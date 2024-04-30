@@ -1,26 +1,15 @@
-import './assets/main.css'
+import { createApp } from "vue"
+import App from "./App.vue"
+import router from "./router"
+import pinia from "./store"
+import registerIcons from "./global/register-icons"
 
-// import { createApp } from 'vue'
-// import { createPinia } from 'pinia'
-
-// import App from './App.vue'
-// import router from './router'
-
-// const app = createApp(App)
-
-// app.use(createPinia())
-// app.use(router)
-
-// app.mount('#app')
-
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import pinia from './stores'
-import registerIcons from './global/register-icons'
-
-// 全局引入样式
-import 'element-plus/dist/index.css'
+// CSS
+// import "uno.css"
+import "normalize.css"
+import "element-plus/dist/index.css"
+import "element-plus/theme-chalk/dark/css-vars.css"
+import "@/styles/index.scss"
 
 const app = createApp(App)
 app.use(registerIcons)
@@ -28,4 +17,4 @@ app.use(registerIcons)
 app.use(pinia)
 app.use(router)
 
-app.mount('#app')
+app.mount("#app")
