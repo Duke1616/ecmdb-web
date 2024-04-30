@@ -2,21 +2,72 @@ import { fileURLToPath, URL } from "node:url"
 
 import { defineConfig } from "vite"
 import vue from "@vitejs/plugin-vue"
-import AutoImport from "unplugin-auto-import/vite"
-import Components from "unplugin-vue-components/vite"
-import { ElementPlusResolver } from "unplugin-vue-components/resolvers"
+import UnoCSS from "unocss/vite"
+import path from "path"
+import svgLoader from "vite-svg-loader"
+import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
-    AutoImport({
-      resolvers: [ElementPlusResolver()]
+    /** 将 SVG 静态图转化为 Vue 组件 */
+    svgLoader({ defaultImport: "url" }),
+    /** SVG */
+    createSvgIconsPlugin({
+      iconDirs: [path.resolve(process.cwd(), "src/icons/svg")],
+      symbolId: "icon-[dir]-[name]"
     }),
-    Components({
-      resolvers: [ElementPlusResolver()]
-    })
+    /** UnoCSS */
+    UnoCSS()
   ],
+  server: {
+    /** 设置 host: true 才可以使用 Network 的形式，以 IP 访问项目 */
+    host: true, // host: "0.0.0.0"
+    /** 端口号 */
+    port: 3333,
+    /** 是否自动打开浏览器 */
+    open: false,
+    /** 跨域设置允许 */
+    cors: true,
+    /** 端口被占用时，是否直接退出 */
+    strictPort: false,
+    /** 接口代理 */
+    proxy: {
+      "/api/v1": {
+        target: "https://mock.mengxuegu.com/mock/63218b5fb4c53348ed2bc212",
+        ws: true,
+        /** 是否允许跨域 */
+        changeOrigin: true
+      }
+    },
+    /** 预热常用文件，提高初始页面加载速度 */
+    warmup: {
+      clientFiles: ["./src/layouts/**/*.vue"]
+    }
+  },
+  build: {
+    /** 单个 chunk 文件的大小超过 2048KB 时发出警告 */
+    chunkSizeWarningLimit: 2048,
+    /** 禁用 gzip 压缩大小报告 */
+    reportCompressedSize: false,
+    /** 打包后静态资源目录 */
+    assetsDir: "static",
+    rollupOptions: {
+      output: {
+        /**
+         * 分块策略
+         * 1. 注意这些包名必须存在，否则打包会报错
+         * 2. 如果你不想自定义 chunk 分割策略，可以直接移除这段配置
+         */
+        manualChunks: {
+          vue: ["vue", "vue-router", "pinia"],
+          element: ["element-plus", "@element-plus/icons-vue"],
+          vxe: ["vxe-table", "vxe-table-plugin-element", "xe-utils"]
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url))
