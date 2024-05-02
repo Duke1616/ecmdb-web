@@ -1,6 +1,6 @@
-import axios from 'axios'
-import type { AxiosInstance } from 'axios'
-import type { HYRequesInterceptors, HYRequestConfig } from './type'
+import axios from "axios"
+import type { AxiosInstance } from "axios"
+import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 
 class HyRequest {
   // axios的实力方法
@@ -14,9 +14,15 @@ class HyRequest {
     this.interceptors = config.interceptors
 
     // 当前实例的请求拦截
-    this.instance.interceptors.request.use(this.interceptors?.requestInterceptor, this.interceptors?.requestInterceptorCath)
+    this.instance.interceptors.request.use(
+      this.interceptors?.requestInterceptor,
+      this.interceptors?.requestInterceptorCath
+    )
     // 当前实例的响应拦击
-    this.instance.interceptors.response.use(this.interceptors?.responseInterceptor, this.interceptors?.responseInterceptorCath)
+    this.instance.interceptors.response.use(
+      this.interceptors?.responseInterceptor,
+      this.interceptors?.responseInterceptorCath
+    )
 
     // 所有实例的请求拦截
     this.instance.interceptors.request.use(
@@ -75,35 +81,35 @@ class HyRequest {
     data: T
     message: string
   }> {
-    return this.request<T>({ ...config, method: 'get' })
+    return this.request<T>({ ...config, method: "get" })
   }
   post<T>(config: HYRequestConfig): Promise<{
     code: number
     data: T
     message: string
   }> {
-    return this.request<T>({ ...config, method: 'post' })
+    return this.request<T>({ ...config, method: "post" })
   }
   delete<T>(config: HYRequestConfig): Promise<{
     code: number
     data: T
     message: string
   }> {
-    return this.request<T>({ ...config, method: 'delete' })
+    return this.request<T>({ ...config, method: "delete" })
   }
   put<T>(config: HYRequestConfig): Promise<{
     code: number
     data: T
     message: string
   }> {
-    return this.request<T>({ ...config, method: 'put' })
+    return this.request<T>({ ...config, method: "put" })
   }
   patch<T>(config: HYRequestConfig): Promise<{
     code: number
     data: T
     message: string
   }> {
-    return this.request<T>({ ...config, method: 'patch' })
+    return this.request<T>({ ...config, method: "patch" })
   }
 }
 

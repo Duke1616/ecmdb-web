@@ -78,6 +78,34 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/model",
+    component: Layouts,
+    redirect: "/model/index",
+    meta: {
+      title: "模型",
+      svgIcon: "model"
+    },
+    children: [
+      {
+        path: "index",
+        component: () => import("@/views/model/index.vue"),
+        name: "model-index",
+        meta: {
+          title: "模型资产",
+          svgIcon: "unocss"
+        }
+      },
+      {
+        path: "info",
+        component: () => import("@/views/model/info/index.vue"),
+        name: "model-info",
+        meta: {
+          hidden: true
+        }
+      }
+    ]
+  },
+  {
     path: "/link",
     meta: {
       title: "外链",

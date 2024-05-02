@@ -1,4 +1,4 @@
-import type { AxiosResponse, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios'
+import type { AxiosResponse, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios"
 
 // 拦截器接口
 export interface HYRequesInterceptors {
