@@ -83,7 +83,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/model/index",
     meta: {
       title: "模型",
-      svgIcon: "model"
+      svgIcon: "link"
     },
     children: [
       {
@@ -100,7 +100,17 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/model/info/index.vue"),
         name: "model-info",
         meta: {
-          hidden: true
+          hidden: true,
+          title: "模型详情"
+        }
+      },
+      {
+        path: "relation",
+        component: () => import("@/views/model/relation/index.vue"),
+        name: "model-relation",
+        meta: {
+          title: "关联关系",
+          svgIcon: "link"
         }
       }
     ]
