@@ -1,0 +1,43 @@
+{
+  "rootId": "mysql",
+  "nodes": [
+    {
+      "id": "mongo",
+      "text": "mongo"
+    },
+    {
+      "id": "mysql",
+      "text": "mysql"
+    },
+    {
+      "id": "virtual",
+      "text": "虚拟机"
+    },
+    {
+      "id": "physical",
+      "text": "物理机"
+    }
+  ],
+  "lines": [
+    {
+      "from": "physical",
+      "to": "mysql",
+      "text": "run"
+    },
+    {
+      "from": "virtual",
+      "to": "mysql",
+      "text": "run"
+    },
+    {
+      "from": "virtual",
+      "to": "mongo",
+      "text": "run"
+    },
+    {
+      "from": "physical",
+      "to": "mongo",
+      "text": "run"
+    }
+  ]
+}

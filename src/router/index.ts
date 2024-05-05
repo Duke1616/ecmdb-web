@@ -65,6 +65,9 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: "/unocss",
     component: Layouts,
     redirect: "/unocss/index",
+    meta: {
+      hidden: true
+    },
     children: [
       {
         path: "index",
@@ -121,6 +124,9 @@ export const constantRoutes: RouteRecordRaw[] = [
       title: "外链",
       svgIcon: "link"
     },
+    meta: {
+      hidden: true
+    },
     children: [
       {
         path: "https://juejin.cn/post/7089377403717287972",
@@ -148,6 +154,9 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       title: "表格",
       elIcon: "Grid"
+    },
+    meta: {
+      hidden: true
     },
     children: [
       {
@@ -178,6 +187,9 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       title: "多级路由",
       svgIcon: "menu"
+    },
+    meta: {
+      hidden: true
     },
     children: [
       {
@@ -259,6 +271,9 @@ export const constantRoutes: RouteRecordRaw[] = [
       elIcon: "Menu",
       alwaysShow: true
     },
+    meta: {
+      hidden: true
+    },
     children: [
       {
         path: "use-fetch-select",
@@ -304,6 +319,9 @@ export const dynamicRoutes: RouteRecordRaw[] = [
       svgIcon: "lock",
       roles: ["admin", "editor"], // 可以在根路由中设置角色
       alwaysShow: true // 将始终显示根菜单
+    },
+    meta: {
+      hidden: true
     },
     children: [
       {

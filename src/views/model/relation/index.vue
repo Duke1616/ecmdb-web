@@ -1,50 +1,10 @@
 <template>
   <div>
-    <div style="margin-top: 0px; width: calc(100% - 10px); height: calc(100vh)">
-      <RelationGraph ref="graphRef" :options="graphOptions">
+    <div ref="myPage" style="margin-top: 0px; width: calc(100% - 10px); height: calc(100vh)">
+      <RelationGraph ref="graphRef" :options="graphOptions" :on-node-click="onNodeClick">
         <template #node="{ node }">
           <div class="my-node-style" :style="{ 'background-image': 'url(' + node.data.icon + ')' }" />
           <div class="c-node-name" :style="{ color: node.color }">{{ node.text }}</div>
-        </template>
-        <template #graph-plug>
-          <div
-            style="
-              position: absolute;
-              z-index: 700;
-              left: 20px;
-              top: 20px;
-              height: 110px;
-              padding-top: 6px;
-              padding-left: 30px;
-              padding-right: 30px;
-              border: #efefef solid 1px;
-              color: #555555;
-              border-radius: 10px;
-              background-color: rgba(255, 255, 255, 0.79);
-              font-size: 12px;
-            "
-          >
-            <div style="">
-              <div style="line-height: 20px">Node Filter:</div>
-              <el-radio-group v-model="checked_sex" size="small" @change="doFilter">
-                <el-radio-button label="">All</el-radio-button>
-                <el-radio-button label="male" />
-                <el-radio-button label="female" />
-              </el-radio-group>
-              &nbsp;&nbsp;&nbsp;&nbsp;
-              <el-radio-group v-model="checked_isgoodman" size="small" style="margin-left: 50px" @change="doFilter">
-                <el-radio-button label="">All</el-radio-button>
-                <el-radio-button :label="true">Positive</el-radio-button>
-                <el-radio-button :label="false">Negative</el-radio-button>
-              </el-radio-group>
-            </div>
-            <div>
-              <div style="line-height: 20px">Relation Filter:</div>
-              <el-checkbox-group v-model="rel_checkList" @change="doFilter">
-                <el-checkbox v-for="thisItem in all_rel_type" :key="thisItem" :label="thisItem" />
-              </el-checkbox-group>
-            </div>
-          </div>
         </template>
       </RelationGraph>
     </div>
@@ -53,19 +13,18 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from "vue"
-import RelationGraph, {
-  RGJsonData,
-  RGOptions,
-  RGNode,
-  RGLine,
-  RGLink,
-  RGUserEvent,
-  RelationGraphComponent
-} from "relation-graph-vue3"
-import demoData from "./Demo4AdvDataFilterData.json"
+import RelationGraph, { RGJsonData, RGOptions, RelationGraphComponent } from "relation-graph-vue3"
+import demoData from "./Demo4AdvDataFilterData copy.json"
 
 const graphOptions: RGOptions = {
   debug: false,
+  allowShowMiniToolBar: true, // 是否显示工具栏
+  allowShowMiniNameFilter: false, // 是否显示搜索框
+  defaultNodeShape: 0, // 默认的节点形状，0:圆形；1:矩形
+  // defaultNodeColor: "rgba(66,187,66,1)",
+  defaultJunctionPoint: "border",
+  moveToCenterWhenResize: true, // 当图谱的大小发生变化时，是否重新让图谱的内容看起来居中
+  hideNodeContentByZoom: true, // 是否根据缩放比例隐藏节点内容
   defaultNodeBorderWidth: 0,
   defaultNodeColor: "rgba(238, 178, 94, 1)",
   allowSwitchLineShape: true,
@@ -73,64 +32,56 @@ const graphOptions: RGOptions = {
   defaultLineShape: 1,
   layouts: [
     {
-      label: "Auto Layout",
+      label: "自动布局",
       layoutName: "force",
       layoutClassName: "seeks-layout-force"
     }
-  ],
-  defaultJunctionPoint: "border"
+  ]
 }
 
 const graphRef = ref<RelationGraphComponent>()
-const checked_sex = ref("")
-const checked_isgoodman = ref("")
-const rel_checkList = ref(["师生", "上下级", "亲戚", "情人", "朋友", "夫妻", "勾结", "腐化", "举报"])
-const all_rel_type = ref(["师生", "上下级", "亲戚", "情人", "朋友", "夫妻", "勾结", "腐化", "举报"])
 
 onMounted(() => {
   setGraphData()
 })
 
+// 点击节点触发的函数
+const onNodeClick = (nodeObject) => {
+  // 获取所有连线
+  const graphInstance = graphRef.value!.getInstance()
+  const allLinks = graphInstance.getLinks()
+
+  allLinks.forEach((link) => {
+    // 还原所有样式
+    link.relations.forEach((line) => {
+      line.color = line.data.orignColor || ""
+      line.fontColor = line.data.orignFontColor || line.color || ""
+      line.lineWidth = line.data.orignLineWidth || 1
+    })
+  })
+
+  // 高亮与nodeObject相关的所有连线
+  allLinks
+    .filter((link) => link.fromNode === nodeObject || link.toNode === nodeObject)
+    .forEach((link) => {
+      link.relations.forEach((line) => {
+        line.data.orignColor = line.color
+        line.data.orignFontColor = line.fontColor || line.color
+        line.data.orignLineWidth = line.lineWidth || 1
+        line.color = "#ff0000"
+        line.fontColor = "#ff0000"
+        line.lineWidth = 3
+      })
+    })
+
+  // 强制更新视图
+  graphInstance.dataUpdated()
+}
+
 const setGraphData = async () => {
   const __graph_json_data: RGJsonData = demoData
   const graphInstance = graphRef.value!.getInstance()
   await graphInstance.setJsonData(__graph_json_data)
-}
-
-const doFilter = () => {
-  const graphInstance = graphRef.value!.getInstance()
-  const _all_nodes = graphInstance.getNodes()
-  const _all_links = graphInstance.getLinks()
-  _all_nodes.forEach((thisNode) => {
-    let _isHideThisLine = false
-    if (checked_sex.value !== "") {
-      if (thisNode.data["sexType"] !== checked_sex.value) {
-        _isHideThisLine = true
-      }
-    }
-    if (checked_isgoodman.value !== "") {
-      if (thisNode.data["isGoodMan"] !== checked_isgoodman.value) {
-        _isHideThisLine = true
-      }
-    }
-    thisNode.opacity = _isHideThisLine ? 0.1 : 1
-  })
-  _all_links.forEach((thisLink) => {
-    thisLink.relations.forEach((thisLine) => {
-      if (rel_checkList.value.indexOf(thisLine.data["type"]) === -1) {
-        if (!thisLine.isHide) {
-          thisLine.isHide = true
-          console.log("Hide line:", thisLine)
-        }
-      } else {
-        if (thisLine.isHide) {
-          thisLine.isHide = false
-          console.log("Show line:", thisLine)
-        }
-      }
-    })
-  })
-  graphInstance.dataUpdated()
 }
 </script>
 
