@@ -106,7 +106,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: "relation",
-        component: () => import("@/views/model/relation/index.vue"),
+        component: () => import("@/views/model/relation-graph/index.vue"),
         name: "model-relation",
         meta: {
           title: "关联关系",

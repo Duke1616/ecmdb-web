@@ -111,13 +111,13 @@
   <!-- Edit、Create 抽屉 -->
   <el-drawer v-model="editDrawer" title="编辑字段">
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
-      <el-form-item label="唯一标识" prop="filed_unique_name">
+      <el-form-item label="唯一标识" prop="name">
         <el-input v-model="formData.name" />
       </el-form-item>
-      <el-form-item label="字段名称" prop="filed_name">
+      <el-form-item label="字段名称" prop="field_name">
         <el-input v-model="formData.field_name" />
       </el-form-item>
-      <el-form-item label="字段类型" prop="filed_type">
+      <el-form-item label="字段类型" prop="field_type">
         <el-input v-model="formData.field_type" />
       </el-form-item>
       <el-form-item label="是否必填" prop="required">
@@ -161,17 +161,15 @@ const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
 }
 const dialogVisible = ref<boolean>(false)
 const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+const formRef = ref<FormInstance | null>(null)
+const fieldRules: FormRules = {
+  name: [{ required: true, message: "必须输入字段唯一标识", trigger: "blur" }],
+  field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
+}
 
 // 是否展开组、鼠标聚焦效果
 const showDetail = ref(false)
-const currentItem = ref<Attribute>({
-  id: 0,
-  model_uid: "",
-  name: "",
-  field_name: "",
-  field_type: "",
-  required: false
-})
+const currentItem = ref<Attribute>()
 
 const showDetails = (item: Attribute) => {
   currentItem.value = item
@@ -182,17 +180,21 @@ const hideDetails = () => {
   showDetail.value = false
 }
 
+//** 新增字段信息 */
 const handlerAddAttribute = () => {
-  CreateAttributeApi(formData.value)
-    .then(() => {
-      ElMessage.success("操作成功")
-      dialogVisible.value = false
-      editDrawer.value = false
-      getAttributesData()
-    })
-    .finally(() => {
-      loading.value = false
-    })
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (!valid) return console.error("表单校验不通过", fields)
+    CreateAttributeApi(formData.value)
+      .then(() => {
+        ElMessage.success("操作成功")
+        dialogVisible.value = false
+        editDrawer.value = false
+        getAttributesData()
+      })
+      .finally(() => {
+        loading.value = false
+      })
+  })
 }
 
 //** 获取字段信息 */
@@ -225,18 +227,6 @@ function handleEditDrawer(model: any) {
   console.log(model)
 }
 
-const submitForm = (formEl: FormInstance | undefined) => {
-  if (!formEl) return
-  formEl.validate((valid) => {
-    if (valid) {
-      console.log("submit!")
-    } else {
-      console.log("error submit!")
-      return false
-    }
-  })
-}
-
 const resetForm = () => {
   editDrawer.value = false
 }
@@ -249,11 +239,6 @@ function search() {
 function toggleGroup(group: any) {
   group.expanded = !group.expanded
 }
-
-// const fieldRules: FormRules = {
-//   filed_unique_name: [{ required: true, message: "必须输入帐号信息", trigger: "blur" }],
-//   filed_name: [{ required: true, message: "必须输入密码信息", trigger: "blur" }]
-// }
 </script>
 
 <style lang="scss">
