@@ -16,12 +16,12 @@
   </div>
 
   <div>
-    <div v-for="group in modelGroups" :key="group.id" class="model-group">
+    <div v-for="group in AttributesData" :key="group.group_id" class="model-group">
       <div class="model-group-header">
         <div @click="toggleGroup(group)" class="group-header">
           <el-icon v-if="group.expanded"><ArrowRight /></el-icon>
           <el-icon v-else><ArrowDown /></el-icon>
-          <h4>{{ group.name }}</h4>
+          <h4>{{ group.group_name }}</h4>
         </div>
         <div class="model-button">
           <el-button text size="default" type="primary" icon="CirclePlus" @click="handleEditDrawer">添加字段</el-button>
@@ -32,31 +32,31 @@
         <div>
           <el-row :gutter="20">
             <el-col
-              v-for="model in group.models"
-              :key="model.id"
+              v-for="item in group.attributes"
+              :key="item.id"
               :xs="24"
               :sm="12"
               :md="8"
-              :lg="6"
+              :lg="4"
               :xl="4"
               style="margin-bottom: 4px"
-              @mouseenter="model.showButtons = true"
-              @mouseleave="model.showButtons = false"
+              @mouseenter="showDetails(item)"
+              @mouseleave="hideDetails()"
             >
-              <el-card @click="handleCardDrawer(model)">
+              <el-card @click="showDetails(item)">
                 <div class="model-field-card">
                   <div class="field-content">
-                    <p class="field-name">{{ model.filed_name }}</p>
-                    <p font-size="12px">{{ model.filed_type }} {{ model.filed_unique_name }}</p>
+                    <p class="field-name">{{ item.name }}</p>
+                    <p font-size="12px">{{ item.field_type }} {{ item.field_name }}</p>
                   </div>
                   <!-- 判断鼠标移动到card，是否展示按钮 -->
-                  <div v-if="model.showButtons" class="btn-field-cell">
+                  <div v-if="showDetail && currentItem === item" class="btn-field-cell">
                     <el-button
                       text
                       size="default"
                       type="primary"
                       icon="edit"
-                      @click.stop="handleEditDrawer(model)"
+                      @click.stop="handleEditDrawer(item)"
                       el-button
                     />
                     <el-button
@@ -132,14 +132,68 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
-
+import { ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
-const searchInput = ref("")
+import { listAttributesByModelUidApi } from "@/api/attribute"
+import { type AttributeGroup, type Attribute } from "@/api/attribute/types/attribute"
+import { usePagination } from "@/hooks/usePagination"
 
+const { paginationData } = usePagination()
+const searchInput = ref("")
 const cardDrawer = ref(false)
 const editDrawer = ref(false)
 const deleteDialogVisible = ref(false)
+const loading = ref<boolean>(false)
+
+const props = defineProps({
+  modelUid: String
+})
+
+// 是否展开组、鼠标聚焦效果
+const showDetail = ref(false)
+const currentItem = ref<Attribute>({
+  id: 0,
+  model_uid: "",
+  name: "",
+  field_name: "",
+  field_type: "",
+  required: false,
+  showDetail: false
+})
+
+const showDetails = (item: Attribute) => {
+  currentItem.value = item
+  showDetail.value = true
+}
+
+const hideDetails = () => {
+  showDetail.value = false
+}
+
+//** 获取字段信息 */
+
+console.log(props.modelUid)
+const AttributesData = ref<AttributeGroup[]>([])
+// ** 获取数据 */
+function getAttributesData() {
+  loading.value = true
+  listAttributesByModelUidApi(props.modelUid || "")
+    .then(({ data }) => {
+      console.log(data)
+      AttributesData.value = data.data.ags
+    })
+    .catch(() => {
+      AttributesData.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getAttributesData, {
+  immediate: true
+})
 
 function handleEditDrawer(model: any) {
   editDrawer.value = true
@@ -170,12 +224,6 @@ const formData = ref({
   required: true
 })
 
-function handleCardDrawer(model: any) {
-  cardDrawer.value = true
-  formData.value = model
-  console.log(model)
-}
-
 function search() {
   // 调用搜索接口
   console.log("搜索:", searchInput.value)
@@ -189,92 +237,6 @@ const fieldRules: FormRules = {
   filed_unique_name: [{ required: true, message: "必须输入帐号信息", trigger: "blur" }],
   filed_name: [{ required: true, message: "必须输入密码信息", trigger: "blur" }]
 }
-
-const modelGroups = ref([
-  {
-    id: 1,
-    name: "分组1",
-    expanded: true,
-    models: [
-      {
-        id: 1,
-        filed_name: "字段1",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string",
-        showButtons: false,
-        required: true
-      },
-      {
-        id: 2,
-        filed_name: "字段2",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string",
-        required: false
-      },
-      {
-        id: 2,
-        filed_name: "字段2",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string",
-        required: true
-      },
-      {
-        id: 2,
-        filed_name: "字段2",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      },
-      {
-        id: 3,
-        filed_name: "字段3",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      },
-      {
-        id: 1,
-        filed_name: "字段3",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      },
-      {
-        id: 1,
-        filed_name: "字段4",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      },
-      {
-        id: 1,
-        filed_name: "字段5",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      },
-      {
-        id: 1,
-        filed_name: "字段6",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "分组2",
-    models: [
-      {
-        id: 1,
-        filed_name: "字段1",
-        filed_unique_name: "唯一名称1",
-        filed_type: "string"
-      },
-      {
-        id: 2,
-        filed_name: "字段2",
-        filed_unique_name: "唯一名称2",
-        filed_type: "string"
-      }
-    ]
-  }
-])
 </script>
 
 <style lang="scss">

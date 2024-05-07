@@ -10,8 +10,8 @@
     </el-page-header>
     <div class="model-info">
       <div class="model-name">
-        <span class="model-unique">唯一标识: host{{ $route.query.uniqueName }}</span>
-        <span>名称: 主机{{ $route.query.name }}</span>
+        <span class="model-uid">唯一标识: {{ $route.query.uid }}</span>
+        <span>名称: {{ $route.query.name }}</span>
       </div>
       <div class="model-button">
         <el-button text size="large" type="danger" icon="RemoveFilled">禁用</el-button>
@@ -19,17 +19,15 @@
       </div>
     </div>
     <div class="model-tabs">
-      <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
+      <el-tabs stretchv-model="activeName" v-model="activeName" @tab-click="handleClick">
         <el-tab-pane label="模型字段" name="model-field">
-          <model-field />
+          <model-field :model-uid="$route.query.uid" />
         </el-tab-pane>
         <el-tab-pane label="模型关联" name="model-relation">
           <model-relation />
         </el-tab-pane>
       </el-tabs>
     </div>
-
-    <!-- <div class="model-content">Your page content here</div> -->
   </div>
 </template>
 
@@ -38,6 +36,7 @@ import { ref } from "vue"
 import type { TabsPaneContext } from "element-plus"
 import modelField from "./c-cnps/model-field.vue"
 import modelRelation from "./c-cnps/model-relation.vue"
+
 const goBack = () => {
   console.log("go back")
 }
@@ -53,7 +52,7 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
 .container-app {
   margin: 20px;
 }
-.model-unique {
+.model-uid {
   margin-right: 20px;
 }
 .model-info {

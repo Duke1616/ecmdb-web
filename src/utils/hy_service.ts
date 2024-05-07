@@ -2,7 +2,7 @@ import { localCache } from "@/utils/cache"
 import { BASE_URL, TIME_OUT } from "../config"
 import HyRequest from "@/utils/request"
 
-const hyRequest = new HyRequest({
+const instance = new HyRequest({
   baseURL: BASE_URL,
   timeout: TIME_OUT,
   interceptors: {
@@ -16,4 +16,4 @@ const hyRequest = new HyRequest({
   }
 })
 
-export default hyRequest
+export default instance

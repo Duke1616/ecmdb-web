@@ -24,8 +24,8 @@
       </div>
     </div>
     <div class="model-groups">
-      <div v-for="group in modelGroups" :key="group.id" class="model-group">
-        <h3>{{ group.name }}</h3>
+      <div v-for="group in ModelsData" :key="group.group_id" class="model-group">
+        <h3>{{ group.group_name }}</h3>
         <div class="model-cards">
           <el-row :gutter="20">
             <el-col
@@ -38,19 +38,19 @@
               :xl="4"
               style="margin-bottom: 4px"
             >
-              <router-link :to="`/model/info`" class="model-card" @click="handleModelClick(model)">
-                <el-card class="model-card">
-                  <div class="model-content">
-                    <div class="model-image">
-                      <img :src="model.icon" style="width: 100%" />
-                    </div>
-                    <div class="model-info">
-                      <div class="model-name">{{ model.name }}</div>
-                      <div class="model-unique-name">{{ model.uniqueName }}</div>
-                    </div>
+              <!-- <router-link :to="`/model/info`" class="model-card" @click="handleModelClick()"> -->
+              <el-card class="model-card" @click="handleModelClick(model)">
+                <div class="model-content">
+                  <div class="model-image">
+                    <img :src="model.icon" style="width: 100%" />
                   </div>
-                </el-card>
-              </router-link>
+                  <div class="model-info">
+                    <div class="model-name">{{ model.name }}</div>
+                    <div class="model-unique-name">{{ model.uid }}</div>
+                  </div>
+                </div>
+              </el-card>
+              <!-- </router-link> -->
             </el-col>
           </el-row>
         </div>
@@ -60,96 +60,52 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { CirclePlus, Search } from "@element-plus/icons-vue"
-const searchInput = ref("")
-const modelStatus = ref<"all" | "open" | "close">("all")
+import { listModelsApi } from "@/api/model"
+import { type Models, type Model } from "@/api/model/types/model"
+import { usePagination } from "@/hooks/usePagination"
 
-function handleModelClick(model: any) {
-  // Handle model click here
-  console.log("Model clicked:", model)
+// import { type listModelsResponseData } from "@/api/model/types/model"
+const searchInput = ref("")
+import { useRouter } from "vue-router"
+const modelStatus = ref<"all" | "open" | "close">("all")
+const loading = ref<boolean>(false)
+const { paginationData } = usePagination()
+const router = useRouter()
+
+// function handleModelClick(model: any) {
+//   // Handle model click here
+//   console.log("Model clicked:", model)
+// }
+
+const ModelsData = ref<Models[]>([])
+// ** 获取数据 */
+const getModelsData = () => {
+  loading.value = true
+  listModelsApi()
+    .then(({ data }) => {
+      console.log(data)
+      ModelsData.value = data.data.mgs
+    })
+    .catch(() => {
+      ModelsData.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 
-const modelGroups = ref([
-  {
-    id: 1,
-    name: "分组1",
-    models: [
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 2,
-        name: "模型2",
-        uniqueName: "唯一名称2",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 3,
-        name: "模型3",
-        uniqueName: "唯一名称3",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "分组2",
-    models: [
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      },
-      {
-        id: 1,
-        name: "模型1",
-        uniqueName: "唯一名称1",
-        icon: "https://shadow.elemecdn.com/app/element/hamburger.9cf7b091-55e9-11e9-a976-7f4d0b07eef6.png"
-      }
-    ]
-  }
-])
+const handleModelClick = (model: Model) => {
+  console.log(model)
+  router.push({
+    path: "/model/info",
+    query: { uid: model.uid, name: model.name }
+  })
+}
+
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getModelsData, { immediate: true })
 
 function search() {
   // 调用搜索接口
@@ -179,9 +135,19 @@ function search() {
 
 .model-content {
   display: flex;
+  align-items: center;
   .model-image {
-    width: 20%;
+    width: 15%;
     margin-right: 20px;
+  }
+  .model-name {
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  .model-unique-name {
+    color: rgb(191, 199, 210);
+    font-size: 16px;
   }
 }
 </style>

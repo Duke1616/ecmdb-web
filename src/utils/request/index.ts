@@ -38,7 +38,7 @@ class HyRequest {
     // 所有实例的响应拦截
     this.instance.interceptors.response.use(
       (config) => {
-        // console.log('所有实例的响应拦截')
+        // 返回结果包括了响应数据和响应头信息
         return config
       },
       (error) => {
@@ -53,6 +53,7 @@ class HyRequest {
     code: number
     data: T
     message: string
+    headers: any
   }> {
     return new Promise((resolve) => {
       // 单独的请求拦截
@@ -67,8 +68,14 @@ class HyRequest {
           if (config.interceptorsToOnce?.responseInterceptor) {
             res = config.interceptorsToOnce.responseInterceptor(res)
           }
+
           // 返回结果
-          resolve(res.data)
+          resolve({
+            code: res.status,
+            data: res.data,
+            message: res.statusText,
+            headers: res.headers
+          })
         })
         .catch((err) => {
           resolve(err.response ? err.response.data : err)

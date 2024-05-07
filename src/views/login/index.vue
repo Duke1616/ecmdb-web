@@ -20,8 +20,8 @@ const loading = ref(false)
 
 /** 登录表单数据 */
 const loginFormData: LoginRequestData = reactive({
-  username: "admin",
-  password: "12345678"
+  username: "luankz",
+  password: ""
 })
 
 /** 登录表单校验规则 */
@@ -53,6 +53,8 @@ const handleLogin = () => {
       console.error("表单校验不通过", fields)
     }
   })
+
+  console.log("登录成功")
 }
 </script>
 

@@ -12,9 +12,6 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/redirect",
     component: Layouts,
-    meta: {
-      hidden: true
-    },
     children: [
       {
         path: ":path(.*)",
@@ -54,8 +51,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/dashboard/index.vue"),
         name: "Dashboard",
         meta: {
-          title: "首页",
-          svgIcon: "dashboard",
+          title: "全局搜索",
+          svgIcon: "search",
           affix: true
         }
       }
@@ -85,7 +82,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: Layouts,
     redirect: "/model/index",
     meta: {
-      title: "模型",
+      title: "模型管理",
       svgIcon: "link"
     },
     children: [
@@ -122,9 +119,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: "/link",
     meta: {
       title: "外链",
-      svgIcon: "link"
-    },
-    meta: {
+      svgIcon: "link",
       hidden: true
     },
     children: [
@@ -155,9 +150,6 @@ export const constantRoutes: RouteRecordRaw[] = [
       title: "表格",
       elIcon: "Grid"
     },
-    meta: {
-      hidden: true
-    },
     children: [
       {
         path: "element-plus",
@@ -186,9 +178,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     name: "Menu",
     meta: {
       title: "多级路由",
-      svgIcon: "menu"
-    },
-    meta: {
+      svgIcon: "menu",
       hidden: true
     },
     children: [
@@ -269,9 +259,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       title: "Hook",
       elIcon: "Menu",
-      alwaysShow: true
-    },
-    meta: {
+      alwaysShow: true,
       hidden: true
     },
     children: [
@@ -318,9 +306,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
       title: "权限",
       svgIcon: "lock",
       roles: ["admin", "editor"], // 可以在根路由中设置角色
-      alwaysShow: true // 将始终显示根菜单
-    },
-    meta: {
+      alwaysShow: true, // 将始终显示根菜单
       hidden: true
     },
     children: [

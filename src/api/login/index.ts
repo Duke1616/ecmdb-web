@@ -1,19 +1,24 @@
-import { request } from "@/utils/service"
 import type * as Login from "./types/login"
+
+import instance from "@/utils/hy_service"
 
 /** 登录并返回 Token */
 export function loginApi(data: Login.LoginRequestData) {
-  return request<Login.LoginResponseData>({
-    url: "users/login",
-    method: "post",
-    data
-  })
+  return instance
+    .request<Login.LoginResponseData>({
+      url: "user/ldap/login",
+      method: "post",
+      data
+    })
+    .then((response) => {
+      response.data.token = response.headers["x-refresh-token"]
+      return response // 返回原始的响应对象
+    })
 }
 
 /** 获取用户详情 */
 export function getUserInfoApi() {
-  return request<Login.UserInfoResponseData>({
-    url: "users/info",
-    method: "get"
+  return instance.post<Login.UserInfoResponseData>({
+    url: "user/info"
   })
 }
