@@ -1,3 +1,12 @@
+export interface CreateAttributeRequestData {
+  id?: number
+  model_uid: string
+  name: string
+  field_name: string
+  field_type: string
+  required: boolean
+}
+
 export interface AttributeGroup {
   group_name: string
   group_id: number
@@ -12,8 +21,6 @@ export interface Attribute {
   field_name: string
   field_type: string
   required: boolean
-
-  showDetail: boolean
 }
 
 export type listAttributesResponseData = ApiResponseData<{

@@ -90,20 +90,20 @@
   <el-drawer v-model="cardDrawer" title="字段详情">
     <el-descriptions :column="2">
       <el-descriptions-item label="唯一标识：">
-        {{ formData.filed_unique_name }}
+        {{ formData.name }}
       </el-descriptions-item>
       <el-descriptions-item label="字段名称：">
-        {{ formData.filed_name }}
+        {{ formData.field_name }}
       </el-descriptions-item>
       <el-descriptions-item label="字段类型：">
-        {{ formData.filed_type }}
+        {{ formData.field_type }}
       </el-descriptions-item>
       <el-descriptions-item label="是否必填：">
         {{ formData.required }}
       </el-descriptions-item>
     </el-descriptions>
     <div>
-      <el-button size="default" type="primary" @click.stop="handleEditDrawer(model)">修改</el-button>
+      <el-button size="default" type="primary" @click.stop="handlerAddAttribute()">修改</el-button>
       <el-button size="default" type="danger" @click.stop="deleteDialogVisible = true">删除</el-button>
     </div>
   </el-drawer>
@@ -112,19 +112,19 @@
   <el-drawer v-model="editDrawer" title="编辑字段">
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
       <el-form-item label="唯一标识" prop="filed_unique_name">
-        <el-input v-model="formData.filed_unique_name" />
+        <el-input v-model="formData.name" />
       </el-form-item>
       <el-form-item label="字段名称" prop="filed_name">
-        <el-input v-model="formData.filed_name" />
+        <el-input v-model="formData.field_name" />
       </el-form-item>
       <el-form-item label="字段类型" prop="filed_type">
-        <el-input v-model="formData.filed_type" />
+        <el-input v-model="formData.field_type" />
       </el-form-item>
       <el-form-item label="是否必填" prop="required">
         <el-switch v-model="formData.required" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="submitForm(ruleFormRef)"> 保存 </el-button>
+        <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
         <el-button @click="resetForm()">取消</el-button>
       </el-form-item>
     </el-form>
@@ -134,9 +134,11 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
-import { listAttributesByModelUidApi } from "@/api/attribute"
-import { type AttributeGroup, type Attribute } from "@/api/attribute/types/attribute"
+import { listAttributesByModelUidApi, CreateAttributeApi } from "@/api/attribute"
+import { type AttributeGroup, type Attribute, type CreateAttributeRequestData } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/hooks/usePagination"
+import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { cloneDeep } from "lodash-es"
 
 const { paginationData } = usePagination()
 const searchInput = ref("")
@@ -149,6 +151,17 @@ const props = defineProps({
   modelUid: String
 })
 
+const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
+  id: undefined,
+  model_uid: props.modelUid || "",
+  name: "",
+  field_name: "",
+  field_type: "",
+  required: false
+}
+const dialogVisible = ref<boolean>(false)
+const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+
 // 是否展开组、鼠标聚焦效果
 const showDetail = ref(false)
 const currentItem = ref<Attribute>({
@@ -157,8 +170,7 @@ const currentItem = ref<Attribute>({
   name: "",
   field_name: "",
   field_type: "",
-  required: false,
-  showDetail: false
+  required: false
 })
 
 const showDetails = (item: Attribute) => {
@@ -168,6 +180,19 @@ const showDetails = (item: Attribute) => {
 
 const hideDetails = () => {
   showDetail.value = false
+}
+
+const handlerAddAttribute = () => {
+  CreateAttributeApi(formData.value)
+    .then(() => {
+      ElMessage.success("操作成功")
+      dialogVisible.value = false
+      editDrawer.value = false
+      getAttributesData()
+    })
+    .finally(() => {
+      loading.value = false
+    })
 }
 
 //** 获取字段信息 */
@@ -216,14 +241,6 @@ const resetForm = () => {
   editDrawer.value = false
 }
 
-const formData = ref({
-  id: 2,
-  filed_name: "字段2",
-  filed_unique_name: "唯一名称1",
-  filed_type: "string",
-  required: true
-})
-
 function search() {
   // 调用搜索接口
   console.log("搜索:", searchInput.value)
@@ -233,10 +250,10 @@ function toggleGroup(group: any) {
   group.expanded = !group.expanded
 }
 
-const fieldRules: FormRules = {
-  filed_unique_name: [{ required: true, message: "必须输入帐号信息", trigger: "blur" }],
-  filed_name: [{ required: true, message: "必须输入密码信息", trigger: "blur" }]
-}
+// const fieldRules: FormRules = {
+//   filed_unique_name: [{ required: true, message: "必须输入帐号信息", trigger: "blur" }],
+//   filed_name: [{ required: true, message: "必须输入密码信息", trigger: "blur" }]
+// }
 </script>
 
 <style lang="scss">
