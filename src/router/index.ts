@@ -112,6 +112,15 @@ export const constantRoutes: RouteRecordRaw[] = [
           title: "关联关系",
           svgIcon: "link"
         }
+      },
+      {
+        path: "relation-type",
+        component: () => import("@/views/model/relation-type/index.vue"),
+        name: "model-type",
+        meta: {
+          title: "关联类型",
+          svgIcon: "link"
+        }
       }
     ]
   },

@@ -11,7 +11,7 @@
       />
     </div>
     <div class="field-sort">
-      <el-button text size="default" type="default" icon="Setting">表格排序设置</el-button>
+      <el-button text size="default" type="default" icon="Setting" @click="handleSortDrawer">表格排序设置</el-button>
     </div>
   </div>
 
@@ -27,7 +27,6 @@
           <el-button text size="default" type="primary" icon="CirclePlus" @click="handleEditDrawer">添加字段</el-button>
         </div>
       </div>
-
       <div v-if="group.expanded">
         <div>
           <el-row :gutter="20">
@@ -43,11 +42,11 @@
               @mouseenter="showDetails(item)"
               @mouseleave="hideDetails()"
             >
-              <el-card @click="showDetails(item)">
+              <el-card @click="detailInfo(item)">
                 <div class="model-field-card">
                   <div class="field-content">
-                    <p class="field-name">{{ item.name }}</p>
-                    <p font-size="12px">{{ item.field_type }} {{ item.field_name }}</p>
+                    <p class="field-name">{{ item.field_name }}</p>
+                    <p font-size="14px">{{ item.field_type }} {{ item.field_uid }}</p>
                   </div>
                   <!-- 判断鼠标移动到card，是否展示按钮 -->
                   <div v-if="showDetail && currentItem === item" class="btn-field-cell">
@@ -90,16 +89,16 @@
   <el-drawer v-model="cardDrawer" title="字段详情">
     <el-descriptions :column="2">
       <el-descriptions-item label="唯一标识：">
-        {{ formData.name }}
+        {{ currentItem?.field_uid }}
       </el-descriptions-item>
       <el-descriptions-item label="字段名称：">
-        {{ formData.field_name }}
+        {{ currentItem?.field_name }}
       </el-descriptions-item>
       <el-descriptions-item label="字段类型：">
-        {{ formData.field_type }}
+        {{ currentItem?.field_type }}
       </el-descriptions-item>
       <el-descriptions-item label="是否必填：">
-        {{ formData.required }}
+        {{ currentItem?.required }}
       </el-descriptions-item>
     </el-descriptions>
     <div>
@@ -111,8 +110,8 @@
   <!-- Edit、Create 抽屉 -->
   <el-drawer v-model="editDrawer" title="编辑字段">
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
-      <el-form-item label="唯一标识" prop="name">
-        <el-input v-model="formData.name" />
+      <el-form-item label="唯一标识" prop="field_uid">
+        <el-input v-model="formData.field_uid" />
       </el-form-item>
       <el-form-item label="字段名称" prop="field_name">
         <el-input v-model="formData.field_name" />
@@ -129,6 +128,76 @@
       </el-form-item>
     </el-form>
   </el-drawer>
+
+  <!-- 表格排序设置 -->
+  <el-drawer v-model="sortDrawer" size="40%" title="表格排序设置">
+    <div class="sort-card-container">
+      <el-card class="sort-card">
+        <VueDraggable
+          v-model="list1"
+          dragClass="drag"
+          :animation="animationDuration"
+          group="cmdb"
+          ghostClass="ghost"
+          chosenClass="chosen"
+          @start="onStart"
+          @end="onEnd"
+          itemKey="id"
+          class="flex flex-col gap-2 p-0 rounded"
+        >
+          <div v-for="(item, index) in list1" :key="item.id">
+            <div class="sort-item">
+              <div>
+                <el-text truncated>{{ item.name }}</el-text>
+              </div>
+              <div>
+                <el-icon @click="removeAndToList2(index, item)"><Right /></el-icon>
+              </div>
+            </div>
+          </div>
+        </VueDraggable>
+      </el-card>
+      <el-card class="sort-card">
+        <VueDraggable
+          v-model="list2"
+          dragClass="drag"
+          :animation="animationDuration"
+          group="cmdb"
+          ghostClass="ghost"
+          chosenClass="chosen"
+          handle=".handle"
+          @start="onStart"
+          @end="onEnd"
+          itemKey="id"
+          class="flex flex-col gap-2 p-0 rounded"
+        >
+          <div v-for="(item, index) in list2" :key="item.id">
+            <div class="sort-item">
+              <div>
+                <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
+                <el-text truncated class="sort-text">{{ item.name }}</el-text>
+              </div>
+              <div>
+                <el-icon @click="removeAndToList1(index, item)"><Close /></el-icon>
+              </div>
+            </div>
+          </div>
+        </VueDraggable>
+      </el-card>
+    </div>
+
+    <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
+      <el-form-item>
+        <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
+        <el-button @click="resetForm()">取消</el-button>
+      </el-form-item>
+    </el-form>
+
+    <div class="flex justify-between">
+      <preview-list :list="list1" />
+      <preview-list :list="list2" />
+    </div>
+  </el-drawer>
 </template>
 
 <script lang="ts" setup>
@@ -139,22 +208,136 @@ import { type AttributeGroup, type Attribute, type CreateAttributeRequestData } 
 import { usePagination } from "@/hooks/usePagination"
 import { type FormInstance, type FormRules, ElMessage } from "element-plus"
 import { cloneDeep } from "lodash-es"
+import { VueDraggable } from "vue-draggable-plus"
 
 const { paginationData } = usePagination()
 const searchInput = ref("")
 const cardDrawer = ref(false)
 const editDrawer = ref(false)
+const sortDrawer = ref(false)
 const deleteDialogVisible = ref(false)
 const loading = ref<boolean>(false)
+const animationDuration = ref<number>(150)
 
-const props = defineProps({
-  modelUid: String
-})
+const list1 = ref([
+  {
+    name: "Joao",
+    id: 1
+  },
+  {
+    name: "Jean",
+    id: 2
+  },
+  {
+    name: "Johanna",
+    id: 3
+  },
+  {
+    name: "Juan",
+    id: 4
+  },
+  {
+    name: "Joao",
+    id: 1
+  },
+  {
+    name: "Jean",
+    id: 2
+  },
+  {
+    name: "Johanna",
+    id: 3
+  },
+  {
+    name: "Juan",
+    id: 4
+  },
+  {
+    name: "Joao",
+    id: 1
+  },
+  {
+    name: "Jean",
+    id: 2
+  },
+  {
+    name: "Johanna",
+    id: 3
+  },
+  {
+    name: "Juan",
+    id: 4
+  },
+  {
+    name: "Juan",
+    id: 4
+  },
+  {
+    name: "Joao",
+    id: 1
+  },
+  {
+    name: "Jean",
+    id: 2
+  },
+  {
+    name: "Johanna",
+    id: 3
+  },
+  {
+    name: "Juan",
+    id: 4
+  },
+  {
+    name: "Juan",
+    id: 4
+  },
+  {
+    name: "Joao",
+    id: 1
+  },
+  {
+    name: "Jean",
+    id: 2
+  },
+  {
+    name: "Johanna",
+    id: 3
+  },
+  {
+    name: "Juan",
+    id: 4
+  }
+])
+
+const list2 = ref([
+  {
+    name: "Joao",
+    id: 1
+  },
+  {
+    name: "Jeadddn",
+    id: 21
+  },
+  {
+    name: "Johansssana",
+    id: 31
+  },
+  {
+    name: "Juasdasdan",
+    id: 41
+  }
+])
+interface Props {
+  modelUid: string
+}
+
+const props = defineProps<Props>()
 
 const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
   id: undefined,
-  model_uid: props.modelUid || "",
-  name: "",
+  model_uid: props.modelUid,
+  field_uid: "",
   field_name: "",
   field_type: "",
   required: false
@@ -163,7 +346,7 @@ const dialogVisible = ref<boolean>(false)
 const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
-  name: [{ required: true, message: "必须输入字段唯一标识", trigger: "blur" }],
+  field_uid: [{ required: true, message: "必须输入字段唯一标识", trigger: "blur" }],
   field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
 }
 
@@ -174,6 +357,15 @@ const currentItem = ref<Attribute>()
 const showDetails = (item: Attribute) => {
   currentItem.value = item
   showDetail.value = true
+}
+
+const detailInfo = (item: Attribute) => {
+  currentItem.value = item
+  cardDrawer.value = true
+}
+
+const handleSortDrawer = () => {
+  sortDrawer.value = true
 }
 
 const hideDetails = () => {
@@ -198,13 +390,11 @@ const handlerAddAttribute = () => {
 }
 
 //** 获取字段信息 */
-
-console.log(props.modelUid)
 const AttributesData = ref<AttributeGroup[]>([])
 // ** 获取数据 */
 function getAttributesData() {
   loading.value = true
-  listAttributesByModelUidApi(props.modelUid || "")
+  listAttributesByModelUidApi(props.modelUid)
     .then(({ data }) => {
       console.log(data)
       AttributesData.value = data.data.ags
@@ -238,6 +428,25 @@ function search() {
 
 function toggleGroup(group: any) {
   group.expanded = !group.expanded
+}
+
+function removeAndToList1(index: number, item: any) {
+  list1.value.push(item)
+  list2.value.splice(index, 1)
+}
+
+function removeAndToList2(index: number, item: any) {
+  list1.value.splice(index, 1)
+  list2.value.push(item)
+}
+
+const drag = ref(false)
+const onStart = () => {
+  drag.value = true
+}
+//拖拽结束事件
+const onEnd = () => {
+  drag.value = false
 }
 </script>
 
@@ -288,6 +497,34 @@ p {
   h4 {
     margin: 10px;
     margin-left: 10px;
+  }
+}
+
+.sort-card-container {
+  display: flex;
+  width: 100%;
+  height: 90%;
+  margin-bottom: 10px;
+}
+
+.sort-card {
+  flex: 1;
+  height: 100%;
+  /* 可以根据需要添加其他样式 */
+
+  max-height: 600px; /* 根据需要调整高度 */
+  overflow-y: auto; /* 添加垂直滚动条 */
+  padding: 20px; /* 根据需要调整内边距 */
+}
+
+.sort-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 30px;
+  border-radius: 0.25rem;
+  .sort-text {
+    padding-left: 8px;
   }
 }
 </style>

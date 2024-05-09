@@ -1,7 +1,7 @@
 export interface CreateAttributeRequestData {
   id?: number
   model_uid: string
-  name: string
+  field_uid: string
   field_name: string
   field_type: string
   required: boolean
@@ -17,7 +17,7 @@ export interface AttributeGroup {
 export interface Attribute {
   id: number
   model_uid: string
-  name: string
+  field_uid: string
   field_name: string
   field_type: string
   required: boolean
