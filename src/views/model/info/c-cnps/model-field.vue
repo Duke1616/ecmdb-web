@@ -130,7 +130,7 @@
   </el-drawer>
 
   <!-- 表格排序设置 -->
-  <el-drawer v-model="sortDrawer" size="40%" title="表格排序设置">
+  <el-drawer v-model="sortDrawer" class="sort-drawer flex" size="38%" title="表格排序设置">
     <div class="sort-card-container">
       <el-card class="sort-card">
         <VueDraggable
@@ -143,7 +143,7 @@
           @start="onStart"
           @end="onEnd"
           itemKey="id"
-          class="flex flex-col gap-2 p-0 rounded"
+          class="flex flex-col gap-4 p-0 rounded"
         >
           <div v-for="(item, index) in list1" :key="item.id">
             <div class="sort-item">
@@ -169,7 +169,7 @@
           @start="onStart"
           @end="onEnd"
           itemKey="id"
-          class="flex flex-col gap-2 p-0 rounded"
+          class="flex flex-col gap-4 p-0 rounded"
         >
           <div v-for="(item, index) in list2" :key="item.id">
             <div class="sort-item">
@@ -187,16 +187,16 @@
     </div>
 
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
-      <el-form-item>
+      <el-form-item class="text-right">
         <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
         <el-button @click="resetForm()">取消</el-button>
       </el-form-item>
     </el-form>
 
-    <div class="flex justify-between">
+    <!-- <div class="flex justify-between">
       <preview-list :list="list1" />
       <preview-list :list="list2" />
-    </div>
+    </div> -->
   </el-drawer>
 </template>
 
@@ -503,18 +503,25 @@ p {
 .sort-card-container {
   display: flex;
   width: 100%;
-  height: 90%;
-  margin-bottom: 10px;
+  height: 95%;
+  padding-bottom: 20px;
+}
+
+.sort-drawer {
+  .el-drawer__body {
+    padding: 0px;
+    display: flex; /* 使用 Flexbox 布局 */
+    justify-content: flex-end;
+    flex-direction: column; /* 子元素垂直排列 */
+    height: 100%; /* 确保填充整个抽屉高度 */
+  }
 }
 
 .sort-card {
   flex: 1;
-  height: 100%;
-  /* 可以根据需要添加其他样式 */
-
-  max-height: 600px; /* 根据需要调整高度 */
-  overflow-y: auto; /* 添加垂直滚动条 */
-  padding: 20px; /* 根据需要调整内边距 */
+  min-height: 300px;
+  max-height: 700px;
+  overflow-y: auto;
 }
 
 .sort-item {
@@ -526,5 +533,8 @@ p {
   .sort-text {
     padding-left: 8px;
   }
+}
+.text-right {
+  padding-left: 15px;
 }
 </style>
