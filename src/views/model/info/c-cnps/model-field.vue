@@ -218,14 +218,13 @@ const deleteDialogVisible = ref(false)
 const loading = ref<boolean>(false)
 const animationDuration = ref<number>(150)
 
+// 接收父组建传递
 interface Props {
   modelUid: string
 }
-
 const props = defineProps<Props>()
 
 const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
-  id: undefined,
   model_uid: props.modelUid,
   field_uid: "",
   field_name: "",
@@ -236,7 +235,10 @@ const dialogVisible = ref<boolean>(false)
 const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
-  field_uid: [{ required: true, message: "必须输入字段唯一标识", trigger: "blur" }],
+  field_uid: [
+    { required: true, message: "必须输入字段唯一标识", trigger: "blur" },
+    { type: "string", pattern: /^[A-Za-z]+$/, message: "只能输入英文字母", trigger: "blur" }
+  ],
   field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
 }
 

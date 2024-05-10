@@ -1,5 +1,4 @@
 export interface CreateAttributeRequestData {
-  id?: number
   model_uid: string
   field_uid: string
   field_name: string

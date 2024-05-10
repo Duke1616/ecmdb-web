@@ -2,8 +2,8 @@
   <div class="app-container">
     <div class="header">
       <div class="button">
-        <el-button type="primary" :icon="CirclePlus">新增模型</el-button>
-        <el-button type="primary" :icon="CirclePlus">新建分组</el-button>
+        <el-button type="primary" :icon="CirclePlus" @click="handlerDialogModelCreate">新增模型</el-button>
+        <el-button type="primary" :icon="CirclePlus" @click="handlerDialogModelGroupCreate">新建分组</el-button>
       </div>
       <div class="search">
         <div class="search-container">
@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="model-groups">
-      <div v-for="group in ModelsData" :key="group.group_id" class="model-group">
+      <div v-for="group in filterData" :key="group.group_id" class="model-group">
         <h3>{{ group.group_name }}</h3>
         <div class="model-cards">
           <el-row :gutter="20">
@@ -38,7 +38,6 @@
               :xl="4"
               style="margin-bottom: 4px"
             >
-              <!-- <router-link :to="`/model/info`" class="model-card" @click="handleModelClick()"> -->
               <el-card class="model-card" @click="handleModelClick(model)">
                 <div class="model-content">
                   <div class="model-image">
@@ -50,36 +49,138 @@
                   </div>
                 </div>
               </el-card>
-              <!-- </router-link> -->
             </el-col>
           </el-row>
         </div>
       </div>
     </div>
+    <!-- 新增模型 -->
+    <el-dialog v-model="dialogModelVisible" :title="'新增模型'" @closed="resetForm" width="30%">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
+        <el-form-item prop="group_id" label="所属分组">
+          <el-select v-model="formData.group_id" placeholder="请选择">
+            <el-option
+              v-for="item in ModelsData"
+              :key="item.group_id"
+              :label="item.group_name"
+              :value="item.group_id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item prop="uid" label="唯一标识">
+          <el-input v-model="formData.uid" placeholder="请输入唯一标识" />
+        </el-form-item>
+        <el-form-item prop="name" label="名称">
+          <el-input v-model="formData.name" placeholder="请输入名称" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogModelVisible = false">取消</el-button>
+        <el-button type="primary" @click="handlerCreateModel" :loading="loading">确认</el-button>
+      </template>
+    </el-dialog>
+    <!-- 新增分组 -->
+    <el-dialog v-model="dialogModelGroupVisible" :title="'新增分组'" @closed="resetForm" width="30%">
+      <el-form ref="formRef" :model="formModelGroupData" :rules="formRules" label-width="100px" label-position="left">
+        <el-form-item prop="name" label="名称">
+          <el-input v-model="formModelGroupData.name" placeholder="请输入名称" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogModelGroupVisible = false">取消</el-button>
+        <el-button type="primary" @click="handlerCreateModelGroup" :loading="loading">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { CirclePlus, Search } from "@element-plus/icons-vue"
-import { listModelsApi } from "@/api/model"
-import { type Models, type Model } from "@/api/model/types/model"
+import { listModelsApi, CreateModelApi, CreateModelGroupApi } from "@/api/model"
+import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq } from "@/api/model/types/model"
 import { usePagination } from "@/hooks/usePagination"
-
-// import { type listModelsResponseData } from "@/api/model/types/model"
-const searchInput = ref("")
+import { cloneDeep } from "lodash-es"
 import { useRouter } from "vue-router"
+import { M } from "node_modules/vite/dist/node/types.d-aGj9QkWt"
+
+const searchInput = ref("")
 const modelStatus = ref<"all" | "open" | "close">("all")
 const loading = ref<boolean>(false)
 const { paginationData } = usePagination()
 const router = useRouter()
 
-// function handleModelClick(model: any) {
-//   // Handle model click here
-//   console.log("Model clicked:", model)
-// }
+const DEFAULT_FORM_DATA: CreateModelReq = {
+  name: "",
+  group_id: undefined,
+  uid: ""
+}
+
+const DEFAULT_MODEL_GROUP_DATA: CreateModelGroupReq = {
+  name: ""
+}
+
+const dialogModelVisible = ref<boolean>(false)
+const dialogModelGroupVisible = ref<boolean>(false)
+const formData = ref<CreateModelReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formModelGroupData = ref<CreateModelGroupReq>(cloneDeep(DEFAULT_MODEL_GROUP_DATA))
+const formRef = ref<FormInstance | null>(null)
+const formRules: FormRules = {
+  group_id: [{ required: true, message: "必须输入所在组", trigger: "blur" }],
+  uid: [
+    { required: true, message: "必须输入唯一标识", trigger: "blur" },
+    { type: "string", pattern: /^[A-Za-z]+$/, message: "只能输入英文字母", trigger: "blur" }
+  ],
+  name: [{ required: true, message: "必须输入名称", trigger: "blur" }]
+}
+
+const handlerDialogModelCreate = () => {
+  dialogModelVisible.value = true
+}
+const handlerDialogModelGroupCreate = () => {
+  dialogModelGroupVisible.value = true
+}
+
+const resetForm = () => {
+  formRef.value?.clearValidate()
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+// ** 创建模型分组 */
+const handlerCreateModelGroup = () => {
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (!valid) return console.error("表单校验不通过", fields)
+    CreateModelGroupApi(formModelGroupData.value)
+      .then(() => {
+        ElMessage.success("操作成功")
+        dialogModelGroupVisible.value = false
+        getModelsData()
+      })
+      .finally(() => {
+        dialogModelGroupVisible.value = false
+      })
+  })
+}
+
+// ** 创建模型 */
+const handlerCreateModel = () => {
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (!valid) return console.error("表单校验不通过", fields)
+    CreateModelApi(formData.value)
+      .then(() => {
+        ElMessage.success("操作成功")
+        dialogModelVisible.value = false
+        getModelsData()
+      })
+      .finally(() => {
+        dialogModelVisible.value = false
+      })
+  })
+}
 
 const ModelsData = ref<Models[]>([])
+const filterData = ref<Models[]>([])
 // ** 获取数据 */
 const getModelsData = () => {
   loading.value = true
@@ -87,6 +188,7 @@ const getModelsData = () => {
     .then(({ data }) => {
       console.log(data)
       ModelsData.value = data.data.mgs
+      filterData.value = data.data.mgs
     })
     .catch(() => {
       ModelsData.value = []
@@ -104,13 +206,33 @@ const handleModelClick = (model: Model) => {
   })
 }
 
+const search = () => {
+  filterData.value = ModelsData.value
+  // 如果搜索关键词为空，不执行过滤
+  if (!searchInput.value.trim()) {
+    return
+  }
+
+  const foundModels: Models[] = []
+  ModelsData.value.forEach((group) => {
+    const matchingModels = group.models.filter((model) =>
+      model.uid.toLowerCase().includes(searchInput.value.trim().toLowerCase())
+    )
+    if (matchingModels.length > 0) {
+      // 构造一个虚拟的包含匹配模型的组数据
+      foundModels.push({
+        group_id: group.group_id,
+        group_name: group.group_name,
+        models: matchingModels
+      })
+    }
+  })
+
+  filterData.value = foundModels
+}
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], getModelsData, { immediate: true })
-
-function search() {
-  // 调用搜索接口
-  console.log("搜索:", searchInput.value, modelStatus.value)
-}
 </script>
 
 <style lang="scss" scoped>

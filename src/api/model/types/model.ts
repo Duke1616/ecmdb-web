@@ -13,6 +13,16 @@ export interface Model {
   icon: string
 }
 
+export interface CreateModelReq {
+  name: string
+  group_id?: number
+  uid: string
+}
+
+export interface CreateModelGroupReq {
+  name: string
+}
+
 export type listModelsResponseData = ApiResponseData<{
   mgs: Models[]
 }>
