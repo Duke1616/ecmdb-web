@@ -14,7 +14,6 @@
       <el-button text size="default" type="default" icon="Setting" @click="handleSortDrawer">表格排序设置</el-button>
     </div>
   </div>
-
   <div>
     <div v-for="group in AttributesData" :key="group.group_id" class="model-group">
       <div class="model-group-header">
@@ -37,7 +36,7 @@
               :sm="12"
               :md="8"
               :lg="4"
-              :xl="4"
+              :xl="3"
               style="margin-bottom: 4px"
               @mouseenter="showDetails(item)"
               @mouseleave="hideDetails()"
@@ -84,7 +83,6 @@
       </div>
     </template>
   </el-dialog>
-
   <!-- Card 抽屉 -->
   <el-drawer v-model="cardDrawer" title="字段详情">
     <el-descriptions :column="2">
@@ -134,7 +132,7 @@
     <div class="sort-card-container">
       <el-card class="sort-card">
         <VueDraggable
-          v-model="list1"
+          v-model="leftList"
           dragClass="drag"
           :animation="animationDuration"
           group="cmdb"
@@ -145,13 +143,13 @@
           itemKey="id"
           class="flex flex-col gap-4 p-0 rounded"
         >
-          <div v-for="(item, index) in list1" :key="item.id">
+          <div v-for="(item, index) in leftList" :key="item.id">
             <div class="sort-item">
               <div>
                 <el-text truncated>{{ item.name }}</el-text>
               </div>
               <div>
-                <el-icon @click="removeAndToList2(index, item)"><Right /></el-icon>
+                <el-icon @click="removeAndToRightList(index, item)"><Right /></el-icon>
               </div>
             </div>
           </div>
@@ -159,7 +157,7 @@
       </el-card>
       <el-card class="sort-card">
         <VueDraggable
-          v-model="list2"
+          v-model="rightList"
           dragClass="drag"
           :animation="animationDuration"
           group="cmdb"
@@ -171,14 +169,14 @@
           itemKey="id"
           class="flex flex-col gap-4 p-0 rounded"
         >
-          <div v-for="(item, index) in list2" :key="item.id">
+          <div v-for="(item, index) in rightList" :key="item.id">
             <div class="sort-item">
               <div>
                 <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
                 <el-text truncated class="sort-text">{{ item.name }}</el-text>
               </div>
               <div>
-                <el-icon @click="removeAndToList1(index, item)"><Close /></el-icon>
+                <el-icon @click="removeAndToLeftList(index, item)"><Close /></el-icon>
               </div>
             </div>
           </div>
@@ -188,23 +186,24 @@
 
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
       <el-form-item class="text-right">
-        <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
+        <el-button type="primary" @click="handlerCustomAttributeFieldColumns()"> 保存 </el-button>
         <el-button @click="resetForm()">取消</el-button>
       </el-form-item>
     </el-form>
-
-    <!-- <div class="flex justify-between">
-      <preview-list :list="list1" />
-      <preview-list :list="list2" />
-    </div> -->
   </el-drawer>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
-import { listAttributesByModelUidApi, CreateAttributeApi } from "@/api/attribute"
-import { type AttributeGroup, type Attribute, type CreateAttributeRequestData } from "@/api/attribute/types/attribute"
+import { listAttributesByModelUidApi, CreateAttributeApi, CustomAttributeFieldColumnsApi } from "@/api/attribute"
+import {
+  type AttributeGroup,
+  type Attribute,
+  type CreateAttributeRequestData,
+  type CustomField,
+  type CustomAttributeFieldColumnsReq
+} from "@/api/attribute/types/attribute"
 import { usePagination } from "@/hooks/usePagination"
 import { type FormInstance, type FormRules, ElMessage } from "element-plus"
 import { cloneDeep } from "lodash-es"
@@ -219,115 +218,6 @@ const deleteDialogVisible = ref(false)
 const loading = ref<boolean>(false)
 const animationDuration = ref<number>(150)
 
-const list1 = ref([
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jean",
-    id: 2
-  },
-  {
-    name: "Johanna",
-    id: 3
-  },
-  {
-    name: "Juan",
-    id: 4
-  },
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jean",
-    id: 2
-  },
-  {
-    name: "Johanna",
-    id: 3
-  },
-  {
-    name: "Juan",
-    id: 4
-  },
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jean",
-    id: 2
-  },
-  {
-    name: "Johanna",
-    id: 3
-  },
-  {
-    name: "Juan",
-    id: 4
-  },
-  {
-    name: "Juan",
-    id: 4
-  },
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jean",
-    id: 2
-  },
-  {
-    name: "Johanna",
-    id: 3
-  },
-  {
-    name: "Juan",
-    id: 4
-  },
-  {
-    name: "Juan",
-    id: 4
-  },
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jean",
-    id: 2
-  },
-  {
-    name: "Johanna",
-    id: 3
-  },
-  {
-    name: "Juan",
-    id: 4
-  }
-])
-
-const list2 = ref([
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jeadddn",
-    id: 21
-  },
-  {
-    name: "Johansssana",
-    id: 31
-  },
-  {
-    name: "Juasdasdan",
-    id: 41
-  }
-])
 interface Props {
   modelUid: string
 }
@@ -364,10 +254,6 @@ const detailInfo = (item: Attribute) => {
   cardDrawer.value = true
 }
 
-const handleSortDrawer = () => {
-  sortDrawer.value = true
-}
-
 const hideDetails = () => {
   showDetail.value = false
 }
@@ -391,12 +277,12 @@ const handlerAddAttribute = () => {
 
 //** 获取字段信息 */
 const AttributesData = ref<AttributeGroup[]>([])
+
 // ** 获取数据 */
 function getAttributesData() {
   loading.value = true
   listAttributesByModelUidApi(props.modelUid)
     .then(({ data }) => {
-      console.log(data)
       AttributesData.value = data.data.ags
     })
     .catch(() => {
@@ -430,21 +316,68 @@ function toggleGroup(group: any) {
   group.expanded = !group.expanded
 }
 
-function removeAndToList1(index: number, item: any) {
-  list1.value.push(item)
-  list2.value.splice(index, 1)
+//** 获取自定义列表信息 */
+const leftList = ref<CustomField[]>([])
+const rightList = ref<CustomField[]>([])
+
+const handleSortDrawer = () => {
+  sortDrawer.value = true
+  const attributesData = AttributesData.value
+  // resetLeftAndRightList()
+  if (rightList.value.length != 0 || leftList.value.length != 0) {
+    return
+  }
+
+  // 预先检查是否所有的属性都是显示的，如果是，则只需要处理一次
+  if (attributesData.every((item) => item.attributes.every((attr) => attr.display === true))) {
+    attributesData[0].attributes.forEach((attr) => {
+      rightList.value.push({ name: attr.field_name, index: attr.index || 0, id: attr.id })
+    })
+  } else {
+    attributesData.forEach((item) => {
+      item.attributes.forEach((attr) => {
+        const list = attr.display ? rightList : leftList
+        list.value.push({ name: attr.field_name, id: attr.id, index: attr.index || 0 })
+      })
+    })
+  }
+
+  rightList.value.sort((a, b) => a.index - b.index)
 }
 
-function removeAndToList2(index: number, item: any) {
-  list1.value.splice(index, 1)
-  list2.value.push(item)
+const handlerCustomAttributeFieldColumns = () => {
+  loading.value = true
+  const req: CustomAttributeFieldColumnsReq = {
+    model_uid: props.modelUid,
+    custom_field_name: rightList.value.map((item) => item.name)
+  }
+
+  CustomAttributeFieldColumnsApi(req)
+    .then(({ data }) => {
+      console.log("data", data)
+      sortDrawer.value = false
+    })
+    .catch(() => {})
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+function removeAndToLeftList(index: number, item: any) {
+  leftList.value.push(item)
+  rightList.value.splice(index, 1)
+}
+
+function removeAndToRightList(index: number, item: any) {
+  leftList.value.splice(index, 1)
+  rightList.value.push(item)
 }
 
 const drag = ref(false)
 const onStart = () => {
   drag.value = true
 }
-//拖拽结束事件
+
 const onEnd = () => {
   drag.value = false
 }
@@ -519,8 +452,6 @@ p {
 
 .sort-card {
   flex: 1;
-  min-height: 300px;
-  max-height: 700px;
   overflow-y: auto;
 }
 

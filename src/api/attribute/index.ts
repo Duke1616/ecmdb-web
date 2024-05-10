@@ -16,3 +16,10 @@ export function CreateAttributeApi(data: attribute.CreateAttributeRequestData) {
     data: data
   })
 }
+
+export function CustomAttributeFieldColumnsApi(data: attribute.CustomAttributeFieldColumnsReq) {
+  return instance.post<number>({
+    url: "attribute/custom/field",
+    data: data
+  })
+}
