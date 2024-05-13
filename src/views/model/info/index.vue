@@ -24,7 +24,7 @@
           <model-field :model-uid="$route.query.uid as string" />
         </el-tab-pane>
         <el-tab-pane label="模型关联" name="model-relation">
-          <model-relation />
+          <model-relation :model-uid="$route.query.uid as string" />
         </el-tab-pane>
       </el-tabs>
     </div>

@@ -63,6 +63,7 @@
                       type="primary"
                       icon="delete"
                       @click.stop="deleteDialogVisible = true"
+                      @click="handleDelete(item)"
                       el-button
                     />
                   </div>
@@ -74,16 +75,8 @@
       </div>
     </div>
   </div>
-  <!-- 删除 Visible -->
-  <el-dialog v-model="deleteDialogVisible" align-center title="确定删除字段" width="500">
-    <template #footer>
-      <div class="dialog-footer">
-        <el-button @click="deleteDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="deleteDialogVisible = false">确定</el-button>
-      </div>
-    </template>
-  </el-dialog>
-  <!-- Card 抽屉 -->
+
+  <!-- detail 抽屉 -->
   <el-drawer v-model="cardDrawer" title="字段详情">
     <el-descriptions :column="2">
       <el-descriptions-item label="唯一标识：">
@@ -196,7 +189,12 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
-import { listAttributesByModelUidApi, CreateAttributeApi, CustomAttributeFieldColumnsApi } from "@/api/attribute"
+import {
+  listAttributesByModelUidApi,
+  CreateAttributeApi,
+  CustomAttributeFieldColumnsApi,
+  DeleteAttributeApi
+} from "@/api/attribute"
 import {
   type AttributeGroup,
   type Attribute,
@@ -205,7 +203,7 @@ import {
   type CustomAttributeFieldColumnsReq
 } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/hooks/usePagination"
-import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 
@@ -285,7 +283,7 @@ function getAttributesData() {
   loading.value = true
   listAttributesByModelUidApi(props.modelUid)
     .then(({ data }) => {
-      AttributesData.value = data.data.ags
+      AttributesData.value = data.ags
     })
     .catch(() => {
       AttributesData.value = []
@@ -382,6 +380,19 @@ const onStart = () => {
 
 const onEnd = () => {
   drag.value = false
+}
+
+const handleDelete = (row: Attribute) => {
+  ElMessageBox.confirm(`正在删除字段：${row.field_name}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    DeleteAttributeApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      getAttributesData()
+    })
+  })
 }
 </script>
 

@@ -41,7 +41,7 @@
               <el-card class="model-card" @click="handleModelClick(model)">
                 <div class="model-content">
                   <div class="model-image">
-                    <img :src="model.icon" style="width: 100%" />
+                    <img :src="model.icon" class="model-icon" />
                   </div>
                   <div class="model-info">
                     <div class="model-name">{{ model.name }}</div>
@@ -95,15 +95,15 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue"
+import { ref, watch } from "vue"
 import { CirclePlus, Search } from "@element-plus/icons-vue"
-import { listModelsApi, CreateModelApi, CreateModelGroupApi } from "@/api/model"
+import { CreateModelApi, CreateModelGroupApi } from "@/api/model"
 import { type FormInstance, type FormRules, ElMessage } from "element-plus"
 import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq } from "@/api/model/types/model"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import { useRouter } from "vue-router"
-import { M } from "node_modules/vite/dist/node/types.d-aGj9QkWt"
+import { useModelStore } from "@/store/modules/model"
 
 const searchInput = ref("")
 const modelStatus = ref<"all" | "open" | "close">("all")
@@ -184,11 +184,11 @@ const filterData = ref<Models[]>([])
 // ** 获取数据 */
 const getModelsData = () => {
   loading.value = true
-  listModelsApi()
+  useModelStore()
+    .ListModelsInGroup()
     .then(({ data }) => {
-      console.log(data)
-      ModelsData.value = data.data.mgs
-      filterData.value = data.data.mgs
+      ModelsData.value = data.mgs
+      filterData.value = data.mgs
     })
     .catch(() => {
       ModelsData.value = []
@@ -259,8 +259,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMode
   display: flex;
   align-items: center;
   .model-image {
-    width: 15%;
+    width: 37px;
+    height: 37px;
     margin-right: 20px;
+  }
+  .model-icon {
+    width: 100%;
+    height: 100%;
   }
   .model-name {
     font-weight: bold;

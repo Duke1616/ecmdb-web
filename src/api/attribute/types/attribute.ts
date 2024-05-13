@@ -35,6 +35,6 @@ export interface Attribute {
   index?: number
 }
 
-export type listAttributesResponseData = ApiResponseData<{
+export type listAttributesResponseData = {
   ags: AttributeGroup[]
-}>
+}

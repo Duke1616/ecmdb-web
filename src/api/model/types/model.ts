@@ -23,8 +23,9 @@ export interface CreateModelGroupReq {
   name: string
 }
 
-export type listModelsResponseData = ApiResponseData<{
+export type listModelsResponseData = {
+  total: number
   mgs: Models[]
-}>
+}
 
 export type UserInfoResponseData = { username: string; roles: string[] }

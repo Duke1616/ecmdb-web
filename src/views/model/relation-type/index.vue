@@ -1,196 +1,160 @@
 <template>
-  <div class="manual-manuscript">
-    <div class="itxst">
-      <el-row>
-        <div class="col">
-          <div class="title">
-            <el-checkbox class="check-box"> 稿件列表</el-checkbox>
-          </div>
-          <VueDraggable
-            v-model="list1"
-            dragClass="drag"
-            :animation="animationDuration"
-            group="people"
-            ghostClass="ghost"
-            chosenClass="chosen"
-            @start="onStart"
-            @end="onEnd"
-            itemKey="id"
-            class="flex flex-col gap-2 p-4 w-300px bg-gray-500/5 rounded"
-          >
-            <div
-              v-for="item in list1"
-              :key="item.id"
-              class="h-30px bg-gray-500/5 rounded flex items-center justify-between px-4"
-            >
-              {{ item.name }}
-            </div>
-          </VueDraggable>
+  <div class="app-container">
+    <el-card shadow="never">
+      <div class="toolbar-wrapper">
+        <div>
+          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增</el-button>
         </div>
-        <div class="col">
-          <div class="title">
-            <h2 class="check-box">已选属性</h2>
-          </div>
-          <VueDraggable
-            v-model="list2"
-            dragClass="drag"
-            :animation="animationDuration"
-            group="people"
-            ghostClass="ghost"
-            chosenClass="chosen"
-            handle=".handle"
-            @start="onStart"
-            @end="onEnd"
-            itemKey="id"
-            class="flex flex-col gap-2 p-4 w-300px bg-gray-500/5 rounded"
-          >
-            <div
-              v-for="(item, index) in list2"
-              :key="item.id"
-              class="h-30px bg-gray-500/5 rounded flex items-center justify-between px-4"
-            >
-              <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
-              {{ item.name }}
-              <el-icon class="cursor-pointer" @click="remove(index)"><Close /></el-icon>
-            </div>
-          </VueDraggable>
+        <div>
+          <el-tooltip content="刷新当前页">
+            <el-button type="primary" :icon="RefreshRight" circle @click="getTableData" />
+          </el-tooltip>
         </div>
-        <div class="flex justify-between">
-          <preview-list :list="list1" />
-          <preview-list :list="list2" />
-        </div>
-      </el-row>
-    </div>
+      </div>
+      <div class="table-wrapper">
+        <el-table :data="tableData">
+          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="uid" label="唯一标识" align="center" />
+          <el-table-column prop="source_describe" label="源->目标描述" align="center" />
+          <el-table-column prop="target_describe" label="目标->源描述" align="center" />
+          <el-table-column fixed="right" label="操作" width="150" align="center">
+            <template #default="scope">
+              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div class="pager-wrapper">
+        <el-pagination
+          background
+          :layout="paginationData.layout"
+          :page-sizes="paginationData.pageSizes"
+          :total="paginationData.total"
+          :page-size="paginationData.pageSize"
+          :currentPage="paginationData.currentPage"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
+    <!-- 新增 -->
+    <el-dialog v-model="dialogVisible" title="新增关联类型" @closed="resetForm" width="30%">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
+        <el-form-item prop="uid" label="唯一标识">
+          <el-input v-model="formData.uid" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="name" label="名称">
+          <el-input v-model="formData.name" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="source_describe" label="源->目标描述">
+          <el-input v-model="formData.source_describe" placeholder="请输入" />
+        </el-form-item>
+        <el-form-item prop="target_describe" label="目标->源描述">
+          <el-input v-model="formData.target_describe" placeholder="请输入" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateOrUpdate">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ElIcon } from "element-plus"
-import { ref } from "vue"
-import { VueDraggable } from "vue-draggable-plus"
-const animationDuration = ref<number>(150)
+import { ref, watch } from "vue"
+import { CreateRelationTypeApi, ListRelationTypeApi } from "@/api/relation"
+import { type CreateRealtionTypeReq, type ListRelationTypeData } from "@/api/relation/types/relation"
+import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { usePagination } from "@/hooks/usePagination"
+import { cloneDeep } from "lodash-es"
 
-const list1 = ref([
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jean",
-    id: 2
-  },
-  {
-    name: "Johanna",
-    id: 3
-  },
-  {
-    name: "Juan",
-    id: 4
-  }
-])
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
-const list2 = ref([
-  {
-    name: "Joao",
-    id: 1
-  },
-  {
-    name: "Jeadddn",
-    id: 21
-  },
-  {
-    name: "Johansssana",
-    id: 31
-  },
-  {
-    name: "Juasdasdan",
-    id: 41
-  }
-])
-// const list1 = ref([
-//   {
-//     name: "Joao",
-//     id: "1"
-//   },
-//   {
-//     name: "Jean",
-//     id: "2"
-//   },
-//   {
-//     name: "Johanna",
-//     id: "3"
-//   },
-//   {
-//     name: "Juan",
-//     id: "4"
-//   }
-// ])
-
-// const list2 = ref(
-//   list1.value.map((item) => ({
-//     name: `${item.name}-2`,
-//     id: `${item.id}-2`
-//   }))
-// )
-
-function remove(index: number) {
-  list2.value.splice(index, 1)
+//#region 增
+const DEFAULT_FORM_DATA: CreateRealtionTypeReq = {
+  uid: "",
+  name: "",
+  source_describe: "",
+  target_describe: ""
 }
-const drag = ref(false)
-const onStart = () => {
-  drag.value = true
+const dialogVisible = ref<boolean>(false)
+const formRef = ref<FormInstance | null>(null)
+const formData = ref<CreateRealtionTypeReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formRules: FormRules<CreateRealtionTypeReq> = {
+  uid: [
+    { required: true, trigger: "blur", message: "请输入唯一标识" },
+    { type: "string", pattern: /^[A-Za-z]+$/, message: "只能输入英文字母", trigger: "blur" }
+  ],
+  name: [{ required: true, trigger: "blur", message: "请输入名称" }],
+  source_describe: [{ required: true, trigger: "blur", message: "请输入源描述" }],
+  target_describe: [{ required: true, trigger: "blur", message: "请输入目标描述" }]
 }
-//拖拽结束事件
-const onEnd = () => {
-  drag.value = false
+/** 新增关联类型 */
+const handleCreateOrUpdate = () => {
+  formRef.value?.validate((valid: boolean, fields) => {
+    if (!valid) return console.error("表单校验不通过", fields)
+    CreateRelationTypeApi(formData.value)
+      .then(() => {
+        ElMessage.success("操作成功")
+        dialogVisible.value = false
+        getTableData()
+      })
+      .finally(() => {})
+  })
 }
+const resetForm = () => {
+  formRef.value?.clearValidate()
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+/** 查询关联类型 */
+const tableData = ref<ListRelationTypeData[]>([])
+const getTableData = () => {
+  console.log(`请求第${paginationData.currentPage}页，每页${paginationData.pageSize}条`)
+  ListRelationTypeApi({
+    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+    limit: paginationData.pageSize
+  })
+    .then(({ data }) => {
+      paginationData.total = data.total
+      tableData.value = data.relation_types
+    })
+    .catch(() => {
+      tableData.value = []
+    })
+    .finally(() => {})
+}
+
+const handleUpdate = (row: ListRelationTypeData) => {
+  dialogVisible.value = false
+  formData.value = cloneDeep(row)
+}
+
+const handleDelete = (row: ListRelationTypeData) => {
+  dialogVisible.value = false
+  formData.value = cloneDeep(row)
+}
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getTableData, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
-.manual-manuscript {
-  width: 60%;
-  height: 600px;
-}
-.main-title {
-  font-size: 20px;
-  font-weight: 700;
-  margin-left: 33px;
-  margin-top: 20px;
-  float: left;
-  margin-bottom: 10px;
-}
-.chosen {
-  background-color: #409eff !important;
-  color: rgb(255, 255, 255);
-}
-.ghost {
-  background-color: #409eff !important;
+.toolbar-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-.itxst {
-  margin: 10px;
-}
-.title {
-  height: 50px;
-  background: rgb(245, 243, 243);
+.table-wrapper {
+  margin-bottom: 20px;
 }
 
-.check-box {
-  float: left;
-  margin-left: 15px;
-  margin-top: 5px;
-  font-size: 12px;
-  font-weight: bold;
-}
-.col {
-  width: 40%;
-  flex: 1;
-  padding: 10px;
-  border: solid 1px rgb(241, 210, 210);
-  border-radius: 5px;
-  float: left;
-}
-.col + .col {
-  margin-left: 20px;
+.pager-wrapper {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

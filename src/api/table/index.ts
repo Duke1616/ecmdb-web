@@ -7,6 +7,8 @@ export function createTableDataApi(data: Table.CreateOrUpdateTableRequestData) {
     url: "table",
     method: "post",
     data
+  }).then((response) => {
+    return response // 返回原始的响应对象
   })
 }
 

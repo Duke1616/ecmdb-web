@@ -23,3 +23,10 @@ export function CustomAttributeFieldColumnsApi(data: attribute.CustomAttributeFi
     data: data
   })
 }
+
+export function DeleteAttributeApi(id: number) {
+  return instance.post<number>({
+    url: "attribute/delete",
+    data: { id: id }
+  })
+}
