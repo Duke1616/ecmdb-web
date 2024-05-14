@@ -30,3 +30,10 @@ export function DeleteAttributeApi(id: number) {
     data: { id: id }
   })
 }
+
+export function ListAttributeFieldApi(modelUid: string) {
+  return instance.post<attribute.listAttributeFieldData>({
+    url: "attribute/list/field",
+    data: { model_uid: modelUid }
+  })
+}

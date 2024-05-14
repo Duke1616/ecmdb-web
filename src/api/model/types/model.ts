@@ -28,4 +28,21 @@ export type listModelsResponseData = {
   mgs: Models[]
 }
 
+export type node = {
+  id: string
+  text: string
+}
+
+export type line = {
+  from: string
+  to: string
+  text: string
+}
+
+export type modelGraph = {
+  id: string
+  nodes: node[]
+  lines: line[]
+}
+
 export type UserInfoResponseData = { username: string; roles: string[] }

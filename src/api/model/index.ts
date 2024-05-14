@@ -1,5 +1,5 @@
 import type * as Model from "./types/model"
-
+import { RGJsonData } from "relation-graph-vue3"
 import instance from "@/utils/hy_service"
 
 /** 新增模型 */
@@ -22,5 +22,12 @@ export function CreateModelGroupApi(data: Model.CreateModelGroupReq) {
 export function listModelsApi() {
   return instance.post<Model.listModelsResponseData>({
     url: "model/list/pipeline"
+  })
+}
+
+/** 获取模型拓扑图 */
+export function listModelGraphApi() {
+  return instance.post<RGJsonData>({
+    url: "model/relation/graph"
   })
 }

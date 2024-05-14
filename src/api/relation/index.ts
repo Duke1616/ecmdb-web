@@ -38,3 +38,10 @@ export function ListModelRelationApi(data: Relation.ListModelRealtionReq) {
     data: data
   })
 }
+
+export function DeleteModelRelationApi(id: number) {
+  return instance.post<number>({
+    url: "model/relation/delete",
+    data: { id: id }
+  })
+}

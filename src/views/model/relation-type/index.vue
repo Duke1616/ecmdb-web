@@ -114,7 +114,6 @@ const resetForm = () => {
 /** 查询关联类型 */
 const tableData = ref<ListRelationTypeData[]>([])
 const getTableData = () => {
-  console.log(`请求第${paginationData.currentPage}页，每页${paginationData.pageSize}条`)
   ListRelationTypeApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize

@@ -35,6 +35,11 @@ export interface Attribute {
   index?: number
 }
 
+export type listAttributeFieldData = {
+  total: number
+  attribute_fields: Attribute[]
+}
+
 export type listAttributesResponseData = {
   ags: AttributeGroup[]
 }

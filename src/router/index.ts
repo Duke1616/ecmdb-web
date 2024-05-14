@@ -125,6 +125,35 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/resource",
+    component: Layouts,
+    redirect: "/resource/index",
+    meta: {
+      title: "资产管理",
+      svgIcon: "link"
+    },
+    children: [
+      {
+        path: "index",
+        component: () => import("@/views/resource/warehouse/index.vue"),
+        name: "resource-warehouse",
+        meta: {
+          title: "资产仓库",
+          svgIcon: "unocss"
+        }
+      },
+      {
+        path: "info",
+        component: () => import("@/views/resource/warehouse/list/list.vue"),
+        name: "resource-warehouse-info",
+        meta: {
+          hidden: true,
+          title: "资产详情"
+        }
+      }
+    ]
+  },
+  {
     path: "/link",
     meta: {
       title: "外链",

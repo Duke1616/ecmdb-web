@@ -2,8 +2,11 @@
   <div>
     <div ref="myPage" style="margin-top: 0px; width: calc(100% - 10px); height: calc(100vh)">
       <RelationGraph ref="graphRef" :options="graphOptions" :on-node-click="onNodeClick">
-        <template #node="{ node }">
-          <div class="my-node-style" :style="{ 'background-image': 'url(' + node.data.icon + ')' }" />
+        <template #node="{ node }: { node: RGNode }">
+          <div
+            class="my-node-style"
+            :style="{ 'background-image': 'url(' + (node.data ? node.data.icon : '') + ')' }"
+          />
           <div class="c-node-name" :style="{ color: node.color }">{{ node.text }}</div>
         </template>
       </RelationGraph>
@@ -13,22 +16,23 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from "vue"
-import RelationGraph, { RGJsonData, RGOptions, RelationGraphComponent } from "relation-graph-vue3"
-import demoData from "./Demo4AdvDataFilterData copy.json"
+import RelationGraph, { RGJsonData, RGNode, RGOptions, RelationGraphComponent } from "relation-graph-vue3"
+import { listModelGraphApi } from "@/api/model"
 
 const graphOptions: RGOptions = {
   debug: false,
+  allowSwitchLineShape: true,
+  allowSwitchJunctionPoint: true,
+  allowShowDownloadButton: true,
+  defaultJunctionPoint: "border",
+  defaultLineWidth: 2,
+  defaultLineColor: "#333333",
   allowShowMiniToolBar: true, // 是否显示工具栏
-  allowShowMiniNameFilter: false, // 是否显示搜索框
   defaultNodeShape: 0, // 默认的节点形状，0:圆形；1:矩形
   // defaultNodeColor: "rgba(66,187,66,1)",
-  defaultJunctionPoint: "border",
-  moveToCenterWhenResize: true, // 当图谱的大小发生变化时，是否重新让图谱的内容看起来居中
   hideNodeContentByZoom: true, // 是否根据缩放比例隐藏节点内容
   defaultNodeBorderWidth: 0,
   defaultNodeColor: "rgba(238, 178, 94, 1)",
-  allowSwitchLineShape: true,
-  allowSwitchJunctionPoint: true,
   defaultLineShape: 1,
   layouts: [
     {
@@ -41,19 +45,15 @@ const graphOptions: RGOptions = {
 
 const graphRef = ref<RelationGraphComponent>()
 
-onMounted(() => {
-  setGraphData()
-})
-
 // 点击节点触发的函数
-const onNodeClick = (nodeObject) => {
+const onNodeClick = (nodeObject: RGNode) => {
   // 获取所有连线
   const graphInstance = graphRef.value!.getInstance()
   const allLinks = graphInstance.getLinks()
 
   allLinks.forEach((link) => {
     // 还原所有样式
-    link.relations.forEach((line) => {
+    link.relations.forEach((line: any) => {
       line.color = line.data.orignColor || ""
       line.fontColor = line.data.orignFontColor || line.color || ""
       line.lineWidth = line.data.orignLineWidth || 1
@@ -64,7 +64,7 @@ const onNodeClick = (nodeObject) => {
   allLinks
     .filter((link) => link.fromNode === nodeObject || link.toNode === nodeObject)
     .forEach((link) => {
-      link.relations.forEach((line) => {
+      link.relations.forEach((line: any) => {
         line.data.orignColor = line.color
         line.data.orignFontColor = line.fontColor || line.color
         line.data.orignLineWidth = line.lineWidth || 1
@@ -78,11 +78,43 @@ const onNodeClick = (nodeObject) => {
   graphInstance.dataUpdated()
 }
 
-const setGraphData = async () => {
-  const __graph_json_data: RGJsonData = demoData
-  const graphInstance = graphRef.value!.getInstance()
-  await graphInstance.setJsonData(__graph_json_data)
+const modelGraphData = ref<RGJsonData>()
+const listModelGraphData = () => {
+  listModelGraphApi()
+    .then(({ data }) => {
+      modelGraphData.value = data
+      setGraphData()
+    })
+    .catch(() => {
+      modelGraphData.value = undefined
+    })
+    .finally(() => {})
 }
+
+const setGraphData = async () => {
+  try {
+    if (modelGraphData.value !== undefined) {
+      const __graph_json_data: RGJsonData = modelGraphData.value
+      const rootId = __graph_json_data.nodes[0].id
+      __graph_json_data.rootId = rootId
+      __graph_json_data.nodes.forEach((n) => {
+        if (n.id !== rootId) {
+          __graph_json_data.lines.push({ from: rootId, to: n.id, opacity: 0 })
+        }
+      })
+      graphRef.value!.setJsonData(__graph_json_data, async (graphInstance) => {
+        await graphInstance.moveToCenter()
+        await graphInstance.zoomToFit()
+      })
+    }
+  } catch (error) {
+    console.error("获取数据时发生错误:", error)
+  }
+}
+
+onMounted(() => {
+  listModelGraphData()
+})
 </script>
 
 <style lang="scss" scoped>

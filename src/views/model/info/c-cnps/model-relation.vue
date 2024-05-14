@@ -15,7 +15,7 @@
         <el-table :data="modelRelationData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="relation_name" label="唯一标识" align="center" />
-          <el-table-column prop="source_model_uid" label="状态" align="center">
+          <el-table-column prop="source_model_uid" label="源模型" align="center">
             <template #default="scope">
               {{ modelMap.get(scope.row.source_model_uid) }}
             </template>
@@ -95,14 +95,19 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { useModelStore } from "@/store/modules/model"
-import { ListRelationTypeApi, CreateModelRelationApi, ListModelRelationApi } from "@/api/relation"
+import {
+  ListRelationTypeApi,
+  CreateModelRelationApi,
+  ListModelRelationApi,
+  DeleteModelRelationApi
+} from "@/api/relation"
 import {
   type ListRelationTypeData,
   type CreateModelRelationReq,
   type ModelRelation
 } from "@/api/relation/types/relation"
 import { cloneDeep } from "lodash-es"
-import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { usePagination } from "@/hooks/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 
@@ -220,10 +225,17 @@ const handleUpdate = (row: ModelRelation) => {
 }
 
 const handleDelete = (row: ModelRelation) => {
-  drawerVisible.value = false
-  formData.value = cloneDeep(row)
+  ElMessageBox.confirm(`正在删除字段：${row.relation_name}，确认删除？`, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    DeleteModelRelationApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listModelRelationData()
+    })
+  })
 }
-
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listModelRelationData, { immediate: true })
 </script>
