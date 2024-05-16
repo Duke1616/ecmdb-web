@@ -143,8 +143,17 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: "info",
+        path: "list",
         component: () => import("@/views/resource/warehouse/list/list.vue"),
+        name: "resource-warehouse-list",
+        meta: {
+          hidden: true,
+          title: "资产列表"
+        }
+      },
+      {
+        path: "info",
+        component: () => import("@/views/resource/warehouse/info/info.vue"),
         name: "resource-warehouse-info",
         meta: {
           hidden: true,

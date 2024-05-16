@@ -16,3 +16,19 @@ export function createResourceApi(data: resource.CreateResourceReq) {
     data: data
   })
 }
+
+/** 资源详情 */
+export function detailResourceApi(data: resource.detailResource) {
+  return instance.post<resource.Resource>({
+    url: "resource/detail",
+    data: data
+  })
+}
+
+/** 删除资源 */
+export function deleteResourceApi(id: number) {
+  return instance.post<number>({
+    url: "resource/delete",
+    data: { id: id }
+  })
+}

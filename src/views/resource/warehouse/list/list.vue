@@ -14,6 +14,11 @@
       <div class="table-wrapper">
         <el-table :data="resourcesData">
           <el-table-column type="selection" width="50" align="center" />
+          <el-table-column fixed="left" prop="id" label="ID" align="center">
+            <template #default="scope">
+              <el-button type="text" size="small" @click="handleIdClick(scope.row)">{{ scope.row.id }}</el-button>
+            </template>
+          </el-table-column>
           <el-table-column prop="name" label="名称" align="center" />
           <el-table-column
             v-for="item in displayFileds"
@@ -44,28 +49,26 @@
       </div>
     </el-card>
     <!-- 新增 -->
-    <el-drawer v-model="drawerVisible" title="新增资产" @closed="resetForm" size="30%">
-      <el-form
-        :inline="true"
-        ref="formRef"
-        :model="formData"
-        :rules="formRules"
-        label-width="100px"
-        label-position="top"
-      >
-        <el-form-item prop="name" label="名称">
-          <el-input v-model="formData.name" placeholder="请输入" />
-        </el-form-item>
-        <el-form-item prop="name" label="名称">
-          <el-input v-model="formData.name" placeholder="请输入" />
-        </el-form-item>
-        <el-form-item prop="name" label="名称">
-          <el-input v-model="formData.name" placeholder="请输入" />
-        </el-form-item>
-        <el-form-item prop="name" label="名称">
-          <el-input v-model="formData.name" placeholder="请输入" />
-        </el-form-item>
+    <el-drawer class="drawer-container" v-model="drawerVisible" title="新增资产" @closed="resetForm" size="30%">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
+        <el-collapse v-model="activeNames">
+          <el-collapse-item title="基础属性" name="1">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <el-form-item prop="name" label="名称">
+                  <el-input v-model="formData.name" placeholder="请输入资源名称" />
+                </el-form-item>
+              </el-col>
+              <el-col v-for="(item, index) of attributeFiledsData" :key="index" :span="12" class="lightgreen-box">
+                <el-form-item :prop="item.field_uid" :label="item.field_name">
+                  <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-collapse-item>
+        </el-collapse>
       </el-form>
+
       <template #footer>
         <el-button @click="drawerVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
@@ -75,27 +78,29 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch, h } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
-import { listResourceApi, createResourceApi } from "@/api/resource"
+import { listResourceApi, createResourceApi, deleteResourceApi } from "@/api/resource"
 import { type Resource, type CreateResourceReq } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
-import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import router from "@/router"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
 const modelUid = route.query.uid as string
 const attributeFiledsData = ref<Attribute[]>([])
 const displayFileds = ref<Attribute[]>([])
-
 const drawerVisible = ref<boolean>(false)
+const activeNames = ref<string[]>(["0", "1"])
 
-const DEFAULT_FORM_DATA: any = {
+const DEFAULT_FORM_DATA: CreateResourceReq = {
   name: "",
+  model_uid: modelUid,
   data: {}
 }
 
@@ -103,6 +108,13 @@ const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateResourceReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRules: FormRules<CreateResourceReq> = {
   name: [{ required: true, trigger: "blur", message: "请输入名称" }]
+}
+
+const handleIdClick = (resource: Resource) => {
+  router.push({
+    path: "/resource/info",
+    query: { model_uid: modelUid, id: resource.id, name: resource.name }
+  })
 }
 
 /** 新增关联类型 */
@@ -113,7 +125,7 @@ const handleCreate = () => {
       .then(() => {
         ElMessage.success("操作成功")
         drawerVisible.value = false
-        listAttributeFields()
+        listResourceByModelUid()
       })
       .finally(() => {})
   })
@@ -150,8 +162,6 @@ const sortFields = () => {
     })
 }
 
-// ** 字段分组 */
-
 // ** 获取资产列表 */
 const resourcesData = ref<Resource[]>([])
 const listResourceByModelUid = () => {
@@ -176,8 +186,22 @@ const handleUpdate = (row: Resource) => {
 }
 
 const handleDelete = (row: Resource) => {
-  drawerVisible.value = false
-  formData.value = cloneDeep(row)
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除名称: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteResourceApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listResourceByModelUid()
+    })
+  })
 }
 
 onMounted(() => {

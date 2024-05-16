@@ -6,16 +6,22 @@ export interface ListResourceReq {
   model_uid: string
 }
 
+export interface detailResource {
+  id: number
+  model_uid: string
+}
+
 export interface Resource {
   id: number
   name: string
   model_uid: string
-  data: object
+  data: any
 }
 
 export interface CreateResourceReq {
   name: string
-  data: object
+  model_uid: string
+  data: any
 }
 
 export interface ResourceData {

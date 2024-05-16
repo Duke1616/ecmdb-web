@@ -21,10 +21,10 @@
     <div class="model-tabs">
       <el-tabs stretchv-model="activeName" v-model="activeName" @tab-click="handleClick">
         <el-tab-pane label="模型字段" name="model-field">
-          <model-field :model-uid="$route.query.uid as string" />
+          <model-field :model-uid="modelUid" />
         </el-tab-pane>
         <el-tab-pane label="模型关联" name="model-relation">
-          <model-relation :model-uid="$route.query.uid as string" />
+          <model-relation :model-uid="modelUid" />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -36,13 +36,17 @@ import { ref } from "vue"
 import type { TabsPaneContext } from "element-plus"
 import modelField from "./c-cnps/model-field.vue"
 import modelRelation from "./c-cnps/model-relation.vue"
+import router from "@/router"
+import { useRoute } from "vue-router"
+
+const route = useRoute()
+const modelUid = route.query.uid as string
 
 const goBack = () => {
-  console.log("go back")
+  router.go(-1)
 }
 
 const activeName = ref("model-field")
-
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
 }
