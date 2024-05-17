@@ -215,16 +215,18 @@ const search = () => {
 
   const foundModels: Models[] = []
   ModelsData.value.forEach((group) => {
-    const matchingModels = group.models.filter((model) =>
-      model.uid.toLowerCase().includes(searchInput.value.trim().toLowerCase())
-    )
-    if (matchingModels.length > 0) {
-      // 构造一个虚拟的包含匹配模型的组数据
-      foundModels.push({
-        group_id: group.group_id,
-        group_name: group.group_name,
-        models: matchingModels
-      })
+    if (Array.isArray(group.models)) {
+      const matchingModels = group.models.filter((model) =>
+        model.uid.toLowerCase().includes(searchInput.value.trim().toLowerCase())
+      )
+      if (matchingModels.length > 0) {
+        // 构造一个虚拟的包含匹配模型的组数据
+        foundModels.push({
+          group_id: group.group_id,
+          group_name: group.group_name,
+          models: matchingModels
+        })
+      }
     }
   })
 

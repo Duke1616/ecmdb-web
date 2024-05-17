@@ -32,3 +32,11 @@ export function deleteResourceApi(id: number) {
     data: { id: id }
   })
 }
+
+/** 获取可关联的数据 */
+export function canBeRelatedResourceApi(data: resource.canBeRelationReq) {
+  return instance.post<resource.ResourceData>({
+    url: "resource/relation/can_be_related",
+    data: data
+  })
+}

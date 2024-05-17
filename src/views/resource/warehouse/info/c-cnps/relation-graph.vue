@@ -1,8 +1,15 @@
 <template>
-  <div>
-    <div v-loading="g_loading" style="height: calc(100vh - 200px)">
+  <div style="width: 100%; height: 100%">
+    <div v-loading="g_loading" style="width: 100%; height: calc(100vh - 200px)">
       <RelationGraph ref="graphRef" :options="graphOptions" @node-expand="onNodeExpand" @node-collapse="onNodeCollapse">
-        0
+        <template #graph-plug>
+          <div class="c-my-panel">
+            <el-radio-group v-model="currentCase" size="small">
+              <el-radio-button label="Horizontal Tree" />
+              <el-radio-button label="Vertical Tree" />
+            </el-radio-group>
+          </div>
+        </template>
       </RelationGraph>
     </div>
   </div>
@@ -13,6 +20,7 @@ import { ref, onMounted } from "vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGJsonData, RGNode, RGOptions, RGUserEvent, RelationGraphComponent } from "relation-graph-vue3"
 
+const currentCase = ref("Horizontal Tree")
 const graphRef = ref<RelationGraphComponent>()
 const g_loading = ref(true)
 
@@ -34,11 +42,14 @@ const graphOptions: RGOptions = {
     refY: 6,
     data: "M2,2 L10,6 L2,10 L6,6 L2,2"
   },
-  moveToCenterWhenRefresh: false,
-  defaultExpandHolderPosition: "right",
+  moveToCenterWhenRefresh: true,
+  zoomToFitWhenRefresh: true,
+  useAnimationWhenRefresh: true,
+  allowShowMiniToolBar: true,
+  // defaultExpandHolderPosition: "left",
   defaultNodeShape: 1,
-  defaultNodeWidth: 100,
   defaultLineShape: 4,
+  defaultNodeWidth: 100,
   defaultJunctionPoint: "lr",
   defaultNodeBorderWidth: 0,
   defaultLineColor: "rgba(0, 186, 189, 1)",
@@ -53,67 +64,53 @@ const setGraphData = async () => {
   const __graph_json_data: RGJsonData = {
     rootId: "a",
     nodes: [
-      { id: "a", text: "a" },
-      { id: "b", text: "b-固定数据展开/关闭" },
-      { id: "b1", text: "b1" },
-      { id: "b1-1", text: "b1-1" },
-      { id: "b1-2", text: "b1-2" },
-      { id: "b1-3", text: "b1-3" },
-      { id: "b1-4", text: "b1-4" },
-      { id: "b1-5", text: "b1-5" },
-      { id: "b1-6", text: "b1-6" },
-      { id: "b2", text: "b2" },
-      { id: "b2-1", text: "b2-1" },
-      { id: "b2-2", text: "b2-2" },
-      { id: "c", text: "c-动态数据展开/关闭" },
-      {
-        id: "c1",
-        text: "c1-动态获取子节点",
-        expandHolderPosition: "right",
-        expanded: false,
-        data: { isNeedLoadDataFromRemoteServer: true, childrenLoaded: false }
-      },
-      {
-        id: "c2",
-        text: "c2-动态获取子节点",
-        expandHolderPosition: "right",
-        expanded: false,
-        data: { isNeedLoadDataFromRemoteServer: true, childrenLoaded: false }
-      },
-      {
-        id: "c3",
-        text: "c3-动态获取子节点",
-        expandHolderPosition: "right",
-        expanded: false,
-        data: { isNeedLoadDataFromRemoteServer: true, childrenLoaded: false }
-      }
+      { id: "a", text: "Root Node a" },
+      { id: "R-b", text: "R-b" },
+      { id: "R-c", text: "R-c", expandHolderPosition: "left" },
+      { id: "R-c-1", text: "R-c-1" },
+      { id: "R-c-2", text: "R-c-2" },
+      { id: "R-d", text: "R-d" },
+      { id: "b", text: "b" },
+      { id: "c", text: "c", expandHolderPosition: "right" },
+      { id: "c1", text: "c1" },
+      { id: "c2", text: "c2" },
+      { id: "c3", text: "c3" },
+      { id: "d", text: "d" },
+      { id: "e", text: "e" }
     ],
     lines: [
+      { from: "R-b", to: "a" },
+      { from: "R-c", to: "a" },
+      { from: "R-c-1", to: "R-c" },
+      { from: "R-c-2", to: "R-c" },
+      { from: "R-d", to: "a" },
       { from: "a", to: "b" },
-      { from: "b", to: "b1" },
-      { from: "b1", to: "b1-1" },
-      { from: "b1", to: "b1-2" },
-      { from: "b1", to: "b1-3" },
-      { from: "b1", to: "b1-4" },
-      { from: "b1", to: "b1-5" },
-      { from: "b1", to: "b1-6" },
-      { from: "b", to: "b2" },
-      { from: "b2", to: "b2-1" },
-      { from: "b2", to: "b2-2" },
       { from: "a", to: "c" },
       { from: "c", to: "c1" },
       { from: "c", to: "c2" },
-      { from: "c", to: "c3" }
+      { from: "c", to: "c3" },
+      { from: "a", to: "d" },
+      { from: "a", to: "e" }
     ]
   }
 
-  console.log(JSON.stringify(__graph_json_data))
   g_loading.value = false
   const graphInstance = graphRef.value!.getInstance()
   await graphInstance.setJsonData(__graph_json_data)
   await graphInstance.moveToCenter()
   await graphInstance.zoomToFit()
+  // await graphInstance.focusNodeById("a")
+  // await graphInstance.refresh()
 }
+
+// const showGraph = async (graphRef: RelationGraphComponent, graph_json_data: RGJsonData) => {
+//   const graphInstance = graphRef.getInstance()
+//   await graphInstance.setJsonData(graph_json_data)
+//   await graphInstance.moveToCenter()
+//   await graphInstance.zoomToFit()
+//   await graphInstance.focusNodeById("a")
+//   await graphInstance.refresh()
+// }
 
 const onNodeCollapse = () => {
   const graphInstance = graphRef.value!.getInstance()

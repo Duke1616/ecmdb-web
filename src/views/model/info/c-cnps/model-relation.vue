@@ -93,7 +93,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { onMounted, ref, watch } from "vue"
 import { useModelStore } from "@/store/modules/model"
 import {
   ListRelationTypeApi,
@@ -110,17 +110,18 @@ import { cloneDeep } from "lodash-es"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { usePagination } from "@/hooks/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const modelData = useModelStore().ModelsData
 
 const modelMap: Map<string, string> = new Map<string, string>()
 const reverseMap = () => {
-  for (const mg of modelData) {
-    for (const m of mg.models) {
-      modelMap.set(m.uid, m.name)
+  modelData.forEach((mg) => {
+    if (Array.isArray(mg.models)) {
+      mg.models.forEach((m) => {
+        modelMap.set(m.uid, m.name)
+      })
     }
-  }
+  })
 }
 
 // 接收父组建传递
@@ -190,7 +191,6 @@ const getRealtionTypeData = () => {
   })
     .then(({ data }) => {
       relationTypeData.value = data.relation_types
-      console.log("type", relationTypeData.value)
     })
     .catch(() => {
       relationTypeData.value = []
@@ -198,7 +198,9 @@ const getRealtionTypeData = () => {
     .finally(() => {})
 }
 
-getRealtionTypeData()
+onMounted(() => {
+  getRealtionTypeData()
+})
 
 /** 查询关联类型 */
 const modelRelationData = ref<ModelRelation[]>([])
@@ -212,9 +214,12 @@ const listModelRelationData = () => {
       reverseMap()
       paginationData.total = data.total
       modelRelationData.value = data.model_relations
+
+      console.log("relation", modelRelationData.value)
     })
-    .catch(() => {
+    .catch((error) => {
       modelRelationData.value = []
+      console.log("cache", error)
     })
     .finally(() => {})
 }

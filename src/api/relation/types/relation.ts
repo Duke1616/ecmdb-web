@@ -20,6 +20,7 @@ export interface ModelRelation {
   target_model_uid: string
   relation_type_uid: string
   mapping: string
+  display_label?: string
 }
 
 export interface ListModelRealtionReq {
@@ -48,6 +49,12 @@ export interface ListRelationTypeData {
   name: string
   source_describe: string
   target_describe: string
+}
+
+export interface createResourceRelation {
+  source_resource_id: number
+  target_resource_id: number
+  relation_name: string
 }
 
 export type ListRelationTypeResult = {

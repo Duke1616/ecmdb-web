@@ -10,12 +10,23 @@
     </el-page-header>
 
     <div class="model-tabs">
-      <el-tabs stretchv-model="activeName" v-model="activeName">
-        <el-tab-pane label="资源详情" name="resource-desc">
-          <resourceDesc :resource-id="resourceId" :model-uid="modelUid" />
-        </el-tab-pane>
-        <el-tab-pane label="关联拓扑图" name="resource-relation">
-          <resourceRelation :model-uid="modelUid" />
+      <el-tabs v-model="activeName" @tab-click="handleTabClick">
+        <el-tab-pane lazy v-for="(item, index) in tabList" :key="index" :label="item.title" :name="item.value">
+          <resourceDesc
+            v-if="item.active && activeName === 'resource-desc'"
+            :resource-id="resourceId"
+            :model-uid="modelUid"
+          />
+          <resourceList
+            v-if="item.active && activeName === 'resource-list'"
+            :model-uid="modelUid"
+            :resource-id="resourceId"
+          />
+          <resourceRelation
+            v-if="item.active && activeName === 'resource-relation'"
+            :model-uid="modelUid"
+            :resource-id="resourceId"
+          />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -27,16 +38,36 @@ import { ref } from "vue"
 import { useRoute } from "vue-router"
 import resourceDesc from "./c-cnps/desc.vue"
 import resourceRelation from "./c-cnps/relation-graph.vue"
+import resourceList from "./c-cnps/relation-list.vue"
 import router from "@/router"
 
 const route = useRoute()
 const modelUid = route.query.model_uid as string
 const resourceName = route.query.name as string
 const resourceId = route.query.id as string
-const activeName = ref("resource-desc")
+
+const activeName = ref<string>("resource-desc")
+interface TabItem {
+  title: string
+  value: string
+  active: boolean
+}
+
+const tabList = ref<TabItem[]>([
+  { title: "资源详情", value: "resource-desc", active: true },
+  { title: "关系列表", value: "resource-list", active: false },
+  { title: "关联拓扑图", value: "resource-relation", active: false }
+])
+
+const handleTabClick = (tab: { index: any }) => {
+  console.log("index", tab.index)
+  tabList.value = tabList.value.map((v, i) => ({
+    ...v,
+    active: Number(tab.index) === i
+  }))
+}
 
 const goBack = () => {
   router.go(-1)
 }
-console.log(modelUid, resourceName, resourceId)
 </script>

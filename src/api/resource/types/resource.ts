@@ -11,6 +11,16 @@ export interface detailResource {
   model_uid: string
 }
 
+export interface canBeRelationReq {
+  /** 跳过条数 */
+  offset: number
+  /** 查询条数 */
+  limit: number
+  resource_id: number
+  model_uid: string
+  relation_name: string
+}
+
 export interface Resource {
   id: number
   name: string

@@ -45,3 +45,11 @@ export function DeleteModelRelationApi(id: number) {
     data: { id: id }
   })
 }
+
+/** 新增资产关联 */
+export function CreateResourceRelationApi(data: Relation.createResourceRelation) {
+  return instance.post<number>({
+    url: "resource/relation/create",
+    data: data
+  })
+}
