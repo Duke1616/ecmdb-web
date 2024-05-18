@@ -53,3 +53,11 @@ export function CreateResourceRelationApi(data: Relation.createResourceRelation)
     data: data
   })
 }
+
+/** 获取指定资产所关联的所有其他资产信息 */
+export function ListRelatedAssetsApi(data: Relation.listRelatedAssetsReq) {
+  return instance.post<Relation.relatedAssetsData[]>({
+    url: "resource/relation/pipeline/all",
+    data: data
+  })
+}

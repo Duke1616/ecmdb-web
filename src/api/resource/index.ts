@@ -40,3 +40,11 @@ export function canBeRelatedResourceApi(data: resource.canBeRelationReq) {
     data: data
   })
 }
+
+/** 根据ids获取资源 */
+export function listResourceByIdsApi(modelUid: string, resourceIds: number[]) {
+  return instance.post<resource.ResourceData>({
+    url: "resource/list/ids",
+    data: { model_uid: modelUid, resource_ids: resourceIds }
+  })
+}

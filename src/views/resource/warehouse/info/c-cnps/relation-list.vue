@@ -3,23 +3,28 @@
     <el-button type="primary" :icon="CirclePlus" @click="handlerDrawerVisible">新增关联</el-button>
   </div>
   <div>
-    <el-collapse accordion>
-      <el-collapse-item title="反馈 Feedback">
-        <div>控制反馈：通过界面样式和交互动效让用户可以清晰的感知自己的操作；</div>
-        <div>页面反馈：操作后，通过页面元素的变化清晰地展现当前状态。</div>
-      </el-collapse-item>
-      <el-collapse-item title="反馈 Feedback">
-        <div>控制反馈：通过界面样式和交互动效让用户可以清晰的感知自己的操作；</div>
-        <div>页面反馈：操作后，通过页面元素的变化清晰地展现当前状态。</div>
-      </el-collapse-item>
-      <el-collapse-item title="效率 Efficiency">
-        <div>简化流程：设计简洁直观的操作流程；</div>
-        <div>清晰明确：语言表达清晰且表意明确，让用户快速理解进而作出决策；</div>
-        <div>帮助用户识别：界面简单直白，让用户快速识别而非回忆，减少用户记忆负担。</div>
-      </el-collapse-item>
-      <el-collapse-item title="可控 Controllability">
-        <div>用户决策：根据场景可给予用户操作建议或安全提示，但不能代替用户进行决策；</div>
-        <div>结果可控：用户可以自由的进行操作，包括撤销、回退和终止当前操作等。</div>
+    <el-collapse accordion v-for="(item, index) in assetsData" :key="index">
+      <el-collapse-item :name="item.relation_name" @click="listResourceByIds(item.model_uid, item.resource_ids)">
+        <template #title>
+          <span class="collapse-title">{{ displayMap.get(item.relation_name) }}</span>
+        </template>
+        <el-table :data="resourcesByIdsData">
+          <el-table-column prop="name" label="名称" align="left" />
+          <el-table-column
+            v-for="item in displayFileds"
+            :key="item.id"
+            :prop="`data.${item.field_uid}`"
+            :label="item.field_name"
+            align="left"
+          />
+          <el-table-column fixed="right" label="操作" width="150" align="center">
+            <template #default="scope">
+              <el-button type="primary" text bg size="small" @click="handlerCreateRealtion(scope.row)">
+                取消关联
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </el-collapse-item>
     </el-collapse>
   </div>
@@ -31,7 +36,7 @@
           <el-option
             v-for="item in modelRelationData"
             :key="item.id"
-            :label="item.display_label"
+            :label="displayMap.get(item.relation_name)"
             :value="item.relation_name"
           />
         </el-select>
@@ -85,10 +90,15 @@
 
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch, h } from "vue"
-import { CreateResourceRelationApi, ListModelRelationApi, ListRelationTypeApi } from "@/api/relation"
-import { type ModelRelation, type ListRelationTypeData } from "@/api/relation/types/relation"
+import {
+  CreateResourceRelationApi,
+  ListModelRelationApi,
+  ListRelatedAssetsApi,
+  ListRelationTypeApi
+} from "@/api/relation"
+import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
 import { CirclePlus } from "@element-plus/icons-vue"
-import { canBeRelatedResourceApi } from "@/api/resource"
+import { canBeRelatedResourceApi, listResourceByIdsApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { usePagination } from "@/hooks/usePagination"
 import { Attribute } from "@/api/attribute/types/attribute"
@@ -106,7 +116,7 @@ const drawerVisible = ref<boolean>(false)
 // ** 新建抽屉，第一次打开，初始化数据 */
 const firstRelationName = ref<string>("")
 const handlerDrawerVisible = () => {
-  reverseDisplayLabel()
+  // reverseDisplayLabel()
   drawerVisible.value = true
   listResourceByModelUid(firstRelationName.value)
 }
@@ -142,6 +152,23 @@ const options = [
   }
 ]
 
+// ** 获取模型关联类型 */
+const relationTypeData = ref<ListRelationTypeData[]>([])
+const getRealtionTypeData = () => {
+  ListRelationTypeApi({
+    offset: 0,
+    limit: 100
+  })
+    .then(({ data }) => {
+      relationTypeData.value = data.relation_types
+      console.log("关联关系", relationTypeData.value)
+    })
+    .catch(() => {
+      relationTypeData.value = []
+    })
+    .finally(() => {})
+}
+
 // ** 获取模型关联列表 */
 const modelRelationData = ref<ModelRelation[]>([])
 const listModelRelationData = () => {
@@ -162,24 +189,8 @@ const listModelRelationData = () => {
     .finally(() => {})
 }
 
-// ** 获取模型关联类型 */
-const relationTypeData = ref<ListRelationTypeData[]>([])
-const getRealtionTypeData = () => {
-  ListRelationTypeApi({
-    offset: 0,
-    limit: 100
-  })
-    .then(({ data }) => {
-      relationTypeData.value = data.relation_types
-      console.log("关联关系", relationTypeData.value)
-    })
-    .catch(() => {
-      relationTypeData.value = []
-    })
-    .finally(() => {})
-}
-
 // 转换关联名称前端进行展示、并后端获取字段信息
+const displayMap: Map<string, string> = new Map<string, string>()
 const reverseDisplayLabel = () => {
   // 检查 modelRelationData 是否为空
   if (!modelRelationData.value || modelRelationData.value.length === 0) {
@@ -196,11 +207,11 @@ const reverseDisplayLabel = () => {
     if (src === props.modelUid) {
       model.display_label = relationInfo!.target_describe + "-" + model.target_model_uid
       relationName.value = model.display_label
-      listAttributeFields(model.target_model_uid)
+      displayMap.set(model.relation_name, model.display_label)
     } else {
       model.display_label = relationInfo!.source_describe + "-" + model.source_model_uid
       relationName.value = model.display_label
-      listAttributeFields(model.source_model_uid)
+      displayMap.set(model.relation_name, model.display_label)
     }
   })
 }
@@ -209,6 +220,7 @@ const reverseDisplayLabel = () => {
 const resourcesData = ref<Resource[]>([])
 const listResourceByModelUid = (value: string) => {
   // 判断是否需要 filter 过滤条件
+  // 创建关联时候需要传入的参数
   relationName.value = value
   canBeRelatedResourceApi({
     model_uid: props.modelUid,
@@ -218,6 +230,15 @@ const listResourceByModelUid = (value: string) => {
     limit: paginationData.pageSize
   })
     .then(({ data }) => {
+      const src: string = value.split("_")[0]
+      // 判断当前数据是正向还是反向
+      if (src === props.modelUid) {
+        console.log("运行此处1")
+        listAttributeFields(value.split("_")[2])
+      } else {
+        console.log("运行此处2", value)
+        listAttributeFields(src)
+      }
       resourcesData.value = data.resources
       paginationData.total = data.total
     })
@@ -227,12 +248,62 @@ const listResourceByModelUid = (value: string) => {
     .finally(() => {})
 }
 
+/** 获取指定资产所关联的所有其他资产信息 */
+const assetsData = ref<relatedAssetsData[]>()
+const listRelatedAssetsData = () => {
+  ListRelatedAssetsApi({
+    model_uid: props.modelUid,
+    resource_id: parseInt(props.resourceId, 10)
+  })
+    .then(({ data }) => {
+      assetsData.value = data
+      console.log("assetsData", assetsData.value)
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+    .finally(() => {})
+}
+
+// ** 根据 ids 获取资产信息*/
+const resourcesByIdsData = ref<Resource[]>([])
+const listResourceByIds = (modelUid: string, resourceIds: number[]) => {
+  console.log("test", modelUid, resourceIds)
+  listResourceByIdsApi(modelUid, resourceIds)
+    .then(({ data }) => {
+      // 判断当前数据是正向还是反向
+      listAttributeFields(modelUid)
+      sortFields()
+      console.log(displayFileds.value, "hello world")
+
+      resourcesByIdsData.value = data.resources
+      console.log(data.resources, "yes")
+      console.log(resourcesByIdsData.value, "yes")
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+    .finally(() => {})
+}
+
+// ** 过滤展示字段，并排序 */
+const displayFileds = ref<Attribute[]>([])
+const sortFields = () => {
+  displayFileds.value = attributeFiledsData.value
+    .filter((item) => item.display === true)
+    .sort((a, b) => {
+      const indexA = a.index ?? 100
+      const indexB = b.index ?? 100
+      return indexA - indexB
+    })
+}
 // ** 获取资产字段信息 */
 const attributeFiledsData = ref<Attribute[]>([])
 const listAttributeFields = (modelUid: string) => {
   ListAttributeFieldApi(modelUid)
     .then(({ data }) => {
       attributeFiledsData.value = data.attribute_fields
+      sortFields()
     })
     .catch(() => {
       attributeFiledsData.value = []
@@ -242,6 +313,7 @@ const listAttributeFields = (modelUid: string) => {
     })
 }
 
+// 新增关联关系
 const handlerCreateRealtion = (row: Resource) => {
   console.log("啦啦啦", relationName.value)
   ElMessageBox({
@@ -271,6 +343,7 @@ const handlerCreateRealtion = (row: Resource) => {
     }).then(() => {
       ElMessage.success("关联成功")
       listResourceByModelUid(relationName.value)
+      listRelatedAssetsData()
     })
   })
 }
@@ -280,11 +353,12 @@ onMounted(() => {
 })
 
 // 观察 modelRelationData 和 relationTypeData 的变化
-// watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTypes]) => {
-//   if (newModelRelations.length > 0 && newRelationTypes.length > 0) {
-//     reverseDisplayLabel()
-//   }
-// })
+watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTypes]) => {
+  if (newModelRelations.length > 0 && newRelationTypes.length > 0) {
+    reverseDisplayLabel()
+    listRelatedAssetsData()
+  }
+})
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
@@ -318,5 +392,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
 .search-button {
   width: 14%;
   margin-right: 0; /* 最后一个元素不需要右间距 */
+}
+
+:deep(.el-collapse-item__header) {
+  text-align: left;
+}
+
+.collapse-title {
+  flex: 1 0 90%;
+  order: 1;
 }
 </style>

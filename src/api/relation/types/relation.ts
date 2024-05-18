@@ -61,3 +61,15 @@ export type ListRelationTypeResult = {
   relation_types: ListRelationTypeData[]
   total: number
 }
+
+export interface listRelatedAssetsReq {
+  model_uid: string
+  resource_id: number
+}
+
+export interface relatedAssetsData {
+  relation_name: string
+  model_uid: string
+  total: number
+  resource_ids: number[]
+}
