@@ -22,13 +22,7 @@
           />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button
-                type="primary"
-                text
-                bg
-                size="small"
-                @click="handlerDeleteRealtion(item.relation_name, scope.row)"
-              >
+              <el-button type="primary" text bg size="small" @click="handlerDeleteRealtion(scope.row)">
                 取消关联
               </el-button>
             </template>
@@ -103,7 +97,8 @@ import {
   CreateResourceRelationApi,
   ListModelRelationApi,
   ListRelatedAssetsApi,
-  ListRelationTypeApi
+  ListRelationTypeApi,
+  deleteResourceRelationApi
 } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
 import { CirclePlus } from "@element-plus/icons-vue"
@@ -264,7 +259,6 @@ const listRelatedAssetsData = () => {
   })
     .then(({ data }) => {
       assetsData.value = data
-      activeNames.value = [assetsData.value[0].relation_name]
     })
     .catch((error) => {
       console.log(error)
@@ -331,7 +325,6 @@ const listAttributeFields = async (modelUid: string) => {
 
 // 新增关联关系
 const handlerCreateRealtion = (row: Resource) => {
-  console.log("啦啦啦", relationName.value)
   ElMessageBox({
     title: "关联确认",
     message: h("p", null, [
@@ -359,14 +352,37 @@ const handlerCreateRealtion = (row: Resource) => {
     }).then(() => {
       ElMessage.success("关联成功")
       listResourceByModelUid(relationName.value)
-      listRelatedAssetsData()
     })
   })
 }
 
-// 删除关联
-const handlerDeleteRealtion = (relationName: string, row: Resource) => {
-  console.log(relationName, row)
+// 删除关联 deleteResourceRelationApi
+const handlerDeleteRealtion = (row: Resource) => {
+  ElMessageBox({
+    title: "取消关联",
+    message: h("p", null, [
+      h("span", null, "正在删除关联数据名称: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认取消？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteResourceRelationApi(row.id).then(() => {
+      console.log(row)
+      ElMessage.success("删除成功")
+      deleteAssetResource(row.id)
+    })
+  })
+}
+const deleteAssetResource = (id: number) => {
+  assetsData.value!.forEach((item) => {
+    // 使用 filter 方法过滤掉指定 id 的资源
+    item.resources = item.resources.filter((resource: any) => {
+      return resource.id !== id
+    })
+  })
 }
 
 // ** 打开折叠面板
@@ -410,13 +426,22 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
   listResourceByModelUid(relationName.value)
 })
 
-watchEffect(() => {
+watchEffect((onInvalidate) => {
   // 处理折叠面板变化的逻辑
-  activeNames.value.forEach((activeName) => {
-    const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-    if (activeItem) {
-      listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
+  const unwatch = watch(activeNames, (newActiveNames, oldActiveNames) => {
+    // 找到新增的激活面板
+    const newActiveName = newActiveNames.find((name) => !oldActiveNames.includes(name))
+    if (newActiveName) {
+      const activeItem = assetsData.value!.find((item) => item.relation_name === newActiveName)
+      if (activeItem) {
+        listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
+      }
     }
+  })
+
+  // 在下一次运行副作用之前调用
+  onInvalidate(() => {
+    unwatch()
   })
 })
 </script>

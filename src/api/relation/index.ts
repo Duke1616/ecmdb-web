@@ -61,3 +61,10 @@ export function ListRelatedAssetsApi(data: Relation.listRelatedAssetsReq) {
     data: data
   })
 }
+
+export function deleteResourceRelationApi(id: number) {
+  return instance.post<number>({
+    url: "resource/relation/delete",
+    data: { id: id }
+  })
+}
