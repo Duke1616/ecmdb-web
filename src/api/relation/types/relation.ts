@@ -72,4 +72,6 @@ export interface relatedAssetsData {
   model_uid: string
   total: number
   resource_ids: number[]
+  resources: any
+  display_field: any
 }

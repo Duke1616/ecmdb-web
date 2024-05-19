@@ -1,25 +1,34 @@
 <template>
-  <div>
+  <div class="relation-button">
     <el-button type="primary" :icon="CirclePlus" @click="handlerDrawerVisible">新增关联</el-button>
+    <el-button type="primary" :icon="CirclePlus" @click="handlerExpandAll">{{
+      allPanelsExpanded ? "折叠所有" : "展开所有"
+    }}</el-button>
   </div>
   <div>
-    <el-collapse accordion v-for="(item, index) in assetsData" :key="index">
-      <el-collapse-item :name="item.relation_name" @click="listResourceByIds(item.model_uid, item.resource_ids)">
+    <el-collapse v-for="(item, index) in assetsData" :key="index" v-model="activeNames">
+      <el-collapse-item :name="item.relation_name">
         <template #title>
-          <span class="collapse-title">{{ displayMap.get(item.relation_name) }}</span>
+          <span class="collapse-title">{{ displayMap.get(item.relation_name) }} ({{ item.total }})</span>
         </template>
-        <el-table :data="resourcesByIdsData">
+        <el-table border :data="item.resources">
           <el-table-column prop="name" label="名称" align="left" />
           <el-table-column
-            v-for="item in displayFileds"
-            :key="item.id"
-            :prop="`data.${item.field_uid}`"
-            :label="item.field_name"
+            v-for="field in item.display_field"
+            :key="field.id"
+            :prop="`data.${field.field_uid}`"
+            :label="field.field_name"
             align="left"
           />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handlerCreateRealtion(scope.row)">
+              <el-button
+                type="primary"
+                text
+                bg
+                size="small"
+                @click="handlerDeleteRealtion(item.relation_name, scope.row)"
+              >
                 取消关联
               </el-button>
             </template>
@@ -89,7 +98,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch, h } from "vue"
+import { computed, onMounted, ref, watch, h, watchEffect } from "vue"
 import {
   CreateResourceRelationApi,
   ListModelRelationApi,
@@ -233,10 +242,8 @@ const listResourceByModelUid = (value: string) => {
       const src: string = value.split("_")[0]
       // 判断当前数据是正向还是反向
       if (src === props.modelUid) {
-        console.log("运行此处1")
         listAttributeFields(value.split("_")[2])
       } else {
-        console.log("运行此处2", value)
         listAttributeFields(src)
       }
       resourcesData.value = data.resources
@@ -257,7 +264,7 @@ const listRelatedAssetsData = () => {
   })
     .then(({ data }) => {
       assetsData.value = data
-      console.log("assetsData", assetsData.value)
+      activeNames.value = [assetsData.value[0].relation_name]
     })
     .catch((error) => {
       console.log(error)
@@ -266,19 +273,22 @@ const listRelatedAssetsData = () => {
 }
 
 // ** 根据 ids 获取资产信息*/
-const resourcesByIdsData = ref<Resource[]>([])
-const listResourceByIds = (modelUid: string, resourceIds: number[]) => {
-  console.log("test", modelUid, resourceIds)
+// const resourcesByIdsData = ref<Resource[]>([])
+const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
+  assetsData.value!.forEach(async (item) => {
+    if (item.model_uid === modelUid) {
+      await sortFields(modelUid)
+      item.display_field = displayFileds.value
+    }
+  })
+
   listResourceByIdsApi(modelUid, resourceIds)
     .then(({ data }) => {
-      // 判断当前数据是正向还是反向
-      listAttributeFields(modelUid)
-      sortFields()
-      console.log(displayFileds.value, "hello world")
-
-      resourcesByIdsData.value = data.resources
-      console.log(data.resources, "yes")
-      console.log(resourcesByIdsData.value, "yes")
+      assetsData.value!.forEach((item) => {
+        if (item.model_uid === modelUid) {
+          item.resources = data.resources
+        }
+      })
     })
     .catch((error) => {
       console.log(error)
@@ -288,7 +298,9 @@ const listResourceByIds = (modelUid: string, resourceIds: number[]) => {
 
 // ** 过滤展示字段，并排序 */
 const displayFileds = ref<Attribute[]>([])
-const sortFields = () => {
+const sortFields = async (modelUid: string) => {
+  await listAttributeFields(modelUid)
+  console.log("返回结果", attributeFiledsData.value)
   displayFileds.value = attributeFiledsData.value
     .filter((item) => item.display === true)
     .sort((a, b) => {
@@ -296,16 +308,20 @@ const sortFields = () => {
       const indexB = b.index ?? 100
       return indexA - indexB
     })
+
+  return displayFileds
 }
 // ** 获取资产字段信息 */
 const attributeFiledsData = ref<Attribute[]>([])
-const listAttributeFields = (modelUid: string) => {
-  ListAttributeFieldApi(modelUid)
+const listAttributeFields = async (modelUid: string) => {
+  console.log("modelUid-Attribute", modelUid)
+  await ListAttributeFieldApi(modelUid)
     .then(({ data }) => {
       attributeFiledsData.value = data.attribute_fields
-      sortFields()
+      console.log("attribute result", attributeFiledsData.value)
     })
-    .catch(() => {
+    .catch((error) => {
+      console.log("报错", error)
       attributeFiledsData.value = []
     })
     .finally(() => {
@@ -348,6 +364,35 @@ const handlerCreateRealtion = (row: Resource) => {
   })
 }
 
+// 删除关联
+const handlerDeleteRealtion = (relationName: string, row: Resource) => {
+  console.log(relationName, row)
+}
+
+// ** 打开折叠面板
+const allPanelsExpanded = ref(false)
+const activeNames = ref<string[]>([])
+const handlerExpandAll = () => {
+  if (allPanelsExpanded.value) {
+    activeNames.value = []
+  } else {
+    activeNames.value = assetsData.value!.map((item) => item.relation_name)
+  }
+  allPanelsExpanded.value = !allPanelsExpanded.value
+}
+
+// const handleCollapseChange = (value: CollapseModelValue) => {
+//   console.log("选择", value)
+//   const activeName = Array.isArray(value) ? value[0] : value
+
+//   console.log("选择", activeName)
+
+//   const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
+//   if (activeItem) {
+//     listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
+//   }
+// }
+
 onMounted(() => {
   listModelRelationData()
 })
@@ -364,9 +409,23 @@ watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTyp
 watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
   listResourceByModelUid(relationName.value)
 })
+
+watchEffect(() => {
+  // 处理折叠面板变化的逻辑
+  activeNames.value.forEach((activeName) => {
+    const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
+    if (activeItem) {
+      listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
+    }
+  })
+})
 </script>
 
 <style scoped>
+.relation-button {
+  margin-bottom: 12px;
+}
+
 .form-item-content {
   display: flex;
   justify-content: space-between;
@@ -401,5 +460,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
 .collapse-title {
   flex: 1 0 90%;
   order: 1;
+}
+
+:deep(.el-collapse) {
+  margin-bottom: 8px;
+}
+
+:deep(.el-collapse:last-child) {
+  margin-bottom: 0;
 }
 </style>
