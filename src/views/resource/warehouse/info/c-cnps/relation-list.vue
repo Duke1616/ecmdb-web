@@ -292,27 +292,38 @@ const listRelatedAssetsData = async () => {
 }
 
 const mergeAndTrackChanges = (existingData: relatedAssetsData[], newData: relatedAssetsData[]) => {
-  const mergedData = [...existingData]
-  const changedData: any[] = []
+  const mergedData: relatedAssetsData[] = []
+  const changedData: relatedAssetsData[] = []
 
-  newData.forEach((newItem) => {
-    const existingItemIndex = mergedData.findIndex((item) => item.relation_name === newItem.relation_name)
-    console.log(newItem.relation_name, existingItemIndex)
-    if (existingItemIndex !== -1) {
-      if (!isSame(mergedData[existingItemIndex].resource_ids, newItem.resource_ids)) {
+  // 创建一个集合，用于快速查找 newData 中是否存在某个 relation_name
+  const newDataRelationNames = new Set(newData.map((item) => item.relation_name))
+
+  // 遍历 existingData，将仍然存在于 newData 中的项加入 mergedData 中
+  existingData.forEach((existingItem) => {
+    const newItem = newData.find((item) => item.relation_name === existingItem.relation_name)
+    if (newItem) {
+      if (!isSame(existingItem.resource_ids, newItem.resource_ids)) {
         changedData.push(newItem)
       }
-      mergedData[existingItemIndex] = { ...mergedData[existingItemIndex], ...newItem }
+      mergedData.push({ ...existingItem, ...newItem })
     } else {
+      // 如果 existingItem 不在 newData 中，则表示该项被删除，需要记录变更
+      changedData.push({ ...existingItem })
+    }
+  })
+
+  // 遍历 newData，添加新出现的项到 mergedData 中
+  newData.forEach((newItem) => {
+    if (!existingData.some((item) => item.relation_name === newItem.relation_name)) {
       mergedData.push(newItem)
       changedData.push(newItem)
     }
   })
 
-  // 删除旧数据中不存在的新数据项
-  mergedData.filter((item) => !newData.find((newItem) => newItem.relation_name === item.relation_name))
+  // 过滤 mergedData，删除那些不在 newData 中的项
+  const filteredMergedData = mergedData.filter((item) => newDataRelationNames.has(item.relation_name))
 
-  return { mergedData: mergedData, changedData }
+  return { mergedData: filteredMergedData, changedData }
 }
 
 // 辅助函数，用于比较两个对象是否相同
