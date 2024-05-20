@@ -267,18 +267,16 @@ const listRelatedAssetsData = async () => {
         changedAssets = data
       } else {
         // 合并新数据到 assetsData
-        changedAssets = mergeAndTrackChanges(assetsData.value, newAssetsData)
-        // assetsData.value = mergeAssetsData(assetsData.value, newAssetsData)
+        const { mergedData, changedData } = mergeAndTrackChanges(assetsData.value, newAssetsData)
+        assetsData.value = mergedData
+        changedAssets = changedData
       }
-
       console.log("new-assetsData", assetsData.value)
 
       // 只更新变更的数据
       if (changedAssets.length > 0) {
         await updateActivePanelData(changedAssets)
       }
-      // 更新需要更新的面板的数据
-      // await updateActivePanelData(newAssetsData)
     })
     .catch((error) => {
       console.log(error)
@@ -292,21 +290,23 @@ const mergeAndTrackChanges = (existingData: relatedAssetsData[], newData: relate
 
   newData.forEach((newItem) => {
     const existingItemIndex = mergedData.findIndex((item) => item.relation_name === newItem.relation_name)
+    console.log(newItem.relation_name, existingItemIndex)
     if (existingItemIndex !== -1) {
       if (!isSame(mergedData[existingItemIndex].resource_ids, newItem.resource_ids)) {
-        mergedData[existingItemIndex] = { ...mergedData[existingItemIndex], ...newItem }
         changedData.push(newItem)
       }
+      mergedData[existingItemIndex] = { ...mergedData[existingItemIndex], ...newItem }
     } else {
       mergedData.push(newItem)
       changedData.push(newItem)
     }
   })
 
+  console.log("mergedData", mergedData)
   // 删除旧数据中不存在的新数据项
-  mergedData.filter((item) => !newData.find((newItem) => newItem.relation_name === item.relation_name))
+  // mergedData.filter((item) => !newData.find((newItem) => newItem.relation_name === item.relation_name))
 
-  return changedData
+  return { mergedData: mergedData, changedData }
 }
 
 // 辅助函数，用于比较两个对象是否相同
@@ -335,36 +335,6 @@ const updateActivePanelData = async (changedAssetsData: relatedAssetsData[]) => 
     }
   }
 }
-
-// const mergeAssetsData = (existingData: relatedAssetsData[], newData: any[]) => {
-//   const mergedData = [...existingData]
-
-//   newData.forEach((newItem) => {
-//     const existingItemIndex = mergedData.findIndex((item) => item.relation_name === newItem.relation_name)
-//     if (existingItemIndex !== -1) {
-//       mergedData[existingItemIndex] = { ...mergedData[existingItemIndex], ...newItem }
-//     } else {
-//       mergedData.push(newItem)
-//     }
-//   })
-
-//   return mergedData
-// }
-
-// const updateActivePanelData = async (newAssetsData: relatedAssetsData[]) => {
-//   console.log("activeNames", activeNames.value)
-//   const activeNamesToUpdate = activeNames.value.filter((activeName) =>
-//     newAssetsData.some((newItem) => newItem.relation_name === activeName)
-//   )
-
-//   console.log("activeNamesToUpdate", activeNamesToUpdate)
-//   for (const activeName of activeNamesToUpdate) {
-//     const activeItem = newAssetsData.find((item) => item.relation_name === activeName)
-//     if (activeItem) {
-//       await listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-//     }
-//   }
-// }
 
 // ** 根据 ids 获取资产信息*/
 // const resourcesByIdsData = ref<Resource[]>([])
@@ -487,15 +457,6 @@ const deleteAssetResource = (id: number) => {
   })
 }
 
-// const addAssetResource = (id: number) => {
-//   assetsData.value!.forEach((item) => {
-//     // 使用 filter 方法过滤掉指定 id 的资源
-//     item.resources = item.resources.filter((resource: any) => {
-//       return resource.id !== id
-//     })
-//   })
-// }
-
 // ** 打开折叠面板
 const allPanelsExpanded = ref(false)
 const activeNames = ref<string[]>([])
@@ -528,20 +489,6 @@ const handlerExpandAll = () => {
 //   // }
 // }
 
-// const handleCollapseChange = (value: any) => {
-//   console.log("选择", value)
-//   const activeNames = Array.isArray(value) ? value : [value]
-
-//   // 仅处理当前点击的面板
-//   const activeName = activeNames[activeNames.length - 1]
-//   console.log("当前点击的面板", activeName)
-
-//   const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-//   if (activeItem) {
-//     listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-//   }
-// }
-
 onMounted(() => {
   listModelRelationData()
 })
@@ -558,36 +505,6 @@ watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTyp
 watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
   listResourceByModelUid(relationName.value)
 })
-
-// watchEffect(() => {
-//   // 处理折叠面板变化的逻辑
-//   activeNames.value.forEach((activeName) => {
-//     const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-//     if (activeItem) {
-//       listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-//     }
-//   })
-// })
-
-// watchEffect((onInvalidate) => {
-//   // 处理折叠面板变化的逻辑
-//   const unwatch = watch(activeNames, (newActiveNames, oldActiveNames) => {
-//     // 处理新增的激活面板
-//     newActiveNames.forEach((newActiveName) => {
-//       if (!oldActiveNames.includes(newActiveName)) {
-//         const activeItem = assetsData.value!.find((item) => item.relation_name === newActiveName)
-//         if (activeItem) {
-//           listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-//         }
-//       }
-//     })
-//   })
-
-//   // 在下一次运行副作用之前调用
-//   onInvalidate(() => {
-//     unwatch()
-//   })
-// })
 
 watchEffect((onInvalidate) => {
   const unwatch = watch(
