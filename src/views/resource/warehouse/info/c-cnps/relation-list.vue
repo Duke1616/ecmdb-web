@@ -234,6 +234,7 @@ const listResourceByModelUid = (value: string) => {
     limit: paginationData.pageSize
   })
     .then(({ data }) => {
+      // TODO 当关联成功，重新请求避免多次调用获取模型字段接口
       const src: string = value.split("_")[0]
       // 判断当前数据是正向还是反向
       if (src === props.modelUid) {
@@ -302,9 +303,8 @@ const mergeAndTrackChanges = (existingData: relatedAssetsData[], newData: relate
     }
   })
 
-  console.log("mergedData", mergedData)
   // 删除旧数据中不存在的新数据项
-  // mergedData.filter((item) => !newData.find((newItem) => newItem.relation_name === item.relation_name))
+  mergedData.filter((item) => !newData.find((newItem) => newItem.relation_name === item.relation_name))
 
   return { mergedData: mergedData, changedData }
 }
@@ -340,9 +340,9 @@ const updateActivePanelData = async (changedAssetsData: relatedAssetsData[]) => 
 // const resourcesByIdsData = ref<Resource[]>([])
 const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
   // 先处理排序字段
-  await sortFields(modelUid)
+  const displayFileds = await sortFields(modelUid)
 
-  listResourceByIdsApi(modelUid, resourceIds)
+  await listResourceByIdsApi(modelUid, resourceIds)
     .then(({ data }) => {
       assetsData.value!.forEach((item) => {
         if (item.model_uid === modelUid) {
@@ -350,6 +350,8 @@ const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
           item.display_field = displayFileds.value
         }
       })
+
+      console.log(assetsData.value)
     })
     .catch((error) => {
       console.log(error)
@@ -358,8 +360,9 @@ const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
 }
 
 // ** 过滤展示字段，并排序 */
-const displayFileds = ref<Attribute[]>([])
+
 const sortFields = async (modelUid: string) => {
+  const displayFileds = ref<Attribute[]>([])
   await listAttributeFields(modelUid)
   console.log("返回结果", attributeFiledsData.value)
   displayFileds.value = attributeFiledsData.value
