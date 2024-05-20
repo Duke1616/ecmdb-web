@@ -75,3 +75,9 @@ export interface relatedAssetsData {
   resources: any
   display_field: any
 }
+
+export interface deleteResourceRelationReq {
+  model_uid: string
+  resource_id: number
+  relation_name: string
+}

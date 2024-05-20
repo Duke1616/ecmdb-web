@@ -22,7 +22,13 @@
           />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handlerDeleteRealtion(scope.row)">
+              <el-button
+                type="primary"
+                text
+                bg
+                size="small"
+                @click="handlerDeleteRealtion(item.relation_name, scope.row)"
+              >
                 取消关联
               </el-button>
             </template>
@@ -432,7 +438,7 @@ const handlerCreateRealtion = (row: Resource) => {
 }
 
 // 删除关联 deleteResourceRelationApi
-const handlerDeleteRealtion = (row: Resource) => {
+const handlerDeleteRealtion = (relationName: string, row: Resource) => {
   ElMessageBox({
     title: "取消关联",
     message: h("p", null, [
@@ -444,21 +450,27 @@ const handlerDeleteRealtion = (row: Resource) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteResourceRelationApi(row.id).then(() => {
-      console.log(row)
+    deleteResourceRelationApi({
+      resource_id: row.id,
+      relation_name: relationName,
+      model_uid: row.model_uid
+    }).then(() => {
+      console.log("删除信息", relationName, row)
       ElMessage.success("删除成功")
-      deleteAssetResource(row.id)
+      // deleteAssetResource(row.id)
+      listRelatedAssetsData()
     })
   })
 }
-const deleteAssetResource = (id: number) => {
-  assetsData.value!.forEach((item) => {
-    // 使用 filter 方法过滤掉指定 id 的资源
-    item.resources = item.resources.filter((resource: any) => {
-      return resource.id !== id
-    })
-  })
-}
+
+// const deleteAssetResource = (id: number) => {
+//   assetsData.value!.forEach((item) => {
+//     // 使用 filter 方法过滤掉指定 id 的资源
+//     item.resources = item.resources.filter((resource: any) => {
+//       return resource.id !== id
+//     })
+//   })
+// }
 
 // ** 打开折叠面板
 const allPanelsExpanded = ref(false)
