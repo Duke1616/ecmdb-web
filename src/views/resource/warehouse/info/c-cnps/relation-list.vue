@@ -510,14 +510,22 @@ watchEffect((onInvalidate) => {
   const unwatch = watch(
     () => activeNames.value,
     (newActiveNames, oldActiveNames) => {
-      const newlyActivated = newActiveNames.filter((name) => !oldActiveNames.includes(name))
-      if (newlyActivated.length > 0) {
-        const activeName = newlyActivated[0] // 只处理第一个新激活的面板
-        console.log("当前点击的面板", activeName)
+      if (allPanelsExpanded.value) {
+        // 如果 allPanelsExpanded 为 true，则更新所有面板
+        assetsData.value!.forEach((item) => {
+          listResourceByIds(item.model_uid, item.resource_ids)
+        })
+      } else {
+        // 否则只处理新激活的面板
+        const newlyActivated = newActiveNames.filter((name) => !oldActiveNames.includes(name))
+        if (newlyActivated.length > 0) {
+          const activeName = newlyActivated[0] // 只处理第一个新激活的面板
+          console.log("当前点击的面板", activeName)
 
-        const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-        if (activeItem) {
-          listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
+          const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
+          if (activeItem) {
+            listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
+          }
         }
       }
     }
