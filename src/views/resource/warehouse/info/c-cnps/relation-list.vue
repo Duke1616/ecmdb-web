@@ -1,9 +1,16 @@
 <template>
-  <div class="relation-button">
-    <el-button type="primary" :icon="CirclePlus" @click="handlerDrawerVisible">新增关联</el-button>
-    <el-button type="primary" :icon="CirclePlus" @click="handlerExpandAll">{{
-      allPanelsExpanded ? "折叠所有" : "展开所有"
-    }}</el-button>
+  <div class="toolbar-wrapper">
+    <div>
+      <el-button type="primary" :icon="CirclePlus" @click="handlerDrawerVisible">新增关联</el-button>
+      <el-button type="primary" :icon="CirclePlus" @click="handlerExpandAll">{{
+        allPanelsExpanded ? "折叠所有" : "展开所有"
+      }}</el-button>
+    </div>
+    <div>
+      <el-tooltip content="刷新当前页">
+        <el-button type="primary" :icon="RefreshRight" circle @click="listRelatedAssetsData" />
+      </el-tooltip>
+    </div>
   </div>
   <div>
     <el-collapse v-for="(item, index) in assetsData" :key="index" v-model="activeNames">
@@ -107,7 +114,7 @@ import {
   deleteResourceRelationApi
 } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
-import { CirclePlus } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { canBeRelatedResourceApi, listResourceByIdsApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { usePagination } from "@/hooks/usePagination"
@@ -564,8 +571,10 @@ watchEffect((onInvalidate) => {
 </script>
 
 <style scoped>
-.relation-button {
-  margin-bottom: 12px;
+.toolbar-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
 .form-item-content {

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div ref="myPage" style="margin-top: 0px; width: calc(100% - 10px); height: calc(100vh)">
-      <RelationGraph ref="graphRef" :options="graphOptions" :on-node-click="onNodeClick">
+      <RelationGraph ref="graphRef" :options="graphOptions" :on-node-click="onNodeClick" @refresh="listModelGraphData">
         <template #node="{ node }: { node: RGNode }">
           <div
             class="my-node-style"

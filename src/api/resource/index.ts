@@ -1,5 +1,6 @@
 import instance from "@/utils/hy_service"
 import type * as resource from "./types/resource"
+import { RGJsonData } from "relation-graph-vue3"
 
 /** 获取模型下所有资源 */
 export function listResourceApi(data: resource.ListResourceReq) {
@@ -46,5 +47,13 @@ export function listResourceByIdsApi(modelUid: string, resourceIds: number[]) {
   return instance.post<resource.ResourceData>({
     url: "resource/list/ids",
     data: { model_uid: modelUid, resource_ids: resourceIds }
+  })
+}
+
+// 查询拓扑图
+export function findGraphApi(data: resource.findGraphReq) {
+  return instance.post<RGJsonData>({
+    url: "resource/relation/graph",
+    data: data
   })
 }

@@ -38,3 +38,9 @@ export interface ResourceData {
   total: number
   resources: Resource[]
 }
+
+export interface findGraphReq {
+  model_uid: string
+  resource_id: number
+  resource_name: string
+}

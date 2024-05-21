@@ -2,12 +2,22 @@
   <div style="width: 100%; height: 100%">
     <div v-loading="g_loading" style="width: 100%; height: calc(100vh - 200px)">
       <RelationGraph ref="graphRef" :options="graphOptions" @node-expand="onNodeExpand" @node-collapse="onNodeCollapse">
-        <template #graph-plug>
-          <div class="c-my-panel">
-            <el-radio-group v-model="currentCase" size="small">
-              <el-radio-button label="Horizontal Tree" />
-              <el-radio-button label="Vertical Tree" />
-            </el-radio-group>
+        <template #node="{ node }: { node: RGNode }">
+          <div>
+            <div style="width: 100px; cursor: pointer; text-align: left; padding: 0px">
+              <div style="padding-left: 10px">{{ node.data!.model_uid }}</div>
+              <div
+                style="
+                  background-color: #ffffff;
+                  color: #555555;
+                  padding-left: 10px;
+                  /* padding-top: 10px; */
+                  /* border-radius: 8px; */
+                "
+              >
+                <div style="border-bottom: #efefef solid 1px">{{ node.text }}</div>
+              </div>
+            </div>
           </div>
         </template>
       </RelationGraph>
@@ -19,8 +29,15 @@
 import { ref, onMounted } from "vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGJsonData, RGNode, RGOptions, RGUserEvent, RelationGraphComponent } from "relation-graph-vue3"
+import { findGraphApi } from "@/api/resource"
 
-const currentCase = ref("Horizontal Tree")
+interface Props {
+  modelUid: string
+  resourceId: string
+  resourceName: string
+}
+const props = defineProps<Props>()
+
 const graphRef = ref<RelationGraphComponent>()
 const g_loading = ref(true)
 
@@ -56,61 +73,83 @@ const graphOptions: RGOptions = {
   defaultNodeColor: "rgba(0, 206, 209, 1)"
 }
 
-onMounted(() => {
-  setGraphData()
-})
+// onMounted(() => {
+//   setGraphData()
+// })
 
-const setGraphData = async () => {
-  const __graph_json_data: RGJsonData = {
-    rootId: "a",
-    nodes: [
-      { id: "a", text: "Root Node a" },
-      { id: "R-b", text: "R-b" },
-      { id: "R-c", text: "R-c", expandHolderPosition: "left" },
-      { id: "R-c-1", text: "R-c-1" },
-      { id: "R-c-2", text: "R-c-2" },
-      { id: "R-d", text: "R-d" },
-      { id: "b", text: "b" },
-      { id: "c", text: "c", expandHolderPosition: "right" },
-      { id: "c1", text: "c1" },
-      { id: "c2", text: "c2" },
-      { id: "c3", text: "c3" },
-      { id: "d", text: "d" },
-      { id: "e", text: "e" }
-    ],
-    lines: [
-      { from: "R-b", to: "a" },
-      { from: "R-c", to: "a" },
-      { from: "R-c-1", to: "R-c" },
-      { from: "R-c-2", to: "R-c" },
-      { from: "R-d", to: "a" },
-      { from: "a", to: "b" },
-      { from: "a", to: "c" },
-      { from: "c", to: "c1" },
-      { from: "c", to: "c2" },
-      { from: "c", to: "c3" },
-      { from: "a", to: "d" },
-      { from: "a", to: "e" }
-    ]
-  }
+// const setGraphData = async () => {
+//   const __graph_json_data: RGJsonData = {
+//     rootId: "a",
+//     nodes: [
+//       { id: "a", text: "Root Node a" },
+//       { id: "R-b", text: "R-b" },
+//       { id: "R-c", text: "R-c", expandHolderPosition: "left" },
+//       { id: "R-c-1", text: "R-c-1", expandHolderPosition: "left" },
+//       { id: "R-c-1-1", text: "R-c-1-1" },
+//       { id: "R-c-2", text: "R-c-2" },
+//       { id: "R-d", text: "R-d" },
+//       { id: "b", text: "b" },
+//       { id: "c", text: "c", expandHolderPosition: "right" },
+//       { id: "c1", text: "c1" },
+//       { id: "c2", text: "c2" },
+//       { id: "c3", text: "c3" },
+//       { id: "d", text: "d" },
+//       { id: "e", text: "e" }
+//     ],
+//     lines: [
+//       { from: "R-b", to: "a" },
+//       { from: "R-c", to: "a" },
+//       { from: "R-c-1", to: "R-c" },
+//       { from: "R-c-2", to: "R-c" },
+//       { from: "R-c-1-1", to: "R-c-1" },
+//       { from: "R-d", to: "a" },
+//       { from: "a", to: "b" },
+//       { from: "a", to: "c" },
+//       { from: "c", to: "c1" },
+//       { from: "c", to: "c2" },
+//       { from: "c", to: "c3" },
+//       { from: "a", to: "d" },
+//       { from: "a", to: "e" }
+//     ]
+//   }
 
-  g_loading.value = false
-  const graphInstance = graphRef.value!.getInstance()
-  await graphInstance.setJsonData(__graph_json_data)
-  await graphInstance.moveToCenter()
-  await graphInstance.zoomToFit()
-  // await graphInstance.focusNodeById("a")
-  // await graphInstance.refresh()
-}
-
-// const showGraph = async (graphRef: RelationGraphComponent, graph_json_data: RGJsonData) => {
-//   const graphInstance = graphRef.getInstance()
-//   await graphInstance.setJsonData(graph_json_data)
+//   g_loading.value = false
+//   const graphInstance = graphRef.value!.getInstance()
+//   await graphInstance.setJsonData(__graph_json_data)
 //   await graphInstance.moveToCenter()
 //   await graphInstance.zoomToFit()
-//   await graphInstance.focusNodeById("a")
-//   await graphInstance.refresh()
+//   // await graphInstance.focusNodeById("a")
+//   // await graphInstance.refresh()
 // }
+
+const setGraphData = async () => {
+  if (resourceGraphData.value !== undefined) {
+    const __graph_json_data: RGJsonData = resourceGraphData.value
+    g_loading.value = false
+    const graphInstance = graphRef.value!.getInstance()
+    await graphInstance.setJsonData(__graph_json_data)
+    await graphInstance.moveToCenter()
+    await graphInstance.zoomToFit()
+  }
+}
+
+const resourceGraphData = ref<RGJsonData>()
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
+const findResourceGraph = () => {
+  findGraphApi({
+    model_uid: props.modelUid,
+    resource_id: parseInt(props.resourceId, 10),
+    resource_name: props.resourceName
+  })
+    .then(({ data }) => {
+      resourceGraphData.value = data
+      setGraphData()
+    })
+    .catch(() => {
+      resourceGraphData.value = undefined
+    })
+    .finally(() => {})
+}
 
 const onNodeCollapse = () => {
   const graphInstance = graphRef.value!.getInstance()
@@ -165,6 +204,27 @@ const loadChildNodesFromRemoteServer = (node: RGNode, callback: (new_data: RGJso
     callback(_new_json_data)
   }, 1000)
 }
+
+onMounted(() => {
+  findResourceGraph()
+})
 </script>
 
-<style scoped></style>
+<style scoped>
+.c-node-menu-item {
+  line-height: 30px;
+  padding-left: 10px;
+  cursor: pointer;
+  color: #444444;
+  font-size: 14px;
+  border-top: #efefef solid 1px;
+}
+.c-node-menu-item:hover {
+  background-color: rgba(66, 187, 66, 0.2);
+}
+.c-person-pic {
+  width: 120px;
+  border-radius: 50%;
+  margin-top: 10px;
+}
+</style>
