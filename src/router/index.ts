@@ -195,6 +195,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     name: "Table",
     meta: {
       title: "表格",
+      hidden: true,
       elIcon: "Grid"
     },
     children: [
@@ -204,6 +205,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "ElementPlus",
         meta: {
           title: "Element Plus",
+          hidden: true,
           keepAlive: true
         }
       },
@@ -213,6 +215,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "VxeTable",
         meta: {
           title: "Vxe Table",
+          hidden: true,
           keepAlive: true
         }
       }

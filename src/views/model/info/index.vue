@@ -10,12 +10,12 @@
     </el-page-header>
     <div class="model-info">
       <div class="model-name">
-        <span class="model-uid">唯一标识: {{ $route.query.uid }}</span>
-        <span>名称: {{ $route.query.name }}</span>
+        <span class="model-uid">唯一标识: {{ modelUid }}</span>
+        <span>名称: {{ modelName }}</span>
       </div>
       <div class="model-button">
         <el-button text size="large" type="danger" icon="RemoveFilled">禁用</el-button>
-        <el-button text size="large" type="danger" icon="DeleteFilled">删除</el-button>
+        <el-button text size="large" type="danger" icon="DeleteFilled" @click="handleDeleteModel">删除</el-button>
       </div>
     </div>
     <div class="model-tabs">
@@ -32,15 +32,17 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
-import type { TabsPaneContext } from "element-plus"
+import { h, ref } from "vue"
+import { ElMessage, ElMessageBox, type TabsPaneContext } from "element-plus"
 import modelField from "./c-cnps/model-field.vue"
 import modelRelation from "./c-cnps/model-relation.vue"
 import router from "@/router"
 import { useRoute } from "vue-router"
+import { deleteModelApi } from "@/api/model"
 
 const route = useRoute()
 const modelUid = route.query.uid as string
+const modelName = route.query.name as string
 
 const goBack = () => {
   router.go(-1)
@@ -49,6 +51,25 @@ const goBack = () => {
 const activeName = ref("model-field")
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
+}
+
+const handleDeleteModel = () => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除模型: "),
+      h("i", { style: "color: red" }, `${modelName}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteModelApi(modelUid).then(() => {
+      ElMessage.success("删除成功")
+      goBack()
+    })
+  })
 }
 </script>
 

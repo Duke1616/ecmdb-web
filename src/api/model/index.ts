@@ -31,3 +31,11 @@ export function listModelGraphApi() {
     url: "model/relation/graph"
   })
 }
+
+/** 删除模型 */
+export function deleteModelApi(model_uid: string) {
+  return instance.post<number>({
+    url: "model/delete",
+    data: { model_uid: model_uid }
+  })
+}

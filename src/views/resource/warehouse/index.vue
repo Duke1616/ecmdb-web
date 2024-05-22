@@ -19,11 +19,16 @@
                   style="margin-bottom: 4px"
                 >
                   <el-card class="model-card" @click="handleModelClick(model)">
-                    <div class="model-content">
-                      <div class="model-image">
-                        <img :src="model.icon" class="model-icon" />
+                    <div class="model-title">
+                      <div class="model-content">
+                        <div class="model-image">
+                          <img :src="model.icon" class="model-icon" />
+                        </div>
+                        <div class="model-name">{{ model.name }}</div>
                       </div>
-                      <div class="model-name">{{ model.name }}</div>
+                      <div>
+                        {{ model.total }}
+                      </div>
                     </div>
                   </el-card>
                 </el-col>
@@ -93,6 +98,12 @@ getModelsData()
   .model-group-name {
     padding-bottom: 5px;
   }
+}
+
+.model-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .model-content {

@@ -23,7 +23,7 @@
     </div>
   </div>
   <div>
-    <div v-for="group in AttributesData" :key="group.group_id" class="model-group">
+    <div v-for="group in filterData" :key="group.group_id" class="model-group">
       <div class="model-group-header">
         <div @click="toggleGroup(group)" class="group-header">
           <el-icon v-if="group.expanded"><ArrowRight /></el-icon>
@@ -108,8 +108,8 @@
     </div>
   </el-drawer>
 
-  <!-- Edit、Create 抽屉 -->
-  <el-drawer v-model="editDrawer" title="编辑字段">
+  <!-- 新增属性 -->
+  <el-drawer v-model="editDrawer" title="编辑字段" @closed="resetForm">
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
       <el-form-item label="唯一标识" prop="field_uid">
         <el-input v-model="formData.field_uid" />
@@ -190,13 +190,13 @@
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
       <el-form-item class="text-right">
         <el-button type="primary" @click="handlerCustomAttributeFieldColumns()"> 保存 </el-button>
-        <el-button @click="resetForm()">取消</el-button>
+        <el-button @click="sortDrawer = false">取消</el-button>
       </el-form-item>
     </el-form>
   </el-drawer>
 
-  <!-- 新增/修改 -->
-  <el-dialog v-model="dialogAttrGroupVisible" title="新增分组" @closed="resetForm" width="30%">
+  <!-- 新增属性分组 -->
+  <el-dialog v-model="dialogAttrGroupVisible" title="新增分组" @closed="resetAttrGroupFrom" width="30%">
     <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="100px" label-position="left">
       <el-form-item prop="group_name" label="组名称">
         <el-input v-model="AttrGroup.group_name" placeholder="请输入" />
@@ -210,7 +210,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { h, ref, watch } from "vue"
 import { Search, CirclePlus } from "@element-plus/icons-vue"
 import {
   listAttributesByModelUidApi,
@@ -266,6 +266,11 @@ const fieldRules: FormRules = {
   field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
 }
 
+const resetForm = () => {
+  formRef.value?.clearValidate()
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
 // 是否展开组、鼠标聚焦效果
 const showDetail = ref(false)
 const currentItem = ref<Attribute>()
@@ -310,6 +315,7 @@ function getAttributesData() {
   listAttributesByModelUidApi(props.modelUid)
     .then(({ data }) => {
       AttributesData.value = data.attribute_groups
+      filterData.value = data.attribute_groups
     })
     .catch(() => {
       AttributesData.value = []
@@ -332,15 +338,6 @@ function handleCreateDrawer(group_id: number) {
 function handleEditDrawer(item: any) {
   editDrawer.value = true
   console.log(item)
-}
-
-const resetForm = () => {
-  editDrawer.value = false
-}
-
-function search() {
-  // 调用搜索接口
-  console.log("搜索:", searchInput.value)
 }
 
 function toggleGroup(group: any) {
@@ -370,6 +367,38 @@ const handleSortDrawer = () => {
   })
 
   rightList.value.sort((a, b) => a.index - b.index)
+}
+
+const filterData = ref<AttributeGroup[]>([])
+const search = () => {
+  filterData.value = AttributesData.value
+  // 如果搜索关键词为空，不执行过滤
+  if (!searchInput.value.trim()) {
+    return
+  }
+
+  const foundAttrs: AttributeGroup[] = []
+  AttributesData.value.forEach((group) => {
+    if (Array.isArray(group.attributes)) {
+      const matchingAttrs = group.attributes.filter(
+        (attr) =>
+          attr.field_uid.toLowerCase().includes(searchInput.value.trim().toLowerCase()) ||
+          attr.field_name.toLowerCase().includes(searchInput.value.trim().toLowerCase())
+      )
+      if (matchingAttrs.length > 0) {
+        foundAttrs.push({
+          group_id: group.group_id,
+          group_name: group.group_name,
+          attributes: matchingAttrs,
+          expanded: true,
+          index: 0,
+          total: 0
+        })
+      }
+    }
+  })
+
+  filterData.value = foundAttrs
 }
 
 const handlerCustomAttributeFieldColumns = () => {
@@ -411,7 +440,13 @@ const onEnd = () => {
 }
 
 const handleDelete = (row: Attribute) => {
-  ElMessageBox.confirm(`正在删除字段：${row.field_name}，确认删除？`, "提示", {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除字段: "),
+      h("i", { style: "color: red" }, `${row.field_name}`),
+      h("span", null, " 确认删除？")
+    ]),
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
@@ -432,6 +467,11 @@ const AttrGroup = ref<CreateAttributeGroupReq>(cloneDeep(DEFAULT_ATTR_GROUP_DATA
 const attrGroupRef = ref<FormInstance | null>(null)
 const attrGroupRules: FormRules = {
   group_name: [{ required: true, message: "必须输入分组名称", trigger: "blur" }]
+}
+
+const resetAttrGroupFrom = () => {
+  attrGroupRef.value?.clearValidate()
+  AttrGroup.value = cloneDeep(DEFAULT_ATTR_GROUP_DATA)
 }
 
 const handlerAddAttributeGroup = () => {

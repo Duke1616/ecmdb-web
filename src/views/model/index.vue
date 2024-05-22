@@ -39,13 +39,26 @@
               style="margin-bottom: 4px"
             >
               <el-card class="model-card" @click="handleModelClick(model)">
-                <div class="model-content">
-                  <div class="model-image">
-                    <img :src="model.icon" class="model-icon" />
+                <div class="model-title">
+                  <div class="model-content">
+                    <div class="model-image">
+                      <img :src="model.icon" class="model-icon" />
+                    </div>
+                    <div class="model-info">
+                      <div class="model-name">{{ model.name }}</div>
+                      <div class="model-unique-name">{{ model.uid }}</div>
+                    </div>
                   </div>
-                  <div class="model-info">
-                    <div class="model-name">{{ model.name }}</div>
-                    <div class="model-unique-name">{{ model.uid }}</div>
+                  <div class="button-container">
+                    <el-button
+                      text
+                      size="large"
+                      class="full-width-button"
+                      type="default"
+                      @click.stop="handleIdClick(model.uid)"
+                    >
+                      {{ model.total }}
+                    </el-button>
                   </div>
                 </div>
               </el-card>
@@ -72,6 +85,9 @@
         </el-form-item>
         <el-form-item prop="name" label="名称">
           <el-input v-model="formData.name" placeholder="请输入名称" />
+        </el-form-item>
+        <el-form-item prop="icon" label="图片地址">
+          <el-input v-model="formData.icon" placeholder="请输入图片地址" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -114,6 +130,7 @@ const router = useRouter()
 const DEFAULT_FORM_DATA: CreateModelReq = {
   name: "",
   group_id: undefined,
+  icon: "",
   uid: ""
 }
 
@@ -216,8 +233,10 @@ const search = () => {
   const foundModels: Models[] = []
   ModelsData.value.forEach((group) => {
     if (Array.isArray(group.models)) {
-      const matchingModels = group.models.filter((model) =>
-        model.uid.toLowerCase().includes(searchInput.value.trim().toLowerCase())
+      const matchingModels = group.models.filter(
+        (model) =>
+          model.uid.toLowerCase().includes(searchInput.value.trim().toLowerCase()) ||
+          model.name.toLowerCase().includes(searchInput.value.trim().toLowerCase())
       )
       if (matchingModels.length > 0) {
         // 构造一个虚拟的包含匹配模型的组数据
@@ -231,6 +250,14 @@ const search = () => {
   })
 
   filterData.value = foundModels
+}
+
+const handleIdClick = (modelUid: string) => {
+  console.log("跳转")
+  router.push({
+    path: "/resource/list",
+    query: { uid: modelUid }
+  })
 }
 
 /** 监听分页参数的变化 */
@@ -257,6 +284,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMode
   margin-left: 10px;
 }
 
+.model-title {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0px;
+  justify-content: space-between;
+}
+
 .model-content {
   display: flex;
   align-items: center;
@@ -278,5 +313,30 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMode
     color: rgb(191, 199, 210);
     font-size: 16px;
   }
+}
+
+.model-card {
+  position: relative;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.full-width-button {
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  margin-left: -20px;
+  margin-right: -20px;
+  box-sizing: border-box;
+}
+
+.button-container {
+  position: absolute;
+  top: 20px;
+  bottom: 20px;
+  right: 20px;
+  width: 10%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 </style>

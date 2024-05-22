@@ -384,7 +384,6 @@ const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
 }
 
 // ** 过滤展示字段，并排序 */
-
 const sortFields = async (modelUid: string) => {
   const displayFileds = ref<Attribute[]>([])
   await listAttributeFields(modelUid)
@@ -480,15 +479,6 @@ const handlerDeleteRealtion = (relationName: string, row: Resource) => {
     })
   })
 }
-
-// const deleteAssetResource = (id: number) => {
-//   assetsData.value!.forEach((item) => {
-//     // 使用 filter 方法过滤掉指定 id 的资源
-//     item.resources = item.resources.filter((resource: any) => {
-//       return resource.id !== id
-//     })
-//   })
-// }
 
 // ** 打开折叠面板
 const allPanelsExpanded = ref(false)

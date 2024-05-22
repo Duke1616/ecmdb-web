@@ -10,11 +10,13 @@ export interface Model {
   id: number
   name: string
   uid: string
+  total: number
   icon: string
 }
 
 export interface CreateModelReq {
   name: string
+  icon: string
   group_id?: number
   uid: string
 }
