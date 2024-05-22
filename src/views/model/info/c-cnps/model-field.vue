@@ -1,6 +1,14 @@
 <template>
   <div class="field-tab-header">
     <div class="search-field">
+      <el-button
+        type="primary"
+        size="default"
+        style="margin-right: 8px"
+        :icon="CirclePlus"
+        @click="dialogAttrGroupVisible = true"
+        >新增分组</el-button
+      >
       <el-input
         v-model="searchInput"
         style="width: 240px"
@@ -23,7 +31,9 @@
           <h4>{{ group.group_name }}</h4>
         </div>
         <div class="model-button">
-          <el-button text size="default" type="primary" icon="CirclePlus" @click="handleEditDrawer">添加字段</el-button>
+          <el-button text size="default" type="primary" icon="CirclePlus" @click="handleCreateDrawer(group.group_id)"
+            >添加字段</el-button
+          >
         </div>
       </div>
       <div v-if="group.expanded">
@@ -184,23 +194,38 @@
       </el-form-item>
     </el-form>
   </el-drawer>
+
+  <!-- 新增/修改 -->
+  <el-dialog v-model="dialogAttrGroupVisible" title="新增分组" @closed="resetForm" width="30%">
+    <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="100px" label-position="left">
+      <el-form-item prop="group_name" label="组名称">
+        <el-input v-model="AttrGroup.group_name" placeholder="请输入" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="handlerAddAttributeGroup" :loading="loading">确认</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch } from "vue"
-import { Search } from "@element-plus/icons-vue"
+import { Search, CirclePlus } from "@element-plus/icons-vue"
 import {
   listAttributesByModelUidApi,
   CreateAttributeApi,
   CustomAttributeFieldColumnsApi,
-  DeleteAttributeApi
+  DeleteAttributeApi,
+  createAttributeGroupApi
 } from "@/api/attribute"
 import {
   type AttributeGroup,
   type Attribute,
   type CreateAttributeRequestData,
   type CustomField,
-  type CustomAttributeFieldColumnsReq
+  type CustomAttributeFieldColumnsReq,
+  CreateAttributeGroupReq
 } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/hooks/usePagination"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
@@ -224,6 +249,7 @@ const props = defineProps<Props>()
 
 const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
   model_uid: props.modelUid,
+  group_id: 0,
   field_uid: "",
   field_name: "",
   field_type: "",
@@ -283,7 +309,7 @@ function getAttributesData() {
   loading.value = true
   listAttributesByModelUidApi(props.modelUid)
     .then(({ data }) => {
-      AttributesData.value = data.ags
+      AttributesData.value = data.attribute_groups
     })
     .catch(() => {
       AttributesData.value = []
@@ -298,9 +324,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getAttr
   immediate: true
 })
 
-function handleEditDrawer(model: any) {
+function handleCreateDrawer(group_id: number) {
   editDrawer.value = true
-  console.log(model)
+  formData.value.group_id = group_id
+}
+
+function handleEditDrawer(item: any) {
+  editDrawer.value = true
+  console.log(item)
 }
 
 const resetForm = () => {
@@ -322,25 +353,21 @@ const rightList = ref<CustomField[]>([])
 
 const handleSortDrawer = () => {
   sortDrawer.value = true
-  const attributesData = AttributesData.value
-  // resetLeftAndRightList()
-  if (rightList.value.length != 0 || leftList.value.length != 0) {
+  const attributesData = AttributesData?.value
+  if (!attributesData || !Array.isArray(attributesData)) {
+    console.error("attributesData is undefined or not an array")
     return
   }
 
-  // 预先检查是否所有的属性都是显示的，如果是，则只需要处理一次
-  if (attributesData.every((item) => item.attributes.every((attr) => attr.display === true))) {
-    attributesData[0].attributes.forEach((attr) => {
-      rightList.value.push({ name: attr.field_name, index: attr.index || 0, id: attr.id })
+  rightList.value = []
+  leftList.value = []
+
+  attributesData.forEach((item) => {
+    item.attributes.forEach((attr) => {
+      const list = attr.display ? rightList : leftList
+      list.value.push({ name: attr.field_name, id: attr.id, index: attr.index || 0 })
     })
-  } else {
-    attributesData.forEach((item) => {
-      item.attributes.forEach((attr) => {
-        const list = attr.display ? rightList : leftList
-        list.value.push({ name: attr.field_name, id: attr.id, index: attr.index || 0 })
-      })
-    })
-  }
+  })
 
   rightList.value.sort((a, b) => a.index - b.index)
 }
@@ -356,6 +383,7 @@ const handlerCustomAttributeFieldColumns = () => {
     .then(({ data }) => {
       console.log("data", data)
       sortDrawer.value = false
+      getAttributesData()
     })
     .catch(() => {})
     .finally(() => {
@@ -392,6 +420,32 @@ const handleDelete = (row: Attribute) => {
       ElMessage.success("删除成功")
       getAttributesData()
     })
+  })
+}
+
+const DEFAULT_ATTR_GROUP_DATA: CreateAttributeGroupReq = {
+  model_uid: props.modelUid,
+  group_name: ""
+}
+const dialogAttrGroupVisible = ref<boolean>(false)
+const AttrGroup = ref<CreateAttributeGroupReq>(cloneDeep(DEFAULT_ATTR_GROUP_DATA))
+const attrGroupRef = ref<FormInstance | null>(null)
+const attrGroupRules: FormRules = {
+  group_name: [{ required: true, message: "必须输入分组名称", trigger: "blur" }]
+}
+
+const handlerAddAttributeGroup = () => {
+  attrGroupRef.value?.validate((valid: boolean, fields) => {
+    if (!valid) return console.error("表单校验不通过", fields)
+    createAttributeGroupApi(AttrGroup.value)
+      .then(() => {
+        ElMessage.success("操作成功")
+        dialogAttrGroupVisible.value = false
+        getAttributesData()
+      })
+      .finally(() => {
+        loading.value = false
+      })
   })
 }
 </script>

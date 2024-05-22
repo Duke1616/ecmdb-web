@@ -20,10 +20,10 @@
     </div>
     <div class="model-tabs">
       <el-tabs stretchv-model="activeName" v-model="activeName" @tab-click="handleClick">
-        <el-tab-pane label="模型字段" name="model-field">
+        <el-tab-pane lazy label="模型字段" name="model-field">
           <model-field :model-uid="modelUid" />
         </el-tab-pane>
-        <el-tab-pane label="模型关联" name="model-relation">
+        <el-tab-pane lazy label="模型关联" name="model-relation">
           <model-relation :model-uid="modelUid" />
         </el-tab-pane>
       </el-tabs>

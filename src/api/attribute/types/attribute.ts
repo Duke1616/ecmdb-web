@@ -1,4 +1,5 @@
 export interface CreateAttributeRequestData {
+  group_id: number
   model_uid: string
   field_uid: string
   field_name: string
@@ -17,10 +18,17 @@ export interface CustomField {
   id: number
 }
 
+export interface CreateAttributeGroupReq {
+  group_name: string
+  model_uid: string
+}
+
 export interface AttributeGroup {
   group_name: string
   group_id: number
   expanded: boolean
+  index: number
+  total: number
   attributes: Attribute[]
 }
 
@@ -41,5 +49,5 @@ export type listAttributeFieldData = {
 }
 
 export type listAttributesResponseData = {
-  ags: AttributeGroup[]
+  attribute_groups: AttributeGroup[]
 }

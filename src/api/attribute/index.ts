@@ -37,3 +37,10 @@ export function ListAttributeFieldApi(modelUid: string) {
     data: { model_uid: modelUid }
   })
 }
+
+export function createAttributeGroupApi(data: attribute.CreateAttributeGroupReq) {
+  return instance.post<number>({
+    url: "attribute/group/create",
+    data: data
+  })
+}
