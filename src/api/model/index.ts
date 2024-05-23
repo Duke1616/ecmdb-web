@@ -39,3 +39,11 @@ export function deleteModelApi(model_uid: string) {
     data: { model_uid: model_uid }
   })
 }
+
+/** 删除模型分组 */
+export function deleteModelGroupApi(id: number) {
+  return instance.post<number>({
+    url: "model/group/delete",
+    data: { id: id }
+  })
+}

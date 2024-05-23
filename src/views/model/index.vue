@@ -25,7 +25,19 @@
     </div>
     <div class="model-groups">
       <div v-for="group in filterData" :key="group.group_id" class="model-group">
-        <h3>{{ group.group_name }}</h3>
+        <div class="btn-group-cell">
+          <h3 @mouseenter="toggleButton(group.group_id)" @mouseleave="hideButton()">
+            {{ group.group_name }}
+          </h3>
+          <div
+            v-if="buttonActive === group.group_id"
+            @mouseenter="showButton(group.group_id)"
+            @mouseleave="hideButton()"
+          >
+            <el-button text size="default" type="primary" :icon="Delete" @click="handleDeleteModelGroup(group)" />
+          </div>
+        </div>
+
         <div class="model-cards">
           <el-row :gutter="20">
             <el-col
@@ -69,7 +81,7 @@
     </div>
     <!-- 新增模型 -->
     <el-dialog v-model="dialogModelVisible" :title="'新增模型'" @closed="resetForm" width="30%">
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
         <el-form-item prop="group_id" label="所属分组">
           <el-select v-model="formData.group_id" placeholder="请选择">
             <el-option
@@ -111,10 +123,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
-import { CirclePlus, Search } from "@element-plus/icons-vue"
-import { CreateModelApi, CreateModelGroupApi } from "@/api/model"
-import { type FormInstance, type FormRules, ElMessage } from "element-plus"
+import { h, ref, watch } from "vue"
+import { CirclePlus, Search, Delete } from "@element-plus/icons-vue"
+import { CreateModelApi, CreateModelGroupApi, deleteModelGroupApi } from "@/api/model"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq } from "@/api/model/types/model"
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
@@ -126,6 +138,40 @@ const modelStatus = ref<"all" | "open" | "close">("all")
 const loading = ref<boolean>(false)
 const { paginationData } = usePagination()
 const router = useRouter()
+
+// 组鼠标移动事件
+const buttonActive = ref<number | null>(null)
+const toggleButton = (groupId: number) => {
+  if (buttonActive.value === groupId) {
+    buttonActive.value = null
+  } else {
+    buttonActive.value = groupId
+  }
+}
+const showButton = (groupId: number) => {
+  buttonActive.value = groupId
+}
+const hideButton = () => {
+  buttonActive.value = null
+}
+const handleDeleteModelGroup = (item: any) => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除模型: "),
+      h("i", { style: "color: red" }, `${item.group_name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteModelGroupApi(item.group_id).then(() => {
+      ElMessage.success("删除成功")
+      getModelsData()
+    })
+  })
+}
 
 const DEFAULT_FORM_DATA: CreateModelReq = {
   name: "",
@@ -269,6 +315,21 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], getMode
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
+}
+
+.container {
+  position: relative;
+}
+
+.action-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.btn-group-cell {
+  display: flex;
+  align-items: center;
 }
 
 .search-container {

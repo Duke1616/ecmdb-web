@@ -83,7 +83,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/model/index",
     meta: {
       title: "模型管理",
-      svgIcon: "link"
+      elIcon: "Grid"
     },
     children: [
       {
