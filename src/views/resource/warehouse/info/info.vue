@@ -30,6 +30,7 @@ import { ref } from "vue"
 import { useRoute } from "vue-router"
 import resourceDesc from "./c-cnps/desc.vue"
 import resourceRelation from "./c-cnps/relation-graph.vue"
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
 import resourceList from "./c-cnps/relation-list.vue"
 import router from "@/router"
 
@@ -40,6 +41,9 @@ const resourceId = route.query.id as string
 
 const activeName = ref<string>("resource-desc")
 const goBack = () => {
+  console.log("返回了")
   router.go(-1)
 }
 </script>
+
+<style lang="scss" scoped></style>

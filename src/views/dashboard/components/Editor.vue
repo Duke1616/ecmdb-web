@@ -1,6 +1,6 @@
 <template>
   <div class="app-container center">
-    <el-empty description="欢迎来到 editor 角色专属首页" />
+    <el-empty description="欢迎来到 ECMDB 资产管理系统" />
   </div>
 </template>
 

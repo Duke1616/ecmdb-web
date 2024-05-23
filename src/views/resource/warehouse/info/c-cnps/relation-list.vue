@@ -19,7 +19,6 @@
           <span class="collapse-title">{{ displayMap.get(item.relation_name) }} ({{ item.total }})</span>
         </template>
         <el-table border :data="item.resources">
-          <el-table-column prop="name" label="名称" align="left" />
           <el-table-column
             v-for="field in item.display_field"
             :key="field.id"
@@ -75,7 +74,6 @@
     </el-form>
     <el-table border :data="resourcesData">
       <el-table-column type="selection" width="50" align="center" />
-      <el-table-column prop="name" label="名称" align="center" />
       <el-table-column
         v-for="item in visibleColumns"
         :key="item.id"
@@ -105,7 +103,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch, h, watchEffect } from "vue"
+import { computed, h, onMounted, ref, watch } from "vue"
 import {
   CreateResourceRelationApi,
   ListModelRelationApi,
@@ -140,13 +138,14 @@ const handlerDrawerVisible = () => {
 
 // 新增关联 selected 信息
 const relationName = ref<string>("")
-const fieldName = ref<string>("名称")
-const condition = ref<string>("包含")
+const fieldName = ref<string>("name")
+const condition = ref<string>("等于")
 
 // 计算出需要展示的字段
 const dynamicDisplayColumns = ref<string>("")
 const handleFieldName = (value: string) => {
   dynamicDisplayColumns.value = value
+  fieldName.value = "name"
   console.log("dynamicDisplayColumns", dynamicDisplayColumns.value)
 }
 const visibleColumns = computed(() => {
@@ -235,7 +234,7 @@ const reverseDisplayLabel = () => {
 
 // ** 获取资产列表 */
 const resourcesData = ref<Resource[]>([])
-const listResourceByModelUid = (value: string) => {
+const listResourceByModelUid = async (value: string) => {
   // 判断是否需要 filter 过滤条件
   // 创建关联时候需要传入的参数
   relationName.value = value
@@ -246,15 +245,17 @@ const listResourceByModelUid = (value: string) => {
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
-    .then(({ data }) => {
+    .then(async ({ data }) => {
       // TODO 当关联成功，重新请求避免多次调用获取模型字段接口
       const src: string = value.split("_")[0]
       // 判断当前数据是正向还是反向
       if (src === props.modelUid) {
-        listAttributeFields(value.split("_")[2])
+        await listAttributeFields(value.split("_")[2])
       } else {
-        listAttributeFields(src)
+        await listAttributeFields(src)
       }
+
+      handleFieldName(fieldName.value)
       resourcesData.value = data.resources
       paginationData.total = data.total
     })
@@ -405,6 +406,7 @@ const listAttributeFields = async (modelUid: string) => {
   await ListAttributeFieldApi(modelUid)
     .then(({ data }) => {
       attributeFiledsData.value = data.attribute_fields
+
       console.log("attribute result", attributeFiledsData.value)
     })
     .catch((error) => {
@@ -529,35 +531,40 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
   listResourceByModelUid(relationName.value)
 })
 
-watchEffect((onInvalidate) => {
-  const unwatch = watch(
-    () => activeNames.value,
-    (newActiveNames, oldActiveNames) => {
-      if (allPanelsExpanded.value) {
-        // 如果 allPanelsExpanded 为 true，则更新所有面板
-        assetsData.value!.forEach((item) => {
-          listResourceByIds(item.model_uid, item.resource_ids)
-        })
-      } else {
-        // 否则只处理新激活的面板
-        const newlyActivated = newActiveNames.filter((name) => !oldActiveNames.includes(name))
-        if (newlyActivated.length > 0) {
-          const activeName = newlyActivated[0] // 只处理第一个新激活的面板
-          console.log("当前点击的面板", activeName)
+// watchEffect((onInvalidate) => {
+watch(
+  () => activeNames.value,
+  (newActiveNames, oldActiveNames) => {
+    if (newActiveNames.length !== assetsData.value!.length) {
+      allPanelsExpanded.value = false
+    } else {
+      allPanelsExpanded.value = true
+    }
+    if (allPanelsExpanded.value) {
+      // 如果 allPanelsExpanded 为 true，则更新所有面板
 
-          const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-          if (activeItem) {
-            listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-          }
+      assetsData.value!.forEach((item) => {
+        if (!oldActiveNames.includes(item.relation_name)) {
+          listResourceByIds(item.model_uid, item.resource_ids)
+        }
+      })
+    } else {
+      allPanelsExpanded.value = false
+      // 否则只处理新激活的面板
+      const newlyActivated = newActiveNames.filter((name) => !oldActiveNames.includes(name))
+      console.log("newlyActivated", newlyActivated)
+      if (newlyActivated.length > 0) {
+        const activeName = newlyActivated[0] // 只处理第一个新激活的面板
+        console.log("当前点击的面板", activeName)
+
+        const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
+        if (activeItem) {
+          listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
         }
       }
     }
-  )
-
-  onInvalidate(() => {
-    unwatch()
-  })
-})
+  }
+)
 </script>
 
 <style scoped>
