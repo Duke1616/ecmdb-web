@@ -1,0 +1,16 @@
+version: "3"
+services:
+  ecmdb-web:
+    restart: always
+    container_name: ecmdb-web
+    image: duke1616/ecmdb-web:deploy-v1.0.0
+    ports:
+      - "8888:8000"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+networks:
+  default:
+    external:
+      name: sre
