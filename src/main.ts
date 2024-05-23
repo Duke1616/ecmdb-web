@@ -3,7 +3,6 @@ import { createApp } from "vue"
 import App from "@/App.vue"
 import store from "@/store"
 import router from "@/router"
-import Avue from "@smallwei/avue"
 
 import "@/router/permission"
 // load
@@ -18,7 +17,6 @@ import "element-plus/theme-chalk/dark/css-vars.css"
 import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@/styles/index.scss"
-import "@smallwei/avue/lib/index.css"
 
 const app = createApp(App)
 
@@ -29,7 +27,7 @@ loadSvg(app)
 /** 加载自定义指令 */
 loadDirectives(app)
 
-app.use(Avue).use(store).use(router)
+app.use(store).use(router)
 router.isReady().then(() => {
   app.mount("#app")
 })

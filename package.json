@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
-    "@smallwei/avue": "^3.4.1",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
+    "@vue/runtime-dom": "^3.4.27",
     "axios": "^1.6.8",
     "dayjs": "^1.11.11",
     "element-plus": "^2.7.2",
@@ -48,7 +48,6 @@
     "@types/node": "^20.12.5",
     "@types/nprogress": "^0.2.3",
     "@types/path-browserify": "^1.0.2",
-    "@types/smallwei__avue": "^3.0.5",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/eslint-config-typescript": "^13.0.0",

@@ -1,10 +1,9 @@
 import { localCache } from "@/utils/cache"
-import { BASE_URL, TIME_OUT } from "../config"
 import HyRequest from "@/utils/request"
 
 const instance = new HyRequest({
-  baseURL: BASE_URL,
-  timeout: TIME_OUT,
+  baseURL: import.meta.env.VITE_BASE_API,
+  timeout: 5000,
   interceptors: {
     requestInterceptor: (config) => {
       const token = localCache.getCache("access_token")
