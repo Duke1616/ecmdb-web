@@ -1,8 +1,8 @@
 <script lang="ts" setup>
-import { ref } from "vue"
+import { Ref, ref } from "vue"
 import { useWatermark } from "@/hooks/useWatermark"
 
-const localRef = ref<HTMLElement | null>(null)
+const localRef = ref(document.body) as Ref<HTMLElement>
 const { setWatermark, clearWatermark } = useWatermark(localRef)
 const { setWatermark: setGlobalWatermark, clearWatermark: clearGlobalWatermark } = useWatermark()
 </script>

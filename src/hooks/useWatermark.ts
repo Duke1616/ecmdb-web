@@ -30,13 +30,14 @@ const defaultConfig = {
 }
 
 /** body 元素 */
-const bodyEl = ref<HTMLElement>(document.body)
+export const bodyEl = ref(document.body) as Ref<HTMLElement>
 
 /**
  * 创建水印
  * 1. 可以选择传入挂载水印的容器元素，默认是 body
  * 2. 做了水印防御，能有效防御别人打开控制台删除或隐藏水印
  */
+
 export function useWatermark(parentEl: Ref<HTMLElement | null> = bodyEl) {
   /** 备份文本 */
   let backupText: string
