@@ -267,6 +267,7 @@ const fieldRules: FormRules = {
 }
 
 const resetForm = () => {
+  editDrawer.value = !editDrawer.value
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }

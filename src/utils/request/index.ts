@@ -39,49 +39,36 @@ class HyRequest {
     )
     // 所有实例的响应拦截
     this.instance.interceptors.response.use(
-      (config) => {
+      (response) => {
         // 返回结果包括了响应数据和响应头信息
-        return config
+        // apiData 是 api 返回的数据
+        const apiData = response.data
+        // 二进制数据则直接返回
+        const responseType = response.request?.responseType
+        if (responseType === "blob" || responseType === "arraybuffer") return apiData
+        // 这个 code 是和后端约定的业务 code
+        const code = apiData.code
+        // 如果没有 code, 代表这不是项目后端开发的 api
+        if (code === undefined) {
+          ElMessage.error("非本系统的接口")
+          return Promise.reject(new Error("非本系统的接口"))
+        }
+        switch (code) {
+          case 0:
+            // 本系统采用 code === 0 来表示没有业务错误
+            return response
+          case 401:
+            // Token 过期时
+            return response
+          default:
+            // 不是正确的 code
+            ElMessage.error(apiData.msg || "Error")
+            return Promise.reject(new Error("Error"))
+        }
       },
       (error) => {
-        const status = get(error, "response.status")
-        switch (status) {
-          case 400:
-            error.message = "请求错误"
-            break
-          case 401:
-            break
-          case 403:
-            error.message = "拒绝访问"
-            break
-          case 404:
-            error.message = "请求地址出错"
-            break
-          case 408:
-            error.message = "请求超时"
-            break
-          case 500:
-            error.message = "服务器内部错误"
-            break
-          case 501:
-            error.message = "服务未实现"
-            break
-          case 502:
-            error.message = "网关错误"
-            break
-          case 503:
-            error.message = "服务不可用"
-            break
-          case 504:
-            error.message = "网关超时"
-            break
-          case 505:
-            error.message = "HTTP 版本不受支持"
-            break
-          default:
-            break
-        }
-        ElMessage.error(error.message)
+        const message = get(error, "response.data.msg")
+        ElMessage.error(message)
         return Promise.reject(error)
       }
     )
@@ -94,7 +81,7 @@ class HyRequest {
     message: string
     headers: any
   }> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       // 单独的请求拦截
       if (config.interceptorsToOnce?.requestInterceptor) {
         config = config.interceptorsToOnce.requestInterceptor(config)
@@ -107,12 +94,10 @@ class HyRequest {
           if (config.interceptorsToOnce?.responseInterceptor) {
             res = config.interceptorsToOnce.responseInterceptor(res)
           }
-
-          // 返回结果
           resolve(res.data)
         })
         .catch((error) => {
-          resolve(error.response ? error.response.data : error)
+          reject(error.response ? error.response.data : error)
         })
     })
   }
