@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { useLayoutMode } from "@/hooks/useLayoutMode"
-import logo from "@/assets/layouts/logo.png?url"
-import logoText1 from "@/assets/layouts/logo-text-1.png?url"
-import logoText2 from "@/assets/layouts/logo-text-2.png?url"
+import logo from "@/assets/layouts/logo-纯图形.png?url"
+import logoText1 from "@/assets/layouts/logo-标准.png?url"
+import logoText2 from "@/assets/layouts/logo-纯图形.png?url"
 
 interface Props {
   collapse?: boolean
@@ -40,7 +40,8 @@ const { isLeft, isTop } = useLayoutMode()
     display: none;
   }
   .layout-logo-text {
-    height: 100%;
+    width: 100%;
+    transform: scale(0.8);
     vertical-align: middle;
   }
 }

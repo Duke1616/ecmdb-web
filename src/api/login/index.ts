@@ -9,10 +9,6 @@ export function loginApi(data: Login.LoginRequestData) {
     method: "post",
     data
   })
-  // .then((response) => {
-  //   response.data.token = response.headers["x-refresh-token"]
-  //   return response // 返回原始的响应对象
-  // })
 }
 
 /** 获取用户详情 */

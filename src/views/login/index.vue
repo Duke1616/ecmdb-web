@@ -64,7 +64,7 @@ const handleLogin = () => {
     <Owl :close-eyes="isFocus" />
     <div class="login-card">
       <div class="title">
-        <img src="@/assets/layouts/logo-text-2.png" />
+        <img src="@/assets/layouts/logo-标准.png" />
       </div>
       <div class="content">
         <el-form ref="loginFormRef" :model="loginFormData" :rules="loginFormRules" @keyup.enter="handleLogin">
@@ -125,7 +125,8 @@ const handleLogin = () => {
       align-items: center;
       height: 150px;
       img {
-        height: 100%;
+        width: 100%;
+        transform: scale(0.7);
       }
     }
     .content {
