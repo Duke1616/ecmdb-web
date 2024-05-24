@@ -41,7 +41,7 @@ const { isLeft, isTop } = useLayoutMode()
   }
   .layout-logo-text {
     width: 100%;
-    transform: scale(0.8);
+    transform: scale(0.65);
     vertical-align: middle;
   }
 }
