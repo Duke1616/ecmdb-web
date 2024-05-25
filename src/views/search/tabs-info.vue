@@ -23,6 +23,7 @@
 <script lang="ts" setup>
 import { ref } from "vue"
 import { Back } from "@element-plus/icons-vue"
+import { TabsPaneContext } from "element-plus"
 const input = ref("")
 const search = () => {
   console.log(input.value)
