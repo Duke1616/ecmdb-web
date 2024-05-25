@@ -48,12 +48,21 @@ export const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: "dashboard",
-        component: () => import("@/views/dashboard/index.vue"),
+        component: () => import("@/views/search/search.vue"),
         name: "Dashboard",
         meta: {
           title: "全局搜索",
           svgIcon: "search",
           affix: true
+        }
+      },
+      {
+        path: "/dashboard/search",
+        component: () => import("@/views/search/tabs-info.vue"),
+        name: "search",
+        meta: {
+          title: "搜索列表",
+          hidden: true
         }
       }
     ]
