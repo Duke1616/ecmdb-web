@@ -44,3 +44,9 @@ export interface findGraphReq {
   resource_id: number
   resource_name: string
 }
+
+export interface globalSearchData {
+  model_uid: string
+  total: number
+  data: any[]
+}

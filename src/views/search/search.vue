@@ -1,64 +1,54 @@
 <template>
   <div class="centered-container">
-    <el-input clearable v-model="input" placeholder="请输入搜索内容">
+    <el-input clearable v-model="inputSearch" placeholder="请输入搜索内容">
       <template #append>
         <el-button type="primary" @click="search">搜索</el-button>
       </template>
     </el-input>
     <div class="search-title">
-      <h3>搜索</h3>
+      <h4>搜索历史</h4>
       <el-button type="primary" text class="button-clear" @click="removeHistory">清除历史记录</el-button>
     </div>
     <div class="tag-container">
-      <el-button v-for="(history, index) in searchHistory" :key="index">{{ history }}</el-button>
+      <el-button v-for="(history, index) in searchHistory" :key="index" @click="handlerTagClick(history)">{{
+        history
+      }}</el-button>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
+import { ElMessage } from "element-plus"
+import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
-const router = useRouter()
+import { useSearchStore } from "@/store/modules/search"
 
-const input = ref("")
-const searchHistory = ref<string[]>([
-  "张三",
-  "李四",
-  "王五",
-  "张三",
-  "李四",
-  "王五",
-  "张三",
-  "李四",
-  "王五",
-  "张三",
-  "李四",
-  "王五",
-  "张三",
-  "李四",
-  "王五",
-  "张三"
-])
-console.log(input.value)
+const router = useRouter()
+const inputSearch = ref("")
+const searchHistory = computed(() => useSearchStore().historySearchData)
 
 const search = () => {
-  if (input.value.trim() !== "") {
-    searchHistory.value.push(input.value.trim())
-  }
-
-  if (input.value.trim() === "") {
+  if (inputSearch.value.trim() === "") {
+    ElMessage.error("搜索内容不成为空")
     return
   }
 
+  useSearchStore().addHistorySearch(inputSearch.value.trim())
   router.push({
     path: "/dashboard/search",
-    query: { text: input.value }
+    query: { text: inputSearch.value }
   })
-  input.value = ""
 }
 
 const removeHistory = () => {
-  searchHistory.value = []
+  useSearchStore().clearHistorySearch()
+}
+
+const handlerTagClick = (history: string) => {
+  router.push({
+    path: "/dashboard/search",
+    query: { text: history }
+  })
 }
 </script>
 

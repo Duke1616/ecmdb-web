@@ -41,7 +41,6 @@ const resourceId = route.query.id as string
 
 const activeName = ref<string>("resource-desc")
 const goBack = () => {
-  console.log("返回了")
   router.go(-1)
 }
 </script>

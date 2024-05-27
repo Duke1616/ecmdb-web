@@ -50,10 +50,18 @@ export function listResourceByIdsApi(modelUid: string, resourceIds: number[]) {
   })
 }
 
-// 查询拓扑图
+/** 查询拓扑图 */
 export function findGraphApi(data: resource.findGraphReq) {
   return instance.post<RGJsonData>({
     url: "resource/relation/graph",
     data: data
+  })
+}
+
+/** 全局检索 */
+export function globalSearchApi(text: string) {
+  return instance.post<resource.globalSearchData[]>({
+    url: "resource/search",
+    data: { text: text }
   })
 }
