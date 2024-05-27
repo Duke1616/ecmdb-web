@@ -11,7 +11,7 @@ export interface detailResource {
   model_uid: string
 }
 
-export interface canBeRelationReq {
+export interface canBeRelationFilterReq {
   /** 跳过条数 */
   offset: number
   /** 查询条数 */
@@ -19,6 +19,9 @@ export interface canBeRelationReq {
   resource_id: number
   model_uid: string
   relation_name: string
+  filter_name?: string
+  filter_condition?: string
+  filter_input?: string
 }
 
 export interface Resource {

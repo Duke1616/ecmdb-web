@@ -47,7 +47,7 @@
   <el-drawer class="drawer-container" v-model="drawerVisible" title="新增关联" size="40%">
     <el-form>
       <el-form-item label="关联列表">
-        <el-select v-model="relationName" placeholder="关联模型" style="width: 42%" @change="listResourceByModelUid">
+        <el-select v-model="relationName" placeholder="关联模型" style="width: 42%" @change="handlerChangeRelationList">
           <el-option
             v-for="item in modelRelationData"
             :key="item.id"
@@ -68,8 +68,8 @@
         <el-select v-model="condition" class="condition" placeholder="条件" @change="handleCondition">
           <el-option v-for="item in options" :key="item.label" :label="item.label" :value="item.value" />
         </el-select>
-        <el-input class="input-content" placeholder="请输入内容" />
-        <el-button class="search-button" type="primary">搜索</el-button>
+        <el-input class="input-content" clearable v-model="inputSearch" placeholder="请输入搜索内容" />
+        <el-button class="search-button" type="primary" @click="handlerFilterSearchClick()">搜索</el-button>
       </el-form-item>
     </el-form>
     <el-table border :data="resourcesData">
@@ -113,8 +113,8 @@ import {
 } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { canBeRelatedResourceApi, listResourceByIdsApi } from "@/api/resource"
-import { type Resource } from "@/api/resource/types/resource"
+import { canBeRelatedFilterResourceApi, listResourceByIdsApi } from "@/api/resource"
+import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
 import { usePagination } from "@/hooks/usePagination"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
@@ -131,23 +131,22 @@ const drawerVisible = ref<boolean>(false)
 // ** 新建抽屉，第一次打开，初始化数据 */
 const firstRelationName = ref<string>("")
 const handlerDrawerVisible = () => {
-  // reverseDisplayLabel()
   drawerVisible.value = true
-  listResourceByModelUid(firstRelationName.value)
+  canBeRelatedFilterResource(firstRelationName.value)
 }
 
 // 新增关联 selected 信息
 const relationName = ref<string>("")
 const fieldName = ref<string>("name")
-const condition = ref<string>("等于")
+const condition = ref<string>("contains")
+const inputSearch = ref<string>("")
 
 // 计算出需要展示的字段
 const dynamicDisplayColumns = ref<string>("")
 const handleFieldName = (value: string) => {
   dynamicDisplayColumns.value = value
-  fieldName.value = "name"
-  console.log("dynamicDisplayColumns", dynamicDisplayColumns.value)
 }
+
 const visibleColumns = computed(() => {
   return attributeFiledsData.value.filter((item) => dynamicDisplayColumns.value.includes(item.field_uid))
 })
@@ -155,16 +154,16 @@ const visibleColumns = computed(() => {
 const handleCondition = () => {}
 const options = [
   {
-    value: "包含",
-    label: "包含"
+    label: "包含",
+    value: "contains"
   },
   {
-    value: "等于",
-    label: "等于"
+    label: "等于",
+    value: "equal"
   },
   {
-    value: "不等于",
-    label: "不等于"
+    label: "不等于",
+    value: "not_equal"
   }
 ]
 
@@ -232,19 +231,38 @@ const reverseDisplayLabel = () => {
   })
 }
 
+const handlerChangeRelationList = (value: string) => {
+  fieldName.value = "name"
+  inputSearch.value = ""
+  isFilter.value = false
+  canBeRelatedFilterResource(value)
+}
+
+const isFilter = ref<boolean>(false)
+const handlerFilterSearchClick = () => {
+  isFilter.value = true
+  canBeRelatedFilterResource(relationName.value)
+}
+
 // ** 获取资产列表 */
 const resourcesData = ref<Resource[]>([])
-const listResourceByModelUid = async (value: string) => {
-  // 判断是否需要 filter 过滤条件
-  // 创建关联时候需要传入的参数
+const canBeRelatedFilterResource = async (value: string) => {
   relationName.value = value
-  canBeRelatedResourceApi({
+  const requestOptions: canBeRelationFilterReq = {
     model_uid: props.modelUid,
     resource_id: parseInt(props.resourceId, 10),
     relation_name: value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
-  })
+  }
+
+  if (inputSearch.value && isFilter.value === true) {
+    requestOptions.filter_name = fieldName.value
+    requestOptions.filter_condition = condition.value
+    requestOptions.filter_input = inputSearch.value
+  }
+
+  canBeRelatedFilterResourceApi(requestOptions)
     .then(async ({ data }) => {
       // TODO 当关联成功，重新请求避免多次调用获取模型字段接口
       const src: string = value.split("_")[0]
@@ -446,7 +464,7 @@ const handlerCreateRealtion = (row: Resource) => {
       relation_name: relationName.value
     }).then(() => {
       ElMessage.success("关联成功")
-      listResourceByModelUid(relationName.value)
+      canBeRelatedFilterResource(relationName.value)
 
       // 判断是否存在折叠面板是否打开，如果打开，则更新数据、或者手动写入数据
       listRelatedAssetsData()
@@ -494,26 +512,6 @@ const handlerExpandAll = () => {
   allPanelsExpanded.value = !allPanelsExpanded.value
 }
 
-// const handleCollapseChange = (value: any) => {
-//   console.log("选择", value)
-//   const activeNames = Array.isArray(value) ? value : [value]
-
-//   // console.log("选择", activeName)
-
-//   activeNames.forEach((activeName) => {
-//     console.log("选择", activeName)
-
-//     const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-//     if (activeItem) {
-//       listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-//     }
-//   })
-//   // const activeItem = assetsData.value!.find((item) => item.relation_name === activeName)
-//   // if (activeItem) {
-//   //   listResourceByIds(activeItem.model_uid, activeItem.resource_ids)
-//   // }
-// }
-
 onMounted(() => {
   listModelRelationData()
 })
@@ -528,7 +526,7 @@ watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTyp
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
-  listResourceByModelUid(relationName.value)
+  canBeRelatedFilterResource(relationName.value)
 })
 
 // watchEffect((onInvalidate) => {

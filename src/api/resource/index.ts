@@ -34,8 +34,8 @@ export function deleteResourceApi(id: number) {
   })
 }
 
-/** 获取可关联的数据 */
-export function canBeRelatedResourceApi(data: resource.canBeRelationReq) {
+/** 获取可关联的数据, 增加过滤条件 */
+export function canBeRelatedFilterResourceApi(data: resource.canBeRelationFilterReq) {
   return instance.post<resource.ResourceData>({
     url: "resource/relation/can_be_related",
     data: data
