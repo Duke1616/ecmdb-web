@@ -70,11 +70,9 @@ class HyRequest {
         console.log("error", error)
         if (error.response.data !== "") {
           const message = get(error, "response.data.msg")
-          console.log("到这里了1")
           ElMessage.error(message)
         } else {
           const status = get(error, "response.status")
-          console.log("到这里了2")
           switch (status) {
             case 400:
               error.message = "请求错误"

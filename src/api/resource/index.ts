@@ -58,6 +58,22 @@ export function findGraphApi(data: resource.findGraphReq) {
   })
 }
 
+/** 拓扑图 Left 方向扩展 */
+export function findLeftGraphApi(data: resource.findGraphReq) {
+  return instance.post<RGJsonData>({
+    url: "resource/relation/graph/add/left",
+    data: data
+  })
+}
+
+/** 拓扑图 Right 方向扩展 */
+export function findRightGraphApi(data: resource.findGraphReq) {
+  return instance.post<RGJsonData>({
+    url: "resource/relation/graph/add/right",
+    data: data
+  })
+}
+
 /** 全局检索 */
 export function globalSearchApi(text: string) {
   return instance.post<resource.globalSearchData[]>({

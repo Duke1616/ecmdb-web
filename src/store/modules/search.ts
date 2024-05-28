@@ -7,7 +7,9 @@ export const useSearchStore = defineStore(
     const historySearchData = ref<string[]>([])
 
     const addHistorySearch = (data: string) => {
-      historySearchData.value.push(data)
+      if (!historySearchData.value.includes(data)) {
+        historySearchData.value.push(data)
+      }
     }
 
     const clearHistorySearch = () => {

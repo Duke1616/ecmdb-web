@@ -21,7 +21,8 @@
 import { ref, onMounted } from "vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGJsonData, RGNode, RGOptions, RGUserEvent, RelationGraphComponent } from "relation-graph-vue3"
-import { findGraphApi } from "@/api/resource"
+import { findLeftGraphApi, findGraphApi, findRightGraphApi } from "@/api/resource"
+import { findGraphReq } from "@/api/resource/types/resource"
 
 interface Props {
   modelUid: string
@@ -77,7 +78,7 @@ const setGraphData = async () => {
 }
 
 const resourceGraphData = ref<RGJsonData>()
-const findResourceGraph = () => {
+const findRootResourceGraph = () => {
   findGraphApi({
     model_uid: props.modelUid,
     resource_id: parseInt(props.resourceId, 10),
@@ -110,30 +111,37 @@ const onNodeExpand = (node: RGNode, $event: RGUserEvent): void => {
   })
 }
 
-const addResourceGraph = async (modelUid: string, resourceId: number, resourceName: string) => {
+const addResourceGraph = async (node: RGNode) => {
   const addResourceGraphData = ref<RGJsonData | undefined>()
+  const requestOptions: findGraphReq = {
+    model_uid: node.data!.model_uid,
+    resource_id: parseInt(node.id, 10),
+    resource_name: node.text!
+  }
+
+  const api =
+    node.expandHolderPosition === "left" ? findLeftGraphApi(requestOptions) : findRightGraphApi(requestOptions)
   try {
-    const { data } = await findGraphApi({
-      model_uid: modelUid,
-      resource_id: resourceId,
-      resource_name: resourceName
-    })
+    const { data } = await api
     addResourceGraphData.value = data
   } catch (error) {
+    g_loading.value = false
     addResourceGraphData.value = undefined
   }
+
   return addResourceGraphData.value
 }
 
 const loadChildNodesFromRemoteServer = async (node: RGNode, callback: (new_data: RGJsonData) => void) => {
-  const resource = await addResourceGraph(node.data!.model_uid, parseInt(node.id, 10), node.text!)
+  const resource = await addResourceGraph(node)
+
   if (resource) {
     callback(resource)
   }
 }
 
 onMounted(() => {
-  findResourceGraph()
+  findRootResourceGraph()
 })
 </script>
 

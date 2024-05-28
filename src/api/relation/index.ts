@@ -62,6 +62,20 @@ export function ListRelatedAssetsApi(data: Relation.listRelatedAssetsReq) {
   })
 }
 
+export function ListRelatedAssetsSrcApi(data: Relation.listRelatedAssetsReq) {
+  return instance.post<Relation.relatedAssetsData[]>({
+    url: "resource/relation/pipeline/src",
+    data: data
+  })
+}
+
+export function ListRelatedAssetsDstApi(data: Relation.listRelatedAssetsReq) {
+  return instance.post<Relation.relatedAssetsData[]>({
+    url: "resource/relation/pipeline/dst",
+    data: data
+  })
+}
+
 export function deleteResourceRelationApi(data: Relation.deleteResourceRelationReq) {
   return instance.post<number>({
     url: "resource/relation/delete",
