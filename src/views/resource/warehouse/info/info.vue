@@ -18,7 +18,12 @@
           <resourceList :model-uid="modelUid" :resource-id="resourceId" />
         </el-tab-pane>
         <el-tab-pane lazy label="关联拓扑图" name="resource-relation">
-          <resourceRelation :model-uid="modelUid" :resource-id="resourceId" :resource-name="resourceName" />
+          <resourceRelation
+            :model-uid="modelUid"
+            :resource-id="resourceId"
+            :activeName="activeName"
+            :resource-name="resourceName"
+          />
         </el-tab-pane>
       </el-tabs>
     </div>

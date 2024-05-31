@@ -18,7 +18,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGJsonData, RGNode, RGOptions, RGUserEvent, RelationGraphComponent } from "relation-graph-vue3"
 import { findLeftGraphApi, findGraphApi, findRightGraphApi } from "@/api/resource"
@@ -28,6 +28,7 @@ interface Props {
   modelUid: string
   resourceId: string
   resourceName: string
+  activeName: string
 }
 const props = defineProps<Props>()
 
@@ -140,6 +141,14 @@ const loadChildNodesFromRemoteServer = async (node: RGNode, callback: (new_data:
   }
 }
 
+watch(
+  () => props.activeName,
+  (newval) => {
+    if (newval === "resource-relation") {
+      findRootResourceGraph()
+    }
+  }
+)
 onMounted(() => {
   findRootResourceGraph()
 })

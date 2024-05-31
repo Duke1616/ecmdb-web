@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed } from "vue"
+import { computed, watch, ref } from "vue"
 import { useRoute } from "vue-router"
 import { useAppStore } from "@/store/modules/app"
 import { usePermissionStore } from "@/store/modules/permission"
@@ -9,7 +9,7 @@ import Logo from "../Logo/index.vue"
 import { useDevice } from "@/hooks/useDevice"
 import { useLayoutMode } from "@/hooks/useLayoutMode"
 import { getCssVariableValue } from "@/utils"
-
+import lodash from "lodash"
 const v3SidebarMenuBgColor = getCssVariableValue("--v3-sidebar-menu-bg-color")
 const v3SidebarMenuTextColor = getCssVariableValue("--v3-sidebar-menu-text-color")
 const v3SidebarMenuActiveTextColor = getCssVariableValue("--v3-sidebar-menu-active-text-color")
@@ -29,6 +29,22 @@ const activeMenu = computed(() => {
   return activeMenu ? activeMenu : path
 })
 const noHiddenRoutes = computed(() => permissionStore.routes.filter((item) => !item.meta?.hidden))
+const currentroutes = ref<any[]>([])
+console.log("noHiddenRoutes", noHiddenRoutes, route)
+
+watch(
+  () => route,
+  (newval, oldval) => {
+    console.log(newval, oldval)
+    const arr = lodash.filter(noHiddenRoutes.value, { path: newval.path })
+    console.log("0000", arr)
+    currentroutes.value = arr
+  },
+  {
+    immediate: true,
+    deep: true
+  }
+)
 const isCollapse = computed(() => !appStore.sidebar.opened)
 const isLogo = computed(() => isLeft.value && settingsStore.showLogo)
 const backgroundColor = computed(() => (isLeft.value ? v3SidebarMenuBgColor : undefined))
