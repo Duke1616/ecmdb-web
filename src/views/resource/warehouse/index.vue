@@ -64,7 +64,7 @@ const getModelsData = () => {
 
 const handleModelClick = (model: Model) => {
   router.push({
-    path: "/resource/list",
+    path: "/cmdb/resource/list",
     query: { uid: model.uid }
   })
 }

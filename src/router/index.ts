@@ -44,10 +44,10 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/",
     component: Layouts,
-    redirect: "/dashboard",
+    redirect: "/cmdb/dashboard",
     children: [
       {
-        path: "dashboard",
+        path: "/cmdb/dashboard",
         component: () => import("@/views/search/search.vue"),
         name: "Dashboard",
         meta: {
@@ -57,7 +57,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
-        path: "/dashboard/search",
+        path: "/cmdb/dashboard/search",
         component: () => import("@/views/search/tabs-info.vue"),
         name: "search",
         meta: {
@@ -69,7 +69,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/model",
+    path: "/cmdb/model",
     component: Layouts,
     redirect: "/model/index",
     meta: {
@@ -116,12 +116,13 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/resource",
+    path: "/cmdb/resource",
     component: Layouts,
     redirect: "/resource/index",
     meta: {
       title: "资产管理",
-      svgIcon: "link"
+      svgIcon: "link",
+      platforms: ["resource"]
     },
     children: [
       {
@@ -130,7 +131,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "resource-warehouse",
         meta: {
           title: "资产仓库",
-          svgIcon: "unocss"
+          svgIcon: "unocss",
+          platforms: ["cmdb"]
         }
       },
       {

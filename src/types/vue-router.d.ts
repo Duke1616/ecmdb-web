@@ -48,5 +48,10 @@ declare module "vue-router" {
      * 默认为 false，为 true 时代表需要缓存，此时该路由和该页面都需要设置一致的 Name
      */
     keepAlive?: boolean
+    /**
+     * 平台导航
+     * 不同平台需要展示的导航菜单
+     */
+    platforms?: string[]
   }
 }

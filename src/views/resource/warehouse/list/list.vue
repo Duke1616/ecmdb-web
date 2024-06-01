@@ -110,9 +110,8 @@ const formRules: FormRules<CreateResourceReq> = {
 }
 
 const handleIdClick = (resource: Resource) => {
-  console.log("跳转")
   router.push({
-    path: "/resource/info",
+    path: "/cmdb/resource/info",
     query: { model_uid: modelUid, id: resource.id, name: resource.name }
   })
 }

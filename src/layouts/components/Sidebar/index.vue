@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, watch, ref } from "vue"
-import { useRoute } from "vue-router"
+import { RouteRecordRaw, useRoute } from "vue-router"
 import { useAppStore } from "@/store/modules/app"
 import { usePermissionStore } from "@/store/modules/permission"
 import { useSettingsStore } from "@/store/modules/settings"
@@ -9,7 +9,7 @@ import Logo from "../Logo/index.vue"
 import { useDevice } from "@/hooks/useDevice"
 import { useLayoutMode } from "@/hooks/useLayoutMode"
 import { getCssVariableValue } from "@/utils"
-import lodash from "lodash"
+// import lodash from "lodash"
 const v3SidebarMenuBgColor = getCssVariableValue("--v3-sidebar-menu-bg-color")
 const v3SidebarMenuTextColor = getCssVariableValue("--v3-sidebar-menu-text-color")
 const v3SidebarMenuActiveTextColor = getCssVariableValue("--v3-sidebar-menu-active-text-color")
@@ -20,7 +20,6 @@ const route = useRoute()
 const appStore = useAppStore()
 const permissionStore = usePermissionStore()
 const settingsStore = useSettingsStore()
-
 const activeMenu = computed(() => {
   const {
     meta: { activeMenu },
@@ -29,22 +28,6 @@ const activeMenu = computed(() => {
   return activeMenu ? activeMenu : path
 })
 const noHiddenRoutes = computed(() => permissionStore.routes.filter((item) => !item.meta?.hidden))
-const currentroutes = ref<any[]>([])
-console.log("noHiddenRoutes", noHiddenRoutes, route)
-
-watch(
-  () => route,
-  (newval, oldval) => {
-    console.log(newval, oldval)
-    const arr = lodash.filter(noHiddenRoutes.value, { path: newval.path })
-    console.log("0000", arr)
-    currentroutes.value = arr
-  },
-  {
-    immediate: true,
-    deep: true
-  }
-)
 const isCollapse = computed(() => !appStore.sidebar.opened)
 const isLogo = computed(() => isLeft.value && settingsStore.showLogo)
 const backgroundColor = computed(() => (isLeft.value ? v3SidebarMenuBgColor : undefined))
@@ -63,6 +46,85 @@ const tipLineWidth = computed(() => {
 const hiddenScrollbarVerticalBar = computed(() => {
   return isTop.value ? "none" : "block"
 })
+
+// const hasPlatformNavigation = (platforms: string[], route: RouteRecordRaw) => {
+//   const routePlatforms = route.meta?.platforms
+//   return routePlatforms ? platforms.some((item) => routePlatforms.includes(item)) : true
+// }
+
+// const filterPlatformRoutes = (routes: RouteRecordRaw[], path: string) => {
+//   const res: RouteRecordRaw[] = []
+//   routes.forEach((route) => {
+//     const tempRoute = { ...route }
+//     if (hasPlatformNavigation(platforms, tempRoute)) {
+//       if (tempRoute.children) {
+//         tempRoute.children = filterPlatformRoutes(tempRoute.children, platforms)
+//       }
+//       res.push(tempRoute)
+//     }
+//   })
+//   return res
+// }
+
+// const currentroutes = ref<RouteRecordRaw[]>([])
+// console.log("noHiddenRoutes", noHiddenRoutes, route)
+// watch(
+//   () => route,
+//   (newval) => {
+//     // const arr = lodash.filter(noHiddenRoutes.value, { path: newval.path })
+//     console.log(newval.meta.platforms, "platforms")
+//     console.log(newval, "newval")
+//     const tempArr = filterPlatformRoutes(noHiddenRoutes.value, newval.path)
+//     currentroutes.value = tempArr
+//   },
+//   {
+//     immediate: true,
+//     deep: true
+//   }
+// )
+
+const hasPlatformNavigation = (currentPath: string, route: RouteRecordRaw) => {
+  const routePlatforms = route.meta?.platforms
+  if (routePlatforms) {
+    console.log("存在的", routePlatforms)
+    return routePlatforms.includes(currentPath)
+  }
+  // 如果 route.meta.platforms 不存在，则默认允许访问
+  return true
+}
+
+const filterPlatformRoutes = (routes: RouteRecordRaw[], currentPath: string) => {
+  const res: RouteRecordRaw[] = []
+  routes.forEach((route) => {
+    const tempRoute = { ...route }
+    console.log("第一次", tempRoute)
+    console.log("currentPath", currentPath)
+    if (hasPlatformNavigation(currentPath, tempRoute)) {
+      if (tempRoute.children) {
+        tempRoute.children = filterPlatformRoutes(tempRoute.children, currentPath)
+      }
+      res.push(tempRoute)
+    }
+  })
+
+  return res
+}
+
+const currentroutes = ref<RouteRecordRaw[]>([])
+
+watch(
+  () => route,
+  (newval) => {
+    console.log(newval.path)
+    const filteredRoutes = filterPlatformRoutes(noHiddenRoutes.value, newval.path)
+    console.log("filter", filteredRoutes)
+    currentroutes.value = filteredRoutes
+  },
+  {
+    immediate: true,
+    deep: true
+  }
+)
 </script>
 
 <template>

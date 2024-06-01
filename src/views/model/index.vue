@@ -264,7 +264,7 @@ const getModelsData = () => {
 const handleModelClick = (model: Model) => {
   console.log(model)
   router.push({
-    path: "/model/info",
+    path: "/cmdb/model/info",
     query: { uid: model.uid, name: model.name }
   })
 }
@@ -301,7 +301,7 @@ const search = () => {
 const handleIdClick = (modelUid: string) => {
   console.log("跳转")
   router.push({
-    path: "/resource/list",
+    path: "/cmdb/resource/list",
     query: { uid: modelUid }
   })
 }

@@ -76,7 +76,7 @@ const search = () => {
   useSearchStore().addHistorySearch(inputSearch.value.trim())
   if (inputSearch.value.trim() !== "") {
     router.push({
-      path: "/dashboard/search",
+      path: "/cmdb/dashboard/search",
       query: { text: inputSearch.value }
     })
     listGlobalSearchData(inputSearch.value)
@@ -86,7 +86,7 @@ const search = () => {
 
 const goBack = () => {
   router.push({
-    path: "/dashboard"
+    path: "/cmdb/dashboard"
   })
 }
 
@@ -193,9 +193,8 @@ const listAttributeFields = async (modelUid: string) => {
 }
 
 const handlerDetailClick = (row: any) => {
-  console.log(row)
   router.push({
-    path: "/resource/info",
+    path: "/cmdb/resource/info",
     query: { model_uid: row.model_uid, name: row.name, id: row.id }
   })
 }

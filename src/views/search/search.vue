@@ -35,7 +35,7 @@ const search = () => {
 
   useSearchStore().addHistorySearch(inputSearch.value.trim())
   router.push({
-    path: "/dashboard/search",
+    path: "/cmdb/dashboard/search",
     query: { text: inputSearch.value }
   })
 }
@@ -46,7 +46,7 @@ const removeHistory = () => {
 
 const handlerTagClick = (history: string) => {
   router.push({
-    path: "/dashboard/search",
+    path: "/cmdb/dashboard/search",
     query: { text: history }
   })
 }
