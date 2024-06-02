@@ -53,7 +53,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "全局搜索",
           svgIcon: "search",
-          affix: true
+          affix: true,
+          platforms: ["cmdb"]
         }
       },
       {
@@ -63,7 +64,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "搜索列表",
           hidden: true,
-          routers: ["/path1", "/path2", "/path3"]
+          platforms: ["cmdb"]
         }
       }
     ]
@@ -71,10 +72,11 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/cmdb/model",
     component: Layouts,
-    redirect: "/model/index",
+    redirect: "/cmdb/model/index",
     meta: {
       title: "模型管理",
-      elIcon: "Grid"
+      elIcon: "Grid",
+      platforms: ["cmdb"]
     },
     children: [
       {
@@ -83,7 +85,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-index",
         meta: {
           title: "模型资产",
-          svgIcon: "unocss"
+          svgIcon: "unocss",
+          platforms: ["cmdb"]
         }
       },
       {
@@ -92,7 +95,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-info",
         meta: {
           hidden: true,
-          title: "模型详情"
+          title: "模型详情",
+          platforms: ["cmdb"]
         }
       },
       {
@@ -101,7 +105,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-relation",
         meta: {
           title: "关联关系",
-          svgIcon: "link"
+          svgIcon: "link",
+          platforms: ["cmdb"]
         }
       },
       {
@@ -110,7 +115,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-type",
         meta: {
           title: "关联类型",
-          svgIcon: "link"
+          svgIcon: "link",
+          platforms: ["cmdb"]
         }
       }
     ]
@@ -118,11 +124,11 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/cmdb/resource",
     component: Layouts,
-    redirect: "/resource/index",
+    redirect: "/cmdb/resource/index",
     meta: {
       title: "资产管理",
       svgIcon: "link",
-      platforms: ["resource"]
+      platforms: ["cmdb"]
     },
     children: [
       {
@@ -141,7 +147,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "resource-warehouse-list",
         meta: {
           hidden: true,
-          title: "资产列表"
+          title: "资产列表",
+          platforms: ["task"]
         }
       },
       {
@@ -150,7 +157,8 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "resource-warehouse-info",
         meta: {
           hidden: true,
-          title: "资产详情"
+          title: "资产详情",
+          platforms: ["task"]
         }
       }
     ]

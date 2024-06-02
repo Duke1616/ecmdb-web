@@ -47,25 +47,6 @@ const hiddenScrollbarVerticalBar = computed(() => {
   return isTop.value ? "none" : "block"
 })
 
-// const hasPlatformNavigation = (platforms: string[], route: RouteRecordRaw) => {
-//   const routePlatforms = route.meta?.platforms
-//   return routePlatforms ? platforms.some((item) => routePlatforms.includes(item)) : true
-// }
-
-// const filterPlatformRoutes = (routes: RouteRecordRaw[], path: string) => {
-//   const res: RouteRecordRaw[] = []
-//   routes.forEach((route) => {
-//     const tempRoute = { ...route }
-//     if (hasPlatformNavigation(platforms, tempRoute)) {
-//       if (tempRoute.children) {
-//         tempRoute.children = filterPlatformRoutes(tempRoute.children, platforms)
-//       }
-//       res.push(tempRoute)
-//     }
-//   })
-//   return res
-// }
-
 // const currentroutes = ref<RouteRecordRaw[]>([])
 // console.log("noHiddenRoutes", noHiddenRoutes, route)
 // watch(
@@ -83,13 +64,12 @@ const hiddenScrollbarVerticalBar = computed(() => {
 //   }
 // )
 
+/** 不同应用平台的路由 */
 const hasPlatformNavigation = (currentPath: string, route: RouteRecordRaw) => {
   const routePlatforms = route.meta?.platforms
   if (routePlatforms) {
-    console.log("存在的", routePlatforms)
     return routePlatforms.includes(currentPath)
   }
-  // 如果 route.meta.platforms 不存在，则默认允许访问
   return true
 }
 
@@ -97,8 +77,6 @@ const filterPlatformRoutes = (routes: RouteRecordRaw[], currentPath: string) => 
   const res: RouteRecordRaw[] = []
   routes.forEach((route) => {
     const tempRoute = { ...route }
-    console.log("第一次", tempRoute)
-    console.log("currentPath", currentPath)
     if (hasPlatformNavigation(currentPath, tempRoute)) {
       if (tempRoute.children) {
         tempRoute.children = filterPlatformRoutes(tempRoute.children, currentPath)
@@ -115,9 +93,7 @@ const currentroutes = ref<RouteRecordRaw[]>([])
 watch(
   () => route,
   (newval) => {
-    console.log(newval.path)
-    const filteredRoutes = filterPlatformRoutes(noHiddenRoutes.value, newval.path)
-    console.log("filter", filteredRoutes)
+    const filteredRoutes = filterPlatformRoutes(noHiddenRoutes.value, newval.path.split("/")[1])
     currentroutes.value = filteredRoutes
   },
   {
@@ -141,7 +117,7 @@ watch(
         :collapse-transition="false"
         :mode="isTop && !isMobile ? 'horizontal' : 'vertical'"
       >
-        <SidebarItem v-for="route in noHiddenRoutes" :key="route.path" :item="route" :base-path="route.path" />
+        <SidebarItem v-for="route in currentroutes" :key="route.path" :item="route" :base-path="route.path" />
       </el-menu>
     </el-scrollbar>
   </div>
