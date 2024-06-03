@@ -4,6 +4,7 @@ export interface CreateAttributeRequestData {
   field_uid: string
   field_name: string
   field_type: string
+  secure: boolean
   required: boolean
 }
 
@@ -41,6 +42,7 @@ export interface Attribute {
   required: boolean
   display?: boolean
   index?: number
+  secure?: boolean
 }
 
 export type listAttributeFieldData = {

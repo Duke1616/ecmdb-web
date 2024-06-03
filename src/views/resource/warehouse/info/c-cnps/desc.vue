@@ -1,8 +1,8 @@
 <template>
   <el-descriptions class="margin-top" title="详情信息" :column="3" border>
-    <el-descriptions-item label="名称">
+    <!-- <el-descriptions-item label="名称">
       {{ resourceData?.name }}
-    </el-descriptions-item>
+    </el-descriptions-item> -->
     <el-descriptions-item v-for="item in attributeFiledsData" :key="item.id" :label="item.field_name">
       {{ resourceData?.data[item.field_uid] || "null" }}
     </el-descriptions-item>

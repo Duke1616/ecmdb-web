@@ -123,6 +123,9 @@
       <el-form-item label="是否必填" prop="required">
         <el-switch v-model="formData.required" />
       </el-form-item>
+      <el-form-item label="是否加密" prop="secure">
+        <el-switch v-model="formData.secure" />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
         <el-button @click="resetForm()">取消</el-button>
@@ -253,7 +256,8 @@ const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
   field_uid: "",
   field_name: "",
   field_type: "",
-  required: false
+  required: false,
+  secure: false
 }
 const dialogVisible = ref<boolean>(false)
 const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))

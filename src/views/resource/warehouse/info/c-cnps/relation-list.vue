@@ -24,8 +24,17 @@
             :key="field.id"
             :prop="`data.${field.field_uid}`"
             :label="field.field_name"
-            align="left"
-          />
+            align="center"
+          >
+            <template #default="scope">
+              <template v-if="field.secure">
+                <el-button type="primary" size="small" @click="handleSecureClick(scope.row, field)"> 查看 </el-button>
+              </template>
+              <template v-else>
+                {{ scope.row.data[field.field_uid] }}
+              </template>
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button
@@ -113,7 +122,7 @@ import {
 } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { canBeRelatedFilterResourceApi, listResourceByIdsApi } from "@/api/resource"
+import { canBeRelatedFilterResourceApi, findSecureData, listResourceByIdsApi } from "@/api/resource"
 import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
 import { usePagination } from "@/hooks/usePagination"
 import { Attribute } from "@/api/attribute/types/attribute"
@@ -510,6 +519,16 @@ const handlerExpandAll = () => {
     activeNames.value = assetsData.value!.map((item) => item.relation_name)
   }
   allPanelsExpanded.value = !allPanelsExpanded.value
+}
+
+const handleSecureClick = (row: Resource, item: Attribute) => {
+  findSecureData({
+    id: row.id,
+    field_uid: item.field_uid
+  }).then((data) => {
+    row.data[item.field_uid] = data.data
+    item.secure = false
+  })
 }
 
 onMounted(() => {

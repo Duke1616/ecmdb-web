@@ -48,6 +48,11 @@ export interface findGraphReq {
   resource_name: string
 }
 
+export interface findSecureReq {
+  id: number
+  field_uid: string
+}
+
 export interface globalSearchData {
   model_uid: string
   total: number

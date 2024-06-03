@@ -81,3 +81,11 @@ export function globalSearchApi(text: string) {
     data: { text: text }
   })
 }
+
+/** 查看加密数据字段 */
+export function findSecureData(data: resource.findSecureReq) {
+  return instance.post<string>({
+    url: "resource/secure",
+    data: data
+  })
+}

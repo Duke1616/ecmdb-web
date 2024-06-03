@@ -25,7 +25,16 @@
             :prop="`data.${item.field_uid}`"
             :label="item.field_name"
             align="center"
-          />
+          >
+            <template #default="scope">
+              <template v-if="item.secure">
+                <el-button type="primary" size="small" @click="handleSecureClick(scope.row, item)"> 查看 </el-button>
+              </template>
+              <template v-else>
+                {{ scope.row.data[item.field_uid] }}
+              </template>
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
@@ -81,7 +90,7 @@ import { onMounted, ref, watch, h } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
-import { listResourceApi, createResourceApi, deleteResourceApi } from "@/api/resource"
+import { listResourceApi, createResourceApi, deleteResourceApi, findSecureData } from "@/api/resource"
 import { type Resource, type CreateResourceReq } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -200,6 +209,16 @@ const handleDelete = (row: Resource) => {
       ElMessage.success("删除成功")
       listResourceByModelUid()
     })
+  })
+}
+
+const handleSecureClick = (row: Resource, item: Attribute) => {
+  findSecureData({
+    id: row.id,
+    field_uid: item.field_uid
+  }).then((data) => {
+    row.data[item.field_uid] = data.data
+    item.secure = false
   })
 }
 
