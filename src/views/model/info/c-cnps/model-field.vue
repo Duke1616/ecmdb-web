@@ -108,71 +108,6 @@
     </div>
   </el-drawer>
 
-  <!-- 表格排序设置 -->
-  <el-drawer v-model="sortDrawer" class="sort-drawer flex" size="38%" title="表格排序设置">
-    <div class="sort-card-container">
-      <el-card class="sort-card">
-        <VueDraggable
-          v-model="leftList"
-          dragClass="drag"
-          :animation="animationDuration"
-          group="cmdb"
-          ghostClass="ghost"
-          chosenClass="chosen"
-          @start="onStart"
-          @end="onEnd"
-          itemKey="id"
-          class="flex flex-col gap-4 p-0 rounded"
-        >
-          <div v-for="(item, index) in leftList" :key="item.id">
-            <div class="sort-item">
-              <div>
-                <el-text truncated>{{ item.name }}</el-text>
-              </div>
-              <div>
-                <el-icon @click="removeAndToRightList(index, item)"><Right /></el-icon>
-              </div>
-            </div>
-          </div>
-        </VueDraggable>
-      </el-card>
-      <el-card class="sort-card">
-        <VueDraggable
-          v-model="rightList"
-          dragClass="drag"
-          :animation="animationDuration"
-          group="cmdb"
-          ghostClass="ghost"
-          chosenClass="chosen"
-          handle=".handle"
-          @start="onStart"
-          @end="onEnd"
-          itemKey="id"
-          class="flex flex-col gap-4 p-0 rounded"
-        >
-          <div v-for="(item, index) in rightList" :key="item.id">
-            <div class="sort-item">
-              <div>
-                <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
-                <el-text truncated class="sort-text">{{ item.name }}</el-text>
-              </div>
-              <div>
-                <el-icon @click="removeAndToLeftList(index, item)"><Close /></el-icon>
-              </div>
-            </div>
-          </div>
-        </VueDraggable>
-      </el-card>
-    </div>
-
-    <el-form size="large" label-width="auto" ref="formRef">
-      <el-form-item class="text-right">
-        <el-button type="primary" @click="handlerCustomAttributeFieldColumns()"> 保存 </el-button>
-        <el-button @click="sortDrawer = false">取消</el-button>
-      </el-form-item>
-    </el-form>
-  </el-drawer>
-
   <!-- 新增属性分组 -->
   <el-dialog v-model="dialogAttrGroupVisible" title="新增分组" @closed="resetAttrGroupFrom" width="30%">
     <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="100px" label-position="left">
@@ -194,40 +129,36 @@
     @close="onClosed"
     @attributes-updated="getAttributesData"
   />
+
+  <!-- 表格排序设置 -->
+  <sortField
+    :model-uid="props.modelUid"
+    :sort-drawer-visibe="sortDrawerVisibe"
+    :attributes-data="AttributesData"
+    @close="sortClose"
+    @attributes-updated="getAttributesData"
+  />
 </template>
 
 <script lang="ts" setup>
 import { h, ref, watch } from "vue"
 import { Search, CirclePlus } from "@element-plus/icons-vue"
-import {
-  listAttributesByModelUidApi,
-  CustomAttributeFieldColumnsApi,
-  DeleteAttributeApi,
-  createAttributeGroupApi
-} from "@/api/attribute"
-import {
-  type AttributeGroup,
-  type Attribute,
-  type CustomField,
-  type CustomAttributeFieldColumnsReq,
-  CreateAttributeGroupReq
-} from "@/api/attribute/types/attribute"
+import { listAttributesByModelUidApi, DeleteAttributeApi, createAttributeGroupApi } from "@/api/attribute"
+import { type AttributeGroup, type Attribute, CreateAttributeGroupReq } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/hooks/usePagination"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import { VueDraggable } from "vue-draggable-plus"
 import addField from "./add-field.vue"
+import sortField from "./sort-field.vue"
 
 const { paginationData } = usePagination()
 const searchInput = ref("")
 const cardDrawer = ref(false)
 const editDrawer = ref(false)
-const sortDrawer = ref(false)
+
 const deleteDialogVisible = ref(false)
 const addDialogVisible = ref(false)
-
 const loading = ref<boolean>(false)
-const animationDuration = ref<number>(150)
 
 // 接收父组建传递
 interface Props {
@@ -272,7 +203,7 @@ function getAttributesData() {
 
 //** 创建子组件，新增字段属性 */
 const addAttrGroupId = ref<number>()
-const addAttrDrawerVisible = ref(false)
+const addAttrDrawerVisible = ref<boolean>(false)
 function handleOpenAttrDrawer(group_id: number) {
   addAttrDrawerVisible.value = true
   addAttrGroupId.value = group_id
@@ -282,40 +213,28 @@ const onClosed = (val: boolean) => {
   addAttrDrawerVisible.value = val
 }
 
+//** 编辑 */
 function handleEditDrawer(item: any) {
   editDrawer.value = true
   console.log(item)
 }
 
+//** 组展开 */
 function toggleGroup(group: any) {
   group.expanded = !group.expanded
 }
 
-//** 获取自定义列表信息 */
-const leftList = ref<CustomField[]>([])
-const rightList = ref<CustomField[]>([])
-
+//** 前端动态表单排序 */
+const sortDrawerVisibe = ref<boolean>(false)
 const handleSortDrawer = () => {
-  sortDrawer.value = true
-  const attributesData = AttributesData?.value
-  if (!attributesData || !Array.isArray(attributesData)) {
-    console.error("attributesData is undefined or not an array")
-    return
-  }
-
-  rightList.value = []
-  leftList.value = []
-
-  attributesData.forEach((item) => {
-    item.attributes.forEach((attr) => {
-      const list = attr.display ? rightList : leftList
-      list.value.push({ name: attr.field_name, id: attr.id, index: attr.index || 0 })
-    })
-  })
-
-  rightList.value.sort((a, b) => a.index - b.index)
+  sortDrawerVisibe.value = true
 }
 
+const sortClose = (val: boolean) => {
+  sortDrawerVisibe.value = val
+}
+
+//** 前端过滤展示 */
 const filterData = ref<AttributeGroup[]>([])
 const search = () => {
   filterData.value = AttributesData.value
@@ -348,45 +267,7 @@ const search = () => {
   filterData.value = foundAttrs
 }
 
-const handlerCustomAttributeFieldColumns = () => {
-  loading.value = true
-  const req: CustomAttributeFieldColumnsReq = {
-    model_uid: props.modelUid,
-    custom_field_name: rightList.value.map((item) => item.name)
-  }
-
-  CustomAttributeFieldColumnsApi(req)
-    .then(({ data }) => {
-      console.log("data", data)
-      sortDrawer.value = false
-      getAttributesData()
-    })
-    .catch(() => {})
-    .finally(() => {
-      loading.value = false
-    })
-}
-
 const handlerUpdateAttribute = () => {}
-
-function removeAndToLeftList(index: number, item: any) {
-  leftList.value.push(item)
-  rightList.value.splice(index, 1)
-}
-
-function removeAndToRightList(index: number, item: any) {
-  leftList.value.splice(index, 1)
-  rightList.value.push(item)
-}
-
-const drag = ref(false)
-const onStart = () => {
-  drag.value = true
-}
-
-const onEnd = () => {
-  drag.value = false
-}
 
 const handleDelete = (row: Attribute) => {
   ElMessageBox({
@@ -492,41 +373,5 @@ p {
     margin: 10px;
     margin-left: 10px;
   }
-}
-
-.sort-card-container {
-  display: flex;
-  width: 100%;
-  height: 95%;
-  padding-bottom: 20px;
-}
-
-.sort-drawer {
-  .el-drawer__body {
-    padding: 0px;
-    display: flex; /* 使用 Flexbox 布局 */
-    justify-content: flex-end;
-    flex-direction: column; /* 子元素垂直排列 */
-    height: 100%; /* 确保填充整个抽屉高度 */
-  }
-}
-
-.sort-card {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.sort-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 30px;
-  border-radius: 0.25rem;
-  .sort-text {
-    padding-left: 8px;
-  }
-}
-.text-right {
-  padding-left: 15px;
 }
 </style>
