@@ -28,7 +28,17 @@
           >
             <template #default="scope">
               <template v-if="item.secure">
-                <el-button type="primary" size="small" @click="handleSecureClick(scope.row, item)"> 查看 </el-button>
+                <el-button
+                  v-if="!secureDisplay.get(scope.row.id)"
+                  type="primary"
+                  size="small"
+                  @click="handleSecureClick(scope.row, item)"
+                >
+                  查看
+                </el-button>
+                <div v-if="secureDisplay.get(scope.row.id)">
+                  {{ scope.row.data[item.field_uid] }}
+                </div>
               </template>
               <template v-else>
                 {{ scope.row.data[item.field_uid] }}
@@ -86,7 +96,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, h } from "vue"
+import { onMounted, ref, watch, h, reactive } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
@@ -212,14 +222,19 @@ const handleDelete = (row: Resource) => {
   })
 }
 
+const secureDisplay = reactive(new Map())
 const handleSecureClick = (row: Resource, item: Attribute) => {
   findSecureData({
     id: row.id,
     field_uid: item.field_uid
-  }).then((data) => {
-    row.data[item.field_uid] = data.data
-    item.secure = false
   })
+    .then((data) => {
+      row.data[item.field_uid] = data.data
+      secureDisplay.set(row.id, true)
+    })
+    .catch(() => {
+      ElMessage.error("获取数据失败")
+    })
 }
 
 onMounted(() => {

@@ -14,7 +14,7 @@
                   :xs="8"
                   :sm="6"
                   :md="6"
-                  :lg="6"
+                  :lg="5"
                   :xl="4"
                   style="margin-bottom: 4px"
                 >

@@ -28,7 +28,17 @@
           >
             <template #default="scope">
               <template v-if="field.secure">
-                <el-button type="primary" size="small" @click="handleSecureClick(scope.row, field)"> 查看 </el-button>
+                <el-button
+                  v-if="!secureDisplay.get(scope.row.id)"
+                  type="primary"
+                  size="small"
+                  @click="handleSecureClick(scope.row, field)"
+                >
+                  查看
+                </el-button>
+                <div v-if="secureDisplay.get(scope.row.id)">
+                  {{ scope.row.data[field.field_uid] }}
+                </div>
               </template>
               <template v-else>
                 {{ scope.row.data[field.field_uid] }}
@@ -112,7 +122,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h, onMounted, ref, watch } from "vue"
+import { computed, h, onMounted, reactive, ref, watch } from "vue"
 import {
   CreateResourceRelationApi,
   ListModelRelationApi,
@@ -521,14 +531,19 @@ const handlerExpandAll = () => {
   allPanelsExpanded.value = !allPanelsExpanded.value
 }
 
+const secureDisplay = reactive(new Map())
 const handleSecureClick = (row: Resource, item: Attribute) => {
   findSecureData({
     id: row.id,
     field_uid: item.field_uid
-  }).then((data) => {
-    row.data[item.field_uid] = data.data
-    item.secure = false
   })
+    .then((data) => {
+      row.data[item.field_uid] = data.data
+      secureDisplay.set(row.id, true)
+    })
+    .catch(() => {
+      ElMessage.error("获取数据失败")
+    })
 }
 
 onMounted(() => {

@@ -31,6 +31,16 @@
                   <span :style="{ color: textColor(scope.row[item.field_uid]) }">
                     {{ scope.row[item.field_uid] }}
                   </span>
+                  <template v-if="item.secure">
+                    <el-button
+                      v-if="!secureDisplay.get(scope.row.id)"
+                      type="primary"
+                      size="small"
+                      @click="handleSecureClick(scope.row, item)"
+                    >
+                      查看
+                    </el-button>
+                  </template>
                 </template>
               </el-table-column>
               <el-table-column fixed="right" label="操作" width="150" align="center">
@@ -47,10 +57,10 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from "vue"
+import { onMounted, reactive, ref } from "vue"
 import { Back } from "@element-plus/icons-vue"
 import { globalSearchData } from "@/api/resource/types/resource"
-import { globalSearchApi } from "@/api/resource"
+import { findSecureData, globalSearchApi } from "@/api/resource"
 import { useRoute } from "vue-router"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
@@ -197,6 +207,21 @@ const handlerDetailClick = (row: any) => {
     path: "/cmdb/resource/info",
     query: { model_uid: row.model_uid, name: row.name, id: row.id }
   })
+}
+
+const secureDisplay = reactive(new Map())
+const handleSecureClick = (row: any, item: Attribute) => {
+  findSecureData({
+    id: row.id,
+    field_uid: item.field_uid
+  })
+    .then((data) => {
+      row[item.field_uid] = data.data
+      secureDisplay.set(row.id, true)
+    })
+    .catch(() => {
+      ElMessage.error("获取数据失败")
+    })
 }
 
 onMounted(() => {
