@@ -31,7 +31,7 @@
           <h4>{{ group.group_name }}</h4>
         </div>
         <div class="model-button">
-          <el-button text size="default" type="primary" icon="CirclePlus" @click="handleCreateDrawer(group.group_id)"
+          <el-button text size="default" type="primary" icon="CirclePlus" @click="handleOpenAttrDrawer(group.group_id)"
             >添加字段</el-button
           >
         </div>
@@ -103,34 +103,9 @@
       </el-descriptions-item>
     </el-descriptions>
     <div>
-      <el-button size="default" type="primary" @click.stop="handlerAddAttribute()">修改</el-button>
+      <el-button size="default" type="primary" @click.stop="handlerUpdateAttribute()">修改</el-button>
       <el-button size="default" type="danger" @click.stop="deleteDialogVisible = true">删除</el-button>
     </div>
-  </el-drawer>
-
-  <!-- 新增属性 -->
-  <el-drawer v-model="editDrawer" title="编辑字段" @closed="resetForm">
-    <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
-      <el-form-item label="唯一标识" prop="field_uid">
-        <el-input v-model="formData.field_uid" />
-      </el-form-item>
-      <el-form-item label="字段名称" prop="field_name">
-        <el-input v-model="formData.field_name" />
-      </el-form-item>
-      <el-form-item label="字段类型" prop="field_type">
-        <el-input v-model="formData.field_type" />
-      </el-form-item>
-      <el-form-item label="是否必填" prop="required">
-        <el-switch v-model="formData.required" />
-      </el-form-item>
-      <el-form-item label="是否加密" prop="secure">
-        <el-switch v-model="formData.secure" />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
-        <el-button @click="resetForm()">取消</el-button>
-      </el-form-item>
-    </el-form>
   </el-drawer>
 
   <!-- 表格排序设置 -->
@@ -190,7 +165,7 @@
       </el-card>
     </div>
 
-    <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
+    <el-form size="large" label-width="auto" ref="formRef">
       <el-form-item class="text-right">
         <el-button type="primary" @click="handlerCustomAttributeFieldColumns()"> 保存 </el-button>
         <el-button @click="sortDrawer = false">取消</el-button>
@@ -206,10 +181,19 @@
       </el-form-item>
     </el-form>
     <template #footer>
-      <el-button @click="dialogVisible = false">取消</el-button>
+      <el-button @click="addDialogVisible = false">取消</el-button>
       <el-button type="primary" @click="handlerAddAttributeGroup" :loading="loading">确认</el-button>
     </template>
   </el-dialog>
+
+  <!-- 添加字段属性 -->
+  <add-field
+    :model-uid="props.modelUid"
+    :add-attr-drawer-visible="addAttrDrawerVisible"
+    :group-id="addAttrGroupId"
+    @close="onClosed"
+    @attributes-updated="getAttributesData"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -217,7 +201,6 @@ import { h, ref, watch } from "vue"
 import { Search, CirclePlus } from "@element-plus/icons-vue"
 import {
   listAttributesByModelUidApi,
-  CreateAttributeApi,
   CustomAttributeFieldColumnsApi,
   DeleteAttributeApi,
   createAttributeGroupApi
@@ -225,7 +208,6 @@ import {
 import {
   type AttributeGroup,
   type Attribute,
-  type CreateAttributeRequestData,
   type CustomField,
   type CustomAttributeFieldColumnsReq,
   CreateAttributeGroupReq
@@ -234,6 +216,7 @@ import { usePagination } from "@/hooks/usePagination"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
+import addField from "./add-field.vue"
 
 const { paginationData } = usePagination()
 const searchInput = ref("")
@@ -241,6 +224,8 @@ const cardDrawer = ref(false)
 const editDrawer = ref(false)
 const sortDrawer = ref(false)
 const deleteDialogVisible = ref(false)
+const addDialogVisible = ref(false)
+
 const loading = ref<boolean>(false)
 const animationDuration = ref<number>(150)
 
@@ -249,32 +234,6 @@ interface Props {
   modelUid: string
 }
 const props = defineProps<Props>()
-
-const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
-  model_uid: props.modelUid,
-  group_id: 0,
-  field_uid: "",
-  field_name: "",
-  field_type: "",
-  required: false,
-  secure: false
-}
-const dialogVisible = ref<boolean>(false)
-const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))
-const formRef = ref<FormInstance | null>(null)
-const fieldRules: FormRules = {
-  field_uid: [
-    { required: true, message: "必须输入字段唯一标识", trigger: "blur" },
-    { type: "string", pattern: /^[A-Za-z]+$/, message: "只能输入英文字母", trigger: "blur" }
-  ],
-  field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
-}
-
-const resetForm = () => {
-  editDrawer.value = !editDrawer.value
-  formRef.value?.clearValidate()
-  formData.value = cloneDeep(DEFAULT_FORM_DATA)
-}
 
 // 是否展开组、鼠标聚焦效果
 const showDetail = ref(false)
@@ -294,27 +253,8 @@ const hideDetails = () => {
   showDetail.value = false
 }
 
-//** 新增字段信息 */
-const handlerAddAttribute = () => {
-  formRef.value?.validate((valid: boolean, fields) => {
-    if (!valid) return console.error("表单校验不通过", fields)
-    CreateAttributeApi(formData.value)
-      .then(() => {
-        ElMessage.success("操作成功")
-        dialogVisible.value = false
-        editDrawer.value = false
-        getAttributesData()
-      })
-      .finally(() => {
-        loading.value = false
-      })
-  })
-}
-
 //** 获取字段信息 */
 const AttributesData = ref<AttributeGroup[]>([])
-
-// ** 获取数据 */
 function getAttributesData() {
   loading.value = true
   listAttributesByModelUidApi(props.modelUid)
@@ -330,14 +270,16 @@ function getAttributesData() {
     })
 }
 
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getAttributesData, {
-  immediate: true
-})
+//** 创建子组件，新增字段属性 */
+const addAttrGroupId = ref<number>()
+const addAttrDrawerVisible = ref(false)
+function handleOpenAttrDrawer(group_id: number) {
+  addAttrDrawerVisible.value = true
+  addAttrGroupId.value = group_id
+}
 
-function handleCreateDrawer(group_id: number) {
-  editDrawer.value = true
-  formData.value.group_id = group_id
+const onClosed = (val: boolean) => {
+  addAttrDrawerVisible.value = val
 }
 
 function handleEditDrawer(item: any) {
@@ -425,6 +367,8 @@ const handlerCustomAttributeFieldColumns = () => {
     })
 }
 
+const handlerUpdateAttribute = () => {}
+
 function removeAndToLeftList(index: number, item: any) {
   leftList.value.push(item)
   rightList.value.splice(index, 1)
@@ -493,6 +437,11 @@ const handlerAddAttributeGroup = () => {
       })
   })
 }
+
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], getAttributesData, {
+  immediate: true
+})
 </script>
 
 <style lang="scss">
