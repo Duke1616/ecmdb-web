@@ -45,7 +45,7 @@
               <div class="add-field-item">
                 <div class="add-field-input">
                   <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
-                  <input type="text" v-model="item.name" />
+                  <input type="text" v-model="item.name" @change="changeText(index)" required />
                 </div>
                 <div>
                   <el-icon v-if="list.length > 1" @click="removeList(index)"><Minus /></el-icon>
@@ -68,7 +68,7 @@
 import { ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
 import { CreateAttributeApi } from "@/api/attribute"
-import { type CreateAttributeRequestData } from "@/api/attribute/types/attribute"
+import { type createAttributeReq } from "@/api/attribute/types/attribute"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { v4 as uuidv4 } from "uuid"
@@ -115,6 +115,7 @@ const list = ref([
 
 function removeList(index: number) {
   list.value.splice(index, 1)
+  formData.value.option = list.value.map((item) => item.name).filter((name) => name)
 }
 
 function handlerAdd() {
@@ -122,21 +123,27 @@ function handlerAdd() {
     name: "",
     id: uuidv4
   })
-
-  console.log(list)
 }
 
-const DEFAULT_FORM_DATA: CreateAttributeRequestData = {
+const changeText = (index: number) => {
+  if (!Array.isArray(formData.value.option)) {
+    formData.value.option = []
+  }
+  formData.value.option.push(list.value[index].name)
+}
+
+const DEFAULT_FORM_DATA: createAttributeReq = {
   model_uid: props.modelUid,
   group_id: 0,
   field_uid: "",
   field_name: "",
-  field_type: "list",
+  field_type: "string",
   required: false,
-  secure: false
+  secure: false,
+  option: ""
 }
 
-const formData = ref<CreateAttributeRequestData>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createAttributeReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
   field_uid: [
@@ -147,6 +154,7 @@ const fieldRules: FormRules = {
 }
 
 const handlerAddAttribute = () => {
+  console.log(formData.value)
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
     CreateAttributeApi(formData.value).then(() => {

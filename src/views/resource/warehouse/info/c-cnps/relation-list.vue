@@ -536,14 +536,10 @@ const handleSecureClick = (row: Resource, item: Attribute) => {
   findSecureData({
     id: row.id,
     field_uid: item.field_uid
+  }).then((data) => {
+    row.data[item.field_uid] = data.data
+    secureDisplay.set(row.id, true)
   })
-    .then((data) => {
-      row.data[item.field_uid] = data.data
-      secureDisplay.set(row.id, true)
-    })
-    .catch(() => {
-      ElMessage.error("获取数据失败")
-    })
 }
 
 onMounted(() => {

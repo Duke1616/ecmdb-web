@@ -10,7 +10,7 @@ export function listAttributesByModelUidApi(modelUid: string) {
   })
 }
 
-export function CreateAttributeApi(data: attribute.CreateAttributeRequestData) {
+export function CreateAttributeApi(data: attribute.createAttributeReq) {
   return instance.post<number>({
     url: "attribute/create",
     data: data

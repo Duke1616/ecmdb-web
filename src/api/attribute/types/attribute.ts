@@ -1,4 +1,4 @@
-export interface CreateAttributeRequestData {
+export interface createAttributeReq {
   group_id: number
   model_uid: string
   field_uid: string
@@ -6,6 +6,7 @@ export interface CreateAttributeRequestData {
   field_type: string
   secure: boolean
   required: boolean
+  option: any
 }
 
 export interface CustomAttributeFieldColumnsReq {
@@ -43,6 +44,7 @@ export interface Attribute {
   display?: boolean
   index?: number
   secure?: boolean
+  option?: any
 }
 
 export type listAttributeFieldData = {

@@ -154,7 +154,6 @@ import sortField from "./sort-field.vue"
 const { paginationData } = usePagination()
 const searchInput = ref("")
 const cardDrawer = ref(false)
-const editDrawer = ref(false)
 
 const deleteDialogVisible = ref(false)
 const addDialogVisible = ref(false)
@@ -214,10 +213,12 @@ const onClosed = (val: boolean) => {
 }
 
 //** 编辑 */
-function handleEditDrawer(item: any) {
-  editDrawer.value = true
-  console.log(item)
+function handleEditDrawer(row: Attribute) {
+  addAttrDrawerVisible.value = true
+  console.log(row)
 }
+
+const handlerUpdateAttribute = () => {}
 
 //** 组展开 */
 function toggleGroup(group: any) {
@@ -266,8 +267,6 @@ const search = () => {
 
   filterData.value = foundAttrs
 }
-
-const handlerUpdateAttribute = () => {}
 
 const handleDelete = (row: Attribute) => {
   ElMessageBox({

@@ -79,7 +79,14 @@
               </el-col> -->
               <el-col v-for="(item, index) of attributeFiledsData" :key="index" :span="12" class="lightgreen-box">
                 <el-form-item :prop="item.field_uid" :label="item.field_name">
-                  <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
+                  <template v-if="item.field_type === 'string'">
+                    <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
+                  </template>
+                  <template v-if="item.field_type === 'list'">
+                    <el-select v-model="formData.data[item.field_uid]" placeholder="请选择">
+                      <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
+                    </el-select>
+                  </template>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -96,7 +103,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, h, reactive } from "vue"
+import { onMounted, ref, watch, h, reactive, computed } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
@@ -124,9 +131,19 @@ const DEFAULT_FORM_DATA: CreateResourceReq = {
 
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateResourceReq>(cloneDeep(DEFAULT_FORM_DATA))
-const formRules: FormRules<CreateResourceReq> = {
-  model_uid: [{ required: true, trigger: "blur", message: "请输入名称" }]
-}
+const formRules = computed<FormRules>(() => {
+  const rules: FormRules = {}
+  attributeFiledsData.value.forEach((field) => {
+    rules[field.field_uid] = [
+      {
+        required: field.required,
+        message: `请填写${field.field_name}`,
+        trigger: "blur"
+      }
+    ].filter((rule) => rule.required)
+  })
+  return rules
+})
 
 const handleIdClick = (resource: Resource) => {
   router.push({
@@ -227,14 +244,10 @@ const handleSecureClick = (row: Resource, item: Attribute) => {
   findSecureData({
     id: row.id,
     field_uid: item.field_uid
+  }).then((data) => {
+    row.data[item.field_uid] = data.data
+    secureDisplay.set(row.id, true)
   })
-    .then((data) => {
-      row.data[item.field_uid] = data.data
-      secureDisplay.set(row.id, true)
-    })
-    .catch(() => {
-      ElMessage.error("获取数据失败")
-    })
 }
 
 onMounted(() => {
