@@ -162,6 +162,38 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       }
     ]
+  },
+  {
+    path: "/cmdb/template",
+    component: Layouts,
+    redirect: "/cmdb/template/index",
+    meta: {
+      title: "工单中心",
+      svgIcon: "link",
+      platforms: ["cmdb"]
+    },
+    children: [
+      {
+        path: "info",
+        component: () => import("@/views/template/info/detail.vue"),
+        name: "template-info",
+        meta: {
+          title: "模型详情",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
+      },
+      {
+        path: "manager",
+        component: () => import("@/views/template/manager/index.vue"),
+        name: "template-manager",
+        meta: {
+          title: "模版管理",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
+      }
+    ]
   }
 ]
 
