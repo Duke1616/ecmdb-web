@@ -18,15 +18,32 @@
           <el-table-column prop="name" label="名称" align="center" />
           <el-table-column prop="create_type" label="来源" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.create_type === 1" effect="plain">系统自建</el-tag>
-              <el-tag v-else-if="scope.row.create_type === 2" effect="plain">企业微信</el-tag>
+              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统自建</el-tag>
+              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning">企业微信</el-tag>
               <el-tag v-else type="info" effect="plain">未知类型</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="desc" label="描述" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button
+                v-if="scope.row.create_type === 1"
+                type="primary"
+                text
+                bg
+                size="small"
+                @click="handleUpdate(scope.row)"
+                >修改</el-button
+              >
+              <el-button
+                v-if="scope.row.create_type === 2"
+                type="warning"
+                text
+                bg
+                size="small"
+                @click="handlerSync(scope.row)"
+                >同步</el-button
+              >
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -46,7 +63,7 @@
       </div>
     </el-card>
     <!-- 新增模版 -->
-    <addTemplate :dialog-visible="addDialogVisible" @close="onClosed" />
+    <addTemplate :dialog-visible="addDialogVisible" @close="onClosed" @list-templates="listTemplatesData" />
 
     <!-- 修改或查看模版 -->
     <updateTemplate :dialog-visible="updateDialogVisible" :template-data="updateTemplateData" @close="onClosed" />
@@ -54,13 +71,15 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { h, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { template } from "@/api/template/types/template"
-import { listTemplateApi } from "@/api/template"
+import { deleteTemplateApi, listTemplateApi } from "@/api/template"
 import addTemplate from "./add-template.vue"
 import updateTemplate from "./update-template.vue"
+import { ElMessageBox } from "element-plus"
+import { ElMessage } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogVisible = ref<boolean>(false)
@@ -98,9 +117,27 @@ const handleUpdate = (row: template) => {
   updateDialogVisible.value = true
 }
 
-const handleDelete = (row: template) => {
+const handlerSync = (row: template) => {
   console.log(row)
-  addDialogVisible.value = false
+}
+
+const handleDelete = (row: template) => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除模版: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteTemplateApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listTemplatesData()
+    })
+  })
 }
 
 /** 监听分页参数的变化 */

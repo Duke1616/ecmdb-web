@@ -192,6 +192,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "link",
           platforms: ["cmdb"]
         }
+      },
+      {
+        path: "policy",
+        component: () => import("@/views/template/policy/index.vue"),
+        name: "template-policy",
+        meta: {
+          title: "模版策略",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
       }
     ]
   }

@@ -25,7 +25,7 @@ interface Props {
 
 const dialogDrawer = ref(false)
 const props = defineProps<Props>()
-const emits = defineEmits(["close"])
+const emits = defineEmits(["close", "list-templates"])
 const onClosed = () => {
   emits("close", false)
 }
@@ -52,12 +52,16 @@ const handleSave = () => {
   formData.value.rules = designerRef.value!.getJson()
   // 获取表单的配置
   formData.value.options = designerRef.value!.getOptionsJson()
+
+  console.log(formData.value.rules, "form-rules")
+  console.log(formData.value.options, "form-options")
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
     createTemplateApi(formData.value)
       .then(() => {
         dialogDrawer.value = false
         ElMessage.success("保存成功")
+        emits("list-templates")
       })
       .catch((error) => {
         console.log("catch", error)

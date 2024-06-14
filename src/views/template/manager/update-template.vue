@@ -13,7 +13,7 @@
       ><el-form-item prop="desc" label="描述">
         <el-input v-model="formData.desc" placeholder="请输入描述" />
       </el-form-item>
-      <fc-designer ref="designerRef" :config="config" style="height: calc(100% - 40px)" />
+      <fc-designer ref="designerRef" :config="config" style="height: calc(100% - 25px)" />
     </el-form>
   </el-drawer>
 </template>
@@ -21,7 +21,7 @@
 import { type template, type createTemplateReq } from "@/api/template/types/template"
 import FcDesigner from "@form-create/designer"
 import { FormInstance, FormRules } from "element-plus"
-import { ref, watch } from "vue"
+import { nextTick, ref, watch } from "vue"
 import { cloneDeep } from "lodash-es"
 
 // 接收父组建传递
@@ -47,7 +47,6 @@ const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [{ required: true, message: "必须输入名称", trigger: "blur" }]
 }
-const designerRef = ref<InstanceType<typeof FcDesigner>>()
 
 const config: any = {
   showSaveBtn: true
@@ -55,22 +54,24 @@ const config: any = {
 
 watch(
   () => props.dialogVisible,
-  (val: boolean) => {
+  async (val: boolean) => {
     dialogDrawer.value = val
+    await nextTick()
   },
   { immediate: true }
 )
 
+const designerRef = ref<InstanceType<typeof FcDesigner>>()
 watch(
   () => props.templateData,
-  (val: template | undefined) => {
+  async (val: template | undefined) => {
     if (val !== undefined) {
-      console.log("查看rule数据", JSON.stringify(val.rules))
-      console.log("查看option数据", val.options)
+      await nextTick()
+
       designerRef.value?.setOptions(val.options)
       designerRef.value?.setRule(JSON.stringify(val.rules))
 
-      const test = designerRef.value?.getJson()
+      const test = designerRef.value?.getRule()
       console.log("验证是否插入", test)
 
       formData.value.name = val.name

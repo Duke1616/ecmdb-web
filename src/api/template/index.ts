@@ -24,3 +24,11 @@ export function listTemplateApi(data: template.listTemplateReq) {
     data: data
   })
 }
+
+/** 删除模版 */
+export function deleteTemplateApi(id: number) {
+  return instance.post<number>({
+    url: "template/delete",
+    data: { id: id }
+  })
+}
