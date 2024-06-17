@@ -18,6 +18,22 @@ import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@/styles/index.scss"
 // import "@smallwei/avue/lib/index.css"
+import { createTheme, Theme } from "./composables/theme"
+
+export interface AppCreatorOptions {
+  initTheme: Theme
+  language: string
+  userAgent: string
+}
+
+// export const createUniversalApp = (options: AppCreatorOptions) => {
+//   const theme = createTheme(options.initTheme)
+
+//   ret
+
+// }
+
+// const theme = createTheme(Theme)
 
 const app = createApp(App)
 
@@ -28,6 +44,7 @@ loadSvg(app)
 /** 加载自定义指令 */
 loadDirectives(app)
 
+// app.use(theme)
 app.use(store).use(router)
 router.isReady().then(() => {
   app.mount("#app")
