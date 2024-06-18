@@ -27,12 +27,12 @@
     <div class="divider" />
     <div class="footer">
       <div class="buttons">
-        <button class="item" @click="togglePreview">
+        <!-- <button class="item" @click="togglePreview">
           <span>Preview</span>
           <i class="iconfont" :class="preview ? 'icon-eye' : 'icon-eye-close'" />
         </button>
         <button class="item" @click="handleUndo">Undo</button>
-        <button class="item" @click="handleRedo">Redo</button>
+        <button class="item" @click="handleRedo">Redo</button> -->
       </div>
       <div class="infos">
         <span class="item">Spaces: {{ tabSize }}</span>
@@ -82,9 +82,9 @@ const extensions = computed(() => {
 })
 
 const preview = shallowRef(false)
-const togglePreview = () => {
-  preview.value = !preview.value
-}
+// const togglePreview = () => {
+//   preview.value = !preview.value
+// }
 
 const cmView = shallowRef<EditorView>()
 const handleReady = ({ view }: any) => {
