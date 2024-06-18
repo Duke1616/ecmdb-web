@@ -1,17 +1,33 @@
 <template>
   <div class="example">
-    <editor :config="config" :theme="currentTheme" :language="currentLangCode.language" :code="currentLangCode.code" />
+    <toolbar
+      :config="config"
+      :disabled="loading"
+      :themes="Object.keys(themes)"
+      :languages="Object.keys(languages)"
+      @language="ensureLanguageCode"
+    />
+    <div class="divider" />
+    <div class="loading-box" v-if="loading">
+      <loading />
+    </div>
+    <editor
+      v-else-if="currentLangCode"
+      :config="config"
+      :theme="currentTheme"
+      :language="currentLangCode.language"
+      :code="currentLangCode.code"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { reactive, computed, shallowRef, onBeforeMount } from "vue"
+import Toolbar from "./toolbar.vue"
 import Editor from "./editor.vue"
 import * as themes from "./themes"
 import languages from "./languages"
 import { useTheme, Theme } from "@/composables/theme"
-
-console.log("currentLangCode")
 
 const config = reactive({
   disabled: false,
@@ -19,13 +35,14 @@ const config = reactive({
   tabSize: 2,
   autofocus: true,
   height: "auto",
-  language: "javascript",
+  language: "python",
   theme: useTheme().theme.value === Theme.Dark ? "oneDark" : "default"
 })
 
 const loading = shallowRef(false)
 const langCodeMap = reactive(new Map<string, { code: string; language: () => any }>())
 const currentLangCode = computed(() => langCodeMap.get(config.language)!)
+
 const currentTheme = computed(() => {
   return config.theme !== "default" ? (themes as any)[config.theme] : void 0
 })

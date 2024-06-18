@@ -65,7 +65,6 @@ const createThemeStore = (defaultTheme: Theme) => {
 export type ThemeState = ReturnType<typeof createThemeStore>
 export const createTheme = (defaultTheme: Theme) => {
   const themeStore = createThemeStore(defaultTheme)
-  console.log("注入")
   return {
     ...themeStore,
     install(app: App) {

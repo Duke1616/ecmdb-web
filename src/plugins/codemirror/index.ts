@@ -1,7 +1,8 @@
 import { type App } from "vue"
-import codemirror from "vue-codemirror"
-import "codemirror/lib/codemirror.css"
+
+import { createTheme, Theme } from "@/composables/theme"
 
 export function loadCodeMirror(app: App) {
-  app.use(codemirror)
+  const theme = createTheme(Theme.Dark)
+  app.use(theme)
 }

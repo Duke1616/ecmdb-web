@@ -17,23 +17,8 @@ import "element-plus/theme-chalk/dark/css-vars.css"
 import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@/styles/index.scss"
+import { loadCodeMirror } from "./plugins/codemirror"
 // import "@smallwei/avue/lib/index.css"
-import { createTheme, Theme } from "./composables/theme"
-
-export interface AppCreatorOptions {
-  initTheme: Theme
-  language: string
-  userAgent: string
-}
-
-// export const createUniversalApp = (options: AppCreatorOptions) => {
-//   const theme = createTheme(options.initTheme)
-
-//   ret
-
-// }
-
-// const theme = createTheme(Theme)
 
 const app = createApp(App)
 
@@ -43,8 +28,9 @@ loadPlugins(app)
 loadSvg(app)
 /** 加载自定义指令 */
 loadDirectives(app)
+/** 加载vue-codemirror */
+loadCodeMirror(app)
 
-// app.use(theme)
 app.use(store).use(router)
 router.isReady().then(() => {
   app.mount("#app")

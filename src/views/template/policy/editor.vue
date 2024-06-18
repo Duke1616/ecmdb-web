@@ -59,11 +59,9 @@ interface Props {
     indentWithTab: boolean
     disabled: boolean
     autofocus: boolean
-    // type: Object
-    // required: true
   }
   code: string
-  theme: [Object, Array<any>]
+  theme: [Object, Array<string>]
   language: Function
 }
 const props = defineProps<Props>()
