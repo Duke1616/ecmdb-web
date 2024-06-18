@@ -3,5 +3,6 @@ import code from "./python.py?raw"
 
 export default {
   language: python,
+  tabSize: 4,
   code
 }

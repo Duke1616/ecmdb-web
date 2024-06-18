@@ -17,6 +17,9 @@ importers:
       '@codemirror/lang-python':
         specifier: ^6.1.6
         version: 6.1.6(@codemirror/view@6.28.1)
+      '@codemirror/legacy-modes':
+        specifier: ^6.4.0
+        version: 6.4.0
       '@codemirror/theme-one-dark':
         specifier: ^6.1.2
         version: 6.1.2
@@ -86,6 +89,9 @@ importers:
       screenfull:
         specifier: ^6.0.2
         version: 6.0.2
+      shell:
+        specifier: link:@codemirror/legacy-modes/mode/shell
+        version: link:@codemirror/legacy-modes/mode/shell
       thememirror:
         specifier: ^2.0.1
         version: 2.0.1(@codemirror/language@6.10.2)(@codemirror/state@6.4.1)(@codemirror/view@6.28.1)
@@ -401,6 +407,9 @@ packages:
 
   '@codemirror/language@6.10.2':
     resolution: {integrity: sha512-kgbTYTo0Au6dCSc/TFy7fK3fpJmgHDv1sG1KNQKJXVi+xBTEeBPY/M30YXiU6mMXeH+YIDLsbrT4ZwNRdtF+SA==}
+
+  '@codemirror/legacy-modes@6.4.0':
+    resolution: {integrity: sha512-5m/K+1A6gYR0e+h/dEde7LoGimMjRtWXZFg4Lo70cc8HzjSdHe3fLwjWMR0VRl5KFT1SxalSap7uMgPKF28wBA==}
 
   '@codemirror/lint@6.8.0':
     resolution: {integrity: sha512-lsFofvaw0lnPRJlQylNsC4IRt/1lI4OD/yYslrSGVndOJfStc58v+8p9dgGiD90ktOfL7OhBWns1ZETYgz0EJA==}
@@ -3513,6 +3522,10 @@ snapshots:
       '@lezer/highlight': 1.2.0
       '@lezer/lr': 1.4.1
       style-mod: 4.1.2
+
+  '@codemirror/legacy-modes@6.4.0':
+    dependencies:
+      '@codemirror/language': 6.10.2
 
   '@codemirror/lint@6.8.0':
     dependencies:

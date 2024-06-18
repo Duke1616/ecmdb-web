@@ -1,93 +1,32 @@
 <template>
-  <div class="example">
-    <toolbar
-      :config="config"
-      :disabled="loading"
-      :themes="Object.keys(themes)"
-      :languages="Object.keys(languages)"
-      @language="ensureLanguageCode"
-    />
-    <div class="divider" />
-    <div class="loading-box" v-if="loading">
-      <loading />
-    </div>
-    <editor
-      v-else-if="currentLangCode"
-      :config="config"
-      :theme="currentTheme"
-      :language="currentLangCode.language"
-      :code="currentLangCode.code"
-    />
-  </div>
+  <el-button plain @click="dialogVisible = true"> Click to open the Dialog </el-button>
+
+  <el-drawer class="add-drawer" v-model="dialogVisible" title="添加任务脚本" direction="ttb" size="100%">
+    <CodeMirror />
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="dialogVisible = false"> 保存 </el-button>
+      </div>
+    </template>
+  </el-drawer>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, shallowRef, onBeforeMount } from "vue"
-import Toolbar from "./toolbar.vue"
-import Editor from "./editor.vue"
-import * as themes from "./themes"
-import languages from "./languages"
-import { useTheme, Theme } from "@/composables/theme"
+import CodeMirror from "@/components/CodeMirror/index.vue"
+import { ref } from "vue"
 
-const config = reactive({
-  disabled: false,
-  indentWithTab: true,
-  tabSize: 2,
-  autofocus: true,
-  height: "auto",
-  language: "python",
-  theme: useTheme().theme.value === Theme.Dark ? "oneDark" : "default"
-})
-
-const loading = shallowRef(false)
-const langCodeMap = reactive(new Map<string, { code: string; language: () => any }>())
-const currentLangCode = computed(() => langCodeMap.get(config.language)!)
-
-const currentTheme = computed(() => {
-  return config.theme !== "default" ? (themes as any)[config.theme] : void 0
-})
-
-const ensureLanguageCode = async (targetLanguage: string) => {
-  config.language = targetLanguage
-  loading.value = true
-  const delayPromise = () => new Promise((resolve) => window.setTimeout(resolve, 260))
-  if (langCodeMap.has(targetLanguage)) {
-    await delayPromise()
-  } else {
-    const [result] = await Promise.all([languages[targetLanguage](), delayPromise()])
-    langCodeMap.set(targetLanguage, result.default)
-  }
-  loading.value = false
-}
-
-// HACK: Make sure the first screen the user sees is the loading placeholder
-loading.value = true
-onBeforeMount(() => {
-  // init default language & code
-  ensureLanguageCode(config.language)
-})
+const dialogVisible = ref(false)
 </script>
 
-<style lang="scss" scoped>
-@import "@/styles/variables.scss";
+<style lang="scss">
+.add-form {
+  height: 90%;
+}
 
-.example {
-  .divider {
-    height: 1px;
-    background-color: $border-color;
-  }
-
-  .loading-box {
-    width: 100%;
-    min-height: 20rem;
-    max-height: 60rem;
-    /* loading height = view-height - layout-height - page-height */
-    /* navbar + banner + footer */
-    $layout-height: $navbar-height + $banner-height + $footbar-height;
-    /* single-card-gap * 2 + card-header + editor-header */
-    $page-height: 2rem * 2 + 3.2rem + 3rem;
-    /* editor-border * 2 */
-    height: calc(100vh - $layout-height - $page-height - 2px);
+.add-drawer {
+  .el-drawer__header {
+    margin: 0;
   }
 }
 </style>

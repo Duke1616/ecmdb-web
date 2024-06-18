@@ -14,7 +14,7 @@
         :autofocus="config.autofocus"
         :disabled="config.disabled"
         :indent-with-tab="config.indentWithTab"
-        :tab-size="config.tabSize"
+        :tab-size="tabSize"
         @update="handleStateUpdate"
         @ready="handleReady"
         @focus="log('focus', $event)"
@@ -35,7 +35,7 @@
         <button class="item" @click="handleRedo">Redo</button>
       </div>
       <div class="infos">
-        <span class="item">Spaces: {{ config.tabSize }}</span>
+        <span class="item">Spaces: {{ tabSize }}</span>
         <span class="item">Length: {{ state.length }}</span>
         <span class="item">Lines: {{ state.lines }}</span>
         <span class="item">Cursor: {{ state.cursor }}</span>
@@ -55,7 +55,6 @@ import { Codemirror } from "vue-codemirror"
 interface Props {
   config: {
     height: string
-    tabSize: number
     indentWithTab: boolean
     disabled: boolean
     autofocus: boolean
@@ -63,6 +62,10 @@ interface Props {
   code: string
   theme: [Object, Array<string>]
   language: Function
+  tabSize: number
+  editorPreview: boolean
+  editorUndo: boolean
+  editorRedo: boolean
 }
 const props = defineProps<Props>()
 const log = console.log
@@ -120,6 +123,34 @@ const handleStateUpdate = (viewUpdate: ViewUpdate) => {
   // log('viewUpdate', viewUpdate)
 }
 
+watch(
+  () => props.editorPreview,
+  (value: boolean) => {
+    preview.value = value
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.editorUndo,
+  (val: boolean) => {
+    if (val) {
+      handleUndo()
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.editorRedo,
+  (val: boolean) => {
+    if (val) {
+      handleRedo()
+    }
+  },
+  { immediate: true }
+)
+
 onMounted(() => {
   watch(
     () => props.code,
@@ -132,6 +163,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 @import "@/styles/variables.scss";
+@import "@/styles/iconfont.scss";
 
 .editor {
   .divider {
