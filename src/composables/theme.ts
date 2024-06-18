@@ -74,6 +74,5 @@ export const createTheme = (defaultTheme: Theme) => {
 }
 
 export const useTheme = (): ThemeState => {
-  console.log("currentLangCode11")
   return inject(ThemeSymbol) as ThemeState
 }

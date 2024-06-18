@@ -16,9 +16,9 @@
         <PreView @preview="handlePreview" @redo="handleRedo" @undo="handleUndo" />
       </div>
     </div>
-
     <editor
       v-if="currentLangCode"
+      ref="editorRef"
       :config="config"
       :theme="currentTheme"
       :language="currentLangCode.language"
@@ -86,39 +86,24 @@ const ensureLanguageCode = async (targetLanguage: string) => {
   loading.value = false
 }
 
-// HACK: Make sure the first screen the user sees is the loading placeholder
+const editorRef = ref<InstanceType<typeof Editor>>()
+const getCode = () => {
+  return editorRef.value?.getCode()
+}
+
+defineExpose({ getCode })
+
 loading.value = true
 onBeforeMount(() => {
-  // init default language & code
   ensureLanguageCode(config.language)
 })
 </script>
 
 <style lang="scss" scoped>
-@import "@/styles/variables.scss";
-
 .editor-header {
   display: flex;
   justify-content: space-between;
-}
-
-.example {
-  .divider {
-    height: 1px;
-    background-color: $border-color;
-  }
-
-  .loading-box {
-    width: 100%;
-    min-height: 20rem;
-    max-height: 60rem;
-    /* loading height = view-height - layout-height - page-height */
-    /* navbar + banner + footer */
-    $layout-height: $navbar-height + $banner-height + $footbar-height;
-    /* single-card-gap * 2 + card-header + editor-header */
-    $page-height: 2rem * 2 + 3.2rem + 3rem;
-    /* editor-border * 2 */
-    height: calc(100vh - $layout-height - $page-height - 2px);
-  }
+  align-items: center;
+  align-content: center;
 }
 </style>

@@ -26,14 +26,7 @@
     </div>
     <div class="divider" />
     <div class="footer">
-      <div class="buttons">
-        <!-- <button class="item" @click="togglePreview">
-          <span>Preview</span>
-          <i class="iconfont" :class="preview ? 'icon-eye' : 'icon-eye-close'" />
-        </button>
-        <button class="item" @click="handleUndo">Undo</button>
-        <button class="item" @click="handleRedo">Redo</button> -->
-      </div>
+      <div class="buttons" />
       <div class="infos">
         <span class="item">Spaces: {{ tabSize }}</span>
         <span class="item">Length: {{ state.length }}</span>
@@ -51,7 +44,6 @@ import { EditorView, ViewUpdate } from "@codemirror/view"
 import { redo, undo } from "@codemirror/commands"
 import { Codemirror } from "vue-codemirror"
 
-// const code = ref(`console.log('Hello, world!')`)
 interface Props {
   config: {
     height: string
@@ -70,6 +62,7 @@ interface Props {
 const props = defineProps<Props>()
 const log = console.log
 const code = shallowRef(props.code)
+
 const extensions = computed(() => {
   const result = []
   if (props.language) {
@@ -82,9 +75,6 @@ const extensions = computed(() => {
 })
 
 const preview = shallowRef(false)
-// const togglePreview = () => {
-//   preview.value = !preview.value
-// }
 
 const cmView = shallowRef<EditorView>()
 const handleReady = ({ view }: any) => {
@@ -122,6 +112,12 @@ const handleStateUpdate = (viewUpdate: ViewUpdate) => {
   state.lines = viewUpdate.state.doc.lines
   // log('viewUpdate', viewUpdate)
 }
+
+const getCode = () => {
+  return code.value
+}
+
+defineExpose({ getCode })
 
 watch(
   () => props.editorPreview,
@@ -193,27 +189,6 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     font-size: 90%;
-
-    .buttons {
-      .item {
-        margin-right: 1em;
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        background-color: transparent;
-        border: 1px dashed $border-color;
-        font-size: $font-size-small;
-        color: $text-secondary;
-        cursor: pointer;
-        .iconfont {
-          margin-left: $xs-gap;
-        }
-        &:hover {
-          color: $text-color;
-          border-color: $text-color;
-        }
-      }
-    }
 
     .infos {
       .item {

@@ -1,12 +1,11 @@
-<!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div class="toolbar">
-    <el-form :model="config" class="form-inline" style="max-width: 800px">
+    <el-form :model="localConfig" class="form-inline" style="max-width: 800px">
       <el-form-item label="语言">
         <el-select
           name="language"
           id="language"
-          v-model="config.language"
+          v-model="localConfig.language"
           :disabled="disabled"
           placeholder="选择语言"
           size="default"
@@ -16,12 +15,12 @@
         </el-select>
       </el-form-item>
       <el-form-item label="主题">
-        <el-select v-model="config.theme" :disabled="disabled" placeholder="Select" size="default">
+        <el-select v-model="localConfig.theme" :disabled="disabled" placeholder="Select" size="default">
           <el-option v-for="option in ['default', ...themes]" :key="option" :label="option" :value="option" />
         </el-select>
       </el-form-item>
       <el-form-item label="高度">
-        <el-select v-model="config.height" :disabled="disabled" placeholder="Select" size="default">
+        <el-select v-model="localConfig.height" :disabled="disabled" placeholder="Select" size="default">
           <el-option
             v-for="option in ['auto', '500px', '550px', '600px', '650px', '700px', '750px', '800px']"
             :key="option"
@@ -31,14 +30,14 @@
         </el-select>
       </el-form-item>
       <el-form-item label="禁止输入">
-        <el-switch v-model="config.disabled" size="default" />
+        <el-switch v-model="localConfig.disabled" size="default" />
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, PropType } from "vue"
+import { PropType, ref, watch } from "vue"
 
 interface Config {
   language: string
@@ -70,6 +69,16 @@ const props = defineProps({
   }
 })
 
+const localConfig = ref<Config>(props.config)
+
+watch(
+  () => props.config,
+  () => {
+    localConfig.value = props.config
+  },
+  { immediate: true }
+)
+
 // 定义 Emits
 const emit = defineEmits(["language"])
 
@@ -89,13 +98,19 @@ const handleSelectLanguage = () => {
 .form-inline {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-start; /* Optional: Adjust as per your layout needs */
+  gap: 15px;
+  justify-content: center;
   align-items: center;
+  align-items: center;
+  align-content: center;
 }
 
 .el-form-item {
   flex: 1;
   min-width: 150px;
+  justify-content: center;
+  align-items: center;
+  align-items: center;
+  align-content: center;
 }
 </style>
