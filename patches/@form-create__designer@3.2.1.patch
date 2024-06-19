@@ -1,0 +1,13 @@
+diff --git a/types/index.d.ts b/types/index.d.ts
+index a1664cb6652ab3a6e49704b6ef62da358e3b2839..9f552afcdea75af6c39f99a10202028d24bea17f 100644
+--- a/types/index.d.ts
++++ b/types/index.d.ts
+@@ -219,7 +219,7 @@ interface FcDesignerProtoType {
+     makeOptionsRule(t: t, to: string): Rule;
+ 
+     //挂载组件
+-    install: FunctionPlugin<[]>;
++    install: (app: App, ...options: any[]) => any;
+ }
+ 
+ //设计器组件

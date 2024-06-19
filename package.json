@@ -72,6 +72,7 @@
     "i": "^0.3.7",
     "npm": "^10.7.0",
     "npm-run-all2": "^6.1.2",
+    "patch-package": "^8.0.0",
     "prettier": "^3.2.5",
     "sass": "^1.75.0",
     "typescript": "~5.4.0",
@@ -79,5 +80,10 @@
     "unplugin-vue-components": "^0.26.0",
     "vite": "^5.2.8",
     "vue-tsc": "^2.0.11"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "@form-create/designer@3.2.1": "patches/@form-create__designer@3.2.1.patch"
+    }
   }
 }
