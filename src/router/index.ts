@@ -192,13 +192,25 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "link",
           platforms: ["cmdb"]
         }
-      },
+      }
+    ]
+  },
+  {
+    path: "/cmdb/task",
+    component: Layouts,
+    redirect: "/cmdb/task/codebook",
+    meta: {
+      title: "任务中心",
+      svgIcon: "link",
+      platforms: ["cmdb"]
+    },
+    children: [
       {
-        path: "policy",
-        component: () => import("@/views/template/policy/index.vue"),
-        name: "template-policy",
+        path: "codebook",
+        component: () => import("@/views/task/codebook/index.vue"),
+        name: "task-codebook",
         meta: {
-          title: "模版策略",
+          title: "任务模版",
           svgIcon: "link",
           platforms: ["cmdb"]
         }

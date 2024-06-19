@@ -2,6 +2,12 @@
   <div class="preview">
     <div class="footer">
       <div class="buttons">
+        <!-- <el-button text type="primary" @click="handlerPreview">
+          Upload
+          <i class="iconfont" :class="preview ? 'icon-eye' : 'icon-eye-close'" />
+        </el-button>
+        <el-button text type="primary" @click="handleUndo"> Undo</el-button>
+        <el-button text type="primary" @click="handleRedo"> Redo</el-button> -->
         <button class="item" @click="handlerPreview">
           <span>Preview</span>
           <i class="iconfont" :class="preview ? 'icon-eye' : 'icon-eye-close'" />
@@ -38,6 +44,9 @@ const handleUndo = () => {
 @import "@/styles/variables.scss";
 @import "@/styles/iconfont.scss";
 
+.iconfont {
+  padding-left: 4px;
+}
 .footer {
   height: 3rem;
   padding: 0 1em;

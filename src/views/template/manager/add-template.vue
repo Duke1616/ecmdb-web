@@ -2,8 +2,9 @@
   <el-drawer class="add-drawer" v-model="dialogDrawer" title="添加模版" direction="ttb" size="100%" @closed="onClosed">
     <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" class="add-form">
       <el-form-item prop="name" label="名称">
-        <el-input v-model="formData.name" placeholder="请输入名称" /> </el-form-item
-      ><el-form-item prop="desc" label="描述">
+        <el-input v-model="formData.name" placeholder="请输入名称" />
+      </el-form-item>
+      <el-form-item prop="desc" label="描述">
         <el-input v-model="formData.desc" placeholder="请输入描述" />
       </el-form-item>
       <fc-designer ref="designerRef" :config="config" @save="handleSave" style="height: calc(100% - 40px)" />
@@ -27,6 +28,7 @@ const dialogDrawer = ref(false)
 const props = defineProps<Props>()
 const emits = defineEmits(["close", "list-templates"])
 const onClosed = () => {
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
   emits("close", false)
 }
 

@@ -9,6 +9,8 @@
           :themes="Object.keys(themes)"
           :languages="Object.keys(languages)"
           :tabSize="currentLangCode.tabSize"
+          :createOrUpdate="props.createOrUpdate"
+          :language="props.language"
           @language="ensureLanguageCode"
         />
       </div>
@@ -39,6 +41,15 @@ import Editor from "./editor.vue"
 import * as themes from "./themes"
 import languages from "./languages"
 import { useTheme, Theme } from "@/composables/theme"
+
+// 接收父组建传递
+interface Props {
+  createOrUpdate: string
+  code: string
+  language: string
+}
+
+const props = defineProps<Props>()
 
 const editorPreview = ref<boolean>(false)
 const editorUndo = ref<boolean>(false)
@@ -81,7 +92,16 @@ const ensureLanguageCode = async (targetLanguage: string) => {
     await delayPromise()
   } else {
     const [result] = await Promise.all([languages[targetLanguage](), delayPromise()])
-    langCodeMap.set(targetLanguage, result.default)
+    // 判断是更新 OR 新增逻辑
+    if (props.createOrUpdate === "update") {
+      langCodeMap.set(targetLanguage, {
+        code: props.code,
+        language: result.default.language,
+        tabSize: result.default.tabSize
+      })
+    } else {
+      langCodeMap.set(targetLanguage, result.default)
+    }
   }
   loading.value = false
 }
@@ -91,11 +111,20 @@ const getCode = () => {
   return editorRef.value?.getCode()
 }
 
-defineExpose({ getCode })
+const getLanguage = () => {
+  return config.language
+}
 
+const setLanguage = (language: string) => {
+  console.log("替换")
+  config.language = language
+}
+
+defineExpose({ getCode, getLanguage, setLanguage })
 loading.value = true
+
 onBeforeMount(() => {
-  ensureLanguageCode(config.language)
+  ensureLanguageCode(props.language)
 })
 </script>
 
@@ -104,6 +133,5 @@ onBeforeMount(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  align-content: center;
 }
 </style>

@@ -1,7 +1,8 @@
+<!-- eslint-disable vue/no-mutating-props -->
 <template>
   <div class="toolbar">
     <el-form :model="localConfig" class="form-inline" style="max-width: 800px">
-      <el-form-item label="语言">
+      <el-form-item label="语言" v-if="createOrUpdate === 'create'">
         <el-select
           name="language"
           id="language"
@@ -13,6 +14,9 @@
         >
           <el-option v-for="option in languages" :key="option" :label="option" :value="option" />
         </el-select>
+      </el-form-item>
+      <el-form-item label="语言" v-if="createOrUpdate === 'update'">
+        <el-input v-model="props.language" disabled />
       </el-form-item>
       <el-form-item label="主题">
         <el-select v-model="localConfig.theme" :disabled="disabled" placeholder="Select" size="default">
@@ -29,7 +33,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="禁止输入">
+      <el-form-item label="禁止编辑">
         <el-switch v-model="localConfig.disabled" size="default" />
       </el-form-item>
     </el-form>
@@ -66,6 +70,14 @@ const props = defineProps({
   themes: {
     type: Array as PropType<Array<string>>,
     required: true
+  },
+  createOrUpdate: {
+    type: String as PropType<string>,
+    required: true
+  },
+  language: {
+    type: String as PropType<string>,
+    required: true
   }
 })
 
@@ -95,22 +107,17 @@ const handleSelectLanguage = () => {
 </script>
 
 <style lang="scss" scoped>
+.toolbar {
+  margin-left: 8px;
+}
 .form-inline {
   display: flex;
-  flex-wrap: wrap;
   gap: 15px;
-  justify-content: center;
-  align-items: center;
-  align-items: center;
-  align-content: center;
 }
 
 .el-form-item {
-  flex: 1;
-  min-width: 150px;
-  justify-content: center;
-  align-items: center;
-  align-items: center;
-  align-content: center;
+  flex: 1; /* 允许弹性伸缩以占用可用空间 */
+  min-width: 150px; /* 设置最小宽度 */
+  // margin-top: 17px;
 }
 </style>

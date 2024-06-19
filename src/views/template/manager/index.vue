@@ -86,7 +86,7 @@ const addDialogVisible = ref<boolean>(false)
 const updateDialogVisible = ref<boolean>(false)
 const updateTemplateData = ref<template>()
 
-/** 查询关联类型 */
+/** 查询模版列表 */
 const templatesData = ref<template[]>([])
 const listTemplatesData = () => {
   listTemplateApi({
