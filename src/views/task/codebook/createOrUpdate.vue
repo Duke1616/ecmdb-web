@@ -16,8 +16,8 @@
       <CodeMirror
         ref="codeMirrorRef"
         :createOrUpdate="props.createOrUpdate"
-        :language="props.language"
-        :code="props.code"
+        :language="props.codebookRow.language"
+        :code="props.codebookRow.code"
       />
       <template #footer>
         <div class="dialog-footer">
@@ -32,17 +32,16 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import CodeMirror from "@/components/CodeMirror/index.vue"
-import { createCodebookReq } from "@/api/task/types/codebook"
+import { type codebook, type createOrUpdateCodebookReq } from "@/api/task/types/codebook"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { createCodebookApi } from "@/api/task"
+import { createCodebookApi, updateCodebookApi } from "@/api/task"
 
 // 接收父组建传递
 interface Props {
   dialogVisible: boolean
   createOrUpdate: string
-  language: string
-  code: string
+  codebookRow: codebook
 }
 
 const dialogDrawer = ref(false)
@@ -53,17 +52,15 @@ const onClosed = () => {
   emits("close", false)
 }
 
-// const language = ref<string>("python")
-// const code = ref<string>("code")
-
 const codeMirrorRef = ref<InstanceType<typeof CodeMirror>>()
-const DEFAULT_FORM_DATA: createCodebookReq = {
+const DEFAULT_FORM_DATA: createOrUpdateCodebookReq = {
+  id: undefined,
   name: "",
   code: "",
   language: ""
 }
 
-const formData = ref<createCodebookReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createOrUpdateCodebookReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [{ required: true, message: "必须输入名称", trigger: "blur" }]
@@ -82,7 +79,8 @@ const handlerCreate = () => {
 
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    createCodebookApi(formData.value)
+    const api = formData.value.id === undefined ? createCodebookApi : updateCodebookApi
+    api(formData.value)
       .then(() => {
         dialogDrawer.value = false
         ElMessage.success("保存成功")
@@ -99,6 +97,14 @@ watch(
   () => props.dialogVisible,
   (val: boolean) => {
     dialogDrawer.value = val
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.codebookRow,
+  (val: codebook) => {
+    formData.value = cloneDeep(val)
   },
   { immediate: true }
 )

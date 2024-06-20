@@ -1,4 +1,5 @@
-export interface createCodebookReq {
+export interface createOrUpdateCodebookReq {
+  id?: number
   name: string
   language: string
   code: string

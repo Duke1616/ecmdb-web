@@ -41,8 +41,7 @@
     <addCodebook
       :dialog-visible="addDialogDrawer"
       :createOrUpdate="createOrUpdate"
-      :code="code"
-      :language="language"
+      :codebookRow="codebookRow"
       @close="onClosed"
       @list-codebooks="listCodebooksData"
     />
@@ -50,38 +49,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { h, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import addCodebook from "./createOrUpdate.vue"
 import { codebook } from "@/api/task/types/codebook"
-import { listCodebookApi } from "@/api/task"
+import { cloneDeep } from "lodash-es"
+import { deleteCodebookApi, listCodebookApi } from "@/api/task"
+import { ElMessage, ElMessageBox } from "element-plus"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
-const code = ref<string>("")
-const language = ref<string>("")
-
 const createOrUpdate = ref<string>("")
+
 const handlerCreate = () => {
   createOrUpdate.value = "create"
   addDialogDrawer.value = true
 }
 
+const codebookRow = ref<codebook>({
+  id: 0,
+  name: "",
+  code: "",
+  language: ""
+})
+
 const handleUpdate = (row: codebook) => {
   createOrUpdate.value = "update" + row.id
-  code.value = row.code
-  language.value = row.language
+  codebookRow.value = cloneDeep(row)
   addDialogDrawer.value = true
-  console.log(row)
 }
 
 const onClosed = (val: boolean) => {
   addDialogDrawer.value = val
-}
-
-const handleDelete = (row: codebook) => {
-  console.log(row)
 }
 
 /** 查询模版列表 */
@@ -101,6 +101,24 @@ const listCodebooksData = () => {
     .finally(() => {})
 }
 
+const handleDelete = (row: codebook) => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除名称: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteCodebookApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listCodebooksData()
+    })
+  })
+}
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listCodebooksData, { immediate: true })
 </script>
