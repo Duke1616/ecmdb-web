@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, shallowRef, onBeforeMount, ref } from "vue"
+import { reactive, computed, shallowRef, onBeforeMount, ref, watch } from "vue"
 import Toolbar from "./toolbar.vue"
 import PreView from "./preview.vue"
 import Editor from "./editor.vue"
@@ -84,26 +84,58 @@ const currentTheme = computed(() => {
   return config.theme !== "default" ? (themes as any)[config.theme] : void 0
 })
 
+// const ensureLanguageCode = async (targetLanguage: string) => {
+//   config.language = targetLanguage
+//   loading.value = true
+//   const delayPromise = () => new Promise((resolve) => window.setTimeout(resolve, 0))
+//   if (langCodeMap.has(targetLanguage)) {
+//     const [result] = await Promise.all([languages[targetLanguage](), delayPromise()])
+//     // await delayPromise()
+//     if (props.createOrUpdate === "create") {
+//       langCodeMap.set(targetLanguage, result.default)
+//     } else {
+//       langCodeMap.set(targetLanguage, {
+//         code: props.code,
+//         language: result.default.language,
+//         tabSize: result.default.tabSize
+//       })
+//     }
+//     // console.log("你猜呀", result)
+//   } else {
+//     const [result] = await Promise.all([languages[targetLanguage](), delayPromise()])
+//     if (props.createOrUpdate === "create") {
+//       langCodeMap.set(targetLanguage, result.default)
+//     } else {
+//       langCodeMap.set(targetLanguage, {
+//         code: props.code,
+//         language: result.default.language,
+//         tabSize: result.default.tabSize
+//       })
+//     }
+//   }
+//   loading.value = false
+// }
+
 const ensureLanguageCode = async (targetLanguage: string) => {
   config.language = targetLanguage
   loading.value = true
-  const delayPromise = () => new Promise((resolve) => window.setTimeout(resolve, 0))
-  if (langCodeMap.has(targetLanguage)) {
-    await delayPromise()
-  } else {
-    const [result] = await Promise.all([languages[targetLanguage](), delayPromise()])
-    // 判断是更新 OR 新增逻辑
-    if (props.createOrUpdate === "update") {
-      langCodeMap.set(targetLanguage, {
-        code: props.code,
-        language: result.default.language,
-        tabSize: result.default.tabSize
-      })
+
+  try {
+    const result = await languages[targetLanguage]() // 假设这是异步操作
+
+    if (props.createOrUpdate === "create") {
+      langCodeMap.set(targetLanguage, result?.default ?? {})
     } else {
-      langCodeMap.set(targetLanguage, result.default)
+      langCodeMap.set(targetLanguage, {
+        ...(result?.default ?? {}),
+        code: props.code
+      })
     }
+  } catch (error) {
+    console.error("Error in ensureLanguageCode:", error)
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
 const editorRef = ref<InstanceType<typeof Editor>>()
@@ -115,16 +147,18 @@ const getLanguage = () => {
   return config.language
 }
 
-const setLanguage = (language: string) => {
-  console.log("替换")
-  config.language = language
-}
-
-defineExpose({ getCode, getLanguage, setLanguage })
+defineExpose({ getCode, getLanguage })
 loading.value = true
 
 onBeforeMount(() => {
-  ensureLanguageCode(props.language)
+  watch(
+    () => props.createOrUpdate,
+    () => {
+      ensureLanguageCode(props.language)
+    }
+  )
+
+  ensureLanguageCode(config.language)
 })
 </script>
 

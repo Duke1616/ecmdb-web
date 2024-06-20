@@ -15,7 +15,7 @@
           <el-option v-for="option in languages" :key="option" :label="option" :value="option" />
         </el-select>
       </el-form-item>
-      <el-form-item label="语言" v-if="createOrUpdate === 'update'">
+      <el-form-item label="语言" v-if="createOrUpdate !== 'create'">
         <el-input v-model="props.language" disabled />
       </el-form-item>
       <el-form-item label="主题">

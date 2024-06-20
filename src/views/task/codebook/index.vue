@@ -41,6 +41,8 @@
     <addCodebook
       :dialog-visible="addDialogDrawer"
       :createOrUpdate="createOrUpdate"
+      :code="code"
+      :language="language"
       @close="onClosed"
       @list-codebooks="listCodebooksData"
     />
@@ -57,12 +59,20 @@ import { listCodebookApi } from "@/api/task"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
-const createOrUpdate = ref<string>("update")
+const code = ref<string>("")
+const language = ref<string>("")
+
+const createOrUpdate = ref<string>("")
 const handlerCreate = () => {
+  createOrUpdate.value = "create"
   addDialogDrawer.value = true
 }
 
 const handleUpdate = (row: codebook) => {
+  createOrUpdate.value = "update" + row.id
+  code.value = row.code
+  language.value = row.language
+  addDialogDrawer.value = true
   console.log(row)
 }
 

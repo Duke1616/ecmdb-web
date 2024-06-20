@@ -3,7 +3,7 @@
     <el-drawer
       class="add-drawer"
       v-model="dialogDrawer"
-      title="添加任务脚本"
+      :title="props.createOrUpdate === 'create' ? '添加任务脚本' : '修改任务脚本'"
       direction="ttb"
       size="100%"
       @closed="onClosed"
@@ -13,7 +13,12 @@
           <el-input v-model="formData.name" placeholder="请输入名称" />
         </el-form-item>
       </el-form>
-      <CodeMirror ref="codeMirrorRef" :createOrUpdate="props.createOrUpdate" :language="language" :code="code" />
+      <CodeMirror
+        ref="codeMirrorRef"
+        :createOrUpdate="props.createOrUpdate"
+        :language="props.language"
+        :code="props.code"
+      />
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogDrawer = false">取消</el-button>
@@ -36,6 +41,8 @@ import { createCodebookApi } from "@/api/task"
 interface Props {
   dialogVisible: boolean
   createOrUpdate: string
+  language: string
+  code: string
 }
 
 const dialogDrawer = ref(false)
@@ -46,8 +53,8 @@ const onClosed = () => {
   emits("close", false)
 }
 
-const language = ref<string>("python")
-const code = ref<string>("code")
+// const language = ref<string>("python")
+// const code = ref<string>("code")
 
 const codeMirrorRef = ref<InstanceType<typeof CodeMirror>>()
 const DEFAULT_FORM_DATA: createCodebookReq = {
