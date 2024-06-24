@@ -7,17 +7,23 @@
         </div>
         <div>
           <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listCodebooksData" />
+            <el-button type="primary" :icon="RefreshRight" circle @click="listWorkersData" />
           </el-tooltip>
         </div>
       </div>
       <div class="table-wrapper">
-        <el-table :data="codebooksData">
+        <el-table :data="workersData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="ID" align="center" />
-          <el-table-column prop="identifier" label="唯一标识" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="secret" label="密钥" align="center" />
+          <el-table-column prop="topic" label="Topic" align="center" />
+          <el-table-column prop="status" label="状态" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.status === 1" effect="plain" type="primary">启用</el-tag>
+              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning">禁用</el-tag>
+              <el-tag v-else type="info" effect="plain">未知类型</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
@@ -39,26 +45,16 @@
         />
       </div>
     </el-card>
-    <!-- 新增模版 -->
-    <addCodebook
-      :dialog-visible="addDialogDrawer"
-      :createOrUpdate="createOrUpdate"
-      :codebookRow="codebookRow"
-      @close="onClosed"
-      @list-codebooks="listCodebooksData"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { h, ref, watch } from "vue"
+import { ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import addCodebook from "./createOrUpdate.vue"
-import { codebook } from "@/api/task/types/codebook"
-import { cloneDeep } from "lodash-es"
-import { deleteCodebookApi, listCodebookApi } from "@/api/task"
-import { ElMessage, ElMessageBox } from "element-plus"
+// import { ElMessage, ElMessageBox } from "element-plus"
+import { worker } from "@/api/worker/types/worker"
+import { listWorkerApi } from "@/api/worker/worker"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
@@ -69,62 +65,55 @@ const handlerCreate = () => {
   addDialogDrawer.value = true
 }
 
-const codebookRow = ref<codebook>({
-  id: 0,
-  name: "",
-  code: "",
-  language: "",
-  identifier: "",
-  secret: ""
-})
-
-const handleUpdate = (row: codebook) => {
-  createOrUpdate.value = "update" + row.id
-  codebookRow.value = cloneDeep(row)
-  addDialogDrawer.value = true
-}
-
-const onClosed = (val: boolean) => {
-  addDialogDrawer.value = val
-}
+// const onClosed = (val: boolean) => {
+//   addDialogDrawer.value = val
+// }
 
 /** 查询模版列表 */
-const codebooksData = ref<codebook[]>([])
-const listCodebooksData = () => {
-  listCodebookApi({
+const workersData = ref<worker[]>([])
+const listWorkersData = () => {
+  listWorkerApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
     .then(({ data }) => {
       paginationData.total = data.total
-      codebooksData.value = data.codebooks
+      workersData.value = data.workers
     })
     .catch(() => {
-      codebooksData.value = []
+      workersData.value = []
     })
     .finally(() => {})
 }
 
-const handleDelete = (row: codebook) => {
-  ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除名称: "),
-      h("i", { style: "color: red" }, `${row.name}`),
-      h("span", null, " 确认删除？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    deleteCodebookApi(row.id).then(() => {
-      ElMessage.success("删除成功")
-      listCodebooksData()
-    })
-  })
+const handleDelete = (row: worker) => {
+  console.log(row)
 }
+
+const handleUpdate = (row: worker) => {
+  console.log(row)
+}
+
+// const handleDelete = (row: worker) => {
+//   ElMessageBox({
+//     title: "删除确认",
+//     message: h("p", null, [
+//       h("span", null, "正在删除名称: "),
+//       h("i", { style: "color: red" }, `${row.name}`),
+//       h("span", null, " 确认删除？")
+//     ]),
+//     confirmButtonText: "确定",
+//     cancelButtonText: "取消",
+//     type: "warning"
+//   }).then(() => {
+//     deleteCodebookApi(row.id).then(() => {
+//       ElMessage.success("删除成功")
+//       listWorkersData()
+//     })
+//   })
+// }
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listCodebooksData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listWorkersData, { immediate: true })
 </script>
 
 <style lang="scss">

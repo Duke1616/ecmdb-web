@@ -73,12 +73,12 @@
           <el-collapse-item title="基础属性" name="1">
             <el-row :gutter="20">
               <!-- <el-col :span="12">
-                <el-form-item prop="name" label="名称">
-                  <el-input v-model="formData.name" placeholder="请输入资源名称" />
-                </el-form-item>
-              </el-col> -->
+              <el-form-item prop="name" label="名称">
+                <el-input v-model="formData.name" placeholder="请输入资源名称" />
+              </el-form-item>
+            </el-col> -->
               <el-col v-for="(item, index) of attributeFiledsData" :key="index" :span="12" class="lightgreen-box">
-                <el-form-item :prop="item.field_uid" :label="item.field_name">
+                <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
                   <template v-if="item.field_type === 'string'">
                     <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
                   </template>
@@ -134,7 +134,8 @@ const formData = ref<CreateResourceReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRules = computed<FormRules>(() => {
   const rules: FormRules = {}
   attributeFiledsData.value.forEach((field) => {
-    rules[field.field_uid] = [
+    const dataField = `data.${field.field_uid}`
+    rules[dataField] = [
       {
         required: field.required,
         message: `请填写${field.field_name}`,

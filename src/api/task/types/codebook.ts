@@ -3,6 +3,7 @@ export interface createOrUpdateCodebookReq {
   name: string
   language: string
   code: string
+  identifier: string
 }
 
 export interface codebook {
@@ -10,6 +11,8 @@ export interface codebook {
   name: string
   language: string
   code: string
+  secret: string
+  identifier: string
 }
 
 export interface codebooks {

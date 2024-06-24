@@ -9,9 +9,18 @@
       @closed="onClosed"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto">
-        <el-form-item prop="name" label="名称">
-          <el-input v-model="formData.name" placeholder="请输入名称" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item prop="name" label="任务名称">
+              <el-input v-model="formData.name" placeholder="请输入名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item prop="name" label="唯一标识">
+              <el-input v-model="formData.identifier" placeholder="请输入唯一标识" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <CodeMirror
         ref="codeMirrorRef"
@@ -22,7 +31,7 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogDrawer = false">取消</el-button>
-          <el-button type="primary" @click="handlerCreate"> 保存 </el-button>
+          <el-button type="primary" @click="handlerCreateOrUpdagte"> 保存 </el-button>
         </div>
       </template>
     </el-drawer>
@@ -57,16 +66,18 @@ const DEFAULT_FORM_DATA: createOrUpdateCodebookReq = {
   id: undefined,
   name: "",
   code: "",
-  language: ""
+  language: "",
+  identifier: ""
 }
 
 const formData = ref<createOrUpdateCodebookReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
-  name: [{ required: true, message: "必须输入名称", trigger: "blur" }]
+  name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
+  identifier: [{ required: true, message: "必须输入唯一标识", trigger: "blur" }]
 }
 
-const handlerCreate = () => {
+const handlerCreateOrUpdagte = () => {
   const code = codeMirrorRef.value?.getCode()
   const language = codeMirrorRef.value?.getLanguage()
   if (code != undefined) {
@@ -79,7 +90,7 @@ const handlerCreate = () => {
 
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    const api = formData.value.id === undefined ? createCodebookApi : updateCodebookApi
+    const api = props.createOrUpdate === "create" ? createCodebookApi : updateCodebookApi
     api(formData.value)
       .then(() => {
         dialogDrawer.value = false

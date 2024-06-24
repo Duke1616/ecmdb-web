@@ -214,6 +214,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "link",
           platforms: ["cmdb"]
         }
+      },
+      {
+        path: "worker",
+        component: () => import("@/views/task/worker/index.vue"),
+        name: "task-worker",
+        meta: {
+          title: "工作节点",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
       }
     ]
   }
