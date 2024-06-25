@@ -19,8 +19,9 @@
           <el-table-column prop="topic" label="Topic" align="center" />
           <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.status === 1" effect="plain" type="primary">启用</el-tag>
-              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning">禁用</el-tag>
+              <el-tag v-if="scope.row.status === 1" effect="plain" type="primary">运行</el-tag>
+              <el-tag v-else-if="scope.row.status === 2" effect="plain" type="warning">禁用</el-tag>
+              <el-tag v-else-if="scope.row.status === 3" effect="plain" type="danger">离线</el-tag>
               <el-tag v-else type="info" effect="plain">未知类型</el-tag>
             </template>
           </el-table-column>
