@@ -192,6 +192,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "link",
           platforms: ["cmdb"]
         }
+      },
+      {
+        path: "workflow",
+        component: () => import("@/views/template/workflow/index.vue"),
+        name: "template-workflow",
+        meta: {
+          title: "流程管理",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
       }
     ]
   },

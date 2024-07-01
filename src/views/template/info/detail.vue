@@ -16,18 +16,21 @@ const fApi = ref({})
 const formData = ref({})
 const options = ref({
   //表单提交事件
-  onSubmit: function (formData: any) {
-    alert(JSON.stringify(formData))
-  }
+  onSubmit: function () {}
 })
 
 const rule = ref()
 
 const handleDetail = () => {
-  detailTemplateApi(5)
+  detailTemplateApi(13)
     .then((res) => {
       options.value = res.data.options
       rule.value = res.data.rules
+      options.value.onSubmit = function () {
+        console.log("test")
+        alert(JSON.stringify(formData.value))
+      }
+      console.log("res", rule.value)
     })
     .catch((error) => {
       console.log("catch", error)

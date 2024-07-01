@@ -1,6 +1,7 @@
 export interface runner {
   id: number
   name: string
+  worker: string
   desc: string
   tags: string[]
 }
