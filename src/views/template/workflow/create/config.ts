@@ -14,21 +14,21 @@ export const nodeList = [
     text: "用户",
     class: "node-user"
   },
-  {
-    type: "push",
-    text: "推送",
-    class: "node-push"
-  },
-  {
-    type: "download",
-    text: "位置",
-    class: "node-download"
-  },
-  {
-    type: "connect",
-    text: "Html",
-    class: "node-push"
-  },
+  // {
+  //   type: "push",
+  //   text: "推送",
+  //   class: "node-push"
+  // },
+  // {
+  //   type: "download",
+  //   text: "位置",
+  //   class: "node-download"
+  // },
+  // {
+  //   type: "connect",
+  //   text: "Html",
+  //   class: "node-push"
+  // },
   {
     type: "end",
     text: "结束",

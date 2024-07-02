@@ -10,8 +10,8 @@ export default function registerEnd(lf: any) {
           {
             x: x - width / 2,
             y: y - height / 2,
-            width: 40,
-            height: 40,
+            width: 60,
+            height: 60,
             viewBox: "0 0 1024 1024"
           },
           h("path", {
@@ -54,12 +54,10 @@ export default function registerEnd(lf: any) {
           y: data.y + 35
         }
         super.initNodeData(data)
-        this.r = 20
-        console.log("this", this)
       }
       // 设置自定义节点形状属性
       setAttributes() {
-        this.r = 20
+        this.r = 30
       }
       // 自定义锚点样式
       getAnchorStyle() {

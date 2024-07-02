@@ -1,199 +1,100 @@
 <template>
-  <div class="logic-flow-view">
-    <h3 class="title">流程控制</h3>
-    <!-- 辅助工具栏 -->
-    <Control class="control" v-if="lf" @getData="getData" />
-    <!-- 节点面板 -->
-    <NodePanel v-if="lf" :lf="lf" :nodeList="nodeList" />
-    <!-- 画布 -->
-    <div id="LF-view" ref="container" />
+  <div class="app-container">
+    <el-card shadow="never" v-show="elCardVisibe">
+      <div class="toolbar-wrapper">
+        <div>
+          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增流程</el-button>
+        </div>
+        <div>
+          <el-tooltip content="刷新当前页">
+            <el-button type="primary" :icon="RefreshRight" circle @click="listFlowsData" />
+          </el-tooltip>
+        </div>
+      </div>
+      <div class="table-wrapper">
+        <el-table :data="flowsData">
+          <el-table-column type="selection" width="50" align="center" />
+          <el-table-column prop="id" label="ID" align="center" />
+          <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="create_type" label="来源" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统自建</el-tag>
+              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning">企业微信</el-tag>
+              <el-tag v-else type="info" effect="plain">未知类型</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="desc" label="描述" align="center" />
+          <el-table-column fixed="right" label="操作" width="150" align="center">
+            <template #default="scope">
+              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div class="pager-wrapper">
+        <el-pagination
+          background
+          :layout="paginationData.layout"
+          :page-sizes="paginationData.pageSizes"
+          :total="paginationData.total"
+          :page-size="paginationData.pageSize"
+          :currentPage="paginationData.currentPage"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
+    <!-- 新增模版 -->
+    <createWorkflow :dialog-visible="addDialogVisible" @close="onClosed" @list-templates="listFlowsData" />
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, reactive, ref } from "vue"
-import LogicFlow from "@logicflow/core"
-import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
-import "@logicflow/core/dist/index.css"
-import "@logicflow/extension/lib/style/index.css"
-import NodePanel from "@/components/workflow/LFComponents/NodePanel.vue"
-import Control from "@/components/workflow/LFComponents/Control.vue"
-import { nodeList } from "./config"
-import { registerStart, registerEnd } from "@/components/workflow/RegisterNode/index"
+<script lang="ts" setup>
+import { ref, watch } from "vue"
+import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { usePagination } from "@/hooks/usePagination"
+import createWorkflow from "./create/index.vue"
 
-const lf = ref()
-const nodeData = ref()
-const showAttribute = ref(false)
-const container = ref()
-const config = reactive<any>({
-  background: {
-    backgroundColor: "#f7f9ff"
-  },
-  grid: {
-    size: 10,
-    visible: false
-  },
-  keyboard: {
-    enabled: true
-  },
-  edgeTextDraggable: true,
-  hoverOutline: false,
-  moveData: {},
-  nodeList: nodeList
-})
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const addDialogVisible = ref<boolean>(false)
+const elCardVisibe = ref<boolean>(true)
 
-const graphData = {
-  nodes: [
-    {
-      id: "742356ea-762b-4899-b96a-bd567e3c4361",
-      type: "start",
-      x: 220,
-      y: 170,
-      text: {
-        x: 350,
-        y: 190,
-        value: "sdfasf"
-      },
-      properties: {},
-      baseType: "node"
-    },
-    {
-      id: "b119f24f-2669-4a90-a837-afd853b2ffcc",
-      type: "end",
-      x: 990,
-      y: 320,
-      properties: {},
-      baseType: "node"
-    }
-  ]
+const handlerCreate = () => {
+  addDialogVisible.value = !addDialogVisible.value
+  elCardVisibe.value = !elCardVisibe.value
 }
 
-const initLf = () => {
-  const lfInstance = new LogicFlow({
-    ...config,
-    plugins: [Menu, MiniMap, Snapshot],
-    container: container.value
-  })
-  lf.value = lfInstance
-  // 设置主题
-  setThemem()
-  // 注册节点
-  registerNode()
-  // 加载数据、事件监听
-  render()
+const onClosed = () => {
+  addDialogVisible.value = !addDialogVisible.value
+  elCardVisibe.value = !elCardVisibe.value
 }
 
-const setThemem = () => {
-  lf.value.setTheme({
-    circle: {
-      stroke: "#000000",
-      strokeWidth: 1,
-      outlineColor: "#88f"
-    },
-    rect: {
-      outlineColor: "#88f",
-      strokeWidth: 1
-    },
-    polygon: {
-      strokeWidth: 1
-    },
-    polyline: {
-      stroke: "#000000",
-      hoverStroke: "#000000",
-      selectedStroke: "#000000",
-      outlineColor: "#88f",
-      strokeWidth: 1
-    },
-    nodeText: {
-      color: "#000000"
-    },
-    edgeText: {
-      color: "#000000",
-      background: {
-        fill: "#f7f9ff"
-      }
-    }
-  })
+const flowsData = ref([])
+const listFlowsData = () => {}
+const handleUpdate = (row: any) => {
+  console.log(row)
 }
-
-const registerNode = () => {
-  registerStart(lf.value)
-  registerEnd(lf.value)
+const handleDelete = (row: any) => {
+  console.log(row)
 }
-
-const render = () => {
-  lf.value.render(graphData)
-  LfEvent()
-}
-
-const LfEvent = () => {
-  lf.value.on("node:click", ({ data }: any) => {
-    console.log("node:click", data)
-    nodeData.value = data
-    if (
-      ["start", "assignment", "decision", "startParallel", "endParallel", "machineLearning", "deepLearning"].includes(
-        data.type
-      )
-    ) {
-      showAttribute.value = true
-    }
-  })
-}
-
-const graph = ref()
-const dataVisible = ref<boolean>(false)
-const getData = () => {
-  graph.value = lf.value.getGraphData()
-  console.log("data", graph.value)
-  dataVisible.value = true
-}
-
-onMounted(() => {
-  initLf()
-})
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listFlowsData, { immediate: true })
 </script>
 
-<style scoped>
-#LF-view {
-  width: calc(100% - 100px);
-  height: 80%;
-  outline: none;
-  margin-left: 50px;
-}
-.logic-flow-view {
-  height: 100vh;
-  position: relative;
-}
-.title {
-  text-align: center;
-  margin: 20px;
-}
-.control {
-  position: absolute;
-  top: 60px;
-  right: 50px;
-  z-index: 2;
+<style lang="scss" scoped>
+.toolbar-wrapper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
 }
 
-.time-plus {
-  cursor: pointer;
-}
-.add-panel {
-  position: absolute;
-  z-index: 11;
-  background-color: white;
-  padding: 10px 5px;
-}
-.el-drawer__body {
-  height: 80%;
-  overflow: auto;
-  margin-top: -30px;
-  z-index: 3;
+.table-wrapper {
+  margin-bottom: 20px;
 }
 
-@keyframes lf_animate_dash {
-  to {
-    stroke-dashoffset: 0;
-  }
+.pager-wrapper {
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

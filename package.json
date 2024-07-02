@@ -52,6 +52,7 @@
     "vue": "^3.4.21",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "^0.4.0",
+    "vue-json-pretty": "^2.4.0",
     "vue-router": "^4.3.0",
     "vuedraggable": "^4.1.0",
     "vxe-table": "^4.5.21",

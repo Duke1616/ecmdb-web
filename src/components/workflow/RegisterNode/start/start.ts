@@ -41,7 +41,7 @@ export default function registerStart(lf: any) {
         data.text = {
           value: (data.text && data.text.value) || "",
           x: data.x,
-          y: data.y + 35,
+          y: data.y + 40,
           dragable: false,
           editable: true
         }
@@ -49,7 +49,7 @@ export default function registerStart(lf: any) {
       }
       // 设置自定义节点形状属性
       setAttributes() {
-        this.r = 20
+        this.r = 30
       }
       // 自定义节点样式属性
       getNodeStyle() {
