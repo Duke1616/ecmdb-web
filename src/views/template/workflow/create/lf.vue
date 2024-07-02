@@ -11,10 +11,15 @@
       <DataDialog :graph="graph" />
     </el-dialog>
   </div>
+  <div class="lf-button">
+    <el-button @click="previous">上一步</el-button>
+    <el-button @click="next" type="primary">下一步</el-button>
+    <el-button @click="onClosed">取消</el-button>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from "vue"
+import { onMounted, reactive, ref, watch, nextTick } from "vue"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
@@ -24,7 +29,25 @@ import Control from "@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
 import { nodeList } from "./config"
 import { registerStart, registerEnd } from "@/components/workflow/RegisterNode/index"
+import { createWorkflowReq } from "@/api/workflow/types/workflow"
 
+interface Props {
+  data: createWorkflowReq
+}
+const props = defineProps<Props>()
+
+const emits = defineEmits(["previous", "next", "close"])
+const next = () => {
+  emits("next", "lf")
+}
+
+const previous = () => {
+  emits("previous")
+}
+
+const onClosed = () => {
+  emits("close")
+}
 const lf = ref()
 const nodeData = ref()
 const showAttribute = ref(false)
@@ -45,32 +68,6 @@ const config = reactive<any>({
   moveData: {},
   nodeList: nodeList
 })
-
-const graphData = {
-  nodes: [
-    {
-      id: "742356ea-762b-4899-b96a-bd567e3c4361",
-      type: "start",
-      x: 220,
-      y: 170,
-      text: {
-        x: 350,
-        y: 190,
-        value: "sdfasf"
-      },
-      properties: {},
-      baseType: "node"
-    },
-    {
-      id: "b119f24f-2669-4a90-a837-afd853b2ffcc",
-      type: "end",
-      x: 990,
-      y: 320,
-      properties: {},
-      baseType: "node"
-    }
-  ]
-}
 
 const initLf = () => {
   const lfInstance = new LogicFlow({
@@ -126,7 +123,6 @@ const registerNode = () => {
 }
 
 const render = () => {
-  lf.value.render(graphData)
   LfEvent()
 }
 
@@ -149,7 +145,26 @@ const dataVisible = ref<boolean>(false)
 const getData = () => {
   graph.value = lf.value.getGraphData()
   dataVisible.value = true
+  console.log("print", graph.value)
 }
+
+const getGraphData = () => {
+  return lf.value.getGraphData()
+}
+
+watch(
+  () => props.data,
+  (val: any) => {
+    nextTick(() => {
+      lf.value.render(val.logic)
+    })
+  },
+  { immediate: true }
+)
+
+defineExpose({
+  getGraphData
+})
 
 onMounted(() => {
   initLf()
@@ -189,6 +204,11 @@ onMounted(() => {
   overflow: auto;
   margin-top: -30px;
   z-index: 3;
+}
+
+.lf-button {
+  margin-left: 50px;
+  margin-top: 12px;
 }
 
 @keyframes lf_animate_dash {

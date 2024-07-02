@@ -154,7 +154,6 @@ const fieldRules: FormRules = {
 }
 
 const handlerAddAttribute = () => {
-  console.log(formData.value)
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
     CreateAttributeApi(formData.value).then(() => {
