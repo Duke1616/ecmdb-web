@@ -27,7 +27,7 @@ import "@logicflow/extension/lib/style/index.css"
 import NodePanel from "@/components/workflow/LFComponents/NodePanel.vue"
 import Control from "@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
-import { nodeList } from "./config"
+import { nodeList } from "../config"
 import { registerStart, registerEnd } from "@/components/workflow/RegisterNode/index"
 import { createWorkflowReq } from "@/api/workflow/types/workflow"
 
@@ -154,9 +154,9 @@ const getGraphData = () => {
 
 watch(
   () => props.data,
-  (val: any) => {
+  (val: createWorkflowReq) => {
     nextTick(() => {
-      lf.value.render(val.logic)
+      lf.value.render(val.flow_data)
     })
   },
   { immediate: true }

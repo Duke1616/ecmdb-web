@@ -29,6 +29,8 @@ import Lf from "./lf.vue"
 import Setting from "./setting.vue"
 import { createWorkflowReq } from "@/api/workflow/types/workflow"
 import { cloneDeep } from "lodash-es"
+import { createWorkflowApi } from "@/api/workflow/workflow"
+import { ElMessage } from "element-plus"
 interface Props {
   dialogVisible: boolean
 }
@@ -61,7 +63,7 @@ const DEFAULT_FORM_DATA: createWorkflowReq = {
   template_id: 0,
   icon: "",
   owner: "",
-  logic: graphData
+  flow_data: graphData
 }
 const formData = ref<createWorkflowReq>(cloneDeep(DEFAULT_FORM_DATA))
 const infoRef = ref<InstanceType<typeof Info>>()
@@ -78,9 +80,8 @@ const next = (val: string) => {
 
   if (val === "lf") {
     const data = lfRef.value?.getGraphData()
-    console.log(data, "lf data")
     if (data) {
-      formData.value.logic = data
+      formData.value.flow_data = data
     }
   }
 
@@ -90,10 +91,21 @@ const next = (val: string) => {
 const previous = () => {
   if (active.value-- === 0) active.value = 1
 }
-
-const save = () => {}
+const save = () => {
+  createWorkflowApi(formData.value)
+    .then(() => {
+      onClosed()
+      ElMessage.success("保存成功")
+    })
+    .catch((error) => {
+      console.log("catch", error)
+    })
+    .finally(() => {})
+}
 const emits = defineEmits(["close", "list-templates"])
 const onClosed = () => {
+  active.value = 1
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
   emits("close", false)
 }
 

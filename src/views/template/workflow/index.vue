@@ -16,19 +16,14 @@
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="create_type" label="来源" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统自建</el-tag>
-              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning">企业微信</el-tag>
-              <el-tag v-else type="info" effect="plain">未知类型</el-tag>
-            </template>
-          </el-table-column>
           <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
-            <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
-            </template>
+          <el-table-column fixed="right" label="操作" width="200" align="center">
+            <OperateBtn
+              :items="operateBtnStatus"
+              @routeEvent="operateEvent"
+              :operateItem="operateItem"
+              :maxLength="2"
+            />
           </el-table-column>
         </el-table>
       </div>
@@ -47,6 +42,9 @@
     </el-card>
     <!-- 新增模版 -->
     <createWorkflow :dialog-visible="addDialogVisible" @close="onClosed" @list-templates="listFlowsData" />
+    <div>
+      <Preview :PreviewDialogvisble="PreviewDialogvisble" :data="graphData" />
+    </div>
   </div>
 </template>
 
@@ -55,6 +53,10 @@ import { ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import createWorkflow from "./create/index.vue"
+import { listWorkflowApi } from "@/api/workflow/workflow"
+import { workflow } from "@/api/workflow/types/workflow"
+import OperateBtn from "@/components/OperateBtn/index.vue"
+import Preview from "./preview/Preview.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogVisible = ref<boolean>(false)
@@ -70,14 +72,84 @@ const onClosed = () => {
   elCardVisibe.value = !elCardVisibe.value
 }
 
-const flowsData = ref([])
-const listFlowsData = () => {}
-const handleUpdate = (row: any) => {
-  console.log(row)
+const flowsData = ref<workflow[]>([])
+const listFlowsData = () => {
+  listWorkflowApi({
+    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+    limit: paginationData.pageSize
+  })
+    .then(({ data }) => {
+      paginationData.total = data.total
+      flowsData.value = data.workflows
+    })
+    .catch(() => {
+      flowsData.value = []
+    })
+    .finally(() => {})
 }
-const handleDelete = (row: any) => {
-  console.log(row)
+// const handleUpdate = (row: any) => {
+//   console.log(row)
+// }
+// const handleDelete = (row: any) => {
+//   console.log(row)
+// }
+
+const graphData = {
+  nodes: [
+    {
+      id: "386cc810-3f14-4453-b939-d1f96806bda4",
+      type: "start",
+      x: 350,
+      y: 160,
+      properties: {}
+    },
+    {
+      id: "a03a5d7b-e2f2-4a16-ae15-862f3de90b78",
+      type: "end",
+      x: 610,
+      y: 160,
+      properties: {}
+    }
+  ],
+  edges: []
 }
+const operateEvent = (data: any, name: string) => {
+  console.log(data, name, 999999999)
+  if (name === "预览") {
+    PreviewDialogvisble.value = !PreviewDialogvisble.value
+  }
+
+  if (name === "部署") {
+    console.log("部署")
+  }
+}
+
+const PreviewDialogvisble = ref<boolean>(false)
+const operateItem = ref({})
+const operateBtnStatus = ref([
+  {
+    name: "部署",
+    code: "1",
+    icon: "Open"
+  },
+  {
+    name: "预览",
+    code: "2",
+    icon: "View"
+  },
+  {
+    name: "编辑",
+    code: "3",
+    icon: "EditPen"
+  },
+  {
+    name: "删除",
+    code: "4",
+    icon: "Delete",
+    type: "danger"
+  }
+])
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listFlowsData, { immediate: true })
 </script>

@@ -4,7 +4,7 @@ export interface createWorkflowReq {
   icon: string
   desc: string
   owner: string
-  logic: any
+  flow_data: any
 }
 
 export interface createInfoReq {
@@ -15,4 +15,29 @@ export interface createInfoReq {
   owner: string
 }
 
+export interface createSettingReq {
+  name: string
+}
+
+export interface listWorkflowReq {
+  /** 跳过条数 */
+  offset: number
+  /** 查询条数 */
+  limit: number
+}
+
 export interface createLFReq {}
+
+export interface workflow {
+  id: number
+  template_id: number
+  name: string
+  desc: string
+  onwer: string
+  icon: string
+  flow_data: any
+}
+export interface workflows {
+  workflows: workflow[]
+  total: number
+}
