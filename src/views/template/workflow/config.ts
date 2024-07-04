@@ -5,7 +5,7 @@ export const nodeList = [
     class: "node-start"
   },
   {
-    text: "矩形",
+    text: "网关",
     type: "rect",
     class: "node-rect"
   },

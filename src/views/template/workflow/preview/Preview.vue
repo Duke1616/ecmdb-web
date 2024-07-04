@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="dataVisible" width="60%">
+  <el-dialog v-model="dataVisible" width="60%" @closed="onClosed">
     <div class="logic-flow-preview">
       <div id="LF-preview" ref="container" />
     </div>
@@ -98,7 +98,10 @@ const render = () => {
   lf.value.render(props.data)
 }
 const dataVisible = ref<boolean>(false)
-
+const emits = defineEmits(["close"])
+const onClosed = () => {
+  emits("close")
+}
 watch(
   () => props.PreviewDialogvisble, // 确保属性名称正确
   (val: boolean) => {

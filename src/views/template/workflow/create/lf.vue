@@ -10,6 +10,14 @@
     <el-dialog title="数据" v-model="dataVisible" width="50%">
       <DataDialog :graph="graph" />
     </el-dialog>
+    <!-- 属性面板 -->
+    <PropertyDialog
+      v-if="showAttribute"
+      :nodeData="nodeData"
+      :flowDetail="flowDetail"
+      :lf="lf"
+      @closed="showAttribute = false"
+    />
   </div>
   <div class="lf-button">
     <el-button @click="previous">上一步</el-button>
@@ -27,9 +35,11 @@ import "@logicflow/extension/lib/style/index.css"
 import NodePanel from "@/components/workflow/LFComponents/NodePanel.vue"
 import Control from "@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
+import PropertyDialog from "@/components/workflow/PropertySetting/PropertyDialog.vue"
 import { nodeList } from "../config"
 import { registerStart, registerEnd } from "@/components/workflow/RegisterNode/index"
 import { createWorkflowReq } from "@/api/workflow/types/workflow"
+import registerUser from "@/components/workflow/RegisterNode/user/user"
 
 interface Props {
   data: createWorkflowReq
@@ -48,6 +58,8 @@ const previous = () => {
 const onClosed = () => {
   emits("close")
 }
+
+const flowDetail = reactive<Object>({})
 const lf = ref()
 const nodeData = ref()
 const showAttribute = ref(false)
@@ -120,6 +132,7 @@ const setThemem = () => {
 const registerNode = () => {
   registerStart(lf.value)
   registerEnd(lf.value)
+  registerUser(lf.value)
 }
 
 const render = () => {
@@ -131,12 +144,18 @@ const LfEvent = () => {
     console.log("node:click", data)
     nodeData.value = data
     if (
-      ["start", "assignment", "decision", "startParallel", "endParallel", "machineLearning", "deepLearning"].includes(
+      ["start", "user", "decision", "startParallel", "endParallel", "machineLearning", "deepLearning"].includes(
         data.type
       )
     ) {
       showAttribute.value = true
     }
+  })
+
+  lf.value.on("edge:click", ({ data }: any) => {
+    console.log(data)
+    nodeData.value = data
+    showAttribute.value = true
   })
 }
 

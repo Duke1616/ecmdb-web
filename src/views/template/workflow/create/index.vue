@@ -102,6 +102,7 @@ const save = () => {
     })
     .finally(() => {})
 }
+
 const emits = defineEmits(["close", "list-templates"])
 const onClosed = () => {
   active.value = 1

@@ -43,7 +43,7 @@
     <!-- 新增模版 -->
     <createWorkflow :dialog-visible="addDialogVisible" @close="onClosed" @list-templates="listFlowsData" />
     <div>
-      <Preview :PreviewDialogvisble="PreviewDialogvisble" :data="graphData" />
+      <Preview :PreviewDialogvisble="PreviewDialogvisble" :data="graphData" @close="onPrevieClosed" />
     </div>
   </div>
 </template>
@@ -70,6 +70,10 @@ const handlerCreate = () => {
 const onClosed = () => {
   addDialogVisible.value = !addDialogVisible.value
   elCardVisibe.value = !elCardVisibe.value
+}
+
+const onPrevieClosed = () => {
+  PreviewDialogvisble.value = !PreviewDialogvisble.value
 }
 
 const flowsData = ref<workflow[]>([])
