@@ -27,12 +27,14 @@ import { ref, watch } from "vue"
 import Info from "./info.vue"
 import Lf from "./lf.vue"
 import Setting from "./setting.vue"
-import { createWorkflowReq } from "@/api/workflow/types/workflow"
+import { createWorkflowReq, workflow } from "@/api/workflow/types/workflow"
 import { cloneDeep } from "lodash-es"
-import { createWorkflowApi } from "@/api/workflow/workflow"
+import { createWorkflowApi, updateWorkflowApi } from "@/api/workflow/workflow"
 import { ElMessage } from "element-plus"
 interface Props {
-  dialogVisible: boolean
+  createDialogVisible: boolean
+  updateDialogVisible: boolean
+  workflowData: workflow | undefined
 }
 const props = defineProps<Props>()
 const visible = ref<boolean>(false)
@@ -58,6 +60,7 @@ const graphData = {
 }
 
 const DEFAULT_FORM_DATA: createWorkflowReq = {
+  id: undefined,
   name: "",
   desc: "",
   template_id: 0,
@@ -92,9 +95,11 @@ const previous = () => {
   if (active.value-- === 0) active.value = 1
 }
 const save = () => {
-  createWorkflowApi(formData.value)
+  const api = props.createDialogVisible === true ? createWorkflowApi : updateWorkflowApi
+  api(formData.value)
     .then(() => {
       onClosed()
+      emits("list-templates")
       ElMessage.success("保存成功")
     })
     .catch((error) => {
@@ -111,8 +116,19 @@ const onClosed = () => {
 }
 
 watch(
-  () => props.dialogVisible,
+  () => props.createDialogVisible,
   (val: boolean) => {
+    visible.value = val
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.updateDialogVisible,
+  (val: boolean) => {
+    formData.value = { ...formData.value, ...props.workflowData }
+    console.log(formData.value, "123")
+    console.log(props.workflowData, "123")
     visible.value = val
   },
   { immediate: true }

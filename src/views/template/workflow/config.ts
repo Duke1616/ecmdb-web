@@ -14,6 +14,11 @@ export const nodeList = [
     text: "用户",
     class: "node-user"
   },
+  {
+    type: "condition",
+    text: "条件",
+    class: "node-condition"
+  },
   // {
   //   type: "push",
   //   text: "推送",

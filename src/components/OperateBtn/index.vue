@@ -74,7 +74,6 @@ const dropData = ref<any>([])
 const showBtn = ref<any>([])
 
 onMounted(() => {
-  console.log(props.items, props.maxLength)
   if (props.items.length > props.maxLength) {
     showBtn.value = props.items.slice(0, props.maxLength)
     dropData.value = props.items.slice(props.maxLength)

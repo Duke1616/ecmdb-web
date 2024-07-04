@@ -14,7 +14,7 @@ import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import { nodeList } from "../config"
-import { registerStart, registerEnd } from "@/components/workflow/RegisterNode/index"
+import { registerStart, registerEnd, registerCondition, registerUser } from "@/components/workflow/RegisterNode/index"
 
 interface Props {
   data: any
@@ -92,6 +92,8 @@ const setThemem = () => {
 const registerNode = () => {
   registerStart(lf.value)
   registerEnd(lf.value)
+  registerCondition(lf.value)
+  registerUser(lf.value)
 }
 
 const render = () => {

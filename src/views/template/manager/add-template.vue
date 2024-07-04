@@ -46,7 +46,8 @@ const formRules: FormRules = {
 const designerRef = ref<InstanceType<typeof FcDesigner>>()
 
 const config: any = {
-  showSaveBtn: true
+  showSaveBtn: true,
+  fieldReadonly: false
 }
 
 const handleSave = () => {

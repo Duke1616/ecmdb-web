@@ -1,4 +1,5 @@
 export interface createWorkflowReq {
+  id?: number
   name: string
   template_id: number
   icon: string

@@ -2,7 +2,7 @@
   <el-drawer
     class="update-drawer"
     v-model="dialogDrawer"
-    title="添加模版"
+    title="修改模版"
     direction="ttb"
     size="100%"
     @closed="onClosed"
@@ -49,7 +49,8 @@ const formRules: FormRules = {
 }
 
 const config: any = {
-  showSaveBtn: true
+  showSaveBtn: true,
+  fieldReadonly: false
 }
 
 watch(
@@ -70,10 +71,6 @@ watch(
 
       designerRef.value?.setOptions(val.options)
       designerRef.value?.setRule(JSON.stringify(val.rules))
-
-      const test = designerRef.value?.getRule()
-      console.log("验证是否插入", test)
-
       formData.value.name = val.name
       formData.value.desc = val.desc
     }

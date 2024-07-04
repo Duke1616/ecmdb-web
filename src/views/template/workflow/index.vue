@@ -18,12 +18,14 @@
           <el-table-column prop="name" label="名称" align="center" />
           <el-table-column prop="desc" label="描述" align="center" />
           <el-table-column fixed="right" label="操作" width="200" align="center">
-            <OperateBtn
-              :items="operateBtnStatus"
-              @routeEvent="operateEvent"
-              :operateItem="operateItem"
-              :maxLength="2"
-            />
+            <template #default="scope">
+              <OperateBtn
+                :items="operateBtnStatus"
+                @routeEvent="operateEvent"
+                :operateItem="scope.row"
+                :maxLength="2"
+              />
+            </template>
           </el-table-column>
         </el-table>
       </div>
@@ -41,25 +43,33 @@
       </div>
     </el-card>
     <!-- 新增模版 -->
-    <createWorkflow :dialog-visible="addDialogVisible" @close="onClosed" @list-templates="listFlowsData" />
-    <div>
-      <Preview :PreviewDialogvisble="PreviewDialogvisble" :data="graphData" @close="onPrevieClosed" />
-    </div>
+    <createWorkflow
+      :create-dialog-visible="addDialogVisible"
+      :update-dialog-visible="updateDialogVisible"
+      :workflowData="workflowData"
+      @close="onClosed"
+      @list-templates="listFlowsData"
+    />
+
+    <!-- 预览 -->
+    <Preview :PreviewDialogvisble="PreviewDialogvisble" :data="graphData" @close="onPrevieClosed" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { h, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import createWorkflow from "./create/index.vue"
-import { listWorkflowApi } from "@/api/workflow/workflow"
+import { deleteWorkflowApi, listWorkflowApi } from "@/api/workflow/workflow"
 import { workflow } from "@/api/workflow/types/workflow"
 import OperateBtn from "@/components/OperateBtn/index.vue"
 import Preview from "./preview/Preview.vue"
+import { ElMessage, ElMessageBox } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogVisible = ref<boolean>(false)
+const updateDialogVisible = ref<boolean>(false)
 const elCardVisibe = ref<boolean>(true)
 
 const handlerCreate = () => {
@@ -68,8 +78,9 @@ const handlerCreate = () => {
 }
 
 const onClosed = () => {
-  addDialogVisible.value = !addDialogVisible.value
+  addDialogVisible.value = false
   elCardVisibe.value = !elCardVisibe.value
+  updateDialogVisible.value = false
 }
 
 const onPrevieClosed = () => {
@@ -91,45 +102,52 @@ const listFlowsData = () => {
     })
     .finally(() => {})
 }
-// const handleUpdate = (row: any) => {
-//   console.log(row)
-// }
-// const handleDelete = (row: any) => {
-//   console.log(row)
-// }
 
-const graphData = {
-  nodes: [
-    {
-      id: "386cc810-3f14-4453-b939-d1f96806bda4",
-      type: "start",
-      x: 350,
-      y: 160,
-      properties: {}
-    },
-    {
-      id: "a03a5d7b-e2f2-4a16-ae15-862f3de90b78",
-      type: "end",
-      x: 610,
-      y: 160,
-      properties: {}
-    }
-  ],
-  edges: []
-}
+const graphData = ref<any>()
+const workflowData = ref<workflow>()
 const operateEvent = (data: any, name: string) => {
-  console.log(data, name, 999999999)
   if (name === "预览") {
     PreviewDialogvisble.value = !PreviewDialogvisble.value
+    graphData.value = data.flow_data
   }
 
   if (name === "部署") {
     console.log("部署")
   }
+
+  // 编辑
+  if (name === "3") {
+    workflowData.value = data
+    updateDialogVisible.value = !updateDialogVisible.value
+    elCardVisibe.value = !elCardVisibe.value
+  }
+
+  // 删除
+  if (name === "4") {
+    handleDelete(data)
+  }
+}
+
+const handleDelete = (row: workflow) => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除名称: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteWorkflowApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listFlowsData()
+    })
+  })
 }
 
 const PreviewDialogvisble = ref<boolean>(false)
-const operateItem = ref({})
 const operateBtnStatus = ref([
   {
     name: "部署",

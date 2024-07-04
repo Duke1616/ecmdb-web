@@ -37,9 +37,8 @@ import Control from "@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@/components/workflow/PropertySetting/PropertyDialog.vue"
 import { nodeList } from "../config"
-import { registerStart, registerEnd } from "@/components/workflow/RegisterNode/index"
+import { registerStart, registerEnd, registerCondition, registerUser } from "@/components/workflow/RegisterNode/index"
 import { createWorkflowReq } from "@/api/workflow/types/workflow"
-import registerUser from "@/components/workflow/RegisterNode/user/user"
 
 interface Props {
   data: createWorkflowReq
@@ -133,6 +132,7 @@ const registerNode = () => {
   registerStart(lf.value)
   registerEnd(lf.value)
   registerUser(lf.value)
+  registerCondition(lf.value)
 }
 
 const render = () => {

@@ -65,8 +65,7 @@ const formRules: FormRules = {
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
-    desc: propertyForm.desc,
-    frontend_status: "1" //0配置错误，1配置正常
+    desc: propertyForm.desc
   })
 }
 

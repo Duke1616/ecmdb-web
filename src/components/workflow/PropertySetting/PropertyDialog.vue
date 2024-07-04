@@ -27,6 +27,13 @@
           :flowDetail="flowDetail"
           @closed="closed"
         />
+        <conditionProperty
+          v-if="props.nodeData?.type === 'condition'"
+          :nodeData="nodeData"
+          :lf="lf"
+          :flowDetail="flowDetail"
+          @closed="closed"
+        />
         <!-- 连线 -->
         <edge
           v-if="nodeData?.type === 'polyline'"
@@ -44,6 +51,7 @@ import { ref, onMounted } from "vue"
 import { pixelOption } from "@/components/workflow/PropertySetting/options"
 import startProperty from "@/components/workflow/RegisterNode/start/startProperty.vue"
 import userProperty from "@/components/workflow/RegisterNode/user/userProperty.vue"
+import conditionProperty from "@/components/workflow/RegisterNode/condition/conditionProperty.vue"
 import edge from "@/components/workflow/RegisterEdge/edge.vue"
 const props = defineProps({
   //标题

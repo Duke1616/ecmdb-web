@@ -9,6 +9,22 @@ export function createWorkflowApi(data: workflow.createWorkflowReq) {
   })
 }
 
+/** 修改工作流程 */
+export function updateWorkflowApi(data: workflow.createWorkflowReq) {
+  return instance.post<number>({
+    url: "workflow/update",
+    data: data
+  })
+}
+
+/** 删除工作流程 */
+export function deleteWorkflowApi(id: number) {
+  return instance.post<number>({
+    url: "workflow/delete",
+    data: { id: id }
+  })
+}
+
 /** 列表 */
 export function listWorkflowApi(data: workflow.listWorkflowReq) {
   return instance.post<workflow.workflows>({

@@ -10,8 +10,8 @@ export default function registerEnd(lf: any) {
           {
             x: x - width / 2,
             y: y - height / 2,
-            width: 60,
-            height: 60,
+            width: 40,
+            height: 40,
             viewBox: "0 0 1024 1024"
           },
           h("path", {
@@ -57,7 +57,7 @@ export default function registerEnd(lf: any) {
       }
       // 设置自定义节点形状属性
       setAttributes() {
-        this.r = 30
+        this.r = 20
       }
       // 自定义锚点样式
       getAnchorStyle() {

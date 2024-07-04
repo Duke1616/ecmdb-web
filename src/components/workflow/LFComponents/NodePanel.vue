@@ -66,6 +66,10 @@ const $_dragNode = (item: any) => {
   background: url("../background/user.png") no-repeat;
   background-size: cover;
 }
+.node-condition {
+  background: url("../background/condition.png") no-repeat;
+  background-size: cover;
+}
 .node-time {
   background: url("../background/time.png") no-repeat;
   background-size: cover;
