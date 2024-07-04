@@ -25,6 +25,14 @@ export function deleteWorkflowApi(id: number) {
   })
 }
 
+/** 部署工作流程 */
+export function deployWorkflowApi(id: number) {
+  return instance.post<number>({
+    url: "workflow/deploy",
+    data: { id: id }
+  })
+}
+
 /** 列表 */
 export function listWorkflowApi(data: workflow.listWorkflowReq) {
   return instance.post<workflow.workflows>({

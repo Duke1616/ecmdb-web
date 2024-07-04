@@ -61,7 +61,7 @@ import { h, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import createWorkflow from "./create/index.vue"
-import { deleteWorkflowApi, listWorkflowApi } from "@/api/workflow/workflow"
+import { deleteWorkflowApi, deployWorkflowApi, listWorkflowApi } from "@/api/workflow/workflow"
 import { workflow } from "@/api/workflow/types/workflow"
 import OperateBtn from "@/components/OperateBtn/index.vue"
 import Preview from "./preview/Preview.vue"
@@ -112,7 +112,7 @@ const operateEvent = (data: any, name: string) => {
   }
 
   if (name === "部署") {
-    console.log("部署")
+    deployWorkflow(data)
   }
 
   // 编辑
@@ -147,6 +147,24 @@ const handleDelete = (row: workflow) => {
   })
 }
 
+const deployWorkflow = (row: workflow) => {
+  ElMessageBox({
+    title: "部署确认",
+    message: h("p", null, [
+      h("span", null, "正在部署名称: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认部署？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deployWorkflowApi(row.id).then(() => {
+      ElMessage.success("部署成功")
+      listFlowsData()
+    })
+  })
+}
 const PreviewDialogvisble = ref<boolean>(false)
 const operateBtnStatus = ref([
   {
