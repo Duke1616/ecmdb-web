@@ -33,10 +33,20 @@ const propertyForm = ref({
   name: ""
 })
 
+//更新节点属性
+const setProperties = () => {
+  props.lf?.setProperties(props.nodeData?.id, {
+    name: propertyForm.value.name,
+    desc: propertyForm.value.condition,
+    frontend_status: "1" //0配置错误，1配置正常
+  })
+}
+
 //确定
 const confirmFunc = () => {
   formRef.value?.validate((valid) => {
     if (valid) {
+      setProperties()
       props.lf?.updateText(props.nodeData?.id, propertyForm.value.name)
       emits("closed")
     }
@@ -49,7 +59,8 @@ const cancelFunc = () => {
 }
 
 onMounted(() => {
-  propertyForm.value.name = props.nodeData?.text.value
+  propertyForm.value.name = props.nodeData?.properties.name
+  propertyForm.value.condition = props.nodeData?.properties.condition ? props.nodeData.properties.condition : ""
 })
 </script>
 <style scoped></style>
