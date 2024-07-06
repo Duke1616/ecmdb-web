@@ -38,7 +38,7 @@
       <div v-for="(item, index) in props.items" :key="index" class="btn-box">
         <el-tooltip effect="dark" placement="right" :content="item.name">
           <el-button
-            :type="item.type || 'primary'"
+            :type="item.type || 'default'"
             link
             :icon="item.icon ? item.icon : ''"
             size="small"
@@ -55,10 +55,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
+
 interface Item {
   name: string
   code: string
-  type?: string
+  type?: any
   icon?: string
   disabled?: boolean
 }
