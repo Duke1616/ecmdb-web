@@ -31,6 +31,8 @@ import { createWorkflowReq, workflow } from "@/api/workflow/types/workflow"
 import { cloneDeep } from "lodash-es"
 import { createWorkflowApi, updateWorkflowApi } from "@/api/workflow/workflow"
 import { ElMessage } from "element-plus"
+import { v4 as uuidv4 } from "uuid"
+
 interface Props {
   createDialogVisible: boolean
   updateDialogVisible: boolean
@@ -42,14 +44,14 @@ const active = ref(1)
 const graphData = {
   nodes: [
     {
-      id: "386cc810-3f14-4453-b939-d1f96806bda4",
+      id: uuidv4(),
       type: "start",
       x: 350,
       y: 160,
       properties: {}
     },
     {
-      id: "a03a5d7b-e2f2-4a16-ae15-862f3de90b78",
+      id: uuidv4(),
       type: "end",
       x: 610,
       y: 160,
@@ -111,14 +113,35 @@ const save = () => {
 const emits = defineEmits(["close", "list-templates"])
 const onClosed = () => {
   active.value = 1
-  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  resetGraphData()
   emits("close", false)
+}
+
+// 为了保证取消后，新增节点 ID 会产生变化
+const resetGraphData = () => {
+  graphData.nodes = [
+    {
+      id: uuidv4(),
+      type: "start",
+      x: 350,
+      y: 160,
+      properties: {}
+    },
+    {
+      id: uuidv4(),
+      type: "end",
+      x: 610,
+      y: 160,
+      properties: {}
+    }
+  ]
 }
 
 watch(
   () => props.createDialogVisible,
   (val: boolean) => {
     visible.value = val
+    formData.value = cloneDeep(DEFAULT_FORM_DATA)
   },
   { immediate: true }
 )
@@ -127,8 +150,6 @@ watch(
   () => props.updateDialogVisible,
   (val: boolean) => {
     formData.value = { ...formData.value, ...props.workflowData }
-    console.log(formData.value, "123")
-    console.log(props.workflowData, "123")
     visible.value = val
   },
   { immediate: true }

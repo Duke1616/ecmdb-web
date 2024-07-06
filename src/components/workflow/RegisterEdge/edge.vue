@@ -4,8 +4,8 @@
       <el-form-item label="关系名称" prop="name">
         <el-input v-model="propertyForm.name" type="name" />
       </el-form-item>
-      <el-form-item label="关系表达式" prop="condition">
-        <el-input v-model="propertyForm.condition" type="condition" />
+      <el-form-item label="关系表达式" prop="expression">
+        <el-input v-model="propertyForm.expression" type="expression" />
       </el-form-item>
     </el-form>
     <div class="mt15">
@@ -29,7 +29,7 @@ const formRules: FormRules = {
 }
 
 const propertyForm = ref({
-  condition: "",
+  expression: "",
   name: ""
 })
 
@@ -37,7 +37,7 @@ const propertyForm = ref({
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.value.name,
-    desc: propertyForm.value.condition,
+    expression: propertyForm.value.expression,
     frontend_status: "1" //0配置错误，1配置正常
   })
 }
@@ -60,7 +60,7 @@ const cancelFunc = () => {
 
 onMounted(() => {
   propertyForm.value.name = props.nodeData?.properties.name
-  propertyForm.value.condition = props.nodeData?.properties.condition ? props.nodeData.properties.condition : ""
+  propertyForm.value.expression = props.nodeData?.properties.expression ? props.nodeData.properties.expression : ""
 })
 </script>
 <style scoped></style>

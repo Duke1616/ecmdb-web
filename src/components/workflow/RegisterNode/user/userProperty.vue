@@ -58,7 +58,7 @@ const formRules: FormRules = {
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
-    desc: propertyForm.approved
+    approved: propertyForm.approved
   })
 }
 

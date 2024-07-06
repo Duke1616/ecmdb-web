@@ -98,6 +98,7 @@ const registerNode = () => {
 
 const render = () => {
   lf.value.render(props.data)
+  lf.value.translateCenter()
 }
 const dataVisible = ref<boolean>(false)
 const emits = defineEmits(["close"])

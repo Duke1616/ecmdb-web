@@ -47,6 +47,7 @@ export default function registerStart(lf: any) {
         }
         super.initNodeData(data)
       }
+
       // 设置自定义节点形状属性
       setAttributes() {
         this.r = 20

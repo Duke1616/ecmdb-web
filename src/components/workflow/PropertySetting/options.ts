@@ -11,6 +11,10 @@ export const pixelOption = [
     label: "用户节点属性"
   },
   {
+    value: "condition",
+    label: "条件节点属性"
+  },
+  {
     value: "polyline",
     label: "连线配置"
   }

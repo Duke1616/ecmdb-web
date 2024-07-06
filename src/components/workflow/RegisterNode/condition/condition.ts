@@ -78,6 +78,7 @@ export default function registerUser(lf: any) {
           }
         ]
       }
+
       initNodeData(data: any) {
         super.initNodeData(data)
       }

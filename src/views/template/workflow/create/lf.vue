@@ -143,11 +143,7 @@ const LfEvent = () => {
   lf.value.on("node:click", ({ data }: any) => {
     console.log("node:click", data)
     nodeData.value = data
-    if (
-      ["start", "user", "decision", "startParallel", "endParallel", "machineLearning", "deepLearning"].includes(
-        data.type
-      )
-    ) {
+    if (["start", "user", "condition"].includes(data.type)) {
       showAttribute.value = true
     }
   })

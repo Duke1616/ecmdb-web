@@ -11,9 +11,6 @@
       <el-form-item label="名称" prop="name">
         <el-input v-model="propertyForm.name" clearable />
       </el-form-item>
-      <el-form-item label="审批人" prop="approved">
-        <el-input v-model="propertyForm.approved" />
-      </el-form-item>
     </el-form>
     <div class="mt15" v-if="flowDetail.status != '2'">
       <el-button @click="cancelFunc"> 取消 </el-button>
@@ -39,8 +36,7 @@ const props = defineProps({
 
 const emits = defineEmits(["closed"])
 const propertyForm = reactive({
-  name: "",
-  approved: ""
+  name: ""
 })
 
 const formRef = ref<FormInstance | null>(null)
@@ -57,8 +53,7 @@ const formRules: FormRules = {
 //更新节点属性
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
-    name: propertyForm.name,
-    desc: propertyForm.approved
+    name: propertyForm.name
   })
 }
 
@@ -80,7 +75,6 @@ const cancelFunc = () => {
 
 onMounted(() => {
   propertyForm.name = props.nodeData?.properties.name
-  propertyForm.approved = props.nodeData?.properties.approved ? props.nodeData.properties.approved : ""
 })
 </script>
 <style scoped></style>
