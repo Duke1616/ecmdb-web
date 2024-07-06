@@ -22,13 +22,13 @@
 </template>
 
 <script lang="ts" setup>
-import { createInfoReq, createWorkflowReq } from "@/api/workflow/types/workflow"
+import { createInfoReq, createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 import { FormInstance, FormRules } from "element-plus"
 import { ref, watch } from "vue"
 import { cloneDeep } from "lodash-es"
 
 interface Props {
-  data: createWorkflowReq
+  data: createOrUpdateWorkflowReq
 }
 const props = defineProps<Props>()
 

@@ -27,7 +27,7 @@ import { ref, watch } from "vue"
 import Info from "./info.vue"
 import Lf from "./lf.vue"
 import Setting from "./setting.vue"
-import { createWorkflowReq, workflow } from "@/api/workflow/types/workflow"
+import { createOrUpdateWorkflowReq, workflow } from "@/api/workflow/types/workflow"
 import { cloneDeep } from "lodash-es"
 import { createWorkflowApi, updateWorkflowApi } from "@/api/workflow/workflow"
 import { ElMessage } from "element-plus"
@@ -61,7 +61,7 @@ const graphData = {
   edges: []
 }
 
-const DEFAULT_FORM_DATA: createWorkflowReq = {
+const DEFAULT_FORM_DATA: createOrUpdateWorkflowReq = {
   id: undefined,
   name: "",
   desc: "",
@@ -70,7 +70,7 @@ const DEFAULT_FORM_DATA: createWorkflowReq = {
   owner: "",
   flow_data: graphData
 }
-const formData = ref<createWorkflowReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createOrUpdateWorkflowReq>(cloneDeep(DEFAULT_FORM_DATA))
 const infoRef = ref<InstanceType<typeof Info>>()
 const lfRef = ref<InstanceType<typeof Lf>>()
 

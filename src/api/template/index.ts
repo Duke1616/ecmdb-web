@@ -2,9 +2,17 @@ import type * as template from "./types/template"
 import instance from "@/utils/hy_service"
 
 /** 新增模版 */
-export function createTemplateApi(data: template.createTemplateReq) {
+export function createTemplateApi(data: template.createOrUpdateTemplateReq) {
   return instance.post<number>({
     url: "template/create",
+    data: data
+  })
+}
+
+/** 修改模版 */
+export function updateTemplateApi(data: template.createOrUpdateTemplateReq) {
+  return instance.post<number>({
+    url: "template/update",
     data: data
   })
 }

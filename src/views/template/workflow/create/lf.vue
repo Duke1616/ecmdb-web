@@ -38,10 +38,10 @@ import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@/components/workflow/PropertySetting/PropertyDialog.vue"
 import { nodeList } from "../config"
 import { registerStart, registerEnd, registerCondition, registerUser } from "@/components/workflow/RegisterNode/index"
-import { createWorkflowReq } from "@/api/workflow/types/workflow"
+import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 
 interface Props {
-  data: createWorkflowReq
+  data: createOrUpdateWorkflowReq
 }
 const props = defineProps<Props>()
 
@@ -136,6 +136,7 @@ const registerNode = () => {
 }
 
 const render = () => {
+  lf.value.translateCenter()
   LfEvent()
 }
 
@@ -169,9 +170,10 @@ const getGraphData = () => {
 
 watch(
   () => props.data,
-  (val: createWorkflowReq) => {
+  (val: createOrUpdateWorkflowReq) => {
     nextTick(() => {
       lf.value.render(val.flow_data)
+      lf.value.translateCenter()
     })
   },
   { immediate: true }

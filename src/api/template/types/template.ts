@@ -1,4 +1,5 @@
-export interface createTemplateReq {
+export interface createOrUpdateTemplateReq {
+  id?: number
   name: string
   rules?: any
   options?: any

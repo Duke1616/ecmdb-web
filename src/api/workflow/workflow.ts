@@ -2,7 +2,7 @@ import type * as workflow from "./types/workflow"
 import instance from "@/utils/hy_service"
 
 /** 新增工作流程 */
-export function createWorkflowApi(data: workflow.createWorkflowReq) {
+export function createWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
   return instance.post<number>({
     url: "workflow/create",
     data: data
@@ -10,7 +10,7 @@ export function createWorkflowApi(data: workflow.createWorkflowReq) {
 }
 
 /** 修改工作流程 */
-export function updateWorkflowApi(data: workflow.createWorkflowReq) {
+export function updateWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
   return instance.post<number>({
     url: "workflow/update",
     data: data

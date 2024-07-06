@@ -63,10 +63,16 @@
       </div>
     </el-card>
     <!-- 新增模版 -->
-    <addTemplate :dialog-visible="addDialogVisible" @close="onClosed" @list-templates="listTemplatesData" />
+    <Template
+      :create-dialog-visible="createDialogVisible"
+      :update-dialog-visible="updateDialogVisible"
+      :templateData="updateTemplateData"
+      @close="onClosed"
+      @list-templates="listTemplatesData"
+    />
 
     <!-- 修改或查看模版 -->
-    <updateTemplate :dialog-visible="updateDialogVisible" :template-data="updateTemplateData" @close="onClosed" />
+    <!-- <updateTemplate :dialog-visible="updateDialogVisible" :template-data="updateTemplateData" @close="onClosed" /> -->
   </div>
 </template>
 
@@ -76,13 +82,12 @@ import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { template } from "@/api/template/types/template"
 import { deleteTemplateApi, listTemplateApi } from "@/api/template"
-import addTemplate from "./add-template.vue"
-import updateTemplate from "./update-template.vue"
+import Template from "./template.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const addDialogVisible = ref<boolean>(false)
+const createDialogVisible = ref<boolean>(false)
 const updateDialogVisible = ref<boolean>(false)
 const updateTemplateData = ref<template>()
 
@@ -103,13 +108,13 @@ const listTemplatesData = () => {
     .finally(() => {})
 }
 
-const onClosed = (val: boolean) => {
-  addDialogVisible.value = val
-  updateDialogVisible.value = val
+const onClosed = () => {
+  createDialogVisible.value = false
+  updateDialogVisible.value = false
 }
 
 const handlerCreate = () => {
-  addDialogVisible.value = true
+  createDialogVisible.value = true
 }
 
 const handleUpdate = (row: template) => {

@@ -98,7 +98,10 @@ const registerNode = () => {
 
 const render = () => {
   lf.value.render(props.data)
+  // 居中展示
   lf.value.translateCenter()
+  // 流程图缩小到画布能全部显示
+  lf.value.fitView(40, 40, 40, 40)
 }
 const dataVisible = ref<boolean>(false)
 const emits = defineEmits(["close"])

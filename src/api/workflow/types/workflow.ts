@@ -1,4 +1,4 @@
-export interface createWorkflowReq {
+export interface createOrUpdateWorkflowReq {
   id?: number
   name: string
   template_id: number
