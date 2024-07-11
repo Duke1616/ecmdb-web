@@ -26,7 +26,7 @@ export function detailTemplateApi(id: number) {
 }
 
 /** 根据模版列表 */
-export function listTemplateApi(data: template.listTemplateReq) {
+export function listTemplateApi(data: template.PageReq) {
   return instance.post<template.templates>({
     url: "template/list",
     data: data
@@ -38,5 +38,21 @@ export function deleteTemplateApi(id: number) {
   return instance.post<number>({
     url: "template/delete",
     data: { id: id }
+  })
+}
+
+/** 新增模版分组 */
+export function createTemplateGroupApi(data: template.createTemplateGroupReq) {
+  return instance.post<number>({
+    url: "template/group/create",
+    data: data
+  })
+}
+
+/** 根据模版列表 */
+export function listTemplateGroupApi(data: template.PageReq) {
+  return instance.post<template.templateGroups>({
+    url: "template/group/list",
+    data: data
   })
 }

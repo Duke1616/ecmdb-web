@@ -48,11 +48,11 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
-import { pixelOption } from "@/components/workflow/PropertySetting/options"
-import startProperty from "@/components/workflow/RegisterNode/start/startProperty.vue"
-import userProperty from "@/components/workflow/RegisterNode/user/userProperty.vue"
-import conditionProperty from "@/components/workflow/RegisterNode/condition/conditionProperty.vue"
-import edge from "@/components/workflow/RegisterEdge/edge.vue"
+import { pixelOption } from "@/components/WorkFlow/PropertySetting/options"
+import startProperty from "@/components/WorkFlow/RegisterNode/start/startProperty.vue"
+import userProperty from "@/components/WorkFlow/RegisterNode/user/userProperty.vue"
+import conditionProperty from "@/components/WorkFlow/RegisterNode/condition/conditionProperty.vue"
+import edge from "@/components/WorkFlow/RegisterEdge/edge.vue"
 const props = defineProps({
   //标题
   title: {

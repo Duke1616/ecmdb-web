@@ -14,7 +14,7 @@ import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import { nodeList } from "../config"
-import { registerStart, registerEnd, registerCondition, registerUser } from "@/components/workflow/RegisterNode/index"
+import { registerStart, registerEnd, registerCondition, registerUser } from "@/components/WorkFlow/RegisterNode/index"
 
 interface Props {
   data: any

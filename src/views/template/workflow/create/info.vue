@@ -7,8 +7,8 @@
       <el-form-item prop="owner" label="负责人">
         <el-input v-model="formData.owner" />
       </el-form-item>
-      <el-form-item prop="icon" label="图标">
-        <el-input v-model="formData.icon" />
+      <el-form-item prop="template" label="绑定模版">
+        <el-input v-model="formData.template_id" />
       </el-form-item>
       <el-form-item prop="desc" label="流程说明">
         <el-input v-model="formData.desc" type="textarea" d />
@@ -40,7 +40,7 @@ const handleClose = () => {
 const DEFAULT_FORM_DATA: createInfoReq = {
   name: "",
   desc: "",
-  template_id: 0,
+  template_id: undefined,
   icon: "",
   owner: ""
 }
@@ -84,3 +84,12 @@ defineExpose({
   getFormData
 })
 </script>
+
+<style lang="scss" scoped>
+.el-form {
+  min-width: 100%; /* 确保表单至少和视窗一样宽 */
+}
+.flow-info {
+  width: 1000px;
+}
+</style>

@@ -3,6 +3,7 @@ import { computed } from "vue"
 
 interface Props {
   prefix?: string
+  size?: string
   name: string
 }
 
@@ -11,10 +12,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const symbolId = computed(() => `#${props.prefix}-${props.name}`)
+console.log(props.name, props.prefix)
 </script>
 
 <template>
-  <svg class="svg-icon" aria-hidden="true">
+  <svg class="svg-icon" aria-hidden="true" :style="{ height: props.size, width: props.size }">
     <use :href="symbolId" />
   </svg>
 </template>

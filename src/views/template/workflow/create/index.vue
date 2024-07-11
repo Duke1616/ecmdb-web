@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-card v-show="visible" height="1000px">
+    <el-card v-show="visible" style="height: auto">
       <div class="steps-container">
         <el-steps class="steps" align-center :active="active">
           <el-step title="填写流程信息" :icon="Edit" />
@@ -173,5 +173,6 @@ watch(
   display: flex;
   flex: 1;
   justify-content: center;
+  height: 600px;
 }
 </style>

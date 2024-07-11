@@ -174,11 +174,11 @@ export const constantRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
-        path: "info",
-        component: () => import("@/views/template/info/detail.vue"),
-        name: "template-info",
+        path: "start",
+        component: () => import("@/views/template/start/index.vue"),
+        name: "template-start",
         meta: {
-          title: "模型详情",
+          title: "提交工单",
           svgIcon: "link",
           platforms: ["cmdb"]
         }

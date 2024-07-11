@@ -20,17 +20,14 @@ const options = ref({
 })
 
 const rule = ref()
-
 const handleDetail = () => {
-  detailTemplateApi(13)
+  detailTemplateApi(14)
     .then((res) => {
       options.value = res.data.options
       rule.value = res.data.rules
       options.value.onSubmit = function () {
-        console.log("test")
         alert(JSON.stringify(formData.value))
       }
-      console.log("res", rule.value)
     })
     .catch((error) => {
       console.log("catch", error)

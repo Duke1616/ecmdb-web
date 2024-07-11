@@ -3,7 +3,8 @@
     <el-card shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增模版</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handlerCreateGroup">新增分组</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
@@ -62,7 +63,7 @@
         />
       </div>
     </el-card>
-    <!-- 新增模版 -->
+    <!-- 新增 OR 修改模版 -->
     <Template
       :create-dialog-visible="createDialogVisible"
       :update-dialog-visible="updateDialogVisible"
@@ -71,8 +72,8 @@
       @list-templates="listTemplatesData"
     />
 
-    <!-- 修改或查看模版 -->
-    <!-- <updateTemplate :dialog-visible="updateDialogVisible" :template-data="updateTemplateData" @close="onClosed" /> -->
+    <!-- 新增分组 -->
+    <Group :create-dialog-visible="groupDialogVisible" @close="onClosed" />
   </div>
 </template>
 
@@ -83,6 +84,7 @@ import { usePagination } from "@/hooks/usePagination"
 import { template } from "@/api/template/types/template"
 import { deleteTemplateApi, listTemplateApi } from "@/api/template"
 import Template from "./template.vue"
+import Group from "./group.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
 
@@ -90,6 +92,8 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 const createDialogVisible = ref<boolean>(false)
 const updateDialogVisible = ref<boolean>(false)
 const updateTemplateData = ref<template>()
+
+const groupDialogVisible = ref<boolean>(false)
 
 /** 查询模版列表 */
 const templatesData = ref<template[]>([])
@@ -108,9 +112,14 @@ const listTemplatesData = () => {
     .finally(() => {})
 }
 
+const handlerCreateGroup = () => {
+  groupDialogVisible.value = true
+}
+
 const onClosed = () => {
   createDialogVisible.value = false
   updateDialogVisible.value = false
+  groupDialogVisible.value = false
 }
 
 const handlerCreate = () => {
