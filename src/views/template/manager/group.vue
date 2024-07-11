@@ -39,7 +39,7 @@ const formData = ref<createTemplateGroupReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
-  icon: [{ required: true, message: "图标", trigger: "blur" }]
+  icon: [{ required: true, message: "必须输入图标", trigger: "blur" }]
 }
 
 const handlerCreate = () => {
