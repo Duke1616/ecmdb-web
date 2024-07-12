@@ -55,9 +55,9 @@ import { h, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import addCodebook from "./createOrUpdate.vue"
-import { codebook } from "@/api/task/types/codebook"
+import { codebook } from "@/api/codebook/types/codebook"
 import { cloneDeep } from "lodash-es"
-import { deleteCodebookApi, listCodebookApi } from "@/api/task"
+import { deleteCodebookApi, listCodebookApi } from "@/api/codebook"
 import { ElMessage, ElMessageBox } from "element-plus"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)

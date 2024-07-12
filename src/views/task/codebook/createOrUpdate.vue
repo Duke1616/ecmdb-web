@@ -41,10 +41,10 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import CodeMirror from "@/components/CodeMirror/index.vue"
-import { type codebook, type createOrUpdateCodebookReq } from "@/api/task/types/codebook"
+import { type codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { createCodebookApi, updateCodebookApi } from "@/api/task"
+import { createCodebookApi, updateCodebookApi } from "@/api/codebook"
 
 // 接收父组建传递
 interface Props {
