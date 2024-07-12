@@ -1,4 +1,5 @@
-export interface CreateOrderReq {
-  applicant: string
-  data: any
+export interface createOrderReq {
+  template_id: number
+  flow_id: number
+  data: object
 }

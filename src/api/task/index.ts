@@ -8,11 +8,3 @@ export function startTaskApi(data: task.startTaskReq) {
     data: data
   })
 }
-
-/** 创建任务 */
-export function createTaskApi(data: task.createTaskReq) {
-  return instance.post<number>({
-    url: "task/create",
-    data: data
-  })
-}

@@ -7,13 +7,13 @@
 </template>
 
 <script setup lang="ts">
-import { createTaskReq } from "@/api/task/types/task"
 import { detailTemplateApi } from "@/api/template"
 import formCreate from "@form-create/element-ui"
 import { ref, watch } from "vue"
 import { cloneDeep } from "lodash-es"
-import { createTaskApi } from "@/api/task"
 import { ElMessage } from "element-plus"
+import { createOrderApi } from "@/api/order"
+import { createOrderReq } from "@/api/order/types/order"
 
 interface Props {
   templateId: number | undefined
@@ -31,13 +31,13 @@ const resetForm = () => {
 const FormCreate = formCreate.$form()
 const fApi = ref({})
 
-const DEFAULT_FORM_DATA: createTaskReq = {
+const DEFAULT_FORM_DATA: createOrderReq = {
   flow_id: 0,
   template_id: 0,
   data: {}
 }
 
-const formData = ref<createTaskReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createOrderReq>(cloneDeep(DEFAULT_FORM_DATA))
 
 const data = ref()
 const options = ref({
@@ -55,7 +55,8 @@ const handleDetail = (id: number) => {
         formData.value.data = data.value
         formData.value.template_id = res.data.id
         formData.value.flow_id = res.data.flow_id
-        createTaskApi(formData.value)
+        console.log(formData.value)
+        createOrderApi(formData.value)
           .then(() => {
             resetForm()
             ElMessage.success("保存成功")

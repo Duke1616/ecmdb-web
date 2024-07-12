@@ -9,9 +9,3 @@ export interface variables {
   key: string
   value: string
 }
-
-export interface createTaskReq {
-  template_id: number
-  flow_id: number
-  data: any
-}
