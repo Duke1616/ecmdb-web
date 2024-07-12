@@ -1,42 +1,18 @@
-import type * as codebook from "./types/codebook"
+import type * as task from "./types/task"
 import instance from "@/utils/hy_service"
 
-/** 新增 */
-export function createCodebookApi(data: codebook.createOrUpdateCodebookReq) {
+/** 创建工单任务 */
+export function startTaskApi(data: task.startTaskReq) {
   return instance.post<number>({
-    url: "codebook/create",
+    url: "task/start",
     data: data
   })
 }
 
-/** 修改 */
-export function updateCodebookApi(data: codebook.createOrUpdateCodebookReq) {
+/** 创建任务 */
+export function createTaskApi(data: task.createTaskReq) {
   return instance.post<number>({
-    url: "codebook/update",
+    url: "task/create",
     data: data
-  })
-}
-
-/** 列表 */
-export function listCodebookApi(data: codebook.listCodebookReq) {
-  return instance.post<codebook.codebooks>({
-    url: "codebook/list",
-    data: data
-  })
-}
-
-/** 详情 */
-export function detailCodebookApi(id: number) {
-  return instance.post<codebook.codebooks>({
-    url: "codebook/list",
-    data: { id: id }
-  })
-}
-
-/** 删除 */
-export function deleteCodebookApi(id: number) {
-  return instance.post<number>({
-    url: "codebook/delete",
-    data: { id: id }
   })
 }

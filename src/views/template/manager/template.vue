@@ -25,7 +25,8 @@
         </el-col>
         <el-col :span="12">
           <el-form-item prop="icon" label="应用图标">
-            <Vue3IconPicker v-model="formData.icon" valueType="name" placeholder="请选择图标" />
+            <!-- <Vue3IconPicker v-model="formData.icon" valueType="name" placeholder="请选择图标" /> -->
+            <e-icon-picker v-model="formData.icon" placeholder="请选择图标" class="icon-picker" />
           </el-form-item>
         </el-col>
       </el-row>
@@ -43,7 +44,7 @@ import FcDesigner from "@form-create/designer"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { ref, watch, nextTick, onMounted } from "vue"
 import { cloneDeep } from "lodash-es"
-import { Vue3IconPicker } from "vue3-icon-picker"
+// import { Vue3IconPicker } from "vue3-icon-picker"
 import "vue3-icon-picker/dist/style.css"
 import { workflow } from "@/api/workflow/types/workflow"
 import { listWorkflowApi } from "@/api/workflow/workflow"
@@ -202,5 +203,9 @@ onMounted(() => {
   .el-drawer__header {
     margin: 0;
   }
+}
+
+.icon-picker {
+  width: 100%;
 }
 </style>

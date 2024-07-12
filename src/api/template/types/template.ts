@@ -48,3 +48,15 @@ export interface templateGroups {
   total: number
   template_groups: templateGroup[]
 }
+
+export interface templateCombination {
+  id: number
+  name: string
+  icon: string
+  total: number
+  templates: template[]
+}
+
+export interface templateCombinations {
+  template_combinations: templateCombination[]
+}

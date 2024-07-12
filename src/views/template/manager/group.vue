@@ -5,7 +5,7 @@
         <el-input v-model="formData.name" placeholder="请输入名称" />
       </el-form-item>
       <el-form-item prop="icon" label="图标">
-        <Vue3IconPicker v-model="formData.icon" valueType="name" placeholder="请选择图标" />
+        <e-icon-picker v-model="formData.icon" placeholder="请选择图标" class="icon-picker" />
       </el-form-item>
     </el-form>
     <template #footer>
@@ -21,7 +21,6 @@ import { createTemplateGroupReq } from "@/api/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { ref, watch } from "vue"
-import { Vue3IconPicker } from "vue3-icon-picker"
 
 interface Props {
   createDialogVisible: boolean
@@ -74,3 +73,9 @@ watch(
   { immediate: true }
 )
 </script>
+
+<style lang="scss" scoped>
+.icon-picker {
+  width: 100%;
+}
+</style>

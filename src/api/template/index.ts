@@ -56,3 +56,10 @@ export function listTemplateGroupApi(data: template.PageReq) {
     data: data
   })
 }
+
+/** 聚合组数据查看 */
+export function pipelineGroupApi() {
+  return instance.post<template.templateCombinations>({
+    url: "template/list/pipeline"
+  })
+}

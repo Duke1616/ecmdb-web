@@ -1,32 +1,69 @@
 <template>
-  <el-card>
-    <FormCreate :rule="rule" :option="options" v-model="formData" v-model:api="fApi" />
-  </el-card>
+  <div class="app-container">
+    <el-dialog v-model="dialogVisible" :title="'新建工单'" @closed="resetForm" width="35%">
+      <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
+    </el-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
-//导入 form-create
+import { createTaskReq } from "@/api/task/types/task"
 import { detailTemplateApi } from "@/api/template"
 import formCreate from "@form-create/element-ui"
-import { onMounted, ref } from "vue"
+import { ref, watch } from "vue"
+import { cloneDeep } from "lodash-es"
+import { createTaskApi } from "@/api/task"
+import { ElMessage } from "element-plus"
 
+interface Props {
+  templateId: number | undefined
+  isVisible: boolean
+}
+
+const props = defineProps<Props>()
+const emits = defineEmits(["close"])
+const dialogVisible = ref<boolean>(false)
+const resetForm = () => {
+  dialogVisible.value = false
+  emits("close")
+}
 //获取 formCreate 组件
 const FormCreate = formCreate.$form()
 const fApi = ref({})
-const formData = ref({})
+
+const DEFAULT_FORM_DATA: createTaskReq = {
+  flow_id: 0,
+  template_id: 0,
+  data: {}
+}
+
+const formData = ref<createTaskReq>(cloneDeep(DEFAULT_FORM_DATA))
+
+const data = ref()
 const options = ref({
   //表单提交事件
   onSubmit: function () {}
 })
 
 const rule = ref()
-const handleDetail = () => {
-  detailTemplateApi(14)
+const handleDetail = (id: number) => {
+  detailTemplateApi(id)
     .then((res) => {
       options.value = res.data.options
       rule.value = res.data.rules
       options.value.onSubmit = function () {
-        alert(JSON.stringify(formData.value))
+        formData.value.data = data.value
+        formData.value.template_id = res.data.id
+        formData.value.flow_id = res.data.flow_id
+        createTaskApi(formData.value)
+          .then(() => {
+            resetForm()
+            ElMessage.success("保存成功")
+          })
+          .catch((error) => {
+            console.log("catch", error)
+          })
+          .finally(() => {})
       }
     })
     .catch((error) => {
@@ -35,7 +72,14 @@ const handleDetail = () => {
     .finally(() => {})
 }
 
-onMounted(() => {
-  handleDetail()
-})
+watch(
+  () => props.isVisible,
+  (val) => {
+    dialogVisible.value = val
+    if (props.templateId) {
+      handleDetail(props.templateId)
+    }
+  },
+  { immediate: true }
+)
 </script>
