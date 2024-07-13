@@ -4,11 +4,19 @@ import instance from "@/utils/hy_service"
 
 /** 登录并返回 Token */
 export function loginApi(data: Login.LoginRequestData) {
-  return instance.request<Login.LoginResponseData>({
-    url: "user/ldap/login",
-    method: "post",
-    data
-  })
+  return instance
+    .requestHader<Login.LoginResponseData>({
+      url: "user/ldap/login",
+      method: "post",
+      data
+    })
+    .then((response) => {
+      if (response.headers && response.headers["x-access-token"]) {
+        response.data.token = response.headers["x-access-token"]
+      }
+
+      return response
+    })
 }
 
 /** 获取用户详情 */

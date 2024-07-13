@@ -144,6 +144,40 @@ class HyRequest {
     })
   }
 
+  requestHader<T>(config: HYRequestConfig): Promise<{
+    code: number
+    data: T
+    message: string
+    headers: any
+  }> {
+    return new Promise((resolve, reject) => {
+      // 单独的请求拦截
+      if (config.interceptorsToOnce?.requestInterceptor) {
+        config = config.interceptorsToOnce.requestInterceptor(config)
+      }
+
+      this.instance
+        .request(config)
+        .then((res) => {
+          // 单独的响应拦截
+          if (config.interceptorsToOnce?.responseInterceptor) {
+            res = config.interceptorsToOnce.responseInterceptor(res)
+          }
+          // 将 header 信息添加到返回的数据对象中
+          const response = {
+            code: res.data.code,
+            data: res.data,
+            message: res.data.message,
+            headers: res.headers
+          }
+          resolve(response)
+        })
+        .catch((error) => {
+          reject(error.response ? error.response.data : error)
+        })
+    })
+  }
+
   get<T>(config: HYRequestConfig): Promise<{
     code: number
     data: T

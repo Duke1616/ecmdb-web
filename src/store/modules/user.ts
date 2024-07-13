@@ -8,6 +8,7 @@ import { resetRouter } from "@/router"
 import { loginApi, getUserInfoApi } from "@/api/login"
 import { type LoginRequestData } from "@/api/login/types/login"
 import routeSettings from "@/config/route"
+import { localCache } from "@/utils/cache"
 
 export const useUserStore = defineStore("user", () => {
   const token = ref<string>(getToken() || "")
@@ -20,6 +21,8 @@ export const useUserStore = defineStore("user", () => {
   /** 登录 */
   const login = async ({ username, password }: LoginRequestData) => {
     const { data } = await loginApi({ username, password })
+
+    localCache.setCache("access_token", data.token)
     setToken(data.token)
     token.value = data.token
   }
