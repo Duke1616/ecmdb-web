@@ -18,7 +18,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item prop="icon" label="流程">
-            <el-select v-model="formData.flow_id" placeholder="请选择">
+            <el-select v-model="formData.workflow_id" placeholder="请选择">
               <el-option v-for="item in workFlowsData" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
@@ -75,7 +75,7 @@ const DEFAULT_FORM_DATA: createOrUpdateTemplateReq = {
   options: undefined,
   icon: "",
   group_id: undefined,
-  flow_id: undefined
+  workflow_id: undefined
 }
 
 const formData = ref<createOrUpdateTemplateReq>(cloneDeep(DEFAULT_FORM_DATA))
@@ -84,7 +84,7 @@ const formRules: FormRules = {
   name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
   icon: [{ required: true, message: "必须输入图标", trigger: "blur" }],
   group_id: [{ required: true, message: "", trigger: "blur" }],
-  flow_id: [{ required: true, message: "", trigger: "blur" }]
+  workflow_id: [{ required: true, message: "", trigger: "blur" }]
 }
 
 const designerRef = ref<InstanceType<typeof FcDesigner>>()

@@ -184,6 +184,16 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       },
       {
+        path: "list",
+        component: () => import("@/views/order/index.vue"),
+        name: "order-list",
+        meta: {
+          title: "工单列表",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
+      },
+      {
         path: "manager",
         component: () => import("@/views/template/manager/index.vue"),
         name: "template-manager",
@@ -195,8 +205,8 @@ export const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: "workflow",
-        component: () => import("@/views/template/workflow/index.vue"),
-        name: "template-workflow",
+        component: () => import("@/views/workflow/index.vue"),
+        name: "workflow",
         meta: {
           title: "流程管理",
           svgIcon: "link",

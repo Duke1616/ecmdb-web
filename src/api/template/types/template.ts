@@ -5,7 +5,7 @@ export interface createOrUpdateTemplateReq {
   options?: any
   desc: string
   icon: string
-  flow_id?: number
+  workflow_id?: number
   group_id?: number
 }
 
@@ -24,7 +24,7 @@ export interface template {
   create_type: number
   desc: string
   icon: string
-  flow_id: number
+  workflow_id: number
   group_id: number
 }
 
