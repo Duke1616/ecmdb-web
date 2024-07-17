@@ -1,15 +1,5 @@
 <template>
   <el-card shadow="never">
-    <!-- <div class="toolbar-wrapper">
-      <div>
-        <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增模版</el-button>
-      </div>
-      <div>
-        <el-tooltip content="刷新当前页">
-          <el-button type="primary" :icon="RefreshRight" circle @click="listOrdersData" />
-        </el-tooltip>
-      </div>
-    </div> -->
     <div class="table-wrapper">
       <el-table :data="ordersData">
         <el-table-column type="selection" width="50" align="center" />
@@ -71,8 +61,13 @@ const startByOrdersData = () => {
 const handleDelete = (row: order) => {
   console.log(row)
 }
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], startByOrdersData, { immediate: true })
+
+defineExpose({
+  startByOrdersData
+})
 </script>
 
 <style lang="scss" scoped>

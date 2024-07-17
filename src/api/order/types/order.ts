@@ -29,9 +29,20 @@ export interface order {
   workflow_id: number
   template_id: number
   ctime: number
+  data: object
 }
 
 export interface ordersListRes {
   orders: order[]
   total: number
+}
+
+export interface passOrder {
+  task_id: number
+  comment: string
+}
+
+export interface rejectOrder {
+  task_id: number
+  comment: string
 }

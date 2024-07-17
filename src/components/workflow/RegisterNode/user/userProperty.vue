@@ -32,6 +32,9 @@
           <el-button class="select-button" :icon="UserFilled" @click="openUser" />
         </div>
       </el-form-item>
+      <el-form-item label="是否会签" prop="type">
+        <el-switch v-model="propertyForm.is_cosigned" size="default" />
+      </el-form-item>
     </el-form>
     <div class="mt15" v-if="flowDetail.status != '2'">
       <el-button @click="cancelFunc"> 取消 </el-button>
@@ -152,7 +155,8 @@ const emits = defineEmits(["closed"])
 const propertyForm = reactive({
   name: "",
   approved: ref<string[]>(),
-  type: "appoint"
+  type: "appoint",
+  is_cosigned: false
 })
 
 const openUser = () => {
@@ -186,7 +190,8 @@ const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
     approved: propertyForm.approved,
-    type: propertyForm.type
+    type: propertyForm.type,
+    is_cosigned: propertyForm.is_cosigned
   })
 }
 
@@ -208,6 +213,7 @@ const cancelFunc = () => {
 
 onMounted(() => {
   propertyForm.name = props.nodeData?.properties.name
+  propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
   propertyForm.approved = props.nodeData?.properties.approved ? props.nodeData.properties.approved : ""
 })
 </script>

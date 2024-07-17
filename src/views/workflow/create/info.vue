@@ -44,7 +44,8 @@ const DEFAULT_FORM_DATA: createInfoReq = {
 const formData = ref<createInfoReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
-  name: [{ required: true, message: "必须输入名称", trigger: "blur" }]
+  name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
+  owner: [{ required: true, message: "必须输入负责人", trigger: "blur" }]
 }
 
 const handleNext = () => {

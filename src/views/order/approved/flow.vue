@@ -1,10 +1,7 @@
 <template>
-  <el-dialog v-model="dataVisible" width="60%" @closed="onClosed">
-    <div class="logic-flow-preview">
-      <div id="LF-preview" ref="container" />
-    </div>
-    <!-- <el-button @click="onClosed">关闭</el-button> -->
-  </el-dialog>
+  <div class="logic-flow-preview">
+    <div id="LF-preview" ref="container" />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -19,13 +16,11 @@ import {
   registerEnd,
   registerCondition,
   registerUser,
-  registerParallel,
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
 
 interface Props {
-  data: any
-  PreviewDialogvisble: boolean
+  workflowId: number | undefined
 }
 const props = defineProps<Props>()
 
@@ -102,29 +97,33 @@ const registerNode = () => {
   registerCondition(lf.value)
   registerUser(lf.value)
   registerEdge(lf.value)
-  registerParallel(lf.value)
 }
 
 const render = () => {
-  lf.value.render(props.data)
+  lf.value.render()
   // 居中展示
   lf.value.translateCenter()
   // 流程图缩小到画布能全部显示
   lf.value.fitView(40, 40, 40, 40)
 }
-const dataVisible = ref<boolean>(false)
-const emits = defineEmits(["close"])
-const onClosed = () => {
-  emits("close")
-}
+
+// 获取线条颜色
+
 watch(
-  () => props.PreviewDialogvisble, // 确保属性名称正确
-  (val: boolean) => {
-    dataVisible.value = val
+  () => props.workflowId, // 确保属性名称正确
+  (val) => {
     if (val) {
       nextTick(() => {
         initLf()
-        lf.value.render(props.data)
+        lf.value.render()
+
+        // 设置线条颜色
+        const edgeModel = lf.value.getEdgeModelById("6775fe22-5d52-4b6a-90aa-1a2ec298d4a0")
+        edgeModel.setProperties({
+          isPass: true
+        })
+
+        console.log(edgeModel)
       })
     }
   },
@@ -133,18 +132,6 @@ watch(
 </script>
 
 <style scoped>
-/* .logic-flow-preview {
-  height: 70vh;
-  position: relative;
-}
-
-#LF-preview {
-  width: calc(100% - 100px);
-  height: 100%;
-  outline: none;
-  margin-left: 50px;
-} */
-
 .logic-flow-preview {
   display: flex;
   flex-direction: column;

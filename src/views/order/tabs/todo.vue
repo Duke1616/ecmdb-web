@@ -1,15 +1,5 @@
 <template>
   <el-card shadow="never">
-    <!-- <div class="toolbar-wrapper">
-      <div>
-        <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增模版</el-button>
-      </div>
-      <div>
-        <el-tooltip content="刷新当前页">
-          <el-button type="primary" :icon="RefreshRight" circle @click="listOrdersData" />
-        </el-tooltip>
-      </div>
-    </div> -->
     <div class="table-wrapper">
       <el-table :data="ordersData">
         <el-table-column type="selection" width="50" align="center" />
@@ -39,6 +29,16 @@
       />
     </div>
   </el-card>
+
+  <Detail
+    :action="action"
+    :dialogVisible="dialogVisible"
+    :processInstId="processInstId"
+    :templateId="templateId"
+    :taskId="taskId"
+    :workflowId="workflowId"
+    @close="onClosed"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -47,9 +47,16 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
 import { todoOrderApi } from "@/api/order"
+import Detail from "../approved/detail.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
+const dialogVisible = ref<boolean>()
+const templateId = ref<number>()
+const processInstId = ref<number>()
+const taskId = ref<number>()
+const workflowId = ref<number>()
+const action = ref<string>("todo")
 /** 查询模版列表 */
 const ordersData = ref<order[]>([])
 const listOrdersData = () => {
@@ -71,10 +78,27 @@ const listOrdersData = () => {
 }
 
 const handleDelete = (row: order) => {
-  console.log(row)
+  templateId.value = row.template_id
+  processInstId.value = row.process_instance_id
+  taskId.value = row.task_id
+  workflowId.value = row.workflow_id
+  dialogVisible.value = true
 }
+
+const onClosed = () => {
+  dialogVisible.value = false
+  templateId.value = 0
+  processInstId.value = 0
+  workflowId.value = 0
+  taskId.value = 0
+}
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listOrdersData, { immediate: true })
+
+defineExpose({
+  listOrdersData
+})
 </script>
 
 <style lang="scss" scoped>

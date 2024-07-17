@@ -24,3 +24,27 @@ export function startByOrderApi(data: order.startByOrderReq) {
     data: data
   })
 }
+
+/** TODO 查看我的工单 */
+export function getOrderByProcessInstIdApi(processInstId: number) {
+  return instance.post<order.order>({
+    url: "order/detail/process_inst_id",
+    data: { process_instance_id: processInstId }
+  })
+}
+
+/** 同意工单 */
+export function passOrderApi(data: order.passOrder) {
+  return instance.post<number>({
+    url: "order/pass",
+    data: data
+  })
+}
+
+/** 驳回工单 */
+export function rejectOrderApi(data: order.rejectOrder) {
+  return instance.post<number>({
+    url: "order/reject",
+    data: data
+  })
+}

@@ -70,6 +70,10 @@ const $_dragNode = (item: any) => {
   background: url("../background/condition.png") no-repeat;
   background-size: cover;
 }
+.node-parallel {
+  background: url("../background/parallel.png") no-repeat;
+  background-size: cover;
+}
 .node-time {
   background: url("../background/time.png") no-repeat;
   background-size: cover;

@@ -36,8 +36,16 @@ import NodePanel from "@/components/workflow/LFComponents/NodePanel.vue"
 import Control from "@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@/components/workflow/PropertySetting/PropertyDialog.vue"
-import { nodeList } from "../config"
-import { registerStart, registerEnd, registerCondition, registerUser } from "@/components/workflow/RegisterNode/index"
+import { nodeList } from "@/components/workflow/config"
+import {
+  registerStart,
+  registerEnd,
+  registerCondition,
+  registerParallel,
+  registerUser,
+  registerEdge
+} from "@/components/workflow/RegisterNode/index"
+
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 
 interface Props {
@@ -133,6 +141,8 @@ const registerNode = () => {
   registerEnd(lf.value)
   registerUser(lf.value)
   registerCondition(lf.value)
+  registerEdge(lf.value)
+  registerParallel(lf.value)
 }
 
 const render = () => {
