@@ -1,7 +1,6 @@
 export interface createOrUpdateWorkflowReq {
   id?: number
   name: string
-  template_id: number
   icon: string
   desc: string
   owner: string
@@ -10,7 +9,6 @@ export interface createOrUpdateWorkflowReq {
 
 export interface createInfoReq {
   name: string
-  template_id?: number
   icon: string
   desc: string
   owner: string

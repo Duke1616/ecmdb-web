@@ -7,9 +7,6 @@
       <el-form-item prop="owner" label="负责人">
         <el-input v-model="formData.owner" />
       </el-form-item>
-      <el-form-item prop="template" label="绑定模版">
-        <el-input v-model="formData.template_id" />
-      </el-form-item>
       <el-form-item prop="desc" label="流程说明">
         <el-input v-model="formData.desc" type="textarea" d />
       </el-form-item>
@@ -40,7 +37,6 @@ const handleClose = () => {
 const DEFAULT_FORM_DATA: createInfoReq = {
   name: "",
   desc: "",
-  template_id: undefined,
   icon: "",
   owner: ""
 }

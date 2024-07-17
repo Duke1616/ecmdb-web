@@ -65,7 +65,6 @@ const DEFAULT_FORM_DATA: createOrUpdateWorkflowReq = {
   id: undefined,
   name: "",
   desc: "",
-  template_id: 0,
   icon: "",
   owner: "",
   flow_data: graphData
