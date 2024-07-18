@@ -46,7 +46,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emits = defineEmits(["close"])
+const emits = defineEmits(["close", "refresh-data"])
 
 //获取 formCreate 组件
 const FormCreate = formCreate.$form()
@@ -98,10 +98,10 @@ const handlePass = () => {
   }
 
   // 同意审批
-  passOrderApi(formData.value)
-
-  // 重置表单，关闭弹窗
-  resetForm()
+  passOrderApi(formData.value).then(() => {
+    // 重置表单，关闭弹窗
+    resetForm()
+  })
 }
 
 const handleReject = () => {
@@ -110,10 +110,10 @@ const handleReject = () => {
   }
 
   // 同意审批
-  rejectOrderApi(formData.value)
-
-  // 重置表单，关闭弹窗
-  resetForm()
+  rejectOrderApi(formData.value).then(() => {
+    // 重置表单，关闭弹窗
+    resetForm()
+  })
 }
 
 const resetForm = () => {
@@ -121,6 +121,7 @@ const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 
   emits("close")
+  emits("refresh-data")
 }
 
 watch(

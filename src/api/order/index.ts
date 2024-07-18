@@ -9,7 +9,7 @@ export function createOrderApi(data: order.createOrderReq) {
   })
 }
 
-/** TODO 查看待办工单 */
+/** 查看待办工单 */
 export function todoOrderApi(data: order.todoOrderReq) {
   return instance.post<order.ordersListRes>({
     url: "order/todo",
@@ -17,7 +17,7 @@ export function todoOrderApi(data: order.todoOrderReq) {
   })
 }
 
-/** TODO 查看我的待办工单 */
+/** 查看我的待办工单 */
 export function startByOrderApi(data: order.startByOrderReq) {
   return instance.post<order.ordersListRes>({
     url: "order/start/user",
@@ -25,8 +25,16 @@ export function startByOrderApi(data: order.startByOrderReq) {
   })
 }
 
-/** TODO 查看我的工单 */
+/** 查看我的工单 */
 export function getOrderByProcessInstIdApi(processInstId: number) {
+  return instance.post<order.order>({
+    url: "order/detail/process_inst_id",
+    data: { process_instance_id: processInstId }
+  })
+}
+
+/** 查看历史工单 */
+export function getHisotryOrderApi(processInstId: number) {
   return instance.post<order.order>({
     url: "order/detail/process_inst_id",
     data: { process_instance_id: processInstId }
@@ -45,6 +53,14 @@ export function passOrderApi(data: order.passOrder) {
 export function rejectOrderApi(data: order.rejectOrder) {
   return instance.post<number>({
     url: "order/reject",
+    data: data
+  })
+}
+
+/** 工单历史任务记录 */
+export function orderTaskRecordsApi(data: order.taskRecordReq) {
+  return instance.post<order.taskRecords>({
+    url: "order/task/record",
     data: data
   })
 }

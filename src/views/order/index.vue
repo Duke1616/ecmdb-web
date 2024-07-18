@@ -17,7 +17,7 @@ import { ref } from "vue"
 import type { TabsPaneContext } from "element-plus"
 import Todo from "./tabs/todo.vue"
 import My from "./tabs/my.vue"
-const activeName = ref("todo-all")
+const activeName = ref("my")
 
 const myRef = ref<InstanceType<typeof My>>()
 const todoRef = ref<InstanceType<typeof Todo>>()

@@ -11,7 +11,8 @@
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
         <el-table-column fixed="right" label="操作" width="150" align="center">
           <template #default="scope">
-            <el-button type="success" text bg size="small" @click="handleDelete(scope.row)">处理</el-button>
+            <el-button type="success" text bg size="small" @click="handleDelete(scope.row)">详情</el-button>
+            <el-button type="success" text bg size="small" @click="handleDelete(scope.row)">撤回</el-button>
           </template>
         </el-table-column>
       </el-table>

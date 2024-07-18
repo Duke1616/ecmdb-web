@@ -37,6 +37,7 @@
     :templateId="templateId"
     :taskId="taskId"
     :workflowId="workflowId"
+    @refresh-data="listOrdersData"
     @close="onClosed"
   />
 </template>
@@ -70,6 +71,8 @@ const listOrdersData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       ordersData.value = data.orders
+
+      console.log(ordersData.value)
     })
     .catch(() => {
       ordersData.value = []

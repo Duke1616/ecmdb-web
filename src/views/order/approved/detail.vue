@@ -16,12 +16,15 @@
             :process-inst-id="props.processInstId"
             :task-id="props.taskId"
             @close="onClosed"
+            @refresh-data="refreshData"
           />
         </el-tab-pane>
         <el-tab-pane lazy label="流程图" name="flow">
           <Flow :workflow-id="props.workflowId" />
         </el-tab-pane>
-        <el-tab-pane lazy label="审批记录" name="process">Task</el-tab-pane>
+        <el-tab-pane lazy label="审批记录" name="process">
+          <Record :process-inst-id="props.processInstId" />
+        </el-tab-pane>
       </el-tabs>
     </el-drawer>
   </div>
@@ -31,6 +34,7 @@ import { TabsPaneContext } from "element-plus"
 import { ref, watch } from "vue"
 import Form from "./form.vue"
 import Flow from "./flow.vue"
+import Record from "./record.vue"
 
 const activeName = ref<string>("form")
 const handleClick = (tab: TabsPaneContext, event: Event) => {
@@ -50,11 +54,17 @@ interface Props {
 const actionName = ref<string>("")
 const drawerDialogVisible = ref<boolean>(false)
 const props = defineProps<Props>()
-const emits = defineEmits(["close"])
+const emits = defineEmits(["close", "refresh-data"])
 
 const onClosed = () => {
   drawerDialogVisible.value = false
+
   emits("close")
+}
+
+const refreshData = () => {
+  console.log("重新获取数据")
+  emits("refresh-data")
 }
 
 watch(
