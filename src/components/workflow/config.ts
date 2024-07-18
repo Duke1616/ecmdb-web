@@ -20,6 +20,11 @@ export const nodeList = [
     class: "node-parallel"
   },
   {
+    text: "包容",
+    type: "inclusion",
+    class: "node-inclusion"
+  },
+  {
     type: "end",
     text: "结束",
     class: "node-end"

@@ -42,6 +42,7 @@ import {
   registerEnd,
   registerCondition,
   registerParallel,
+  regsiterInclusion,
   registerUser,
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
@@ -143,6 +144,7 @@ const registerNode = () => {
   registerCondition(lf.value)
   registerEdge(lf.value)
   registerParallel(lf.value)
+  regsiterInclusion(lf.value)
 }
 
 const render = () => {
