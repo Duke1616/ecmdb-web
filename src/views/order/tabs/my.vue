@@ -12,10 +12,11 @@
         <el-table-column prop="current_step" label="当前步骤" align="center" />
         <el-table-column prop="approved_by" label="当前处理人" align="center" />
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
-        <el-table-column prop="active" fixed="right" label="操作" width="150" align="center">
+        <el-table-column prop="withdraw" fixed="right" label="操作" width="200" align="center">
           <template #default="scope">
-            <el-button type="success" text bg size="small" @click="handleDelete(scope.row)">详情</el-button>
-            <el-button type="success" text bg size="small" @click="handleDelete(scope.row)">撤回</el-button>
+            <el-button type="primary" text bg size="small" @click="handleDelete(scope.row)">详情</el-button>
+            <el-button type="warning" text bg size="small" @click="handleDelete(scope.row)">催办</el-button>
+            <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">撤回</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -40,6 +41,7 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
 import { startByOrderApi } from "@/api/order"
+import { Column, TableColumnCtx } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -55,7 +57,14 @@ const startByOrdersData = () => {
       paginationData.total = data.total
       ordersData.value = data.orders
       // 需要合并的字段名，按照合并登记来排序
-      const colFields = ["process_instance_id", "title", "current_step", "active"]
+      const colFields = [
+        "process_instance_id",
+        "template_name",
+        "withdraw",
+        "current_step",
+        "proc_inst_create_time",
+        "active"
+      ]
       // 表格数据，表格字段
       setTableRowSpan(ordersData.value, colFields)
     })
@@ -70,10 +79,10 @@ const handleDelete = (row: order) => {
 }
 
 // 设置合并的行和列
-const setTableRowSpan = (tableData: any, colFields: any) => {
+const setTableRowSpan = (tableData: any, colFields: string[]) => {
   let lastItem: any = []
   // 循环需要合并的列
-  colFields.forEach((field: any, index: any) => {
+  colFields.forEach((field: string, index: number) => {
     tableData.forEach((item: any) => {
       // 存值，把合并字段存入行，为了合并单元格时检索列是否含有该字段
       item.mergeCell = colFields
@@ -94,8 +103,15 @@ const setTableRowSpan = (tableData: any, colFields: any) => {
     })
   })
 }
+
+// 类型定义
+interface Row {
+  mergeCell: string[]
+  [key: `rowspan_${string}`]: number | undefined
+}
+
 // 列表合并单元格发方法
-const objectSpanMethod = ({ row, column }: any) => {
+const objectSpanMethod = ({ row, column }: { row: Row; column: TableColumnCtx<Column> }) => {
   if (row.mergeCell.includes(column.property)) {
     const rowspan = row[`rowspan_${column.property}`]
     if (rowspan) {
