@@ -37,6 +37,9 @@ importers:
       '@form-create/element-ui':
         specifier: ^3.1.33
         version: 3.1.33(vue@3.4.25(typescript@5.4.5))
+      '@jinming6/merge-helper':
+        specifier: ^1.2.10
+        version: 1.2.10
       '@logicflow/core':
         specifier: 2.0.0-beta.1
         version: 2.0.0-beta.1
@@ -696,6 +699,9 @@ packages:
     resolution: {integrity: sha512-CQnYqLiQD5LOAaXhBrmj1mdL2/NCJvwcC4jtW2Z8ukhThiFkLDkutarTOV2trfc9EXqUqRs0KqXOL9pZ/IyysA==}
     peerDependencies:
       vue: '>=3'
+
+  '@jinming6/merge-helper@1.2.10':
+    resolution: {integrity: sha512-XQPCN2+NoY1ohe9ceJjcxJJS16vkyZuVOKqUfyuPNEDI3GdBNIS40+QMV4l73WubnxP5L6eCkWYklu+bED7EVQ==}
 
   '@jridgewell/gen-mapping@0.3.5':
     resolution: {integrity: sha512-IzL8ZoEDIBRWEzlCcRhOaCupYyN5gdIK+Q6fbFdPDg6HqX6jpkItn7DFIpW9LQzXG6Df9sA7+OKnq0qlz/GaQg==}
@@ -1633,6 +1639,10 @@ packages:
 
   domutils@3.1.0:
     resolution: {integrity: sha512-H78uMmQtI2AhgDJjWeQmHwJJ2bLPD3GMmO7Zja/ZZh84wkm+4ut+IUnUdRa8uCGX88DiVx1j6FRe1XfxEgjEZA==}
+
+  dotenv@16.4.5:
+    resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
+    engines: {node: '>=12'}
 
   duplexer@0.1.2:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
@@ -3981,6 +3991,11 @@ snapshots:
       '@iconify/types': 2.0.0
       vue: 3.4.25(typescript@5.4.5)
 
+  '@jinming6/merge-helper@1.2.10':
+    dependencies:
+      dotenv: 16.4.5
+      lodash-es: 4.17.21
+
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
       '@jridgewell/set-array': 1.2.1
@@ -5065,6 +5080,8 @@ snapshots:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
       domhandler: 5.0.3
+
+  dotenv@16.4.5: {}
 
   duplexer@0.1.2: {}
 

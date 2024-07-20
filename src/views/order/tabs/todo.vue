@@ -1,10 +1,13 @@
 <template>
   <el-card shadow="never">
     <div class="table-wrapper">
-      <el-table :data="ordersData">
-        <el-table-column type="selection" width="50" align="center" />
+      <el-table
+        :data="ordersData"
+        border
+        :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
+      >
         <el-table-column prop="task_id" label="任务单号" align="center" />
-        <el-table-column prop="title" label="标题" align="center" />
+        <el-table-column prop="template_name" label="工单名称" align="center" />
         <el-table-column prop="starter" label="提单人" align="center" />
         <el-table-column prop="current_step" label="当前步骤" align="center" />
         <el-table-column prop="approved_by" label="当前处理人" align="center" />

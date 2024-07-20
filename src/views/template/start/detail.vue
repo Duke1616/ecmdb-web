@@ -34,6 +34,7 @@ const fApi = ref({})
 const DEFAULT_FORM_DATA: createOrderReq = {
   workflow_id: 0,
   template_id: 0,
+  template_name: "",
   data: {}
 }
 
@@ -53,6 +54,7 @@ const handleDetail = (id: number) => {
       rule.value = res.data.rules
       options.value.onSubmit = function () {
         formData.value.data = data.value
+        formData.value.template_name = res.data.name
         formData.value.template_id = res.data.id
         formData.value.workflow_id = res.data.workflow_id
         console.log(formData.value)

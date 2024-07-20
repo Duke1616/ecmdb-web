@@ -1,5 +1,6 @@
 export interface createOrderReq {
   template_id: number
+  template_name: string
   workflow_id: number
   data: object
 }
@@ -23,13 +24,20 @@ export interface order {
   task_id: number
   process_instance_id: number
   title: string
-  current_step: string
-  approved_by: string[]
   proc_inst_create_time: string
   workflow_id: number
   template_id: number
+  template_name: string
   ctime: number
+  current_step: string
+  approved_by: string[]
+  steps: steps[]
   data: object
+}
+
+export interface steps {
+  current_step: string
+  approved_by: string[]
 }
 
 export interface ordersListRes {

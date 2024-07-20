@@ -21,6 +21,7 @@
     "@element-plus/icons-vue": "^2.3.1",
     "@form-create/designer": "^3.2.1",
     "@form-create/element-ui": "^3.1.33",
+    "@jinming6/merge-helper": "^1.2.10",
     "@logicflow/core": "2.0.0-beta.1",
     "@logicflow/extension": "2.0.0-beta.1",
     "@vitejs/plugin-vue-jsx": "^3.1.0",
