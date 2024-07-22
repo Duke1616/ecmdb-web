@@ -4,6 +4,7 @@ import registerUser from "./user/user"
 import registerCondition from "./condition/condition"
 import registerParallel from "./parallel/parallel"
 import regsiterInclusion from "./inclusion/inclusion"
+import registerAutomation from "./automation/automation"
 import registerEdge from "../RegisterEdge/edge"
 
 export {
@@ -11,6 +12,7 @@ export {
   registerEnd,
   registerCondition,
   registerUser,
+  registerAutomation,
   registerParallel,
   regsiterInclusion,
   registerEdge

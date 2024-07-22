@@ -34,6 +34,13 @@
           :flowDetail="flowDetail"
           @closed="closed"
         />
+        <automationProperty
+          v-if="props.nodeData?.type === 'automation'"
+          :nodeData="nodeData"
+          :lf="lf"
+          :flowDetail="flowDetail"
+          @closed="closed"
+        />
         <!-- 连线 -->
         <edge
           v-if="nodeData?.type === 'polyline'"
@@ -52,6 +59,7 @@ import { pixelOption } from "./options"
 import startProperty from "../RegisterNode/start/startProperty.vue"
 import userProperty from "../RegisterNode/user/userProperty.vue"
 import conditionProperty from "../RegisterNode/condition/conditionProperty.vue"
+import automationProperty from "../RegisterNode/automation/automationProperty.vue"
 import edge from "../RegisterEdge/edge.vue"
 const props = defineProps({
   //标题

@@ -43,6 +43,7 @@ import {
   registerCondition,
   registerParallel,
   regsiterInclusion,
+  registerAutomation,
   registerUser,
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
@@ -145,6 +146,7 @@ const registerNode = () => {
   registerEdge(lf.value)
   registerParallel(lf.value)
   regsiterInclusion(lf.value)
+  registerAutomation(lf.value)
 }
 
 const render = () => {
@@ -156,7 +158,7 @@ const LfEvent = () => {
   lf.value.on("node:click", ({ data }: any) => {
     console.log("node:click", data)
     nodeData.value = data
-    if (["start", "user", "condition"].includes(data.type)) {
+    if (["start", "user", "condition", "automation"].includes(data.type)) {
       showAttribute.value = true
     }
   })

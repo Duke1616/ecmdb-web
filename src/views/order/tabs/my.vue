@@ -102,6 +102,8 @@ const setTableRowSpan = (tableData: any, colFields: string[]) => {
       }
     })
   })
+
+  console.log(tableData, "123")
 }
 
 // 类型定义

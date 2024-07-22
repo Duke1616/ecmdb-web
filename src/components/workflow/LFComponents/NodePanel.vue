@@ -74,6 +74,10 @@ const $_dragNode = (item: any) => {
   background: url("../background/inclusion.png") no-repeat;
   background-size: cover;
 }
+.node-automation {
+  background: url("../background/automation.png") no-repeat;
+  background-size: cover;
+}
 .node-parallel {
   background: url("../background/parallel.png") no-repeat;
   background-size: cover;

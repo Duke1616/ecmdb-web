@@ -10,6 +10,11 @@ export const nodeList = [
     class: "node-user"
   },
   {
+    type: "automation",
+    text: "自动化",
+    class: "node-automation"
+  },
+  {
     type: "condition",
     text: "条件",
     class: "node-condition"

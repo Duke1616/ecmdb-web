@@ -3,6 +3,7 @@ import type { AxiosInstance } from "axios"
 import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
+import { refreshAccessTokenApi } from "@/api/login"
 
 class HyRequest {
   // axios的实力方法
@@ -58,7 +59,6 @@ class HyRequest {
             // 本系统采用 code === 0 来表示没有业务错误
             return response
           case 401:
-            // Token 过期时
             return response
           default:
             // 不是正确的 code
@@ -78,6 +78,14 @@ class HyRequest {
               error.message = "请求错误"
               break
             case 401:
+              refreshAccessTokenApi()
+                .then(() => {
+                  this.instance(error.config)
+                })
+                .catch((error: { message: string }) => {
+                  error.message = "Token过期"
+                })
+
               break
             case 403:
               error.message = "拒绝访问"

@@ -5,12 +5,12 @@
         <el-table-column type="selection" width="50" align="center" />
         <el-table-column prop="nodename" label="节点名称" align="center" />
         <el-table-column prop="approved_by" label="操作人" align="center" />
-        <el-table-column prop="is_finished" label="任务状态" align="center">
+        <!-- <el-table-column prop="is_finished" label="任务状态" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.is_finished === 1" type="success" effect="plain">完成</el-tag>
             <el-tag v-else-if="scope.row.is_finished === 0" type="danger" effect="plain">待处理</el-tag>
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column prop="is_finished" label="任务动作" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.status === 0 && scope.row.is_finished == 1" type="success" effect="plain">
