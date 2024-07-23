@@ -8,3 +8,10 @@ export function listRunnerApi(data: runner.listRunnerReq) {
     data: data
   })
 }
+
+/** 查看标签 */
+export function listRunnerTagsApi() {
+  return instance.post<runner.runnerTagResp>({
+    url: "runner/list/tags"
+  })
+}
