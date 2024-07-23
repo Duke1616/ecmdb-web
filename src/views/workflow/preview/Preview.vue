@@ -121,6 +121,7 @@ const emits = defineEmits(["close"])
 const onClosed = () => {
   emits("close")
 }
+
 watch(
   () => props.PreviewDialogvisble, // 确保属性名称正确
   (val: boolean) => {

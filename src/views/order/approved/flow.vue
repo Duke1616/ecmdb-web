@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch, nextTick } from "vue"
+import { reactive, ref, watch, nextTick, onMounted } from "vue"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
@@ -16,11 +16,16 @@ import {
   registerEnd,
   registerCondition,
   registerUser,
+  registerParallel,
+  regsiterInclusion,
+  registerAutomation,
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
+import { getWorkflowGraphApi } from "@/api/workflow/workflow"
 
 interface Props {
   workflowId: number | undefined
+  processInstId: number | undefined
 }
 const props = defineProps<Props>()
 
@@ -97,6 +102,9 @@ const registerNode = () => {
   registerCondition(lf.value)
   registerUser(lf.value)
   registerEdge(lf.value)
+  registerParallel(lf.value)
+  regsiterInclusion(lf.value)
+  registerAutomation(lf.value)
 }
 
 const render = () => {
@@ -104,26 +112,43 @@ const render = () => {
   // 居中展示
   lf.value.translateCenter()
   // 流程图缩小到画布能全部显示
-  lf.value.fitView(40, 40, 40, 40)
+  lf.value.fitView(300, 300)
 }
 
-// 获取线条颜色
+const getGraphData = async (id: number, process_instance_id: number) => {
+  const res = await getWorkflowGraphApi({
+    id: id,
+    process_instance_id: process_instance_id
+  })
+  return res.data
+}
 
+onMounted(() => {
+  initLf()
+})
+
+// 获取线条颜色
 watch(
-  () => props.workflowId, // 确保属性名称正确
+  () => props.workflowId,
   (val) => {
     if (val) {
-      nextTick(() => {
-        initLf()
-        lf.value.render()
-
+      nextTick(async () => {
         // 设置线条颜色
-        const edgeModel = lf.value.getEdgeModelById("6775fe22-5d52-4b6a-90aa-1a2ec298d4a0")
-        edgeModel.setProperties({
-          isPass: true
-        })
+        // const edgeModel = lf.value.getEdgeModelById("6775fe22-5d52-4b6a-90aa-1a2ec298d4a0")
+        // edgeModel.setProperties({
+        //   isPass: true
+        // })
 
-        console.log(edgeModel)
+        if (props.processInstId != undefined) {
+          const workflowGraph = await getGraphData(val, props.processInstId)
+          lf.value.render(workflowGraph?.workflow?.flow_data)
+          // 居中展示
+          lf.value.translateCenter()
+          // 流程图缩小到画布能全部显示
+          lf.value.fitView(300, 300)
+        }
+
+        // console.log(edgeModel)
       })
     }
   },

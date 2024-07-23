@@ -17,7 +17,15 @@ export function todoOrderApi(data: order.todoOrderReq) {
   })
 }
 
-/** 查看我的待办工单 */
+/** 查看我受办待处理工单 */
+export function todoOrderByUserApi(data: order.todoOrderReq) {
+  return instance.post<order.ordersListRes>({
+    url: "order/todo/user",
+    data: data
+  })
+}
+
+/** 查看我提交的待处理工单 */
 export function startByOrderApi(data: order.startByOrderReq) {
   return instance.post<order.ordersListRes>({
     url: "order/start/user",

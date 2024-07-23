@@ -12,6 +12,7 @@
       <el-tabs v-model="activeName" type="card" class="demo-tabs" @tab-click="handleClick">
         <el-tab-pane lazy label="表单信息" name="form">
           <Form
+            ref="formRef"
             :template-id="props.templateId"
             :process-inst-id="props.processInstId"
             :task-id="props.taskId"
@@ -20,10 +21,10 @@
           />
         </el-tab-pane>
         <el-tab-pane lazy label="流程图" name="flow">
-          <Flow :workflow-id="props.workflowId" />
+          <Flow ref="flowRef" :workflow-id="props.workflowId" :process-inst-id="props.processInstId" />
         </el-tab-pane>
         <el-tab-pane lazy label="审批记录" name="process">
-          <Record :process-inst-id="props.processInstId" />
+          <Record ref="recordRef" :process-inst-id="props.processInstId" />
         </el-tab-pane>
       </el-tabs>
     </el-drawer>
@@ -37,8 +38,17 @@ import Flow from "./flow.vue"
 import Record from "./record.vue"
 
 const activeName = ref<string>("form")
-const handleClick = (tab: TabsPaneContext, event: Event) => {
-  console.log(tab, event)
+
+// const formRef = ref<InstanceType<typeof Form>>()
+// const flowRef = ref<InstanceType<typeof Flow>>()
+const recordRef = ref<InstanceType<typeof Record>>()
+const handleClick = (tab: TabsPaneContext) => {
+  console.log(tab.paneName)
+  if (tab.paneName === "flow") {
+    // todoRef.value?.listOrdersData()
+  } else if (tab.paneName == "process") {
+    recordRef.value?.listOrderTaskRecordsData()
+  }
 }
 
 // 接收父组建传递
@@ -58,7 +68,7 @@ const emits = defineEmits(["close", "refresh-data"])
 
 const onClosed = () => {
   drawerDialogVisible.value = false
-
+  activeName.value = "form"
   emits("close")
 }
 

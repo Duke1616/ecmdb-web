@@ -14,7 +14,7 @@
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
         <el-table-column fixed="right" label="操作" width="150" align="center">
           <template #default="scope">
-            <el-button type="success" text bg size="small" @click="handleApproval(scope.row)">处理</el-button>
+            <el-button type="success" text bg size="small" @click="handleDelete(scope.row)">处理</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -50,7 +50,7 @@ import { ref, watch } from "vue"
 // import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
-import { todoOrderApi } from "@/api/order"
+import { todoOrderByUserApi } from "@/api/order"
 import Detail from "../approved/detail.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -64,7 +64,7 @@ const action = ref<string>("todo")
 /** 查询模版列表 */
 const ordersData = ref<order[]>([])
 const listOrdersData = () => {
-  todoOrderApi({
+  todoOrderByUserApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize,
     sort_by_asc: true,
@@ -83,7 +83,7 @@ const listOrdersData = () => {
     .finally(() => {})
 }
 
-const handleApproval = (row: order) => {
+const handleDelete = (row: order) => {
   templateId.value = row.template_id
   processInstId.value = row.process_instance_id
   taskId.value = row.task_id

@@ -119,6 +119,7 @@ const listRunnerTags = () => {
   listRunnerTagsApi()
     .then((res) => {
       runnerTagsData.value = res.data.runner_tags
+      handlerChangeCodebook()
     })
     .catch((error) => {
       console.log(error)

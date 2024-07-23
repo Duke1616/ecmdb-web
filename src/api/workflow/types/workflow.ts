@@ -40,3 +40,13 @@ export interface workflows {
   workflows: workflow[]
   total: number
 }
+
+export interface workflowGraphReq {
+  id: number
+  process_instance_id: number
+}
+
+export interface workflowGraph {
+  edge_ids: string[]
+  workflow: workflow
+}

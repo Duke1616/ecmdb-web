@@ -40,3 +40,11 @@ export function listWorkflowApi(data: workflow.listWorkflowReq) {
     data: data
   })
 }
+
+/** 获取流程状态图 */
+export function getWorkflowGraphApi(data: workflow.workflowGraphReq) {
+  return instance.post<workflow.workflowGraph>({
+    url: "workflow/graph",
+    data: data
+  })
+}

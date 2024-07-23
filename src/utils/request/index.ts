@@ -58,8 +58,8 @@ class HyRequest {
           case 0:
             // 本系统采用 code === 0 来表示没有业务错误
             return response
-          case 401:
-            return response
+          // case 401:
+          //   return response
           default:
             // 不是正确的 code
             ElMessage.error(apiData.msg || "Error")
@@ -85,7 +85,6 @@ class HyRequest {
                 .catch((error: { message: string }) => {
                   error.message = "Token过期"
                 })
-
               break
             case 403:
               error.message = "拒绝访问"

@@ -133,6 +133,8 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({})
 </script>
 
 <style lang="scss" scoped>

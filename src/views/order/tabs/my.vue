@@ -14,9 +14,9 @@
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
         <el-table-column prop="withdraw" fixed="right" label="操作" width="200" align="center">
           <template #default="scope">
-            <el-button type="primary" text bg size="small" @click="handleDelete(scope.row)">详情</el-button>
-            <el-button type="warning" text bg size="small" @click="handleDelete(scope.row)">催办</el-button>
-            <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">撤回</el-button>
+            <el-button type="primary" text bg size="small" @click="handleApproval(scope.row)">详情</el-button>
+            <el-button type="warning" text bg size="small" @click="handleUrging(scope.row)">催办</el-button>
+            <el-button type="danger" text bg size="small" @click="handleRevoke(scope.row)">撤回</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -34,6 +34,16 @@
       />
     </div>
   </el-card>
+  <Detail
+    :action="action"
+    :dialogVisible="dialogVisible"
+    :processInstId="processInstId"
+    :templateId="templateId"
+    :taskId="taskId"
+    :workflowId="workflowId"
+    @refresh-data="startByOrdersData"
+    @close="onClosed"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -41,9 +51,16 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
 import { startByOrderApi } from "@/api/order"
-import { Column, TableColumnCtx } from "element-plus"
-
+import { Column, ElMessage, TableColumnCtx } from "element-plus"
+import Detail from "../approved/detail.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+const dialogVisible = ref<boolean>()
+const templateId = ref<number>()
+const processInstId = ref<number>()
+const taskId = ref<number>()
+const workflowId = ref<number>()
+const action = ref<string>("todo")
 
 /** 查询模版列表 */
 const ordersData = ref<order[]>([])
@@ -74,8 +91,30 @@ const startByOrdersData = () => {
     .finally(() => {})
 }
 
-const handleDelete = (row: order) => {
+const handleUrging = (row: order) => {
+  ElMessage.error("暂不支持功能")
   console.log(row)
+}
+
+const handleApproval = (row: order) => {
+  templateId.value = row.template_id
+  processInstId.value = row.process_instance_id
+  taskId.value = row.task_id
+  workflowId.value = row.workflow_id
+  dialogVisible.value = true
+}
+
+const handleRevoke = (row: order) => {
+  ElMessage.error("暂不支持功能")
+  console.log(row)
+}
+
+const onClosed = () => {
+  dialogVisible.value = false
+  templateId.value = 0
+  processInstId.value = 0
+  workflowId.value = 0
+  taskId.value = 0
 }
 
 // 设置合并的行和列
