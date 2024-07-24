@@ -75,7 +75,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/cmdb/model/index",
     meta: {
       title: "模型管理",
-      elIcon: "Grid",
+      svgIcon: "model",
       platforms: ["cmdb"]
     },
     children: [
@@ -85,7 +85,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-index",
         meta: {
           title: "模型资产",
-          svgIcon: "unocss",
+          svgIcon: "model-one",
           platforms: ["cmdb"]
         }
       },
@@ -105,7 +105,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-relation",
         meta: {
           title: "关联关系",
-          svgIcon: "link",
+          svgIcon: "relation-graph",
           platforms: ["cmdb"]
         }
       },
@@ -115,7 +115,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "model-type",
         meta: {
           title: "关联类型",
-          svgIcon: "link",
+          svgIcon: "relation-type",
           platforms: ["cmdb"]
         }
       }
@@ -137,7 +137,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "resource-warehouse",
         meta: {
           title: "资产仓库",
-          svgIcon: "unocss",
+          svgIcon: "resource",
           platforms: ["cmdb"]
         }
       },
@@ -169,7 +169,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/cmdb/order/index",
     meta: {
       title: "工单中心",
-      svgIcon: "link",
+      svgIcon: "order-center",
       platforms: ["cmdb"]
     },
     children: [
@@ -179,7 +179,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "order-start",
         meta: {
           title: "提交工单",
-          svgIcon: "link",
+          svgIcon: "submit-order",
           platforms: ["cmdb"]
         }
       },
@@ -189,7 +189,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "order-list",
         meta: {
           title: "工单列表",
-          svgIcon: "link",
+          svgIcon: "order-list",
           platforms: ["cmdb"]
         }
       }
@@ -201,7 +201,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/cmdb/process/index",
     meta: {
       title: "流程控制",
-      svgIcon: "link",
+      svgIcon: "process-control",
       platforms: ["cmdb"]
     },
     children: [
@@ -211,7 +211,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "process-template",
         meta: {
           title: "模版管理",
-          svgIcon: "link",
+          svgIcon: "template",
           platforms: ["cmdb"]
         }
       },
@@ -221,7 +221,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "process-workflow",
         meta: {
           title: "流程管理",
-          svgIcon: "link",
+          svgIcon: "process",
           platforms: ["cmdb"]
         }
       }
@@ -233,7 +233,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     redirect: "/cmdb/task/codebook",
     meta: {
       title: "任务中心",
-      svgIcon: "link",
+      svgIcon: "task",
       platforms: ["cmdb"]
     },
     children: [
@@ -243,7 +243,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "task-codebook",
         meta: {
           title: "任务模版",
-          svgIcon: "link",
+          svgIcon: "template",
           platforms: ["cmdb"]
         }
       },
@@ -253,7 +253,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "task-worker",
         meta: {
           title: "工作节点",
-          svgIcon: "link",
+          svgIcon: "worker",
           platforms: ["cmdb"]
         }
       },
@@ -263,7 +263,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "task-runner",
         meta: {
           title: "执行单元",
-          svgIcon: "link",
+          svgIcon: "runner",
           platforms: ["cmdb"]
         }
       },
@@ -273,7 +273,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "task-history",
         meta: {
           title: "历史任务",
-          svgIcon: "link",
+          svgIcon: "task-history",
           platforms: ["cmdb"]
         }
       }
