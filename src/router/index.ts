@@ -192,6 +192,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "order-list",
           platforms: ["cmdb"]
         }
+      },
+      {
+        path: "convert",
+        component: () => import("@/views/order/convert/index.vue"),
+        name: "order-convert",
+        meta: {
+          title: "工单转换",
+          svgIcon: "order-convert",
+          platforms: ["cmdb"]
+        }
       }
     ]
   },
