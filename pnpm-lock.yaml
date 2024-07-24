@@ -103,6 +103,9 @@ importers:
       pinia-plugin-persistedstate:
         specifier: ^3.2.1
         version: 3.2.1(pinia@2.1.7(typescript@5.4.5)(vue@3.4.25(typescript@5.4.5)))
+      prismjs:
+        specifier: ^1.29.0
+        version: 1.29.0
       relation-graph:
         specifier: ^2.2.0
         version: 2.2.0
@@ -133,6 +136,9 @@ importers:
       vue:
         specifier: ^3.4.21
         version: 3.4.25(typescript@5.4.5)
+      vue-code-highlight:
+        specifier: ^0.7.8
+        version: 0.7.8
       vue-codemirror:
         specifier: ^6.1.1
         version: 6.1.1(codemirror@6.0.1(@lezer/common@1.2.1))(vue@3.4.25(typescript@5.4.5))
@@ -142,6 +148,9 @@ importers:
       vue-json-pretty:
         specifier: ^2.4.0
         version: 2.4.0(vue@3.4.25(typescript@5.4.5))
+      vue-prism-editor:
+        specifier: 2.0.0-alpha.2
+        version: 2.0.0-alpha.2(vue@3.4.25(typescript@5.4.5))
       vue-router:
         specifier: ^4.3.0
         version: 4.3.2(vue@3.4.25(typescript@5.4.5))
@@ -179,6 +188,9 @@ importers:
       '@types/path-browserify':
         specifier: ^1.0.2
         version: 1.0.2
+      '@types/prismjs':
+        specifier: ^1.26.4
+        version: 1.26.4
       '@types/uuid':
         specifier: ^9.0.8
         version: 9.0.8
@@ -230,6 +242,9 @@ importers:
       vite:
         specifier: ^5.2.8
         version: 5.2.10(@types/node@20.12.7)(sass@1.75.0)
+      vite-plugin-prismjs:
+        specifier: ^0.0.11
+        version: 0.0.11(prismjs@1.29.0)
       vue-tsc:
         specifier: ^2.0.11
         version: 2.0.14(typescript@5.4.5)
@@ -901,6 +916,9 @@ packages:
   '@types/path-browserify@1.0.2':
     resolution: {integrity: sha512-ZkC5IUqqIFPXx3ASTTybTzmQdwHwe2C0u3eL75ldQ6T9E9IWFJodn6hIfbZGab73DfyiHN4Xw15gNxUq2FbvBA==}
 
+  '@types/prismjs@1.26.4':
+    resolution: {integrity: sha512-rlAnzkW2sZOjbqZ743IHUhFcvzaGbqijwOu8QZnZCjfQzBqFE3s4lOTJEsxikImav9uzz/42I+O7YUs1mWgMlg==}
+
   '@types/semver@7.5.8':
     resolution: {integrity: sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==}
 
@@ -1111,6 +1129,9 @@ packages:
   '@vue/compiler-dom@3.4.25':
     resolution: {integrity: sha512-Ugz5DusW57+HjllAugLci19NsDK+VyjGvmbB2TXaTcSlQxwL++2PETHx/+Qv6qFwNLzSt7HKepPe4DcTE3pBWg==}
 
+  '@vue/compiler-sfc@2.7.16':
+    resolution: {integrity: sha512-KWhJ9k5nXuNtygPU7+t1rX6baZeqOYLEforUPjgNDBnLicfHCoi48H87Q8XyLZOrNNsmhuwKqtpDQWjEFe6Ekg==}
+
   '@vue/compiler-sfc@3.4.25':
     resolution: {integrity: sha512-m7rryuqzIoQpOBZ18wKyq05IwL6qEpZxFZfRxlNYuIPDqywrXQxgUwLXIvoU72gs6cRdY6wHD0WVZIFE4OEaAQ==}
 
@@ -1295,6 +1316,11 @@ packages:
 
   axios@1.6.8:
     resolution: {integrity: sha512-v/ZHtJDU39mDpyBoFVkETcd/uNdxrWRrg3bKpOKzXFA6Bvqopts6ALSMU3y6ijYxbw2B+wPrIv46egTzJXCLGQ==}
+
+  babel-plugin-prismjs@2.1.0:
+    resolution: {integrity: sha512-ehzSKYfeAz4U78zi/sfwsjDPlq0LvDKxNefcZTJ/iKBu+plsHsLqZhUeGf1+82LAcA35UZGbU6ksEx2Utphc/g==}
+    peerDependencies:
+      prismjs: ^1.18.0
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -2785,10 +2811,22 @@ packages:
     resolution: {integrity: sha512-GbK2cP9nraSSUF9N2XwUwqfzlAFlMNYYl+ShE/V+H8a9uNl/oUqB1w2EL54Jh0OlyRSd8RfWYJ3coVS4TROP2w==}
     engines: {node: '>=6.0.0'}
 
+  prettier@2.8.8:
+    resolution: {integrity: sha512-tdN8qQGvNjw4CHbY+XXk0JgCXn9QiF21a55rBe5LJAU+kDyC4WQn4+awm2Xfk2lQMk5fKup9XgzTZtGkjBdP9Q==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+
   prettier@3.2.5:
     resolution: {integrity: sha512-3/GWa9aOC0YeD7LUfvOG2NiDyhOWRvt1k+rcKhOuYnMY24iiCphgneUfJDyFXd6rZCAnuLBv6UeAULtrhT/F4A==}
     engines: {node: '>=14'}
     hasBin: true
+
+  prism-es6@1.2.0:
+    resolution: {integrity: sha512-A8JV9G2zKM8PWksT7YJcmnaWtYO6C9hSfxM/xv0RxB2aNc8rjv30WakzIw1gWyqLi2eiqquo2KmS7orxqlm+yg==}
+
+  prismjs@1.29.0:
+    resolution: {integrity: sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q==}
+    engines: {node: '>=6'}
 
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
@@ -3275,6 +3313,10 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
+  vite-plugin-prismjs@0.0.11:
+    resolution: {integrity: sha512-20NBQxg/zH+3FTrlU6BQTob720xkuXNYtrx7psAQ4E6pMcRDeLEK77QU9kXURU587+f2To7ASH1JVTGbXVV/vQ==}
+    engines: {node: '>=12.0.0'}
+
   vite-plugin-svg-icons@2.0.1:
     resolution: {integrity: sha512-6ktD+DhV6Rz3VtedYvBKKVA2eXF+sAQVaKkKLDSqGUfnhqXl3bj5PPkVTl3VexfTuZy66PmINi8Q6eFnVfRUmA==}
     peerDependencies:
@@ -3312,6 +3354,9 @@ packages:
         optional: true
       terser:
         optional: true
+
+  vue-code-highlight@0.7.8:
+    resolution: {integrity: sha512-jMt1W0DGisNZ3B2TASFCPLEswohVrwImX+TxzMIZINZyAUUNZ1Xth3soJw1xepTsMgxkIkhsmN/xVNpiI3bU4g==}
 
   vue-codemirror@6.1.1:
     resolution: {integrity: sha512-rTAYo44owd282yVxKtJtnOi7ERAcXTeviwoPXjIc6K/IQYUsoDkzPvw/JDFtSP6T7Cz/2g3EHaEyeyaQCKoDMg==}
@@ -3367,6 +3412,12 @@ packages:
     peerDependencies:
       vue: ^3.0.0
 
+  vue-prism-editor@2.0.0-alpha.2:
+    resolution: {integrity: sha512-Gu42ba9nosrE+gJpnAEuEkDMqG9zSUysIR8SdXUw8MQKDjBnnNR9lHC18uOr/ICz7yrA/5c7jHJr9lpElODC7w==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      vue: ^3.0.0
+
   vue-resize@2.0.0-alpha.1:
     resolution: {integrity: sha512-7+iqOueLU7uc9NrMfrzbG8hwMqchfVfSzpVlCMeJQe4pyibqyoifDNbKTZvwxZKDvGkB+PdFeKvnGZMoEb8esg==}
     peerDependencies:
@@ -3395,6 +3446,10 @@ packages:
     resolution: {integrity: sha512-VXRZ95Hlrsc9EN74l/AJaMnzoL6uQajfFU2TYBczxGlQ1f4zDsluN4u3A9JsBb7gsY0LrsPT+3FROjwAeUWyJA==}
     peerDependencies:
       vue: ^3.2.45
+
+  vue@2.7.16:
+    resolution: {integrity: sha512-4gCtFXaAA3zYZdTp5s4Hl2sozuySsgz4jy1EnpBHNfpMa9dK1ZCG7viqBPCwXtmgc8nHqUsAu3G4gtmXkkY3Sw==}
+    deprecated: Vue 2 has reached EOL and is no longer actively maintained. See https://v2.vuejs.org/eol/ for more details.
 
   vue@3.4.25:
     resolution: {integrity: sha512-HWyDqoBHMgav/OKiYA2ZQg+kjfMgLt/T0vg4cbIF7JbXAjDexRf5JRg+PWAfrAkSmTd2I8aPSXtooBFWHB98cg==}
@@ -4153,6 +4208,8 @@ snapshots:
 
   '@types/path-browserify@1.0.2': {}
 
+  '@types/prismjs@1.26.4': {}
+
   '@types/semver@7.5.8': {}
 
   '@types/sortablejs@1.15.8': {}
@@ -4478,6 +4535,14 @@ snapshots:
       '@vue/compiler-core': 3.4.25
       '@vue/shared': 3.4.25
 
+  '@vue/compiler-sfc@2.7.16':
+    dependencies:
+      '@babel/parser': 7.24.5
+      postcss: 8.4.38
+      source-map: 0.6.1
+    optionalDependencies:
+      prettier: 2.8.8
+
   '@vue/compiler-sfc@3.4.25':
     dependencies:
       '@babel/parser': 7.24.4
@@ -4695,6 +4760,10 @@ snapshots:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+
+  babel-plugin-prismjs@2.1.0(prismjs@1.29.0):
+    dependencies:
+      prismjs: 1.29.0
 
   balanced-match@1.0.2: {}
 
@@ -6250,7 +6319,14 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
+  prettier@2.8.8:
+    optional: true
+
   prettier@3.2.5: {}
+
+  prism-es6@1.2.0: {}
+
+  prismjs@1.29.0: {}
 
   proxy-from-env@1.1.0: {}
 
@@ -6843,6 +6919,14 @@ snapshots:
 
   vary@1.1.2: {}
 
+  vite-plugin-prismjs@0.0.11(prismjs@1.29.0):
+    dependencies:
+      '@babel/core': 7.24.5
+      babel-plugin-prismjs: 2.1.0(prismjs@1.29.0)
+    transitivePeerDependencies:
+      - prismjs
+      - supports-color
+
   vite-plugin-svg-icons@2.0.1(vite@5.2.10(@types/node@20.12.7)(sass@1.75.0)):
     dependencies:
       '@types/svgo': 2.6.4
@@ -6871,6 +6955,11 @@ snapshots:
       '@types/node': 20.12.7
       fsevents: 2.3.3
       sass: 1.75.0
+
+  vue-code-highlight@0.7.8:
+    dependencies:
+      prism-es6: 1.2.0
+      vue: 2.7.16
 
   vue-codemirror@6.1.1(codemirror@6.0.1(@lezer/common@1.2.1))(vue@3.4.25(typescript@5.4.5)):
     dependencies:
@@ -6914,6 +7003,10 @@ snapshots:
     dependencies:
       vue: 3.4.25(typescript@5.4.5)
 
+  vue-prism-editor@2.0.0-alpha.2(vue@3.4.25(typescript@5.4.5)):
+    dependencies:
+      vue: 3.4.25(typescript@5.4.5)
+
   vue-resize@2.0.0-alpha.1(vue@3.4.25(typescript@5.4.5)):
     dependencies:
       vue: 3.4.25(typescript@5.4.5)
@@ -6951,6 +7044,11 @@ snapshots:
       vue-virtual-scroller: 2.0.0-beta.8(vue@3.4.25(typescript@5.4.5))
     transitivePeerDependencies:
       - '@vue/composition-api'
+
+  vue@2.7.16:
+    dependencies:
+      '@vue/compiler-sfc': 2.7.16
+      csstype: 3.1.3
 
   vue@3.4.25(typescript@5.4.5):
     dependencies:

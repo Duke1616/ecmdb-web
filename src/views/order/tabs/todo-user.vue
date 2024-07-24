@@ -6,7 +6,7 @@
         border
         :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
       >
-        <el-table-column prop="task_id" label="任务单号" align="center" />
+        <el-table-column prop="task_id" label="任务ID" align="center" />
         <el-table-column prop="template_name" label="工单名称" align="center" />
         <el-table-column prop="starter" label="提单人" align="center" />
         <el-table-column prop="current_step" label="当前步骤" align="center" />

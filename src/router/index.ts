@@ -164,9 +164,9 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/cmdb/template",
+    path: "/cmdb/order",
     component: Layouts,
-    redirect: "/cmdb/template/index",
+    redirect: "/cmdb/order/index",
     meta: {
       title: "工单中心",
       svgIcon: "link",
@@ -175,8 +175,8 @@ export const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: "start",
-        component: () => import("@/views/template/start/index.vue"),
-        name: "template-start",
+        component: () => import("@/views/order/start/index.vue"),
+        name: "order-start",
         meta: {
           title: "提交工单",
           svgIcon: "link",
@@ -192,11 +192,23 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "link",
           platforms: ["cmdb"]
         }
-      },
+      }
+    ]
+  },
+  {
+    path: "/cmdb/process",
+    component: Layouts,
+    redirect: "/cmdb/process/index",
+    meta: {
+      title: "流程控制",
+      svgIcon: "link",
+      platforms: ["cmdb"]
+    },
+    children: [
       {
-        path: "manager",
-        component: () => import("@/views/template/manager/index.vue"),
-        name: "template-manager",
+        path: "template",
+        component: () => import("@/views/process/template/index.vue"),
+        name: "process-template",
         meta: {
           title: "模版管理",
           svgIcon: "link",
@@ -205,8 +217,8 @@ export const constantRoutes: RouteRecordRaw[] = [
       },
       {
         path: "workflow",
-        component: () => import("@/views/workflow/index.vue"),
-        name: "workflow",
+        component: () => import("@/views/process/index.vue"),
+        name: "process-workflow",
         meta: {
           title: "流程管理",
           svgIcon: "link",
@@ -251,6 +263,16 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "task-runner",
         meta: {
           title: "执行单元",
+          svgIcon: "link",
+          platforms: ["cmdb"]
+        }
+      },
+      {
+        path: "history",
+        component: () => import("@/views/task/history/index.vue"),
+        name: "task-history",
+        meta: {
+          title: "历史任务",
           svgIcon: "link",
           platforms: ["cmdb"]
         }

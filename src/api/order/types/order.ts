@@ -21,6 +21,7 @@ export interface startByOrderReq {
 }
 
 export interface order {
+  id: number
   task_id: number
   process_instance_id: number
   title: string

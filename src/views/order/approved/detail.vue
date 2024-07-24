@@ -16,6 +16,7 @@
             :template-id="props.templateId"
             :process-inst-id="props.processInstId"
             :task-id="props.taskId"
+            :action="props.action"
             @close="onClosed"
             @refresh-data="refreshData"
           />

@@ -5,6 +5,7 @@ import UnoCSS from "unocss/vite"
 import path, { resolve } from "path"
 import svgLoader from "vite-svg-loader"
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
+import prismjs from "vite-plugin-prismjs"
 
 // https://vitejs.dev/config/
 export default ({ mode }: ConfigEnv): UserConfigExport => {
@@ -30,7 +31,20 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         symbolId: "icon-[dir]-[name]"
       }),
       /** UnoCSS */
-      UnoCSS()
+      UnoCSS(),
+      prismjs({
+        languages: ["javascript", "css", "html", "json", "sass", "scss", "md", "bash", "shell", "ts"],
+        plugins: [
+          "toolbar",
+          "show-language",
+          "copy-to-clipboard",
+          "normalize-whitespace",
+          "line-numbers",
+          "unescaped-markup"
+        ],
+        theme: "tomorrow",
+        css: true
+      })
     ],
     /** 混淆器 */
     esbuild:

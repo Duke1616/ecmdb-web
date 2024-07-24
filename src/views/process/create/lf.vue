@@ -175,7 +175,6 @@ const dataVisible = ref<boolean>(false)
 const getData = () => {
   graph.value = lf.value.getGraphData()
   dataVisible.value = true
-  console.log("print", graph.value)
 }
 
 const getGraphData = () => {

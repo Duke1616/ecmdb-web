@@ -5,10 +5,30 @@
         <template #header>
           <strong> 表单信息</strong>
         </template>
-        <FormCreate :rule="rule" :option="options" v-model="data" disabled v-model:api="fApi" />
+        <!-- 如果是自己的工单，支持修改 -->
+        <div v-if="props.action != 'my'">
+          <FormCreate
+            :rule="rule"
+            :option="options"
+            v-model="data"
+            :disabled="props.action != 'my'"
+            v-model:api="fApi"
+          />
+        </div>
+
+        <!-- 不是我的工单，禁止修改数据 -->
+        <div v-if="props.action == 'my'">
+          <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
+          <div class="form-bottom" v-if="props.action == 'my'">
+            <el-form-item>
+              <el-button type="primary" size="large" @click="handlePass">修改</el-button>
+              <el-button type="danger" size="large" @click="handleReject">撤回</el-button>
+            </el-form-item>
+          </div>
+        </div>
       </el-card>
     </div>
-    <div>
+    <div v-if="props.action != 'my'">
       <el-card>
         <template #header>
           <strong>操作信息</strong>
@@ -43,6 +63,7 @@ interface Props {
   templateId: number | undefined
   processInstId: number | undefined
   taskId: number | undefined
+  action: string
 }
 
 const props = defineProps<Props>()

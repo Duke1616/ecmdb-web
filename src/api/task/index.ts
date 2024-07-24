@@ -8,3 +8,11 @@ export function startTaskApi(data: task.startTaskReq) {
     data: data
   })
 }
+
+/** 自动化任务列表 */
+export function listTasksApi(data: task.page) {
+  return instance.post<task.tasks>({
+    url: "task/list",
+    data: data
+  })
+}
