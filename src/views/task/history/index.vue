@@ -12,15 +12,27 @@
             <template #default="scope">
               <el-tag v-if="scope.row.status === 3" type="primary" effect="plain"> 运行中 </el-tag>
               <el-tag v-if="scope.row.status === 4" type="warning" effect="plain"> 等待中 </el-tag>
+              <el-tag v-if="scope.row.status === 5" type="warning" effect="plain"> 暂停中 </el-tag>
+              <el-tag v-if="scope.row.status === 6" type="warning" effect="plain"> 调度中 </el-tag>
               <el-tag v-if="scope.row.status === 1" type="success" effect="plain"> 成功 </el-tag>
               <el-tag v-if="scope.row.status === 2" type="danger" effect="plain"> 失败 </el-tag>
               <el-tag v-if="scope.row.status === 0" type="info" effect="plain"> 未知 </el-tag>
             </template>
           </el-table-column>
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <!-- <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="primary" text bg size="small" @click="handleInput(scope.row)">输入</el-button>
               <el-button type="primary" text bg size="small" @click="handleResult(scope.row)">输出</el-button>
+            </template>
+          </el-table-column> -->
+          <el-table-column fixed="right" label="操作" width="200" align="center">
+            <template #default="scope">
+              <OperateBtn
+                :items="operateBtnStatus"
+                @routeEvent="operateEvent"
+                :operateItem="scope.row"
+                :maxLength="2"
+              />
             </template>
           </el-table-column>
         </el-table>
@@ -39,18 +51,37 @@
       </div>
     </el-card>
     <div>
-      <el-dialog v-model="resultVisible" width="50%" @close="onclose">
-        <prism-editor class="my-editor" v-model="result" :readonly="true" :highlight="highlighter" line-numbers />
+      <!--  代码块 -->
+      <el-dialog v-model="resultVisible" width="40%" @close="onclose" :close-on-click-modal="closeOnClickModal">
+        <prism-editor
+          v-if="language !== 'json'"
+          class="my-editor"
+          v-model="result"
+          :readonly="true"
+          :highlight="highlighter"
+          line-numbers
+        />
+        <div v-if="language === 'json'">
+          <vue-json-pretty
+            :deep="3"
+            v-model:data="result"
+            selectableType="single"
+            :editable="true"
+            :showLineNumber="true"
+            :showLine="true"
+            path="res"
+          />
+        </div>
       </el-dialog>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { h, ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { task } from "@/api/task/types/task"
-import { listTasksApi } from "@/api/task"
+import { listTasksApi, retryTaskApi, updateTaskArgsApi } from "@/api/task"
 import { PrismEditor } from "vue-prism-editor"
 import "vue-prism-editor/dist/prismeditor.min.css"
 import { highlight, languages } from "prismjs/components/prism-core"
@@ -58,10 +89,15 @@ import "prismjs/components/prism-clike"
 import "prismjs/components/prism-javascript"
 import "prismjs/components/prism-python"
 import "prismjs/components/prism-bash"
+import "prismjs/components/prism-json"
 import "prismjs/themes/prism-dark.css"
 
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+import VueJsonPretty from "vue-json-pretty"
+import "vue-json-pretty/lib/styles.css"
+import OperateBtn from "@/components/OperateBtn/index.vue"
+import { ElMessage, ElMessageBox } from "element-plus"
 
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 /** 查询模版列表 */
 const tasksData = ref<task[]>([])
 const listTasksData = () => {
@@ -79,38 +115,115 @@ const listTasksData = () => {
     .finally(() => {})
 }
 
+const operateBtnStatus = ref([
+  {
+    name: "输入",
+    code: "1",
+    icon: "View"
+  },
+  {
+    name: "输出",
+    code: "2",
+    icon: "View"
+  },
+  {
+    name: "调参",
+    code: "3",
+    icon: "Tools",
+    type: "primary"
+  },
+  {
+    name: "重试",
+    code: "4",
+    icon: "Refresh",
+    type: "primary"
+  }
+])
+
+const operateEvent = (data: task, name: string) => {
+  taskId.value = data.id
+  resultVisible.value = true
+
+  switch (name) {
+    case "输入":
+      result.value = data.code
+      language.value = data.language
+      break
+    case "输出":
+      result.value = data.result
+      language.value = data.language
+      break
+    case "3":
+      tempResult.value = JSON.parse(data.args)
+      result.value = JSON.parse(data.args)
+      closeOnClickModal.value = false
+      language.value = "json"
+      break
+    case "4":
+      resultVisible.value = false
+      retryTask()
+      break
+  }
+}
+
 const onclose = () => {
+  if (language.value === "json") {
+    if (JSON.stringify(tempResult.value) !== JSON.stringify(result.value)) {
+      handlerUpdateArgs()
+    }
+  }
+
   result.value = ""
   language.value = ""
   resultVisible.value = false
+  taskId.value = 0
 }
 
-const result = ref<string>("")
+const taskId = ref<number>(0)
+const tempResult = ref<any>("")
+const result = ref<any>("")
 const language = ref<string>("")
 const resultVisible = ref<boolean>(false)
+const closeOnClickModal = ref<boolean>(true)
 const highlighter = (code: string) => {
-  if (language.value === "python") {
-    return highlight(code, languages.python)
-  }
-  if (language.value === "javascript") {
-    return highlight(code, languages.javascript)
-  }
-  if (language.value === "shell") {
-    console.log("shell", code)
-    return highlight(code, languages.bash)
+  switch (language.value) {
+    case "json":
+      return highlight(code, languages.bash)
+    case "python":
+      return highlight(code, languages.python)
+    case "shell":
+      return highlight(code, languages.bash)
+    case "javascript":
+      return highlight(code, languages.javascript)
   }
 }
 
-const handleInput = (row: task) => {
-  result.value = row.code
-  resultVisible.value = true
-  language.value = row.language
+const handlerUpdateArgs = () => {
+  updateTaskArgsApi({
+    id: taskId.value,
+    args: result.value
+  }).then(() => {
+    listTasksData()
+    ElMessage.success("修改传递参数成功")
+  })
 }
 
-const handleResult = (row: task) => {
-  result.value = row.result
-  resultVisible.value = true
-  language.value = row.language
+const retryTask = () => {
+  ElMessageBox({
+    title: "重试确认",
+    message: h("p", null, [
+      h("span", null, "正在重试任务: "),
+      h("i", { style: "color: red" }, `${taskId.value}`),
+      h("span", null, " 确认？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    retryTaskApi(taskId.value).then(() => {
+      ElMessage.success("重试已提交，请稍后查看结果")
+    })
+  })
 }
 
 /** 监听分页参数的变化 */

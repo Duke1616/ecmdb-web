@@ -52,6 +52,14 @@
         />
       </div>
     </el-card>
+    <!-- 注册Runner -->
+    <reigsterRunner
+      :dialog-visible="addDialogDrawer"
+      :createOrUpdate="createOrUpdate"
+      :runnerRow="runnerRow"
+      @close="onClosed"
+      @list-codebooks="listRunnerApi"
+    />
   </div>
 </template>
 
@@ -63,6 +71,7 @@ import { usePagination } from "@/hooks/usePagination"
 import { worker } from "@/api/worker/types/worker"
 import { runner } from "@/api/runner/types/runner"
 import { listRunnerApi } from "@/api/runner"
+import reigsterRunner from "./registerOrUpdate.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
@@ -73,9 +82,20 @@ const handlerCreate = () => {
   addDialogDrawer.value = true
 }
 
-// const onClosed = (val: boolean) => {
-//   addDialogDrawer.value = val
-// }
+const onClosed = (val: boolean) => {
+  addDialogDrawer.value = val
+}
+
+const runnerRow = ref<runner>({
+  id: 0,
+  name: "",
+  worker_name: "",
+  codebook_uid: "",
+  codebook_secret: "",
+  desc: "",
+  tags: [],
+  variables: []
+})
 
 /** 查询模版列表 */
 const runnersData = ref<runner[]>([])

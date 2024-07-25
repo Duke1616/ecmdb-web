@@ -3,13 +3,31 @@ export interface runner {
   name: string
   worker_name: string
   codebook_uid: string
+  codebook_secret: string
   desc: string
   tags: string[]
+  variables: variables[]
+}
+
+export interface registerOrUpdateReq {
+  id: undefined
+  name: string
+  worker_name: string
+  codebook_uid: string
+  codebook_secret: string
+  desc: string
+  tags: string[]
+  variables: variables[]
 }
 
 export interface runners {
   runners: runner[]
   total: number
+}
+
+export interface variables {
+  key: string
+  value: any
 }
 
 export interface listRunnerReq {

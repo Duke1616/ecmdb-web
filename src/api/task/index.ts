@@ -16,3 +16,19 @@ export function listTasksApi(data: task.page) {
     data: data
   })
 }
+
+/** 修改传入参数 */
+export function updateTaskArgsApi(data: task.args) {
+  return instance.post<number>({
+    url: "task/update/args",
+    data: data
+  })
+}
+
+/** 修改传入参数 */
+export function retryTaskApi(id: number) {
+  return instance.post<number>({
+    url: "task/retry",
+    data: { id: id }
+  })
+}

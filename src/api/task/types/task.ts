@@ -24,10 +24,16 @@ export interface task {
   status: number
   result: string
   code: string
+  args: string
   language: string
 }
 
 export interface tasks {
   tasks: task[]
   total: number
+}
+
+export interface args {
+  id: number
+  args: any
 }

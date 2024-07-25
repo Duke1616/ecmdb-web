@@ -15,3 +15,11 @@ export function listRunnerTagsApi() {
     url: "runner/list/tags"
   })
 }
+
+/** 注册runner */
+export function registerRunnerApi(data: runner.registerOrUpdateReq) {
+  return instance.post<runner.registerOrUpdateReq>({
+    url: "runner/register",
+    data: data
+  })
+}
