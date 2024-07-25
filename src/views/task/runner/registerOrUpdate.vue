@@ -29,6 +29,8 @@
             <el-select
               v-model="formData.tags"
               multiple
+              filterable
+              remote
               placeholder=""
               :show-arrow="false"
               suffix-icon=""
@@ -36,7 +38,14 @@
             >
               <!-- 选项内容 -->
             </el-select>
-            <el-button class="select-button" :icon="UserFilled" />
+
+            <el-button class="select-button" :icon="Plus" @click="handlerTag" />
+            <tag
+              :dialogTagVisible="dialogTagVisible"
+              :tags="formData.tags"
+              @close="handlerCloseTag"
+              @add-tag="handlerAddTag"
+            />
           </div>
         </el-form-item>
         <!-- 变量配置 -->
@@ -64,8 +73,9 @@ import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { registerOrUpdateReq, runner, variables } from "@/api/runner/types/runner"
 import { registerRunnerApi } from "@/api/runner"
-import { UserFilled } from "@element-plus/icons-vue"
+import { Plus } from "@element-plus/icons-vue"
 import variable from "./variable.vue"
+import tag from "./tag.vue"
 
 // 接收父组建传递
 interface Props {
@@ -74,7 +84,8 @@ interface Props {
   runnerRow?: runner
 }
 
-const dialogDrawer = ref(false)
+const dialogDrawer = ref<boolean>(false)
+const dialogTagVisible = ref<boolean>(false)
 const props = defineProps<Props>()
 const emits = defineEmits(["close", "list-runners"])
 const onClosed = () => {
@@ -82,6 +93,20 @@ const onClosed = () => {
   emits("close", false)
 }
 
+const handlerTag = () => {
+  dialogTagVisible.value = !dialogTagVisible.value
+}
+const handlerAddTag = (data: string) => {
+  formData.value.tags.push(data)
+  dialogTagVisible.value = false
+}
+
+const handlerCloseTag = () => {
+  dialogTagVisible.value = false
+}
+// const handlerDelTag = (data: string) => {
+//   formData.value.tags = formData.value.tags.filter((tag) => tag !== data)
+// }
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
   id: undefined,
   name: "",

@@ -210,9 +210,9 @@ const handlerUpdateArgs = () => {
 
 const retryTask = () => {
   ElMessageBox({
-    title: "重试确认",
+    title: "重试任务",
     message: h("p", null, [
-      h("span", null, "正在重试任务: "),
+      h("span", null, "正在重试任务ID: "),
       h("i", { style: "color: red" }, `${taskId.value}`),
       h("span", null, " 确认？")
     ]),
