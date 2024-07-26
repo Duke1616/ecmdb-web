@@ -15,7 +15,15 @@
           <el-input v-model="formData.worker_name" placeholder="请输入工作节点名称" />
         </el-form-item>
         <el-form-item prop="codebook_uid" label="任务模版标识">
-          <el-input v-model="formData.codebook_uid" placeholder="请输入任务模版唯一标识" />
+          <template #label>
+            任务模版标识
+            <span v-if="props.createOrUpdate !== 'create'" class="highlight-text">（禁止修改）</span>
+          </template>
+          <el-input
+            v-model="formData.codebook_uid"
+            :disabled="props.createOrUpdate !== 'create'"
+            placeholder="请输入任务模版唯一标识"
+          />
         </el-form-item>
         <el-form-item prop="codebook_secret" label="任务模版密钥">
           <el-input v-model="formData.codebook_secret" placeholder="请输入任务模版密钥" />
@@ -72,7 +80,7 @@ import { ref, watch } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { registerOrUpdateReq, runner, variables } from "@/api/runner/types/runner"
-import { registerRunnerApi } from "@/api/runner"
+import { registerRunnerApi, updateRunnerAPi } from "@/api/runner"
 import { Plus } from "@element-plus/icons-vue"
 import variable from "./variable.vue"
 import tag from "./tag.vue"
@@ -81,7 +89,7 @@ import tag from "./tag.vue"
 interface Props {
   dialogVisible: boolean
   createOrUpdate: string
-  runnerRow?: runner
+  runnerRow: runner
 }
 
 const dialogDrawer = ref<boolean>(false)
@@ -104,32 +112,20 @@ const handlerAddTag = (data: string) => {
 const handlerCloseTag = () => {
   dialogTagVisible.value = false
 }
-// const handlerDelTag = (data: string) => {
-//   formData.value.tags = formData.value.tags.filter((tag) => tag !== data)
-// }
+
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
-  id: undefined,
+  id: 0,
   name: "",
   worker_name: "",
   codebook_uid: "",
   codebook_secret: "",
   desc: "",
   tags: [],
-  variables: [
-    {
-      key: "1",
-      value: "1"
-    },
-    {
-      key: "2",
-      value: "2"
-    }
-  ]
+  variables: []
 }
 
 const dialogVariable = ref(false)
 const handlerCloseVariable = () => {
-  console.log("tset")
   dialogVariable.value = false
 }
 
@@ -144,15 +140,17 @@ const formRules: FormRules = {
 }
 
 const handlerAddVaribale = (data: variables) => {
-  formData.value.variables.push({ ...data })
+  formData.value.variables?.push({ ...data })
 }
+
 const handlerDelVaribale = (key: string) => {
-  formData.value.variables = formData.value.variables.filter((variable) => variable.key !== key)
+  formData.value.variables = formData.value.variables?.filter((variable) => variable.key !== key)
 }
+
 const handlerCreateOrUpdagte = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    const api = props.createOrUpdate === "create" ? registerRunnerApi : registerRunnerApi
+    const api = props.createOrUpdate === "create" ? registerRunnerApi : updateRunnerAPi
     api(formData.value)
       .then(() => {
         dialogDrawer.value = false
@@ -170,6 +168,15 @@ watch(
   () => props.dialogVisible,
   (val: boolean) => {
     dialogDrawer.value = val
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.runnerRow,
+  (val: runner) => {
+    console.log(val, "123")
+    formData.value = cloneDeep(val)
   },
   { immediate: true }
 )

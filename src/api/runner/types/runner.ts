@@ -10,14 +10,14 @@ export interface runner {
 }
 
 export interface registerOrUpdateReq {
-  id: undefined
+  id?: number
   name: string
   worker_name: string
   codebook_uid: string
   codebook_secret: string
   desc: string
   tags: string[]
-  variables: variables[]
+  variables?: variables[]
 }
 
 export interface runners {

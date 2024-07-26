@@ -81,7 +81,7 @@
 import { h, ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { task } from "@/api/task/types/task"
-import { listTasksApi, retryTaskApi, updateTaskArgsApi } from "@/api/task"
+import { listTasksApi, retryTaskApi, updateTaskArgsApi, updateTaskVariablesApi } from "@/api/task"
 import { PrismEditor } from "vue-prism-editor"
 import "vue-prism-editor/dist/prismeditor.min.css"
 import { highlight, languages } from "prismjs/components/prism-core"
@@ -133,13 +133,20 @@ const operateBtnStatus = ref([
     type: "primary"
   },
   {
-    name: "重试",
+    name: "变量",
     code: "4",
+    icon: "Shop",
+    type: "primary"
+  },
+  {
+    name: "重试",
+    code: "5",
     icon: "Refresh",
     type: "primary"
   }
 ])
 
+const active = ref<string>("")
 const operateEvent = (data: task, name: string) => {
   taskId.value = data.id
   resultVisible.value = true
@@ -157,9 +164,17 @@ const operateEvent = (data: task, name: string) => {
       tempResult.value = JSON.parse(data.args)
       result.value = JSON.parse(data.args)
       closeOnClickModal.value = false
+      active.value = "参数"
       language.value = "json"
       break
     case "4":
+      tempResult.value = JSON.parse(data.variables)
+      result.value = JSON.parse(data.variables)
+      closeOnClickModal.value = false
+      active.value = "变量"
+      language.value = "json"
+      break
+    case "5":
       resultVisible.value = false
       retryTask()
       break
@@ -169,13 +184,21 @@ const operateEvent = (data: task, name: string) => {
 const onclose = () => {
   if (language.value === "json") {
     if (JSON.stringify(tempResult.value) !== JSON.stringify(result.value)) {
-      handlerUpdateArgs()
+      switch (active.value) {
+        case "参数":
+          handlerUpdateArgs()
+          break
+        case "变量":
+          handlerUpdateVaribales()
+          break
+      }
     }
   }
 
   result.value = ""
   language.value = ""
   resultVisible.value = false
+  closeOnClickModal.value = true
   taskId.value = 0
 }
 
@@ -205,6 +228,16 @@ const handlerUpdateArgs = () => {
   }).then(() => {
     listTasksData()
     ElMessage.success("修改传递参数成功")
+  })
+}
+
+const handlerUpdateVaribales = () => {
+  updateTaskVariablesApi({
+    id: taskId.value,
+    variables: JSON.stringify(result.value)
+  }).then(() => {
+    listTasksData()
+    ElMessage.success("修改传递变量成功")
   })
 }
 

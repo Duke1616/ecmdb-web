@@ -70,7 +70,9 @@ class HyRequest {
         console.log("error", error)
         if (error.response.data !== "") {
           const message = get(error, "response.data.msg")
+
           ElMessage.error(message)
+          ElMessage.error("是不是你小子 401")
         } else {
           const status = get(error, "response.status")
           switch (status) {

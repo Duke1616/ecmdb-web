@@ -26,6 +26,14 @@ export function updateTaskArgsApi(data: task.args) {
 }
 
 /** 修改传入参数 */
+export function updateTaskVariablesApi(data: task.varibales) {
+  return instance.post<number>({
+    url: "task/update/variables",
+    data: data
+  })
+}
+
+/** 修改传入参数 */
 export function retryTaskApi(id: number) {
   return instance.post<number>({
     url: "task/retry",

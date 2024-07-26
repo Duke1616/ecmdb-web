@@ -18,8 +18,24 @@ export function listRunnerTagsApi() {
 
 /** 注册runner */
 export function registerRunnerApi(data: runner.registerOrUpdateReq) {
-  return instance.post<runner.registerOrUpdateReq>({
+  return instance.post<number>({
     url: "runner/register",
+    data: data
+  })
+}
+
+/** 删除runner */
+export function deleteRunnerApi(id: number) {
+  return instance.post<number>({
+    url: "runner/delete",
+    data: { id: id }
+  })
+}
+
+/** 修改runner */
+export function updateRunnerAPi(data: runner.registerOrUpdateReq) {
+  return instance.post<number>({
+    url: "runner/update",
     data: data
   })
 }

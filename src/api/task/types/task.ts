@@ -25,6 +25,7 @@ export interface task {
   result: string
   code: string
   args: string
+  variables: string
   language: string
 }
 
@@ -36,4 +37,9 @@ export interface tasks {
 export interface args {
   id: number
   args: any
+}
+
+export interface varibales {
+  id: number
+  variables: string
 }
