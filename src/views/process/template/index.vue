@@ -43,7 +43,7 @@
                 bg
                 size="small"
                 @click="handlerSync(scope.row)"
-                >同步</el-button
+                >流程</el-button
               >
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
@@ -132,6 +132,8 @@ const handleUpdate = (row: template) => {
 }
 
 const handlerSync = (row: template) => {
+  updateDialogVisible.value = true
+  updateTemplateData.value = row
   console.log(row)
 }
 
