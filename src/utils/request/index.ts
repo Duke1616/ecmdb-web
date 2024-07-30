@@ -4,6 +4,8 @@ import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { refreshAccessTokenApi } from "@/api/login"
+import { useRouter } from "vue-router"
+const router = useRouter()
 
 class HyRequest {
   // axios的实力方法
@@ -70,9 +72,7 @@ class HyRequest {
         console.log("error", error)
         if (error.response.data !== "") {
           const message = get(error, "response.data.msg")
-
           ElMessage.error(message)
-          ElMessage.error("是不是你小子 401")
         } else {
           const status = get(error, "response.status")
           switch (status) {
@@ -85,9 +85,11 @@ class HyRequest {
                   this.instance(error.config)
                 })
                 .catch((error: { message: string }) => {
-                  error.message = "Token过期"
+                  error.message = "认证过期，请重新登录"
+                  ElMessage.error(error.message)
+                  router.push("/login")
                 })
-              break
+              return
             case 403:
               error.message = "拒绝访问"
               break
