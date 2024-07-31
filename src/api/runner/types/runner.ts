@@ -28,6 +28,7 @@ export interface runners {
 export interface variables {
   key: string
   value: any
+  secret: boolean
 }
 
 export interface listRunnerReq {

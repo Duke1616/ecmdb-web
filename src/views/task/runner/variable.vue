@@ -17,7 +17,14 @@
       :header-cell-style="{ background: '#f3f8ff', height: '10px', 'text-align': 'center' }"
     >
       <el-table-column prop="key" label="名称" align="center" />
-      <el-table-column prop="value" label="值" align="center" />
+      <el-table-column prop="value" label="值" align="center">
+        <template #default="scope">
+          <span v-if="scope.row.secret === false" type="success" effect="plain">
+            {{ scope.row.value }}
+          </span>
+          <span v-if="scope.row.secret === true" type="success" effect="plain"> ******** </span>
+        </template>
+      </el-table-column>
       <el-table-column fixed="right" label="操作" align="center">
         <template #default="scope">
           <el-button type="primary" text bg size="small" @click="handleDelVaribale(scope.row)">删除</el-button>
@@ -40,6 +47,9 @@
       <el-form-item prop="value" label="变量值">
         <el-input v-model="formData.value" placeholder="请输入" />
       </el-form-item>
+      <el-form-item label="安全属性">
+        <el-switch v-model="formData.secret" size="default" />
+      </el-form-item>
     </el-form>
   </el-dialog>
 </template>
@@ -58,7 +68,8 @@ interface Props {
 
 const DEFAULT_FORM_DATA: variables = {
   key: "",
-  value: ""
+  value: "",
+  secret: false
 }
 
 const formData = ref<variables>(cloneDeep(DEFAULT_FORM_DATA))
