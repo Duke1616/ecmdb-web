@@ -14,6 +14,7 @@
               <el-tag v-if="scope.row.status === 4" type="warning" effect="plain"> 等待中 </el-tag>
               <el-tag v-if="scope.row.status === 5" type="warning" effect="plain"> 暂停中 </el-tag>
               <el-tag v-if="scope.row.status === 6" type="warning" effect="plain"> 调度中 </el-tag>
+              <el-tag v-if="scope.row.status === 7" type="warning" effect="plain"> 重试 </el-tag>
               <el-tag v-if="scope.row.status === 1" type="success" effect="plain"> 成功 </el-tag>
               <el-tag v-if="scope.row.status === 2" type="danger" effect="plain"> 失败 </el-tag>
               <el-tag v-if="scope.row.status === 0" type="info" effect="plain"> 未知 </el-tag>
