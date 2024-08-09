@@ -294,7 +294,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: Layouts,
     redirect: "/cmdb/system/menu",
     meta: {
-      title: "流程控制",
+      title: "系统管理",
       svgIcon: "process-control",
       platforms: ["cmdb"]
     },
@@ -305,6 +305,16 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "system-menu",
         meta: {
           title: "菜单管理",
+          svgIcon: "template",
+          platforms: ["cmdb"]
+        }
+      },
+      {
+        path: "api",
+        component: () => import("@/views/system/api/index.vue"),
+        name: "system-api",
+        meta: {
+          title: "接口管理",
           svgIcon: "template",
           platforms: ["cmdb"]
         }

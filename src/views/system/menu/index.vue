@@ -5,7 +5,8 @@
         <el-card>
           <el-button type="primary" @click="addMenu"> 添加菜单</el-button>
           <el-button type="primary" :disabled="!currentNodeKey" @click="addSubMenu"> 添加子菜单</el-button>
-          <el-button type="primary"> 全部展开</el-button>
+          <el-button type="primary" @click="handlerExpandAll"> 全部展开</el-button>
+          <el-button type="primary" @click="handlerCollapse"> 全部收起</el-button>
         </el-card>
         <el-card class="menu-tree">
           <el-input v-model="input1" size="large" placeholder="Please Input" :suffix-icon="Search" />
@@ -26,7 +27,7 @@
         <el-card>
           <div v-if="empty">
             <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="listMenusTreeData" />
-            <div class="form-bottom">
+            <div class="form-bottom" style="margin-top: 20px">
               <el-form-item>
                 <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
                 <el-button type="danger" size="large" @click="handleDelete">删除</el-button>
@@ -58,14 +59,15 @@ import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
 import { listMenuTreeApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
+import { ElTree } from "element-plus"
 const input1 = ref("")
 
 const dialogVisible = ref<boolean>(false)
-const defaultProps = {
+const defaultProps = ref<any>({
   children: "children",
   label: (node: menu) => node.meta.title,
   key: "id"
-}
+})
 
 const empty = ref<boolean>(false)
 const menuCreateRef = ref<InstanceType<typeof MenuForm>>()
@@ -88,6 +90,7 @@ const menuTreeData = ref<menu[]>([])
 const listMenusTreeData = () => {
   currentNodeKey.value = null
   empty.value = false
+  dialogVisible.value = false
 
   listMenuTreeApi()
     .then(({ data }) => {
@@ -99,7 +102,7 @@ const listMenusTreeData = () => {
     .finally(() => {})
 }
 
-const currentNodeKey = ref<number | null>(null)
+const currentNodeKey = ref<any>(null)
 const handleNodeClick = async (node: menu) => {
   if (currentNodeKey.value === node.id) {
     // 如果点击的节点已经是当前高亮节点，则取消高亮
@@ -124,6 +127,14 @@ const handleNodeClick = async (node: menu) => {
     menuUpdateRef.value?.setCheckedCities(me.value)
     menuUpdateRef.value?.setMenuData(node)
   }
+}
+
+const treeRef = ref<InstanceType<typeof ElTree>>() as any
+const handlerExpandAll = () => {
+  Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
+}
+const handlerCollapse = () => {
+  Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.collapse())
 }
 
 const addSubMenu = async () => {

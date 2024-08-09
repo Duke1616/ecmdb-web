@@ -121,22 +121,16 @@
       </el-form-item>
       <div class="divider">
         <el-divider content-position="left"> 接口设置 </el-divider>
-        <el-button text type="primary"> 添加接口</el-button>
+        <el-button text type="primary" @click="handleAddAPi"> 添加接口</el-button>
       </div>
       <el-table
         :data="formData.endpoints"
         border
         :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
       >
-        <el-table-column prop="desc" label="接口介绍" align="center">
-          <div>123</div>
-        </el-table-column>
-        <el-table-column prop="path" label="接口路径" align="center">
-          <div>123</div>
-        </el-table-column>
-        <el-table-column prop="method" label="接口方法" align="center">
-          <div>123</div>
-        </el-table-column>
+        <el-table-column prop="path" label="接口路径" align="center" />
+        <el-table-column prop="method" label="接口方法" align="center" />
+        <el-table-column prop="desc" label="接口介绍" align="center" />
         <el-table-column fixed="right" label="操作" width="150" align="center">
           <template #default="scope">
             <el-button type="danger" text bg size="small" @click="handleDeleteEndpoint(scope.row)">删除</el-button>
@@ -144,6 +138,15 @@
         </el-table-column>
       </el-table>
     </el-form>
+    <div>
+      <el-dialog v-model="dialogVisible" title="添加接口">
+        <Api ref="apiRef" />
+        <template #footer>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlerAddApi">添加</el-button>
+        </template>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
@@ -153,12 +156,14 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { createMenuApi, updateMenuApi } from "@/api/menu"
+import Api from "./api.vue"
 
-const defaultProps = {
+const apiRef = ref<InstanceType<typeof Api>>()
+const defaultProps = ref<any>({
   children: "children",
   label: (node: menu) => node.meta.title,
   key: "id"
-}
+})
 
 const emits = defineEmits(["listMenusTreeData"])
 
@@ -232,7 +237,17 @@ const handleCheckedCitiesChange = (value: string[]) => {
 }
 
 const handleDeleteEndpoint = (row: endpoint) => {
-  console.log(row)
+  formData.value.endpoints = formData.value.endpoints.filter((endpoint) => endpoint.id !== row.id)
+}
+const handlerAddApi = () => {
+  const endpointAPi = apiRef.value?.getSelectionTableData()
+  const uniqueEndpoints = endpointAPi.filter((newEndpoint: { id: number }) => {
+    return !formData.value.endpoints.some((existingEndpoint) => existingEndpoint.id === newEndpoint.id)
+  })
+
+  formData.value.endpoints = formData.value.endpoints.concat(uniqueEndpoints)
+  apiRef.value?.clearSelection()
+  dialogVisible.value = false
 }
 
 const formData = ref<createOrUpdateMenuReq>(cloneDeep(DEFAULT_FORM_DATA))
@@ -255,6 +270,11 @@ const submitForm = () => {
       })
       .finally(() => {})
   })
+}
+
+const dialogVisible = ref<boolean>(false)
+const handleAddAPi = () => {
+  dialogVisible.value = true
 }
 
 const resetForm = () => {
