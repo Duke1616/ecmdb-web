@@ -172,7 +172,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const checkedCities = ref<string[]>([])
+
 const statusOptions = ref([
   { label: 1, name: "开启", disabled: false },
   { label: 2, name: "停用", disabled: true }
@@ -219,8 +219,8 @@ const showLableName = (type: number) => {
   }
 }
 
-const handleCheckedCitiesChange = (value: string[]) => {
-  console.log(checkedCities.value)
+const checkedCities = ref<string[]>([])
+const handleCheckedCitiesChange = (value: any) => {
   metaOptions.value.forEach((option) => {
     switch (option.label) {
       case "hidden":
