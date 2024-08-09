@@ -1,11 +1,13 @@
 export interface menu {
   id: number
+  pid: number
   type: number
-  name: string
   path: string
+  name: string
   icon: string
   component: string
-  Component_path: string
+  redirect: string
+  component_path: string
   status: number
   sort: number
   meta: meta
@@ -15,9 +17,9 @@ export interface menu {
 
 export interface meta {
   title: string
-  hidden: boolean
-  affix: boolean
-  keepalive: boolean
+  is_hidden: boolean
+  is_affix: boolean
+  is_keepalive: boolean
   icon: string
 }
 
@@ -32,10 +34,10 @@ export interface createOrUpdateMenuReq {
   id?: number
   pid?: number
   type: number
-  component: string
-  Component_path: string
-  redirect: string
   name: string
+  component: string
+  component_path: string
+  redirect: string
   path: string
   sort: number
   status: number
