@@ -5,8 +5,9 @@
         <el-card>
           <el-button type="primary" @click="addMenu"> 添加菜单</el-button>
           <el-button type="primary" :disabled="!currentNodeKey" @click="addSubMenu"> 添加子菜单</el-button>
-          <el-button type="primary" @click="handlerExpandAll"> 全部展开</el-button>
-          <el-button type="primary" @click="handlerCollapse"> 全部收起</el-button>
+          <el-button type="primary" @click="handleCheckedTreeExpand">
+            {{ isExpand ? "全部收起" : "全部展开" }}
+          </el-button>
         </el-card>
         <el-card class="menu-tree">
           <el-input v-model="input1" size="large" placeholder="Please Input" :suffix-icon="Search" />
@@ -130,11 +131,30 @@ const handleNodeClick = async (node: menu) => {
 }
 
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
-const handlerExpandAll = () => {
-  Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
+// const handlerExpandAll = () => {
+//   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
+// }
+// const handlerCollapse = () => {
+//   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.collapse())
+// }
+
+const recursionFn = (arr: menu[]) => {
+  const nodes = treeRef.value?.store?.nodesMap
+  if (arr.length > 0) {
+    for (let i = 0; i < arr.length; i++) {
+      if (arr[i]?.children?.length > 0) {
+        nodes[arr[i].id].expanded = isExpand.value
+        recursionFn(arr[i]?.children)
+      }
+    }
+  }
 }
-const handlerCollapse = () => {
-  Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.collapse())
+
+const isExpand = ref(false)
+const handleCheckedTreeExpand = () => {
+  isExpand.value = !isExpand.value
+  const treeList = menuTreeData.value
+  recursionFn(treeList)
 }
 
 const addSubMenu = async () => {

@@ -300,6 +300,16 @@ export const constantRoutes: RouteRecordRaw[] = [
     },
     children: [
       {
+        path: "role",
+        component: () => import("@/views/system/role/index.vue"),
+        name: "system-role",
+        meta: {
+          title: "角色管理",
+          svgIcon: "template",
+          platforms: ["cmdb"]
+        }
+      },
+      {
         path: "menu",
         component: () => import("@/views/system/menu/index.vue"),
         name: "system-menu",
