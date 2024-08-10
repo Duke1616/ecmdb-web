@@ -330,6 +330,28 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       }
     ]
+  },
+  {
+    path: "/cmdb/system",
+    component: Layouts,
+    redirect: "/cmdb/system/menu",
+    meta: {
+      title: "系统管理",
+      svgIcon: "process-control",
+      platforms: ["cmdb"]
+    },
+    children: [
+      {
+        path: "api",
+        component: () => import("@/views/system/api/index.vue"),
+        name: "system-api",
+        meta: {
+          title: "接口管理",
+          svgIcon: "template",
+          platforms: ["cmdb"]
+        }
+      }
+    ]
   }
 ]
 

@@ -27,7 +27,12 @@
       <div class="control">
         <el-card>
           <div v-if="empty">
-            <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="listMenusTreeData" />
+            <MenuForm
+              ref="menuUpdateRef"
+              :menuData="menuTreeData"
+              @listMenusTreeData="listMenusTreeData"
+              @close="onClosed"
+            />
             <div class="form-bottom" style="margin-top: 20px">
               <el-form-item>
                 <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
@@ -43,7 +48,12 @@
     </div>
     <div>
       <el-dialog v-model="dialogVisible" title="添加菜单" @closed="resetForm">
-        <MenuForm ref="menuCreateRef" :menuData="menuTreeData" @list-tree-menu="listMenusTreeData" />
+        <MenuForm
+          ref="menuCreateRef"
+          :menuData="menuTreeData"
+          @listMenusTreeData="listMenusTreeData"
+          @close="onClosed"
+        />
         <template #footer>
           <el-button @click="resetForm">取消</el-button>
           <el-button type="primary" @click="handlerCreate">确认</el-button>
@@ -79,6 +89,10 @@ const handleUpdate = () => {
 const handleDelete = () => {}
 const handlerCreate = () => {
   menuCreateRef.value?.submitForm()
+}
+
+const onClosed = () => {
+  dialogVisible.value = false
 }
 
 const resetForm = () => {
@@ -163,6 +177,7 @@ const addSubMenu = async () => {
   menuCreateRef.value?.resetForm()
 
   // 插入特性数据
+  menuCreateRef.value?.setMenuType(2)
   menuCreateRef.value?.setFromForPid(currentNodeKey.value)
 }
 const addMenu = async () => {

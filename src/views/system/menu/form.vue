@@ -165,7 +165,7 @@ const defaultProps = ref<any>({
   key: "id"
 })
 
-const emits = defineEmits(["listMenusTreeData"])
+const emits = defineEmits(["listMenusTreeData", "closed"])
 
 interface Props {
   menuData: menu[]
@@ -264,6 +264,12 @@ const submitForm = () => {
       .then(() => {
         ElMessage.success("保存成功")
         resetForm()
+
+        console.log("开始调用")
+        // 从新获取数据，关闭 dialog
+        emits("listMenusTreeData")
+        emits("closed")
+        console.log("调用完成")
       })
       .catch((error) => {
         console.log("catch", error)
@@ -272,28 +278,37 @@ const submitForm = () => {
   })
 }
 
+// 控制添加API接口的dialog
 const dialogVisible = ref<boolean>(false)
 const handleAddAPi = () => {
   dialogVisible.value = true
 }
 
+// 重置表单
 const resetForm = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
-  emits("listMenusTreeData")
 }
 
+// 设置菜单数据
 const setMenuData = (form: menu) => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(form)
 }
 
+// 设置按钮类型
+const setMenuType = (value: number) => {
+  formData.value.type = value
+}
+// 设置上级目录
 const setFromForPid = (pid: number | null) => {
   if (pid === null) {
     return
   }
   formData.value.pid = pid
 }
+
+// 初始化选中的高级选项
 const setCheckedCities = (value: string[]) => {
   checkedCities.value = value
 }
@@ -301,6 +316,7 @@ const setCheckedCities = (value: string[]) => {
 defineExpose({
   submitForm,
   resetForm,
+  setMenuType,
   setMenuData,
   setFromForPid,
   setCheckedCities

@@ -24,3 +24,18 @@ export function updateRoleApi(data: role.createOrUpdateRoleReq) {
     data: data
   })
 }
+
+/** 更新角色 */
+export function getRolePermissionApi(role_code: string) {
+  return instance.post<role.rolePermission>({
+    url: "role/permission",
+    data: { role_code: role_code }
+  })
+}
+
+export function addRoleMenuPermissionApi(menuIds: number[], roleCode: string) {
+  return instance.post<number>({
+    url: "role/permission/add",
+    data: { menu_ids: menuIds, role_code: roleCode }
+  })
+}

@@ -53,7 +53,23 @@
         <template #footer>
           <div class="dialog-footer">
             <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="handlerSubmit"> 保存 </el-button>
+            <el-button type="primary" @click="handlerSubmitRole"> 保存 </el-button>
+          </div>
+        </template>
+      </el-dialog>
+    </div>
+    <div>
+      <el-dialog v-model="dialogPermission" title="分配菜单权限" @closed="closeMenePermission" width="500">
+        <Menu ref="menuRef" />
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button plain type="primary" @click="handlerCheckedTreeNodeAll">
+              {{ isExpand ? "全部选中" : "全部取消" }}
+            </el-button>
+            <el-button plain type="primary" @click="handlerExpandAllNodes">
+              {{ isExpand ? "全部收起" : "全部展开" }}
+            </el-button>
+            <el-button type="primary" @click="handlerSubmitRolePermission"> 提交 </el-button>
           </div>
         </template>
       </el-dialog>
@@ -68,14 +84,44 @@ import { listRolesApi } from "@/api/role"
 import { role } from "@/api/role/types/role"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import createOrUpdate from "./createOrUpdate.vue"
+import Menu from "./menu.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
+const dialogPermission = ref<boolean>(false)
 
 const apiRef = ref<InstanceType<typeof createOrUpdate>>()
+const menuRef = ref<InstanceType<typeof Menu>>()
 
-const handlerSubmit = () => {
+const handlerSubmitRole = () => {
   apiRef.value?.submitForm()
+  resetStatus()
+}
+
+const isChecked = ref(false)
+const handlerCheckedTreeNodeAll = () => {
+  isChecked.value = !isChecked.value
+  menuRef.value?.toggleTreeChecked(isChecked.value)
+}
+
+const isExpand = ref(true)
+const handlerExpandAllNodes = () => {
+  isExpand.value = !isExpand.value
+  menuRef.value?.expandAllNodes(isExpand.value)
+}
+
+const resetStatus = () => {
+  isExpand.value = true
+  isChecked.value = false
+}
+
+const handlerSubmitRolePermission = () => {
+  menuRef.value?.submitTree(roleCode.value)
+}
+
+const closeMenePermission = () => {
+  dialogPermission.value = false
+  resetStatus()
 }
 
 const handleUpdate = async (row: role) => {
@@ -86,8 +132,14 @@ const handleUpdate = async (row: role) => {
   apiRef.value?.setFrom(row)
 }
 
-const handleMenuPermission = (row: role) => {
-  console.log(row)
+const roleCode = ref<string>("")
+const handleMenuPermission = async (row: role) => {
+  dialogPermission.value = true
+
+  await nextTick()
+
+  roleCode.value = row.code
+  menuRef.value?.listMenuPermissionTreeData(row.code)
 }
 
 const handleDelete = (row: role) => {
