@@ -328,6 +328,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "template",
           platforms: ["cmdb"]
         }
+      },
+      {
+        path: "user",
+        component: () => import("@/views/system/user/index.vue"),
+        name: "system-user",
+        meta: {
+          title: "用户管理",
+          svgIcon: "template",
+          platforms: ["cmdb"]
+        }
       }
     ]
   },
@@ -340,18 +350,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       svgIcon: "process-control",
       platforms: ["cmdb"]
     },
-    children: [
-      {
-        path: "api",
-        component: () => import("@/views/system/api/index.vue"),
-        name: "system-api",
-        meta: {
-          title: "接口管理",
-          svgIcon: "template",
-          platforms: ["cmdb"]
-        }
-      }
-    ]
+    children: []
   }
 ]
 

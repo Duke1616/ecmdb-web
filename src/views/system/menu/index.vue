@@ -10,18 +10,21 @@
           </el-button>
         </el-card>
         <el-card class="menu-tree">
-          <el-input v-model="input1" size="large" placeholder="Please Input" :suffix-icon="Search" />
-          <el-tree
-            ref="treeRef"
-            :data="menuTreeData"
-            show-checkbox
-            node-key="id"
-            :highlight-current="true"
-            :expand-on-click-node="false"
-            @node-click="handleNodeClick"
-            :current-node-key="currentNodeKey"
-            :props="defaultProps"
-          />
+          <div class="input-tree-container">
+            <el-input v-model="filterInput" size="default" placeholder="输入菜单名称搜索" :suffix-icon="Search" />
+            <el-tree
+              ref="treeRef"
+              :data="menuTreeData"
+              show-checkbox
+              node-key="id"
+              :highlight-current="true"
+              :expand-on-click-node="false"
+              @node-click="handleNodeClick"
+              :current-node-key="currentNodeKey"
+              :props="defaultProps"
+              :filter-node-method="filterNode"
+            />
+          </div>
         </el-card>
       </div>
       <div class="control">
@@ -64,14 +67,14 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted, ref } from "vue"
+import { nextTick, onMounted, ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
 import { listMenuTreeApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
 import { ElTree } from "element-plus"
-const input1 = ref("")
+const filterInput = ref("")
 
 const dialogVisible = ref<boolean>(false)
 const defaultProps = ref<any>({
@@ -144,6 +147,17 @@ const handleNodeClick = async (node: menu) => {
   }
 }
 
+interface Tree {
+  [key: string]: any
+}
+
+const filterNode = (value: string, data: Tree) => {
+  if (!value) return true
+
+  // 确保data.label存在且是字符串
+  return typeof data.meta.title === "string" && data.meta.title.includes(value)
+}
+
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
 // const handlerExpandAll = () => {
 //   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
@@ -189,6 +203,10 @@ const addMenu = async () => {
 onMounted(() => {
   listMenusTreeData()
 })
+
+watch(filterInput, (val: string) => {
+  treeRef.value!.filter(val)
+})
 </script>
 
 <style lang="scss" scoped>
@@ -198,6 +216,11 @@ onMounted(() => {
   align-items: stretch;
   gap: 12px;
 }
+.input-tree-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .menu {
   flex: 0 0 30%;
@@ -205,11 +228,11 @@ onMounted(() => {
 
 .menu-tree {
   overflow-y: auto;
-  max-height: 800px; /* 设置一个固定的最大高度 */
+  max-height: 800px;
 }
 
 .control {
-  flex: 1; /* 70% width */
+  flex: 1;
 }
 
 .divider {

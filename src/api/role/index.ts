@@ -34,7 +34,7 @@ export function getRolePermissionApi(role_code: string) {
 }
 
 export function addRoleMenuPermissionApi(menuIds: number[], roleCode: string) {
-  return instance.post<number>({
+  return instance.post<boolean>({
     url: "role/permission/add",
     data: { menu_ids: menuIds, role_code: roleCode }
   })

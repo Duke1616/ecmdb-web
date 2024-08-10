@@ -4,6 +4,7 @@
       <div class="toolbar-wrapper">
         <div>
           <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增</el-button>
+          <el-button type="danger" :icon="Delete" @click="handleDelete">删除</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
@@ -23,13 +24,15 @@
               <el-tag v-if="scope.row.status === false" type="danger" effect="plain"> 禁用 </el-tag>
             </template>
           </el-table-column>
-          <el-table-column fixed="right" label="操作" width="250" align="center">
+          <el-table-column fixed="right" label="操作" width="400" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleMenuPermission(scope.row)">
+              <el-button type="primary" plain text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="success" plain text bg size="small" @click="handleMenuPermission(scope.row)">
                 菜单权限
               </el-button>
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button type="success" plain text bg size="small" @click="handleMenuPermission(scope.row)">
+                用户管理
+              </el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -82,7 +85,7 @@ import { nextTick, ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { listRolesApi } from "@/api/role"
 import { role } from "@/api/role/types/role"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, Delete } from "@element-plus/icons-vue"
 import createOrUpdate from "./createOrUpdate.vue"
 import Menu from "./menu.vue"
 
@@ -116,7 +119,7 @@ const resetStatus = () => {
 }
 
 const handlerSubmitRolePermission = () => {
-  menuRef.value?.submitTree(roleCode.value)
+  menuRef.value?.submitAddPermission(roleCode.value)
 }
 
 const closeMenePermission = () => {
@@ -142,9 +145,7 @@ const handleMenuPermission = async (row: role) => {
   menuRef.value?.listMenuPermissionTreeData(row.code)
 }
 
-const handleDelete = (row: role) => {
-  console.log(row)
-}
+const handleDelete = () => {}
 const resetForm = () => {
   apiRef.value?.resetForm()
 }
