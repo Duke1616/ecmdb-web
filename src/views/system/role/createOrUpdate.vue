@@ -4,7 +4,6 @@
       <el-form-item prop="name" label="角色名称">
         <el-input v-model="formData.name" placeholder="请输入角色名称" />
       </el-form-item>
-
       <el-form-item prop="code" label="角色编码">
         <el-input v-model="formData.code" placeholder="请输入角色编码" />
       </el-form-item>
