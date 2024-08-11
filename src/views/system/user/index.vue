@@ -8,7 +8,7 @@
         </div>
         <div>
           <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listRolesApi" />
+            <el-button type="primary" :icon="RefreshRight" circle @click="listUsersData" />
           </el-tooltip>
         </div>
       </div>
@@ -60,7 +60,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
-import { listRolesApi } from "@/api/role"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { listUsersApi } from "@/api/user"
 import { user } from "@/api/user/types/user"
