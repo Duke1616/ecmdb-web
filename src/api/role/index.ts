@@ -39,3 +39,17 @@ export function addRoleMenuPermissionApi(menuIds: number[], roleCode: string) {
     data: { menu_ids: menuIds, role_code: roleCode }
   })
 }
+
+export function listUserHaveRolesApi(data: role.userBindReq) {
+  return instance.post<role.roles>({
+    url: "role/user/have",
+    data: data
+  })
+}
+
+export function listUserDoesNotHaveRoles(data: role.userBindReq) {
+  return instance.post<role.roles>({
+    url: "role/user/does_not_have",
+    data: data
+  })
+}

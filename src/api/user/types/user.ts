@@ -19,3 +19,18 @@ export interface users {
   total: number
   users: user[]
 }
+
+export interface user {
+  id: number
+  username: string
+  title: string
+  email: string
+  source_type: number
+  create_type: number
+  role_codes: string[]
+}
+
+export interface bindRoleCodesReq {
+  id: number
+  role_codes: string[]
+}

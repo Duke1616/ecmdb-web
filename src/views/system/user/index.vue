@@ -54,6 +54,11 @@
         />
       </div>
     </el-card>
+    <div>
+      <el-dialog v-model="dialogBindRole" title="分配角色" @closed="handlerClousedRole" width="1000px">
+        <Role ref="roleRef" :roleCodes="codes ?? []" :userId="userId" @listUsersData="listUsersData" />
+      </el-dialog>
+    </div>
   </div>
 </template>
 
@@ -62,11 +67,19 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { listUsersApi } from "@/api/user"
+import Role from "./role.vue"
 import { user } from "@/api/user/types/user"
 
+const roleRef = ref<InstanceType<typeof Role>>()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-
 const dialogVisible = ref<boolean>(false)
+const dialogBindRole = ref<boolean>(false)
+
+const handlerClousedRole = () => {
+  dialogBindRole.value = false
+  roleRef.value?.onClosed()
+}
+
 /** 查询模版列表 */
 const usersData = ref<user[]>([])
 const listUsersData = () => {
@@ -77,6 +90,8 @@ const listUsersData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       usersData.value = data.users
+
+      reset()
     })
     .catch(() => {
       usersData.value = []
@@ -84,8 +99,20 @@ const listUsersData = () => {
     .finally(() => {})
 }
 
+const codes = ref<string[]>([])
+const userId = ref<number>()
+
+const reset = () => {
+  codes.value = []
+  userId.value = 0
+}
 const handleBindRole = (row: user) => {
-  console.log(row)
+  // 打开弹窗
+  dialogBindRole.value = true
+
+  // 数据传递
+  codes.value = row.role_codes
+  userId.value = row.id
 }
 
 const handleUpdate = (row: user) => {

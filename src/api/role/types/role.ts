@@ -32,3 +32,9 @@ export interface rolePermission {
   authz_ids: number[]
   menus: menu.menu[]
 }
+
+export interface userBindReq {
+  offset?: number
+  limit?: number
+  codes: string[]
+}
