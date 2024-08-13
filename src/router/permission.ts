@@ -32,7 +32,7 @@ router.beforeEach(async (to, _from, next) => {
   }
 
   // 如果用户已经获得其权限角色
-  if (userStore.roles.length !== 0) return next()
+  if (permissionStore.dynamicRoutes.length !== 0) return next()
   // 否则要重新获取权限角色
   try {
     await userStore.getInfo()
@@ -40,7 +40,6 @@ router.beforeEach(async (to, _from, next) => {
     await permissionStore.setRoutes(userStore.userId)
     // 将 "有访问权限的动态路由" 添加到 Router 中
     permissionStore.dynamicRoutes.forEach((route) => router.addRoute(route))
-    console.log(permissionStore.routes)
     // 确保添加路由已完成
     // 设置 replace: true, 因此导航将不会留下历史记录
     next({ ...to, replace: true })

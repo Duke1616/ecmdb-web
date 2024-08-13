@@ -7,7 +7,6 @@ export interface menu {
   icon: string
   component: string
   redirect: string
-  component_path: string
   status: number
   sort: number
   meta: meta
@@ -36,7 +35,6 @@ export interface createOrUpdateMenuReq {
   type: number
   name: string
   component: string
-  component_path: string
   redirect: string
   path: string
   sort: number

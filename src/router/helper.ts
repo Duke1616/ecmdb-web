@@ -37,7 +37,7 @@ export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
     } else {
       tmpRouteItem = {
         path: route.path,
-        component: modules[`..${route.component_path}`],
+        component: modules[`..${route.component}`],
         name: route.name,
         meta: {
           title: route.meta.title,

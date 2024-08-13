@@ -30,12 +30,7 @@
       <div class="control">
         <el-card>
           <div v-if="empty">
-            <MenuForm
-              ref="menuUpdateRef"
-              :menuData="menuTreeData"
-              @listMenusTreeData="listMenusTreeData"
-              @close="onClosed"
-            />
+            <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="listMenusTreeData" />
             <div class="form-bottom" style="margin-top: 20px">
               <el-form-item>
                 <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
@@ -55,7 +50,7 @@
           ref="menuCreateRef"
           :menuData="menuTreeData"
           @listMenusTreeData="listMenusTreeData"
-          @close="onClosed"
+          @closed="onClosed"
         />
         <template #footer>
           <el-button @click="resetForm">取消</el-button>
@@ -84,40 +79,28 @@ const defaultProps = ref<any>({
 })
 
 const empty = ref<boolean>(false)
+const treeRef = ref<InstanceType<typeof ElTree>>() as any
 const menuCreateRef = ref<InstanceType<typeof MenuForm>>()
 const menuUpdateRef = ref<InstanceType<typeof MenuForm>>()
 const handleUpdate = () => {
-  menuUpdateRef.value?.submitForm()
+  menuUpdateRef.value?.submitUpdateForm()
 }
 const handleDelete = () => {}
+
 const handlerCreate = () => {
-  menuCreateRef.value?.submitForm()
+  menuCreateRef.value?.submitCreateForm()
 }
 
-const onClosed = () => {
+const onClosed = (id: number) => {
+  // 关闭弹窗
   dialogVisible.value = false
+
+  // 避免触发 update 获取逻辑
+  currentNodeKey.value = id
 }
 
 const resetForm = () => {
   dialogVisible.value = false
-}
-
-// const menuData = ref<menu>()
-/** 查询模版列表 */
-const menuTreeData = ref<menu[]>([])
-const listMenusTreeData = () => {
-  currentNodeKey.value = null
-  empty.value = false
-  dialogVisible.value = false
-
-  listMenuTreeApi()
-    .then(({ data }) => {
-      menuTreeData.value = data
-    })
-    .catch(() => {
-      menuTreeData.value = []
-    })
-    .finally(() => {})
 }
 
 const currentNodeKey = ref<any>(null)
@@ -134,17 +117,24 @@ const handleNodeClick = async (node: menu) => {
     // 添加数据
     await nextTick()
 
-    // 插入特性数据
-    const me = ref<string[]>([])
-    me.value.push(node.meta.is_affix ? "affix" : "")
-    me.value.push(node.meta.is_hidden ? "hidden" : "")
-    me.value.push(node.meta.is_keepalive ? "keepalive" : "")
-    me.value = me.value.filter(Boolean)
-
-    // 调用setCheckedCities，传入过滤后的me.value
-    menuUpdateRef.value?.setCheckedCities(me.value)
-    menuUpdateRef.value?.setMenuData(node)
+    updateMenuData(node)
   }
+}
+
+const updateMenuData = (node: menu | null) => {
+  if (node === null) {
+    return
+  }
+  // 插入特性数据
+  const me = ref<string[]>([])
+  me.value.push(node.meta.is_affix ? "affix" : "")
+  me.value.push(node.meta.is_hidden ? "hidden" : "")
+  me.value.push(node.meta.is_keepalive ? "keepalive" : "")
+  me.value = me.value.filter(Boolean)
+
+  // 调用setCheckedCities，传入过滤后的me.value
+  menuUpdateRef.value?.setCheckedCities(me.value)
+  menuUpdateRef.value?.setMenuData(node)
 }
 
 interface Tree {
@@ -158,13 +148,52 @@ const filterNode = (value: string, data: Tree) => {
   return typeof data.meta.title === "string" && data.meta.title.includes(value)
 }
 
-const treeRef = ref<InstanceType<typeof ElTree>>() as any
 // const handlerExpandAll = () => {
 //   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
 // }
 // const handlerCollapse = () => {
 //   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.collapse())
 // }
+
+// const menuData = ref<menu>()
+/** 查询模版列表 */
+const menuTreeData = ref<menu[]>([])
+const listMenusTreeData = async () => {
+  listMenuTreeApi()
+    .then(async ({ data }) => {
+      menuTreeData.value = data
+
+      await nextTick()
+      // 设置当前节点
+      if (currentNodeKey.value) {
+        treeRef.value!.setCurrentKey(currentNodeKey.value)
+        // 录入数据
+        const node = findMenuById(data, currentNodeKey.value)
+        updateMenuData(node)
+        return
+      }
+    })
+    .catch(() => {
+      menuTreeData.value = []
+    })
+    .finally(() => {})
+}
+
+const findMenuById = (menus: menu[], id: number): menu | null => {
+  for (const menu of menus) {
+    if (menu.id === id) {
+      return menu
+    }
+
+    if (menu.children.length > 0) {
+      const found = findMenuById(menu.children, id)
+      if (found) {
+        return found
+      }
+    }
+  }
+  return null
+}
 
 const recursionFn = (arr: menu[]) => {
   const nodes = treeRef.value?.store?.nodesMap

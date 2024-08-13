@@ -68,7 +68,7 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="路由别名" prop="path">
+          <el-form-item label="路由名称" prop="path">
             <el-input v-model="formData.name" clearable />
           </el-form-item>
         </el-col>
@@ -77,7 +77,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item v-if="formData.type === 2" label="组件路径" prop="path">
-            <el-input v-model="formData.component_path" clearable />
+            <el-input v-model="formData.component" clearable />
           </el-form-item>
         </el-col>
       </el-row>
@@ -87,7 +87,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item label="菜单排序" prop="sort">
-            <el-input v-model="formData.sort" />
+            <el-input-number v-model="formData.sort" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
@@ -197,7 +197,6 @@ const DEFAULT_FORM_DATA: createOrUpdateMenuReq = {
   status: 1,
   name: "",
   component: "",
-  component_path: "",
   sort: 0,
   meta: {
     title: "",
@@ -256,20 +255,32 @@ const formRules: FormRules = {
   title: [{ required: true, message: "名称不能为空" }]
 }
 
-const submitForm = () => {
+const submitUpdateForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    const api = formData.value.id === undefined ? createMenuApi : updateMenuApi
-    api(formData.value)
+    updateMenuApi(formData.value)
       .then(() => {
         ElMessage.success("保存成功")
         resetForm()
-
-        console.log("开始调用")
-        // 从新获取数据，关闭 dialog
         emits("listMenusTreeData")
-        emits("closed")
-        console.log("调用完成")
+      })
+      .catch((error) => {
+        console.log("catch", error)
+      })
+      .finally(() => {})
+  })
+}
+
+const submitCreateForm = () => {
+  formRef.value?.validate((valid: boolean, fields: any) => {
+    if (!valid) return console.error("表单校验不通过", fields)
+    createMenuApi(formData.value)
+      .then((data) => {
+        ElMessage.success("保存成功")
+        resetForm()
+
+        emits("closed", data.data)
+        emits("listMenusTreeData")
       })
       .catch((error) => {
         console.log("catch", error)
@@ -314,7 +325,8 @@ const setCheckedCities = (value: string[]) => {
 }
 
 defineExpose({
-  submitForm,
+  submitCreateForm,
+  submitUpdateForm,
   resetForm,
   setMenuType,
   setMenuData,

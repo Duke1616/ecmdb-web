@@ -7,9 +7,9 @@ import { getToken, removeToken, setToken } from "@/utils/cache/cookies"
 import { resetRouter } from "@/router"
 import { loginApi } from "@/api/login"
 import { type LoginRequestData } from "@/api/login/types/login"
-import routeSettings from "@/config/route"
 import { localCache } from "@/utils/cache"
 import { getUserInfoApi } from "@/api/user"
+import { usePermissionStoreHook } from "./permission"
 
 export const useUserStore = defineStore("user", () => {
   const token = ref<string>(getToken() || "")
@@ -19,6 +19,7 @@ export const useUserStore = defineStore("user", () => {
 
   const tagsViewStore = useTagsViewStore()
   const settingsStore = useSettingsStore()
+  const permissionStore = usePermissionStoreHook()
 
   /** 登录 */
   const login = async ({ username, password }: LoginRequestData) => {
@@ -36,7 +37,7 @@ export const useUserStore = defineStore("user", () => {
     username.value = data.username
     userId.value = data.id
     // 验证返回的 roles 是否为一个非空数组，否则塞入一个没有任何作用的默认角色，防止路由守卫逻辑进入无限循环
-    roles.value = data.role_codes?.length > 0 ? data.role_codes : routeSettings.defaultRoles
+    // roles.value = data.role_codes?.length > 0 ? data.role_codes : routeSettings.defaultRoles
   }
 
   /** 模拟角色变化 */
@@ -51,7 +52,7 @@ export const useUserStore = defineStore("user", () => {
   const logout = () => {
     removeToken()
     token.value = ""
-    roles.value = []
+    permissionStore.dynamicRoutes = []
     resetRouter()
     _resetTagsView()
   }

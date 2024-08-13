@@ -120,6 +120,7 @@ const resetStatus = () => {
 
 const handlerSubmitRolePermission = () => {
   menuRef.value?.submitAddPermission(roleCode.value)
+  closeMenePermission()
 }
 
 const closeMenePermission = () => {
