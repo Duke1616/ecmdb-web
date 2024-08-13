@@ -53,3 +53,10 @@ export function listUserDoesNotHaveRoles(data: role.userBindReq) {
     data: data
   })
 }
+
+export function listUserRolePermission(userId: number) {
+  return instance.post<role.userRolePermission>({
+    url: "role/user/get_permission_menu",
+    data: { user_id: userId }
+  })
+}

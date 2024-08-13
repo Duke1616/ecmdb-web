@@ -5,7 +5,6 @@ import { ElMessage } from "element-plus"
 import { setRouteChange } from "@/hooks/useRouteListener"
 import { useTitle } from "@/hooks/useTitle"
 import { getToken } from "@/utils/cache/cookies"
-import routeSettings from "@/config/route"
 import isWhiteList from "@/config/white-list"
 import NProgress from "nprogress"
 import "nprogress/nprogress.css"
@@ -37,12 +36,11 @@ router.beforeEach(async (to, _from, next) => {
   // 否则要重新获取权限角色
   try {
     await userStore.getInfo()
-    // 注意：角色必须是一个数组！ 例如: ["admin"] 或 ["developer", "editor"]
-    const roles = userStore.roles
     // 生成可访问的 Routes
-    routeSettings.dynamic ? permissionStore.setRoutes(roles) : permissionStore.setAllRoutes()
+    await permissionStore.setRoutes(userStore.userId)
     // 将 "有访问权限的动态路由" 添加到 Router 中
-    permissionStore.addRoutes.forEach((route) => router.addRoute(route))
+    permissionStore.dynamicRoutes.forEach((route) => router.addRoute(route))
+    console.log(permissionStore.routes)
     // 确保添加路由已完成
     // 设置 replace: true, 因此导航将不会留下历史记录
     next({ ...to, replace: true })

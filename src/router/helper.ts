@@ -7,6 +7,50 @@ import {
   createWebHistory
 } from "vue-router"
 import { cloneDeep, omit } from "lodash-es"
+import { menu } from "@/api/menu/types/menu"
+
+const Layouts = import.meta.glob("../layouts/index.vue")
+const modules = import.meta.glob("../views/**/*.vue")
+
+/** 将获取的后端路由数据格式调整成前端格式 */
+export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
+  return backendRoutes.map((route): RouteRecordRaw => {
+    // 定义一个 dd空的 RouteRecordRaw 对象
+    let tmpRouteItem: RouteRecordRaw = {} as RouteRecordRaw
+
+    // console.log(backendRoutes, route)
+    // 如果有子路由，则递归调用此函数将其也转化为前端格式
+    if (route.children && route.type === 1) {
+      tmpRouteItem = {
+        path: route.path,
+        component: Layouts["../layouts/index.vue"],
+        name: route.name,
+        redirect: route.redirect,
+        meta: {
+          title: route.meta.title,
+          svgIcon: route.meta.icon,
+          affix: route.meta.is_affix,
+          hidden: route.meta.is_hidden
+        },
+        children: transformDynamicRoutes(route.children)
+      }
+    } else {
+      tmpRouteItem = {
+        path: route.path,
+        component: modules[`..${route.component_path}`],
+        name: route.name,
+        meta: {
+          title: route.meta.title,
+          affix: route.meta.is_affix,
+          svgIcon: route.meta.icon,
+          hidden: route.meta.is_hidden,
+          keepAlive: route.meta.is_keepalive
+        }
+      }
+    }
+    return tmpRouteItem
+  })
+}
 
 /** 路由模式 */
 export const history =

@@ -50,7 +50,7 @@
 
       <el-row :gutter="20" v-if="formData.type === 1">
         <el-col :span="12">
-          <el-form-item label="目录组件" prop="path">
+          <el-form-item label="菜单布局" prop="path">
             <el-input v-model="formData.component" clearable />
           </el-form-item>
         </el-col>

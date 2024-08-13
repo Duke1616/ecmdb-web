@@ -30,7 +30,7 @@
               <el-button type="success" plain text bg size="small" @click="handleMenuPermission(scope.row)">
                 菜单权限
               </el-button>
-              <el-button type="success" plain text bg size="small" @click="handleMenuPermission(scope.row)">
+              <el-button type="success" plain text bg size="small" @click="handleUserBindRole(scope.row)">
                 用户管理
               </el-button>
             </template>
@@ -148,6 +148,10 @@ const handleMenuPermission = async (row: role) => {
 const handleDelete = () => {}
 const resetForm = () => {
   apiRef.value?.resetForm()
+}
+
+const handleUserBindRole = (row: role) => {
+  console.log(row)
 }
 
 /** 查询模版列表 */

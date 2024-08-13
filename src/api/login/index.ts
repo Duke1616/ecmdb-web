@@ -38,10 +38,3 @@ export function refreshAccessTokenApi() {
       return response
     })
 }
-
-/** 获取用户详情 */
-export function getUserInfoApi() {
-  return instance.post<Login.UserInfoResponseData>({
-    url: "user/info"
-  })
-}

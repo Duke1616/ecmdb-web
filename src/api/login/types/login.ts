@@ -8,4 +8,8 @@ export type LoginResponseData = {
   refresh_token: string
 }
 
-export type UserInfoResponseData = { username: string; roles: string[] }
+export type UserInfoResponseData = {
+  id: number
+  username: string
+  roles: string[]
+}

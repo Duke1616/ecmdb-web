@@ -33,6 +33,10 @@ export interface rolePermission {
   menus: menu.menu[]
 }
 
+export interface userRolePermission {
+  menus: menu.menu[]
+}
+
 export interface userBindReq {
   offset?: number
   limit?: number

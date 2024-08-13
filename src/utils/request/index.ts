@@ -5,7 +5,6 @@ import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { refreshAccessTokenApi } from "@/api/login"
 import { useRouter } from "vue-router"
-const router = useRouter()
 
 class HyRequest {
   // axios的实力方法
@@ -85,6 +84,7 @@ class HyRequest {
                   this.instance(error.config)
                 })
                 .catch((error: { message: string }) => {
+                  const router = useRouter()
                   error.message = "认证过期，请重新登录"
                   ElMessage.error(error.message)
                   router.push("/login")

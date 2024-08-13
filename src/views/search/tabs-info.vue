@@ -148,7 +148,6 @@ const sortFields = async (modelUid: string) => {
   if (matchingItem && matchingItem.data.length > 0) {
     hightShowFields = matchingItem.data.reduce((acc, obj) => {
       Object.keys(obj).forEach((key) => {
-        console.log("key", obj)
         if (obj[key] === inputSearch.value) {
           acc.push({
             field_uid: key,

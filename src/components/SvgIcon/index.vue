@@ -12,7 +12,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const symbolId = computed(() => `#${props.prefix}-${props.name}`)
-console.log(props.name, props.prefix)
 </script>
 
 <template>

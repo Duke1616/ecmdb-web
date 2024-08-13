@@ -16,3 +16,10 @@ export function bindRoleCodesAPi(data: user.bindRoleCodesReq) {
     data: data
   })
 }
+
+/** 获取用户详情 */
+export function getUserInfoApi() {
+  return instance.post<user.user>({
+    url: "user/info"
+  })
+}
