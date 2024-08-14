@@ -25,6 +25,14 @@ export function updateRoleApi(data: role.createOrUpdateRoleReq) {
   })
 }
 
+/** 删除角色 */
+export function deleteRoleApi(id: number) {
+  return instance.post<number>({
+    url: "role/delete",
+    data: { id: id }
+  })
+}
+
 export function listUserHaveRolesApi(data: role.userBindReq) {
   return instance.post<role.roles>({
     url: "role/user/have",

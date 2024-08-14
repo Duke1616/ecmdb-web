@@ -98,6 +98,7 @@ const menuRef = ref<InstanceType<typeof Menu>>()
 
 const handlerSubmitRole = () => {
   apiRef.value?.submitForm()
+  dialogVisible.value = false
   resetStatus()
 }
 

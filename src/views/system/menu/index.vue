@@ -62,13 +62,13 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted, ref, watch } from "vue"
+import { h, nextTick, onMounted, ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
-import { listMenuTreeApi } from "@/api/menu"
+import { deleteMenuApi, listMenuTreeApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
-import { ElTree } from "element-plus"
+import { ElMessage, ElMessageBox, ElTree } from "element-plus"
 const filterInput = ref("")
 
 const dialogVisible = ref<boolean>(false)
@@ -85,7 +85,27 @@ const menuUpdateRef = ref<InstanceType<typeof MenuForm>>()
 const handleUpdate = () => {
   menuUpdateRef.value?.submitUpdateForm()
 }
-const handleDelete = () => {}
+
+const handleDelete = () => {
+  const node = findMenuById(menuTreeData.value, currentNodeKey.value)
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除菜单: "),
+      h("i", { style: "color: red" }, `${node?.meta.title}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteMenuApi(currentNodeKey.value).then(() => {
+      ElMessage.success("删除成功")
+      isExpand.value = false
+      listMenusTreeData()
+    })
+  })
+}
 
 const handlerCreate = () => {
   menuCreateRef.value?.submitCreateForm()
@@ -257,7 +277,7 @@ watch(filterInput, (val: string) => {
 
 .menu-tree {
   overflow-y: auto;
-  max-height: 800px;
+  max-height: 78vh;
 }
 
 .control {

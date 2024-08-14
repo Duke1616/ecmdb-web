@@ -69,58 +69,6 @@ export const constantRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  },
-  {
-    path: "/cmdb/system",
-    component: Layouts,
-    redirect: "/cmdb/system/menu",
-    meta: {
-      title: "系统管理",
-      svgIcon: "process-control",
-      platforms: ["cmdb"]
-    },
-    children: [
-      {
-        path: "role",
-        component: () => import("@/views/system/role/index.vue"),
-        name: "system-role",
-        meta: {
-          title: "角色管理",
-          svgIcon: "role",
-          platforms: ["cmdb"]
-        }
-      },
-      {
-        path: "menu",
-        component: () => import("@/views/system/menu/index.vue"),
-        name: "system-menu",
-        meta: {
-          title: "菜单管理",
-          svgIcon: "menu",
-          platforms: ["cmdb"]
-        }
-      },
-      {
-        path: "api",
-        component: () => import("@/views/system/api/index.vue"),
-        name: "system-api",
-        meta: {
-          title: "接口管理",
-          svgIcon: "api",
-          platforms: ["cmdb"]
-        }
-      },
-      {
-        path: "user",
-        component: () => import("@/views/system/user/index.vue"),
-        name: "system-user",
-        meta: {
-          title: "用户管理",
-          svgIcon: "user",
-          platforms: ["cmdb"]
-        }
-      }
-    ]
   }
 ]
 // export const constantRoutes: RouteRecordRaw[] = [

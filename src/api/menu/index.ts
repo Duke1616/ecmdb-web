@@ -17,6 +17,14 @@ export function updateMenuApi(data: menu.createOrUpdateMenuReq) {
   })
 }
 
+/** 删除菜单 */
+export function deleteMenuApi(id: number) {
+  return instance.post<number>({
+    url: "menu/delete",
+    data: { id: id }
+  })
+}
+
 /** 查看列表树 */
 export function listMenuTreeApi() {
   return instance.post<menu.menu[]>({
