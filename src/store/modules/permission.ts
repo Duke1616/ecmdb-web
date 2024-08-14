@@ -5,7 +5,6 @@ import { type RouteRecordRaw } from "vue-router"
 import { constantRoutes } from "@/router"
 import { flatMultiLevelRoutes } from "@/router/helper"
 import routeSettings from "@/config/route"
-
 import { listUserRolePermissionApi } from "@/api/permission"
 import { transformDynamicRoutes } from "@/router/helper"
 
@@ -33,7 +32,7 @@ export const usePermissionStore = defineStore("permission", () => {
     dynamicRoutes.value = routeSettings.thirdLevelRouteCache ? flatMultiLevelRoutes(accessedRoutes) : accessedRoutes
   }
 
-  return { routes, setRoutes, dynamicRoutes }
+  return { routes, dynamicRoutes, setRoutes }
 })
 
 /** 在 setup 外使用 */
