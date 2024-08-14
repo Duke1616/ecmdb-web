@@ -86,7 +86,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "system-role",
         meta: {
           title: "角色管理",
-          svgIcon: "template",
+          svgIcon: "role",
           platforms: ["cmdb"]
         }
       },
@@ -96,7 +96,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "system-menu",
         meta: {
           title: "菜单管理",
-          svgIcon: "template",
+          svgIcon: "menu",
           platforms: ["cmdb"]
         }
       },
@@ -106,7 +106,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "system-api",
         meta: {
           title: "接口管理",
-          svgIcon: "template",
+          svgIcon: "api",
           platforms: ["cmdb"]
         }
       },
@@ -116,7 +116,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         name: "system-user",
         meta: {
           title: "用户管理",
-          svgIcon: "template",
+          svgIcon: "user",
           platforms: ["cmdb"]
         }
       }

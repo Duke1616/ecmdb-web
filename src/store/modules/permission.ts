@@ -6,7 +6,7 @@ import { constantRoutes } from "@/router"
 import { flatMultiLevelRoutes } from "@/router/helper"
 import routeSettings from "@/config/route"
 
-import { listUserRolePermission } from "@/api/role"
+import { listUserRolePermissionApi } from "@/api/permission"
 import { transformDynamicRoutes } from "@/router/helper"
 
 export const usePermissionStore = defineStore("permission", () => {
@@ -16,7 +16,7 @@ export const usePermissionStore = defineStore("permission", () => {
   /** 获取路由详情 */
   const getRoleMenu = async (userId: number) => {
     // 获取角色拥有的菜单
-    const { data } = await listUserRolePermission(userId)
+    const { data } = await listUserRolePermissionApi(userId)
 
     // 转换动态路由
     dynamicRoutes.value = transformDynamicRoutes(data.menus?.length ? data.menus : [])

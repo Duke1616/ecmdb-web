@@ -1,5 +1,10 @@
 <template>
   <div class="app-container">
+    <div class="search-container">
+      <el-input v-model="filterInput" style="width: 240px" placeholder="根据路径进行搜索" />
+      <el-button type="primary" @click="listEndpointsData()">搜索</el-button>
+    </div>
+
     <el-card shadow="never">
       <div class="table-wrapper">
         <el-table ref="tableRef" :data="endpointsData">
@@ -35,9 +40,11 @@ import { endpoint } from "@/api/endpoint/types/endpoint"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 /** 查询模版列表 */
+const filterInput = ref<string>("")
 const endpointsData = ref<endpoint[]>([])
 const listEndpointsData = () => {
   listEndpointApi({
+    path: filterInput.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
@@ -62,9 +69,14 @@ const clearSelection = () => {
   tableRef.value.clearSelection()
 }
 
+const resetFilterInput = () => {
+  filterInput.value = ""
+}
+
 defineExpose({
   getSelectionTableData,
-  clearSelection
+  clearSelection,
+  resetFilterInput
 })
 
 /** 监听分页参数的变化 */
@@ -93,5 +105,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listEnd
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.search-container {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 10px;
 }
 </style>

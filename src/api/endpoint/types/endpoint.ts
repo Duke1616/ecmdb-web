@@ -14,9 +14,10 @@ export interface endpoints {
   total: number
 }
 
-export interface Page {
+export interface listByPathReq {
   /** 跳过条数 */
   offset: number
   /** 查询条数 */
   limit: number
+  path: string
 }

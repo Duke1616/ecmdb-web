@@ -10,7 +10,7 @@
                 v-for="item in typeOptions"
                 :key="item.label"
                 :name="item.name"
-                :label="item.label"
+                :value="item.label"
                 :disabled="item.disabled"
               >
                 {{ item.name }}
@@ -97,7 +97,7 @@
                 v-for="item in statusOptions"
                 :key="item.label"
                 :name="item.name"
-                :label="item.label"
+                :value="item.label"
                 :disabled="item.disabled"
               >
                 {{ item.name }}
@@ -111,7 +111,7 @@
           <el-checkbox
             v-for="option in metaOptions"
             :key="option.label"
-            :label="option.label"
+            :value="option.label"
             :name="option.name"
             :disabled="option.disabled"
           >
@@ -139,10 +139,10 @@
       </el-table>
     </el-form>
     <div>
-      <el-dialog v-model="dialogVisible" title="添加接口">
+      <el-dialog v-model="dialogVisible" @closed="closeApiPermission" title="添加接口">
         <Api ref="apiRef" />
         <template #footer>
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="closeApiPermission">取消</el-button>
           <el-button type="primary" @click="handlerAddApi">添加</el-button>
         </template>
       </el-dialog>
@@ -218,6 +218,10 @@ const showLableName = (type: number) => {
   }
 }
 
+const closeApiPermission = () => {
+  apiRef.value?.resetFilterInput()
+  dialogVisible.value = false
+}
 const checkedCities = ref<string[]>([])
 const handleCheckedCitiesChange = (value: any) => {
   metaOptions.value.forEach((option) => {
@@ -236,12 +240,17 @@ const handleCheckedCitiesChange = (value: any) => {
 }
 
 const handleDeleteEndpoint = (row: endpoint) => {
-  formData.value.endpoints = formData.value.endpoints.filter((endpoint) => endpoint.id !== row.id)
+  formData.value.endpoints = formData.value.endpoints.filter(
+    (endpoint) => endpoint.name + endpoint.path !== row.name + row.path
+  )
 }
 const handlerAddApi = () => {
-  const endpointAPi = apiRef.value?.getSelectionTableData()
-  const uniqueEndpoints = endpointAPi.filter((newEndpoint: { id: number }) => {
-    return !formData.value.endpoints.some((existingEndpoint) => existingEndpoint.id === newEndpoint.id)
+  const endpointApi = apiRef.value?.getSelectionTableData()
+  if (!endpointApi) return
+  const uniqueEndpoints = endpointApi.filter((endpoint: endpoint) => {
+    return !formData.value.endpoints.some(
+      (existingEndpoint) => endpoint.name + endpoint.path === existingEndpoint.name + existingEndpoint.path
+    )
   })
 
   formData.value.endpoints = formData.value.endpoints.concat(uniqueEndpoints)

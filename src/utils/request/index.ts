@@ -68,12 +68,12 @@ class HyRequest {
         }
       },
       (error) => {
-        console.log("error", error)
         if (error.response.data !== "") {
           const message = get(error, "response.data.msg")
           ElMessage.error(message)
         } else {
           const status = get(error, "response.status")
+
           switch (status) {
             case 400:
               error.message = "请求错误"
@@ -86,6 +86,7 @@ class HyRequest {
                 .catch((error: { message: string }) => {
                   const router = useRouter()
                   error.message = "认证过期，请重新登录"
+                  console.log(error, "123")
                   ElMessage.error(error.message)
                   router.push("/login")
                 })

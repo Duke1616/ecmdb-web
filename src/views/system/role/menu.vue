@@ -6,8 +6,8 @@
       :data="menuPermissionTreeData?.menus"
       show-checkbox
       node-key="id"
-      default-expand-all
       check-strictly
+      default-expand-all
       :highlight-current="true"
       :default-checked-keys="menuPermissionTreeData?.authz_ids"
       :expand-on-click-node="false"
@@ -17,10 +17,12 @@
   </div>
 </template>
 
+<!-- check-strictly -->
+
 <script lang="ts" setup>
 import { menu } from "@/api/menu/types/menu"
-import { addRoleMenuPermissionApi, getRolePermissionApi } from "@/api/role"
-import { rolePermission } from "@/api/role/types/role"
+import { addRoleMenuPermissionApi, getRolePermissionApi } from "@/api/permission"
+import { rolePermission } from "@/api/permission/types/permission"
 import { Search } from "@element-plus/icons-vue"
 import { ElMessage, ElTree } from "element-plus"
 import { ref, watch } from "vue"
@@ -36,7 +38,6 @@ const defaultProps = ref<any>({
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
 const menuPermissionTreeData = ref<rolePermission>()
 const listMenuPermissionTreeData = (roleCode: string) => {
-  console.log("123", roleCode)
   getRolePermissionApi(roleCode)
     .then(({ data }) => {
       menuPermissionTreeData.value = data

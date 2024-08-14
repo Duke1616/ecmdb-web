@@ -76,6 +76,7 @@ const handleUpdate = (row: codebook) => {
 const endpointsData = ref<endpoint[]>([])
 const listEndpointsData = () => {
   listEndpointApi({
+    path: "",
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })

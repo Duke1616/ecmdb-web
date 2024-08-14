@@ -23,7 +23,6 @@ export interface meta {
 }
 
 export interface endpoint {
-  id: number
   name: string
   path: string
   desc: string

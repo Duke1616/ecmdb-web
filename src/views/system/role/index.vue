@@ -63,7 +63,7 @@
     </div>
     <div>
       <el-dialog v-model="dialogPermission" title="分配菜单权限" @closed="closeMenePermission" width="500">
-        <Menu ref="menuRef" />
+        <Menu ref="menuRef" style="max-height: 60vh; overflow-y: auto" />
         <template #footer>
           <div class="dialog-footer">
             <el-button plain type="primary" @click="handlerCheckedTreeNodeAll">

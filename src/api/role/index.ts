@@ -25,21 +25,6 @@ export function updateRoleApi(data: role.createOrUpdateRoleReq) {
   })
 }
 
-/** 更新角色 */
-export function getRolePermissionApi(role_code: string) {
-  return instance.post<role.rolePermission>({
-    url: "role/permission",
-    data: { role_code: role_code }
-  })
-}
-
-export function addRoleMenuPermissionApi(menuIds: number[], roleCode: string) {
-  return instance.post<boolean>({
-    url: "role/permission/add",
-    data: { menu_ids: menuIds, role_code: roleCode }
-  })
-}
-
 export function listUserHaveRolesApi(data: role.userBindReq) {
   return instance.post<role.roles>({
     url: "role/user/have",
@@ -51,12 +36,5 @@ export function listUserDoesNotHaveRoles(data: role.userBindReq) {
   return instance.post<role.roles>({
     url: "role/user/does_not_have",
     data: data
-  })
-}
-
-export function listUserRolePermission(userId: number) {
-  return instance.post<role.userRolePermission>({
-    url: "role/user/get_permission_menu",
-    data: { user_id: userId }
   })
 }
