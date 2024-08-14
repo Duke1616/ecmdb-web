@@ -21,7 +21,7 @@
 
 <script lang="ts" setup>
 import { menu } from "@/api/menu/types/menu"
-import { addRoleMenuPermissionApi, getRolePermissionApi } from "@/api/permission"
+import { changeRoleMenuPermissionApi, getRolePermissionApi } from "@/api/permission"
 import { rolePermission } from "@/api/permission/types/permission"
 import { Search } from "@element-plus/icons-vue"
 import { ElMessage, ElTree } from "element-plus"
@@ -86,7 +86,7 @@ const filterNode = (value: string, data: Tree) => {
 }
 const submitAddPermission = (roleCode: string) => {
   const checkedKeys = treeRef.value.getCheckedKeys()
-  addRoleMenuPermissionApi(checkedKeys, roleCode)
+  changeRoleMenuPermissionApi(checkedKeys, roleCode)
     .then(({ data }) => {
       if (data) {
         ElMessage.success("Success")
