@@ -3,13 +3,7 @@
     <el-card shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button
-            type="primary"
-            v-permission="['get_menu_permission']"
-            :icon="CirclePlus"
-            @click="dialogVisible = true"
-            >新增</el-button
-          >
+          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增</el-button>
           <el-button type="danger" :icon="Delete" @click="handleDelete">删除</el-button>
         </div>
         <div>
@@ -33,15 +27,7 @@
           <el-table-column fixed="right" label="操作" width="400" align="center">
             <template #default="scope">
               <el-button type="primary" plain text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button
-                type="success"
-                v-permission="['get_menu_permission']"
-                plain
-                text
-                bg
-                size="small"
-                @click="handleMenuPermission(scope.row)"
-              >
+              <el-button type="success" plain text bg size="small" @click="handleMenuPermission(scope.row)">
                 菜单权限
               </el-button>
               <el-button type="success" plain text bg size="small" @click="handleUserBindRole(scope.row)">
