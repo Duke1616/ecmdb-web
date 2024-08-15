@@ -54,24 +54,26 @@
     <div>
       <!--  代码块 -->
       <el-dialog v-model="resultVisible" width="40%" @close="onclose" :close-on-click-modal="closeOnClickModal">
-        <prism-editor
-          v-if="language !== 'json'"
-          class="my-editor"
-          v-model="result"
-          :readonly="true"
-          :highlight="highlighter"
-          line-numbers
-        />
-        <div v-if="language === 'json'">
-          <vue-json-pretty
-            :deep="3"
-            v-model:data="result"
-            selectableType="single"
-            :editable="true"
-            :showLineNumber="true"
-            :showLine="true"
-            path="res"
+        <div class="code-container">
+          <prism-editor
+            v-if="language !== 'json'"
+            class="my-editor"
+            v-model="result"
+            :readonly="true"
+            :highlight="highlighter"
+            line-numbers
           />
+          <div v-if="language === 'json'">
+            <vue-json-pretty
+              :deep="3"
+              v-model:data="result"
+              selectableType="single"
+              :editable="true"
+              :showLineNumber="true"
+              :showLine="true"
+              path="res"
+            />
+          </div>
         </div>
       </el-dialog>
     </div>
@@ -286,5 +288,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTas
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.code-container {
+  height: 70vh;
+  overflow: auto;
 }
 </style>
