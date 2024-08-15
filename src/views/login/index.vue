@@ -20,7 +20,7 @@ const loading = ref(false)
 
 /** 登录表单数据 */
 const loginFormData: LoginRequestData = reactive({
-  username: "luankz",
+  username: "",
   password: ""
 })
 
