@@ -11,12 +11,14 @@ import { transformDynamicRoutes } from "@/router/helper"
 export const usePermissionStore = defineStore("permission", () => {
   const routes = ref<RouteRecordRaw[]>([])
   const dynamicRoutes = ref<RouteRecordRaw[]>([])
+  const roles = ref<string[]>([])
 
   /** 获取路由详情 */
   const getRoleMenu = async (userId: number) => {
     // 获取角色拥有的菜单
     const { data } = await listUserRolePermissionApi(userId)
 
+    roles.value = data.role_codes
     // 转换动态路由
     dynamicRoutes.value = transformDynamicRoutes(data.menus?.length ? data.menus : [])
   }
@@ -32,7 +34,7 @@ export const usePermissionStore = defineStore("permission", () => {
     dynamicRoutes.value = routeSettings.thirdLevelRouteCache ? flatMultiLevelRoutes(accessedRoutes) : accessedRoutes
   }
 
-  return { routes, dynamicRoutes, setRoutes }
+  return { routes, dynamicRoutes, roles, setRoutes }
 })
 
 /** 在 setup 外使用 */

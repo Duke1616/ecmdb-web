@@ -30,7 +30,8 @@ export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
           title: route.meta.title,
           svgIcon: route.meta.icon,
           affix: route.meta.is_affix,
-          hidden: route.meta.is_hidden
+          hidden: route.meta.is_hidden,
+          buttons: route.meta.buttons
         },
         children: transformDynamicRoutes(route.children)
       }
@@ -44,7 +45,8 @@ export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
           affix: route.meta.is_affix,
           svgIcon: route.meta.icon,
           hidden: route.meta.is_hidden,
-          keepAlive: route.meta.is_keepalive
+          keepAlive: route.meta.is_keepalive,
+          buttons: route.meta.buttons
         }
       }
     }

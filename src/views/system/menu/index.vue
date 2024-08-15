@@ -145,6 +145,7 @@ const updateMenuData = (node: menu | null) => {
   if (node === null) {
     return
   }
+
   // 插入特性数据
   const me = ref<string[]>([])
   me.value.push(node.meta.is_affix ? "affix" : "")

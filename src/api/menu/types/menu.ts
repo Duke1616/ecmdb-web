@@ -20,6 +20,7 @@ export interface meta {
   is_affix: boolean
   is_keepalive: boolean
   icon: string
+  buttons: string[]
 }
 
 export interface endpoint {

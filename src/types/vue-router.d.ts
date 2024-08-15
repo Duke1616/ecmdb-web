@@ -53,5 +53,10 @@ declare module "vue-router" {
      * 不同平台需要展示的导航菜单
      */
     platforms?: string[]
+    /**
+     * 按钮权限
+     * 判断用户是否拥有权限
+     */
+    buttons?: string[]
   }
 }

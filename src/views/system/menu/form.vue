@@ -1,6 +1,7 @@
 <template>
   <div>
     <el-divider content-position="left">基础设置</el-divider>
+
     <el-form ref="formRef" :model="formData" :inline-message="true" hide-required-asterisk :rules="formRules">
       <el-row :gutter="20">
         <el-col :span="12">
@@ -37,26 +38,16 @@
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item :label="showLableName(formData.type)" prop="meta.title">
+          <el-form-item :label="showLableName(formData.type)" prop="title">
             <el-input v-model="formData.meta.title" clearable />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item v-if="formData.type !== 3" label="菜单图标" prop="meta.icon">
+          <el-form-item v-if="formData.type !== 3" label="菜单图标" prop="icon">
             <el-input v-model="formData.meta.icon" clearable />
           </el-form-item>
-        </el-col>
-      </el-row>
-
-      <el-row :gutter="20" v-if="formData.type === 1">
-        <el-col :span="12">
-          <el-form-item label="菜单布局" prop="path">
-            <el-input v-model="formData.component" clearable />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="默认跳转" prop="redirect">
-            <el-input v-model="formData.redirect" clearable />
+          <el-form-item v-if="formData.type == 3" label="按钮标识" prop="icon">
+            <el-input v-model="formData.name" clearable />
           </el-form-item>
         </el-col>
       </el-row>
@@ -70,6 +61,19 @@
         <el-col :span="12">
           <el-form-item label="路由名称" prop="path">
             <el-input v-model="formData.name" clearable />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20" v-if="formData.type === 1">
+        <el-col :span="12">
+          <el-form-item label="菜单布局" prop="path">
+            <el-input v-model="formData.component" clearable />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="默认跳转" prop="redirect">
+            <el-input v-model="formData.redirect" clearable />
           </el-form-item>
         </el-col>
       </el-row>
@@ -203,7 +207,8 @@ const DEFAULT_FORM_DATA: createOrUpdateMenuReq = {
     is_hidden: false,
     is_affix: false,
     is_keepalive: false,
-    icon: ""
+    icon: "",
+    buttons: []
   },
   endpoints: []
 }
@@ -261,7 +266,7 @@ const handlerAddApi = () => {
 const formData = ref<createOrUpdateMenuReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
-  title: [{ required: true, message: "名称不能为空" }]
+  // title: [{ required: true, message: "名称不能为空" }]
 }
 
 const submitUpdateForm = () => {
