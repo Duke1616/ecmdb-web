@@ -3,21 +3,19 @@
     <el-input v-model="filterInput" size="default" placeholder="输入菜单名称搜索" :suffix-icon="Search" />
     <el-tree
       ref="treeRef"
-      :data="menuPermissionTreeData?.menus"
+      :data="menuPermissionData?.menus"
       show-checkbox
       node-key="id"
       check-strictly
       default-expand-all
       :highlight-current="true"
-      :default-checked-keys="menuPermissionTreeData?.authz_ids"
+      :default-checked-keys="menuPermissionData?.authz_ids"
       :expand-on-click-node="false"
       :props="defaultProps"
       :filter-node-method="filterNode"
     />
   </div>
 </template>
-
-<!-- check-strictly -->
 
 <script lang="ts" setup>
 import { menu } from "@/api/menu/types/menu"
@@ -28,7 +26,6 @@ import { ElMessage, ElTree } from "element-plus"
 import { ref, watch } from "vue"
 
 const filterInput = ref<string>("")
-
 const defaultProps = ref<any>({
   children: "children",
   label: (node: menu) => node.meta.title,
@@ -36,20 +33,23 @@ const defaultProps = ref<any>({
 })
 
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
-const menuPermissionTreeData = ref<rolePermission>()
-const listMenuPermissionTreeData = (roleCode: string) => {
+const menuPermissionData = ref<rolePermission>()
+const getMenuPermissionData = (roleCode: string) => {
   getRolePermissionApi(roleCode)
     .then(({ data }) => {
-      menuPermissionTreeData.value = data
+      menuPermissionData.value = data
+      alert(menuPermissionData.value.authz_ids)
     })
-    .catch(() => {})
+    .catch((err) => {
+      console.log(err)
+    })
     .finally(() => {})
 }
 
 const toggleTreeChecked = (value: boolean) => {
-  const alreadyCheckedKeys = menuPermissionTreeData.value?.authz_ids || []
+  const alreadyCheckedKeys = menuPermissionData.value?.authz_ids || []
   if (value) {
-    const allNodes = menuPermissionTreeData.value?.menus || []
+    const allNodes = menuPermissionData.value?.menus || []
     const allKeys: number[] = []
     const getAllKeys = (nodes: menu[]) => {
       nodes.forEach((node) => {
@@ -99,7 +99,7 @@ const submitAddPermission = (roleCode: string) => {
 }
 
 defineExpose({
-  listMenuPermissionTreeData,
+  getMenuPermissionData,
   toggleTreeChecked,
   expandAllNodes,
   submitAddPermission

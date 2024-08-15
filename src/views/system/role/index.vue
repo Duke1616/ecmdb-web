@@ -143,7 +143,7 @@ const handleMenuPermission = (row: role) => {
   roleCode.value = row.code
 
   nextTick(() => {
-    menuRef.value?.listMenuPermissionTreeData(row.code)
+    menuRef.value?.getMenuPermissionData(roleCode.value)
   })
 }
 
