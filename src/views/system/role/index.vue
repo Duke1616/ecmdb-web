@@ -81,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from "vue"
+import { ref, watch, nextTick } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { listRolesApi } from "@/api/role"
 import { role } from "@/api/role/types/role"
@@ -129,22 +129,22 @@ const closeMenePermission = () => {
   resetStatus()
 }
 
-const handleUpdate = async (row: role) => {
+const handleUpdate = (row: role) => {
   dialogVisible.value = true
 
-  // 添加数据
-  await nextTick()
-  apiRef.value?.setFrom(row)
+  nextTick(() => {
+    apiRef.value?.setFrom(row)
+  })
 }
 
 const roleCode = ref<string>("")
-const handleMenuPermission = async (row: role) => {
+const handleMenuPermission = (row: role) => {
   dialogPermission.value = true
-
-  await nextTick()
-
   roleCode.value = row.code
-  menuRef.value?.listMenuPermissionTreeData(row.code)
+
+  nextTick(() => {
+    menuRef.value?.listMenuPermissionTreeData(row.code)
+  })
 }
 
 const handleDelete = () => {}
