@@ -14,9 +14,9 @@ export const usePermissionStore = defineStore("permission", () => {
   const roles = ref<string[]>([])
 
   /** 获取路由详情 */
-  const getRoleMenu = async (userId: number) => {
+  const getRoleMenu = async () => {
     // 获取角色拥有的菜单
-    const { data } = await listUserRolePermissionApi(userId)
+    const { data } = await listUserRolePermissionApi()
 
     roles.value = data.role_codes
     // 转换动态路由
@@ -24,8 +24,8 @@ export const usePermissionStore = defineStore("permission", () => {
   }
 
   /** 根据角色生成可访问的 Routes（可访问的路由 = 常驻路由 + 有访问权限的动态路由） */
-  const setRoutes = async (userId: number) => {
-    await getRoleMenu(userId)
+  const setRoutes = async () => {
+    await getRoleMenu()
     _set(dynamicRoutes.value)
   }
 

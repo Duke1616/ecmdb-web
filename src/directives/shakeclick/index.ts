@@ -1,3 +1,5 @@
+import { DirectiveBinding } from "vue"
+
 /**
  * 防抖指令
  * @param el 指令绑定的元素
@@ -9,7 +11,7 @@
  * <button v-debounce="{click: handleLike, params: { test: 0 }}">防抖</button> handleLike 为函数 params 为传入的参数
  */
 export default {
-  mounted(el: HTMLElement, binding: { value: { click: any; params?: any; times?: number } }) {
+  mounted(el: HTMLElement, binding: DirectiveBinding) {
     let timer: ReturnType<typeof setTimeout> | null = null
 
     el.addEventListener("click", (e: Event) => {

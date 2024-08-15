@@ -16,9 +16,8 @@ export function changeRoleMenuPermissionApi(menuIds: number[], roleCode: string)
   })
 }
 
-export function listUserRolePermissionApi(userId: number) {
+export function listUserRolePermissionApi() {
   return instance.post<permission.userRolePermission>({
-    url: "permission/get_user_menu",
-    data: { user_id: userId }
+    url: "permission/get_user_menu"
   })
 }

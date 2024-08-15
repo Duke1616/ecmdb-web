@@ -54,6 +54,7 @@ const listTemplateCombinations = () => {
 
 const onClosed = () => {
   isVisible.value = false
+  templateId.value = 0
 }
 
 onMounted(() => {

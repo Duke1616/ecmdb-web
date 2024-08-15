@@ -35,9 +35,8 @@ router.beforeEach(async (to, _from, next) => {
   if (permissionStore.routes.length !== 0) return next()
   // 否则要重新获取权限角色
   try {
-    await userStore.getInfo()
     // 生成可访问的 Routes
-    await permissionStore.setRoutes(userStore.userId)
+    await permissionStore.setRoutes()
     // 将 "有访问权限的动态路由" 添加到 Router 中
     permissionStore.dynamicRoutes.forEach((route) => router.addRoute(route))
     // 确保添加路由已完成
