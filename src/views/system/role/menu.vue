@@ -23,7 +23,7 @@ import { changeRoleMenuPermissionApi, getRolePermissionApi } from "@/api/permiss
 import { rolePermission } from "@/api/permission/types/permission"
 import { Search } from "@element-plus/icons-vue"
 import { ElMessage, ElTree } from "element-plus"
-import { ref, watch } from "vue"
+import { nextTick, ref, watch } from "vue"
 
 const filterInput = ref<string>("")
 const defaultProps = ref<any>({
@@ -38,7 +38,9 @@ const getMenuPermissionData = (roleCode: string) => {
   getRolePermissionApi(roleCode)
     .then(({ data }) => {
       menuPermissionData.value = data
-      alert(menuPermissionData.value.authz_ids)
+      nextTick(() => {
+        treeRef.value?.setCheckedKeys(menuPermissionData.value?.authz_ids)
+      })
     })
     .catch((err) => {
       console.log(err)
@@ -115,9 +117,5 @@ watch(filterInput, (val: string) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.filter-tree .el-tree-node:focus > .el-tree-node__content {
-  background-color: #ccc !important;
 }
 </style>
