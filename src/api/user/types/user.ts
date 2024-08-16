@@ -5,16 +5,6 @@ export interface Page {
   limit: number
 }
 
-export interface user {
-  id: number
-  username: string
-  title: string
-  email: string
-  source_type: number
-  create_type: number
-  role_codes: string[]
-}
-
 export interface users {
   total: number
   users: user[]
@@ -25,7 +15,7 @@ export interface user {
   username: string
   title: string
   email: string
-  source_type: number
+  display_name: string
   create_type: number
   role_codes: string[]
 }

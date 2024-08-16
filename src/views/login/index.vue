@@ -12,7 +12,7 @@
           <el-tab-pane name="ldap">
             <template #label>
               <div class="label">
-                <strong style="font-size: 16px">AD认证</strong>
+                <strong style="font-size: 18px">AD认证</strong>
               </div>
             </template>
             <Login :active="activeName" @focus="handleFocus" />
@@ -20,7 +20,7 @@
           <el-tab-pane name="pass">
             <template #label>
               <div class="label">
-                <strong style="font-size: 16px">标准</strong>
+                <strong style="font-size: 18px">标准</strong>
               </div>
             </template>
             <Login :active="activeName" @focus="handleFocus" />
@@ -76,7 +76,7 @@ const handleFocus = (val: boolean) => {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 120px;
+      height: 130px;
       img {
         width: 100%;
         transform: scale(0.7);

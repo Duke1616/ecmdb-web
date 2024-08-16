@@ -17,17 +17,11 @@
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="username" label="用户名称" align="center" />
-          <el-table-column prop="source_type" label="用户来源" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.source_type === 1" effect="plain" type="primary">系统</el-tag>
-              <el-tag v-else-if="scope.row.source_type === 2" effect="plain" type="primary">LDAP</el-tag>
-              <el-tag v-else type="info" effect="plain">未知类型</el-tag>
-            </template>
-          </el-table-column>
+          <el-table-column prop="display_name" label="显示名称" align="center" />
           <el-table-column prop="create_type" label="创建方式" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统同步</el-tag>
-              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="primary">登录创建</el-tag>
+              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">SYSTEM</el-tag>
+              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="primary">LDAP</el-tag>
               <el-tag v-else type="info" effect="plain">未知类型</el-tag>
             </template>
           </el-table-column>
