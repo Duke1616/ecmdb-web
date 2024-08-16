@@ -5,8 +5,8 @@ import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
 import { getToken, removeToken, setToken } from "@/utils/cache/cookies"
 import { resetRouter } from "@/router"
-import { loginApi } from "@/api/login"
-import { type LoginRequestData } from "@/api/login/types/login"
+import { ldapLoginApi, systemLoginApi } from "@/api/login"
+import { LoginResponseData, type LoginRequestData } from "@/api/login/types/login"
 import { localCache } from "@/utils/cache"
 import { getUserInfoApi } from "@/api/user"
 import { usePermissionStoreHook } from "./permission"
@@ -22,12 +22,22 @@ export const useUserStore = defineStore("user", () => {
   const permissionStore = usePermissionStoreHook()
 
   /** 登录 */
-  const login = async ({ username, password }: LoginRequestData) => {
-    const { data } = await loginApi({ username, password })
+  const systemLogin = async ({ username, password }: LoginRequestData) => {
+    const { data } = await systemLoginApi({ username, password })
+    loginSetToken(data)
+  }
+
+  const ldapLogin = async ({ username, password }: LoginRequestData) => {
+    const { data } = await ldapLoginApi({ username, password })
+
+    loginSetToken(data)
+  }
+
+  const loginSetToken = (data: LoginResponseData) => {
     localCache.setCache("access_token", data.access_token)
     localCache.setCache("refresh_token", data.refresh_token)
 
-    setToken(data.access_token)
+    setToken(data?.access_token)
     token.value = data.access_token
   }
 
@@ -70,7 +80,7 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  return { token, roles, username, userId, login, getInfo, changeRoles, logout, resetToken }
+  return { token, roles, username, userId, systemLogin, ldapLogin, getInfo, changeRoles, logout, resetToken }
 })
 
 /** 在 setup 外使用 */

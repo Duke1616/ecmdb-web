@@ -5,7 +5,24 @@ import instance from "@/utils/hy_service"
 import { localCache } from "@/utils/cache"
 
 /** 登录并返回 Token */
-export function loginApi(data: Login.LoginRequestData) {
+export function systemLoginApi(data: Login.LoginRequestData) {
+  return instance
+    .requestHader<Login.LoginResponseData>({
+      url: "user/system/login",
+      method: "post",
+      data
+    })
+    .then((response) => {
+      if (response.headers && response.headers["x-access-token"]) {
+        response.data.access_token = response.headers["x-access-token"]
+        response.data.refresh_token = response.headers["x-refresh-token"]
+      }
+
+      return response
+    })
+}
+
+export function ldapLoginApi(data: Login.LoginRequestData) {
   return instance
     .requestHader<Login.LoginResponseData>({
       url: "user/ldap/login",
