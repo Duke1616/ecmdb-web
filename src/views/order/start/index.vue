@@ -1,27 +1,30 @@
 <template>
   <div class="app-container">
-    <div v-for="item in templateCombinations" :key="item.id">
-      <div>
-        <h3>{{ item.name }}</h3>
+    <el-empty v-if="empty === true" :image-size="200" />
+    <div v-if="empty === false">
+      <div v-for="item in templateCombinations" :key="item.id">
+        <div>
+          <h3>{{ item.name }}</h3>
+        </div>
+        <el-card>
+          <el-row>
+            <el-col :sm="12" :md="8" :lg="6" :xl="4" :span="4" v-for="template in item.templates" :key="template.id">
+              <el-space @click="handlerStart(template.id)">
+                <div>
+                  <span>
+                    <e-icon :icon-name="template.icon" class-name="icon" />
+                  </span>
+                </div>
+                <div>
+                  <span>
+                    <h4>{{ template.name }}</h4>
+                  </span>
+                </div>
+              </el-space>
+            </el-col>
+          </el-row>
+        </el-card>
       </div>
-      <el-card>
-        <el-row>
-          <el-col :sm="12" :md="8" :lg="6" :xl="4" :span="4" v-for="template in item.templates" :key="template.id">
-            <el-space @click="handlerStart(template.id)">
-              <div>
-                <span>
-                  <e-icon :icon-name="template.icon" class-name="icon" />
-                </span>
-              </div>
-              <div>
-                <span>
-                  <h4>{{ template.name }}</h4>
-                </span>
-              </div>
-            </el-space>
-          </el-col>
-        </el-row>
-      </el-card>
     </div>
     <!-- 创建工单，模版展示 -->
     <Detail :template-id="templateId" :is-visible="isVisible" @close="onClosed" />
@@ -33,6 +36,7 @@ import { pipelineGroupApi } from "@/api/template"
 import { templateCombination } from "@/api/template/types/template"
 import { onMounted, ref } from "vue"
 import Detail from "./detail.vue"
+const empty = ref<boolean>(false)
 
 const templateId = ref<number>()
 const isVisible = ref<boolean>(false)
@@ -43,8 +47,9 @@ const listTemplateCombinations = () => {
   pipelineGroupApi()
     .then(({ data }) => {
       templateCombinations.value = data.template_combinations
-
-      console.log(templateCombinations.value)
+      if (templateCombinations.value.length === 0) {
+        empty.value = true
+      }
     })
     .catch(() => {
       templateCombinations.value = []

@@ -23,7 +23,10 @@
         </div>
       </div>
     </div>
-    <div class="model-groups">
+
+    <el-empty v-if="empty === true" :image-size="200" />
+
+    <div v-if="empty === false" class="model-groups">
       <div v-for="group in filterData" :key="group.group_id" class="model-group">
         <div class="btn-group-cell">
           <h3 @mouseenter="toggleButton(group.group_id)" @mouseleave="hideButton()">
@@ -37,7 +40,6 @@
             <el-button text size="default" type="primary" :icon="Delete" @click="handleDeleteModelGroup(group)" />
           </div>
         </div>
-
         <div class="model-cards">
           <el-row :gutter="20">
             <el-col
@@ -139,6 +141,7 @@ const loading = ref<boolean>(false)
 const { paginationData } = usePagination()
 const router = useRouter()
 
+const empty = ref<boolean>(false)
 // 组鼠标移动事件
 const buttonActive = ref<number | null>(null)
 const toggleButton = (groupId: number) => {
@@ -252,6 +255,10 @@ const getModelsData = () => {
     .then(({ data }) => {
       ModelsData.value = data.mgs
       filterData.value = data.mgs
+
+      if (ModelsData.value.length === 0) {
+        empty.value = true
+      }
     })
     .catch(() => {
       ModelsData.value = []
