@@ -67,7 +67,7 @@
       </div>
     </el-card>
     <!-- 新增 -->
-    <el-drawer class="drawer-container" v-model="drawerVisible" :title="title" @closed="onClosed" size="30%">
+    <el-drawer class="drawer-container" v-model="drawerVisible" :title="title" :closed="onClosed" size="30%">
       <createOrUpdate
         ref="apiRef"
         :attributeFiledsData="attributeFiledsData"

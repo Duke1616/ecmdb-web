@@ -100,7 +100,7 @@
   </el-dialog>
 
   <!-- 添加字段属性 -->
-  <el-drawer v-model="attrFieldVisible" title="添加属性" @closed="onClosed" size="30%">
+  <el-drawer v-model="attrFieldVisible" title="添加属性" :closed="onClosed" size="30%">
     <createOrUpdateField
       ref="apiFieldRef"
       :model-uid="props.modelUid"
@@ -111,7 +111,7 @@
   </el-drawer>
 
   <!-- 表格排序设置 -->
-  <el-drawer v-model="sortFieldVisibe" @closed="onClosed" class="sort-drawer flex" size="38%" title="表格排序设置">
+  <el-drawer v-model="sortFieldVisibe" :closed="onClosed" class="sort-drawer flex" size="38%" title="表格排序设置">
     <sortField
       :model-uid="props.modelUid"
       :attributes-data="AttributesData"
