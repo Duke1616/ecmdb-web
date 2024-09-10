@@ -31,7 +31,7 @@
           <h4>{{ group.group_name }}</h4>
         </div>
         <div class="model-button">
-          <el-button text size="default" type="primary" icon="CirclePlus" @click="handleOpenAttrDrawer(group.group_id)"
+          <el-button text size="default" type="primary" icon="CirclePlus" @click="handleAddAttr(group.group_id)"
             >添加字段</el-button
           >
         </div>
@@ -42,9 +42,9 @@
             <el-col
               v-for="item in group.attributes"
               :key="item.id"
-              :xs="24"
-              :sm="12"
-              :md="8"
+              :xs="8"
+              :sm="6"
+              :md="6"
               :lg="4"
               :xl="3"
               style="margin-bottom: 4px"
@@ -64,7 +64,7 @@
                       size="default"
                       type="primary"
                       icon="edit"
-                      @click.stop="handleEditDrawer(item)"
+                      @click.stop="handleUpdateAttr(group.group_id, item)"
                       el-button
                     />
                     <el-button
@@ -86,28 +86,6 @@
     </div>
   </div>
 
-  <!-- detail 抽屉 -->
-  <el-drawer v-model="cardDrawer" title="字段详情">
-    <el-descriptions :column="2">
-      <el-descriptions-item label="唯一标识：">
-        {{ currentItem?.field_uid }}
-      </el-descriptions-item>
-      <el-descriptions-item label="字段名称：">
-        {{ currentItem?.field_name }}
-      </el-descriptions-item>
-      <el-descriptions-item label="字段类型：">
-        {{ currentItem?.field_type }}
-      </el-descriptions-item>
-      <el-descriptions-item label="是否必填：">
-        {{ currentItem?.required }}
-      </el-descriptions-item>
-    </el-descriptions>
-    <div>
-      <el-button size="default" type="primary" @click.stop="handlerUpdateAttribute()">修改</el-button>
-      <el-button size="default" type="danger" @click.stop="deleteDialogVisible = true">删除</el-button>
-    </div>
-  </el-drawer>
-
   <!-- 新增属性分组 -->
   <el-dialog v-model="dialogAttrGroupVisible" title="新增分组" @closed="resetAttrGroupFrom" width="30%">
     <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="100px" label-position="left">
@@ -122,13 +100,15 @@
   </el-dialog>
 
   <!-- 添加字段属性 -->
-  <add-field
-    :model-uid="props.modelUid"
-    :add-attr-drawer-visible="addAttrDrawerVisible"
-    :group-id="addAttrGroupId"
-    @close="onClosed"
-    @attributes-updated="getAttributesData"
-  />
+  <el-drawer v-model="attrFieldVisible" title="添加属性" @closed="onClosed" size="30%">
+    <createOrUpdateField
+      ref="apiFieldRef"
+      :model-uid="props.modelUid"
+      :group-id="groupId"
+      @close="onClosed"
+      @getAttributesData="getAttributesData"
+    />
+  </el-drawer>
 
   <!-- 表格排序设置 -->
   <sortField
@@ -141,14 +121,14 @@
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch } from "vue"
+import { h, nextTick, ref, watch } from "vue"
 import { Search, CirclePlus } from "@element-plus/icons-vue"
 import { listAttributesByModelUidApi, DeleteAttributeApi, createAttributeGroupApi } from "@/api/attribute"
 import { type AttributeGroup, type Attribute, CreateAttributeGroupReq } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/hooks/usePagination"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import addField from "./add-field.vue"
+import createOrUpdateField from "./createOrUpdateField.vue"
 import sortField from "./sort-field.vue"
 
 const { paginationData } = usePagination()
@@ -200,25 +180,28 @@ function getAttributesData() {
     })
 }
 
-//** 创建子组件，新增字段属性 */
-const addAttrGroupId = ref<number>()
-const addAttrDrawerVisible = ref<boolean>(false)
-function handleOpenAttrDrawer(group_id: number) {
-  addAttrDrawerVisible.value = true
-  addAttrGroupId.value = group_id
+//** 添加 OR 修改字段属性 */
+const groupId = ref<number>()
+const apiFieldRef = ref<InstanceType<typeof createOrUpdateField>>()
+const attrFieldVisible = ref<boolean>(false)
+
+function handleAddAttr(group_id: number) {
+  attrFieldVisible.value = true
+  groupId.value = group_id
+}
+
+function handleUpdateAttr(group_id: number, row: Attribute) {
+  attrFieldVisible.value = true
+  row.group_id = group_id
+
+  nextTick(() => {
+    apiFieldRef.value?.setFrom(row)
+  })
 }
 
 const onClosed = (val: boolean) => {
-  addAttrDrawerVisible.value = val
+  attrFieldVisible.value = val
 }
-
-//** 编辑 */
-function handleEditDrawer(row: Attribute) {
-  addAttrDrawerVisible.value = true
-  console.log(row)
-}
-
-const handlerUpdateAttribute = () => {}
 
 //** 组展开 */
 function toggleGroup(group: any) {

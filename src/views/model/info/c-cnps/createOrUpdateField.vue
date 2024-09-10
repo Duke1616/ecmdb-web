@@ -1,9 +1,9 @@
 <template>
   <!-- 新增属性 -->
-  <el-drawer v-model="drawerVisible" title="编辑字段" @closed="onClosed" size="30%">
+  <div>
     <el-form :model="formData" :rules="fieldRules" size="large" label-width="auto" ref="formRef">
       <el-form-item label="唯一标识" prop="field_uid">
-        <el-input v-model="formData.field_uid" />
+        <el-input v-model="formData.field_uid" :disabled="formData.id !== undefined" />
       </el-form-item>
       <el-form-item label="字段名称" prop="field_name">
         <el-input v-model="formData.field_name" />
@@ -57,18 +57,18 @@
         </template>
       </el-card>
       <el-form-item>
-        <el-button type="primary" @click="handlerAddAttribute()"> 保存 </el-button>
+        <el-button type="primary" @click="handlerCreateOrUpdateAttribute()"> 保存 </el-button>
         <el-button @click="onClosed()">取消</el-button>
       </el-form-item>
     </el-form>
-  </el-drawer>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { ref } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { CreateAttributeApi } from "@/api/attribute"
-import { type createAttributeReq } from "@/api/attribute/types/attribute"
+import { CreateAttributeApi, UpdateAttributeApi } from "@/api/attribute"
+import { Attribute, type createOrUpdateAttributeReq } from "@/api/attribute/types/attribute"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { v4 as uuidv4 } from "uuid"
@@ -76,13 +76,11 @@ import { v4 as uuidv4 } from "uuid"
 // 接收父组建传递
 interface Props {
   modelUid: string
-  addAttrDrawerVisible: boolean
   groupId: number | undefined
 }
 
-const drawerVisible = ref(false)
 const props = defineProps<Props>()
-const emits = defineEmits(["close", "attributes-updated"])
+const emits = defineEmits(["close", "getAttributesData"])
 const onClosed = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
@@ -132,9 +130,9 @@ const changeText = (index: number) => {
   formData.value.option.push(list.value[index].name)
 }
 
-const DEFAULT_FORM_DATA: createAttributeReq = {
+const DEFAULT_FORM_DATA: createOrUpdateAttributeReq = {
   model_uid: props.modelUid,
-  group_id: 0,
+  group_id: props.groupId ?? 0,
   field_uid: "",
   field_name: "",
   field_type: "string",
@@ -143,44 +141,46 @@ const DEFAULT_FORM_DATA: createAttributeReq = {
   option: ""
 }
 
-const formData = ref<createAttributeReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createOrUpdateAttributeReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
   field_uid: [
     { required: true, message: "必须输入字段唯一标识", trigger: "blur" },
-    { type: "string", pattern: /^[A-Za-z]+$/, message: "只能输入英文字母", trigger: "blur" }
+    { type: "string", pattern: /^[A-Za-z_-]+$/, message: "只能输入英文字母", trigger: "blur" }
   ],
   field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
 }
 
-const handlerAddAttribute = () => {
+const handlerCreateOrUpdateAttribute = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    CreateAttributeApi(formData.value).then(() => {
-      ElMessage.success("操作成功")
-      drawerVisible.value = false
-      emits("attributes-updated")
-    })
+    const api = formData.value.id === undefined ? CreateAttributeApi : UpdateAttributeApi
+    api(formData.value)
+      .then(() => {
+        ElMessage.success("保存成功")
+        resetForm()
+        emits("close", false)
+        emits("getAttributesData")
+      })
+      .catch((error) => {
+        console.log("catch", error)
+      })
+      .finally(() => {})
   })
 }
 
-watch(
-  () => props.addAttrDrawerVisible,
-  (val: boolean) => {
-    drawerVisible.value = val
-  },
-  { immediate: true }
-)
+const resetForm = () => {
+  formRef.value?.clearValidate()
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
 
-watch(
-  () => props.groupId,
-  (newGroupId) => {
-    if (newGroupId !== undefined) {
-      formData.value.group_id = newGroupId
-    }
-  },
-  { immediate: true }
-)
+const setFrom = (row: Attribute) => {
+  formData.value = cloneDeep(row)
+}
+
+defineExpose({
+  setFrom
+})
 </script>
 
 <style>
