@@ -41,34 +41,6 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       hidden: true
     }
-  },
-  {
-    path: "/",
-    component: Layouts,
-    redirect: "/cmdb/dashboard",
-    children: [
-      {
-        path: "/cmdb/dashboard",
-        component: () => import("@/views/search/search.vue"),
-        name: "Dashboard",
-        meta: {
-          title: "全局搜索",
-          svgIcon: "search",
-          affix: true,
-          platforms: ["cmdb"]
-        }
-      },
-      {
-        path: "/cmdb/dashboard/search",
-        component: () => import("@/views/search/tabs-info.vue"),
-        name: "search",
-        meta: {
-          title: "搜索列表",
-          hidden: true,
-          platforms: ["cmdb"]
-        }
-      }
-    ]
   }
 ]
 // export const constantRoutes: RouteRecordRaw[] = [
