@@ -3,7 +3,7 @@
     <el-card shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="drawerVisible = true">新增</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
@@ -67,33 +67,14 @@
       </div>
     </el-card>
     <!-- 新增 -->
-    <el-drawer class="drawer-container" v-model="drawerVisible" title="新增资产" @closed="resetForm" size="30%">
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
-        <el-collapse v-model="activeNames">
-          <el-collapse-item title="基础属性" name="1">
-            <el-row :gutter="20">
-              <!-- <el-col :span="12">
-              <el-form-item prop="name" label="名称">
-                <el-input v-model="formData.name" placeholder="请输入资源名称" />
-              </el-form-item>
-            </el-col> -->
-              <el-col v-for="(item, index) of attributeFiledsData" :key="index" :span="12" class="lightgreen-box">
-                <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
-                  <template v-if="item.field_type === 'string'">
-                    <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
-                  </template>
-                  <template v-if="item.field_type === 'list'">
-                    <el-select v-model="formData.data[item.field_uid]" placeholder="请选择">
-                      <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
-                    </el-select>
-                  </template>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </el-collapse-item>
-        </el-collapse>
-      </el-form>
-
+    <el-drawer class="drawer-container" v-model="drawerVisible" :title="title" @closed="onClosed" size="30%">
+      <createOrUpdate
+        ref="apiRef"
+        :attributeFiledsData="attributeFiledsData"
+        :modelUid="modelUid"
+        @list="listResourceByModelUid"
+        @close="onClosed"
+      />
       <template #footer>
         <el-button @click="drawerVisible = false">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
@@ -103,73 +84,33 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, h, reactive, computed } from "vue"
+import { onMounted, ref, watch, h, reactive, nextTick } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
-import { listResourceApi, createResourceApi, deleteResourceApi, findSecureData } from "@/api/resource"
-import { type Resource, type CreateResourceReq } from "@/api/resource/types/resource"
+import { listResourceApi, deleteResourceApi, findSecureData } from "@/api/resource"
+import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { cloneDeep } from "lodash-es"
-import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage, ElMessageBox } from "element-plus"
 import router from "@/router"
 
+import createOrUpdate from "./createOrUpdate.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
 const modelUid = route.query.uid as string
 const attributeFiledsData = ref<Attribute[]>([])
+
 const displayFileds = ref<Attribute[]>([])
 const drawerVisible = ref<boolean>(false)
-const activeNames = ref<string[]>(["0", "1"])
 
-const DEFAULT_FORM_DATA: CreateResourceReq = {
-  name: "",
-  model_uid: modelUid,
-  data: {}
-}
-
-const formRef = ref<FormInstance | null>(null)
-const formData = ref<CreateResourceReq>(cloneDeep(DEFAULT_FORM_DATA))
-const formRules = computed<FormRules>(() => {
-  const rules: FormRules = {}
-  attributeFiledsData.value.forEach((field) => {
-    const dataField = `data.${field.field_uid}`
-    rules[dataField] = [
-      {
-        required: field.required,
-        message: `请填写${field.field_name}`,
-        trigger: "blur"
-      }
-    ].filter((rule) => rule.required)
-  })
-  return rules
-})
+const title = ref<string>("")
 
 const handleIdClick = (resource: Resource) => {
   router.push({
     path: "/cmdb/resource/info",
     query: { model_uid: modelUid, id: resource.id, name: resource.name }
   })
-}
-
-/** 新增关联类型 */
-const handleCreate = () => {
-  formRef.value?.validate((valid: boolean, fields) => {
-    if (!valid) return console.error("表单校验不通过", fields)
-    createResourceApi(formData.value)
-      .then(() => {
-        ElMessage.success("操作成功")
-        drawerVisible.value = false
-        listResourceByModelUid()
-      })
-      .finally(() => {})
-  })
-}
-
-const resetForm = () => {
-  formRef.value?.clearValidate()
-  formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }
 
 // ** 获取资产字段信息 */
@@ -216,11 +157,6 @@ const listResourceByModelUid = () => {
     .finally(() => {})
 }
 
-const handleUpdate = (row: Resource) => {
-  drawerVisible.value = false
-  formData.value = cloneDeep(row)
-}
-
 const handleDelete = (row: Resource) => {
   ElMessageBox({
     title: "删除确认",
@@ -249,6 +185,29 @@ const handleSecureClick = (row: Resource, item: Attribute) => {
     row.data[item.field_uid] = data.data
     secureDisplay.set(row.id, true)
   })
+}
+
+const apiRef = ref<InstanceType<typeof createOrUpdate>>()
+const handlerCreate = () => {
+  title.value = "新增资产"
+  drawerVisible.value = true
+}
+
+const handleUpdate = (row: Resource) => {
+  title.value = "修改资产"
+
+  drawerVisible.value = true
+  nextTick(() => {
+    apiRef.value?.setForm(row)
+  })
+}
+
+const onClosed = (val: boolean) => {
+  drawerVisible.value = val
+}
+
+const handleCreate = () => {
+  apiRef.value?.handleCreate()
 }
 
 onMounted(() => {

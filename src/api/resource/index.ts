@@ -11,9 +11,17 @@ export function listResourceApi(data: resource.ListResourceReq) {
 }
 
 /** 新增资源 */
-export function createResourceApi(data: resource.CreateResourceReq) {
+export function createResourceApi(data: resource.CreateOrUpdateResourceReq) {
   return instance.post<number>({
     url: "resource/create",
+    data: data
+  })
+}
+
+/** 修改资源 */
+export function updateResourceApi(data: resource.CreateOrUpdateResourceReq) {
+  return instance.post<number>({
+    url: "resource/update",
     data: data
   })
 }

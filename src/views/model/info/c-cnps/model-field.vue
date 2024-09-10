@@ -111,13 +111,14 @@
   </el-drawer>
 
   <!-- 表格排序设置 -->
-  <sortField
-    :model-uid="props.modelUid"
-    :sort-drawer-visibe="sortDrawerVisibe"
-    :attributes-data="AttributesData"
-    @close="sortClose"
-    @attributes-updated="getAttributesData"
-  />
+  <el-drawer v-model="sortFieldVisibe" @closed="onClosed" class="sort-drawer flex" size="38%" title="表格排序设置">
+    <sortField
+      :model-uid="props.modelUid"
+      :attributes-data="AttributesData"
+      @close="sortClose"
+      @getAttributesData="getAttributesData"
+    />
+  </el-drawer>
 </template>
 
 <script lang="ts" setup>
@@ -203,19 +204,21 @@ const onClosed = (val: boolean) => {
   attrFieldVisible.value = val
 }
 
-//** 组展开 */
-function toggleGroup(group: any) {
-  group.expanded = !group.expanded
+//** 属性表格展示排序 */
+const sortFieldVisibe = ref<boolean>(false)
+
+const sortClose = (val: boolean) => {
+  sortFieldVisibe.value = val
 }
 
 //** 前端动态表单排序 */
-const sortDrawerVisibe = ref<boolean>(false)
 const handleSortDrawer = () => {
-  sortDrawerVisibe.value = true
+  sortFieldVisibe.value = true
 }
 
-const sortClose = (val: boolean) => {
-  sortDrawerVisibe.value = val
+//** 组展开 */
+function toggleGroup(group: any) {
+  group.expanded = !group.expanded
 }
 
 //** 前端过滤展示 */

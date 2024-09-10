@@ -31,7 +31,8 @@ export interface Resource {
   data: any
 }
 
-export interface CreateResourceReq {
+export interface CreateOrUpdateResourceReq {
+  id?: number
   name: string
   model_uid: string
   data: any

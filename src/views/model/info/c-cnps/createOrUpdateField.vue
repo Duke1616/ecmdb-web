@@ -82,8 +82,7 @@ interface Props {
 const props = defineProps<Props>()
 const emits = defineEmits(["close", "getAttributesData"])
 const onClosed = () => {
-  formRef.value?.clearValidate()
-  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  resetForm()
   list.value = cloneDeep([
     {
       name: "",
@@ -158,9 +157,7 @@ const handlerCreateOrUpdateAttribute = () => {
     api(formData.value)
       .then(() => {
         ElMessage.success("保存成功")
-        resetForm()
-        emits("close", false)
-        emits("getAttributesData")
+        onClosed()
       })
       .catch((error) => {
         console.log("catch", error)

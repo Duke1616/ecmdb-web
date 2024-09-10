@@ -1,67 +1,65 @@
 <template>
-  <el-drawer v-model="drawerVisible" @closed="onClosed" class="sort-drawer flex" size="38%" title="表格排序设置">
-    <div class="sort-card-container">
-      <el-card class="sort-card">
-        <VueDraggable
-          v-model="leftList"
-          dragClass="drag"
-          :animation="animationDuration"
-          group="cmdb"
-          ghostClass="ghost"
-          chosenClass="chosen"
-          @start="onStart"
-          @end="onEnd"
-          itemKey="id"
-          class="flex flex-col gap-4 p-0 rounded"
-        >
-          <div v-for="(item, index) in leftList" :key="item.id">
-            <div class="sort-item">
-              <div>
-                <el-text truncated>{{ item.name }}</el-text>
-              </div>
-              <div>
-                <el-icon @click="removeAndToRightList(index, item)"><Right /></el-icon>
-              </div>
+  <div class="sort-card-container">
+    <el-card class="sort-card">
+      <VueDraggable
+        v-model="leftList"
+        dragClass="drag"
+        :animation="animationDuration"
+        group="cmdb"
+        ghostClass="ghost"
+        chosenClass="chosen"
+        @start="onStart"
+        @end="onEnd"
+        itemKey="id"
+        class="flex flex-col gap-4 p-0 rounded"
+      >
+        <div v-for="(item, index) in leftList" :key="item.id">
+          <div class="sort-item">
+            <div>
+              <el-text truncated>{{ item.name }}</el-text>
+            </div>
+            <div>
+              <el-icon @click="removeAndToRightList(index, item)"><Right /></el-icon>
             </div>
           </div>
-        </VueDraggable>
-      </el-card>
-      <el-card class="sort-card">
-        <VueDraggable
-          v-model="rightList"
-          dragClass="drag"
-          :animation="animationDuration"
-          group="cmdb"
-          ghostClass="ghost"
-          chosenClass="chosen"
-          handle=".handle"
-          @start="onStart"
-          @end="onEnd"
-          itemKey="id"
-          class="flex flex-col gap-4 p-0 rounded"
-        >
-          <div v-for="(item, index) in rightList" :key="item.id">
-            <div class="sort-item">
-              <div>
-                <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
-                <el-text truncated class="sort-text">{{ item.name }}</el-text>
-              </div>
-              <div>
-                <el-icon @click="removeAndToLeftList(index, item)"><Close /></el-icon>
-              </div>
+        </div>
+      </VueDraggable>
+    </el-card>
+    <el-card class="sort-card">
+      <VueDraggable
+        v-model="rightList"
+        dragClass="drag"
+        :animation="animationDuration"
+        group="cmdb"
+        ghostClass="ghost"
+        chosenClass="chosen"
+        handle=".handle"
+        @start="onStart"
+        @end="onEnd"
+        itemKey="id"
+        class="flex flex-col gap-4 p-0 rounded"
+      >
+        <div v-for="(item, index) in rightList" :key="item.id">
+          <div class="sort-item">
+            <div>
+              <el-icon name="sort" class="handle cursor-move"><Grid /></el-icon>
+              <el-text truncated class="sort-text">{{ item.name }}</el-text>
+            </div>
+            <div>
+              <el-icon @click="removeAndToLeftList(index, item)"><Close /></el-icon>
             </div>
           </div>
-        </VueDraggable>
-      </el-card>
-    </div>
+        </div>
+      </VueDraggable>
+    </el-card>
+  </div>
 
-    <el-form size="large" label-width="auto" ref="formRef">
-      <el-form-item class="text-right">
-        <el-button type="primary" @click="handlerCustomAttributeFieldColumns()"> 保存 </el-button>
-        <el-button @click="onClosed()">取消</el-button>
-      </el-form-item>
-    </el-form>
-  </el-drawer>
+  <el-form size="large" label-width="auto" ref="formRef">
+    <el-form-item class="text-right">
+      <el-button type="primary" @click="handlerCustomAttributeFieldColumns()"> 保存 </el-button>
+      <el-button @click="onClosed()">取消</el-button>
+    </el-form-item>
+  </el-form>
 </template>
 
 <script lang="ts" setup>
@@ -74,15 +72,13 @@ import { ElMessage } from "element-plus"
 // 接收父组建传递
 interface Props {
   modelUid: string
-  sortDrawerVisibe: boolean
   attributesData: AttributeGroup[]
 }
 
 const props = defineProps<Props>()
-const drawerVisible = ref(false)
 const attrData = ref<AttributeGroup[]>([])
 
-const emits = defineEmits(["close", "attributes-updated"])
+const emits = defineEmits(["close", "getAttributesData"])
 const onClosed = () => {
   emits("close", false)
 }
@@ -121,8 +117,8 @@ const handlerCustomAttributeFieldColumns = () => {
   CustomAttributeFieldColumnsApi(req)
     .then(() => {
       ElMessage.success("操作成功")
-      drawerVisible.value = false
-      emits("attributes-updated")
+      emits("close", false)
+      emits("getAttributesData")
     })
     .catch(() => {})
 }
@@ -145,14 +141,6 @@ const onStart = () => {
 const onEnd = () => {
   drag.value = false
 }
-
-watch(
-  () => props.sortDrawerVisibe,
-  (val: boolean) => {
-    drawerVisible.value = val
-  },
-  { immediate: true }
-)
 
 watch(
   () => props.attributesData,
