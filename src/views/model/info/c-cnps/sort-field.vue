@@ -66,7 +66,7 @@
 import { VueDraggable } from "vue-draggable-plus"
 import { CustomAttributeFieldColumnsApi } from "@/api/attribute"
 import { type CustomField, type CustomAttributeFieldColumnsReq, AttributeGroup } from "@/api/attribute/types/attribute"
-import { ref, watch } from "vue"
+import { ref } from "vue"
 import { ElMessage } from "element-plus"
 
 // 接收父组建传递
@@ -76,7 +76,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const attrData = ref<AttributeGroup[]>([])
 
 const emits = defineEmits(["close", "getAttributesData"])
 const onClosed = () => {
@@ -89,8 +88,8 @@ const animationDuration = ref<number>(150)
 const leftList = ref<CustomField[]>([])
 const rightList = ref<CustomField[]>([])
 
-const handleSortDrawer = () => {
-  const attributesData = attrData?.value
+const handleSortFilter = () => {
+  const attributesData = props.attributesData
   if (!attributesData || !Array.isArray(attributesData)) {
     return
   }
@@ -142,14 +141,9 @@ const onEnd = () => {
   drag.value = false
 }
 
-watch(
-  () => props.attributesData,
-  (val: AttributeGroup[]) => {
-    attrData.value = val
-    handleSortDrawer()
-  },
-  { immediate: true }
-)
+defineExpose({
+  handleSortFilter
+})
 </script>
 
 <style lang="scss">

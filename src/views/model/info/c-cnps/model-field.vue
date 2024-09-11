@@ -100,7 +100,7 @@
   </el-dialog>
 
   <!-- 添加字段属性 -->
-  <el-drawer v-model="attrFieldVisible" title="添加属性" :closed="onClosed" size="30%">
+  <el-drawer v-model="attrFieldVisible" :before-close="handleClose" title="添加属性" size="30%">
     <createOrUpdateField
       ref="apiFieldRef"
       :model-uid="props.modelUid"
@@ -111,8 +111,9 @@
   </el-drawer>
 
   <!-- 表格排序设置 -->
-  <el-drawer v-model="sortFieldVisibe" :closed="onClosed" class="sort-drawer flex" size="38%" title="表格排序设置">
+  <el-drawer v-model="sortFieldVisibe" class="sort-drawer flex" size="38%" title="表格排序设置">
     <sortField
+      ref="sortFieldRef"
       :model-uid="props.modelUid"
       :attributes-data="AttributesData"
       @close="sortClose"
@@ -195,6 +196,7 @@ function handleUpdateAttr(group_id: number, row: Attribute) {
   attrFieldVisible.value = true
   row.group_id = group_id
 
+  console.log(row, "row")
   nextTick(() => {
     apiFieldRef.value?.setFrom(row)
   })
@@ -204,7 +206,12 @@ const onClosed = (val: boolean) => {
   attrFieldVisible.value = val
 }
 
+const handleClose = () => {
+  attrFieldVisible.value = false
+  apiFieldRef.value?.resetForm()
+}
 //** 属性表格展示排序 */
+const sortFieldRef = ref<InstanceType<typeof sortField>>()
 const sortFieldVisibe = ref<boolean>(false)
 
 const sortClose = (val: boolean) => {
@@ -214,6 +221,9 @@ const sortClose = (val: boolean) => {
 //** 前端动态表单排序 */
 const handleSortDrawer = () => {
   sortFieldVisibe.value = true
+  nextTick(() => {
+    sortFieldRef.value?.handleSortFilter()
+  })
 }
 
 //** 组展开 */

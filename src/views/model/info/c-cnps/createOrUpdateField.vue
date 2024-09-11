@@ -158,6 +158,7 @@ const handlerCreateOrUpdateAttribute = () => {
       .then(() => {
         ElMessage.success("保存成功")
         onClosed()
+        emits("getAttributesData")
       })
       .catch((error) => {
         console.log("catch", error)
@@ -173,10 +174,18 @@ const resetForm = () => {
 
 const setFrom = (row: Attribute) => {
   formData.value = cloneDeep(row)
+  list.value = []
+  row.option?.forEach((item: string) => {
+    list.value.push({
+      name: item,
+      id: uuidv4
+    })
+  })
 }
 
 defineExpose({
-  setFrom
+  setFrom,
+  resetForm
 })
 </script>
 

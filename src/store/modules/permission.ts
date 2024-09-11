@@ -18,6 +18,10 @@ export const usePermissionStore = defineStore("permission", () => {
     // 获取角色拥有的菜单
     const { data } = await listUserRolePermissionApi()
 
+    if (!data.menus || data.menus.length === 0) {
+      console.log("hello world")
+    }
+
     roles.value = data.role_codes
     // 转换动态路由
     dynamicRoutes.value = transformDynamicRoutes(data.menus?.length ? data.menus : [])
