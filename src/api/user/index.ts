@@ -9,6 +9,22 @@ export function listUsersApi(data: user.Page) {
   })
 }
 
+/** 模糊匹配用户 */
+export function listUsersByUsernameRegexApi(data: user.listUserByUsernameRegexReq) {
+  return instance.post<user.users>({
+    url: "user/find/regex/username",
+    data: data
+  })
+}
+
+/** 查看部门组用户 */
+export function listUsersByDepartmentApi(data: user.listUserByDepartmentReq) {
+  return instance.post<user.users>({
+    url: "user/find/department_id",
+    data: data
+  })
+}
+
 /** 用户绑定角色 */
 export function bindRoleCodesAPi(data: user.bindRoleCodesReq) {
   return instance.post<number>({
@@ -21,5 +37,21 @@ export function bindRoleCodesAPi(data: user.bindRoleCodesReq) {
 export function getUserInfoApi() {
   return instance.post<user.user>({
     url: "user/info"
+  })
+}
+
+/** 创建用户 */
+export function createUserApi(data: user.createOrUpdateUserReq) {
+  return instance.post<number>({
+    url: "user/create",
+    data: data
+  })
+}
+
+/** 更新用户 */
+export function updateUserApi(data: user.createOrUpdateUserReq) {
+  return instance.post<user.user[]>({
+    url: "user/update",
+    data: data
   })
 }

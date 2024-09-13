@@ -10,6 +10,22 @@ export interface users {
   users: user[]
 }
 
+export interface listUserByUsernameRegexReq {
+  username: string
+  /** 跳过条数 */
+  offset: number
+  /** 查询条数 */
+  limit: number
+}
+
+export interface listUserByDepartmentReq {
+  department_id: number
+  /** 跳过条数 */
+  offset: number
+  /** 查询条数 */
+  limit: number
+}
+
 export interface user {
   id: number
   username: string
@@ -18,6 +34,16 @@ export interface user {
   display_name: string
   create_type: number
   role_codes: string[]
+}
+
+export interface createOrUpdateUserReq {
+  id?: number
+  department_id?: number
+  username: string
+  display_name: string
+  title?: string
+  email?: string
+  role_codes?: string[]
 }
 
 export interface bindRoleCodesReq {

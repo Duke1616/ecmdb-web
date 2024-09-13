@@ -4,12 +4,12 @@
     <el-form ref="formRef" :model="formData" :inline-message="true" hide-required-asterisk :rules="formRules">
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="目录名称" prop="name">
+          <el-form-item label="部门名称" prop="name">
             <el-input v-model="formData.name" />
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="上级目录" prop="pid">
+          <el-form-item label="上级部门" prop="pid">
             <el-tree-select
               v-model="formData.pid"
               :data="props.departmentData"
@@ -39,7 +39,7 @@
               filterable
               remote
             >
-              <el-option v-for="item in usersData" :key="item.id" :label="item.username" :value="item.username" />
+              <el-option v-for="item in usersData" :key="item.id" :label="item.display_name" :value="item.id" />
               <template #footer>
                 <el-pagination
                   class="justify-center h-10 p-2 bg-white"
@@ -71,12 +71,7 @@
               filterable
               remote
             >
-              <el-option
-                v-for="item in usersData"
-                :key="item.id"
-                :label="item.display_name"
-                :value="item.display_name"
-              />
+              <el-option v-for="item in usersData" :key="item.id" :label="item.display_name" :value="item.id" />
               <template #footer>
                 <el-pagination
                   class="justify-center h-10 p-2 bg-white"
@@ -132,7 +127,7 @@ import { cloneDeep } from "lodash-es"
 import { createOrUpdateDepartment, department } from "@/api/department/types/department"
 import { createDepartmentApi, updateDepartmentApi } from "@/api/department"
 import { user } from "@/api/user/types/user"
-import { listUsersApi } from "@/api/user"
+import { listUsersByUsernameRegexApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 
 const init = {
@@ -219,9 +214,9 @@ const setDepartmentData = (form: department) => {
   formData.value = cloneDeep(form)
 
   Object.keys(formData.value).forEach((key) => {
-    const typedKey = key as keyof typeof formData.value // Type assertion
+    const typedKey = key as keyof typeof formData.value
     if (formData.value[typedKey] === 0 || formData.value[typedKey] === null || formData.value[typedKey] === "") {
-      delete formData.value[typedKey] // Remove zero-value fields
+      delete formData.value[typedKey]
     }
   })
 }
@@ -247,7 +242,8 @@ const remoteMethod = (query: string) => {
 
 const usersData = ref<user[]>([])
 const listUsersData = () => {
-  listUsersApi({
+  listUsersByUsernameRegexApi({
+    username: keyword.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })

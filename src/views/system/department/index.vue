@@ -32,17 +32,24 @@
       <div class="control">
         <el-card>
           <div v-if="empty">
-            <DepartmentForm
-              ref="departmentUpdateRef"
-              :departmentData="treeData"
-              @listDepartmentTreeData="listDepartmentTreeData"
-            />
-            <div class="form-bottom" style="margin-top: 20px">
-              <el-form-item>
-                <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
-                <el-button type="danger" size="large" @click="handleDelete">删除</el-button>
-              </el-form-item>
-            </div>
+            <el-tabs v-model="activeName" type="card" class="demo-tabs" @tab-click="handleClick">
+              <el-tab-pane lazy label="详情信息" name="detail">
+                <DepartmentForm
+                  ref="departmentUpdateRef"
+                  :departmentData="treeData"
+                  @listDepartmentTreeData="listDepartmentTreeData"
+                />
+                <div class="form-bottom" style="margin-top: 20px">
+                  <el-form-item>
+                    <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
+                    <el-button type="danger" size="large" @click="handleDelete">删除</el-button>
+                  </el-form-item>
+                </div>
+              </el-tab-pane>
+              <el-tab-pane lazy label="用户列表" name="user">
+                <User ref="userRef" :departmentId="currentNodeKey" />
+              </el-tab-pane>
+            </el-tabs>
           </div>
           <div>
             <Tip :empty="empty" />
@@ -72,7 +79,8 @@ import { h, nextTick, onMounted, ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
 import DepartmentForm from "./form.vue"
 import Tip from "./tip.vue"
-import { ElMessage, ElMessageBox, ElTree } from "element-plus"
+import User from "./user.vue"
+import { ElMessage, ElMessageBox, ElTree, TabsPaneContext } from "element-plus"
 import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
 const filterInput = ref("")
@@ -88,6 +96,7 @@ const empty = ref<boolean>(false)
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
 const departmentCreateRef = ref<InstanceType<typeof DepartmentForm>>()
 const departmentUpdateRef = ref<InstanceType<typeof DepartmentForm>>()
+const userRef = ref<InstanceType<typeof User>>()
 const handleUpdate = () => {
   departmentUpdateRef.value?.submitUpdateForm()
 }
@@ -109,6 +118,7 @@ const onClosed = (id: number) => {
 
   // 避免触发 update 获取逻辑
   currentNodeKey.value = id
+  empty.value = true
 }
 
 const resetForm = () => {
@@ -117,6 +127,7 @@ const resetForm = () => {
 
 const currentNodeKey = ref<any>(null)
 const handleNodeClick = async (node: department) => {
+  activeName.value = "detail"
   if (currentNodeKey.value === node.id) {
     // 如果点击的节点已经是当前高亮节点，则取消高亮
     currentNodeKey.value = null
@@ -154,9 +165,13 @@ const filterNode = (value: string, data: Tree) => {
 
 /** 查询模版列表 */
 const treeData = ref<department[]>([])
-const listDepartmentTreeData = async () => {
+const listDepartmentTreeData = () => {
   listDepartmentTreeApi()
     .then(async ({ data }) => {
+      if (data.length === 0) {
+        return
+      }
+
       treeData.value = data
 
       await nextTick(() => {
@@ -179,7 +194,7 @@ const handleDelete = () => {
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
-      h("span", null, "正在删除菜单: "),
+      h("span", null, "正在删除部门: "),
       h("i", { style: "color: red" }, `${node?.name}`),
       h("span", null, " 确认删除？")
     ]),
@@ -191,6 +206,11 @@ const handleDelete = () => {
       ElMessage.success("删除成功")
       isExpand.value = false
       listDepartmentTreeData()
+
+      if (treeData.value.length === 1) {
+        empty.value = false
+        currentNodeKey.value = null
+      }
     })
   })
 }
@@ -237,6 +257,15 @@ const addSubMenu = async () => {
 
   // 插入特性数据
   departmentCreateRef.value?.setFromForPid(currentNodeKey.value)
+}
+
+const activeName = ref("detail")
+const handleClick = (tab: TabsPaneContext) => {
+  if (tab.paneName === "detail") {
+    console.log("detail")
+  } else if (tab.paneName === "user") {
+    userRef.value?.listUsersData()
+  }
 }
 
 onMounted(() => {

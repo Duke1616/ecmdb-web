@@ -3,7 +3,7 @@
     <el-card shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="dialogVisible = true">新增</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handlerCreateUser">新增</el-button>
           <!-- <el-button type="danger" :icon="Delete" @click="handleDelete">删除</el-button> -->
         </div>
         <div>
@@ -49,6 +49,17 @@
       </div>
     </el-card>
     <div>
+      <el-dialog v-model="dialogVisible" :title="titel" @closed="handlerClousedRole" width="500px">
+        <createOrUpdate ref="apiRef" @listUsersData="listUsersData" @close="onClosed" />
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="handlerSubmitUser"> 保存 </el-button>
+          </div>
+        </template>
+      </el-dialog>
+    </div>
+    <div>
       <el-dialog v-model="dialogBindRole" title="分配角色" @closed="handlerClousedRole" width="1000px">
         <Role ref="roleRef" :roleCodes="codes ?? []" :userId="userId" @listUsersData="listUsersData" />
       </el-dialog>
@@ -57,21 +68,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref, watch, nextTick } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { listUsersApi } from "@/api/user"
 import Role from "./role.vue"
 import { user } from "@/api/user/types/user"
+import createOrUpdate from "./createOrUpdate.vue"
 
 const roleRef = ref<InstanceType<typeof Role>>()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const dialogBindRole = ref<boolean>(false)
+const apiRef = ref<InstanceType<typeof createOrUpdate>>()
 
+const titel = ref<string>("")
 const handlerClousedRole = () => {
   dialogBindRole.value = false
   roleRef.value?.onClosed()
+  apiRef.value?.resetForm()
 }
 
 /** 查询模版列表 */
@@ -109,10 +124,26 @@ const handleBindRole = (row: user) => {
   userId.value = row.id
 }
 
-const handleUpdate = (row: user) => {
-  console.log(row)
+const handlerCreateUser = () => {
+  dialogVisible.value = true
+  titel.value = "新增用户"
 }
 
+const handleUpdate = (row: user) => {
+  dialogVisible.value = true
+  titel.value = "修改用户"
+  nextTick(() => {
+    apiRef.value?.setFrom(row)
+  })
+}
+
+const handlerSubmitUser = () => {
+  apiRef.value?.submitForm()
+}
+
+const onClosed = () => {
+  dialogVisible.value = false
+}
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: true })
 </script>
