@@ -3,18 +3,20 @@
     <div class="layout">
       <div class="menu">
         <el-card>
-          <el-button type="primary" @click="addMenu"> 添加菜单</el-button>
-          <el-button type="primary" :disabled="!currentNodeKey" @click="addSubMenu"> 添加子菜单</el-button>
-          <el-button type="primary" @click="handleCheckedTreeExpand">
+          <el-button size="default" type="primary" @click="addDepartment"> 添加部门</el-button>
+          <el-button size="default" type="primary" :disabled="!currentNodeKey" @click="addSubMenu">
+            添加子部门</el-button
+          >
+          <el-button size="default" type="primary" @click="handleCheckedTreeExpand">
             {{ isExpand ? "全部收起" : "全部展开" }}
           </el-button>
         </el-card>
         <el-card class="menu-tree">
           <div class="input-tree-container">
-            <el-input v-model="filterInput" size="default" placeholder="输入菜单名称搜索" :suffix-icon="Search" />
+            <el-input v-model="filterInput" size="default" placeholder="输入部门名称搜索" :suffix-icon="Search" />
             <el-tree
               ref="treeRef"
-              :data="menuTreeData"
+              :data="treeData"
               show-checkbox
               node-key="id"
               :highlight-current="true"
@@ -30,7 +32,11 @@
       <div class="control">
         <el-card>
           <div v-if="empty">
-            <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="listMenusTreeData" />
+            <DepartmentForm
+              ref="departmentUpdateRef"
+              :departmentData="treeData"
+              @listDepartmentTreeData="listDepartmentTreeData"
+            />
             <div class="form-bottom" style="margin-top: 20px">
               <el-form-item>
                 <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
@@ -45,12 +51,11 @@
       </div>
     </div>
     <div>
-      <el-dialog v-model="dialogVisible" title="添加菜单" @closed="resetForm">
-        <MenuForm
-          style="max-height: 60vh; overflow-y: auto"
-          ref="menuCreateRef"
-          :menuData="menuTreeData"
-          @listMenusTreeData="listMenusTreeData"
+      <el-dialog v-model="dialogVisible" title="添加部门" @closed="resetForm">
+        <DepartmentForm
+          ref="departmentCreateRef"
+          :departmentData="treeData"
+          @listDepartmentTreeData="listDepartmentTreeData"
           @closed="onClosed"
         />
         <template #footer>
@@ -65,51 +70,37 @@
 <script lang="ts" setup>
 import { h, nextTick, onMounted, ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
-import MenuForm from "./form.vue"
+import DepartmentForm from "./form.vue"
 import Tip from "./tip.vue"
-import { deleteMenuApi, listMenuTreeApi } from "@/api/menu"
-import { menu } from "@/api/menu/types/menu"
 import { ElMessage, ElMessageBox, ElTree } from "element-plus"
+import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
+import { department } from "@/api/department/types/department"
 const filterInput = ref("")
 
 const dialogVisible = ref<boolean>(false)
 const defaultProps = ref<any>({
   children: "children",
-  label: (node: menu) => node.meta.title,
+  label: (node: department) => node.name,
   key: "id"
 })
 
 const empty = ref<boolean>(false)
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
-const menuCreateRef = ref<InstanceType<typeof MenuForm>>()
-const menuUpdateRef = ref<InstanceType<typeof MenuForm>>()
+const departmentCreateRef = ref<InstanceType<typeof DepartmentForm>>()
+const departmentUpdateRef = ref<InstanceType<typeof DepartmentForm>>()
 const handleUpdate = () => {
-  menuUpdateRef.value?.submitUpdateForm()
+  departmentUpdateRef.value?.submitUpdateForm()
 }
 
-const handleDelete = () => {
-  const node = findMenuById(menuTreeData.value, currentNodeKey.value)
-  ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除菜单: "),
-      h("i", { style: "color: red" }, `${node?.meta.title}`),
-      h("span", null, " 确认删除？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    deleteMenuApi(currentNodeKey.value).then(() => {
-      ElMessage.success("删除成功")
-      isExpand.value = false
-      listMenusTreeData()
-    })
+const addDepartment = async () => {
+  dialogVisible.value = true
+  await nextTick(() => {
+    departmentCreateRef.value?.resetForm()
   })
 }
 
 const handlerCreate = () => {
-  menuCreateRef.value?.submitCreateForm()
+  departmentCreateRef.value?.submitCreateForm()
 }
 
 const onClosed = (id: number) => {
@@ -125,7 +116,7 @@ const resetForm = () => {
 }
 
 const currentNodeKey = ref<any>(null)
-const handleNodeClick = async (node: menu) => {
+const handleNodeClick = async (node: department) => {
   if (currentNodeKey.value === node.id) {
     // 如果点击的节点已经是当前高亮节点，则取消高亮
     currentNodeKey.value = null
@@ -135,28 +126,19 @@ const handleNodeClick = async (node: menu) => {
     currentNodeKey.value = node.id
     empty.value = true
 
-    // 添加数据
-    await nextTick()
-
-    updateMenuData(node)
+    console.log(node)
+    await nextTick(() => {
+      updateDepartmentData(node)
+    })
   }
 }
 
-const updateMenuData = (node: menu | null) => {
+const updateDepartmentData = (node: department | null) => {
   if (node === null) {
     return
   }
 
-  // 插入特性数据
-  const me = ref<string[]>([])
-  me.value.push(node.meta.is_affix ? "affix" : "")
-  me.value.push(node.meta.is_hidden ? "hidden" : "")
-  me.value.push(node.meta.is_keepalive ? "keepalive" : "")
-  me.value = me.value.filter(Boolean)
-
-  // 调用setCheckedCities，传入过滤后的me.value
-  menuUpdateRef.value?.setCheckedCities(me.value)
-  menuUpdateRef.value?.setMenuData(node)
+  departmentUpdateRef.value?.setDepartmentData(node)
 }
 
 interface Tree {
@@ -170,45 +152,57 @@ const filterNode = (value: string, data: Tree) => {
   return typeof data.meta.title === "string" && data.meta.title.includes(value)
 }
 
-// const handlerExpandAll = () => {
-//   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
-// }
-// const handlerCollapse = () => {
-//   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.collapse())
-// }
-
-// const menuData = ref<menu>()
 /** 查询模版列表 */
-const menuTreeData = ref<menu[]>([])
-const listMenusTreeData = async () => {
-  listMenuTreeApi()
+const treeData = ref<department[]>([])
+const listDepartmentTreeData = async () => {
+  listDepartmentTreeApi()
     .then(async ({ data }) => {
-      menuTreeData.value = data
+      treeData.value = data
 
-      await nextTick()
-      // 设置当前节点
-      if (currentNodeKey.value) {
-        treeRef.value!.setCurrentKey(currentNodeKey.value)
-        // 录入数据
-        const node = findMenuById(data, currentNodeKey.value)
-        updateMenuData(node)
-        return
-      }
+      await nextTick(() => {
+        if (currentNodeKey.value) {
+          treeRef.value!.setCurrentKey(currentNodeKey.value)
+          const node = findDepartmentById(data, currentNodeKey.value)
+          updateDepartmentData(node)
+          return
+        }
+      })
     })
     .catch(() => {
-      menuTreeData.value = []
+      treeData.value = []
     })
     .finally(() => {})
 }
 
-const findMenuById = (menus: menu[], id: number): menu | null => {
-  for (const menu of menus) {
-    if (menu.id === id) {
-      return menu
+const handleDelete = () => {
+  const node = findDepartmentById(treeData.value, currentNodeKey.value)
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除菜单: "),
+      h("i", { style: "color: red" }, `${node?.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteDepartmentApi(currentNodeKey.value).then(() => {
+      ElMessage.success("删除成功")
+      isExpand.value = false
+      listDepartmentTreeData()
+    })
+  })
+}
+
+const findDepartmentById = (departments: department[], id: number): department | null => {
+  for (const department of departments) {
+    if (department.id === id) {
+      return department
     }
 
-    if (menu.children.length > 0) {
-      const found = findMenuById(menu.children, id)
+    if (department.children.length > 0) {
+      const found = findDepartmentById(department.children, id)
       if (found) {
         return found
       }
@@ -217,7 +211,7 @@ const findMenuById = (menus: menu[], id: number): menu | null => {
   return null
 }
 
-const recursionFn = (arr: menu[]) => {
+const recursionFn = (arr: department[]) => {
   const nodes = treeRef.value?.store?.nodesMap
   if (arr.length > 0) {
     for (let i = 0; i < arr.length; i++) {
@@ -232,27 +226,21 @@ const recursionFn = (arr: menu[]) => {
 const isExpand = ref(false)
 const handleCheckedTreeExpand = () => {
   isExpand.value = !isExpand.value
-  const treeList = menuTreeData.value
+  const treeList = treeData.value
   recursionFn(treeList)
 }
 
 const addSubMenu = async () => {
   dialogVisible.value = true
   await nextTick()
-  menuCreateRef.value?.resetForm()
+  departmentCreateRef.value?.resetForm()
 
   // 插入特性数据
-  menuCreateRef.value?.setMenuType(2)
-  menuCreateRef.value?.setFromForPid(currentNodeKey.value)
-}
-const addMenu = async () => {
-  dialogVisible.value = true
-  await nextTick()
-  menuCreateRef.value?.resetForm()
+  departmentCreateRef.value?.setFromForPid(currentNodeKey.value)
 }
 
 onMounted(() => {
-  listMenusTreeData()
+  listDepartmentTreeData()
 })
 
 watch(filterInput, (val: string) => {
@@ -274,7 +262,7 @@ watch(filterInput, (val: string) => {
 }
 
 .menu {
-  flex: 0 0 30%;
+  flex: 0 0 28%;
 }
 
 .menu-tree {

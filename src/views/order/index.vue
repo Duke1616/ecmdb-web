@@ -5,10 +5,10 @@
         <My ref="myRef" />
       </el-tab-pane>
       <el-tab-pane lazy label="我的待办" name="todo">
-        <TodoUser ref="todoRef" />
+        <TodoUser ref="todoUserRef" />
       </el-tab-pane>
       <el-tab-pane lazy label="全部待办" name="todo-all">
-        <Todo ref="todoUserRef" />
+        <Todo ref="todoRef" />
       </el-tab-pane>
       <el-tab-pane lazy label="历史工单" name="history">Task</el-tab-pane>
     </el-tabs>

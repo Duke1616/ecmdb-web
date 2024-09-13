@@ -83,34 +83,14 @@ defineExpose({
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listEndpointsData, { immediate: true })
 </script>
 
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
-  }
-}
-</style>
-
 <style lang="scss" scoped>
-.toolbar-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .search-container {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   margin-bottom: 10px;
+}
+.pager-wrapper {
+  margin-top: 10px;
 }
 </style>

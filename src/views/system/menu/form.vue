@@ -1,7 +1,6 @@
 <template>
   <div>
     <el-divider content-position="left">基础设置</el-divider>
-
     <el-form ref="formRef" :model="formData" :inline-message="true" hide-required-asterisk :rules="formRules">
       <el-row :gutter="20">
         <el-col :span="12">
@@ -144,7 +143,7 @@
     </el-form>
     <div>
       <el-dialog v-model="dialogVisible" @closed="closeApiPermission" title="添加接口">
-        <Api ref="apiRef" />
+        <Api ref="apiRef" style="max-height: 60vh; overflow-y: auto" />
         <template #footer>
           <el-button @click="closeApiPermission">取消</el-button>
           <el-button type="primary" @click="handlerAddApi">添加</el-button>
@@ -319,6 +318,13 @@ const resetForm = () => {
 const setMenuData = (form: menu) => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(form)
+
+  Object.keys(formData.value).forEach((key) => {
+    const typedKey = key as keyof typeof formData.value
+    if (formData.value[typedKey] === 0 || formData.value[typedKey] === null || formData.value[typedKey] === "") {
+      delete formData.value[typedKey]
+    }
+  })
 }
 
 // 设置按钮类型

@@ -54,6 +54,7 @@ import { listRunnerTagsApi } from "@/api/runner"
 import { runnerTags } from "@/api/runner/types/runner"
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
+import { cloneDeep } from "lodash-es"
 
 const props = defineProps({
   nodeData: Object,
@@ -68,11 +69,14 @@ const props = defineProps({
 })
 
 const emits = defineEmits(["closed"])
-const propertyForm = reactive({
-  name: "",
+
+const DEFAULT_FORM_DATA = reactive({
+  name: "自动化-",
   codebook_uid: "",
   tag: ""
 })
+
+const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
 
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
@@ -81,6 +85,16 @@ const formRules: FormRules = {
     {
       max: 50,
       message: "最大50字符"
+    },
+    {
+      validator: (rule, value, callback) => {
+        if (!value.startsWith("自动化-")) {
+          callback(new Error("名称必须以'自动化-'开头"))
+        } else {
+          callback()
+        }
+      },
+      trigger: "blur"
     }
   ]
 }
@@ -133,7 +147,7 @@ const cancelFunc = () => {
 
 onMounted(() => {
   listRunnerTags()
-  propertyForm.name = props.nodeData?.properties.name
+  propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
   propertyForm.tag = props.nodeData?.properties.tag
 })
