@@ -104,8 +104,8 @@
           <el-form-item label="部门状态" prop="enabled">
             <el-radio-group v-model="formData.enabled" is-button>
               <el-radio-button
-                v-for="item in statusOptions"
-                :key="item.label"
+                v-for="(item, index) in statusOptions"
+                :key="index"
                 :name="item.name"
                 :value="item.label"
                 :disabled="item.disabled"
