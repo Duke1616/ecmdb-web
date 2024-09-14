@@ -50,3 +50,17 @@ export interface bindRoleCodesReq {
   id: number
   role_codes: string[]
 }
+
+export interface userDepartmentCombination {
+  id: number
+  type: string
+  display_name: string
+  disabled: boolean
+  name: string
+  sort: number
+  children: userDepartmentCombination[]
+}
+
+export interface findByUsernamesReq {
+  usernames: string[]
+}

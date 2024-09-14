@@ -27,7 +27,7 @@
 
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="部门领导" prop="leaders">
+          <el-form-item label="部门主管" prop="leaders">
             <el-select
               v-model="formData.leaders"
               reserve-keyword

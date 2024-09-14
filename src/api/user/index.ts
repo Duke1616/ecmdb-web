@@ -55,3 +55,18 @@ export function updateUserApi(data: user.createOrUpdateUserReq) {
     data: data
   })
 }
+
+/** 根据部门聚合查询 */
+export function pipelineUserByDepartmentApi() {
+  return instance.post<user.userDepartmentCombination[]>({
+    url: "user/pipeline/department_id"
+  })
+}
+
+/** 查询多个用户详情 */
+export function findByUsernamesApi(uns: string[]) {
+  return instance.post<user.users>({
+    url: "user/find/usernames",
+    data: { usernames: uns }
+  })
+}
