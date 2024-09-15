@@ -1,8 +1,8 @@
 <template>
   <div class="setting-container">
     <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" style="width: 1000px">
-      <h4>基础设置</h4>
-      <el-form-item prop="name" label="流程名称">
+      <h4>通知设置</h4>
+      <el-form-item prop="name" label="通知源">
         <el-input v-model="formData.name" />
       </el-form-item>
       <h4>通知设置</h4>

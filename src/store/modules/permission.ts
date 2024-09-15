@@ -14,7 +14,7 @@ export const usePermissionStore = defineStore("permission", () => {
   const roles = ref<string[]>([])
 
   /** 获取路由详情 */
-  const getRoleMenu = async (retryCount = 3): Promise<void> => {
+  const getRoleMenu = async (retryCount = 1): Promise<void> => {
     try {
       const response = await listUserRolePermissionApi()
 

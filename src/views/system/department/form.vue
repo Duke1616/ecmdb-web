@@ -234,7 +234,9 @@ const keyword = ref<string>("")
 const remoteMethod = (query: string) => {
   if (query) {
     keyword.value = query
-    listUsersData()
+    setTimeout(() => {
+      listUsersData()
+    }, 500)
   } else {
     usersData.value = []
   }

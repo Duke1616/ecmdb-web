@@ -174,8 +174,11 @@ const handleAppendUser = () => {
   if (treeRef.value) {
     const nodes = treeRef.value.getCheckedNodes()
     console.log(nodes)
+    // 填充数据
     propertyForm.approved = nodes.map((node) => node.name)
-
+    // 填充默认值
+    checkedKeys.value = nodes.map((node) => node.id)
+    // 填充选项
     approvedOptions.value = nodes.map((node) => ({
       display_name: node.display_name,
       name: node.name
