@@ -145,7 +145,12 @@ const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
   field_uid: [
     { required: true, message: "必须输入字段唯一标识", trigger: "blur" },
-    { type: "string", pattern: /^[A-Za-z_-]+$/, message: "只能输入英文字母", trigger: "blur" }
+    {
+      type: "string",
+      pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
+      message: "名称以字母开头，只能包含字母、数字、下划线",
+      trigger: "blur"
+    }
   ],
   field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
 }
@@ -174,6 +179,8 @@ const resetForm = () => {
 
 const setFrom = (row: Attribute) => {
   formData.value = cloneDeep(row)
+  if (!Array.isArray(row.option)) return
+
   list.value = []
   row.option?.forEach((item: string) => {
     list.value.push({
