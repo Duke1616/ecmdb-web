@@ -46,10 +46,10 @@
               v-for="model in group.models"
               :key="model.id"
               :xs="8"
-              :sm="6"
+              :sm="7"
               :md="6"
               :lg="5"
-              :xl="3"
+              :xl="4"
               style="margin-bottom: 4px"
             >
               <el-card class="model-card" @click="handleModelClick(model)">
