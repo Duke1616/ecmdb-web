@@ -126,8 +126,8 @@ class HyRequest {
                 .catch((error) => {
                   // 刷新失败，处理队列并登出
                   processQueue(error, null)
-                  ElMessage.error("认证过期，请重新登录")
                   logout()
+                  ElMessage.error("认证过期，请重新登录")
                   return Promise.reject(error)
                 })
                 .finally(() => {

@@ -29,6 +29,13 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12" style="padding-left: 0 !important">
+            <el-form-item label="是否外链" prop="link">
+              <el-switch v-model="formData.link" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <template v-if="formData.field_type == 'list'">
           <h5 style="margin-top: 0px">列表值</h5>
@@ -136,6 +143,7 @@ const DEFAULT_FORM_DATA: createOrUpdateAttributeReq = {
   field_name: "",
   field_type: "string",
   required: false,
+  link: false,
   secure: false,
   option: ""
 }

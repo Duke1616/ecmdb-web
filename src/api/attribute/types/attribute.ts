@@ -7,6 +7,7 @@ export interface createOrUpdateAttributeReq {
   field_type: string
   secure: boolean
   required: boolean
+  link: boolean
   option: any
 }
 
@@ -46,6 +47,7 @@ export interface Attribute {
   display?: boolean
   index?: number
   secure: boolean
+  link: boolean
   option: any
 }
 

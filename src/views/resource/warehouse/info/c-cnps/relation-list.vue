@@ -40,6 +40,11 @@
                   {{ scope.row.data[field.field_uid] }}
                 </div>
               </template>
+              <template v-else-if="field.link">
+                <el-button type="text" @click="openNewPage(scope.row.data[field.field_uid])">
+                  {{ scope.row.data[field.field_uid] }}
+                </el-button>
+              </template>
               <template v-else>
                 {{ scope.row.data[field.field_uid] }}
               </template>
@@ -201,6 +206,11 @@ const getRealtionTypeData = () => {
       relationTypeData.value = []
     })
     .finally(() => {})
+}
+
+// 跳转外部
+const openNewPage = (url: string) => {
+  window.open(url, "_blank")
 }
 
 // ** 获取模型关联列表 */

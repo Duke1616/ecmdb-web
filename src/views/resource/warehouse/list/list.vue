@@ -14,11 +14,7 @@
       <div class="table-wrapper">
         <el-table :data="resourcesData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column fixed="left" prop="id" label="ID" align="center">
-            <template #default="scope">
-              <el-button type="text" size="small" @click="handleIdClick(scope.row)">{{ scope.row.id }}</el-button>
-            </template>
-          </el-table-column>
+
           <el-table-column
             v-for="item in displayFileds"
             :key="item.id"
@@ -40,14 +36,20 @@
                   {{ scope.row.data[item.field_uid] }}
                 </div>
               </template>
+              <template v-else-if="item.link">
+                <el-button type="text" @click="openNewPage(scope.row.data[item.field_uid])">
+                  {{ scope.row.data[item.field_uid] }}
+                </el-button>
+              </template>
               <template v-else>
                 {{ scope.row.data[item.field_uid] }}
               </template>
             </template>
           </el-table-column>
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
+              <el-button type="primary" text bg size="small" @click="handleDetailClick(scope.row)">详情</el-button>
+              <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -106,7 +108,7 @@ const drawerVisible = ref<boolean>(false)
 
 const title = ref<string>("")
 
-const handleIdClick = (resource: Resource) => {
+const handleDetailClick = (resource: Resource) => {
   router.push({
     path: "/cmdb/resource/info",
     query: { model_uid: modelUid, id: resource.id, name: resource.name }
@@ -137,6 +139,11 @@ const sortFields = () => {
       const indexB = b.index ?? 100
       return indexA - indexB
     })
+}
+
+// 跳转外部
+const openNewPage = (url: string) => {
+  window.open(url, "_blank")
 }
 
 // ** 获取资产列表 */

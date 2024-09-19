@@ -25,3 +25,15 @@
     <span>当前解决方案是兼容这种情况, 为企业微信OA审批, 绑定属于自己的流程</span>
   </div>
 </template>
+
+<script lang="ts" setup></script>
+
+<style scoped>
+.no-border-button {
+  border: none !important;
+  background-color: transparent !important;
+  color: inherit; /* 继承父元素的文字颜色 */
+  padding: 0; /* 去除默认的内边距 */
+  font-size: inherit; /* 继承父元素的字体大小 */
+}
+</style>
