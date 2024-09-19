@@ -14,7 +14,7 @@ export const usePermissionStore = defineStore("permission", () => {
   const roles = ref<string[]>([])
 
   /** 获取路由详情 */
-  const getRoleMenu = async (retryCount = 1): Promise<void> => {
+  const getRoleMenu = async (): Promise<void> => {
     try {
       const response = await listUserRolePermissionApi()
 
@@ -31,16 +31,8 @@ export const usePermissionStore = defineStore("permission", () => {
         dynamicRoutes.value = transformDynamicRoutes(data.menus)
       }
     } catch (error) {
-      console.error(`获取菜单失败，重试剩余次数: ${retryCount}`, error)
-
-      // 如果还有重试次数，则继续重试
-      if (retryCount > 0) {
-        return new Promise(
-          (resolve) => setTimeout(() => resolve(getRoleMenu(retryCount - 1)), 100) // 1毫秒后重试
-        )
-      } else {
-        dynamicRoutes.value = defaultRoutes
-      }
+      console.error("获取菜单失败", error)
+      dynamicRoutes.value = defaultRoutes
     }
   }
 

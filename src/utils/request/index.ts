@@ -4,7 +4,30 @@ import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { refreshAccessTokenApi } from "@/api/login"
-import { useRouter } from "vue-router"
+import { useUserStoreHook } from "@/store/modules/user"
+import { localCache } from "../cache"
+
+/** 退出登录并强制刷新页面（会重定向到登录页） */
+function logout() {
+  useUserStoreHook().logout()
+  location.reload()
+}
+
+// 创建一个锁来确保只有一个 token 刷新操作在执行
+let isRefreshing = false
+let failedQueue: any[] = []
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+
+  failedQueue = []
+}
 
 class HyRequest {
   // axios的实力方法
@@ -59,8 +82,6 @@ class HyRequest {
           case 0:
             // 本系统采用 code === 0 来表示没有业务错误
             return response
-          // case 401:
-          //   return response
           default:
             // 不是正确的 code
             ElMessage.error(apiData.msg || "Error")
@@ -73,23 +94,45 @@ class HyRequest {
           ElMessage.error(message)
         } else {
           const status = get(error, "response.status")
-
+          const originalRequest = error.config
           switch (status) {
             case 400:
               error.message = "请求错误"
               break
             case 401:
-              refreshAccessTokenApi()
-                .then(() => {
-                  this.instance(error.config)
+              if (isRefreshing) {
+                return new Promise(function (resolve, reject) {
+                  failedQueue.push({ resolve, reject })
                 })
-                .catch((error: { message: string }) => {
-                  const router = useRouter()
-                  error.message = "认证过期，请重新登录"
-                  ElMessage.error(error.message)
-                  router.push("/login")
+                  .then((token) => {
+                    originalRequest.headers["Authorization"] = `Bearer ${token}`
+                    return this.instance(originalRequest)
+                  })
+                  .catch((err) => {
+                    return Promise.reject(err)
+                  })
+              }
+
+              isRefreshing = true
+
+              return refreshAccessTokenApi()
+                .then((token) => {
+                  // 刷新成功，处理队列中的请求
+                  this.instance.defaults.headers["Authorization"] = `Bearer ${token}`
+                  originalRequest.headers["Authorization"] = `Bearer ${token}`
+                  processQueue(null, localCache.getCache("access_token"))
+                  return this.instance(originalRequest)
                 })
-              return
+                .catch((error) => {
+                  // 刷新失败，处理队列并登出
+                  processQueue(error, null)
+                  ElMessage.error("认证过期，请重新登录")
+                  logout()
+                  return Promise.reject(error)
+                })
+                .finally(() => {
+                  isRefreshing = false
+                })
             case 403:
               error.message = "拒绝访问"
               break
