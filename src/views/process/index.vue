@@ -3,7 +3,7 @@
     <el-card shadow="never" v-show="elCardVisibe">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增流程</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handleCreate">新增流程</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
@@ -43,21 +43,19 @@
       </div>
     </el-card>
     <!-- 新增模版 -->
-    <createWorkflow
-      :create-dialog-visible="addDialogVisible"
-      :update-dialog-visible="updateDialogVisible"
-      :workflowData="workflowData"
-      @close="onClosed"
-      @list-templates="listFlowsData"
-    />
+    <el-card v-show="visibleWorkflow" style="height: auto">
+      <createWorkflow ref="apiRef" @close="onClosed" @list-templates="listFlowsData" />
+    </el-card>
 
     <!-- 预览 -->
-    <Preview :PreviewDialogvisble="PreviewDialogvisble" :data="graphData" @close="onPrevieClosed" />
+    <el-dialog v-model="graphPreviewVisible" width="60%" @closed="onPreviewClosed">
+      <Preview ref="previewRef" @close="onPreviewClosed" />
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch } from "vue"
+import { h, ref, watch, nextTick } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import createWorkflow from "./create/index.vue"
@@ -68,23 +66,44 @@ import Preview from "./preview/Preview.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const addDialogVisible = ref<boolean>(false)
-const updateDialogVisible = ref<boolean>(false)
+const apiRef = ref<InstanceType<typeof createWorkflow>>()
+const previewRef = ref<InstanceType<typeof Preview>>()
+// 控制列表卡片
 const elCardVisibe = ref<boolean>(true)
+// 控制新增修改
+const visibleWorkflow = ref<boolean>(false)
+// 预览流程图
+const graphPreviewVisible = ref<boolean>(false)
 
-const handlerCreate = () => {
-  addDialogVisible.value = !addDialogVisible.value
-  elCardVisibe.value = !elCardVisibe.value
+const handleCreate = () => {
+  // 展示新增页面，隐藏底层列表卡片
+  elCardVisibe.value = false
+  visibleWorkflow.value = true
+
+  // 渲然初始化页面
+  nextTick(() => {
+    apiRef.value?.setCreateForm()
+  })
 }
 
+const handleUpdate = (row: workflow) => {
+  // 展示新增页面，隐藏底层列表卡片
+  elCardVisibe.value = false
+  visibleWorkflow.value = true
+
+  nextTick(() => {
+    apiRef.value?.setUpdateForm(row)
+  })
+}
+
+// 关闭事件 - 父子通信
 const onClosed = () => {
-  addDialogVisible.value = false
-  elCardVisibe.value = !elCardVisibe.value
-  updateDialogVisible.value = false
+  visibleWorkflow.value = false
+  elCardVisibe.value = true
 }
 
-const onPrevieClosed = () => {
-  PreviewDialogvisble.value = !PreviewDialogvisble.value
+const onPreviewClosed = () => {
+  graphPreviewVisible.value = false
 }
 
 const flowsData = ref<workflow[]>([])
@@ -103,12 +122,12 @@ const listFlowsData = () => {
     .finally(() => {})
 }
 
-const graphData = ref<any>()
-const workflowData = ref<workflow>()
-const operateEvent = (data: any, name: string) => {
+const operateEvent = (data: workflow, name: string) => {
   if (name === "预览") {
-    PreviewDialogvisble.value = !PreviewDialogvisble.value
-    graphData.value = data.flow_data
+    graphPreviewVisible.value = true
+    nextTick(() => {
+      previewRef.value?.initLf(data.flow_data)
+    })
   }
 
   if (name === "部署") {
@@ -117,9 +136,7 @@ const operateEvent = (data: any, name: string) => {
 
   // 编辑
   if (name === "3") {
-    workflowData.value = data
-    updateDialogVisible.value = !updateDialogVisible.value
-    elCardVisibe.value = !elCardVisibe.value
+    handleUpdate(data)
   }
 
   // 删除
@@ -165,7 +182,7 @@ const deployWorkflow = (row: workflow) => {
     })
   })
 }
-const PreviewDialogvisble = ref<boolean>(false)
+
 const operateBtnStatus = ref([
   {
     name: "部署",

@@ -1,29 +1,25 @@
 <template>
-  <div>
-    <el-card v-show="visible" style="height: auto">
-      <div class="steps-container">
-        <el-steps class="steps" align-center :active="active">
-          <el-step title="填写流程信息" :icon="Edit" />
-          <el-step title="定义配置流程" :icon="Ticket" />
-          <el-step title="配置启动设置" :icon="Tools" />
-        </el-steps>
-      </div>
-      <div class="flow-info" v-if="active === 1">
-        <Info @next="next" @close="onClosed" ref="infoRef" :data="formData" />
-      </div>
-      <div v-if="active === 2">
-        <Lf @previous="previous" @next="next" @close="onClosed" ref="lfRef" :data="formData" />
-      </div>
-      <div v-if="active === 3">
-        <Setting @previous="previous" @save="save" @close="onClosed" />
-      </div>
-    </el-card>
+  <div class="steps-container">
+    <el-steps class="steps" align-center :active="active">
+      <el-step title="填写流程信息" :icon="Edit" @click="test" />
+      <el-step title="定义配置流程" :icon="Ticket" />
+      <el-step title="配置启动设置" :icon="Tools" />
+    </el-steps>
+  </div>
+  <div class="flow-info" v-if="active === 1">
+    <Info ref="infoRef" @next="next" @close="onClosed" />
+  </div>
+  <div v-if="active === 2">
+    <Lf ref="lfRef" :data="formData" @previous="previous" @next="next" @close="onClosed" />
+  </div>
+  <div v-if="active === 3">
+    <Setting @previous="previous" @save="save" @close="onClosed" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { Edit, Tools, Ticket } from "@element-plus/icons-vue"
-import { ref, watch } from "vue"
+import { ref, nextTick } from "vue"
 import Info from "./info.vue"
 import Lf from "./lf.vue"
 import Setting from "./setting.vue"
@@ -33,14 +29,14 @@ import { createWorkflowApi, updateWorkflowApi } from "@/api/workflow/workflow"
 import { ElMessage } from "element-plus"
 import { v4 as uuidv4 } from "uuid"
 
-interface Props {
-  createDialogVisible: boolean
-  updateDialogVisible: boolean
-  workflowData: workflow | undefined
+const test = () => {
+  console.log("test")
 }
-const props = defineProps<Props>()
-const visible = ref<boolean>(false)
+
+// 流程步骤
 const active = ref(1)
+
+// 流程图默认数据
 const graphData = {
   nodes: [
     {
@@ -75,28 +71,32 @@ const lfRef = ref<InstanceType<typeof Lf>>()
 
 const next = (val: string) => {
   if (active.value++ > 2) active.value = 1
-  if (val === "info") {
-    const data = infoRef.value?.getFormData()
-    if (data) {
-      formData.value = { ...formData.value, ...data }
-    }
-  }
 
-  if (val === "lf") {
-    const data = lfRef.value?.getGraphData()
-    if (data) {
-      formData.value.flow_data = data
-    }
+  switch (val) {
+    case "info":
+      formData.value = { ...formData.value, ...infoRef.value?.getForm() }
+      break
+    case "lf":
+      formData.value.flow_data = lfRef.value?.getGraphData()
+      break
   }
-
-  console.log(formData.value, "build")
 }
 
 const previous = () => {
   if (active.value-- === 0) active.value = 1
+
+  switch (active.value) {
+    case 1:
+      nextTick(() => {
+        infoRef.value?.setForm(formData.value)
+      })
+      break
+    case 2:
+      break
+  }
 }
 const save = () => {
-  const api = props.createDialogVisible === true ? createWorkflowApi : updateWorkflowApi
+  const api = formData.value.id === undefined ? createWorkflowApi : updateWorkflowApi
   api(formData.value)
     .then(() => {
       onClosed()
@@ -136,23 +136,21 @@ const resetGraphData = () => {
   ]
 }
 
-watch(
-  () => props.createDialogVisible,
-  (val: boolean) => {
-    visible.value = val
-    formData.value = cloneDeep(DEFAULT_FORM_DATA)
-  },
-  { immediate: true }
-)
+const setUpdateForm = (row: workflow) => {
+  formData.value = { ...formData.value, ...row }
 
-watch(
-  () => props.updateDialogVisible,
-  (val: boolean) => {
-    formData.value = { ...formData.value, ...props.workflowData }
-    visible.value = val
-  },
-  { immediate: true }
-)
+  // 需要把第一个步骤的数据传输过去
+  infoRef.value?.setForm(formData.value)
+}
+
+const setCreateForm = () => {
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+defineExpose({
+  setCreateForm,
+  setUpdateForm
+})
 </script>
 
 <style lang="scss" scoped>

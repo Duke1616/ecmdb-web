@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch, nextTick } from "vue"
+import { reactive, ref, nextTick, onMounted, watch } from "vue"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
@@ -47,7 +47,6 @@ import {
   registerUser,
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
-
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 
 interface Props {
@@ -101,6 +100,7 @@ const initLf = () => {
   setThemem()
   // 注册节点
   registerNode()
+
   // 加载数据、事件监听
   render()
 }
@@ -181,10 +181,15 @@ const getGraphData = () => {
   return lf.value.getGraphData()
 }
 
+onMounted(() => {
+  initLf()
+})
+
 watch(
   () => props.data,
   (val: createOrUpdateWorkflowReq) => {
     nextTick(() => {
+      console.log(val, "1231312")
       lf.value.render(val.flow_data)
       lf.value.translateCenter()
     })
@@ -194,10 +199,6 @@ watch(
 
 defineExpose({
   getGraphData
-})
-
-onMounted(() => {
-  initLf()
 })
 </script>
 

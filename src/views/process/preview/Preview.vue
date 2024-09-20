@@ -1,14 +1,11 @@
 <template>
-  <el-dialog v-model="dataVisible" width="60%" @closed="onClosed">
-    <div class="logic-flow-preview">
-      <div id="LF-preview" ref="container" />
-    </div>
-    <!-- <el-button @click="onClosed">关闭</el-button> -->
-  </el-dialog>
+  <div class="logic-flow-preview">
+    <div id="LF-preview" ref="container" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, watch, nextTick } from "vue"
+import { reactive, ref } from "vue"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
@@ -24,12 +21,6 @@ import {
   registerAutomation,
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
-
-interface Props {
-  data: any
-  PreviewDialogvisble: boolean
-}
-const props = defineProps<Props>()
 
 const lf = ref()
 const container = ref()
@@ -50,7 +41,7 @@ const config = reactive<any>({
   nodeList: nodeList
 })
 
-const initLf = () => {
+const initLf = (data: any) => {
   const lfInstance = new LogicFlow({
     ...config,
     plugins: [Menu, MiniMap, Snapshot],
@@ -61,8 +52,13 @@ const initLf = () => {
   setThemem()
   // 注册节点
   registerNode()
+
   // 加载数据、事件监听
-  render()
+  lf.value.render(data)
+  // 居中展示
+  lf.value.translateCenter()
+  // 流程图缩小到画布能全部显示
+  lf.value.fitView(300, 300)
 }
 
 const setThemem = () => {
@@ -109,32 +105,9 @@ const registerNode = () => {
   registerAutomation(lf.value)
 }
 
-const render = () => {
-  lf.value.render(props.data)
-  // 居中展示
-  lf.value.translateCenter()
-  // 流程图缩小到画布能全部显示
-  lf.value.fitView(300, 300)
-}
-const dataVisible = ref<boolean>(false)
-const emits = defineEmits(["close"])
-const onClosed = () => {
-  emits("close")
-}
-
-watch(
-  () => props.PreviewDialogvisble, // 确保属性名称正确
-  (val: boolean) => {
-    dataVisible.value = val
-    if (val) {
-      nextTick(() => {
-        initLf()
-        lf.value.render(props.data)
-      })
-    }
-  },
-  { immediate: true }
-)
+defineExpose({
+  initLf
+})
 </script>
 
 <style scoped>

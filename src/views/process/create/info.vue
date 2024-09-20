@@ -48,7 +48,7 @@
 <script lang="ts" setup>
 import { createInfoReq, createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 import { FormInstance, FormRules } from "element-plus"
-import { ref, watch } from "vue"
+import { ref, watch, nextTick } from "vue"
 import { cloneDeep } from "lodash-es"
 import { listUsersByUsernameRegexApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
@@ -62,11 +62,6 @@ const init = {
   layout: "prev, pager, next"
 }
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
-
-interface Props {
-  data: createOrUpdateWorkflowReq
-}
-const props = defineProps<Props>()
 
 const emits = defineEmits(["next", "close"])
 const handleClose = () => {
@@ -101,9 +96,12 @@ const keyword = ref<string>("")
 const remoteMethod = (query: string) => {
   if (query) {
     keyword.value = query
-    setTimeout(() => {
-      listUsersData()
-    }, 500)
+
+    nextTick(() => {
+      setTimeout(() => {
+        listUsersData()
+      }, 500)
+    })
   } else {
     usersData.value = []
   }
@@ -119,6 +117,7 @@ const listUsersData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       usersData.value = data.users
+      console.log(usersData.value, "123")
     })
     .catch(() => {
       usersData.value = []
@@ -128,21 +127,18 @@ const listUsersData = () => {
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: true })
-const getFormData = () => {
+
+const setForm = (row: createOrUpdateWorkflowReq) => {
+  formData.value = { ...formData.value, ...row }
+}
+
+const getForm = () => {
   return formData.value
 }
 
-watch(
-  () => props.data,
-  (val: createInfoReq) => {
-    console.log("hello， world")
-    formData.value = cloneDeep(val)
-  },
-  { immediate: true }
-)
-
 defineExpose({
-  getFormData
+  getForm,
+  setForm
 })
 </script>
 
