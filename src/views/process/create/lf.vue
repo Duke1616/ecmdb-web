@@ -54,12 +54,16 @@ interface Props {
 }
 const props = defineProps<Props>()
 
-const emits = defineEmits(["previous", "next", "close"])
+const emits = defineEmits(["previous", "next", "close", "update:formData"])
 const next = () => {
-  emits("next", "lf")
+  localFormData.value.flow_data = lf.value.getGraphData()
+  emits("update:formData", localFormData.value)
+  emits("next")
 }
 
 const previous = () => {
+  localFormData.value.flow_data = lf.value.getGraphData()
+  emits("update:formData", localFormData.value)
   emits("previous")
 }
 
@@ -185,11 +189,13 @@ onMounted(() => {
   initLf()
 })
 
+const localFormData = ref({ ...props.data })
+/** 监听消息是否变更 */
 watch(
   () => props.data,
   (val: createOrUpdateWorkflowReq) => {
+    localFormData.value = { ...val }
     nextTick(() => {
-      console.log(val, "1231312")
       lf.value.render(val.flow_data)
       lf.value.translateCenter()
     })

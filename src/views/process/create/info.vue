@@ -1,55 +1,51 @@
 <template>
   <div>
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" style="width: 600px">
-      <el-form-item prop="name" label="流程名称">
-        <el-input v-model="formData.name" />
-      </el-form-item>
-      <el-form-item prop="owner" label="负责人">
-        <el-select
-          v-model="formData.owner"
-          reserve-keyword
-          placeholder="输入关键字选择"
-          :remote-method="remoteMethod"
-          :loading="loading"
-          clearable
-          filterable
-          remote
-        >
-          <el-option v-for="item in usersData" :key="item.id" :label="item.display_name" :value="item.username" />
-          <template #footer>
-            <el-pagination
-              class="justify-center h-10 p-2 bg-white"
-              background
-              :layout="paginationData.layout"
-              :page-sizes="paginationData.pageSizes"
-              :total="paginationData.total"
-              :page-size="paginationData.pageSize"
-              :currentPage="paginationData.currentPage"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-            />
-          </template>
-          <template #loading>
-            <div v-loading="loading" element-loading-text="加载中" class="h-20" />
-          </template>
-        </el-select>
-      </el-form-item>
-      <el-form-item prop="desc" label="流程说明">
-        <el-input v-model="formData.desc" type="textarea" d />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="handleNext">下一步</el-button>
-        <el-button @click="handleClose">取消</el-button>
-      </el-form-item>
-    </el-form>
+    <el-form-item prop="name" label="流程名称">
+      <el-input v-model="localFormData.name" @input="updateFormData" />
+    </el-form-item>
+    <el-form-item prop="owner" label="负责人">
+      <el-select
+        v-model="localFormData.owner"
+        reserve-keyword
+        placeholder="输入关键字选择"
+        :remote-method="remoteMethod"
+        :loading="loading"
+        clearable
+        filterable
+        remote
+        @change="updateFormData"
+      >
+        <el-option v-for="item in usersData" :key="item.id" :label="item.display_name" :value="item.username" />
+        <template #footer>
+          <el-pagination
+            class="justify-center h-10 p-2 bg-white"
+            background
+            :layout="paginationData.layout"
+            :page-sizes="paginationData.pageSizes"
+            :total="paginationData.total"
+            :page-size="paginationData.pageSize"
+            :currentPage="paginationData.currentPage"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </template>
+        <template #loading>
+          <div v-loading="loading" element-loading-text="加载中" class="h-20" />
+        </template>
+      </el-select>
+    </el-form-item>
+    <el-form-item prop="desc" label="流程说明">
+      <el-input v-model="localFormData.desc" type="textarea" @input="updateFormData" />
+    </el-form-item>
+    <el-form-item>
+      <el-button type="primary" @click="handleNext">下一步</el-button>
+      <el-button @click="handleClose">取消</el-button>
+    </el-form-item>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { createInfoReq, createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
-import { FormInstance, FormRules } from "element-plus"
 import { ref, watch, nextTick } from "vue"
-import { cloneDeep } from "lodash-es"
 import { listUsersByUsernameRegexApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 import { user } from "@/api/user/types/user"
@@ -63,32 +59,21 @@ const init = {
 }
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
 
-const emits = defineEmits(["next", "close"])
+const props = defineProps({
+  formData: {
+    type: Object,
+    required: true
+  }
+})
+
+const localFormData = ref({ ...props.formData })
+const emits = defineEmits(["update:formData", "next", "close"])
 const handleClose = () => {
   emits("close")
 }
 
-const DEFAULT_FORM_DATA: createInfoReq = {
-  name: "",
-  desc: "",
-  icon: "",
-  owner: ""
-}
-
-const formData = ref<createInfoReq>(cloneDeep(DEFAULT_FORM_DATA))
-const formRef = ref<FormInstance | null>(null)
-const formRules: FormRules = {
-  name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
-  owner: [{ required: true, message: "必须输入负责人", trigger: "blur" }]
-}
-
 const handleNext = () => {
-  formRef.value?.validate((valid: boolean, fields: any) => {
-    if (!valid) {
-      return console.error("表单校验不通过", fields)
-    }
-    emits("next", "info")
-  })
+  emits("next")
 }
 
 const loading = ref<boolean>(false)
@@ -124,22 +109,21 @@ const listUsersData = () => {
     })
     .finally(() => {})
 }
+const updateFormData = () => {
+  emits("update:formData", localFormData.value)
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: true })
 
-const setForm = (row: createOrUpdateWorkflowReq) => {
-  formData.value = { ...formData.value, ...row }
-}
-
-const getForm = () => {
-  return formData.value
-}
-
-defineExpose({
-  getForm,
-  setForm
-})
+/** 监听消息是否变更 */
+watch(
+  () => props.formData,
+  (newFormData) => {
+    localFormData.value = { ...newFormData }
+  },
+  { deep: true }
+)
 </script>
 
 <style lang="scss" scoped>

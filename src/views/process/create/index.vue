@@ -1,37 +1,41 @@
 <template>
   <div class="steps-container">
     <el-steps class="steps" align-center :active="active">
-      <el-step title="填写流程信息" :icon="Edit" @click="test" />
+      <el-step title="填写流程信息" :icon="Edit" />
       <el-step title="定义配置流程" :icon="Ticket" />
       <el-step title="配置启动设置" :icon="Tools" />
     </el-steps>
   </div>
-  <div class="flow-info" v-if="active === 1">
-    <Info ref="infoRef" @next="next" @close="onClosed" />
-  </div>
-  <div v-if="active === 2">
-    <Lf ref="lfRef" :data="formData" @previous="previous" @next="next" @close="onClosed" />
-  </div>
-  <div v-if="active === 3">
-    <Setting @previous="previous" @save="save" @close="onClosed" />
-  </div>
+  <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" style="width: 1200px">
+    <div class="flow-info" v-if="active === 1">
+      <Info
+        :formData="formData"
+        @update:formData="updateFormData"
+        @next="next"
+        @close="onClosed"
+        class="info-container"
+      />
+    </div>
+    <div v-if="active === 2">
+      <Lf :data="formData" @update:formData="updateFormData" @previous="previous" @next="next" @close="onClosed" />
+    </div>
+    <div v-if="active === 3">
+      <Setting @previous="previous" @save="save" @close="onClosed" />
+    </div>
+  </el-form>
 </template>
 
 <script lang="ts" setup>
 import { Edit, Tools, Ticket } from "@element-plus/icons-vue"
-import { ref, nextTick } from "vue"
+import { computed, ref } from "vue"
 import Info from "./info.vue"
 import Lf from "./lf.vue"
 import Setting from "./setting.vue"
 import { createOrUpdateWorkflowReq, workflow } from "@/api/workflow/types/workflow"
 import { cloneDeep } from "lodash-es"
 import { createWorkflowApi, updateWorkflowApi } from "@/api/workflow/workflow"
-import { ElMessage } from "element-plus"
+import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { v4 as uuidv4 } from "uuid"
-
-const test = () => {
-  console.log("test")
-}
 
 // 流程步骤
 const active = ref(1)
@@ -66,35 +70,49 @@ const DEFAULT_FORM_DATA: createOrUpdateWorkflowReq = {
   flow_data: graphData
 }
 const formData = ref<createOrUpdateWorkflowReq>(cloneDeep(DEFAULT_FORM_DATA))
-const infoRef = ref<InstanceType<typeof Info>>()
-const lfRef = ref<InstanceType<typeof Lf>>()
-
-const next = (val: string) => {
-  if (active.value++ > 2) active.value = 1
-
-  switch (val) {
-    case "info":
-      formData.value = { ...formData.value, ...infoRef.value?.getForm() }
-      break
-    case "lf":
-      formData.value.flow_data = lfRef.value?.getGraphData()
-      break
+const formRef = ref<FormInstance | null>(null)
+const formRules = computed<FormRules>(() => {
+  if (active.value === 1) {
+    return {
+      name: [{ required: true, message: "请输入流程名称", trigger: "blur" }],
+      owner: [{ required: true, message: "请选择负责人", trigger: "change" }]
+    }
+  } else if (active.value === 2) {
+    return {
+      // 步骤2的验证规则
+    }
+  } else if (active.value === 3) {
+    return {
+      // 步骤3的验证规则
+    }
   }
+  return {}
+})
+
+// 下一步
+const next = () => {
+  formRef.value?.validate((valid: boolean, fields: any) => {
+    if (!valid) {
+      return console.error("表单校验不通过", fields)
+    }
+
+    if (active.value++ > 2) active.value = 1
+  })
 }
 
+// 上一步
 const previous = () => {
-  if (active.value-- === 0) active.value = 1
+  formRef.value?.validate((valid: boolean, fields: any) => {
+    if (!valid) {
+      return console.error("表单校验不通过", fields)
+    }
 
-  switch (active.value) {
-    case 1:
-      nextTick(() => {
-        infoRef.value?.setForm(formData.value)
-      })
-      break
-    case 2:
-      break
-  }
+    if (active.value-- === 0) active.value = 1
+  })
 }
+
+// 保存 或修改
+const emits = defineEmits(["close", "list-templates"])
 const save = () => {
   const api = formData.value.id === undefined ? createWorkflowApi : updateWorkflowApi
   api(formData.value)
@@ -109,10 +127,14 @@ const save = () => {
     .finally(() => {})
 }
 
-const emits = defineEmits(["close", "list-templates"])
 const onClosed = () => {
+  // 重置 el-step 步骤为第一步
   active.value = 1
+
+  // 初始化流程图，只有开始和结束两个节点
   resetGraphData()
+
+  // 关闭弹窗
   emits("close", false)
 }
 
@@ -136,15 +158,19 @@ const resetGraphData = () => {
   ]
 }
 
-const setUpdateForm = (row: workflow) => {
-  formData.value = { ...formData.value, ...row }
-
-  // 需要把第一个步骤的数据传输过去
-  infoRef.value?.setForm(formData.value)
+// 自组件调用传递数据
+const updateFormData = (newFormData: createOrUpdateWorkflowReq) => {
+  formData.value = { ...formData.value, ...newFormData }
 }
 
+// 新增事件 - 父组件调用
 const setCreateForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+// 修改方法 - 父组件调用
+const setUpdateForm = (row: workflow) => {
+  formData.value = { ...formData.value, ...row }
 }
 
 defineExpose({
@@ -171,5 +197,12 @@ defineExpose({
   flex: 1;
   justify-content: center;
   height: 600px;
+}
+
+.info-container,
+.setting-container {
+  flex: 1;
+  max-width: 800px;
+  width: 100%;
 }
 </style>
