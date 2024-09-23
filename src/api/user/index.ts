@@ -70,3 +70,11 @@ export function findByUsernamesApi(uns: string[]) {
     data: { usernames: uns }
   })
 }
+
+/** 查询单个用户详情 */
+export function findByUsernameApi(username: string) {
+  return instance.post<user.user>({
+    url: "user/find/username",
+    data: { username: username }
+  })
+}

@@ -1,28 +1,42 @@
 <template>
-  <div class="steps-container">
-    <el-steps class="steps" align-center :active="active">
-      <el-step title="填写流程信息" :icon="Edit" />
-      <el-step title="定义配置流程" :icon="Ticket" />
-      <el-step title="配置启动设置" :icon="Tools" />
-    </el-steps>
+  <div class="cons">
+    <div class="steps-container">
+      <el-steps class="steps" align-center :active="active">
+        <el-step title="填写流程信息" :icon="Edit" />
+        <el-step title="定义配置流程" :icon="Ticket" />
+        <el-step title="配置启动设置" :icon="Tools" />
+      </el-steps>
+    </div>
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" style="width: auto">
+      <div class="flow-info" v-if="active === 1">
+        <Info
+          :formData="formData"
+          @update:formData="updateFormData"
+          @next="next"
+          @close="onClosed"
+          class="info-container"
+        />
+      </div>
+      <div v-if="active === 2">
+        <Lf
+          :formData="formData"
+          @update:formData="updateFormData"
+          @previous="previous"
+          @next="next"
+          @close="onClosed"
+        />
+      </div>
+      <div class="flow-info" v-if="active === 3">
+        <Setting
+          :formData="formData"
+          @update:formData="updateFormData"
+          @previous="previous"
+          @save="save"
+          @close="onClosed"
+        />
+      </div>
+    </el-form>
   </div>
-  <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" style="width: 1200px">
-    <div class="flow-info" v-if="active === 1">
-      <Info
-        :formData="formData"
-        @update:formData="updateFormData"
-        @next="next"
-        @close="onClosed"
-        class="info-container"
-      />
-    </div>
-    <div v-if="active === 2">
-      <Lf :data="formData" @update:formData="updateFormData" @previous="previous" @next="next" @close="onClosed" />
-    </div>
-    <div v-if="active === 3">
-      <Setting @previous="previous" @save="save" @close="onClosed" />
-    </div>
-  </el-form>
 </template>
 
 <script lang="ts" setup>
@@ -63,6 +77,8 @@ const graphData = {
 
 const DEFAULT_FORM_DATA: createOrUpdateWorkflowReq = {
   id: undefined,
+  is_notify: false,
+  notify_method: 1,
   name: "",
   desc: "",
   icon: "",
@@ -180,29 +196,46 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
+.cons {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
 .steps-container {
   display: flex;
   justify-content: center;
-  height: 100%;
   align-items: center;
+  margin-bottom: 20px;
 }
 
 .steps {
   min-width: 700px;
-  margin-bottom: 20px;
 }
 
 .flow-info {
   display: flex;
   flex: 1;
   justify-content: center;
-  height: 600px;
+  height: 70vh;
 }
 
-.info-container,
+.info-container {
+  flex: 1;
+  max-width: 600px;
+  width: 100%;
+}
+
 .setting-container {
   flex: 1;
   max-width: 800px;
   width: 100%;
+}
+
+.lf-container {
+  flex: 1;
+  width: 100%;
+  height: 100%;
 }
 </style>

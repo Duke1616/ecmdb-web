@@ -4,18 +4,9 @@ export interface createOrUpdateWorkflowReq {
   icon: string
   desc: string
   owner: string
+  is_notify: boolean
+  notify_method: number
   flow_data: any
-}
-
-export interface createInfoReq {
-  name: string
-  icon: string
-  desc: string
-  owner: string
-}
-
-export interface createSettingReq {
-  name: string
 }
 
 export interface listWorkflowReq {

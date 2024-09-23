@@ -45,8 +45,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, nextTick } from "vue"
-import { listUsersByUsernameRegexApi } from "@/api/user"
+import { ref, watch, nextTick, onMounted } from "vue"
+import { findByUsernameApi, listUsersByUsernameRegexApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 import { user } from "@/api/user/types/user"
 
@@ -102,34 +102,55 @@ const listUsersData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       usersData.value = data.users
-      console.log(usersData.value, "123")
     })
     .catch(() => {
       usersData.value = []
     })
     .finally(() => {})
 }
+
+const getUserData = () => {
+  findByUsernameApi(localFormData.value.owner)
+    .then(({ data }) => {
+      usersData.value = [data]
+      // 给定默认负责人
+      if (localFormData.value.owner === "") {
+        localFormData.value.owner = data.username
+        updateFormData()
+      }
+    })
+    .catch(() => {
+      usersData.value = []
+    })
+    .finally(() => {})
+}
+
 const updateFormData = () => {
   emits("update:formData", localFormData.value)
 }
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: false })
 
 /** 监听消息是否变更 */
 watch(
   () => props.formData,
   (newFormData) => {
     localFormData.value = { ...newFormData }
+
+    getUserData()
   },
   { deep: true }
 )
+
+onMounted(() => {
+  if (localFormData.value.owner) {
+    getUserData()
+  }
+})
 </script>
 
 <style lang="scss" scoped>
-.el-form {
-  min-width: 100%; /* 确保表单至少和视窗一样宽 */
-}
 .flow-info {
   width: 1000px;
 }

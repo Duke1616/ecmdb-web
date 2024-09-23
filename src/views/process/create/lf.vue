@@ -50,7 +50,7 @@ import {
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 
 interface Props {
-  data: createOrUpdateWorkflowReq
+  formData: createOrUpdateWorkflowReq
 }
 const props = defineProps<Props>()
 
@@ -189,10 +189,10 @@ onMounted(() => {
   initLf()
 })
 
-const localFormData = ref({ ...props.data })
+const localFormData = ref({ ...props.formData })
 /** 监听消息是否变更 */
 watch(
-  () => props.data,
+  () => props.formData,
   (val: createOrUpdateWorkflowReq) => {
     localFormData.value = { ...val }
     nextTick(() => {
