@@ -10,7 +10,6 @@
         <el-table-column prop="template_name" label="工单名称" align="center" />
         <el-table-column prop="starter" label="提单人" align="center" />
         <el-table-column prop="current_step" label="当前步骤" align="center" />
-        <el-table-column prop="approved_by" label="当前处理人" align="center" />
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
         <el-table-column fixed="right" label="操作" width="150" align="center">
           <template #default="scope">

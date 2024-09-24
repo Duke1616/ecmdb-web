@@ -10,7 +10,9 @@
       <el-tab-pane lazy label="全部待办" name="todo-all">
         <Todo ref="todoRef" />
       </el-tab-pane>
-      <el-tab-pane lazy label="历史工单" name="history">Task</el-tab-pane>
+      <el-tab-pane lazy label="历史工单" name="history">
+        <History ref="historyRef" />
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
@@ -20,11 +22,13 @@ import type { TabsPaneContext } from "element-plus"
 import Todo from "./tabs/todo.vue"
 import TodoUser from "./tabs/todo-user.vue"
 import My from "./tabs/my.vue"
+import History from "./tabs/history.vue"
 const activeName = ref("my")
 
 const myRef = ref<InstanceType<typeof My>>()
 const todoRef = ref<InstanceType<typeof Todo>>()
 const todoUserRef = ref<InstanceType<typeof TodoUser>>()
+const historyRef = ref<InstanceType<typeof History>>()
 const handleClick = (tab: TabsPaneContext) => {
   if (tab.paneName === "my") {
     myRef.value?.startByOrdersData()
@@ -32,6 +36,8 @@ const handleClick = (tab: TabsPaneContext) => {
     todoRef.value?.listOrdersData()
   } else if (tab.paneName == "todo") {
     todoUserRef.value?.listOrdersData()
+  } else if (tab.paneName == "history") {
+    historyRef.value?.listOrdersData()
   }
 }
 </script>

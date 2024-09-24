@@ -16,8 +16,19 @@
             <el-tag v-if="scope.row.status === 0 && scope.row.is_finished == 1" type="success" effect="plain">
               自动通过
             </el-tag>
-            <el-tag v-if="scope.row.status === 1 && scope.row.is_finished == 1" type="warning" effect="plain">
+            <el-tag
+              v-if="scope.row.status === 1 && !scope.row.nodename.startsWith('自动化-') && scope.row.is_finished == 1"
+              type="success"
+              effect="plain"
+            >
               确认通过
+            </el-tag>
+            <el-tag
+              v-if="scope.row.status === 1 && scope.row.nodename.startsWith('自动化-') && scope.row.is_finished == 1"
+              type="success"
+              effect="plain"
+            >
+              自动通过
             </el-tag>
             <el-tag v-if="scope.row.status === 2 && scope.row.is_finished == 1" type="danger" effect="plain">
               手动驳回

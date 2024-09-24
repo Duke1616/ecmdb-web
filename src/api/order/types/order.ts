@@ -13,6 +13,12 @@ export interface todoOrderReq {
   limit: number
 }
 
+export interface historyOrderReq {
+  user_id?: string
+  offset: number
+  limit: number
+}
+
 export interface startByOrderReq {
   user_id?: string
   process_name?: string
@@ -30,6 +36,7 @@ export interface order {
   template_id: number
   template_name: string
   ctime: number
+  wtime: number
   current_step: string
   approved_by: string[]
   steps: steps[]
@@ -74,5 +81,10 @@ export interface taskRecord {
 
 export interface taskRecords {
   task_records: taskRecord[]
+  total: number
+}
+
+export interface orders {
+  orders: order[]
   total: number
 }

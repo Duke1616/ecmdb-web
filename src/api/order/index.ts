@@ -42,10 +42,10 @@ export function getOrderByProcessInstIdApi(processInstId: number) {
 }
 
 /** 查看历史工单 */
-export function getHisotryOrderApi(processInstId: number) {
-  return instance.post<order.order>({
-    url: "order/detail/process_inst_id",
-    data: { process_instance_id: processInstId }
+export function getHisotryOrderApi(data: order.historyOrderReq) {
+  return instance.post<order.orders>({
+    url: "order/history",
+    data: data
   })
 }
 
