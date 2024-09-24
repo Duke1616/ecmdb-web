@@ -23,6 +23,9 @@
           :props="defaultProps"
         />
       </el-form-item>
+      <el-form-item prop="feishu_info.user_id" label="飞书用户">
+        <el-input v-model="formData.feishu_info.user_id" placeholder="请输入飞书用户ID" />
+      </el-form-item>
     </el-form>
   </div>
 </template>
@@ -31,7 +34,7 @@
 import { onMounted, ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { createOrUpdateUserReq, user } from "@/api/user/types/user"
+import { createOrUpdateUserReq, feishuInfo, user } from "@/api/user/types/user"
 import { createUserApi, updateUserApi } from "@/api/user"
 import { listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
@@ -39,9 +42,13 @@ import { department } from "@/api/department/types/department"
 // 接收父组建传递
 const emits = defineEmits(["close", "listUsersData"])
 
+const FeishuInfo: feishuInfo = {
+  user_id: 0
+}
 const DEFAULT_FORM_DATA: createOrUpdateUserReq = {
   username: "",
-  display_name: ""
+  display_name: "",
+  feishu_info: FeishuInfo
 }
 
 const defaultProps = ref<any>({

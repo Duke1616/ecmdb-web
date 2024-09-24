@@ -10,6 +10,10 @@ export interface users {
   users: user[]
 }
 
+export interface feishuInfo {
+  user_id?: number
+}
+
 export interface listUserByUsernameRegexReq {
   username: string
   /** 跳过条数 */
@@ -34,6 +38,7 @@ export interface user {
   display_name: string
   create_type: number
   role_codes: string[]
+  feishu_info: feishuInfo
 }
 
 export interface createOrUpdateUserReq {
@@ -44,6 +49,7 @@ export interface createOrUpdateUserReq {
   title?: string
   email?: string
   role_codes?: string[]
+  feishu_info: feishuInfo
 }
 
 export interface bindRoleCodesReq {
