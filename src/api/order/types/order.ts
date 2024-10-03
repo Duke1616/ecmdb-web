@@ -48,6 +48,11 @@ export interface steps {
   approved_by: string[]
 }
 
+export interface revokeOrderReq {
+  instance_id: number
+  force: boolean
+}
+
 export interface ordersListRes {
   orders: order[]
   total: number

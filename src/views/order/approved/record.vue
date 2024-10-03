@@ -5,36 +5,10 @@
         <el-table-column type="selection" width="50" align="center" />
         <el-table-column prop="nodename" label="节点名称" align="center" />
         <el-table-column prop="approved_by" label="操作人" align="center" />
-        <!-- <el-table-column prop="is_finished" label="任务状态" align="center">
-          <template #default="scope">
-            <el-tag v-if="scope.row.is_finished === 1" type="success" effect="plain">完成</el-tag>
-            <el-tag v-else-if="scope.row.is_finished === 0" type="danger" effect="plain">待处理</el-tag>
-          </template>
-        </el-table-column> -->
         <el-table-column prop="is_finished" label="任务动作" align="center">
           <template #default="scope">
-            <el-tag v-if="scope.row.status === 0 && scope.row.is_finished == 1" type="success" effect="plain">
-              自动通过
-            </el-tag>
-            <el-tag
-              v-if="scope.row.status === 1 && !scope.row.nodename.startsWith('自动化-') && scope.row.is_finished == 1"
-              type="success"
-              effect="plain"
-            >
-              确认通过
-            </el-tag>
-            <el-tag
-              v-if="scope.row.status === 1 && scope.row.nodename.startsWith('自动化-') && scope.row.is_finished == 1"
-              type="success"
-              effect="plain"
-            >
-              自动通过
-            </el-tag>
-            <el-tag v-if="scope.row.status === 2 && scope.row.is_finished == 1" type="danger" effect="plain">
-              手动驳回
-            </el-tag>
-            <el-tag v-if="scope.row.status === 0 && scope.row.is_finished == 0" type="danger" effect="plain">
-              等待处理
+            <el-tag :type="getTagType(scope.row)" effect="plain">
+              {{ getTagLabel(scope.row) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -69,6 +43,20 @@ interface Props {
 }
 const props = defineProps<Props>()
 
+const getTagType = (row: taskRecord) => {
+  if (row.status === 1 && row.nodename.startsWith("自动化-")) return "success"
+  if (row.status === 2) return "danger"
+  if (row.status === 0 && row.is_finished === 1) return "danger"
+  return "success"
+}
+
+const getTagLabel = (row: taskRecord) => {
+  if (row.status === 1 && !row.nodename.startsWith("自动化-") && row.is_finished === 1) return "确认通过"
+  if (row.status === 1 && row.nodename.startsWith("自动化-") && row.is_finished === 1) return "自动通过"
+  if (row.status === 2 && row.is_finished === 1) return "手动驳回"
+  if (row.status === 0 && row.is_finished === 1) return "手动撤销"
+  return "等待处理"
+}
 /** 查询模版列表 */
 const taskRecordsData = ref<taskRecord[]>([])
 const listOrderTaskRecordsData = () => {

@@ -40,8 +40,6 @@ import Record from "./record.vue"
 
 const activeName = ref<string>("form")
 
-// const formRef = ref<InstanceType<typeof Form>>()
-// const flowRef = ref<InstanceType<typeof Flow>>()
 const recordRef = ref<InstanceType<typeof Record>>()
 const handleClick = (tab: TabsPaneContext) => {
   console.log(tab.paneName)
@@ -74,7 +72,6 @@ const onClosed = () => {
 }
 
 const refreshData = () => {
-  console.log("重新获取数据")
   emits("refresh-data")
 }
 

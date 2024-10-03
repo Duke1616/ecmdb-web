@@ -17,6 +17,14 @@ export function todoOrderApi(data: order.todoOrderReq) {
   })
 }
 
+/** 撤销工单 */
+export function revokeOrderApi(data: order.revokeOrderReq) {
+  return instance.post<boolean>({
+    url: "order/revoke",
+    data: data
+  })
+}
+
 /** 查看我受办待处理工单 */
 export function todoOrderByUserApi(data: order.todoOrderReq) {
   return instance.post<order.ordersListRes>({

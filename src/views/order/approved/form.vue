@@ -1,34 +1,28 @@
 <template>
   <div>
-    <div>
-      <el-card title="审批">
-        <template #header>
-          <strong> 表单信息</strong>
-        </template>
-        <!-- 如果是自己的工单，支持修改 -->
-        <div v-if="props.action != 'my'">
-          <FormCreate
-            :rule="rule"
-            :option="options"
-            v-model="data"
-            :disabled="props.action != 'my'"
-            v-model:api="fApi"
-          />
-        </div>
+    <el-card title="审批">
+      <template #header>
+        <strong> 表单信息</strong>
+      </template>
+      <!-- 如果是自己的工单，支持修改 -->
+      <div v-if="props.action != 'my-Start'">
+        <FormCreate :rule="rule" :option="options" v-model="data" :disabled="props.action != 'my'" v-model:api="fApi" />
+      </div>
 
-        <!-- 不是我的工单，禁止修改数据 -->
-        <div v-if="props.action == 'my'">
-          <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
-          <div class="form-bottom" v-if="props.action == 'my'">
-            <el-form-item>
-              <el-button type="primary" size="large" @click="handlePass">修改</el-button>
-              <el-button type="danger" size="large" @click="handleReject">撤回</el-button>
-            </el-form-item>
-          </div>
+      <!-- 不是我的工单，禁止修改数据 -->
+      <div v-if="props.action == 'my-Start'">
+        <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
+
+        <div class="form-bottom">
+          <el-form-item>
+            <el-button type="primary" size="large" @click="handlePass">修改</el-button>
+            <el-button type="danger" size="large" @click="handleRevoke">撤回</el-button>
+          </el-form-item>
         </div>
-      </el-card>
-    </div>
-    <div v-if="!['my', 'history'].includes(props.action)">
+      </div>
+    </el-card>
+
+    <div v-if="!/^my-/.test(props.action) && props.action !== 'history'">
       <el-card>
         <template #header>
           <strong>操作信息</strong>
@@ -54,7 +48,7 @@
 import { detailTemplateApi } from "@/api/template"
 import formCreate from "@form-create/element-ui"
 import { ref, watch } from "vue"
-import { getOrderByProcessInstIdApi, passOrderApi, rejectOrderApi } from "@/api/order"
+import { getOrderByProcessInstIdApi, passOrderApi, rejectOrderApi, revokeOrderApi } from "@/api/order"
 import { passOrder } from "@/api/order/types/order"
 import { cloneDeep } from "lodash-es"
 import { FormInstance } from "element-plus"
@@ -132,6 +126,20 @@ const handleReject = () => {
 
   // 同意审批
   rejectOrderApi(formData.value).then(() => {
+    // 重置表单，关闭弹窗
+    resetForm()
+  })
+}
+
+const handleRevoke = () => {
+  if (!props.processInstId) {
+    return
+  }
+
+  revokeOrderApi({
+    instance_id: props.processInstId,
+    force: true
+  }).then(() => {
     // 重置表单，关闭弹窗
     resetForm()
   })

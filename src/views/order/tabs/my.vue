@@ -50,7 +50,7 @@
 import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
-import { startByOrderApi } from "@/api/order"
+import { revokeOrderApi, startByOrderApi } from "@/api/order"
 import { Column, ElMessage, TableColumnCtx } from "element-plus"
 import Detail from "../approved/detail.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -95,11 +95,16 @@ const handleApproval = (row: order) => {
   taskId.value = row.task_id
   workflowId.value = row.workflow_id
   dialogVisible.value = true
+  action.value = "my-" + row.current_step
 }
 
 const handleRevoke = (row: order) => {
-  ElMessage.error("暂不支持功能")
-  console.log(row)
+  revokeOrderApi({
+    instance_id: row.process_instance_id,
+    force: true
+  }).then(() => {
+    startByOrdersData()
+  })
 }
 
 const onClosed = () => {
