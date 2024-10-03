@@ -28,7 +28,7 @@
         </div>
       </el-card>
     </div>
-    <div v-if="props.action != 'my'">
+    <div v-if="!['my', 'history'].includes(props.action)">
       <el-card>
         <template #header>
           <strong>操作信息</strong>

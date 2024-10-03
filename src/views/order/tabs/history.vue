@@ -68,7 +68,7 @@ const templateId = ref<number>()
 const processInstId = ref<number>()
 const taskId = ref<number>()
 const workflowId = ref<number>()
-const action = ref<string>("todo")
+const action = ref<string>("history")
 /** 查询模版列表 */
 const ordersData = ref<order[]>([])
 const listOrdersData = () => {
