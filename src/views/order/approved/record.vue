@@ -36,25 +36,29 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { orderTaskRecordsApi } from "@/api/order"
 import { taskRecord } from "@/api/order/types/order"
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 interface Props {
   processInstId: number | undefined
 }
 const props = defineProps<Props>()
 
 const getTagType = (row: taskRecord) => {
-  if (row.status === 1 && row.nodename.startsWith("自动化-")) return "success"
+  if (row.status === 1 && row.is_finished === 1) return "success"
   if (row.status === 2) return "danger"
+  if (row.status === 3 && row.is_finished === 1) return "success"
+  if (row.status === 4 && row.is_finished === 1) return "danger"
   if (row.status === 0 && row.is_finished === 1) return "danger"
-  return "success"
+  return "warning"
 }
 
 const getTagLabel = (row: taskRecord) => {
   if (row.status === 1 && !row.nodename.startsWith("自动化-") && row.is_finished === 1) return "确认通过"
   if (row.status === 1 && row.nodename.startsWith("自动化-") && row.is_finished === 1) return "自动通过"
+  if (row.status === 3 && row.is_finished === 1) return "系统通过"
+  if (row.status === 4 && row.is_finished === 1) return "系统驳回"
   if (row.status === 2 && row.is_finished === 1) return "手动驳回"
-  if (row.status === 0 && row.is_finished === 1) return "手动撤销"
+  if (row.status === 0 && row.is_finished === 1) return "节点或签联动处理"
   return "等待处理"
 }
 /** 查询模版列表 */
