@@ -14,6 +14,10 @@ export interface feishuInfo {
   user_id?: number
 }
 
+export interface wechatInfo {
+  user_id?: number
+}
+
 export interface listUserByUsernameRegexReq {
   username: string
   /** 跳过条数 */
@@ -39,6 +43,7 @@ export interface user {
   create_type: number
   role_codes: string[]
   feishu_info: feishuInfo
+  wechat_info: wechatInfo
 }
 
 export interface createOrUpdateUserReq {
@@ -50,6 +55,7 @@ export interface createOrUpdateUserReq {
   email?: string
   role_codes?: string[]
   feishu_info: feishuInfo
+  wechat_info: wechatInfo
 }
 
 export interface bindRoleCodesReq {

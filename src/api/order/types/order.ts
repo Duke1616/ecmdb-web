@@ -34,6 +34,7 @@ export interface order {
   proc_inst_create_time: string
   workflow_id: number
   template_id: number
+  provide: number
   template_name: string
   ctime: number
   wtime: number

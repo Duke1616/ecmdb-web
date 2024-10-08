@@ -12,7 +12,6 @@
       <!-- 不是我的工单，禁止修改数据 -->
       <div v-if="props.action == 'my-Start'">
         <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
-
         <div class="form-bottom">
           <el-form-item>
             <el-button type="primary" size="large" @click="handlePass">修改</el-button>

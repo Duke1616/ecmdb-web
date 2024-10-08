@@ -9,6 +9,13 @@
       >
         <el-table-column prop="id" label="工单ID" align="center" />
         <el-table-column prop="template_name" label="工单名称" align="center" />
+        <el-table-column prop="provide" label="来源" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary">本系统</el-tag>
+            <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning">企业微信</el-tag>
+            <el-tag v-else type="info" effect="plain">未知类型</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="current_step" label="当前步骤" align="center" />
         <el-table-column prop="approved_by" label="当前处理人" align="center" />
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
