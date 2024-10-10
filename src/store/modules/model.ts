@@ -1,22 +1,22 @@
 import { defineStore } from "pinia"
 import { type Models } from "@/api/model/types/model"
-import { listModelsApi } from "@/api/model"
+import { ListModelsByGroupApi } from "@/api/model"
 import { ref } from "vue"
 
 export const useModelStore = defineStore(
   "model",
   () => {
-    const ModelsData = ref<Models[]>([])
+    const modelsData = ref<Models[]>([])
 
     /** 获取模型信息 */
-    const ListModelsInGroup = async () => {
-      const { data } = await listModelsApi()
-      ModelsData.value = data.mgs
+    const ListModelsByGroup = async () => {
+      const { data } = await ListModelsByGroupApi()
+      modelsData.value = data.mgs
 
       return { data }
     }
 
-    return { ModelsData, ListModelsInGroup }
+    return { modelsData, ListModelsByGroup }
   },
   {
     persist: true

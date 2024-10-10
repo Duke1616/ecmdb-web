@@ -19,9 +19,9 @@ export function CreateModelGroupApi(data: Model.CreateModelGroupReq) {
 }
 
 /** 获取模型列表，按照分组 */
-export function listModelsApi() {
+export function ListModelsByGroupApi() {
   return instance.post<Model.listModelsResponseData>({
-    url: "model/list/pipeline"
+    url: "model/by_group"
   })
 }
 

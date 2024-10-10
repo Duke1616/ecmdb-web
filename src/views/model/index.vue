@@ -251,7 +251,7 @@ const filterData = ref<Models[]>([])
 const getModelsData = () => {
   loading.value = true
   useModelStore()
-    .ListModelsInGroup()
+    .ListModelsByGroup()
     .then(({ data }) => {
       ModelsData.value = data.mgs
       filterData.value = data.mgs

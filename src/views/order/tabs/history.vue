@@ -12,10 +12,17 @@
           <template #default="scope">
             <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary">本系统</el-tag>
             <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning">企业微信</el-tag>
-            <el-tag v-else type="info" effect="plain">未知类型</el-tag>
+            <el-tag v-else type="info" effect="plain">未知</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="starter" label="提单人" align="center" />
+        <el-table-column prop="status" label="状态" align="center">
+          <template #default="scope">
+            <el-tag v-if="scope.row.status === 4" effect="plain" type="danger">撤单</el-tag>
+            <el-tag v-else-if="scope.row.status === 3" effect="plain" type="success">结单</el-tag>
+            <el-tag v-else type="info" effect="plain">未知</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="ctime" label="工单提交时间" align="center" />
         <el-table-column prop="wtime" label="工单结束时间" align="center" />
         <el-table-column fixed="right" label="操作" width="150" align="center">

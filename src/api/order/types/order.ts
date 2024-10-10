@@ -35,6 +35,7 @@ export interface order {
   workflow_id: number
   template_id: number
   provide: number
+  status: number
   template_name: string
   ctime: number
   wtime: number

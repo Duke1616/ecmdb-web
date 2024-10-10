@@ -111,7 +111,7 @@ import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "elem
 import { usePagination } from "@/hooks/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const modelData = useModelStore().ModelsData
+const modelData = useModelStore().modelsData
 
 const modelMap: Map<string, string> = new Map<string, string>()
 const reverseMap = () => {

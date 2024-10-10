@@ -54,11 +54,11 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { h, ref, watch } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
 import { revokeOrderApi, startByOrderApi } from "@/api/order"
-import { Column, ElMessage, TableColumnCtx } from "element-plus"
+import { Column, ElMessage, ElMessageBox, TableColumnCtx } from "element-plus"
 import Detail from "../approved/detail.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -106,11 +106,23 @@ const handleApproval = (row: order) => {
 }
 
 const handleRevoke = (row: order) => {
-  revokeOrderApi({
-    instance_id: row.process_instance_id,
-    force: true
+  ElMessageBox({
+    title: "撤销工单",
+    message: h("p", null, [
+      h("span", null, "正在撤销工单: "),
+      h("i", { style: "color: red" }, `${row.approved_by}的${row.template_name}`),
+      h("span", null, " 确认？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
   }).then(() => {
-    startByOrdersData()
+    revokeOrderApi({
+      instance_id: row.process_instance_id,
+      force: true
+    }).then(() => {
+      startByOrdersData()
+    })
   })
 }
 
