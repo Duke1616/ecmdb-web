@@ -7,7 +7,7 @@
         border
         :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
       >
-        <el-table-column prop="id" label="工单ID" align="center" />
+        <el-table-column prop="id" label="工单号" align="center" />
         <el-table-column prop="template_name" label="工单名称" align="center" />
         <el-table-column prop="provide" label="来源" align="center">
           <template #default="scope">

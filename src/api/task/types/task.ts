@@ -21,6 +21,7 @@ export interface task {
   id: number
   order_id: number
   codebook_uid: string
+  codebook_name: string
   status: number
   result: string
   code: string
