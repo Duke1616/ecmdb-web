@@ -122,6 +122,7 @@ const handleDelete = (row: codebook) => {
     })
   })
 }
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listCodebooksData, { immediate: true })
 </script>

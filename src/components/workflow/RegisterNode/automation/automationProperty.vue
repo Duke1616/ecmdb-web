@@ -22,8 +22,8 @@
             >
               <el-option
                 v-for="item in runnerTagsData"
-                :key="item.codebook_uid + item.codebook_name"
-                :label="item.codebook_uid"
+                :key="item.codebook_uid"
+                :label="item.codebook_name"
                 :value="item.codebook_uid"
               />
             </el-select>
