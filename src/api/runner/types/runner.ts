@@ -39,6 +39,7 @@ export interface listRunnerReq {
 }
 
 export interface runnerTags {
+  codebook_name: string
   codebook_uid: string
   tags: string[]
 }

@@ -14,9 +14,8 @@
       <div class="table-wrapper">
         <el-table :data="codebooksData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
-          <el-table-column prop="identifier" label="唯一标识" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="identifier" label="唯一标识" align="center" />
           <el-table-column prop="secret" label="密钥" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">

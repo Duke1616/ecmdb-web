@@ -22,7 +22,7 @@
             >
               <el-option
                 v-for="item in runnerTagsData"
-                :key="item.codebook_uid"
+                :key="item.codebook_uid + item.codebook_name"
                 :label="item.codebook_uid"
                 :value="item.codebook_uid"
               />
@@ -121,7 +121,6 @@ const confirmFunc = () => {
 const runnerTagsData = ref<runnerTags[]>([])
 const tags = ref<string[]>([])
 const handlerChangeCodebook = () => {
-  console.log(propertyForm.codebook_uid)
   runnerTagsData.value.forEach((item) => {
     if (item.codebook_uid == propertyForm.codebook_uid) {
       const uniqueTags = new Set(item.tags)
