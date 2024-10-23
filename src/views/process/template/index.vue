@@ -3,8 +3,8 @@
     <el-card shadow="never">
       <div class="toolbar-wrapper">
         <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增模版</el-button>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreateGroup">新增分组</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="handleCreateTemplate">新增模版</el-button>
+          <el-button type="primary" :icon="CirclePlus" @click="groupDialogVisible = true">新增分组</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
@@ -15,8 +15,8 @@
       <div class="table-wrapper">
         <el-table :data="templatesData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="group_id" label="所属组" align="center" />
           <el-table-column prop="create_type" label="来源" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统自建</el-tag>
@@ -63,37 +63,60 @@
         />
       </div>
     </el-card>
-    <!-- 新增 OR 修改模版 -->
-    <Template
-      :create-dialog-visible="createDialogVisible"
-      :update-dialog-visible="updateDialogVisible"
-      :templateData="updateTemplateData"
-      @close="onClosed"
-      @list-templates="listTemplatesData"
-    />
+    <!-- 新增 或 修改模版 -->
+    <el-drawer
+      class="add-drawer"
+      v-model="templateDialogDrawer"
+      :title="templateTitle"
+      direction="ttb"
+      size="100%"
+      @closed="onClosedTemplate"
+    >
+      <Template ref="tRef" @closed="onClosedTemplate" @list-templates="listTemplatesData" />
+    </el-drawer>
 
     <!-- 新增分组 -->
-    <Group :create-dialog-visible="groupDialogVisible" @close="onClosed" />
+    <el-dialog v-model="groupDialogVisible" :title="'新增模版分组'" width="30%">
+      <TemplateGroup ref="tgRef" @closed="onClosedThirdParty" />
+      <template #footer>
+        <el-button @click="onClosedTemplateGroup">取消</el-button>
+        <el-button type="primary" @click="handlerCreateTemplateGroup">确认</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 第三方流程绑定、如对接企业微信 OR 飞书 -->
+    <el-dialog v-model="thirdpartyDialogVisible" :title="'绑定第三方流程'" width="35%">
+      <thirdParty ref="thirdRef" @closed="onClosedThirdParty" />
+      <template #footer>
+        <el-button @click="onClosedThirdParty">取消</el-button>
+        <el-button type="primary" @click="handlerCreateThirdParty">确认</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch } from "vue"
+import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { template } from "@/api/template/types/template"
 import { deleteTemplateApi, listTemplateApi } from "@/api/template"
 import Template from "./template.vue"
-import Group from "./group.vue"
+import TemplateGroup from "./group.vue"
+import thirdParty from "./thirdparty.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const createDialogVisible = ref<boolean>(false)
-const updateDialogVisible = ref<boolean>(false)
-const updateTemplateData = ref<template>()
-
+const templateDialogDrawer = ref<boolean>(false)
 const groupDialogVisible = ref<boolean>(false)
+const thirdpartyDialogVisible = ref<boolean>(false)
+
+const tRef = ref<InstanceType<typeof Template>>()
+const tgRef = ref<InstanceType<typeof TemplateGroup>>()
+const thirdRef = ref<InstanceType<typeof thirdParty>>()
+
+const templateTitle = ref<string>("创建模版")
 
 /** 查询模版列表 */
 const templatesData = ref<template[]>([])
@@ -112,29 +135,48 @@ const listTemplatesData = () => {
     .finally(() => {})
 }
 
-const handlerCreateGroup = () => {
-  groupDialogVisible.value = true
+const onClosedThirdParty = () => {
+  thirdpartyDialogVisible.value = false
+  thirdRef.value?.resetForm()
 }
 
-const onClosed = () => {
-  createDialogVisible.value = false
-  updateDialogVisible.value = false
+const onClosedTemplateGroup = () => {
+  tgRef.value?.resetForm()
   groupDialogVisible.value = false
 }
 
-const handlerCreate = () => {
-  createDialogVisible.value = true
+const onClosedTemplate = () => {
+  tRef.value?.resetForm()
+  templateDialogDrawer.value = false
+}
+
+const handlerCreateTemplateGroup = () => {
+  tgRef.value?.handlerCreate()
 }
 
 const handleUpdate = (row: template) => {
-  updateTemplateData.value = row
-  updateDialogVisible.value = true
+  templateDialogDrawer.value = true
+  templateTitle.value = "修改模版"
+
+  nextTick(() => {
+    tRef.value?.setForm(row)
+  })
 }
 
+const handleCreateTemplate = () => {
+  templateDialogDrawer.value = true
+  templateTitle.value = "创建模版"
+}
 const handlerSync = (row: template) => {
-  updateDialogVisible.value = true
-  updateTemplateData.value = row
-  console.log(row)
+  thirdpartyDialogVisible.value = true
+
+  nextTick(() => {
+    thirdRef.value?.setForm(row)
+  })
+}
+
+const handlerCreateThirdParty = () => {
+  thirdRef.value?.handleCreate()
 }
 
 const handleDelete = (row: template) => {
@@ -169,6 +211,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTem
 
 .table-wrapper {
   margin-bottom: 20px;
+}
+
+.add-drawer {
+  .el-drawer__header {
+    margin: 0;
+  }
 }
 
 .pager-wrapper {
