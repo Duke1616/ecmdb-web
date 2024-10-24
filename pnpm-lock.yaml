@@ -4,11 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-patchedDependencies:
-  '@form-create/designer@3.2.1':
-    hash: wweex2efzoxzlrt5puweapzbya
-    path: patches/@form-create__designer@3.2.1.patch
-
 importers:
 
   .:
@@ -32,8 +27,8 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1(vue@3.4.25(typescript@5.4.5))
       '@form-create/designer':
-        specifier: ^3.2.1
-        version: 3.2.1(patch_hash=wweex2efzoxzlrt5puweapzbya)(vue@3.4.25(typescript@5.4.5))
+        specifier: ^3.2.8
+        version: 3.2.8(vue@3.4.25(typescript@5.4.5))
       '@form-create/element-ui':
         specifier: ^3.1.33
         version: 3.1.33(vue@3.4.25(typescript@5.4.5))
@@ -685,8 +680,10 @@ packages:
     peerDependencies:
       vue: ^3.1.0
 
-  '@form-create/designer@3.2.1':
-    resolution: {integrity: sha512-OxP/2178o9p2SndfRvtFNM6anCUEzUGxZuSR2u5m5IadUdkQ/QIn9bidRnKP7hkWQPLiqj+on2Y/Hb1KQzf0QQ==}
+  '@form-create/designer@3.2.8':
+    resolution: {integrity: sha512-SgrGiWOFaQTARAmysepHDtFyRi97rERrlkv1joz+DCOAzZME3RKRTXVqA7ALzJ2jI3psiCosGAK4rPSLh6EvgA==}
+    peerDependencies:
+      vue: ^3.1.5
 
   '@form-create/element-ui@3.1.33':
     resolution: {integrity: sha512-d3lTcciWxjfPqBZ5KKGmtfVAojKX7t6RcLtpjfDGU8ythglmoZ9LwMOrqLDWHv6YdmtazKdANUxqHcnXj8cj1g==}
@@ -695,6 +692,9 @@ packages:
 
   '@form-create/utils@3.1.30':
     resolution: {integrity: sha512-xgYvAEz/3qgXzI0FPQJ/C4MbvzSuRyYFzyg0TZwJtWIl+7jpbjDmuhKLCM5KFMXeHvoSJzSk/v1jlL7ieFhZOg==}
+
+  '@form-create/utils@3.2.0':
+    resolution: {integrity: sha512-fqc7/l+US76NhloxMF3xE7UafYgxA8jU+t5WrAhmjaIAJ0vUNp6ScL/kdwN4nfOvjByZ/Q8BFQT0wqrp4lcgtw==}
 
   '@humanwhocodes/config-array@0.11.14':
     resolution: {integrity: sha512-3T8LkOmg45BV5FICb15QQMsyUSWrQ8AygVfC7ZG32zOalnqrilm018ZVCw0eapXux8FtA33q8PSRSstjee3jSg==}
@@ -1441,6 +1441,10 @@ packages:
   codemirror@6.0.1:
     resolution: {integrity: sha512-J8j+nZ+CdWmIeFIGXEFbFPtpiYacFMDR8GlHK3IyHQJMCaVRfGx9NT+Hxivv1ckLWPvNdZqndbr/7lVhrf/Svg==}
 
+  codemirror@6.65.7:
+    resolution: {integrity: sha512-HcfnUFJwI2FvH73YWVbbMh7ObWxZiHIycEhv9ZEXy6e8ZKDjtZKbbYFUtsLN46HFXPvU5V2Uvc2d55Z//oFW5A==}
+    deprecated: This is an accidentally mis-tagged instance of 5.65.7
+
   collection-visit@1.0.0:
     resolution: {integrity: sha512-lNkKvzEeMBBjUGHZ+q6z9pSJla0KWAQPvtzhEV9+iGyQYG+pBpl7xKDhxoNSOZH2hhv0v5k0y2yAM4o4SjoSkw==}
     engines: {node: '>=0.10.0'}
@@ -1686,6 +1690,11 @@ packages:
 
   element-plus@2.7.5:
     resolution: {integrity: sha512-e4oqhfRGBpdblgsjEBK+tA2+fg1H1KZ2Qinty1SaJl0X49FrMLK0lpXQNheWyBqI4V/pyjVOF9sRjz2hfyoctw==}
+    peerDependencies:
+      vue: ^3.2.0
+
+  element-plus@2.8.6:
+    resolution: {integrity: sha512-fk5jB8V3efM02/4roZ5SWOLArgaYXbxEydZLlXSr+KPAwjNyHBlk2+HO5em8YKo5+RLBoHnn6BaThj6IE4nXoQ==}
     peerDependencies:
       vue: ^3.2.0
 
@@ -3993,14 +4002,17 @@ snapshots:
       '@form-create/utils': 3.1.30
       vue: 3.4.25(typescript@5.4.5)
 
-  '@form-create/designer@3.2.1(patch_hash=wweex2efzoxzlrt5puweapzbya)(vue@3.4.25(typescript@5.4.5))':
+  '@form-create/designer@3.2.8(vue@3.4.25(typescript@5.4.5))':
     dependencies:
       '@form-create/component-wangeditor': 3.1.20
       '@form-create/element-ui': 3.1.33(vue@3.4.25(typescript@5.4.5))
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.0
+      codemirror: 6.65.7
+      element-plus: 2.8.6(vue@3.4.25(typescript@5.4.5))
+      vue: 3.4.25(typescript@5.4.5)
       vuedraggable: 4.1.0(vue@3.4.25(typescript@5.4.5))
     transitivePeerDependencies:
-      - vue
+      - '@vue/composition-api'
 
   '@form-create/element-ui@3.1.33(vue@3.4.25(typescript@5.4.5))':
     dependencies:
@@ -4017,6 +4029,8 @@ snapshots:
       vue: 3.4.25(typescript@5.4.5)
 
   '@form-create/utils@3.1.30': {}
+
+  '@form-create/utils@3.2.0': {}
 
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
@@ -4923,6 +4937,8 @@ snapshots:
     transitivePeerDependencies:
       - '@lezer/common'
 
+  codemirror@6.65.7: {}
+
   collection-visit@1.0.0:
     dependencies:
       map-visit: 1.0.0
@@ -5172,6 +5188,27 @@ snapshots:
   electron-to-chromium@1.4.751: {}
 
   element-plus@2.7.5(vue@3.4.25(typescript@5.4.5)):
+    dependencies:
+      '@ctrl/tinycolor': 3.6.1
+      '@element-plus/icons-vue': 2.3.1(vue@3.4.25(typescript@5.4.5))
+      '@floating-ui/dom': 1.6.4
+      '@popperjs/core': '@sxzz/popperjs-es@2.11.7'
+      '@types/lodash': 4.17.0
+      '@types/lodash-es': 4.17.12
+      '@vueuse/core': 9.13.0(vue@3.4.25(typescript@5.4.5))
+      async-validator: 4.2.5
+      dayjs: 1.11.11
+      escape-html: 1.0.3
+      lodash: 4.17.21
+      lodash-es: 4.17.21
+      lodash-unified: 1.0.3(@types/lodash-es@4.17.12)(lodash-es@4.17.21)(lodash@4.17.21)
+      memoize-one: 6.0.0
+      normalize-wheel-es: 1.2.0
+      vue: 3.4.25(typescript@5.4.5)
+    transitivePeerDependencies:
+      - '@vue/composition-api'
+
+  element-plus@2.8.6(vue@3.4.25(typescript@5.4.5)):
     dependencies:
       '@ctrl/tinycolor': 3.6.1
       '@element-plus/icons-vue': 2.3.1(vue@3.4.25(typescript@5.4.5))

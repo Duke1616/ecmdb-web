@@ -1,33 +1,24 @@
 <template>
   <div class="app-container">
-    <el-dialog v-model="dialogVisible" :title="'新建工单'" @closed="resetForm" width="35%">
-      <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
-    </el-dialog>
+    <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { detailTemplateApi } from "@/api/template"
 import formCreate from "@form-create/element-ui"
-import { ref, watch } from "vue"
+import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage } from "element-plus"
 import { createOrderApi } from "@/api/order"
 import { createOrderReq } from "@/api/order/types/order"
+import { template } from "@/api/template/types/template"
 
-interface Props {
-  templateId: number | undefined
-  isVisible: boolean
+const emits = defineEmits(["closed"])
+const onClosed = () => {
+  emits("closed")
 }
 
-const props = defineProps<Props>()
-const emits = defineEmits(["close"])
-const dialogVisible = ref<boolean>(false)
-const resetForm = () => {
-  dialogVisible.value = false
-  emits("close")
-}
-//获取 formCreate 组件
 const FormCreate = formCreate.$form()
 const fApi = ref({})
 
@@ -41,48 +32,55 @@ const DEFAULT_FORM_DATA: createOrderReq = {
 const formData = ref<createOrderReq>(cloneDeep(DEFAULT_FORM_DATA))
 
 const data = ref()
+const rule = ref()
 const options = ref({
   //表单提交事件
   onSubmit: function () {}
 })
 
-const rule = ref()
 const handleDetail = (id: number) => {
   detailTemplateApi(id)
     .then((res) => {
-      options.value = res.data.options
-      rule.value = res.data.rules
-      options.value.onSubmit = function () {
-        formData.value.data = data.value
-        formData.value.template_name = res.data.name
-        formData.value.template_id = res.data.id
-        formData.value.workflow_id = res.data.workflow_id
-        console.log(formData.value)
-        createOrderApi(formData.value)
-          .then(() => {
-            resetForm()
-            ElMessage.success("保存成功")
-          })
-          .catch((error) => {
-            console.log("catch", error)
-          })
-          .finally(() => {})
-      }
+      const resData = res.data
+      // 使用解构赋值
+      options.value = { ...resData.options }
+      rule.value = resData.rules
+
+      // 将 onSubmit 函数绑定到闭包函数
+      options.value.onSubmit = handleSubmit(resData)
     })
     .catch((error) => {
       console.log("catch", error)
     })
-    .finally(() => {})
 }
 
-watch(
-  () => props.isVisible,
-  (val) => {
-    dialogVisible.value = val
-    if (props.templateId) {
-      handleDetail(props.templateId)
+const handleSubmit = (resData: template) => {
+  return () => {
+    // 封装提交数据的逻辑
+    formData.value = {
+      data: data.value,
+      template_name: resData.name,
+      template_id: resData.id,
+      workflow_id: resData.workflow_id
     }
-  },
-  { immediate: true }
-)
+
+    createOrderApi(formData.value)
+      .then(() => {
+        onClosed()
+        ElMessage.success("保存成功")
+      })
+      .catch((error) => {
+        console.log("catch", error)
+      })
+  }
+}
+
+const resetForm = () => {
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+defineExpose({
+  handleDetail,
+  resetForm
+})
 </script>

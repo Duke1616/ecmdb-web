@@ -27,20 +27,22 @@
       </div>
     </div>
     <!-- 创建工单，模版展示 -->
-    <Detail :template-id="templateId" :is-visible="isVisible" @close="onClosed" />
+    <el-dialog v-model="dialogVisible" :title="'新建工单'" @closed="onClosed" width="35%">
+      <Detail ref="detailRef" @closed="onClosed" />
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { pipelineGroupApi } from "@/api/template"
 import { templateCombination } from "@/api/template/types/template"
-import { onMounted, ref } from "vue"
+import { onMounted, ref, nextTick } from "vue"
 import Detail from "./detail.vue"
+
+const detailRef = ref<InstanceType<typeof Detail>>()
+const dialogVisible = ref<boolean>(false)
+
 const empty = ref<boolean>(false)
-
-const templateId = ref<number>()
-const isVisible = ref<boolean>(false)
-
 /** 查询流程列表 */
 const templateCombinations = ref<templateCombination[]>([])
 const listTemplateCombinations = () => {
@@ -58,8 +60,8 @@ const listTemplateCombinations = () => {
 }
 
 const onClosed = () => {
-  isVisible.value = false
-  templateId.value = 0
+  dialogVisible.value = false
+  detailRef.value?.resetForm()
 }
 
 onMounted(() => {
@@ -67,8 +69,10 @@ onMounted(() => {
 })
 
 const handlerStart = (id: number) => {
-  templateId.value = id
-  isVisible.value = !isVisible.value
+  dialogVisible.value = true
+  nextTick(() => {
+    detailRef.value?.handleDetail(id)
+  })
 }
 </script>
 
