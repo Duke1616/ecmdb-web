@@ -16,6 +16,7 @@ export function systemLoginApi(data: Login.LoginRequestData) {
       if (response.headers && response.headers["x-access-token"]) {
         response.data.access_token = response.headers["x-access-token"]
         response.data.refresh_token = response.headers["x-refresh-token"]
+        response.data.username = data.username
       }
 
       return response
@@ -33,6 +34,7 @@ export function ldapLoginApi(data: Login.LoginRequestData) {
       if (response.headers && response.headers["x-access-token"]) {
         response.data.access_token = response.headers["x-access-token"]
         response.data.refresh_token = response.headers["x-refresh-token"]
+        response.data.username = data.username
       }
 
       return response

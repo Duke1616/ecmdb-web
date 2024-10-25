@@ -36,6 +36,7 @@ export const useUserStore = defineStore("user", () => {
   const loginSetToken = (data: LoginResponseData) => {
     localCache.setCache("access_token", data.access_token)
     localCache.setCache("refresh_token", data.refresh_token)
+    localCache.setCache("username", data.username)
 
     setToken(data?.access_token)
     token.value = data.access_token

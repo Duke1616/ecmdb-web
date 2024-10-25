@@ -57,4 +57,9 @@ export const getCachedViews = () => {
 export const setCachedViews = (views: string[]) => {
   localStorage.setItem(CacheKey.CACHED_VIEWS, JSON.stringify(views))
 }
+
+export const setUsername = (username: string) => {
+  localStorage.setItem("username", username)
+}
+
 //#endregion

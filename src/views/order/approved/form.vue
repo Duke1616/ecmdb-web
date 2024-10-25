@@ -45,12 +45,12 @@
 
 <script setup lang="ts">
 import { detailTemplateApi } from "@/api/template"
-import formCreate from "@form-create/element-ui"
+import formCreate, { FormRule } from "@form-create/element-ui"
 import { ref, watch } from "vue"
 import { getOrderByProcessInstIdApi, passOrderApi, rejectOrderApi, revokeOrderApi } from "@/api/order"
 import { passOrder } from "@/api/order/types/order"
 import { cloneDeep } from "lodash-es"
-import { FormInstance } from "element-plus"
+import { FormInstance, Options } from "element-plus"
 
 interface Props {
   templateId: number | undefined
@@ -66,10 +66,8 @@ const emits = defineEmits(["close", "refresh-data"])
 const FormCreate = formCreate.$form()
 const fApi = ref({})
 const data = ref()
-const options = ref({
-  //表单提交事件
-  submitBtn: false
-})
+const rule = ref<FormRule[]>()
+const options = ref<FormRule>()
 
 const DEFAULT_FORM_DATA: passOrder = {
   task_id: 0,
@@ -78,14 +76,14 @@ const DEFAULT_FORM_DATA: passOrder = {
 const formData = ref<passOrder>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 
-const rule = ref()
 const handleDetail = (id: number, processInstId: number) => {
   detailTemplateApi(id)
     .then((res) => {
       // 工单模版
-      options.value = res.data.options
-      rule.value = res.data.rules
+      options.value = formCreate.parseJson(res.data.options) as unknown as Options
       options.value.submitBtn = false
+      rule.value = formCreate.parseJson(res.data.rules)
+
       // 获取工单数据
       handleGetOrderData(processInstId)
     })

@@ -4,6 +4,7 @@ export interface LoginRequestData {
 }
 
 export type LoginResponseData = {
+  username: string
   access_token: string
   refresh_token: string
 }
