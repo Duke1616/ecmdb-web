@@ -42,6 +42,22 @@
           </el-form-item>
         </el-col>
       </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="开启通知" prop="codebook_uid">
+            <el-select v-model="propertyForm.is_notify" placeholder="是否开启消息通知">
+              <el-option v-for="item in is_notify" :key="item.label" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="发送方式" prop="tag">
+            <el-select v-model="propertyForm.notify_method" placeholder="消息通知方式">
+              <el-option v-for="item in notify_method" :key="item.label" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
     <div class="mt15" v-if="flowDetail.status != '2'">
       <el-button @click="cancelFunc"> 取消 </el-button>
@@ -73,11 +89,34 @@ const emits = defineEmits(["closed"])
 const DEFAULT_FORM_DATA = reactive({
   name: "自动化-",
   codebook_uid: "",
+  is_notify: false,
+  notify_method: 1,
   tag: ""
 })
 
-const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
+const is_notify = [
+  {
+    value: true,
+    label: "开启"
+  },
+  {
+    value: false,
+    label: "关闭"
+  }
+]
 
+const notify_method = [
+  {
+    value: 1,
+    label: "工单结束后合并发送"
+  },
+  {
+    value: 2,
+    label: "当前节点完成立即发送"
+  }
+]
+
+const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [
@@ -97,15 +136,6 @@ const formRules: FormRules = {
       trigger: "blur"
     }
   ]
-}
-
-//更新节点属性
-const setProperties = () => {
-  props.lf?.setProperties(props.nodeData?.id, {
-    name: propertyForm.name,
-    codebook_uid: propertyForm.codebook_uid,
-    tag: propertyForm.tag
-  })
 }
 
 //确定
@@ -144,10 +174,23 @@ const cancelFunc = () => {
   emits("closed")
 }
 
+//更新节点属性
+const setProperties = () => {
+  props.lf?.setProperties(props.nodeData?.id, {
+    name: propertyForm.name,
+    codebook_uid: propertyForm.codebook_uid,
+    is_notify: propertyForm.is_notify,
+    notify_method: propertyForm.notify_method,
+    tag: propertyForm.tag
+  })
+}
+
 onMounted(() => {
   listRunnerTags()
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
+  propertyForm.is_notify = props.nodeData?.properties.is_notify
+  propertyForm.notify_method = props.nodeData?.properties.notify_method
   propertyForm.tag = props.nodeData?.properties.tag
 })
 </script>
