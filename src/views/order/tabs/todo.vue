@@ -31,7 +31,7 @@
               >处理</el-button
             >
             <el-button
-              v-if="scope.row.current_step.startsWith('自动化-') && scope.row.approved_by !== 'automation'"
+              v-if="scope.row.current_step.startsWith('自动化-') && scope.row.approved_by === 'automation'"
               type="primary"
               text
               bg
