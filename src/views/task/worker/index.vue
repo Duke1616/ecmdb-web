@@ -4,7 +4,6 @@
       <div class="table-wrapper">
         <el-table :data="workersData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
           <el-table-column prop="topic" label="Topic" align="center" />
           <el-table-column prop="status" label="状态" align="center">
@@ -15,6 +14,7 @@
               <el-tag v-else type="info" effect="plain">未知类型</el-tag>
             </template>
           </el-table-column>
+          <el-table-column prop="desc" label="描述" align="center" />
           <el-table-column fixed="right" label="操作" width="150" align="center">
             <template #default="scope">
               <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">禁用</el-button>

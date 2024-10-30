@@ -76,3 +76,8 @@ export interface userDepartmentCombination {
 export interface findByUsernamesReq {
   usernames: string[]
 }
+
+export interface serachLdapUserReq {
+  username?: string
+  page_size?: number
+}

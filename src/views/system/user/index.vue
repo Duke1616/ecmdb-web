@@ -4,7 +4,7 @@
       <div class="toolbar-wrapper">
         <div>
           <el-button type="primary" :icon="CirclePlus" @click="handlerCreateUser">新增</el-button>
-          <!-- <el-button type="danger" :icon="Delete" @click="handleDelete">删除</el-button> -->
+          <el-button type="primary" :icon="User" @click="handleSyncUser">同步用户</el-button>
         </div>
         <div>
           <el-tooltip content="刷新当前页">
@@ -15,9 +15,9 @@
       <div class="table-wrapper">
         <el-table :data="usersData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="username" label="用户名称" align="center" />
           <el-table-column prop="display_name" label="显示名称" align="center" />
+          <el-table-column prop="title" label="岗位" align="center" />
           <el-table-column prop="create_type" label="创建方式" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">SYSTEM</el-tag>
@@ -64,22 +64,42 @@
         <Role ref="roleRef" :roleCodes="codes ?? []" :userId="userId" @listUsersData="listUsersData" />
       </el-dialog>
     </div>
+
+    <div>
+      <el-dialog v-model="dialogSyncUser" title="LDAP 用户列表" @closed="handlerClousedRole" width="700px">
+        <Sync
+          ref="syncRef"
+          style="max-height: 70vh; overflow-y: auto"
+          @listUsersData="listUsersData"
+          @close="onClosed"
+        />
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="dialogSyncUser = false">取消</el-button>
+            <el-button type="primary" @click="handlerSubmitUser"> 导入 </el-button>
+          </div>
+        </template>
+      </el-dialog>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue"
 import { usePagination } from "@/hooks/usePagination"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, User } from "@element-plus/icons-vue"
 import { listUsersApi } from "@/api/user"
 import Role from "./role.vue"
 import { user } from "@/api/user/types/user"
 import createOrUpdate from "./createOrUpdate.vue"
+import Sync from "./sync.vue"
 
 const roleRef = ref<InstanceType<typeof Role>>()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const dialogBindRole = ref<boolean>(false)
+const dialogSyncUser = ref<boolean>(false)
+
 const apiRef = ref<InstanceType<typeof createOrUpdate>>()
 
 const titel = ref<string>("")
@@ -89,8 +109,13 @@ const handlerClousedRole = () => {
   apiRef.value?.resetForm()
 }
 
+const handleSyncUser = () => {
+  dialogSyncUser.value = true
+}
+
 /** 查询模版列表 */
 const usersData = ref<user[]>([])
+
 const listUsersData = () => {
   listUsersApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
@@ -144,6 +169,7 @@ const handlerSubmitUser = () => {
 const onClosed = () => {
   dialogVisible.value = false
 }
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: true })
 </script>

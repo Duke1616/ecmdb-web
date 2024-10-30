@@ -14,7 +14,6 @@
       <div class="table-wrapper">
         <el-table :data="runnersData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
           <el-table-column prop="worker_name" label="工作节点" align="center" />
           <el-table-column prop="codebook_uid" label="绑定模版" align="center" />

@@ -1,4 +1,5 @@
 import type * as user from "./types/user"
+import type * as ldap from "./types/ldap"
 import instance from "@/utils/hy_service"
 
 /** 查询用户列表 */
@@ -76,5 +77,20 @@ export function findByUsernameApi(username: string) {
   return instance.post<user.user>({
     url: "user/find/username",
     data: { username: username }
+  })
+}
+
+/** 查询Ldap用户 */
+export function searchLdapUserApi(data: user.Page) {
+  return instance.post<ldap.users>({
+    url: "user/ldap/search",
+    data: data
+  })
+}
+
+/** 刷新 Cache 缓存 */
+export function refreshCacheLdapApi() {
+  return instance.post<string>({
+    url: "user/ldap/refresh_cache"
   })
 }

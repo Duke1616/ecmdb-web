@@ -14,8 +14,21 @@
       <div class="table-wrapper">
         <el-table :data="flowsData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
+          <el-table-column prop="owner" label="创建人" align="center" />
+          <el-table-column prop="is_notify" label="消息通知" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.is_notify === true" effect="plain" type="primary">开启</el-tag>
+              <el-tag v-else type="warning" effect="plain">关闭</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="notify_method" label="发送媒介" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.notify_method === 1" effect="plain" type="primary">飞书</el-tag>
+              <el-tag v-else-if="scope.row.notify_method === 2" effect="plain" type="primary">微信</el-tag>
+              <el-tag v-else type="info" effect="plain">暂未开启</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column prop="desc" label="描述" align="center" />
           <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
