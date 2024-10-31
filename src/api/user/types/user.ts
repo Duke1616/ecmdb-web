@@ -78,6 +78,7 @@ export interface findByUsernamesReq {
 }
 
 export interface serachLdapUserReq {
-  username?: string
-  page_size?: number
+  keywords?: string
+  offset: number
+  limit: number
 }

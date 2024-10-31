@@ -7,6 +7,7 @@
         size="default"
         placeholder="输入用户名称进行搜索"
         :suffix-icon="Search"
+        @input="debouncedSearch"
         style="width: 200px"
       />
     </div>
@@ -58,6 +59,7 @@ import { refreshCacheLdapApi, searchLdapUserApi } from "@/api/user"
 import { Search } from "@element-plus/icons-vue"
 import { user } from "@/api/user/types/ldap"
 import { usePagination } from "@/hooks/usePagination"
+import { debounce } from "lodash-es"
 
 const init = {
   total: 0,
@@ -72,6 +74,7 @@ const filterInput = ref<string>("")
 const usersData = ref<user[]>([])
 const searchLdapUser = () => {
   searchLdapUserApi({
+    keywords: filterInput.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
@@ -105,6 +108,11 @@ const refreshCacheLdap = () => {
 const handleSync = (row: user) => {
   console.log(row)
 }
+
+const debouncedSearch = debounce(() => {
+  paginationData.currentPage = 1
+  searchLdapUser()
+}, 388)
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], searchLdapUser, { immediate: true })

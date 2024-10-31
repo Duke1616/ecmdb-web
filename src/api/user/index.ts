@@ -81,7 +81,7 @@ export function findByUsernameApi(username: string) {
 }
 
 /** 查询Ldap用户 */
-export function searchLdapUserApi(data: user.Page) {
+export function searchLdapUserApi(data: user.serachLdapUserReq) {
   return instance.post<ldap.users>({
     url: "user/ldap/search",
     data: data
