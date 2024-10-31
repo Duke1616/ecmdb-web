@@ -4,7 +4,6 @@
       <div class="table-wrapper">
         <el-table :data="tasksData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="order_id" label="工单号" align="center" />
           <el-table-column prop="codebook_name" label="任务模版" align="center" />
           <el-table-column prop="worker_name" label="工作节点" align="center" />

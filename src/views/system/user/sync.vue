@@ -33,22 +33,31 @@
         </el-table-column>
         <el-table-column fixed="right" label="操作" width="100" align="center">
           <template #default="scope">
-            <el-button type="primary" plain text bg size="small" @click="handleSync(scope.row)">补充信息</el-button>
+            <el-button type="primary" plain text bg size="small" @click="handlerSyncLdapUser(scope.row)"
+              >导入</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
     </div>
-    <div class="pager-wrapper">
-      <el-pagination
-        background
-        :layout="paginationData.layout"
-        :page-sizes="paginationData.pageSizes"
-        :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :currentPage="paginationData.currentPage"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
+    <div class="footer">
+      <div class="pager-wrapper">
+        <el-pagination
+          background
+          :layout="paginationData.layout"
+          :page-sizes="paginationData.pageSizes"
+          :total="paginationData.total"
+          :page-size="paginationData.pageSize"
+          :currentPage="paginationData.currentPage"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+
+      <div class="button">
+        <el-button @click="onClosed">取消</el-button>
+        <el-button type="primary" @click="handlerBatchSyncLdapUser"> 导入 </el-button>
+      </div>
     </div>
   </div>
 </template>
@@ -60,15 +69,18 @@ import { Search } from "@element-plus/icons-vue"
 import { user } from "@/api/user/types/ldap"
 import { usePagination } from "@/hooks/usePagination"
 import { debounce } from "lodash-es"
+import { ElMessage } from "element-plus"
 
 const init = {
   total: 0,
   currentPage: 1,
   pageSizes: [10, 20, 50],
-  pageSize: 6,
+  pageSize: 8,
   layout: "total, prev, pager, next"
 }
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
+
+const emits = defineEmits(["closed", "listUsersData"])
 
 const filterInput = ref<string>("")
 const usersData = ref<user[]>([])
@@ -90,14 +102,14 @@ const searchLdapUser = () => {
 
 const refreshCacheLdap = () => {
   refreshCacheLdapApi()
-    .then(({ data }) => {
-      console.log("data", data)
-
+    .then(() => {
       if (paginationData.currentPage === 1) {
         searchLdapUser()
       } else {
         paginationData.currentPage = 1
       }
+
+      ElMessage.success("刷新缓存成功")
     })
     .catch(() => {
       usersData.value = []
@@ -105,8 +117,14 @@ const refreshCacheLdap = () => {
     .finally(() => {})
 }
 
-const handleSync = (row: user) => {
+const handlerSyncLdapUser = (row: user) => {
   console.log(row)
+}
+
+const handlerBatchSyncLdapUser = () => {}
+
+const onClosed = () => {
+  emits("closed", false)
 }
 
 const debouncedSearch = debounce(() => {
@@ -134,6 +152,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], searchL
 }
 
 .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.footer {
   display: flex;
   justify-content: space-between;
   align-items: center;

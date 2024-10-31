@@ -43,7 +43,7 @@ import { listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
 
 // 接收父组建传递
-const emits = defineEmits(["close", "listUsersData"])
+const emits = defineEmits(["closed", "listUsersData"])
 
 const FeishuInfo: feishuInfo = {
   user_id: 0
@@ -80,7 +80,7 @@ const submitForm = () => {
       .then(() => {
         ElMessage.success("保存成功")
         emits("listUsersData")
-        emits("close")
+        emits("closed")
       })
       .catch((error) => {
         console.log("catch", error)

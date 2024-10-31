@@ -49,8 +49,8 @@
       </div>
     </el-card>
     <div>
-      <el-dialog v-model="dialogVisible" :title="titel" @closed="handlerClousedRole" width="500px">
-        <createOrUpdate ref="apiRef" @listUsersData="listUsersData" @close="onClosed" />
+      <el-dialog v-model="dialogVisible" :title="titel" width="500px">
+        <createOrUpdate ref="apiRef" @closed="onClosed" @listUsersData="listUsersData" />
         <template #footer>
           <div class="dialog-footer">
             <el-button @click="dialogVisible = false">取消</el-button>
@@ -60,25 +60,25 @@
       </el-dialog>
     </div>
     <div>
-      <el-dialog v-model="dialogBindRole" title="分配角色" @closed="handlerClousedRole" width="1000px">
-        <Role ref="roleRef" :roleCodes="codes ?? []" :userId="userId" @listUsersData="listUsersData" />
+      <el-dialog v-model="dialogBindRole" title="分配角色" width="1000px">
+        <Role
+          ref="roleRef"
+          @closed="handlerClousedRole"
+          :roleCodes="codes ?? []"
+          :userId="userId"
+          @listUsersData="listUsersData"
+        />
       </el-dialog>
     </div>
 
     <div>
-      <el-dialog v-model="dialogSyncUser" title="LDAP 用户列表" @closed="handlerClousedRole" width="700px">
+      <el-dialog v-model="dialogSyncUser" title="LDAP 用户列表" width="700px">
         <Sync
           ref="syncRef"
+          @closed="onClosedSyncUser"
           style="max-height: 70vh; overflow-y: auto"
           @listUsersData="listUsersData"
-          @close="onClosed"
         />
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="dialogSyncUser = false">取消</el-button>
-            <el-button type="primary" @click="handlerSubmitUser"> 导入 </el-button>
-          </div>
-        </template>
       </el-dialog>
     </div>
   </div>
@@ -111,6 +111,10 @@ const handlerClousedRole = () => {
 
 const handleSyncUser = () => {
   dialogSyncUser.value = true
+}
+
+const onClosedSyncUser = () => {
+  dialogSyncUser.value = false
 }
 
 /** 查询模版列表 */
