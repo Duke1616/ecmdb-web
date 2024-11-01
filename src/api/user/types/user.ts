@@ -35,7 +35,7 @@ export interface listUserByDepartmentReq {
 }
 
 export interface user {
-  id?: number
+  id: number
   username: string
   title: string
   email: string
