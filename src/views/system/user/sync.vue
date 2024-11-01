@@ -55,21 +55,32 @@
       </div>
 
       <div class="button">
-        <el-button @click="onClosed">取消</el-button>
+        <el-button @click="onClosedSync">取消</el-button>
         <el-button type="primary" @click="handlerBatchSyncLdapUser"> 导入 </el-button>
       </div>
     </div>
+
+    <el-dialog v-model="dialogVisible" :before-close="onClosedImportUser" title="导入用户" width="500px">
+      <createOrUpdate ref="apiRef" @closed="onClosedImportUser" @callback="callback" />
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlerImportUser"> 确定 </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch } from "vue"
+import { ref, watch, nextTick } from "vue"
 import { refreshCacheLdapApi, searchLdapUserApi } from "@/api/user"
 import { Search } from "@element-plus/icons-vue"
 import { user } from "@/api/user/types/ldap"
 import { usePagination } from "@/hooks/usePagination"
 import { debounce } from "lodash-es"
 import { ElMessage } from "element-plus"
+import createOrUpdate from "./createOrUpdate.vue"
 
 const init = {
   total: 0,
@@ -79,9 +90,10 @@ const init = {
   layout: "total, prev, pager, next"
 }
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
+const dialogVisible = ref<boolean>(false)
+const apiRef = ref<InstanceType<typeof createOrUpdate>>()
 
 const emits = defineEmits(["closed", "listUsersData"])
-
 const filterInput = ref<string>("")
 const usersData = ref<user[]>([])
 const searchLdapUser = () => {
@@ -98,6 +110,21 @@ const searchLdapUser = () => {
       usersData.value = []
     })
     .finally(() => {})
+}
+
+const callback = () => {
+  searchLdapUser()
+  emits("listUsersData")
+}
+
+// 关闭导入用户页面
+const onClosedImportUser = () => {
+  dialogVisible.value = false
+}
+
+// 关闭用户列表
+const onClosedSync = () => {
+  emits("closed")
 }
 
 const refreshCacheLdap = () => {
@@ -118,13 +145,24 @@ const refreshCacheLdap = () => {
 }
 
 const handlerSyncLdapUser = (row: user) => {
-  console.log(row)
+  if (row.is_system_exist === true) {
+    ElMessage.warning("该用户已存在, 无需导入")
+    return
+  }
+
+  dialogVisible.value = true
+
+  nextTick(() => {
+    apiRef.value?.setSyncForm(row)
+  })
 }
 
-const handlerBatchSyncLdapUser = () => {}
+const handlerImportUser = () => {
+  apiRef.value?.submitForm()
+}
 
-const onClosed = () => {
-  emits("closed", false)
+const handlerBatchSyncLdapUser = () => {
+  ElMessage.warning("暂不支持批量导入功能")
 }
 
 const debouncedSearch = debounce(() => {

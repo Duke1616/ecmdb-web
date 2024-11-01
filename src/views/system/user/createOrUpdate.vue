@@ -38,20 +38,19 @@ import { onMounted, ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { createOrUpdateUserReq, feishuInfo, user, wechatInfo } from "@/api/user/types/user"
-import { createUserApi, updateUserApi } from "@/api/user"
+import { updateUserApi, syncLdapUserApi } from "@/api/user"
 import { listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
+import { user as syncUser } from "@/api/user/types/ldap"
 
 // 接收父组建传递
-const emits = defineEmits(["closed", "listUsersData"])
-
-const FeishuInfo: feishuInfo = {
-  user_id: 0
+const emits = defineEmits(["closed", "callback"])
+const onClosed = () => {
+  emits("closed")
 }
 
-const WechatInfo: wechatInfo = {
-  user_id: 0
-}
+const FeishuInfo: feishuInfo = {}
+const WechatInfo: wechatInfo = {}
 const DEFAULT_FORM_DATA: createOrUpdateUserReq = {
   username: "",
   display_name: "",
@@ -75,12 +74,12 @@ const formRules: FormRules = {
 const submitForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    const api = formData.value.id === undefined ? createUserApi : updateUserApi
+    const api = formData.value.id === undefined ? syncLdapUserApi : updateUserApi
     api(formData.value)
       .then(() => {
+        onClosed()
         ElMessage.success("保存成功")
-        emits("listUsersData")
-        emits("closed")
+        emits("callback")
       })
       .catch((error) => {
         console.log("catch", error)
@@ -112,6 +111,14 @@ const setFrom = (row: user) => {
   })
 }
 
+const setSyncForm = (row: syncUser) => {
+  formData.value = {
+    ...cloneDeep(row),
+    feishu_info: {},
+    wechat_info: {}
+  }
+}
+
 const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }
@@ -123,6 +130,9 @@ onMounted(() => {
 defineExpose({
   submitForm,
   setFrom,
+  setSyncForm,
   resetForm
 })
 </script>
+
+<style lang="scss"></style>

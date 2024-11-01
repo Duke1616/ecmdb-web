@@ -120,6 +120,10 @@ const listTemplateCombinations = () => {
 
 const onClosed = () => {
   dialogVisible.value = false
+  reset()
+}
+
+const reset = () => {
   rule.value = []
   options.value = {}
   data.value = {}

@@ -76,7 +76,7 @@
     </el-drawer>
 
     <!-- 新增分组 -->
-    <el-dialog v-model="groupDialogVisible" :title="'新增模版分组'" width="30%">
+    <el-dialog v-model="groupDialogVisible" :before-close="onClosedThirdParty" :title="'新增模版分组'" width="30%">
       <TemplateGroup ref="tgRef" @closed="onClosedThirdParty" />
       <template #footer>
         <el-button @click="onClosedTemplateGroup">取消</el-button>
@@ -85,7 +85,12 @@
     </el-dialog>
 
     <!-- 第三方流程绑定、如对接企业微信 OR 飞书 -->
-    <el-dialog v-model="thirdpartyDialogVisible" :title="'绑定第三方流程'" width="35%">
+    <el-dialog
+      v-model="thirdpartyDialogVisible"
+      :before-close="onClosedThirdParty"
+      :title="'绑定第三方流程'"
+      width="35%"
+    >
       <thirdParty ref="thirdRef" @closed="onClosedThirdParty" />
       <template #footer>
         <el-button @click="onClosedThirdParty">取消</el-button>

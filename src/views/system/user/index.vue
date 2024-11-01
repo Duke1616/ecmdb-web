@@ -49,18 +49,18 @@
       </div>
     </el-card>
     <div>
-      <el-dialog v-model="dialogVisible" :title="titel" width="500px">
-        <createOrUpdate ref="apiRef" @closed="onClosed" @listUsersData="listUsersData" />
+      <el-dialog v-model="dialogVisible" :before-close="onClosedCreateOrUpdae" :title="titel" width="500px">
+        <createOrUpdate ref="apiRef" @closed="onClosedCreateOrUpdae" @callback="listUsersData" />
         <template #footer>
           <div class="dialog-footer">
-            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button @click="onClosedCreateOrUpdae">取消</el-button>
             <el-button type="primary" @click="handlerSubmitUser"> 保存 </el-button>
           </div>
         </template>
       </el-dialog>
     </div>
     <div>
-      <el-dialog v-model="dialogBindRole" title="分配角色" width="1000px">
+      <el-dialog v-model="dialogBindRole" title="分配角色" width="800px">
         <Role
           ref="roleRef"
           @closed="handlerClousedRole"
@@ -93,6 +93,7 @@ import Role from "./role.vue"
 import { user } from "@/api/user/types/user"
 import createOrUpdate from "./createOrUpdate.vue"
 import Sync from "./sync.vue"
+import { ElMessage } from "element-plus"
 
 const roleRef = ref<InstanceType<typeof Role>>()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -154,8 +155,7 @@ const handleBindRole = (row: user) => {
 }
 
 const handlerCreateUser = () => {
-  dialogVisible.value = true
-  titel.value = "新增用户"
+  ElMessage.warning("暂不支持外部新增用户功能")
 }
 
 const handleUpdate = (row: user) => {
@@ -170,7 +170,8 @@ const handlerSubmitUser = () => {
   apiRef.value?.submitForm()
 }
 
-const onClosed = () => {
+const onClosedCreateOrUpdae = () => {
+  apiRef.value?.resetForm()
   dialogVisible.value = false
 }
 

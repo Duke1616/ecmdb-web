@@ -4,7 +4,6 @@
       <div class="table-wrapper">
         <el-table :data="rolesData">
           <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="id" label="ID" align="center" />
           <el-table-column prop="name" label="角色名称" align="center" />
           <el-table-column prop="code" label="角色编码" align="center" />
           <el-table-column prop="desc" label="角色描述" align="center" />

@@ -94,3 +94,11 @@ export function refreshCacheLdapApi() {
     url: "user/ldap/refresh_cache"
   })
 }
+
+/** 同步 LDAP 用户 */
+export function syncLdapUserApi(data: user.createOrUpdateUserReq) {
+  return instance.post<number>({
+    url: "user/ldap/sync",
+    data: data
+  })
+}
