@@ -17,7 +17,7 @@
       <el-form-item prop="codebook_secret" label="任务模版密钥">
         <el-input disabled v-model="formData.codebook_secret" />
       </el-form-item>
-      <el-form-item prop="tags">
+      <!-- <el-form-item prop="tags">
         <template #label>
           标签
           <span class="highlight-text">（自动化任务是根据【标签】 + 【任务模版标识】进行匹配工作节点）</span>
@@ -32,9 +32,7 @@
             :show-arrow="false"
             suffix-icon=""
             tag-type="info"
-          >
-            <!-- 选项内容 -->
-          </el-select>
+          />
 
           <el-button class="select-button" :icon="Plus" @click="handlerTag" />
           <tag
@@ -44,6 +42,25 @@
             @add-tag="handlerAddTag"
           />
         </div>
+      </el-form-item> -->
+      <el-form-item prop="tags">
+        <template #label>
+          标签
+          <span class="highlight-text">（自动化任务是根据【标签】 + 【任务模版标识】进行匹配工作节点）</span>
+        </template>
+        <el-select
+          v-model="formData.tags"
+          multiple
+          filterable
+          allow-create
+          default-first-option
+          :reserve-keyword="false"
+          remote
+          placeholder=""
+          :show-arrow="false"
+          suffix-icon=""
+          tag-type="info"
+        />
       </el-form-item>
       <!-- 变量配置 -->
       <variable
@@ -63,9 +80,7 @@ import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { registerOrUpdateReq, runner, variables } from "@/api/runner/types/runner"
 import { registerRunnerApi, updateRunnerAPi } from "@/api/runner"
-import { Plus } from "@element-plus/icons-vue"
 import variable from "./variable.vue"
-import tag from "./tag.vue"
 import { codebook } from "@/api/codebook/types/codebook"
 import { worker } from "@/api/worker/types/worker"
 import { listWorkerApi } from "@/api/worker/worker"
@@ -86,18 +101,18 @@ const computedSecret = computed(() => {
   return selectedCodebook ? selectedCodebook.secret : ""
 })
 
-const dialogTagVisible = ref<boolean>(false)
-const handlerTag = () => {
-  dialogTagVisible.value = !dialogTagVisible.value
-}
-const handlerAddTag = (data: string) => {
-  formData.value.tags.push(data)
-  dialogTagVisible.value = false
-}
+// const dialogTagVisible = ref<boolean>(false)
+// const handlerTag = () => {
+//   dialogTagVisible.value = !dialogTagVisible.value
+// }
+// const handlerAddTag = (data: string) => {
+//   formData.value.tags.push(data)
+//   dialogTagVisible.value = false
+// }
 
-const handlerCloseTag = () => {
-  dialogTagVisible.value = false
-}
+// const handlerCloseTag = () => {
+//   dialogTagVisible.value = false
+// }
 
 const dialogVariable = ref(false)
 const handlerCloseVariable = () => {
