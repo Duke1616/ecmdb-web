@@ -32,7 +32,7 @@
     <el-form-item prop="desc" label="描述" style="margin-left: -30px">
       <el-input v-model="formData.desc" type="textarea" d />
     </el-form-item>
-    <fc-designer ref="designerRef" :config="config" @save="handleSave" style="height: calc(100% - 40px)" />
+    <fc-designer ref="designerRef" :config="config" @save="handleCreateOrUpdate" style="height: calc(100% - 40px)" />
   </el-form>
 </template>
 <script setup lang="ts">
@@ -47,7 +47,7 @@ import "vue3-icon-picker/dist/style.css"
 import { workflow } from "@/api/workflow/types/workflow"
 import { listWorkflowApi } from "@/api/workflow/workflow"
 
-const emits = defineEmits(["closed", "list-templates"])
+const emits = defineEmits(["closed", "callback"])
 const onClosed = () => {
   emits("closed")
 }
@@ -79,7 +79,7 @@ const config: any = {
   fieldReadonly: false
 }
 
-const handleSave = () => {
+const handleCreateOrUpdate = () => {
   // 获取表单的生成规则
   formData.value.rules = designerRef.value!.getJson()
   // 获取表单的配置
@@ -94,7 +94,7 @@ const handleSave = () => {
       .then(() => {
         onClosed()
         ElMessage.success("保存成功")
-        emits("list-templates")
+        emits("callback")
       })
       .catch((error) => {
         console.log("catch", error)

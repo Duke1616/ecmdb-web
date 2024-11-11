@@ -72,12 +72,12 @@
       size="100%"
       @closed="onClosedTemplate"
     >
-      <Template ref="tRef" @closed="onClosedTemplate" @list-templates="listTemplatesData" />
+      <Template ref="tRef" @closed="onClosedTemplate" @callback="listTemplatesData" />
     </el-drawer>
 
     <!-- 新增分组 -->
-    <el-dialog v-model="groupDialogVisible" :before-close="onClosedThirdParty" :title="'新增模版分组'" width="30%">
-      <TemplateGroup ref="tgRef" @closed="onClosedThirdParty" />
+    <el-dialog v-model="groupDialogVisible" :before-close="onClosedTemplateGroup" :title="'新增模版分组'" width="30%">
+      <TemplateGroup ref="tgRef" @closed="onClosedTemplateGroup" />
       <template #footer>
         <el-button @click="onClosedTemplateGroup">取消</el-button>
         <el-button type="primary" @click="handlerCreateTemplateGroup">确认</el-button>

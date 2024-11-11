@@ -51,51 +51,42 @@
         />
       </div>
     </el-card>
-    <!-- 注册Runner -->
-    <reigsterRunner
-      :dialog-visible="addDialogDrawer"
-      :createOrUpdate="createOrUpdate"
-      :runnerRow="runnerRow"
-      @close="onClosed"
-      @list-runners="listRunnerData"
-    />
+    <el-drawer class="drawer-header" v-model="dialogVisible" :title="title" size="30%" @closed="onClosed">
+      <!-- 注册Runner -->
+      <reigsterRunner ref="runnerApiRef" @callback="listRunnerData" @closed="onClosed" />
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlerCreateOrUpdagte"> 保存 </el-button>
+        </div>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { h, ref, watch } from "vue"
+import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-// import { ElMessage, ElMessageBox } from "element-plus"
 import { runner } from "@/api/runner/types/runner"
 import { deleteRunnerApi, listRunnerApi } from "@/api/runner"
 import reigsterRunner from "./registerOrUpdate.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { cloneDeep } from "lodash-es"
-
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const addDialogDrawer = ref<boolean>(false)
-const createOrUpdate = ref<string>("")
+
+const runnerApiRef = ref<InstanceType<typeof reigsterRunner>>()
+const dialogVisible = ref<boolean>(false)
+const title = ref<string>("")
 
 const handlerCreate = () => {
-  createOrUpdate.value = "create"
-  addDialogDrawer.value = true
+  title.value = "添加执行器"
+  dialogVisible.value = true
 }
 
-const onClosed = (val: boolean) => {
-  addDialogDrawer.value = val
+const onClosed = () => {
+  runnerApiRef.value?.resetForm()
+  dialogVisible.value = false
 }
-
-const runnerRow = ref<runner>({
-  id: 0,
-  name: "",
-  worker_name: "",
-  codebook_uid: "",
-  codebook_secret: "",
-  desc: "",
-  tags: [],
-  variables: []
-})
 
 /** 查询模版列表 */
 const runnersData = ref<runner[]>([])
@@ -115,11 +106,15 @@ const listRunnerData = () => {
 }
 
 const handleUpdate = (row: runner) => {
-  console.log("row", row)
-  console.log(runnersData, "data")
-  createOrUpdate.value = "update" + row.id
-  runnerRow.value = cloneDeep(row)
-  addDialogDrawer.value = true
+  dialogVisible.value = true
+  title.value = "修改执行器"
+  nextTick(() => {
+    runnerApiRef.value?.setFrom(row)
+  })
+}
+
+const handlerCreateOrUpdagte = () => {
+  runnerApiRef.value?.submitForm()
 }
 
 const handleDelete = (row: runner) => {
@@ -146,7 +141,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRun
 </script>
 
 <style lang="scss">
-.add-drawer {
+.drawer-header {
   .el-drawer__header {
     margin: 0;
   }
