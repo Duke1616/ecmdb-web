@@ -15,7 +15,7 @@
         </el-select>
       </el-form-item>
       <el-form-item prop="codebook_secret" label="任务模版密钥">
-        <el-input disabled v-model="computedSecret" />
+        <el-input disabled v-model="formData.codebook_secret" />
       </el-form-item>
       <el-form-item prop="tags">
         <template #label>
@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { registerOrUpdateReq, runner, variables } from "@/api/runner/types/runner"
@@ -82,6 +82,7 @@ const getLabel = (item: worker) => {
 
 const computedSecret = computed(() => {
   const selectedCodebook = codebooks.value.find((item) => item.identifier === formData.value.codebook_uid)
+
   return selectedCodebook ? selectedCodebook.secret : ""
 })
 
@@ -104,7 +105,6 @@ const handlerCloseVariable = () => {
 }
 
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
-  id: 0,
   name: "",
   worker_name: "",
   codebook_uid: "",
@@ -206,6 +206,14 @@ defineExpose({
   setFrom,
   resetForm
 })
+
+watch(
+  () => computedSecret.value,
+  (val) => {
+    formData.value.codebook_secret = val
+  },
+  { immediate: true }
+)
 </script>
 
 <style lang="scss" scoped>
