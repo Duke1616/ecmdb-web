@@ -26,6 +26,9 @@ const { showNotify, showThemeSwitch, showScreenfull, showSearchMenu } = storeToR
 /** 切换侧边栏 */
 const toggleSidebar = () => {
   appStore.toggleSidebar(false)
+
+  // 手动触发 window resize 事件，通知 FullCalendar 调整
+  window.dispatchEvent(new Event("resize"))
 }
 
 /** 登出 */
