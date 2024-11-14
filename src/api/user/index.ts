@@ -80,6 +80,13 @@ export function findByUsernameApi(username: string) {
   })
 }
 
+/** 查询单个用户详情 */
+export function findByUserIdApi(id: number) {
+  return instance.post<user.user>({
+    url: "user/find/id",
+    data: { id: id }
+  })
+}
 /** 查询Ldap用户 */
 export function searchLdapUserApi(data: user.serachLdapUserReq) {
   return instance.post<ldap.users>({

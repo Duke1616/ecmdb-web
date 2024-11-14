@@ -12,7 +12,8 @@ export const INITIAL_EVENTS: EventInput[] = [
   {
     id: createEventId(),
     title: "Timed event",
-    start: todayStr + "T12:00:00"
+    start: "2024-11-13" + "T22:00:00",
+    end: "2024-12-19" + "T22:00:00"
   }
 ]
 

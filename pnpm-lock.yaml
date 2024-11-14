@@ -41,12 +41,18 @@ importers:
       '@fullcalendar/interaction':
         specifier: ^6.1.15
         version: 6.1.15(@fullcalendar/core@6.1.15)
+      '@fullcalendar/list':
+        specifier: ^6.1.15
+        version: 6.1.15(@fullcalendar/core@6.1.15)
       '@fullcalendar/resource':
         specifier: ^6.1.15
         version: 6.1.15(@fullcalendar/core@6.1.15)
       '@fullcalendar/resource-timeline':
         specifier: ^6.1.15
         version: 6.1.15(@fullcalendar/core@6.1.15)(@fullcalendar/resource@6.1.15(@fullcalendar/core@6.1.15))
+      '@fullcalendar/rrule':
+        specifier: ^6.1.15
+        version: 6.1.15(@fullcalendar/core@6.1.15)(rrule@2.8.1)
       '@fullcalendar/timegrid':
         specifier: ^6.1.15
         version: 6.1.15(@fullcalendar/core@6.1.15)
@@ -83,12 +89,6 @@ importers:
       dayjs:
         specifier: ^1.11.11
         version: 1.11.11
-      dhtmlx-gantt:
-        specifier: ^9.0.2
-        version: 9.0.2
-      dhtmlx-scheduler:
-        specifier: ^7.1.1
-        version: 7.1.1
       e-icon-picker:
         specifier: ^2.2.0
         version: 2.2.0(vue@3.4.25(typescript@5.4.5))
@@ -168,8 +168,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1(codemirror@6.0.1(@lezer/common@1.2.1))(vue@3.4.25(typescript@5.4.5))
       vue-draggable-plus:
-        specifier: ^0.4.0
-        version: 0.4.0(@types/sortablejs@1.15.8)
+        specifier: ^0.5.6
+        version: 0.5.6(@types/sortablejs@1.15.8)
       vue-json-pretty:
         specifier: ^2.4.0
         version: 2.4.0(vue@3.4.25(typescript@5.4.5))
@@ -736,6 +736,11 @@ packages:
     peerDependencies:
       '@fullcalendar/core': ~6.1.15
 
+  '@fullcalendar/list@6.1.15':
+    resolution: {integrity: sha512-U1bce04tYDwkFnuVImJSy2XalYIIQr6YusOWRPM/5ivHcJh67Gm8CIMSWpi3KdRSNKFkqBxLPkfZGBMaOcJYug==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.15
+
   '@fullcalendar/premium-common@6.1.15':
     resolution: {integrity: sha512-IwUHptHNzWDOgAsXLoBntGxmbfCKvUy6iYFMCP3F3ahbG58E0PJMYsXvgw+NaA7Cz4gcQoVHioGjIFgQqs3Keg==}
     peerDependencies:
@@ -751,6 +756,12 @@ packages:
     resolution: {integrity: sha512-s9Rz3HNDQWBYCG+V4wqg8x5+UTD5kC3S2poq+5zwbPeyWT8+FEILikQZIgfESX70Z4fn8bBlLJ04Jd/LijfqWw==}
     peerDependencies:
       '@fullcalendar/core': ~6.1.15
+
+  '@fullcalendar/rrule@6.1.15':
+    resolution: {integrity: sha512-4tJivAncp/eIhMDTH2v1gssv3sHPYrj2RHfbUklz2Z7bYRSj8tI7mjZWve2acqPmbg21y1nVEOwDfjWhHPcE/Q==}
+    peerDependencies:
+      '@fullcalendar/core': ~6.1.15
+      rrule: ^2.6.0
 
   '@fullcalendar/scrollgrid@6.1.15':
     resolution: {integrity: sha512-z7q6eh9bUSQ60YwgztPlJzQAMr6XQgky6bxNQR9cMqfzcwyo/ww11G7OZUp840VIXyqT3g8XPziEDbS5zB4VVQ==}
@@ -1703,12 +1714,6 @@ packages:
 
   destr@2.0.3:
     resolution: {integrity: sha512-2N3BOUU4gYMpTP24s5rF5iP7BDr7uNTCs4ozw3kf/eKfvWSIu93GEBi5m427YoyJoeOzQ5smuu4nNAPGb8idSQ==}
-
-  dhtmlx-gantt@9.0.2:
-    resolution: {integrity: sha512-5wNpvhMqcsRZw0CkLyMqPSW+yWNay6mu8nVq5TVSibFsE/mhFp5ZJKxkVfDcibiemEuuIduVcyRWjs0gZ0fa9w==}
-
-  dhtmlx-scheduler@7.1.1:
-    resolution: {integrity: sha512-35wG+kRMKB73D76GgmumryBRXVcw29YY7jEip8sM2a6cFp4ebQsVU5kuYGJnUY1/ykALp4fcVf2TYRXuyaS28Q==}
 
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
@@ -3011,6 +3016,9 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
+  rrule@2.8.1:
+    resolution: {integrity: sha512-hM3dHSBMeaJ0Ktp7W38BJZ7O1zOgaFEsn41PDk+yHoEtfLV+PoJt9E9xAlZiWgf/iqEqionN0ebHFZIDAp+iGw==}
+
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
 
@@ -3484,8 +3492,8 @@ packages:
       '@vue/composition-api':
         optional: true
 
-  vue-draggable-plus@0.4.0:
-    resolution: {integrity: sha512-CcvSopMmSZY9McCdQ56QsAydT5cZilx9LzLU0UIz6KDYe9ll6QnmNHN80t6wnxN402ZECSXc5X1dm/myiMFi+A==}
+  vue-draggable-plus@0.5.6:
+    resolution: {integrity: sha512-RMt8YuoB534GH2LD2M60KxHDPtfjfl2C9mH3YSEsfcZBclcoRs5RyrLiEKhUM0QCAQG2T/c3ktHujzxxomqfIw==}
     peerDependencies:
       '@types/sortablejs': ^1.15.0
       '@vue/composition-api': '*'
@@ -4130,6 +4138,10 @@ snapshots:
     dependencies:
       '@fullcalendar/core': 6.1.15
 
+  '@fullcalendar/list@6.1.15(@fullcalendar/core@6.1.15)':
+    dependencies:
+      '@fullcalendar/core': 6.1.15
+
   '@fullcalendar/premium-common@6.1.15(@fullcalendar/core@6.1.15)':
     dependencies:
       '@fullcalendar/core': 6.1.15
@@ -4146,6 +4158,11 @@ snapshots:
     dependencies:
       '@fullcalendar/core': 6.1.15
       '@fullcalendar/premium-common': 6.1.15(@fullcalendar/core@6.1.15)
+
+  '@fullcalendar/rrule@6.1.15(@fullcalendar/core@6.1.15)(rrule@2.8.1)':
+    dependencies:
+      '@fullcalendar/core': 6.1.15
+      rrule: 2.8.1
 
   '@fullcalendar/scrollgrid@6.1.15(@fullcalendar/core@6.1.15)':
     dependencies:
@@ -5244,10 +5261,6 @@ snapshots:
   delayed-stream@1.0.0: {}
 
   destr@2.0.3: {}
-
-  dhtmlx-gantt@9.0.2: {}
-
-  dhtmlx-scheduler@7.1.1: {}
 
   dir-glob@3.0.1:
     dependencies:
@@ -6608,6 +6621,10 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.17.0
       fsevents: 2.3.3
 
+  rrule@2.8.1:
+    dependencies:
+      tslib: 2.6.2
+
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
@@ -7160,7 +7177,7 @@ snapshots:
     dependencies:
       vue: 3.4.25(typescript@5.4.5)
 
-  vue-draggable-plus@0.4.0(@types/sortablejs@1.15.8):
+  vue-draggable-plus@0.5.6(@types/sortablejs@1.15.8):
     dependencies:
       '@types/sortablejs': 1.15.8
 
