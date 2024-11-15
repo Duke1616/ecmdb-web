@@ -18,8 +18,8 @@ export interface wechatInfo {
   user_id?: number
 }
 
-export interface listUserByUsernameRegexReq {
-  username: string
+export interface listUserByKeywordReq {
+  keyword: string
   /** 跳过条数 */
   offset: number
   /** 查询条数 */
@@ -75,6 +75,10 @@ export interface userDepartmentCombination {
 
 export interface findByUsernamesReq {
   usernames: string[]
+}
+
+export interface findByIdsReq {
+  ids: number[]
 }
 
 export interface serachLdapUserReq {

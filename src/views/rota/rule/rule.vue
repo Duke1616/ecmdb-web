@@ -18,7 +18,7 @@
             <template #label>
               <div class="end-form-item">
                 <span style="margin-right: 10px">结束时间</span>
-                <el-switch size="small" v-model="isEndTimeVisible" />
+                <el-switch size="small" v-model="isEndTimeVisible" @change="handleSwitchChange" />
               </div>
             </template>
 
@@ -59,7 +59,7 @@
           <UserPopover :add-rota-group="addRotaGroup" />
         </div>
         <div>
-          <div v-for="group in rotaGroups" :key="group.id">
+          <div v-for="group in formData.rota_rule.rota_groups" :key="group.id">
             <div v-if="group.members.length > 0">
               <div class="empty-group">
                 <span>{{ group.name }}</span>
@@ -104,18 +104,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { addOrUpdateRuleReq, rotaGroup } from "@/api/rota/types/rota"
-import { FormInstance, FormRules } from "element-plus"
+import { addRuleReq, rotaGroup } from "@/api/rota/types/rota"
+import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 import { ref } from "vue"
 import { user as userInfo } from "@/api/user/types/user"
-import UserPopover from "./userPopover.vue"
+import UserPopover from "./user-popover.vue"
+import { addShifSchedulingRuleApi } from "@/api/rota"
+import { findByIdsApi } from "@/api/user"
 
-const isEndTimeVisible = ref(false)
-// 定义值班组的数据结构
-const rotaGroups = ref<rotaGroup[]>([]) // 组列表
-
+const emits = defineEmits(["closed", "callback"])
 // 存储所有用户数据的 Map
 const userMap = ref(new Map<number, string>())
 
@@ -126,7 +125,7 @@ const getUserById = (id: number) => {
 
 // 添加用户并创建新组
 const addRotaGroup = (user: userInfo) => {
-  const newGroupName = `组 ${String.fromCharCode(65 + rotaGroups.value.length)}`
+  const newGroupName = `组 ${String.fromCharCode(65 + formData.value.rota_rule.rota_groups.length)}`
   const newGroup = {
     id: Date.now(),
     name: newGroupName,
@@ -134,26 +133,25 @@ const addRotaGroup = (user: userInfo) => {
   }
 
   userMap.value.set(user.id, user.display_name + " [" + user.username + "] ")
-  rotaGroups.value.push(newGroup)
+  formData.value.rota_rule.rota_groups.push(newGroup)
 }
 
 // 处理拖拽开始事件
 const onStart = () => {
-  console.log("当前值班组:", rotaGroups.value)
+  console.log("当前值班组:", formData.value.rota_rule.rota_groups)
 }
 
 // 处理拖拽结束事件
 const onEnd = () => {
-  rotaGroups.value.forEach((group, index) => {
+  formData.value.rota_rule.rota_groups.forEach((group, index) => {
     if (group.members.length === 0) {
-      rotaGroups.value.splice(index, 1)
+      formData.value.rota_rule.rota_groups.splice(index, 1)
     }
   })
 
-  rotaGroups.value.forEach((group, index) => {
+  formData.value.rota_rule.rota_groups.forEach((group, index) => {
     group.name = `组 ${String.fromCharCode(65 + index)}`
   })
-  console.log("当前值班组:", rotaGroups.value)
 }
 
 // 将成员从当前组移到另一组（或者做其他操作）
@@ -163,18 +161,19 @@ const removeAndToLeftList = (index: number, member: number, group: rotaGroup) =>
 
   // 检查组是否为空，若为空则删除该组
   if (group.members.length === 0) {
-    const groupIndex = rotaGroups.value.findIndex((g) => g.id === group.id)
+    const groupIndex = formData.value.rota_rule.rota_groups.findIndex((g) => g.id === group.id)
     if (groupIndex !== -1) {
-      rotaGroups.value.splice(groupIndex, 1)
+      formData.value.rota_rule.rota_groups.splice(groupIndex, 1)
     }
   }
 }
 
-const DEFAULT_FORM_DATA: addOrUpdateRuleReq = {
+const rotaGroups = ref<rotaGroup[]>([]) // 组列表
+const DEFAULT_FORM_DATA: addRuleReq = {
   id: 0,
   rota_rule: {
     start_time: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
-    end_time: new Date(new Date().setHours(0, 0, 0, 0)).setDate(new Date().getDate() + 1),
+    end_time: 0,
     rota_groups: rotaGroups.value,
     rotate: {
       time_unit: 1,
@@ -183,12 +182,86 @@ const DEFAULT_FORM_DATA: addOrUpdateRuleReq = {
   }
 }
 
-const formData = ref<addOrUpdateRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<addRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [{ required: true, message: "必须输入值班名称", trigger: "blur" }],
   owner: [{ required: true, message: "必须输入值班管理人员", trigger: "blur" }]
 }
+
+const isEndTimeVisible = ref<boolean>(false)
+const handleSwitchChange = () => {
+  if (isEndTimeVisible.value) {
+    formData.value.rota_rule.end_time = new Date(new Date().setHours(0, 0, 0, 0)).setDate(new Date().getDate() + 1)
+  } else {
+    formData.value.rota_rule.end_time = 0
+  }
+}
+
+const setFrom = (row: addRuleReq) => {
+  formData.value = cloneDeep(row)
+
+  // 获取所有的成员
+  const members = ref<number[]>([])
+
+  row.rota_rule.rota_groups.forEach((group) => {
+    group.members.forEach((member) => {
+      members.value.push(member)
+    })
+  })
+
+  console.log(members, "123")
+  // 获取所有的用户信息
+  findByIdsData(members.value)
+}
+
+const findByIdsData = (members: number[]) => {
+  findByIdsApi(members)
+    .then((data) => {
+      userMap.value = new Map(data.data.users.map((user) => [user.id, user.display_name + " [" + user.username + "] "]))
+    })
+    .catch((error) => {
+      console.log("catch", error)
+    })
+    .finally(() => {})
+}
+
+const getFrom = () => {
+  return formData
+}
+
+const resetForm = () => {
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+const onClosed = () => {
+  emits("closed")
+}
+
+const submitForm = (rotaId: number) => {
+  formData.value.id = rotaId
+  if (formData.value.id === 0) {
+    ElMessage.error("值班不存在，无法保存")
+    return
+  }
+
+  addShifSchedulingRuleApi(formData.value)
+    .then(() => {
+      onClosed()
+      ElMessage.success("保存成功")
+    })
+    .catch((error) => {
+      console.log("catch", error)
+    })
+    .finally(() => {})
+}
+
+defineExpose({
+  submitForm,
+  setFrom,
+  getFrom,
+  resetForm
+})
 </script>
 
 <style scoped>

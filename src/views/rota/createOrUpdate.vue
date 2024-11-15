@@ -50,7 +50,7 @@ import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { createOrUpdateRotaReq, rota } from "@/api/rota/types/rota"
 import { createRotaApi, updateRotaApi } from "@/api/rota"
-import { findByUserIdApi, listUsersByUsernameRegexApi } from "@/api/user"
+import { findByUserIdApi, listUsersByKeywordApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 import { user } from "@/api/user/types/user"
 
@@ -118,8 +118,8 @@ const remoteMethod = (query: string) => {
 
 const usersData = ref<user[]>([])
 const listUsersData = () => {
-  listUsersByUsernameRegexApi({
-    username: keyword.value,
+  listUsersByKeywordApi({
+    keyword: keyword.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })

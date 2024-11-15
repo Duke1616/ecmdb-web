@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { listUsersApi, listUsersByUsernameRegexApi } from "@/api/user"
+import { listUsersApi, listUsersByKeywordApi } from "@/api/user"
 import { user as userInfo } from "@/api/user/types/user"
 import { usePagination } from "@/hooks/usePagination"
 import { ElPopover } from "element-plus"
@@ -89,8 +89,8 @@ const listUsersData = () => {
 }
 
 const listUsersRegexData = () => {
-  listUsersByUsernameRegexApi({
-    username: keyword.value,
+  listUsersByKeywordApi({
+    keyword: keyword.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
@@ -118,7 +118,7 @@ const listUsers = () => {
 }
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: false })
 
 // 处理用户点击事件
 const handleUserClick = (user: userInfo) => {

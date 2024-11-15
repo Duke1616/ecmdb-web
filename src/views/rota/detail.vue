@@ -17,8 +17,8 @@
       </div>
     </el-card>
     <div>
-      <el-dialog v-model="dialogVisible" title="规则管理" :before-close="onClosed" width="400">
-        <Rule ref="apiRef" @closed="onClosed" />
+      <el-dialog v-model="dialogVisible" title="新增规则" :before-close="onClosed" width="400">
+        <Rule ref="ruleRef" @closed="onClosed" />
         <template #footer>
           <div class="dialog-footer">
             <el-button @click="onClosed">取消</el-button>
@@ -27,11 +27,16 @@
         </template>
       </el-dialog>
     </div>
+    <div>
+      <el-dialog v-model="dialogListRuleVisible" title="规则列表" :before-close="onRuleListClosed" width="400">
+        <ListRule ref="ruleListRef" @closed="onRuleListClosed" />
+      </el-dialog>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive } from "vue"
+import { ref, reactive, nextTick } from "vue"
 import { CalendarOptions, EventApi, DateSelectArg, EventClickArg } from "@fullcalendar/core"
 import zhLocale from "@fullcalendar/core/locales/zh-cn"
 import FullCalendar from "@fullcalendar/vue3"
@@ -40,13 +45,34 @@ import rrulePlugin from "@fullcalendar/rrule"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
 import { INITIAL_EVENTS, createEventId } from "./event-utils"
-import Rule from "./rule.vue"
+import Rule from "./rule/rule.vue"
+import ListRule from "./rule/list-rule.vue"
+import { useRoute } from "vue-router"
+import { getRuleListById } from "@/api/rota"
+import { rotaRule } from "@/api/rota/types/rota"
+import { ElMessage } from "element-plus"
+
+const route = useRoute()
+const rotaId = route.query.id as string
 
 const onClosed = () => {
   dialogVisible.value = false
+  ruleRef.value?.resetForm()
 }
 
-const handlerSubmitRotaRule = () => {}
+const onRuleListClosed = () => {
+  dialogListRuleVisible.value = false
+  ruleListRef.value?.resetRule()
+}
+
+const ruleRef = ref<InstanceType<typeof Rule>>()
+const ruleListRef = ref<InstanceType<typeof ListRule>>()
+
+// 添加新的规则
+const handlerSubmitRotaRule = () => {
+  ruleRef.value?.submitForm(Number(rotaId))
+}
+
 const calendarOptions = reactive<any>({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, rrulePlugin],
   locales: [zhLocale],
@@ -91,14 +117,12 @@ const calendarOptions = reactive<any>({
   },
   customButtons: {
     rule: {
-      text: "规则",
+      text: "新增规则",
       click: addShifSchedulingRule
     },
     settings: {
-      text: "设置",
-      click: function () {
-        alert("设置")
-      }
+      text: "查看规则",
+      click: listShifSchedulingRule
     }
   },
   contentHeight: "auto",
@@ -120,9 +144,37 @@ const calendarOptions = reactive<any>({
 const currentEvents = ref<EventApi[]>([])
 const calendarRef = ref()
 const dialogVisible = ref<boolean>(false)
+const dialogListRuleVisible = ref<boolean>(false)
 
 function addShifSchedulingRule() {
   dialogVisible.value = true
+}
+
+// 获取指定排班-规则列表
+const rotaRuleData = ref<rotaRule[]>([])
+const getRuleList = async () => {
+  await getRuleListById(Number(rotaId))
+    .then(({ data }) => {
+      rotaRuleData.value = data
+    })
+    .catch(() => {
+      rotaRuleData.value = []
+    })
+    .finally(() => {})
+}
+
+async function listShifSchedulingRule() {
+  await getRuleList()
+
+  if (rotaRuleData.value.length === 0) {
+    ElMessage.warning("暂无规则, 请先添加")
+    return
+  }
+  dialogListRuleVisible.value = true
+
+  nextTick(() => {
+    ruleListRef.value?.setRules(Number(rotaId), rotaRuleData.value)
+  })
 }
 
 function handleDateSelect(selectInfo: DateSelectArg) {

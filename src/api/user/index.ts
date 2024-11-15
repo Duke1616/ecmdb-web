@@ -11,9 +11,9 @@ export function listUsersApi(data: user.Page) {
 }
 
 /** 模糊匹配用户 */
-export function listUsersByUsernameRegexApi(data: user.listUserByUsernameRegexReq) {
+export function listUsersByKeywordApi(data: user.listUserByKeywordReq) {
   return instance.post<user.users>({
-    url: "user/find/regex/username",
+    url: "user/find/by_keyword",
     data: data
   })
 }
@@ -69,6 +69,14 @@ export function findByUsernamesApi(uns: string[]) {
   return instance.post<user.users>({
     url: "user/find/usernames",
     data: { usernames: uns }
+  })
+}
+
+/** 查询多个用户详情 */
+export function findByIdsApi(ids: number[]) {
+  return instance.post<user.users>({
+    url: "user/find/by_ids",
+    data: { ids: ids }
   })
 }
 

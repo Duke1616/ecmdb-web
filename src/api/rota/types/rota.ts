@@ -13,9 +13,14 @@ export interface createOrUpdateRotaReq {
   enabled: boolean
 }
 
-export interface addOrUpdateRuleReq {
+export interface addRuleReq {
   id: number
   rota_rule: rotaRule
+}
+
+export interface updateOrDeleteRuleReq {
+  id: number
+  rota_rules: rotaRule[]
 }
 
 // Rota 值班信息
@@ -37,17 +42,17 @@ export interface rotaRule {
   rotate: rotate // 轮换参数
 }
 
-// Rotate 轮换相关参数
-export interface rotate {
-  time_unit: number // 轮换时间单位 (例如天、周等)
-  time_duration: number // 轮换时长 (例如：每 3 天一次)
-}
-
 // RotaGroup 值班组
 export interface rotaGroup {
   id: number
   name: string // 组名
   members: number[] // 成员 ID 数组
+}
+
+// Rotate 轮换相关参数
+export interface rotate {
+  time_unit: number // 轮换时间单位 (例如天、周等)
+  time_duration: number // 轮换时长 (例如：每 3 天一次)
 }
 
 export interface rotas {

@@ -46,7 +46,7 @@
 
 <script lang="ts" setup>
 import { ref, watch, nextTick, onMounted } from "vue"
-import { findByUsernameApi, listUsersByUsernameRegexApi } from "@/api/user"
+import { findByUsernameApi, listUsersByKeywordApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 import { user } from "@/api/user/types/user"
 
@@ -94,8 +94,8 @@ const remoteMethod = (query: string) => {
 
 const usersData = ref<user[]>([])
 const listUsersData = () => {
-  listUsersByUsernameRegexApi({
-    username: keyword.value,
+  listUsersByKeywordApi({
+    keyword: keyword.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })

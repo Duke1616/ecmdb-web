@@ -127,7 +127,7 @@ import { cloneDeep } from "lodash-es"
 import { createOrUpdateDepartment, department } from "@/api/department/types/department"
 import { createDepartmentApi, updateDepartmentApi } from "@/api/department"
 import { user } from "@/api/user/types/user"
-import { listUsersByUsernameRegexApi } from "@/api/user"
+import { listUsersByKeywordApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 
 const init = {
@@ -244,8 +244,8 @@ const remoteMethod = (query: string) => {
 
 const usersData = ref<user[]>([])
 const listUsersData = () => {
-  listUsersByUsernameRegexApi({
-    username: keyword.value,
+  listUsersByKeywordApi({
+    keyword: keyword.value,
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
