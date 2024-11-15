@@ -34,7 +34,6 @@ export interface rotaRule {
   start_time: number // 开始时间 (timestamp)
   end_time: number // 结束时间 (timestamp)
   rota_groups: rotaGroup[] // 值班组
-  is_rotate: boolean // 是否轮换
   rotate: rotate // 轮换参数
 }
 

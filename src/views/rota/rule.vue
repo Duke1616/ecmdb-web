@@ -13,8 +13,19 @@
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item prop="desc" label="结束时间">
+          <el-form-item prop="desc">
+            <!-- 使用 template 来包裹内容 -->
+            <template #label>
+              <div class="end-form-item">
+                <span style="margin-right: 10px">结束时间</span>
+                <el-switch size="small" v-model="isEndTimeVisible" />
+              </div>
+            </template>
+
+            <span v-if="!isEndTimeVisible" style="color: #888">无结束时间</span>
+            <!-- 当开关为 true 时显示日期选择器 -->
             <el-date-picker
+              v-if="isEndTimeVisible"
               v-model="formData.rota_rule.end_time"
               type="datetime"
               placeholder="选择日期和时间"
@@ -35,8 +46,8 @@
         <el-col :span="12">
           <el-form-item prop="desc" label="单位">
             <el-select v-model="formData.rota_rule.rotate.time_unit" placeholder="选择单位" style="width: 100%">
-              <el-option label="小时" value="hour" />
-              <el-option label="天" value="day" />
+              <el-option label="小时" :value="0" />
+              <el-option label="天" :value="1" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -45,10 +56,10 @@
       <div>
         <div class="group-header">
           <span>班排人员</span>
-          <el-button type="info" text bg size="default" @click="addUser">添加人员</el-button>
+          <UserPopover :add-rota-group="addRotaGroup" />
         </div>
         <div>
-          <div v-for="(group, index) in rotaGroups" :key="group.id">
+          <div v-for="group in rotaGroups" :key="group.id">
             <div v-if="group.members.length > 0">
               <div class="empty-group">
                 <span>{{ group.name }}</span>
@@ -64,7 +75,6 @@
                 @end="onEnd"
                 itemKey="id"
                 class="flex flex-col gap-4 p-0 rounded"
-                @change="onGroupChange(group, index)"
               >
                 <div
                   v-for="(member, itemIndex) in group.members"
@@ -72,7 +82,7 @@
                   class="h-40px bg-gray-500/5 px-2 rounded flex items-center"
                 >
                   <div class="flex-1 flex">
-                    <el-text truncated class="sort-text">{{ member }}</el-text>
+                    <el-text truncated class="sort-text">{{ getUserById(member) }}</el-text>
                   </div>
 
                   <div class="flex items-center space-x-2">
@@ -99,21 +109,32 @@ import { FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 import { ref } from "vue"
+import { user as userInfo } from "@/api/user/types/user"
+import UserPopover from "./userPopover.vue"
 
+const isEndTimeVisible = ref(false)
 // 定义值班组的数据结构
 const rotaGroups = ref<rotaGroup[]>([]) // 组列表
-let userId = 1
+
+// 存储所有用户数据的 Map
+const userMap = ref(new Map<number, string>())
+
+// 渲染时，使用 computed 来从 userMap 获取用户信息
+const getUserById = (id: number) => {
+  return userMap.value.get(id)
+}
 
 // 添加用户并创建新组
-const addUser = () => {
+const addRotaGroup = (user: userInfo) => {
   const newGroupName = `组 ${String.fromCharCode(65 + rotaGroups.value.length)}`
   const newGroup = {
-    id: Date.now(), // 使用时间戳作为唯一标识
+    id: Date.now(),
     name: newGroupName,
-    members: [userId]
+    members: [user.id]
   }
+
+  userMap.value.set(user.id, user.display_name + " [" + user.username + "] ")
   rotaGroups.value.push(newGroup)
-  userId++
 }
 
 // 处理拖拽开始事件
@@ -123,14 +144,16 @@ const onStart = () => {
 
 // 处理拖拽结束事件
 const onEnd = () => {
-  console.log("当前值班组:", rotaGroups.value)
-}
+  rotaGroups.value.forEach((group, index) => {
+    if (group.members.length === 0) {
+      rotaGroups.value.splice(index, 1)
+    }
+  })
 
-// 组内成员变更时调用此方法
-const onGroupChange = (group: rotaGroup, groupIndex: number) => {
-  if (group.members.length === 0) {
-    rotaGroups.value.splice(groupIndex, 1)
-  }
+  rotaGroups.value.forEach((group, index) => {
+    group.name = `组 ${String.fromCharCode(65 + index)}`
+  })
+  console.log("当前值班组:", rotaGroups.value)
 }
 
 // 将成员从当前组移到另一组（或者做其他操作）
@@ -138,21 +161,24 @@ const removeAndToLeftList = (index: number, member: number, group: rotaGroup) =>
   // 从当前组中移除成员
   group.members.splice(index, 1)
 
-  // 需要手动触发刷新
-  // VueDraggable 并不会自动触发成员数组的更新，手动更新触发视图更新
-  group.members = [...group.members]
+  // 检查组是否为空，若为空则删除该组
+  if (group.members.length === 0) {
+    const groupIndex = rotaGroups.value.findIndex((g) => g.id === group.id)
+    if (groupIndex !== -1) {
+      rotaGroups.value.splice(groupIndex, 1)
+    }
+  }
 }
 
 const DEFAULT_FORM_DATA: addOrUpdateRuleReq = {
   id: 0,
   rota_rule: {
-    start_time: 0,
-    end_time: 0,
-    rota_groups: [],
-    is_rotate: false,
+    start_time: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
+    end_time: new Date(new Date().setHours(0, 0, 0, 0)).setDate(new Date().getDate() + 1),
+    rota_groups: rotaGroups.value,
     rotate: {
-      time_unit: 0,
-      time_duration: 0
+      time_unit: 1,
+      time_duration: 1
     }
   }
 }
@@ -172,6 +198,15 @@ const formRules: FormRules = {
   justify-content: space-between;
   align-items: center;
   padding: 5px;
+}
+
+.end-form-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  .el-switch--small {
+    height: 22px;
+  }
 }
 
 .group-header {
