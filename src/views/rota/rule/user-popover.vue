@@ -1,7 +1,7 @@
 <template>
   <el-popover ref="popoverRef" placement="bottom" :width="200" trigger="click">
     <template #reference>
-      <el-button>添加成员</el-button>
+      <el-button @click="listUsers">添加成员</el-button>
     </template>
 
     <div class="search-wrapper">
@@ -118,7 +118,7 @@ const listUsers = () => {
 }
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: false })
 
 // 处理用户点击事件
 const handleUserClick = (user: userInfo) => {

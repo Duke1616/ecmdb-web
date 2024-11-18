@@ -29,7 +29,7 @@
     </div>
     <div>
       <el-dialog v-model="dialogListRuleVisible" title="规则列表" :before-close="onRuleListClosed" width="400">
-        <ListRule ref="ruleListRef" @closed="onRuleListClosed" />
+        <ListRule ref="ruleListRef" @closed="onRuleListClosed" @callback="listShifSchedulingRule" />
       </el-dialog>
     </div>
   </div>
