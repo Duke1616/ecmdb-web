@@ -63,3 +63,11 @@ export function getRuleListById(id: number) {
     data: { id: id }
   })
 }
+
+/** 查看排班表 */
+export function previewSchedule(data: rota.previewScheduleReq) {
+  return instance.post<rota.shiftRostered>({
+    url: "rota/schedule/preview",
+    data: data
+  })
+}

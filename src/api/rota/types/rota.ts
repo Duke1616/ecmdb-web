@@ -23,6 +23,12 @@ export interface updateOrDeleteRuleReq {
   rota_rules: rotaRule[]
 }
 
+export interface previewScheduleReq {
+  id: number
+  start_time: number
+  end_time: number
+}
+
 // Rota 值班信息
 export interface rota {
   id: number // 排班 ID
@@ -58,4 +64,26 @@ export interface rotate {
 export interface rotas {
   rotas: rota[]
   total: number
+}
+
+// RotaRule 值班规则
+export interface rotaRule {
+  start_time: number // 开始时间 (timestamp)
+  end_time: number // 结束时间 (timestamp)
+  rota_groups: rotaGroup[] // 值班组
+  rotate: rotate // 轮换参数
+}
+
+// shiftRostered 排班表
+export interface shiftRostered {
+  final_schedule: schedule[]
+  current_schedule: schedule
+  next_schedule: schedule
+}
+
+export interface schedule {
+  title: string
+  start_time: number
+  end_time: number
+  rota_group: rotaGroup
 }

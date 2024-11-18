@@ -9,6 +9,7 @@
               type="datetime"
               placeholder="选择日期和时间"
               format="YYYY-MM-DD HH:mm"
+              @change="handleStartDateTimeChange"
             />
           </el-form-item>
         </el-col>
@@ -30,6 +31,7 @@
               type="datetime"
               placeholder="选择日期和时间"
               format="YYYY-MM-DD HH:mm"
+              @change="handleEndDateTimeChange"
             />
           </el-form-item>
         </el-col>
@@ -46,8 +48,8 @@
         <el-col :span="12">
           <el-form-item prop="desc" label="单位">
             <el-select v-model="formData.rota_rule.rotate.time_unit" placeholder="选择单位" style="width: 100%">
-              <el-option label="小时" :value="0" />
-              <el-option label="天" :value="1" />
+              <el-option label="小时" :value="5" />
+              <el-option label="天" :value="4" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -165,6 +167,18 @@ const removeAndToLeftList = (index: number, member: number, group: rotaGroup) =>
     if (groupIndex !== -1) {
       formData.value.rota_rule.rota_groups.splice(groupIndex, 1)
     }
+  }
+}
+
+const handleStartDateTimeChange = (date: Date | null) => {
+  if (date) {
+    formData.value.rota_rule.start_time = date.getTime()
+  }
+}
+
+const handleEndDateTimeChange = (date: Date | null) => {
+  if (date) {
+    formData.value.rota_rule.end_time = date.getTime()
   }
 }
 

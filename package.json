@@ -59,6 +59,7 @@
     "screenfull": "^6.0.2",
     "shell": "link:@codemirror/legacy-modes/mode/shell",
     "thememirror": "^2.0.1",
+    "tippy.js": "^6.3.7",
     "unocss": "^0.59.4",
     "uuid": "^9.0.1",
     "vite-plugin-svg-icons": "^2.0.1",

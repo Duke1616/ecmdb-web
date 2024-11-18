@@ -59,7 +59,13 @@ const deleteRule = (ruleIndex: number) => {
     type: "warning"
   }).then(() => {
     rotaRuleData.value.splice(ruleIndex, 1)
-    updateShifSchedulingRule()
+
+    // 重置
+    activeCollapse.value = []
+    deleteShifSchedulingRule()
+
+    // 重新获取数据
+    emits("callback")
   })
 }
 
@@ -76,6 +82,9 @@ const replaceRule = (ruleIndex: number) => {
 
         // 更新数据库
         updateShifSchedulingRule()
+
+        // 重新获取数据
+        emits("callback")
       }
     }
   })
@@ -96,7 +105,7 @@ const handleCollapseChange = (active: any) => {
   }
 }
 
-const updateShifSchedulingRule = () => {
+const deleteShifSchedulingRule = () => {
   updateShifSchedulingRuleApi({
     id: rotaId.value,
     rota_rules: rotaRuleData.value
@@ -104,8 +113,21 @@ const updateShifSchedulingRule = () => {
     .then(() => {
       ElMessage.success("删除成功")
 
-      // 重置
-      activeCollapse.value = []
+      if (rotaRuleData.value.length === 0) {
+        emits("closed")
+      }
+    })
+    .catch(() => {})
+    .finally(() => {})
+}
+
+const updateShifSchedulingRule = () => {
+  updateShifSchedulingRuleApi({
+    id: rotaId.value,
+    rota_rules: rotaRuleData.value
+  })
+    .then(() => {
+      ElMessage.success("修改成功")
 
       if (rotaRuleData.value.length === 0) {
         emits("closed")
