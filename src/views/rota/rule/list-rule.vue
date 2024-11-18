@@ -64,7 +64,7 @@ const replaceRule = (ruleIndex: number) => {
   })
 }
 
-const handleCollapseChange = (active: number) => {
+const handleCollapseChange = (active: any) => {
   const ruleComponent = ruleRefs.value[active]
   const rule = rotaRuleData.value[active]
   if (ruleComponent) {

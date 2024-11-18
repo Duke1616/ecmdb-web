@@ -118,7 +118,7 @@ const listUsers = () => {
 }
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: false })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: true })
 
 // 处理用户点击事件
 const handleUserClick = (user: userInfo) => {
