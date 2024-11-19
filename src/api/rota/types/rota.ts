@@ -79,6 +79,7 @@ export interface shiftRostered {
   final_schedule: schedule[]
   current_schedule: schedule
   next_schedule: schedule
+  members: number[]
 }
 
 export interface schedule {

@@ -57,20 +57,17 @@ const deleteRule = (ruleIndex: number) => {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
-  }).then(() => {
+  }).then(async () => {
     rotaRuleData.value.splice(ruleIndex, 1)
 
     // 重置
     activeCollapse.value = []
     deleteShifSchedulingRule()
-
-    // 重新获取数据
-    emits("callback")
   })
 }
 
 const replaceRule = (ruleIndex: number) => {
-  nextTick(() => {
+  nextTick(async () => {
     const ruleComponent = ruleRefs.value[ruleIndex]
 
     if (ruleComponent) {
@@ -82,9 +79,6 @@ const replaceRule = (ruleIndex: number) => {
 
         // 更新数据库
         updateShifSchedulingRule()
-
-        // 重新获取数据
-        emits("callback")
       }
     }
   })
@@ -116,6 +110,9 @@ const deleteShifSchedulingRule = () => {
       if (rotaRuleData.value.length === 0) {
         emits("closed")
       }
+
+      // 重新获取数据
+      emits("callback")
     })
     .catch(() => {})
     .finally(() => {})
@@ -132,6 +129,8 @@ const updateShifSchedulingRule = () => {
       if (rotaRuleData.value.length === 0) {
         emits("closed")
       }
+
+      emits("callback")
     })
     .catch(() => {})
     .finally(() => {})

@@ -2,8 +2,10 @@
   <div class="app-container">
     <div class="app-sidebar">
       <div class="app-sidebar-section">
-        <el-card class="card-item">当前排班</el-card>
-        <el-card class="card-item">下期排班</el-card>
+        <!-- 当前值班 -->
+        <scheduleCard title="当前值班" :schedule="currentSchecule" :formatTimestamp="formatTimestamp" />
+        <!-- 下期值班 -->
+        <scheduleCard title="下期值班" :schedule="nextSchecule" :formatTimestamp="formatTimestamp" />
       </div>
     </div>
     <el-card class="app-calendar">
@@ -36,8 +38,9 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, nextTick, createApp, h } from "vue"
+import { ref, reactive, nextTick, createApp, h, watch } from "vue"
 import { CalendarOptions, EventApi, DateSelectArg, EventInput, EventHoveringArg } from "@fullcalendar/core"
+import scheduleCard from "./schedule-card.vue"
 import zhLocale from "@fullcalendar/core/locales/zh-cn"
 import FullCalendar from "@fullcalendar/vue3"
 import dayGridPlugin from "@fullcalendar/daygrid"
@@ -55,10 +58,18 @@ import tippy, { followCursor } from "tippy.js"
 import "tippy.js/dist/tippy.css"
 import "tippy.js/themes/light.css"
 import "tippy.js/animations/scale.css"
-import formatDate from "@/utils/day"
+import { formatDate, formatTimestamp } from "@/utils/day"
+import { findByIdsApi } from "@/api/user"
+import { isEqual } from "lodash-es"
 
 const route = useRoute()
 const rotaId = route.query.id as string
+
+const currentSchecule = ref<schedule>()
+const nextSchecule = ref<schedule>()
+const members = ref<number[]>([])
+// 存储所有用户数据的 Map
+const userMap = ref(new Map<number, string>())
 
 const onClosed = () => {
   dialogVisible.value = false
@@ -70,6 +81,7 @@ const onRuleListClosed = () => {
   ruleListRef.value?.resetRule()
 }
 
+const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const ruleRef = ref<InstanceType<typeof Rule>>()
 const ruleListRef = ref<InstanceType<typeof ListRule>>()
 
@@ -118,6 +130,7 @@ const calendarOptions = reactive<any>({
   datesSet: function (info) {
     visibleStart.value = info.view.activeStart.getTime()
     endStart.value = info.view.activeEnd.getTime()
+
     preview()
   },
   select: handleDateSelect,
@@ -129,7 +142,6 @@ const calendarOptions = reactive<any>({
 const visibleStart = ref<number>(0)
 const endStart = ref<number>(0)
 const currentEvents = ref<EventApi[]>([])
-const calendarRef = ref()
 const dialogVisible = ref<boolean>(false)
 const dialogListRuleVisible = ref<boolean>(false)
 const event = ref<EventInput[]>([])
@@ -160,14 +172,17 @@ const getRuleList = async () => {
 
 function handleEventMouseEnter(info: EventHoveringArg) {
   // 创建 Vue 应用程序
-  console.log("info", info.event.groupId)
   const app = createApp({
     render() {
+      const memberNames = (info.event.extendedProps.members || [])
+        .map((memberId: number) => userMap.value.get(memberId) || memberId)
+        .join("、")
+
       return h("div", [
         h("div", { style: "font-weight: bold; margin-bottom: 5px;" }, info.event.title),
         h("div", { style: "margin-bottom: 5px;" }, `${formatDate(info.event.start)} - ${formatDate(info.event.end)}`),
         h(ElDivider, { style: "margin: 10px 0;" }),
-        h("div", { style: "margin-bottom: 10px;" }, [h("div", "值班人员："), h("div", "张三"), h("div", "李四")]),
+        h("div", { style: "margin-bottom: 10px;" }, [h("div", "值班人员："), h("div", memberNames)]),
         h(ElDivider, { style: "margin: 10px 0;" }),
         h("div", { style: "display: flex; gap: 10px; justify-content: flex-end;" }, [
           h(
@@ -265,12 +280,21 @@ const preview = () => {
   })
     .then(({ data }) => {
       event.value = []
+      members.value = data.members
+
+      // 录入当前值班，下期值班
+      currentSchecule.value = data.current_schedule
+      nextSchecule.value = data.next_schedule
+
       data.final_schedule.forEach((item: schedule) => {
         event.value.push({
           id: createEventId(),
           title: item.title + " - " + item.rota_group.name,
           start: item.start_time,
-          end: item.end_time
+          end: item.end_time,
+          extendedProps: {
+            members: item.rota_group.members
+          }
         })
       })
 
@@ -286,6 +310,29 @@ function handleEvents(events: EventApi[]) {
   console.log("selectInfo", events)
   currentEvents.value = events
 }
+
+const findByIdsData = (members: number[]) => {
+  findByIdsApi(members)
+    .then((data) => {
+      userMap.value = new Map(data.data.users.map((user) => [user.id, user.display_name]))
+    })
+    .catch((error) => {
+      console.log("catch", error)
+    })
+    .finally(() => {})
+}
+
+// 深度监听 members 数据的变化
+watch(
+  members,
+  (newMembers, oldMembers) => {
+    if (!isEqual(newMembers, oldMembers)) {
+      // 例如，重新加载数据或更新视图
+      findByIdsData(newMembers)
+    }
+  },
+  { deep: true }
+)
 </script>
 
 <style lang="scss" scoped>
