@@ -87,6 +87,7 @@ const replaceRule = (ruleIndex: number) => {
 const handleCollapseChange = (active: any) => {
   const ruleComponent = ruleRefs.value[active]
   const rule = rotaRuleData.value[active]
+
   if (ruleComponent) {
     const ruleToUpdate: addRuleReq = {
       id: Number(rotaId),

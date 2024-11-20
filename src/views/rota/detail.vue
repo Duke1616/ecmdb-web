@@ -388,6 +388,7 @@ function handleEvents(events: EventApi[]) {
 }
 
 const findByIdsData = (members: number[]) => {
+  if (members === null) return
   if (members.length === 0) return
   findByIdsApi(members)
     .then((data) => {

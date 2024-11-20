@@ -216,14 +216,16 @@ const formRules: FormRules = {
 const isEndTimeVisible = ref<boolean>(false)
 const handleSwitchChange = () => {
   if (isEndTimeVisible.value) {
-    formData.value.rota_rule.end_time = new Date(new Date().setHours(0, 0, 0, 0)).setDate(new Date().getDate() + 1)
-  } else {
     formData.value.rota_rule.end_time = 0
   }
 }
 
 const setFrom = (row: addRuleReq) => {
   formData.value = cloneDeep(row)
+
+  if (row.rota_rule.end_time !== 0) {
+    isEndTimeVisible.value = true
+  }
 
   // 获取所有的成员
   const members = ref<number[]>([])
