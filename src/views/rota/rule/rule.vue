@@ -64,7 +64,7 @@
           <div v-for="group in formData.rota_rule.rota_groups" :key="group.id">
             <div v-if="group.members.length > 0">
               <div class="empty-group">
-                <span>{{ group.name }}</span>
+                <span>{{ `组 ` }} {{ group.name }}</span>
               </div>
               <VueDraggable
                 v-model="group.members"
@@ -88,7 +88,7 @@
                   </div>
 
                   <div class="flex items-center space-x-2">
-                    <el-icon @click="removeAndToLeftList(itemIndex, member, group)">
+                    <el-icon @click="removeAndToLeftList(itemIndex, member, group)" class="cursor-pointer">
                       <Close />
                     </el-icon>
                     <el-icon name="sort" class="handle cursor-move">
@@ -127,7 +127,7 @@ const getUserById = (id: number) => {
 
 // 添加用户并创建新组
 const addRotaGroup = (user: userInfo) => {
-  const newGroupName = `组 ${String.fromCharCode(65 + formData.value.rota_rule.rota_groups.length)}`
+  const newGroupName = `${String.fromCharCode(65 + formData.value.rota_rule.rota_groups.length)}`
   const newGroup = {
     id: Date.now(),
     name: newGroupName,
@@ -152,7 +152,7 @@ const onEnd = () => {
   })
 
   formData.value.rota_rule.rota_groups.forEach((group, index) => {
-    group.name = `组 ${String.fromCharCode(65 + index)}`
+    group.name = `${String.fromCharCode(65 + index)}`
   })
 }
 
@@ -178,7 +178,17 @@ const handleStartDateTimeChange = (date: Date | null) => {
 
 const handleEndDateTimeChange = (date: Date | null) => {
   if (date) {
-    formData.value.rota_rule.end_time = date.getTime()
+    const endTime = date.getTime()
+    const startTime = formData.value.rota_rule.start_time
+
+    if (startTime && endTime < startTime) {
+      ElMessage.error("结束时间不能小于开始时间")
+      formData.value.rota_rule.end_time = 0
+    } else {
+      formData.value.rota_rule.end_time = endTime
+    }
+  } else {
+    formData.value.rota_rule.end_time = 0
   }
 }
 
@@ -224,7 +234,6 @@ const setFrom = (row: addRuleReq) => {
     })
   })
 
-  console.log(members, "123")
   // 获取所有的用户信息
   findByIdsData(members.value)
 }
@@ -285,6 +294,10 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 5px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 
 .end-form-item {

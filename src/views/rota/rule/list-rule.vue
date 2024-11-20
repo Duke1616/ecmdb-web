@@ -1,5 +1,5 @@
 <template>
-  <el-collapse v-model="activeCollapse" accordion @change="handleCollapseChange" heidth="60vh">
+  <el-collapse v-model="activeCollapse" accordion @change="handleCollapseChange">
     <el-collapse-item
       v-for="(rule, ruleIndex) in rotaRuleData"
       :key="ruleIndex"
@@ -143,6 +143,12 @@ defineExpose({ setRules, resetRule })
 .custom-card {
   border: 1px solid #42b983; /* 自定义边框颜色 */
   border-radius: 8px; /* 可选：调整圆角 */
+}
+
+::v-deep(.el-card__body) {
+  max-height: 420px;
+  overflow: auto;
+  scroll-behavior: smooth; /* 平滑滚动 */
 }
 
 .rota-group-card {

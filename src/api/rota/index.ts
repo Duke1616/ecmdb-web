@@ -49,9 +49,25 @@ export function deleteShifSchedulingRuleApi(data: rota.updateOrDeleteRuleReq) {
 }
 
 /** 新增临时值班规则 */
-export function addShifAdjustmentRuleApi(data: rota.addRuleReq) {
+export function addShifAdjustmentRuleApi(data: rota.addOrUpdateAdjustmentRuleReq) {
   return instance.post<number>({
     url: "rota/rule/shift_adjustment/add",
+    data: data
+  })
+}
+
+/** 新增临时值班规则 */
+export function updateShifAdjustmentRuleApi(data: rota.addOrUpdateAdjustmentRuleReq) {
+  return instance.post<number>({
+    url: "rota/rule/shift_adjustment/update",
+    data: data
+  })
+}
+
+/** 删除临时值班规则 */
+export function deleteShifAdjustmentRuleApi(data: rota.deleteAdjustmentReq) {
+  return instance.post<number>({
+    url: "rota/rule/shift_adjustment/delete",
     data: data
   })
 }

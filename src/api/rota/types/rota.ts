@@ -48,6 +48,20 @@ export interface rotaRule {
   rotate: rotate // 轮换参数
 }
 
+// addOrUpdateAdjustmentRuleReq 临时值班组
+export interface addOrUpdateAdjustmentRuleReq {
+  id: number
+  group_id: number
+  rota_rule: rotaAdjustmentRule
+}
+
+// rotaAdjustmentRule 临时值班规则
+export interface rotaAdjustmentRule {
+  start_time: number // 开始时间 (timestamp)
+  end_time: number // 结束时间 (timestamp)
+  rota_group: rotaGroup // 值班组
+}
+
 // RotaGroup 值班组
 export interface rotaGroup {
   id: number
@@ -87,4 +101,9 @@ export interface schedule {
   start_time: number
   end_time: number
   rota_group: rotaGroup
+}
+
+export interface deleteAdjustmentReq {
+  id: number
+  group_id: number
 }

@@ -3,9 +3,9 @@
     <div class="app-sidebar">
       <div class="app-sidebar-section">
         <!-- 当前值班 -->
-        <scheduleCard title="当前值班" :schedule="currentSchecule" :formatTimestamp="formatTimestamp" />
+        <ScheduleCard title="当前值班" :schedule="currentSchecule" :formatTimestamp="formatTimestamp" />
         <!-- 下期值班 -->
-        <scheduleCard title="下期值班" :schedule="nextSchecule" :formatTimestamp="formatTimestamp" />
+        <ScheduleCard title="下期值班" :schedule="nextSchecule" :formatTimestamp="formatTimestamp" />
       </div>
     </div>
     <el-card class="app-calendar">
@@ -19,7 +19,7 @@
       </div>
     </el-card>
     <div>
-      <el-dialog v-model="dialogVisible" title="新增规则" :before-close="onClosed" width="400">
+      <el-dialog v-model="dialogVisible" title="新增规则" :before-close="onClosed" max-height="500" width="400">
         <Rule ref="ruleRef" @closed="onClosed" />
         <template #footer>
           <div class="dialog-footer">
@@ -30,8 +30,32 @@
       </el-dialog>
     </div>
     <div>
-      <el-dialog v-model="dialogListRuleVisible" title="规则列表" :before-close="onRuleListClosed" width="400">
+      <el-dialog
+        v-model="dialogListRuleVisible"
+        title="规则列表"
+        :before-close="onRuleListClosed"
+        width="400"
+        height="500"
+      >
         <ListRule ref="ruleListRef" @closed="onRuleListClosed" @callback="preview" />
+      </el-dialog>
+    </div>
+
+    <div>
+      <el-dialog
+        v-model="dialogAdjustmentRuleVisible"
+        title="临时调班"
+        :before-close="onAdjustmentRuleClosed"
+        width="400"
+        height="500"
+      >
+        <AdjustmentRule ref="adjustmentRuleRef" @closed="onAdjustmentRuleClosed" @callback="preview" />
+        <template #footer>
+          <div class="dialog-footer">
+            <el-button @click="onAdjustmentRuleClosed">取消</el-button>
+            <el-button type="primary" @click="handlerSubmitAdjustmentRule"> 保存 </el-button>
+          </div>
+        </template>
       </el-dialog>
     </div>
   </div>
@@ -40,18 +64,19 @@
 <script lang="ts" setup>
 import { ref, reactive, nextTick, createApp, h, watch } from "vue"
 import { CalendarOptions, EventApi, DateSelectArg, EventInput, EventHoveringArg } from "@fullcalendar/core"
-import scheduleCard from "./schedule-card.vue"
+import ScheduleCard from "./schedule-card.vue"
 import zhLocale from "@fullcalendar/core/locales/zh-cn"
 import FullCalendar from "@fullcalendar/vue3"
 import dayGridPlugin from "@fullcalendar/daygrid"
 import rrulePlugin from "@fullcalendar/rrule"
 import timeGridPlugin from "@fullcalendar/timegrid"
 import interactionPlugin from "@fullcalendar/interaction"
-import { createEventId } from "./event-utils"
+import { createEventId, colorMap } from "./event-utils"
 import Rule from "./rule/rule.vue"
 import ListRule from "./rule/list-rule.vue"
+import AdjustmentRule from "./rule/adjustment-rule.vue"
 import { useRoute } from "vue-router"
-import { getRuleListById, previewSchedule } from "@/api/rota"
+import { deleteShifAdjustmentRuleApi, getRuleListById, previewSchedule } from "@/api/rota"
 import { rotaRule, schedule } from "@/api/rota/types/rota"
 import { ElButton, ElDivider, ElMessage } from "element-plus"
 import tippy, { followCursor } from "tippy.js"
@@ -81,13 +106,24 @@ const onRuleListClosed = () => {
   ruleListRef.value?.resetRule()
 }
 
+const onAdjustmentRuleClosed = () => {
+  dialogAdjustmentRuleVisible.value = false
+  adjustmentRuleRef.value?.resetForm()
+}
+
 const calendarRef = ref<InstanceType<typeof FullCalendar>>()
 const ruleRef = ref<InstanceType<typeof Rule>>()
 const ruleListRef = ref<InstanceType<typeof ListRule>>()
+const adjustmentRuleRef = ref<InstanceType<typeof AdjustmentRule>>()
 
 // 添加新的规则
 const handlerSubmitRotaRule = () => {
   ruleRef.value?.submitForm(Number(rotaId))
+}
+
+// 添加调班规则
+const handlerSubmitAdjustmentRule = () => {
+  adjustmentRuleRef.value?.submitForm(Number(rotaId))
 }
 
 const calendarOptions = reactive<any>({
@@ -100,10 +136,10 @@ const calendarOptions = reactive<any>({
   },
   initialView: "dayGridMonth",
   aspectRatio: 2.2,
-  editable: true,
-  selectable: true,
+  editable: false,
+  selectable: false,
   selectMirror: true,
-  dayMaxEvents: true,
+  dayMaxEvents: 2,
   unselectAuto: true,
   weekends: true,
   buttonText: {
@@ -144,6 +180,7 @@ const endStart = ref<number>(0)
 const currentEvents = ref<EventApi[]>([])
 const dialogVisible = ref<boolean>(false)
 const dialogListRuleVisible = ref<boolean>(false)
+const dialogAdjustmentRuleVisible = ref<boolean>(false)
 const event = ref<EventInput[]>([])
 
 async function addShifSchedulingRule() {
@@ -178,38 +215,74 @@ function handleEventMouseEnter(info: EventHoveringArg) {
         .map((memberId: number) => userMap.value.get(memberId) || memberId)
         .join("、")
 
+      // 按钮数组，动态渲染
+      const buttons = []
+
+      // 如果 groupId 是 TEMP，则添加“撤销”按钮
+      if (info.event.groupId === "TEMP") {
+        buttons.push(
+          h(
+            ElButton,
+            {
+              type: "danger",
+              size: "small",
+              style: { flex: "1" },
+              onClick: () => {
+                deleteShifAdjustmentRuleApi({ id: Number(rotaId), group_id: info.event.extendedProps.groupid })
+                  .then(() => {
+                    ElMessage.success("撤销成功")
+                    preview()
+                    instance.hide()
+                  })
+                  .catch(() => {})
+                  .finally(() => {})
+              }
+            },
+            "撤销"
+          )
+        )
+      }
+
+      // 添加“调班”按钮
+      buttons.push(
+        h(
+          ElButton,
+          {
+            type: "primary",
+            size: "small",
+            style: { flex: "1" },
+            onClick: () => {
+              dialogAdjustmentRuleVisible.value = true
+              nextTick(() => {
+                // 只有当前组是调班组才写回数据
+                if (info.event.groupId === "TEMP") {
+                  adjustmentRuleRef.value?.setMembers(info.event.extendedProps.members)
+                }
+
+                adjustmentRuleRef.value?.setGroupId(info.event.extendedProps.groupid)
+                adjustmentRuleRef.value?.setStartDate(info.event.start)
+                adjustmentRuleRef.value?.setEndDate(info.event.end)
+              })
+            }
+          },
+          "调班"
+        )
+      )
+
+      const containerStyle = {
+        display: "flex",
+        justifyContent: "space-between",
+        gap: "10px",
+        width: "100%"
+      }
+
       return h("div", [
         h("div", { style: "font-weight: bold; margin-bottom: 5px;" }, info.event.title),
         h("div", { style: "margin-bottom: 5px;" }, `${formatDate(info.event.start)} - ${formatDate(info.event.end)}`),
         h(ElDivider, { style: "margin: 10px 0;" }),
         h("div", { style: "margin-bottom: 10px;" }, [h("div", "值班人员："), h("div", memberNames)]),
         h(ElDivider, { style: "margin: 10px 0;" }),
-        h("div", { style: "display: flex; gap: 10px; justify-content: flex-end;" }, [
-          h(
-            ElButton,
-            {
-              type: "primary",
-              size: "small",
-              onClick: () => {
-                console.log("编辑按钮被点击")
-                alert("编辑操作")
-              }
-            },
-            "编辑"
-          ),
-          h(
-            ElButton,
-            {
-              type: "warning",
-              size: "small",
-              onClick: () => {
-                console.log("调班按钮被点击")
-                alert("调班操作")
-              }
-            },
-            "调班"
-          )
-        ])
+        h("div", { style: containerStyle }, buttons)
       ])
     }
   })
@@ -232,7 +305,6 @@ function handleEventMouseEnter(info: EventHoveringArg) {
     followCursor: "horizontal",
     plugins: [followCursor],
     onHidden() {
-      // 销毁 Vue 应用并清理容器
       app.unmount()
       container.remove()
     }
@@ -292,7 +364,11 @@ const preview = () => {
           title: item.title + " - " + item.rota_group.name,
           start: item.start_time,
           end: item.end_time,
+          backgroundColor: colorMap.get(item.rota_group.name)?.color,
+          allDay: true,
+          groupId: item.rota_group.name,
           extendedProps: {
+            groupid: item.rota_group.id,
             members: item.rota_group.members
           }
         })
@@ -312,6 +388,7 @@ function handleEvents(events: EventApi[]) {
 }
 
 const findByIdsData = (members: number[]) => {
+  if (members.length === 0) return
   findByIdsApi(members)
     .then((data) => {
       userMap.value = new Map(data.data.users.map((user) => [user.id, user.display_name]))
@@ -356,7 +433,6 @@ watch(
 
 .card-item {
   flex: 1;
-  margin-top: 15px;
   margin-bottom: 20px;
 }
 
@@ -370,6 +446,6 @@ watch(
 }
 
 :deep(.fc .fc-icon) {
-  font-family: fcicons !important; /* 确保字体加载正确 */
+  font-family: fcicons !important;
 }
 </style>
