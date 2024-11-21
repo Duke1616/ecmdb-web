@@ -197,7 +197,7 @@ const DEFAULT_FORM_DATA: addRuleReq = {
     end_time: 0,
     rota_groups: rotaGroups.value,
     rotate: {
-      time_unit: 1,
+      time_unit: 4,
       time_duration: 1
     }
   }
