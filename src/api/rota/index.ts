@@ -81,9 +81,9 @@ export function deleteShifAdjustmentRuleApi(data: rota.deleteAdjustmentReq) {
 }
 
 /** 查看 */
-export function getRuleListById(id: number) {
+export function getRotaRuleById(id: number) {
   return instance.post<rota.rotaRule[]>({
-    url: "rota/rule/list_by_id",
+    url: "rota/rule/detail",
     data: { id: id }
   })
 }

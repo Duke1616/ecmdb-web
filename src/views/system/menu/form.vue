@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="form-container">
     <el-divider content-position="left">基础设置</el-divider>
     <el-form ref="formRef" :model="formData" :inline-message="true" hide-required-asterisk :rules="formRules">
       <el-row :gutter="20">
@@ -358,5 +358,10 @@ defineExpose({
 <style lang="scss" scoped>
 .divider .el-divider__text {
   font-size: 20px; /* 您可以根据需要调整这个值 */
+}
+
+.form-container {
+  padding-left: 10px;
+  padding-right: 10px;
 }
 </style>

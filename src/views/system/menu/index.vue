@@ -267,6 +267,7 @@ watch(filterInput, (val: string) => {
   align-items: stretch;
   gap: 12px;
 }
+
 .input-tree-container {
   display: flex;
   flex-direction: column;

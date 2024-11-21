@@ -76,7 +76,7 @@ import Rule from "./rule/rule.vue"
 import ListRule from "./rule/list-rule.vue"
 import AdjustmentRule from "./rule/adjustment-rule.vue"
 import { useRoute } from "vue-router"
-import { deleteShifAdjustmentRuleApi, getRuleListById, previewSchedule } from "@/api/rota"
+import { deleteShifAdjustmentRuleApi, getRotaRuleById, previewSchedule } from "@/api/rota"
 import { rotaRule, schedule } from "@/api/rota/types/rota"
 import { ElButton, ElDivider, ElMessage } from "element-plus"
 import tippy, { followCursor } from "tippy.js"
@@ -197,7 +197,7 @@ async function addShifSchedulingRule() {
 // 获取指定排班-规则列表
 const rotaRuleData = ref<rotaRule[]>([])
 const getRuleList = async () => {
-  await getRuleListById(Number(rotaId))
+  await getRotaRuleById(Number(rotaId))
     .then(({ data }) => {
       rotaRuleData.value = data
     })
