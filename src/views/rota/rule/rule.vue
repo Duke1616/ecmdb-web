@@ -212,7 +212,7 @@ const formRules: FormRules = {
 
 const isEndTimeVisible = ref<boolean>(false)
 const handleSwitchChange = () => {
-  if (isEndTimeVisible.value) {
+  if (!isEndTimeVisible.value) {
     formData.value.rota_rule.end_time = 0
   }
 }
