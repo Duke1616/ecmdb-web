@@ -84,17 +84,17 @@ import "tippy.js/dist/tippy.css"
 import "tippy.js/themes/light.css"
 import "tippy.js/animations/scale.css"
 import { formatDate, formatTimestamp } from "@/utils/day"
-import { findByIdsApi } from "@/api/user"
 import { isEqual } from "lodash-es"
+import { useAppStore } from "@/store/modules/app"
+import { useUserToolsStore } from "@/store/modules/user-tools"
+const appStore = useAppStore()
+const userToolsStore = useUserToolsStore()
 
 const route = useRoute()
 const rotaId = route.query.id as string
 
 const currentSchecule = ref<schedule>()
 const nextSchecule = ref<schedule>()
-const members = ref<number[]>([])
-// 存储所有用户数据的 Map
-const userMap = ref(new Map<number, string>())
 
 const onClosed = () => {
   dialogVisible.value = false
@@ -209,12 +209,12 @@ const getRuleList = async () => {
 
 function handleEventMouseEnter(info: EventHoveringArg) {
   // 创建 Vue 应用程序
+  const memberNames = (info.event.extendedProps.members || [])
+    .map((memberId: number) => userToolsStore.getOnlyDisplayName(memberId) || memberId)
+    .join("、")
+
   const app = createApp({
     render() {
-      const memberNames = (info.event.extendedProps.members || [])
-        .map((memberId: number) => userMap.value.get(memberId) || memberId)
-        .join("、")
-
       // 按钮数组，动态渲染
       const buttons = []
 
@@ -344,6 +344,7 @@ function handleDateSelect(selectInfo: DateSelectArg) {
   }
 }
 
+const members = ref<number[]>([])
 const preview = () => {
   previewSchedule({
     id: Number(rotaId),
@@ -387,29 +388,26 @@ function handleEvents(events: EventApi[]) {
   currentEvents.value = events
 }
 
-const findByIdsData = (members: number[]) => {
-  if (members === null) return
-  if (members.length === 0) return
-  findByIdsApi(members)
-    .then((data) => {
-      userMap.value = new Map(data.data.users.map((user) => [user.id, user.display_name]))
-    })
-    .catch((error) => {
-      console.log("catch", error)
-    })
-    .finally(() => {})
-}
-
 // 深度监听 members 数据的变化
 watch(
   members,
   (newMembers, oldMembers) => {
     if (!isEqual(newMembers, oldMembers)) {
       // 例如，重新加载数据或更新视图
-      findByIdsData(newMembers)
+      userToolsStore.setByUserIds(newMembers)
     }
   },
   { deep: true }
+)
+
+// 检测左侧菜单栏变化
+// 副作用：屏幕宽度变小，无法正常展开 sidebar
+watch(
+  () => appStore.sidebar.opened,
+  () => {
+    window.dispatchEvent(new Event("resize"))
+  },
+  { immediate: false }
 )
 </script>
 

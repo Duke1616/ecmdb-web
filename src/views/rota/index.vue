@@ -21,12 +21,20 @@
               <el-tag v-else type="info" effect="plain">禁用</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="owner" label="管理员" align="center" />
-          <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column prop="owner" label="管理员" align="center">
             <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleDetailClick(scope.row)">详情</el-button>
-              <el-button type="danger" text bg size="small" @click="handleUpdate(scope.row)">删除</el-button>
+              {{ userToolsStore.getOnlyDisplayName(scope.row.owner) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="desc" label="描述" align="center" />
+          <el-table-column fixed="right" label="操作" width="200" align="center">
+            <template #default="scope">
+              <OperateBtn
+                :items="operateBtnStatus"
+                @routeEvent="operateEvent"
+                :operateItem="scope.row"
+                :maxLength="2"
+              />
             </template>
           </el-table-column>
         </el-table>
@@ -60,23 +68,67 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue"
+import { ref, watch, nextTick, h } from "vue"
 import { usePagination } from "@/hooks/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { rota } from "@/api/rota/types/rota"
-import { listRotasApi } from "@/api/rota"
+import { deleteRotaApi, listRotasApi } from "@/api/rota"
 import createOrUpdate from "./createOrUpdate.vue"
 import router from "@/router"
+import OperateBtn from "@/components/OperateBtn/index.vue"
+import { ElMessage, ElMessageBox } from "element-plus"
+import { useUserToolsStore } from "@/store/modules/user-tools"
+const userToolsStore = useUserToolsStore()
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const dialogVisible = ref<boolean>(false)
 const apiRef = ref<InstanceType<typeof createOrUpdate>>()
 
+const operateBtnStatus = ref([
+  {
+    name: "详情",
+    code: "1",
+    icon: "View"
+  },
+  {
+    name: "修改",
+    code: "2",
+    icon: "Edit"
+  },
+  {
+    name: "删除",
+    code: "3",
+    icon: "Delete",
+    type: "danger"
+  }
+])
+
+const operateEvent = (data: rota, name: string) => {
+  switch (name) {
+    case "详情":
+      handleDetailClick(data)
+      break
+    case "修改":
+      handleUpdateClick(data)
+      break
+    case "3":
+      handleDeleteClick(data)
+      break
+  }
+}
+
 const handleDetailClick = (row: rota) => {
   router.push({
     path: "/cmdb/rota/detail",
     query: { id: row.id }
+  })
+}
+
+const handleUpdateClick = (row: rota) => {
+  dialogVisible.value = true
+  nextTick(() => {
+    apiRef.value?.setFrom(row)
   })
 }
 
@@ -107,6 +159,11 @@ const listRotasData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       rotasData.value = data.rotas
+
+      const userIds = rotasData.value.map((item) => item.owner)
+      if (userIds.length > 0) {
+        userToolsStore.setByUserIds(userIds)
+      }
     })
     .catch(() => {
       rotasData.value = []
@@ -114,8 +171,23 @@ const listRotasData = () => {
     .finally(() => {})
 }
 
-const handleUpdate = (row: rota) => {
-  console.log(row)
+const handleDeleteClick = (row: rota) => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除模版: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteRotaApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listRotasData()
+    })
+  })
 }
 
 /** 监听分页参数的变化 */

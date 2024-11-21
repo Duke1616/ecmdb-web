@@ -76,15 +76,13 @@ import { ref } from "vue"
 import { user as userInfo } from "@/api/user/types/user"
 import UserPopover from "./user-popover.vue"
 import { addShifAdjustmentRuleApi, updateShifAdjustmentRuleApi } from "@/api/rota"
-import { findByIdsApi } from "@/api/user"
+import { useUserToolsStore } from "@/store/modules/user-tools"
+const userToolsStore = useUserToolsStore()
 
 const emits = defineEmits(["closed", "callback"])
-// 存储所有用户数据的 Map
-const userMap = ref(new Map<number, string>())
 
-// 渲染时，使用 computed 来从 userMap 获取用户信息
 const getUserById = (id: number) => {
-  return userMap.value.get(id)
+  return userToolsStore.getUsernme(id)
 }
 
 // 添加用户并创建新组
@@ -94,7 +92,7 @@ const addRotaGroup = (user: userInfo) => {
   existingGroup.members.push(user.id)
 
   // 更新用户映射
-  userMap.value.set(user.id, user.display_name + " [" + user.username + "] ")
+  userToolsStore.setToMap(user.id, user.display_name + " [" + user.username + "] ")
 }
 
 const removeAndToLeftList = (index: number) => {
@@ -141,17 +139,6 @@ const formRules: FormRules = {
   owner: [{ required: true, message: "必须输入值班管理人员", trigger: "blur" }]
 }
 
-const findByIdsData = (members: number[]) => {
-  findByIdsApi(members)
-    .then((data) => {
-      userMap.value = new Map(data.data.users.map((user) => [user.id, user.display_name + " [" + user.username + "] "]))
-    })
-    .catch((error) => {
-      console.log("catch", error)
-    })
-    .finally(() => {})
-}
-
 const getFrom = () => {
   return formData
 }
@@ -193,7 +180,7 @@ const setMembers = (members: number[]) => {
   formData.value.rota_rule.rota_group.members = members
 
   // 获取所有的用户信息
-  findByIdsData(members)
+  userToolsStore.setByUserIds(members)
 }
 
 const memberLen = ref<number>(0)

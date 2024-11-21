@@ -16,6 +16,14 @@ export function createRotaApi(data: rota.createOrUpdateRotaReq) {
   })
 }
 
+/** 删除排班表 */
+export function deleteRotaApi(id: number) {
+  return instance.post<number>({
+    url: "rota/delete",
+    data: { id: id }
+  })
+}
+
 /** 更新排班表 */
 export function updateRotaApi(data: rota.createOrUpdateRotaReq) {
   return instance.post<rota.rota[]>({

@@ -114,15 +114,12 @@ import { ref } from "vue"
 import { user as userInfo } from "@/api/user/types/user"
 import UserPopover from "./user-popover.vue"
 import { addShifSchedulingRuleApi } from "@/api/rota"
-import { findByIdsApi } from "@/api/user"
+import { useUserToolsStore } from "@/store/modules/user-tools"
+const userToolsStore = useUserToolsStore()
 
 const emits = defineEmits(["closed", "callback"])
-// 存储所有用户数据的 Map
-const userMap = ref(new Map<number, string>())
-
-// 渲染时，使用 computed 来从 userMap 获取用户信息
 const getUserById = (id: number) => {
-  return userMap.value.get(id)
+  return userToolsStore.getUsernme(id)
 }
 
 // 添加用户并创建新组
@@ -134,7 +131,7 @@ const addRotaGroup = (user: userInfo) => {
     members: [user.id]
   }
 
-  userMap.value.set(user.id, user.display_name + " [" + user.username + "] ")
+  userToolsStore.setToMap(user.id, user.display_name + " [" + user.username + "] ")
   formData.value.rota_rule.rota_groups.push(newGroup)
 }
 
@@ -237,18 +234,7 @@ const setFrom = (row: addRuleReq) => {
   })
 
   // 获取所有的用户信息
-  findByIdsData(members.value)
-}
-
-const findByIdsData = (members: number[]) => {
-  findByIdsApi(members)
-    .then((data) => {
-      userMap.value = new Map(data.data.users.map((user) => [user.id, user.display_name + " [" + user.username + "] "]))
-    })
-    .catch((error) => {
-      console.log("catch", error)
-    })
-    .finally(() => {})
+  userToolsStore.setByUserIds(members.value)
 }
 
 const getFrom = () => {

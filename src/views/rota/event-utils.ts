@@ -25,7 +25,8 @@ export const colorMap = new Map<string, { color: string; class: string }>([
   ["E", { color: "#07B9B9", class: "cyan" }],
   ["F", { color: "#3662EC", class: "blue" }],
   ["G", { color: "#8A38F5", class: "purple" }],
-  ["H", { color: "#EB2F96", class: "magenta" }]
+  ["H", { color: "#EB2F96", class: "magenta" }],
+  ["TEMP", { color: "#FF69B4", class: "pink" }]
 ])
 
 export function createEventId() {
