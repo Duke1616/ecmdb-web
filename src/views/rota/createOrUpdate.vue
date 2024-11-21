@@ -137,6 +137,7 @@ const setOwnerForm = () => {
   findByUserIdApi(formData.value.owner)
     .then(({ data }) => {
       usersData.value = [data]
+
       // 给定默认负责人
       if (formData.value.owner === 0) {
         formData.value.owner = data.id
@@ -150,6 +151,9 @@ const setOwnerForm = () => {
 
 const setFrom = (row: rota) => {
   formData.value = cloneDeep(row)
+
+  // 设置负责人展示
+  setOwnerForm()
 }
 
 const resetForm = () => {
