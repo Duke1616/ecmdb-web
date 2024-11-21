@@ -213,6 +213,8 @@ function handleEventMouseEnter(info: EventHoveringArg) {
     .map((memberId: number) => userToolsStore.getOnlyDisplayName(memberId) || memberId)
     .join("、")
 
+  console.log(info.event.start)
+
   const app = createApp({
     render() {
       // 按钮数组，动态渲染
@@ -360,13 +362,17 @@ const preview = () => {
       nextSchecule.value = data.next_schedule
 
       data.final_schedule.forEach((item: schedule) => {
+        // 计算时间戳差值，确保时间戳为毫秒单位
+        const duration = (item.end_time - item.start_time) / (1000 * 60 * 60 * 24)
+        const isAllDay = duration >= 1
+
         event.value.push({
           id: createEventId(),
           title: item.title + " - " + item.rota_group.name,
           start: item.start_time,
           end: item.end_time,
           backgroundColor: colorMap.get(item.rota_group.name)?.color,
-          allDay: true,
+          allDay: isAllDay,
           groupId: item.rota_group.name,
           extendedProps: {
             groupid: item.rota_group.id,
@@ -384,7 +390,6 @@ const preview = () => {
 }
 
 function handleEvents(events: EventApi[]) {
-  console.log("selectInfo", events)
   currentEvents.value = events
 }
 

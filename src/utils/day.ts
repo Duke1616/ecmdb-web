@@ -2,6 +2,8 @@ function formatDate(date: Date | null) {
   if (!date) {
     return ""
   }
+
+  console.log(date)
   const month = date.getMonth() + 1 // 月份从 0 开始
   const day = date.getDate()
   const hours = date.getHours().toString().padStart(2, "0") // 补零
@@ -22,7 +24,7 @@ function formatTimestamp(timestamp: number | undefined) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false // 使用 24 小时制
+    hour12: false
   })
 
   // 格式化后的结果
