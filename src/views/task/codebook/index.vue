@@ -71,6 +71,7 @@ const handlerCreate = () => {
 const codebookRow = ref<codebook>({
   id: 0,
   name: "",
+  owner: 0,
   code: "",
   language: "",
   identifier: "",
