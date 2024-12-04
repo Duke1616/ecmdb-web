@@ -41,6 +41,28 @@
                   {{ scope.row.data[item.field_uid] }}
                 </el-button>
               </template>
+              <template v-else-if="item.field_type === 'file'">
+                <div v-if="scope.row.data[item.field_uid] === undefined">空</div>
+                <div v-else>
+                  <el-popover width="350px" trigger="click" placement="top">
+                    <div v-for="(file, index) in fileList" :key="index" class="file-item">
+                      <span class="file-name">{{ file.name }}</span>
+                      <el-button size="small" type="primary" @click="downloadFile(file.url)">下载</el-button>
+                    </div>
+                    <template #reference>
+                      <el-button
+                        type="primary"
+                        text
+                        bg
+                        size="small"
+                        @click="handleReviewClick(scope.row.data[item.field_uid])"
+                      >
+                        查看
+                      </el-button>
+                    </template>
+                  </el-popover>
+                </div>
+              </template>
               <template v-else>
                 {{ scope.row.data[item.field_uid] }}
               </template>
@@ -94,10 +116,11 @@ import { listResourceApi, deleteResourceApi, findSecureData } from "@/api/resour
 import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage, ElMessageBox, ElPopover, UploadUserFile } from "element-plus"
 import router from "@/router"
 
 import createOrUpdate from "./createOrUpdate.vue"
+
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
 const modelUid = route.query.uid as string
@@ -113,6 +136,20 @@ const handleDetailClick = (resource: Resource) => {
     path: "/cmdb/resource/info",
     query: { model_uid: modelUid, id: resource.id, name: resource.name }
   })
+}
+
+const fileList = ref<UploadUserFile[]>([])
+const handleReviewClick = (data: UploadUserFile[]) => {
+  fileList.value = Array.isArray(data) ? data : []
+
+  // 如果文件列表为空，则隐藏 popover
+  if (fileList.value.length === 0) {
+    return
+  }
+}
+
+const downloadFile = (url?: string) => {
+  window.open(url, "_blank")
 }
 
 // ** 获取资产字段信息 */
@@ -239,5 +276,19 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRes
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+.file-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.file-name {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

@@ -107,6 +107,10 @@ const mapping = [
   {
     value: "list",
     label: "列表"
+  },
+  {
+    value: "file",
+    label: "文件"
   }
 ]
 
