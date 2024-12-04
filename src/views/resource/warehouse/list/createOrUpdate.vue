@@ -95,7 +95,7 @@ const formRules = computed<FormRules>(() => {
 })
 
 const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
-  putMinioPresignedUrl(action.file.name).then((res: any) => {
+  return putMinioPresignedUrl(action.file.name).then((res: any) => {
     // 替换 URL 为本地的访问地址，通过代理Minio进行访问
     const currentUrl = window.location.origin
     const backendUrlObj = new URL(res.data)
