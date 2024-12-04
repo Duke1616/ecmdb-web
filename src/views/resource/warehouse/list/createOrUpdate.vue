@@ -1,51 +1,50 @@
 <template>
-  <div>
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
-      <el-collapse v-model="activeNames">
-        <el-collapse-item title="基础属性" name="1">
-          <el-row :gutter="20">
-            <el-col v-for="(item, index) of nonFileFields" :key="index" :span="12" class="lightgreen-box">
-              <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
-                <template v-if="item.field_type === 'string'">
-                  <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
-                </template>
-                <template v-if="item.field_type === 'list'">
-                  <el-select v-model="formData.data[item.field_uid]" placeholder="请选择">
-                    <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
-                  </el-select>
-                </template>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="24" v-for="(item, index) of fileFields" :key="index">
-              <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
-                <el-upload
-                  v-model:file-list="formData.data[item.field_uid]"
-                  action="#"
-                  multiple
-                  show-file-list
-                  list-type="picture-card"
-                  :http-request="(action: UploadRequestOptions) => uploadFile(action, item.field_uid)"
-                  :on-preview="handlePreview"
-                  :on-remove="handleRemove"
-                  :before-remove="beforeRemove"
-                  :limit="3"
-                  :on-exceed="handleExceed"
-                >
-                  <el-button type="primary">文件上传</el-button>
-                </el-upload>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </el-collapse-item>
-      </el-collapse>
-    </el-form>
-  </div>
+  <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
+    <el-collapse v-model="activeNames">
+      <el-collapse-item title="基础属性" name="1">
+        <el-row :gutter="20">
+          <el-col v-for="(item, index) of nonFileFields" :key="index" :span="12" class="lightgreen-box">
+            <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
+              <template v-if="item.field_type === 'string'">
+                <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
+              </template>
+              <template v-if="item.field_type === 'list'">
+                <el-select v-model="formData.data[item.field_uid]" placeholder="请选择">
+                  <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
+                </el-select>
+              </template>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24" v-for="(item, index) of fileFields" :key="index">
+            <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
+              <el-upload
+                v-model:file-list="formData.data[item.field_uid]"
+                class="upload-file"
+                action="#"
+                multiple
+                show-file-list
+                :http-request="(action: UploadRequestOptions) => uploadFile(action, item.field_uid)"
+                :on-preview="handlePreview"
+                :on-remove="handleRemove"
+                :before-remove="beforeRemove"
+                :limit="3"
+                :on-exceed="handleExceed"
+                :on-progress="handleProgress"
+              >
+                <el-button type="primary">文件上传</el-button>
+              </el-upload>
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </el-collapse-item>
+    </el-collapse>
+  </el-form>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from "vue"
+import { ref, computed, h } from "vue"
 import { createResourceApi, updateResourceApi } from "@/api/resource"
 import { Resource, type CreateOrUpdateResourceReq } from "@/api/resource/types/resource"
 import { cloneDeep } from "lodash-es"
@@ -54,11 +53,13 @@ import {
   type FormRules,
   ElMessage,
   ElMessageBox,
+  UploadProgressEvent,
   UploadProps,
-  UploadRequestOptions
+  UploadRequestOptions,
+  UploadUserFile
 } from "element-plus"
 import { Attribute } from "@/api/attribute/types/attribute"
-import { getMinioPresignedUrl } from "@/api/tools"
+import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
 
 // 接收父组建传递
@@ -94,46 +95,76 @@ const formRules = computed<FormRules>(() => {
 })
 
 const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
-  getMinioPresignedUrl(action.file.name).then((res: any) => {
-    const url = res.data
+  putMinioPresignedUrl(action.file.name).then((res: any) => {
+    // 替换 URL 为本地的访问地址，通过代理Minio进行访问
+    const currentUrl = window.location.origin
+    const backendUrlObj = new URL(res.data)
+    const path = "/minio" + backendUrlObj.pathname
+    const url = `${currentUrl}${path}${backendUrlObj.search}`
+
+    // 请求上传
     axios
       .put(url, action.file, {
         headers: {
           "Content-Type": action.file.type
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            action.onProgress({
+              percent: percentCompleted
+            } as UploadProgressEvent)
+          }
         }
       })
       .then(() => {
         const fileList = formData.value.data[fieldUid]
-        const file = fileList.find((item: any) => item.name === action.file.name)
+        const file = fileList.find((item: UploadUserFile) => item.name === action.file.name)
         if (file) {
           console.log(file, "file")
           file.url = url.split("?")[0]
         }
       })
+      .catch(() => {
+        ElMessage.error("上传失败")
+      })
   })
 }
 
-const handleRemove: UploadProps["onRemove"] = (file, uploadFiles) => {
-  console.log(file, uploadFiles)
+const handleRemove: UploadProps["onRemove"] = (file) => {
+  const filePath = file.url?.split("ecmdb/")[1]
+  if (filePath === undefined) {
+    return
+  }
+
+  removeMinioObject(filePath).then(() => {
+    ElMessage.success("删除成功")
+  })
+}
+const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
+  file.percentage = event.percent
 }
 
 const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
   console.log(uploadFile)
 }
 
-const handleExceed: UploadProps["onExceed"] = (files, uploadFiles) => {
-  ElMessage.warning(
-    `The limit is 3, you selected ${files.length} files this time, add up to ${
-      files.length + uploadFiles.length
-    } totally`
-  )
+const handleExceed: UploadProps["onExceed"] = (files) => {
+  ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
 }
 
 const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
-  return ElMessageBox.confirm(`删除文件 ${uploadFile.name} ?`).then(
-    () => true,
-    () => false
-  )
+  return ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除文件: "),
+      h("i", { style: "color: red" }, `${uploadFile.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => true)
 }
 
 const nonFileFields = computed(() => {
@@ -181,4 +212,8 @@ const resetForm = () => {
 }
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.upload-file {
+  width: 100%;
+}
+</style>

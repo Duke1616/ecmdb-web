@@ -42,7 +42,9 @@
                 </el-button>
               </template>
               <template v-else-if="item.field_type === 'file'">
-                <div v-if="scope.row.data[item.field_uid] === undefined">空</div>
+                <div v-if="scope.row.data[item.field_uid] === undefined || scope.row.data[item.field_uid].length === 0">
+                  空
+                </div>
                 <div v-else>
                   <el-popover width="350px" trigger="click" placement="top">
                     <div v-for="(file, index) in fileList" :key="index" class="file-item">
@@ -120,6 +122,7 @@ import { ElMessage, ElMessageBox, ElPopover, UploadUserFile } from "element-plus
 import router from "@/router"
 
 import createOrUpdate from "./createOrUpdate.vue"
+import { getMinioPresignedUrl } from "@/api/tools"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
@@ -141,15 +144,21 @@ const handleDetailClick = (resource: Resource) => {
 const fileList = ref<UploadUserFile[]>([])
 const handleReviewClick = (data: UploadUserFile[]) => {
   fileList.value = Array.isArray(data) ? data : []
-
-  // 如果文件列表为空，则隐藏 popover
-  if (fileList.value.length === 0) {
-    return
-  }
 }
 
 const downloadFile = (url?: string) => {
-  window.open(url, "_blank")
+  const filePath = url?.split("ecmdb/")[1]
+  if (filePath === undefined) {
+    return
+  }
+
+  getMinioPresignedUrl(filePath).then((res: any) => {
+    const currentUrl = window.location.origin
+    const backendUrlObj = new URL(res.data)
+    const path = "/minio" + backendUrlObj.pathname
+    const url = `${currentUrl}${path}${backendUrlObj.search}`
+    window.location.href = url
+  })
 }
 
 // ** 获取资产字段信息 */
@@ -263,6 +272,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRes
 </script>
 
 <style lang="scss" scoped>
+:deep(.el-drawer__header) {
+  margin-bottom: 0px;
+}
+
 .toolbar-wrapper {
   display: flex;
   justify-content: space-between;

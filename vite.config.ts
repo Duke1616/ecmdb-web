@@ -72,10 +72,16 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       /** 接口代理 */
       proxy: {
         "/api": {
-          target: "http://127.0.0.1:8000",
+          target: `http://${viteEnv.VITE_ECMDB_API}`,
           ws: true,
           /** 是否允许跨域 */
           changeOrigin: true
+        },
+        "/minio": {
+          target: `http://${viteEnv.VITE_MINIO_ENDPOINT}`,
+          changeOrigin: true,
+          ws: true,
+          rewrite: (path) => path.replace("/minio", "")
         }
       },
       /** 预热常用文件，提高初始页面加载速度 */
