@@ -152,7 +152,10 @@ const downloadFile = (url?: string) => {
     return
   }
 
-  getMinioPresignedUrl(filePath).then((res: any) => {
+  // 会有中文特殊字符，需要进行解码
+  const decodedFilePath = decodeURIComponent(filePath)
+
+  getMinioPresignedUrl(decodedFilePath).then((res: any) => {
     const currentUrl = window.location.origin
     const backendUrlObj = new URL(res.data)
     const path = "/minio" + backendUrlObj.pathname

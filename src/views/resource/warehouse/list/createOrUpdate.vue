@@ -121,8 +121,8 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
         const fileList = formData.value.data[fieldUid]
         const file = fileList.find((item: UploadUserFile) => item.name === action.file.name)
         if (file) {
-          console.log(file, "file")
-          file.url = url.split("?")[0]
+          file.url = res.data.split("?")[0]
+          console.log("file", file)
         }
       })
       .catch(() => {
