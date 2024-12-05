@@ -3,7 +3,7 @@ services:
   ecmdb-web:
     restart: always
     container_name: ecmdb-web
-    image: duke1616/ecmdb-web:deploy-v1.0.0
+    image: registry.cn-qingdao.aliyuncs.com/duke1616/ecmdb-web:main
     ports:
       - "8888:8000"
     environment:
@@ -12,5 +12,5 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
 networks:
   default:
-    external:
-      name: sre
+    name: ecmdb
+    external: true

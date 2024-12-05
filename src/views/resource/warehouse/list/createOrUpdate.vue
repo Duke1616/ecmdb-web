@@ -137,7 +137,10 @@ const handleRemove: UploadProps["onRemove"] = (file) => {
     return
   }
 
-  removeMinioObject(filePath).then(() => {
+  // 会有中文特殊字符，需要进行解码
+  const decodedFilePath = decodeURIComponent(filePath)
+
+  removeMinioObject(decodedFilePath).then(() => {
     ElMessage.success("删除成功")
   })
 }
