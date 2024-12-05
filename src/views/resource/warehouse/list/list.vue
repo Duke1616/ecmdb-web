@@ -172,7 +172,8 @@ const uploadFile = (action: UploadRequestOptions, row: Resource, filedUid: strin
     background: "rgba(0, 0, 0, 0.7)"
   })
 
-  return putMinioPresignedUrl(action.file.name).then((res: any) => {
+  const objectName = action.file.uid + "/" + action.file.name
+  return putMinioPresignedUrl(objectName).then((res: any) => {
     const url = getLocalMinioUrl(res.data)
 
     axios

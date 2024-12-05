@@ -96,7 +96,8 @@ const formRules = computed<FormRules>(() => {
 })
 
 const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
-  return putMinioPresignedUrl(action.file.name).then((res: any) => {
+  const objectName = action.file.uid + "/" + action.file.name
+  return putMinioPresignedUrl(objectName).then((res: any) => {
     const url = getLocalMinioUrl(res.data)
 
     // 请求上传
