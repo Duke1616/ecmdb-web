@@ -43,13 +43,25 @@
               </template>
               <template v-else-if="item.field_type === 'file'">
                 <div v-if="scope.row.data[item.field_uid] === undefined || scope.row.data[item.field_uid].length === 0">
-                  空
+                  <el-upload
+                    v-model:file-list="scope.row.data[item.field_uid]"
+                    class="upload-file"
+                    action="#"
+                    multiple
+                    show-file-list
+                    :http-request="(action: UploadRequestOptions) => uploadFile(action, scope.row, item.field_uid)"
+                    :limit="3"
+                    :on-exceed="handleExceed"
+                    :on-progress="handleProgress"
+                  >
+                    <el-button type="warning" text bg size="small">上传</el-button>
+                  </el-upload>
                 </div>
                 <div v-else>
                   <el-popover width="350px" trigger="click" placement="top">
                     <div v-for="(file, index) in fileList" :key="index" class="file-item">
                       <span class="file-name">{{ file.name }}</span>
-                      <el-button size="small" type="primary" @click="downloadFile(file.url)">下载</el-button>
+                      <el-button size="small" type="primary" @click="downloadFile(file)">下载</el-button>
                     </div>
                     <template #reference>
                       <el-button
@@ -114,15 +126,26 @@ import { onMounted, ref, watch, h, reactive, nextTick } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
-import { listResourceApi, deleteResourceApi, findSecureData } from "@/api/resource"
+import { listResourceApi, deleteResourceApi, findSecureData, updateResourceApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
-import { ElMessage, ElMessageBox, ElPopover, UploadUserFile } from "element-plus"
+import {
+  ElLoading,
+  ElMessage,
+  ElMessageBox,
+  ElPopover,
+  UploadProgressEvent,
+  UploadProps,
+  UploadRequestOptions,
+  UploadUserFile
+} from "element-plus"
 import router from "@/router"
 
 import createOrUpdate from "./createOrUpdate.vue"
-import { getMinioPresignedUrl } from "@/api/tools"
+import { getMinioPresignedUrl, putMinioPresignedUrl } from "@/api/tools"
+import axios from "axios"
+import { decodedUrlPath, getLocalMinioUrl } from "./url"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
@@ -133,6 +156,59 @@ const displayFileds = ref<Attribute[]>([])
 const drawerVisible = ref<boolean>(false)
 
 const title = ref<string>("")
+
+const handleExceed: UploadProps["onExceed"] = (files) => {
+  ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
+}
+
+const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
+  file.percentage = event.percent
+}
+
+// 上传文件
+const uploadFile = (action: UploadRequestOptions, row: Resource, filedUid: string) => {
+  const loading = ElLoading.service({
+    text: "正在上传...",
+    background: "rgba(0, 0, 0, 0.7)"
+  })
+
+  return putMinioPresignedUrl(action.file.name).then((res: any) => {
+    const url = getLocalMinioUrl(res.data)
+
+    axios
+      .put(url, action.file, {
+        headers: {
+          "Content-Type": action.file.type
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            loading.setText(`已上传 ${percentCompleted.toFixed(1)}%`)
+          }
+        }
+      })
+      .then(() => {
+        // 填写URL信息
+        row.data[filedUid] = row.data[filedUid].map((item: UploadUserFile) =>
+          item.name === action.file.name ? { ...item, url: res.data.split("?")[0] } : item
+        )
+
+        // 重新录入数据
+        updateResourceApi(row).then(() => {
+          ElMessage.success("上传成功")
+
+          listResourceByModelUid()
+        })
+      })
+      .catch(() => {
+        ElMessage.error("上传失败")
+      })
+      .finally(() => {
+        // 关闭 loading
+        loading.close()
+      })
+  })
+}
 
 const handleDetailClick = (resource: Resource) => {
   router.push({
@@ -146,21 +222,13 @@ const handleReviewClick = (data: UploadUserFile[]) => {
   fileList.value = Array.isArray(data) ? data : []
 }
 
-const downloadFile = (url?: string) => {
-  const filePath = url?.split("ecmdb/")[1]
-  if (filePath === undefined) {
+const downloadFile = (file: UploadUserFile) => {
+  if (file?.url === undefined) {
     return
   }
 
-  // 会有中文特殊字符，需要进行解码
-  const decodedFilePath = decodeURIComponent(filePath)
-
-  getMinioPresignedUrl(decodedFilePath).then((res: any) => {
-    const currentUrl = window.location.origin
-    const backendUrlObj = new URL(res.data)
-    const path = "/minio" + backendUrlObj.pathname
-    const url = `${currentUrl}${path}${backendUrlObj.search}`
-    window.location.href = url
+  getMinioPresignedUrl(decodedUrlPath(file.url)).then((res: any) => {
+    window.location.href = getLocalMinioUrl(res.data)
   })
 }
 
@@ -263,7 +331,7 @@ const onClosed = (val: boolean) => {
 }
 
 const handleCreate = () => {
-  apiRef.value?.handleCreate()
+  apiRef.value?.handleSubmit()
 }
 
 onMounted(() => {

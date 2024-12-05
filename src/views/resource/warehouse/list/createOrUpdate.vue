@@ -61,6 +61,7 @@ import {
 import { Attribute } from "@/api/attribute/types/attribute"
 import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
+import { decodedUrlPath, getLocalMinioUrl } from "./url"
 
 // 接收父组建传递
 interface Props {
@@ -96,11 +97,7 @@ const formRules = computed<FormRules>(() => {
 
 const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
   return putMinioPresignedUrl(action.file.name).then((res: any) => {
-    // 替换 URL 为本地的访问地址，通过代理Minio进行访问
-    const currentUrl = window.location.origin
-    const backendUrlObj = new URL(res.data)
-    const path = "/minio" + backendUrlObj.pathname
-    const url = `${currentUrl}${path}${backendUrlObj.search}`
+    const url = getLocalMinioUrl(res.data)
 
     // 请求上传
     axios
@@ -114,6 +111,10 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
             action.onProgress({
               percent: percentCompleted
             } as UploadProgressEvent)
+
+            if (percentCompleted === 100) {
+              action.onSuccess && action.onSuccess(action.file)
+            }
           }
         }
       })
@@ -132,15 +133,11 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
 }
 
 const handleRemove: UploadProps["onRemove"] = (file) => {
-  const filePath = file.url?.split("ecmdb/")[1]
-  if (filePath === undefined) {
+  if (file.url === undefined) {
     return
   }
 
-  // 会有中文特殊字符，需要进行解码
-  const decodedFilePath = decodeURIComponent(filePath)
-
-  removeMinioObject(decodedFilePath).then(() => {
+  removeMinioObject(decodedUrlPath(file.url)).then(() => {
     ElMessage.success("删除成功")
   })
 }
@@ -179,7 +176,7 @@ const fileFields = computed(() => {
 })
 
 /** 新增关联类型 */
-const handleCreate = () => {
+const handleSubmit = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
     const api = formData.value.id === undefined ? createResourceApi : updateResourceApi
@@ -195,12 +192,10 @@ const handleCreate = () => {
 
 const setForm = (row: Resource) => {
   formData.value = cloneDeep(row)
-
-  console.log(formData.value, "setForm")
 }
 
 defineExpose({
-  handleCreate,
+  handleSubmit,
   setForm
 })
 
