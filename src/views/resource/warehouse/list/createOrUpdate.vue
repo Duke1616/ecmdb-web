@@ -29,7 +29,7 @@
                 :on-preview="handlePreview"
                 :on-remove="handleRemove"
                 :before-remove="beforeRemove"
-                :limit="3"
+                :limit="5"
                 :on-exceed="handleExceed"
                 :on-progress="handleProgress"
               >

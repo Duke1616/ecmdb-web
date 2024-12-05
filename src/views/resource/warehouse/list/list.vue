@@ -50,7 +50,7 @@
                     multiple
                     show-file-list
                     :http-request="(action: UploadRequestOptions) => uploadFile(action, scope.row, item.field_uid)"
-                    :limit="3"
+                    :limit="5"
                     :on-exceed="handleExceed"
                     :on-progress="handleProgress"
                   >
@@ -58,10 +58,26 @@
                   </el-upload>
                 </div>
                 <div v-else>
-                  <el-popover width="350px" trigger="click" placement="top">
-                    <div v-for="(file, index) in fileList" :key="index" class="file-item">
-                      <span class="file-name">{{ file.name }}</span>
-                      <el-button size="small" type="primary" @click="downloadFile(file)">下载</el-button>
+                  <el-popover width="300px" trigger="click" placement="top">
+                    <div class="upload-container">
+                      <el-upload
+                        v-model:file-list="scope.row.data[item.field_uid]"
+                        class="upload-file"
+                        action="#"
+                        multiple
+                        show-file-list
+                        :http-request="(action: UploadRequestOptions) => uploadFile(action, scope.row, item.field_uid)"
+                        :limit="5"
+                        :on-exceed="handleExceed"
+                        :on-progress="handleProgress"
+                        :on-preview="handlePreview"
+                        :on-remove="handleRemove"
+                        :before-remove="beforeRemove"
+                      >
+                        <el-button type="primary" text bg size="default" style="width: 100%; text-align: center">
+                          新增文件
+                        </el-button>
+                      </el-upload>
                     </div>
                     <template #reference>
                       <el-button
@@ -69,7 +85,7 @@
                         text
                         bg
                         size="small"
-                        @click="handleReviewClick(scope.row.data[item.field_uid])"
+                        @click="handleReviewClick(scope.row, item.field_uid)"
                       >
                         查看
                       </el-button>
@@ -135,6 +151,7 @@ import {
   ElMessage,
   ElMessageBox,
   ElPopover,
+  UploadFile,
   UploadProgressEvent,
   UploadProps,
   UploadRequestOptions,
@@ -143,7 +160,7 @@ import {
 import router from "@/router"
 
 import createOrUpdate from "./createOrUpdate.vue"
-import { getMinioPresignedUrl, putMinioPresignedUrl } from "@/api/tools"
+import { getMinioPresignedUrl, putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
 import { decodedUrlPath, getLocalMinioUrl } from "./url"
 
@@ -163,6 +180,68 @@ const handleExceed: UploadProps["onExceed"] = (files) => {
 
 const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
   file.percentage = event.percent
+}
+
+// 下载文件
+const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
+  ElMessageBox({
+    title: "下载确认",
+    message: h("p", null, [
+      h("span", null, "正在下载文件: "),
+      h("i", { style: "color: red" }, `${uploadFile.name}`),
+      h("span", null, " 确认下载？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    if (uploadFile?.url === undefined) {
+      return
+    }
+
+    getMinioPresignedUrl(decodedUrlPath(uploadFile.url)).then((res: any) => {
+      window.location.href = getLocalMinioUrl(res.data)
+    })
+  })
+}
+
+const handleRemove: UploadProps["onRemove"] = (file: UploadFile) => {
+  if (file.url === undefined) {
+    return
+  }
+
+  removeMinioObject(decodedUrlPath(file.url)).then(() => {
+    const row = resource.value
+    if (row === undefined) {
+      return
+    }
+
+    if (row.data[filedUid.value]) {
+      // 删除数据
+      row.data[filedUid.value] = row.data[filedUid.value].map((item: UploadUserFile) =>
+        item.name === file.name ? { ...item, url: "" } : item
+      )
+
+      // 修改数据
+      updateResourceApi(row).then(() => {
+        ElMessage.success("删除成功")
+      })
+    }
+  })
+}
+
+const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
+  return ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除文件: "),
+      h("i", { style: "color: red" }, `${uploadFile.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => true)
 }
 
 // 上传文件
@@ -218,19 +297,11 @@ const handleDetailClick = (resource: Resource) => {
   })
 }
 
-const fileList = ref<UploadUserFile[]>([])
-const handleReviewClick = (data: UploadUserFile[]) => {
-  fileList.value = Array.isArray(data) ? data : []
-}
-
-const downloadFile = (file: UploadUserFile) => {
-  if (file?.url === undefined) {
-    return
-  }
-
-  getMinioPresignedUrl(decodedUrlPath(file.url)).then((res: any) => {
-    window.location.href = getLocalMinioUrl(res.data)
-  })
+const resource = ref<Resource>()
+const filedUid = ref<string>("")
+const handleReviewClick = (row: Resource, uid: string) => {
+  resource.value = row
+  filedUid.value = uid
 }
 
 // ** 获取资产字段信息 */
@@ -370,8 +441,14 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRes
   margin-bottom: 10px;
 }
 
+.upload-file {
+  :deep(.el-upload) {
+    width: 100%;
+  }
+}
+
 .file-name {
-  max-width: 280px;
+  max-width: 230px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
