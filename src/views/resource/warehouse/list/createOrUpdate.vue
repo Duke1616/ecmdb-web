@@ -45,7 +45,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, h } from "vue"
-import { createResourceApi, updateResourceApi } from "@/api/resource"
+import { createResourceApi, setCustomFieldApi, updateResourceApi } from "@/api/resource"
 import { Resource, type CreateOrUpdateResourceReq } from "@/api/resource/types/resource"
 import { cloneDeep } from "lodash-es"
 import {
@@ -70,7 +70,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emits = defineEmits(["list", "close"])
+const emits = defineEmits(["list", "closed"])
 const activeNames = ref<string[]>(["0", "1"])
 const DEFAULT_FORM_DATA: CreateOrUpdateResourceReq = {
   name: "",
@@ -124,7 +124,17 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
         const file = fileList.find((item: UploadUserFile) => item.name === action.file.name)
         if (file) {
           file.url = res.data.split("?")[0]
-          console.log("file", file)
+        }
+
+        // 当为修改的时候，主动调用接口更新字段信息，防止文件已经删除，页面依旧展示
+        if (formData.value.id !== undefined) {
+          setCustomFieldApi({
+            id: formData.value.id,
+            field: fieldUid,
+            data: fileList
+          }).then(() => {
+            ElMessage.success("删除成功")
+          })
         }
       })
       .catch(() => {
@@ -195,20 +205,20 @@ const setForm = (row: Resource) => {
   formData.value = cloneDeep(row)
 }
 
-defineExpose({
-  handleSubmit,
-  setForm
-})
-
 const onClosed = () => {
-  resetForm()
-  emits("close", false)
+  emits("closed")
 }
 
 const resetForm = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }
+
+defineExpose({
+  handleSubmit,
+  setForm,
+  resetForm
+})
 </script>
 
 <style lang="scss" scoped>

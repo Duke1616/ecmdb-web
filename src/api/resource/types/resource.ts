@@ -10,6 +10,11 @@ export interface detailResource {
   id: number
   model_uid: string
 }
+export interface setCustomFieldReq {
+  id: number
+  field: string
+  data: any
+}
 
 export interface canBeRelationFilterReq {
   /** 跳过条数 */

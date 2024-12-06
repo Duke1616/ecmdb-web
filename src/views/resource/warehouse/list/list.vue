@@ -127,10 +127,10 @@
         :attributeFiledsData="attributeFiledsData"
         :modelUid="modelUid"
         @list="listResourceByModelUid"
-        @close="onClosed"
+        @closed="onClosed"
       />
       <template #footer>
-        <el-button @click="drawerVisible = false">取消</el-button>
+        <el-button @click="onClosed">取消</el-button>
         <el-button type="primary" @click="handleCreate">确认</el-button>
       </template>
     </el-drawer>
@@ -142,7 +142,7 @@ import { onMounted, ref, watch, h, reactive, nextTick } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
-import { listResourceApi, deleteResourceApi, findSecureData, updateResourceApi } from "@/api/resource"
+import { listResourceApi, deleteResourceApi, findSecureData, setCustomFieldApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
@@ -222,8 +222,12 @@ const handleRemove: UploadProps["onRemove"] = (file: UploadFile) => {
         item.name === file.name ? { ...item, url: "" } : item
       )
 
-      // 修改数据
-      updateResourceApi(row).then(() => {
+      // 变更字段数据
+      setCustomFieldApi({
+        id: row.id,
+        field: filedUid.value,
+        data: row.data[filedUid.value]
+      }).then(() => {
         ElMessage.success("删除成功")
       })
     }
@@ -273,11 +277,13 @@ const uploadFile = (action: UploadRequestOptions, row: Resource, filedUid: strin
           item.name === action.file.name ? { ...item, url: res.data.split("?")[0] } : item
         )
 
-        // 重新录入数据
-        updateResourceApi(row).then(() => {
-          ElMessage.success("上传成功")
-
-          listResourceByModelUid()
+        // 变更字段数据
+        setCustomFieldApi({
+          id: row.id,
+          field: filedUid,
+          data: row.data[filedUid]
+        }).then(() => {
+          ElMessage.success("删除成功")
         })
       })
       .catch(() => {
@@ -398,8 +404,9 @@ const handleUpdate = (row: Resource) => {
   })
 }
 
-const onClosed = (val: boolean) => {
-  drawerVisible.value = val
+const onClosed = () => {
+  apiRef.value?.resetForm()
+  drawerVisible.value = false
 }
 
 const handleCreate = () => {

@@ -26,6 +26,14 @@ export function updateResourceApi(data: resource.CreateOrUpdateResourceReq) {
   })
 }
 
+/** 变更自定义字段数据 */
+export function setCustomFieldApi(data: resource.setCustomFieldReq) {
+  return instance.post<number>({
+    url: "resource/set_custom_field",
+    data: data
+  })
+}
+
 /** 资源详情 */
 export function detailResourceApi(data: resource.detailResource) {
   return instance.post<resource.Resource>({
