@@ -30,6 +30,11 @@ export type listModelsResponseData = {
   mgs: Models[]
 }
 
+export type retrieveModelsListResp = {
+  total: number
+  models: Model[]
+}
+
 export type node = {
   id: string
   text: string

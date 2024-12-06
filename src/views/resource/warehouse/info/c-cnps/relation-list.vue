@@ -127,7 +127,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, h, onMounted, reactive, ref, watch } from "vue"
+import { computed, h, onMounted, reactive, ref, watch, nextTick } from "vue"
 import {
   CreateResourceRelationApi,
   ListModelRelationApi,
@@ -142,9 +142,12 @@ import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/reso
 import { usePagination } from "@/hooks/usePagination"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
+import { useModelStore } from "@/store/modules/model"
 import { ElMessage, ElMessageBox } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+const modelStore = useModelStore()
 interface Props {
   modelUid: string
   resourceId: string
@@ -223,8 +226,15 @@ const listModelRelationData = () => {
   })
     .then(({ data }) => {
       modelRelationData.value = data.model_relations
-      console.log("模型数据", modelRelationData.value)
-      getRealtionTypeData()
+
+      nextTick(() => {
+        // 获取模型 UID 对应的名称，前端展示
+        modelStore.getByModelUids([
+          ...new Set(modelRelationData.value.flatMap((item) => [item.source_model_uid, item.target_model_uid]))
+        ])
+
+        getRealtionTypeData()
+      })
     })
     .catch((error) => {
       modelRelationData.value = []
@@ -250,14 +260,30 @@ const reverseDisplayLabel = () => {
     // 判断当前数据是正向还是反向
     if (src === props.modelUid) {
       model.display_label = relationInfo!.target_describe + "-" + model.target_model_uid
-      relationName.value = model.display_label
-      displayMap.set(model.relation_name, model.display_label)
+      setDisplayMap(model)
     } else {
       model.display_label = relationInfo!.source_describe + "-" + model.source_model_uid
-      relationName.value = model.display_label
-      displayMap.set(model.relation_name, model.display_label)
+      setDisplayMap(model)
     }
   })
+}
+const setDisplayMap = (model: ModelRelation) => {
+  if (!model.display_label) {
+    return
+  }
+
+  const separatorIndex = model.display_label.indexOf("-")
+  const prefix = separatorIndex !== -1 ? model.display_label.substring(0, separatorIndex) : model.display_label
+
+  // 提取 '-' 后的内容
+  const suffix = separatorIndex !== -1 ? model.display_label.substring(separatorIndex + 1) : ""
+
+  // 处理 suffix，确保调用 getModelName 时不返回 undefined
+  const resolvedSuffix = suffix ? modelStore.getModelName(suffix) || suffix : ""
+
+  // 拼接最终的 display 值
+  const display = resolvedSuffix ? `${prefix}-${resolvedSuffix}` : prefix
+  displayMap.set(model.relation_name, display as string)
 }
 
 const handlerChangeRelationList = (value: string) => {
@@ -559,6 +585,7 @@ onMounted(() => {
 // 观察 modelRelationData 和 relationTypeData 的变化
 watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTypes]) => {
   if (newModelRelations.length > 0 && newRelationTypes.length > 0) {
+    console.log("变化了么")
     reverseDisplayLabel()
     listRelatedAssetsData()
   }

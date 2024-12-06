@@ -40,6 +40,13 @@ export function deleteModelApi(model_uid: string) {
   })
 }
 
+export function getByModelUidsApi(uids: string[]) {
+  return instance.post<Model.retrieveModelsListResp>({
+    url: "model/by_uids",
+    data: { uids: uids }
+  })
+}
+
 /** 删除模型分组 */
 export function deleteModelGroupApi(id: number) {
   return instance.post<number>({

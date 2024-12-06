@@ -15,7 +15,7 @@
           <el-tab-pane
             v-for="(tab, index) in searchResourcesData"
             :key="index"
-            :label="tab.model_uid + ' ( ' + tab.total + ' )'"
+            :label="modelStore.getModelName(tab.model_uid) + ' ( ' + tab.total + ' )'"
             :name="tab.model_uid"
           >
             <el-table :data="tab.data">
@@ -95,6 +95,7 @@ import { useRoute } from "vue-router"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
 import { useSearchStore } from "@/store/modules/search"
+import { useModelStore } from "@/store/modules/model"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox, UploadProps } from "element-plus"
 import { getMinioPresignedUrl } from "@/api/tools"
@@ -102,6 +103,7 @@ import { decodedUrlPath, getLocalMinioUrl } from "@/utils/url"
 
 const router = useRouter()
 const route = useRoute()
+const modelStore = useModelStore()
 
 const inputSearch = ref<string>(route.query.text as string)
 let oldSearch = route.query.text as string
@@ -160,6 +162,8 @@ const listGlobalSearchData = (text: string) => {
         activeName.value = searchResourcesData.value[0].model_uid
         await sortFields(activeName.value)
       }
+
+      modelStore.getByModelUids(searchResourcesData.value.map((item) => item.model_uid))
     })
     .catch(() => {
       searchResourcesData.value = []
