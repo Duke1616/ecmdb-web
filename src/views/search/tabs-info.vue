@@ -138,8 +138,11 @@ const handleTabClick = () => {
 }
 
 const textColor = (fieldValue: string) => {
-  console.log("fieldValue", fieldValue)
-  console.log("inputSearch", inputSearch)
+  // 为空处理否则会报错
+  if (fieldValue === undefined) {
+    return ""
+  }
+
   if (fieldValue.includes(inputSearch.value)) {
     return "red"
   } else {

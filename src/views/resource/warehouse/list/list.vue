@@ -71,7 +71,7 @@
                         :on-exceed="handleExceed"
                         :on-progress="handleProgress"
                         :on-preview="handlePreview"
-                        :on-remove="handleRemove"
+                        :on-remove="createHandleRemove(scope.row, item.field_uid)"
                         :before-remove="beforeRemove"
                       >
                         <el-button type="primary" text bg size="default" style="width: 100%; text-align: center">
@@ -80,15 +80,7 @@
                       </el-upload>
                     </div>
                     <template #reference>
-                      <el-button
-                        type="primary"
-                        text
-                        bg
-                        size="small"
-                        @click="handleReviewClick(scope.row, item.field_uid)"
-                      >
-                        查看
-                      </el-button>
+                      <el-button type="primary" text bg size="small"> 查看 </el-button>
                     </template>
                   </el-popover>
                 </div>
@@ -205,33 +197,36 @@ const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
   })
 }
 
-const handleRemove: UploadProps["onRemove"] = (file: UploadFile) => {
-  if (file.url === undefined) {
-    return
-  }
-
-  removeMinioObject(decodedUrlPath(file.url)).then(() => {
-    const row = resource.value
-    if (row === undefined) {
+const createHandleRemove = (row: Resource, filed: string) => {
+  const handleRemove: UploadProps["onRemove"] = (file: UploadFile) => {
+    if (file.url === undefined) {
       return
     }
 
-    if (row.data[filedUid.value]) {
-      // 删除数据
-      row.data[filedUid.value] = row.data[filedUid.value].map((item: UploadUserFile) =>
-        item.name === file.name ? { ...item, url: "" } : item
-      )
+    removeMinioObject(decodedUrlPath(file.url)).then(() => {
+      if (row === undefined) {
+        return
+      }
 
-      // 变更字段数据
-      setCustomFieldApi({
-        id: row.id,
-        field: filedUid.value,
-        data: row.data[filedUid.value]
-      }).then(() => {
-        ElMessage.success("删除成功")
-      })
-    }
-  })
+      if (row.data[filed]) {
+        // 删除数据
+        row.data[filed] = row.data[filed].map((item: UploadUserFile) =>
+          item.name === file.name ? { ...item, url: "" } : item
+        )
+
+        // 变更字段数据
+        setCustomFieldApi({
+          id: row.id,
+          field: filed,
+          data: row.data[filed]
+        }).then(() => {
+          ElMessage.success("删除成功")
+        })
+      }
+    })
+  }
+
+  return handleRemove
 }
 
 const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
@@ -301,13 +296,6 @@ const handleDetailClick = (resource: Resource) => {
     path: "/cmdb/resource/info",
     query: { model_uid: modelUid, id: resource.id, name: resource.name }
   })
-}
-
-const resource = ref<Resource>()
-const filedUid = ref<string>("")
-const handleReviewClick = (row: Resource, uid: string) => {
-  resource.value = row
-  filedUid.value = uid
 }
 
 // ** 获取资产字段信息 */

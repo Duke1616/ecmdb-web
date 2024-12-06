@@ -27,7 +27,7 @@
                 show-file-list
                 :http-request="(action: UploadRequestOptions) => uploadFile(action, item.field_uid)"
                 :on-preview="handlePreview"
-                :on-remove="handleRemove"
+                :on-remove="createHandleRemove(item.field_uid)"
                 :before-remove="beforeRemove"
                 :limit="5"
                 :on-exceed="handleExceed"
@@ -61,7 +61,7 @@ import {
 import { Attribute } from "@/api/attribute/types/attribute"
 import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "../../../../utils/url"
+import { decodedUrlPath, getLocalMinioUrl } from "@/utils/url"
 
 // 接收父组建传递
 interface Props {
@@ -99,7 +99,6 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
   const objectName = action.file.uid + "/" + action.file.name
   return putMinioPresignedUrl(objectName).then((res: any) => {
     const url = getLocalMinioUrl(res.data)
-
     // 请求上传
     axios
       .put(url, action.file, {
@@ -133,8 +132,8 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
             id: formData.value.id,
             field: fieldUid,
             data: fileList
-          }).then(() => {
-            ElMessage.success("删除成功")
+          }).catch(() => {
+            ElMessage.error("上传失败")
           })
         }
       })
@@ -144,15 +143,30 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
   })
 }
 
-const handleRemove: UploadProps["onRemove"] = (file) => {
-  if (file.url === undefined) {
-    return
+const createHandleRemove = (field: string) => {
+  const handleRemove: UploadProps["onRemove"] = (file) => {
+    if (file.url === undefined) {
+      return
+    }
+
+    removeMinioObject(decodedUrlPath(file.url)).then(() => {
+      formData.value.data[field] = formData.value.data[field].map((item: UploadUserFile) =>
+        item.name === file.name ? { ...item } : item
+      )
+
+      setCustomFieldApi({
+        id: formData.value.id as number,
+        field: field,
+        data: formData.value.data[field]
+      }).catch(() => {
+        ElMessage.error("上传失败")
+      })
+    })
   }
 
-  removeMinioObject(decodedUrlPath(file.url)).then(() => {
-    ElMessage.success("删除成功")
-  })
+  return handleRemove
 }
+
 const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
   file.percentage = event.percent
 }
