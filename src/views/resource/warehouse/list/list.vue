@@ -120,8 +120,8 @@
         </div>
       </div>
     </el-card>
-    <!-- 新增 -->
-    <el-drawer class="drawer-container" v-model="drawerVisible" :title="title" :closed="onClosed" size="30%">
+    <!-- 新增或删除 -->
+    <el-drawer class="drawer-container" v-model="drawerVisible" :title="title" @closed="onClosed" size="30%">
       <createOrUpdate
         ref="apiRef"
         :attributeFiledsData="attributeFiledsData"
@@ -405,6 +405,7 @@ const handleUpdate = (row: Resource) => {
 }
 
 const onClosed = () => {
+  console.log("onClosed")
   apiRef.value?.resetForm()
   drawerVisible.value = false
 }

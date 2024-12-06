@@ -127,6 +127,7 @@ const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
         }
 
         // 当为修改的时候，主动调用接口更新字段信息，防止文件已经删除，页面依旧展示
+        // 如果新增情况下，主动上传文件不触发保存 Minio 会存在脏数据情况，暂时不处理
         if (formData.value.id !== undefined) {
           setCustomFieldApi({
             id: formData.value.id,
