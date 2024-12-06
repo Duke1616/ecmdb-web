@@ -28,9 +28,39 @@
                 align="center"
               >
                 <template #default="scope">
-                  <span :style="{ color: textColor(scope.row[item.field_uid]) }">
-                    {{ scope.row[item.field_uid] }}
-                  </span>
+                  <!-- 判断只有是文字类型的才会进行展示颜色检索 -->
+                  <template v-if="item.field_type === 'string' || item.field_type === 'list'">
+                    <span :style="{ color: textColor(scope.row[item.field_uid]) }">
+                      {{ scope.row[item.field_uid] }}
+                    </span>
+                  </template>
+                  <template v-if="item.field_type === 'file'">
+                    <div class="upload-container">
+                      <el-popover
+                        v-if="scope.row[item.field_uid] !== undefined && scope.row[item.field_uid].length > 0"
+                        width="300px"
+                        trigger="click"
+                        placement="top"
+                      >
+                        <div class="upload-container">
+                          <el-upload
+                            v-model:file-list="scope.row[item.field_uid]"
+                            class="upload-file"
+                            action="#"
+                            multiple
+                            show-file-list
+                            :limit="5"
+                            :disabled="true"
+                            :on-exceed="handleExceed"
+                            :on-preview="handlePreview"
+                          />
+                        </div>
+                        <template #reference>
+                          <el-button type="primary" text bg size="small"> 查看 </el-button>
+                        </template>
+                      </el-popover>
+                    </div>
+                  </template>
                   <template v-if="item.secure">
                     <el-button
                       v-if="!secureDisplay.get(scope.row.id)"
@@ -57,7 +87,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, reactive, ref } from "vue"
+import { h, onMounted, reactive, ref } from "vue"
 import { Back } from "@element-plus/icons-vue"
 import { globalSearchData } from "@/api/resource/types/resource"
 import { findSecureData, globalSearchApi } from "@/api/resource"
@@ -66,7 +96,9 @@ import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
 import { useSearchStore } from "@/store/modules/search"
 import { useRouter } from "vue-router"
-import { ElMessage } from "element-plus"
+import { ElMessage, ElMessageBox, UploadProps } from "element-plus"
+import { getMinioPresignedUrl } from "@/api/tools"
+import { decodedUrlPath, getLocalMinioUrl } from "@/utils/url"
 
 const router = useRouter()
 const route = useRoute()
@@ -106,6 +138,8 @@ const handleTabClick = () => {
 }
 
 const textColor = (fieldValue: string) => {
+  console.log("fieldValue", fieldValue)
+  console.log("inputSearch", inputSearch)
   if (fieldValue.includes(inputSearch.value)) {
     return "red"
   } else {
@@ -223,6 +257,33 @@ const handleSecureClick = (row: any, item: Attribute) => {
     })
 }
 
+const handleExceed: UploadProps["onExceed"] = (files) => {
+  ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
+}
+
+// 下载文件
+const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
+  ElMessageBox({
+    title: "下载确认",
+    message: h("p", null, [
+      h("span", null, "正在下载文件: "),
+      h("i", { style: "color: red" }, `${uploadFile.name}`),
+      h("span", null, " 确认下载？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    if (uploadFile?.url === undefined) {
+      return
+    }
+
+    getMinioPresignedUrl(decodedUrlPath(uploadFile.url)).then((res: any) => {
+      window.location.href = getLocalMinioUrl(res.data)
+    })
+  })
+}
+
 onMounted(() => {
   listGlobalSearchData(inputSearch.value)
 })
@@ -241,5 +302,15 @@ onMounted(() => {
 
 .centered-button {
   height: 40px;
+}
+
+.upload-container {
+  :deep(.el-upload) {
+    display: none;
+  }
+
+  ::v-deep .el-upload-list__item {
+    transition: none !important;
+  }
 }
 </style>

@@ -162,7 +162,7 @@ import router from "@/router"
 import createOrUpdate from "./createOrUpdate.vue"
 import { getMinioPresignedUrl, putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "./url"
+import { decodedUrlPath, getLocalMinioUrl } from "../../../../utils/url"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
@@ -452,6 +452,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRes
 .upload-file {
   :deep(.el-upload) {
     width: 100%;
+  }
+
+  ::v-deep .el-upload-list__item {
+    transition: none !important;
   }
 }
 

@@ -61,7 +61,7 @@ import {
 import { Attribute } from "@/api/attribute/types/attribute"
 import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "./url"
+import { decodedUrlPath, getLocalMinioUrl } from "../../../../utils/url"
 
 // 接收父组建传递
 interface Props {
@@ -225,5 +225,8 @@ defineExpose({
 <style lang="scss" scoped>
 .upload-file {
   width: 100%;
+  ::v-deep .el-upload-list__item {
+    transition: none !important;
+  }
 }
 </style>

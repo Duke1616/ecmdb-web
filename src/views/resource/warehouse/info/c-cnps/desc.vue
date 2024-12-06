@@ -1,10 +1,16 @@
 <template>
   <el-descriptions class="margin-top" title="详情信息" :column="3" border>
-    <!-- <el-descriptions-item label="名称">
-      {{ resourceData?.name }}
-    </el-descriptions-item> -->
     <el-descriptions-item v-for="item in attributeFiledsData" :key="item.id" :label="item.field_name">
-      {{ resourceData?.data[item.field_uid] || "null" }}
+      <template v-if="item.field_type === 'string' || item.field_type === 'list'">
+        <span>
+          {{ resourceData?.data[item.field_uid] || "null" }}
+        </span>
+      </template>
+      <template v-else-if="item.field_type === 'file'">
+        <span v-for="(resource, index) in resourceData?.data[item.field_uid]" :key="index" style="display: block">
+          {{ resource.name }}
+        </span>
+      </template>
     </el-descriptions-item>
   </el-descriptions>
 </template>
