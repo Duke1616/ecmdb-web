@@ -56,6 +56,7 @@
     "prismjs": "^1.29.0",
     "relation-graph": "^2.2.0",
     "relation-graph-vue3": "^2.2.0",
+    "rollup-plugin-visualizer": "^5.12.0",
     "screenfull": "^6.0.2",
     "shell": "link:@codemirror/legacy-modes/mode/shell",
     "thememirror": "^2.0.1",

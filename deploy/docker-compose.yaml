@@ -5,7 +5,7 @@ services:
     container_name: ecmdb-web
     image: registry.cn-qingdao.aliyuncs.com/duke1616/ecmdb-web:main
     ports:
-      - "8888:8000"
+      - 8888:80
     environment:
       - TZ=Asia/Shanghai
     volumes:
