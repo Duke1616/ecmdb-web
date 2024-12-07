@@ -6,7 +6,7 @@ import path, { resolve } from "path"
 import svgLoader from "vite-svg-loader"
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
 import prismjs from "vite-plugin-prismjs"
-import { visualizer } from "rollup-plugin-visualizer"
+// import { visualizer } from "rollup-plugin-visualizer"
 
 // https://vitejs.dev/config/
 export default ({ mode }: ConfigEnv): UserConfigExport => {
@@ -31,9 +31,9 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         iconDirs: [path.resolve(process.cwd(), "src/icons/svg")],
         symbolId: "icon-[dir]-[name]"
       }),
-      visualizer({
-        open: true // 构建完成后自动打开分析页面
-      }),
+      // visualizer({
+      //   open: true // 构建完成后自动打开分析页面
+      // }),
       /** UnoCSS */
       UnoCSS(),
       prismjs({
@@ -110,8 +110,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           manualChunks: {
             vue: ["vue", "vue-router", "pinia"],
             element: ["element-plus", "@element-plus/icons-vue"],
-            vxe: ["vxe-table", "vxe-table-plugin-element", "xe-utils"],
-            misc: ["vue3-icon-picker"]
+            vxe: ["vxe-table", "vxe-table-plugin-element", "xe-utils"]
           }
         }
       }
