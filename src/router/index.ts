@@ -4,6 +4,7 @@ import { history, flatMultiLevelRoutes } from "./helper"
 import routeSettings from "@/config/route"
 
 const Layouts = () => import("@/layouts/index.vue")
+const Terminal = () => import("@/terminal/index.vue")
 
 /**
  * 常驻路由
@@ -38,6 +39,13 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/login",
     component: () => import("@/views/login/index.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
+    path: "/terminal",
+    component: Terminal,
     meta: {
       hidden: true
     }
