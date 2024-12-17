@@ -9,6 +9,7 @@ import "xterm/css/xterm.css"
 import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "xterm"
 import { FitAddon } from "xterm-addon-fit"
 import _ from "lodash"
+import { ElMessage } from "element-plus"
 
 const props = withDefaults(
   defineProps<{
@@ -78,19 +79,34 @@ const initXterm = () => {
   window.addEventListener("resize", resize)
 }
 
+const pingInterval = ref()
 const socketOnOpen = () => {
-  socket.value!.onopen = () => {}
+  socket.value!.onopen = () => {
+    pingInterval.value = setInterval(() => {
+      const message = {
+        operation: "ping",
+        data: ""
+      }
+
+      socket.value!.send(JSON.stringify(message))
+    }, 10000)
+  }
 }
 
 const socketOnClose = () => {
   socket.value!.onclose = () => {
-    console.log("close socket")
+    ElMessage.error(`无法连接`)
+    xterm.value?.writeln("connection is closed.")
+    if (pingInterval.value) {
+      clearInterval(pingInterval.value)
+    }
   }
 }
 
 const socketOnError = () => {
-  socket.value!.onerror = () => {
-    console.log("close socket")
+  socket.value!.onerror = (e: any) => {
+    xterm.value?.writeln(`websocket error: \x1B[1;3;31m${e.data}\x1B[0m `)
+    ElMessage.error("错误：连接失败", e.data)
   }
 }
 
