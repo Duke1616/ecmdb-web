@@ -51,8 +51,10 @@ const initXterm = () => {
   fitAddon.value.fit()
   xterm.value.focus()
 
+  const config = getWebSocketConfig()
+
   socket.value = new WebSocket(
-    `ws://127.0.0.1:8000/api/term/ssh/tunnel?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
+    `${config.wsServer}/api/term/ssh/tunnel?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
   )
   socketOnClose()
   socketOnOpen()
@@ -111,6 +113,15 @@ const resizeTerminal = () => {
       rows
     }
     socket.value?.send(JSON.stringify(terminalSize))
+  }
+}
+
+function getWebSocketConfig() {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
+  const host = window.location.host
+
+  return {
+    wsServer: `${protocol}//${host}`
   }
 }
 
