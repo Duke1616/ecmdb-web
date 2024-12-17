@@ -17,13 +17,20 @@
       </template>
     </el-dialog>
 
-    <xterm v-if="isConnected" />
+    <xterm v-if="isConnected" :resource_id="resourceId" />
+    <!-- <guacd v-if="isConnected" /> -->
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref } from "vue"
+import { useRoute } from "vue-router"
+
+const route = useRoute()
+const resourceId = route.query.resource_id as string
+
 // import guacd from "./guacd.vue"
+
 import xterm from "./xterm.vue"
 const dialogVisible = ref<boolean>(true)
 

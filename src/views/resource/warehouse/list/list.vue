@@ -90,8 +90,15 @@
               </template>
             </template>
           </el-table-column>
-          <el-table-column fixed="right" label="操作" width="200" align="center">
+          <el-table-column fixed="right" label="操作" width="300" align="center">
             <template #default="scope">
+              <router-link
+                v-if="modelUid === 'host'"
+                :to="{ path: '/terminal', query: { resource_id: scope.row.id } }"
+                target="_blank"
+              >
+                <el-button type="primary" text bg size="small">终端</el-button>
+              </router-link>
               <el-button type="primary" text bg size="small" @click="handleDetailClick(scope.row)">详情</el-button>
               <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>

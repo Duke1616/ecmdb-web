@@ -6,13 +6,25 @@
           <el-col v-for="(item, index) of nonFileFields" :key="index" :span="12" class="lightgreen-box">
             <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
               <template v-if="item.field_type === 'string'">
-                <el-input v-model="formData.data[item.field_uid]" placeholder="请输入" />
+                <el-input v-model="formData.data[item.field_uid]" :placeholder="handlerPlaceholder(item.field_name)" />
               </template>
               <template v-if="item.field_type === 'list'">
                 <el-select v-model="formData.data[item.field_uid]" placeholder="请选择">
                   <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
                 </el-select>
               </template>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24" v-for="(item, index) of multilineFields" :key="index">
+            <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name">
+              <el-input
+                v-model="formData.data[item.field_uid]"
+                :autosize="{ minRows: 2, maxRows: 4 }"
+                type="textarea"
+                :placeholder="handlerPlaceholder(item.field_name)"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -94,6 +106,10 @@ const formRules = computed<FormRules>(() => {
   })
   return rules
 })
+
+const handlerPlaceholder = (name: string) => {
+  return `请输入${name}`
+}
 
 const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
   const objectName = action.file.uid + "/" + action.file.name
@@ -194,11 +210,15 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
 }
 
 const nonFileFields = computed(() => {
-  return props.attributeFiledsData.filter((item) => item.field_type !== "file")
+  return props.attributeFiledsData.filter((item) => item.field_type !== "file" && item.field_type !== "multiline")
 })
 
 const fileFields = computed(() => {
   return props.attributeFiledsData.filter((item) => item.field_type === "file")
+})
+
+const multilineFields = computed(() => {
+  return props.attributeFiledsData.filter((item) => item.field_type === "multiline")
 })
 
 /** 新增关联类型 */

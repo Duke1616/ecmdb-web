@@ -10,6 +10,15 @@ import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "xterm"
 import { FitAddon } from "xterm-addon-fit"
 import _ from "lodash"
 
+const props = withDefaults(
+  defineProps<{
+    resource_id: string
+  }>(),
+  {
+    resource_id: "1"
+  }
+)
+
 defineOptions({
   name: "IXterm"
 })
@@ -43,7 +52,7 @@ const initXterm = () => {
   xterm.value.focus()
 
   socket.value = new WebSocket(
-    `ws://127.0.0.1:8000/api/term/ssh/tunnel?cols=${xterm.value.cols}&rows=${xterm.value.rows}`
+    `ws://127.0.0.1:8000/api/term/ssh/tunnel?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
   )
   socketOnClose()
   socketOnOpen()

@@ -105,6 +105,10 @@ const mapping = [
     label: "字符串"
   },
   {
+    value: "multiline",
+    label: "多行文本"
+  },
+  {
     value: "list",
     label: "列表"
   },
