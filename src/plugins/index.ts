@@ -4,6 +4,7 @@ import { loadElementPlusIcon } from "./element-plus-icon"
 import { loadVxeTable } from "./vxe-table"
 import { loadFromCreate } from "./form-create"
 import { loadIconPicker } from "./icon-picker"
+import { loadFinder } from "./finder"
 
 export function loadPlugins(app: App) {
   loadElementPlus(app)
@@ -11,4 +12,5 @@ export function loadPlugins(app: App) {
   loadFromCreate(app)
   loadVxeTable(app)
   loadIconPicker(app)
+  loadFinder(app)
 }

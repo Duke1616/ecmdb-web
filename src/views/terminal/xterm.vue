@@ -5,9 +5,9 @@
 <script lang="ts" setup>
 import { onDeactivated, onMounted, ref } from "vue"
 
-import "xterm/css/xterm.css"
-import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "xterm"
-import { FitAddon } from "xterm-addon-fit"
+import "@xterm/xterm/css/xterm.css"
+import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "@xterm/xterm"
+import { FitAddon } from "@xterm/addon-fit"
 import _ from "lodash"
 import { ElMessage } from "element-plus"
 

@@ -19,25 +19,38 @@
 
     <xterm v-if="isConnected" :resource_id="resourceId" />
     <!-- <guacd v-if="isConnected" /> -->
+    <!-- <finder v-if="isConnected" /> -->
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref } from "vue"
+import { connectApi } from "@/api/term"
 import { useRoute } from "vue-router"
-
 const route = useRoute()
 const resourceId = route.query.resource_id as string
 
+import xterm from "./xterm.vue"
 // import guacd from "./guacd.vue"
 
-import xterm from "./xterm.vue"
-const dialogVisible = ref<boolean>(true)
+// import finder from "./finder.vue"
+import { ElMessage } from "element-plus"
 
+const dialogVisible = ref<boolean>(true)
 const isConnected = ref<boolean>(false)
 const connect = () => {
-  isConnected.value = true
-  dialogVisible.value = false
+  connectApi({
+    resource_id: Number(resourceId),
+    type: "ssh"
+  })
+    .then(() => {
+      isConnected.value = true
+      dialogVisible.value = false
+    })
+    .catch(() => {
+      ElMessage.error("连接失败")
+    })
+    .finally(() => {})
 }
 </script>
 

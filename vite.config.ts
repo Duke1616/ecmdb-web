@@ -7,6 +7,7 @@ import svgLoader from "vite-svg-loader"
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
 import prismjs from "vite-plugin-prismjs"
 // import { visualizer } from "rollup-plugin-visualizer"
+// import vueDevTools from "vite-plugin-vue-devtools"
 
 // https://vitejs.dev/config/
 export default ({ mode }: ConfigEnv): UserConfigExport => {
@@ -23,6 +24,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     plugins: [
       vue(),
+      // vueDevTools(),
       vueJsx(),
       /** 将 SVG 静态图转化为 Vue 组件 */
       svgLoader({ defaultImport: "url" }),

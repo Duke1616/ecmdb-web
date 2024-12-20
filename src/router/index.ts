@@ -4,7 +4,7 @@ import { history, flatMultiLevelRoutes } from "./helper"
 import routeSettings from "@/config/route"
 
 const Layouts = () => import("@/layouts/index.vue")
-const Terminal = () => import("@/terminal/index.vue")
+const Terminal = () => import("@/views/terminal/index.vue")
 
 /**
  * 常驻路由
