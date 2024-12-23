@@ -17,6 +17,17 @@
 <script lang="ts" setup>
 import { ElMessage } from "element-plus"
 import { ref } from "vue"
+import { PrefixConfig } from "./index.vue"
+
+const props = withDefaults(
+  defineProps<{
+    resource_id: string
+    prefix: PrefixConfig | undefined
+  }>(),
+  {
+    resource_id: "1"
+  }
+)
 
 interface RequestConfig {
   url: string
@@ -27,41 +38,45 @@ interface RequestConfig {
 }
 
 const request = {
-  baseUrl: "http://127.0.0.1:8350/api/finder/index",
+  baseUrl: `${props.prefix?.prefix}/api/finder/index`,
+  params: { id: Number(props.resource_id) },
   transformRequest: (req: RequestConfig) => {
     switch (req.params.q) {
       case "upload":
-        req.url = "http://127.0.0.1:8350/api/finder/upload"
+        req.url = `${props.prefix?.prefix}/api/finder/upload`
         break
       case "download":
-        req.url = "http://127.0.0.1:8350/api/finder/download"
+        req.url = `${props.prefix?.prefix}/api/finder/download`
         break
       case "rename":
-        req.url = "http://127.0.0.1:8350/api/finder/rename"
+        req.url = `${props.prefix?.prefix}/api/finder/rename`
         break
       case "newfile":
-        req.url = "http://127.0.0.1:8350/api/finder/new_file"
+        req.url = `${props.prefix?.prefix}/api/finder/new_file`
         break
       case "newfolder":
-        req.url = "http://127.0.0.1:8350/api/finder/new_folder"
+        req.url = `${props.prefix?.prefix}/api/finder/new_folder`
         break
       case "delete":
-        req.url = "http://127.0.0.1:8350/api/finder/remove"
+        req.url = `${props.prefix?.prefix}/api/finder/remove`
         break
       case "subfolders":
-        req.url = "http://127.0.0.1:8350/api/finder/subfolders"
+        req.url = `${props.prefix?.prefix}/api/finder/subfolders`
         break
       case "move":
-        req.url = "http://127.0.0.1:8350/api/finder/move"
+        req.url = `${props.prefix?.prefix}/api/finder/move`
         break
       case "archive":
-        req.url = "http://127.0.0.1:8350/api/finder/archive"
+        req.url = `${props.prefix?.prefix}/api/finder/archive`
         break
       case "search":
-        req.url = "http://127.0.0.1:8350/api/finder/search"
+        req.url = `${props.prefix?.prefix}/api/finder/search`
         break
       case "preview":
-        req.url = "http://127.0.0.1:8350/api/finder/preview"
+        req.url = `${props.prefix?.prefix}/api/finder/preview`
+        break
+      case "save":
+        req.url = `${props.prefix?.prefix}/api/finder/save`
         break
       default:
         break

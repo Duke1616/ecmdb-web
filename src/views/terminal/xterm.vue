@@ -10,10 +10,12 @@ import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "@xterm/xte
 import { FitAddon } from "@xterm/addon-fit"
 import _ from "lodash"
 import { ElMessage } from "element-plus"
+import { PrefixConfig } from "./index.vue"
 
 const props = withDefaults(
   defineProps<{
     resource_id: string
+    prefix: PrefixConfig | undefined
   }>(),
   {
     resource_id: "1"
@@ -52,10 +54,8 @@ const initXterm = () => {
   fitAddon.value.fit()
   xterm.value.focus()
 
-  const config = getWebSocketConfig()
-
   socket.value = new WebSocket(
-    `${config.wsServer}/api/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
+    `${props.prefix?.wsServer}/api/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
   )
   socketOnClose()
   socketOnOpen()
@@ -128,15 +128,6 @@ const resizeTerminal = () => {
       rows
     }
     socket.value?.send(JSON.stringify(terminalSize))
-  }
-}
-
-function getWebSocketConfig() {
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-  const host = window.location.host
-
-  return {
-    wsServer: `${protocol}//${host}`
   }
 }
 
