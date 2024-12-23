@@ -12,7 +12,7 @@
       <span>It's a draggable Dialog</span>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="connect"> 连接 </el-button>
+          <el-button type="primary" @click="connect" :loading="loading"> 连接 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -31,14 +31,16 @@ const route = useRoute()
 const resourceId = route.query.resource_id as string
 
 import xterm from "./xterm.vue"
+import { ElMessage } from "element-plus"
 // import guacd from "./guacd.vue"
 
 // import finder from "./finder.vue"
-import { ElMessage } from "element-plus"
 
 const dialogVisible = ref<boolean>(true)
 const isConnected = ref<boolean>(false)
+const loading = ref<boolean>(false)
 const connect = () => {
+  loading.value = true
   connectApi({
     resource_id: Number(resourceId),
     type: "ssh"
@@ -47,10 +49,14 @@ const connect = () => {
       isConnected.value = true
       dialogVisible.value = false
     })
-    .catch(() => {
-      ElMessage.error("连接失败")
+    .catch((err) => {
+      if (err.msg === undefined) {
+        ElMessage.error("连接超时")
+      }
     })
-    .finally(() => {})
+    .finally(() => {
+      loading.value = false
+    })
 }
 </script>
 

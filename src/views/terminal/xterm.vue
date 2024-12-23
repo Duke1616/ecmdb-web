@@ -55,7 +55,7 @@ const initXterm = () => {
   const config = getWebSocketConfig()
 
   socket.value = new WebSocket(
-    `${config.wsServer}/api/term/ssh/tunnel?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
+    `${config.wsServer}/api/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
   )
   socketOnClose()
   socketOnOpen()
@@ -95,7 +95,6 @@ const socketOnOpen = () => {
 
 const socketOnClose = () => {
   socket.value!.onclose = () => {
-    ElMessage.error(`无法连接`)
     xterm.value?.writeln("connection is closed.")
     if (pingInterval.value) {
       clearInterval(pingInterval.value)
