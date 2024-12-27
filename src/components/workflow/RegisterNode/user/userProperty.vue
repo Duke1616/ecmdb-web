@@ -11,10 +11,16 @@
       <el-form-item label="名称" prop="name">
         <el-input v-model="propertyForm.name" clearable />
       </el-form-item>
-      <el-form-item label="审批人" prop="type">
+      <el-form-item label="审批规则" prop="type">
         <el-select v-model="propertyForm.type" clearable>
           <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
+      </el-form-item>
+      <!-- TODO: 查询使用模版的字段，进行options选择， 暂时主动录入 -->
+      <el-form-item v-if="propertyForm.type === 'template'" label="模版字段" prop="approved">
+        <div class="select-container">
+          <el-input v-model="propertyForm.template_field" clearable />
+        </div>
       </el-form-item>
       <el-form-item v-if="propertyForm.type === 'appoint'" label="参与者" prop="approved">
         <div class="select-container">
@@ -33,9 +39,18 @@
           <el-button class="select-button" :icon="UserFilled" @click="openUser" />
         </div>
       </el-form-item>
-      <el-form-item label="是否会签" prop="type">
-        <el-switch v-model="propertyForm.is_cosigned" size="default" />
-      </el-form-item>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="是否会签" prop="type">
+            <el-switch v-model="propertyForm.is_cosigned" size="default" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="仅抄送" prop="cc">
+            <el-switch v-model="propertyForm.is_cc" size="default" />
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
     <div class="mt15" v-if="flowDetail.status != '2'">
       <el-button @click="cancelFunc"> 取消 </el-button>
@@ -106,6 +121,14 @@ const options = [
   {
     label: "所属部门领导",
     value: "automatic"
+  },
+  {
+    label: "工单创建人",
+    value: "founder"
+  },
+  {
+    label: "模版字段获取",
+    value: "template"
   }
 ]
 
@@ -140,8 +163,10 @@ const emits = defineEmits(["closed"])
 const propertyForm = reactive({
   name: "",
   approved: ref<string[]>(),
+  template_field: "",
   type: "appoint",
-  is_cosigned: false
+  is_cosigned: false,
+  is_cc: false
 })
 
 interface ParticipantOption {
@@ -204,8 +229,10 @@ const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
     approved: propertyForm.approved,
+    template_field: propertyForm.template_field,
     type: propertyForm.type,
-    is_cosigned: propertyForm.is_cosigned
+    is_cosigned: propertyForm.is_cosigned,
+    is_cc: propertyForm.is_cc
   })
 }
 
@@ -233,7 +260,9 @@ onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || ""
   propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
   propertyForm.approved = Array.isArray(props.nodeData?.properties.approved) ? props.nodeData.properties.approved : []
-
+  propertyForm.template_field = props.nodeData?.properties.template_field || ""
+  propertyForm.type = props.nodeData?.properties.type || "appoint"
+  propertyForm.is_cc = props.nodeData?.properties.is_cc ? props.nodeData.properties.is_cc : false
   // 如果存在审批用户则获取
   if (props.nodeData?.properties.approved.length > 0) {
     getUsernamesData(props.nodeData?.properties.approved)
