@@ -1,7 +1,7 @@
 <template>
   <div class="logic-flow-view">
     <!-- 辅助工具栏 -->
-    <Control class="control" v-if="lf" @getData="getData" />
+    <Control class="control" v-if="lf" @getData="getData" @download="download" />
     <!-- 节点面板 -->
     <NodePanel v-if="lf" :lf="lf" :nodeList="nodeList" />
     <!-- 画布 -->
@@ -185,6 +185,11 @@ const getGraphData = () => {
   return lf.value.getGraphData()
 }
 
+const download = () => {
+  console.log("download")
+  return lf.value.getSnapshot()
+}
+
 onMounted(() => {
   initLf()
 })
@@ -197,6 +202,7 @@ watch(
     localFormData.value = { ...val }
     nextTick(() => {
       lf.value.render(val.flow_data)
+
       lf.value.translateCenter()
     })
   },

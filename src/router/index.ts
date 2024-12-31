@@ -5,6 +5,7 @@ import routeSettings from "@/config/route"
 
 const Layouts = () => import("@/layouts/index.vue")
 const Terminal = () => import("@/views/terminal/index.vue")
+const Logicflow = () => import("@/views/preview/logicflow.vue")
 
 /**
  * 常驻路由
@@ -39,6 +40,13 @@ export const constantRoutes: RouteRecordRaw[] = [
   {
     path: "/login",
     component: () => import("@/views/login/index.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
+    path: "/logicflow-preview",
+    component: Logicflow,
     meta: {
       hidden: true
     }

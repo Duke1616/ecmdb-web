@@ -1,5 +1,5 @@
 <template>
-  <div class="cons">
+  <div class="cons" style="width: 100%">
     <div class="steps-container">
       <el-steps class="steps" align-center :active="active">
         <el-step title="填写流程信息" :icon="Edit" />

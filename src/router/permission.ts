@@ -17,6 +17,9 @@ router.beforeEach(async (to, _from, next) => {
   const userStore = useUserStoreHook()
   const permissionStore = usePermissionStoreHook()
   const token = getToken()
+  if (to.path === "/logicflow-preview") {
+    return next()
+  }
 
   // 如果没有登陆
   if (!token) {
