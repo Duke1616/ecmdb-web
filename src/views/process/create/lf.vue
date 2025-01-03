@@ -7,7 +7,7 @@
     <!-- 画布 -->
     <div id="LF-view" ref="container" />
     <!-- 数据查看面板 -->
-    <el-dialog title="数据" v-model="dataVisible" width="50%">
+    <el-dialog title="数据" v-model="dataVisible" class="data-dialog">
       <DataDialog :graph="graph" />
     </el-dialog>
     <!-- 属性面板 -->

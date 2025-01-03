@@ -30,6 +30,7 @@ const formRules: FormRules = {
 
 const propertyForm = ref({
   expression: "",
+  is_pass: false,
   name: ""
 })
 
@@ -59,7 +60,8 @@ const cancelFunc = () => {
 }
 
 onMounted(() => {
-  propertyForm.value.name = props.nodeData?.properties.name
+  propertyForm.value.name = props.nodeData?.properties.name ? props.nodeData?.properties.name : ""
+  propertyForm.value.is_pass = props.nodeData?.properties.is_pass ? props.nodeData.properties.is_pass : false
   propertyForm.value.expression = props.nodeData?.properties.expression ? props.nodeData.properties.expression : ""
 })
 </script>

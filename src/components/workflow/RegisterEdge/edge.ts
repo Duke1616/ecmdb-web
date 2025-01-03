@@ -12,10 +12,11 @@ export default function registerPolyline(lf: any) {
         const style = super.getEdgeStyle()
         // 如果节点审批通过，颜色变红
         const {
-          properties: { isPass }
+          properties: { is_pass }
         } = this
-        if (isPass) {
+        if (is_pass) {
           style.stroke = "red"
+          style.strokeWidth = 3
         }
 
         return style
