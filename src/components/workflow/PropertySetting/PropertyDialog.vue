@@ -46,6 +46,7 @@
           v-if="nodeData?.type === 'polyline'"
           :nodeData="nodeData"
           :lf="lf"
+          :id="props.id"
           :flowDetail="flowDetail"
           @closed="closed"
         />
@@ -75,7 +76,8 @@ const props = defineProps({
     default: () => {
       return {}
     }
-  }
+  },
+  id: Number
 })
 const emits = defineEmits(["closed"])
 

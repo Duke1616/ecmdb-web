@@ -63,3 +63,11 @@ export function pipelineGroupApi() {
     url: "template/list/pipeline"
   })
 }
+
+/** 根据流程ID获取所有模版 */
+export function getTemplateByWorkflowIdApi(workflow_id: number) {
+  return instance.post<template.templates>({
+    url: "template/get_by_workflow_id",
+    data: { workflow_id: workflow_id }
+  })
+}

@@ -17,6 +17,7 @@ export interface PageReq {
 }
 
 export interface template {
+  forEach(arg0: (template: any) => void): unknown
   id: number
   name: string
   rules: any

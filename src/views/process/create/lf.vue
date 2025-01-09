@@ -16,6 +16,7 @@
       :nodeData="nodeData"
       :flowDetail="flowDetail"
       :lf="lf"
+      :id="formData.id"
       @closed="showAttribute = false"
     />
   </div>

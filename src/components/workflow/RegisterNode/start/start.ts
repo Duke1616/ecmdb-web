@@ -37,7 +37,6 @@ export default function registerStart(lf: any) {
     class StartModel extends CircleNodeModel {
       // 自定义节点形状属性
       initNodeData(data: any) {
-        console.log(data, "data")
         data.text = {
           value: (data.text && data.text.value) || "",
           x: data.x,
