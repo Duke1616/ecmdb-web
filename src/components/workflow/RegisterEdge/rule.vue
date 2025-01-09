@@ -65,7 +65,7 @@
           </el-select>
         </template>
         <template v-else>
-          <el-input v-model="formData.rightValueData" class="input-box" />
+          <el-input v-model="rightValueDataComputed" class="input-box" />
         </template>
       </div>
     </el-form-item>
@@ -150,6 +150,15 @@ const rules = {
 
 const isMultiple = computed(() => {
   return formData.operator === "in" || formData.operator === "not in"
+})
+
+const rightValueDataComputed = computed({
+  get: () => {
+    return Array.isArray(formData.rightValueData) ? formData.rightValueData.join(",") : formData.rightValueData
+  },
+  set: (val: string) => {
+    formData.rightValueData = isMultiple.value ? val.split(",") : val
+  }
 })
 
 // 选择右值时
