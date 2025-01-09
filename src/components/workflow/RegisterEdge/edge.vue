@@ -8,7 +8,7 @@
         <template #label>
           <div style="display: flex; align-items: center; justify-content: space-between">
             <span>关系表达式</span>
-            <el-button type="primary" size="small" @click="handleExpression">生成表达式</el-button>
+            <el-button type="primary" size="small" @click="handleOpenExpression">生成表达式</el-button>
           </div>
         </template>
         <el-input v-model="propertyForm.expression" type="expression" />
@@ -23,13 +23,13 @@
       :close-on-press-escape="false"
       :before-close="handleExpressionClose"
     >
-      <Expression :templates="templates" />
-      <!-- <template #footer>
+      <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
+      <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="dialogVisible = false"> 确认 </el-button>
+          <el-button type="primary" @click="saveExpression()"> 确认 </el-button>
         </div>
-      </template> -->
+      </template>
     </el-dialog>
     <div class="mt15">
       <el-button @click="cancelFunc"> 取消 </el-button>
@@ -51,6 +51,8 @@ const props = defineProps({
 })
 
 const emits = defineEmits(["closed"])
+
+const expressionRef = ref<InstanceType<typeof Expression>>()
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   id: [{ required: true, message: "连线类型不能为空" }]
@@ -88,7 +90,7 @@ const getTemplateByWorkflowId = async (workflow_id: number) => {
   }
 }
 
-const handleExpression = async () => {
+const handleOpenExpression = async () => {
   if (props.id === undefined) {
     ElMessage.warning("创建流程无法使用此功能")
     return
@@ -101,6 +103,17 @@ const handleExpression = async () => {
   } else {
     ElMessage.warning("没有可用数据，请先通过模版绑定流程")
   }
+}
+
+const saveExpression = () => {
+  const expression = expressionRef.value?.getExpression()
+
+  dialogVisible.value = false
+  if (expression === undefined) {
+    return
+  }
+
+  propertyForm.value.expression = expression.value
 }
 
 //确定

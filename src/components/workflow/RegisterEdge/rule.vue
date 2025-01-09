@@ -74,7 +74,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue"
-import { FormInstance } from "element-plus"
+import { FormInstance, FormRules } from "element-plus"
 import { template } from "@/api/template/types/template"
 import { Rule } from "@form-create/element-ui"
 
@@ -126,7 +126,6 @@ const isFieldInMap = computed(() => {
 
 const getOptionsForLeftValue = () => {
   const t = templatesMap.value.get(formData.leftValue)
-  console.log(t)
   if (!t) {
     return new Map<string, string>()
   }
@@ -142,7 +141,7 @@ const formData = reactive({
 })
 
 // 表单校验规则
-const rules = {
+const rules: FormRules = {
   leftValue: [{ required: true, message: "请选择左值", trigger: "change" }],
   operator: [{ required: true, message: "请选择运算符", trigger: "change" }],
   rightValue: [{ required: true, message: "请选择右值", trigger: "change" }]
@@ -173,12 +172,35 @@ const onRightValueChange = () => {
     formData.rightValueData = ""
   }
 }
+
 const getForm = () => {
+  let isValid = true
+
+  formRef.value?.validate((valid: boolean, fields: any) => {
+    if (!valid) {
+      console.error("表单校验不通过", fields)
+      isValid = false
+    }
+  })
+
+  // 如果校验不通过，直接返回
+  if (!isValid) {
+    return
+  }
+
+  // 校验通过，继续执行后续逻辑
+  console.log("表单校验通过，继续执行后续逻辑")
   return formData
 }
 
+const resetForm = () => {
+  formData.leftValueData = ""
+  formData.rightValueData = ""
+}
+
 defineExpose({
-  getForm
+  getForm,
+  resetForm
 })
 
 watch([() => formData.operator, () => formData.leftValueData], () => {
