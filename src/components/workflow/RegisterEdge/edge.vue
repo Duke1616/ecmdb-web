@@ -21,6 +21,7 @@
       :lock-scroll="true"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
+      :show-close="false"
       :before-close="handleExpressionClose"
     >
       <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
