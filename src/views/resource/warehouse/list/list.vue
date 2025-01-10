@@ -94,7 +94,7 @@
             <template #default="scope">
               <router-link
                 v-if="modelUid === 'host'"
-                :to="{ path: '/terminal', query: { resource_id: scope.row.id } }"
+                :to="{ path: '/terminal', query: { resource_id: scope.row.id, title: scope.row.name } }"
                 target="_blank"
               >
                 <el-button type="primary" text bg size="small">终端</el-button>

@@ -1,25 +1,35 @@
 <template>
-  <div class="app-container">
+  <div class="term-container">
     <el-dialog
       v-model="dialogVisible"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :show-close="false"
-      title="连接服务器"
+      :title="title"
       width="500"
       draggable
     >
-      <span>It's a draggable Dialog</span>
+      <div class="connection-options">
+        <div
+          v-for="option in options"
+          :key="option"
+          class="connection-option"
+          :class="{ selected: selectedOption === option }"
+          @click="selectedOption = option"
+        >
+          {{ option }}
+        </div>
+      </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" @click="connect" :loading="loading"> 连接 </el-button>
+          <el-button type="primary" @click="connect" :loading="loading" :disabled="!selectedOption"> 连接 </el-button>
         </div>
       </template>
     </el-dialog>
 
-    <!-- <xterm v-if="isConnected" :resource_id="resourceId" :prefix="prefix" /> -->
-    <!-- <guacd v-if="isConnected" /> -->
-    <finder v-if="isConnected" :resource_id="resourceId" :prefix="prefix" />
+    <finder v-if="isConnected && selectedOption === 'Web Sftp'" :resource_id="resourceId" :prefix="prefix" />
+    <xterm v-if="isConnected && selectedOption === 'Web Shell'" :resource_id="resourceId" :prefix="prefix" />
+    <guacd v-if="isConnected && selectedOption === 'RDP'" :resource_id="resourceId" :prefix="prefix" />
   </div>
 </template>
 
@@ -29,20 +39,22 @@ import { connectApi } from "@/api/term"
 import { useRoute } from "vue-router"
 const route = useRoute()
 const resourceId = route.query.resource_id as string
+const title = route.query.title as string
 
-// import xterm from "./xterm.vue"
 import { ElMessage } from "element-plus"
+const selectedOption = ref("Web Shell")
 
-// import guacd from "./guacd.vue"
-
+import guacd from "./guacd.vue"
+import xterm from "./xterm.vue"
 import finder from "./file-system.vue"
+const options = ["Web Shell", "Web Sftp", "RDP"]
 
 const dialogVisible = ref<boolean>(true)
 const isConnected = ref<boolean>(false)
 const loading = ref<boolean>(false)
 export interface PrefixConfig {
-  wsServer: string // WebSocket 服务器地址
-  prefix: string // 前缀地址
+  wsServer: string
+  prefix: string
 }
 
 const prefix = ref<PrefixConfig>()
@@ -50,7 +62,7 @@ const connect = () => {
   loading.value = true
   connectApi({
     resource_id: Number(resourceId),
-    type: "ssh"
+    type: selectedOption.value
   })
     .then(() => {
       prefix.value = getPrefixConfig()
@@ -78,4 +90,57 @@ function getPrefixConfig() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.term-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.connection-options {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.connection-option {
+  padding: 12px 24px;
+  border-radius: 20px;
+  border: 2px solid #dcdfe6;
+  background: #fff;
+  color: #333;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.connection-option.selected {
+  background: linear-gradient(135deg, #67c23a, #95d475);
+  color: white;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 6px 12px rgba(103, 194, 58, 0.5);
+  transform: scale(1.1);
+}
+
+.connection-option:hover {
+  border-color: #67c23a;
+  transform: scale(1.05);
+}
+
+.dialog-footer {
+  text-align: center;
+}
+
+.el-button {
+  background: linear-gradient(135deg, #5b9efc, #2b80f3);
+  border-radius: 20px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(91, 158, 252, 0.6);
+}
+</style>
