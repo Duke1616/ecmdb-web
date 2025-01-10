@@ -47,7 +47,7 @@ const selectedOption = ref("Web Shell")
 import guacd from "./guacd.vue"
 import xterm from "./xterm.vue"
 import finder from "./file-system.vue"
-const options = ["Web Shell", "Web Sftp", "RDP"]
+const options = ["Web Shell", "Web Sftp", "RDP", "VNC"]
 
 const dialogVisible = ref<boolean>(true)
 const isConnected = ref<boolean>(false)
