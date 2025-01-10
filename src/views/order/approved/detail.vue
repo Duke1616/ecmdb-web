@@ -13,19 +13,24 @@
         <el-tab-pane lazy label="表单信息" name="form">
           <Form
             ref="formRef"
-            :template-id="props.templateId"
-            :process-inst-id="props.processInstId"
-            :task-id="props.taskId"
+            :template-id="props.orderInfo?.template_id"
+            :process-inst-id="props.orderInfo?.process_instance_id"
+            :task-id="props.orderInfo?.task_id"
             :action="props.action"
             @close="onClosed"
             @refresh-data="refreshData"
           />
         </el-tab-pane>
         <el-tab-pane lazy label="流程图" name="flow">
-          <Flow ref="flowRef" :workflow-id="props.workflowId" :process-inst-id="props.processInstId" />
+          <Flow
+            ref="flowRef"
+            :workflow-id="props.orderInfo?.workflow_id"
+            :process-inst-id="props.orderInfo?.process_instance_id"
+            :status="props.orderInfo?.status"
+          />
         </el-tab-pane>
         <el-tab-pane lazy label="审批记录" name="process">
-          <Record ref="recordRef" :process-inst-id="props.processInstId" />
+          <Record ref="recordRef" :process-inst-id="props.orderInfo?.process_instance_id" />
         </el-tab-pane>
       </el-tabs>
     </el-drawer>
@@ -37,6 +42,7 @@ import { ref, watch } from "vue"
 import Form from "./form.vue"
 import Flow from "./flow.vue"
 import Record from "./record.vue"
+import { order } from "@/api/order/types/order"
 
 const activeName = ref<string>("form")
 
@@ -53,11 +59,8 @@ const handleClick = (tab: TabsPaneContext) => {
 // 接收父组建传递
 interface Props {
   action: string
-  templateId: number | undefined
-  processInstId: number | undefined
   dialogVisible: boolean | undefined
-  workflowId: number | undefined
-  taskId: number | undefined
+  orderInfo: order | undefined
 }
 
 const actionName = ref<string>("")

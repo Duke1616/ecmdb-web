@@ -26,6 +26,7 @@ import { getWorkflowGraphApi } from "@/api/workflow/workflow"
 interface Props {
   workflowId: number | undefined
   processInstId: number | undefined
+  status: number | undefined
 }
 const props = defineProps<Props>()
 
@@ -115,10 +116,11 @@ const render = () => {
   lf.value.fitView(300, 300)
 }
 
-const getGraphData = async (id: number, process_instance_id: number) => {
+const getGraphData = async (id: number, process_instance_id: number, status: number) => {
   const res = await getWorkflowGraphApi({
     id: id,
-    process_instance_id: process_instance_id
+    process_instance_id: process_instance_id,
+    status: status
   })
   return res.data
 }
@@ -139,16 +141,14 @@ watch(
         //   isPass: true
         // })
 
-        if (props.processInstId != undefined) {
-          const workflowGraph = await getGraphData(val, props.processInstId)
+        if (props.processInstId != undefined && props.status != undefined) {
+          const workflowGraph = await getGraphData(val, props.processInstId, props.status)
           lf.value.render(workflowGraph?.workflow?.flow_data)
           // 居中展示
           lf.value.translateCenter()
           // 流程图缩小到画布能全部显示
           lf.value.fitView(300, 300)
         }
-
-        // console.log(edgeModel)
       })
     }
   },

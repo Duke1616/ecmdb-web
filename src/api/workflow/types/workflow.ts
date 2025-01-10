@@ -35,6 +35,7 @@ export interface workflows {
 export interface workflowGraphReq {
   id: number
   process_instance_id: number
+  status: number
 }
 
 export interface workflowGraph {

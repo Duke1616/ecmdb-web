@@ -43,10 +43,7 @@
   <Detail
     :action="action"
     :dialogVisible="dialogVisible"
-    :processInstId="processInstId"
-    :templateId="templateId"
-    :taskId="taskId"
-    :workflowId="workflowId"
+    :orderInfo="orderInfo"
     @refresh-data="listOrdersData"
     @close="onClosed"
   />
@@ -63,11 +60,9 @@ import Detail from "../approved/detail.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const dialogVisible = ref<boolean>()
-const templateId = ref<number>()
-const processInstId = ref<number>()
-const taskId = ref<number>()
-const workflowId = ref<number>()
+const orderInfo = ref<order>()
 const action = ref<string>("todo")
+
 /** 查询模版列表 */
 const ordersData = ref<order[]>([])
 const listOrdersData = () => {
@@ -91,19 +86,13 @@ const listOrdersData = () => {
 }
 
 const handleDelete = (row: order) => {
-  templateId.value = row.template_id
-  processInstId.value = row.process_instance_id
-  taskId.value = row.task_id
-  workflowId.value = row.workflow_id
   dialogVisible.value = true
+  orderInfo.value = row
 }
 
 const onClosed = () => {
   dialogVisible.value = false
-  templateId.value = 0
-  processInstId.value = 0
-  workflowId.value = 0
-  taskId.value = 0
+  orderInfo.value = undefined
 }
 
 /** 监听分页参数的变化 */
