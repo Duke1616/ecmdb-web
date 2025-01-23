@@ -23,7 +23,7 @@ export interface workflow {
   template_id: number
   name: string
   desc: string
-  onwer: string
+  owner: string
   icon: string
   flow_data: any
 }

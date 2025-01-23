@@ -15,7 +15,7 @@
         <el-table :data="flowsData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="owner" label="创建人" align="center" />
+          <el-table-column prop="owner" label="负责人" align="center" :formatter="formatOwner" />
           <el-table-column prop="is_notify" label="消息通知" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.is_notify === true" effect="plain" type="primary">开启</el-tag>
@@ -77,6 +77,7 @@ import { workflow } from "@/api/workflow/types/workflow"
 import OperateBtn from "@/components/OperateBtn/index.vue"
 import Preview from "./preview/Preview.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
+import { findByUsernamesApi } from "@/api/user"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const apiRef = ref<InstanceType<typeof createWorkflow>>()
@@ -128,11 +129,38 @@ const listFlowsData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       flowsData.value = data.workflows
+      const uniqueOwners = new Set<string>()
+
+      // 遍历 flowsData.value，提取 onwer 并添加到 Set 中
+      data.workflows.forEach((item) => {
+        console.log(item)
+        if (item.owner) {
+          uniqueOwners.add(item.owner)
+        }
+      })
+
+      console.log(uniqueOwners)
+      getUsernamesData(Array.from(uniqueOwners))
     })
     .catch(() => {
       flowsData.value = []
     })
     .finally(() => {})
+}
+const userMaps = ref(new Map<string, string>())
+const getUsernamesData = (uns: string[]) => {
+  findByUsernamesApi(uns)
+    .then(({ data }) => {
+      data.users.forEach((node) => {
+        userMaps.value.set(node.username, node.display_name)
+      })
+    })
+    .catch(() => {})
+    .finally(() => {})
+}
+
+const formatOwner = (row: workflow) => {
+  return userMaps.value.get(row.owner) || "未知用户"
 }
 
 const operateEvent = (data: workflow, name: string) => {
