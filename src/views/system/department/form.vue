@@ -127,7 +127,7 @@ import { cloneDeep } from "lodash-es"
 import { createOrUpdateDepartment, department } from "@/api/department/types/department"
 import { createDepartmentApi, updateDepartmentApi } from "@/api/department"
 import { user } from "@/api/user/types/user"
-import { listUsersByKeywordApi } from "@/api/user"
+import { findByIdsApi, listUsersByKeywordApi } from "@/api/user"
 import { usePagination } from "@/hooks/usePagination"
 
 const init = {
@@ -213,12 +213,30 @@ const setDepartmentData = (form: department) => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(form)
 
+  // 清空空值
   Object.keys(formData.value).forEach((key) => {
     const typedKey = key as keyof typeof formData.value
     if (formData.value[typedKey] === 0 || formData.value[typedKey] === null || formData.value[typedKey] === "") {
       delete formData.value[typedKey]
     }
   })
+
+  // 将 main_leader 和 leaders 组合成一个数组
+  const leaders = Array.isArray(form.leaders) ? form.leaders : []
+  const combinedLeaders = [form.main_leader, ...leaders]
+
+  // 使用 Set 去除重复数据，并转换回数组
+  const uniqueLeaders = [...new Set(combinedLeaders)]
+
+  // 解析当前用户信息
+  findByIdsApi(uniqueLeaders)
+    .then((data) => {
+      usersData.value = data.data.users
+    })
+    .catch((error) => {
+      console.log("catch", error)
+    })
+    .finally(() => {})
 }
 
 // 设置上级目录

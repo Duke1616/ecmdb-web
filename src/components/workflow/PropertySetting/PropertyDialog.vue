@@ -23,6 +23,7 @@
         <userProperty
           v-if="props.nodeData?.type === 'user'"
           :nodeData="nodeData"
+          :id="props.id"
           :lf="lf"
           :flowDetail="flowDetail"
           @closed="closed"

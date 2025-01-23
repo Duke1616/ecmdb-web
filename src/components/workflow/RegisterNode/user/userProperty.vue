@@ -11,18 +11,47 @@
       <el-form-item label="名称" prop="name">
         <el-input v-model="propertyForm.name" clearable />
       </el-form-item>
-      <el-form-item label="审批规则" prop="type">
-        <el-select v-model="propertyForm.type" clearable>
+      <el-form-item label="审批规则" prop="rule">
+        <el-select v-model="propertyForm.rule" clearable @change="handleChange">
           <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <!-- TODO: 查询使用模版的字段，进行options选择， 暂时主动录入 -->
-      <el-form-item v-if="propertyForm.type === 'template'" label="模版字段" prop="approved">
-        <div class="select-container">
-          <el-input v-model="propertyForm.template_field" clearable />
-        </div>
-      </el-form-item>
-      <el-form-item v-if="propertyForm.type === 'appoint'" label="参与者" prop="approved">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item v-if="propertyForm.rule === 'template'" label="模版名称" prop="leftValue">
+            <el-select v-model="templateName" placeholder="请选择模版" class="select-box" @change="handleChangeTempate">
+              <el-option v-for="(item, index) in templates" :key="index" :label="item.name" :value="item.name" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+
+        <el-col :span="12">
+          <el-form-item v-if="propertyForm.rule === 'template'" label="模版字段" prop="leftValue">
+            <el-select
+              v-model="propertyForm.template_field"
+              :disabled="!templateName"
+              placeholder="请选择模版字段"
+              class="input-box"
+            >
+              <el-option
+                v-for="[title, field] in Array.from(getOptionsForLeftValue())"
+                :key="field"
+                :label="title"
+                :value="field"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-form-item
+        v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
+        label="参与者"
+        prop="approved"
+      >
+        <template #label>
+          <span>{{ getLabel(propertyForm.rule) }}</span>
+        </template>
         <div class="select-container">
           <el-select
             v-model="propertyForm.approved"
@@ -91,6 +120,9 @@ import { UserFilled } from "@element-plus/icons-vue"
 import { userDepartmentCombination } from "@/api/user/types/user"
 import { findByUsernamesApi, pipelineUserByDepartmentApi } from "@/api/user"
 import { Search } from "@element-plus/icons-vue"
+import { getTemplateByWorkflowIdApi } from "@/api/template"
+import { template } from "@/api/template/types/template"
+import { Rule } from "@form-create/element-ui"
 
 const filterInput = ref<string>("")
 
@@ -119,18 +151,89 @@ const options = [
     value: "appoint"
   },
   {
-    label: "所属部门领导",
-    value: "automatic"
+    label: "所属部门领导【允许多人】",
+    value: "leaders"
   },
   {
-    label: "工单创建人",
+    label: "所属分管领导【仅有一人】",
+    value: "main_leader"
+  },
+  {
+    label: "工单提交人",
     value: "founder"
   },
   {
-    label: "模版字段获取",
+    label: "模版字段提取",
     value: "template"
   }
 ]
+
+const getLabel = (rule: string) => {
+  switch (rule) {
+    case "leaders":
+      return "部门领导（保底机制）"
+    case "main_leader":
+      return "分管领导（保底机制）"
+    case "appoint":
+      return "参与者"
+    default:
+      return ""
+  }
+}
+
+const handleChange = async () => {
+  if (propertyForm.rule !== "template") {
+    return
+  }
+
+  if (props.id === undefined) {
+    return
+  }
+
+  await getTemplateByWorkflowId(props.nodeData?.workflow_id || 0)
+}
+
+const templateName = ref<string>("")
+const templates = ref<template[]>([])
+const templateMap = new Map<string, template>()
+const getTemplateByWorkflowId = async (workflow_id: number) => {
+  try {
+    const { data } = await getTemplateByWorkflowIdApi(workflow_id)
+    templates.value = data.templates
+
+    //  s
+    templates.value.forEach((template) => {
+      templateMap.set(template.name, template)
+    })
+    return data.templates.length > 0
+  } catch {
+    templates.value = []
+    return false
+  }
+}
+
+const getOptionsForLeftValue = () => {
+  const t = templateMap.get(templateName.value)
+  if (!t) {
+    return new Map<string, string>()
+  }
+  return f(t)
+}
+
+const f = (template: template) => {
+  const map = new Map<string, string>()
+
+  template.rules.forEach((rule: Rule) => {
+    if (typeof rule.title === "string" && typeof rule.field === "string") {
+      map.set(rule.title, rule.field)
+    } else {
+      console.warn("Invalid rule detected:", rule)
+    }
+  })
+  return map
+}
+
+const handleChangeTempate = () => {}
 
 /** 查询模版列表 */
 const treeData = ref<userDepartmentCombination[]>([])
@@ -148,6 +251,7 @@ const listDepartmentTreeData = () => {
 const props = defineProps({
   nodeData: Object,
   lf: Object || String,
+  id: Number,
   //详情
   flowDetail: {
     type: Object,
@@ -164,7 +268,7 @@ const propertyForm = reactive({
   name: "",
   approved: ref<string[]>(),
   template_field: "",
-  type: "appoint",
+  rule: "appoint",
   is_cosigned: false,
   is_cc: false
 })
@@ -230,7 +334,7 @@ const setProperties = () => {
     name: propertyForm.name,
     approved: propertyForm.approved,
     template_field: propertyForm.template_field,
-    type: propertyForm.type,
+    rule: propertyForm.rule,
     is_cosigned: propertyForm.is_cosigned,
     is_cc: propertyForm.is_cc
   })
@@ -261,7 +365,7 @@ onMounted(async () => {
   propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
   propertyForm.approved = Array.isArray(props.nodeData?.properties.approved) ? props.nodeData.properties.approved : []
   propertyForm.template_field = props.nodeData?.properties.template_field || ""
-  propertyForm.type = props.nodeData?.properties.type || "appoint"
+  propertyForm.rule = props.nodeData?.properties.rule || "appoint"
   propertyForm.is_cc = props.nodeData?.properties.is_cc ? props.nodeData.properties.is_cc : false
   // 如果存在审批用户则获取
   if (props.nodeData?.properties.approved.length > 0) {

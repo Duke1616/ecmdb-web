@@ -83,6 +83,7 @@ import User from "./user.vue"
 import { ElMessage, ElMessageBox, ElTree, TabsPaneContext } from "element-plus"
 import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
+
 const filterInput = ref("")
 
 const dialogVisible = ref<boolean>(false)
@@ -137,7 +138,6 @@ const handleNodeClick = async (node: department) => {
     currentNodeKey.value = node.id
     empty.value = true
 
-    console.log(node)
     await nextTick(() => {
       updateDepartmentData(node)
     })
