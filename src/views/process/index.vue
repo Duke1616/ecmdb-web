@@ -139,7 +139,6 @@ const listFlowsData = () => {
         }
       })
 
-      console.log(uniqueOwners)
       getUsernamesData(Array.from(uniqueOwners))
     })
     .catch(() => {

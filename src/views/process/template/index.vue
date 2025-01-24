@@ -16,7 +16,7 @@
         <el-table :data="templatesData">
           <el-table-column type="selection" width="50" align="center" />
           <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="group_id" label="所属组" align="center" />
+          <el-table-column prop="group_id" label="所属组" align="center" :formatter="formatGroup" />
           <el-table-column prop="create_type" label="来源" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统自建</el-tag>
@@ -105,7 +105,7 @@ import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/hooks/usePagination"
 import { template } from "@/api/template/types/template"
-import { deleteTemplateApi, listTemplateApi } from "@/api/template"
+import { deleteTemplateApi, getTemplateGroupsByIdsApi, listTemplateApi } from "@/api/template"
 import Template from "./template.vue"
 import TemplateGroup from "./group.vue"
 import thirdParty from "./thirdparty.vue"
@@ -133,11 +133,37 @@ const listTemplatesData = () => {
     .then(({ data }) => {
       paginationData.total = data.total
       templatesData.value = data.templates
+
+      const uniqueIds = new Set<number>()
+      data.templates.forEach((item) => {
+        console.log(item)
+        if (item.group_id) {
+          uniqueIds.add(item.group_id)
+        }
+      })
+
+      getTemplateGroupsData(Array.from(uniqueIds))
     })
     .catch(() => {
       templatesData.value = []
     })
     .finally(() => {})
+}
+
+const groupMaps = ref(new Map<number, string>())
+const getTemplateGroupsData = (ids: number[]) => {
+  getTemplateGroupsByIdsApi(ids)
+    .then(({ data }) => {
+      data.template_groups.forEach((node) => {
+        groupMaps.value.set(node.id, node.name)
+      })
+    })
+    .catch(() => {})
+    .finally(() => {})
+}
+
+const formatGroup = (row: template) => {
+  return groupMaps.value.get(row.group_id) || "未知组"
 }
 
 const onClosedThirdParty = () => {

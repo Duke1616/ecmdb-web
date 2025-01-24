@@ -71,3 +71,11 @@ export function getTemplateByWorkflowIdApi(workflow_id: number) {
     data: { workflow_id: workflow_id }
   })
 }
+
+/** 根据 ids 获取模版组 */
+export function getTemplateGroupsByIdsApi(ids: number[]) {
+  return instance.post<template.templateGroups>({
+    url: "template/group/by_ids",
+    data: { ids: ids }
+  })
+}
