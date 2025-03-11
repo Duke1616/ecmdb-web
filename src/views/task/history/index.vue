@@ -10,7 +10,9 @@
           <el-table-column prop="status" label="状态" align="center">
             <template #default="scope">
               <el-tag v-if="scope.row.status === 3" type="primary" effect="plain"> 运行中 </el-tag>
-              <el-tag v-if="scope.row.status === 4" type="warning" effect="plain"> 等待中 </el-tag>
+              <el-tag v-if="scope.row.status === 4 || scope.row.status === 8" type="warning" effect="plain">
+                等待中
+              </el-tag>
               <el-tag v-if="scope.row.status === 5" type="warning" effect="plain"> 暂停中 </el-tag>
               <el-tag v-if="scope.row.status === 6" type="warning" effect="plain"> 调度中 </el-tag>
               <el-tag v-if="scope.row.status === 7" type="warning" effect="plain"> 重试 </el-tag>
@@ -25,6 +27,17 @@
               <el-button type="primary" text bg size="small" @click="handleResult(scope.row)">输出</el-button>
             </template>
           </el-table-column> -->
+          <el-table-column prop="is_timing" label="定时任务" align="center">
+            <template #default="scope">
+              <el-tag v-if="scope.row.is_timing === true" type="primary"> 是 </el-tag>
+              <el-tag v-if="scope.row.is_timing === false" type="warning"> 否 </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="run_time" label="执行时间" align="center">
+            <template #default="scope">
+              <span>{{ scope.row.start_time }}</span>
+            </template>
+          </el-table-column>
           <el-table-column fixed="right" label="操作" width="200" align="center">
             <template #default="scope">
               <OperateBtn
