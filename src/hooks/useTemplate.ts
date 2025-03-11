@@ -1,23 +1,24 @@
 // hooks/useTemplate.ts
-import { ref, computed, onMounted } from "vue"
+import { ref, onMounted } from "vue"
 import { getTemplateByWorkflowIdApi } from "@/api/template"
 import { template } from "@/api/template/types/template"
 import { Rule } from "@form-create/element-ui"
 
 export function useTemplate(workflowId?: number) {
-  const templateName = ref<string>("")
   const templates = ref<template[]>([])
-  const templateMap = ref<Map<string, template>>(new Map())
+  const templateMap = ref<Map<number, template>>(new Map())
 
   // 计算属性：当前选中模板的字段选项
-  const templateFieldOptions = computed(() => {
-    const template = templateMap.value.get(templateName.value)
+
+  const getTemplateFieldOptions = (templateId: number) => {
+    const template = Array.from(templateMap.value.values()).find((t) => t.id === templateId)
     if (!template) return new Map<string, string>()
     return extractTemplateFields(template)
-  })
+  }
 
   // 获取模板数据
   const fetchTemplates = async (workflowId: number) => {
+    console.log("执行了么")
     try {
       const { data } = await getTemplateByWorkflowIdApi(workflowId)
       templates.value = data.templates
@@ -31,10 +32,11 @@ export function useTemplate(workflowId?: number) {
 
   // 更新模板映射
   const updateTemplateMap = (templates: template[]) => {
-    const newMap = new Map<string, template>()
+    const newMap = new Map<number, template>()
     templates.forEach((template) => {
-      newMap.set(template.name, template)
+      newMap.set(template.id, template)
     })
+
     templateMap.value = newMap
   }
 
@@ -55,9 +57,8 @@ export function useTemplate(workflowId?: number) {
   }
 
   return {
-    templateName,
     templates,
-    templateFieldOptions,
+    getTemplateFieldOptions,
     fetchTemplates
   }
 }

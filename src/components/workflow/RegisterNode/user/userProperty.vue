@@ -20,7 +20,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item v-if="propertyForm.rule === 'template'" label="模版名称" prop="leftValue">
-            <el-select v-model="templateName" placeholder="请选择模版" class="select-box">
+            <el-select v-model="propertyForm.template_id" placeholder="请选择模版" class="select-box">
               <el-option v-for="(item, index) in templates" :key="index" :label="item.name" :value="item.name" />
             </el-select>
           </el-form-item>
@@ -30,12 +30,12 @@
           <el-form-item v-if="propertyForm.rule === 'template'" label="模版字段" prop="leftValue">
             <el-select
               v-model="propertyForm.template_field"
-              :disabled="!templateName"
+              :disabled="!propertyForm.template_id"
               placeholder="请选择模版字段"
               class="input-box"
             >
               <el-option
-                v-for="[title, field] in Array.from(templateFieldOptions)"
+                v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id))"
                 :key="field"
                 :label="title"
                 :value="field"
@@ -123,7 +123,7 @@ import { Search } from "@element-plus/icons-vue"
 
 import { useTemplate } from "@/hooks/useTemplate"
 // 使用模板 Hook
-const { templateName, templates, templateFieldOptions, fetchTemplates } = useTemplate()
+const { templates, getTemplateFieldOptions, fetchTemplates } = useTemplate()
 
 // 在需要获取模板的地方调用 fetchTemplates
 const handleChange = async () => {
@@ -223,6 +223,7 @@ const propertyForm = reactive({
   name: "",
   approved: ref<string[]>(),
   template_field: "",
+  template_id: 0,
   rule: "appoint",
   is_cosigned: false,
   is_cc: false
@@ -288,6 +289,7 @@ const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
     approved: propertyForm.approved,
+    template_id: propertyForm.template_id,
     template_field: propertyForm.template_field,
     rule: propertyForm.rule,
     is_cosigned: propertyForm.is_cosigned,
@@ -320,11 +322,21 @@ onMounted(async () => {
   propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
   propertyForm.approved = Array.isArray(props.nodeData?.properties.approved) ? props.nodeData.properties.approved : []
   propertyForm.template_field = props.nodeData?.properties.template_field || ""
+  propertyForm.template_id = props.nodeData?.properties.template_id || ""
   propertyForm.rule = props.nodeData?.properties.rule || "appoint"
   propertyForm.is_cc = props.nodeData?.properties.is_cc ? props.nodeData.properties.is_cc : false
   // 如果存在审批用户则获取
   if (props.nodeData?.properties.approved.length > 0) {
     getUsernamesData(props.nodeData?.properties.approved)
+  }
+
+  // 如果执行方式是模板，加载模板数据
+  if (propertyForm.rule === "template" && propertyForm.template_id) {
+    if (props.id !== undefined) {
+      fetchTemplates(props.id).then(() => {
+        getTemplateFieldOptions(propertyForm.template_id)
+      })
+    }
   }
 })
 </script>

@@ -88,8 +88,8 @@
             label="模版名称"
             prop="leftValue"
           >
-            <el-select v-model="templateName" placeholder="请选择模版" class="select-box">
-              <el-option v-for="item in templates" :key="item.name" :label="item.name" :value="item.name" />
+            <el-select v-model="propertyForm.template_id" placeholder="请选择模版" class="select-box">
+              <el-option v-for="item in templates" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -102,12 +102,12 @@
           >
             <el-select
               v-model="propertyForm.template_field"
-              :disabled="!templateName"
+              :disabled="!propertyForm.template_id"
               placeholder="请选择模版字段"
               class="input-box"
             >
               <el-option
-                v-for="[title, field] in Array.from(templateFieldOptions)"
+                v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id))"
                 :key="field"
                 :label="title"
                 :value="field"
@@ -148,7 +148,7 @@ import { cloneDeep } from "lodash-es"
 import { useTemplate } from "@/hooks/useTemplate"
 
 // 使用模板 Hook
-const { templateName, templates, templateFieldOptions, fetchTemplates } = useTemplate()
+const { templates, getTemplateFieldOptions, fetchTemplates } = useTemplate()
 
 // 在需要获取模板的地方调用 fetchTemplates
 const handleChange = async () => {
@@ -180,6 +180,7 @@ const DEFAULT_FORM_DATA = reactive({
   is_timing: false,
   exec_method: "",
   template_field: "",
+  template_id: 0,
   notify_method: 1,
   unit: 1,
   quantity: 0,
@@ -211,10 +212,14 @@ const is_notify = [
 const unit = [
   {
     value: 1,
-    label: "小时"
+    label: "分钟"
   },
   {
     value: 2,
+    label: "小时"
+  },
+  {
+    value: 3,
     label: "天"
   }
 ]
@@ -306,10 +311,12 @@ const setProperties = () => {
     codebook_uid: propertyForm.codebook_uid,
     is_notify: propertyForm.is_notify,
     template_field: propertyForm.template_field,
+    template_id: propertyForm.template_id,
     is_timing: propertyForm.is_timing,
     notify_method: propertyForm.notify_method,
     tag: propertyForm.tag,
     unit: propertyForm.unit,
+    exec_method: propertyForm.exec_method,
     quantity: propertyForm.quantity
   })
 }
@@ -322,9 +329,20 @@ onMounted(() => {
   propertyForm.is_timing = props.nodeData?.properties.is_timing
   propertyForm.notify_method = props.nodeData?.properties.notify_method
   propertyForm.template_field = props.nodeData?.properties.template_field
+  propertyForm.template_id = props.nodeData?.properties.template_id
   propertyForm.tag = props.nodeData?.properties.tag
+  propertyForm.exec_method = props.nodeData?.properties.exec_method
   propertyForm.unit = props.nodeData?.properties.unit
   propertyForm.quantity = props.nodeData?.properties.quantity
+
+  // 如果执行方式是模板，加载模板数据
+  if (propertyForm.exec_method === "template" && propertyForm.template_id) {
+    if (props.id !== undefined) {
+      fetchTemplates(props.id).then(() => {
+        getTemplateFieldOptions(propertyForm.template_id)
+      })
+    }
+  }
 })
 </script>
 <style lang="scss" scoped>
