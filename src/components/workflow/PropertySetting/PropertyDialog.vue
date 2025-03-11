@@ -38,6 +38,7 @@
         <automationProperty
           v-if="props.nodeData?.type === 'automation'"
           :nodeData="nodeData"
+          :id="props.id"
           :lf="lf"
           :flowDetail="flowDetail"
           @closed="closed"

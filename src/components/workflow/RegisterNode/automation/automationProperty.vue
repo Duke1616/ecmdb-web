@@ -44,14 +44,88 @@
       </el-row>
       <el-row :gutter="20">
         <el-col :span="12">
-          <el-form-item label="开启通知" prop="codebook_uid">
+          <el-form-item label="定时执行" prop="is_timing">
+            <el-select v-model="propertyForm.is_timing" placeholder="是否开启定时执行">
+              <el-option v-for="item in is_timing" :key="item.label" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item label="执行方式" prop="rule">
+            <el-select v-model="propertyForm.exec_method" clearable @change="handleChange">
+              <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item
+            v-if="propertyForm.exec_method === 'hand' && propertyForm.is_timing === true"
+            label="单位"
+            prop="unit"
+          >
+            <el-select v-model="propertyForm.unit" placeholder="执行单位">
+              <el-option v-for="item in unit" :key="item.label" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item
+            v-if="propertyForm.exec_method === 'hand' && propertyForm.is_timing === true"
+            label="数值"
+            prop="quantity"
+          >
+            <el-input-number v-model="propertyForm.quantity" :min="1" size="default" />
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item
+            v-if="propertyForm.exec_method === 'template' && propertyForm.is_timing === true"
+            label="模版名称"
+            prop="leftValue"
+          >
+            <el-select v-model="templateName" placeholder="请选择模版" class="select-box">
+              <el-option v-for="item in templates" :key="item.name" :label="item.name" :value="item.name" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+
+        <el-col :span="12">
+          <el-form-item
+            v-if="propertyForm.exec_method === 'template' && propertyForm.is_timing === true"
+            label="模版字段"
+            prop="leftValue"
+          >
+            <el-select
+              v-model="propertyForm.template_field"
+              :disabled="!templateName"
+              placeholder="请选择模版字段"
+              class="input-box"
+            >
+              <el-option
+                v-for="[title, field] in Array.from(templateFieldOptions)"
+                :key="field"
+                :label="title"
+                :value="field"
+              />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="开启通知" prop="is_notify">
             <el-select v-model="propertyForm.is_notify" placeholder="是否开启消息通知">
               <el-option v-for="item in is_notify" :key="item.label" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
         </el-col>
         <el-col :span="12">
-          <el-form-item label="发送方式" prop="tag">
+          <el-form-item label="发送方式" prop="notify_method">
             <el-select v-model="propertyForm.notify_method" placeholder="消息通知方式">
               <el-option v-for="item in notify_method" :key="item.label" :label="item.label" :value="item.value" />
             </el-select>
@@ -71,10 +145,23 @@ import { runnerTags } from "@/api/runner/types/runner"
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
+import { useTemplate } from "@/hooks/useTemplate"
+
+// 使用模板 Hook
+const { templateName, templates, templateFieldOptions, fetchTemplates } = useTemplate()
+
+// 在需要获取模板的地方调用 fetchTemplates
+const handleChange = async () => {
+  if (propertyForm.exec_method !== "template") return
+  if (props.id === undefined) return
+
+  await fetchTemplates(props.id)
+}
 
 const props = defineProps({
   nodeData: Object,
   lf: Object || String,
+  id: Number,
   //详情
   flowDetail: {
     type: Object,
@@ -90,11 +177,49 @@ const DEFAULT_FORM_DATA = reactive({
   name: "自动化-",
   codebook_uid: "",
   is_notify: false,
+  is_timing: false,
+  exec_method: "",
+  template_field: "",
   notify_method: 1,
+  unit: 1,
+  quantity: 0,
   tag: ""
 })
 
+const options = [
+  {
+    label: "手动设置",
+    value: "hand"
+  },
+  {
+    label: "模版字段提取",
+    value: "template"
+  }
+]
+
 const is_notify = [
+  {
+    value: true,
+    label: "开启"
+  },
+  {
+    value: false,
+    label: "关闭"
+  }
+]
+
+const unit = [
+  {
+    value: 1,
+    label: "小时"
+  },
+  {
+    value: 2,
+    label: "天"
+  }
+]
+
+const is_timing = [
   {
     value: true,
     label: "开启"
@@ -180,8 +305,12 @@ const setProperties = () => {
     name: propertyForm.name,
     codebook_uid: propertyForm.codebook_uid,
     is_notify: propertyForm.is_notify,
+    template_field: propertyForm.template_field,
+    is_timing: propertyForm.is_timing,
     notify_method: propertyForm.notify_method,
-    tag: propertyForm.tag
+    tag: propertyForm.tag,
+    unit: propertyForm.unit,
+    quantity: propertyForm.quantity
   })
 }
 
@@ -190,8 +319,16 @@ onMounted(() => {
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
   propertyForm.is_notify = props.nodeData?.properties.is_notify
+  propertyForm.is_timing = props.nodeData?.properties.is_timing
   propertyForm.notify_method = props.nodeData?.properties.notify_method
+  propertyForm.template_field = props.nodeData?.properties.template_field
   propertyForm.tag = props.nodeData?.properties.tag
+  propertyForm.unit = props.nodeData?.properties.unit
+  propertyForm.quantity = props.nodeData?.properties.quantity
 })
 </script>
-<style scoped></style>
+<style lang="scss" scoped>
+.el-input-number {
+  width: 100%;
+}
+</style>

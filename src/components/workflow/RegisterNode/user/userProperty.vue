@@ -20,7 +20,7 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-form-item v-if="propertyForm.rule === 'template'" label="模版名称" prop="leftValue">
-            <el-select v-model="templateName" placeholder="请选择模版" class="select-box" @change="handleChangeTempate">
+            <el-select v-model="templateName" placeholder="请选择模版" class="select-box">
               <el-option v-for="(item, index) in templates" :key="index" :label="item.name" :value="item.name" />
             </el-select>
           </el-form-item>
@@ -35,7 +35,7 @@
               class="input-box"
             >
               <el-option
-                v-for="[title, field] in Array.from(getOptionsForLeftValue())"
+                v-for="[title, field] in Array.from(templateFieldOptions)"
                 :key="field"
                 :label="title"
                 :value="field"
@@ -120,9 +120,18 @@ import { UserFilled } from "@element-plus/icons-vue"
 import { userDepartmentCombination } from "@/api/user/types/user"
 import { findByUsernamesApi, pipelineUserByDepartmentApi } from "@/api/user"
 import { Search } from "@element-plus/icons-vue"
-import { getTemplateByWorkflowIdApi } from "@/api/template"
-import { template } from "@/api/template/types/template"
-import { Rule } from "@form-create/element-ui"
+
+import { useTemplate } from "@/hooks/useTemplate"
+// 使用模板 Hook
+const { templateName, templates, templateFieldOptions, fetchTemplates } = useTemplate()
+
+// 在需要获取模板的地方调用 fetchTemplates
+const handleChange = async () => {
+  if (propertyForm.rule !== "template") return
+  if (props.id === undefined) return
+
+  await fetchTemplates(props.id)
+}
 
 const filterInput = ref<string>("")
 
@@ -180,60 +189,6 @@ const getLabel = (rule: string) => {
       return ""
   }
 }
-
-const handleChange = async () => {
-  if (propertyForm.rule !== "template") {
-    return
-  }
-
-  if (props.id === undefined) {
-    return
-  }
-
-  await getTemplateByWorkflowId(props.nodeData?.workflow_id || 0)
-}
-
-const templateName = ref<string>("")
-const templates = ref<template[]>([])
-const templateMap = new Map<string, template>()
-const getTemplateByWorkflowId = async (workflow_id: number) => {
-  try {
-    const { data } = await getTemplateByWorkflowIdApi(workflow_id)
-    templates.value = data.templates
-
-    //  s
-    templates.value.forEach((template) => {
-      templateMap.set(template.name, template)
-    })
-    return data.templates.length > 0
-  } catch {
-    templates.value = []
-    return false
-  }
-}
-
-const getOptionsForLeftValue = () => {
-  const t = templateMap.get(templateName.value)
-  if (!t) {
-    return new Map<string, string>()
-  }
-  return f(t)
-}
-
-const f = (template: template) => {
-  const map = new Map<string, string>()
-
-  template.rules.forEach((rule: Rule) => {
-    if (typeof rule.title === "string" && typeof rule.field === "string") {
-      map.set(rule.title, rule.field)
-    } else {
-      console.warn("Invalid rule detected:", rule)
-    }
-  })
-  return map
-}
-
-const handleChangeTempate = () => {}
 
 /** 查询模版列表 */
 const treeData = ref<userDepartmentCombination[]>([])
