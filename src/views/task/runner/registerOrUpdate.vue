@@ -122,6 +122,7 @@ const handlerCloseVariable = () => {
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
   name: "",
   worker_name: "",
+  topic: "",
   codebook_uid: "",
   codebook_secret: "",
   desc: "",
@@ -151,6 +152,13 @@ const submitForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
     const api = formData.value.id === undefined ? registerRunnerApi : updateRunnerAPi
+
+    // 写入TOPIC
+    const matchedWorker = workers.value.find((item) => item.name === formData.value.worker_name)
+    formData.value = {
+      ...formData.value,
+      topic: matchedWorker?.topic || "default_topic"
+    }
     api(formData.value)
       .then(() => {
         onClosed()

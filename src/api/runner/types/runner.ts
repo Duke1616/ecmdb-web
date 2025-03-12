@@ -2,6 +2,7 @@ export interface runner {
   id: number
   name: string
   worker_name: string
+  topic: string
   codebook_uid: string
   codebook_secret: string
   desc: string
@@ -13,6 +14,7 @@ export interface registerOrUpdateReq {
   id?: number
   name: string
   worker_name: string
+  topic: string
   codebook_uid: string
   codebook_secret: string
   desc: string
