@@ -35,8 +35,8 @@ importers:
         specifier: ^3.2.11
         version: 3.2.11(vue@3.4.25(typescript@5.4.5))
       '@form-create/element-ui':
-        specifier: ^3.1.33
-        version: 3.1.33(vue@3.4.25(typescript@5.4.5))
+        specifier: ^3.2.19
+        version: 3.2.19(vue@3.4.25(typescript@5.4.5))
       '@fullcalendar/core':
         specifier: ^6.1.15
         version: 6.1.15
@@ -746,11 +746,6 @@ packages:
     resolution: {integrity: sha512-5mPyeHFOj8n01LOVhibjX8OujD6RYBH8TF2Ol7n8QxaSqIcAFTz9PADIiX982REPxiZ6I8BqZa2t0OtYQtETpA==}
     peerDependencies:
       vue: ^3.1.5
-
-  '@form-create/element-ui@3.1.33':
-    resolution: {integrity: sha512-d3lTcciWxjfPqBZ5KKGmtfVAojKX7t6RcLtpjfDGU8ythglmoZ9LwMOrqLDWHv6YdmtazKdANUxqHcnXj8cj1g==}
-    peerDependencies:
-      vue: ^3.1.0
 
   '@form-create/element-ui@3.2.19':
     resolution: {integrity: sha512-eUuyuicrVjdudrhvU7Ri6sK1VNHImapuYW1k7g9AXZCiMNmqjzoA7W82W1nZoZj5LoAwmPay34oj9N6PhYUilg==}
@@ -4453,20 +4448,6 @@ snapshots:
       vuedraggable: 4.1.0(vue@3.4.25(typescript@5.4.5))
     transitivePeerDependencies:
       - '@vue/composition-api'
-
-  '@form-create/element-ui@3.1.33(vue@3.4.25(typescript@5.4.5))':
-    dependencies:
-      '@form-create/component-elm-checkbox': 3.2.18
-      '@form-create/component-elm-frame': 3.2.18
-      '@form-create/component-elm-group': 3.2.19
-      '@form-create/component-elm-radio': 3.2.18
-      '@form-create/component-elm-select': 3.2.18
-      '@form-create/component-elm-tree': 3.2.18
-      '@form-create/component-elm-upload': 3.2.18
-      '@form-create/component-subform': 3.1.34
-      '@form-create/core': 3.2.19(vue@3.4.25(typescript@5.4.5))
-      '@form-create/utils': 3.2.18
-      vue: 3.4.25(typescript@5.4.5)
 
   '@form-create/element-ui@3.2.19(vue@3.4.25(typescript@5.4.5))':
     dependencies:

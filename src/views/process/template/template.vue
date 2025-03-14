@@ -173,6 +173,10 @@ onMounted(() => {
   }
 }
 
+.el-container {
+  overflow-y: auto;
+}
+
 .icon-picker {
   width: 100%;
 }
