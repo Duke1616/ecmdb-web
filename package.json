@@ -19,7 +19,7 @@
     "@codemirror/legacy-modes": "^6.4.0",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@element-plus/icons-vue": "^2.3.1",
-    "@form-create/designer": "^3.2.8",
+    "@form-create/designer": "^3.2.11",
     "@form-create/element-ui": "^3.1.33",
     "@fullcalendar/core": "^6.1.15",
     "@fullcalendar/daygrid": "^6.1.15",

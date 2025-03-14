@@ -32,8 +32,8 @@ importers:
         specifier: ^2.3.1
         version: 2.3.1(vue@3.4.25(typescript@5.4.5))
       '@form-create/designer':
-        specifier: ^3.2.8
-        version: 3.2.8(vue@3.4.25(typescript@5.4.5))
+        specifier: ^3.2.11
+        version: 3.2.11(vue@3.4.25(typescript@5.4.5))
       '@form-create/element-ui':
         specifier: ^3.1.33
         version: 3.1.33(vue@3.4.25(typescript@5.4.5))
@@ -710,40 +710,40 @@ packages:
   '@floating-ui/utils@0.2.2':
     resolution: {integrity: sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==}
 
-  '@form-create/component-elm-checkbox@3.1.32':
-    resolution: {integrity: sha512-jlOXGpInb6NDmfHKs0meqNAH4IHrI9nY3zaUT0H5x9CIoKvo8FFl3pS7mujRfesnSaHPdCMNB867ZjlWFnrH5Q==}
+  '@form-create/component-elm-checkbox@3.2.18':
+    resolution: {integrity: sha512-W8v4o+MZWPEJmIIWojKmnn87tFWpxyTbaIhWJU4Ca0S99YoXR7RdHKLt06HYwJixVLZqytNRj9BMxR4UZQ6JNg==}
 
-  '@form-create/component-elm-frame@3.1.30':
-    resolution: {integrity: sha512-YJ1OaAMuXSp5SqWNCGAkUB7TDiK9rLhFJQlKV/rJ2iPfKfovlCX7WnEsdEiBgi1vVgm+n0nrlU2nsuPuhx4sRw==}
+  '@form-create/component-elm-frame@3.2.18':
+    resolution: {integrity: sha512-yob3jmO1xBbKfVfFNeO/xh80o1E2IbVx8NsnpTaaK9X0ARJFvhPvW53qX6TgJxdvzCGTsm/W6P6a4SaebQJtVQ==}
 
-  '@form-create/component-elm-group@3.1.30':
-    resolution: {integrity: sha512-win6mSfHf4aFGc2d3+VJ6lS39fGsCi/a+sLHNuhDlEeO3cxZd323viw42WG4wCLMWoJSTb0ntJuZgS2OA6JDkA==}
+  '@form-create/component-elm-group@3.2.19':
+    resolution: {integrity: sha512-lnNG+6BzbA5Jl5kY5C5957u4GyAjOCZ4S6TFII+Jb80PKs9MFoZUEEWF0uMhh5Ew5W19fhimUhyEZNF1fii/dw==}
 
-  '@form-create/component-elm-radio@3.1.32':
-    resolution: {integrity: sha512-ZsKK3XuAuk9AXhDrQnsXCGWENAiSNBja37cOaikMJPvxe/uSdeAJ1JEezCgNX2rBLDGux6p4r2wy+fy6Ttzyaw==}
+  '@form-create/component-elm-radio@3.2.18':
+    resolution: {integrity: sha512-kkb6xFOviqgoBRRLzsoZTnqKX9GSw2jaLCWWRPkwqEwA/aLNHRX0MuBdGNvpaaLaD1ph5g+N86GekHvvanbJlQ==}
 
-  '@form-create/component-elm-select@3.1.30':
-    resolution: {integrity: sha512-P2idIJNT2E+IHKHe8eUN1LyxYMNzTZapA7daFiCmQCnNQxoqG+4z4EHegXQW+Td1l9qCFF/GWsoNikkV8LkPug==}
+  '@form-create/component-elm-select@3.2.18':
+    resolution: {integrity: sha512-gqBzPgNGJ6GwQ/pK/qCuoxQeM/fflNv7IqibETt2IFgutsGVM1lXYic8QJ/51YkuI0afkDKF+wAEbfB6zqaKIA==}
 
-  '@form-create/component-elm-tree@3.1.30':
-    resolution: {integrity: sha512-woqbz/Yqs8RvFLAZjPMgosO7OJ2xj87RMApWX9PSrsEJK90m8ysnGLAP1SioBeyEaGgSF5aRjKZQ2G/qP3Ypog==}
+  '@form-create/component-elm-tree@3.2.18':
+    resolution: {integrity: sha512-s+0+NPh2t500pv4CA51dtwuWWlY2wW0qbL7ZE3steTBh8Z++7s+n/6y6joGPxTeP+7FkpfruA1TfJ7+5Ntpe1Q==}
 
-  '@form-create/component-elm-upload@3.1.30':
-    resolution: {integrity: sha512-UptKU5Wq2qiSzerxE2dR72Vw1jdpxGRhD0Akl+7G6ywI0l3rOJUcspo9Db8bCIlXa0chceo56LOf1nIErggfIg==}
+  '@form-create/component-elm-upload@3.2.18':
+    resolution: {integrity: sha512-FVFJYarlk5+/Kjg9kJ9ElwyP8bt+DR0m/pPUMqmkEoUtv0Sr6nkk596THLjfyXV1WRFeoZMjzIS6qCyTnqWksQ==}
 
-  '@form-create/component-subform@3.1.5':
-    resolution: {integrity: sha512-JHNEFGuwpnjGvCJ0I0GCqPL5al0qXoN4ymnRBpm+oL+6MMo5bz1kUyoqMX1MutuC96gHTqpeqc67hssi8g2mIw==}
+  '@form-create/component-subform@3.1.34':
+    resolution: {integrity: sha512-OJcFH/7MTHx7JLEjDK/weS27qfuFWAI+OK+gXTJ2jIt9aZkGWF/EWkjetiJLt5a0KMw4Z15wOS2XCY9pVK9vlA==}
 
   '@form-create/component-wangeditor@3.1.20':
     resolution: {integrity: sha512-lAjpltmYfr3a2AeXasCehGsZNL/1WB6vWqqV9TIsJ4pleTr0/D/oPwEYQjfv+gG+NoB2Sa25SRGhtlnephjyhg==}
 
-  '@form-create/core@3.1.33':
-    resolution: {integrity: sha512-KFb5vryjtDiPfU8JmX44TXDtG/nXrYyVE2vrA4WsJtVVir5ojMSNfXWPxju1utW6M9sPaZfAPMf6E8Nw2iRSTQ==}
+  '@form-create/core@3.2.19':
+    resolution: {integrity: sha512-+raJEgulpAQWc+eXXBziCI4wtSRw5qV1TJ/gHFaA2P80wQCawevMw8rt8iisdNvHUipAUbDYbUsj4OfdpByUkQ==}
     peerDependencies:
       vue: ^3.1.0
 
-  '@form-create/designer@3.2.8':
-    resolution: {integrity: sha512-SgrGiWOFaQTARAmysepHDtFyRi97rERrlkv1joz+DCOAzZME3RKRTXVqA7ALzJ2jI3psiCosGAK4rPSLh6EvgA==}
+  '@form-create/designer@3.2.11':
+    resolution: {integrity: sha512-5mPyeHFOj8n01LOVhibjX8OujD6RYBH8TF2Ol7n8QxaSqIcAFTz9PADIiX982REPxiZ6I8BqZa2t0OtYQtETpA==}
     peerDependencies:
       vue: ^3.1.5
 
@@ -752,11 +752,13 @@ packages:
     peerDependencies:
       vue: ^3.1.0
 
-  '@form-create/utils@3.1.30':
-    resolution: {integrity: sha512-xgYvAEz/3qgXzI0FPQJ/C4MbvzSuRyYFzyg0TZwJtWIl+7jpbjDmuhKLCM5KFMXeHvoSJzSk/v1jlL7ieFhZOg==}
+  '@form-create/element-ui@3.2.19':
+    resolution: {integrity: sha512-eUuyuicrVjdudrhvU7Ri6sK1VNHImapuYW1k7g9AXZCiMNmqjzoA7W82W1nZoZj5LoAwmPay34oj9N6PhYUilg==}
+    peerDependencies:
+      vue: ^3.1.0
 
-  '@form-create/utils@3.2.0':
-    resolution: {integrity: sha512-fqc7/l+US76NhloxMF3xE7UafYgxA8jU+t5WrAhmjaIAJ0vUNp6ScL/kdwN4nfOvjByZ/Q8BFQT0wqrp4lcgtw==}
+  '@form-create/utils@3.2.18':
+    resolution: {integrity: sha512-C98bFPdFVMltiHQvEZqv4rVdhcqthJgvxMbWDlniL03HS5oyusnUvxUE8jf0I9zk5dZRDGmxKOUtzE3JDWP9nQ==}
 
   '@fullcalendar/core@6.1.15':
     resolution: {integrity: sha512-BuX7o6ALpLb84cMw1FCB9/cSgF4JbVO894cjJZ6kP74jzbUZNjtwffwRdA+Id8rrLjT30d/7TrkW90k4zbXB5Q==}
@@ -841,6 +843,10 @@ packages:
     peerDependencies:
       vue: '>=3'
 
+  '@isaacs/cliui@8.0.2':
+    resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
+    engines: {node: '>=12'}
+
   '@jinming6/merge-helper@1.2.10':
     resolution: {integrity: sha512-XQPCN2+NoY1ohe9ceJjcxJJS16vkyZuVOKqUfyuPNEDI3GdBNIS40+QMV4l73WubnxP5L6eCkWYklu+bED7EVQ==}
 
@@ -899,6 +905,13 @@ packages:
   '@nodelib/fs.walk@1.2.8':
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
+
+  '@one-ini/wasm@0.1.1':
+    resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
+
+  '@pkgjs/parseargs@0.11.0':
+    resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
+    engines: {node: '>=14'}
 
   '@pkgr/core@0.1.1':
     resolution: {integrity: sha512-cq8o4cWH0ibXh9VGi5P20Tu9XF/0fFXl9EUinr9QfTM7a7p0oTA4iJRCQWppXR1Pg8dSM0UCItCkPwsk9qWWYA==}
@@ -1416,6 +1429,10 @@ packages:
   '@yarnpkg/lockfile@1.1.0':
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
 
+  abbrev@2.0.0:
+    resolution: {integrity: sha512-6/mh1E2u2YgEsCHdY0Yx5oW+61gZU+1vXaoiHHrpKeuRNNgFvS+/jrwHiQhB5apAf5oB7UB7E19ol2R2LKH8hQ==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
     peerDependencies:
@@ -1436,6 +1453,10 @@ packages:
   ansi-regex@5.0.1:
     resolution: {integrity: sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ==}
     engines: {node: '>=8'}
+
+  ansi-regex@6.1.0:
+    resolution: {integrity: sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA==}
+    engines: {node: '>=12'}
 
   ansi-styles@2.2.1:
     resolution: {integrity: sha512-kmCevFghRiWM7HB5zTPULl4r9bVFSWjz62MhqizDGUrq2NWuNMQyuv4tHHoKJHs69M/MF64lEcHdYIocrdWQYA==}
@@ -1667,6 +1688,10 @@ packages:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
     engines: {node: '>= 0.8'}
 
+  commander@10.0.1:
+    resolution: {integrity: sha512-y4Mg2tXshplEbSGzx7amzPwKKOCGuoSRP/CjEdwwk0FOGlUbq6lKuoyDZTNZkmxHdJtp54hdfY/JUrdL7Xfdug==}
+    engines: {node: '>=14'}
+
   commander@7.2.0:
     resolution: {integrity: sha512-QrWXB+ZQSVPmIWIhtEO9H+gwHaMGYiF5ChvoJ+K9ZGHG/sVsa6yiesAD1GC/x46sET00Xlwo1u49RVVVzvcSkw==}
     engines: {node: '>= 10'}
@@ -1682,6 +1707,9 @@ packages:
 
   confbox@0.1.7:
     resolution: {integrity: sha512-uJcB/FKZtBMCJpK8MQji6bJHgu1tixKPxRLeGkNzBoOZzpnZUJm0jm2/sBDWcuBx1dYgxV4JU+g5hmNxCyAmdA==}
+
+  config-chain@1.1.13:
+    resolution: {integrity: sha512-qj+f8APARXHrM0hraqXYb2/bOVSV4PvJQlNZ/DVj0QrmNM2q2euizkeuVckQ57J+W0mRH6Hvi+k50M4Jul2VRQ==}
 
   consola@3.2.3:
     resolution: {integrity: sha512-I5qxpzLv+sJhTVEoLYNcTW+bThDCPsit0vLNKShZx6rLtpilNpmmeTPaeqJb9ZE9dV3DGaeby6Vuhrw38WjeyQ==}
@@ -1709,6 +1737,10 @@ packages:
 
   cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
+    engines: {node: '>= 8'}
+
+  cross-spawn@7.0.6:
+    resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
 
   css-line-break@2.1.0:
@@ -1893,6 +1925,14 @@ packages:
     peerDependencies:
       vue: ^3.2.0
 
+  eastasianwidth@0.2.0:
+    resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
+
+  editorconfig@1.0.4:
+    resolution: {integrity: sha512-L9Qe08KWTlqYMVvMcTIvMAdl1cDUubzRNYL+WfA4bLDMHe4nemKkpmYzkznE1FwLKu0EEmy6obgQKzMJrg4x9Q==}
+    engines: {node: '>=14'}
+    hasBin: true
+
   electron-to-chromium@1.4.751:
     resolution: {integrity: sha512-2DEPi++qa89SMGRhufWTiLmzqyuGmNF3SK4+PQetW1JKiZdEpF4XQonJXJCzyuYSA6mauiMhbyVhqYAP45Hvfw==}
 
@@ -1908,6 +1948,9 @@ packages:
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
+
+  emoji-regex@9.2.2:
+    resolution: {integrity: sha512-L18DaJsXSUk2+42pv8mLs5jJT2hqFkFE4j21wOmgbUqsZ2hL72NsUU785g9RXgo3s0ZNgVl42TiHp3ZtOv/Vyg==}
 
   emojis-list@3.0.0:
     resolution: {integrity: sha512-/kyM18EfinwXZbno9FyUGeFh87KC8HRQBQGildHZbEuRyWFOmv1U10o9BBp8XVZDVNNuQKyIGIu5ZYAAXJ0V2Q==}
@@ -2129,6 +2172,10 @@ packages:
     resolution: {integrity: sha512-7EwmXrOjyL+ChxMhmG5lnW9MPt1aIeZEwKhQzoBUdTV0N3zuwWDZYVJatDvZ2OyzPUvdIAZDsCetk3coyMfcnQ==}
     engines: {node: '>=0.10.0'}
 
+  foreground-child@3.3.1:
+    resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
+    engines: {node: '>=14'}
+
   form-data@4.0.0:
     resolution: {integrity: sha512-ETEklSGi5t0QMZuiXoA/Q6vcnxcLQP5vdugSpuAyi6SVGi2clPPp+xgEhuMaHC+zGgn31Kd235W35f7Hykkaww==}
     engines: {node: '>= 6'}
@@ -2194,6 +2241,10 @@ packages:
   glob-parent@6.0.2:
     resolution: {integrity: sha512-XxwI8EOhVQgWp6iDL+3b0r86f4d6AX6zSU55HfB4ydCEuXLXc5FcYeOu+nnGftS4TEju/11rt4KJPTMgbfmv4A==}
     engines: {node: '>=10.13.0'}
+
+  glob@10.4.5:
+    resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
@@ -2335,6 +2386,9 @@ packages:
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
+
+  ini@1.3.8:
+    resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
 
   internal-slot@1.0.7:
     resolution: {integrity: sha512-NGnrKwXzSms2qUUih/ILZ5JBqNTSa1+ZmP6flaIp6KmSElgE9qdndzS3cqjrDovwFdmwsGsLdeFgB6suw+1e9g==}
@@ -2502,12 +2556,20 @@ packages:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
 
+  jackspeak@3.4.3:
+    resolution: {integrity: sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw==}
+
   jiti@1.21.0:
     resolution: {integrity: sha512-gFqAIbuKyyso/3G2qhiO2OM6shY6EPP/R0+mkDbyspxKazh8BXDC5FiFsUjlczgdNz/vfra0da2y+aHrusLG/Q==}
     hasBin: true
 
   js-base64@2.6.4:
     resolution: {integrity: sha512-pZe//GGmwJndub7ZghVHz7vjb2LgC1m8B07Au3eYqeqv9emhESByMXxaEgkUkEqJe87oBbSniGYoQNIBklc7IQ==}
+
+  js-beautify@1.15.4:
+    resolution: {integrity: sha512-9/KXeZUKKJwqCXUdBxFJ3vPh467OCckSBmYDwSK/EtV090K+iMJ7zx2S3HLVDIWFQdqMIsZWbnaGiba18aWhaA==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   js-cookie@3.0.5:
     resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
@@ -2621,6 +2683,9 @@ packages:
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
+  lru-cache@10.4.3:
+    resolution: {integrity: sha512-JNAzZcXrCt42VGLuYz0zfAzDfAvJWW6AfYlDBQyDV5DClI2m5sAmK+OIO7s59XfsRsWHp02jAJrRadPRGTt6SQ==}
+
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
@@ -2695,12 +2760,20 @@ packages:
   minimatch@3.1.2:
     resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
 
+  minimatch@9.0.1:
+    resolution: {integrity: sha512-0jWhJpD/MdhPXwPuiRkCbfYfSKp2qnn2eOc279qI7f+osl/l+prKSrvhg157zSYvx/1nmgn2NqdT6k2Z7zSH9w==}
+    engines: {node: '>=16 || 14 >=14.17'}
+
   minimatch@9.0.4:
     resolution: {integrity: sha512-KqWh+VchfxcMNRAJjj2tnsSJdNbHsVgnkBhTNrW7AjVo6OvLtxw8zfT9oLw1JSohlFzJ8jCoTgaoXvJ+kHt6fw==}
     engines: {node: '>=16 || 14 >=14.17'}
 
   minimist@1.2.8:
     resolution: {integrity: sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA==}
+
+  minipass@7.1.2:
+    resolution: {integrity: sha512-qOOzS1cBTWYF4BH8fVePDBOO9iptMnGUEZwNc/cMWnTV2nVLZ7VoNWEPHkYczZA0pdoA7dl6e7FL659nX9S2aw==}
+    engines: {node: '>=16 || 14 >=14.17'}
 
   mitt@2.1.0:
     resolution: {integrity: sha512-ILj2TpLiysu2wkBbWjAmww7TkZb65aiQO+DkVdUTBpBXq+MHYiETENkKFMtsJZX1Lf4pe4QOrTSjIfUwN5lRdg==}
@@ -2770,6 +2843,11 @@ packages:
 
   node-releases@2.0.14:
     resolution: {integrity: sha512-y10wOWt8yZpqXmOgRo77WaHEmhYQYGNA6y421PKsKYWEK8aW+cqAphborZDhqfyKrbZEN92CN1X2KbafY2s7Yw==}
+
+  nopt@7.2.1:
+    resolution: {integrity: sha512-taM24ViiimT/XntxbPyJQzCG+p4EKOpgD3mxFwW38mGjVUrfERQOeY4EDHjdnptttfHuHQXFx+lTP08Q+mLa/w==}
+    engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    hasBin: true
 
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
@@ -2942,6 +3020,9 @@ packages:
     resolution: {integrity: sha512-hEt02O4hUct5wtwg4H4KcWgDdm+l1bOaEy/hWzd8xtXB9BqxTWBBhb+2ImAtH4Cv4rPjV76xN3Zumqk3k3AhhQ==}
     engines: {node: '>=16.17'}
 
+  package-json-from-dist@1.0.1:
+    resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
+
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
     engines: {node: '>=6'}
@@ -2972,6 +3053,10 @@ packages:
 
   path-parse@1.0.7:
     resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
+
+  path-scurry@1.11.1:
+    resolution: {integrity: sha512-Xa4Nw17FS9ApQFJ9umLiJS4orGjm7ZzwUrwamcGQuHSzDyth9boKDaycYdDcZDuqYATXw4HFXgaqWTctW/v1HA==}
+    engines: {node: '>=16 || 14 >=14.18'}
 
   path-to-regexp@6.2.2:
     resolution: {integrity: sha512-GQX3SSMokngb36+whdpRXE+3f9V8UzyAorlYvOGx87ufGHehNTn5lCxrKtLyZ4Yl/wEKnNnr98ZzOwwDZV5ogw==}
@@ -3100,6 +3185,9 @@ packages:
   prismjs@1.29.0:
     resolution: {integrity: sha512-Kx/1w86q/epKcmte75LNrEoT+lX8pBpavuAbvJWRXar7Hz8jrtF+e3vY751p0R8H9HdArwaCTNDDzHg/ScJK1Q==}
     engines: {node: '>=6'}
+
+  proto-list@1.2.4:
+    resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
@@ -3279,6 +3367,10 @@ packages:
   signal-exit@3.0.7:
     resolution: {integrity: sha512-wnD2ZE+l+SPC/uoS0vXeE9L1+0wuaMqKlfz9AMUo38JsyLSBWSFcHR1Rri62LZc12vLr1gb3jl7iwQhgwpAbGQ==}
 
+  signal-exit@4.1.0:
+    resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
+    engines: {node: '>=14'}
+
   sirv@2.0.4:
     resolution: {integrity: sha512-94Bdh3cC2PKrbgSOUqTiGPWVZeSiXfKOVZNJniWoqrWrRkB1CJzBU3NEbiTsPcYy1lDsANA/THzS+9WBiy5nfQ==}
     engines: {node: '>= 10'}
@@ -3354,6 +3446,10 @@ packages:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
     engines: {node: '>=8'}
 
+  string-width@5.1.2:
+    resolution: {integrity: sha512-HnLOCR3vjcY8beoNLtcjZ5/nxn2afmME6lhrDrebokqMap+XbeW8n9TXpPDOqdGK5qcI3oT0GKTW6wC7EMiVqA==}
+    engines: {node: '>=12'}
+
   string.prototype.trim@1.2.9:
     resolution: {integrity: sha512-klHuCNxiMZ8MlsOihJhJEBJAiMVqU3Z2nEXWfWnIqjN0gEFS9J9+IxKozWWtQGcgoa1WUZzLjKPTr4ZHNFTFxw==}
     engines: {node: '>= 0.4'}
@@ -3375,6 +3471,10 @@ packages:
   strip-ansi@6.0.1:
     resolution: {integrity: sha512-Y38VPSHcqkFrCpFnQ9vuSXmquuv5oXOKpGeT6aGrr3o3Gc9AlVa6JBfUSOCnbxGGZF+/0ooI7KrPuUSztUdU5A==}
     engines: {node: '>=8'}
+
+  strip-ansi@7.1.0:
+    resolution: {integrity: sha512-iq6eVVI64nQQTRYq2KtEg2d2uU7LElhTJwsH4YzIHZshxlgZms/wIc4VoDQTlG/IvVIrBKG06CrZnp0qv7hkcQ==}
+    engines: {node: '>=12'}
 
   strip-final-newline@2.0.0:
     resolution: {integrity: sha512-BrpvfNAE3dcvq7ll3xVumzjKjZQ5tI1sEUIKr3Uoks0XUl45St3FlatVqef9prk4jRDzhW6WZg+3bk93y6pLjA==}
@@ -3833,6 +3933,10 @@ packages:
   wrap-ansi@7.0.0:
     resolution: {integrity: sha512-YVGIj2kamLSTxw6NsZjoBxfSwsn0ycdesmc4p+Q21c5zPuZ1pl+NfxVdxPtdHvmNVOQ6XSYG4AUtyt/Fi7D16Q==}
     engines: {node: '>=10'}
+
+  wrap-ansi@8.1.0:
+    resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
+    engines: {node: '>=12'}
 
   wrappy@1.0.2:
     resolution: {integrity: sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==}
@@ -4298,52 +4402,53 @@ snapshots:
 
   '@floating-ui/utils@0.2.2': {}
 
-  '@form-create/component-elm-checkbox@3.1.32':
+  '@form-create/component-elm-checkbox@3.2.18':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-elm-frame@3.1.30':
+  '@form-create/component-elm-frame@3.2.18':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-elm-group@3.1.30':
+  '@form-create/component-elm-group@3.2.19':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-elm-radio@3.1.32':
+  '@form-create/component-elm-radio@3.2.18':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-elm-select@3.1.30':
+  '@form-create/component-elm-select@3.2.18':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-elm-tree@3.1.30':
+  '@form-create/component-elm-tree@3.2.18':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-elm-upload@3.1.30':
+  '@form-create/component-elm-upload@3.2.18':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
 
-  '@form-create/component-subform@3.1.5': {}
+  '@form-create/component-subform@3.1.34': {}
 
   '@form-create/component-wangeditor@3.1.20':
     dependencies:
       wangeditor: 4.7.15
 
-  '@form-create/core@3.1.33(vue@3.4.25(typescript@5.4.5))':
+  '@form-create/core@3.2.19(vue@3.4.25(typescript@5.4.5))':
     dependencies:
-      '@form-create/utils': 3.1.30
+      '@form-create/utils': 3.2.18
       vue: 3.4.25(typescript@5.4.5)
 
-  '@form-create/designer@3.2.8(vue@3.4.25(typescript@5.4.5))':
+  '@form-create/designer@3.2.11(vue@3.4.25(typescript@5.4.5))':
     dependencies:
       '@form-create/component-wangeditor': 3.1.20
-      '@form-create/element-ui': 3.1.33(vue@3.4.25(typescript@5.4.5))
-      '@form-create/utils': 3.2.0
+      '@form-create/element-ui': 3.2.19(vue@3.4.25(typescript@5.4.5))
+      '@form-create/utils': 3.2.18
       codemirror: 6.65.7
       element-plus: 2.8.6(vue@3.4.25(typescript@5.4.5))
+      js-beautify: 1.15.4
       vue: 3.4.25(typescript@5.4.5)
       vuedraggable: 4.1.0(vue@3.4.25(typescript@5.4.5))
     transitivePeerDependencies:
@@ -4351,21 +4456,33 @@ snapshots:
 
   '@form-create/element-ui@3.1.33(vue@3.4.25(typescript@5.4.5))':
     dependencies:
-      '@form-create/component-elm-checkbox': 3.1.32
-      '@form-create/component-elm-frame': 3.1.30
-      '@form-create/component-elm-group': 3.1.30
-      '@form-create/component-elm-radio': 3.1.32
-      '@form-create/component-elm-select': 3.1.30
-      '@form-create/component-elm-tree': 3.1.30
-      '@form-create/component-elm-upload': 3.1.30
-      '@form-create/component-subform': 3.1.5
-      '@form-create/core': 3.1.33(vue@3.4.25(typescript@5.4.5))
-      '@form-create/utils': 3.1.30
+      '@form-create/component-elm-checkbox': 3.2.18
+      '@form-create/component-elm-frame': 3.2.18
+      '@form-create/component-elm-group': 3.2.19
+      '@form-create/component-elm-radio': 3.2.18
+      '@form-create/component-elm-select': 3.2.18
+      '@form-create/component-elm-tree': 3.2.18
+      '@form-create/component-elm-upload': 3.2.18
+      '@form-create/component-subform': 3.1.34
+      '@form-create/core': 3.2.19(vue@3.4.25(typescript@5.4.5))
+      '@form-create/utils': 3.2.18
       vue: 3.4.25(typescript@5.4.5)
 
-  '@form-create/utils@3.1.30': {}
+  '@form-create/element-ui@3.2.19(vue@3.4.25(typescript@5.4.5))':
+    dependencies:
+      '@form-create/component-elm-checkbox': 3.2.18
+      '@form-create/component-elm-frame': 3.2.18
+      '@form-create/component-elm-group': 3.2.19
+      '@form-create/component-elm-radio': 3.2.18
+      '@form-create/component-elm-select': 3.2.18
+      '@form-create/component-elm-tree': 3.2.18
+      '@form-create/component-elm-upload': 3.2.18
+      '@form-create/component-subform': 3.1.34
+      '@form-create/core': 3.2.19(vue@3.4.25(typescript@5.4.5))
+      '@form-create/utils': 3.2.18
+      vue: 3.4.25(typescript@5.4.5)
 
-  '@form-create/utils@3.2.0': {}
+  '@form-create/utils@3.2.18': {}
 
   '@fullcalendar/core@6.1.15':
     dependencies:
@@ -4457,6 +4574,15 @@ snapshots:
       '@iconify/types': 2.0.0
       vue: 3.4.25(typescript@5.4.5)
 
+  '@isaacs/cliui@8.0.2':
+    dependencies:
+      string-width: 5.1.2
+      string-width-cjs: string-width@4.2.3
+      strip-ansi: 7.1.0
+      strip-ansi-cjs: strip-ansi@6.0.1
+      wrap-ansi: 8.1.0
+      wrap-ansi-cjs: wrap-ansi@7.0.0
+
   '@jinming6/merge-helper@1.2.10':
     dependencies:
       dotenv: 16.4.5
@@ -4530,6 +4656,11 @@ snapshots:
     dependencies:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.17.1
+
+  '@one-ini/wasm@0.1.1': {}
+
+  '@pkgjs/parseargs@0.11.0':
+    optional: true
 
   '@pkgr/core@0.1.1': {}
 
@@ -5191,6 +5322,8 @@ snapshots:
 
   '@yarnpkg/lockfile@1.1.0': {}
 
+  abbrev@2.0.0: {}
+
   acorn-jsx@5.3.2(acorn@8.11.3):
     dependencies:
       acorn: 8.11.3
@@ -5207,6 +5340,8 @@ snapshots:
   ansi-regex@2.1.1: {}
 
   ansi-regex@5.0.1: {}
+
+  ansi-regex@6.1.0: {}
 
   ansi-styles@2.2.1: {}
 
@@ -5465,6 +5600,8 @@ snapshots:
     dependencies:
       delayed-stream: 1.0.0
 
+  commander@10.0.1: {}
+
   commander@7.2.0: {}
 
   component-emitter@1.3.1: {}
@@ -5474,6 +5611,11 @@ snapshots:
   concat-map@0.0.1: {}
 
   confbox@0.1.7: {}
+
+  config-chain@1.1.13:
+    dependencies:
+      ini: 1.3.8
+      proto-list: 1.2.4
 
   consola@3.2.3: {}
 
@@ -5493,6 +5635,12 @@ snapshots:
   cropperjs@1.6.2: {}
 
   cross-spawn@7.0.3:
+    dependencies:
+      path-key: 3.1.1
+      shebang-command: 2.0.0
+      which: 2.0.2
+
+  cross-spawn@7.0.6:
     dependencies:
       path-key: 3.1.1
       shebang-command: 2.0.0
@@ -5694,6 +5842,15 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
 
+  eastasianwidth@0.2.0: {}
+
+  editorconfig@1.0.4:
+    dependencies:
+      '@one-ini/wasm': 0.1.1
+      commander: 10.0.1
+      minimatch: 9.0.1
+      semver: 7.6.0
+
   electron-to-chromium@1.4.751: {}
 
   element-plus@2.7.5(vue@3.4.25(typescript@5.4.5)):
@@ -5739,6 +5896,8 @@ snapshots:
       - '@vue/composition-api'
 
   emoji-regex@8.0.0: {}
+
+  emoji-regex@9.2.2: {}
 
   emojis-list@3.0.0: {}
 
@@ -6070,6 +6229,11 @@ snapshots:
 
   for-in@1.0.2: {}
 
+  foreground-child@3.3.1:
+    dependencies:
+      cross-spawn: 7.0.6
+      signal-exit: 4.1.0
+
   form-data@4.0.0:
     dependencies:
       asynckit: 0.4.0
@@ -6138,6 +6302,15 @@ snapshots:
   glob-parent@6.0.2:
     dependencies:
       is-glob: 4.0.3
+
+  glob@10.4.5:
+    dependencies:
+      foreground-child: 3.3.1
+      jackspeak: 3.4.3
+      minimatch: 9.0.4
+      minipass: 7.1.2
+      package-json-from-dist: 1.0.1
+      path-scurry: 1.11.1
 
   glob@7.2.3:
     dependencies:
@@ -6272,6 +6445,8 @@ snapshots:
       wrappy: 1.0.2
 
   inherits@2.0.4: {}
+
+  ini@1.3.8: {}
 
   internal-slot@1.0.7:
     dependencies:
@@ -6418,9 +6593,23 @@ snapshots:
 
   isobject@3.0.1: {}
 
+  jackspeak@3.4.3:
+    dependencies:
+      '@isaacs/cliui': 8.0.2
+    optionalDependencies:
+      '@pkgjs/parseargs': 0.11.0
+
   jiti@1.21.0: {}
 
   js-base64@2.6.4: {}
+
+  js-beautify@1.15.4:
+    dependencies:
+      config-chain: 1.1.13
+      editorconfig: 1.0.4
+      glob: 10.4.5
+      js-cookie: 3.0.5
+      nopt: 7.2.1
 
   js-cookie@3.0.5: {}
 
@@ -6519,6 +6708,8 @@ snapshots:
 
   lodash@4.17.21: {}
 
+  lru-cache@10.4.3: {}
+
   lru-cache@5.1.1:
     dependencies:
       yallist: 3.1.1
@@ -6598,11 +6789,17 @@ snapshots:
     dependencies:
       brace-expansion: 1.1.11
 
+  minimatch@9.0.1:
+    dependencies:
+      brace-expansion: 2.0.1
+
   minimatch@9.0.4:
     dependencies:
       brace-expansion: 2.0.1
 
   minimist@1.2.8: {}
+
+  minipass@7.1.2: {}
 
   mitt@2.1.0: {}
 
@@ -6669,6 +6866,10 @@ snapshots:
   node-fetch-native@1.6.4: {}
 
   node-releases@2.0.14: {}
+
+  nopt@7.2.1:
+    dependencies:
+      abbrev: 2.0.0
 
   normalize-path@3.0.0: {}
 
@@ -6779,6 +6980,8 @@ snapshots:
       is-network-error: 1.1.0
       retry: 0.13.1
 
+  package-json-from-dist@1.0.1: {}
+
   parent-module@1.0.1:
     dependencies:
       callsites: 3.1.0
@@ -6812,6 +7015,11 @@ snapshots:
   path-key@3.1.1: {}
 
   path-parse@1.0.7: {}
+
+  path-scurry@1.11.1:
+    dependencies:
+      lru-cache: 10.4.3
+      minipass: 7.1.2
 
   path-to-regexp@6.2.2: {}
 
@@ -6922,6 +7130,8 @@ snapshots:
   prism-es6@1.2.0: {}
 
   prismjs@1.29.0: {}
+
+  proto-list@1.2.4: {}
 
   proxy-from-env@1.1.0: {}
 
@@ -7119,6 +7329,8 @@ snapshots:
 
   signal-exit@3.0.7: {}
 
+  signal-exit@4.1.0: {}
+
   sirv@2.0.4:
     dependencies:
       '@polka/url': 1.0.0-next.25
@@ -7193,6 +7405,12 @@ snapshots:
       is-fullwidth-code-point: 3.0.0
       strip-ansi: 6.0.1
 
+  string-width@5.1.2:
+    dependencies:
+      eastasianwidth: 0.2.0
+      emoji-regex: 9.2.2
+      strip-ansi: 7.1.0
+
   string.prototype.trim@1.2.9:
     dependencies:
       call-bind: 1.0.7
@@ -7223,6 +7441,10 @@ snapshots:
   strip-ansi@6.0.1:
     dependencies:
       ansi-regex: 5.0.1
+
+  strip-ansi@7.1.0:
+    dependencies:
+      ansi-regex: 6.1.0
 
   strip-final-newline@2.0.0: {}
 
@@ -7768,6 +7990,12 @@ snapshots:
       ansi-styles: 4.3.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+
+  wrap-ansi@8.1.0:
+    dependencies:
+      ansi-styles: 6.2.1
+      string-width: 5.1.2
+      strip-ansi: 7.1.0
 
   wrappy@1.0.2: {}
 

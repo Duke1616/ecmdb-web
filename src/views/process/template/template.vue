@@ -85,8 +85,6 @@ const handleCreateOrUpdate = () => {
   // 获取表单的配置
   formData.value.options = designerRef.value!.getOptionsJson()
 
-  console.log("formData-new", designerRef.value!.getOptionsJson())
-
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
     const api = formData.value.id === undefined ? createTemplateApi : updateTemplateApi
