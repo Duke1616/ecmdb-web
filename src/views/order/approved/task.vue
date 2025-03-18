@@ -81,6 +81,10 @@ const listTasksData = () => {
     .finally(() => {})
 }
 
+defineExpose({
+  listTasksData
+})
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listTasksData, { immediate: true })
 </script>

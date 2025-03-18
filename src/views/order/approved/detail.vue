@@ -51,12 +51,15 @@ import { order } from "@/api/order/types/order"
 const activeName = ref<string>("form")
 
 const recordRef = ref<InstanceType<typeof Record>>()
+const taskRef = ref<InstanceType<typeof Task>>()
 const handleClick = (tab: TabsPaneContext) => {
   console.log(tab.paneName)
   if (tab.paneName === "flow") {
     // todoRef.value?.listOrdersData()
   } else if (tab.paneName == "process") {
     recordRef.value?.listOrderTaskRecordsData()
+  } else if (tab.paneName == "task") {
+    taskRef.value?.listTasksData()
   }
 }
 
