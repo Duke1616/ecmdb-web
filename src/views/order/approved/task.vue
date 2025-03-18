@@ -1,6 +1,7 @@
 <template>
   <div class="app-container">
-    <el-card shadow="never">
+    <el-empty v-if="tasksData.length === 0" :image-size="200" />
+    <el-card v-if="tasksData.length !== 0" shadow="never">
       <div class="table-wrapper">
         <el-table :data="tasksData">
           <el-table-column type="selection" width="50" align="center" />
@@ -85,14 +86,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTas
 </script>
 
 <style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
-  }
-}
-</style>
-
-<style lang="scss" scoped>
 .toolbar-wrapper {
   display: flex;
   justify-content: space-between;
@@ -106,10 +99,5 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTas
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
-}
-
-.code-container {
-  height: 70vh;
-  overflow: auto;
 }
 </style>
