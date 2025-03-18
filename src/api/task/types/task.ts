@@ -17,6 +17,14 @@ export interface page {
   limit: number
 }
 
+export interface listByInstanceId {
+  instance_id: number
+  /** 跳过条数 */
+  offset: number
+  /** 查询条数 */
+  limit: number
+}
+
 export interface task {
   id: number
   order_id: number

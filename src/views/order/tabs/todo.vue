@@ -22,15 +22,7 @@
         <el-table-column prop="proc_inst_create_time" label="流程提交时间" align="center" />
         <el-table-column fixed="right" label="操作" width="150" align="center">
           <template #default="scope">
-            <el-button
-              v-if="!scope.row.current_step.startsWith('自动化-')"
-              type="success"
-              text
-              bg
-              size="small"
-              @click="handleApproval(scope.row)"
-              >处理</el-button
-            >
+            <el-button type="success" text bg size="small" @click="handleApproval(scope.row)">处理</el-button>
             <el-button
               v-if="scope.row.current_step.startsWith('自动化-') && scope.row.approved_by === 'automation'"
               type="primary"

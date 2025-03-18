@@ -32,6 +32,9 @@
         <el-tab-pane lazy label="审批记录" name="process">
           <Record ref="recordRef" :process-inst-id="props.orderInfo?.process_instance_id" />
         </el-tab-pane>
+        <el-tab-pane lazy label="任务记录" name="task">
+          <Task ref="taskRef" :process-inst-id="props.orderInfo?.process_instance_id" />
+        </el-tab-pane>
       </el-tabs>
     </el-drawer>
   </div>
@@ -42,6 +45,7 @@ import { ref, watch } from "vue"
 import Form from "./form.vue"
 import Flow from "./flow.vue"
 import Record from "./record.vue"
+import Task from "./task.vue"
 import { order } from "@/api/order/types/order"
 
 const activeName = ref<string>("form")

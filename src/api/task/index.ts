@@ -17,6 +17,14 @@ export function listTasksApi(data: task.page) {
   })
 }
 
+/** 自动化任务列表 */
+export function listTasksByInstanceIdApi(data: task.listByInstanceId) {
+  return instance.post<task.tasks>({
+    url: "task/list/by_instance_id",
+    data: data
+  })
+}
+
 /** 修改传入参数 */
 export function updateTaskArgsApi(data: task.args) {
   return instance.post<number>({
