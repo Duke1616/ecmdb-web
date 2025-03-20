@@ -37,7 +37,12 @@
               placeholder="选择代码模版后可编辑"
               :disabled="!propertyForm.codebook_uid"
             >
-              <el-option v-for="(tag, index) in tags" :key="index" :label="tag" :value="tag" />
+              <el-option
+                v-for="[tag, topic] of Array.from(tags_topic)"
+                :key="`${topic}-${tag}`"
+                :label="tag"
+                :value="tag"
+              />
             </el-select>
           </el-form-item>
         </el-col>
@@ -176,6 +181,7 @@ const emits = defineEmits(["closed"])
 const DEFAULT_FORM_DATA = reactive({
   name: "自动化-",
   codebook_uid: "",
+  topic: "",
   is_notify: false,
   is_timing: false,
   exec_method: "",
@@ -278,13 +284,13 @@ const confirmFunc = () => {
     }
   })
 }
+
 const runnerTagsData = ref<runnerTags[]>([])
-const tags = ref<string[]>([])
+const tags_topic = ref<Map<string, string>>(new Map())
 const handlerChangeCodebook = () => {
   runnerTagsData.value.forEach((item) => {
     if (item.codebook_uid == propertyForm.codebook_uid) {
-      const uniqueTags = new Set(item.tags)
-      tags.value = Array.from(uniqueTags)
+      tags_topic.value = new Map<string, string>(Object.entries(item.tags_topic))
     }
   })
 }
@@ -315,6 +321,7 @@ const setProperties = () => {
     is_timing: propertyForm.is_timing,
     notify_method: propertyForm.notify_method,
     tag: propertyForm.tag,
+    topic: tags_topic.value.get(propertyForm.tag) || "",
     unit: propertyForm.unit,
     exec_method: propertyForm.exec_method,
     quantity: propertyForm.quantity
@@ -334,6 +341,7 @@ onMounted(() => {
   propertyForm.exec_method = props.nodeData?.properties.exec_method
   propertyForm.unit = props.nodeData?.properties.unit
   propertyForm.quantity = props.nodeData?.properties.quantity
+  propertyForm.topic = props.nodeData?.properties.topic
 
   // 如果执行方式是模板，加载模板数据
   if (propertyForm.exec_method === "template" && propertyForm.template_id) {

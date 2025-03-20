@@ -49,6 +49,7 @@ import {
   registerEdge
 } from "@/components/workflow/RegisterNode/index"
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
+import { node } from "@/api/model/types/model"
 
 interface Props {
   formData: createOrUpdateWorkflowReq
@@ -75,6 +76,7 @@ const onClosed = () => {
 const flowDetail = reactive<Object>({})
 const lf = ref()
 const nodeData = ref()
+const autoNodeData = ref()
 const showAttribute = ref(false)
 const container = ref()
 const config = reactive<any>({
@@ -161,7 +163,12 @@ const render = () => {
 
 const LfEvent = () => {
   lf.value.on("node:click", ({ data }: any) => {
-    console.log("node:click", data)
+    lf.value.getGraphData().nodes.forEach((item: any) => {
+      if (item.type === "automation") {
+        console.log(item.properties)
+      }
+    })
+    console.log("node:click")
     nodeData.value = data
     if (["start", "user", "condition", "automation"].includes(data.type)) {
       showAttribute.value = true

@@ -12,13 +12,13 @@ export function useTemplate(workflowId?: number) {
 
   const getTemplateFieldOptions = (templateId: number) => {
     const template = Array.from(templateMap.value.values()).find((t) => t.id === templateId)
+    console.log("模版", template, templateId)
     if (!template) return new Map<string, string>()
     return extractTemplateFields(template)
   }
 
   // 获取模板数据
   const fetchTemplates = async (workflowId: number) => {
-    console.log("执行了么")
     try {
       const { data } = await getTemplateByWorkflowIdApi(workflowId)
       templates.value = data.templates

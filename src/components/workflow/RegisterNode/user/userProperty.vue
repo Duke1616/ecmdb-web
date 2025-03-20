@@ -21,7 +21,7 @@
         <el-col :span="12">
           <el-form-item v-if="propertyForm.rule === 'template'" label="模版名称" prop="leftValue">
             <el-select v-model="propertyForm.template_id" placeholder="请选择模版" class="select-box">
-              <el-option v-for="(item, index) in templates" :key="index" :label="item.name" :value="item.name" />
+              <el-option v-for="item in templates" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>

@@ -43,7 +43,7 @@ export interface listRunnerReq {
 export interface runnerTags {
   codebook_name: string
   codebook_uid: string
-  tags: string[]
+  tags_topic: Map<string, string>
 }
 
 export interface runnerTagResp {
