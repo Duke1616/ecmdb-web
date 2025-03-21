@@ -167,8 +167,8 @@ const formatGroup = (row: template) => {
 }
 
 const onClosedThirdParty = () => {
-  thirdpartyDialogVisible.value = false
   thirdRef.value?.resetForm()
+  thirdpartyDialogVisible.value = false
 }
 
 const onClosedTemplateGroup = () => {

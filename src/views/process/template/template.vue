@@ -148,6 +148,8 @@ const setForm = (row: template) => {
 }
 
 const resetForm = () => {
+  designerRef.value?.clearDragRule()
+  designerRef.value?.setOptions({})
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }
 
