@@ -8,12 +8,15 @@
       label-position="top"
       :disabled="flowDetail.status == '2'"
     >
-      <el-form-item label="名称" prop="name">
-        <el-input v-model="propertyForm.name" clearable />
-      </el-form-item>
-      <el-form-item label="描述" prop="desc">
-        <el-input v-model="propertyForm.desc" type="textarea" :rows="2" />
-      </el-form-item>
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item label="开启通知" prop="is_notify">
+            <el-select v-model="propertyForm.is_notify" placeholder="是否开启消息通知">
+              <el-option v-for="item in is_notify" :key="item.label" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+        </el-col>
+      </el-row>
     </el-form>
     <div class="mt15" v-if="flowDetail.status != '2'">
       <el-button @click="cancelFunc"> 取消 </el-button>
@@ -39,8 +42,7 @@ const props = defineProps({
 
 const emits = defineEmits(["closed"])
 const propertyForm = reactive({
-  name: "",
-  desc: "",
+  is_notify: true,
   assignList: []
 })
 
@@ -53,6 +55,7 @@ const formRules: FormRules = {
       message: "最大50字符"
     }
   ],
+  is_notify: [{ required: true, message: "不能为空" }],
   desc: [
     {
       max: 50,
@@ -61,11 +64,21 @@ const formRules: FormRules = {
   ]
 }
 
+const is_notify = [
+  {
+    value: true,
+    label: "开启"
+  },
+  {
+    value: false,
+    label: "关闭"
+  }
+]
+
 //更新节点属性
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
-    name: propertyForm.name,
-    desc: propertyForm.desc
+    is_notify: propertyForm.is_notify
   })
 }
 
@@ -74,7 +87,6 @@ const confirmFunc = () => {
   formRef.value?.validate((valid) => {
     if (valid) {
       setProperties()
-      props.lf?.updateText(props.nodeData?.id, propertyForm.name)
       emits("closed")
     }
   })
@@ -86,8 +98,7 @@ const cancelFunc = () => {
 }
 
 onMounted(() => {
-  propertyForm.name = props.nodeData?.properties.name
-  propertyForm.desc = props.nodeData?.properties.desc ? props.nodeData.properties.desc : ""
+  propertyForm.is_notify = props.nodeData?.properties.is_notify ?? true
 })
 </script>
 <style scoped></style>

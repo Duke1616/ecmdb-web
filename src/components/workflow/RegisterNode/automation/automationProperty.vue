@@ -131,7 +131,13 @@
         </el-col>
         <el-col :span="12">
           <el-form-item label="发送方式" prop="notify_method">
-            <el-select v-model="propertyForm.notify_method" placeholder="消息通知方式">
+            <el-select
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              v-model="propertyForm.notify_method"
+              placeholder="消息通知方式"
+            >
               <el-option v-for="item in notify_method" :key="item.label" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
@@ -187,7 +193,7 @@ const DEFAULT_FORM_DATA = reactive({
   exec_method: "",
   template_field: "",
   template_id: 0,
-  notify_method: 1,
+  notify_method: [],
   unit: 1,
   quantity: 0,
   tag: ""
@@ -334,7 +340,10 @@ onMounted(() => {
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
   propertyForm.is_notify = props.nodeData?.properties.is_notify
   propertyForm.is_timing = props.nodeData?.properties.is_timing
-  propertyForm.notify_method = props.nodeData?.properties.notify_method
+  propertyForm.notify_method = Array.isArray(props.nodeData?.properties.notify_method)
+    ? props.nodeData?.properties.notify_method
+    : [props.nodeData?.properties.notify_method].filter(Boolean) // 过滤掉 undefined 或 null
+
   propertyForm.template_field = props.nodeData?.properties.template_field
   propertyForm.template_id = props.nodeData?.properties.template_id
   propertyForm.tag = props.nodeData?.properties.tag
