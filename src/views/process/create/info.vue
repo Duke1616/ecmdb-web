@@ -1,7 +1,8 @@
 <template>
   <div>
     <el-form-item prop="name" label="流程名称">
-      <el-input v-model="localFormData.name" @input="updateFormData" />
+      <!-- TODO 暂时流程创建是根据名称进行的，如果名称发生变化，发版会影响流程的处理 -->
+      <el-input :disabled="localFormData.id" v-model="localFormData.name" @input="updateFormData" />
     </el-form-item>
     <el-form-item prop="owner" label="负责人">
       <el-select
