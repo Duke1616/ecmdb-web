@@ -285,7 +285,7 @@ const uploadFile = (action: UploadRequestOptions, row: Resource, filedUid: strin
           field: filedUid,
           data: row.data[filedUid]
         }).then(() => {
-          ElMessage.success("删除成功")
+          ElMessage.success("上传成功")
         })
       })
       .catch(() => {
