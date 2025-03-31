@@ -72,6 +72,14 @@ export function getTemplateByWorkflowIdApi(workflow_id: number) {
   })
 }
 
+/** 根据流程ID获取所有模版的Rule信息 */
+export function getTemplateRulesByWorkflowIdApi(workflow_id: number) {
+  return instance.post<template.templateRules>({
+    url: "template/rules/by_workflow_id",
+    data: { workflow_id: workflow_id }
+  })
+}
+
 /** 根据 ids 获取模版组 */
 export function getTemplateGroupsByIdsApi(ids: number[]) {
   return instance.post<template.templateGroups>({

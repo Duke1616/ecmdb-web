@@ -16,6 +16,22 @@ export interface PageReq {
   limit: number
 }
 
+export interface rule {
+  type: string
+  title: string
+  field: string
+}
+
+export interface templateRule {
+  id: number
+  name: string
+  rules: rule[]
+}
+
+export interface templateRules {
+  template_rules: templateRule[]
+}
+
 export interface template {
   forEach(arg0: (template: any) => void): unknown
   id: number

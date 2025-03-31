@@ -94,7 +94,7 @@
             prop="leftValue"
           >
             <el-select v-model="propertyForm.template_id" placeholder="请选择模版" class="select-box">
-              <el-option v-for="item in templates" :key="item.id" :label="item.name" :value="item.id" />
+              <el-option v-for="item in templateRules" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -156,10 +156,10 @@ import { runnerTags } from "@/api/runner/types/runner"
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
-import { useTemplate } from "@/hooks/useTemplate"
+import { useTemplateRules } from "@/hooks/useTemplateRules"
 
 // 使用模板 Hook
-const { templates, getTemplateFieldOptions, fetchTemplates } = useTemplate()
+const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
 
 // 在需要获取模板的地方调用 fetchTemplates
 const handleChange = async () => {

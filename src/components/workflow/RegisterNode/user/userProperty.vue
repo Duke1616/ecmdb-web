@@ -21,7 +21,7 @@
         <el-col :span="12">
           <el-form-item v-if="propertyForm.rule === 'template'" label="模版名称" prop="leftValue">
             <el-select v-model="propertyForm.template_id" placeholder="请选择模版" class="select-box">
-              <el-option v-for="item in templates" :key="item.id" :label="item.name" :value="item.id" />
+              <el-option v-for="item in templateRules" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </el-col>
@@ -121,9 +121,9 @@ import { userDepartmentCombination } from "@/api/user/types/user"
 import { findByUsernamesApi, pipelineUserByDepartmentApi } from "@/api/user"
 import { Search } from "@element-plus/icons-vue"
 
-import { useTemplate } from "@/hooks/useTemplate"
+import { useTemplateRules } from "@/hooks/useTemplateRules"
 // 使用模板 Hook
-const { templates, getTemplateFieldOptions, fetchTemplates } = useTemplate()
+const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
 
 // 在需要获取模板的地方调用 fetchTemplates
 const handleChange = async () => {
