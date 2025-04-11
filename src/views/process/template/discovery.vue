@@ -175,27 +175,23 @@ const listRunnerByWorkflowId = () => {
     .catch(() => {})
 }
 
-const handlerSubmitDiscovery = () => {
-  formRef.value?.validate((valid: boolean, fields: any) => {
-    if (!valid) return console.error("表单校验不通过", fields)
-    // 补充 TemplateId 信息
+const handlerSubmitDiscovery = async () => {
+  try {
+    await formRef.value?.validate()
     formData.value.template_id = templateData.value?.id || 0
+
     const api = formData.value.id === undefined ? createDiscoveryApi : updateDiscoveryApi
-    api(formData.value)
-      .then(() => {
-        onClosed()
+    await api(formData.value)
 
-        console.log("保存成功")
-        ElMessage.success("保存成功")
-
-        // 重新获取数据
-        listDiscoveriesData()
-      })
-      .catch((error) => {
-        console.log("catch", error)
-      })
-      .finally(() => {})
-  })
+    ElMessage.success("保存成功")
+    onClosed()
+    listDiscoveriesData()
+  } catch (error) {
+    // 表单验证错误已由Element Plus处理
+    if (!(error instanceof Error)) {
+      ElMessage.error("操作失败")
+    }
+  }
 }
 
 const onClosed = () => {
