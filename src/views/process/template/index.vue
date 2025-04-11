@@ -25,7 +25,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
+          <el-table-column fixed="right" label="操作" width="250" align="center">
             <template #default="scope">
               <el-button
                 v-if="scope.row.create_type === 1"
@@ -45,6 +45,7 @@
                 @click="handlerSync(scope.row)"
                 >流程</el-button
               >
+              <el-button type="primary" text bg size="small" @click="handleDiscover(scope.row)">自动发现</el-button>
               <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
             </template>
           </el-table-column>
@@ -84,6 +85,11 @@
       </template>
     </el-dialog>
 
+    <!-- 自动发现 -->
+    <el-dialog v-model="templateDiscoverDialog" :before-close="onClosedDiscover" :title="'自动发现'" width="60%">
+      <Discovery ref="discoveryRef" @closed="onClosedDiscover" />
+    </el-dialog>
+
     <!-- 第三方流程绑定、如对接企业微信 OR 飞书 -->
     <el-dialog
       v-model="thirdpartyDialogVisible"
@@ -111,15 +117,18 @@ import TemplateGroup from "./group.vue"
 import thirdParty from "./thirdparty.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
+import Discovery from "./discovery.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const templateDialogDrawer = ref<boolean>(false)
+const templateDiscoverDialog = ref<boolean>(false)
 const groupDialogVisible = ref<boolean>(false)
 const thirdpartyDialogVisible = ref<boolean>(false)
 
 const tRef = ref<InstanceType<typeof Template>>()
 const tgRef = ref<InstanceType<typeof TemplateGroup>>()
 const thirdRef = ref<InstanceType<typeof thirdParty>>()
+const discoveryRef = ref<InstanceType<typeof Discovery>>()
 
 const templateTitle = ref<string>("创建模版")
 
@@ -175,6 +184,9 @@ const onClosedTemplateGroup = () => {
   tgRef.value?.resetForm()
   groupDialogVisible.value = false
 }
+const onClosedDiscover = () => {
+  templateDiscoverDialog.value = false
+}
 
 const onClosedTemplate = () => {
   tRef.value?.resetForm()
@@ -183,6 +195,14 @@ const onClosedTemplate = () => {
 
 const handlerCreateTemplateGroup = () => {
   tgRef.value?.handlerCreate()
+}
+
+const handleDiscover = (row: template) => {
+  templateDiscoverDialog.value = true
+
+  nextTick(() => {
+    discoveryRef.value?.setForm(row)
+  })
 }
 
 const handleUpdate = (row: template) => {

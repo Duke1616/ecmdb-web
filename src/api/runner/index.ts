@@ -39,3 +39,19 @@ export function updateRunnerAPi(data: runner.registerOrUpdateReq) {
     data: data
   })
 }
+
+/** by_ids 列表 */
+export function listRunnerByIdsApi(ids: number[]) {
+  return instance.post<runner.runners>({
+    url: "runner/list/by_ids",
+    data: { ids: ids }
+  })
+}
+
+/** by_workflow_id 列表 */
+export function listRunnerByWorkflowIdApi(workflokId: number) {
+  return instance.post<runner.runners>({
+    url: "runner/list/by_workflow_id",
+    data: { workflow_id: workflokId }
+  })
+}
