@@ -3,6 +3,7 @@
     <div class="toolbar-wrapper">
       <div>
         <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
+        <el-button type="primary" :icon="CirclePlus" @click="handlerSync">同步</el-button>
       </div>
       <div>
         <el-tooltip content="刷新当前页">
@@ -16,13 +17,13 @@
         <el-table-column prop="id" label="ID" align="center" />
         <el-table-column prop="field" label="字段名称" align="center">
           <template #default="{ row }">
-            {{ fieldMap.get(row.field) || "未知执行器" }}
+            {{ fieldMap.get(row.field) }}
           </template>
         </el-table-column>
         <el-table-column prop="value" label="字段值" align="center" />
         <el-table-column prop="runner_name" label="执行器名称" align="center">
           <template #default="{ row }">
-            {{ runnerMap.get(row.runner_id) || "未知执行器" }}
+            {{ runnerMap.get(row.runner_id) }}
           </template>
         </el-table-column>
         <el-table-column fixed="right" label="操作" width="200" align="center">
@@ -49,21 +50,14 @@
 
   <!-- 自动发现 -->
   <el-dialog v-model="dialogVisible" :before-close="onClosed" width="30%">
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto">
-      <el-form-item prop="field" label="请选择字段">
-        <el-select v-model="formData.field" placeholder="请选择模版字段">
-          <el-option v-for="[field, title] in Array.from(fieldMap)" :key="field" :label="title" :value="field" />
-        </el-select>
-      </el-form-item>
-      <el-form-item prop="value" label="输入匹配值">
-        <el-input v-model="formData.value" placeholder="请输入匹配值" />
-      </el-form-item>
-      <el-form-item prop="runner_id" label="执行器名称">
-        <el-select v-model="formData.runner_id" placeholder="请选择执行器">
-          <el-option v-for="[id, name] in Array.from(runnerMap)" :key="id" :label="name" :value="id" />
-        </el-select>
-      </el-form-item>
-    </el-form>
+    <createEditForm
+      ref="apiRef"
+      :fields-map="fieldMap"
+      :template-id="templateData?.id"
+      :runner-map="runnerMap"
+      @callback="listDiscoveriesData"
+      @closed="onClosed"
+    />
     <template #footer>
       <el-button @click="onClosed">取消</el-button>
       <el-button type="primary" @click="handlerSubmitDiscovery">确认</el-button>
@@ -71,24 +65,20 @@
   </el-dialog>
 </template>
 <script setup lang="ts">
-import { createOrUpdateDiscoveryReq, discovery } from "@/api/discovery/types/discovery"
+import { discovery } from "@/api/discovery/types/discovery"
 import { usePagination } from "@/hooks/usePagination"
 import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import {
-  createDiscoveryApi,
-  deleteDiscoveryApi,
-  listDiscoveriesByTemplateIdApi,
-  updateDiscoveryApi
-} from "@/api/discovery"
+import { deleteDiscoveryApi, listDiscoveriesByTemplateIdApi } from "@/api/discovery"
 import { template } from "@/api/template/types/template"
-import { ElMessage, ElMessageBox, FormInstance, FormRules } from "element-plus"
-import { cloneDeep } from "lodash-es"
+import { ElMessage, ElMessageBox } from "element-plus"
 import { runner } from "@/api/runner/types/runner"
 import { listRunnerByIdsApi, listRunnerByWorkflowIdApi } from "@/api/runner"
+import createEditForm from "./createEditForm.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
+const apiRef = ref<InstanceType<typeof createEditForm>>()
 // 模版数据
 const templateData = ref<template>()
 const dialogVisible = ref<boolean>(false)
@@ -136,114 +126,49 @@ const supplementRunnerNames = async () => {
   runnerMap.value = newMap
 }
 
-const DEFAULT_FORM_DATA: createOrUpdateDiscoveryReq = {
-  template_id: templateData.value?.id || 0,
-  runner_id: 0,
-  field: "",
-  value: ""
-}
-
-const formData = ref<createOrUpdateDiscoveryReq>(cloneDeep(DEFAULT_FORM_DATA))
-const formRef = ref<FormInstance | null>(null)
-const formRules: FormRules = {
-  runner_id: [{ required: true, message: "必须输入执行器", trigger: "blur" }],
-  field: [{ required: true, message: "必须输入字段名称", trigger: "blur" }],
-  value: [{ required: true, message: "必须输入匹配值", trigger: "blur" }]
-}
-
-const handlerCreate = () => {
-  dialogVisible.value = true
-
-  //查询关联的 Runner 列表
-  nextTick(() => {
-    listRunnerByWorkflowId()
-  })
-}
-
-const runnerMap = ref<Map<number, string>>(new Map())
-const listRunnerByWorkflowId = () => {
-  if (!templateData.value) return
-  runnerMap.value.clear()
-  listRunnerByWorkflowIdApi(templateData.value.workflow_id)
-    .then(({ data }) => {
-      const newMap = new Map<number, string>()
-      data.runners.forEach((item: runner) => {
-        newMap.set(item.id, item.name)
-      })
-      runnerMap.value = newMap
-    })
-    .catch(() => {})
-}
-
-const handlerSubmitDiscovery = async () => {
-  try {
-    await formRef.value?.validate()
-    formData.value.template_id = templateData.value?.id || 0
-
-    const api = formData.value.id === undefined ? createDiscoveryApi : updateDiscoveryApi
-    await api(formData.value)
-
-    ElMessage.success("保存成功")
-    onClosed()
-    listDiscoveriesData()
-  } catch (error) {
-    // 表单验证错误已由Element Plus处理
-    if (!(error instanceof Error)) {
-      ElMessage.error("操作失败")
-    }
-  }
-}
-
 const onClosed = () => {
   dialogVisible.value = false
-
-  // 重置表单
-  formData.value = cloneDeep(DEFAULT_FORM_DATA)
-  formRef.value?.resetFields()
 }
 
-const fieldMap = new Map<string, string>()
-const setForm = (row: template) => {
-  templateData.value = row
-
-  // 处理模版规则
-  processRules(row.rules, fieldMap)
-
-  // 空值清空，不展示
-  Object.keys(formData.value).forEach((key) => {
-    const typedKey = key as keyof typeof formData.value
-    if (formData.value[typedKey] === 0 || formData.value[typedKey] === null || formData.value[typedKey] === "") {
-      delete formData.value[typedKey]
-    }
-  })
-
-  // 获取模版自动发现数据
-  listDiscoveriesData()
+const handlerSubmitDiscovery = () => {
+  apiRef.value?.submitForm()
 }
 
-const processRules = (rules: any[], fieldMap: Map<string, string>) => {
-  rules.forEach((item: any) => {
-    // 仅当不是 fcRow/col 且 field 存在时，才存入 map
-    if (item.type !== "fcRow" && item.type !== "col" && item.field) {
-      fieldMap.set(item.field, item.title)
-    }
-
-    // 无论当前项是否被跳过，都要递归处理其 children
-    if (item.children && Array.isArray(item.children)) {
-      processRules(item.children, fieldMap)
-    }
-  })
+const checkRunners = async (): Promise<boolean> => {
+  if (runnerMap.value.size === 0) {
+    await listRunnerByWorkflowId()
+  }
+  return runnerMap.value.size > 0
 }
 
-const handlerUpdate = (row: discovery) => {
-  formData.value = cloneDeep(row)
+const handlerCreate = async () => {
+  if (!(await checkRunners())) {
+    ElMessage.warning("请先添加执行器")
+    return
+  }
+
   dialogVisible.value = true
 
-  //查询关联的 Runner 列表
   nextTick(() => {
-    listRunnerByWorkflowId()
+    apiRef.value?.resetForm()
   })
 }
+
+const handlerUpdate = async (row: discovery) => {
+  if (runnerMap.value.size === 0) {
+    ElMessage.warning("请先添加执行器")
+    return
+  }
+
+  dialogVisible.value = true
+  listRunnerByWorkflowId()
+
+  nextTick(() => {
+    apiRef.value?.setForm(row)
+  })
+}
+
+const handlerSync = () => {}
 
 const handlerDelete = (row: discovery) => {
   ElMessageBox({
@@ -264,8 +189,61 @@ const handlerDelete = (row: discovery) => {
   })
 }
 
+// 字段前端展示 id -> name
+const runnerMap = ref<Map<number, string>>(new Map())
+const listRunnerByWorkflowId = () => {
+  if (!templateData.value) return
+  listRunnerByWorkflowIdApi(templateData.value.workflow_id)
+    .then(({ data }) => {
+      // 创建现有 map 的副本
+      const updatedMap = new Map(runnerMap.value)
+
+      // 只添加新获取的 runner 中不存在的条目
+      data.runners.forEach((item: runner) => {
+        if (!updatedMap.has(item.id)) {
+          updatedMap.set(item.id, item.name)
+        }
+      })
+
+      runnerMap.value = updatedMap
+    })
+    .catch(() => {})
+}
+
+// 字段前端展示 field -> title
+const fieldMap = new Map<string, string>()
+const processRules = (rules: any[], fieldMap: Map<string, string>) => {
+  rules.forEach((item: any) => {
+    // 仅当不是 fcRow/col 且 field 存在时，才存入 map
+    if (item.type !== "fcRow" && item.type !== "col" && item.field) {
+      fieldMap.set(item.field, item.title)
+    }
+
+    // 无论当前项是否被跳过，都要递归处理其 children
+    if (item.children && Array.isArray(item.children)) {
+      processRules(item.children, fieldMap)
+    }
+  })
+}
+
+const setForm = (row: template) => {
+  templateData.value = row
+
+  // 处理模版规则
+  processRules(row.rules, fieldMap)
+
+  // 获取模版自动发现数据
+  listDiscoveriesData()
+}
+
+const resetMap = () => {
+  runnerMap.value = new Map()
+  fieldMap.clear()
+}
+
 defineExpose({
-  setForm
+  setForm,
+  resetMap
 })
 
 /** 监听分页参数的变化 */

@@ -33,6 +33,7 @@ export interface templateRules {
 }
 
 export interface template {
+  value: any
   forEach(arg0: (template: any) => void): unknown
   id: number
   name: string

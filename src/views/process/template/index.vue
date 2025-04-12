@@ -86,7 +86,7 @@
     </el-dialog>
 
     <!-- 自动发现 -->
-    <el-dialog v-model="templateDiscoverDialog" :before-close="onClosedDiscover" :title="'自动发现'" width="60%">
+    <el-dialog v-model="templateDiscoverDialog" :fullscreen="true" :before-close="onClosedDiscover" :title="'自动发现'">
       <Discovery ref="discoveryRef" @closed="onClosedDiscover" />
     </el-dialog>
 
@@ -113,11 +113,11 @@ import { usePagination } from "@/hooks/usePagination"
 import { template } from "@/api/template/types/template"
 import { deleteTemplateApi, getTemplateGroupsByIdsApi, listTemplateApi } from "@/api/template"
 import Template from "./template.vue"
-import TemplateGroup from "./group.vue"
+import TemplateGroup from "./group/index.vue"
 import thirdParty from "./thirdparty.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
-import Discovery from "./discovery.vue"
+import Discovery from "./discovery/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const templateDialogDrawer = ref<boolean>(false)
@@ -186,6 +186,8 @@ const onClosedTemplateGroup = () => {
 }
 const onClosedDiscover = () => {
   templateDiscoverDialog.value = false
+
+  discoveryRef.value?.resetMap()
 }
 
 const onClosedTemplate = () => {
