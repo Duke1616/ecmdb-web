@@ -63,6 +63,15 @@
       <el-button type="primary" @click="handlerSubmitDiscovery">确认</el-button>
     </template>
   </el-dialog>
+
+  <!-- 同步其他 -->
+  <el-dialog v-model="dialogVisible" :before-close="onClosed" width="30%">
+    <sync ref="syncRef" @callback="listDiscoveriesData" @closed="onClosed" />
+    <template #footer>
+      <el-button @click="onClosed">取消</el-button>
+      <el-button type="primary" @click="handlerSubmitDiscovery">确认</el-button>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import { discovery } from "@/api/discovery/types/discovery"
@@ -75,10 +84,12 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { runner } from "@/api/runner/types/runner"
 import { listRunnerByIdsApi, listRunnerByWorkflowIdApi } from "@/api/runner"
 import createEditForm from "./createEditForm.vue"
+import sync from "./sync.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const apiRef = ref<InstanceType<typeof createEditForm>>()
+const syncRef = ref<InstanceType<typeof sync>>()
 // 模版数据
 const templateData = ref<template>()
 const dialogVisible = ref<boolean>(false)
