@@ -46,9 +46,9 @@ interface Props {
 const props = defineProps<Props>()
 
 const DEFAULT_FORM_DATA: syncDiscoveryReq = {
-  template_id: null,
-  sync_template_id: null,
-  template_group_id: null
+  template_id: undefined,
+  sync_template_id: undefined,
+  template_group_id: undefined
 }
 
 const formData = ref<syncDiscoveryReq>(cloneDeep(DEFAULT_FORM_DATA))
@@ -103,10 +103,10 @@ const currentTemplates = ref<tls[]>([])
 // 监听模板组变化，更新模板列表
 watch(
   () => formData.value.template_group_id,
-  (newGroupId: number | null) => {
+  (newGroupId: number | undefined) => {
     const group = templateCombinations.value.find((g) => g.id === newGroupId)
     currentTemplates.value = group?.templates ?? []
-    formData.value.sync_template_id = null
+    formData.value.sync_template_id = undefined
   }
 )
 

@@ -30,9 +30,9 @@ export interface listByTemplateIdReq {
 
 export interface syncDiscoveryReq {
   /** 模版ID */
-  template_group_id: number | null
+  template_group_id: number | undefined
   /** 模版ID */
-  template_id: number | null
+  template_id: number | undefined
   /** 同步模版ID */
-  sync_template_id: number | null
+  sync_template_id: number | undefined
 }
