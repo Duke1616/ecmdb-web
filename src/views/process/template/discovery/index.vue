@@ -14,7 +14,11 @@
     <div class="table-wrapper">
       <el-table :data="discoveriesData">
         <el-table-column type="selection" width="50" align="center" />
-        <el-table-column prop="id" label="ID" align="center" />
+        <el-table-column prop="template_id" label="模版名称" align="center">
+          <template #default>
+            {{ templateData?.name }}
+          </template>
+        </el-table-column>
         <el-table-column prop="field" label="字段名称" align="center">
           <template #default="{ row }">
             {{ fieldMap.get(row.field) }}
@@ -49,7 +53,7 @@
   </el-card>
 
   <!-- 自动发现 -->
-  <el-dialog v-model="dialogVisible" :before-close="onClosed" width="30%">
+  <el-dialog v-model="dialogVisible" title="自动发现" :before-close="onClosed" width="30%">
     <createEditForm
       ref="apiRef"
       :fields-map="fieldMap"
@@ -65,11 +69,11 @@
   </el-dialog>
 
   <!-- 同步其他 -->
-  <el-dialog v-model="dialogVisible" :before-close="onClosed" width="30%">
-    <sync ref="syncRef" @callback="listDiscoveriesData" @closed="onClosed" />
+  <el-dialog v-model="syncVisible" title="同步数据" :before-close="onSyncClosed" width="30%">
+    <sync ref="syncRef" :template-id="templateData?.id" @callback="listDiscoveriesData" @closed="onSyncClosed" />
     <template #footer>
-      <el-button @click="onClosed">取消</el-button>
-      <el-button type="primary" @click="handlerSubmitDiscovery">确认</el-button>
+      <el-button @click="onSyncClosed">取消</el-button>
+      <el-button type="primary" @click="handlerSubmiSync">全部同步</el-button>
     </template>
   </el-dialog>
 </template>
@@ -93,6 +97,7 @@ const syncRef = ref<InstanceType<typeof sync>>()
 // 模版数据
 const templateData = ref<template>()
 const dialogVisible = ref<boolean>(false)
+const syncVisible = ref<boolean>(false)
 
 /** 查询模版列表 */
 const discoveriesData = ref<discovery[]>([])
@@ -179,7 +184,16 @@ const handlerUpdate = async (row: discovery) => {
   })
 }
 
-const handlerSync = () => {}
+const handlerSync = () => {
+  syncVisible.value = true
+}
+const handlerSubmiSync = () => {
+  syncRef.value?.syncSubmit()
+}
+
+const onSyncClosed = () => {
+  syncVisible.value = false
+}
 
 const handlerDelete = (row: discovery) => {
   ElMessageBox({

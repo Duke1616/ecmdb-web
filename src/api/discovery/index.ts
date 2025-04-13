@@ -32,3 +32,11 @@ export function deleteDiscoveryApi(id: number) {
     data: { id: id }
   })
 }
+
+/** 删除自动发现 */
+export function syncDiscoveryApi(data: discovery.syncDiscoveryReq) {
+  return instance.post<number>({
+    url: "discovery/sync",
+    data: data
+  })
+}

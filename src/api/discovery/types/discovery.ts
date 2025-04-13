@@ -27,3 +27,12 @@ export interface listByTemplateIdReq {
   /** 模版ID */
   template_id: number
 }
+
+export interface syncDiscoveryReq {
+  /** 模版ID */
+  template_group_id: number | null
+  /** 模版ID */
+  template_id: number | null
+  /** 同步模版ID */
+  sync_template_id: number | null
+}

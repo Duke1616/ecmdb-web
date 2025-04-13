@@ -297,6 +297,7 @@ const handlerChangeCodebook = () => {
   runnerTagsData.value.forEach((item) => {
     if (item.codebook_uid == propertyForm.codebook_uid) {
       tags_topic.value = new Map<string, string>(Object.entries(item.tags_topic))
+      tags_topic.value.set("auto", "auto")
     }
   })
 }
