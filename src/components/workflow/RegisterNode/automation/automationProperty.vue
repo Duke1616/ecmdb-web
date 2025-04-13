@@ -32,6 +32,7 @@
         <el-col :span="12">
           <el-form-item label="标签" prop="tag">
             <el-select
+              ref="tagSelect"
               v-model="propertyForm.tag"
               filterable
               placeholder="选择代码模版后可编辑"
@@ -43,6 +44,11 @@
                 :label="tag"
                 :value="tag"
               />
+              <template #footer>
+                <el-button text bg size="small" type="primary" style="width: 100%" @click="setAutoTag">
+                  自动发现
+                </el-button>
+              </template>
             </el-select>
           </el-form-item>
         </el-col>
@@ -153,7 +159,7 @@
 <script setup lang="ts">
 import { listRunnerTagsApi } from "@/api/runner"
 import { runnerTags } from "@/api/runner/types/runner"
-import { FormInstance, FormRules } from "element-plus"
+import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
 import { useTemplateRules } from "@/hooks/useTemplateRules"
@@ -258,6 +264,12 @@ const notify_method = [
   }
 ]
 
+const tagSelect = ref<InstanceType<typeof ElSelect> | null>(null)
+function setAutoTag() {
+  propertyForm.tag = "auto"
+  tagSelect.value?.blur?.()
+}
+
 const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
@@ -297,7 +309,6 @@ const handlerChangeCodebook = () => {
   runnerTagsData.value.forEach((item) => {
     if (item.codebook_uid == propertyForm.codebook_uid) {
       tags_topic.value = new Map<string, string>(Object.entries(item.tags_topic))
-      tags_topic.value.set("auto", "auto")
     }
   })
 }
