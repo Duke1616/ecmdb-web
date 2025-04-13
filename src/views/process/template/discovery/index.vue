@@ -151,10 +151,13 @@ const handlerSubmitDiscovery = () => {
 }
 
 const checkRunners = async (): Promise<boolean> => {
-  if (runnerMap.value.size === 0) {
+  try {
     await listRunnerByWorkflowId()
+    // 确保异步操作完成后再检查大小
+    return runnerMap.value.size > 0
+  } catch (error) {
+    return false
   }
-  return runnerMap.value.size > 0
 }
 
 const handlerCreate = async () => {
@@ -164,7 +167,6 @@ const handlerCreate = async () => {
   }
 
   dialogVisible.value = true
-
   nextTick(() => {
     apiRef.value?.resetForm()
   })
@@ -177,7 +179,6 @@ const handlerUpdate = async (row: discovery) => {
   }
 
   dialogVisible.value = true
-  listRunnerByWorkflowId()
 
   nextTick(() => {
     apiRef.value?.setForm(row)
@@ -216,9 +217,9 @@ const handlerDelete = (row: discovery) => {
 
 // 字段前端展示 id -> name
 const runnerMap = ref<Map<number, string>>(new Map())
-const listRunnerByWorkflowId = () => {
+const listRunnerByWorkflowId = async () => {
   if (!templateData.value) return
-  listRunnerByWorkflowIdApi(templateData.value.workflow_id)
+  await listRunnerByWorkflowIdApi(templateData.value.workflow_id)
     .then(({ data }) => {
       // 创建现有 map 的副本
       const updatedMap = new Map(runnerMap.value)
