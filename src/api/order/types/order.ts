@@ -1,6 +1,5 @@
 export interface createOrderReq {
   template_id: number
-  template_name: string
   workflow_id: number
   data: object
 }
@@ -36,7 +35,6 @@ export interface order {
   template_id: number
   provide: number
   status: number
-  template_name: string
   ctime: number
   wtime: number
   current_step: string

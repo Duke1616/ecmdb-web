@@ -64,6 +64,14 @@ export function pipelineGroupApi() {
   })
 }
 
+/** 根据模版 Ids 获取模版列表 */
+export function findByTemplateIdsApi(ids: number[]) {
+  return instance.post<template.templates>({
+    url: "template/by_ids",
+    data: { ids: ids }
+  })
+}
+
 /** 根据流程ID获取所有模版 */
 export function getTemplateByWorkflowIdApi(workflow_id: number) {
   return instance.post<template.templates>({

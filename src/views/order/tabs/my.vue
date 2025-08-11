@@ -8,11 +8,16 @@
         :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
       >
         <el-table-column prop="id" label="工单号" align="center" />
-        <el-table-column prop="template_name" label="工单名称" align="center" />
+        <el-table-column prop="template_name" label="工单名称" align="center">
+          <template #default="scope">
+            {{ templateToolsStore.getTemplateName(scope.row.template_id) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="provide" label="来源" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary">本系统</el-tag>
             <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning">企业微信</el-tag>
+            <el-tag v-else-if="scope.row.provide === 3" effect="plain" type="warning">告警平台</el-tag>
             <el-tag v-else type="info" effect="plain">未知类型</el-tag>
           </template>
         </el-table-column>
@@ -57,6 +62,8 @@ import { order } from "@/api/order/types/order"
 import { revokeOrderApi, startByOrderApi } from "@/api/order"
 import { Column, ElMessage, ElMessageBox, TableColumnCtx } from "element-plus"
 import Detail from "../approved/detail.vue"
+import { useTemplateToolsStore } from "@/store/modules/template-tools"
+const templateToolsStore = useTemplateToolsStore()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const dialogVisible = ref<boolean>()
@@ -78,6 +85,12 @@ const startByOrdersData = () => {
       const colFields = ["id", "template_name", "withdraw", "current_step", "proc_inst_create_time", "active"]
       // 表格数据，表格字段
       setTableRowSpan(ordersData.value, colFields)
+
+      // 根据模版ID获取模版名称
+      const templateIds = ordersData.value.map((item) => item.template_id)
+      if (templateIds.length > 0) {
+        templateToolsStore.setByTemplateIds(templateIds)
+      }
     })
     .catch(() => {
       ordersData.value = []
@@ -95,7 +108,7 @@ const handleRevoke = (row: order) => {
     title: "撤销工单",
     message: h("p", null, [
       h("span", null, "正在撤销工单: "),
-      h("i", { style: "color: red" }, `${row.approved_by}的${row.template_name}`),
+      h("i", { style: "color: red" }, `${row.approved_by}的${templateToolsStore.getTemplateName(row.template_id)}`),
       h("span", null, " 确认？")
     ]),
     confirmButtonText: "确定",
@@ -146,8 +159,6 @@ const setTableRowSpan = (tableData: any, colFields: string[]) => {
       }
     })
   })
-
-  console.log(tableData, "123")
 }
 
 // 类型定义

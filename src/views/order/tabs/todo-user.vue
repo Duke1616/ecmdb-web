@@ -8,11 +8,16 @@
       >
         <el-table-column prop="id" label="工单号" align="center" />
         <el-table-column prop="task_id" label="流程任务号" align="center" />
-        <el-table-column prop="template_name" label="工单名称" align="center" />
+        <el-table-column prop="template_name" label="工单名称" align="center">
+          <template #default="scope">
+            {{ templateToolsStore.getTemplateName(scope.row.template_id) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="provide" label="来源" align="center">
           <template #default="scope">
             <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary">本系统</el-tag>
             <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning">企业微信</el-tag>
+            <el-tag v-else-if="scope.row.provide === 3" effect="plain" type="warning">告警平台</el-tag>
             <el-tag v-else type="info" effect="plain">未知类型</el-tag>
           </template>
         </el-table-column>
@@ -56,6 +61,8 @@ import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
 import { todoOrderByUserApi } from "@/api/order"
 import Detail from "../approved/detail.vue"
+import { useTemplateToolsStore } from "@/store/modules/template-tools"
+const templateToolsStore = useTemplateToolsStore()
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -77,7 +84,11 @@ const listOrdersData = () => {
       paginationData.total = data.total
       ordersData.value = data.orders
 
-      console.log(ordersData.value)
+      // 根据模版ID获取模版名称
+      const templateIds = ordersData.value.map((item) => item.template_id)
+      if (templateIds.length > 0) {
+        templateToolsStore.setByTemplateIds(templateIds)
+      }
     })
     .catch(() => {
       ordersData.value = []
