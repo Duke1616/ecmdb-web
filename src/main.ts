@@ -24,9 +24,10 @@ const app = createApp(App)
 // 安装插件（全局组件、自定义指令等）
 installPlugins(app)
 
-/** 加载全局 SVG */
+// 加载全局 SVG
 loadSvg(app)
-/** 加载自定义指令 */
+
+// 加载自定义指令
 loadDirectives(app)
 
 // 安装 pinia 和 router
