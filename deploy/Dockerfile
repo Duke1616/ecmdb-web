@@ -1,10 +1,10 @@
-FROM node:20.12.2-alpine3.19 as build
+FROM node:22.18.0-bookworm as build
 WORKDIR /app
 COPY . .
 RUN npm install -g pnpm \
     && pnpm set registry https://registry.npmmirror.com/ \
     && pnpm install && pnpm run build
-FROM nginx:1.26.0 as deploy
+FROM nginx:1.29.1 as deploy
 COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD [ "nginx", "-g", "daemon off;" ]
