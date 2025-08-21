@@ -1,5 +1,5 @@
 import type * as department from "./types/department"
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 /** 查看列表树 */
 export function listDepartmentTreeApi() {

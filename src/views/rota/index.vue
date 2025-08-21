@@ -75,7 +75,7 @@ import { rota } from "@/api/rota/types/rota"
 import { deleteRotaApi, listRotasApi } from "@/api/rota"
 import createOrUpdate from "./createOrUpdate.vue"
 import router from "@/router"
-import OperateBtn from "@/components/OperateBtn/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { useUserToolsStore } from "@/store/modules/user-tools"
 const userToolsStore = useUserToolsStore()

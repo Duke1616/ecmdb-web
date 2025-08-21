@@ -73,7 +73,7 @@ import {
 import { Attribute } from "@/api/attribute/types/attribute"
 import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "@/utils/url"
+import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
 
 // 接收父组建传递
 interface Props {

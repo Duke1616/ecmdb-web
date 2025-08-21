@@ -1,5 +1,5 @@
 import type * as task from "./types/task"
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 /** 创建工单任务 */
 export function startTaskApi(data: task.startTaskReq) {

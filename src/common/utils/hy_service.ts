@@ -1,5 +1,5 @@
-import { localCache } from "@/utils/cache"
-import HyRequest from "@/utils/request"
+import { localCache } from "@@/utils/cache"
+import HyRequest from "@@/utils/request"
 
 const instance = new HyRequest({
   baseURL: import.meta.env.VITE_BASE_API,

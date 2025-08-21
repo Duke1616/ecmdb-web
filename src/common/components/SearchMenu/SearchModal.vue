@@ -7,7 +7,7 @@ import SearchFooter from "./SearchFooter.vue"
 import { ElMessage, ElScrollbar } from "element-plus"
 import { cloneDeep, debounce } from "lodash-es"
 import { useDevice } from "@/hooks/useDevice"
-import { isExternal } from "@/utils/validate"
+import { isExternal } from "@/common/utils/validate"
 
 /** 控制 modal 显隐 */
 const modelValue = defineModel<boolean>({ required: true })

@@ -5,7 +5,7 @@ import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { refreshAccessTokenApi } from "@/api/login"
 import { useUserStoreHook } from "@/store/modules/user"
-import { localCache } from "../cache"
+import { localCache } from "@@/utils/cache"
 
 /** 退出登录并强制刷新页面（会重定向到登录页） */
 function logout() {

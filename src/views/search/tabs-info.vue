@@ -99,7 +99,7 @@ import { useModelStore } from "@/store/modules/model"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox, UploadProps } from "element-plus"
 import { getMinioPresignedUrl } from "@/api/tools"
-import { decodedUrlPath, getLocalMinioUrl } from "@/utils/url"
+import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
 
 const router = useRouter()
 const route = useRoute()

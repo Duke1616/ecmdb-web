@@ -1,5 +1,5 @@
 import type * as rota from "./types/rota"
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 export function listRotasApi(data: rota.page) {
   return instance.post<rota.rotas>({

@@ -161,7 +161,7 @@ import router from "@/router"
 import createOrUpdate from "./createOrUpdate.vue"
 import { getMinioPresignedUrl, putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "../../../../utils/url"
+import { decodedUrlPath, getLocalMinioUrl } from "../../../../common/utils/url"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()

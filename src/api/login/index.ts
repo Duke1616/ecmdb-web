@@ -1,8 +1,8 @@
 import type * as Login from "./types/login"
 
-import instanceRefersh from "@/utils/refersh_service"
-import instance from "@/utils/hy_service"
-import { localCache } from "@/utils/cache"
+import instanceRefersh from "@/common/utils/refersh_service"
+import instance from "@/common/utils/hy_service"
+import { localCache } from "@/common/utils/cache"
 
 /** 登录并返回 Token */
 export function systemLoginApi(data: Login.LoginRequestData) {

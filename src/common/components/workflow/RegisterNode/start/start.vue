@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import variables from "@/assets/styles/variables.module.scss"
 import { ref, onMounted } from "vue"
-import SvgIcon from "@/components/SvgIcon/index.vue"
+import SvgIcon from "@@/components/SvgIcon/index.vue"
 const props = defineProps({
   properties: {
     type: Object,

@@ -1,5 +1,5 @@
 import dayjs from "dayjs"
-import { removeConfigLayout } from "@/utils/cache/local-storage"
+import { removeConfigLayout } from "@@/utils/cache/local-storage"
 
 /** 格式化时间 */
 export const formatDateTime = (time: string | number | Date) => {

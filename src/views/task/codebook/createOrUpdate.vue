@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from "vue"
-import CodeMirror from "@/components/CodeMirror/index.vue"
+import CodeMirror from "@@/components/CodeMirror/index.vue"
 import { type codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"

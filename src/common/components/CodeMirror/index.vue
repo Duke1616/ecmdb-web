@@ -40,7 +40,7 @@ import PreView from "./preview.vue"
 import Editor from "./editor.vue"
 import * as themes from "./themes"
 import languages from "./languages"
-import { useTheme, Theme } from "@/composables/theme"
+import { useTheme, Theme } from "@@/composables/theme"
 
 // 接收父组建传递
 interface Props {

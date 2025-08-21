@@ -1,4 +1,4 @@
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 import type * as resource from "./types/resource"
 import { RGJsonData } from "relation-graph-vue3"
 

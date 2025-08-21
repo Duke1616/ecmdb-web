@@ -10,7 +10,7 @@ import LeftMode from "./LeftMode.vue"
 import TopMode from "./TopMode.vue"
 import LeftTopMode from "./LeftTopMode.vue"
 import { Settings, RightPanel } from "./components"
-import { getCssVariableValue, setCssVariableValue } from "@/utils"
+import { getCssVariableValue, setCssVariableValue } from "@/common/utils"
 
 /** Layout 布局响应式 */
 useResize()

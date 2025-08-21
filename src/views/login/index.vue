@@ -33,7 +33,7 @@
 
 <script lang="ts" setup>
 import { ref } from "vue"
-import ThemeSwitch from "@/components/ThemeSwitch/index.vue"
+import ThemeSwitch from "@@/components/ThemeSwitch/index.vue"
 import { type TabsPaneContext } from "element-plus"
 import Owl from "./components/Owl.vue"
 import Login from "./login.vue"

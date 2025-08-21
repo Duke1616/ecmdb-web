@@ -1,5 +1,5 @@
 import type * as term from "./types/term"
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 /** 建立连接 */
 export function connectApi(data: term.connectReq) {

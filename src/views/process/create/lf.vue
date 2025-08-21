@@ -33,11 +33,11 @@ import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
-import NodePanel from "@/components/workflow/LFComponents/NodePanel.vue"
-import Control from "@/components/workflow/LFComponents/Control.vue"
-import DataDialog from "@/components/workflow/LFComponents/DataDialog.vue"
-import PropertyDialog from "@/components/workflow/PropertySetting/PropertyDialog.vue"
-import { nodeList } from "@/components/workflow/config"
+import NodePanel from "@@/components/workflow/LFComponents/NodePanel.vue"
+import Control from "@@/components/workflow/LFComponents/Control.vue"
+import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
+import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
+import { nodeList } from "@@/components/workflow/config"
 import {
   registerStart,
   registerEnd,
@@ -47,7 +47,7 @@ import {
   registerAutomation,
   registerUser,
   registerEdge
-} from "@/components/workflow/RegisterNode/index"
+} from "@@/components/workflow/RegisterNode/index"
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 
 interface Props {

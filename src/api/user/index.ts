@@ -1,6 +1,6 @@
 import type * as user from "./types/user"
 import type * as ldap from "./types/ldap"
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 /** 查询用户列表 */
 export function listUsersApi(data: user.Page) {

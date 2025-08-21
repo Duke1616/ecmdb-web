@@ -2,7 +2,7 @@
 import { computed } from "vue"
 import { type RouteRecordRaw } from "vue-router"
 import SidebarItemLink from "./SidebarItemLink.vue"
-import { isExternal } from "@/utils/validate"
+import { isExternal } from "@/common/utils/validate"
 import path from "path-browserify"
 
 interface Props {

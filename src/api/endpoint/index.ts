@@ -1,5 +1,5 @@
 import type * as endpoint from "./types/endpoint"
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 /** 列表 */
 export function listEndpointApi(data: endpoint.listByPathReq) {

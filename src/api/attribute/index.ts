@@ -1,6 +1,6 @@
 import type * as attribute from "./types/attribute"
 
-import instance from "@/utils/hy_service"
+import instance from "@/common/utils/hy_service"
 
 /** 获取模型字段列表 */
 export function listAttributesByModelUidApi(modelUid: string) {

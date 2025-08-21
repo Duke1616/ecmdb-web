@@ -109,7 +109,7 @@ import "prismjs/themes/prism-dark.css"
 
 import VueJsonPretty from "vue-json-pretty"
 import "vue-json-pretty/lib/styles.css"
-import OperateBtn from "@/components/OperateBtn/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
