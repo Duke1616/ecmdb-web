@@ -210,10 +210,10 @@ importers:
         version: 2.7.0(patch_hash=eb6f7a44e83a11062acb0bf210dc50bfaf229186f4d31ffddfbcae77b2747e2a)(typescript@5.4.5)
       vxe-table:
         specifier: ^4.5.21
-        version: 4.15.10(vue@3.5.19(typescript@5.4.5))
+        version: 4.6.25(vue@3.5.19(typescript@5.4.5))
       vxe-table-plugin-element:
         specifier: ^4.0.1
-        version: 4.0.4(vxe-table@4.15.10(vue@3.5.19(typescript@5.4.5)))
+        version: 4.0.4(vxe-table@4.6.25(vue@3.5.19(typescript@5.4.5)))
       xe-utils:
         specifier: ^3.5.25
         version: 3.7.8
@@ -1475,11 +1475,6 @@ packages:
 
   '@vueuse/shared@9.13.0':
     resolution: {integrity: sha512-UrnhU+Cnufu4S6JLCPZnkWh0WwZGUp72ktOF2DFptMlOs3TOdVv8xJN53zhHGARmVOsz5KqOls09+J1NR6sBKw==}
-
-  '@vxe-ui/core@4.2.11':
-    resolution: {integrity: sha512-Cv0XKTGgFD+CD2MGixxM+k60Y3tFEJYErQj59tuPd0y0HuSFc7sQk0fuXdbcNgxZxtAi4zX3nsDk3kY+/HeAgQ==}
-    peerDependencies:
-      vue: ^3.2.0
 
   '@xterm/addon-fit@0.10.0':
     resolution: {integrity: sha512-UFYkDm4HUahf2lnEyHvio51TNGiLK66mqP2JoATy7hRZeXaGMRDr00JiSF7m63vR5WKATF605yEggJKsw0JpMQ==}
@@ -4120,16 +4115,15 @@ packages:
   vuefinder@2.7.0:
     resolution: {integrity: sha512-VFmb/ipOoLWyADruFs0PH7+Y/Ajbrgn8icgnm5fNNuv5xI9agV1gJYwJpfBd+ymW4H+/bvwrUZl6cnkDMi/sSQ==}
 
-  vxe-pc-ui@4.8.23:
-    resolution: {integrity: sha512-DGIcG5tw7MP5Vhs3ZSRKeIijKhMa+SR7B1pqq57fFPVifWGddu6iPMqeNHjt51oji+6yd/t3n17pP6w9ypJawg==}
-
   vxe-table-plugin-element@4.0.4:
     resolution: {integrity: sha512-TKhx4Bi45kdXRa9PyjdDtOjQuA9We+ASDdZez/d3DB7p2tFvBwVNnyvwYHT+kJntAeq0pOchmhsYhZeVADMAuw==}
     peerDependencies:
       vxe-table: ^4.5.0
 
-  vxe-table@4.15.10:
-    resolution: {integrity: sha512-1bTw5PEuwpNCFZdQ326JRw5sgldv96in77RGNQYYhTtsjXIOvmLx82QBThY5UR+r3ig8c2oGz7nsRtN1wBLRAg==}
+  vxe-table@4.6.25:
+    resolution: {integrity: sha512-rFhGh8w+420cdnIasQKisiKagz9F/iNieB/z6v0j4GcsMfGHEmSJ72YrHcXogQh4wNlCzKVfb7rl7nREL5eIOg==}
+    peerDependencies:
+      vue: ^3.2.28
 
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
@@ -5573,12 +5567,6 @@ snapshots:
     transitivePeerDependencies:
       - '@vue/composition-api'
       - vue
-
-  '@vxe-ui/core@4.2.11(vue@3.5.19(typescript@5.4.5))':
-    dependencies:
-      dom-zindex: 1.0.6
-      vue: 3.5.19(typescript@5.4.5)
-      xe-utils: 3.7.8
 
   '@xterm/addon-fit@0.10.0(@xterm/xterm@5.5.0)':
     dependencies:
@@ -8380,21 +8368,15 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  vxe-pc-ui@4.8.23(vue@3.5.19(typescript@5.4.5)):
+  vxe-table-plugin-element@4.0.4(vxe-table@4.6.25(vue@3.5.19(typescript@5.4.5))):
     dependencies:
-      '@vxe-ui/core': 4.2.11(vue@3.5.19(typescript@5.4.5))
-    transitivePeerDependencies:
-      - vue
+      vxe-table: 4.6.25(vue@3.5.19(typescript@5.4.5))
 
-  vxe-table-plugin-element@4.0.4(vxe-table@4.15.10(vue@3.5.19(typescript@5.4.5))):
+  vxe-table@4.6.25(vue@3.5.19(typescript@5.4.5)):
     dependencies:
-      vxe-table: 4.15.10(vue@3.5.19(typescript@5.4.5))
-
-  vxe-table@4.15.10(vue@3.5.19(typescript@5.4.5)):
-    dependencies:
-      vxe-pc-ui: 4.8.23(vue@3.5.19(typescript@5.4.5))
-    transitivePeerDependencies:
-      - vue
+      dom-zindex: 1.0.6
+      vue: 3.5.19(typescript@5.4.5)
+      xe-utils: 3.7.8
 
   w3c-keyname@2.2.8: {}
 

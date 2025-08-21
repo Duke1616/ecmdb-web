@@ -76,7 +76,6 @@ const handleDetail = async (id: number) => {
 const DEFAULT_FORM_DATA: createOrderReq = {
   workflow_id: 0,
   template_id: 0,
-  template_name: "",
   data: {}
 }
 const formData = ref<createOrderReq>(cloneDeep(DEFAULT_FORM_DATA))
@@ -86,7 +85,6 @@ const handleSubmit = (resData: any) => {
     // 封装提交数据的逻辑
     formData.value = {
       data: data.value,
-      template_name: resData.name,
       template_id: resData.id,
       workflow_id: resData.workflow_id
     }
