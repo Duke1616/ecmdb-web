@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
-import store from "@/store"
+import store from "@/pinia"
 import { findByIdsApi } from "@/api/user"
 
 export const useUserToolsStore = defineStore("user-tools", () => {

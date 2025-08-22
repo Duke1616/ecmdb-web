@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { computed, watch, ref } from "vue"
 import { RouteRecordRaw, useRoute } from "vue-router"
-import { useAppStore } from "@/store/modules/app"
-import { usePermissionStore } from "@/store/modules/permission"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useAppStore } from "@/pinia/stores/app"
+import { usePermissionStore } from "@/pinia/stores/permission"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import SidebarItem from "./SidebarItem.vue"
 import Logo from "../Logo/index.vue"
 import { useDevice } from "@/hooks/useDevice"

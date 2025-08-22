@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, shallowRef } from "vue"
 import { type RouteRecordName, type RouteRecordRaw, useRouter } from "vue-router"
-import { usePermissionStore } from "@/store/modules/permission"
+import { usePermissionStore } from "@/pinia/stores/permission"
 import SearchResult from "./SearchResult.vue"
 import SearchFooter from "./SearchFooter.vue"
 import { ElMessage, ElScrollbar } from "element-plus"

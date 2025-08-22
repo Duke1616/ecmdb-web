@@ -32,7 +32,7 @@
 <script lang="ts" setup>
 import { reactive, ref } from "vue"
 import { useRouter } from "vue-router"
-import { useUserStore } from "@/store/modules/user"
+import { useUserStore } from "@/pinia/stores/user"
 import { type FormInstance, type FormRules } from "element-plus"
 import { User, Lock } from "@element-plus/icons-vue"
 import { type LoginRequestData } from "@/api/login/types/login"

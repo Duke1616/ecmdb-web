@@ -85,8 +85,8 @@ import "tippy.js/themes/light.css"
 import "tippy.js/animations/scale.css"
 import { formatDate, formatTimestamp } from "@/common/utils/day"
 import { isEqual } from "lodash-es"
-import { useAppStore } from "@/store/modules/app"
-import { useUserToolsStore } from "@/store/modules/user-tools"
+import { useAppStore } from "@/pinia/stores/app"
+import { useUserToolsStore } from "@/pinia/stores/user-tools"
 const appStore = useAppStore()
 const userToolsStore = useUserToolsStore()
 

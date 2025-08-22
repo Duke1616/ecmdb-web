@@ -93,7 +93,7 @@ const onClosed = () => {
   list.value = cloneDeep([
     {
       name: "",
-      id: uuidv4
+      id: uuidv4()
     }
   ])
   emits("close", false)
@@ -121,7 +121,7 @@ const mapping = [
 const list = ref([
   {
     name: "",
-    id: uuidv4
+    id: uuidv4()
   }
 ])
 
@@ -133,7 +133,7 @@ function removeList(index: number) {
 function handlerAdd() {
   list.value.push({
     name: "",
-    id: uuidv4
+    id: uuidv4()
   })
 }
 
@@ -201,7 +201,7 @@ const setFrom = (row: Attribute) => {
   row.option?.forEach((item: string) => {
     list.value.push({
       name: item,
-      id: uuidv4
+      id: uuidv4()
     })
   })
 }

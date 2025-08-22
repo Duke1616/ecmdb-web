@@ -1,6 +1,6 @@
 import { type VNode, cloneVNode, createVNode, defineComponent, h, KeepAlive } from "vue"
 import { useRoute } from "vue-router"
-import { useTagsViewStore } from "@/store/modules/tags-view"
+import { useTagsViewStore } from "@/pinia/stores/tags-view"
 
 interface CompConsumerProps {
   component: VNode

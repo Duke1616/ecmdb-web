@@ -1,5 +1,5 @@
 import { App, inject, ref, computed, readonly } from "vue"
-import storage from "@/store/modules/theme"
+import storage from "@/pinia/stores/theme"
 
 export enum Theme {
   System = "system",

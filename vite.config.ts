@@ -3,9 +3,14 @@ import vue from "@vitejs/plugin-vue"
 import vueJsx from "@vitejs/plugin-vue-jsx"
 import UnoCSS from "unocss/vite"
 import path, { resolve } from "path"
+import AutoImport from "unplugin-auto-import/vite"
+import SvgComponent from "unplugin-svg-component/vite"
+import { ElementPlusResolver } from "unplugin-vue-components/resolvers"
+import Components from "unplugin-vue-components/vite"
 import svgLoader from "vite-svg-loader"
 import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
 import prismjs from "vite-plugin-prismjs"
+import { VueMcp } from "vite-plugin-vue-mcp"
 // import { visualizer } from "rollup-plugin-visualizer"
 // import vueDevTools from "vite-plugin-vue-devtools"
 
@@ -26,20 +31,53 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     plugins: [
       vue(),
-      // vueDevTools(),
-      vueJsx(),
-      /** 将 SVG 静态图转化为 Vue 组件 */
-      svgLoader({ defaultImport: "url" }),
-      /** SVG */
-      createSvgIconsPlugin({
-        iconDirs: [path.resolve(process.cwd(), "src/icons/svg")],
-        symbolId: "icon-[dir]-[name]"
-      }),
       // visualizer({
       //   open: true // 构建完成后自动打开分析页面
       // }),
-      /** UnoCSS */
+      // vueDevTools(),
+      vueJsx(),
+      // 支持将 SVG 文件导入为 Vue 组件
+      svgLoader({
+        defaultImport: "url",
+        svgoConfig: {
+          plugins: [
+            {
+              name: "preset-default",
+              params: {
+                overrides: {
+                  // @see https://github.com/svg/svgo/issues/1128
+                  removeViewBox: false
+                }
+              }
+            }
+          ]
+        }
+      }),
+      /** SVG */
+      createSvgIconsPlugin({
+        iconDirs: [path.resolve(process.cwd(), "src/common/assets/icons")],
+        symbolId: "icon-[dir]-[name]"
+      }),
+      // 自动生成 SvgIcon 组件和 SVG 雪碧图
+      SvgComponent({
+        iconDir: [resolve(__dirname, "src/common/assets/icons")],
+        preserveColor: resolve(__dirname, "src/common/assets/icons/preserve-color"),
+        dts: true,
+        dtsDir: resolve(__dirname, "types/auto")
+      }),
+      // 原子化 CSS
       UnoCSS(),
+      // 自动按需导入 API
+      AutoImport({
+        imports: ["vue", "vue-router", "pinia"],
+        dts: "types/auto/auto-imports.d.ts",
+        resolvers: [ElementPlusResolver()]
+      }),
+      // 自动按需导入组件
+      Components({
+        dts: "types/auto/components.d.ts",
+        resolvers: [ElementPlusResolver()]
+      }),
       prismjs({
         languages: ["javascript", "css", "html", "json", "sass", "scss", "md", "bash", "shell", "ts"],
         plugins: [
@@ -52,7 +90,9 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         ],
         theme: "tomorrow",
         css: true
-      })
+      }),
+      // 为项目开启 MCP Server
+      VueMcp()
     ],
     /** 混淆器 */
     esbuild:
@@ -66,6 +106,15 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
             /** 打包时移除所有注释 */
             legalComments: "none"
           },
+    // 依赖预构建
+    optimizeDeps: {
+      include: ["element-plus/es/components/*/style/css"]
+    },
+    // CSS 相关配置
+    css: {
+      // 线程中运行 CSS 预处理器
+      preprocessorMaxWorkers: true
+    },
     server: {
       /** 设置 host: true 才可以使用 Network 的形式，以 IP 访问项目 */
       host: true, // host: "0.0.0.0"

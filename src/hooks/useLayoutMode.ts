@@ -1,5 +1,5 @@
 import { computed } from "vue"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import { LayoutModeEnum } from "@@/constants/app-key"
 
 const settingsStore = useSettingsStore()

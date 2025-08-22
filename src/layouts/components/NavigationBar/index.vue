@@ -1,9 +1,9 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router"
 import { storeToRefs } from "pinia"
-import { useAppStore } from "@/store/modules/app"
-import { useSettingsStore } from "@/store/modules/settings"
-import { useUserStore } from "@/store/modules/user"
+import { useAppStore } from "@/pinia/stores/app"
+import { useSettingsStore } from "@/pinia/stores/settings"
+import { useUserStore } from "@/pinia/stores/user"
 import { UserFilled } from "@element-plus/icons-vue"
 import Hamburger from "../Hamburger/index.vue"
 import Breadcrumb from "../Breadcrumb/index.vue"

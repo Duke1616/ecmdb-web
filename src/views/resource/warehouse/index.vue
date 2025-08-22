@@ -37,7 +37,7 @@
 import { useRouter } from "vue-router"
 import { type Model, type Models } from "@/api/model/types/model"
 import { ref } from "vue"
-import { useModelStore } from "@/store/modules/model"
+import { useModelStore } from "@/pinia/stores/model"
 
 const empty = ref<boolean>(false)
 const router = useRouter()

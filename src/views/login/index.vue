@@ -4,7 +4,7 @@
     <Owl :close-eyes="isFocus" />
     <div class="login-card">
       <div class="title">
-        <img src="@/assets/layouts/logo-标准.png" />
+        <img src="@@/assets/images/layouts/logo-标准.png" />
       </div>
 
       <div class="content">

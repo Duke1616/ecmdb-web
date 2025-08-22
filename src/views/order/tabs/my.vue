@@ -62,7 +62,7 @@ import { order } from "@/api/order/types/order"
 import { revokeOrderApi, startByOrderApi } from "@/api/order"
 import { Column, ElMessage, ElMessageBox, TableColumnCtx } from "element-plus"
 import Detail from "../approved/detail.vue"
-import { useTemplateToolsStore } from "@/store/modules/template-tools"
+import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
 const templateToolsStore = useTemplateToolsStore()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 

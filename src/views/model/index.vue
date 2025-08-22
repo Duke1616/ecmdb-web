@@ -133,7 +133,7 @@ import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq 
 import { usePagination } from "@/hooks/usePagination"
 import { cloneDeep } from "lodash-es"
 import { useRouter } from "vue-router"
-import { useModelStore } from "@/store/modules/model"
+import { useModelStore } from "@/pinia/stores/model"
 
 const searchInput = ref("")
 const modelStatus = ref<"all" | "open" | "close">("all")

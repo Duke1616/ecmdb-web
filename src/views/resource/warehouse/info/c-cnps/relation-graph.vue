@@ -2,7 +2,7 @@
   <div style="width: 100%; height: 100%">
     <div v-loading="g_loading" style="width: 100%; height: calc(100vh - 200px)">
       <RelationGraph ref="graphRef" :options="graphOptions" @node-expand="onNodeExpand" @node-collapse="onNodeCollapse">
-        <template #node="{ node }: { node: RGNode }">
+        <template #node="{ node }">
           <div>
             <div style="width: 100px; cursor: pointer; text-align: left; padding: 0px">
               <div style="padding-left: 10px">{{ node.data!.model_uid }}</div>

@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
-import store from "@/store"
+import store from "@/pinia"
 import { findByTemplateIdsApi } from "@/api/template"
 
 export const useTemplateToolsStore = defineStore("template-tools", () => {

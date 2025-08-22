@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import { useTagsViewStore } from "@/store/modules/tags-view"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useTagsViewStore } from "@/pinia/stores/tags-view"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import Footer from "./Footer/index.vue"
 
 const tagsViewStore = useTagsViewStore()
@@ -29,7 +29,7 @@ const settingsStore = useSettingsStore()
 </template>
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
+@import "@@/assets/styles/mixins.scss";
 
 .app-main {
   width: 100%;

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { watchEffect } from "vue"
 import { storeToRefs } from "pinia"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import { useLayoutMode } from "@/hooks/useLayoutMode"
 import { resetConfigLayout } from "@@/utils"
 import SelectLayoutMode from "./SelectLayoutMode.vue"
@@ -63,7 +63,7 @@ watchEffect(() => {
 </template>
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
+@import "@@/assets/styles/mixins.scss";
 
 .setting-container {
   padding: 20px;

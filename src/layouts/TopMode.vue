@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { storeToRefs } from "pinia"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import { AppMain, NavigationBar, TagsView, Logo } from "./components"
 
 const settingsStore = useSettingsStore()
@@ -26,7 +26,7 @@ const { showTagsView, showLogo } = storeToRefs(settingsStore)
 </template>
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
+@import "@@/assets/styles/mixins.scss";
 $transition-time: 0.35s;
 
 .app-wrapper {

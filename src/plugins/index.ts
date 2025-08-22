@@ -6,6 +6,7 @@ import { loadFromCreate } from "./form-create"
 import { loadIconPicker } from "./icon-picker"
 import { loadFinder } from "./finder"
 import { loadCodeMirror } from "./codemirror"
+import { loadIconSvg } from "./icon-svg"
 
 export function installPlugins(app: App) {
   loadElementPlus(app)
@@ -15,4 +16,5 @@ export function installPlugins(app: App) {
   loadIconPicker(app)
   loadFinder(app)
   loadCodeMirror(app)
+  loadIconSvg(app)
 }

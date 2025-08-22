@@ -2,7 +2,7 @@
   <div>
     <div ref="myPage" style="margin-top: 0px; width: calc(100% - 10px); height: calc(100vh)">
       <RelationGraph ref="graphRef" :options="graphOptions" :on-node-click="onNodeClick" @refresh="listModelGraphData">
-        <template #node="{ node }: { node: RGNode }">
+        <template #node="{ node }">
           <div
             class="my-node-style"
             :style="{ 'background-image': 'url(' + (node.data ? node.data.icon : '') + ')' }"

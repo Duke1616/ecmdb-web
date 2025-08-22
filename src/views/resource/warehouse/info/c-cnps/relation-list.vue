@@ -142,7 +142,7 @@ import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/reso
 import { usePagination } from "@/hooks/usePagination"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
-import { useModelStore } from "@/store/modules/model"
+import { useModelStore } from "@/pinia/stores/model"
 import { ElMessage, ElMessageBox } from "element-plus"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

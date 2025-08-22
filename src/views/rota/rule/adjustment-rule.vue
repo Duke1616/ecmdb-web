@@ -76,7 +76,7 @@ import { ref } from "vue"
 import { user as userInfo } from "@/api/user/types/user"
 import UserPopover from "./user-popover.vue"
 import { addShifAdjustmentRuleApi, updateShifAdjustmentRuleApi } from "@/api/rota"
-import { useUserToolsStore } from "@/store/modules/user-tools"
+import { useUserToolsStore } from "@/pinia/stores/user-tools"
 const userToolsStore = useUserToolsStore()
 
 const emits = defineEmits(["closed", "callback"])

@@ -1,5 +1,5 @@
 import { onBeforeMount, onMounted, onBeforeUnmount } from "vue"
-import { useAppStore } from "@/store/modules/app"
+import { useAppStore } from "@/pinia/stores/app"
 import { useRouteListener } from "@/hooks/useRouteListener"
 import { DeviceEnum } from "@@/constants/app-key"
 

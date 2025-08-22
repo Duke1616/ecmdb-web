@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed, watchEffect } from "vue"
 import { storeToRefs } from "pinia"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import useResize from "./hooks/useResize"
 import { useWatermark } from "@/hooks/useWatermark"
 import { useDevice } from "@/hooks/useDevice"

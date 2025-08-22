@@ -33,7 +33,8 @@
       "@@/*": ["src/common/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "types/**/*.d.ts", "vite.config.ts"],
+  // 需要被编译的文件列表
+  "include": ["**/*.ts", "**/*.tsx", "**/*.vue", "**/*.d.ts"],
   /** 编译器默认排除的编译文件 */
   "exclude": ["node_modules", "dist"]
 }

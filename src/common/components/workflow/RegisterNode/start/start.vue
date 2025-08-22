@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import variables from "@/assets/styles/variables.module.scss"
+import variables from "variables.module.scss"
 import { ref, onMounted } from "vue"
 import SvgIcon from "@@/components/SvgIcon/index.vue"
 const props = defineProps({

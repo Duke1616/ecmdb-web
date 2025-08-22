@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import store from "@/store"
+import store from "@/pinia"
 import { defineStore } from "pinia"
 import { type RouteRecordRaw } from "vue-router"
 import { constantRoutes, defaultRoutes } from "@/router"

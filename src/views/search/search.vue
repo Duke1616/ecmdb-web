@@ -21,7 +21,7 @@
 import { ElMessage } from "element-plus"
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
-import { useSearchStore } from "@/store/modules/search"
+import { useSearchStore } from "@/pinia/stores/search"
 
 const router = useRouter()
 const inputSearch = ref("")

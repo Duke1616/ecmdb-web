@@ -1,6 +1,6 @@
 import router from "@/router"
-import { useUserStoreHook } from "@/store/modules/user"
-import { usePermissionStoreHook } from "@/store/modules/permission"
+import { useUserStoreHook } from "@/pinia/stores/user"
+import { usePermissionStoreHook } from "@/pinia/stores/permission"
 import { ElMessage } from "element-plus"
 import { setRouteChange } from "@/hooks/useRouteListener"
 import { useTitle } from "@/hooks/useTitle"

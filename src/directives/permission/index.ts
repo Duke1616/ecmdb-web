@@ -1,4 +1,4 @@
-import { usePermissionStoreHook } from "@/store/modules/permission"
+import { usePermissionStoreHook } from "@/pinia/stores/permission"
 import { Directive, DirectiveBinding } from "vue"
 import router from "@/router/index"
 

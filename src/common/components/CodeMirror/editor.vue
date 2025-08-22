@@ -158,8 +158,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-@import "@/styles/variables.scss";
-@import "@/styles/iconfont.scss";
+@import "@@/assets/styles/variables.scss";
+@import "@@/assets/styles/iconfont.scss";
 
 .editor {
   .divider {

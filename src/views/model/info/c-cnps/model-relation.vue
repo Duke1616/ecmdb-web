@@ -94,7 +94,7 @@
 
 <script lang="ts" setup>
 import { onMounted, ref, watch } from "vue"
-import { useModelStore } from "@/store/modules/model"
+import { useModelStore } from "@/pinia/stores/model"
 import {
   ListRelationTypeApi,
   CreateModelRelationApi,

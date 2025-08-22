@@ -4,7 +4,7 @@ import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { refreshAccessTokenApi } from "@/api/login"
-import { useUserStoreHook } from "@/store/modules/user"
+import { useUserStoreHook } from "@/pinia/stores/user"
 import { localCache } from "@@/utils/cache"
 
 /** 退出登录并强制刷新页面（会重定向到登录页） */

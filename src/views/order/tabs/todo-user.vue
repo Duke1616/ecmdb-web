@@ -61,7 +61,7 @@ import { usePagination } from "@/hooks/usePagination"
 import { order } from "@/api/order/types/order"
 import { todoOrderByUserApi } from "@/api/order"
 import Detail from "../approved/detail.vue"
-import { useTemplateToolsStore } from "@/store/modules/template-tools"
+import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
 const templateToolsStore = useTemplateToolsStore()
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

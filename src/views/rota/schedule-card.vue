@@ -14,7 +14,7 @@
 import { schedule as scheduleCard } from "@/api/rota/types/rota"
 import { isEqual } from "lodash-es"
 import { defineProps, watch } from "vue"
-import { useUserToolsStore } from "@/store/modules/user-tools"
+import { useUserToolsStore } from "@/pinia/stores/user-tools"
 const userToolsStore = useUserToolsStore()
 
 const props = defineProps<{

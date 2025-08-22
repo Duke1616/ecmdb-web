@@ -1,5 +1,5 @@
 import { computed } from "vue"
-import { useAppStore } from "@/store/modules/app"
+import { useAppStore } from "@/pinia/stores/app"
 import { DeviceEnum } from "@@/constants/app-key"
 
 const appStore = useAppStore()

@@ -1,8 +1,8 @@
 <script lang="ts" setup>
 import { computed } from "vue"
 import { storeToRefs } from "pinia"
-import { useAppStore } from "@/store/modules/app"
-import { useSettingsStore } from "@/store/modules/settings"
+import { useAppStore } from "@/pinia/stores/app"
+import { useSettingsStore } from "@/pinia/stores/settings"
 import { AppMain, NavigationBar, Sidebar, TagsView, Logo } from "./components"
 
 const appStore = useAppStore()
@@ -38,7 +38,7 @@ const layoutClasses = computed(() => {
 </template>
 
 <style lang="scss" scoped>
-@import "@/styles/mixins.scss";
+@import "@@/assets/styles/mixins.scss";
 $transition-time: 0.35s;
 
 .app-wrapper {
