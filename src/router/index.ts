@@ -18,20 +18,20 @@ export const constantRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: ":path(.*)",
-        component: () => import("@/views/redirect/index.vue")
+        component: () => import("@/pages/redirect/index.vue")
       }
     ]
   },
   {
     path: "/403",
-    component: () => import("@/views/error-page/403.vue"),
+    component: () => import("@/pages/error/403.vue"),
     meta: {
       hidden: true
     }
   },
   {
     path: "/404",
-    component: () => import("@/views/error-page/404.vue"),
+    component: () => import("@/pages/error/404.vue"),
     meta: {
       hidden: true
     },
@@ -39,7 +39,7 @@ export const constantRoutes: RouteRecordRaw[] = [
   },
   {
     path: "/login",
-    component: () => import("@/views/login/index.vue"),
+    component: () => import("@/pages/login/index.vue"),
     meta: {
       hidden: true
     }

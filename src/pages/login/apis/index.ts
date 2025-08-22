@@ -1,8 +1,6 @@
-import type * as Login from "./types/login"
+import type * as Login from "./types"
+import instance from "@@/utils/hy_service"
 
-import instanceRefersh from "@/common/utils/refersh_service"
-import instance from "@/common/utils/hy_service"
-import { localCache } from "@/common/utils/cache"
 
 /** 登录并返回 Token */
 export function systemLoginApi(data: Login.LoginRequestData) {
@@ -41,21 +39,3 @@ export function ldapLoginApi(data: Login.LoginRequestData) {
     })
 }
 
-/** 获取用户详情 */
-export function refreshAccessTokenApi() {
-  return instanceRefersh
-    .requestHader({
-      url: "user/refresh",
-      method: "post"
-    })
-    .then((response) => {
-      console.log(response.headers["x-access-token"], "x-access-token")
-      console.log(response.headers["x-refresh-token"], "x-refresh-token")
-      if (response.headers && response.headers["x-access-token"]) {
-        localCache.setCache("access_token", response.headers["x-access-token"])
-        localCache.setCache("refresh_token", response.headers["x-refresh-token"])
-      }
-
-      return response
-    })
-}

@@ -200,7 +200,7 @@ importers:
         specifier: 2.0.0-alpha.2
         version: 2.0.0-alpha.2(vue@3.5.19(typescript@5.8.3))
       vue-router:
-        specifier: ^4.3.0
+        specifier: ^4.5.1
         version: 4.5.1(vue@3.5.19(typescript@5.8.3))
       vue3-icon-picker:
         specifier: ^0.1.3

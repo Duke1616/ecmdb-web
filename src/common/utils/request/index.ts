@@ -3,13 +3,15 @@ import type { AxiosInstance } from "axios"
 import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
-import { refreshAccessTokenApi } from "@/api/login"
-import { useUserStoreHook } from "@/pinia/stores/user"
 import { localCache } from "@@/utils/cache"
 
 /** 退出登录并强制刷新页面（会重定向到登录页） */
 function logout() {
-  useUserStoreHook().logout()
+  // 清除token
+  localCache.removeCache("access_token")
+  localCache.removeCache("refresh_token")
+  localCache.removeCache("username")
+  // 强制刷新页面
   location.reload()
 }
 
@@ -115,16 +117,25 @@ class HyRequest {
 
               isRefreshing = true
 
-              return refreshAccessTokenApi()
-                .then((token) => {
-                  // 刷新成功，处理队列中的请求
-                  this.instance.defaults.headers["Authorization"] = `Bearer ${token}`
-                  originalRequest.headers["Authorization"] = `Bearer ${token}`
-                  processQueue(null, localCache.getCache("access_token"))
+              // 使用原生axios，避免使用HyRequest实例（打破循环）
+              return axios
+                .create({
+                  baseURL: import.meta.env.VITE_BASE_API,
+                  timeout: 5000
+                })
+                .post("/auth/refresh", {
+                  refresh_token: localCache.getCache("refresh_token")
+                })
+                .then((response) => {
+                  const newToken = response.data.data.access_token
+                  localCache.setCache("access_token", newToken)
+
+                  this.instance.defaults.headers["Authorization"] = `Bearer ${newToken}`
+                  originalRequest.headers["Authorization"] = `Bearer ${newToken}`
+                  processQueue(null, newToken)
                   return this.instance(originalRequest)
                 })
                 .catch((error) => {
-                  // 刷新失败，处理队列并登出
                   processQueue(error, null)
                   logout()
                   ElMessage.error("认证过期，请重新登录")
@@ -133,6 +144,46 @@ class HyRequest {
                 .finally(() => {
                   isRefreshing = false
                 })
+
+            // return refreshAccessTokenApi()
+            //   .then((token) => {
+            //     // 刷新成功，处理队列中的请求
+            //     this.instance.defaults.headers["Authorization"] = `Bearer ${token}`
+            //     originalRequest.headers["Authorization"] = `Bearer ${token}`
+            //     processQueue(null, localCache.getCache("access_token"))
+            //     return this.instance(originalRequest)
+            //   })
+            //   .catch((error) => {
+            //     // 刷新失败，处理队列并登出
+            //     processQueue(error, null)
+            //     logout()
+            //     ElMessage.error("认证过期，请重新登录")
+            //     return Promise.reject(error)
+            //   })
+            //   .finally(() => {
+            //     isRefreshing = false
+            //   })
+
+            // 动态导入，打破循环依赖
+            // return import("@@/apis/users")
+            //   .then(({ refreshAccessTokenApi }) => {
+            //     return refreshAccessTokenApi()
+            //   })
+            //   .then((token) => {
+            //     this.instance.defaults.headers["Authorization"] = `Bearer ${token}`
+            //     originalRequest.headers["Authorization"] = `Bearer ${token}`
+            //     processQueue(null, localCache.getCache("access_token"))
+            //     return this.instance(originalRequest)
+            //   })
+            //   .catch((error) => {
+            //     processQueue(error, null)
+            //     logout()
+            //     ElMessage.error("认证过期，请重新登录")
+            //     return Promise.reject(error)
+            //   })
+            //   .finally(() => {
+            //     isRefreshing = false
+            //   })
             case 403:
               error.message = "拒绝访问"
               break

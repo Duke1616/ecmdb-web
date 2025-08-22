@@ -33,10 +33,12 @@
 import { reactive, ref } from "vue"
 import { useRouter } from "vue-router"
 import { useUserStore } from "@/pinia/stores/user"
-import { type FormInstance, type FormRules } from "element-plus"
+import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { User, Lock } from "@element-plus/icons-vue"
-import { type LoginRequestData } from "@/api/login/types/login"
+import { type LoginRequestData } from "./apis/types"
+import { ldapLoginApi, systemLoginApi } from "./apis"
 const router = useRouter()
+const userStore = useUserStore()
 
 interface Props {
   active: string
@@ -75,25 +77,48 @@ const loginFormRules: FormRules = {
   ],
   code: [{ required: true, message: "请输入验证码", trigger: "blur" }]
 }
-/** 登录逻辑 */
-const handleLogin = () => {
-  loginFormRef.value?.validate((valid: boolean, fields) => {
-    if (valid) {
-      loading.value = true
-      const api = props.active === "ldap" ? useUserStore().ldapLogin : useUserStore().systemLogin
-      api(loginFormData)
-        .then(() => {
-          router.push({ path: "/" })
-        })
-        .catch(() => {
-          loginFormData.password = ""
-        })
-        .finally(() => {
-          loading.value = false
-        })
-    } else {
-      console.error("表单校验不通过", fields)
+// /** 登录逻辑 */
+// const handleLogin = () => {
+//   loginFormRef.value?.validate((valid: boolean, fields) => {
+//     if (valid) {
+//       loading.value = true
+//       const api = props.active === "ldap" ? useUserStore().ldapLogin : useUserStore().systemLogin
+//       api(loginFormData)
+//         .then(() => {
+//           router.push({ path: "/" })
+//         })
+//         .catch(() => {
+//           loginFormData.password = ""
+//         })
+//         .finally(() => {
+//           loading.value = false
+//         })
+//     } else {
+//       console.error("表单校验不通过", fields)
+//     }
+//   })
+// }
+
+/** 登录 */
+function handleLogin() {
+  loginFormRef.value?.validate((valid) => {
+    if (!valid) {
+      ElMessage.error("表单校验不通过")
+      return
     }
+    loading.value = true
+    const loginApi = props.active === "ldap" ? ldapLoginApi : systemLoginApi
+    loginApi(loginFormData)
+      .then(({ data }) => {
+        userStore.loginSetToken(data)
+        router.push({ path: "/" })
+      })
+      .catch(() => {
+        loginFormData.password = ""
+      })
+      .finally(() => {
+        loading.value = false
+      })
   })
 }
 </script>
