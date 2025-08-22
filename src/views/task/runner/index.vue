@@ -67,7 +67,7 @@
 <script setup lang="ts">
 import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { runner } from "@/api/runner/types/runner"
 import { deleteRunnerApi, listRunnerApi } from "@/api/runner"
 import reigsterRunner from "./registerOrUpdate.vue"

@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { h, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import addCodebook from "./createOrUpdate.vue"
 import { codebook } from "@/api/codebook/types/codebook"
 import { cloneDeep } from "lodash-es"

@@ -108,7 +108,7 @@ import {
 } from "@/api/relation/types/relation"
 import { cloneDeep } from "lodash-es"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const modelData = useModelStore().modelsData

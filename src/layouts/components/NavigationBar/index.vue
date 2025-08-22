@@ -12,8 +12,8 @@ import Notify from "@@/components/Notify/index.vue"
 import ThemeSwitch from "@@/components/ThemeSwitch/index.vue"
 import Screenfull from "@@/components/Screenfull/index.vue"
 import SearchMenu from "@@/components/SearchMenu/index.vue"
-import { useDevice } from "@/hooks/useDevice"
-import { useLayoutMode } from "@/hooks/useLayoutMode"
+import { useDevice } from "@/common/composables/useDevice"
+import { useLayoutMode } from "@/common/composables/useLayoutMode"
 
 const { isMobile } = useDevice()
 const { isTop } = useLayoutMode()

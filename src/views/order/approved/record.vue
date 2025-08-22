@@ -33,7 +33,7 @@
 
 <script lang="ts" setup>
 import { ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { orderTaskRecordsApi } from "@/api/order"
 import { taskRecord } from "@/api/order/types/order"
 

@@ -48,7 +48,7 @@
 <script lang="ts" setup>
 import { ref, watch, nextTick, onMounted } from "vue"
 import { findByUsernameApi, listUsersByKeywordApi } from "@/api/user"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { user } from "@/api/user/types/user"
 
 const init = {

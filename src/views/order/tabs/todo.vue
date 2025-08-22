@@ -68,7 +68,7 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 // import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { order } from "@/api/order/types/order"
 import { todoOrderApi } from "@/api/order"
 import Detail from "../approved/detail.vue"

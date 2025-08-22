@@ -69,7 +69,7 @@ import { CreateRelationTypeApi, ListRelationTypeApi } from "@/api/relation"
 import { type CreateRealtionTypeReq, type ListRelationTypeData } from "@/api/relation/types/relation"
 import { type FormInstance, type FormRules, ElMessage } from "element-plus"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { cloneDeep } from "lodash-es"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

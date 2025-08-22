@@ -2,7 +2,7 @@
 
 import CacheKey from "@@/constants/cache-key"
 import { type SidebarOpened, SidebarClosed } from "@@/constants/app-key"
-import { type ThemeName } from "@/hooks/useTheme"
+import { type ThemeName } from "@/common/composables/useTheme"
 import { type TagView } from "@/pinia/stores/tags-view"
 import { type LayoutSettings } from "@/config/layouts"
 

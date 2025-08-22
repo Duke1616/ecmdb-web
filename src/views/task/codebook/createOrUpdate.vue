@@ -78,7 +78,7 @@ import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { createCodebookApi, updateCodebookApi } from "@/api/codebook"
 import { findByUserIdApi, listUsersByKeywordApi } from "@/api/user"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { user } from "@/api/user/types/user"
 
 const init = {

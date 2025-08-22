@@ -94,7 +94,7 @@
 
 <script setup lang="ts">
 import { h, ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { task } from "@/api/task/types/task"
 import { listTasksApi, retryTaskApi, updateTaskArgsApi, updateTaskVariablesApi } from "@/api/task"
 import { PrismEditor } from "vue-prism-editor"

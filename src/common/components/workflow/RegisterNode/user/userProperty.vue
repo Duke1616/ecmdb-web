@@ -121,7 +121,7 @@ import { userDepartmentCombination } from "@/api/user/types/user"
 import { findByUsernamesApi, pipelineUserByDepartmentApi } from "@/api/user"
 import { Search } from "@element-plus/icons-vue"
 
-import { useTemplateRules } from "@/hooks/useTemplateRules"
+import { useTemplateRules } from "@/common/composables/useTemplateRules"
 // 使用模板 Hook
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
 

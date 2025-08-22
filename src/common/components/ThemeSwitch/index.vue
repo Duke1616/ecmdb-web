@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { type ThemeName, useTheme } from "@/hooks/useTheme"
+import { type ThemeName, useTheme } from "@/common/composables/useTheme"
 import { MagicStick } from "@element-plus/icons-vue"
 
 const { themeList, activeThemeName, setTheme } = useTheme()
@@ -16,6 +16,8 @@ const handleChangeTheme = ({ clientX, clientY }: MouseEvent, themeName: ThemeNam
   const handler = () => {
     setTheme(themeName)
   }
+
+  // @ts-ignore
   document.startViewTransition ? document.startViewTransition(handler) : handler()
 }
 </script>

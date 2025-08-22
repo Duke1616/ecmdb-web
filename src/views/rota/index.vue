@@ -69,7 +69,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick, h } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { rota } from "@/api/rota/types/rota"
 import { deleteRotaApi, listRotasApi } from "@/api/rota"

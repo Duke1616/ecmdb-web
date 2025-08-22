@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { task } from "@/api/task/types/task"
 import { listTasksByInstanceIdApi } from "@/api/task"
 

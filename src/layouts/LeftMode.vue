@@ -4,7 +4,7 @@ import { storeToRefs } from "pinia"
 import { useAppStore } from "@/pinia/stores/app"
 import { useSettingsStore } from "@/pinia/stores/settings"
 import { AppMain, NavigationBar, Sidebar, TagsView } from "./components"
-import { useDevice } from "@/hooks/useDevice"
+import { useDevice } from "@/common/composables/useDevice"
 
 const { isMobile } = useDevice()
 const appStore = useAppStore()

@@ -57,7 +57,7 @@
 
 <script lang="ts" setup>
 import { h, ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { order } from "@/api/order/types/order"
 import { revokeOrderApi, startByOrderApi } from "@/api/order"
 import { Column, ElMessage, ElMessageBox, TableColumnCtx } from "element-plus"

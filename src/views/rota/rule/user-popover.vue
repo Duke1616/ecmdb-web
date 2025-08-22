@@ -47,7 +47,7 @@
 <script setup lang="ts">
 import { listUsersApi, listUsersByKeywordApi } from "@/api/user"
 import { user as userInfo } from "@/api/user/types/user"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { ElPopover } from "element-plus"
 import { debounce } from "lodash-es"
 import { ref, watch } from "vue"

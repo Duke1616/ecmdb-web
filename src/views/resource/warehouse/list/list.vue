@@ -144,7 +144,7 @@ import { ListAttributeFieldApi } from "@/api/attribute"
 import { listResourceApi, deleteResourceApi, findSecureData, setCustomFieldApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import {
   ElLoading,
   ElMessage,

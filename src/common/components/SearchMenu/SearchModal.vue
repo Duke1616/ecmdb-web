@@ -6,7 +6,7 @@ import SearchResult from "./SearchResult.vue"
 import SearchFooter from "./SearchFooter.vue"
 import { ElMessage, ElScrollbar } from "element-plus"
 import { cloneDeep, debounce } from "lodash-es"
-import { useDevice } from "@/hooks/useDevice"
+import { useDevice } from "@/common/composables/useDevice"
 import { isExternal } from "@/common/utils/validate"
 
 /** 控制 modal 显隐 */

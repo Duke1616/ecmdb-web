@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useFetchSelect } from "@/hooks/useFetchSelect"
+import { useFetchSelect } from "@/common/composables/useFetchSelect"
 import { getSelectDataApi } from "@/api/hook-demo/use-fetch-select"
 
 const { loading, options, value } = useFetchSelect({

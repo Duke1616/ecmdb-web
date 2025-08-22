@@ -4,7 +4,7 @@ import { createTableDataApi, deleteTableDataApi, updateTableDataApi, getTableDat
 import { type CreateOrUpdateTableRequestData, type GetTableData } from "@/api/table/types/table"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Search, Refresh, CirclePlus, Delete, Download, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { cloneDeep } from "lodash-es"
 
 defineOptions({

@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { h, ref, watch, nextTick } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { listUserDoesNotHaveRoles } from "@/api/role"
 import { role } from "@/api/role/types/role"
 import { ElMessage, ElMessageBox } from "element-plus"

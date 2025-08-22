@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { worker } from "@/api/worker/types/worker"
 import { listWorkerApi } from "@/api/worker/worker"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

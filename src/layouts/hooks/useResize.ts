@@ -1,6 +1,6 @@
 import { onBeforeMount, onMounted, onBeforeUnmount } from "vue"
 import { useAppStore } from "@/pinia/stores/app"
-import { useRouteListener } from "@/hooks/useRouteListener"
+import { useRouteListener } from "@/common/composables/useRouteListener"
 import { DeviceEnum } from "@@/constants/app-key"
 
 /** 参考 Bootstrap 的响应式设计将最大移动端宽度设置为 992 */

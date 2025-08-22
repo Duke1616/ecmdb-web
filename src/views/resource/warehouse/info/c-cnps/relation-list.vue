@@ -139,7 +139,7 @@ import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { canBeRelatedFilterResourceApi, findSecureData, listResourceByIdsApi } from "@/api/resource"
 import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
 import { useModelStore } from "@/pinia/stores/model"

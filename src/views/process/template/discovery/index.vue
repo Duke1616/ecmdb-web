@@ -79,7 +79,7 @@
 </template>
 <script setup lang="ts">
 import { discovery } from "@/api/discovery/types/discovery"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { deleteDiscoveryApi, listDiscoveriesByTemplateIdApi } from "@/api/discovery"

@@ -70,7 +70,7 @@
 <script lang="ts" setup>
 import { h, ref, watch, nextTick } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import createWorkflow from "./create/index.vue"
 import { deleteWorkflowApi, deployWorkflowApi, listWorkflowApi } from "@/api/workflow/workflow"
 import { workflow } from "@/api/workflow/types/workflow"

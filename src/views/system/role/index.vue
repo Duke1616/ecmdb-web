@@ -81,7 +81,7 @@
 
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { listRolesApi } from "@/api/role"
 import { role } from "@/api/role/types/role"
 import { CirclePlus, RefreshRight, Delete } from "@element-plus/icons-vue"

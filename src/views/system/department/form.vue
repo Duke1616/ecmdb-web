@@ -128,7 +128,7 @@ import { createOrUpdateDepartment, department } from "@/api/department/types/dep
 import { createDepartmentApi, updateDepartmentApi } from "@/api/department"
 import { user } from "@/api/user/types/user"
 import { findByIdsApi, listUsersByKeywordApi } from "@/api/user"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 
 const init = {
   total: 0,

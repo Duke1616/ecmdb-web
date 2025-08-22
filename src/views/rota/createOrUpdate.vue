@@ -51,7 +51,7 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { createOrUpdateRotaReq, rota } from "@/api/rota/types/rota"
 import { createRotaApi, updateRotaApi } from "@/api/rota"
 import { findByUserIdApi, listUsersByKeywordApi } from "@/api/user"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { user } from "@/api/user/types/user"
 
 const init = {

@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { listEndpointApi } from "@/api/endpoint"
 import { endpoint } from "@/api/endpoint/types/endpoint"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

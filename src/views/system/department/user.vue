@@ -34,7 +34,7 @@
 
 <script lang="ts" setup>
 import { ref, watch } from "vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { user } from "@/api/user/types/user"
 import { listUsersByDepartmentApi } from "@/api/user"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

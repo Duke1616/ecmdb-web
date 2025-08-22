@@ -162,7 +162,7 @@ import { runnerTags } from "@/api/runner/types/runner"
 import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
-import { useTemplateRules } from "@/hooks/useTemplateRules"
+import { useTemplateRules } from "@/common/composables/useTemplateRules"
 
 // 使用模板 Hook
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()

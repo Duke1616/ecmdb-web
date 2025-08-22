@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useLayoutMode } from "@/hooks/useLayoutMode"
+import { useLayoutMode } from "@/common/composables/useLayoutMode"
 import logo from "@@/assets/images/layouts/logo-纯图形.png?url"
 import logoText1 from "@@/assets/images/layouts/logo-标准.png?url"
 import logoText2 from "@@/assets/images/layouts/logo-纯图形.png?url"

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { useTheme } from "@/hooks/useTheme"
+import { useTheme } from "@/common/composables/useTheme"
 import zhCn from "element-plus/es/locale/lang/zh-cn"
 
 const { initTheme } = useTheme()

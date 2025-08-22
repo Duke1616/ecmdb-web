@@ -2,7 +2,7 @@
 import { watchEffect } from "vue"
 import { storeToRefs } from "pinia"
 import { useSettingsStore } from "@/pinia/stores/settings"
-import { useLayoutMode } from "@/hooks/useLayoutMode"
+import { useLayoutMode } from "@/common/composables/useLayoutMode"
 import { resetConfigLayout } from "@@/utils"
 import SelectLayoutMode from "./SelectLayoutMode.vue"
 import { Refresh } from "@element-plus/icons-vue"

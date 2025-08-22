@@ -109,7 +109,7 @@
 <script lang="ts" setup>
 import { h, nextTick, ref, watch } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { usePagination } from "@/hooks/usePagination"
+import { usePagination } from "@/common/composables/usePagination"
 import { template } from "@/api/template/types/template"
 import { deleteTemplateApi, getTemplateGroupsByIdsApi, listTemplateApi } from "@/api/template"
 import Template from "./template.vue"
