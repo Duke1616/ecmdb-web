@@ -206,7 +206,6 @@ const DEFAULT_FORM_DATA: createOrUpdateMenuReq = {
     is_hidden: false,
     is_affix: false,
     is_keepalive: false,
-    icon: "",
     buttons: []
   },
   endpoints: []

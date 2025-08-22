@@ -1,3 +1,4 @@
+import type { SvgName } from "~virtual/svg-component"
 export interface menu {
   id: number
   pid: number
@@ -19,7 +20,7 @@ export interface meta {
   is_hidden: boolean
   is_affix: boolean
   is_keepalive: boolean
-  icon: string
+  icon?: SvgName
   buttons: string[]
 }
 
