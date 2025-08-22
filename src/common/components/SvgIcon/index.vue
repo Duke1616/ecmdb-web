@@ -1,3 +1,5 @@
+<!-- vite-plugin-svg-icons 插件使用方式，在当前项目中已经弃用 -->
+
 <script lang="ts" setup>
 import { computed } from "vue"
 

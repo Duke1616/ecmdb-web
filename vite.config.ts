@@ -2,13 +2,16 @@ import { type ConfigEnv, type UserConfigExport, loadEnv } from "vite"
 import vue from "@vitejs/plugin-vue"
 import vueJsx from "@vitejs/plugin-vue-jsx"
 import UnoCSS from "unocss/vite"
-import path, { resolve } from "path"
+
+// import path from "path"
+// import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
+
+import { resolve } from "path"
 import AutoImport from "unplugin-auto-import/vite"
 import SvgComponent from "unplugin-svg-component/vite"
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers"
 import Components from "unplugin-vue-components/vite"
 import svgLoader from "vite-svg-loader"
-import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
 import prismjs from "vite-plugin-prismjs"
 import { VueMcp } from "vite-plugin-vue-mcp"
 // import { visualizer } from "rollup-plugin-visualizer"
@@ -53,11 +56,11 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           ]
         }
       }),
-      /** SVG */
-      createSvgIconsPlugin({
-        iconDirs: [path.resolve(process.cwd(), "src/common/assets/icons")],
-        symbolId: "icon-[dir]-[name]"
-      }),
+      // vite-plugin-svg-icons 插件使用方式，在当前项目中已经弃用
+      // createSvgIconsPlugin({
+      //   iconDirs: [path.resolve(process.cwd(), "src/common/assets/icons")],
+      //   symbolId: "icon-[dir]-[name]"
+      // }),
       // 自动生成 SvgIcon 组件和 SVG 雪碧图
       SvgComponent({
         iconDir: [resolve(__dirname, "src/common/assets/icons")],
