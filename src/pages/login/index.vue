@@ -15,7 +15,7 @@
                 <strong style="font-size: 18px">AD认证</strong>
               </div>
             </template>
-            <Login :active="activeName" @focus="handleFocus" />
+            <Login :active="activeName" @focus="handleFocus" @blur="handleBlur" />
           </el-tab-pane>
           <el-tab-pane name="pass">
             <template #label>
@@ -23,7 +23,7 @@
                 <strong style="font-size: 18px">标准</strong>
               </div>
             </template>
-            <Login :active="activeName" @focus="handleFocus" />
+            <Login :active="activeName" @focus="handleFocus" @blur="handleBlur" />
           </el-tab-pane>
         </el-tabs>
       </div>
@@ -37,18 +37,15 @@ import ThemeSwitch from "@@/components/ThemeSwitch/index.vue"
 import { type TabsPaneContext } from "element-plus"
 import Owl from "./components/Owl.vue"
 import Login from "./login.vue"
+import { useFocus } from "./composables/useFocus"
 
-const isFocus = ref<boolean>(false)
+const { isFocus, handleBlur, handleFocus } = useFocus()
 const activeName = ref("ldap")
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
 }
 
-/** 失去焦点 */
-const handleFocus = (val: boolean) => {
-  isFocus.value = val
-}
 </script>
 
 <style lang="scss" scoped>

@@ -32,7 +32,9 @@ export const usePermissionStore = defineStore("permission", () => {
       }
     } catch (error) {
       console.error("获取菜单失败", error)
+      // 当获取菜单失败时，使用默认路由，不抛出错误
       dynamicRoutes.value = defaultRoutes
+      // 不抛出错误，让流程继续
     }
   }
 

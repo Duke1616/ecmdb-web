@@ -31,7 +31,16 @@ router.beforeEach(async (to, _from, next) => {
 
   // 如果已经登录，并准备进入 Login 页面，则重定向到主页
   if (to.path === "/login") {
-    return next({ path: "/" })
+    // 检查token是否有效，如果无效则清除token并允许访问登录页
+    try {
+      // 这里可以添加token有效性检查逻辑
+      // 暂时直接重定向到主页
+      return next({ path: "/" })
+    } catch (error) {
+      // 如果token无效，清除token并允许访问登录页
+      userStore.resetToken()
+      return next()
+    }
   }
 
   // 如果用户已经获得其权限角色
