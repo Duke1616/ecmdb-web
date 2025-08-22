@@ -37,6 +37,7 @@ import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { User, Lock } from "@element-plus/icons-vue"
 import { type LoginRequestData } from "./apis/types"
 import { ldapLoginApi, systemLoginApi } from "./apis"
+
 const router = useRouter()
 const userStore = useUserStore()
 
@@ -45,7 +46,16 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emits = defineEmits(["focus"])
+const emits = defineEmits(["focus", "blur"])
+
+/** 失去焦点 */
+const handleBlur = () => {
+  emits("blur")
+}
+/** 获取焦点 */
+const handleFocus = () => {
+  emits("focus")
+}
 
 /** 登录表单元素的引用 */
 const loginFormRef = ref<FormInstance | null>(null)
@@ -59,14 +69,7 @@ const loginFormData: LoginRequestData = reactive({
   password: ""
 })
 
-/** 失去焦点 */
-const handleBlur = () => {
-  emits("focus", false)
-}
-/** 获取焦点 */
-const handleFocus = () => {
-  emits("focus", true)
-}
+
 
 /** 登录表单校验规则 */
 const loginFormRules: FormRules = {

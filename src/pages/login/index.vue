@@ -39,12 +39,15 @@ import Owl from "./components/Owl.vue"
 import Login from "./login.vue"
 import { useFocus } from "./composables/useFocus"
 
-const { isFocus, handleBlur, handleFocus } = useFocus()
+// 直接在父组件中使用useFocus
+const { isFocus, handleFocus, handleBlur } = useFocus()
+
 const activeName = ref("ldap")
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
 }
+
 
 </script>
 
