@@ -104,7 +104,7 @@ importers:
         specifier: ^2.2.0
         version: 2.2.3(vue@3.5.19(typescript@5.8.3))
       element-plus:
-        specifier: ^2.7.5
+        specifier: ^2.10.7
         version: 2.10.7(vue@3.5.19(typescript@5.8.3))
       font-awesome:
         specifier: ^4.7.0

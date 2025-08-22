@@ -43,7 +43,7 @@
     "codemirror": "^6.0.1",
     "dayjs": "^1.11.11",
     "e-icon-picker": "^2.2.0",
-    "element-plus": "^2.7.5",
+    "element-plus": "^2.10.7",
     "font-awesome": "^4.7.0",
     "guacamole-common-js": "^1.5.0",
     "index.css": "link:@logicflow/core/dist/style/index.css",
@@ -69,6 +69,7 @@
     "uuid": "^9.0.1",
     "vite-plugin-svg-icons": "^2.0.1",
     "vite-svg-loader": "^5.1.0",
+    "vue": "^3.5.19",
     "vue-code-highlight": "^0.7.8",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "^0.5.4",
@@ -80,8 +81,7 @@
     "vuefinder": "2.7.0",
     "vxe-table": "4.6.25",
     "vxe-table-plugin-element": "^4.0.1",
-    "xe-utils": "^3.5.25",
-    "vue": "^3.5.19"
+    "xe-utils": "^3.5.25"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.8.0",
