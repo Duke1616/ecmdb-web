@@ -15,9 +15,13 @@
         </el-table-column>
         <el-table-column prop="provide" label="来源" align="center">
           <template #default="scope">
-            <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary">本系统</el-tag>
-            <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning">企业微信</el-tag>
-            <el-tag v-else-if="scope.row.provide === 3" effect="plain" type="warning">告警平台</el-tag>
+            <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary" disable-transitions>本系统</el-tag>
+            <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning" disable-transitions
+              >企业微信</el-tag
+            >
+            <el-tag v-else-if="scope.row.provide === 3" effect="plain" type="warning" disable-transitions
+              >告警平台</el-tag
+            >
             <el-tag v-else type="info" effect="plain">未知类型</el-tag>
           </template>
         </el-table-column>

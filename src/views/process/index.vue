@@ -18,15 +18,21 @@
           <el-table-column prop="owner" label="负责人" align="center" :formatter="formatOwner" />
           <el-table-column prop="is_notify" label="消息通知" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.is_notify === true" effect="plain" type="primary">开启</el-tag>
-              <el-tag v-else type="warning" effect="plain">关闭</el-tag>
+              <el-tag v-if="scope.row.is_notify === true" effect="plain" type="primary" disable-transitions
+                >开启</el-tag
+              >
+              <el-tag v-else type="warning" effect="plain" disable-transitions>关闭</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="notify_method" label="发送媒介" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.notify_method === 1" effect="plain" type="primary">飞书</el-tag>
-              <el-tag v-else-if="scope.row.notify_method === 2" effect="plain" type="primary">微信</el-tag>
-              <el-tag v-else type="info" effect="plain">暂未开启</el-tag>
+              <el-tag v-if="scope.row.notify_method === 1" effect="plain" type="primary" disable-transitions
+                >飞书</el-tag
+              >
+              <el-tag v-else-if="scope.row.notify_method === 2" effect="plain" type="primary" disable-transitions
+                >微信</el-tag
+              >
+              <el-tag v-else type="info" effect="plain" disable-transitions>暂未开启</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="desc" label="描述" align="center" />

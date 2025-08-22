@@ -14,18 +14,22 @@
         </el-table-column>
         <el-table-column prop="provide" label="来源" align="center">
           <template #default="scope">
-            <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary">本系统</el-tag>
-            <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning">企业微信</el-tag>
-            <el-tag v-else-if="scope.row.provide === 3" effect="plain" type="warning">告警平台</el-tag>
+            <el-tag v-if="scope.row.provide === 1" effect="plain" type="primary" disable-transitions>本系统</el-tag>
+            <el-tag v-else-if="scope.row.provide === 2" effect="plain" type="warning" disable-transitions
+              >企业微信</el-tag
+            >
+            <el-tag v-else-if="scope.row.provide === 3" effect="plain" type="warning" disable-transitions
+              >告警平台</el-tag
+            >
             <el-tag v-else type="info" effect="plain">未知</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="starter" label="提单人" align="center" />
         <el-table-column prop="status" label="状态" align="center">
           <template #default="scope">
-            <el-tag v-if="scope.row.status === 4" effect="plain" type="danger">撤单</el-tag>
-            <el-tag v-else-if="scope.row.status === 3" effect="plain" type="success">结单</el-tag>
-            <el-tag v-else type="info" effect="plain">未知</el-tag>
+            <el-tag v-if="scope.row.status === 4" effect="plain" type="danger" disable-transitions>撤单</el-tag>
+            <el-tag v-else-if="scope.row.status === 3" effect="plain" type="success" disable-transitions>结单</el-tag>
+            <el-tag v-else type="info" effect="plain" disable-transitions>未知</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="ctime" label="工单提交时间" align="center" />

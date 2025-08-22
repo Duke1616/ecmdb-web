@@ -19,9 +19,13 @@
           <el-table-column prop="group_id" label="所属组" align="center" :formatter="formatGroup" />
           <el-table-column prop="create_type" label="来源" align="center">
             <template #default="scope">
-              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary">系统自建</el-tag>
-              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning">企业微信</el-tag>
-              <el-tag v-else type="info" effect="plain">未知类型</el-tag>
+              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary" disable-transitions
+                >系统自建</el-tag
+              >
+              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning" disable-transitions
+                >企业微信</el-tag
+              >
+              <el-tag v-else type="info" effect="plain" disable-transitions>未知类型</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="desc" label="描述" align="center" />

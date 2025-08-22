@@ -8,17 +8,8 @@
           <el-table-column prop="codebook_name" label="任务模版" align="center" />
           <el-table-column prop="worker_name" label="工作节点" align="center" />
           <el-table-column prop="status" label="状态" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.status === 3" type="primary" effect="plain"> 运行中 </el-tag>
-              <el-tag v-if="scope.row.status === 4 || scope.row.status === 8" type="warning" effect="plain">
-                等待中
-              </el-tag>
-              <el-tag v-if="scope.row.status === 5" type="warning" effect="plain"> 暂停中 </el-tag>
-              <el-tag v-if="scope.row.status === 6" type="warning" effect="plain"> 调度中 </el-tag>
-              <el-tag v-if="scope.row.status === 7" type="warning" effect="plain"> 重试 </el-tag>
-              <el-tag v-if="scope.row.status === 1" type="success" effect="plain"> 成功 </el-tag>
-              <el-tag v-if="scope.row.status === 2" type="danger" effect="plain"> 失败 </el-tag>
-              <el-tag v-if="scope.row.status === 0" type="info" effect="plain"> 未知 </el-tag>
+            <template #default="{ row }">
+              <EnumTag :value="row.status" :map="statusMap" effect="plain" />
             </template>
           </el-table-column>
           <!-- <el-table-column fixed="right" label="操作" width="150" align="center">
@@ -28,9 +19,8 @@
             </template>
           </el-table-column> -->
           <el-table-column prop="is_timing" label="定时任务" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.is_timing === true" type="primary"> 是 </el-tag>
-              <el-tag v-if="scope.row.is_timing === false" type="warning"> 否 </el-tag>
+            <template #default="{ row }">
+              <EnumTag :value="row.is_timing" :map="timingMap" effect="plain" />
             </template>
           </el-table-column>
           <el-table-column prop="run_time" label="执行时间" align="center">
@@ -111,6 +101,8 @@ import VueJsonPretty from "vue-json-pretty"
 import "vue-json-pretty/lib/styles.css"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
+import { TagInfo } from "@/common/components/EnumTag/index.vue"
+import EnumTag from "@/common/components/EnumTag/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 /** 查询模版列表 */
@@ -128,6 +120,23 @@ const listTasksData = () => {
       tasksData.value = []
     })
     .finally(() => {})
+}
+
+const timingMap: Record<string, TagInfo> = {
+  true: { type: "primary", text: "是" },
+  false: { type: "warning", text: "否" }
+}
+
+const statusMap: Record<number, TagInfo> = {
+  0: { type: "info", text: "未知" },
+  1: { type: "success", text: "成功" },
+  2: { type: "danger", text: "失败" },
+  3: { type: "primary", text: "运行中" },
+  4: { type: "warning", text: "等待中" },
+  5: { type: "warning", text: "暂停中" },
+  6: { type: "warning", text: "调度中" },
+  7: { type: "warning", text: "重试" },
+  8: { type: "warning", text: "等待中" }
 }
 
 const operateBtnStatus = ref([
