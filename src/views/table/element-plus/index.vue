@@ -88,8 +88,8 @@ const getTableData = () => {
     phone: searchData.phone || undefined
   })
     .then(({ data }) => {
-      paginationData.total = data.total
-      tableData.value = data.list
+      paginationData.total = data.data.total
+      tableData.value = data.data.list
     })
     .catch(() => {
       tableData.value = []

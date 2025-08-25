@@ -1,20 +1,22 @@
-import { request } from "@/common/utils/service"
+import instance from "@@/utils/service"
 import type * as Table from "./types/table"
 
 /** 增 */
 export function createTableDataApi(data: Table.CreateOrUpdateTableRequestData) {
-  return request({
-    url: "table",
-    method: "post",
-    data
-  }).then((response) => {
-    return response // 返回原始的响应对象
-  })
+  return instance
+    .post({
+      url: "table",
+      method: "post",
+      data
+    })
+    .then((response) => {
+      return response // 返回原始的响应对象
+    })
 }
 
 /** 删 */
 export function deleteTableDataApi(id: string) {
-  return request({
+  return instance.delete({
     url: `table/${id}`,
     method: "delete"
   })
@@ -22,7 +24,7 @@ export function deleteTableDataApi(id: string) {
 
 /** 改 */
 export function updateTableDataApi(data: Table.CreateOrUpdateTableRequestData) {
-  return request({
+  return instance.put({
     url: "table",
     method: "put",
     data
@@ -31,7 +33,7 @@ export function updateTableDataApi(data: Table.CreateOrUpdateTableRequestData) {
 
 /** 查 */
 export function getTableDataApi(params: Table.GetTableRequestData) {
-  return request<Table.GetTableResponseData>({
+  return instance.get<Table.GetTableResponseData>({
     url: "table",
     method: "get",
     params
