@@ -3,17 +3,12 @@ import store from "@/pinia"
 import { defineStore } from "pinia"
 import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
-import { getToken, removeToken, setToken } from "@@/utils/cache/cookies"
 import { resetRouter } from "@/router"
-// import { ldapLoginApi, systemLoginApi } from "@/api/login"
-// import { LoginResponseData, type LoginRequestData } from "@/api/login/types/login"
-import { localCache } from "@/common/utils/cache"
 import { getUserInfoApi } from "@/api/user"
 import { usePermissionStoreHook } from "./permission"
-import { LoginResponseData } from "@/pages/login/apis/types"
+import { removeToken } from "@@/utils/cache/cookies"
 
 export const useUserStore = defineStore("user", () => {
-  const token = ref<string>(getToken() || "")
   const roles = ref<string[]>([])
   const username = ref<string>("")
   const userId = ref<number>(0)
@@ -21,27 +16,6 @@ export const useUserStore = defineStore("user", () => {
   const tagsViewStore = useTagsViewStore()
   const settingsStore = useSettingsStore()
   const permissionStore = usePermissionStoreHook()
-
-  // /** 登录 */
-  // const systemLogin = async ({ username, password }: LoginRequestData) => {
-  //   const { data } = await systemLoginApi({ username, password })
-  //   setToken(data)
-  // }
-
-  // const ldapLogin = async ({ username, password }: LoginRequestData) => {
-  //   const { data } = await ldapLoginApi({ username, password })
-
-  //   setToken(data)
-  // }
-
-  const loginSetToken = (data: LoginResponseData) => {
-    localCache.setCache("access_token", data.access_token)
-    localCache.setCache("refresh_token", data.refresh_token)
-    localCache.setCache("username", data.username)
-
-    setToken(data.access_token)
-    token.value = data.access_token
-  }
 
   /** 获取用户详情 */
   const getInfo = async () => {
@@ -54,16 +28,13 @@ export const useUserStore = defineStore("user", () => {
 
   /** 模拟角色变化 */
   const changeRoles = async (role: string) => {
-    const newToken = "token-" + role
-    token.value = newToken
-    setToken(newToken)
+    console.log(role)
     // 用刷新页面代替重新登录
     window.location.reload()
   }
   /** 登出 */
   const logout = () => {
     removeToken()
-    token.value = ""
     permissionStore.dynamicRoutes = []
     resetRouter()
     _resetTagsView()
@@ -71,9 +42,9 @@ export const useUserStore = defineStore("user", () => {
   /** 重置 Token */
   const resetToken = () => {
     removeToken()
-    token.value = ""
     roles.value = []
   }
+
   /** 重置 Visited Views 和 Cached Views */
   const _resetTagsView = () => {
     if (!settingsStore.cacheTagsView) {
@@ -82,7 +53,7 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  return { token, roles, username, userId, getInfo, changeRoles, logout, resetToken, loginSetToken }
+  return { roles, username, userId, getInfo, changeRoles, logout, resetToken }
 })
 
 /** 在 setup 外使用 */

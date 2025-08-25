@@ -1,4 +1,4 @@
-// import { localCache } from "@@/utils/cache"
+import { setToken } from "@@/utils/cache/cookies"
 import HyRequest from "@@/utils/request"
 
 const instance = new HyRequest({
@@ -12,6 +12,13 @@ const instance = new HyRequest({
     //   }
     //   return config
     // }
+    responseInterceptor: (response) => {
+      const token = response.headers?.["x-access-token"] || response.headers?.["X-Access-Token"]
+      if (token) {
+        setToken(token)
+      }
+      return response
+    }
   }
 })
 

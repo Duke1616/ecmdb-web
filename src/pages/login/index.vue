@@ -47,8 +47,6 @@ const activeName = ref("ldap")
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
 }
-
-
 </script>
 
 <style lang="scss" scoped>
