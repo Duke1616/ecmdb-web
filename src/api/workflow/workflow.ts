@@ -1,5 +1,5 @@
 import type * as workflow from "./types/workflow"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 新增工作流程 */
 export function createWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {

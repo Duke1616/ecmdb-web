@@ -5,33 +5,33 @@ import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { useUserStoreHook } from "@/pinia/stores/user"
 
-// 退出登录并重定向到登录页 
+// 退出登录并重定向到登录页
 async function logout() {
   useUserStoreHook().logout()
-  
+
   // 重定向到登录页，而不是刷新整个页面
   window.location.href = "/login"
 }
 
-// 创建一个锁来确保只有一个 token 刷新操作在执行
-let isRefreshing = false
-let failedQueue: any[] = []
-// 防止刷新token请求本身也触发401循环
-let isRefreshRequest = false
-// 防止logout被频繁调用导致无限刷新
-let isLoggingOut = false
+// let failedQueue: any[] = []
+// // 创建一个锁来确保只有一个 token 刷新操作在执行
+// let isRefreshing = false
+// // 防止刷新token请求本身也触发401循环
+// let isRefreshRequest = false
+// // 防止logout被频繁调用导致无限刷新
+// let isLoggingOut = false
 
-const processQueue = (error: any, token: string | null = null) => {
-  failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error)
-    } else {
-      prom.resolve(token)
-    }
-  })
+// const processQueue = (error: any, token: string | null = null) => {
+//   failedQueue.forEach((prom) => {
+//     if (error) {
+//       prom.reject(error)
+//     } else {
+//       prom.resolve(token)
+//     }
+//   })
 
-  failedQueue = []
-}
+//   failedQueue = []
+// }
 
 class HyRequest {
   // axios的实力方法
@@ -92,20 +92,20 @@ class HyRequest {
             return Promise.reject(new Error("Error"))
         }
       },
-      (error) => {        
+      (error) => {
         // 处理网络错误（如网络断开、服务器不可达等）
         if (!error.response) {
           // 网络错误时不立即登出，只显示错误信息
           ElMessage.error("网络连接失败，请检查网络设置")
           return Promise.reject(error)
         }
-        
+
         if (error.response.data !== "") {
           const message = get(error, "response.data.msg")
           ElMessage.error(message)
         } else {
           const status = get(error, "response.status")
-          const originalRequest = error.config
+          // const originalRequest = error.config
           switch (status) {
             case 400:
               error.message = "请求错误"
@@ -114,82 +114,82 @@ class HyRequest {
               error.message = "认证拒绝"
               logout()
               break
-              // // 如果是刷新token的请求本身返回401，直接登出
-              // if (isRefreshRequest) {
-              //   logout().catch(console.error)
-              //   ElMessage.error("刷新token失败, 请重新登录")
-              //   return Promise.reject(error)
-              // }
-              
-              // // 如果正在刷新token，将请求添加到队列中
-              // if (isRefreshing) {
-              //   return new Promise(function (resolve, reject) {
-              //     failedQueue.push({ resolve, reject })
-              //   })
-              //     .then((token) => {
-              //       originalRequest.headers["Authorization"] = `Bearer ${token}`
-              //       return this.instance(originalRequest)
-              //     })
-              //     .catch((err) => {
-              //       return Promise.reject(err)
-              //     })
-              // }
+            // // 如果是刷新token的请求本身返回401，直接登出
+            // if (isRefreshRequest) {
+            //   logout().catch(console.error)
+            //   ElMessage.error("刷新token失败, 请重新登录")
+            //   return Promise.reject(error)
+            // }
 
-              // isRefreshing = true
-              // isRefreshRequest = true
+            // // 如果正在刷新token，将请求添加到队列中
+            // if (isRefreshing) {
+            //   return new Promise(function (resolve, reject) {
+            //     failedQueue.push({ resolve, reject })
+            //   })
+            //     .then((token) => {
+            //       originalRequest.headers["Authorization"] = `Bearer ${token}`
+            //       return this.instance(originalRequest)
+            //     })
+            //     .catch((err) => {
+            //       return Promise.reject(err)
+            //     })
+            // }
 
-              // // 使用原生axios，避免使用HyRequest实例（打破循环）
-              // return axios
-              //   .create({
-              //     baseURL: import.meta.env.VITE_BASE_API,
-              //     timeout: 5000,
-              //     headers: {
-              //       Authorization: `Bearer ${localCache.getCache("refresh_token")}`
-              //     }
-              //   })
-              //   .post("/user/refresh")
-              //   .then((response) => {
-              //     // 从响应头获取新的token
-              //     const newAccessToken = response.headers["x-access-token"]
-              //     const newRefreshToken = response.headers["x-refresh-token"]
-                  
-              //     if (newAccessToken) {
-              //       localCache.setCache("access_token", newAccessToken)
-              //       if (newRefreshToken) {
-              //         localCache.setCache("refresh_token", newRefreshToken)
-              //       }
-                    
-              //       this.instance.defaults.headers["Authorization"] = `Bearer ${newAccessToken}`
-              //       originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`
-              //       processQueue(null, newAccessToken)
-              //       return this.instance(originalRequest)
-              //     } else {
-              //       throw new Error("刷新token失败：未获取到新的access_token")
-              //     }
-              //   })
-              //   .catch((error) => {
-              //     processQueue(error, null)
-              //     // 检查是否是网络错误或服务器错误
-              //     if (!error.response || error.response.status >= 500) {
-              //       logout().catch(console.error)
-              //       ElMessage.error("服务器暂时不可用，请稍后重试")
-              //       return Promise.reject(error)
-              //     }
-                  
-              //     // 只有真正的认证错误才登出
-              //     if (error.response.status === 401) {
-              //       logout().catch(console.error)
-              //       ElMessage.error("认证过期，请重新登录")
-              //     } else {
-              //       ElMessage.error("刷新token失败，请重新登录")
-              //     }
-                  
-              //     return Promise.reject(error)
-              //   })
-              //   .finally(() => {
-              //     isRefreshing = false
-              //     isRefreshRequest = false
-              //   })
+            // isRefreshing = true
+            // isRefreshRequest = true
+
+            // // 使用原生axios，避免使用HyRequest实例（打破循环）
+            // return axios
+            //   .create({
+            //     baseURL: import.meta.env.VITE_BASE_API,
+            //     timeout: 5000,
+            //     headers: {
+            //       Authorization: `Bearer ${localCache.getCache("refresh_token")}`
+            //     }
+            //   })
+            //   .post("/user/refresh")
+            //   .then((response) => {
+            //     // 从响应头获取新的token
+            //     const newAccessToken = response.headers["x-access-token"]
+            //     const newRefreshToken = response.headers["x-refresh-token"]
+
+            //     if (newAccessToken) {
+            //       localCache.setCache("access_token", newAccessToken)
+            //       if (newRefreshToken) {
+            //         localCache.setCache("refresh_token", newRefreshToken)
+            //       }
+
+            //       this.instance.defaults.headers["Authorization"] = `Bearer ${newAccessToken}`
+            //       originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`
+            //       processQueue(null, newAccessToken)
+            //       return this.instance(originalRequest)
+            //     } else {
+            //       throw new Error("刷新token失败：未获取到新的access_token")
+            //     }
+            //   })
+            //   .catch((error) => {
+            //     processQueue(error, null)
+            //     // 检查是否是网络错误或服务器错误
+            //     if (!error.response || error.response.status >= 500) {
+            //       logout().catch(console.error)
+            //       ElMessage.error("服务器暂时不可用，请稍后重试")
+            //       return Promise.reject(error)
+            //     }
+
+            //     // 只有真正的认证错误才登出
+            //     if (error.response.status === 401) {
+            //       logout().catch(console.error)
+            //       ElMessage.error("认证过期，请重新登录")
+            //     } else {
+            //       ElMessage.error("刷新token失败，请重新登录")
+            //     }
+
+            //     return Promise.reject(error)
+            //   })
+            //   .finally(() => {
+            //     isRefreshing = false
+            //     isRefreshRequest = false
+            //   })
 
             // return refreshAccessTokenApi()
             //   .then((token) => {

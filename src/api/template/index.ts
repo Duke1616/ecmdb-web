@@ -1,5 +1,5 @@
 import type * as template from "./types/template"
-import instance from "@/common/utils/hy_service"
+import instance from "@@/utils/service"
 
 /** 新增模版 */
 export function createTemplateApi(data: template.createOrUpdateTemplateReq) {

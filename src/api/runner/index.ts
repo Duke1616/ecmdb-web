@@ -1,5 +1,5 @@
 import type * as runner from "./types/runner"
-import instance from "@/common/utils/hy_service"
+import instance from "@@/utils/service"
 
 /** 列表 */
 export function listRunnerApi(data: runner.listRunnerReq) {

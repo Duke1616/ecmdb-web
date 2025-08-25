@@ -1,5 +1,5 @@
 import type * as codebook from "./types/codebook"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 新增 */
 export function createCodebookApi(data: codebook.createOrUpdateCodebookReq) {

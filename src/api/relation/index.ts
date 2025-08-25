@@ -1,6 +1,6 @@
 import type * as Relation from "./types/relation"
 
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 新增关联类型 */
 export function CreateRelationTypeApi(data: Relation.CreateRealtionTypeReq) {

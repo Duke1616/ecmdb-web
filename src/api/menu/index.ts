@@ -1,5 +1,5 @@
 import type * as menu from "./types/menu"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 创建菜单 */
 export function createMenuApi(data: menu.createOrUpdateMenuReq) {

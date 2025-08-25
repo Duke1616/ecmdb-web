@@ -1,5 +1,5 @@
 import type * as permission from "./types/permission"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 更新角色 */
 export function getRolePermissionApi(role_code: string) {

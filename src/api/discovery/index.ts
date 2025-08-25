@@ -1,5 +1,5 @@
 import type * as discovery from "./types/discovery"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 自动发现列表 */
 export function listDiscoveriesByTemplateIdApi(data: discovery.listByTemplateIdReq) {

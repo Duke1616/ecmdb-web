@@ -1,5 +1,5 @@
 import type * as role from "./types/role"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 角色列表 */
 export function listRolesApi(data: role.Page) {

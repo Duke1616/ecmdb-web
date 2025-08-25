@@ -1,5 +1,5 @@
 import * as order from "./types/order"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 新增工单 */
 export function createOrderApi(data: order.createOrderReq) {

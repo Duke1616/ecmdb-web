@@ -1,6 +1,6 @@
 import type * as Model from "./types/model"
 import { RGJsonData } from "relation-graph-vue3"
-import instance from "@/common/utils/hy_service"
+import instance from "@/common/utils/service"
 
 /** 新增模型 */
 export function CreateModelApi(data: Model.CreateModelReq) {

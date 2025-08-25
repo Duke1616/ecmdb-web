@@ -1,4 +1,4 @@
-import instance from "@/common/utils/hy_service"
+import instance from "@@/utils/service"
 
 /** 获取 Minio Put 签名 */
 export function putMinioPresignedUrl(objectName: string) {

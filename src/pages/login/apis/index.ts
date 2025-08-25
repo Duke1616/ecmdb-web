@@ -1,6 +1,5 @@
 import type * as Login from "./types"
-import instance from "@@/utils/hy_service"
-
+import instance from "@@/utils/service"
 
 /** 登录并返回 Token */
 export function systemLoginApi(data: Login.LoginRequestData) {
@@ -38,4 +37,3 @@ export function ldapLoginApi(data: Login.LoginRequestData) {
       return response
     })
 }
-
