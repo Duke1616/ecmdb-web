@@ -27,3 +27,7 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Generated files
+*.js.map
+src/**/*.js

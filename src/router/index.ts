@@ -23,6 +23,16 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/navigation",
+    component: () => import("@/pages/navigation/index.vue"),
+    name: "Navigation",
+    meta: {
+      title: "首页导航",
+      svgIcon: "dashboard",
+      affix: true
+    }
+  },
+  {
     path: "/403",
     component: () => import("@/pages/error/403.vue"),
     meta: {
@@ -64,8 +74,18 @@ export const defaultRoutes: RouteRecordRaw[] = [
   {
     path: "/",
     component: Layouts,
-    redirect: "/cmdb/dashboard",
+    redirect: "/navigation",
     children: [
+      {
+        path: "/navigation",
+        component: () => import("@/pages/navigation/index.vue"),
+        name: "Navigation",
+        meta: {
+          title: "首页导航",
+          svgIcon: "dashboard",
+          affix: true
+        }
+      },
       {
         path: "/cmdb/dashboard",
         component: () => import("@/views/search/search.vue"),
