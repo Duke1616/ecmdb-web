@@ -66,7 +66,7 @@ const navigationCards = ref<NavigationCard[]>([
     description: 'IT变更管理和审批流程',
     icon: 'Connection',
     color: '#67C23A',
-    route: '/change',
+    route: '/cmdb/rota',
     permission: 'change'
   },
   {
@@ -75,7 +75,7 @@ const navigationCards = ref<NavigationCard[]>([
     description: '自动化任务和流程管理',
     icon: 'List',
     color: '#909399',
-    route: '/automation',
+    route: '/cmdb/task/codebook',
     permission: 'automation'
   }
 ])

@@ -3,7 +3,7 @@ import { watchEffect } from "vue"
 import { storeToRefs } from "pinia"
 import { useSettingsStore } from "@/pinia/stores/settings"
 import { useLayoutMode } from "@/common/composables/useLayoutMode"
-import { resetConfigLayout } from "@@/utils"
+import { removeLayoutsConfig } from "@@/utils/cache/local-storage"
 import SelectLayoutMode from "./SelectLayoutMode.vue"
 import { Refresh } from "@element-plus/icons-vue"
 
@@ -46,6 +46,12 @@ const switchSettings = {
 watchEffect(() => {
   !isLeft.value && (fixedHeader.value = true)
 })
+
+/** 重置项目配置 */
+function resetLayoutsConfig() {
+  removeLayoutsConfig()
+  location.reload()
+}
 </script>
 
 <template>
@@ -58,7 +64,7 @@ watchEffect(() => {
       <span class="setting-name">{{ settingName }}</span>
       <el-switch v-model="settingValue.value" :disabled="!isLeft && settingName === '固定 Header'" />
     </div>
-    <el-button type="danger" :icon="Refresh" @click="resetConfigLayout">重 置</el-button>
+    <el-button type="danger" :icon="Refresh" @click="resetLayoutsConfig"> 重 置 </el-button>
   </div>
 </template>
 

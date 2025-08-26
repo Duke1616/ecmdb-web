@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { storeToRefs } from "pinia"
 import { useSettingsStore } from "@/pinia/stores/settings"
-import { AppMain, NavigationBar, TagsView, Logo } from "./components"
+import { AppMain, NavigationBar, TagsView, Logo } from "../components"
 
 const settingsStore = useSettingsStore()
 const { showTagsView, showLogo } = storeToRefs(settingsStore)

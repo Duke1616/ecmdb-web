@@ -8,11 +8,11 @@ import SidebarItem from "./SidebarItem.vue"
 import Logo from "../Logo/index.vue"
 import { useDevice } from "@/common/composables/useDevice"
 import { useLayoutMode } from "@/common/composables/useLayoutMode"
-import { getCssVariableValue } from "@/common/utils"
+import { getCssVar } from "@/common/utils/css"
 // import lodash from "lodash"
-const v3SidebarMenuBgColor = getCssVariableValue("--v3-sidebar-menu-bg-color")
-const v3SidebarMenuTextColor = getCssVariableValue("--v3-sidebar-menu-text-color")
-const v3SidebarMenuActiveTextColor = getCssVariableValue("--v3-sidebar-menu-active-text-color")
+const v3SidebarMenuBgColor = getCssVar("--v3-sidebar-menu-bg-color")
+const v3SidebarMenuTextColor = getCssVar("--v3-sidebar-menu-text-color")
+const v3SidebarMenuActiveTextColor = getCssVar("--v3-sidebar-menu-active-text-color")
 
 const { isMobile } = useDevice()
 const { isLeft, isTop } = useLayoutMode()

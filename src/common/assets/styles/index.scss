@@ -22,6 +22,14 @@
 
 html {
   height: 100%;
+  // 灰色模式
+  &.grey-mode {
+    filter: grayscale(1);
+  }
+  // 色弱模式
+  &.color-weakness {
+    filter: invert(0.8);
+  }
 }
 
 body {
@@ -31,7 +39,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
   font-family:
-    "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+    Inter, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial,
+    sans-serif;
   @extend %scrollbar;
 }
 
@@ -39,11 +48,11 @@ body {
   height: 100%;
 }
 
-// *,
-// *::before,
-// *::after {
-//   box-sizing: border-box;
-// }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 a,
 a:focus,

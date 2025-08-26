@@ -3,7 +3,7 @@ import { computed } from "vue"
 import { storeToRefs } from "pinia"
 import { useAppStore } from "@/pinia/stores/app"
 import { useSettingsStore } from "@/pinia/stores/settings"
-import { AppMain, NavigationBar, Sidebar, TagsView, Logo } from "./components"
+import { AppMain, NavigationBar, Sidebar, TagsView, Logo } from "../components"
 
 const appStore = useAppStore()
 const settingsStore = useSettingsStore()
