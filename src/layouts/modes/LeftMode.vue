@@ -54,6 +54,7 @@ $transition-time: 0.35s;
   @extend %clearfix;
   position: relative;
   width: 100%;
+  height: 100%;
 }
 
 .drawer-bg {
@@ -104,14 +105,15 @@ $transition-time: 0.35s;
 }
 
 .app-main {
-  min-height: calc(100vh - var(--v3-navigationbar-height));
+  // min-height: calc(100vh - var(--v3-navigationbar-height));
+  height: 100vh;
   position: relative;
   overflow: hidden;
 }
 
 .fixed-header + .app-main {
   padding-top: var(--v3-navigationbar-height);
-  height: 92vh;
+  // height: 92vh;
   overflow: auto;
 }
 

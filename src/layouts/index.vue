@@ -40,7 +40,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div>
+  <div class="home">
     <!-- 左侧模式 -->
     <LeftMode v-if="isLeft || isMobile" />
     <!-- 顶部模式 -->
@@ -53,3 +53,8 @@ watchEffect(() => {
     </RightPanel>
   </div>
 </template>
+<style scoped lang="scss">
+.home {
+  height: 100%;
+}
+</style>
