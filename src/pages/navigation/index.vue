@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '@/pinia/stores/user'
-import { storeToRefs } from 'pinia'
-import { 
-  ArrowRight 
-} from '@element-plus/icons-vue'
+import { ref, computed } from "vue"
+import { useRouter } from "vue-router"
+import { ArrowRight } from "@element-plus/icons-vue"
 import type * as ElementPlusIconsVue from "@element-plus/icons-vue"
 type ElementPlusIconsName = keyof typeof ElementPlusIconsVue
 
@@ -20,63 +16,61 @@ interface NavigationCard {
 }
 
 const router = useRouter()
-const userStore = useUserStore()
-const { roles } = storeToRefs(userStore)
 
 const navigationCards = ref<NavigationCard[]>([
   {
-    id: 'cmdb',
-    title: 'CMDB',
-    description: '配置管理数据库，管理IT基础设施和配置项',
-    icon: 'DataBoard',
-    color: '#409EFF',
-    route: '/cmdb/dashboard',
-    permission: 'cmdb'
+    id: "cmdb",
+    title: "CMDB",
+    description: "配置管理数据库，管理IT基础设施和配置项",
+    icon: "DataBoard",
+    color: "#409EFF",
+    route: "/cmdb/dashboard",
+    permission: "cmdb"
   },
   {
-    id: 'order',
-    title: '工单',
-    description: '处理变更申请和工单流程',
-    icon: 'Tickets',
-    color: '#F56C6C',
-    route: '/cmdb/order/start',
-    permission: 'order'
+    id: "order",
+    title: "工单",
+    description: "处理变更申请和工单流程",
+    icon: "Tickets",
+    color: "#F56C6C",
+    route: "/cmdb/order/start",
+    permission: "order"
   },
   {
-    id: 'alert',
-    title: '告警平台',
-    description: '监控告警管理和处理',
-    icon: 'Monitor',
-    color: '#E6A23C',
-    route: '/alert',
-    permission: 'alert'
+    id: "alert",
+    title: "告警平台",
+    description: "监控告警管理和处理",
+    icon: "Monitor",
+    color: "#E6A23C",
+    route: "/alert",
+    permission: "alert"
   },
   {
-    id: 'system',
-    title: '系统配置',
-    description: '用户、角色、权限等系统配置',
-    icon: 'Setting',
-    color: '#9C27B0',
-    route: '/cmdb/system/menu',
-    permission: 'system'
+    id: "system",
+    title: "系统配置",
+    description: "用户、角色、权限等系统配置",
+    icon: "Setting",
+    color: "#9C27B0",
+    route: "/cmdb/system/menu",
+    permission: "system"
   },
   {
-    id: 'change',
-    title: '变更平台',
-    description: 'IT变更管理和审批流程',
-    icon: 'Connection',
-    color: '#67C23A',
-    route: '/cmdb/rota',
-    permission: 'change'
+    id: "change",
+    title: "变更平台",
+    description: "IT变更管理和审批流程",
+    icon: "Connection",
+    color: "#67C23A",
+    route: "/cmdb/rota",
+    permission: "change"
   },
   {
-    id: 'automation',
-    title: '自动化平台',
-    description: '自动化任务和流程管理',
-    icon: 'List',
-    color: '#909399',
-    route: '/cmdb/task/codebook',
-    permission: 'automation'
+    id: "automation",
+    title: "自动化平台",
+    description: "自动化任务和流程管理",
+    icon: "List",
+    color: "#909399",
+    route: "/cmdb/task/codebook",
+    permission: "automation"
   }
 ])
 
@@ -100,7 +94,7 @@ const handleCardClick = (card: NavigationCard) => {
       <h1 class="page-title">IT 运维管理平台</h1>
       <p class="page-subtitle">请选择您要访问的功能模块</p>
     </div>
-    
+
     <div class="navigation-grid">
       <div
         v-for="card in filteredCards"
@@ -132,20 +126,20 @@ const handleCardClick = (card: NavigationCard) => {
 .navigation-page {
   padding: 40px;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: calc(100vh - 80px);
+  min-height: calc(100vh);
 }
 
 .navigation-header {
   text-align: center;
   margin-bottom: 60px;
-  
+
   .page-title {
     font-size: 36px;
     font-weight: 600;
     color: #2c3e50;
     margin-bottom: 16px;
   }
-  
+
   .page-subtitle {
     font-size: 18px;
     color: #7f8c8d;
@@ -176,9 +170,9 @@ const handleCardClick = (card: NavigationCard) => {
   display: flex;
   align-items: center;
   gap: 20px;
-  
+
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -188,22 +182,22 @@ const handleCardClick = (card: NavigationCard) => {
     border-radius: 16px 16px 0 0;
     transition: height 0.3s ease;
   }
-  
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-    
+
     &::before {
       height: 6px;
       border-radius: 16px 16px 0 0;
     }
-    
+
     .card-arrow {
       transform: translateX(8px);
       opacity: 1;
     }
   }
-  
+
   .card-icon {
     flex-shrink: 0;
     width: 64px;
@@ -215,17 +209,17 @@ const handleCardClick = (card: NavigationCard) => {
     justify-content: center;
     color: white;
   }
-  
+
   .card-content {
     flex: 1;
-    
+
     .card-title {
       font-size: 20px;
       font-weight: 600;
       color: #2c3e50;
       margin: 0 0 8px 0;
     }
-    
+
     .card-description {
       font-size: 14px;
       color: #7f8c8d;
@@ -233,7 +227,7 @@ const handleCardClick = (card: NavigationCard) => {
       line-height: 1.5;
     }
   }
-  
+
   .card-arrow {
     flex-shrink: 0;
     color: var(--card-color);
@@ -246,42 +240,42 @@ const handleCardClick = (card: NavigationCard) => {
   .navigation-page {
     padding: 20px;
   }
-  
+
   .navigation-header {
     margin-bottom: 40px;
-    
+
     .page-title {
       font-size: 28px;
     }
-    
+
     .page-subtitle {
       font-size: 16px;
     }
   }
-  
+
   .navigation-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .navigation-card {
     padding: 24px;
     padding-top: 28px;
-    
+
     .card-icon {
       width: 48px;
       height: 48px;
-      
+
       .el-icon {
         font-size: 24px;
       }
     }
-    
+
     .card-content {
       .card-title {
         font-size: 18px;
       }
-      
+
       .card-description {
         font-size: 13px;
       }
