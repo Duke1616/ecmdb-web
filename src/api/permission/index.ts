@@ -5,14 +5,14 @@ import { API_SERVICE } from "@@/utils/service"
 /** 更新角色 */
 export function getRolePermissionApi(role_code: string) {
   return instance.post<permission.rolePermission>({
-    url: `${API_SERVICE.CMDB}permission/list`,
+    url: `${API_SERVICE.CMDB}/permission/list`,
     data: { role_code: role_code }
   })
 }
 
 export function changeRoleMenuPermissionApi(menuIds: number[], roleCode: string) {
   return instance.post<boolean>({
-    url: `${API_SERVICE.CMDB}permission/change`,
+    url: `${API_SERVICE.CMDB}/permission/change`,
     data: { menu_ids: menuIds, role_code: roleCode }
   })
 }
