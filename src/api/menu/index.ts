@@ -1,10 +1,11 @@
 import type * as menu from "./types/menu"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 创建菜单 */
 export function createMenuApi(data: menu.createOrUpdateMenuReq) {
   return instance.post<number>({
-    url: "menu/create",
+    url: `${API_SERVICE.CMDB}/menu/create`,
     data: data
   })
 }
@@ -12,7 +13,7 @@ export function createMenuApi(data: menu.createOrUpdateMenuReq) {
 /** 更新菜单 */
 export function updateMenuApi(data: menu.createOrUpdateMenuReq) {
   return instance.post<menu.menu[]>({
-    url: "menu/update",
+    url: `${API_SERVICE.CMDB}/menu/update`,
     data: data
   })
 }
@@ -20,7 +21,7 @@ export function updateMenuApi(data: menu.createOrUpdateMenuReq) {
 /** 删除菜单 */
 export function deleteMenuApi(id: number) {
   return instance.post<number>({
-    url: "menu/delete",
+    url: `${API_SERVICE.CMDB}/menu/delete`,
     data: { id: id }
   })
 }
@@ -28,6 +29,6 @@ export function deleteMenuApi(id: number) {
 /** 查看列表树 */
 export function listMenuTreeApi() {
   return instance.post<menu.menu[]>({
-    url: "menu/list/tree"
+    url: `${API_SERVICE.CMDB}/menu/list/tree`
   })
 }

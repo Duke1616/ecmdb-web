@@ -6,7 +6,7 @@ import routeSettings from "@/config/route"
 const Layouts = () => import("@/layouts/index.vue")
 const Terminal = () => import("@/views/terminal/index.vue")
 const Logicflow = () => import("@/views/preview/logicflow.vue")
-const AlertLayouts = () => import("@/layouts/index.vue")
+
 /**
  * 常驻路由
  * 除了 redirect/403/404/login 等隐藏页面，其他页面建议设置 Name 属性
@@ -66,16 +66,6 @@ export const constantRoutes: RouteRecordRaw[] = [
     component: Terminal,
     meta: {
       hidden: true
-    }
-  },
-  {
-    path: "/alert/datasource",
-    component: AlertLayouts,
-    name: "datasource",
-    meta: {
-      title: "数据源",
-      svgIcon: "dashboard",
-      affix: true
     }
   }
 ]

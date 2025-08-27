@@ -1,9 +1,10 @@
 import type * as rota from "./types/rota"
 import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 export function listRotasApi(data: rota.page) {
   return instance.post<rota.rotas>({
-    url: "rota/list",
+    url: `${API_SERVICE.CMDB}/rota/list`,
     data: data
   })
 }
@@ -11,7 +12,7 @@ export function listRotasApi(data: rota.page) {
 /** 创建排班表 */
 export function createRotaApi(data: rota.createOrUpdateRotaReq) {
   return instance.post<number>({
-    url: "rota/create",
+    url: `${API_SERVICE.CMDB}/rota/create`,
     data: data
   })
 }
@@ -19,7 +20,7 @@ export function createRotaApi(data: rota.createOrUpdateRotaReq) {
 /** 删除排班表 */
 export function deleteRotaApi(id: number) {
   return instance.post<number>({
-    url: "rota/delete",
+    url: `${API_SERVICE.CMDB}/rota/delete`,
     data: { id: id }
   })
 }
@@ -27,7 +28,7 @@ export function deleteRotaApi(id: number) {
 /** 更新排班表 */
 export function updateRotaApi(data: rota.createOrUpdateRotaReq) {
   return instance.post<rota.rota[]>({
-    url: "rota/update",
+    url: `${API_SERVICE.CMDB}/rota/update`,
     data: data
   })
 }
@@ -35,7 +36,7 @@ export function updateRotaApi(data: rota.createOrUpdateRotaReq) {
 /** 新增常规值班规则 */
 export function addShifSchedulingRuleApi(data: rota.addRuleReq) {
   return instance.post<number>({
-    url: "rota/rule/shift_scheduling/add",
+    url: `${API_SERVICE.CMDB}/rota/rule/shift_scheduling/add`,
     data: data
   })
 }
@@ -43,7 +44,7 @@ export function addShifSchedulingRuleApi(data: rota.addRuleReq) {
 /** 修改常规值班规则 */
 export function updateShifSchedulingRuleApi(data: rota.updateOrDeleteRuleReq) {
   return instance.post<number>({
-    url: "rota/rule/shift_scheduling/update",
+    url: `${API_SERVICE.CMDB}/rota/rule/shift_scheduling/update`,
     data: data
   })
 }
@@ -51,7 +52,7 @@ export function updateShifSchedulingRuleApi(data: rota.updateOrDeleteRuleReq) {
 /** 删除常规值班规则 */
 export function deleteShifSchedulingRuleApi(data: rota.updateOrDeleteRuleReq) {
   return instance.post<number>({
-    url: "rota/rule/shift_scheduling/delete",
+    url: `${API_SERVICE.CMDB}/rota/rule/shift_scheduling/delete`,
     data: data
   })
 }
@@ -59,7 +60,7 @@ export function deleteShifSchedulingRuleApi(data: rota.updateOrDeleteRuleReq) {
 /** 新增临时值班规则 */
 export function addShifAdjustmentRuleApi(data: rota.addOrUpdateAdjustmentRuleReq) {
   return instance.post<number>({
-    url: "rota/rule/shift_adjustment/add",
+    url: `${API_SERVICE.CMDB}/rota/rule/shift_adjustment/add`,
     data: data
   })
 }
@@ -67,7 +68,7 @@ export function addShifAdjustmentRuleApi(data: rota.addOrUpdateAdjustmentRuleReq
 /** 新增临时值班规则 */
 export function updateShifAdjustmentRuleApi(data: rota.addOrUpdateAdjustmentRuleReq) {
   return instance.post<number>({
-    url: "rota/rule/shift_adjustment/update",
+    url: `${API_SERVICE.CMDB}/rota/rule/shift_adjustment/update`,
     data: data
   })
 }
@@ -75,7 +76,7 @@ export function updateShifAdjustmentRuleApi(data: rota.addOrUpdateAdjustmentRule
 /** 删除临时值班规则 */
 export function deleteShifAdjustmentRuleApi(data: rota.deleteAdjustmentReq) {
   return instance.post<number>({
-    url: "rota/rule/shift_adjustment/delete",
+    url: `${API_SERVICE.CMDB}/rota/rule/shift_adjustment/delete`,
     data: data
   })
 }
@@ -83,7 +84,7 @@ export function deleteShifAdjustmentRuleApi(data: rota.deleteAdjustmentReq) {
 /** 查看 */
 export function getRotaRuleById(id: number) {
   return instance.post<rota.rotaRule[]>({
-    url: "rota/rule/detail",
+    url: `${API_SERVICE.CMDB}/rota/rule/detail`,
     data: { id: id }
   })
 }
@@ -91,7 +92,7 @@ export function getRotaRuleById(id: number) {
 /** 查看排班表 */
 export function previewSchedule(data: rota.previewScheduleReq) {
   return instance.post<rota.shiftRostered>({
-    url: "rota/schedule/preview",
+    url: `${API_SERVICE.CMDB}/rota/schedule/preview`,
     data: data
   })
 }

@@ -1,10 +1,11 @@
 import type * as codebook from "./types/codebook"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 新增 */
 export function createCodebookApi(data: codebook.createOrUpdateCodebookReq) {
   return instance.post<number>({
-    url: "codebook/create",
+    url: `${API_SERVICE.CMDB}/codebook/create`,
     data: data
   })
 }
@@ -12,7 +13,7 @@ export function createCodebookApi(data: codebook.createOrUpdateCodebookReq) {
 /** 修改 */
 export function updateCodebookApi(data: codebook.createOrUpdateCodebookReq) {
   return instance.post<number>({
-    url: "codebook/update",
+    url: `${API_SERVICE.CMDB}/codebook/update`,
     data: data
   })
 }
@@ -20,7 +21,7 @@ export function updateCodebookApi(data: codebook.createOrUpdateCodebookReq) {
 /** 列表 */
 export function listCodebookApi(data: codebook.listCodebookReq) {
   return instance.post<codebook.codebooks>({
-    url: "codebook/list",
+    url: `${API_SERVICE.CMDB}/codebook/list`,
     data: data
   })
 }
@@ -28,7 +29,7 @@ export function listCodebookApi(data: codebook.listCodebookReq) {
 /** 详情 */
 export function detailCodebookApi(id: number) {
   return instance.post<codebook.codebooks>({
-    url: "codebook/list",
+    url: `${API_SERVICE.CMDB}/codebook/list`,
     data: { id: id }
   })
 }
@@ -36,7 +37,7 @@ export function detailCodebookApi(id: number) {
 /** 删除 */
 export function deleteCodebookApi(id: number) {
   return instance.post<number>({
-    url: "codebook/delete",
+    url: `${API_SERVICE.CMDB}/codebook/delete`,
     data: { id: id }
   })
 }

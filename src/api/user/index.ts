@@ -1,11 +1,12 @@
 import type * as user from "./types/user"
 import type * as ldap from "./types/ldap"
 import instance from "@/common/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 查询用户列表 */
 export function listUsersApi(data: user.Page) {
   return instance.post<user.users>({
-    url: "user/list",
+    url: `${API_SERVICE.CMDB}/user/list`,
     data: data
   })
 }
@@ -13,7 +14,7 @@ export function listUsersApi(data: user.Page) {
 /** 模糊匹配用户 */
 export function listUsersByKeywordApi(data: user.listUserByKeywordReq) {
   return instance.post<user.users>({
-    url: "user/find/by_keyword",
+    url: `${API_SERVICE.CMDB}/user/find/by_keyword`,
     data: data
   })
 }
@@ -21,7 +22,7 @@ export function listUsersByKeywordApi(data: user.listUserByKeywordReq) {
 /** 查看部门组用户 */
 export function listUsersByDepartmentApi(data: user.listUserByDepartmentReq) {
   return instance.post<user.users>({
-    url: "user/find/department_id",
+    url: `${API_SERVICE.CMDB}/user/find/department_id`,
     data: data
   })
 }
@@ -29,7 +30,7 @@ export function listUsersByDepartmentApi(data: user.listUserByDepartmentReq) {
 /** 用户绑定角色 */
 export function bindRoleCodesAPi(data: user.bindRoleCodesReq) {
   return instance.post<number>({
-    url: "user/role/bind",
+    url: `${API_SERVICE.CMDB}/user/role/bind`,
     data: data
   })
 }
@@ -37,14 +38,14 @@ export function bindRoleCodesAPi(data: user.bindRoleCodesReq) {
 /** 获取用户详情 */
 export function getUserInfoApi() {
   return instance.post<user.user>({
-    url: "user/info"
+    url: `${API_SERVICE.CMDB}/user/info`
   })
 }
 
 /** 创建用户 */
 export function createUserApi(data: user.createOrUpdateUserReq) {
   return instance.post<number>({
-    url: "user/create",
+    url: `${API_SERVICE.CMDB}/user/create`,
     data: data
   })
 }
@@ -52,7 +53,7 @@ export function createUserApi(data: user.createOrUpdateUserReq) {
 /** 更新用户 */
 export function updateUserApi(data: user.createOrUpdateUserReq) {
   return instance.post<user.user[]>({
-    url: "user/update",
+    url: `${API_SERVICE.CMDB}/user/update`,
     data: data
   })
 }
@@ -60,14 +61,14 @@ export function updateUserApi(data: user.createOrUpdateUserReq) {
 /** 根据部门聚合查询 */
 export function pipelineUserByDepartmentApi() {
   return instance.post<user.userDepartmentCombination[]>({
-    url: "user/pipeline/department_id"
+    url: `${API_SERVICE.CMDB}/user/pipeline/department_id`
   })
 }
 
 /** 查询多个用户详情 */
 export function findByUsernamesApi(uns: string[]) {
   return instance.post<user.users>({
-    url: "user/find/usernames",
+    url: `${API_SERVICE.CMDB}/user/find/usernames`,
     data: { usernames: uns }
   })
 }
@@ -75,7 +76,7 @@ export function findByUsernamesApi(uns: string[]) {
 /** 查询多个用户详情 */
 export function findByIdsApi(ids: number[]) {
   return instance.post<user.users>({
-    url: "user/find/by_ids",
+    url: `${API_SERVICE.CMDB}/user/find/by_ids`,
     data: { ids: ids }
   })
 }
@@ -83,7 +84,7 @@ export function findByIdsApi(ids: number[]) {
 /** 查询单个用户详情 */
 export function findByUsernameApi(username: string) {
   return instance.post<user.user>({
-    url: "user/find/username",
+    url: `${API_SERVICE.CMDB}/user/find/username`,
     data: { username: username }
   })
 }
@@ -91,14 +92,14 @@ export function findByUsernameApi(username: string) {
 /** 查询单个用户详情 */
 export function findByUserIdApi(id: number) {
   return instance.post<user.user>({
-    url: "user/find/id",
+    url: `${API_SERVICE.CMDB}/user/find/id`,
     data: { id: id }
   })
 }
 /** 查询Ldap用户 */
 export function searchLdapUserApi(data: user.serachLdapUserReq) {
   return instance.post<ldap.users>({
-    url: "user/ldap/search",
+    url: `${API_SERVICE.CMDB}/user/ldap/search`,
     data: data
   })
 }
@@ -106,14 +107,14 @@ export function searchLdapUserApi(data: user.serachLdapUserReq) {
 /** 刷新 Cache 缓存 */
 export function refreshCacheLdapApi() {
   return instance.post<string>({
-    url: "user/ldap/refresh_cache"
+    url: `${API_SERVICE.CMDB}/user/ldap/refresh_cache`
   })
 }
 
 /** 同步 LDAP 用户 */
 export function syncLdapUserApi(data: user.createOrUpdateUserReq) {
   return instance.post<number>({
-    url: "user/ldap/sync",
+    url: `${API_SERVICE.CMDB}/user/ldap/sync`,
     data: data
   })
 }

@@ -1,9 +1,10 @@
 import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 获取 Minio Put 签名 */
 export function putMinioPresignedUrl(objectName: string) {
   return instance.post<number>({
-    url: "tools/minio/put_presigned_url",
+    url: `${API_SERVICE.CMDB}/tools/minio/put_presigned_url`,
     data: { object_name: objectName }
   })
 }
@@ -11,7 +12,7 @@ export function putMinioPresignedUrl(objectName: string) {
 /** 获取 Minio Get 签名 */
 export function getMinioPresignedUrl(objectName: string) {
   return instance.post<number>({
-    url: "tools/minio/get_presigned_url",
+    url: `${API_SERVICE.CMDB}/tools/minio/get_presigned_url`,
     data: { object_name: objectName }
   })
 }
@@ -19,7 +20,7 @@ export function getMinioPresignedUrl(objectName: string) {
 /** 删除对象 */
 export function removeMinioObject(objectName: string) {
   return instance.post<number>({
-    url: "tools/minio/object/remove",
+    url: `${API_SERVICE.CMDB}/tools/minio/object/remove`,
     data: { object_name: objectName }
   })
 }

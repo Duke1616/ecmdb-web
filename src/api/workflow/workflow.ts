@@ -1,10 +1,11 @@
 import type * as workflow from "./types/workflow"
 import instance from "@/common/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 新增工作流程 */
 export function createWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
   return instance.post<number>({
-    url: "workflow/create",
+    url: `${API_SERVICE.CMDB}/workflow/create`,
     data: data
   })
 }
@@ -12,7 +13,7 @@ export function createWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
 /** 修改工作流程 */
 export function updateWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
   return instance.post<number>({
-    url: "workflow/update",
+    url: `${API_SERVICE.CMDB}/workflow/update`,
     data: data
   })
 }
@@ -20,7 +21,7 @@ export function updateWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
 /** 删除工作流程 */
 export function deleteWorkflowApi(id: number) {
   return instance.post<number>({
-    url: "workflow/delete",
+    url: `${API_SERVICE.CMDB}/workflow/delete`,
     data: { id: id }
   })
 }
@@ -28,7 +29,7 @@ export function deleteWorkflowApi(id: number) {
 /** 部署工作流程 */
 export function deployWorkflowApi(id: number) {
   return instance.post<number>({
-    url: "workflow/deploy",
+    url: `${API_SERVICE.CMDB}/workflow/deploy`,
     data: { id: id }
   })
 }
@@ -36,7 +37,7 @@ export function deployWorkflowApi(id: number) {
 /** 列表 */
 export function listWorkflowApi(data: workflow.listWorkflowReq) {
   return instance.post<workflow.workflows>({
-    url: "workflow/list",
+    url: `${API_SERVICE.CMDB}/workflow/list`,
     data: data
   })
 }
@@ -44,7 +45,7 @@ export function listWorkflowApi(data: workflow.listWorkflowReq) {
 /** 获取流程状态图 */
 export function getWorkflowGraphApi(data: workflow.workflowGraphReq) {
   return instance.post<workflow.workflowGraph>({
-    url: "workflow/graph",
+    url: `${API_SERVICE.CMDB}/workflow/graph`,
     data: data
   })
 }

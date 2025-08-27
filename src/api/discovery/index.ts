@@ -1,10 +1,11 @@
 import type * as discovery from "./types/discovery"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 自动发现列表 */
 export function listDiscoveriesByTemplateIdApi(data: discovery.listByTemplateIdReq) {
   return instance.post<discovery.discoveries>({
-    url: "discovery/list/by_template_id",
+    url: `${API_SERVICE.CMDB}/discovery/list/by_template_id`,
     data: data
   })
 }
@@ -12,7 +13,7 @@ export function listDiscoveriesByTemplateIdApi(data: discovery.listByTemplateIdR
 /** 创建自动发现 */
 export function createDiscoveryApi(data: discovery.createOrUpdateDiscoveryReq) {
   return instance.post<number>({
-    url: "discovery/create",
+    url: `${API_SERVICE.CMDB}/discovery/create`,
     data: data
   })
 }
@@ -20,7 +21,7 @@ export function createDiscoveryApi(data: discovery.createOrUpdateDiscoveryReq) {
 /** 更新自动发现 */
 export function updateDiscoveryApi(data: discovery.createOrUpdateDiscoveryReq) {
   return instance.post<number>({
-    url: "discovery/update",
+    url: `${API_SERVICE.CMDB}/discovery/update`,
     data: data
   })
 }
@@ -28,7 +29,7 @@ export function updateDiscoveryApi(data: discovery.createOrUpdateDiscoveryReq) {
 /** 删除自动发现 */
 export function deleteDiscoveryApi(id: number) {
   return instance.post<number>({
-    url: "discovery/delete",
+    url: `${API_SERVICE.CMDB}/discovery/delete`,
     data: { id: id }
   })
 }
@@ -36,7 +37,7 @@ export function deleteDiscoveryApi(id: number) {
 /** 删除自动发现 */
 export function syncDiscoveryApi(data: discovery.syncDiscoveryReq) {
   return instance.post<number>({
-    url: "discovery/sync",
+    url: `${API_SERVICE.CMDB}/discovery/sync`,
     data: data
   })
 }

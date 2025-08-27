@@ -1,10 +1,11 @@
 import type * as template from "./types/template"
 import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 新增模版 */
 export function createTemplateApi(data: template.createOrUpdateTemplateReq) {
   return instance.post<number>({
-    url: "template/create",
+    url: `${API_SERVICE.CMDB}/template/create`,
     data: data
   })
 }
@@ -12,7 +13,7 @@ export function createTemplateApi(data: template.createOrUpdateTemplateReq) {
 /** 修改模版 */
 export function updateTemplateApi(data: template.createOrUpdateTemplateReq) {
   return instance.post<number>({
-    url: "template/update",
+    url: `${API_SERVICE.CMDB}/template/update`,
     data: data
   })
 }
@@ -20,7 +21,7 @@ export function updateTemplateApi(data: template.createOrUpdateTemplateReq) {
 /** 查看模版详情 */
 export function detailTemplateApi(id: number) {
   return instance.post<template.template>({
-    url: "template/detail",
+    url: `${API_SERVICE.CMDB}/template/detail`,
     data: { id: id }
   })
 }
@@ -28,7 +29,7 @@ export function detailTemplateApi(id: number) {
 /** 根据模版列表 */
 export function listTemplateApi(data: template.PageReq) {
   return instance.post<template.templates>({
-    url: "template/list",
+    url: `${API_SERVICE.CMDB}/template/list`,
     data: data
   })
 }
@@ -36,7 +37,7 @@ export function listTemplateApi(data: template.PageReq) {
 /** 删除模版 */
 export function deleteTemplateApi(id: number) {
   return instance.post<number>({
-    url: "template/delete",
+    url: `${API_SERVICE.CMDB}/template/delete`,
     data: { id: id }
   })
 }
@@ -44,7 +45,7 @@ export function deleteTemplateApi(id: number) {
 /** 新增模版分组 */
 export function createTemplateGroupApi(data: template.createTemplateGroupReq) {
   return instance.post<number>({
-    url: "template/group/create",
+    url: `${API_SERVICE.CMDB}/template/group/create`,
     data: data
   })
 }
@@ -52,7 +53,7 @@ export function createTemplateGroupApi(data: template.createTemplateGroupReq) {
 /** 根据模版列表 */
 export function listTemplateGroupApi(data: template.PageReq) {
   return instance.post<template.templateGroups>({
-    url: "template/group/list",
+    url: `${API_SERVICE.CMDB}/template/group/list`,
     data: data
   })
 }
@@ -60,14 +61,14 @@ export function listTemplateGroupApi(data: template.PageReq) {
 /** 聚合组数据查看 */
 export function pipelineGroupApi() {
   return instance.post<template.templateCombinations>({
-    url: "template/list/pipeline"
+    url: `${API_SERVICE.CMDB}/template/list/pipeline`
   })
 }
 
 /** 根据模版 Ids 获取模版列表 */
 export function findByTemplateIdsApi(ids: number[]) {
   return instance.post<template.templates>({
-    url: "template/by_ids",
+    url: `${API_SERVICE.CMDB}/template/by_ids`,
     data: { ids: ids }
   })
 }
@@ -75,7 +76,7 @@ export function findByTemplateIdsApi(ids: number[]) {
 /** 根据流程ID获取所有模版 */
 export function getTemplateByWorkflowIdApi(workflow_id: number) {
   return instance.post<template.templates>({
-    url: "template/get_by_workflow_id",
+    url: `${API_SERVICE.CMDB}/template/get_by_workflow_id`,
     data: { workflow_id: workflow_id }
   })
 }
@@ -83,7 +84,7 @@ export function getTemplateByWorkflowIdApi(workflow_id: number) {
 /** 根据流程ID获取所有模版的Rule信息 */
 export function getTemplateRulesByWorkflowIdApi(workflow_id: number) {
   return instance.post<template.templateRules>({
-    url: "template/rules/by_workflow_id",
+    url: `${API_SERVICE.CMDB}/template/rules/by_workflow_id`,
     data: { workflow_id: workflow_id }
   })
 }
@@ -91,7 +92,7 @@ export function getTemplateRulesByWorkflowIdApi(workflow_id: number) {
 /** 根据 ids 获取模版组 */
 export function getTemplateGroupsByIdsApi(ids: number[]) {
   return instance.post<template.templateGroups>({
-    url: "template/group/by_ids",
+    url: `${API_SERVICE.CMDB}/template/group/by_ids`,
     data: { ids: ids }
   })
 }

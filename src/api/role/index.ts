@@ -1,10 +1,11 @@
 import type * as role from "./types/role"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
+import { API_SERVICE } from "@@/utils/service"
 
 /** 角色列表 */
 export function listRolesApi(data: role.Page) {
   return instance.post<role.roles>({
-    url: "role/list",
+    url: `${API_SERVICE.CMDB}/role/list`,
     data: data
   })
 }
@@ -12,7 +13,7 @@ export function listRolesApi(data: role.Page) {
 /** 创建角色 */
 export function createRoleApi(data: role.createOrUpdateRoleReq) {
   return instance.post<number>({
-    url: "role/create",
+    url: `${API_SERVICE.CMDB}/role/create`,
     data: data
   })
 }
@@ -20,7 +21,7 @@ export function createRoleApi(data: role.createOrUpdateRoleReq) {
 /** 更新角色 */
 export function updateRoleApi(data: role.createOrUpdateRoleReq) {
   return instance.post<role.role[]>({
-    url: "role/update",
+    url: `${API_SERVICE.CMDB}/role/update`,
     data: data
   })
 }
@@ -28,21 +29,21 @@ export function updateRoleApi(data: role.createOrUpdateRoleReq) {
 /** 删除角色 */
 export function deleteRoleApi(id: number) {
   return instance.post<number>({
-    url: "role/delete",
+    url: `${API_SERVICE.CMDB}/role/delete`,
     data: { id: id }
   })
 }
 
 export function listUserHaveRolesApi(data: role.userBindReq) {
   return instance.post<role.roles>({
-    url: "role/user/have",
+    url: `${API_SERVICE.CMDB}/role/user/have`,
     data: data
   })
 }
 
 export function listUserDoesNotHaveRoles(data: role.userBindReq) {
   return instance.post<role.roles>({
-    url: "role/user/does_not_have",
+    url: `${API_SERVICE.CMDB}/role/user/does_not_have`,
     data: data
   })
 }

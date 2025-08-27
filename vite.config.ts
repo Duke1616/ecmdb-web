@@ -131,11 +131,17 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       strictPort: false,
       /** 接口代理 */
       proxy: {
-        "/api": {
+        "/api/cmdb": {
           target: `http://${viteEnv.VITE_ECMDB_API}`,
           ws: true,
-          /** 是否允许跨域 */
-          changeOrigin: true
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/cmdb/, "/api")
+        },
+        "/api/alert": {
+          target: `http://${viteEnv.VITE_ALERT_API}`,
+          ws: true,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/alert/, "/api")
         },
         "/minio": {
           target: `http://${viteEnv.VITE_MINIO_ENDPOINT}`,
