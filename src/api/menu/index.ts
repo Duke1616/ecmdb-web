@@ -32,3 +32,11 @@ export function listMenuTreeApi() {
     url: `${API_SERVICE.CMDB}/menu/list/tree`
   })
 }
+
+/** 删除菜单 */
+export function listMenusByPlatformApi(platform: string) {
+  return instance.post<menu.menu[]>({
+    url: `${API_SERVICE.CMDB}/menu/list/tree/by_platform`,
+    data: { platform: platform }
+  })
+}

@@ -205,6 +205,7 @@ const DEFAULT_FORM_DATA: createOrUpdateMenuReq = {
     title: "",
     is_hidden: false,
     is_affix: false,
+    platform: "",
     is_keepalive: false,
     buttons: []
   },
@@ -283,9 +284,10 @@ const submitUpdateForm = () => {
   })
 }
 
-const submitCreateForm = () => {
+const submitCreateForm = (platform: string) => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
+    formData.value.meta.platform = platform
     createMenuApi(formData.value)
       .then((data) => {
         ElMessage.success("保存成功")

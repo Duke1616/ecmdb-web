@@ -1,34 +1,89 @@
 <template>
-  <div class="app-container">
-    <div class="header">
-      <el-empty v-if="empty" :image-size="200" />
-      <el-space v-else direction="vertical" fill>
-        <div v-for="group in groupModelsData" :key="group.group_id" class="model-group">
-          <!-- 使用 el-descriptions 展示组名称 -->
-          <el-descriptions v-if="group.models" :title="group.group_name" :column="3" border />
+  <div class="model-display-container">
+    <!-- 头部区域 -->
+    <!-- <div class="header-section">
+      <h1 class="page-title">模型中心</h1>
+      <p class="page-subtitle">浏览和管理您的模型资源</p>
+    </div> -->
 
-          <!-- 展示模型卡片 -->
-          <el-space wrap>
-            <el-card
-              v-for="model in group.models"
-              :key="model.id"
-              class="model-card"
-              @click="handleModelClick(model)"
-              style="width: 200px"
-            >
-              <div class="model-title">
-                <div class="model-content">
-                  <div class="model-image">
-                    <img :src="model.icon" class="model-icon" />
-                  </div>
-                  <div class="model-name">{{ model.name }}</div>
-                </div>
-                <div>{{ model.total }}</div>
-              </div>
-            </el-card>
-          </el-space>
+    <!-- 空状态显示 -->
+    <div v-if="empty" class="empty-state">
+      <el-empty :image-size="160" description="暂无模型数据" class="custom-empty">
+        <template #image>
+          <div class="empty-icon">
+            <svg viewBox="0 0 64 64" width="64" height="64">
+              <circle cx="32" cy="32" r="20" fill="#f0f2f5" stroke="#d9d9d9" stroke-width="2" />
+              <path d="M32 24v16M24 32h16" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+        </template>
+      </el-empty>
+    </div>
+
+    <!-- 左右分栏布局 -->
+    <div v-else class="main-layout">
+      <!-- 左侧分组列表 -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <h3>模型分组</h3>
+          <div class="total-groups">{{ groupModelsData.length }} 个分组</div>
         </div>
-      </el-space>
+        <div class="groups-list">
+          <div
+            v-for="group in groupModelsData"
+            :key="`group-${group.group_id}`"
+            class="group-list-item"
+            :class="{ 'group-active': String(selectedGroupId) === String(group.group_id) }"
+            @click="selectGroup(group.group_id)"
+          >
+            <div class="group-content">
+              <div class="group-title">{{ group.group_name }}</div>
+              <div class="group-badge">{{ group.models?.length || 0 }} 个模型</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧模型展示区域 -->
+      <div class="content-area">
+        <div v-if="selectedGroup" class="models-section">
+          <div class="section-header">
+            <h2 class="section-title">{{ selectedGroup.group_name }}</h2>
+            <div class="section-count">{{ selectedGroup.models?.length || 0 }} 个模型</div>
+          </div>
+
+          <!-- 模型网格 -->
+          <div v-if="selectedGroup.models && selectedGroup.models.length > 0" class="models-grid">
+            <div
+              v-for="model in selectedGroup.models"
+              :key="model.id"
+              class="model-card-wrapper"
+              @click="handleModelClick(model)"
+            >
+              <div class="model-card">
+                <div class="model-icon-wrapper">
+                  <img :src="model.icon" class="model-icon" alt="模型图标" />
+                </div>
+                <div class="model-info">
+                  <h3 class="model-name">{{ model.name }}</h3>
+                  <div class="model-uid">{{ model.uid }}</div>
+                </div>
+                <div class="model-count">{{ model.total }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 分组内空状态 -->
+          <div v-else class="group-empty">
+            <el-empty :image-size="120" description="该分组暂无模型" />
+          </div>
+        </div>
+
+        <!-- 未选择分组时的提示 -->
+        <div v-else class="no-selection">
+          <el-empty :image-size="140" description="请选择一个分组查看模型" />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -36,14 +91,22 @@
 <script lang="ts" setup>
 import { useRouter } from "vue-router"
 import { type Model, type Models } from "@/api/model/types/model"
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useModelStore } from "@/pinia/stores/model"
 
-const empty = ref<boolean>(false)
 const router = useRouter()
+const empty = ref<boolean>(false)
+const selectedGroupId = ref<string | number>("")
 
 const groupModelsData = ref<Models[]>([])
-// ** 获取数据 */
+
+const selectedGroup = computed(() => {
+  return groupModelsData.value.find((group) => String(group.group_id) === String(selectedGroupId.value))
+})
+
+const selectGroup = (groupId: string | number) => {
+  selectedGroupId.value = groupId
+}
 
 const getModelsData = () => {
   useModelStore()
@@ -52,6 +115,8 @@ const getModelsData = () => {
       groupModelsData.value = data.mgs
       if (groupModelsData.value.length === 0) {
         empty.value = true
+      } else {
+        selectedGroupId.value = groupModelsData.value[0].group_id
       }
     })
     .catch(() => {
@@ -67,57 +132,513 @@ const handleModelClick = (model: Model) => {
   })
 }
 
-getModelsData()
+// Ensure hooks are called at the top level
+const useModelData = () => {
+  getModelsData()
+}
+
+useModelData()
 </script>
 
-<style>
-.model-card:hover {
-  box-shadow: 0 1px 6px rgba(255, 255, 255, 0.932);
-  border-color: #eee;
-  transition: all 0.2s ease-in-out;
-  transform: scale(1.02);
+<style scoped>
+.model-display-container {
+  height: calc(100vh - 40px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* 调整 el-card 大小 */
-/*
-.model-card {
-  .el-card__body {
-    padding: 16px;
-  }
-} */
-
-.el-descriptions__header {
-  margin-bottom: 10px;
+/* 压缩头部区域空间占用 */
+.header-section {
+  text-align: center;
+  margin-bottom: 20px;
+  padding: 12px 0;
 }
 
-.search-input {
-  margin-right: 10px;
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin: 0 0 4px 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.search-radio {
-  margin-left: 10px;
+.page-subtitle {
+  font-size: 0.9rem;
+  color: #718096;
+  margin: 0;
+  font-weight: 400;
 }
 
-.model-title {
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.custom-empty {
+  padding: 40px;
+}
+
+.empty-icon {
+  margin-bottom: 16px;
+}
+
+/* 修复左右两栏间隙问题，设置统一背景色并保留边框间隔 */
+.main-layout {
+  display: flex;
+  gap: 0;
+  background: #f8fafc; /* 设置与header相同的背景色，覆盖所有间隙 */
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+  justify-content: flex-start;
+  border: 1px solid #e2e8f0;
+}
+
+/* 同步左侧边栏样式，改进配色方案并保留右边框 */
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: white; /* 保持白色背景 */
+  border-right: 1px solid #e2e8f0; /* 保留右边框作为间隔 */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  /* 确保与右侧section-header高度一致 */
+  min-height: 72px;
+  box-sizing: border-box;
 }
 
-.model-content {
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.total-groups {
+  background: #e2e8f0;
+  color: #4a5568;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.groups-list {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* 同步分组项样式，确保显示为正常列表 */
+.group-list-item {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  width: 100% !important;
+  padding: 14px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fafbfc;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.group-list-item:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e0;
+  transform: translateX(2px);
+}
+
+.group-list-item.group-active {
+  background: #3182ce !important;
+  color: white !important;
+  border-color: #2c5aa0;
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+.group-content {
   display: flex;
-  .model-image {
-    width: 17px;
-    height: 17px;
-    margin-right: 5px;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.group-title {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2d3748;
+  line-height: 1.3;
+}
+
+.group-badge {
+  font-size: 0.8rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.group-list-item.group-active .group-title {
+  color: white !important;
+}
+
+.group-list-item.group-active .group-badge {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* 移除可能冲突的旧样式类 */
+.group-item {
+  display: none !important;
+}
+
+/* 同步右侧内容区域样式 */
+.content-area {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white; /* 设置白色背景 */
+}
+
+.models-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.section-header {
+  padding: 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  flex-shrink: 0;
+  min-height: 72px;
+  box-sizing: border-box;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.section-count {
+  background: #3182ce;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* 同步模型网格样式，包括Mac屏幕优化和高分辨率适配 */
+.models-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  align-content: start;
+}
+
+@media (max-width: 480px) {
+  .models-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 16px;
   }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) {
+  .models-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .models-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    padding: 18px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .models-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+    padding: 22px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .models-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+}
+
+.model-card-wrapper {
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.model-card-wrapper:hover {
+  transform: translateY(-3px);
+}
+
+/* 同步现代化模型卡片设计 */
+.model-card {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  height: 100%;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.model-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3182ce 0%, #2c5aa0 100%);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.model-card:hover {
+  border-color: #3182ce;
+  box-shadow: 0 6px 20px rgba(49, 130, 206, 0.15);
+}
+
+.model-card:hover::before {
+  transform: scaleX(1);
+}
+
+.model-icon-wrapper {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f7fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .model-icon-wrapper {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.model-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
   .model-icon {
-    width: 100%;
-    height: 100%;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.model-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.model-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 2px 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 1280px) and (max-width: 1439px) {
+  .model-name {
+    font-size: 0.9rem;
+  }
+}
+
+.model-uid {
+  color: #718096;
+  font-size: 0.8rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.model-count {
+  background: #3182ce;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  min-width: 36px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.no-selection,
+.group-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 同步响应式设计优化 */
+@media (max-width: 768px) {
+  .model-display-container {
+    padding: 16px;
+    height: 100vh;
   }
 
-  .model-name {
-    font-weight: bold;
+  .header-section {
+    padding: 12px 0;
+    margin-bottom: 16px;
+  }
+
+  .main-layout {
+    flex-direction: column;
+    gap: 0;
+    height: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #e2e8f0;
+    max-height: 180px;
+    min-height: 150px;
+  }
+
+  .groups-list {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 12px;
+  }
+
+  .group-list-item {
+    min-width: 180px;
+    margin-bottom: 0;
+  }
+
+  .content-area {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 16px;
+  }
+
+  .section-header .section-title {
+    font-size: 1.1rem;
+  }
+
+  .page-title {
+    font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .model-display-container {
+    padding: 12px;
+  }
+
+  .header-section {
+    padding: 8px 0;
+  }
+
+  .sidebar {
+    max-height: 160px;
+  }
+
+  .group-list-item {
+    min-width: 140px;
+  }
+
+  .model-card {
+    padding: 14px;
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+  }
+}
+
+/* 添加高分辨率显示器优化 */
+@media (min-width: 1440px) {
+  .model-display-container {
+    padding: 24px;
+  }
+
+  .sidebar {
+    width: 320px;
+    min-width: 320px;
   }
 }
 </style>

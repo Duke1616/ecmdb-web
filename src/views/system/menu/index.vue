@@ -3,18 +3,19 @@ import { h, nextTick, onMounted, ref, watch } from "vue"
 import { Search } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
-import { deleteMenuApi, listMenuTreeApi } from "@/api/menu"
+import { deleteMenuApi, listMenusByPlatformApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
 import { ElMessage, ElMessageBox, ElTree } from "element-plus"
 const platforms = ref([
-  { id: 1, name: "平台1" },
-  { id: 2, name: "平台2" },
-  { id: 3, name: "平台3" }
+  { id: "cmdb", name: "资产管理" },
+  { id: "order", name: "工单管理" },
+  { id: "alert", name: "告警平台" },
+  { id: "system", name: "系统管理" }
 ])
 
-const currentPlatform = ref(1) // 默认选中平台1
+const currentPlatform = ref<string>("cmdb")
 
-const handlePlatformChange = (platformId: number) => {
+const handlePlatformChange = (platformId: string) => {
   if (currentPlatform.value === platformId) {
     return // 如果点击的是当前平台，不做任何操作
   }
@@ -72,7 +73,7 @@ const handleDelete = () => {
 }
 
 const handlerCreate = () => {
-  menuCreateRef.value?.submitCreateForm()
+  menuCreateRef.value?.submitCreateForm(currentPlatform.value)
 }
 
 const onClosed = (id: number) => {
@@ -115,6 +116,7 @@ const updateMenuData = (node: menu | null) => {
   me.value.push(node.meta.is_affix ? "affix" : "")
   me.value.push(node.meta.is_hidden ? "hidden" : "")
   me.value.push(node.meta.is_keepalive ? "keepalive" : "")
+  me.value.push(node.meta.platform)
   me.value = me.value.filter(Boolean)
 
   // 调用setCheckedCities，传入过滤后的me.value
@@ -144,14 +146,14 @@ const filterNode = (value: string, data: Tree) => {
 /** 查询模版列表 */
 const menuTreeData = ref<menu[]>([])
 const listMenusTreeData = async () => {
-  listMenuTreeApi()
+  listMenusByPlatformApi(currentPlatform.value)
     .then(async ({ data }) => {
       menuTreeData.value = data
 
       await nextTick()
       // 设置当前节点
-      if (currentNodeKey.value) {
-        treeRef.value!.setCurrentKey(currentNodeKey.value)
+      if (currentNodeKey.value && treeRef.value) {
+        treeRef.value.setCurrentKey(currentNodeKey.value)
         // 录入数据
         const node = findMenuById(data, currentNodeKey.value)
         updateMenuData(node)
@@ -164,20 +166,32 @@ const listMenusTreeData = async () => {
     .finally(() => {})
 }
 
-const findMenuById = (menus: menu[], id: number): menu | null => {
-  for (const menu of menus) {
-    if (menu.id === id) {
-      return menu
-    }
+const menuCache = new Map<number, menu>()
 
-    if (menu.children.length > 0) {
-      const found = findMenuById(menu.children, id)
-      if (found) {
-        return found
+const clearCache = () => {
+  menuCache.clear()
+}
+
+const findMenuById = (menus: menu[], id: number): menu | null => {
+  if (menuCache.has(id)) {
+    return menuCache.get(id) || null
+  }
+
+  const findRecursive = (menuList: menu[]): menu | null => {
+    for (const menu of menuList) {
+      if (menu.id === id) {
+        menuCache.set(id, menu)
+        return menu
+      }
+      if (menu.children?.length > 0) {
+        const found = findRecursive(menu.children)
+        if (found) return found
       }
     }
+    return null
   }
-  return null
+
+  return findRecursive(menus)
 }
 
 const recursionFn = (arr: menu[]) => {
@@ -214,12 +228,25 @@ const addMenu = async () => {
   menuCreateRef.value?.resetForm()
 }
 
-onMounted(() => {
-  listMenusTreeData()
+let searchTimer: NodeJS.Timeout | null = null
+watch(filterInput, (val: string) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+
+  searchTimer = setTimeout(() => {
+    if (treeRef.value) {
+      treeRef.value.filter(val)
+    }
+  }, 300)
 })
 
-watch(filterInput, (val: string) => {
-  treeRef.value!.filter(val)
+watch(currentPlatform, () => {
+  clearCache()
+})
+
+onMounted(async () => {
+  await listMenusTreeData()
 })
 </script>
 
@@ -315,8 +342,6 @@ watch(filterInput, (val: string) => {
 
 <style lang="scss" scoped>
 .app-container {
-  // min-height: 100vh;
-  // max-height: 100vh;
   display: flex;
   flex-direction: column;
   background-color: #f5f7fa;
