@@ -1,5 +1,5 @@
 <template>
-  <div class="model-display-container">
+  <div class="app-container">
     <!-- 头部区域 -->
     <!-- <div class="header-section">
       <h1 class="page-title">模型中心</h1>
@@ -141,7 +141,7 @@ useModelData()
 </script>
 
 <style scoped>
-.model-display-container {
+.app-container {
   height: calc(100vh - 40px);
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 20px;
