@@ -192,7 +192,7 @@
                   <span>提交中...</span>
                 </div>
               </template>
-              {{ isSubmitting ? "提交中..." : "提交工单" }}
+              {{ isSubmitting ? "" : "提交工单" }}
             </el-button>
           </div>
         </div>
