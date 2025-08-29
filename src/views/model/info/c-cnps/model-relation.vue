@@ -6,7 +6,7 @@
         <p>管理模型之间的关联关系和约束</p>
       </div>
       <div class="header-actions">
-        <el-button type="primary" :icon="CirclePlus" @click="handleCreateNew" size="small" class="primary-btn">
+        <el-button type="primary" :icon="CirclePlus" @click="handleCreateNew" size="default" class="primary-btn">
           新建关联
         </el-button>
         <el-tooltip content="刷新当前页">
