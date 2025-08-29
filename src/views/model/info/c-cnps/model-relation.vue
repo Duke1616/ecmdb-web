@@ -10,14 +10,7 @@
           新建关联
         </el-button>
         <el-tooltip content="刷新当前页">
-          <el-button
-            type="default"
-            :icon="RefreshRight"
-            circle
-            size="small"
-            @click="listModelRelationData"
-            class="refresh-btn"
-          />
+          <el-button :icon="RefreshRight" circle size="default" @click="listModelRelationData" class="refresh-btn" />
         </el-tooltip>
       </div>
     </div>
@@ -252,16 +245,15 @@ onMounted(() => {
           border-color: #0d5b56;
         }
       }
-
       .refresh-btn {
-        background: #f9fafb;
-        border-color: #e5e7eb;
-        color: #6b7280;
+        background: #eff6ff; // 淡蓝背景
+        border-color: #bfdbfe;
+        color: #2563eb;
 
         &:hover {
-          background: #f3f4f6;
-          color: #374151;
-          border-color: #d1d5db;
+          background: #dbeafe;
+          border-color: #2563eb;
+          color: #1d4ed8;
         }
       }
     }
