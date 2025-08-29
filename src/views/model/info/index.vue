@@ -22,14 +22,15 @@
             <h2 class="model-name">{{ modelName }}</h2>
           </div>
         </div>
+        <!-- 按钮部分 -->
         <div class="action-buttons">
           <button class="action-btn disable-btn" @click="handleDisableModel">
-            <span class="btn-icon">⊘</span>
-            禁用模型
+            <el-icon class="btn-icon"><CircleClose /></el-icon>
+            <span>禁用模型</span>
           </button>
           <button class="action-btn delete-btn" @click="handleDeleteModel">
-            <span class="btn-icon">🗑</span>
-            删除模型
+            <el-icon class="btn-icon"><Delete /></el-icon>
+            <span>删除模型</span>
           </button>
         </div>
       </div>
