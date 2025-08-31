@@ -92,34 +92,29 @@ interface Props {
 const props = defineProps<Props>()
 const emits = defineEmits(["previous", "next", "close", "update:formData"])
 
-const localFormData = ref({ ...props.formData })
+// const localFormData = ref({ ...props.formData })
 
-const {
-  localFormData: formHandlerData,
-  updateFormData,
-  next: baseNext,
-  previous: basePrevious,
-  close,
-  setFormData
-} = useFormHandler(localFormData, emits, "lf")
+const { next: baseNext, previous: basePrevious, close, setFormData } = useFormHandler(props.formData, emits, "lf")
 
 // 包装next和previous函数，在调用前保存LogicFlow数据
 const next = () => {
   if (lf.value) {
-    localFormData.value.flow_data = lf.value.getGraphData()
+    // eslint-disable-next-line vue/no-mutating-props
+    props.formData.flow_data = lf.value.getGraphData()
   }
   baseNext()
 }
 
 const previous = () => {
   if (lf.value) {
-    localFormData.value.flow_data = lf.value.getGraphData()
+    // eslint-disable-next-line vue/no-mutating-props
+    props.formData.flow_data = lf.value.getGraphData()
   }
   basePrevious()
 }
 
 const flowDetail = reactive<Object>({})
-const lf = ref()
+const lf = ref<any>(null)
 const nodeData = ref()
 const showAttribute = ref(false)
 const container = ref()
@@ -184,15 +179,54 @@ const initLf = () => {
   // 加载初始数据（如果有的话）
   if (props.formData.flow_data && props.formData.flow_data.nodes) {
     lf.value.render(props.formData.flow_data)
-    lf.value.translateCenter()
-    // 在数据加载完成后更新计数
+    // 在数据加载完成后更新计数缩放数据
     nextTick(() => {
       updateCounts()
+      smartCenterAndZoom()
     })
   } else {
     // 如果没有初始数据，设置默认计数
     updateCounts()
   }
+}
+
+/**
+ * 智能居中和缩放
+ * @param lfInstance LogicFlow 实例
+ * @param container 容器 ref
+ */
+const smartCenterAndZoom = () => {
+  if (!lf.value || !container.value) return
+
+  const graphData = lf.value.getGraphData()
+  const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
+
+  if (nodes.length === 0) return
+
+  // 节点少 → 只居中，不缩放
+  if (nodes.length <= 2) {
+    lf.value.translateCenter()
+    return
+  }
+
+  // 节点多 → 计算范围，自适应缩放并居中
+  const minX = Math.min(...nodes.map((n: { x: any }) => n.x))
+  const maxX = Math.max(...nodes.map((n: { x: any }) => n.x))
+  const minY = Math.min(...nodes.map((n: { y: any }) => n.y))
+  const maxY = Math.max(...nodes.map((n: { y: any }) => n.y))
+
+  const nodesWidth = maxX - minX
+  const nodesHeight = maxY - minY
+
+  const canvasWidth = container.value.clientWidth
+  const canvasHeight = container.value.clientHeight
+
+  // 缩放比例，留边距
+  let scale = Math.min(canvasWidth / (nodesWidth * 1.2), canvasHeight / (nodesHeight * 1.2))
+  scale = Math.min(scale, 1)
+
+  lf.value.zoom(scale)
+  lf.value.translateCenter()
 }
 
 const setThemem = () => {
@@ -282,17 +316,6 @@ const registerNode = () => {
   registerAutomation(lf.value)
 }
 
-const render = () => {
-  nextTick(() => {
-    if (lf.value) {
-      // 居中展示
-      lf.value.translateCenter()
-      // 在渲染完成后更新计数
-      updateCounts()
-    }
-  })
-}
-
 const LfEvent = () => {
   lf.value.on("node:click", ({ data }: any) => {
     nodeData.value = data
@@ -307,12 +330,28 @@ const LfEvent = () => {
     showAttribute.value = true
   })
 
+  const syncFormData = () => {
+    if (lf.value) {
+      // 获取最新数据
+      const graphData = lf.value.getGraphData()
+
+      // 更新数据
+      emits("update:formData", { ...props.formData, flow_data: graphData })
+
+      // 智能数据
+      smartCenterAndZoom()
+    }
+
+    // 变更数量
+    updateCounts()
+  }
+
   // 监听节点和连线的变化，实时更新计数
-  lf.value.on("node:add", updateCounts)
-  lf.value.on("node:delete", updateCounts)
-  lf.value.on("edge:add", updateCounts)
-  lf.value.on("edge:delete", updateCounts)
-  lf.value.on("history:change", updateCounts)
+  lf.value.on("node:add", syncFormData)
+  lf.value.on("node:delete", syncFormData)
+  lf.value.on("edge:add", syncFormData)
+  lf.value.on("edge:delete", syncFormData)
+  lf.value.on("history:change", syncFormData)
 }
 
 const graph = ref<any>(null)
@@ -370,21 +409,12 @@ onUnmounted(() => {
   }
 })
 
-/** 监听消息是否变更 */
 watch(
   () => props.formData,
-  (val: createOrUpdateWorkflowReq) => {
-    localFormData.value = { ...val }
-    nextTick(() => {
-      if (lf.value) {
-        lf.value.render(localFormData.value.flow_data)
-        lf.value.translateCenter()
-        // 在数据重新渲染后更新计数
-        updateCounts()
-      }
-    })
+  (newFormData) => {
+    setFormData(newFormData)
   },
-  { immediate: true }
+  { deep: true, immediate: true }
 )
 
 defineExpose({

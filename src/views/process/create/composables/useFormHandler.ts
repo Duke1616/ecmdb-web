@@ -29,7 +29,7 @@ const PAGE_CONFIGS = {
     icon: "📝"
   },
   lf: {
-    title: "确认取消", 
+    title: "确认取消",
     content: "确定要取消当前操作吗？已设计的流程将不会保存。",
     confirmText: "确定取消",
     cancelText: "继续编辑",
@@ -38,17 +38,13 @@ const PAGE_CONFIGS = {
   setting: {
     title: "确认取消",
     content: "确定要取消当前操作吗？已配置的设置将不会保存。",
-    confirmText: "确定取消", 
+    confirmText: "确定取消",
     cancelText: "继续配置",
     icon: "⚙️"
   }
 }
 
-export function useFormHandler(
-  formData: any,
-  emits: any,
-  pageType: PageType
-) {
+export function useFormHandler(formData: any, emits: any, pageType: PageType) {
   // 本地表单数据
   const localFormData = ref({ ...formData })
 
@@ -78,7 +74,7 @@ export function useFormHandler(
   // 关闭确认对话框
   const close = () => {
     const config = PAGE_CONFIGS[pageType]
-    
+
     ElMessageBox.confirm(config.content, config.title, {
       confirmButtonText: config.confirmText,
       cancelButtonText: config.cancelText,
