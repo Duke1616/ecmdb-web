@@ -337,9 +337,6 @@ const LfEvent = () => {
 
       // 更新数据
       emits("update:formData", { ...props.formData, flow_data: graphData })
-
-      // 智能数据
-      smartCenterAndZoom()
     }
 
     // 变更数量
