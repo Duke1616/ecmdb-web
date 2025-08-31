@@ -417,25 +417,31 @@ const removeUser = (userId: number) => {
     margin: 5vh auto;
     max-height: 90vh !important;
 
-    /* 响应式宽度适配 */
+    /* 响应式宽度和高度适配 */
     @media (max-width: 1199px) {
       width: 90vw !important;
       max-width: 90vw !important;
+      height: 75vh !important;
+      max-height: 75vh !important;
+      margin: 2vh auto;
     }
 
     @media (min-width: 1200px) and (max-width: 1599px) {
       width: 600px !important;
       max-width: 600px !important;
+      /* 保持默认高度，不需要滚动 */
     }
 
     @media (min-width: 1600px) and (max-width: 1919px) {
       width: 720px !important;
       max-width: 720px !important;
+      /* 保持默认高度，不需要滚动 */
     }
 
     @media (min-width: 1920px) {
       width: 800px !important;
       max-width: 800px !important;
+      /* 保持默认高度，不需要滚动 */
     }
   }
 
@@ -446,7 +452,7 @@ const removeUser = (userId: number) => {
 
   :deep(.el-dialog__body) {
     padding: 0;
-    max-height: calc(90vh - 120px); /* 减去头部和底部的高度 */
+    /* 移除 max-height 限制，让对话框本身控制高度 */
     overflow-y: auto;
   }
 
@@ -491,6 +497,28 @@ const removeUser = (userId: number) => {
       color: rgba(255, 255, 255, 0.9);
       font-weight: 400;
       line-height: 1.3;
+    }
+  }
+
+  /* 小屏幕：减少高度 */
+  @media (max-width: 1199px) {
+    padding: 12px 16px 10px;
+    gap: 10px;
+
+    .header-icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-content {
+      .header-title {
+        font-size: 15px;
+        margin: 0 0 3px 0;
+      }
+
+      .header-subtitle {
+        font-size: 10px;
+      }
     }
   }
 
@@ -599,6 +627,20 @@ const removeUser = (userId: number) => {
     }
   }
 
+  /* 小屏幕：减少高度和间距 */
+  @media (max-width: 1199px) {
+    padding: 0px 16px 1px;
+
+    .search-container .search-input :deep(.el-input__wrapper) {
+      height: 24px;
+      padding: 2px 6px;
+    }
+
+    .search-container .search-input :deep(.el-input__inner) {
+      font-size: 10px;
+    }
+  }
+
   /* 大屏幕适配 */
   @media (min-width: 1200px) {
     padding: 0px 24px 6px;
@@ -650,16 +692,18 @@ const removeUser = (userId: number) => {
   padding: 20px;
   min-height: 0;
 
-  /* 小屏幕：上下布局 */
+  /* 小屏幕：上下布局，减少高度和间距，合理分配空间 */
   @media (max-width: 1199px) {
     flex-direction: column;
-    gap: 16px;
-    padding: 16px;
+    gap: 8px;
+    padding: 8px;
+    height: calc(75vh - 200px); /* 减去头部、搜索、底部的高度 */
   }
 
-  /* 大屏幕：左右布局 */
+  /* 中等屏幕及以上：保持舒适布局，不需要固定高度 */
   @media (min-width: 1200px) {
     flex-direction: row;
+    height: auto;
   }
 }
 
@@ -671,6 +715,8 @@ const removeUser = (userId: number) => {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 右侧：已选择人员面板 */
@@ -681,6 +727,8 @@ const removeUser = (userId: number) => {
   border-radius: 12px;
   border: 1px solid #e2e8f0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 面板头部 */
@@ -691,6 +739,7 @@ const removeUser = (userId: number) => {
   padding: 16px 20px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0; /* 防止头部被压缩 */
 
   .panel-title {
     margin: 0;
@@ -706,6 +755,34 @@ const removeUser = (userId: number) => {
     padding: 4px 12px;
     border-radius: 16px;
     font-weight: 500;
+  }
+
+  /* 小屏幕：减少高度和字体大小 */
+  @media (max-width: 1199px) {
+    padding: 6px 10px;
+
+    .panel-title {
+      font-size: 13px;
+    }
+
+    .selection-count {
+      font-size: 9px;
+      padding: 1px 6px;
+    }
+  }
+
+  /* 中等屏幕及以上：保持舒适设置 */
+  @media (min-width: 1200px) {
+    padding: 16px 20px;
+
+    .panel-title {
+      font-size: 16px;
+    }
+
+    .selection-count {
+      font-size: 12px;
+      padding: 4px 12px;
+    }
   }
 }
 
@@ -733,11 +810,37 @@ const removeUser = (userId: number) => {
       background: #94a3b8;
     }
   }
+
+  /* 小屏幕：根据对话框高度调整内容区域高度 */
+  @media (max-width: 1199px) {
+    max-height: 180px;
+    padding: 8px;
+  }
+
+  /* 中等屏幕 */
+  @media (min-width: 1200px) and (max-width: 1599px) {
+    max-height: 250px;
+    padding: 12px;
+  }
+
+  /* 大屏幕 */
+  @media (min-width: 1600px) and (max-width: 1919px) {
+    max-height: 300px;
+    padding: 14px;
+  }
+
+  /* 超大屏幕 */
+  @media (min-width: 1920px) {
+    max-height: 350px;
+    padding: 16px;
+  }
 }
 
 /* 树形包装器 */
 .tree-wrapper {
   @extend .content-area;
+  flex: 1; /* 占用剩余空间 */
+  min-height: 0; /* 允许收缩 */
 
   .org-tree {
     :deep(.el-tree-node) {
@@ -761,12 +864,40 @@ const removeUser = (userId: number) => {
         margin-right: 8px;
       }
     }
+
+    /* 小屏幕：减少树节点间距 */
+    @media (max-width: 1199px) {
+      :deep(.el-tree-node) {
+        .el-tree-node__content {
+          padding: 3px 0;
+        }
+
+        .el-tree-node__label {
+          font-size: 11px;
+        }
+      }
+    }
+
+    /* 中等屏幕及以上：保持舒适设置 */
+    @media (min-width: 1200px) {
+      :deep(.el-tree-node) {
+        .el-tree-node__content {
+          padding: 8px 0;
+        }
+
+        .el-tree-node__label {
+          font-size: 13px;
+        }
+      }
+    }
   }
 }
 
 /* 用户列表 */
 .user-list {
   @extend .content-area;
+  flex: 1; /* 占用剩余空间 */
+  min-height: 0; /* 允许收缩 */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -835,6 +966,78 @@ const removeUser = (userId: number) => {
       }
     }
   }
+
+  /* 小屏幕：减少用户卡片间距和高度 */
+  @media (max-width: 1199px) {
+    gap: 6px;
+
+    .user-card {
+      padding: 6px;
+      gap: 6px;
+
+      .user-avatar {
+        :deep(.el-avatar) {
+          width: 18px !important;
+          height: 18px !important;
+        }
+      }
+
+      .user-details {
+        .user-name {
+          font-size: 12px;
+        }
+
+        .user-dept {
+          font-size: 10px;
+        }
+      }
+
+      .remove-btn {
+        width: 20px;
+        height: 20px;
+
+        .el-icon {
+          font-size: 10px;
+        }
+      }
+    }
+  }
+
+  /* 中等屏幕及以上：保持舒适设置 */
+  @media (min-width: 1200px) {
+    gap: 12px;
+
+    .user-card {
+      padding: 12px;
+      gap: 12px;
+
+      .user-avatar {
+        :deep(.el-avatar) {
+          width: 24px !important;
+          height: 24px !important;
+        }
+      }
+
+      .user-details {
+        .user-name {
+          font-size: 14px;
+        }
+
+        .user-dept {
+          font-size: 12px;
+        }
+      }
+
+      .remove-btn {
+        width: 28px;
+        height: 28px;
+
+        .el-icon {
+          font-size: 14px;
+        }
+      }
+    }
+  }
 }
 
 .approval-footer {
@@ -862,6 +1065,19 @@ const removeUser = (userId: number) => {
       opacity: 0.6;
       cursor: not-allowed;
       transform: none;
+    }
+  }
+
+  /* 小屏幕：减少高度和字体大小 */
+  @media (max-width: 1199px) {
+    padding: 8px 12px;
+    gap: 6px;
+
+    .footer-btn {
+      padding: 4px 12px;
+      font-size: 10px;
+      min-width: 70px;
+      border-width: 1px;
     }
   }
 
