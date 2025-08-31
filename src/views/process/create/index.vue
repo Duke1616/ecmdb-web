@@ -27,6 +27,7 @@
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" class="wizard-form">
         <component
           :is="currentStepComponent"
+          :key="currentStep"
           :formData="formData"
           @update:formData="updateFormData"
           @next="goToNext"

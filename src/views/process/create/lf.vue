@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, nextTick, onMounted, watch } from "vue"
+import { reactive, ref, nextTick, onMounted, onUnmounted, watch } from "vue"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
@@ -331,12 +331,21 @@ const getGraphData = () => {
 }
 
 const download = () => {
-  console.log("download")
   return lf.value.getSnapshot()
 }
 
 onMounted(() => {
+  // 初始化 LogicFlow
   initLf()
+
+  // 渲染
+  lf.value.render()
+})
+
+onUnmounted(() => {
+  if (lf.value && typeof lf.value.destroy === "function") {
+    lf.value.destroy()
+  }
 })
 
 /** 监听消息是否变更 */
@@ -345,12 +354,8 @@ watch(
   (val: createOrUpdateWorkflowReq) => {
     localFormData.value = { ...val }
     nextTick(() => {
-      if (lf.value && val.flow_data) {
-        lf.value.render(val.flow_data)
-        // 居中展示
-        lf.value.translateCenter()
-        updateCounts() // 更新计数
-      }
+      lf.value.render(localFormData.value.flow_data)
+      lf.value.translateCenter()
     })
   },
   { immediate: true }
