@@ -31,13 +31,12 @@
       <!-- 画布区域 - 右侧 -->
       <div class="canvas-container">
         <!-- 画布 -->
-        <div id="LF-view" ref="container">
-          <!-- 空状态提示 -->
-          <div v-if="getNodeCount() === 0" class="empty-state">
-            <div class="empty-icon">📋</div>
-            <h4 class="empty-title">开始设计您的工作流</h4>
-            <p class="empty-description">从左侧节点库拖拽节点到画布中开始创建工作流程</p>
-          </div>
+        <div id="LF-view" ref="container" />
+        <!-- 空状态提示 -->
+        <div v-if="getNodeCount() === 0" class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h4 class="empty-title">开始设计您的工作流</h4>
+          <p class="empty-description">从左侧节点库拖拽节点到画布中开始创建工作流程</p>
         </div>
       </div>
     </div>
@@ -95,8 +94,14 @@ const emits = defineEmits(["previous", "next", "close", "update:formData"])
 
 const localFormData = ref({ ...props.formData })
 
-// 直接使用useFormHandler，然后在本地包装next和previous函数
-const { close, next: baseNext, previous: basePrevious } = useFormHandler(localFormData, emits, "workflow")
+const {
+  localFormData: formHandlerData,
+  updateFormData,
+  next: baseNext,
+  previous: basePrevious,
+  close,
+  setFormData
+} = useFormHandler(localFormData, emits, "lf")
 
 // 包装next和previous函数，在调用前保存LogicFlow数据
 const next = () => {
@@ -166,13 +171,28 @@ const initLf = () => {
     container: container.value
   })
   lf.value = lfInstance
+
   // 设置主题
   setThemem()
+
   // 注册节点
   registerNode()
 
-  // 加载数据、事件监听
-  render()
+  // 设置事件监听
+  LfEvent()
+
+  // 加载初始数据（如果有的话）
+  if (props.formData.flow_data && props.formData.flow_data.nodes) {
+    lf.value.render(props.formData.flow_data)
+    lf.value.translateCenter()
+    // 在数据加载完成后更新计数
+    nextTick(() => {
+      updateCounts()
+    })
+  } else {
+    // 如果没有初始数据，设置默认计数
+    updateCounts()
+  }
 }
 
 const setThemem = () => {
@@ -267,11 +287,10 @@ const render = () => {
     if (lf.value) {
       // 居中展示
       lf.value.translateCenter()
+      // 在渲染完成后更新计数
+      updateCounts()
     }
   })
-
-  LfEvent()
-  updateCounts() // 设置初始计数
 }
 
 const LfEvent = () => {
@@ -309,9 +328,15 @@ const getData = async () => {
 const updateCounts = () => {
   try {
     if (!lf.value) return
+
     const graphData = lf.value.getGraphData()
-    nodeCount.value = graphData.nodes?.length || 0
-    edgeCount.value = graphData.edges?.length || 0
+
+    // 确保 nodes 和 edges 是数组
+    const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
+    const edges = Array.isArray(graphData.edges) ? graphData.edges : []
+
+    nodeCount.value = nodes.length
+    edgeCount.value = edges.length
   } catch (error) {
     nodeCount.value = 0
     edgeCount.value = 0
@@ -337,9 +362,6 @@ const download = () => {
 onMounted(() => {
   // 初始化 LogicFlow
   initLf()
-
-  // 渲染
-  lf.value.render()
 })
 
 onUnmounted(() => {
@@ -354,8 +376,12 @@ watch(
   (val: createOrUpdateWorkflowReq) => {
     localFormData.value = { ...val }
     nextTick(() => {
-      lf.value.render(localFormData.value.flow_data)
-      lf.value.translateCenter()
+      if (lf.value) {
+        lf.value.render(localFormData.value.flow_data)
+        lf.value.translateCenter()
+        // 在数据重新渲染后更新计数
+        updateCounts()
+      }
     })
   },
   { immediate: true }

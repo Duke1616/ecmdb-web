@@ -121,7 +121,7 @@ const emits = defineEmits(["previous", "save", "close", "update:formData"])
 const { localFormData, updateFormData, setFormData, close, previous, save } = useFormHandler(
   props.formData,
   emits,
-  "form"
+  "setting"
 )
 
 const getNotifyMethodLabel = () => {

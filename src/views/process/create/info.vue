@@ -136,7 +136,7 @@ const {
   next: handleNext,
   close: handleClose,
   setFormData
-} = useFormHandler(props.formData, emits, "form")
+} = useFormHandler(props.formData, emits, "info")
 
 // 表单引用
 const formRef = ref<FormInstance>()
@@ -150,17 +150,10 @@ const formRules: FormRules = {
   owner: [{ required: true, message: "请选择流程负责人", trigger: "change" }]
 }
 
-// 处理下一步，先进行表单校验
+// 处理下一步，直接调用 useFormHandler 的 next 方法
 const handleFormNext = async () => {
-  if (!formRef.value) return
-
-  try {
-    await formRef.value.validate()
-    // 校验通过，调用原有的 next 方法
-    handleNext()
-  } catch (error) {
-    console.log("表单校验失败:", error)
-  }
+  // 直接调用 useFormHandler 的 next 方法，它会自动执行验证
+  await handleNext()
 }
 
 watch(
