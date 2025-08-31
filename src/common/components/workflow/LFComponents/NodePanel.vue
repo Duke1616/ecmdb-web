@@ -1,125 +1,335 @@
 <template>
   <div class="node-panel">
-    <div class="node-item" v-for="item in nodeList" :key="item.text" @mousedown="$_dragNode(item)">
-      <div class="node-item-icon" :class="item.class">
-        <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+    <!-- Updated header with modern typography and styling -->
+    <div class="panel-header">
+      <h3 class="panel-title font-heading">节点库</h3>
+      <p class="panel-subtitle font-body">拖拽添加节点</p>
+    </div>
+
+    <!-- Redesigned categories with modern card layout -->
+    <div class="node-categories">
+      <div class="category-section">
+        <h4 class="category-title font-heading">
+          <div class="category-icon">🚦</div>
+          网关节点
+        </h4>
+        <div class="node-grid">
+          <div v-for="item in gatewayNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
+            <div class="node-icon" :class="item.class">
+              <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+            </div>
+            <span class="node-label font-body">{{ item.text }}</span>
+            <div class="node-description font-body">{{ item.description }}</div>
+          </div>
+        </div>
       </div>
-      <span class="node-label">{{ item.text }}</span>
+
+      <div class="category-section">
+        <h4 class="category-title font-heading">
+          <div class="category-icon">🏢</div>
+          业务节点
+        </h4>
+        <div class="node-grid">
+          <div v-for="item in businessNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
+            <div class="node-icon" :class="item.class">
+              <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+            </div>
+            <span class="node-label font-body">{{ item.text }}</span>
+            <div class="node-description font-body">{{ item.description }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="category-section">
+        <h4 class="category-title font-heading">
+          <div class="category-icon">⚙️</div>
+          流程控制
+        </h4>
+        <div class="node-grid">
+          <div v-for="item in controlNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
+            <div class="node-icon" :class="item.class">
+              <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+            </div>
+            <span class="node-label font-body">{{ item.text }}</span>
+            <div class="node-description font-body">{{ item.description }}</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
-<script setup lang="ts">
-import { defineProps } from "vue"
 
-// 定义props类型接口
+<script setup lang="ts">
+import { defineProps, computed } from "vue"
+
 interface Props {
   lf: any
   nodeList: any[]
 }
 
-// 使用defineProps宏函数定义组件的props
 const props = defineProps<Props>()
 
-// 定义一个方法，用于节点拖拽开始时调用
+const gatewayNodes = computed(() =>
+  props.nodeList
+    .filter((item) => ["condition", "parallel", "inclusion"].includes(item.type))
+    .map((item) => ({
+      ...item,
+      description: getNodeDescription(item.type)
+    }))
+)
+
+const businessNodes = computed(() =>
+  props.nodeList
+    .filter((item) => ["user", "automation", "time", "push", "download", "click"].includes(item.type))
+    .map((item) => ({
+      ...item,
+      description: getNodeDescription(item.type)
+    }))
+)
+
+const controlNodes = computed(() =>
+  props.nodeList
+    .filter((item) => ["start", "end"].includes(item.type))
+    .map((item) => ({
+      ...item,
+      description: getNodeDescription(item.type)
+    }))
+)
+
+const getNodeDescription = (type: string) => {
+  const descriptions: Record<string, string> = {
+    start: "流程开始",
+    end: "流程结束",
+    user: "用户任务",
+    condition: "条件判断",
+    automation: "自动化任务",
+    parallel: "并行网关",
+    inclusion: "包含网关",
+    time: "定时任务",
+    push: "推送消息",
+    download: "下载文件",
+    click: "点击事件"
+  }
+  return descriptions[type] || "节点"
+}
+
 const $_dragNode = (item: any) => {
-  props.lf.dnd.startDrag({
-    type: item.type
-  })
+  console.log("[v0] Starting drag for node:", item.type)
+  if (props.lf && props.lf.dnd) {
+    props.lf.dnd.startDrag({
+      type: item.type
+    })
+  } else {
+    console.error("[v0] LogicFlow instance or dnd not available")
+  }
 }
 </script>
 
 <style lang="scss" scoped>
+/* Fixed positioning and layout to work within sidebar container */
 .node-panel {
-  position: absolute;
-  // top: 50px;
-  left: 50px;
-  width: 70px;
-  padding: 20px 10px;
-  background-color: white;
-  box-shadow: 0 0 10px 1px rgb(228, 224, 219);
-  border-radius: 6px;
+  width: 100%;
+  height: 100%;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel-header {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid #e2e8f0;
   text-align: center;
-  z-index: 101;
+  background: #f8fafc;
+  flex-shrink: 0;
 }
-.node-item {
-  margin-bottom: 20px;
+
+.panel-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #0891b2;
+  margin: 0 0 4px 0;
 }
-.node-item-icon {
-  width: 30px;
-  height: 30px;
-  margin-left: 20px;
-  background-size: cover;
-}
-.node-label {
+
+.panel-subtitle {
   font-size: 12px;
-  margin-top: 5px;
+  color: #64748b;
+  margin: 0;
+  opacity: 0.7;
+}
+
+.node-categories {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.category-section {
+  margin-bottom: 24px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  margin: 0 0 12px 0;
+  padding: 6px 10px;
+  background: rgba(8, 145, 178, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #0891b2;
+}
+
+.category-icon {
+  font-size: 14px;
+}
+
+.node-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.node-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: grab;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #0891b2, #ea580c);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(8, 145, 178, 0.15);
+    border-color: #0891b2;
+
+    &::before {
+      transform: scaleX(1);
+    }
+  }
+
+  &:active {
+    cursor: grabbing;
+    transform: translateY(0);
+  }
+}
+
+.node-icon {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 8px;
+  background-size: cover;
+  border-radius: 6px;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 6px;
+    background: linear-gradient(135deg, rgba(8, 145, 178, 0.1), rgba(234, 88, 12, 0.1));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .node-card:hover &::after {
+    opacity: 1;
+  }
+}
+
+.node-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
   user-select: none;
 }
+
+.node-description {
+  font-size: 10px;
+  color: #64748b;
+  user-select: none;
+  line-height: 1.2;
+}
+
+/* Updated node type styles with modern colors */
 .node-start {
-  background: url("../background/start.png") no-repeat;
+  background: url("../background/start.png") no-repeat center;
   background-size: cover;
+  background-color: rgba(34, 197, 94, 0.1);
 }
-.node-rect {
-  border: 1px solid black;
-}
-.node-user {
-  background: url("../background/user.png") no-repeat;
-  background-size: cover;
-}
-.node-condition {
-  background: url("../background/condition.png") no-repeat;
-  background-size: cover;
-}
-.node-inclusion {
-  background: url("../background/inclusion.png") no-repeat;
-  background-size: cover;
-}
-.node-automation {
-  background: url("../background/automation.png") no-repeat;
-  background-size: cover;
-}
-.node-parallel {
-  background: url("../background/parallel.png") no-repeat;
-  background-size: cover;
-}
-.node-time {
-  background: url("../background/time.png") no-repeat;
-  background-size: cover;
-}
-.node-push {
-  background: url("../background/push.png") no-repeat;
-  background-size: cover;
-}
-.node-download {
-  background: url("../background/download.png") no-repeat;
-  background-size: cover;
-}
-.node-click {
-  background: url("../background/click.png") no-repeat;
-  background-size: cover;
-}
+
 .node-end {
-  background: url("../background/end.png") no-repeat;
+  background: url("../background/end.png") no-repeat center;
   background-size: cover;
+  background-color: rgba(239, 68, 68, 0.1);
 }
-.bpmn-start {
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAABGdBTUEAALGPC/xhBQAAAnBJREFUOBGdVL1rU1EcPfdGBddmaZLiEhdx1MHZQXApraCzQ7GKLgoRBxMfcRELuihWKcXFRcEWF8HBf0DdDCKYRZpnl7p0svLe9Zzbd29eQhTbC8nv+9zf130AT63jvooOGS8Vf9Nt5zxba7sXQwODfkWpkbjTQfCGUd9gIp3uuPP8bZ946g56dYQvnBg+b1HB8VIQmMFrazKcKSvFW2dQTxJnJdQ77urmXWOMBCmXM2Rke4S7UAW+/8ywwFoewmBps2tu7mbTdp8VMOkIRAkKfrVawalJTtIliclFbaOBqa0M2xImHeVIfd/nKAfVq/LGnPss5Kh00VEdSzfwnBXPUpmykNss4lUI9C1ga+8PNrBD5YeqRY2Zz8PhjooIbfJXjowvQJBqkmEkVnktWhwu2SM7SMx7Cj0N9IC0oQXRo8xwAGzQms+xrB/nNSUWVveI48ayrFGyC2+E2C+aWrZHXvOuz+CiV6iycWe1Rd1Q6+QUG07nb5SbPrL4426d+9E1axKjY3AoRrlEeSQo2Eu0T6BWAAr6COhTcWjRaYfKG5csnvytvUr/WY4rrPMB53Uo7jZRjXaG6/CFfNMaXEu75nG47X+oepU7PKJvvzGDY1YLSKHJrK7vFUwXKkaxwhCW3u+sDFMVrIju54RYYbFKpALZAo7sB6wcKyyrd+aBMryMT2gPyD6GsQoRFkGHr14TthZni9ck0z+Pnmee460mHXbRAypKNy3nuMdrWgVKj8YVV8E7PSzp1BZ9SJnJAsXdryw/h5ctboUVi4AFiCd+lQaYMw5z3LGTBKjLQOeUF35k89f58Vv/tGh+l+PE/wG0rgfIUbZK5AAAAABJRU5ErkJggg==)
-    center center no-repeat;
-  cursor: grab;
+
+.node-user {
+  background: url("../background/user.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(8, 145, 178, 0.1);
 }
-.bpmn-end {
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAAUCAYAAAH6ji2bAAAABGdBTUEAALGPC/xhBQAAA1BJREFUOBFtVE1IVUEYPXOf+tq40Y3vPcmFIdSjIorWoRG0ERWUgnb5FwVhYQSl72oUoZAboxKNFtWiwKRN0M+jpfSzqJAQclHo001tKkjl3emc8V69igP3znzfnO/M9zcDcKT67azmjYWTwl9Vn7Vumeqzj1DVb6cleQY4oAVnIOPb+mKAGxQmKI5CWNJ2aLPatxWa3aB9K7/fB+/Z0jUF6TmMlFLQqrkECWQzOZxYGjTlOl8eeKaIY5yHnFn486xBustDjWT6dG7pmjHOJd+33t0iitTPkK6tEvjxq4h2MozQ6WFSX/LkDUGfFwfhEZj1Auz/U4pyAi5Sznd7uKzznXeVHlI/Aywmk6j7fsUsEuCGADrWARXXwjxWQsUbIupDHJI7kF5dRktg0eN81IbiZXiTESic50iwS+t1oJgL83jAiBupLDCQqwziaWSoAFSeIR3P5Xv5az00wyIn35QRYTwdSYbz8pH8fxUUAtxnFvYmEmgI0wYXUXcCCSpeEVpXlsRhBnCEATxWylL9+EKCAYhe1NGstUa6356kS9NVvt3DU2fd+Wtbm/+lSbylJqsqkSm9CRhvoJVlvKPvF1RKY/FcPn5j4UfIMLn8D4UYb54BNsilTDXKnF4CfTobA0FpoW/LSp306wkXM+XaOJhZaFkcNM82ASNAWMrhrUbRfmyeI1FvRBTpN06WKxa9BK0o2E4Pd3zfBBEwPsv9sQBnmLVbLEIZ/Xe9LYwJu/Er17W6HYVBc7vmuk0xUQ+pqxdom5Fnp55SiytXLPYoMXNM4u4SNSCFWnrVIzKG3EGyMXo6n/BQOe+bX3FClY4PwydVhthOZ9NnS+ntiLh0fxtlUJHAuGaFoVmttpVMeum0p3WEXbcll94l1wM/gZ0Ccczop77VvN2I7TlsZCsuXf1WHvWEhjO8DPtyOVg2/mvK9QqboEth+7pD6NUQC1HN/TwvydGBARi9MZSzLE4b8Ru3XhX2PBxf8E1er2A6516o0w4sIA+lwURhAON82Kwe2iDAC1Watq4XHaGQ7skLcFOtI5lDxuM2gZe6WFIotPAhbaeYlU4to5cuarF1QrcZ/lwrLaCJl66JBocYZnrNlvm2+MBCTmUymPrYZVbjdlr/BxlMjmNmNI3SAAAAAElFTkSuQmCC)
-    center center no-repeat;
-  cursor: grab;
+
+.node-condition {
+  background: url("../background/condition.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(234, 88, 12, 0.1);
 }
-.bpmn-user {
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABMAAAATCAYAAAEFVwZaAAAABGdBTUEAALGPC/xhBQAAAqlJREFUOBF9VM9rE0EUfrMJNUKLihGbpLGtaCOIR8VjQMGDePCgCCIiCNqzCAp2MyYUCXhUtF5E0D+g1t48qAd7CCLqQUQKEWkStcEfVGlLdp/fm3aW2QQdyLzf33zz5m2IsAZ9XhDpyaaIZkTS4ASzK41TFao88GuJ3hsr2pAbipHxuSYyKRugagICGANkfFnNh3HeE2N0b3nN2cgnpcictw5veJIzxmDamSlxxQZicq/mflxhbaH8BLRbuRwNtZp0JAhoplVRUdzmCe/vO27wFuuA3S5qXruGdboy5/PRGFsbFGKo/haRtQHIrM83bVeTrOgNhZReWaYGnE4aUQgTJNvijJFF4jQ8BxJE5xfKatZWmZcTQ+BVgh7s8SgPlCkcec4mGTmieTP4xd7PcpIEg1TX6gdeLW8rTVMVLVvb7ctXoH0Cydl2QOPJBG21STE5OsnbweVYzAnD3A7PVILuY0yiiyDwSm2g441r6rMSgp6iK42yqroI2QoXeJVeA+YeZSa47gZdXaZWQKTrG93rukk/l2Al6Kzh5AZEl7dDQy+JjgFahQjRopSxPbrbvK7GRe9ePWBo1wcU7sYrFZtavXALwGw/7Dnc50urrHJuTPSoO2IMV3gUQGNg87IbSOIY9BpiT9HV7FCZ94nPXb3MSnwHn/FFFE1vG6DTby+r31KAkUktB3Qf6ikUPWxW1BkXSPQeMHHiW0+HAd2GelJsZz1OJegCxqzl+CLVHa/IibuHeJ1HAKzhuDR+ymNaRFM+4jU6UWKXorRmbyqkq/D76FffevwdCp+jN3UAN/C9JRVTDuOxC/oh+EdMnqIOrlYteKSfadVRGLJFJPSB/ti/6K8f0CNymg/iH2gO/f0DwE0yjAFO6l8JaR5j0VPwPwfaYHqOqrCI319WzwhwzNW/aQAAAABJRU5ErkJggg==)
-    center center no-repeat;
-  cursor: grab;
+
+.node-automation {
+  background: url("../background/automation.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(168, 85, 247, 0.1);
 }
-.bpmn-exclusiveGateway {
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAYAAAHeEJUAAAAABGdBTUEAALGPC/xhBQAAAvVJREFUOBGNVEFrE0EU/mY3bQoiFlOkaUJrQUQoWMGePLX24EH0IIoHKQiCV0G8iE1covgLiqA/QTzVm1JPogc9tIJYFaQtlhQxqYjSpunu+L7JvmUTU3AgmTfvffPNN++9WSA1DO182f6xwILzD5btfAoQmwL5KJEwiQyVbSVZ0IgRyV6PTpIJ81E5ZvqfHQR0HUOBHW4L5Et2kQ6Zf7iAOhTFAA8s0pEP7AXO1uAA52SbqGk6h/6J45LaLhO64ByfcUzM39V7ZiAdS2yCePPEIQYvTUHqM/n7dgQNfBKWPjpF4ISk8q3J4nB11qw6X8l+FsF3EhlkEMfrjIer3wJTLwS2aCNcj4DbGxXTw00JmAuO+Ni6bBxVUCvS5d9aa04+so4pHW5jLTywuXAL7jJ+D06sl82Sgl2JuVBQn498zkc2bGKxULHjCnSMadBKYDYYHAtsby1EQ5lNGrQd4Y3v4Zo0XdGEmDno46yCM9Tk+RiJmUYHS/aXHPNTcjxcbTFna000PFJHIVZ5lFRqRpJWk9/+QtlOUYJj9HG5pVFEU7zqIYDVsw2s+AJaD8wTd2umgSCCyUxgGsS1Y6TBwXQQTFuZaHcd8gAGioE90hlsY+wMcs30RduYtxanjMGal8H5dMW67dmT1JFtYUEe8LiQLRsPZ6IIc7A4J5tqco3T0pnv/4u0kyzrYUq7gASuEyI8VXKvB9Odytv6jS/PNaZBln0nioJG/AVQRZvApOdhjj3Jt8QC8Im09SafwdBdvIpztpxWxpeKCC+EsFdS8DCyuCn2munFpL7ctHKp+Xc5cMybeIyMAN33SPL3ZR9QV1XVwLyzHm6Iv0/yeUuUb7PPlZC4D4HZkeu6dpF4v9j9MreGtMbxMMRLIcjJic9yHi7WQ3yVKzZVWUr5UrViJvn1FfUlwe/KYVfYyWRLSGNu16hR01U9IacajXPei0wx/5BqgInvJN+MMNtNme7ReU9SBbgntovn0kKHpFg7UogZvaZiOue/q1SBo9ktHzQAAAAASUVORK5CYII=)
-    center center no-repeat;
-  cursor: grab;
+
+.node-parallel {
+  background: url("../background/parallel.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.node-inclusion {
+  background: url("../background/inclusion.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .node-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-header {
+    padding: 16px;
+  }
+
+  .node-categories {
+    padding: 16px;
+  }
 }
 </style>

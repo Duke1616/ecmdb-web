@@ -1,125 +1,209 @@
 <template>
-  <div>
-    <el-form
-      ref="formRef"
-      :model="propertyForm"
-      :inline-message="true"
-      :rules="formRules"
-      label-position="top"
-      :disabled="flowDetail.status == '2'"
-    >
-      <el-form-item label="名称" prop="name">
-        <el-input v-model="propertyForm.name" clearable />
-      </el-form-item>
-      <el-form-item label="审批规则" prop="rule">
-        <el-select v-model="propertyForm.rule" clearable @change="handleChange">
-          <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
-      </el-form-item>
-      <!-- TODO: 查询使用模版的字段，进行options选择， 暂时主动录入 -->
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item v-if="propertyForm.rule === 'template'" label="模版名称" prop="leftValue">
-            <el-select v-model="propertyForm.template_id" placeholder="请选择模版" class="select-box">
-              <el-option v-for="item in templateRules" :key="item.id" :label="item.name" :value="item.id" />
-            </el-select>
-          </el-form-item>
-        </el-col>
+  <div class="user-property-dialog">
+    <!-- 弹窗头部 -->
+    <div class="dialog-header">
+      <div class="header-icon">
+        <div class="icon-circle">
+          <SvgIcon name="user" icon-class="user" />
+        </div>
+      </div>
+      <div class="header-content">
+        <h3 class="header-title">用户节点配置</h3>
+        <p class="header-subtitle">配置审批流程的用户节点属性</p>
+      </div>
+    </div>
 
-        <el-col :span="12">
-          <el-form-item v-if="propertyForm.rule === 'template'" label="模版字段" prop="leftValue">
+    <!-- 表单内容 -->
+    <div class="dialog-content">
+      <el-form
+        ref="formRef"
+        :model="propertyForm"
+        :inline-message="true"
+        :rules="formRules"
+        label-position="top"
+        :disabled="flowDetail.status == '2'"
+        class="property-form"
+      >
+        <div class="form-section">
+          <div class="section-title">
+            <span class="title-icon">📝</span>
+            <span>基本信息</span>
+          </div>
+
+          <el-form-item label="节点名称" prop="name" class="form-item">
+            <el-input
+              v-model="propertyForm.name"
+              placeholder="请输入节点名称"
+              class="modern-input"
+              :disabled="flowDetail.status == '2'"
+            />
+            <div class="form-help">节点名称用于标识审批步骤，建议使用描述性名称</div>
+          </el-form-item>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <span class="title-icon">⚙️</span>
+            <span>审批配置</span>
+          </div>
+
+          <el-form-item label="审批规则" prop="rule" class="form-item">
             <el-select
-              v-model="propertyForm.template_field"
-              :disabled="!propertyForm.template_id"
-              placeholder="请选择模版字段"
-              class="input-box"
+              v-model="propertyForm.rule"
+              placeholder="请选择审批规则"
+              class="modern-select"
+              :disabled="flowDetail.status == '2'"
+              @change="handleChange"
             >
               <el-option
-                v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id))"
-                :key="field"
-                :label="title"
-                :value="field"
+                v-for="item in options"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+                class="modern-option"
               />
             </el-select>
+            <div class="form-help">选择审批人员的确定方式，影响后续的参与者配置</div>
           </el-form-item>
-        </el-col>
-      </el-row>
-      <el-form-item
-        v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
-        label="参与者"
-        prop="approved"
-      >
-        <template #label>
-          <span>{{ getLabel(propertyForm.rule) }}</span>
-        </template>
-        <div class="select-container">
-          <el-select
-            v-model="propertyForm.approved"
-            multiple
-            placeholder=""
-            :show-arrow="false"
-            suffix-icon=""
-            tag-type="info"
-            :disabled="approvalInputDisabled"
+
+          <!-- 模板字段配置 -->
+          <div v-if="propertyForm.rule === 'template'" class="conditional-section">
+            <div class="form-row">
+              <el-form-item label="模版名称" prop="template_id" class="form-item">
+                <el-select
+                  v-model="propertyForm.template_id"
+                  placeholder="请选择模版"
+                  class="modern-select"
+                  :disabled="flowDetail.status == '2'"
+                >
+                  <el-option
+                    v-for="item in templateRules"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                    class="modern-option"
+                  />
+                </el-select>
+              </el-form-item>
+
+              <el-form-item label="模版字段" prop="template_field" class="form-item">
+                <el-select
+                  v-model="propertyForm.template_field"
+                  :disabled="!propertyForm.template_id || flowDetail.status == '2'"
+                  placeholder="请选择模版字段"
+                  class="modern-select"
+                >
+                  <el-option
+                    v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id))"
+                    :key="field"
+                    :label="title"
+                    :value="field"
+                    class="modern-option"
+                  />
+                </el-select>
+              </el-form-item>
+            </div>
+          </div>
+
+          <!-- 参与者配置 -->
+          <el-form-item
+            v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
+            :label="getLabel(propertyForm.rule)"
+            prop="approved"
+            class="form-item"
           >
-            <!-- 使用 v-slot 自定义选项内容 -->
-            <el-option v-for="item in approvedOptions" :key="item.name" :label="item.display_name" :value="item.name" />
-          </el-select>
-          <el-button class="select-button" :icon="UserFilled" @click="openUser" />
+            <div class="select-container">
+              <el-select
+                v-model="propertyForm.approved"
+                multiple
+                placeholder="请选择参与者"
+                :show-arrow="false"
+                suffix-icon=""
+                tag-type="info"
+                :disabled="approvalInputDisabled || flowDetail.status == '2'"
+                class="modern-select"
+              >
+                <el-option
+                  v-for="item in approvedOptions"
+                  :key="item.name"
+                  :label="item.display_name"
+                  :value="item.name"
+                  class="modern-option"
+                />
+              </el-select>
+              <el-button
+                class="select-button"
+                :icon="UserFilled"
+                @click="openUser"
+                :disabled="flowDetail.status == '2'"
+              />
+            </div>
+            <div class="form-help">点击右侧按钮选择具体的审批人员</div>
+          </el-form-item>
         </div>
-      </el-form-item>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="是否会签" prop="type">
-            <el-switch v-model="propertyForm.is_cosigned" size="default" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="仅抄送" prop="cc">
-            <el-switch v-model="propertyForm.is_cc" size="default" />
-          </el-form-item>
-        </el-col>
-      </el-row>
-    </el-form>
-    <div class="mt15" v-if="flowDetail.status != '2'">
-      <el-button @click="cancelFunc"> 取消 </el-button>
-      <el-button type="primary" @click="confirmFunc"> 确定 </el-button>
+
+        <div class="form-section">
+          <div class="section-title">
+            <span class="title-icon">🔔</span>
+            <span>流程设置</span>
+          </div>
+
+          <div class="settings-grid">
+            <div class="setting-item">
+              <el-form-item label="是否会签" prop="is_cosigned">
+                <el-switch
+                  v-model="propertyForm.is_cosigned"
+                  size="default"
+                  :disabled="flowDetail.status == '2'"
+                  active-color="var(--primary)"
+                  inactive-color="var(--border)"
+                />
+              </el-form-item>
+            </div>
+
+            <div class="setting-item">
+              <el-form-item label="仅抄送" prop="is_cc">
+                <el-switch
+                  v-model="propertyForm.is_cc"
+                  size="default"
+                  :disabled="flowDetail.status == '2'"
+                  active-color="var(--primary)"
+                  inactive-color="var(--border)"
+                />
+              </el-form-item>
+            </div>
+          </div>
+
+          <div class="settings-help">
+            <div class="help-item">
+              <span class="help-icon">ℹ️</span>
+              <span class="help-text">会签：开启后需要所有参与者都同意才能通过</span>
+            </div>
+            <div class="help-item">
+              <span class="help-icon">ℹ️</span>
+              <span class="help-text">抄送：开启后该节点仅用于通知，无需审批</span>
+            </div>
+          </div>
+        </div>
+      </el-form>
     </div>
-    <el-dialog v-model="approvalVisible" title="审批人员" width="25%">
-      <div class="input-tree-container">
-        <el-input
-          v-model="filterInput"
-          size="default"
-          placeholder="输入用户名或展示名称进行搜索"
-          :suffix-icon="Search"
-        />
-        <el-tree
-          ref="treeRef"
-          :data="treeData"
-          show-checkbox
-          check-strictly
-          default-expand-all
-          node-key="id"
-          :highlight-current="true"
-          :default-checked-keys="checkedKeys"
-          :props="defaultProps"
-          :filter-node-method="filterNode"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="approvalVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAppendUser">确认</el-button>
-      </template>
-    </el-dialog>
+
+    <!-- 弹窗底部按钮 -->
+    <div class="dialog-footer" v-if="flowDetail.status != '2'">
+      <el-button @click="cancelFunc" class="footer-btn footer-btn-cancel"> 取消 </el-button>
+      <el-button type="primary" @click="confirmFunc" class="footer-btn footer-btn-confirm"> 确定 </el-button>
+    </div>
+    <!-- 用户选择器组件 -->
+    <UserSelector v-model="approvalVisible" :default-checked-keys="checkedKeys" @confirm="handleUserSelected" />
   </div>
 </template>
 <script setup lang="ts">
-import { FormInstance, FormRules, ElTree } from "element-plus"
-import { ref, onMounted, reactive, watch } from "vue"
+import { FormInstance, FormRules } from "element-plus"
+import { ref, onMounted, reactive } from "vue"
 import { UserFilled } from "@element-plus/icons-vue"
-import { userDepartmentCombination } from "@/api/user/types/user"
-import { findByUsernamesApi, pipelineUserByDepartmentApi } from "@/api/user"
-import { Search } from "@element-plus/icons-vue"
+import { findByUsernamesApi } from "@/api/user"
+import SvgIcon from "@@/components/SvgIcon/index.vue"
+import UserSelector from "./UserSelector.vue"
 
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 // 使用模板 Hook
@@ -131,27 +215,6 @@ const handleChange = async () => {
   if (props.id === undefined) return
 
   await fetchTemplates(props.id)
-}
-
-const filterInput = ref<string>("")
-
-interface Tree {
-  [key: string]: any
-}
-
-const filterNode = (value: string, data: Tree) => {
-  if (!value) return true
-
-  // 确保data.label存在且是字符串
-  return (typeof data.display_name === "string" && data.display_name.includes(value)) || data.name.includes(value)
-}
-
-const treeRef = ref<InstanceType<typeof ElTree>>()
-const defaultProps = {
-  key: "id",
-  children: "children",
-  label: "display_name",
-  disabled: "disabled"
 }
 
 const options = [
@@ -188,19 +251,6 @@ const getLabel = (rule: string) => {
     default:
       return ""
   }
-}
-
-/** 查询模版列表 */
-const treeData = ref<userDepartmentCombination[]>([])
-const listDepartmentTreeData = () => {
-  pipelineUserByDepartmentApi()
-    .then(({ data }) => {
-      treeData.value = data
-    })
-    .catch(() => {
-      treeData.value = []
-    })
-    .finally(() => {})
 }
 
 const props = defineProps({
@@ -252,25 +302,26 @@ const getUsernamesData = (uns: string[]) => {
 
 const openUser = () => {
   approvalVisible.value = !approvalVisible.value
-  listDepartmentTreeData()
 }
 
-const handleAppendUser = () => {
-  if (treeRef.value) {
-    const nodes = treeRef.value.getCheckedNodes()
-    console.log(nodes)
-    // 填充数据
-    propertyForm.approved = nodes.map((node) => node.name)
-    // 填充默认值
-    checkedKeys.value = nodes.map((node) => node.id)
-    // 填充选项
-    approvedOptions.value = nodes.map((node) => ({
-      display_name: node.display_name,
-      name: node.name
-    }))
-  }
+// 处理用户选择确认
+const handleUserSelected = (users: Array<{ name: string; display_name: string; id: number }>) => {
+  console.log("父组件收到用户选择确认事件:", users)
 
-  approvalVisible.value = !approvalVisible.value
+  // 填充数据
+  propertyForm.approved = users.map((user) => user.name)
+  console.log("更新后的 propertyForm.approved:", propertyForm.approved)
+
+  // 填充默认值
+  checkedKeys.value = users.map((user) => user.id)
+  console.log("更新后的 checkedKeys:", checkedKeys.value)
+
+  // 填充选项
+  approvedOptions.value = users.map((user) => ({
+    display_name: user.display_name,
+    name: user.name
+  }))
+  console.log("更新后的 approvedOptions:", approvedOptions.value)
 }
 
 const formRef = ref<FormInstance | null>(null)
@@ -313,10 +364,6 @@ const cancelFunc = () => {
   emits("closed")
 }
 
-watch(filterInput, (val: string) => {
-  treeRef.value!.filter(val)
-})
-
 onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || ""
   propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
@@ -326,8 +373,12 @@ onMounted(async () => {
   propertyForm.rule = props.nodeData?.properties.rule || "appoint"
   propertyForm.is_cc = props.nodeData?.properties.is_cc ? props.nodeData.properties.is_cc : false
   // 如果存在审批用户则获取
-  if (props.nodeData?.properties.approved.length > 0) {
-    getUsernamesData(props.nodeData?.properties.approved)
+  if (
+    props.nodeData?.properties.approved &&
+    Array.isArray(props.nodeData.properties.approved) &&
+    props.nodeData.properties.approved.length > 0
+  ) {
+    getUsernamesData(props.nodeData.properties.approved)
   }
 
   // 如果执行方式是模板，加载模板数据
@@ -341,15 +392,341 @@ onMounted(async () => {
 })
 </script>
 <style lang="scss" scoped>
-.select-container {
-  display: flex;
-  justify-items: center;
-  align-items: center;
+.user-property-dialog {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+  max-width: 520px;
   width: 100%;
 }
-.input-tree-container {
+
+.dialog-header {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  padding: 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+
+    :deep(.svg-icon) {
+      width: 20px;
+      height: 20px;
+      color: white;
+    }
+  }
+}
+
+.header-content {
+  flex: 1;
+}
+
+.header-title {
+  margin: 0 0 3px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+}
+
+.dialog-content {
+  padding: 20px 16px 16px;
+}
+
+.form-section {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+
+  .title-icon {
+    font-size: 16px;
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-item {
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  :deep(.el-form-item__label) {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+}
+
+.conditional-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.modern-input {
+  width: 100%;
+
+  :deep(.el-input__wrapper) {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    height: 48px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+  }
+}
+
+.modern-select {
+  width: 100%;
+
+  :deep(.el-input__wrapper) {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    height: 48px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+  }
+}
+
+.modern-option {
+  :deep(.el-select-dropdown__item) {
+    padding: 12px 16px;
+    font-size: 14px;
+
+    &.selected {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: white;
+    }
+
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .setting-item {
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+
+    .el-form-item {
+      margin-bottom: 0;
+
+      :deep(.el-form-item__content) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      :deep(.el-switch) {
+        --el-switch-on-color: #3b82f6;
+        --el-switch-off-color: #d1d5db;
+      }
+    }
+  }
+}
+
+.settings-help {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+
+  .help-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border-left: 3px solid #3b82f6;
+
+    .help-icon {
+      font-size: 14px;
+      color: #3b82f6;
+    }
+
+    .help-text {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.4;
+    }
+  }
+}
+
+.form-help {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+}
+
+.select-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+
+  .modern-select {
+    flex: 1;
+  }
+
+  .select-button {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    padding: 12px;
+    height: 48px;
+    width: 48px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    }
+
+    &:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+  }
+}
+
+.dialog-footer {
+  padding: 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.footer-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.footer-btn-cancel {
+  background: #ffffff;
+  color: #64748b;
+  border-color: #e2e8f0;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+}
+
+.footer-btn-confirm {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-color: #3b82f6;
+
+  &:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    border-color: #1d4ed8;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
 }
 </style>

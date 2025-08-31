@@ -19,7 +19,7 @@ import {
   registerParallel,
   regsiterInclusion,
   registerAutomation,
-  registerEdge
+  registerPolyline
 } from "@@/components/workflow/RegisterNode/index"
 import { getWorkflowGraphApi } from "@/api/workflow/workflow"
 
@@ -102,7 +102,7 @@ const registerNode = () => {
   registerEnd(lf.value)
   registerCondition(lf.value)
   registerUser(lf.value)
-  registerEdge(lf.value)
+  registerPolyline(lf.value)
   registerParallel(lf.value)
   regsiterInclusion(lf.value)
   registerAutomation(lf.value)

@@ -1,41 +1,129 @@
 <template>
-  <div>
-    <el-form ref="formRef" :model="propertyForm" :inline-message="true" :rules="formRules" label-position="top">
-      <el-form-item label="关系名称" prop="name">
-        <el-input v-model="propertyForm.name" type="name" />
-      </el-form-item>
-      <el-form-item prop="expression">
-        <template #label>
-          <div style="display: flex; align-items: center; justify-content: space-between">
-            <span>关系表达式</span>
-            <el-button type="primary" size="small" @click="handleOpenExpression">生成表达式</el-button>
+  <div class="edge-property-dialog">
+    <!-- 弹窗头部 -->
+    <div class="dialog-header">
+      <div class="header-icon">
+        <div class="icon-circle">
+          <SvgIcon name="edge" icon-class="edge" />
+        </div>
+      </div>
+      <div class="header-content">
+        <h3 class="header-title">连线配置</h3>
+        <p class="header-subtitle">配置工作流节点间的连接关系和条件</p>
+      </div>
+    </div>
+
+    <!-- 表单内容 -->
+    <div class="dialog-content">
+      <el-form
+        ref="formRef"
+        :model="propertyForm"
+        :inline-message="true"
+        :rules="formRules"
+        label-position="top"
+        class="property-form"
+      >
+        <div class="form-section">
+          <div class="section-title">
+            <span class="title-icon">🔗</span>
+            <span>基本信息</span>
           </div>
-        </template>
-        <el-input v-model="propertyForm.expression" type="expression" />
-      </el-form-item>
-    </el-form>
+
+          <el-form-item label="关系名称" prop="name" class="form-item">
+            <el-input v-model="propertyForm.name" placeholder="请输入连线关系名称" class="modern-input" />
+            <div class="form-help">连线名称用于标识节点间的关系，建议使用描述性名称</div>
+          </el-form-item>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <span class="title-icon">⚙️</span>
+            <span>条件配置</span>
+          </div>
+
+          <el-form-item label="关系表达式" prop="expression" class="form-item">
+            <el-input
+              v-model="propertyForm.expression"
+              placeholder="请点击右侧按钮生成表达式"
+              class="modern-input"
+              readonly
+            >
+              <template #append>
+                <el-button @click="handleOpenExpression" class="expression-btn" :icon="Setting"> 生成表达式 </el-button>
+              </template>
+            </el-input>
+            <div class="form-help">通过表达式编辑器配置连线的执行条件</div>
+          </el-form-item>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <span class="title-icon">💡</span>
+            <span>使用说明</span>
+          </div>
+
+          <div class="edge-tips">
+            <div class="tip-item">
+              <div class="tip-icon">🔗</div>
+              <div class="tip-content">
+                <h4 class="tip-title">连线关系</h4>
+                <p class="tip-desc">定义节点间的连接关系，支持条件分支和并行执行</p>
+              </div>
+            </div>
+
+            <div class="tip-item">
+              <div class="tip-icon">⚡</div>
+              <div class="tip-content">
+                <h4 class="tip-title">条件判断</h4>
+                <p class="tip-desc">通过表达式设置连线的执行条件，实现动态流程控制</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </el-form>
+    </div>
+
+    <!-- 弹窗底部按钮 -->
+    <div class="dialog-footer">
+      <el-button @click="cancelFunc" class="footer-btn footer-btn-cancel"> 取消 </el-button>
+      <el-button type="primary" @click="confirmFunc" class="footer-btn footer-btn-confirm"> 确定 </el-button>
+    </div>
+
+    <!-- 表达式编辑器弹窗 -->
     <el-dialog
       v-model="dialogVisible"
-      :fullscreen="true"
+      title="表达式编辑器"
+      :fullscreen="false"
       :modal="true"
       :lock-scroll="true"
       :close-on-click-modal="false"
-      :close-on-press-escape="false"
-      :show-close="false"
+      :close-on-press-escape="true"
+      :show-close="true"
       :before-close="handleExpressionClose"
+      width="65%"
+      top="8vh"
+      class="expression-dialog"
     >
-      <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
+      <div class="expression-content">
+        <div class="expression-header">
+          <div class="header-info">
+            <h3 class="content-title">配置连线执行条件</h3>
+            <p class="content-subtitle">通过表达式编辑器设置连线的执行条件，支持模板字段和自定义逻辑</p>
+          </div>
+        </div>
+
+        <div class="expression-body">
+          <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
+        </div>
+      </div>
+
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveExpression()"> 确认 </el-button>
+        <div class="expression-footer">
+          <el-button @click="dialogVisible = false" class="footer-btn footer-btn-cancel">取消</el-button>
+          <el-button type="primary" @click="saveExpression()" class="footer-btn footer-btn-confirm">确认</el-button>
         </div>
       </template>
     </el-dialog>
-    <div class="mt15">
-      <el-button @click="cancelFunc"> 取消 </el-button>
-      <el-button type="primary" @click="confirmFunc"> 确定 </el-button>
-    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -44,6 +132,8 @@ import Expression from "./expression.vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { getTemplateByWorkflowIdApi } from "@/api/template"
 import { template } from "@/api/template/types/template"
+import SvgIcon from "@@/components/SvgIcon/index.vue"
+import { Setting } from "@element-plus/icons-vue"
 
 const props = defineProps({
   nodeData: Object,
@@ -139,4 +229,365 @@ onMounted(() => {
   propertyForm.value.expression = props.nodeData?.properties.expression ? props.nodeData.properties.expression : ""
 })
 </script>
-<style scoped></style>
+<style scoped lang="scss">
+.edge-property-dialog {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+}
+
+.dialog-header {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  padding: 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+
+    :deep(.svg-icon) {
+      width: 20px;
+      height: 20px;
+      color: white;
+    }
+  }
+}
+
+.header-content {
+  flex: 1;
+}
+
+.header-title {
+  margin: 0 0 3px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 400;
+}
+
+.dialog-content {
+  padding: 20px 16px 16px;
+}
+
+.form-section {
+  margin-bottom: 20px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+
+  .title-icon {
+    font-size: 16px;
+  }
+}
+
+.form-item {
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  :deep(.el-form-item__label) {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+  }
+}
+
+.expression-btn {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+  border: none !important;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white !important;
+  transition: all 0.3s ease;
+  height: 100%;
+  border-radius: 0 8px 8px 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+
+  &:hover {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  }
+
+  // 确保图标颜色也是白色
+  :deep(.el-icon) {
+    color: white !important;
+  }
+}
+
+.modern-input {
+  width: 100%;
+
+  :deep(.el-input__wrapper) {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    height: 48px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    &.is-focus {
+      border-color: #06b6d4;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+    }
+  }
+
+  :deep(.el-input__inner) {
+    font-size: 14px;
+    color: #1e293b;
+    font-weight: 500;
+  }
+
+  :deep(.el-input-group__append) {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+}
+
+.form-help {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border-left: 3px solid #06b6d4;
+}
+
+.edge-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: #ecfeff;
+  border: 1px solid #22d3ee;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: #cffafe;
+    border-color: #06b6d4;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
+  }
+
+  .tip-icon {
+    font-size: 20px;
+    color: #0891b2;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .tip-content {
+    flex: 1;
+
+    .tip-title {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0e7490;
+    }
+
+    .tip-desc {
+      margin: 0;
+      font-size: 12px;
+      color: #0891b2;
+      line-height: 1.4;
+    }
+  }
+}
+
+.dialog-footer {
+  padding: 20px;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.footer-btn {
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.footer-btn-cancel {
+  background: #ffffff;
+  color: #64748b;
+  border-color: #e2e8f0;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+}
+
+.footer-btn-confirm {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+  border-color: #06b6d4;
+
+  &:hover {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    border-color: #0891b2;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+  }
+}
+
+// 表达式编辑器弹窗样式
+.expression-dialog {
+  :deep(.el-dialog) {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border: none;
+  }
+
+  :deep(.el-dialog__header) {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    padding: 20px 24px;
+    margin: 0;
+    border-bottom: none;
+
+    .el-dialog__title {
+      color: white;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .el-dialog__headerbtn {
+      .el-dialog__close {
+        color: white;
+        font-size: 20px;
+
+        &:hover {
+          color: rgba(255, 255, 255, 0.8);
+        }
+      }
+    }
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 24px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    min-height: 320px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 20px 24px;
+    background: #ffffff;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+
+  :deep(.el-overlay) {
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+  }
+}
+
+// 表达式编辑器内容样式
+.expression-content {
+  .expression-header {
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 10px;
+    border: 1px solid #bae6fd;
+
+    .header-info {
+      .content-title {
+        margin: 0 0 6px 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0c4a6e;
+      }
+
+      .content-subtitle {
+        margin: 0;
+        font-size: 13px;
+        color: #0369a1;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .expression-body {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.expression-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+</style>

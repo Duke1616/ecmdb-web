@@ -1,64 +1,111 @@
 <template>
-  <div>
-    <el-form-item prop="name" label="流程名称">
-      <!-- TODO 暂时流程创建是根据名称进行的，如果名称发生变化，发版会影响流程的处理 -->
-      <el-input :disabled="localFormData.id" v-model="localFormData.name" @input="updateFormData" />
-    </el-form-item>
-    <el-form-item prop="owner" label="负责人">
-      <el-select
-        v-model="localFormData.owner"
-        reserve-keyword
-        placeholder="输入关键字选择"
-        :remote-method="remoteMethod"
-        :loading="loading"
-        clearable
-        filterable
-        remote
-        @change="updateFormData"
-      >
-        <el-option v-for="item in usersData" :key="item.id" :label="item.display_name" :value="item.username" />
-        <template #footer>
-          <el-pagination
-            class="justify-center h-10 p-2 bg-white"
-            background
-            :layout="paginationData.layout"
-            :page-sizes="paginationData.pageSizes"
-            :total="paginationData.total"
-            :page-size="paginationData.pageSize"
-            :currentPage="paginationData.currentPage"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </template>
-        <template #loading>
-          <div v-loading="loading" element-loading-text="加载中" class="h-20" />
-        </template>
-      </el-select>
-    </el-form-item>
-    <el-form-item prop="desc" label="流程说明">
-      <el-input v-model="localFormData.desc" type="textarea" @input="updateFormData" />
-    </el-form-item>
-    <el-form-item>
-      <el-button type="primary" @click="handleNext">下一步</el-button>
-      <el-button @click="handleClose">取消</el-button>
-    </el-form-item>
+  <div class="info-container">
+    <div class="info-content">
+      <div class="form-card">
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                />
+              </svg>
+            </div>
+            <div class="section-title">
+              <h3>流程标识</h3>
+              <p>为您的流程设置名称和负责人</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">流程名称</span>
+                <span class="required">*</span>
+              </div>
+              <div class="input-container">
+                <el-input
+                  :disabled="localFormData.id"
+                  v-model="localFormData.name"
+                  @input="updateFormData"
+                  placeholder="请输入流程名称，如：用户注册流程"
+                  class="modern-input"
+                  size="large"
+                />
+                <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">负责人</span>
+                <span class="required">*</span>
+              </div>
+              <div class="input-container">
+                <UserPicker
+                  v-model="localFormData.owner"
+                  placeholder="选择流程负责人"
+                  @update:modelValue="updateFormData"
+                  class="modern-select"
+                />
+                <div class="input-hint">选择负责此流程的主要人员</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </div>
+            <div class="section-title">
+              <h3>流程描述</h3>
+              <p>详细描述流程的目的和功能</p>
+            </div>
+          </div>
+
+          <div class="form-field full-width">
+            <div class="field-label">
+              <span class="label-text">流程说明</span>
+            </div>
+            <div class="input-container">
+              <el-input
+                v-model="localFormData.desc"
+                type="textarea"
+                @input="updateFormData"
+                placeholder="请详细描述此流程的目的、适用场景、预期效果等信息..."
+                :rows="6"
+                class="modern-textarea"
+                size="large"
+              />
+              <div class="input-hint">清晰的描述有助于团队成员理解和执行流程</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <FormActions @next="handleNext" @cancel="handleClose" :show-previous="false" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, watch, nextTick, onMounted } from "vue"
-import { findByUsernameApi, listUsersByKeywordApi } from "@/api/user"
-import { usePagination } from "@/common/composables/usePagination"
-import { user } from "@/api/user/types/user"
-
-const init = {
-  total: 0,
-  currentPage: 1,
-  pageSizes: [10, 20, 50],
-  pageSize: 5,
-  layout: "prev, pager, next"
-}
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
+import { watch } from "vue"
+import { useFormHandler } from "./composables/useFormHandler"
+import UserPicker from "@@/components/UserPicker/index.vue"
+import FormActions from "./components/FormActions/index.vue"
 
 const props = defineProps({
   formData: {
@@ -67,92 +114,287 @@ const props = defineProps({
   }
 })
 
-const localFormData = ref({ ...props.formData })
 const emits = defineEmits(["update:formData", "next", "close"])
-const handleClose = () => {
-  emits("close")
-}
 
-const handleNext = () => {
-  emits("next")
-}
+const {
+  localFormData,
+  updateFormData,
+  next: handleNext,
+  close: handleClose,
+  setFormData
+} = useFormHandler(props.formData, emits, "form")
 
-const loading = ref<boolean>(false)
-const keyword = ref<string>("")
-const remoteMethod = (query: string) => {
-  if (query) {
-    keyword.value = query
-
-    nextTick(() => {
-      setTimeout(() => {
-        listUsersData()
-      }, 500)
-    })
-  } else {
-    usersData.value = []
-  }
-}
-
-const usersData = ref<user[]>([])
-const listUsersData = () => {
-  listUsersByKeywordApi({
-    keyword: keyword.value,
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
-  })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      usersData.value = data.users
-    })
-    .catch(() => {
-      usersData.value = []
-    })
-    .finally(() => {})
-}
-
-const getUserData = () => {
-  findByUsernameApi(localFormData.value.owner)
-    .then(({ data }) => {
-      usersData.value = [data]
-      // 给定默认负责人
-      if (localFormData.value.owner === "") {
-        localFormData.value.owner = data.username
-        updateFormData()
-      }
-    })
-    .catch(() => {
-      usersData.value = []
-    })
-    .finally(() => {})
-}
-
-const updateFormData = () => {
-  emits("update:formData", localFormData.value)
-}
-
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsersData, { immediate: false })
-
-/** 监听消息是否变更 */
 watch(
   () => props.formData,
   (newFormData) => {
-    localFormData.value = { ...newFormData }
-
-    getUserData()
+    setFormData(newFormData)
   },
-  { deep: true }
+  { deep: true, immediate: true }
 )
-
-onMounted(() => {
-  if (localFormData.value.owner) {
-    getUserData()
-  }
-})
 </script>
 
 <style lang="scss" scoped>
-.flow-info {
-  width: 1000px;
+.info-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  min-height: 500px;
+}
+
+// 信息内容
+.info-content {
+  flex: 1;
+  padding: 0px 32px;
+  overflow-y: auto;
+
+  .form-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+}
+
+// 表单区块
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      svg {
+        width: 16px;
+        height: 16px;
+        color: white;
+      }
+    }
+
+    .section-title {
+      h3 {
+        margin: 0 0 3px 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      p {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
+// 表单网格
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+// 表单字段
+.form-field {
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+
+    .label-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .required {
+      color: #ef4444;
+      font-weight: 600;
+    }
+  }
+
+  .input-container {
+    .input-hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+  }
+}
+
+// 现代化输入框样式
+:deep(.modern-input) {
+  .el-input__wrapper {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 16px;
+    min-height: 42px;
+    height: 42px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      border-color: #667eea;
+      background: #f1f5f9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    &.is-focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+  }
+
+  .el-input__inner {
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 500;
+
+    &::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+  }
+}
+
+:deep(.modern-textarea) {
+  .el-textarea__inner {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #1e293b;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 120px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      border-color: #667eea;
+      background: #f1f5f9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    &:focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &::placeholder {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+  }
+}
+
+:deep(.modern-select) {
+  .el-input__wrapper {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 16px;
+    min-height: 42px;
+    height: 42px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      border-color: #667eea;
+      background: #f1f5f9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    &.is-focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+// UserPicker 样式调整
+:deep(.user-picker-container) {
+  .user-picker-input {
+    min-height: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .info-content {
+    padding: 16px;
+  }
+
+  .form-card {
+    border-radius: 12px;
+  }
+
+  .form-section {
+    padding: 24px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .info-content {
+    padding: 12px;
+  }
+
+  .form-section {
+    padding: 20px;
+  }
 }
 </style>

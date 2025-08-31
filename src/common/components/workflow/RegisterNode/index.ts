@@ -5,7 +5,7 @@ import registerCondition from "./condition/condition"
 import registerParallel from "./parallel/parallel"
 import regsiterInclusion from "./inclusion/inclusion"
 import registerAutomation from "./automation/automation"
-import registerEdge from "../RegisterEdge/edge"
+import registerPolyline from "../RegisterEdge/edge"
 
 export {
   registerStart,
@@ -15,5 +15,5 @@ export {
   registerAutomation,
   registerParallel,
   regsiterInclusion,
-  registerEdge
+  registerPolyline
 }
