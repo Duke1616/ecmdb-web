@@ -1,7 +1,14 @@
 <template>
   <div class="info-container">
     <div class="info-content">
-      <div class="form-card">
+      <el-form
+        ref="formRef"
+        :model="localFormData"
+        :rules="formRules"
+        label-position="top"
+        class="form-card"
+        @submit.prevent="handleFormNext"
+      >
         <div class="form-section">
           <div class="section-header">
             <div class="section-icon">
@@ -27,14 +34,16 @@
                 <span class="required">*</span>
               </div>
               <div class="input-container">
-                <el-input
-                  :disabled="localFormData.id"
-                  v-model="localFormData.name"
-                  @input="updateFormData"
-                  placeholder="请输入流程名称，如：用户注册流程"
-                  class="modern-input"
-                  size="large"
-                />
+                <el-form-item prop="name" class="no-margin">
+                  <el-input
+                    :disabled="localFormData.id"
+                    v-model="localFormData.name"
+                    @input="updateFormData"
+                    placeholder="请输入流程名称，如：用户注册流程"
+                    class="modern-input"
+                    size="large"
+                  />
+                </el-form-item>
                 <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div>
               </div>
             </div>
@@ -45,12 +54,14 @@
                 <span class="required">*</span>
               </div>
               <div class="input-container">
-                <UserPicker
-                  v-model="localFormData.owner"
-                  placeholder="选择流程负责人"
-                  @update:modelValue="updateFormData"
-                  class="modern-select"
-                />
+                <el-form-item prop="owner" class="no-margin">
+                  <UserPicker
+                    v-model="localFormData.owner"
+                    placeholder="选择流程负责人"
+                    @update:modelValue="updateFormData"
+                    class="modern-select"
+                  />
+                </el-form-item>
                 <div class="input-hint">选择负责此流程的主要人员</div>
               </div>
             </div>
@@ -80,32 +91,35 @@
               <span class="label-text">流程说明</span>
             </div>
             <div class="input-container">
-              <el-input
-                v-model="localFormData.desc"
-                type="textarea"
-                @input="updateFormData"
-                placeholder="请详细描述此流程的目的、适用场景、预期效果等信息..."
-                :rows="6"
-                class="modern-textarea"
-                size="large"
-              />
+              <el-form-item prop="desc" class="no-margin">
+                <el-input
+                  v-model="localFormData.desc"
+                  type="textarea"
+                  @input="updateFormData"
+                  placeholder="请详细描述此流程的目的、适用场景、预期效果等信息..."
+                  :rows="6"
+                  class="modern-textarea"
+                  size="large"
+                />
+              </el-form-item>
               <div class="input-hint">清晰的描述有助于团队成员理解和执行流程</div>
             </div>
           </div>
         </div>
-      </div>
+      </el-form>
     </div>
 
     <!-- 操作按钮 -->
-    <FormActions @next="handleNext" @cancel="handleClose" :show-previous="false" />
+    <FormActions @next="handleFormNext" @cancel="handleClose" :show-previous="false" />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { watch } from "vue"
+import { watch, ref } from "vue"
 import { useFormHandler } from "./composables/useFormHandler"
 import UserPicker from "@@/components/UserPicker/index.vue"
 import FormActions from "./components/FormActions/index.vue"
+import type { FormInstance, FormRules } from "element-plus"
 
 const props = defineProps({
   formData: {
@@ -123,6 +137,31 @@ const {
   close: handleClose,
   setFormData
 } = useFormHandler(props.formData, emits, "form")
+
+// 表单引用
+const formRef = ref<FormInstance>()
+
+// 表单校验规则
+const formRules: FormRules = {
+  name: [
+    { required: true, message: "请输入流程名称", trigger: "blur" },
+    { min: 2, max: 50, message: "流程名称长度在 2 到 50 个字符", trigger: "blur" }
+  ],
+  owner: [{ required: true, message: "请选择流程负责人", trigger: "change" }]
+}
+
+// 处理下一步，先进行表单校验
+const handleFormNext = async () => {
+  if (!formRef.value) return
+
+  try {
+    await formRef.value.validate()
+    // 校验通过，调用原有的 next 方法
+    handleNext()
+  } catch (error) {
+    console.log("表单校验失败:", error)
+  }
+}
 
 watch(
   () => props.formData,
@@ -253,6 +292,25 @@ watch(
       color: #6b7280;
       line-height: 1.4;
     }
+  }
+}
+
+// 隐藏 el-form-item 的默认样式，保持现有的 UI 样式
+:deep(.no-margin) {
+  margin-bottom: 0;
+
+  .el-form-item__content {
+    margin-left: 0 !important;
+  }
+
+  .el-form-item__error {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #ef4444;
+    line-height: 1.2;
   }
 }
 
