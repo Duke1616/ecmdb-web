@@ -44,7 +44,7 @@
                     size="large"
                   />
                 </el-form-item>
-                <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div>
+                <!-- <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div> -->
               </div>
             </div>
 
@@ -62,7 +62,7 @@
                     class="modern-select"
                   />
                 </el-form-item>
-                <div class="input-hint">选择负责此流程的主要人员</div>
+                <!-- <div class="input-hint">选择负责此流程的主要人员</div> -->
               </div>
             </div>
           </div>
@@ -150,10 +150,19 @@ const formRules: FormRules = {
   owner: [{ required: true, message: "请选择流程负责人", trigger: "change" }]
 }
 
-// 处理下一步，直接调用 useFormHandler 的 next 方法
-const handleFormNext = async () => {
-  // 直接调用 useFormHandler 的 next 方法，它会自动执行验证
-  await handleNext()
+// 处理下一步，先进行表单校验
+const handleFormNext = () => {
+  if (!formRef.value) return
+
+  formRef.value.validate((valid, fields) => {
+    if (valid) {
+      handleNext()
+    } else {
+      console.log("表单校验失败:", fields)
+      // 可以增加提示
+      ElMessage.warning("请完善必填项")
+    }
+  })
 }
 
 watch(
