@@ -43,9 +43,9 @@
 <script lang="ts" setup>
 import { Edit, Tools, Ticket, Check } from "@element-plus/icons-vue"
 import { computed, ref } from "vue"
-import Info from "./Info.vue"
-import WorkflowEditor from "./WorkflowEditor.vue"
-import Setting from "./Setting.vue"
+import Info from "./info.vue"
+import WorkflowEditor from "./lf.vue"
+import Setting from "./setting.vue"
 import { createOrUpdateWorkflowReq, workflow } from "@/api/workflow/types/workflow"
 import { cloneDeep } from "lodash-es"
 import { createWorkflowApi, updateWorkflowApi } from "@/api/workflow/workflow"
