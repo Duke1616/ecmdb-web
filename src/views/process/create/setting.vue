@@ -374,7 +374,7 @@ watch(
     &.is-focus {
       border-color: #667eea;
       background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
       transform: translateY(-2px);
     }
   }
@@ -449,8 +449,9 @@ watch(
 
   .preview-header {
     display: flex;
-    align-items: flex-start;
+    align-items: flex-start; /* 图标在上方对齐 */
     gap: 16px;
+    position: relative; /* 为绝对定位的子元素提供定位上下文 */
 
     .preview-icon {
       width: 32px;
@@ -461,18 +462,28 @@ watch(
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      position: relative; /* 添加相对定位 */
 
       svg {
         width: 18px;
         height: 18px;
         color: white;
+        position: absolute; /* 绝对定位确保完全居中 */
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%); /* 使用 transform 确保精确居中 */
+        margin: 0; /* 移除可能的默认边距 */
       }
     }
 
     .preview-info {
       flex: 1;
+      position: absolute; /* 绝对定位 */
+      left: 50%; /* 相对于 preview-header 居中 */
+      transform: translateX(-50%); /* 水平居中偏移 */
+      text-align: center; /* 文案内容居中显示 */
 
-      .preview-title {
+      h4 {
         margin: 0 0 8px 0;
         font-size: 16px;
         font-weight: 600;

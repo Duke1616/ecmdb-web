@@ -86,7 +86,7 @@ const formData = ref<createOrUpdateWorkflowReq>({
   name: "",
   desc: "",
   icon: "",
-  owner: "",
+  owner: "", // 保持为空字符串以符合类型定义
   flow_data: {
     nodes: [
       {
@@ -178,7 +178,7 @@ const onClosed = () => {
     name: "",
     desc: "",
     icon: "",
-    owner: "",
+    owner: "", // 保持为空字符串以符合类型定义
     flow_data: {
       nodes: [
         {
@@ -214,7 +214,7 @@ defineExpose({
       name: "",
       desc: "",
       icon: "",
-      owner: "",
+      owner: "", // 保持为空字符串以符合类型定义
       flow_data: {
         nodes: [
           {
