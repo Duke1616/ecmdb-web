@@ -183,16 +183,15 @@ const getTemplateByWorkflowId = async (workflow_id: number) => {
 
 const handleOpenExpression = async () => {
   if (props.id === undefined) {
-    ElMessage.warning("创建流程无法使用此功能")
+    ElMessage.warning("创建流程时无法使用此功能，请优先模版绑定流程")
     return
   }
 
   const hasTemplates = await getTemplateByWorkflowId(props.id)
-
   if (hasTemplates) {
     dialogVisible.value = true
   } else {
-    ElMessage.warning("没有可用数据，请先通过模版绑定流程")
+    ElMessage.warning("未被模版绑定的流程无法使用此功能")
   }
 }
 

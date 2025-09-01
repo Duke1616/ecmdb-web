@@ -77,7 +77,6 @@ const steps = [
 ]
 
 const currentStep = ref(0)
-
 const currentStepComponent = computed(() => steps[currentStep.value]?.component)
 
 const formData = ref<createOrUpdateWorkflowReq>({
@@ -148,10 +147,7 @@ const goToStep = (stepIndex: number) => {
 
 const updateFormData = (newFormData: createOrUpdateWorkflowReq) => {
   try {
-    console.log("index.vue 接收到数据更新:", newFormData) // 调试信息
-    console.log("index.vue 当前formData:", formData.value) // 调试信息
     formData.value = { ...formData.value, ...newFormData }
-    console.log("index.vue 更新后的formData:", formData.value) // 调试信息
   } catch (error) {
     console.error("[v0] Error updating form data:", error)
   }
@@ -162,7 +158,7 @@ const save = () => {
   api(formData.value)
     .then(() => {
       onClosed()
-      emits("list-templates")
+      emits("callback")
       ElMessage.success("保存成功")
     })
     .catch((error) => {
@@ -203,7 +199,7 @@ const onClosed = () => {
   emits("close", false)
 }
 
-const emits = defineEmits(["close", "list-templates"])
+const emits = defineEmits(["close", "callback"])
 
 defineExpose({
   setCreateForm: () => {

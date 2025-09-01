@@ -98,8 +98,8 @@
 
 <script setup lang="ts">
 import { watch } from "vue"
-import { useFormHandler } from "./composables/useFormHandler"
-import FormActions from "./components/FormActions/index.vue"
+import { useFormHandler } from "@/common/composables/useFormHandler"
+import FormActions from "@/common/components/FormActions/index.vue"
 
 const notifyMapping = [
   {

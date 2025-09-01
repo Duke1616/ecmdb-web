@@ -68,17 +68,14 @@
         />
       </div>
     </el-card>
-    <!-- 新增 或 修改模版 -->
-    <el-drawer
-      class="add-drawer"
-      v-model="templateDialogDrawer"
-      :title="templateTitle"
-      direction="ttb"
-      size="100%"
-      @closed="onClosedTemplate"
+
+    <!-- 新增或删除模版 -->
+    <el-card
+      v-show="templateDialogDrawer"
+      style="height: 100vh; margin: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000"
     >
-      <Template ref="tRef" @closed="onClosedTemplate" @callback="listTemplatesData" />
-    </el-drawer>
+      <Template ref="tRef" @close="onClosedTemplate" @callback="listTemplatesData" />
+    </el-card>
 
     <!-- 新增分组 -->
     <el-dialog v-model="groupDialogVisible" :before-close="onClosedTemplateGroup" :title="'新增模版分组'" width="30%">
@@ -133,8 +130,6 @@ const tRef = ref<InstanceType<typeof Template>>()
 const tgRef = ref<InstanceType<typeof TemplateGroup>>()
 const thirdRef = ref<InstanceType<typeof thirdParty>>()
 const discoveryRef = ref<InstanceType<typeof Discovery>>()
-
-const templateTitle = ref<string>("创建模版")
 
 /** 查询模版列表 */
 const templatesData = ref<template[]>([])
@@ -195,7 +190,7 @@ const onClosedDiscover = () => {
 }
 
 const onClosedTemplate = () => {
-  tRef.value?.resetForm()
+  tRef.value?.setCreateForm?.()
   templateDialogDrawer.value = false
 }
 
@@ -213,16 +208,13 @@ const handleDiscover = (row: template) => {
 
 const handleUpdate = (row: template) => {
   templateDialogDrawer.value = true
-  templateTitle.value = "修改模版"
 
   nextTick(() => {
-    tRef.value?.setForm(row)
+    tRef.value?.setUpdateForm(row)
   })
 }
-
 const handleCreateTemplate = () => {
   templateDialogDrawer.value = true
-  templateTitle.value = "创建模版"
 }
 const handlerSync = (row: template) => {
   thirdpartyDialogVisible.value = true
@@ -254,6 +246,7 @@ const handleDelete = (row: template) => {
     })
   })
 }
+
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listTemplatesData, { immediate: true })

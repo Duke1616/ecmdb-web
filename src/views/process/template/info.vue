@@ -22,47 +22,103 @@
               </svg>
             </div>
             <div class="section-title">
-              <h3>流程标识</h3>
-              <p>为您的流程设置名称和负责人</p>
+              <h3>模板标识</h3>
+              <p>为您的模板设置名称和基本信息</p>
             </div>
           </div>
 
           <div class="form-grid">
             <div class="form-field">
               <div class="field-label">
-                <span class="label-text">流程名称</span>
+                <span class="label-text">模板名称</span>
                 <span class="required">*</span>
               </div>
               <div class="input-container">
                 <el-form-item prop="name" class="no-margin">
                   <el-input
-                    :disabled="localFormData.id"
                     v-model="localFormData.name"
                     @input="updateFormData"
-                    placeholder="请输入流程名称，如：用户注册流程"
+                    placeholder="请输入模板名称，如：用户注册表单"
                     class="modern-input"
                     size="large"
                   />
                 </el-form-item>
-                <!-- <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div> -->
               </div>
             </div>
 
             <div class="form-field">
               <div class="field-label">
-                <span class="label-text">负责人</span>
+                <span class="label-text">所属分组</span>
                 <span class="required">*</span>
               </div>
               <div class="input-container">
-                <el-form-item prop="owner" class="no-margin">
-                  <UserPicker
-                    v-model="localFormData.owner"
-                    placeholder="选择流程负责人"
-                    @update:modelValue="updateFormData"
+                <el-form-item prop="group_id" class="no-margin">
+                  <el-select
+                    v-model="localFormData.group_id"
+                    @change="updateFormData"
+                    placeholder="请选择分组"
                     class="modern-select"
+                  >
+                    <el-option v-for="item in templateGroupsData" :key="item.id" :label="item.name" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                />
+              </svg>
+            </div>
+            <div class="section-title">
+              <h3>关联配置</h3>
+              <p>设置模板关联的流程和图标</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">关联流程</span>
+                <span class="required">*</span>
+              </div>
+              <div class="input-container">
+                <el-form-item prop="workflow_id" class="no-margin">
+                  <el-select
+                    v-model="localFormData.workflow_id"
+                    @change="updateFormData"
+                    placeholder="请选择流程"
+                    class="modern-select"
+                  >
+                    <el-option v-for="item in workFlowsData" :key="item.id" :label="item.name" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">应用图标</span>
+                <span class="required">*</span>
+              </div>
+              <div class="input-container">
+                <el-form-item prop="icon" class="no-margin">
+                  <e-icon-picker
+                    v-model="localFormData.icon"
+                    @change="updateFormData"
+                    placeholder="请选择图标"
+                    class="modern-icon-picker"
                   />
                 </el-form-item>
-                <!-- <div class="input-hint">选择负责此流程的主要人员</div> -->
               </div>
             </div>
           </div>
@@ -81,14 +137,14 @@
               </svg>
             </div>
             <div class="section-title">
-              <h3>流程描述</h3>
-              <p>详细描述流程的目的和功能</p>
+              <h3>模板描述</h3>
+              <p>详细描述模板的目的和功能</p>
             </div>
           </div>
 
           <div class="form-field full-width">
             <div class="field-label">
-              <span class="label-text">流程说明</span>
+              <span class="label-text">模板说明</span>
             </div>
             <div class="input-container">
               <el-form-item prop="desc" class="no-margin">
@@ -96,13 +152,13 @@
                   v-model="localFormData.desc"
                   type="textarea"
                   @input="updateFormData"
-                  placeholder="请详细描述此流程的目的、适用场景、预期效果等信息..."
+                  placeholder="请详细描述此模板的目的、适用场景、预期效果等信息..."
                   :rows="6"
                   class="modern-textarea"
                   size="large"
                 />
               </el-form-item>
-              <div class="input-hint">清晰的描述有助于团队成员理解和执行流程</div>
+              <div class="input-hint">清晰的描述有助于团队成员理解和执行模板</div>
             </div>
           </div>
         </div>
@@ -110,44 +166,43 @@
     </div>
 
     <!-- 操作按钮 -->
-    <FormActions @next="handleFormNext" @cancel="handleClose" :show-previous="false" />
+    <FormActions @next="handleFormNext" @cancel="close" :show-previous="false" />
   </div>
 </template>
 
-<script lang="ts" setup>
-import { watch, ref } from "vue"
-import { useFormHandler } from "@/common/composables/useFormHandler"
-import UserPicker from "@@/components/UserPicker/index.vue"
+<script setup lang="ts">
+import { ref, onMounted, watch } from "vue"
+import { ElMessage, FormInstance, FormRules } from "element-plus"
+import { listTemplateGroupApi } from "@/api/template"
+import { listWorkflowApi } from "@/api/workflow/workflow"
+import { createOrUpdateTemplateReq, templateGroup } from "@/api/template/types/template"
+import { workflow } from "@/api/workflow/types/workflow"
 import FormActions from "@/common/components/FormActions/index.vue"
-import type { FormInstance, FormRules } from "element-plus"
+import { useFormHandler } from "@/common/composables/useFormHandler"
+import "vue3-icon-picker/dist/style.css"
 
-const props = defineProps({
-  formData: {
-    type: Object,
-    required: true
-  }
-})
+const props = defineProps<{
+  formData: createOrUpdateTemplateReq
+}>()
 
-const emits = defineEmits(["update:formData", "next", "close"])
+const emits = defineEmits<{
+  next: []
+  close: []
+  "update:formData": [data: createOrUpdateTemplateReq]
+}>()
 
-const {
-  localFormData,
-  updateFormData,
-  next,
-  close: handleClose,
-  setFormData
-} = useFormHandler(props.formData, emits, "info")
+const { localFormData, updateFormData, next, close, setFormData } = useFormHandler(props.formData, emits, "info")
 
-// 表单引用
-const formRef = ref<FormInstance>()
+const formRef = ref<FormInstance | null>(null)
 
-// 表单校验规则
 const formRules: FormRules = {
   name: [
-    { required: true, message: "请输入流程名称", trigger: "blur" },
-    { min: 2, max: 50, message: "流程名称长度在 2 到 50 个字符", trigger: "blur" }
+    { required: true, message: "请输入模板名称", trigger: "blur" },
+    { min: 2, max: 50, message: "名称长度在 2 到 50 个字符", trigger: "blur" }
   ],
-  owner: [{ required: true, message: "请选择流程负责人", trigger: "change" }]
+  group_id: [{ required: true, message: "请选择所属分组", trigger: "change" }],
+  workflow_id: [{ required: true, message: "请选择关联流程", trigger: "change" }],
+  icon: [{ required: true, message: "请选择应用图标", trigger: "change" }]
 }
 
 // 处理下一步，先进行表单校验
@@ -164,6 +219,43 @@ const handleFormNext = () => {
     }
   })
 }
+
+/** 查询模版列表 */
+const templateGroupsData = ref<templateGroup[]>([])
+const listTemplateGroups = () => {
+  listTemplateGroupApi({
+    offset: 0,
+    limit: 100
+  })
+    .then(({ data }) => {
+      templateGroupsData.value = data.template_groups
+    })
+    .catch(() => {
+      templateGroupsData.value = []
+    })
+    .finally(() => {})
+}
+
+/** 查询流程列表 */
+const workFlowsData = ref<workflow[]>([])
+const listWorkFlowsData = () => {
+  listWorkflowApi({
+    offset: 0,
+    limit: 100
+  })
+    .then(({ data }) => {
+      workFlowsData.value = data.workflows
+    })
+    .catch(() => {
+      workFlowsData.value = []
+    })
+    .finally(() => {})
+}
+
+onMounted(() => {
+  listTemplateGroups()
+  listWorkFlowsData()
+})
 
 watch(
   () => props.formData,
@@ -417,14 +509,30 @@ watch(
   }
 }
 
-// UserPicker 样式调整
-:deep(.user-picker-container) {
-  .user-picker-input {
+:deep(.modern-icon-picker) {
+  .el-input__wrapper {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 16px;
     min-height: 42px;
     height: 42px;
-    display: flex;
-    align-items: center;
-    padding: 8px 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      border-color: #667eea;
+      background: #f1f5f9;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    &.is-focus {
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
+    }
   }
 }
 

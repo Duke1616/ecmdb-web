@@ -1,9 +1,8 @@
 import { ref } from "vue"
 import { ElMessageBox } from "element-plus"
-import "./close-dialog.scss"
 
 // 定义页面类型
-export type PageType = "info" | "lf" | "setting"
+export type PageType = "info" | "designer" | "setting" | "workflow" | "lf"
 
 // 定义表单数据接口
 export interface FormData {
@@ -28,12 +27,12 @@ const PAGE_CONFIGS = {
     cancelText: "继续填写",
     icon: "📝"
   },
-  lf: {
+  designer: {
     title: "确认取消",
-    content: "确定要取消当前操作吗？已设计的流程将不会保存。",
+    content: "确定要取消当前操作吗？已设计的表单将不会保存。",
     confirmText: "确定取消",
-    cancelText: "继续编辑",
-    icon: "🔧"
+    cancelText: "继续设计",
+    icon: "🎨"
   },
   setting: {
     title: "确认取消",
@@ -41,6 +40,20 @@ const PAGE_CONFIGS = {
     confirmText: "确定取消",
     cancelText: "继续配置",
     icon: "⚙️"
+  },
+  workflow: {
+    title: "确认取消",
+    content: "确定要取消当前操作吗？已配置的流程将不会保存。",
+    confirmText: "确定取消",
+    cancelText: "继续配置",
+    icon: "🔄"
+  },
+  lf: {
+    title: "确认取消",
+    content: "确定要取消当前操作吗？已设计的流程将不会保存。",
+    confirmText: "确定取消",
+    cancelText: "继续设计",
+    icon: "🎯"
   }
 }
 
@@ -55,19 +68,16 @@ export function useFormHandler(formData: any, emits: any, pageType: PageType) {
 
   // 下一步
   const next = () => {
-    updateFormData()
     emits("next")
   }
 
   // 上一步
   const previous = () => {
-    updateFormData()
     emits("previous")
   }
 
   // 保存
   const save = () => {
-    updateFormData()
     emits("save")
   }
 
@@ -93,10 +103,20 @@ export function useFormHandler(formData: any, emits: any, pageType: PageType) {
           <div class="confirm-icon">${config.icon}</div>
           <div class="confirm-text">${config.content}</div>
         </div>
-      `
+      `,
+      beforeClose: (action, instance, done) => {
+        // 确保样式应用
+        setTimeout(() => {
+          const messageBox = document.querySelector('.custom-confirm-dialog')
+          if (messageBox) {
+            messageBox.classList.add('custom-confirm-dialog')
+          }
+        }, 0)
+        done()
+      }
     })
       .then(() => {
-        emits("close")
+        emits("close", false)
       })
       .catch(() => {
         // 用户选择继续操作，不做任何操作

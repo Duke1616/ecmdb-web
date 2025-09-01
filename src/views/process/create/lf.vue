@@ -83,8 +83,8 @@ import {
   registerPolyline
 } from "@@/components/workflow/RegisterNode/index"
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
-import FormActions from "./components/FormActions/index.vue"
-import { useFormHandler } from "./composables/useFormHandler"
+import FormActions from "@/common/components/FormActions/index.vue"
+import { useFormHandler } from "@/common/composables/useFormHandler"
 
 interface Props {
   formData: createOrUpdateWorkflowReq
@@ -92,26 +92,7 @@ interface Props {
 const props = defineProps<Props>()
 const emits = defineEmits(["previous", "next", "close", "update:formData"])
 
-// const localFormData = ref({ ...props.formData })
-
-const { next: baseNext, previous: basePrevious, close, setFormData } = useFormHandler(props.formData, emits, "lf")
-
-// 包装next和previous函数，在调用前保存LogicFlow数据
-const next = () => {
-  if (lf.value) {
-    // eslint-disable-next-line vue/no-mutating-props
-    props.formData.flow_data = lf.value.getGraphData()
-  }
-  baseNext()
-}
-
-const previous = () => {
-  if (lf.value) {
-    // eslint-disable-next-line vue/no-mutating-props
-    props.formData.flow_data = lf.value.getGraphData()
-  }
-  basePrevious()
-}
+const { next, previous, close, setFormData } = useFormHandler(props.formData, emits, "lf")
 
 const flowDetail = reactive<Object>({})
 const lf = ref<any>(null)
