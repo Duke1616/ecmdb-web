@@ -39,7 +39,7 @@
                     v-model="localFormData.name"
                     @input="updateFormData"
                     placeholder="请输入模板名称，如：用户注册表单"
-                    class="modern-input"
+                    size="large"
                   />
                 </el-form-item>
               </div>
@@ -56,7 +56,7 @@
                     v-model="localFormData.group_id"
                     @change="updateFormData"
                     placeholder="请选择分组"
-                    class="modern-select"
+                    size="large"
                   >
                     <el-option v-for="item in templateGroupsData" :key="item.id" :label="item.name" :value="item.id" />
                   </el-select>
@@ -96,7 +96,7 @@
                     v-model="localFormData.workflow_id"
                     @change="updateFormData"
                     placeholder="请选择流程"
-                    class="modern-select"
+                    size="large"
                   >
                     <el-option v-for="item in workFlowsData" :key="item.id" :label="item.name" :value="item.id" />
                   </el-select>
@@ -116,6 +116,7 @@
                     @change="updateFormData"
                     placeholder="请选择图标"
                     class="icon-picker"
+                    size="large"
                   />
                 </el-form-item>
               </div>

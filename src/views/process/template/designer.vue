@@ -28,7 +28,7 @@
     </div>
 
     <!-- 操作按钮 -->
-    <FormActions @previous="previous" @save="save" @cancel="close" :show-next="false" :show-save="true" />
+    <FormActions @previous="previous" @save="hanlderSave" @cancel="close" :show-next="false" :show-save="true" />
   </div>
 </template>
 
@@ -63,6 +63,14 @@ const config: any = {
   showSaveBtn: false,
   // 配置field是否可以编辑
   fieldReadonly: false
+}
+const hanlderSave = () => {
+  if (designerRef.value) {
+    localFormData.value.rules = designerRef.value.getJson()
+    localFormData.value.options = designerRef.value.getOptionsJson()
+    updateFormData()
+    save()
+  }
 }
 
 // 监听 props.formData 变化

@@ -107,9 +107,9 @@ export function useFormHandler(formData: any, emits: any, pageType: PageType) {
       beforeClose: (action, instance, done) => {
         // 确保样式应用
         setTimeout(() => {
-          const messageBox = document.querySelector('.custom-confirm-dialog')
+          const messageBox = document.querySelector(".custom-confirm-dialog")
           if (messageBox) {
-            messageBox.classList.add('custom-confirm-dialog')
+            messageBox.classList.add("custom-confirm-dialog")
           }
         }, 0)
         done()
