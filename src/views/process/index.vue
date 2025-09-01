@@ -66,7 +66,17 @@
       v-show="visibleWorkflow"
       style="height: 100vh; margin: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000"
     >
-      <createWorkflow ref="apiRef" @close="onClosed" @callback="listFlowsData" />
+      <WizardContainer
+        :steps="workflowSteps"
+        :formData="workflowFormData"
+        :formRules="workflowFormRules"
+        @update:formData="updateWorkflowFormData"
+        @next="goToNextWorkflow"
+        @previous="goToPreviousWorkflow"
+        @close="onClosed"
+        @save="saveWorkflow"
+        ref="workflowWizardRef"
+      />
     </el-card>
 
     <!-- 预览 -->
@@ -77,26 +87,123 @@
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch, nextTick } from "vue"
+import { h, ref, watch, nextTick, computed } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
-import createWorkflow from "./create/index.vue"
-import { deleteWorkflowApi, deployWorkflowApi, listWorkflowApi } from "@/api/workflow/workflow"
-import { workflow } from "@/api/workflow/types/workflow"
+import {
+  deleteWorkflowApi,
+  deployWorkflowApi,
+  listWorkflowApi,
+  createWorkflowApi,
+  updateWorkflowApi
+} from "@/api/workflow/workflow"
+import { workflow, createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import Preview from "./preview/Preview.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { findByUsernamesApi } from "@/api/user"
+import WizardContainer from "@/common/components/WizardContainer/index.vue"
+import { COMMON_STEPS } from "@/common/constants/wizard-steps"
+import { getFormRulesByStep } from "@/common/constants/form-rules"
+import Info from "./create/info.vue"
+import WorkflowEditor from "./create/lf.vue"
+import Setting from "./create/setting.vue"
+import { v4 as uuidv4 } from "uuid"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const apiRef = ref<InstanceType<typeof createWorkflow>>()
 const previewRef = ref<InstanceType<typeof Preview>>()
+
+// 工作流向导相关
+const workflowWizardRef = ref()
+const workflowSteps = [
+  {
+    ...COMMON_STEPS.INFO,
+    title: "填写流程信息",
+    component: Info
+  },
+  {
+    ...COMMON_STEPS.DESIGN,
+    title: "定义配置流程",
+    description: "可视化流程设计",
+    component: WorkflowEditor
+  },
+  {
+    ...COMMON_STEPS.SETTING,
+    title: "配置启动设置",
+    description: "通知和参数配置",
+    component: Setting
+  }
+]
+
+const workflowFormData = ref<createOrUpdateWorkflowReq>({
+  id: undefined,
+  is_notify: false,
+  notify_method: 1,
+  name: "",
+  desc: "",
+  icon: "",
+  owner: "",
+  flow_data: {
+    nodes: [
+      {
+        id: uuidv4(),
+        type: "start",
+        x: 350,
+        y: 160,
+        properties: {}
+      },
+      {
+        id: uuidv4(),
+        type: "end",
+        x: 610,
+        y: 160,
+        properties: {}
+      }
+    ],
+    edges: []
+  }
+})
+
+const workflowFormRules = computed(() => {
+  return getFormRulesByStep("WORKFLOW_INFO", workflowWizardRef.value?.currentStep || 0)
+})
+
 // 控制列表卡片
 const elCardVisibe = ref<boolean>(true)
 // 控制新增修改
 const visibleWorkflow = ref<boolean>(false)
 // 预览流程图
 const graphPreviewVisible = ref<boolean>(false)
+
+// 工作流向导相关函数
+const updateWorkflowFormData = (data: createOrUpdateWorkflowReq) => {
+  workflowFormData.value = { ...workflowFormData.value, ...data }
+}
+
+const goToNextWorkflow = () => {
+  workflowWizardRef.value?.goToNext()
+}
+
+const goToPreviousWorkflow = () => {
+  workflowWizardRef.value?.goToPrevious()
+}
+
+const saveWorkflow = async () => {
+  try {
+    if (workflowFormData.value.id) {
+      await updateWorkflowApi(workflowFormData.value)
+      ElMessage.success("流程更新成功")
+    } else {
+      await createWorkflowApi(workflowFormData.value)
+      ElMessage.success("流程创建成功")
+    }
+    // 保存成功后关闭页面并刷新列表
+    onClosed()
+    listFlowsData()
+  } catch (error) {
+    ElMessage.error("操作失败")
+  }
+}
 
 const handleCreate = () => {
   // 展示新增页面，隐藏底层列表卡片
@@ -105,7 +212,35 @@ const handleCreate = () => {
 
   // 渲然初始化页面
   nextTick(() => {
-    apiRef.value?.setCreateForm()
+    workflowWizardRef.value?.setStep(0)
+    workflowFormData.value = {
+      id: undefined,
+      is_notify: false,
+      notify_method: 1,
+      name: "",
+      desc: "",
+      icon: "",
+      owner: "",
+      flow_data: {
+        nodes: [
+          {
+            id: uuidv4(),
+            type: "start",
+            x: 350,
+            y: 160,
+            properties: {}
+          },
+          {
+            id: uuidv4(),
+            type: "end",
+            x: 610,
+            y: 160,
+            properties: {}
+          }
+        ],
+        edges: []
+      }
+    }
   })
 }
 
@@ -115,7 +250,8 @@ const handleUpdate = (row: workflow) => {
   visibleWorkflow.value = true
 
   nextTick(() => {
-    apiRef.value?.setUpdateForm(row)
+    workflowWizardRef.value?.setStep(0)
+    workflowFormData.value = { ...workflowFormData.value, ...row }
   })
 }
 

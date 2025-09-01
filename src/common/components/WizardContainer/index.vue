@@ -24,7 +24,7 @@
       </div>
     </div>
     <div class="wizard-body">
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" class="wizard-form">
+      <el-form ref="formRef" :model="formData" :rules="computedFormRules" label-width="auto" class="wizard-form">
         <component
           :is="currentStepComponent"
           :key="currentStep"
@@ -42,132 +42,73 @@
 </template>
 
 <script lang="ts" setup>
-import { Edit, Check } from "@element-plus/icons-vue"
+import { Check } from "@element-plus/icons-vue"
 import { computed, ref } from "vue"
-import Info from "./info.vue"
-import Designer from "./designer.vue"
-import { createOrUpdateTemplateReq, template } from "@/api/template/types/template"
-import { cloneDeep } from "lodash-es"
-import { createTemplateApi, updateTemplateApi } from "@/api/template"
-import { ElMessage, FormInstance, FormRules } from "element-plus"
+import { FormInstance, FormRules } from "element-plus"
+import type { WizardProps } from "@/common/types/wizard"
 
 const CheckIcon = Check
 
-const steps = [
-  {
-    title: "填写模板信息",
-    description: "基本信息设置",
-    icon: Edit,
-    component: Info
-  },
-  {
-    title: "设计表单结构",
-    description: "可视化表单设计",
-    icon: Check,
-    component: Designer
-  }
-]
+interface Props extends WizardProps {}
 
-const currentStep = ref(0)
-
-const currentStepComponent = computed(() => steps[currentStep.value]?.component)
-
-const formData = ref<createOrUpdateTemplateReq>({
-  id: undefined,
-  name: "",
-  desc: "",
-  rules: undefined,
-  options: undefined,
-  icon: "",
-  group_id: undefined,
-  workflow_id: undefined
+const props = withDefaults(defineProps<Props>(), {
+  initialStep: 0
 })
 
+const emits = defineEmits<{
+  "update:formData": [data: any]
+  next: []
+  previous: []
+  close: []
+  save: []
+}>()
+
+const currentStep = ref(props.initialStep)
 const formRef = ref<FormInstance | null>(null)
 
-const formRules = computed<FormRules>(() => {
-  if (currentStep.value === 0) {
-    return {
-      name: [{ required: true, message: "请输入模板名称", trigger: "blur" }],
-      group_id: [{ required: true, message: "请选择所属分组", trigger: "change" }],
-      workflow_id: [{ required: true, message: "请选择关联流程", trigger: "change" }],
-      icon: [{ required: true, message: "请选择应用图标", trigger: "change" }]
-    }
+const currentStepComponent = computed(() => props.steps[currentStep.value]?.component)
+
+const computedFormRules = computed<FormRules>(() => {
+  if (typeof props.formRules === "function") {
+    return props.formRules()
   }
-  return {}
+  return props.formRules || {}
 })
 
 const goToNext = () => {
-  if (currentStep.value === 0) {
-    formRef.value?.validate((valid: boolean, fields: any) => {
-      if (!valid) {
-        return console.error("表单校验不通过", fields)
-      }
-      goToStep(currentStep.value + 1)
-    })
-  } else {
-    goToStep(currentStep.value + 1)
+  if (currentStep.value < props.steps.length - 1) {
+    currentStep.value++
   }
 }
 
 const goToPrevious = () => {
-  goToStep(currentStep.value - 1)
-}
-
-const goToStep = (stepIndex: number) => {
-  if (stepIndex >= 0 && stepIndex < steps.length) {
-    currentStep.value = stepIndex
-  } else {
-    console.log(`[v0] Invalid step index: ${stepIndex}`)
+  if (currentStep.value > 0) {
+    currentStep.value--
   }
 }
 
-const updateFormData = (newFormData: createOrUpdateTemplateReq) => {
-  try {
-    formData.value = { ...formData.value, ...newFormData }
-  } catch (error) {
-    console.error("Error updating form data:", error)
-  }
-}
-
-const save = () => {
-  const api = formData.value.id === undefined ? createTemplateApi : updateTemplateApi
-  api(formData.value)
-    .then(() => {
-      onClosed()
-      ElMessage.success("保存成功")
-      emits("callback")
-    })
-    .catch((error) => {
-      console.log("catch", error)
-      ElMessage.error("保存失败，请重试")
-    })
-    .finally(() => {})
+const updateFormData = (data: any) => {
+  emits("update:formData", data)
 }
 
 const onClosed = () => {
-  emits("close", false)
+  emits("close")
 }
 
-const emits = defineEmits(["close", "callback"])
+const save = () => {
+  emits("save")
+}
 
+// 暴露方法给父组件
 defineExpose({
-  setCreateForm: () => {
-    currentStep.value = 0
-    formData.value = cloneDeep({
-      id: undefined,
-      name: "",
-      desc: "",
-      rules: undefined,
-      options: undefined,
-      icon: "",
-      group_id: undefined,
-      workflow_id: undefined
-    })
-  },
-  setUpdateForm: (row: template) => {
-    currentStep.value = 0
-    formData.value = { ...formData.value, ...row }
+  currentStep,
+  formRef,
+  goToNext,
+  goToPrevious,
+  setStep: (step: number) => {
+    if (step >= 0 && step < props.steps.length) {
+      currentStep.value = step
+    }
   }
 })
 </script>
@@ -183,7 +124,6 @@ defineExpose({
 .wizard-header {
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  // padding: 0.75rem 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
@@ -282,15 +222,6 @@ defineExpose({
   min-height: 0;
 }
 
-.step-content {
-  flex: 1;
-  display: flex;
-  text-align: center;
-  flex-direction: column;
-  padding: 10px 0px;
-  min-height: 0;
-}
-
 .wizard-form {
   flex: 1;
   display: flex;
@@ -298,22 +229,12 @@ defineExpose({
   min-height: 0;
 }
 
-// 响应式设计
-@media (max-width: 768px) {
-  .step-indicator {
-    max-width: 600px;
-  }
-
-  .step-item {
-    max-width: 150px;
-  }
-
-  .step-title {
-    font-size: 11px;
-  }
-
-  .step-description {
-    font-size: 9px;
-  }
+.step-content {
+  flex: 1;
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  padding: 10px 0px;
+  min-height: 0;
 }
 </style>

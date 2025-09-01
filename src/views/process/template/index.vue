@@ -74,7 +74,17 @@
       v-show="templateDialogDrawer"
       style="height: 100vh; margin: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000"
     >
-      <Template ref="tRef" @close="onClosedTemplate" @callback="listTemplatesData" />
+      <WizardContainer
+        :steps="templateSteps"
+        :formData="templateFormData"
+        :formRules="templateFormRules"
+        @update:formData="updateTemplateFormData"
+        @next="goToNextTemplate"
+        @previous="goToPreviousTemplate"
+        @close="onClosedTemplate"
+        @save="saveTemplate"
+        ref="templateWizardRef"
+      />
     </el-card>
 
     <!-- 新增分组 -->
@@ -108,17 +118,27 @@
 </template>
 
 <script lang="ts" setup>
-import { h, nextTick, ref, watch } from "vue"
+import { h, nextTick, ref, watch, computed } from "vue"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { template } from "@/api/template/types/template"
-import { deleteTemplateApi, getTemplateGroupsByIdsApi, listTemplateApi } from "@/api/template"
-import Template from "./template.vue"
+import { template, createOrUpdateTemplateReq } from "@/api/template/types/template"
+import {
+  deleteTemplateApi,
+  getTemplateGroupsByIdsApi,
+  listTemplateApi,
+  createTemplateApi,
+  updateTemplateApi
+} from "@/api/template"
 import TemplateGroup from "./group/index.vue"
 import thirdParty from "./thirdparty.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
 import Discovery from "./discovery/index.vue"
+import WizardContainer from "@/common/components/WizardContainer/index.vue"
+import { COMMON_STEPS } from "@/common/constants/wizard-steps"
+import { getFormRulesByStep } from "@/common/constants/form-rules"
+import Info from "./info.vue"
+import Designer from "./designer.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const templateDialogDrawer = ref<boolean>(false)
@@ -126,7 +146,37 @@ const templateDiscoverDialog = ref<boolean>(false)
 const groupDialogVisible = ref<boolean>(false)
 const thirdpartyDialogVisible = ref<boolean>(false)
 
-const tRef = ref<InstanceType<typeof Template>>()
+// 模板向导相关
+const templateWizardRef = ref()
+const templateSteps = [
+  {
+    ...COMMON_STEPS.INFO,
+    title: "填写模板信息",
+    component: Info
+  },
+  {
+    ...COMMON_STEPS.DESIGN,
+    title: "设计表单结构",
+    description: "可视化表单设计",
+    component: Designer
+  }
+]
+
+const templateFormData = ref<createOrUpdateTemplateReq>({
+  id: undefined,
+  name: "",
+  desc: "",
+  rules: undefined,
+  options: undefined,
+  icon: "",
+  group_id: undefined,
+  workflow_id: undefined
+})
+
+const templateFormRules = computed(() => {
+  return getFormRulesByStep("TEMPLATE_INFO", templateWizardRef.value?.currentStep || 0)
+})
+
 const tgRef = ref<InstanceType<typeof TemplateGroup>>()
 const thirdRef = ref<InstanceType<typeof thirdParty>>()
 const discoveryRef = ref<InstanceType<typeof Discovery>>()
@@ -189,8 +239,48 @@ const onClosedDiscover = () => {
   discoveryRef.value?.resetMap()
 }
 
+// 模板向导相关函数
+const updateTemplateFormData = (data: createOrUpdateTemplateReq) => {
+  templateFormData.value = { ...templateFormData.value, ...data }
+}
+
+const goToNextTemplate = () => {
+  templateWizardRef.value?.goToNext()
+}
+
+const goToPreviousTemplate = () => {
+  templateWizardRef.value?.goToPrevious()
+}
+
+const saveTemplate = async () => {
+  try {
+    if (templateFormData.value.id) {
+      await updateTemplateApi(templateFormData.value)
+      ElMessage.success("模板更新成功")
+    } else {
+      await createTemplateApi(templateFormData.value)
+      ElMessage.success("模板创建成功")
+    }
+    // 保存成功后关闭页面并刷新列表
+    onClosedTemplate()
+    listTemplatesData()
+  } catch (error) {
+    ElMessage.error("操作失败")
+  }
+}
+
 const onClosedTemplate = () => {
-  tRef.value?.setCreateForm?.()
+  templateWizardRef.value?.setStep(0)
+  templateFormData.value = {
+    id: undefined,
+    name: "",
+    desc: "",
+    rules: undefined,
+    options: undefined,
+    icon: "",
+    group_id: undefined,
+    workflow_id: undefined
+  }
   templateDialogDrawer.value = false
 }
 
@@ -210,7 +300,8 @@ const handleUpdate = (row: template) => {
   templateDialogDrawer.value = true
 
   nextTick(() => {
-    tRef.value?.setUpdateForm(row)
+    templateWizardRef.value?.setStep(0)
+    templateFormData.value = { ...templateFormData.value, ...row }
   })
 }
 const handleCreateTemplate = () => {
