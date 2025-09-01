@@ -1,10 +1,19 @@
 <template>
   <div class="expression-container">
+    <!-- 左侧：定义表达式 -->
     <el-card class="condition-set-card">
       <!-- 标题 -->
       <template #header>
         <div class="card-header">
-          <span>定义表达式</span>
+          <div class="header-content">
+            <div class="header-icon">
+              <el-icon><Edit /></el-icon>
+            </div>
+            <div class="header-text">
+              <h3 class="header-title">条件构建</h3>
+              <p class="header-subtitle">拖拽排序，组合条件逻辑</p>
+            </div>
+          </div>
         </div>
       </template>
 
@@ -79,39 +88,120 @@
         </div>
       </div>
     </el-card>
-  </div>
 
-  <el-card class="condition-result">
-    <!-- 标题 -->
-    <template #header>
-      <div class="card-header">
-        <span>结果</span>
-        <div class="language-toggle">
-          <el-button
-            :type="showChinese ? 'primary' : 'default'"
-            size="small"
-            @click="showChinese = !showChinese"
-            class="toggle-btn"
-          >
-            {{ showChinese ? "中文" : "英文" }}
+    <!-- 右侧：结果和表达式 -->
+    <el-card class="condition-result">
+      <!-- 标题 -->
+      <template #header>
+        <div class="card-header">
+          <div class="header-content">
+            <div class="header-icon">
+              <el-icon><View /></el-icon>
+            </div>
+            <div class="header-text">
+              <h3 class="header-title">表达式预览</h3>
+              <p class="header-subtitle">查看生成的SQL表达式</p>
+            </div>
+          </div>
+          <div class="language-toggle">
+            <el-button
+              :type="showChinese ? 'primary' : 'default'"
+              size="small"
+              @click="showChinese = !showChinese"
+              class="toggle-btn"
+            >
+              {{ showChinese ? "中文" : "英文" }}
+            </el-button>
+          </div>
+        </div>
+      </template>
+
+      <!-- 结果内容 -->
+      <div class="result-content">
+        <!-- 表达式显示 -->
+        <div class="expression-section">
+          <div class="section-title">表达式</div>
+          <div class="expression-display">
+            <span v-if="showChinese" class="chinese-expression">{{ getChineseExpression() }}</span>
+            <span v-else class="english-expression">{{ expresstion }}</span>
+          </div>
+        </div>
+
+        <!-- 分隔线 -->
+        <el-divider />
+
+        <!-- 结果预览 -->
+        <div class="result-section">
+          <div class="section-title">结果预览</div>
+          <div class="result-preview">
+            <div class="preview-item">
+              <span class="preview-label">条件组数量:</span>
+              <span class="preview-value">{{ conditionGroups.length }}</span>
+            </div>
+            <div class="preview-item">
+              <span class="preview-label">表达式长度:</span>
+              <span class="preview-value">{{ expresstion.length }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" size="small" @click="copyExpression">
+            <el-icon><CopyDocument /></el-icon>
+            复制表达式
+          </el-button>
+          <el-button type="success" size="small" @click="exportExpression">
+            <el-icon><Download /></el-icon>
+            导出
           </el-button>
         </div>
       </div>
-    </template>
-
-    <div class="expression-display">
-      <span v-if="showChinese" class="chinese-expression">{{ getChineseExpression() }}</span>
-      <span v-else class="english-expression">{{ expresstion }}</span>
-    </div>
-  </el-card>
+    </el-card>
+  </div>
 
   <!-- 创建条件弹窗 -->
-  <el-dialog v-model="dialogVisible" title="创建条件" width="600px">
-    <Rule ref="ruleRef" :templates="props.templates" />
+  <el-dialog 
+    v-model="dialogVisible" 
+    width="700px" 
+    class="condition-dialog"
+    :close-on-click-modal="false"
+    :close-on-press-escape="true"
+    :show-close="false"
+    align-center
+    destroy-on-close
+    :scrollbar-always-on="true"
+  >
+    <template #header>
+      <div class="dialog-header">
+        <div class="header-content">
+          <div class="header-icon">
+            <el-icon><Document /></el-icon>
+          </div>
+          <div class="header-text">
+            <h3 class="header-title">新建条件</h3>
+            <p class="header-subtitle">设置字段、运算符和值</p>
+          </div>
+        </div>
+      </div>
+    </template>
+    
+    <div class="dialog-body">
+      <Rule ref="ruleRef" :templates="props.templates" />
+    </div>
+    
     <!-- 底部按钮 -->
     <template #footer>
-      <el-button @click="handleClose">取消</el-button>
-      <el-button type="primary" @click="submitForm">确认添加</el-button>
+      <div class="dialog-footer">
+        <div class="footer-buttons">
+          <el-button @click="handleClose" size="large" class="cancel-button">
+            取消
+          </el-button>
+          <el-button type="primary" @click="submitForm" size="large" class="submit-button">
+            确认添加
+          </el-button>
+        </div>
+      </div>
     </template>
   </el-dialog>
 </template>
@@ -119,6 +209,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, watch } from "vue"
 import { ElMessage } from "element-plus"
+import { CopyDocument, Download, Edit, View } from "@element-plus/icons-vue"
 import Rule from "./rule.vue"
 import { template } from "@/api/template/types/template"
 import { VueDraggable } from "vue-draggable-plus"
@@ -465,59 +556,136 @@ const getExpression = () => {
   return expresstion
 }
 
+// 复制表达式到剪贴板
+const copyExpression = async () => {
+  try {
+    const textToCopy = showChinese.value ? getChineseExpression() : expresstion.value
+    await navigator.clipboard.writeText(textToCopy)
+    ElMessage.success("表达式已复制到剪贴板")
+  } catch (error) {
+    ElMessage.error("复制失败，请手动复制")
+  }
+}
+
+// 导出表达式
+const exportExpression = () => {
+  const data = {
+    expression: expresstion.value,
+    chineseExpression: getChineseExpression(),
+    conditionGroups: conditionGroups.value,
+    exportTime: new Date().toISOString()
+  }
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `expression_${new Date().getTime()}.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+
+  ElMessage.success("表达式已导出")
+}
+
 defineExpose({
   getExpression,
   getChineseExpression,
   setFieldMappings,
   setValueMappings,
   getFieldMappings,
-  getValueMappings
+  getValueMappings,
+  copyExpression,
+  exportExpression
 })
 </script>
 
-<style scoped>
-/* 表达式容器 */
+<style lang="scss" scoped>
+/* 表达式容器 - 采用简单的高度管理 */
 .expression-container {
-  height: 100%;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 16px;
+  height: 100%;
 }
 
-/* 卡片样式 */
+/* 左侧条件设置卡片 */
 .condition-set-card {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
   border: 1px solid #ebeef5;
   border-radius: 8px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  min-width: 0;
 }
 
-/* 滚动内容区域 */
+/* 滚动内容区域 - 固定高度，内部滚动 */
 .scrollable-content {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  max-height: 300px;
+  height: 400px; /* 固定高度，避免高度计算问题 */
+}
 
-  /* 自定义滚动条样式 */
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
+/* 自定义滚动条样式 */
+.scrollable-content::-webkit-scrollbar {
+  width: 6px;
+}
 
-  &::-webkit-scrollbar-track {
-    background: #f1f5f9;
-    border-radius: 3px;
-  }
+.scrollable-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
 
-  &::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 3px;
+.scrollable-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
 
-    &:hover {
-      background: #94a3b8;
-    }
-  }
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 右侧结果面板 */
+.condition-result {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 400px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+}
+
+/* 结果内容 - 固定高度，内部滚动 */
+.result-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  padding: 16px;
+  height: 400px; /* 与左侧保持一致的高度 */
+}
+
+/* 右侧滚动条样式 */
+.result-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.result-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.result-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.result-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* 标题样式 */
@@ -525,45 +693,105 @@ defineExpose({
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  min-height: 70px;
 }
 
-.language-toggle {
-  .toggle-btn {
-    font-size: 12px;
-    padding: 4px 12px;
-    height: 28px;
-    border-radius: 6px;
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.header-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
+  border-radius: 8px;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.header-text {
+  flex: 1;
+}
+
+.header-title {
+  margin: 0 0 3px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+}
+
+.header-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.2;
+  font-weight: 400;
+}
+
+.language-toggle .toggle-btn {
+  font-size: 12px;
+  padding: 6px 16px;
+  height: 32px;
+  border-radius: 8px;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #06b6d4;
+    color: #06b6d4;
+    background: #f0f9ff;
   }
+}
+
+/* 表达式显示区域 */
+.expression-section {
+  flex: 1;
 }
 
 .expression-display {
   padding: 12px 0;
-
-  .chinese-expression {
-    color: #0891b2;
-    font-weight: 500;
-    line-height: 1.6;
-  }
-
-  .chinese-text {
-    color: #0891b2;
-    font-weight: 500;
-  }
-
-  .english-text {
-    color: #1e293b;
-    font-weight: 500;
-    font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-  }
-
-  .english-expression {
-    color: #1e293b;
-    font-weight: 500;
-    line-height: 1.6;
-    font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-  }
 }
 
+.chinese-expression {
+  color: #0891b2;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.chinese-text {
+  color: #0891b2;
+  font-weight: 500;
+}
+
+.english-text {
+  color: #1e293b;
+  font-weight: 500;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+.english-expression {
+  color: #1e293b;
+  font-weight: 500;
+  line-height: 1.6;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+/* 图标样式 */
 .icon {
   margin-left: 8px;
   cursor: pointer;
@@ -574,21 +802,27 @@ defineExpose({
   cursor: pointer;
 }
 
+/* 条件组样式 */
 .condition-group {
   margin-bottom: 20px;
+}
 
-  &:last-child {
-    margin-bottom: 0;
-  }
+.condition-group:last-child {
+  margin-bottom: 0;
 }
 
 .condition-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  color: #374151;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .condition-item {
@@ -602,6 +836,73 @@ defineExpose({
   margin: 24px 0;
 }
 
+/* 结果预览样式 */
+.result-section {
+  flex: 1;
+}
+
+.result-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.preview-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.preview-value {
+  font-size: 13px;
+  color: #1e293b;
+  font-weight: 600;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+/* 操作按钮 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* 区域标题样式 */
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 12px;
+  padding: 8px 0;
+  border-bottom: 2px solid #e2e8f0;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    border-radius: 1px;
+  }
+}
+
+/* 按钮组样式 */
 .button-group {
   display: flex;
   flex-direction: column;
@@ -675,7 +976,151 @@ defineExpose({
   line-height: 44px;
   padding: 0 24px;
 }
-.condition-result {
-  margin-top: 10px;
+
+/* 响应式设计 - 简化版本 */
+@media (max-width: 1200px) {
+  .expression-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .condition-set-card,
+  .condition-result {
+    flex: none;
+    max-width: none;
+  }
+  
+  .scrollable-content,
+  .result-content {
+    height: 300px; /* 垂直布局时减小高度 */
+  }
+}
+
+@media (max-width: 768px) {
+  .expression-container {
+    gap: 8px;
+  }
+  
+  .scrollable-content,
+  .result-content {
+    height: 250px; /* 小屏幕时进一步减小高度 */
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
+
+/* 条件弹窗专用样式 */
+:deep(.condition-dialog) {
+  .el-dialog {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e2e8f0;
+    
+    @media (max-width: 768px) {
+      margin: 1rem;
+      width: calc(100% - 2rem) !important;
+      max-width: none !important;
+    }
+  }
+  
+  .el-dialog__header {
+    padding: 0;
+  }
+  
+  .el-dialog__body {
+    padding: 0;
+    background: transparent;
+  }
+  
+  .el-dialog__footer {
+    padding: 0;
+    background: transparent;
+  }
+}
+
+/* 对话框滚动条样式 */
+.dialog-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dialog-body::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.dialog-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.dialog-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dialog-body {
+  padding: 5px;
+  background: #ffffff;
+  min-height: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.dialog-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+
+
+.dialog-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.footer-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.cancel-button {
+  background: #ffffff;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+    transform: translateY(-1px);
+  }
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+  color: white;
+  border: 2px solid #06b6d4;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    border-color: #0891b2;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+    transform: translateY(-1px);
+  }
 }
 </style>

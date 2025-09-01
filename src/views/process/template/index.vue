@@ -70,10 +70,7 @@
     </el-card>
 
     <!-- 新增或删除模版 -->
-    <el-card
-      v-show="templateDialogDrawer"
-      style="height: 100vh; margin: 0; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1000"
-    >
+    <el-card v-show="templateDialogDrawer" class="template-wizard-container">
       <WizardContainer
         :steps="templateSteps"
         :formData="templateFormData"
@@ -343,6 +340,17 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTem
 </script>
 
 <style lang="scss" scoped>
+.template-wizard-container {
+  height: 100vh;
+  margin: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
 .toolbar-wrapper {
   display: flex;
   justify-content: space-between;

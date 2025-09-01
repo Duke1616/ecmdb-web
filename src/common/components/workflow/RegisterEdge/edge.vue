@@ -92,16 +92,16 @@
     <!-- 表达式编辑器弹窗 -->
     <el-dialog
       v-model="dialogVisible"
-      title="表达式编辑器"
       :fullscreen="false"
       :modal="true"
       :lock-scroll="true"
       :close-on-click-modal="false"
       :close-on-press-escape="true"
-      :show-close="true"
+      :show-close="false"
       :before-close="handleExpressionClose"
-      width="65%"
-      top="8vh"
+      :width="'70%'"
+      align-center
+      destroy-on-close
       class="expression-dialog"
     >
       <div class="expression-content">
@@ -494,81 +494,63 @@ onMounted(() => {
   }
 }
 
-// 表达式编辑器弹窗样式
-.expression-dialog {
-  :deep(.el-dialog) {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    border: none;
-  }
-
+:deep(.el-dialog) {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border: none;
+  
   :deep(.el-dialog__header) {
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    padding: 20px 24px;
-    margin: 0;
-    border-bottom: none;
-
-    .el-dialog__title {
-      color: white;
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .el-dialog__headerbtn {
-      .el-dialog__close {
-        color: white;
-        font-size: 20px;
-
-        &:hover {
-          color: rgba(255, 255, 255, 0.8);
-        }
-      }
-    }
+    display: none;
   }
 
   :deep(.el-dialog__body) {
-    padding: 24px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    min-height: 320px;
+    padding: 0;
+    background: transparent;
+    min-height: 400px;
+    max-height: 85vh;
+    overflow: hidden;
   }
 
   :deep(.el-dialog__footer) {
-    padding: 20px 24px;
-    background: #ffffff;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
+    padding: 0;
+    background: transparent;
   }
+}
 
-  :deep(.el-overlay) {
-    background-color: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
-  }
+:deep(.el-overlay) {
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
 }
 
 // 表达式编辑器内容样式
 .expression-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  
   .expression-header {
-    margin-bottom: 20px;
-    padding: 16px 20px;
+    padding: 1.5rem 1.5rem 1rem;
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-radius: 10px;
-    border: 1px solid #bae6fd;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
 
     .header-info {
       .content-title {
         margin: 0 0 6px 0;
-        font-size: 16px;
-        font-weight: 700;
-        color: #0c4a6e;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        line-height: 1.5;
       }
 
       .content-subtitle {
         margin: 0;
-        font-size: 13px;
-        color: #0369a1;
+        font-size: 0.875rem;
+        color: #6b7280;
         line-height: 1.4;
         font-weight: 500;
       }
@@ -576,11 +558,11 @@ onMounted(() => {
   }
 
   .expression-body {
+    flex: 1;
     background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    min-height: 0;
+    padding: 0;
   }
 }
 
@@ -588,5 +570,20 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* 表达式弹窗专用样式 */
+:deep(.expression-dialog) {
+  .el-dialog {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .el-dialog__body {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
 }
 </style>
