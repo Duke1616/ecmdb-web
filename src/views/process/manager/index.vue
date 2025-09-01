@@ -105,9 +105,9 @@ import { findByUsernamesApi } from "@/api/user"
 import WizardContainer from "@/common/components/WizardContainer/index.vue"
 import { COMMON_STEPS } from "@/common/constants/wizard-steps"
 import { getFormRulesByStep } from "@/common/constants/form-rules"
-import Info from "./create/info.vue"
-import WorkflowEditor from "./create/lf.vue"
-import Setting from "./create/setting.vue"
+import Info from "./info.vue"
+import WorkflowEditor from "./lf.vue"
+import Setting from "./setting.vue"
 import { v4 as uuidv4 } from "uuid"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
