@@ -40,7 +40,6 @@
                     @input="updateFormData"
                     placeholder="请输入模板名称，如：用户注册表单"
                     class="modern-input"
-                    size="large"
                   />
                 </el-form-item>
               </div>
@@ -116,7 +115,7 @@
                     v-model="localFormData.icon"
                     @change="updateFormData"
                     placeholder="请选择图标"
-                    class="modern-icon-picker"
+                    class="icon-picker"
                   />
                 </el-form-item>
               </div>
@@ -266,7 +265,7 @@ watch(
 )
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .info-container {
   display: flex;
   flex-direction: column;
@@ -389,151 +388,8 @@ watch(
   }
 }
 
-// 隐藏 el-form-item 的默认样式，保持现有的 UI 样式
-:deep(.no-margin) {
-  margin-bottom: 0;
-
-  .el-form-item__content {
-    margin-left: 0 !important;
-  }
-
-  .el-form-item__error {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 4px;
-    font-size: 11px;
-    color: #ef4444;
-    line-height: 1.2;
-  }
-}
-
-// 现代化输入框样式
-:deep(.modern-input) {
-  .el-input__wrapper {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-height: 42px;
-    height: 42px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &.is-focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-  }
-
-  .el-input__inner {
-    color: #1e293b;
-    font-size: 13px;
-    font-weight: 500;
-
-    &::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-  }
-}
-
-:deep(.modern-textarea) {
-  .el-textarea__inner {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    color: #1e293b;
-    font-size: 13px;
-    line-height: 1.6;
-    resize: vertical;
-    min-height: 120px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &:focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-
-    &::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-  }
-}
-
-:deep(.modern-select) {
-  .el-input__wrapper {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-height: 42px;
-    height: 42px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &.is-focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-  }
-}
-
-:deep(.modern-icon-picker) {
-  .el-input__wrapper {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-height: 42px;
-    height: 42px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &.is-focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-  }
+.icon-picker {
+  width: 100%;
 }
 
 // 响应式设计

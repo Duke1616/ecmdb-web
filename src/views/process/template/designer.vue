@@ -118,7 +118,7 @@ defineExpose({
 .designer-content {
   flex: 1;
   padding: 0px;
-  overflow-y: auto;
+  overflow: hidden;
 
   .form-card {
     background: white;
@@ -187,12 +187,7 @@ defineExpose({
     border-radius: 8px;
     overflow: hidden;
     background: #fafafa;
-    min-height: 600px;
+    min-height: 0;
   }
-}
-
-.form-designer {
-  height: 100%;
-  border: none;
 }
 </style>

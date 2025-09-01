@@ -247,7 +247,6 @@ const handleDelete = (row: template) => {
   })
 }
 
-
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listTemplatesData, { immediate: true })
 </script>

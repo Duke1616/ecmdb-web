@@ -183,7 +183,7 @@ defineExpose({
 .wizard-header {
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  padding: 0.75rem 1.5rem;
+  // padding: 0.75rem 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   flex-shrink: 0;
 }
@@ -300,10 +300,6 @@ defineExpose({
 
 // 响应式设计
 @media (max-width: 768px) {
-  .wizard-header {
-    padding: 0.5rem 1rem;
-  }
-
   .step-indicator {
     max-width: 600px;
   }
