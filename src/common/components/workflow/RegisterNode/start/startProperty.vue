@@ -4,6 +4,7 @@
     subtitle="配置工作流的起始节点属性"
     icon-name="start"
     theme="green"
+    :in-drawer="true"
     @confirm="confirmFunc"
     @cancel="cancelFunc"
   >

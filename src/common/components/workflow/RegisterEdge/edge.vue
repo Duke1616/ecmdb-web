@@ -4,6 +4,7 @@
     subtitle="配置工作流节点间的连接关系和条件"
     icon-name="click"
     theme="cyan"
+    :in-drawer="true"
     @confirm="confirmFunc"
     @cancel="cancelFunc"
   >

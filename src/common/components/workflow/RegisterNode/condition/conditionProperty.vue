@@ -4,6 +4,7 @@
     subtitle="配置工作流分支条件节点的属性"
     icon-name="condition"
     theme="orange"
+    :in-drawer="true"
     @confirm="confirmFunc"
     @cancel="cancelFunc"
   >

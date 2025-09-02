@@ -6,6 +6,7 @@
     :show-close="false"
     :close-on-click-modal="false"
     :close-on-press-escape="true"
+    :z-index="3000"
     class="approval-dialog"
     @close="handleClose"
   >
@@ -416,6 +417,7 @@ const removeUser = (userId: number) => {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     margin: 5vh auto;
     max-height: 90vh !important;
+    z-index: 3000 !important;
 
     /* 响应式宽度和高度适配 */
     @media (max-width: 1199px) {

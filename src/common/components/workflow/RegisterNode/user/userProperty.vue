@@ -4,6 +4,7 @@
     subtitle="配置审批流程的用户节点属性"
     icon-name="user"
     theme="blue"
+    :in-drawer="true"
     @confirm="confirmFunc"
     @cancel="cancelFunc"
   >

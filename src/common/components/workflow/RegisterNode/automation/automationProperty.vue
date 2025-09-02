@@ -4,6 +4,7 @@
     subtitle="配置自动化任务的执行参数和通知设置"
     icon-name="automation"
     theme="purple"
+    :in-drawer="true"
     @confirm="confirmFunc"
     @cancel="cancelFunc"
   >

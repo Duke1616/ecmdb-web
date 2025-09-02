@@ -1,5 +1,5 @@
 <template>
-  <div class="property-container" :class="dialogClass">
+  <div class="property-container" :class="[dialogClass, { 'in-drawer': inDrawer }]">
     <!-- 弹窗头部 -->
     <div class="dialog-header" :class="headerClass">
       <div class="header-icon">
@@ -44,6 +44,9 @@ interface Props {
   // 自定义类名
   dialogClass?: string
   headerClass?: string
+
+  // 上下文配置
+  inDrawer?: boolean
 }
 
 interface Emits {
@@ -55,7 +58,8 @@ const props = withDefaults(defineProps<Props>(), {
   theme: "green",
   showFooter: true,
   dialogClass: "",
-  headerClass: ""
+  headerClass: "",
+  inDrawer: false
 })
 
 const emits = defineEmits<Emits>()
@@ -260,6 +264,22 @@ const handleCancel = () => {
 
   &:hover {
     box-shadow: 0 4px 12px v-bind("currentTheme.focusColor");
+  }
+}
+
+/* 在 drawer 上下文中的样式调整 */
+.property-container.in-drawer {
+  /* 确保子组件（如弹窗）有足够高的 z-index */
+  :deep(.el-dialog) {
+    z-index: 3000 !important;
+  }
+  
+  :deep(.el-dialog__wrapper) {
+    z-index: 3000 !important;
+  }
+  
+  :deep(.el-overlay) {
+    z-index: 2999 !important;
   }
 }
 </style>
