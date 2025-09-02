@@ -168,6 +168,7 @@
     :close-on-click-modal="false"
     :close-on-press-escape="true"
     :show-close="false"
+    :z-index="3000"
     align-center
     destroy-on-close
     :scrollbar-always-on="true"
@@ -1015,6 +1016,7 @@ defineExpose({
     overflow: hidden;
     box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
     border: 1px solid #e2e8f0;
+    z-index: 3000 !important;
 
     @media (max-width: 768px) {
       margin: 1rem;

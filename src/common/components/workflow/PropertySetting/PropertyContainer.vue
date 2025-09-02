@@ -228,7 +228,6 @@ const handleCancel = () => {
   justify-content: flex-end;
   gap: 12px;
   position: relative;
-  z-index: 1;
 }
 
 .footer-btn {
@@ -264,22 +263,6 @@ const handleCancel = () => {
 
   &:hover {
     box-shadow: 0 4px 12px v-bind("currentTheme.focusColor");
-  }
-}
-
-/* 在 drawer 上下文中的样式调整 */
-.property-container.in-drawer {
-  /* 确保子组件（如弹窗）有足够高的 z-index */
-  :deep(.el-dialog) {
-    z-index: 3000 !important;
-  }
-  
-  :deep(.el-dialog__wrapper) {
-    z-index: 3000 !important;
-  }
-  
-  :deep(.el-overlay) {
-    z-index: 2999 !important;
   }
 }
 </style>
