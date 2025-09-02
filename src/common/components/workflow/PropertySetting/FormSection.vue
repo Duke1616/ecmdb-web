@@ -15,7 +15,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-  icon: '📝'
+  icon: "📝"
 })
 </script>
 

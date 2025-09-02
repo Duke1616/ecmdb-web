@@ -4,11 +4,7 @@
     <div class="dialog-header" :class="headerClass">
       <div class="header-icon">
         <div class="icon-circle">
-          <img 
-            :src="getIconPath(iconName)" 
-            :alt="iconName"
-            class="icon-image"
-          />
+          <img :src="getIconPath(iconName)" :alt="iconName" class="icon-image" />
         </div>
       </div>
       <div class="header-content">
@@ -267,5 +263,4 @@ const handleCancel = () => {
     box-shadow: 0 4px 12px v-bind("currentTheme.focusColor");
   }
 }
-
 </style>
