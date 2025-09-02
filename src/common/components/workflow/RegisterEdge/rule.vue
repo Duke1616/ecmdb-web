@@ -10,7 +10,7 @@
             <span class="block-title">左值</span>
             <span class="required-mark">*</span>
           </div>
-          
+
           <div class="field-group">
             <div class="field-item">
               <label class="field-label">模板</label>
@@ -20,15 +20,15 @@
                 class="modern-select"
                 @change="handleChangeLeftValue"
               >
-                <el-option 
-                  v-for="(item, index) in props.templates" 
-                  :key="index" 
-                  :label="item.name" 
-                  :value="item.name" 
+                <el-option
+                  v-for="(item, index) in props.templates"
+                  :key="index"
+                  :label="item.name"
+                  :value="item.name"
                 />
               </el-select>
             </div>
-            
+
             <div class="field-item">
               <label class="field-label">字段</label>
               <el-select
@@ -54,7 +54,7 @@
             <span class="block-title">右值</span>
             <span class="required-mark">*</span>
           </div>
-          
+
           <div class="field-group">
             <div class="field-item">
               <label class="field-label">类型</label>
@@ -68,13 +68,13 @@
                 <el-option label="预留字段" value="reserve" />
               </el-select>
             </div>
-            
+
             <div class="field-item">
               <label class="field-label">值</label>
               <template v-if="isFieldInMap">
-                <el-select 
-                  v-model="formData.rightValueData" 
-                  :multiple="isMultiple" 
+                <el-select
+                  v-model="formData.rightValueData"
+                  :multiple="isMultiple"
                   placeholder="请选择值"
                   class="modern-select"
                 >
@@ -87,11 +87,7 @@
                 </el-select>
               </template>
               <template v-else>
-                <el-input 
-                  v-model="rightValueDataComputed" 
-                  placeholder="请输入值"
-                  class="modern-input" 
-                />
+                <el-input v-model="rightValueDataComputed" placeholder="请输入值" class="modern-input" />
               </template>
             </div>
           </div>
@@ -104,11 +100,11 @@
           <span class="block-title">运算符</span>
           <span class="required-mark">*</span>
         </div>
-        
+
         <div class="operator-content">
           <div class="operator-buttons">
-            <button 
-              v-for="op in operatorOptions" 
+            <button
+              v-for="op in operatorOptions"
               :key="op.value"
               :class="['operator-btn', { active: formData.operator === op.value }]"
               @click="selectOperator(op.value)"
@@ -135,9 +131,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue"
-import { FormInstance, FormRules } from "element-plus"
+import { FormInstance } from "element-plus"
 import { template } from "@/api/template/types/template"
-import { Document } from "@element-plus/icons-vue"
 
 interface Props {
   templates: template[]
@@ -214,7 +209,7 @@ const onRightValueChange = () => {
 const getOptionsForLeftValue = () => {
   const template = templatesMap.value.get(formData.leftValue)
   if (!template || !template.rules) return []
-  
+
   return template.rules.map((rule: any) => [rule.title || "", rule.field || ""])
 }
 
@@ -222,22 +217,24 @@ const getExpressionPreview = () => {
   if (!formData.leftValueData || !formData.operator || !formData.rightValueData) {
     return "请完善条件配置以查看表达式预览"
   }
-  
+
   const left = `$${formData.leftValueData}`
   const operator = formData.operator
   let right = ""
-  
+
   if (Array.isArray(formData.rightValueData)) {
-    const values = formData.rightValueData.map(value => {
-      const numericValue = parseFloat(value)
-      return !isNaN(numericValue) ? numericValue.toString() : `'${value}'`
-    }).join(", ")
+    const values = formData.rightValueData
+      .map((value) => {
+        const numericValue = parseFloat(value)
+        return !isNaN(numericValue) ? numericValue.toString() : `'${value}'`
+      })
+      .join(", ")
     right = `(${values})`
   } else {
     const numericValue = parseFloat(formData.rightValueData)
     right = !isNaN(numericValue) ? numericValue.toString() : `'${formData.rightValueData}'`
   }
-  
+
   return `${left} ${operator} ${right}`
 }
 
@@ -278,22 +275,25 @@ watch([() => formData.leftValueData], () => {
 })
 
 // 初始化时设置字段映射
-watch(() => formData.leftValue, (newValue) => {
-  if (newValue && props.templates) {
-    const template = props.templates.find(t => t.name === newValue)
-    if (template && template.rules) {
-      const optionsMap = new Map<string, Array<{ value: string; label: string }>>()
-      
-      template.rules.forEach((rule: any) => {
-        if (rule.field && rule.options && Array.isArray(rule.options)) {
-          optionsMap.set(rule.field, rule.options)
-        }
-      })
-      
-      selectOptionsMap.value = optionsMap
+watch(
+  () => formData.leftValue,
+  (newValue) => {
+    if (newValue && props.templates) {
+      const template = props.templates.find((t) => t.name === newValue)
+      if (template && template.rules) {
+        const optionsMap = new Map<string, Array<{ value: string; label: string }>>()
+
+        template.rules.forEach((rule: any) => {
+          if (rule.field && rule.options && Array.isArray(rule.options)) {
+            optionsMap.set(rule.field, rule.options)
+          }
+        })
+
+        selectOptionsMap.value = optionsMap
+      }
     }
   }
-})
+)
 </script>
 
 <style scoped>
@@ -513,7 +513,7 @@ watch(() => formData.leftValue, (newValue) => {
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   border: 1px solid #bbf7d0;
   border-radius: 12px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
   font-size: 14px;
   color: #065f46;
   font-weight: 600;
@@ -531,7 +531,6 @@ watch(() => formData.leftValue, (newValue) => {
 }
 
 /* 运算符选择器样式已移除，使用自定义按钮组 */
-
 
 /* 滚动条样式 */
 .rule-form-container::-webkit-scrollbar {
@@ -552,6 +551,4 @@ watch(() => formData.leftValue, (newValue) => {
 .rule-form-container::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-
 </style>
-

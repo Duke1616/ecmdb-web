@@ -1,76 +1,51 @@
 <template>
-  <div class="condition-property-dialog">
-    <!-- 弹窗头部 -->
-    <div class="dialog-header">
-      <div class="header-icon">
-        <div class="icon-circle">
-          <SvgIcon name="condition" icon-class="condition" />
-        </div>
-      </div>
-      <div class="header-content">
-        <h3 class="header-title">条件节点配置</h3>
-        <p class="header-subtitle">配置工作流分支条件节点的属性</p>
-      </div>
-    </div>
+  <PropertyContainer
+    title="条件节点配置"
+    subtitle="配置工作流分支条件节点的属性"
+    icon-name="condition"
+    theme="orange"
+    @confirm="confirmFunc"
+    @cancel="cancelFunc"
+  >
+    <el-form
+      ref="formRef"
+      :model="propertyForm"
+      :inline-message="true"
+      :rules="formRules"
+      label-position="top"
+      :disabled="flowDetail.status == '2'"
+      class="property-form"
+    >
+      <FormSection title="基本信息" icon="📝">
+        <el-form-item label="节点名称" prop="name" class="form-item">
+          <el-input
+            v-model="propertyForm.name"
+            placeholder="请输入条件节点名称"
+            class="modern-input"
+            :disabled="flowDetail.status == '2'"
+          />
+          <FormHelp text="条件节点名称用于标识分支判断点，建议使用描述性名称" />
+        </el-form-item>
+      </FormSection>
 
-    <!-- 表单内容 -->
-    <div class="dialog-content">
-      <el-form
-        ref="formRef"
-        :model="propertyForm"
-        :inline-message="true"
-        :rules="formRules"
-        label-position="top"
-        :disabled="flowDetail.status == '2'"
-        class="property-form"
-      >
-        <div class="form-section">
-          <div class="section-title">
-            <span class="title-icon">📝</span>
-            <span>基本信息</span>
-          </div>
-
-          <el-form-item label="节点名称" prop="name" class="form-item">
-            <el-input
-              v-model="propertyForm.name"
-              placeholder="请输入条件节点名称"
-              class="modern-input"
-              :disabled="flowDetail.status == '2'"
-            />
-            <div class="form-help">条件节点名称用于标识分支判断点，建议使用描述性名称</div>
-          </el-form-item>
-        </div>
-
-        <div class="form-section">
-          <div class="section-title">
-            <span class="title-icon">⚙️</span>
-            <span>条件配置</span>
-          </div>
-
-          <div class="condition-tips">
-            <div class="tip-item">
-              <div class="tip-icon">🔗</div>
-              <div class="tip-content">
-                <h4 class="tip-title">连线设置</h4>
-                <p class="tip-desc">通过连线设置不同的分支条件，支持多个出口路径</p>
-              </div>
+      <FormSection title="条件配置" icon="⚙️">
+        <div class="condition-tips">
+          <div class="tip-item">
+            <div class="tip-icon">🔗</div>
+            <div class="tip-content">
+              <h4 class="tip-title">连线设置</h4>
+              <p class="tip-desc">通过连线设置不同的分支条件，支持多个出口路径</p>
             </div>
           </div>
         </div>
-      </el-form>
-    </div>
-
-    <!-- 弹窗底部按钮 -->
-    <div class="dialog-footer" v-if="flowDetail.status != '2'">
-      <el-button @click="cancelFunc" class="footer-btn footer-btn-cancel"> 取消 </el-button>
-      <el-button type="primary" @click="confirmFunc" class="footer-btn footer-btn-confirm"> 确定 </el-button>
-    </div>
-  </div>
+      </FormSection>
+    </el-form>
+  </PropertyContainer>
 </template>
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import SvgIcon from "@@/components/SvgIcon/index.vue"
+import { PropertyContainer, FormSection, FormHelp } from "../../PropertySetting"
 
 const props = defineProps({
   nodeData: Object,
@@ -128,141 +103,6 @@ onMounted(() => {
 })
 </script>
 <style scoped lang="scss">
-.condition-property-dialog {
-  background: transparent;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  max-width: 520px;
-  width: 100%;
-  position: relative;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #ffffff;
-    border-radius: 24px;
-    z-index: -1;
-  }
-}
-
-.dialog-header {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  padding: 24px 28px;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  border-radius: 24px 24px 0 0;
-  position: relative;
-  z-index: 1;
-
-  &::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
-  }
-}
-
-.header-icon {
-  .icon-circle {
-    width: 56px;
-    height: 56px;
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-    position: relative;
-
-    &::after {
-      content: "";
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      right: 4px;
-      bottom: 4px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-      border-radius: 12px;
-      pointer-events: none;
-    }
-
-    :deep(.svg-icon) {
-      width: 28px;
-      height: 28px;
-      color: white;
-      position: relative;
-      z-index: 1;
-    }
-  }
-}
-
-.header-content {
-  flex: 1;
-}
-
-.header-title {
-  margin: 0 0 6px 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header-subtitle {
-  margin: 0;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.dialog-content {
-  padding: 20px 24px 16px;
-  background: #ffffff;
-  position: relative;
-  z-index: 1;
-  border-radius: 0 0 24px 24px;
-}
-
-.form-section {
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 16px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-
-  .title-icon {
-    font-size: 16px;
-  }
-}
-
 .form-item {
   margin-bottom: 16px;
 

@@ -1,127 +1,144 @@
 <template>
-  <div class="automation-property-dialog">
-    <!-- 弹窗头部 -->
-    <div class="dialog-header">
-      <div class="header-icon">
-        <div class="icon-circle">
-          <SvgIcon name="automation" icon-class="automation" />
-        </div>
-      </div>
-      <div class="header-content">
-        <h3 class="header-title">自动化节点配置</h3>
-        <p class="header-subtitle">配置自动化任务的执行参数和通知设置</p>
-      </div>
-    </div>
+  <PropertyContainer
+    title="自动化节点配置"
+    subtitle="配置自动化任务的执行参数和通知设置"
+    icon-name="automation"
+    theme="purple"
+    @confirm="confirmFunc"
+    @cancel="cancelFunc"
+  >
+    <el-form
+      ref="formRef"
+      :model="propertyForm"
+      :inline-message="true"
+      :rules="formRules"
+      label-position="top"
+      :disabled="flowDetail.status == '2'"
+      class="property-form"
+    >
+             <!-- 基本信息 -->
+       <FormSection title="基本信息" icon="📝">
+         <el-form-item label="节点名称" prop="name" class="form-item">
+           <el-input
+             v-model="propertyForm.name"
+             clearable
+             placeholder="请输入节点名称"
+             class="modern-input"
+             :disabled="flowDetail.status == '2'"
+           />
+           <FormHelp text="名称必须以自动化-开头，最大50个字符" />
+         </el-form-item>
+       </FormSection>
 
-    <!-- 表单内容 -->
-    <div class="dialog-content">
-      <el-form
-        ref="formRef"
-        :model="propertyForm"
-        :inline-message="true"
-        :rules="formRules"
-        label-position="top"
-        :disabled="flowDetail.status == '2'"
-        class="property-form"
-      >
-        <!-- 基本信息 -->
-        <div class="form-section">
-          <div class="section-title">
-            <span class="title-icon">📝</span>
-            <span>基本信息</span>
-          </div>
+             <!-- 执行配置 -->
+       <FormSection title="执行配置" icon="⚙️">
+         <div class="form-row">
+           <el-form-item label="代码模版" prop="codebook_uid" class="form-item">
+             <el-select
+               v-model="propertyForm.codebook_uid"
+               filterable
+               placeholder="请选择代码模版"
+               @change="handlerChangeCodebook()"
+               class="modern-select"
+               :disabled="flowDetail.status == '2'"
+             >
+               <el-option
+                 v-for="item in runnerTagsData"
+                 :key="item.codebook_uid"
+                 :label="item.codebook_name"
+                 :value="item.codebook_uid"
+                 class="modern-option"
+               />
+             </el-select>
+           </el-form-item>
 
-          <el-form-item label="节点名称" prop="name" class="form-item">
-            <el-input
-              v-model="propertyForm.name"
-              clearable
-              placeholder="请输入节点名称"
-              class="modern-input"
-              :disabled="flowDetail.status == '2'"
-            />
-            <div class="form-help">名称必须以"自动化-"开头，最大50个字符</div>
-          </el-form-item>
-        </div>
+           <el-form-item label="标签" prop="tag" class="form-item">
+             <el-select
+               ref="tagSelect"
+               v-model="propertyForm.tag"
+               filterable
+               placeholder="选择代码模版后可编辑"
+               :disabled="!propertyForm.codebook_uid || flowDetail.status == '2'"
+               class="modern-select"
+             >
+               <el-option
+                 v-for="[tag, topic] of Array.from(tags_topic)"
+                 :key="`${topic}-${tag}`"
+                 :label="tag"
+                 :value="tag"
+                 class="modern-option"
+               />
+               <template #footer>
+                 <el-button
+                   text
+                   bg
+                   size="small"
+                   type="primary"
+                   style="width: 100%"
+                   @click="setAutoTag"
+                   class="auto-tag-btn"
+                 >
+                   自动发现
+                 </el-button>
+               </template>
+             </el-select>
+           </el-form-item>
+         </div>
+       </FormSection>
 
-        <!-- 执行配置 -->
-        <div class="form-section">
-          <div class="section-title">
-            <span class="title-icon">⚙️</span>
-            <span>执行配置</span>
-          </div>
+             <!-- 定时设置 -->
+       <FormSection title="定时设置" icon="⏰">
+         <div class="form-row">
+           <el-form-item label="定时执行" prop="is_timing" class="form-item">
+             <el-select
+               v-model="propertyForm.is_timing"
+               placeholder="是否开启定时执行"
+               class="modern-select"
+               :disabled="flowDetail.status == '2'"
+               @change="handleTimingChange"
+             >
+               <el-option
+                 v-for="item in is_timing"
+                 :key="item.label"
+                 :label="item.label"
+                 :value="item.value"
+                 class="modern-option"
+               />
+             </el-select>
+           </el-form-item>
 
+           <el-form-item label="执行方式" prop="rule" class="form-item">
+             <el-select
+               v-model="propertyForm.exec_method"
+               clearable
+               @change="handleChange"
+               placeholder="请选择执行方式"
+               class="modern-select"
+               :disabled="flowDetail.status == '2'"
+             >
+               <el-option
+                 v-for="item in options"
+                 :key="item.value"
+                 :label="item.label"
+                 :value="item.value"
+                 class="modern-option"
+               />
+             </el-select>
+           </el-form-item>
+         </div>
+
+        <!-- 手动设置定时 -->
+        <div v-if="propertyForm.exec_method === 'hand' && propertyForm.is_timing === true" class="conditional-section">
           <div class="form-row">
-            <el-form-item label="代码模版" prop="codebook_uid" class="form-item">
+            <el-form-item label="执行单位" prop="unit" class="form-item">
               <el-select
-                v-model="propertyForm.codebook_uid"
-                filterable
-                placeholder="请选择代码模版"
-                @change="handlerChangeCodebook()"
+                v-model="propertyForm.unit"
+                placeholder="执行单位"
                 class="modern-select"
                 :disabled="flowDetail.status == '2'"
               >
                 <el-option
-                  v-for="item in runnerTagsData"
-                  :key="item.codebook_uid"
-                  :label="item.codebook_name"
-                  :value="item.codebook_uid"
-                  class="modern-option"
-                />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="标签" prop="tag" class="form-item">
-              <el-select
-                ref="tagSelect"
-                v-model="propertyForm.tag"
-                filterable
-                placeholder="选择代码模版后可编辑"
-                :disabled="!propertyForm.codebook_uid || flowDetail.status == '2'"
-                class="modern-select"
-              >
-                <el-option
-                  v-for="[tag, topic] of Array.from(tags_topic)"
-                  :key="`${topic}-${tag}`"
-                  :label="tag"
-                  :value="tag"
-                  class="modern-option"
-                />
-                <template #footer>
-                  <el-button
-                    text
-                    bg
-                    size="small"
-                    type="primary"
-                    style="width: 100%"
-                    @click="setAutoTag"
-                    class="auto-tag-btn"
-                  >
-                    自动发现
-                  </el-button>
-                </template>
-              </el-select>
-            </el-form-item>
-          </div>
-        </div>
-
-        <!-- 定时设置 -->
-        <div class="form-section">
-          <div class="section-title">
-            <span class="title-icon">⏰</span>
-            <span>定时设置</span>
-          </div>
-
-          <div class="form-row">
-            <el-form-item label="定时执行" prop="is_timing" class="form-item">
-              <el-select
-                v-model="propertyForm.is_timing"
-                placeholder="是否开启定时执行"
-                class="modern-select"
-                :disabled="flowDetail.status == '2'"
-                @change="handleTimingChange"
-              >
-                <el-option
-                  v-for="item in is_timing"
+                  v-for="item in unit"
                   :key="item.label"
                   :label="item.label"
                   :value="item.value"
@@ -130,159 +147,104 @@
               </el-select>
             </el-form-item>
 
-            <el-form-item label="执行方式" prop="rule" class="form-item">
-              <el-select
-                v-model="propertyForm.exec_method"
-                clearable
-                @change="handleChange"
-                placeholder="请选择执行方式"
-                class="modern-select"
+            <el-form-item label="执行数值" prop="quantity" class="form-item">
+              <el-input-number
+                v-model="propertyForm.quantity"
+                :min="1"
+                size="default"
+                class="modern-input-number"
                 :disabled="flowDetail.status == '2'"
-              >
-                <el-option
-                  v-for="item in options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
-                  class="modern-option"
-                />
-              </el-select>
+              />
             </el-form-item>
-          </div>
-
-          <!-- 手动设置定时 -->
-          <div
-            v-if="propertyForm.exec_method === 'hand' && propertyForm.is_timing === true"
-            class="conditional-section"
-          >
-            <div class="form-row">
-              <el-form-item label="执行单位" prop="unit" class="form-item">
-                <el-select
-                  v-model="propertyForm.unit"
-                  placeholder="执行单位"
-                  class="modern-select"
-                  :disabled="flowDetail.status == '2'"
-                >
-                  <el-option
-                    v-for="item in unit"
-                    :key="item.label"
-                    :label="item.label"
-                    :value="item.value"
-                    class="modern-option"
-                  />
-                </el-select>
-              </el-form-item>
-
-              <el-form-item label="执行数值" prop="quantity" class="form-item">
-                <el-input-number
-                  v-model="propertyForm.quantity"
-                  :min="1"
-                  size="default"
-                  class="modern-input-number"
-                  :disabled="flowDetail.status == '2'"
-                />
-              </el-form-item>
-            </div>
-          </div>
-
-          <!-- 模板字段定时 -->
-          <div
-            v-if="propertyForm.exec_method === 'template' && propertyForm.is_timing === true"
-            class="conditional-section"
-          >
-            <div class="form-row">
-              <el-form-item label="模版名称" prop="leftValue" class="form-item">
-                <el-select
-                  v-model="propertyForm.template_id"
-                  placeholder="请选择模版"
-                  class="modern-select"
-                  :disabled="flowDetail.status == '2'"
-                >
-                  <el-option
-                    v-for="item in templateRules"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                    class="modern-option"
-                  />
-                </el-select>
-              </el-form-item>
-
-              <el-form-item label="模版字段" prop="leftValue" class="form-item">
-                <el-select
-                  v-model="propertyForm.template_field"
-                  :disabled="!propertyForm.template_id || flowDetail.status == '2'"
-                  placeholder="请选择模版字段"
-                  class="modern-select"
-                >
-                  <el-option
-                    v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id || 0))"
-                    :key="field"
-                    :label="title"
-                    :value="field"
-                    class="modern-option"
-                  />
-                </el-select>
-              </el-form-item>
-            </div>
           </div>
         </div>
 
-        <!-- 通知设置 -->
-        <div class="form-section">
-          <div class="section-title">
-            <span class="title-icon">🔔</span>
-            <span>通知设置</span>
-          </div>
-
+        <!-- 模板字段定时 -->
+        <div
+          v-if="propertyForm.exec_method === 'template' && propertyForm.is_timing === true"
+          class="conditional-section"
+        >
           <div class="form-row">
-            <el-form-item label="开启通知" prop="is_notify" class="form-item">
+            <el-form-item label="模版名称" prop="leftValue" class="form-item">
               <el-select
-                v-model="propertyForm.is_notify"
-                placeholder="是否开启消息通知"
+                v-model="propertyForm.template_id"
+                placeholder="请选择模版"
                 class="modern-select"
                 :disabled="flowDetail.status == '2'"
               >
                 <el-option
-                  v-for="item in is_notify"
-                  :key="item.label"
-                  :label="item.label"
-                  :value="item.value"
+                  v-for="item in templateRules"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id"
                   class="modern-option"
                 />
               </el-select>
             </el-form-item>
 
-            <el-form-item label="发送方式" prop="notify_method" class="form-item">
+            <el-form-item label="模版字段" prop="leftValue" class="form-item">
               <el-select
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                v-model="propertyForm.notify_method"
-                placeholder="消息通知方式"
+                v-model="propertyForm.template_field"
+                :disabled="!propertyForm.template_id || flowDetail.status == '2'"
+                placeholder="请选择模版字段"
                 class="modern-select"
-                :disabled="flowDetail.status == '2'"
               >
                 <el-option
-                  v-for="item in notify_method"
-                  :key="item.label"
-                  :label="item.label"
-                  :value="item.value"
+                  v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id || 0))"
+                  :key="field"
+                  :label="title"
+                  :value="field"
                   class="modern-option"
                 />
               </el-select>
             </el-form-item>
           </div>
-        </div>
-      </el-form>
-    </div>
+                 </div>
+       </FormSection>
 
-    <!-- 弹窗底部按钮 -->
-    <div class="dialog-footer" v-if="flowDetail.status != '2'">
-      <el-button @click="cancelFunc" class="footer-btn footer-btn-cancel"> 取消 </el-button>
-      <el-button type="primary" @click="confirmFunc" class="footer-btn footer-btn-confirm"> 确定 </el-button>
-    </div>
-  </div>
+       <!-- 通知设置 -->
+       <FormSection title="通知设置" icon="🔔">
+         <div class="form-row">
+           <el-form-item label="开启通知" prop="is_notify" class="form-item">
+             <el-select
+               v-model="propertyForm.is_notify"
+               placeholder="是否开启消息通知"
+               class="modern-select"
+               :disabled="flowDetail.status == '2'"
+             >
+               <el-option
+                 v-for="item in is_notify"
+                 :key="item.label"
+                 :label="item.label"
+                 :value="item.value"
+                 class="modern-option"
+               />
+             </el-select>
+           </el-form-item>
+
+           <el-form-item label="发送方式" prop="notify_method" class="form-item">
+             <el-select
+               multiple
+               collapse-tags
+               collapse-tags-tooltip
+               v-model="propertyForm.notify_method"
+               placeholder="消息通知方式"
+               class="modern-select"
+               :disabled="flowDetail.status == '2'"
+             >
+               <el-option
+                 v-for="item in notify_method"
+                 :key="item.label"
+                 :label="item.label"
+                 :value="item.value"
+                 class="modern-option"
+               />
+             </el-select>
+           </el-form-item>
+         </div>
+       </FormSection>
+    </el-form>
+  </PropertyContainer>
 </template>
 <script setup lang="ts">
 import { listRunnerTagsApi } from "@/api/runner"
@@ -291,7 +253,7 @@ import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
-import SvgIcon from "@@/components/SvgIcon/index.vue"
+import { PropertyContainer, FormSection, FormHelp } from "../../PropertySetting"
 
 // 使用模板 Hook
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
@@ -547,140 +509,7 @@ onMounted(() => {
 })
 </script>
 <style scoped lang="scss">
-.automation-property-dialog {
-  background: transparent;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  max-width: 520px;
-  width: 100%;
-  position: relative;
 
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #ffffff;
-    border-radius: 24px;
-    z-index: -1;
-  }
-}
-
-.dialog-header {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  padding: 24px 28px;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  border-radius: 24px 24px 0 0;
-  position: relative;
-  z-index: 1;
-
-  &::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
-  }
-}
-
-.header-icon {
-  .icon-circle {
-    width: 56px;
-    height: 56px;
-    background: rgba(255, 255, 255, 0.25);
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-    position: relative;
-
-    &::after {
-      content: "";
-      position: absolute;
-      top: 4px;
-      left: 4px;
-      right: 4px;
-      bottom: 4px;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
-      border-radius: 12px;
-      pointer-events: none;
-    }
-
-    :deep(.svg-icon) {
-      width: 28px;
-      height: 28px;
-      color: white;
-      position: relative;
-      z-index: 1;
-    }
-  }
-}
-
-.header-content {
-  flex: 1;
-}
-
-.header-title {
-  margin: 0 0 6px 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: white;
-  line-height: 1.3;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.header-subtitle {
-  margin: 0;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.dialog-content {
-  padding: 20px 24px 16px;
-  background: #ffffff;
-  position: relative;
-  z-index: 1;
-  border-radius: 0 0 24px 24px;
-}
-
-.form-section {
-  margin-bottom: 20px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 14px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-
-  .title-icon {
-    font-size: 15px;
-  }
-}
 
 .form-row {
   display: grid;
