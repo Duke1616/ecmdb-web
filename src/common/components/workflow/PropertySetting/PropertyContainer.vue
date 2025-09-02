@@ -4,7 +4,11 @@
     <div class="dialog-header" :class="headerClass">
       <div class="header-icon">
         <div class="icon-circle">
-          <SvgIcon :name="iconName" :icon-class="iconName" />
+          <img 
+            :src="getIconPath(iconName)" 
+            :alt="iconName"
+            class="icon-image"
+          />
         </div>
       </div>
       <div class="header-content">
@@ -30,7 +34,6 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import SvgIcon from "@@/components/SvgIcon/index.vue"
 
 interface Props {
   // 头部配置
@@ -60,6 +63,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emits = defineEmits<Emits>()
+
+// 获取图标路径
+const getIconPath = (iconName: string) => {
+  return new URL(`../background/${iconName}.png`, import.meta.url).href
+}
 
 // 主题配置
 const themeConfig = {
@@ -172,12 +180,13 @@ const handleCancel = () => {
       pointer-events: none;
     }
 
-    :deep(.svg-icon) {
-      width: 28px;
-      height: 28px;
-      color: white;
+    .icon-image {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
       position: relative;
       z-index: 1;
+      filter: brightness(0) invert(1); // 将图标变为白色
     }
   }
 }

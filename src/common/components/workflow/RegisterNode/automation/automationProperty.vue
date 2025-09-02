@@ -32,99 +32,100 @@
 
              <!-- 执行配置 -->
        <FormSection title="执行配置" icon="⚙️">
-         <div class="form-row">
-           <el-form-item label="代码模版" prop="codebook_uid" class="form-item">
-             <el-select
-               v-model="propertyForm.codebook_uid"
-               filterable
-               placeholder="请选择代码模版"
-               @change="handlerChangeCodebook()"
-               class="modern-select"
-               :disabled="flowDetail.status == '2'"
-             >
-               <el-option
-                 v-for="item in runnerTagsData"
-                 :key="item.codebook_uid"
-                 :label="item.codebook_name"
-                 :value="item.codebook_uid"
-                 class="modern-option"
-               />
-             </el-select>
-           </el-form-item>
+         <div class="settings-grid">
+           <div class="setting-item">
+             <el-form-item label="代码模版" prop="codebook_uid">
+               <el-select
+                 v-model="propertyForm.codebook_uid"
+                 filterable
+                 placeholder="请选择代码模版"
+                 @change="handlerChangeCodebook()"
+                 class="modern-select"
+                 :disabled="flowDetail.status == '2'"
+               >
+                 <el-option
+                   v-for="item in runnerTagsData"
+                   :key="item.codebook_uid"
+                   :label="item.codebook_name"
+                   :value="item.codebook_uid"
+                   class="modern-option"
+                 />
+               </el-select>
+             </el-form-item>
+           </div>
 
-           <el-form-item label="标签" prop="tag" class="form-item">
-             <el-select
-               ref="tagSelect"
-               v-model="propertyForm.tag"
-               filterable
-               placeholder="选择代码模版后可编辑"
-               :disabled="!propertyForm.codebook_uid || flowDetail.status == '2'"
-               class="modern-select"
-             >
-               <el-option
-                 v-for="[tag, topic] of Array.from(tags_topic)"
-                 :key="`${topic}-${tag}`"
-                 :label="tag"
-                 :value="tag"
-                 class="modern-option"
-               />
-               <template #footer>
-                 <el-button
-                   text
-                   bg
-                   size="small"
-                   type="primary"
-                   style="width: 100%"
-                   @click="setAutoTag"
-                   class="auto-tag-btn"
-                 >
-                   自动发现
-                 </el-button>
-               </template>
-             </el-select>
-           </el-form-item>
+           <div class="setting-item">
+             <el-form-item label="标签" prop="tag">
+               <el-select
+                 ref="tagSelect"
+                 v-model="propertyForm.tag"
+                 filterable
+                 placeholder="选择代码模版后可编辑"
+                 :disabled="!propertyForm.codebook_uid || flowDetail.status == '2'"
+                 class="modern-select"
+               >
+                 <el-option
+                   v-for="[tag, topic] of Array.from(tags_topic)"
+                   :key="`${topic}-${tag}`"
+                   :label="tag"
+                   :value="tag"
+                   class="modern-option"
+                 />
+                 <template #footer>
+                   <el-button
+                     text
+                     bg
+                     size="small"
+                     type="primary"
+                     style="width: 100%"
+                     @click="setAutoTag"
+                     class="auto-tag-btn"
+                   >
+                     自动发现
+                   </el-button>
+                 </template>
+               </el-select>
+             </el-form-item>
+           </div>
          </div>
        </FormSection>
 
-             <!-- 定时设置 -->
+                    <!-- 定时设置 -->
        <FormSection title="定时设置" icon="⏰">
-         <div class="form-row">
-           <el-form-item label="定时执行" prop="is_timing" class="form-item">
-             <el-select
-               v-model="propertyForm.is_timing"
-               placeholder="是否开启定时执行"
-               class="modern-select"
-               :disabled="flowDetail.status == '2'"
-               @change="handleTimingChange"
-             >
-               <el-option
-                 v-for="item in is_timing"
-                 :key="item.label"
-                 :label="item.label"
-                 :value="item.value"
-                 class="modern-option"
+         <div class="settings-grid">
+           <div class="setting-item">
+             <el-form-item label="定时执行" prop="is_timing">
+               <el-switch
+                 v-model="propertyForm.is_timing"
+                 size="default"
+                 :disabled="flowDetail.status == '2'"
+                 active-color="var(--primary)"
+                 inactive-color="var(--border)"
+                 @change="handleTimingChange"
                />
-             </el-select>
-           </el-form-item>
+             </el-form-item>
+           </div>
 
-           <el-form-item label="执行方式" prop="rule" class="form-item">
-             <el-select
-               v-model="propertyForm.exec_method"
-               clearable
-               @change="handleChange"
-               placeholder="请选择执行方式"
-               class="modern-select"
-               :disabled="flowDetail.status == '2'"
-             >
-               <el-option
-                 v-for="item in options"
-                 :key="item.value"
-                 :label="item.label"
-                 :value="item.value"
-                 class="modern-option"
-               />
-             </el-select>
-           </el-form-item>
+           <div class="setting-item">
+             <el-form-item label="执行方式" prop="rule">
+               <el-select
+                 v-model="propertyForm.exec_method"
+                 clearable
+                 @change="handleChange"
+                 placeholder="请选择执行方式"
+                 class="modern-select"
+                 :disabled="flowDetail.status == '2'"
+               >
+                 <el-option
+                   v-for="item in options"
+                   :key="item.value"
+                   :label="item.label"
+                   :value="item.value"
+                   class="modern-option"
+                 />
+               </el-select>
+             </el-form-item>
+           </div>
          </div>
 
         <!-- 手动设置定时 -->
@@ -202,46 +203,44 @@
                  </div>
        </FormSection>
 
-       <!-- 通知设置 -->
+              <!-- 通知设置 -->
        <FormSection title="通知设置" icon="🔔">
-         <div class="form-row">
-           <el-form-item label="开启通知" prop="is_notify" class="form-item">
-             <el-select
-               v-model="propertyForm.is_notify"
-               placeholder="是否开启消息通知"
-               class="modern-select"
-               :disabled="flowDetail.status == '2'"
-             >
-               <el-option
-                 v-for="item in is_notify"
-                 :key="item.label"
-                 :label="item.label"
-                 :value="item.value"
-                 class="modern-option"
+         <div class="settings-grid">
+           <div class="setting-item">
+             <el-form-item label="开启通知" prop="is_notify">
+               <el-switch
+                 v-model="propertyForm.is_notify"
+                 size="default"
+                 :disabled="flowDetail.status == '2'"
+                 active-color="var(--primary)"
+                 inactive-color="var(--border)"
                />
-             </el-select>
-           </el-form-item>
+             </el-form-item>
+           </div>
 
-           <el-form-item label="发送方式" prop="notify_method" class="form-item">
-             <el-select
-               multiple
-               collapse-tags
-               collapse-tags-tooltip
-               v-model="propertyForm.notify_method"
-               placeholder="消息通知方式"
-               class="modern-select"
-               :disabled="flowDetail.status == '2'"
-             >
-               <el-option
-                 v-for="item in notify_method"
-                 :key="item.label"
-                 :label="item.label"
-                 :value="item.value"
-                 class="modern-option"
-               />
-             </el-select>
-           </el-form-item>
+           <div class="setting-item">
+             <el-form-item label="发送方式" prop="notify_method">
+               <el-select
+                 multiple
+                 collapse-tags
+                 collapse-tags-tooltip
+                 v-model="propertyForm.notify_method"
+                 placeholder="消息通知方式"
+                 class="modern-select"
+                 :disabled="flowDetail.status == '2'"
+               >
+                 <el-option
+                   v-for="item in notify_method"
+                   :key="item.label"
+                   :label="item.label"
+                   :value="item.value"
+                   class="modern-option"
+                 />
+               </el-select>
+             </el-form-item>
+           </div>
          </div>
+
        </FormSection>
     </el-form>
   </PropertyContainer>
@@ -284,6 +283,8 @@ const handleChange = async () => {
 }
 
 // 监听定时执行变更
+
+
 const handleTimingChange = () => {
   if (!propertyForm.is_timing) {
     // 如果关闭定时执行，清除所有定时相关数据
@@ -510,6 +511,34 @@ onMounted(() => {
 </script>
 <style scoped lang="scss">
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .setting-item {
+    background: #f9fafb;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+
+    .el-form-item {
+      margin-bottom: 0;
+
+      :deep(.el-form-item__content) {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      :deep(.el-switch) {
+        --el-switch-on-color: #8b5cf6;
+        --el-switch-off-color: #d1d5db;
+      }
+    }
+  }
+}
 
 .form-row {
   display: grid;

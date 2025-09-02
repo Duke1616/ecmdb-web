@@ -34,6 +34,7 @@
             v-model="propertyForm.rule"
             placeholder="请选择审批规则"
             class="modern-select"
+            size="large"
             :disabled="flowDetail.status == '2'"
             @change="handleChange"
           >
@@ -92,6 +93,7 @@
           v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
           :label="getLabel(propertyForm.rule)"
           prop="approved"
+          size="large"
           class="form-item"
         >
           <div class="select-container">
@@ -102,6 +104,7 @@
               :show-arrow="false"
               suffix-icon=""
               tag-type="info"
+              size="large"
               :disabled="approvalInputDisabled || flowDetail.status == '2'"
               class="modern-select"
             >
