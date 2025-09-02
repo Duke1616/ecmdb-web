@@ -31,20 +31,16 @@
           </div>
 
           <el-form-item label="消息通知" prop="is_notify" class="form-item">
-            <el-select
-              v-model="propertyForm.is_notify"
-              placeholder="选择是否开启消息通知"
-              class="modern-select"
-              :disabled="flowDetail.status == '2'"
-            >
-              <el-option
-                v-for="item in is_notify"
-                :key="item.label"
-                :label="item.label"
-                :value="item.value"
-                class="modern-option"
-              />
-            </el-select>
+            <div class="toggle-container">
+              <div class="toggle-switch" @click="toggleNotify" :class="{ disabled: flowDetail.status == '2' }">
+                <div class="toggle-track" :class="{ active: propertyForm.is_notify }">
+                  <div class="toggle-thumb" :class="{ active: propertyForm.is_notify }">
+                    <span class="toggle-icon">{{ propertyForm.is_notify ? "✓" : "✕" }}</span>
+                  </div>
+                </div>
+                <span class="toggle-label">{{ propertyForm.is_notify ? "开启" : "关闭" }}</span>
+              </div>
+            </div>
             <div class="form-help">
               {{ propertyForm.is_notify ? "开启后，工作流启动时会发送通知消息" : "关闭后，工作流启动时不会发送通知" }}
             </div>
@@ -102,17 +98,6 @@ const formRules: FormRules = {
   ]
 }
 
-const is_notify = [
-  {
-    value: true,
-    label: "开启"
-  },
-  {
-    value: false,
-    label: "关闭"
-  }
-]
-
 //更新节点属性
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
@@ -135,6 +120,12 @@ const cancelFunc = () => {
   emits("closed")
 }
 
+//切换通知状态
+const toggleNotify = () => {
+  if (props.flowDetail.status == "2") return
+  propertyForm.is_notify = !propertyForm.is_notify
+}
+
 onMounted(() => {
   propertyForm.is_notify = props.nodeData?.properties.is_notify ?? true
 })
@@ -142,38 +133,81 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .start-property-dialog {
-  background: #ffffff;
-  border-radius: 12px;
+  background: transparent;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
-  max-width: 480px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  max-width: 520px;
   width: 100%;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    border-radius: 24px;
+    z-index: -1;
+  }
 }
 
 .dialog-header {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  padding: 20px;
+  padding: 24px 28px;
   color: white;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  border-radius: 24px 24px 0 0;
+  position: relative;
+  z-index: 1;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
 }
 
 .header-icon {
   .icon-circle {
-    width: 48px;
-    height: 48px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      border-radius: 12px;
+      pointer-events: none;
+    }
 
     :deep(.svg-icon) {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       color: white;
+      position: relative;
+      z-index: 1;
     }
   }
 }
@@ -183,25 +217,35 @@ onMounted(() => {
 }
 
 .header-title {
-  margin: 0 0 3px 0;
-  font-size: 16px;
-  font-weight: 600;
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 700;
   color: white;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-subtitle {
   margin: 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 400;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .dialog-content {
-  padding: 20px 16px 16px;
+  padding: 20px 24px 16px;
+  background: #ffffff;
+  position: relative;
+  z-index: 1;
+  border-radius: 0 0 24px 24px;
 }
 
 .form-section {
-  margin-bottom: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
 }
 
 .section-title {
@@ -228,75 +272,119 @@ onMounted(() => {
   }
 }
 
-.modern-select {
+/* 开关按钮样式 */
+.toggle-container {
   width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  padding: 12px 0;
+}
 
-  :deep(.el-input__wrapper) {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    height: 48px;
-    transition: all 0.3s ease;
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 
-    &:hover {
-      border-color: #cbd5e1;
-      background: #f1f5f9;
-    }
-
-    &.is-focus {
-      border-color: #10b981;
-      background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-    }
+  &:hover:not(.disabled) {
+    transform: translateY(-1px);
   }
 
-  :deep(.el-input__inner) {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 500;
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 }
 
-.modern-option {
-  :deep(.el-select-dropdown__item) {
-    padding: 12px 16px;
-    font-size: 14px;
+.toggle-track {
+  width: 60px;
+  height: 32px;
+  background: #e2e8f0;
+  border-radius: 16px;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
 
-    &.selected {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-    }
+  &.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+  }
+}
 
-    &:hover {
-      background: #f1f5f9;
-    }
+.toggle-thumb {
+  width: 28px;
+  height: 28px;
+  background: #ffffff;
+  border-radius: 50%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &.active {
+    transform: translateX(28px);
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+.toggle-icon {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  transition: all 0.3s ease;
+
+  .toggle-thumb.active & {
+    color: #10b981;
+  }
+}
+
+.toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.3s ease;
+  min-width: 40px;
+  text-align: center;
+
+  .toggle-switch:hover:not(.disabled) & {
+    color: #10b981;
   }
 }
 
 .form-help {
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 12px;
   color: #64748b;
   line-height: 1.4;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-radius: 6px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   border-left: 3px solid #10b981;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .dialog-footer {
-  padding: 20px;
+  padding: 16px 24px 20px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .footer-btn {
   padding: 12px 24px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
@@ -304,6 +392,7 @@ onMounted(() => {
 
   &:hover {
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 

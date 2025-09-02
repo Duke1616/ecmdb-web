@@ -269,7 +269,7 @@ defineExpose({
   resetForm
 })
 
-watch([() => formData.operator, () => formData.leftValueData], () => {
+watch([() => formData.leftValueData], () => {
   if (isFieldInMap.value) {
     formData.rightValueData = isMultiple.value ? [] : ""
   } else {

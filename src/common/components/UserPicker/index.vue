@@ -173,7 +173,7 @@ const setDefaultToCurrentUser = async () => {
       return
     }
   }
-  
+
   if (props.defaultToCurrentUser && (!props.modelValue || props.modelValue === "") && userStore.username) {
     try {
       const currentUser = await getUserByUsername(userStore.username)
@@ -213,7 +213,7 @@ onMounted(async () => {
       console.warn("Failed to get user info:", error)
     }
   }
-  
+
   // 设置默认用户
   if (props.defaultToCurrentUser && (!props.modelValue || props.modelValue === "")) {
     await setDefaultToCurrentUser()

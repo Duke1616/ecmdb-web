@@ -230,38 +230,81 @@ onMounted(() => {
 </script>
 <style scoped lang="scss">
 .edge-property-dialog {
-  background: #ffffff;
-  border-radius: 12px;
+  background: transparent;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  max-width: 520px;
   width: 100%;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #ffffff;
+    border-radius: 24px;
+    z-index: -1;
+  }
 }
 
 .dialog-header {
   background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  padding: 20px;
+  padding: 24px 28px;
   color: white;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  border-radius: 24px 24px 0 0;
+  position: relative;
+  z-index: 1;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
 }
 
 .header-icon {
   .icon-circle {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      bottom: 4px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+      border-radius: 12px;
+      pointer-events: none;
+    }
 
     :deep(.svg-icon) {
-      width: 20px;
-      height: 20px;
+      width: 28px;
+      height: 28px;
       color: white;
+      position: relative;
+      z-index: 1;
     }
   }
 }
@@ -271,25 +314,36 @@ onMounted(() => {
 }
 
 .header-title {
-  margin: 0 0 3px 0;
-  font-size: 16px;
-  font-weight: 600;
+  margin: 0 0 6px 0;
+  font-size: 18px;
+  font-weight: 700;
   color: white;
+  line-height: 1.3;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .header-subtitle {
   margin: 0;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  font-weight: 400;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .dialog-content {
-  padding: 20px 16px 16px;
+  padding: 20px 24px 16px;
+  background: #ffffff;
+  position: relative;
+  z-index: 1;
+  border-radius: 0 0 24px 24px;
 }
 
 .form-section {
   margin-bottom: 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
 
   &:last-child {
     margin-bottom: 0;
@@ -358,20 +412,22 @@ onMounted(() => {
   :deep(.el-input__wrapper) {
     background: #f8fafc;
     border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 12px 16px;
-    height: 48px;
+    border-radius: 14px;
+    padding: 14px 18px;
+    height: 52px;
     transition: all 0.3s ease;
 
     &:hover {
       border-color: #cbd5e1;
       background: #f1f5f9;
+      transform: translateY(-1px);
     }
 
     &.is-focus {
       border-color: #06b6d4;
       background: #ffffff;
-      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+      box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15);
+      transform: translateY(-2px);
     }
   }
 
@@ -389,14 +445,16 @@ onMounted(() => {
 }
 
 .form-help {
-  margin-top: 8px;
+  margin-top: 12px;
   font-size: 12px;
   color: #64748b;
   line-height: 1.4;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-radius: 6px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
   border-left: 3px solid #06b6d4;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .edge-tips {
@@ -449,17 +507,19 @@ onMounted(() => {
 }
 
 .dialog-footer {
-  padding: 20px;
+  padding: 16px 24px 20px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .footer-btn {
   padding: 12px 24px;
-  border-radius: 10px;
+  border-radius: 12px;
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
@@ -467,6 +527,7 @@ onMounted(() => {
 
   &:hover {
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -499,7 +560,7 @@ onMounted(() => {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   border: none;
-  
+
   :deep(.el-dialog__header) {
     display: none;
   }
@@ -531,7 +592,7 @@ onMounted(() => {
   background: #ffffff;
   border-radius: 16px;
   overflow: hidden;
-  
+
   .expression-header {
     padding: 1.5rem 1.5rem 1rem;
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
@@ -578,7 +639,7 @@ onMounted(() => {
     display: flex;
     flex-direction: column;
   }
-  
+
   .el-dialog__body {
     flex: 1;
     overflow: hidden;

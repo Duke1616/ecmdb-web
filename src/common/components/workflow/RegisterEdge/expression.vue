@@ -161,9 +161,9 @@
   </div>
 
   <!-- 创建条件弹窗 -->
-  <el-dialog 
-    v-model="dialogVisible" 
-    width="700px" 
+  <el-dialog
+    v-model="dialogVisible"
+    width="700px"
     class="condition-dialog"
     :close-on-click-modal="false"
     :close-on-press-escape="true"
@@ -185,21 +185,17 @@
         </div>
       </div>
     </template>
-    
+
     <div class="dialog-body">
       <Rule ref="ruleRef" :templates="props.templates" />
     </div>
-    
+
     <!-- 底部按钮 -->
     <template #footer>
       <div class="dialog-footer">
         <div class="footer-buttons">
-          <el-button @click="handleClose" size="large" class="cancel-button">
-            取消
-          </el-button>
-          <el-button type="primary" @click="submitForm" size="large" class="submit-button">
-            确认添加
-          </el-button>
+          <el-button @click="handleClose" size="large" class="cancel-button"> 取消 </el-button>
+          <el-button type="primary" @click="submitForm" size="large" class="submit-button"> 确认添加 </el-button>
         </div>
       </div>
     </template>
@@ -750,7 +746,7 @@ defineExpose({
   background: white;
   color: #64748b;
   transition: all 0.2s ease;
-  
+
   &:hover {
     border-color: #06b6d4;
     color: #06b6d4;
@@ -889,9 +885,9 @@ defineExpose({
   padding: 8px 0;
   border-bottom: 2px solid #e2e8f0;
   position: relative;
-  
+
   &::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -2px;
     left: 0;
@@ -983,13 +979,13 @@ defineExpose({
     flex-direction: column;
     gap: 12px;
   }
-  
+
   .condition-set-card,
   .condition-result {
     flex: none;
     max-width: none;
   }
-  
+
   .scrollable-content,
   .result-content {
     height: 300px; /* 垂直布局时减小高度 */
@@ -1000,12 +996,12 @@ defineExpose({
   .expression-container {
     gap: 8px;
   }
-  
+
   .scrollable-content,
   .result-content {
     height: 250px; /* 小屏幕时进一步减小高度 */
   }
-  
+
   .action-buttons {
     flex-direction: column;
     gap: 6px;
@@ -1019,23 +1015,23 @@ defineExpose({
     overflow: hidden;
     box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
     border: 1px solid #e2e8f0;
-    
+
     @media (max-width: 768px) {
       margin: 1rem;
       width: calc(100% - 2rem) !important;
       max-width: none !important;
     }
   }
-  
+
   .el-dialog__header {
     padding: 0;
   }
-  
+
   .el-dialog__body {
     padding: 0;
     background: transparent;
   }
-  
+
   .el-dialog__footer {
     padding: 0;
     background: transparent;
@@ -1076,8 +1072,6 @@ defineExpose({
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
 }
 
-
-
 .dialog-footer {
   padding: 20px 24px;
   border-top: 1px solid #e2e8f0;
@@ -1098,7 +1092,7 @@ defineExpose({
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background: #f1f5f9;
     border-color: #cbd5e1;
@@ -1115,7 +1109,7 @@ defineExpose({
   font-weight: 600;
   font-size: 14px;
   transition: all 0.3s ease;
-  
+
   &:hover {
     background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
     border-color: #0891b2;

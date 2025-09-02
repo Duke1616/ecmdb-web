@@ -11,9 +11,6 @@
       :size="drawerSize"
       @closed="closed"
     >
-      <template #header>
-        <div class="unit">{{ getLabelByValue(props.nodeData?.type, pixelOption, "value", "label") }}</div>
-      </template>
       <div>
         <startProperty
           v-if="props.nodeData?.type === 'start'"
@@ -60,7 +57,6 @@
 </template>
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue"
-import { pixelOption } from "./options"
 import startProperty from "../RegisterNode/start/startProperty.vue"
 import userProperty from "../RegisterNode/user/userProperty.vue"
 import conditionProperty from "../RegisterNode/condition/conditionProperty.vue"
@@ -110,16 +106,6 @@ const drawerSize = computed(() => {
 //弹窗关闭
 const closed = () => {
   emits("closed", true)
-}
-
-const getLabelByValue = (value: any, arr: any[], typeValue: string | number, typeLabel: string | number) => {
-  let label = ""
-  arr.forEach((i) => {
-    if (i[typeValue] == value) {
-      label = i[typeLabel]
-    }
-  })
-  return label
 }
 
 onMounted(() => {})
@@ -186,19 +172,19 @@ onMounted(() => {})
 
   // 确保内容区域完全贴合抽屉
   .dialog-content {
-    padding: 20px 16px 16px !important;
+    padding: 10px 0px 10px !important;
   }
 
   // 大屏幕上的优化
   @media (min-width: 1440px) {
     .dialog-content {
-      padding: 24px 20px 20px !important;
+      padding: 15px 0px 15px !important;
     }
   }
 
   @media (min-width: 1920px) {
     .dialog-content {
-      padding: 28px 24px 24px !important;
+      padding: 24px 0px 24px !important;
     }
   }
 }
