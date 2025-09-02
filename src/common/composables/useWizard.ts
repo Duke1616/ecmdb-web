@@ -11,7 +11,7 @@ interface UseWizardOptions<T> {
 
 export function useWizard<T>(options: UseWizardOptions<T>) {
   const { steps, initialFormData, formRules, initialStep = 0 } = options
-  
+
   const currentStep = ref(initialStep)
   const formData = ref<T>(initialFormData)
   const wizardRef = ref()
@@ -19,7 +19,7 @@ export function useWizard<T>(options: UseWizardOptions<T>) {
   const currentStepComponent = computed(() => steps[currentStep.value]?.component)
 
   const computedFormRules = computed<FormRules>(() => {
-    if (typeof formRules === 'function') {
+    if (typeof formRules === "function") {
       return formRules()
     }
     return formRules || {}
@@ -64,7 +64,7 @@ export function useWizard<T>(options: UseWizardOptions<T>) {
     wizardRef,
     currentStepComponent,
     computedFormRules,
-    
+
     // 方法
     goToNext,
     goToPrevious,

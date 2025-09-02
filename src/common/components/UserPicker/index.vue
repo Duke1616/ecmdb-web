@@ -1,5 +1,5 @@
 <template>
-  <div class="user-picker-container">
+  <div class="user-picker-container" ref="containerRef">
     <div class="user-picker-input" @click="toggleUserPicker" :class="{ 'is-focus': showUserPicker }">
       <div v-if="selectedUser" class="selected-user">
         <div class="user-avatar" :style="{ background: generateUserColor(selectedUser.username || '') }">
@@ -15,70 +15,74 @@
       </div>
     </div>
 
-    <div v-if="showUserPicker" class="user-picker-dropdown">
-      <div class="search-section">
-        <div class="search-input-wrapper">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <circle cx="11" cy="11" r="8" />
-            <path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            v-model="searchKeyword"
-            @input="handleSearch"
-            placeholder="搜索用户..."
-            class="search-input"
-            ref="searchInputRef"
-          />
-        </div>
-      </div>
-
-      <div class="users-list" v-loading="loading">
-        <div v-if="usersData.length === 0 && !loading" class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-          </svg>
-          <span>暂无用户数据</span>
+    <!-- 使用 Teleport 将下拉菜单渲染到 body 中，避免被任何容器遮挡 -->
+    <Teleport to="body">
+      <div v-if="showUserPicker" class="user-picker-dropdown" :style="dropdownStyle" @click.stop>
+        <div class="search-section" @click.stop>
+          <div class="search-input-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              v-model="searchKeyword"
+              @input="handleSearch"
+              @click.stop
+              placeholder="搜索用户..."
+              class="search-input"
+              ref="searchInputRef"
+            />
+          </div>
         </div>
 
-        <div
-          v-for="user in usersData"
-          :key="user.id"
-          class="user-item"
-          :class="{ 'is-selected': modelValue === user.username }"
-          @click="handleUserSelect(user)"
-        >
-          <div class="user-avatar" :style="{ background: generateUserColor(user.username) }">
-            {{ user.display_name?.charAt(0) || user.username?.charAt(0) }}
-          </div>
-          <div class="user-info">
-            <div class="user-name">{{ user.display_name || user.username }}</div>
-            <div class="user-username">@{{ user.username }}</div>
-          </div>
-          <div v-if="modelValue === user.username" class="selected-indicator">
+        <div class="users-list" v-loading="loading">
+          <div v-if="usersData.length === 0 && !loading" class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
+            <span>暂无用户数据</span>
+          </div>
+
+          <div
+            v-for="user in usersData"
+            :key="user.id"
+            class="user-item"
+            :class="{ 'is-selected': modelValue === user.username }"
+            @click="handleUserSelect(user)"
+          >
+            <div class="user-avatar" :style="{ background: generateUserColor(user.username) }">
+              {{ user.display_name?.charAt(0) || user.username?.charAt(0) }}
+            </div>
+            <div class="user-info">
+              <div class="user-name">{{ user.display_name || user.username }}</div>
+              <div class="user-username">@{{ user.username }}</div>
+            </div>
+            <div v-if="modelValue === user.username" class="selected-indicator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="paginationData.total > paginationData.pageSize" class="pagination-section">
-        <el-pagination
-          background
-          layout="prev, pager, next"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :current-page="paginationData.currentPage"
-          @current-change="handleCurrentChange"
-          small
-        />
+        <div v-if="paginationData.total > paginationData.pageSize" class="pagination-section">
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :total="paginationData.total"
+            :page-size="paginationData.pageSize"
+            :current-page="paginationData.currentPage"
+            @current-change="handleCurrentChange"
+            small
+          />
+        </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { watch, onMounted } from "vue"
+import { watch, onMounted, onUnmounted, ref, computed, nextTick } from "vue"
 import { useUsers } from "@@/composables/useUsers"
 import { useUserStore } from "@/pinia/stores/user"
 import type { user } from "@/api/user/types/user"
@@ -102,6 +106,28 @@ const emits = defineEmits(["update:modelValue"])
 
 // 获取用户 store
 const userStore = useUserStore()
+
+// 容器引用
+const containerRef = ref<HTMLElement>()
+
+// 计算下拉菜单位置
+const dropdownStyle = computed(() => {
+  if (!containerRef.value || !showUserPicker.value) {
+    return {}
+  }
+  
+  const rect = containerRef.value.getBoundingClientRect()
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
+  
+  return {
+    position: 'fixed' as const,
+    top: `${rect.bottom + scrollTop + 8}px`,
+    left: `${rect.left + scrollLeft}px`,
+    width: `${rect.width}px`,
+    zIndex: 9999
+  }
+})
 
 // 基于用户名生成随机颜色
 const generateUserColor = (username: string) => {
@@ -203,6 +229,13 @@ watch(
   { immediate: true }
 )
 
+// 点击外部关闭下拉菜单
+const handleClickOutside = (event: Event) => {
+  if (showUserPicker.value && containerRef.value && !containerRef.value.contains(event.target as Node)) {
+    showUserPicker.value = false
+  }
+}
+
 // 组件挂载时设置默认用户
 onMounted(async () => {
   // 如果用户信息还没有加载，先尝试获取
@@ -218,6 +251,14 @@ onMounted(async () => {
   if (props.defaultToCurrentUser && (!props.modelValue || props.modelValue === "")) {
     await setDefaultToCurrentUser()
   }
+
+  // 添加点击外部关闭事件监听
+  document.addEventListener('click', handleClickOutside)
+})
+
+// 组件卸载时清理事件监听
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -314,17 +355,13 @@ onMounted(async () => {
 }
 
 .user-picker-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1000;
+  position: fixed; /* 使用 fixed 定位，通过 Teleport 渲染到 body */
   background: #ffffff;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-  margin-top: 8px;
   overflow: hidden;
+  max-height: 400px; /* 限制最大高度 */
 }
 
 .search-section {

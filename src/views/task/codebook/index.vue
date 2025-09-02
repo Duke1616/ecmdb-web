@@ -38,35 +38,77 @@
         />
       </div>
     </el-card>
-    <!-- 新增模版 -->
-    <addCodebook
-      :dialog-visible="addDialogDrawer"
-      :createOrUpdate="createOrUpdate"
-      :codebookRow="codebookRow"
-      @close="onClosed"
-      @list-codebooks="listCodebooksData"
-    />
+    <!-- 新增/编辑模版 -->
+    <el-card v-show="addDialogDrawer">
+      <WizardContainer
+        :steps="codebookSteps"
+        :formData="formData"
+        :formRules="formRules"
+        @update:formData="updateFormData"
+        @close="onClosed"
+        @save="saveCodebook"
+        ref="wizardRef"
+      />
+    </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { h, ref, watch } from "vue"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { h, ref, watch, computed, nextTick } from "vue"
+import { CirclePlus, RefreshRight, Document, Edit } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
-import addCodebook from "./createOrUpdate.vue"
-import { codebook } from "@/api/codebook/types/codebook"
+import WizardContainer from "@@/components/WizardContainer/index.vue"
+import { codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { cloneDeep } from "lodash-es"
-import { deleteCodebookApi, listCodebookApi } from "@/api/codebook"
+import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookApi } from "@/api/codebook"
 import { ElMessage, ElMessageBox } from "element-plus"
+import { findByUsernameApi, findByUserIdApi } from "@/api/user"
+import InfoPage from "./modal/info.vue"
+import CodePage from "./modal/code.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
-const createOrUpdate = ref<string>("")
+const wizardRef = ref()
 
-const handlerCreate = () => {
-  createOrUpdate.value = "create"
-  addDialogDrawer.value = true
-}
+// 向导步骤配置
+const codebookSteps = [
+  {
+    title: "基本信息",
+    description: "填写脚本基本信息",
+    icon: Document,
+    component: InfoPage
+  },
+  {
+    title: "代码编写",
+    description: "编写脚本代码",
+    icon: Edit,
+    component: CodePage
+  }
+]
+
+// 表单数据
+const formData = ref<createOrUpdateCodebookReq>({
+  name: "",
+  code: "",
+  language: "shell",
+  owner: 0,
+  identifier: ""
+})
+
+// 表单验证规则
+const formRules = computed(() => {
+  const currentStep = wizardRef.value?.currentStep || 0
+  if (currentStep === 0) {
+    // 基本信息页面验证规则
+    return {
+      name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
+      owner: [{ required: true, message: "必须输入管理员", trigger: "blur" }],
+      identifier: [{ required: true, message: "必须输入唯一标识", trigger: "blur" }],
+      language: [{ required: true, message: "必须选择脚本语言", trigger: "change" }]
+    }
+  }
+  return {}
+})
 
 const codebookRow = ref<codebook>({
   id: 0,
@@ -78,14 +120,103 @@ const codebookRow = ref<codebook>({
   secret: ""
 })
 
+// 监听弹窗显示状态
+watch(
+  () => addDialogDrawer.value,
+  (val) => {
+    if (val) {
+      // 重置到第一步
+      nextTick(() => {
+        wizardRef.value?.setStep(0)
+      })
+    }
+  }
+)
+
+// 监听编辑数据
+watch(
+  () => codebookRow.value,
+  async (val) => {
+    if (val && addDialogDrawer.value) {
+      // 使用 nextTick 避免循环更新
+      nextTick(async () => {
+        const newFormData = cloneDeep(val)
+        // 将用户ID转换为用户名
+        if (typeof val.owner === "number") {
+          try {
+            const userResponse = await findByUserIdApi(val.owner)
+            newFormData.owner = userResponse.data.username as any
+          } catch (error) {
+            console.error("获取用户信息失败:", error)
+          }
+        }
+        formData.value = newFormData
+      })
+    } else if (!val) {
+      // 重置表单数据
+      formData.value = {
+        name: "",
+        code: "",
+        language: "shell",
+        owner: 0,
+        identifier: ""
+      }
+    }
+  },
+  { immediate: true }
+)
+
+const handlerCreate = () => {
+  codebookRow.value = {
+    id: 0,
+    name: "",
+    owner: 0,
+    code: "",
+    language: "shell",
+    identifier: "",
+    secret: ""
+  }
+  addDialogDrawer.value = true
+}
+
 const handleUpdate = (row: codebook) => {
-  createOrUpdate.value = "update" + row.id
   codebookRow.value = cloneDeep(row)
   addDialogDrawer.value = true
 }
 
-const onClosed = (val: boolean) => {
-  addDialogDrawer.value = val
+const onClosed = () => {
+  addDialogDrawer.value = false
+  listCodebooksData()
+}
+
+// 向导相关方法
+const updateFormData = (data: createOrUpdateCodebookReq) => {
+  formData.value = { ...formData.value, ...data }
+}
+
+const saveCodebook = async () => {
+  try {
+    // 将用户名转换为用户ID
+    let ownerId = formData.value.owner
+    if (typeof formData.value.owner === "string" && formData.value.owner) {
+      const userResponse = await findByUsernameApi(formData.value.owner)
+      ownerId = userResponse.data.id
+    }
+
+    // 准备提交数据
+    const submitData: createOrUpdateCodebookReq = {
+      ...formData.value,
+      owner: ownerId as number
+    }
+
+    const api = formData.value.id ? updateCodebookApi : createCodebookApi
+    await api(submitData)
+
+    ElMessage.success("保存成功")
+    onClosed()
+  } catch (error) {
+    console.log("catch", error)
+  }
 }
 
 /** 查询模版列表 */
@@ -151,4 +282,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listCod
   display: flex;
   justify-content: flex-end;
 }
+
+/* WizardContainer 现在自动处理全屏覆盖，无需额外样式 */
 </style>

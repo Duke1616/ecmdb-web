@@ -119,9 +119,17 @@ defineExpose({
   flex-direction: column;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000; /* 确保在菜单栏之上 */
+  background: #fff; /* 确保完全覆盖底层内容 */
 }
 
 .wizard-header {
+  padding: 20px 0;
   background: white;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

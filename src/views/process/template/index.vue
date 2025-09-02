@@ -70,14 +70,12 @@
     </el-card>
 
     <!-- 新增或删除模版 -->
-    <el-card v-show="templateDialogDrawer" class="template-wizard-container">
+    <el-card v-show="templateDialogDrawer">
       <WizardContainer
         :steps="templateSteps"
         :formData="templateFormData"
         :formRules="templateFormRules"
         @update:formData="updateTemplateFormData"
-        @next="goToNextTemplate"
-        @previous="goToPreviousTemplate"
         @close="onClosedTemplate"
         @save="saveTemplate"
         ref="templateWizardRef"
@@ -241,14 +239,6 @@ const updateTemplateFormData = (data: createOrUpdateTemplateReq) => {
   templateFormData.value = { ...templateFormData.value, ...data }
 }
 
-const goToNextTemplate = () => {
-  templateWizardRef.value?.goToNext()
-}
-
-const goToPreviousTemplate = () => {
-  templateWizardRef.value?.goToPrevious()
-}
-
 const saveTemplate = async () => {
   try {
     if (templateFormData.value.id) {
@@ -340,17 +330,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTem
 </script>
 
 <style lang="scss" scoped>
-.template-wizard-container {
-  height: 100vh;
-  margin: 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-}
-
 .toolbar-wrapper {
   display: flex;
   justify-content: space-between;

@@ -17,34 +17,88 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
             </div>
             <div class="section-title">
-              <h3>流程标识</h3>
-              <p>为您的流程设置名称和负责人</p>
+              <h3>脚本基本信息</h3>
+              <p>为您的脚本设置名称、标识和负责人</p>
             </div>
           </div>
 
           <div class="form-grid">
             <div class="form-field">
               <div class="field-label">
-                <span class="label-text">流程名称</span>
+                <span class="label-text">脚本名称</span>
                 <span class="required">*</span>
               </div>
               <div class="input-container">
                 <el-form-item prop="name" class="no-margin">
                   <el-input
-                    :disabled="localFormData.id"
                     v-model="localFormData.name"
                     @input="updateFormData"
-                    placeholder="请输入流程名称，如：用户注册流程"
+                    placeholder="请输入脚本名称，如：用户数据同步脚本"
                     class="modern-input"
                     size="large"
                   />
                 </el-form-item>
-                <!-- <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div> -->
+                <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">唯一标识</span>
+                <span class="required">*</span>
+              </div>
+              <div class="input-container">
+                <el-form-item prop="identifier" class="no-margin">
+                  <el-input
+                    v-model="localFormData.identifier"
+                    @input="updateFormData"
+                    placeholder="请输入唯一标识，如：user_sync_script"
+                    class="modern-input"
+                    size="large"
+                    :disabled="false"
+                  />
+                </el-form-item>
+                <div class="input-hint">
+                  用于系统内部识别，建议使用下划线命名
+                </div>
+              </div>
+            </div>
+
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">脚本语言</span>
+                <span class="required">*</span>
+              </div>
+              <div class="input-container">
+                <el-form-item prop="language" class="no-margin">
+                  <el-select
+                    v-model="localFormData.language"
+                    @change="updateFormData"
+                    placeholder="请选择脚本语言"
+                    class="modern-select"
+                    size="large"
+                    :disabled="shouldDisableLanguage"
+                  >
+                    <el-option label="Python" value="python" />
+                    <el-option label="JavaScript" value="javascript" />
+                    <el-option label="Shell" value="shell" />
+                    <el-option label="PowerShell" value="powershell" />
+                  </el-select>
+                </el-form-item>
+                <div class="input-hint">
+                  {{ 
+                    props.formData.id 
+                      ? '编辑模式下脚本语言不可修改' 
+                      : shouldDisableLanguage 
+                        ? '已编写代码，脚本语言不可修改' 
+                        : '选择脚本的编程语言' 
+                  }}
+                </div>
               </div>
             </div>
 
@@ -56,53 +110,14 @@
               <div class="input-container">
                 <el-form-item prop="owner" class="no-margin">
                   <UserPicker
-                    v-model="localFormData.owner"
-                    placeholder="选择流程负责人"
+                    v-model="ownerUsername"
                     @update:modelValue="updateFormData"
+                    placeholder="选择脚本负责人"
                     class="modern-select"
                   />
                 </el-form-item>
-                <!-- <div class="input-hint">选择负责此流程的主要人员</div> -->
+                <div class="input-hint">选择负责此脚本的主要人员</div>
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>流程描述</h3>
-              <p>详细描述流程的目的和功能</p>
-            </div>
-          </div>
-
-          <div class="form-field full-width">
-            <div class="field-label">
-              <span class="label-text">流程说明</span>
-            </div>
-            <div class="input-container">
-              <el-form-item prop="desc" class="no-margin">
-                <el-input
-                  v-model="localFormData.desc"
-                  type="textarea"
-                  @input="updateFormData"
-                  placeholder="请详细描述此流程的目的、适用场景、预期效果等信息..."
-                  :rows="6"
-                  class="modern-textarea"
-                  size="large"
-                />
-              </el-form-item>
-              <div class="input-hint">清晰的描述有助于团队成员理解和执行流程</div>
             </div>
           </div>
         </div>
@@ -110,68 +125,117 @@
     </div>
 
     <!-- 操作按钮 -->
-    <FormActions @next="handleFormNext" @cancel="handleClose" :show-previous="false" />
+    <FormActions @next="handleFormNext" @cancel="close" :show-previous="false" />
   </div>
 </template>
 
-<script lang="ts" setup>
-import { watch, ref } from "vue"
-import { useFormHandler } from "@/common/composables/useFormHandler"
+<script setup lang="ts">
+import { ref, computed, watch } from "vue"
 import UserPicker from "@@/components/UserPicker/index.vue"
-import FormActions from "@/common/components/FormActions/index.vue"
-import type { FormInstance, FormRules } from "element-plus"
+import FormActions from "@@/components/FormActions/index.vue"
+import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
+import { ElMessage, FormInstance, FormRules } from "element-plus"
+import { findByUsernameApi, findByUserIdApi } from "@/api/user"
+import { useFormHandler } from "@@/composables/useFormHandler"
 
-const props = defineProps({
-  formData: {
-    type: Object,
-    required: true
+interface Props {
+  formData: createOrUpdateCodebookReq
+}
+
+interface Emits {
+  (e: "update:formData", data: createOrUpdateCodebookReq): void
+  (e: "next"): void
+  (e: "close"): void
+}
+
+const props = defineProps<Props>()
+const emits = defineEmits<Emits>()
+
+const { localFormData, updateFormData, next, close, setFormData } = useFormHandler(props.formData, emits, "codebook")
+
+// 检测是否应该禁用脚本语言选择
+const shouldDisableLanguage = computed(() => {
+  // 如果是编辑模式（有id），一定不能编辑语言
+  if (props.formData.id) {
+    return true
+  }
+  
+  // 如果是创建模式，检查是否有用户编写的代码
+  // 如果代码不为空且不是默认模板，则认为用户已经编写了代码
+  const code = props.formData.code || ""
+  const trimmedCode = code.trim()
+  
+  // 如果代码为空，说明用户还没有编写代码
+  if (!trimmedCode) {
+    return false
+  }
+  
+  // 这里可以添加更复杂的逻辑来检测是否是默认模板
+  // 暂时简单判断：如果代码长度超过50个字符，认为用户已经编写了代码
+  return trimmedCode.length > 50
+})
+
+const formRef = ref<FormInstance>()
+
+// 表单数据
+const formData = computed({
+  get: () => localFormData.value,
+  set: (value) => {
+    localFormData.value = value
+    updateFormData()
   }
 })
 
-const emits = defineEmits(["update:formData", "next", "close"])
+// 用户选择器绑定
+const ownerUsername = computed({
+  get: () => {
+    if (typeof formData.value.owner === 'string') {
+      return formData.value.owner
+    }
+    return ''
+  },
+  set: (value: string) => {
+    formData.value.owner = value as any
+  }
+})
 
-const {
-  localFormData,
-  updateFormData,
-  next,
-  close: handleClose,
-  setFormData
-} = useFormHandler(props.formData, emits, "info")
-
-// 表单引用
-const formRef = ref<FormInstance>()
-
-// 表单校验规则
+// 表单验证规则
 const formRules: FormRules = {
-  name: [
-    { required: true, message: "请输入流程名称", trigger: "blur" },
-    { min: 2, max: 50, message: "流程名称长度在 2 到 50 个字符", trigger: "blur" }
-  ],
-  owner: [{ required: true, message: "请选择流程负责人", trigger: "change" }]
+  name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
+  owner: [{ required: true, message: "必须输入管理员", trigger: "blur" }],
+  identifier: [{ required: true, message: "必须输入唯一标识", trigger: "blur" }],
+  language: [{ required: true, message: "必须选择脚本语言", trigger: "change" }]
 }
+
+// 监听 props 变化
+watch(() => props.formData, (newData) => {
+  setFormData(newData)
+}, { deep: true, immediate: true })
 
 // 处理下一步，先进行表单校验
-const handleFormNext = () => {
+const handleFormNext = async () => {
   if (!formRef.value) return
 
-  formRef.value.validate((valid, fields) => {
-    if (valid) {
-      next()
-    } else {
-      console.log("表单校验失败:", fields)
-      // 可以增加提示
-      ElMessage.warning("请完善必填项")
+  const valid = await formRef.value.validate()
+  if (!valid) {
+    ElMessage.error("请完善基本信息")
+    return
+  }
+  
+  // 将用户名转换为用户ID
+  if (typeof localFormData.value.owner === 'string' && localFormData.value.owner) {
+    try {
+      const userResponse = await findByUsernameApi(localFormData.value.owner)
+      localFormData.value.owner = userResponse.data.id as any
+      updateFormData()
+    } catch (error) {
+      ElMessage.error("获取用户信息失败")
+      return
     }
-  })
+  }
+  
+  next()
 }
-
-watch(
-  () => props.formData,
-  (newFormData) => {
-    setFormData(newFormData)
-  },
-  { deep: true, immediate: true }
-)
 </script>
 
 <style lang="scss" scoped>
@@ -316,6 +380,8 @@ watch(
   }
 }
 
+
+  
 // 现代化输入框样式
 :deep(.modern-input) {
   .el-input__wrapper {
@@ -355,44 +421,9 @@ watch(
   }
 }
 
-:deep(.modern-textarea) {
-  .el-textarea__inner {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    color: #1e293b;
-    font-size: 13px;
-    line-height: 1.6;
-    resize: vertical;
-    min-height: 120px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &:focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-
-    &::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-  }
-}
-
-:deep(.modern-select) {
-  .el-input__wrapper {
-    background: #f8fafc;
+.modern-select :deep(.el-select__wrapper) {
+  background: #f8fafc;
     border: 2px solid #e2e8f0;
     border-radius: 10px;
     padding: 8px 16px;
@@ -414,8 +445,8 @@ watch(
       box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
       transform: translateY(-2px);
     }
-  }
 }
+
 
 // 响应式设计
 @media (max-width: 768px) {

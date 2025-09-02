@@ -17,11 +17,18 @@ export function useUsers() {
   const init = {
     total: 0,
     currentPage: 1,
-    pageSizes: [10, 20, 50],
-    pageSize: 5,
+    pageSize: 3,
     layout: "prev, pager, next"
   }
-  const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
+  const { paginationData, handleCurrentChange: originalHandleCurrentChange, handleSizeChange } = usePagination(init)
+
+  // 重写 handleCurrentChange 以重新加载数据
+  const handleCurrentChange = (page: number) => {
+    originalHandleCurrentChange(page)
+    if (showUserPicker.value) {
+      listUsersData()
+    }
+  }
 
   // Methods
   const listUsersData = () => {
@@ -64,6 +71,17 @@ export function useUsers() {
   const toggleUserPicker = () => {
     showUserPicker.value = !showUserPicker.value
     if (showUserPicker.value) {
+      // 重置分页到第一页
+      paginationData.currentPage = 1
+      // 加载初始数据（如果有搜索关键词则搜索，否则加载所有用户）
+      if (searchKeyword.value) {
+        keyword.value = searchKeyword.value
+        listUsersData()
+      } else {
+        // 如果没有搜索关键词，可以加载一些默认用户或清空列表
+        usersData.value = []
+        paginationData.total = 0
+      }
       nextTick(() => {
         searchInputRef.value?.focus()
       })

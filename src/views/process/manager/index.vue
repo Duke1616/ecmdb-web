@@ -62,14 +62,12 @@
       </div>
     </el-card>
     <!-- 新增模版 -->
-    <el-card v-show="visibleWorkflow" class="workflow-wrapper">
+    <el-card v-show="visibleWorkflow">
       <WizardContainer
         :steps="workflowSteps"
         :formData="workflowFormData"
         :formRules="workflowFormRules"
         @update:formData="updateWorkflowFormData"
-        @next="goToNextWorkflow"
-        @previous="goToPreviousWorkflow"
         @close="onClosed"
         @save="saveWorkflow"
         ref="workflowWizardRef"
@@ -175,14 +173,6 @@ const graphPreviewVisible = ref<boolean>(false)
 // 工作流向导相关函数
 const updateWorkflowFormData = (data: createOrUpdateWorkflowReq) => {
   workflowFormData.value = { ...workflowFormData.value, ...data }
-}
-
-const goToNextWorkflow = () => {
-  workflowWizardRef.value?.goToNext()
-}
-
-const goToPreviousWorkflow = () => {
-  workflowWizardRef.value?.goToPrevious()
 }
 
 const saveWorkflow = async () => {
@@ -409,14 +399,5 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listFlo
   justify-content: flex-end;
 }
 
-.workflow-wrapper {
-  height: 100vh;
-  margin: 0;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1000;
-}
+/* WizardContainer 现在自动处理全屏覆盖，无需额外样式 */
 </style>

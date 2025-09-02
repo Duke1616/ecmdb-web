@@ -2,7 +2,7 @@ import { ref } from "vue"
 import { ElMessageBox } from "element-plus"
 
 // 定义页面类型
-export type PageType = "info" | "designer" | "setting" | "workflow" | "lf"
+export type PageType = "info" | "designer" | "setting" | "workflow" | "lf" | "codebook"
 
 // 定义表单数据接口
 export interface FormData {
@@ -54,6 +54,13 @@ const PAGE_CONFIGS = {
     confirmText: "确定取消",
     cancelText: "继续设计",
     icon: "🎯"
+  },
+  codebook: {
+    title: "确认取消",
+    content: "确定要取消当前操作吗？已填写的脚本信息将不会保存。",
+    confirmText: "确定取消",
+    cancelText: "继续填写",
+    icon: "📝"
   }
 }
 

@@ -5,7 +5,6 @@
         v-model="code"
         :style="{
           width: preview ? '50%' : '100%',
-          height: config.height,
           backgroundColor: '#fff',
           color: '#333'
         }"
@@ -20,7 +19,7 @@
         @focus="log('focus', $event)"
         @blur="log('blur', $event)"
       />
-      <pre v-if="preview" class="code" :style="{ height: config.height, width: preview ? '50%' : '0px' }">{{
+      <pre v-if="preview" class="code" :style="{ width: preview ? '50%' : '0px' }">{{
         code
       }}</pre>
     </div>
@@ -46,7 +45,6 @@ import { Codemirror } from "vue-codemirror"
 
 interface Props {
   config: {
-    height: string
     indentWithTab: boolean
     disabled: boolean
     autofocus: boolean
@@ -107,15 +105,15 @@ const handleStateUpdate = (viewUpdate: ViewUpdate) => {
   const ranges = viewUpdate.state.selection.ranges
   state.selected = ranges.reduce((plus, range) => plus + range.to - range.from, 0)
   state.cursor = ranges[0].anchor
+  
   // length
   state.length = viewUpdate.state.doc.length
   state.lines = viewUpdate.state.doc.lines
-  // log('viewUpdate', viewUpdate)
 }
 
 const getCode = () => {
   return code.value
-}
+} 
 
 defineExpose({ getCode })
 
@@ -133,8 +131,7 @@ watch(
     if (val) {
       handleUndo()
     }
-  },
-  { immediate: true }
+  }
 )
 
 watch(
@@ -143,18 +140,19 @@ watch(
     if (val) {
       handleRedo()
     }
+  }
+)
+
+// 监听代码变化
+watch(
+  () => props.code,
+  (_code) => {
+    console.log("Editor received new code:", _code)
+    code.value = _code
   },
   { immediate: true }
 )
 
-onMounted(() => {
-  watch(
-    () => props.code,
-    (_code) => {
-      code.value = _code
-    }
-  )
-})
 </script>
 
 <style lang="scss" scoped>
@@ -162,6 +160,10 @@ onMounted(() => {
 @import "@@/assets/styles/iconfont.scss";
 
 .editor {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
   .divider {
     height: 1px;
     background-color: $border-color;
@@ -170,6 +172,8 @@ onMounted(() => {
   .main {
     display: flex;
     width: 100%;
+    flex: 1;
+    min-height: 0;
 
     .code {
       width: 30%;
