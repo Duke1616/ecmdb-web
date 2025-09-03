@@ -1,6 +1,6 @@
 import type * as Model from "./types/model"
 import { RGJsonData } from "relation-graph-vue3"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 新增模型 */

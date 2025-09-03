@@ -1,6 +1,6 @@
 import type * as user from "./types/user"
 import type * as ldap from "./types/ldap"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 查询用户列表 */

@@ -1,5 +1,5 @@
 import type * as workflow from "./types/workflow"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 新增工作流程 */

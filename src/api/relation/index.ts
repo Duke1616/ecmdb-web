@@ -1,6 +1,6 @@
 import type * as Relation from "./types/relation"
 
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 新增关联类型 */

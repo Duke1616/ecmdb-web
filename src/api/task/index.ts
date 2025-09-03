@@ -1,5 +1,5 @@
 import type * as task from "./types/task"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 创建工单任务 */

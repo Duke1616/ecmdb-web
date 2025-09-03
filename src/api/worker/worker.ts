@@ -1,5 +1,5 @@
 import type * as worker from "./types/worker"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 列表 */
