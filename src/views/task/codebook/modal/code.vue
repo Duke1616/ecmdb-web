@@ -57,7 +57,6 @@ import FormActions from "@@/components/FormActions/index.vue"
 import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { ElMessage } from "element-plus"
 import { useFormHandler } from "@@/composables/useFormHandler"
-import { cl } from "node_modules/@fullcalendar/core/internal-common"
 
 interface Props {
   formData: createOrUpdateCodebookReq
@@ -88,14 +87,12 @@ const formData = computed({
 
 // 代码更新处理
 const handleCodeUpdate = (code: string) => {
-  console.log("handleCodeUpdate", code)
   localFormData.value = { ...localFormData.value, code }
   updateFormData()
 }
 
 // 语言更新处理
 const handleLanguageUpdate = (language: string) => {
-  console.log("handleLanguageUpdate", language)
   localFormData.value = { ...localFormData.value, language }
   updateFormData()
 }
@@ -112,7 +109,8 @@ const formatCode = () => {
 const clearCode = () => {
   if (codeMirrorRef.value) {
     codeMirrorRef.value.setCode("")
-    formData.value = { ...formData.value, code: "" }
+    localFormData.value = { ...localFormData.value, code: "" }
+    updateFormData()
     ElMessage.success("代码已清空")
   }
 }
@@ -121,33 +119,10 @@ const clearCode = () => {
 watch(
   () => props.formData,
   (newFormData) => {
-    if (newFormData) {
-      // 如果用户已经在代码页面编写了代码，保护用户代码
-      if (localFormData.value.code && localFormData.value.code.trim()) {
-        console.log("保护用户已编写的代码")
-        // 只更新其他字段，保持代码不变
-        const { code, ...otherData } = newFormData
-        localFormData.value = { ...localFormData.value, ...otherData }
-      } else {
-        // 没有用户代码时，正常更新
-        setFormData(newFormData)
-      }
-    }
+    setFormData(newFormData)
   },
-  { immediate: true, deep: true }
+  { deep: true, immediate: true }
 )
-
-// 组件卸载前保存数据，参考 designer.vue 的实现
-onBeforeUnmount(() => {
-  if (codeMirrorRef.value) {
-    // 获取当前代码内容
-    const currentCode = codeMirrorRef.value.getCode()
-    if (currentCode !== localFormData.value.code) {
-      localFormData.value.code = currentCode
-      updateFormData()
-    }
-  }
-})
 </script>
 
 <style lang="scss" scoped>

@@ -63,9 +63,7 @@
                     :disabled="false"
                   />
                 </el-form-item>
-                <div class="input-hint">
-                  用于系统内部识别，建议使用下划线命名
-                </div>
+                <div class="input-hint">用于系统内部识别，建议使用下划线命名</div>
               </div>
             </div>
 
@@ -91,12 +89,12 @@
                   </el-select>
                 </el-form-item>
                 <div class="input-hint">
-                  {{ 
-                    props.formData.id 
-                      ? '编辑模式下脚本语言不可修改' 
-                      : shouldDisableLanguage 
-                        ? '已编写代码，脚本语言不可修改' 
-                        : '选择脚本的编程语言' 
+                  {{
+                    props.formData.id
+                      ? "编辑模式下脚本语言不可修改"
+                      : shouldDisableLanguage
+                        ? "已编写代码，脚本语言不可修改"
+                        : "选择脚本的编程语言"
                   }}
                 </div>
               </div>
@@ -159,17 +157,17 @@ const shouldDisableLanguage = computed(() => {
   if (props.formData.id) {
     return true
   }
-  
+
   // 如果是创建模式，检查是否有用户编写的代码
   // 如果代码不为空且不是默认模板，则认为用户已经编写了代码
   const code = props.formData.code || ""
   const trimmedCode = code.trim()
-  
+
   // 如果代码为空，说明用户还没有编写代码
   if (!trimmedCode) {
     return false
   }
-  
+
   // 这里可以添加更复杂的逻辑来检测是否是默认模板
   // 暂时简单判断：如果代码长度超过50个字符，认为用户已经编写了代码
   return trimmedCode.length > 50
@@ -189,10 +187,10 @@ const formData = computed({
 // 用户选择器绑定
 const ownerUsername = computed({
   get: () => {
-    if (typeof formData.value.owner === 'string') {
+    if (typeof formData.value.owner === "string") {
       return formData.value.owner
     }
-    return ''
+    return ""
   },
   set: (value: string) => {
     formData.value.owner = value as any
@@ -208,9 +206,13 @@ const formRules: FormRules = {
 }
 
 // 监听 props 变化
-watch(() => props.formData, (newData) => {
-  setFormData(newData)
-}, { deep: true, immediate: true })
+watch(
+  () => props.formData,
+  (newData) => {
+    setFormData(newData)
+  },
+  { deep: true, immediate: true }
+)
 
 // 处理下一步，先进行表单校验
 const handleFormNext = async () => {
@@ -221,9 +223,9 @@ const handleFormNext = async () => {
     ElMessage.error("请完善基本信息")
     return
   }
-  
+
   // 将用户名转换为用户ID
-  if (typeof localFormData.value.owner === 'string' && localFormData.value.owner) {
+  if (typeof localFormData.value.owner === "string" && localFormData.value.owner) {
     try {
       const userResponse = await findByUsernameApi(localFormData.value.owner)
       localFormData.value.owner = userResponse.data.id as any
@@ -233,7 +235,7 @@ const handleFormNext = async () => {
       return
     }
   }
-  
+
   next()
 }
 </script>
@@ -380,8 +382,6 @@ const handleFormNext = async () => {
   }
 }
 
-
-  
 // 现代化输入框样式
 :deep(.modern-input) {
   .el-input__wrapper {
@@ -421,32 +421,30 @@ const handleFormNext = async () => {
   }
 }
 
-
 .modern-select :deep(.el-select__wrapper) {
   background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-height: 42px;
-    height: 42px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 8px 16px;
+  min-height: 42px;
+  height: 42px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
+  &:hover {
+    border-color: #667eea;
+    background: #f1f5f9;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  }
 
-    &.is-focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
+  &.is-focus {
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
 }
-
 
 // 响应式设计
 @media (max-width: 768px) {

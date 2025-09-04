@@ -215,7 +215,8 @@ const saveCodebook = async () => {
     ElMessage.success("保存成功")
     onClosed()
   } catch (error) {
-    console.log("catch", error)
+    console.error("保存失败:", error)
+    ElMessage.error("保存失败，请重试")
   }
 }
 
