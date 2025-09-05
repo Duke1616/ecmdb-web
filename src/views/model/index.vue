@@ -78,7 +78,22 @@
               <div class="model-card" @click="handleModelClick(model)">
                 <div class="model-header">
                   <div class="model-icon-wrapper">
-                    <img :src="model.icon" :alt="model.name" class="model-icon" />
+                    <!-- 判断是否为图片URL还是图标字体类名 -->
+                    <img 
+                      v-if="isImageUrl(model.icon)" 
+                      :src="model.icon" 
+                      :alt="model.name" 
+                      class="model-icon" 
+                      @error="handleImageError"
+                    />
+                    <i 
+                      v-else-if="model.icon" 
+                      :class="getIconClass(model.icon)" 
+                      class="model-icon-font"
+                    />
+                    <el-icon v-else class="model-icon-default">
+                      <Document />
+                    </el-icon>
                   </div>
                 </div>
                 <div class="model-info">
@@ -123,8 +138,8 @@
         <el-form-item prop="name" label="名称">
           <el-input v-model="formData.name" placeholder="请输入名称" />
         </el-form-item>
-        <el-form-item prop="icon" label="图片地址">
-          <el-input v-model="formData.icon" placeholder="请输入图片地址" />
+        <el-form-item prop="icon" label="图标选择">
+          <CustomIconSelect v-model="formData.iconData" iconType="cmdb" @change="handleIconChange" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -134,7 +149,7 @@
     </el-dialog>
     <!-- 新增分组 -->
     <el-dialog v-model="dialogModelGroupVisible" :title="'新增分组'" @closed="resetForm" width="30%">
-      <el-form ref="formRef" :model="formModelGroupData" :rules="formRules" label-width="100px" label-position="left">
+      <el-form ref="formGroupRef" :model="formModelGroupData" :rules="{ name: [{ required: true, message: '必须输入名称', trigger: 'blur' }] }" label-width="100px" label-position="left">
         <el-form-item prop="name" label="名称">
           <el-input v-model="formModelGroupData.name" placeholder="请输入名称" />
         </el-form-item>
@@ -149,10 +164,11 @@
 
 <script lang="ts" setup>
 import { h, ref, computed, onMounted, onUnmounted } from "vue"
-import { CirclePlus, Search } from "@element-plus/icons-vue"
+import { CirclePlus, Search, Document } from "@element-plus/icons-vue"
 import { CreateModelApi, CreateModelGroupApi, deleteModelGroupApi } from "@/api/model"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq } from "@/api/model/types/model"
+import CustomIconSelect from "@/common/components/CustomIconSelect/index.vue"
 
 import { cloneDeep } from "lodash-es"
 import { useRouter } from "vue-router"
@@ -197,11 +213,23 @@ const handleDeleteModelGroup = (item: any) => {
   })
 }
 
-const DEFAULT_FORM_DATA: CreateModelReq = {
+interface IconData {
+  name: string
+  color: string
+  id?: string
+  url?: string
+}
+
+interface ExtendedCreateModelReq extends CreateModelReq {
+  iconData: IconData
+}
+
+const DEFAULT_FORM_DATA: ExtendedCreateModelReq = {
   name: "",
   group_id: undefined,
   icon: "",
-  uid: ""
+  uid: "",
+  iconData: { name: "", color: "", id: "", url: "" }
 }
 
 const DEFAULT_MODEL_GROUP_DATA: CreateModelGroupReq = {
@@ -210,16 +238,18 @@ const DEFAULT_MODEL_GROUP_DATA: CreateModelGroupReq = {
 
 const dialogModelVisible = ref<boolean>(false)
 const dialogModelGroupVisible = ref<boolean>(false)
-const formData = ref<CreateModelReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<ExtendedCreateModelReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formModelGroupData = ref<CreateModelGroupReq>(cloneDeep(DEFAULT_MODEL_GROUP_DATA))
 const formRef = ref<FormInstance | null>(null)
+const formGroupRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   group_id: [{ required: true, message: "必须输入所在组", trigger: "blur" }],
   uid: [
     { required: true, message: "必须输入唯一标识", trigger: "blur" },
     { type: "string", pattern: /^[A-Za-z]+$/, message: "只能输入英文字母", trigger: "blur" }
   ],
-  name: [{ required: true, message: "必须输入名称", trigger: "blur" }]
+  name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
+  icon: [{ required: true, message: "必须选择图标", trigger: "change" }]
 }
 
 const handlerDialogModelCreate = () => {
@@ -229,23 +259,51 @@ const handlerDialogModelGroupCreate = () => {
   dialogModelGroupVisible.value = true
 }
 
+
+const handleIconChange = (iconData: IconData) => {
+  // 优先使用 url（图片地址），其次使用 name（图标字体）
+  if (iconData.url) {
+    formData.value.icon = iconData.url
+  } else if (iconData.name) {
+    formData.value.icon = iconData.name
+  }
+  
+  // 更新 iconData 以保持数据同步
+  formData.value.iconData = {
+    name: iconData.name || "",
+    color: iconData.color || "",
+    id: iconData.id || "",
+    url: iconData.url || ""
+  }
+  
+  // 手动触发表单验证
+  formRef.value?.validateField('icon')
+}
+
 const resetForm = () => {
   formRef.value?.clearValidate()
+  formGroupRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  formModelGroupData.value = cloneDeep(DEFAULT_MODEL_GROUP_DATA)
 }
 
 // ** 创建模型分组 */
 const handlerCreateModelGroup = () => {
-  formRef.value?.validate((valid: boolean, fields) => {
+  formGroupRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
+    loading.value = true
     CreateModelGroupApi(formModelGroupData.value)
       .then(() => {
         ElMessage.success("操作成功")
         dialogModelGroupVisible.value = false
         getModelsData()
       })
+      .catch((error) => {
+        console.error("创建分组失败:", error)
+        ElMessage.error("创建分组失败")
+      })
       .finally(() => {
-        dialogModelGroupVisible.value = false
+        loading.value = false
       })
   })
 }
@@ -254,14 +312,28 @@ const handlerCreateModelGroup = () => {
 const handlerCreateModel = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    CreateModelApi(formData.value)
+    loading.value = true
+    
+    // 只发送API需要的字段
+    const apiData: CreateModelReq = {
+      name: formData.value.name,
+      icon: formData.value.icon,
+      group_id: formData.value.group_id,
+      uid: formData.value.uid
+    }
+    
+    CreateModelApi(apiData)
       .then(() => {
         ElMessage.success("操作成功")
         dialogModelVisible.value = false
         getModelsData()
       })
+      .catch((error) => {
+        console.error("创建模型失败:", error)
+        ElMessage.error("创建模型失败")
+      })
       .finally(() => {
-        dialogModelVisible.value = false
+        loading.value = false
       })
   })
 }
@@ -276,6 +348,14 @@ const getModelsData = () => {
     .then(({ data }) => {
       ModelsData.value = data.mgs
       filterData.value = data.mgs
+
+      // 调试：打印图标数据
+      if (data.mgs && data.mgs.length > 0) {
+        console.log('模型数据示例:', data.mgs[0])
+        if (data.mgs[0].models && data.mgs[0].models.length > 0) {
+          console.log('模型图标示例:', data.mgs[0].models[0].icon)
+        }
+      }
 
       if (ModelsData.value.length > 0 && !selectedGroupId.value) {
         selectedGroupId.value = ModelsData.value[0].group_id
@@ -299,6 +379,43 @@ const handleModelClick = (model: Model) => {
     path: "/cmdb/model/info",
     query: { uid: model.uid, name: model.name }
   })
+}
+
+// 判断是否为图片URL
+const isImageUrl = (icon: string): boolean => {
+  if (!icon) return false
+  // 检查是否为HTTP/HTTPS URL
+  if (icon.startsWith('http://') || icon.startsWith('https://')) {
+    return true
+  }
+  // 检查是否为base64图片
+  if (icon.startsWith('data:image/')) {
+    return true
+  }
+  // 检查是否为相对路径的图片文件
+  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp']
+  return imageExtensions.some(ext => icon.toLowerCase().endsWith(ext))
+}
+
+// 获取图标类名
+const getIconClass = (iconName: string): string[] => {
+  if (!iconName) return ['iconfont']
+  
+  // 如果已经包含 iconfont 类，直接返回
+  if (iconName.includes('iconfont')) {
+    return iconName.split(' ')
+  }
+  
+  // 否则添加 iconfont 基础类
+  return ['iconfont', iconName]
+}
+
+// 处理图片加载错误
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement
+  console.warn('图片加载失败:', target.src)
+  // 可以设置默认图片或隐藏图片
+  target.style.display = 'none'
 }
 
 const search = () => {
@@ -736,6 +853,30 @@ onUnmounted(() => {
   @media (min-width: 1280px) and (max-width: 1439px) {
     width: 20px;
     height: 20px;
+  }
+}
+
+.model-icon-font {
+  font-size: 22px;
+  color: #3182ce;
+  font-family: "iconfont" !important;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  
+  /* Mac屏幕优化 */
+  @media (min-width: 1280px) and (max-width: 1439px) {
+    font-size: 20px;
+  }
+}
+
+.model-icon-default {
+  font-size: 22px;
+  color: #94a3b8;
+  
+  /* Mac屏幕优化 */
+  @media (min-width: 1280px) and (max-width: 1439px) {
+    font-size: 20px;
   }
 }
 
