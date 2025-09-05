@@ -108,7 +108,7 @@
               <div class="input-container">
                 <el-form-item prop="owner" class="no-margin">
                   <UserPicker
-                    v-model="ownerUsername"
+                    v-model="localFormData.owner"
                     @update:modelValue="updateFormData"
                     placeholder="选择脚本负责人"
                     class="modern-select"

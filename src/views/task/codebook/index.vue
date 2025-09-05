@@ -47,7 +47,7 @@
           <el-radio-button label="advanced">文件管理模式</el-radio-button>
         </el-radio-group>
       </div>
-      
+
       <WizardContainer
         :steps="codebookSteps"
         :formData="formData"
@@ -78,7 +78,7 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 const addDialogDrawer = ref<boolean>(false)
 
 const wizardRef = ref()
-const codeEditorMode = ref<'simple' | 'advanced'>('simple')
+const codeEditorMode = ref<"simple" | "advanced">("simple")
 
 // 向导步骤配置
 const codebookSteps = computed(() => [
@@ -90,9 +90,9 @@ const codebookSteps = computed(() => [
   },
   {
     title: "代码编写",
-    description: codeEditorMode.value === 'simple' ? "编写脚本代码" : "管理多文件项目",
+    description: codeEditorMode.value === "simple" ? "编写脚本代码" : "管理多文件项目",
     icon: Edit,
-    component: codeEditorMode.value === 'simple' ? CodePage : CodeWithFiles
+    component: codeEditorMode.value === "simple" ? CodePage : CodeWithFiles
   }
 ])
 
@@ -300,7 +300,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listCod
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   text-align: center;
-  
+
   .el-radio-group {
     .el-radio-button__inner {
       padding: 8px 16px;
