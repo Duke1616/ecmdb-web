@@ -21,34 +21,39 @@ import {
   registerPolyline
 } from "@@/components/workflow/RegisterNode/index"
 
-// import { v4 as uuidv4 } from "uuid"
-// const demo = {
-//   nodes: [
-//     {
-//       id: uuidv4(),
-//       type: "start",
-//       x: 350,
-//       y: 160,
-//       properties: {}
-//     },
-//     {
-//       id: uuidv4(),
-//       type: "end",
-//       x: 610,
-//       y: 160,
-//       properties: {}
-//     }
-//   ],
-//   edges: []
-// }
+import { v4 as uuidv4 } from "uuid"
+const demo = {
+  nodes: [
+    {
+      id: uuidv4(),
+      type: "start",
+      x: 350,
+      y: 160,
+      properties: {}
+    },
+    {
+      id: uuidv4(),
+      type: "end",
+      x: 610,
+      y: 160,
+      properties: {}
+    }
+  ],
+  edges: []
+}
 
 const lf = ref()
 const containerRef = ref() as Ref<HTMLDivElement>
 
 
+const config = reactive<any>({
+  background: {
+    backgroundColor: "#EFF2F6"
+  },
+})
 const initLf = (data: any) => {
   const lfInstance = new LogicFlow({
-    plugins: [Menu, MiniMap],
+    ...config,
     container: containerRef.value
   })
   lf.value = lfInstance
@@ -148,7 +153,8 @@ const registerNode = () => {
 }
 
 onMounted(() => {
-  initLf(window.__DATA__)
+  // initLf(window.__DATA__)
+  initLf(demo)
 })
 
 </script>
