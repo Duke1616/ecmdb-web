@@ -25,6 +25,12 @@ importers:
       '@codemirror/legacy-modes':
         specifier: ^6.4.0
         version: 6.5.1
+      '@codemirror/lint':
+        specifier: ^6.8.5
+        version: 6.8.5
+      '@codemirror/state':
+        specifier: ^6.5.2
+        version: 6.5.2
       '@codemirror/theme-one-dark':
         specifier: ^6.1.2
         version: 6.1.3

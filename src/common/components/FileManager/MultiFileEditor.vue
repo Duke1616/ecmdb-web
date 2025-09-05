@@ -12,13 +12,7 @@
         >
           <span class="tab-icon">📄</span>
           <span class="tab-name">{{ file.name }}</span>
-          <button
-            @click.stop="closeFile(file)"
-            class="tab-close"
-            title="关闭文件"
-          >
-            ✕
-          </button>
+          <button @click.stop="closeFile(file)" class="tab-close" title="关闭文件">✕</button>
         </div>
       </div>
     </div>
@@ -29,9 +23,24 @@
         <div class="editor-header">
           <div class="file-info">
             <span class="file-name">{{ currentFile.name }}</span>
-            <span class="file-language">{{ currentFile.language || 'text' }}</span>
+            <span class="file-language">{{ currentFile.language || "text" }}</span>
           </div>
           <div class="editor-actions">
+            <!-- 主题选择 -->
+            <div class="theme-selector">
+              <label class="theme-label">主题</label>
+              <el-select
+                v-model="currentTheme"
+                size="small"
+                placeholder="选择主题"
+                @change="handleThemeChange"
+                class="theme-select"
+                :teleported="false"
+              >
+                <el-option v-for="option in themeOptions" :key="option" :label="option" :value="option" />
+              </el-select>
+            </div>
+            
             <button @click="formatCode" class="btn btn-sm">
               <span class="icon">✏️</span>
               格式化
@@ -42,19 +51,20 @@
             </button>
           </div>
         </div>
-        
+
         <div class="code-editor">
-          <CodeMirror
+          <CodeEditor
             ref="codeMirrorRef"
             :code="currentFile.content || ''"
             :language="currentFile.language || 'text'"
             :is-create="false"
+            :project-files="props.files"
             @update:code="handleCodeUpdate"
             @update:language="handleLanguageUpdate"
           />
         </div>
       </div>
-      
+
       <div v-else class="empty-editor">
         <div class="empty-content">
           <div class="empty-icon">📄</div>
@@ -66,13 +76,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import CodeMirror from '../CodeEditor/index.vue'
+import { ref, computed, watch } from "vue"
+import CodeEditor from "../CodeEditor/index.vue"
+import * as themes from "../CodeEditor/themes"
+import { useTheme, Theme } from "@@/composables/theme"
 
 interface FileNode {
   id: string
   name: string
-  type: 'file' | 'folder'
+  type: "file" | "folder"
   content?: string
   language?: string
   children?: FileNode[]
@@ -85,9 +97,9 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:files', files: FileNode[]): void
-  (e: 'file-update', file: FileNode): void
-  (e: 'file-select', file: FileNode): void
+  (e: "update:files", files: FileNode[]): void
+  (e: "file-update", file: FileNode): void
+  (e: "file-select", file: FileNode): void
 }
 
 const props = defineProps<Props>()
@@ -95,21 +107,69 @@ const emit = defineEmits<Emits>()
 
 const codeMirrorRef = ref()
 
+// 主题相关
+const currentTheme = ref(useTheme().theme.value === Theme.Dark ? "oneDark" : "default")
+
+// 硬编码主题选项，确保有选项显示
+const themeOptions = ref([
+  'default',
+  'oneDark',
+  'materialDark', 
+  'nord',
+  'amy',
+  'ayuLight',
+  'barf',
+  'bespin',
+  'birdsOfParadise',
+  'boysAndGirls',
+  'clouds',
+  'cobalt',
+  'coolGlow',
+  'dracula',
+  'espresso',
+  'noctisLilac',
+  'rosePineDawn',
+  'smoothy',
+  'solarizedLight',
+  'tomorrow'
+])
+
+console.log("Initial theme options:", themeOptions.value)
+
+// 动态加载主题选项
+const loadThemeOptions = () => {
+  try {
+    console.log("Available themes:", themes)
+    const themeKeys = Object.keys(themes)
+    console.log("Theme keys:", themeKeys)
+    
+    if (themeKeys.length > 0) {
+      themeOptions.value = ['default', ...themeKeys]
+      console.log("Final theme options:", themeOptions.value)
+    }
+  } catch (error) {
+    console.error("Error loading themes:", error)
+  }
+}
+
+// 组件挂载时加载主题选项
+loadThemeOptions()
+
 // 打开的文件列表
 const openFiles = ref<FileNode[]>([])
 
 // 当前文件
 const currentFile = computed(() => {
-  return openFiles.value.find(file => file.id === props.currentFileId)
+  return openFiles.value.find((file) => file.id === props.currentFileId)
 })
 
 // 获取所有文件
 const getAllFiles = (files: FileNode[]): FileNode[] => {
   const result: FileNode[] = []
-  
+
   const traverse = (fileList: FileNode[]) => {
     for (const file of fileList) {
-      if (file.type === 'file') {
+      if (file.type === "file") {
         result.push(file)
       }
       if (file.children) {
@@ -117,57 +177,62 @@ const getAllFiles = (files: FileNode[]): FileNode[] => {
       }
     }
   }
-  
+
   traverse(files)
   return result
 }
 
 // 监听文件变化
-watch(() => props.files, (newFiles) => {
-  const allFiles = getAllFiles(newFiles)
-  
-  // 更新打开的文件列表
-  openFiles.value = openFiles.value.filter(openFile => 
-    allFiles.some(file => file.id === openFile.id)
-  )
-  
-  // 如果当前文件被删除，关闭它
-  if (props.currentFileId && !allFiles.some(file => file.id === props.currentFileId)) {
-    openFiles.value = openFiles.value.filter(file => file.id !== props.currentFileId)
-  }
-}, { deep: true })
+watch(
+  () => props.files,
+  (newFiles) => {
+    const allFiles = getAllFiles(newFiles)
+
+    // 更新打开的文件列表
+    openFiles.value = openFiles.value.filter((openFile) => allFiles.some((file) => file.id === openFile.id))
+
+    // 如果当前文件被删除，关闭它
+    if (props.currentFileId && !allFiles.some((file) => file.id === props.currentFileId)) {
+      openFiles.value = openFiles.value.filter((file) => file.id !== props.currentFileId)
+    }
+  },
+  { immediate: true }
+)
 
 // 监听当前文件ID变化
-watch(() => props.currentFileId, (newFileId) => {
-  if (newFileId) {
-    const allFiles = getAllFiles(props.files)
-    const file = allFiles.find(f => f.id === newFileId)
-    if (file && !openFiles.value.some(f => f.id === file.id)) {
-      openFiles.value.push(file)
+watch(
+  () => props.currentFileId,
+  (newFileId) => {
+    if (newFileId) {
+      const allFiles = getAllFiles(props.files)
+      const file = allFiles.find((f) => f.id === newFileId)
+      if (file && !openFiles.value.some((f) => f.id === file.id)) {
+        openFiles.value.push(file)
+      }
     }
   }
-})
+)
 
 // 切换到文件
 const switchToFile = (file: FileNode) => {
-  if (file.type === 'file') {
+  if (file.type === "file") {
     // 通知父组件切换文件
-    emit('file-select', file)
+    emit("file-select", file)
   }
 }
 
 // 关闭文件
 const closeFile = (file: FileNode) => {
-  const index = openFiles.value.findIndex(f => f.id === file.id)
+  const index = openFiles.value.findIndex((f) => f.id === file.id)
   if (index > -1) {
     openFiles.value.splice(index, 1)
-    
+
     // 如果关闭的是当前文件，切换到其他文件
     if (props.currentFileId === file.id) {
       if (openFiles.value.length > 0) {
         const nextFile = openFiles.value[0]
         // 这里应该通知父组件切换文件
-        console.log('切换到下一个文件:', nextFile)
+        console.log("切换到下一个文件:", nextFile)
       }
     }
   }
@@ -177,7 +242,7 @@ const closeFile = (file: FileNode) => {
 const handleCodeUpdate = (newCode: string) => {
   if (currentFile.value) {
     currentFile.value.content = newCode
-    emit('file-update', currentFile.value)
+    emit("file-update", currentFile.value)
   }
 }
 
@@ -185,7 +250,7 @@ const handleCodeUpdate = (newCode: string) => {
 const handleLanguageUpdate = (newLanguage: string) => {
   if (currentFile.value) {
     currentFile.value.language = newLanguage
-    emit('file-update', currentFile.value)
+    emit("file-update", currentFile.value)
   }
 }
 
@@ -193,22 +258,31 @@ const handleLanguageUpdate = (newLanguage: string) => {
 const formatCode = () => {
   if (codeMirrorRef.value) {
     codeMirrorRef.value.formatCode()
-    console.log('代码格式化完成')
+    console.log("代码格式化完成")
   }
 }
 
 // 清空代码
 const clearCode = () => {
   if (currentFile.value) {
-    currentFile.value.content = ''
-    emit('file-update', currentFile.value)
-    console.log('代码已清空')
+    currentFile.value.content = ""
+    emit("file-update", currentFile.value)
+    console.log("代码已清空")
+  }
+}
+
+// 处理主题切换
+const handleThemeChange = (theme: string) => {
+  currentTheme.value = theme
+  // 通知 CodeEditor 更新主题
+  if (codeMirrorRef.value) {
+    codeMirrorRef.value.handleThemeChange?.(theme)
   }
 }
 
 // 保存所有文件
 const saveAllFiles = () => {
-  console.log('所有文件已保存')
+  console.log("所有文件已保存")
 }
 
 // 暴露方法
@@ -254,22 +328,22 @@ defineExpose({
   transition: all 0.2s;
   min-width: 120px;
   max-width: 200px;
-  
+
   &:hover {
     background: #f1f5f9;
   }
-  
+
   &.active {
     background: #dbeafe;
     border-color: #3b82f6;
     color: #1d4ed8;
   }
-  
+
   .tab-icon {
     margin-right: 8px;
     font-size: 14px;
   }
-  
+
   .tab-name {
     flex: 1;
     font-size: 14px;
@@ -277,7 +351,7 @@ defineExpose({
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
+
   .tab-close {
     margin-left: 8px;
     padding: 2px 4px;
@@ -288,12 +362,12 @@ defineExpose({
     font-size: 12px;
     opacity: 0;
     transition: opacity 0.2s;
-    
+
     &:hover {
       background: #f3f4f6;
     }
   }
-  
+
   &:hover .tab-close {
     opacity: 1;
   }
@@ -323,18 +397,18 @@ defineExpose({
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  
+
   .file-info {
     display: flex;
     align-items: center;
     gap: 12px;
-    
+
     .file-name {
       font-weight: 600;
       color: #374151;
       font-size: 14px;
     }
-    
+
     .file-language {
       padding: 2px 8px;
       background: #e5e7eb;
@@ -343,10 +417,43 @@ defineExpose({
       color: #6b7280;
     }
   }
-  
+
   .editor-actions {
     display: flex;
     gap: 8px;
+    align-items: center;
+    
+    .theme-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      
+      .theme-label {
+        font-size: 12px;
+        color: #6b7280;
+        white-space: nowrap;
+      }
+      
+      .theme-select {
+        min-width: 100px;
+        
+        :deep(.el-input__wrapper) {
+          border-radius: 4px;
+          border: 1px solid #d1d5db;
+          box-shadow: none;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            border-color: #9ca3af;
+          }
+          
+          &.is-focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -375,7 +482,7 @@ defineExpose({
   :deep(.cm-editor) {
     height: 100% !important;
     border-radius: 0;
-    
+
     /* 自定义滚轮样式 */
     .cm-scroller {
       &::-webkit-scrollbar {
@@ -406,17 +513,17 @@ defineExpose({
   align-items: center;
   justify-content: center;
   background: #f8fafc;
-  
+
   .empty-content {
     text-align: center;
     color: #6b7280;
-    
+
     .empty-icon {
       font-size: 48px;
       margin-bottom: 16px;
       color: #d1d5db;
     }
-    
+
     p {
       margin: 0;
       font-size: 16px;
@@ -436,17 +543,17 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: 4px;
-  
+
   &:hover {
     background: #f9fafb;
     border-color: #9ca3af;
   }
-  
+
   &.btn-sm {
     padding: 4px 8px;
     font-size: 12px;
   }
-  
+
   .icon {
     font-size: 12px;
   }

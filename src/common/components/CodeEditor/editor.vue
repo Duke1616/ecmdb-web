@@ -4,7 +4,6 @@
       <codemirror
         v-model="code"
         :style="{
-          width: preview ? '50%' : '100%',
           backgroundColor: '#fff',
           color: '#333'
         }"
@@ -19,24 +18,13 @@
         @focus="log('focus', $event)"
         @blur="log('blur', $event)"
       />
-      <pre v-if="preview" class="code" :style="{ width: preview ? '50%' : '0px' }">{{
-        code
-      }}</pre>
-    </div>
-    <div class="divider" />
-    <div class="footer">
-      <div class="buttons" />
-      <div class="infos">
-        <!-- 移除了多余的统计信息显示 -->
-      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, shallowRef, computed, watch, onMounted } from "vue"
+import { reactive, shallowRef, computed, watch } from "vue"
 import { EditorView, ViewUpdate } from "@codemirror/view"
-import { redo, undo } from "@codemirror/commands"
 import { Codemirror } from "vue-codemirror"
 
 interface Props {
@@ -46,12 +34,9 @@ interface Props {
     autofocus: boolean
   }
   code: string
-  theme: [Object, Array<string>]
-  language: string | (() => any)
+  theme: any
+  language: any
   tabSize: number
-  editorPreview: boolean
-  editorUndo: boolean
-  editorRedo: boolean
 }
 
 const props = defineProps<Props>()
@@ -62,36 +47,46 @@ const emit = defineEmits<{
 const log = console.log
 const code = shallowRef(props.code)
 
+
 const extensions = computed(() => {
   const result = []
-  if (props.language && typeof props.language === 'function') {
-    result.push(props.language())
+
+  console.log("Editor extensions computed, language:", props.language)
+
+  // 添加语言支持
+  if (props.language && props.language.language) {
+    console.log("Adding language:", props.language.language)
+    try {
+      // 检查是否是函数，如果是则调用它
+      if (typeof props.language.language === 'function') {
+        const langExt = props.language.language()
+        if (langExt) {
+          result.push(langExt)
+        }
+      } else if (props.language.language && typeof props.language.language === 'object') {
+        result.push(props.language.language)
+      }
+    } catch (error) {
+      console.error("Error adding language extension:", error)
+    }
   }
+
+  // 添加主题
   if (props.theme) {
-    result.push(props.theme)
+    try {
+      result.push(props.theme)
+    } catch (error) {
+      console.error("Error adding theme:", error)
+    }
   }
+
+  console.log("Final extensions:", result)
   return result
 })
-
-const preview = shallowRef(false)
 
 const cmView = shallowRef<EditorView>()
 const handleReady = ({ view }: any) => {
   cmView.value = view
-}
-
-const handleUndo = () => {
-  undo({
-    state: cmView.value!.state,
-    dispatch: cmView.value!.dispatch
-  })
-}
-
-const handleRedo = () => {
-  redo({
-    state: cmView.value!.state,
-    dispatch: cmView.value!.dispatch
-  })
 }
 
 const state = reactive({
@@ -106,11 +101,11 @@ const handleStateUpdate = (viewUpdate: ViewUpdate) => {
   const ranges = viewUpdate.state.selection.ranges
   state.selected = ranges.reduce((plus, range) => plus + range.to - range.from, 0)
   state.cursor = ranges[0].anchor
-  
+
   // length
   state.length = viewUpdate.state.doc.length
   state.lines = viewUpdate.state.doc.lines
-  
+
   // 更新代码并触发事件
   const newCode = viewUpdate.state.doc.toString()
   code.value = newCode
@@ -142,31 +137,6 @@ const formatCode = () => {
 
 defineExpose({ getCode, setCode, formatCode })
 
-watch(
-  () => props.editorPreview,
-  (value: boolean) => {
-    preview.value = value
-  },
-  { immediate: true }
-)
-
-watch(
-  () => props.editorUndo,
-  (val: boolean) => {
-    if (val) {
-      handleUndo()
-    }
-  }
-)
-
-watch(
-  () => props.editorRedo,
-  (val: boolean) => {
-    if (val) {
-      handleRedo()
-    }
-  }
-)
 
 // 监听代码变化 - 只在外部代码变化时更新编辑器
 watch(
@@ -185,7 +155,6 @@ watch(
   },
   { immediate: true }
 )
-
 </script>
 
 <style lang="scss" scoped>
@@ -196,44 +165,17 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-
-  .divider {
-    height: 1px;
-    background-color: $border-color;
-  }
+  width: 100%;
 
   .main {
     display: flex;
     width: 100%;
     flex: 1;
     min-height: 0;
-
-    .code {
-      width: 30%;
-      height: 100px;
-      margin: 0;
-      padding: 0.4em;
-      overflow: scroll;
-      border-left: 1px solid $border-color;
-      font-family: monospace;
-    }
-  }
-
-
-  .footer {
-    height: 3rem;
-    padding: 0 1em;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 90%;
-
-    .infos {
-      .item {
-        margin-left: 2em;
-        display: inline-block;
-        font-feature-settings: "tnum";
-      }
+    
+    :deep(.cm-editor) {
+      width: 100%;
+      height: 100%;
     }
   }
 }

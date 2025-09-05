@@ -3,7 +3,7 @@
     <div class="demo-header">
       <h2>文件管理系统演示</h2>
       <p>这是一个完整的文件目录管理代码编辑器演示页面</p>
-      
+
       <div class="demo-actions">
         <el-button type="primary" @click="loadSampleProject" :teleported="false">
           <el-icon><FolderOpened /></el-icon>
@@ -28,22 +28,22 @@
         @update:files="handleFilesUpdate"
         @file-change="handleFileChange"
         @project-save="handleProjectSave"
+        @import-project="handleImportProject"
       />
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { FolderOpened, Delete, Download } from '@element-plus/icons-vue'
-import FileManager from '@@/components/FileManager/index.vue'
-import { ElMessage } from 'element-plus'
+import { ref, onMounted } from "vue"
+import { FolderOpened, Delete, Download } from "@element-plus/icons-vue"
+import FileManager from "@@/components/FileManager/index.vue"
+import { ElMessage } from "element-plus"
 
 interface FileNode {
   id: string
   name: string
-  type: 'file' | 'folder'
+  type: "file" | "folder"
   content?: string
   language?: string
   children?: FileNode[]
@@ -51,21 +51,21 @@ interface FileNode {
 }
 
 const fileManagerRef = ref()
-const projectName = ref('演示项目')
+const projectName = ref("演示项目")
 const projectFiles = ref<FileNode[]>([])
 
 // 初始化示例项目
 const initializeSampleProject = () => {
   projectFiles.value = [
     {
-      id: 'root',
-      name: '演示项目',
-      type: 'folder',
+      id: "root",
+      name: "演示项目",
+      type: "folder",
       children: [
         {
-          id: 'main',
-          name: 'main.py',
-          type: 'file',
+          id: "main",
+          name: "main.py",
+          type: "file",
           content: `#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -81,31 +81,31 @@ from config.settings import Settings
 def main():
     """主函数"""
     print("欢迎使用文件管理系统演示！")
-    
+
     # 初始化设置
     settings = Settings()
     helper = Helper()
-    
+
     # 执行主要逻辑
     result = helper.process_data()
     print(f"处理结果: {result}")
-    
+
     return 0
 
 if __name__ == "__main__":
     sys.exit(main())`,
-          language: 'python',
-          parentId: 'root'
+          language: "python",
+          parentId: "root"
         },
         {
-          id: 'utils',
-          name: 'utils',
-          type: 'folder',
+          id: "utils",
+          name: "utils",
+          type: "folder",
           children: [
             {
-              id: 'helper',
-              name: 'helper.py',
-              type: 'file',
+              id: "helper",
+              name: "helper.py",
+              type: "file",
               content: `# -*- coding: utf-8 -*-
 """
 辅助函数模块
@@ -114,24 +114,24 @@ if __name__ == "__main__":
 
 class Helper:
     """辅助类"""
-    
+
     def __init__(self):
         self.data = []
-    
+
     def process_data(self):
         """处理数据"""
         return "数据处理完成"
-    
+
     def format_output(self, data):
         """格式化输出"""
         return f"输出: {data}"`,
-              language: 'python',
-              parentId: 'utils'
+              language: "python",
+              parentId: "utils"
             },
             {
-              id: 'validator',
-              name: 'validator.py',
-              type: 'file',
+              id: "validator",
+              name: "validator.py",
+              type: "file",
               content: `# -*- coding: utf-8 -*-
 """
 数据验证模块
@@ -148,21 +148,21 @@ def validate_phone(phone):
     import re
     pattern = r'^1[3-9]\d{9}$'
     return re.match(pattern, phone) is not None`,
-              language: 'python',
-              parentId: 'utils'
+              language: "python",
+              parentId: "utils"
             }
           ],
-          parentId: 'root'
+          parentId: "root"
         },
         {
-          id: 'config',
-          name: 'config',
-          type: 'folder',
+          id: "config",
+          name: "config",
+          type: "folder",
           children: [
             {
-              id: 'settings',
-              name: 'settings.py',
-              type: 'file',
+              id: "settings",
+              name: "settings.py",
+              type: "file",
               content: `# -*- coding: utf-8 -*-
 """
 配置文件
@@ -170,12 +170,12 @@ def validate_phone(phone):
 
 class Settings:
     """设置类"""
-    
+
     def __init__(self):
         self.debug = True
         self.version = "1.0.0"
         self.database_url = "sqlite:///demo.db"
-    
+
     def get_config(self):
         """获取配置"""
         return {
@@ -183,13 +183,13 @@ class Settings:
             "version": self.version,
             "database_url": self.database_url
         }`,
-              language: 'python',
-              parentId: 'config'
+              language: "python",
+              parentId: "config"
             },
             {
-              id: 'database',
-              name: 'database.json',
-              type: 'file',
+              id: "database",
+              name: "database.json",
+              type: "file",
               content: `{
   "database": {
     "host": "localhost",
@@ -207,21 +207,21 @@ class Settings:
     "file": "logs/app.log"
   }
 }`,
-              language: 'json',
-              parentId: 'config'
+              language: "json",
+              parentId: "config"
             }
           ],
-          parentId: 'root'
+          parentId: "root"
         },
         {
-          id: 'tests',
-          name: 'tests',
-          type: 'folder',
+          id: "tests",
+          name: "tests",
+          type: "folder",
           children: [
             {
-              id: 'test_main',
-              name: 'test_main.py',
-              type: 'file',
+              id: "test_main",
+              name: "test_main.py",
+              type: "file",
               content: `#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -240,14 +240,14 @@ from main import main
 
 class TestMain(unittest.TestCase):
     """主程序测试类"""
-    
+
     def test_main_function(self):
         """测试主函数"""
         with patch('builtins.print') as mock_print:
             result = main()
             self.assertEqual(result, 0)
             mock_print.assert_called()
-    
+
     def test_imports(self):
         """测试导入"""
         try:
@@ -259,16 +259,16 @@ class TestMain(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()`,
-              language: 'python',
-              parentId: 'tests'
+              language: "python",
+              parentId: "tests"
             }
           ],
-          parentId: 'root'
+          parentId: "root"
         },
         {
-          id: 'readme',
-          name: 'README.md',
-          type: 'file',
+          id: "readme",
+          name: "README.md",
+          type: "file",
           content: `# 文件管理系统演示项目
 
 这是一个演示文件管理系统功能的示例项目。
@@ -311,8 +311,8 @@ if __name__ == '__main__':
 - Element Plus
 - CodeMirror
 - SCSS`,
-          language: 'markdown',
-          parentId: 'root'
+          language: "markdown",
+          parentId: "root"
         }
       ]
     }
@@ -322,13 +322,13 @@ if __name__ == '__main__':
 // 加载示例项目
 const loadSampleProject = () => {
   initializeSampleProject()
-  ElMessage.success('示例项目加载成功！')
+  ElMessage.success("示例项目加载成功！")
 }
 
 // 清空项目
 const clearProject = () => {
   projectFiles.value = []
-  ElMessage.success('项目已清空')
+  ElMessage.success("项目已清空")
 }
 
 // 导出项目
@@ -345,12 +345,51 @@ const handleFilesUpdate = (files: FileNode[]) => {
 
 // 处理文件变化
 const handleFileChange = (file: FileNode) => {
-  console.log('文件变化:', file)
+  console.log("文件变化:", file)
 }
 
 // 处理项目保存
 const handleProjectSave = (files: FileNode[]) => {
-  ElMessage.success('项目已保存')
+  ElMessage.success("项目已保存")
+}
+
+// 处理导入项目
+const handleImportProject = () => {
+  // 创建文件输入元素
+  const input = document.createElement("input")
+  input.type = "file"
+  input.accept = ".json"
+  input.style.display = "none"
+
+  input.onchange = (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string
+          const importedData = JSON.parse(content)
+
+          // 验证导入的数据格式
+          if (Array.isArray(importedData)) {
+            projectFiles.value = importedData
+            ElMessage.success("项目导入成功")
+          } else {
+            ElMessage.error("无效的项目文件格式")
+          }
+        } catch (error) {
+          console.error("导入失败:", error)
+          ElMessage.error("项目文件解析失败")
+        }
+      }
+      reader.readAsText(file)
+    }
+  }
+
+  // 触发文件选择
+  document.body.appendChild(input)
+  input.click()
+  document.body.removeChild(input)
 }
 
 // 组件挂载时初始化
@@ -372,24 +411,24 @@ onMounted(() => {
   background: white;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  
+
   h2 {
     margin: 0 0 8px 0;
     font-size: 24px;
     font-weight: 600;
     color: #1f2937;
   }
-  
+
   p {
     margin: 0 0 16px 0;
     color: #6b7280;
     font-size: 14px;
   }
-  
+
   .demo-actions {
     display: flex;
     gap: 12px;
-    
+
     .el-button {
       font-size: 13px;
     }
@@ -402,5 +441,4 @@ onMounted(() => {
   min-height: 0;
   overflow: hidden;
 }
-
 </style>

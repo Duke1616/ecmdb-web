@@ -70,9 +70,7 @@ import { codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/c
 import { cloneDeep } from "lodash-es"
 import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookApi } from "@/api/codebook"
 import { ElMessage, ElMessageBox } from "element-plus"
-// 不再需要用户API导入，owner 直接存储为 username
 import InfoPage from "./modal/info.vue"
-import CodePage from "./modal/code.vue"
 import CodeWithFiles from "./modal/code-with-files.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
@@ -92,18 +90,12 @@ const codebookSteps = computed(() => [
     title: "代码编写",
     description: codeEditorMode.value === "simple" ? "编写脚本代码" : "管理多文件项目",
     icon: Edit,
-    component: codeEditorMode.value === "simple" ? CodePage : CodeWithFiles
+    component: CodeWithFiles
   }
 ])
 
 // 表单数据
-const formData = ref<createOrUpdateCodebookReq>({
-  name: "",
-  code: "",
-  language: "shell",
-  owner: "",
-  identifier: ""
-})
+const formData = ref<createOrUpdateCodebookReq>(createDefaultFormData())
 
 // 表单验证规则
 const formRules = computed(() => {
@@ -120,15 +112,41 @@ const formRules = computed(() => {
   return {}
 })
 
-const codebookRow = ref<codebook>({
-  id: 0,
-  name: "",
-  owner: "",
-  code: "",
-  language: "",
-  identifier: "",
-  secret: ""
-})
+const codebookRow = ref<codebook>(createDefaultCodebook())
+
+// 创建默认表单数据
+function createDefaultFormData(): createOrUpdateCodebookReq {
+  return {
+    name: "",
+    code: "",
+    language: "shell",
+    owner: "",
+    identifier: ""
+  }
+}
+
+// 创建默认 codebook 数据
+function createDefaultCodebook(): codebook {
+  return {
+    id: 0,
+    name: "",
+    owner: "",
+    code: "",
+    language: "",
+    identifier: "",
+    secret: ""
+  }
+}
+
+// 重置表单数据
+function resetFormData() {
+  formData.value = createDefaultFormData()
+}
+
+// 重置 codebook 数据
+function resetCodebookRow() {
+  codebookRow.value = createDefaultCodebook()
+}
 
 // 监听弹窗显示状态
 watch(
@@ -156,28 +174,14 @@ watch(
       })
     } else if (!val) {
       // 重置表单数据
-      formData.value = {
-        name: "",
-        code: "",
-        language: "shell",
-        owner: "",
-        identifier: ""
-      }
+      resetFormData()
     }
   },
   { immediate: true }
 )
 
 const handlerCreate = () => {
-  codebookRow.value = {
-    id: 0,
-    name: "",
-    owner: "",
-    code: "",
-    language: "shell",
-    identifier: "",
-    secret: ""
-  }
+  resetCodebookRow()
   addDialogDrawer.value = true
 }
 
@@ -196,58 +200,101 @@ const updateFormData = (data: createOrUpdateCodebookReq) => {
   formData.value = { ...formData.value, ...data }
 }
 
+// 准备提交数据
+function prepareSubmitData(): createOrUpdateCodebookReq {
+  return { ...formData.value }
+}
+
+// 判断是否为更新操作
+function isUpdateOperation(): boolean {
+  return !!formData.value.id
+}
+
+// 获取对应的 API 函数
+function getApiFunction() {
+  return isUpdateOperation() ? updateCodebookApi : createCodebookApi
+}
+
+// 处理保存成功
+function handleSaveSuccess() {
+  ElMessage.success("保存成功")
+  onClosed()
+}
+
+// 处理保存失败
+function handleSaveError(error: any) {
+  console.error("保存失败:", error)
+  ElMessage.error("保存失败，请重试")
+}
+
 const saveCodebook = async () => {
   try {
-    // 准备提交数据，owner 直接存储为 username
-    const submitData: createOrUpdateCodebookReq = {
-      ...formData.value
-    }
-
-    const api = formData.value.id ? updateCodebookApi : createCodebookApi
+    const submitData = prepareSubmitData()
+    const api = getApiFunction()
     await api(submitData)
-
-    ElMessage.success("保存成功")
-    onClosed()
+    handleSaveSuccess()
   } catch (error) {
-    console.error("保存失败:", error)
-    ElMessage.error("保存失败，请重试")
+    handleSaveError(error)
   }
 }
 
 /** 查询模版列表 */
 const codebooksData = ref<codebook[]>([])
-const listCodebooksData = () => {
-  listCodebookApi({
+
+// 构建查询参数
+function buildQueryParams() {
+  return {
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
-  })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      codebooksData.value = data.codebooks
-    })
-    .catch(() => {
-      codebooksData.value = []
-    })
+  }
+}
+
+// 处理查询成功
+function handleQuerySuccess(data: any) {
+  paginationData.total = data.total
+  codebooksData.value = data.codebooks
+}
+
+// 处理查询失败
+function handleQueryError() {
+  codebooksData.value = []
+}
+
+const listCodebooksData = () => {
+  listCodebookApi(buildQueryParams())
+    .then(({ data }) => handleQuerySuccess(data))
+    .catch(() => handleQueryError())
     .finally(() => {})
+}
+
+// 构建删除确认消息
+function buildDeleteMessage(row: codebook) {
+  return h("p", null, [
+    h("span", null, "正在删除名称: "),
+    h("i", { style: "color: red" }, `${row.name}`),
+    h("span", null, " 确认删除？")
+  ])
+}
+
+// 处理删除成功
+function handleDeleteSuccess() {
+  ElMessage.success("删除成功")
+  listCodebooksData()
+}
+
+// 执行删除操作
+function executeDelete(row: codebook) {
+  deleteCodebookApi(row.id).then(handleDeleteSuccess)
 }
 
 const handleDelete = (row: codebook) => {
   ElMessageBox({
     title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除名称: "),
-      h("i", { style: "color: red" }, `${row.name}`),
-      h("span", null, " 确认删除？")
-    ]),
+    message: buildDeleteMessage(row),
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
-  }).then(() => {
-    deleteCodebookApi(row.id).then(() => {
-      ElMessage.success("删除成功")
-      listCodebooksData()
-    })
-  })
+  }).then(() => executeDelete(row))
 }
 
 /** 监听分页参数的变化 */

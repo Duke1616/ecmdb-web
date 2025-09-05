@@ -8,26 +8,18 @@
       @click="handleClick"
       @contextmenu="handleContextMenu"
     >
-      <span 
-        v-if="file.type === 'folder'" 
-        class="folder-toggle"
-        @click.stop="toggleFolder"
-      >
+      <span v-if="file.type === 'folder'" class="folder-toggle" @click.stop="toggleFolder">
         <span class="arrow" :class="{ expanded: isExpanded }">▶</span>
         <span class="folder-icon">📁</span>
       </span>
       <span v-else class="file-icon">📄</span>
       <span class="file-name">{{ file.name }}</span>
       <div class="file-actions">
-        <button @click.stop="renameFile" class="btn-icon" title="重命名">
-          ✏️
-        </button>
-        <button @click.stop="deleteFile" class="btn-icon" title="删除">
-          🗑️
-        </button>
+        <button @click.stop="renameFile" class="btn-icon" title="重命名">✏️</button>
+        <button @click.stop="deleteFile" class="btn-icon" title="删除">🗑️</button>
       </div>
     </div>
-    
+
     <!-- 递归渲染子节点 -->
     <div v-if="file.type === 'folder' && isExpanded && file.children" class="children">
       <FileTreeNode
@@ -48,12 +40,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue"
 
 interface FileNode {
   id: string
   name: string
-  type: 'file' | 'folder'
+  type: "file" | "folder"
   content?: string
   language?: string
   children?: FileNode[]
@@ -70,11 +62,11 @@ interface Props {
 const props = defineProps<Props>()
 
 const emit = defineEmits<{
-  (e: 'select-file', file: FileNode): void
-  (e: 'toggle-folder', folderId: string): void
-  (e: 'rename-file', file: FileNode): void
-  (e: 'delete-file', file: FileNode): void
-  (e: 'context-menu', event: MouseEvent, file: FileNode): void
+  (e: "select-file", file: FileNode): void
+  (e: "toggle-folder", folderId: string): void
+  (e: "rename-file", file: FileNode): void
+  (e: "delete-file", file: FileNode): void
+  (e: "context-menu", event: MouseEvent, file: FileNode): void
 }>()
 
 // 计算属性
@@ -84,27 +76,27 @@ const isExpanded = computed(() => {
 
 // 事件处理
 const handleClick = () => {
-  if (props.file.type === 'file') {
-    emit('select-file', props.file)
+  if (props.file.type === "file") {
+    emit("select-file", props.file)
   } else {
-    emit('toggle-folder', props.file.id)
+    emit("toggle-folder", props.file.id)
   }
 }
 
 const toggleFolder = () => {
-  emit('toggle-folder', props.file.id)
+  emit("toggle-folder", props.file.id)
 }
 
 const renameFile = () => {
-  emit('rename-file', props.file)
+  emit("rename-file", props.file)
 }
 
 const deleteFile = () => {
-  emit('delete-file', props.file)
+  emit("delete-file", props.file)
 }
 
 const handleContextMenu = (event: MouseEvent) => {
-  emit('context-menu', event, props.file)
+  emit("context-menu", event, props.file)
 }
 </script>
 
@@ -118,57 +110,57 @@ const handleContextMenu = (event: MouseEvent) => {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       background: #f1f5f9;
     }
-    
+
     &.active {
       background: #dbeafe;
       color: #1d4ed8;
     }
-    
+
     .folder-toggle {
       display: flex;
       align-items: center;
       margin-right: 8px;
       cursor: pointer;
       user-select: none;
-      
+
       .arrow {
         font-size: 12px;
         color: #6b7280;
         margin-right: 4px;
         transition: transform 0.2s ease;
         display: inline-block;
-        
+
         &.expanded {
           transform: rotate(90deg);
         }
       }
-      
+
       .folder-icon {
         font-size: 16px;
       }
     }
-    
+
     .file-icon {
       margin-right: 8px;
       font-size: 16px;
     }
-    
+
     .file-name {
       flex: 1;
       font-size: 14px;
       color: #374151;
     }
-    
+
     .file-actions {
       display: flex;
       gap: 4px;
       opacity: 0;
       transition: opacity 0.2s;
-      
+
       .btn-icon {
         background: none;
         border: none;
@@ -176,18 +168,18 @@ const handleContextMenu = (event: MouseEvent) => {
         border-radius: 4px;
         cursor: pointer;
         font-size: 12px;
-        
+
         &:hover {
           background: #e5e7eb;
         }
       }
     }
-    
+
     &:hover .file-actions {
       opacity: 1;
     }
   }
-  
+
   .children {
     margin-left: 16px;
   }

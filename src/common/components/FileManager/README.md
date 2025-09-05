@@ -37,21 +37,21 @@ FileManager/
 </template>
 
 <script setup>
-import FileManager from '@@/components/FileManager'
+import FileManager from "@@/components/FileManager"
 
 const files = ref([])
-const projectName = ref('My Project')
+const projectName = ref("My Project")
 
 const handleFilesUpdate = (newFiles) => {
   files.value = newFiles
 }
 
 const handleFileChange = (file) => {
-  console.log('当前文件:', file)
+  console.log("当前文件:", file)
 }
 
 const handleProjectSave = (files) => {
-  console.log('保存项目:', files)
+  console.log("保存项目:", files)
 }
 </script>
 ```

@@ -118,12 +118,12 @@ const handleCancel = () => {
 .form-actions {
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-top: 1px solid rgba(226, 232, 240, 0.8);
-  padding: 28px 32px;
+  padding: 16px 24px;
   box-shadow:
-    0 -4px 20px rgba(0, 0, 0, 0.08),
-    0 -1px 3px rgba(0, 0, 0, 0.05);
+    0 -2px 10px rgba(0, 0, 0, 0.05),
+    0 -1px 2px rgba(0, 0, 0, 0.03);
   flex-shrink: 0;
-  min-height: 80px;
+  min-height: 60px;
   position: relative;
 
   &::before {
@@ -166,16 +166,16 @@ const handleCancel = () => {
   }
 
   .action-button {
-    min-width: 140px;
-    height: 50px;
-    border-radius: 16px;
+    min-width: 120px;
+    height: 42px;
+    border-radius: 12px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    gap: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
     border: none;
@@ -185,7 +185,7 @@ const handleCancel = () => {
       z-index: 1;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .button-glow {
@@ -206,8 +206,8 @@ const handleCancel = () => {
     }
 
     .button-icon {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
       transition: transform 0.3s ease;
     }
 
@@ -229,10 +229,10 @@ const handleCancel = () => {
       background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       border-color: #667eea;
       color: #475569;
-      transform: translateY(-3px);
+      transform: translateY(-2px);
       box-shadow:
-        0 8px 25px rgba(102, 126, 234, 0.2),
-        0 4px 12px rgba(0, 0, 0, 0.1);
+        0 6px 20px rgba(102, 126, 234, 0.15),
+        0 3px 8px rgba(0, 0, 0, 0.08);
 
       .button-icon {
         transform: translateX(-2px);
@@ -252,10 +252,10 @@ const handleCancel = () => {
       0 2px 8px rgba(0, 0, 0, 0.1);
 
     &:hover {
-      transform: translateY(-3px);
+      transform: translateY(-2px);
       box-shadow:
-        0 12px 35px rgba(102, 126, 234, 0.4),
-        0 6px 20px rgba(0, 0, 0, 0.15);
+        0 8px 25px rgba(102, 126, 234, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.1);
 
       .button-icon {
         transform: translateX(2px);
@@ -275,10 +275,10 @@ const handleCancel = () => {
       0 2px 8px rgba(0, 0, 0, 0.1);
 
     &:hover {
-      transform: translateY(-3px);
+      transform: translateY(-2px);
       box-shadow:
-        0 12px 35px rgba(16, 185, 129, 0.4),
-        0 6px 20px rgba(0, 0, 0, 0.15);
+        0 8px 25px rgba(16, 185, 129, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.1);
 
       .button-icon {
         transform: scale(1.1);
@@ -302,10 +302,10 @@ const handleCancel = () => {
       background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
       border-color: #f87171;
       color: #b91c1c;
-      transform: translateY(-3px);
+      transform: translateY(-2px);
       box-shadow:
-        0 8px 25px rgba(220, 38, 38, 0.25),
-        0 4px 12px rgba(0, 0, 0, 0.1);
+        0 6px 20px rgba(220, 38, 38, 0.2),
+        0 3px 8px rgba(0, 0, 0, 0.08);
 
       .button-icon {
         transform: rotate(90deg);
@@ -321,11 +321,11 @@ const handleCancel = () => {
 /* 响应式设计 */
 @media (max-width: 768px) {
   .form-actions {
-    padding: 20px;
+    padding: 16px;
 
     .actions-container {
       flex-direction: column-reverse;
-      gap: 16px;
+      gap: 12px;
     }
 
     .action-button {
@@ -338,20 +338,20 @@ const handleCancel = () => {
 
 @media (max-width: 480px) {
   .form-actions {
-    padding: 16px;
+    padding: 12px;
 
     .actions-container {
-      gap: 12px;
+      gap: 10px;
     }
 
     .action-button {
       min-width: auto;
-      height: 42px;
-      font-size: 13px;
+      height: 38px;
+      font-size: 12px;
 
       .button-icon {
-        width: 16px;
-        height: 16px;
+        width: 14px;
+        height: 14px;
       }
     }
   }

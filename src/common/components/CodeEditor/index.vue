@@ -1,52 +1,31 @@
 <template>
   <div class="code-mirror">
-    <div class="editor-header">
-      <div class="toolbar">
-        <toolbar
-          :config="config"
-          :disabled="loading"
-          :themes="Object.keys(themes)"
-          :languages="Object.keys(languages)"
-          :tabSize="props.language === 'shell' ? 2 : 4"
-          :language="props.language"
-          :is-create="props.isCreate"
-          @language="ensureLanguageCode"
-        />
-      </div>
-      <div class="preview">
-        <PreView @preview="handlePreview" @redo="handleRedo" @undo="handleUndo" />
-      </div>
-    </div>
     <editor
       ref="editorRef"
       :config="config"
       :theme="currentTheme"
-      :language="props.language"
+      :language="getLanguageFunction()"
       :code="props.code"
       :tabSize="props.language === 'shell' ? 2 : 4"
-      :editorPreview="editorPreview"
-      :editorUndo="editorUndo"
-      :editorRedo="editorRedo"
       @update:code="handleCodeUpdate"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, shallowRef, onBeforeMount, ref, watch } from "vue"
+import { reactive, computed, shallowRef, ref } from "vue"
 import { ElMessage } from "element-plus"
-import Toolbar from "./toolbar.vue"
-import PreView from "./preview.vue"
 import Editor from "./editor.vue"
 import * as themes from "./themes"
-import languages from "./languages"
 import { useTheme, Theme } from "@@/composables/theme"
+import { python } from "@codemirror/lang-python"
 
 // 接收父组建传递
 interface Props {
   code: string
   language: string
   isCreate?: boolean
+  projectFiles?: any[] // 项目文件信息，用于智能提示
 }
 
 const props = defineProps<Props>()
@@ -56,65 +35,25 @@ const emit = defineEmits<{
   "update:language": [language: string]
 }>()
 
-const editorPreview = ref<boolean>(false)
-const editorUndo = ref<boolean>(false)
-const editorRedo = ref<boolean>(false)
-const handlePreview = (value: boolean) => {
-  editorPreview.value = value
-}
-
-const handleRedo = () => {
-  editorRedo.value = !editorRedo.value
-}
-
-const handleUndo = () => {
-  editorUndo.value = !editorUndo.value
-}
 
 const config = reactive({
   disabled: false,
   indentWithTab: true,
   tabSize: 2,
   autofocus: true,
-  language: "shell",
   theme: useTheme().theme.value === Theme.Dark ? "oneDark" : "default"
 })
 
 const loading = shallowRef(false)
-const langCodeMap = reactive(new Map<string, { code: string; language: () => any; tabSize: number }>())
 const currentTheme = computed(() => {
-  return config.theme !== "default" ? (themes as any)[config.theme] : void 0
+  console.log("Current theme:", config.theme)
+  console.log("Available themes:", themes)
+  if (config.theme !== "default" && themes[config.theme as keyof typeof themes]) {
+    return themes[config.theme as keyof typeof themes]
+  }
+  return undefined
 })
 
-
-const ensureLanguageCode = async (targetLanguage: string) => {
-  config.language = targetLanguage
-  loading.value = true
-
-  try {
-    const module = await languages[targetLanguage]()
-    const result = module.default
-    
-    langCodeMap.set(targetLanguage, {
-      ...result,
-      language: result?.language || (() => []),
-      code: props.isCreate ? (result?.code || "") : props.code
-    })
-    
-    // 通知父组件更新语言
-    emit("update:language", targetLanguage)
-    
-    // 如果是创建模式且当前代码为空，才更新代码
-    if (props.isCreate && (!props.code || props.code.trim() === "")) {
-      emit("update:code", result?.code || "")
-    }
-  } catch (error) {
-    console.error("Failed to load language:", error)
-    ElMessage.error(`加载语言 ${targetLanguage} 失败`)
-  } finally {
-    loading.value = false
-  }
-}
 
 const editorRef = ref<InstanceType<typeof Editor>>()
 
@@ -135,29 +74,37 @@ const formatCode = () => {
   editorRef.value?.formatCode()
 }
 
-const getLanguage = () => {
-  return config.language
+
+const getLanguageFunction = () => {
+  // 直接返回默认的 Python 配置，使用同步导入
+  return {
+    language: python,
+    tabSize: 4,
+    code: props.code
+  }
 }
 
-defineExpose({ getCode, setCode, formatCode, getLanguage })
+// 处理主题切换
+const handleThemeChange = (theme: string) => {
+  console.log("Theme changing from", config.theme, "to", theme)
+  config.theme = theme
+}
 
-// 初始化加载
-onBeforeMount(async () => {
-  loading.value = true
-  try {
-    await ensureLanguageCode(props.language)
-  } catch (error) {
-    console.error("Failed to initialize language:", error)
-  } finally {
-    loading.value = false
-  }
-})
+// 外部调用主题切换
+const handleExternalThemeChange = (theme: string) => {
+  handleThemeChange(theme)
+}
+
+defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalThemeChange })
+
 </script>
 
 <style lang="scss" scoped>
-.editor-header {
+.code-mirror {
+  height: 100%;
+  width: 100%;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  min-height: 0;
 }
 </style>

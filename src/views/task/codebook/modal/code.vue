@@ -5,8 +5,8 @@
       <div class="editor-wrapper">
         <div class="editor-header">
           <div class="editor-info">
-            <span class="language-badge">{{ formData.language || 'python' }}</span>
-            <span class="file-name">{{ formData.name || 'untitled' }}</span>
+            <span class="language-badge">{{ formData.language || "python" }}</span>
+            <span class="file-name">{{ formData.name || "untitled" }}</span>
           </div>
           <div class="editor-actions">
             <el-button size="small" @click="formatCode" class="format-btn">
@@ -19,7 +19,7 @@
             </el-button>
           </div>
         </div>
-        
+
         <div class="code-editor">
           <CodeMirror
             ref="codeMirrorRef"
@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from "vue"
+import { ref, watch } from "vue"
 import { Edit, Delete } from "@element-plus/icons-vue"
 import CodeMirror from "@@/components/CodeEditor/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
@@ -72,18 +72,13 @@ interface Emits {
 const props = defineProps<Props>()
 const emits = defineEmits<Emits>()
 
-const { localFormData, updateFormData, previous, save, close, setFormData } = useFormHandler(props.formData, emits, "codebook")
+const { localFormData, updateFormData, previous, save, close, setFormData } = useFormHandler(
+  props.formData,
+  emits,
+  "codebook"
+)
 
 const codeMirrorRef = ref()
-
-// 表单数据
-const formData = computed({
-  get: () => localFormData.value,
-  set: (value) => {
-    localFormData.value = value
-    updateFormData()
-  }
-})
 
 // 代码更新处理
 const handleCodeUpdate = (code: string) => {
@@ -144,7 +139,9 @@ watch(
   .editor-wrapper {
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
     overflow: hidden;
     max-width: 100%;
     margin: 0;
@@ -242,7 +239,7 @@ watch(
       :deep(.cm-editor) {
         height: 100% !important;
         border-radius: 0;
-        
+
         /* 自定义滚轮样式 */
         .cm-scroller {
           &::-webkit-scrollbar {
@@ -268,5 +265,4 @@ watch(
     }
   }
 }
-
 </style>

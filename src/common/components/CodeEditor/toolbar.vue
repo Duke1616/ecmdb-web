@@ -2,49 +2,20 @@
 <template>
   <div class="toolbar">
     <div class="toolbar-content">
-      <!-- 语言选择 -->
-      <div class="toolbar-item" v-if="isCreate">
-        <label class="toolbar-label">语言</label>
-        <el-select
-          name="language"
-          id="language"
-          v-model="localConfig.language"
-          :disabled="disabled"
-          placeholder="选择语言"
-          size="small"
-          @change="handleSelectLanguage"
-          class="toolbar-select"
-          :teleported="false"
-        >
-          <el-option v-for="option in languages" :key="option" :label="option" :value="option" />
-        </el-select>
-      </div>
-      
-      <!-- 语言显示（编辑模式） -->
-      <div class="toolbar-item" v-if="!isCreate">
-        <label class="toolbar-label">语言</label>
-        <div class="language-display">{{ props.language }}</div>
-      </div>
-      
       <!-- 主题选择 -->
       <div class="toolbar-item">
         <label class="toolbar-label">主题</label>
-        <el-select 
-          v-model="localConfig.theme" 
-          :disabled="disabled" 
-          placeholder="选择主题" 
+        <el-select
+          v-model="localConfig.theme"
+          :disabled="disabled"
+          placeholder="选择主题"
           size="small"
           class="toolbar-select"
           :teleported="false"
+          @change="handleThemeChange"
         >
           <el-option v-for="option in ['default', ...themes]" :key="option" :label="option" :value="option" />
         </el-select>
-      </div>
-      
-      <!-- 编辑开关 -->
-      <div class="toolbar-item">
-        <label class="toolbar-label">禁止编辑</label>
-        <el-switch v-model="localConfig.disabled" size="small" />
       </div>
     </div>
   </div>
@@ -54,7 +25,6 @@
 import { PropType, ref, watch } from "vue"
 
 interface Config {
-  language: string
   theme: string
   disabled: boolean // 禁用输入
   autofocus: boolean // 自动聚焦
@@ -72,22 +42,9 @@ const props = defineProps({
     type: Object as PropType<Config>,
     required: true
   },
-  languages: {
-    type: Array as PropType<Array<string>>,
-    required: true
-  },
   themes: {
     type: Array as PropType<Array<string>>,
     required: true
-  },
-
-  language: {
-    type: String as PropType<string>,
-    required: true
-  },
-  isCreate: {
-    type: Boolean as PropType<boolean>,
-    default: false
   }
 })
 
@@ -102,13 +59,12 @@ watch(
 )
 
 // 定义 Emits
-const emit = defineEmits(["language"])
+const emit = defineEmits(["theme"])
 
-// 处理语言选择事件
-const handleSelectLanguage = () => {
-  emit("language", localConfig.value.language)
+// 处理主题切换事件
+const handleThemeChange = () => {
+  emit("theme", localConfig.value.theme)
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -144,17 +100,17 @@ const handleSelectLanguage = () => {
 
 .toolbar-select {
   min-width: 120px;
-  
+
   :deep(.el-input__wrapper) {
     border-radius: 6px;
     border: 1px solid #d1d5db;
     box-shadow: none;
     transition: all 0.2s ease;
-    
+
     &:hover {
       border-color: #9ca3af;
     }
-    
+
     &.is-focus {
       border-color: #3b82f6;
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
@@ -162,32 +118,17 @@ const handleSelectLanguage = () => {
   }
 }
 
-.language-display {
-  padding: 4px 8px;
-  background: #e5e7eb;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #374151;
-  font-weight: 500;
-  min-width: 60px;
-  text-align: center;
-}
-
-:deep(.el-switch) {
-  --el-switch-on-color: #3b82f6;
-  --el-switch-off-color: #d1d5db;
-}
 
 // 响应式设计
 @media (max-width: 768px) {
   .toolbar-content {
     gap: 12px;
   }
-  
+
   .toolbar-item {
     gap: 6px;
   }
-  
+
   .toolbar-select {
     min-width: 100px;
   }

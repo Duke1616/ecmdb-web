@@ -14,9 +14,13 @@
           <span class="icon">📁</span>
           新建文件夹
         </button>
+        <button @click="() => importProject()" class="btn btn-success btn-sm">
+          <span class="icon">📥</span>
+          导入项目
+        </button>
       </div>
     </div>
-    
+
     <div class="file-tree-container">
       <div class="file-tree">
         <FileTreeNode
@@ -36,39 +40,30 @@
     </div>
 
     <!-- 右键菜单 -->
-    <div
-      v-if="contextMenuVisible"
-      class="context-menu"
-      :style="contextMenuStyle"
-      @click.stop
-    >
-      <div 
-        v-if="contextMenuData?.type === 'folder'"
-        class="context-menu-item" 
-        @click="handleContextCommand('newFile')"
-      >
+    <div v-if="contextMenuVisible" class="context-menu" :style="contextMenuStyle" @click.stop>
+      <div v-if="contextMenuData?.type === 'folder'" class="context-menu-item" @click="handleContextCommand('newFile')">
         <span class="icon">📄</span>
         新建文件
       </div>
-      <div 
+      <div
         v-if="contextMenuData?.type === 'folder'"
-        class="context-menu-item" 
+        class="context-menu-item"
         @click="handleContextCommand('newFolder')"
       >
         <span class="icon">📁</span>
         新建文件夹
       </div>
-      <div 
+      <div
         v-if="contextMenuData?.type === 'file' || contextMenuData?.type === 'folder'"
-        class="context-menu-item" 
+        class="context-menu-item"
         @click="handleContextCommand('rename')"
       >
         <span class="icon">✏️</span>
         重命名
       </div>
-      <div 
+      <div
         v-if="contextMenuData?.type === 'file' || contextMenuData?.type === 'folder'"
-        class="context-menu-item" 
+        class="context-menu-item"
         @click="handleContextCommand('delete')"
       >
         <span class="icon">🗑️</span>
@@ -77,22 +72,18 @@
     </div>
 
     <!-- 遮罩层，用于关闭右键菜单 -->
-    <div
-      v-if="contextMenuVisible"
-      class="context-menu-overlay"
-      @click="closeContextMenu"
-    ></div>
+    <div v-if="contextMenuVisible" class="context-menu-overlay" @click="closeContextMenu" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import FileTreeNode from './FileTreeNode.vue'
+import { ref } from "vue"
+import FileTreeNode from "./FileTreeNode.vue"
 
 interface FileNode {
   id: string
   name: string
-  type: 'file' | 'folder'
+  type: "file" | "folder"
   content?: string
   language?: string
   children?: FileNode[]
@@ -105,11 +96,12 @@ interface Props {
 }
 
 interface Emits {
-  (e: 'update:files', files: FileNode[]): void
-  (e: 'file-select', file: FileNode): void
-  (e: 'file-create', file: FileNode): void
-  (e: 'file-rename', file: FileNode): void
-  (e: 'file-delete', file: FileNode): void
+  (e: "update:files", files: FileNode[]): void
+  (e: "file-select", file: FileNode): void
+  (e: "file-create", file: FileNode): void
+  (e: "file-rename", file: FileNode): void
+  (e: "file-delete", file: FileNode): void
+  (e: "import-project"): void
 }
 
 const props = defineProps<Props>()
@@ -120,13 +112,13 @@ const contextMenuData = ref<FileNode | null>(null)
 const contextMenuStyle = ref({})
 
 // 展开的文件夹状态
-const expandedFolders = ref<Set<string>>(new Set(['root']))
+const expandedFolders = ref<Set<string>>(new Set(["root"]))
 
 // 选择文件
 const selectFile = (file: FileNode) => {
-  if (file.type === 'file') {
-    emit('file-select', file)
-  } else if (file.type === 'folder') {
+  if (file.type === "file") {
+    emit("file-select", file)
+  } else if (file.type === "folder") {
     // 点击文件夹名称也可以展开/折叠
     toggleFolder(file.id)
   }
@@ -146,11 +138,11 @@ const handleContextMenu = (event: MouseEvent, data: FileNode) => {
   event.preventDefault()
   contextMenuData.value = data
   contextMenuVisible.value = true
-  
+
   contextMenuStyle.value = {
-    position: 'fixed',
-    left: event.clientX + 'px',
-    top: event.clientY + 'px',
+    position: "fixed",
+    left: event.clientX + "px",
+    top: event.clientY + "px",
     zIndex: 9999
   }
 }
@@ -161,44 +153,49 @@ const closeContextMenu = () => {
   contextMenuData.value = null
 }
 
+// 导入项目
+const importProject = () => {
+  emit("import-project")
+}
+
 // 右键菜单命令
 const handleContextCommand = (command: string) => {
   if (!contextMenuData.value) return
-  
+
   switch (command) {
-    case 'newFile':
+    case "newFile":
       addFile(contextMenuData.value.id)
       break
-    case 'newFolder':
+    case "newFolder":
       addFolder(contextMenuData.value.id)
       break
-    case 'rename':
+    case "rename":
       renameFile(contextMenuData.value)
       break
-    case 'delete':
+    case "delete":
       deleteFile(contextMenuData.value)
       break
   }
-  
+
   closeContextMenu()
 }
 
 // 添加文件
 const addFile = (parentId?: string) => {
-  const fileName = prompt('请输入文件名:', 'new_file.py')
+  const fileName = prompt("请输入文件名:", "new_file.py")
   if (fileName) {
     const newFile: FileNode = {
       id: `file_${Date.now()}`,
       name: fileName,
-      type: 'file',
-      content: '',
+      type: "file",
+      content: "",
       language: getLanguageFromFileName(fileName),
-      parentId: parentId || 'root'
+      parentId: parentId || "root"
     }
-    
+
     // 创建新的文件列表副本
     const newFiles = JSON.parse(JSON.stringify(props.files))
-    
+0
     if (parentId) {
       // 添加到指定父节点
       const addToParent = (files: FileNode[], targetId: string): boolean => {
@@ -219,27 +216,27 @@ const addFile = (parentId?: string) => {
       // 添加到根节点
       newFiles.push(newFile)
     }
-    
-    emit('update:files', newFiles)
-    emit('file-create', newFile)
+
+    emit("update:files", newFiles)
+    emit("file-create", newFile)
   }
 }
 
 // 添加文件夹
 const addFolder = (parentId?: string) => {
-  const folderName = prompt('请输入文件夹名:', 'new_folder')
+  const folderName = prompt("请输入文件夹名:", "new_folder")
   if (folderName) {
     const newFolder: FileNode = {
       id: `folder_${Date.now()}`,
       name: folderName,
-      type: 'folder',
+      type: "folder",
       children: [],
-      parentId: parentId || 'root'
+      parentId: parentId || "root"
     }
-    
+
     // 创建新的文件列表副本
     const newFiles = JSON.parse(JSON.stringify(props.files))
-    
+
     if (parentId) {
       // 添加到指定父节点
       const addToParent = (files: FileNode[], targetId: string): boolean => {
@@ -260,25 +257,25 @@ const addFolder = (parentId?: string) => {
       // 添加到根节点
       newFiles.push(newFolder)
     }
-    
-    emit('update:files', newFiles)
-    emit('file-create', newFolder)
+
+    emit("update:files", newFiles)
+    emit("file-create", newFolder)
   }
 }
 
 // 重命名文件
 const renameFile = (file: FileNode) => {
-  const newName = prompt('请输入新文件名:', file.name)
+  const newName = prompt("请输入新文件名:", file.name)
   if (newName && newName !== file.name) {
     // 创建新的文件列表副本
     const newFiles = JSON.parse(JSON.stringify(props.files))
-    
+
     // 在副本中查找并更新文件
     const updateFileInTree = (files: FileNode[], targetId: string): boolean => {
       for (const f of files) {
         if (f.id === targetId) {
           f.name = newName
-          if (f.type === 'file') {
+          if (f.type === "file") {
             f.language = getLanguageFromFileName(newName)
           }
           return true
@@ -289,10 +286,10 @@ const renameFile = (file: FileNode) => {
       }
       return false
     }
-    
+
     updateFileInTree(newFiles, file.id)
-    emit('update:files', newFiles)
-    emit('file-rename', { ...file, name: newName })
+    emit("update:files", newFiles)
+    emit("file-rename", { ...file, name: newName })
   }
 }
 
@@ -301,7 +298,7 @@ const deleteFile = (file: FileNode) => {
   if (confirm(`确定要删除文件 "${file.name}" 吗？`)) {
     // 创建新的文件列表副本
     const newFiles = JSON.parse(JSON.stringify(props.files))
-    
+
     const removeFromTree = (files: FileNode[], targetId: string): boolean => {
       for (let i = 0; i < files.length; i++) {
         if (files[i].id === targetId) {
@@ -314,32 +311,32 @@ const deleteFile = (file: FileNode) => {
       }
       return false
     }
-    
+
     removeFromTree(newFiles, file.id)
-    emit('update:files', newFiles)
-    emit('file-delete', file)
+    emit("update:files", newFiles)
+    emit("file-delete", file)
   }
 }
 
 // 根据文件名获取语言
 const getLanguageFromFileName = (fileName: string): string => {
-  const ext = fileName.split('.').pop()?.toLowerCase()
+  const ext = fileName.split(".").pop()?.toLowerCase()
   const languageMap: Record<string, string> = {
-    'py': 'python',
-    'js': 'javascript',
-    'ts': 'typescript',
-    'vue': 'vue',
-    'html': 'html',
-    'css': 'css',
-    'scss': 'scss',
-    'json': 'json',
-    'md': 'markdown',
-    'sql': 'sql',
-    'sh': 'shell',
-    'yml': 'yaml',
-    'yaml': 'yaml'
+    py: "python",
+    js: "javascript",
+    ts: "typescript",
+    vue: "vue",
+    html: "html",
+    css: "css",
+    scss: "scss",
+    json: "json",
+    md: "markdown",
+    sql: "sql",
+    sh: "shell",
+    yml: "yaml",
+    yaml: "yaml"
   }
-  return languageMap[ext || ''] || 'text'
+  return languageMap[ext || ""] || "text"
 }
 </script>
 
@@ -357,7 +354,7 @@ const getLanguageFromFileName = (fileName: string): string => {
   padding: 16px;
   border-bottom: 1px solid #e2e8f0;
   background: #f8fafc;
-  
+
   .header-title {
     display: flex;
     align-items: center;
@@ -365,12 +362,12 @@ const getLanguageFromFileName = (fileName: string): string => {
     margin-bottom: 12px;
     font-weight: 600;
     color: #374151;
-    
+
     .icon {
       font-size: 16px;
     }
   }
-  
+
   .header-actions {
     display: flex;
     gap: 8px;
@@ -392,64 +389,63 @@ const getLanguageFromFileName = (fileName: string): string => {
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
-    
+
     &:hover {
       background: #f1f5f9;
     }
-    
+
     &.active {
       background: #dbeafe;
       color: #1d4ed8;
     }
-    
-    
+
     .folder-toggle {
       display: flex;
       align-items: center;
       margin-right: 8px;
       cursor: pointer;
       user-select: none;
-      
+
       .arrow {
         font-size: 12px;
         color: #6b7280;
         margin-right: 4px;
         transition: transform 0.2s ease;
         display: inline-block;
-        
+
         &.expanded {
           transform: rotate(90deg);
         }
       }
-      
+
       .folder-icon {
         font-size: 16px;
       }
     }
-    
+
     .file-icon {
       margin-right: 8px;
       font-size: 16px;
     }
-    
+
     .file-name {
       flex: 1;
       font-size: 14px;
       color: #374151;
     }
-    
+
     .file-actions {
       display: flex;
       gap: 4px;
       opacity: 0;
       transition: opacity 0.2s;
     }
-    
+
     &:hover .file-actions {
       opacity: 1;
     }
   }
-  
+
   .children {
     margin-left: 16px;
   }
@@ -463,7 +459,7 @@ const getLanguageFromFileName = (fileName: string): string => {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   min-width: 150px;
-  
+
   .context-menu-item {
     display: flex;
     align-items: center;
@@ -473,11 +469,11 @@ const getLanguageFromFileName = (fileName: string): string => {
     font-size: 14px;
     color: #374151;
     transition: background-color 0.2s;
-    
+
     &:hover {
       background: #f1f5f9;
     }
-    
+
     .icon {
       font-size: 14px;
     }
@@ -506,32 +502,42 @@ const getLanguageFromFileName = (fileName: string): string => {
   display: flex;
   align-items: center;
   gap: 4px;
-  
+
   &:hover {
     background: #f9fafb;
     border-color: #9ca3af;
   }
-  
+
   &.btn-primary {
     background: #3b82f6;
     color: white;
     border-color: #3b82f6;
-    
+
     &:hover {
       background: #2563eb;
     }
   }
-  
+
   &.btn-secondary {
     background: #6b7280;
     color: white;
     border-color: #6b7280;
-    
+
     &:hover {
       background: #4b5563;
     }
   }
-  
+
+  &.btn-success {
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+
+    &:hover {
+      background: #059669;
+    }
+  }
+
   &.btn-sm {
     padding: 4px 8px;
     font-size: 12px;
@@ -545,7 +551,7 @@ const getLanguageFromFileName = (fileName: string): string => {
   cursor: pointer;
   border-radius: 4px;
   font-size: 14px;
-  
+
   &:hover {
     background: #f3f4f6;
   }
