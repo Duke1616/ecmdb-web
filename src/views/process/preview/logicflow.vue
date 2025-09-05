@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { onMounted, ref, nextTick } from "vue"
 import LogicFlow from "@logicflow/core"
-import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
+import { Menu, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import {
@@ -48,7 +48,7 @@ const containerRef = ref() as Ref<HTMLDivElement>
 
 const initLf = (data: any) => {
   const lfInstance = new LogicFlow({
-    plugins: [Menu, MiniMap, Snapshot],
+    plugins: [Menu, MiniMap],
     container: containerRef.value
   })
   lf.value = lfInstance
