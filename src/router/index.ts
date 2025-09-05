@@ -48,6 +48,16 @@ export const constantRoutes: RouteRecordRaw[] = [
     alias: "/:pathMatch(.*)*"
   },
   {
+    path: "/file-manager-demo",
+    component: () => import("@/views/hook-demo/file-manager-demo.vue"),
+    name: "FileManagerDemo",
+    meta: {
+      title: "文件管理系统演示",
+      svgIcon: "template",
+      hidden: false
+    }
+  },
+  {
     path: "/login",
     component: () => import("@/pages/login/index.vue"),
     meta: {

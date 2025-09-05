@@ -40,6 +40,14 @@
     </el-card>
     <!-- 新增/编辑模版 -->
     <el-card v-show="addDialogDrawer">
+      <!-- 代码编辑器模式选择器 -->
+      <div class="editor-mode-selector">
+        <el-radio-group v-model="codeEditorMode" size="small" :teleported="false">
+          <el-radio-button label="simple">简单模式</el-radio-button>
+          <el-radio-button label="advanced">文件管理模式</el-radio-button>
+        </el-radio-group>
+      </div>
+      
       <WizardContainer
         :steps="codebookSteps"
         :formData="formData"
@@ -65,13 +73,15 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { findByUsernameApi, findByUserIdApi } from "@/api/user"
 import InfoPage from "./modal/info.vue"
 import CodePage from "./modal/code.vue"
+import CodeWithFiles from "./modal/code-with-files.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
 const wizardRef = ref()
+const codeEditorMode = ref<'simple' | 'advanced'>('simple')
 
 // 向导步骤配置
-const codebookSteps = [
+const codebookSteps = computed(() => [
   {
     title: "基本信息",
     description: "填写脚本基本信息",
@@ -80,11 +90,11 @@ const codebookSteps = [
   },
   {
     title: "代码编写",
-    description: "编写脚本代码",
+    description: codeEditorMode.value === 'simple' ? "编写脚本代码" : "管理多文件项目",
     icon: Edit,
-    component: CodePage
+    component: codeEditorMode.value === 'simple' ? CodePage : CodeWithFiles
   }
-]
+])
 
 // 表单数据
 const formData = ref<createOrUpdateCodebookReq>({
@@ -282,6 +292,22 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listCod
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 代码编辑器模式选择器 */
+.editor-mode-selector {
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  
+  .el-radio-group {
+    .el-radio-button__inner {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+  }
 }
 
 /* WizardContainer 现在自动处理全屏覆盖，无需额外样式 */

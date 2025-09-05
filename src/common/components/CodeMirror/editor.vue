@@ -27,11 +27,7 @@
     <div class="footer">
       <div class="buttons" />
       <div class="infos">
-        <span class="item">Spaces: {{ tabSize }}</span>
-        <span class="item">Length: {{ state.length }}</span>
-        <span class="item">Lines: {{ state.lines }}</span>
-        <span class="item">Cursor: {{ state.cursor }}</span>
-        <span class="item">Selected: {{ state.selected }}</span>
+        <!-- 移除了多余的统计信息显示 -->
       </div>
     </div>
   </div>
@@ -222,6 +218,7 @@ watch(
       font-family: monospace;
     }
   }
+
 
   .footer {
     height: 3rem;

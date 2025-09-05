@@ -14,6 +14,7 @@
           size="small"
           @change="handleSelectLanguage"
           class="toolbar-select"
+          :teleported="false"
         >
           <el-option v-for="option in languages" :key="option" :label="option" :value="option" />
         </el-select>
@@ -34,6 +35,7 @@
           placeholder="选择主题" 
           size="small"
           class="toolbar-select"
+          :teleported="false"
         >
           <el-option v-for="option in ['default', ...themes]" :key="option" :label="option" :value="option" />
         </el-select>

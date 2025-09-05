@@ -133,7 +133,7 @@ import UserPicker from "@@/components/UserPicker/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
 import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { findByUsernameApi, findByUserIdApi } from "@/api/user"
+import { findByUsernameApi } from "@/api/user"
 import { useFormHandler } from "@@/composables/useFormHandler"
 
 interface Props {
@@ -174,28 +174,6 @@ const shouldDisableLanguage = computed(() => {
 })
 
 const formRef = ref<FormInstance>()
-
-// 表单数据
-const formData = computed({
-  get: () => localFormData.value,
-  set: (value) => {
-    localFormData.value = value
-    updateFormData()
-  }
-})
-
-// 用户选择器绑定
-const ownerUsername = computed({
-  get: () => {
-    if (typeof formData.value.owner === "string") {
-      return formData.value.owner
-    }
-    return ""
-  },
-  set: (value: string) => {
-    formData.value.owner = value as any
-  }
-})
 
 // 表单验证规则
 const formRules: FormRules = {
