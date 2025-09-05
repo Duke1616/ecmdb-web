@@ -40,7 +40,7 @@
                 <el-option v-for="option in themeOptions" :key="option" :label="option" :value="option" />
               </el-select>
             </div>
-            
+
             <button @click="formatCode" class="btn btn-sm">
               <span class="icon">✏️</span>
               格式化
@@ -112,26 +112,26 @@ const currentTheme = ref(useTheme().theme.value === Theme.Dark ? "oneDark" : "de
 
 // 硬编码主题选项，确保有选项显示
 const themeOptions = ref([
-  'default',
-  'oneDark',
-  'materialDark', 
-  'nord',
-  'amy',
-  'ayuLight',
-  'barf',
-  'bespin',
-  'birdsOfParadise',
-  'boysAndGirls',
-  'clouds',
-  'cobalt',
-  'coolGlow',
-  'dracula',
-  'espresso',
-  'noctisLilac',
-  'rosePineDawn',
-  'smoothy',
-  'solarizedLight',
-  'tomorrow'
+  "default",
+  "oneDark",
+  "materialDark",
+  "nord",
+  "amy",
+  "ayuLight",
+  "barf",
+  "bespin",
+  "birdsOfParadise",
+  "boysAndGirls",
+  "clouds",
+  "cobalt",
+  "coolGlow",
+  "dracula",
+  "espresso",
+  "noctisLilac",
+  "rosePineDawn",
+  "smoothy",
+  "solarizedLight",
+  "tomorrow"
 ])
 
 console.log("Initial theme options:", themeOptions.value)
@@ -142,9 +142,9 @@ const loadThemeOptions = () => {
     console.log("Available themes:", themes)
     const themeKeys = Object.keys(themes)
     console.log("Theme keys:", themeKeys)
-    
+
     if (themeKeys.length > 0) {
-      themeOptions.value = ['default', ...themeKeys]
+      themeOptions.value = ["default", ...themeKeys]
       console.log("Final theme options:", themeOptions.value)
     }
   } catch (error) {
@@ -422,31 +422,31 @@ defineExpose({
     display: flex;
     gap: 8px;
     align-items: center;
-    
+
     .theme-selector {
       display: flex;
       align-items: center;
       gap: 6px;
-      
+
       .theme-label {
         font-size: 12px;
         color: #6b7280;
         white-space: nowrap;
       }
-      
+
       .theme-select {
         min-width: 100px;
-        
+
         :deep(.el-input__wrapper) {
           border-radius: 4px;
           border: 1px solid #d1d5db;
           box-shadow: none;
           transition: all 0.2s ease;
-          
+
           &:hover {
             border-color: #9ca3af;
           }
-          
+
           &.is-focus {
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);

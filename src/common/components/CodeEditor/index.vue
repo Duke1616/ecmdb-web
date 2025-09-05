@@ -13,8 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, shallowRef, ref } from "vue"
-import { ElMessage } from "element-plus"
+import { reactive, computed, ref } from "vue"
 import Editor from "./editor.vue"
 import * as themes from "./themes"
 import { useTheme, Theme } from "@@/composables/theme"
@@ -35,7 +34,6 @@ const emit = defineEmits<{
   "update:language": [language: string]
 }>()
 
-
 const config = reactive({
   disabled: false,
   indentWithTab: true,
@@ -44,7 +42,6 @@ const config = reactive({
   theme: useTheme().theme.value === Theme.Dark ? "oneDark" : "default"
 })
 
-const loading = shallowRef(false)
 const currentTheme = computed(() => {
   console.log("Current theme:", config.theme)
   console.log("Available themes:", themes)
@@ -53,7 +50,6 @@ const currentTheme = computed(() => {
   }
   return undefined
 })
-
 
 const editorRef = ref<InstanceType<typeof Editor>>()
 
@@ -73,7 +69,6 @@ const setCode = (code: string) => {
 const formatCode = () => {
   editorRef.value?.formatCode()
 }
-
 
 const getLanguageFunction = () => {
   // 直接返回默认的 Python 配置，使用同步导入
@@ -96,7 +91,6 @@ const handleExternalThemeChange = (theme: string) => {
 }
 
 defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalThemeChange })
-
 </script>
 
 <style lang="scss" scoped>

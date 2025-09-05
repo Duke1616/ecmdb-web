@@ -71,7 +71,7 @@ import { cloneDeep } from "lodash-es"
 import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookApi } from "@/api/codebook"
 import { ElMessage, ElMessageBox } from "element-plus"
 import InfoPage from "./modal/info.vue"
-import CodeWithFiles from "./modal/code-with-files.vue"
+import Code from "./modal/code.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
@@ -90,7 +90,7 @@ const codebookSteps = computed(() => [
     title: "代码编写",
     description: codeEditorMode.value === "simple" ? "编写脚本代码" : "管理多文件项目",
     icon: Edit,
-    component: CodeWithFiles
+    component: Code
   }
 ])
 

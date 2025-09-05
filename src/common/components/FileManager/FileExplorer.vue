@@ -195,7 +195,7 @@ const addFile = (parentId?: string) => {
 
     // 创建新的文件列表副本
     const newFiles = JSON.parse(JSON.stringify(props.files))
-0
+    0
     if (parentId) {
       // 添加到指定父节点
       const addToParent = (files: FileNode[], targetId: string): boolean => {

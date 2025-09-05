@@ -5,7 +5,7 @@ import routeSettings from "@/config/route"
 
 const Layouts = () => import("@/layouts/index.vue")
 const Terminal = () => import("@/views/terminal/index.vue")
-const Logicflow = () => import("@/views/preview/logicflow.vue")
+const Logicflow = () => import("@/views/process/preview/logicflow.vue")
 
 /**
  * 常驻路由
@@ -46,16 +46,6 @@ export const constantRoutes: RouteRecordRaw[] = [
       hidden: true
     },
     alias: "/:pathMatch(.*)*"
-  },
-  {
-    path: "/file-manager-demo",
-    component: () => import("@/views/hook-demo/file-manager-demo.vue"),
-    name: "FileManagerDemo",
-    meta: {
-      title: "文件管理系统演示",
-      svgIcon: "template",
-      hidden: false
-    }
   },
   {
     path: "/login",

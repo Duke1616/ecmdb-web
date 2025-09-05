@@ -11,23 +11,33 @@ const simpleCompletionSource = (context: any) => {
   const line = context.state.doc.lineAt(context.pos)
   const lineText = line.text
   const isImportContext = /^\s*(import|from)\s+/.test(lineText)
-  
+
   if (!isImportContext) return null
 
   const searchText = word?.text.toLowerCase() || ""
-  
+
   // 写死的模块列表
   const modules = [
-    "os", "sys", "json", "datetime", "time", "math", "random", "re",
-    "utils.helper", "utils.validator", "config.settings", "main"
+    "os",
+    "sys",
+    "json",
+    "datetime",
+    "time",
+    "math",
+    "random",
+    "re",
+    "utils.helper",
+    "utils.validator",
+    "config.settings",
+    "main"
   ]
-  
+
   const options = modules
-    .filter(module => module.toLowerCase().includes(searchText))
-    .map(module => ({
+    .filter((module) => module.toLowerCase().includes(searchText))
+    .map((module) => ({
       label: module,
       type: "module",
-      detail: module.includes('.') ? "项目文件" : "标准库"
+      detail: module.includes(".") ? "项目文件" : "标准库"
     }))
 
   return {

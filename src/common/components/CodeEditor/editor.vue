@@ -47,7 +47,6 @@ const emit = defineEmits<{
 const log = console.log
 const code = shallowRef(props.code)
 
-
 const extensions = computed(() => {
   const result = []
 
@@ -58,12 +57,12 @@ const extensions = computed(() => {
     console.log("Adding language:", props.language.language)
     try {
       // 检查是否是函数，如果是则调用它
-      if (typeof props.language.language === 'function') {
+      if (typeof props.language.language === "function") {
         const langExt = props.language.language()
         if (langExt) {
           result.push(langExt)
         }
-      } else if (props.language.language && typeof props.language.language === 'object') {
+      } else if (props.language.language && typeof props.language.language === "object") {
         result.push(props.language.language)
       }
     } catch (error) {
@@ -137,7 +136,6 @@ const formatCode = () => {
 
 defineExpose({ getCode, setCode, formatCode })
 
-
 // 监听代码变化 - 只在外部代码变化时更新编辑器
 watch(
   () => props.code,
@@ -172,7 +170,7 @@ watch(
     width: 100%;
     flex: 1;
     min-height: 0;
-    
+
     :deep(.cm-editor) {
       width: 100%;
       height: 100%;
