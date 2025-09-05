@@ -27,6 +27,7 @@
           :current-file-id="currentFileId"
           @update:files="handleFilesUpdate"
           @file-update="handleFileUpdate"
+          @file-select="handleFileSelect"
         />
       </div>
     </div>

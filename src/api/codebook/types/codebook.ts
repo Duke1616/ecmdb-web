@@ -1,7 +1,7 @@
 export interface createOrUpdateCodebookReq {
   id?: number
   name: string
-  owner: number
+  owner: string
   language: string
   code: string
   identifier: string
@@ -10,7 +10,7 @@ export interface createOrUpdateCodebookReq {
 export interface codebook {
   id: number
   name: string
-  owner: number
+  owner: string
   language: string
   code: string
   secret: string

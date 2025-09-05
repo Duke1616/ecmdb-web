@@ -88,8 +88,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import CodeMirror from '@@/components/CodeMirror/index.vue'
-import FileManager from '@@/components/CodeMirror/FileManager.vue'
+import CodeMirror from '@@/components/CodeEditor/index.vue'
+import FileManager from '@@/components/FileManager/index.vue'
 
 interface FileNode {
   id: string

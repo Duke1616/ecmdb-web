@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { FolderOpened, Delete, Download } from '@element-plus/icons-vue'
-import FileManager from '@@/components/CodeMirror/FileManager.vue'
+import FileManager from '@@/components/FileManager/index.vue'
 import { ElMessage } from 'element-plus'
 
 interface FileNode {

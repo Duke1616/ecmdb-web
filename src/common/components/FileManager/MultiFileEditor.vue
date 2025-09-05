@@ -67,7 +67,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import CodeMirror from './index.vue'
+import CodeMirror from '../CodeEditor/index.vue'
 
 interface FileNode {
   id: string
@@ -87,6 +87,7 @@ interface Props {
 interface Emits {
   (e: 'update:files', files: FileNode[]): void
   (e: 'file-update', file: FileNode): void
+  (e: 'file-select', file: FileNode): void
 }
 
 const props = defineProps<Props>()
@@ -150,9 +151,8 @@ watch(() => props.currentFileId, (newFileId) => {
 // 切换到文件
 const switchToFile = (file: FileNode) => {
   if (file.type === 'file') {
-    // 这里应该通知父组件切换文件
-    // 由于我们移除了复杂的上下文，这里直接处理
-    console.log('切换到文件:', file)
+    // 通知父组件切换文件
+    emit('file-select', file)
   }
 }
 

@@ -70,7 +70,7 @@ import { codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/c
 import { cloneDeep } from "lodash-es"
 import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookApi } from "@/api/codebook"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { findByUsernameApi, findByUserIdApi } from "@/api/user"
+// 不再需要用户API导入，owner 直接存储为 username
 import InfoPage from "./modal/info.vue"
 import CodePage from "./modal/code.vue"
 import CodeWithFiles from "./modal/code-with-files.vue"
@@ -101,7 +101,7 @@ const formData = ref<createOrUpdateCodebookReq>({
   name: "",
   code: "",
   language: "shell",
-  owner: 0,
+  owner: "",
   identifier: ""
 })
 
@@ -123,7 +123,7 @@ const formRules = computed(() => {
 const codebookRow = ref<codebook>({
   id: 0,
   name: "",
-  owner: 0,
+  owner: "",
   code: "",
   language: "",
   identifier: "",
@@ -133,7 +133,7 @@ const codebookRow = ref<codebook>({
 // 监听弹窗显示状态
 watch(
   () => addDialogDrawer.value,
-  (val) => {
+  (val: any) => {
     if (val) {
       // 重置到第一步
       nextTick(() => {
@@ -151,15 +151,7 @@ watch(
       // 使用 nextTick 避免循环更新
       nextTick(async () => {
         const newFormData = cloneDeep(val)
-        // 将用户ID转换为用户名
-        if (typeof val.owner === "number") {
-          try {
-            const userResponse = await findByUserIdApi(val.owner)
-            newFormData.owner = userResponse.data.username as any
-          } catch (error) {
-            console.error("获取用户信息失败:", error)
-          }
-        }
+        // owner 现在直接存储为 username，无需转换
         formData.value = newFormData
       })
     } else if (!val) {
@@ -168,7 +160,7 @@ watch(
         name: "",
         code: "",
         language: "shell",
-        owner: 0,
+        owner: "",
         identifier: ""
       }
     }
@@ -180,7 +172,7 @@ const handlerCreate = () => {
   codebookRow.value = {
     id: 0,
     name: "",
-    owner: 0,
+    owner: "",
     code: "",
     language: "shell",
     identifier: "",
@@ -206,17 +198,9 @@ const updateFormData = (data: createOrUpdateCodebookReq) => {
 
 const saveCodebook = async () => {
   try {
-    // 将用户名转换为用户ID
-    let ownerId = formData.value.owner
-    if (typeof formData.value.owner === "string" && formData.value.owner) {
-      const userResponse = await findByUsernameApi(formData.value.owner)
-      ownerId = userResponse.data.id
-    }
-
-    // 准备提交数据
+    // 准备提交数据，owner 直接存储为 username
     const submitData: createOrUpdateCodebookReq = {
-      ...formData.value,
-      owner: ownerId as number
+      ...formData.value
     }
 
     const api = formData.value.id ? updateCodebookApi : createCodebookApi

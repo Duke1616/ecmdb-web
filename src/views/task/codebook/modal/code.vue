@@ -52,7 +52,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from "vue"
 import { Edit, Delete } from "@element-plus/icons-vue"
-import CodeMirror from "@@/components/CodeMirror/index.vue"
+import CodeMirror from "@@/components/CodeEditor/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
 import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { ElMessage } from "element-plus"

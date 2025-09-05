@@ -3,16 +3,16 @@
     <template #reference>
       <div class="custom-icon-select-trigger">
         <!-- 显示当前选中的图标 -->
-        <img 
-          v-if="isImageUrl(currentIconValue)" 
-          :src="currentIconValue" 
+        <img
+          v-if="isImageUrl(currentIconValue)"
+          :src="currentIconValue"
           class="trigger-icon-img"
           @error="handleImageError"
         />
-        <i 
-          v-else-if="currentIconValue && !isImageUrl(currentIconValue)" 
-          :class="getIconClass(currentIconValue)" 
-          :style="{ color: modelValue.color || '' }" 
+        <i
+          v-else-if="currentIconValue && !isImageUrl(currentIconValue)"
+          :class="getIconClass(currentIconValue)"
+          :style="{ color: modelValue.color || '' }"
         />
         <el-icon v-else class="trigger-icon-default"><Picture /></el-icon>
         <span class="trigger-text">{{ getDisplayText() }}</span>
@@ -41,14 +41,9 @@
           @input="handleImageUrlChange"
         />
         <div class="image-preview" v-if="imageUrl">
-          <img 
-            :src="imageUrl" 
-            class="preview-img"
-            @error="handlePreviewError"
-            @load="handlePreviewLoad"
-          />
+          <img :src="imageUrl" class="preview-img" @error="handlePreviewError" @load="handlePreviewLoad" />
           <span class="preview-status" :class="{ error: previewError }">
-            {{ previewError ? '图片加载失败' : '预览正常' }}
+            {{ previewError ? "图片加载失败" : "预览正常" }}
           </span>
         </div>
       </div>
@@ -118,7 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
-import { Picture, Plus } from "@element-plus/icons-vue"
+import { Picture } from "@element-plus/icons-vue"
 import { commonIconList, linearIconList, fillIconList, multicolorIconList } from "./constants"
 
 // 定义 props
@@ -200,40 +195,40 @@ const getIconDisplayName = (iconName: string) => {
 const isImageUrl = (icon: string): boolean => {
   if (!icon) return false
   // 检查是否为HTTP/HTTPS URL
-  if (icon.startsWith('http://') || icon.startsWith('https://')) {
+  if (icon.startsWith("http://") || icon.startsWith("https://")) {
     return true
   }
   // 检查是否为base64图片
-  if (icon.startsWith('data:image/')) {
+  if (icon.startsWith("data:image/")) {
     return true
   }
   // 检查是否为相对路径的图片文件
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp']
-  return imageExtensions.some(ext => icon.toLowerCase().endsWith(ext))
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"]
+  return imageExtensions.some((ext) => icon.toLowerCase().endsWith(ext))
 }
 
 // 获取图标类名
 const getIconClass = (iconName: string): string[] => {
-  if (!iconName) return ['iconfont']
-  
+  if (!iconName) return ["iconfont"]
+
   // 如果已经包含 iconfont 类，直接返回
-  if (iconName.includes('iconfont')) {
-    return iconName.split(' ')
+  if (iconName.includes("iconfont")) {
+    return iconName.split(" ")
   }
-  
+
   // 否则添加 iconfont 基础类
-  return ['iconfont', iconName]
+  return ["iconfont", iconName]
 }
 
 // 获取显示文本
 const getDisplayText = (): string => {
   const value = currentIconValue.value
   if (!value) return "选择图标"
-  
+
   if (isImageUrl(value)) {
-    if (value.startsWith('data:image/')) {
+    if (value.startsWith("data:image/")) {
       return "Base64图片"
-    } else if (value.startsWith('http')) {
+    } else if (value.startsWith("http")) {
       return "网络图片"
     } else {
       return "本地图片"
@@ -270,11 +265,9 @@ const handlePreviewLoad = () => {
 // 处理触发器图片错误
 const handleImageError = (event: Event) => {
   const target = event.target as HTMLImageElement
-  console.warn('图片加载失败:', target.src)
-  target.style.display = 'none'
+  console.warn("图片加载失败:", target.src)
+  target.style.display = "none"
 }
-
-
 
 const selectIcon = (iconName: string) => {
   const newValue = {
@@ -289,8 +282,6 @@ const selectIcon = (iconName: string) => {
     visible.value = false
   }, 100)
 }
-
-
 
 const handleColorChange = (color: string | null) => {
   if (color) {
@@ -318,16 +309,16 @@ onMounted(() => {
       // 根据图标名称判断类型
       if (commonIconList.includes(value)) {
         currentIconType.value = "0"
-      } else if (value.includes('-line')) {
+      } else if (value.includes("-line")) {
         currentIconType.value = "1"
-      } else if (value.includes('-fill')) {
+      } else if (value.includes("-fill")) {
         currentIconType.value = "2"
-      } else if (value.includes('-color')) {
+      } else if (value.includes("-color")) {
         currentIconType.value = "3"
       }
     }
   }
-  
+
   // 初始化颜色
   if (props.modelValue.color) {
     selectedColor.value = props.modelValue.color

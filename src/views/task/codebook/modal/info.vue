@@ -133,7 +133,7 @@ import UserPicker from "@@/components/UserPicker/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
 import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { findByUsernameApi } from "@/api/user"
+// 不再需要用户API导入，owner 直接存储为 username
 import { useFormHandler } from "@@/composables/useFormHandler"
 
 interface Props {
@@ -202,17 +202,8 @@ const handleFormNext = async () => {
     return
   }
 
-  // 将用户名转换为用户ID
-  if (typeof localFormData.value.owner === "string" && localFormData.value.owner) {
-    try {
-      const userResponse = await findByUsernameApi(localFormData.value.owner)
-      localFormData.value.owner = userResponse.data.id as any
-      updateFormData()
-    } catch (error) {
-      ElMessage.error("获取用户信息失败")
-      return
-    }
-  }
+  // owner 现在直接存储为 username，无需转换
+  updateFormData()
 
   next()
 }
