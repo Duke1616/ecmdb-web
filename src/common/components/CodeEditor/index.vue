@@ -5,7 +5,7 @@
       :config="config"
       :theme="currentTheme"
       :language="getLanguageFunction()"
-      :code="props.code"
+      :code="props.code || getDefaultCode()"
       :tabSize="props.language === 'shell' ? 2 : 4"
       @update:code="handleCodeUpdate"
     />
@@ -71,11 +71,39 @@ const formatCode = () => {
 }
 
 const getLanguageFunction = () => {
-  // 直接返回默认的 Python 配置，使用同步导入
+  // 根据传入的语言动态获取配置
+  const languageConfig = getLanguageConfig(props.language)
+  return {
+    language: languageConfig.language,
+    tabSize: languageConfig.tabSize,
+    code: props.code || languageConfig.code
+  }
+}
+
+// 获取默认代码
+const getDefaultCode = () => {
+  const languageConfig = getLanguageConfig(props.language)
+  return languageConfig.code || ""
+}
+
+// 获取语言配置
+const getLanguageConfig = (language: string) => {
+  // 导入所有语言配置
+  const languages = import.meta.glob("./lang-code/*/index.ts", { eager: true })
+  
+  // 根据语言名称获取对应的配置
+  const languageKey = `./lang-code/${language}/index.ts`
+  const languageModule = languages[languageKey] as any
+  
+  if (languageModule && languageModule.default) {
+    return languageModule.default
+  }
+  
+  // 如果找不到对应语言，返回默认的 Python 配置
   return {
     language: python,
     tabSize: 4,
-    code: props.code
+    code: ""
   }
 }
 

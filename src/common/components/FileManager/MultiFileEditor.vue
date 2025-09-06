@@ -134,18 +134,13 @@ const themeOptions = ref([
   "tomorrow"
 ])
 
-console.log("Initial theme options:", themeOptions.value)
 
 // 动态加载主题选项
 const loadThemeOptions = () => {
   try {
-    console.log("Available themes:", themes)
     const themeKeys = Object.keys(themes)
-    console.log("Theme keys:", themeKeys)
-
     if (themeKeys.length > 0) {
       themeOptions.value = ["default", ...themeKeys]
-      console.log("Final theme options:", themeOptions.value)
     }
   } catch (error) {
     console.error("Error loading themes:", error)
@@ -199,18 +194,24 @@ watch(
   { immediate: true }
 )
 
+// 添加文件到打开列表的函数
+const addFileToOpenFiles = (fileId: string) => {
+  if (fileId) {
+    const allFiles = getAllFiles(props.files)
+    const file = allFiles.find((f) => f.id === fileId)
+    if (file && !openFiles.value.some((f) => f.id === file.id)) {
+      openFiles.value.push(file)
+    }
+  }
+}
+
 // 监听当前文件ID变化
 watch(
   () => props.currentFileId,
   (newFileId) => {
-    if (newFileId) {
-      const allFiles = getAllFiles(props.files)
-      const file = allFiles.find((f) => f.id === newFileId)
-      if (file && !openFiles.value.some((f) => f.id === file.id)) {
-        openFiles.value.push(file)
-      }
-    }
-  }
+    addFileToOpenFiles(newFileId)
+  },
+  { immediate: true }
 )
 
 // 切换到文件
@@ -232,7 +233,6 @@ const closeFile = (file: FileNode) => {
       if (openFiles.value.length > 0) {
         const nextFile = openFiles.value[0]
         // 这里应该通知父组件切换文件
-        console.log("切换到下一个文件:", nextFile)
       }
     }
   }
@@ -258,7 +258,6 @@ const handleLanguageUpdate = (newLanguage: string) => {
 const formatCode = () => {
   if (codeMirrorRef.value) {
     codeMirrorRef.value.formatCode()
-    console.log("代码格式化完成")
   }
 }
 
@@ -267,7 +266,6 @@ const clearCode = () => {
   if (currentFile.value) {
     currentFile.value.content = ""
     emit("file-update", currentFile.value)
-    console.log("代码已清空")
   }
 }
 
@@ -282,7 +280,6 @@ const handleThemeChange = (theme: string) => {
 
 // 保存所有文件
 const saveAllFiles = () => {
-  console.log("所有文件已保存")
 }
 
 // 暴露方法

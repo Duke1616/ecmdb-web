@@ -85,7 +85,6 @@
                     <el-option label="Python" value="python" />
                     <el-option label="JavaScript" value="javascript" />
                     <el-option label="Shell" value="shell" />
-                    <el-option label="PowerShell" value="powershell" />
                   </el-select>
                 </el-form-item>
                 <div class="input-hint">

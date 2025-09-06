@@ -1,4 +1,6 @@
-import { python } from "@codemirror/lang-python"
+// import { python } from "@codemirror/lang-python"
+import { StreamLanguage } from "@codemirror/language"
+import { python } from "@codemirror/legacy-modes/mode/python"
 import { autocompletion } from "@codemirror/autocomplete"
 import code from "./python.py?raw"
 
@@ -47,7 +49,7 @@ const simpleCompletionSource = (context: any) => {
 }
 
 export default {
-  language: python,
+  language:  StreamLanguage.define(python),
   tabSize: 4,
   code,
   extensions: [

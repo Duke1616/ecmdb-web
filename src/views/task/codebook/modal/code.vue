@@ -46,7 +46,7 @@
         <FileManager
           ref="fileManagerRef"
           :initialFiles="projectFiles"
-          :projectName="formData.name || 'Untitled Project'"
+          :projectName="formData.identifier || 'Untitled Project'"
           @update:files="handleFilesUpdate"
           @file-change="handleFileChange"
           @project-save="handleProjectSave"
@@ -121,12 +121,12 @@ const handleModeChange = () => {
     projectFiles.value = [
       {
         id: "root",
-        name: props.formData.name || "Untitled Project",
+        name: props.formData.identifier || "Untitled Project",
         type: "folder",
         children: [
           {
             id: "main",
-            name: `${props.formData.name || "main"}.${getFileExtension(props.formData.language)}`,
+            name: `main.${getFileExtension(props.formData.language)}`,
             type: "file",
             content: props.formData.code || "",
             language: props.formData.language || "python",

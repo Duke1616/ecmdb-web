@@ -73,6 +73,20 @@ const currentFileId = ref<string>("")
 const leftPanelWidth = ref(300)
 const isResizing = ref(false)
 
+// 查找第一个文件
+const findFirstFile = (files: FileNode[]): FileNode | null => {
+  for (const file of files) {
+    if (file.type === "file") {
+      return file
+    }
+    if (file.children) {
+      const found = findFirstFile(file.children)
+      if (found) return found
+    }
+  }
+  return null
+}
+
 // 初始化文件结构
 const initializeFiles = () => {
   if (props.initialFiles.length > 0) {
@@ -112,6 +126,13 @@ const initializeFiles = () => {
         ]
       }
     ]
+  }
+  
+  // 自动选中第一个文件
+  const firstFile = findFirstFile(files.value)
+  if (firstFile) {
+    currentFileId.value = firstFile.id
+    emit("file-change", firstFile)
   }
 }
 
