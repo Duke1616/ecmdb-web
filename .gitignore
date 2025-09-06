@@ -28,6 +28,3 @@ coverage
 *.sln
 *.sw?
 
-# Generated files
-*.js.map
-src/**/*.js
