@@ -59,17 +59,16 @@
         </template>
       </el-dialog>
     </div>
-    <div>
-      <el-dialog v-model="dialogBindRole" title="分配角色" width="800px">
-        <Role
-          ref="roleRef"
-          @closed="handlerClousedRole"
-          :roleCodes="codes ?? []"
-          :userId="userId"
-          @listUsersData="listUsersData"
-        />
-      </el-dialog>
-    </div>
+    <!-- 角色管理弹窗 -->
+    <el-dialog v-model="dialogBindRole" :show-close="false" :with-header="false" :close-on-click-modal="false">
+      <RoleSelector
+        v-if="dialogBindRole && selectedUser"
+        :default-selected-roles="getUserRoleCodes()"
+        :user-id="selectedUser.id"
+        @confirm="handleRoleConfirm"
+        @cancel="handleRoleCancel"
+      />
+    </el-dialog>
 
     <div>
       <el-dialog v-model="dialogSyncUser" title="LDAP 用户列表" width="700px">
@@ -88,27 +87,20 @@
 import { ref, watch, nextTick } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { CirclePlus, RefreshRight, User } from "@element-plus/icons-vue"
-import { listUsersApi } from "@/api/user"
-import Role from "./role.vue"
+import { listUsersApi, bindRoleCodesAPi } from "@/api/user"
+import RoleSelector from "./roleSelector.vue"
 import { user } from "@/api/user/types/user"
 import createOrUpdate from "./createOrUpdate.vue"
 import Sync from "./sync.vue"
 import { ElMessage } from "element-plus"
 
-const roleRef = ref<InstanceType<typeof Role>>()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const dialogBindRole = ref<boolean>(false)
 const dialogSyncUser = ref<boolean>(false)
 
 const apiRef = ref<InstanceType<typeof createOrUpdate>>()
-
 const titel = ref<string>("")
-const handlerClousedRole = () => {
-  dialogBindRole.value = false
-  roleRef.value?.onClosed()
-  apiRef.value?.resetForm()
-}
 
 const handleSyncUser = () => {
   dialogSyncUser.value = true
@@ -138,20 +130,49 @@ const listUsersData = () => {
     .finally(() => {})
 }
 
-const codes = ref<string[]>([])
-const userId = ref<number>()
+const selectedUser = ref<user>()
 
 const reset = () => {
-  codes.value = []
-  userId.value = 0
+  selectedUser.value = undefined
 }
+
 const handleBindRole = (row: user) => {
   // 打开弹窗
   dialogBindRole.value = true
 
   // 数据传递
-  codes.value = row.role_codes
-  userId.value = row.id
+  selectedUser.value = row
+}
+
+// 获取用户的角色代码列表
+const getUserRoleCodes = (): string[] => {
+  // 这里可以根据需要从用户数据中获取角色代码
+  return selectedUser.value?.role_codes || []
+}
+
+// 处理角色选择确认
+const handleRoleConfirm = async (selectedRoles: Array<{ id: number; name: string; code: string; desc: string }>) => {
+  if (!selectedUser.value) return
+
+  try {
+    const roleCodes = selectedRoles.map((role) => role.code)
+    await bindRoleCodesAPi({
+      id: selectedUser.value.id,
+      role_codes: roleCodes
+    })
+
+    ElMessage.success("角色更新成功")
+    dialogBindRole.value = false
+    listUsersData() // 刷新用户列表
+  } catch (error) {
+    console.error("角色更新失败:", error)
+    ElMessage.error("角色更新失败")
+  }
+}
+
+// 处理角色选择取消
+const handleRoleCancel = () => {
+  dialogBindRole.value = false
 }
 
 const handlerCreateUser = () => {

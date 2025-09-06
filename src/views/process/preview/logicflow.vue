@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import { onMounted, ref, nextTick } from "vue"
 import LogicFlow from "@logicflow/core"
-import { Menu, MiniMap } from "@logicflow/extension"
+import { Menu, MiniMap, Snapshot } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import {
@@ -45,15 +45,15 @@ import {
 const lf = ref()
 const containerRef = ref() as Ref<HTMLDivElement>
 
-
 const config = reactive<any>({
   background: {
     backgroundColor: "#EFF2F6"
-  },
+  }
 })
 const initLf = (data: any) => {
   const lfInstance = new LogicFlow({
     ...config,
+    plugins: [Menu, MiniMap, Snapshot],
     container: containerRef.value
   })
   lf.value = lfInstance
@@ -155,7 +155,6 @@ const registerNode = () => {
 onMounted(() => {
   initLf(window.__DATA__)
 })
-
 </script>
 
 <style scoped>
