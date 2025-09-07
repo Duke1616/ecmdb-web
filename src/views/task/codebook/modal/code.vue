@@ -1,47 +1,7 @@
 <template>
   <div class="code-with-files-page">
-    <!-- 模式切换器 -->
-    <div class="mode-switcher">
-      <div class="mode-options">
-        <label class="mode-option">
-          <input type="radio" v-model="editorMode" value="simple" @change="handleModeChange" />
-          <span>简单模式</span>
-        </label>
-        <label class="mode-option">
-          <input type="radio" v-model="editorMode" value="advanced" @change="handleModeChange" />
-          <span>文件管理模式</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- 简单模式 -->
-    <div v-if="editorMode === 'simple'" class="simple-editor">
-      <div class="editor-container">
-        <div class="editor-wrapper">
-          <EditorToolbar
-            :language="formData.language || 'python'"
-            :file-name="formData.name || 'untitled'"
-            @theme-change="handleThemeChange"
-            @format="formatCode"
-            @clear="clearCode"
-          />
-
-          <div class="code-editor">
-            <CodeMirror
-              ref="codeMirrorRef"
-              :code="formData.code || ''"
-              :language="formData.language || 'python'"
-              :is-create="true"
-              @update:code="handleCodeUpdate"
-              @update:language="handleLanguageUpdate"
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 文件管理模式 -->
-    <div v-else class="advanced-editor">
+    <div class="file-editor">
       <div class="file-manager-container">
         <FileManager
           ref="fileManagerRef"
@@ -72,11 +32,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
-import CodeMirror from "@@/components/CodeEditor/index.vue"
+import { ref, watch, nextTick } from "vue"
 import FileManager from "@@/components/FileManager/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
-import EditorToolbar from "@@/components/CodeEditor/toolbar.vue"
 import { useFormHandler } from "@@/composables/useFormHandler"
 
 interface FileNode {
@@ -109,14 +67,12 @@ interface Emits {
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
-const editorMode = ref<"simple" | "advanced">("simple")
-const codeMirrorRef = ref()
 const fileManagerRef = ref()
 const projectFiles = ref<FileNode[]>([])
 
-// 处理模式切换
-const handleModeChange = () => {
-  if (editorMode.value === "advanced" && projectFiles.value.length === 0) {
+// 初始化项目文件
+const initializeProjectFiles = () => {
+  if (projectFiles.value.length === 0) {
     // 初始化项目文件
     projectFiles.value = [
       {
@@ -138,15 +94,10 @@ const handleModeChange = () => {
   }
 }
 
-// 处理代码更新
-const handleCodeUpdate = (newCode: string) => {
-  emit("update:formData", { ...props.formData, code: newCode })
-}
-
-// 处理语言更新
-const handleLanguageUpdate = (newLanguage: string) => {
-  emit("update:formData", { ...props.formData, language: newLanguage })
-}
+// 组件挂载时初始化项目文件
+nextTick(() => {
+  initializeProjectFiles()
+})
 
 // 处理文件更新
 const handleFilesUpdate = (files: FileNode[]) => {
@@ -164,12 +115,19 @@ const handleFilesUpdate = (files: FileNode[]) => {
 
 // 处理文件变化
 const handleFileChange = (file: FileNode) => {
-  console.log("文件变化:", file)
+  // 当文件管理模式中的文件发生变化时，同步更新 formData
+  if (file.type === "file") {
+    emit("update:formData", { 
+      ...props.formData, 
+      code: file.content || "",
+      language: file.language || props.formData.language
+    })
+  }
 }
 
 // 处理项目保存
 const handleProjectSave = (files: FileNode[]) => {
-  console.log("项目保存:", files)
+  // 项目保存逻辑
 }
 
 // 处理导入项目
@@ -192,9 +150,6 @@ const handleImportProject = () => {
           // 验证导入的数据格式
           if (Array.isArray(importedData)) {
             projectFiles.value = importedData
-            console.log("项目导入成功:", importedData)
-          } else {
-            console.error("无效的项目文件格式")
           }
         } catch (error) {
           console.error("导入失败:", error)
@@ -226,9 +181,7 @@ const findMainFile = (files: FileNode[]): FileNode | null => {
 
 // 格式化代码
 const formatCode = () => {
-  if (codeMirrorRef.value) {
-    codeMirrorRef.value.formatCode()
-  }
+  // 格式化代码逻辑
 }
 
 // 清空代码
@@ -238,9 +191,7 @@ const clearCode = () => {
 
 // 处理主题切换
 const handleThemeChange = (theme: string) => {
-  if (editorMode.value === "simple" && codeMirrorRef.value) {
-    codeMirrorRef.value.handleThemeChange?.(theme)
-  }
+  // 主题切换逻辑
 }
 
 // 获取文件扩展名
@@ -263,36 +214,41 @@ const getFileExtension = (language: string): string => {
 }
 
 // 使用 useFormHandler 处理表单逻辑
-const { previous, save: handleSave, close } = useFormHandler(props.formData, emit, "codebook")
+const { previous: originalPrevious, save: handleSave, close } = useFormHandler(props.formData, emit, "codebook")
+
+// 保存当前代码到 formData
+const saveCurrentCode = () => {
+  // 优先从 FileManager 获取文件，否则使用 projectFiles
+  const files = (fileManagerRef.value?.getFiles && fileManagerRef.value.getFiles()) || projectFiles.value
+  const mainFile = findMainFile(files)
+  
+  if (mainFile) {
+    emit("update:formData", {
+      ...props.formData,
+      code: mainFile.content || "",
+      language: mainFile.language || "python"
+    })
+  }
+}
+
+// 重写 previous 函数，添加保存逻辑
+const previous = () => {
+  saveCurrentCode()
+  originalPrevious()
+}
 
 // 保存
 const save = () => {
-  if (editorMode.value === "advanced" && fileManagerRef.value) {
-    // 获取所有文件内容
-    const files = fileManagerRef.value.getFiles()
-    const mainFile = findMainFile(files)
-    if (mainFile) {
-      emit("update:formData", {
-        ...props.formData,
-        code: mainFile.content || "",
-        language: mainFile.language || "python"
-      })
-    }
-  }
+  saveCurrentCode()
   handleSave()
 }
 
-// 监听表单数据变化
+// 监听项目文件变化，通知 FileManager 更新
 watch(
-  () => props.formData,
-  (newData) => {
-    if (editorMode.value === "advanced" && projectFiles.value.length > 0) {
-      // 更新主文件内容
-      const mainFile = findMainFile(projectFiles.value)
-      if (mainFile) {
-        mainFile.content = newData.code || ""
-        mainFile.language = newData.language || "python"
-      }
+  () => projectFiles.value,
+  (newFiles) => {
+    if (newFiles.length > 0 && fileManagerRef.value && typeof fileManagerRef.value.updateFiles === 'function') {
+      fileManagerRef.value.updateFiles(newFiles)
     }
   },
   { deep: true }
@@ -308,123 +264,15 @@ watch(
   width: 100%;
   max-width: none;
   margin: 0;
-  text-align: left; /* 确保内容左对齐 */
+  text-align: left;
 }
 
-.mode-switcher {
-  padding: 16px 24px;
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0;
-
-  .mode-options {
-    display: flex;
-    gap: 24px;
-
-    .mode-option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      color: #374151;
-
-      input[type="radio"] {
-        margin: 0;
-      }
-
-      &:hover {
-        color: #1d4ed8;
-      }
-    }
-  }
-}
-
-.simple-editor {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  height: 100%;
-}
-
-.editor-container {
-  flex: 1;
-  padding: 0px;
-  overflow: hidden;
-
-  .editor-wrapper {
-    background: white;
-    border-radius: 12px;
-    box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    max-width: 100%;
-    margin: 0;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-.code-editor {
-  flex: 1;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fafafa;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-
-  :deep(.code-mirror) {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-
-  :deep(.editor) {
-    flex: 1;
-    min-height: 0;
-  }
-
-  :deep(.cm-editor) {
-    height: 100% !important;
-    border-radius: 0;
-
-    /* 自定义滚轮样式 */
-    .cm-scroller {
-      &::-webkit-scrollbar {
-        width: 8px;
-      }
-
-      &::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 4px;
-      }
-
-      &::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-        transition: background 0.3s ease;
-
-        &:hover {
-          background: #94a3b8;
-        }
-      }
-    }
-  }
-}
-
-.advanced-editor {
+.file-editor {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
   width: 100%;
-  text-align: left; /* 确保文件管理器左对齐 */
 }
 
 .file-manager-container {
@@ -436,6 +284,6 @@ watch(
   height: 100%;
   display: flex;
   flex-direction: column;
-  text-align: left; /* 确保文件管理器内容左对齐 */
+  text-align: left;
 }
 </style>

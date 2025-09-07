@@ -17,7 +17,6 @@ import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@@/assets/styles/index.scss"
 
-
 const app = createApp(App)
 
 // 安装插件（全局组件、自定义指令等）

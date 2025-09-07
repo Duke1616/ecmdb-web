@@ -91,48 +91,15 @@ const findFirstFile = (files: FileNode[]): FileNode | null => {
 const initializeFiles = () => {
   if (props.initialFiles.length > 0) {
     files.value = [...props.initialFiles]
+    // 自动选中第一个文件
+    const firstFile = findFirstFile(files.value)
+    if (firstFile) {
+      currentFileId.value = firstFile.id
+      emit("file-change", firstFile)
+    }
   } else {
-    // 默认文件结构
-    files.value = [
-      {
-        id: "root",
-        name: props.projectName,
-        type: "folder",
-        children: [
-          {
-            id: "main",
-            name: "main.py",
-            type: "file",
-            content: '# 主程序入口\nprint("Hello, World!")',
-            language: "python",
-            parentId: "root"
-          },
-          {
-            id: "utils",
-            name: "utils",
-            type: "folder",
-            children: [
-              {
-                id: "helper",
-                name: "helper.py",
-                type: "file",
-                content: "# 辅助函数\ndef helper_function():\n    pass",
-                language: "python",
-                parentId: "utils"
-              }
-            ],
-            parentId: "root"
-          }
-        ]
-      }
-    ]
-  }
-  
-  // 自动选中第一个文件
-  const firstFile = findFirstFile(files.value)
-  if (firstFile) {
-    currentFileId.value = firstFile.id
-    emit("file-change", firstFile)
+    // 如果没有传入文件，不初始化默认文件结构，等待外部传入
+    files.value = []
   }
 }
 
@@ -308,11 +275,23 @@ watch(
   { immediate: true }
 )
 
+// 更新文件
+const updateFiles = (newFiles: FileNode[]) => {
+  files.value = [...newFiles]
+  // 自动选中第一个文件
+  const firstFile = findFirstFile(files.value)
+  if (firstFile) {
+    currentFileId.value = firstFile.id
+    emit("file-change", firstFile)
+  }
+}
+
 // 暴露方法
 defineExpose({
   exportProject,
   importProject,
   saveProject,
+  updateFiles,
   getFiles: () => files.value,
   getCurrentFile: () => files.value.find((f) => f.id === currentFileId.value),
   getAllFilesContent
