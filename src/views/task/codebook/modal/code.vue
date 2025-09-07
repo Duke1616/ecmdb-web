@@ -70,6 +70,15 @@ const emit = defineEmits<Emits>()
 const fileManagerRef = ref()
 const projectFiles = ref<FileNode[]>([])
 
+// 使用 useFormHandler 处理表单逻辑
+const {
+  previous: originalPrevious,
+  save: handleSave,
+  close,
+  updateFormData,
+  setFormData
+} = useFormHandler(props.formData, emit, "codebook")
+
 // 初始化项目文件
 const initializeProjectFiles = () => {
   if (projectFiles.value.length === 0) {
@@ -105,11 +114,7 @@ const handleFilesUpdate = (files: FileNode[]) => {
   // 更新主文件内容
   const mainFile = findMainFile(files)
   if (mainFile) {
-    emit("update:formData", {
-      ...props.formData,
-      code: mainFile.content || "",
-      language: mainFile.language || "python"
-    })
+    updateFormDataWithFile(mainFile)
   }
 }
 
@@ -117,17 +122,13 @@ const handleFilesUpdate = (files: FileNode[]) => {
 const handleFileChange = (file: FileNode) => {
   // 当文件管理模式中的文件发生变化时，同步更新 formData
   if (file.type === "file") {
-    emit("update:formData", { 
-      ...props.formData, 
-      code: file.content || "",
-      language: file.language || props.formData.language
-    })
+    updateFormDataWithFile(file)
   }
 }
 
 // 处理项目保存
 const handleProjectSave = (files: FileNode[]) => {
-  // 项目保存逻辑
+  console.log(files)
 }
 
 // 处理导入项目
@@ -179,21 +180,6 @@ const findMainFile = (files: FileNode[]): FileNode | null => {
   return null
 }
 
-// 格式化代码
-const formatCode = () => {
-  // 格式化代码逻辑
-}
-
-// 清空代码
-const clearCode = () => {
-  emit("update:formData", { ...props.formData, code: "" })
-}
-
-// 处理主题切换
-const handleThemeChange = (theme: string) => {
-  // 主题切换逻辑
-}
-
 // 获取文件扩展名
 const getFileExtension = (language: string): string => {
   const extMap: Record<string, string> = {
@@ -213,21 +199,24 @@ const getFileExtension = (language: string): string => {
   return extMap[language] || "txt"
 }
 
-// 使用 useFormHandler 处理表单逻辑
-const { previous: originalPrevious, save: handleSave, close } = useFormHandler(props.formData, emit, "codebook")
+// 更新表单数据的公共函数
+const updateFormDataWithFile = (file: FileNode) => {
+  setFormData({
+    ...props.formData,
+    code: file.content || "",
+    language: file.language || props.formData.language
+  })
+  updateFormData()
+}
 
 // 保存当前代码到 formData
 const saveCurrentCode = () => {
   // 优先从 FileManager 获取文件，否则使用 projectFiles
   const files = (fileManagerRef.value?.getFiles && fileManagerRef.value.getFiles()) || projectFiles.value
   const mainFile = findMainFile(files)
-  
+
   if (mainFile) {
-    emit("update:formData", {
-      ...props.formData,
-      code: mainFile.content || "",
-      language: mainFile.language || "python"
-    })
+    updateFormDataWithFile(mainFile)
   }
 }
 
@@ -247,7 +236,7 @@ const save = () => {
 watch(
   () => projectFiles.value,
   (newFiles) => {
-    if (newFiles.length > 0 && fileManagerRef.value && typeof fileManagerRef.value.updateFiles === 'function') {
+    if (newFiles.length > 0 && fileManagerRef.value && typeof fileManagerRef.value.updateFiles === "function") {
       fileManagerRef.value.updateFiles(newFiles)
     }
   },
