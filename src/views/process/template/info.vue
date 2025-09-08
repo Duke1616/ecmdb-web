@@ -266,7 +266,7 @@ watch(
 )
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .info-container {
   display: flex;
   flex-direction: column;

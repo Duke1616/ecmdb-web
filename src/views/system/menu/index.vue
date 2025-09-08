@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { h, nextTick, onMounted, ref, watch } from "vue"
-import { Search } from "@element-plus/icons-vue"
+import { Search, Edit, Delete } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
 import { deleteMenuApi, listMenusByPlatformApi } from "@/api/menu"
@@ -307,11 +307,15 @@ onMounted(async () => {
         <el-card>
           <div v-if="empty">
             <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="listMenusTreeData" />
-            <div class="form-bottom">
-              <el-form-item>
-                <el-button type="primary" size="large" @click="handleUpdate">修改</el-button>
-                <el-button type="danger" size="large" @click="handleDelete">删除</el-button>
-              </el-form-item>
+            <div class="menu-actions-bottom">
+              <el-button type="primary" size="large" @click="handleUpdate" class="action-btn">
+                <el-icon><Edit /></el-icon>
+                修改
+              </el-button>
+              <el-button type="danger" size="large" @click="handleDelete" class="action-btn">
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
             </div>
           </div>
           <div>
@@ -535,6 +539,52 @@ onMounted(async () => {
   }
 }
 
+.menu-actions-bottom {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+
+  .action-btn {
+    min-width: 100px;
+    height: 40px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    .el-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+
+    &.el-button--primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      border: none;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+
+      &:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+        transform: translateY(-1px);
+      }
+    }
+
+    &.el-button--danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: none;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+
+      &:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 8px rgba(239, 68, 68, 0.4);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .content {
     flex-direction: column;
@@ -548,6 +598,16 @@ onMounted(async () => {
 
   .menu-details {
     flex: 1;
+  }
+
+  .menu-actions-bottom {
+    flex-direction: column;
+    gap: 8px;
+
+    .action-btn {
+      width: 100%;
+      min-width: auto;
+    }
   }
 }
 </style>
