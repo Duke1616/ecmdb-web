@@ -51,13 +51,26 @@
         />
       </div>
     </el-card>
-    <el-drawer class="drawer-header" v-model="dialogVisible" :title="title" size="30%" @closed="onClosed">
+    <el-drawer
+      class="drawer-header"
+      v-model="dialogVisible"
+      :show-close="false"
+      :with-header="false"
+      size="35%"
+      @closed="onClosed"
+    >
       <!-- 注册Runner -->
       <reigsterRunner ref="runnerApiRef" @callback="listRunnerData" @closed="onClosed" />
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlerCreateOrUpdagte"> 保存 </el-button>
+        <div class="drawer-footer">
+          <el-button size="large" @click="dialogVisible = false" class="cancel-btn">
+            <el-icon><Close /></el-icon>
+            取消
+          </el-button>
+          <el-button type="primary" size="large" @click="handlerCreateOrUpdagte" class="save-btn">
+            <el-icon><Check /></el-icon>
+            保存
+          </el-button>
         </div>
       </template>
     </el-drawer>
@@ -66,7 +79,7 @@
 
 <script setup lang="ts">
 import { h, nextTick, ref, watch } from "vue"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, Close, Check } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { runner } from "@/api/runner/types/runner"
 import { deleteRunnerApi, listRunnerApi } from "@/api/runner"
@@ -145,6 +158,67 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRun
   .el-drawer__header {
     margin: 0;
   }
+
+  .el-drawer__footer {
+    padding: 20px 24px;
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+  }
+}
+
+.drawer-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+
+  .cancel-btn {
+    min-width: 100px;
+    height: 44px;
+    border-radius: 8px;
+    font-weight: 500;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #6b7280;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #9ca3af;
+      color: #374151;
+      background: #f9fafb;
+    }
+
+    .el-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+  }
+
+  .save-btn {
+    min-width: 100px;
+    height: 44px;
+    border-radius: 8px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border: none;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    .el-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+  }
 }
 </style>
 
@@ -162,5 +236,19 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRun
 .pager-wrapper {
   display: flex;
   justify-content: flex-end;
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .drawer-footer {
+    flex-direction: column;
+    gap: 8px;
+
+    .cancel-btn,
+    .save-btn {
+      width: 100%;
+      min-width: auto;
+    }
+  }
 }
 </style>
