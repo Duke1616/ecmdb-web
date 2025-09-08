@@ -182,184 +182,79 @@ const handleCurrentChange = (page: number) => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 400px; /* 最小高度保证基本可用性 */
-  overflow: hidden; /* 防止整体容器滚动 */
-  border-radius: 8px;
-  background: #ffffff;
+  min-height: 400px;
 }
 
 .table-wrapper {
   flex: 1;
-  min-height: 0; /* 关键：允许flex子项收缩 */
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .data-table {
   flex: 1;
   width: 100%;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 
   :deep(.el-table) {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
     height: 100%;
-    width: 100%; /* 确保el-table使用100%宽度 */
-  }
-
-  :deep(.el-table__header-wrapper) {
-    flex-shrink: 0;
-    overflow: visible;
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: #f8fafc;
   }
 
   :deep(.el-table__body-wrapper) {
-    flex: 1;
-    overflow-y: auto !important; /* 强制显示垂直滚动条 */
-    overflow-x: auto;
-
-    /* 自定义滚动条样式 */
-    &::-webkit-scrollbar {
-      width: 12px; /* 增加滚动条宽度使其更明显 */
-      height: 12px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 6px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: #94a3b8; /* 使滚动条更明显 */
-      border-radius: 6px;
-      transition: background 0.3s ease;
-
-      &:hover {
-        background: #64748b;
-      }
-    }
-
-    /* 确保滚动条始终可见 */
-    &::-webkit-scrollbar-thumb:vertical {
-      min-height: 30px;
-    }
+    overflow-y: auto;
   }
 
   :deep(.el-table__header) {
-    background: #f8fafc;
-
     th {
-      background: #f8fafc !important;
+      background: #f8fafc;
       color: #374151;
       font-weight: 600;
-      border-bottom: 2px solid #e2e8f0;
-      vertical-align: middle;
-      height: 48px; /* 增加表头高度 */
+      height: 42px;
       padding: 8px 12px;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-
-      @media (max-width: 768px) {
-        height: 40px;
-        padding: 6px 8px;
-        font-size: 13px;
-      }
     }
   }
 
   :deep(.el-table__body) {
-    tr {
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%) !important;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      }
-
-      td {
-        vertical-align: middle;
-        height: 52px; /* 增加行高 */
-        padding: 8px 12px;
-        border-bottom: 1px solid #f1f5f9;
-
-        @media (max-width: 768px) {
-          height: 44px;
-          padding: 6px 8px;
-        }
-      }
+    td {
+      height: 46px;
+      padding: 8px 12px;
     }
   }
 
   .action-buttons {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     justify-content: center;
     align-items: center;
-    flex-wrap: wrap;
-
-    @media (max-width: 768px) {
-      gap: 4px;
-      flex-direction: column;
-      align-items: stretch;
-    }
 
     .action-btn {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
       padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      border-radius: 3px;
+      font-size: 11px;
       font-weight: 500;
       transition: all 0.3s ease;
       white-space: nowrap;
-      min-height: 28px;
-
-      @media (max-width: 768px) {
-        padding: 3px 6px;
-        font-size: 11px;
-        min-height: 24px;
-        justify-content: center;
-      }
+      min-height: 24px;
 
       &:hover {
         transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       }
     }
   }
 }
 
 .pagination-container {
-  flex-shrink: 0; /* 不允许收缩 */
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  align-items: center;
   padding: 16px 20px;
-  background: #ffffff;
+  background: #f8fafc;
   border-top: 1px solid #e2e8f0;
-  min-height: 60px; /* 确保分页器有足够高度 */
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05); /* 添加上方阴影 */
-}
-
-@media (max-width: 768px) {
-  .data-table-container {
-    min-height: 300px;
-  }
-
-  .pagination-container {
-    padding: 12px 16px;
-    min-height: 50px;
-  }
+  margin-top: auto;
 }
 </style>

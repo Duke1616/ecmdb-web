@@ -1,24 +1,24 @@
 <template>
   <div class="role-manager">
+    <!-- 头部区域 -->
+    <div class="manager-header">
+      <div class="header-left">
+        <h2 class="manager-title">角色管理</h2>
+        <p class="manager-subtitle">管理系统角色和权限分配</p>
+      </div>
+      <div class="header-right">
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handleAddRole"> 新增角色 </el-button>
+        <el-button type="danger" :icon="Delete" class="action-btn danger" @click="handleBatchDelete">
+          批量删除
+        </el-button>
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
+        </el-tooltip>
+      </div>
+    </div>
+
     <!-- 主内容区域 -->
     <div class="manager-content">
-      <!-- 头部区域 -->
-      <div class="manager-header">
-        <div class="header-left">
-          <h2 class="manager-title">角色管理</h2>
-          <p class="manager-subtitle">管理系统角色和权限分配</p>
-        </div>
-        <div class="header-right">
-          <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handleAddRole"> 新增角色 </el-button>
-          <el-button type="danger" :icon="Delete" class="action-btn danger" @click="handleBatchDelete">
-            批量删除
-          </el-button>
-          <el-tooltip content="刷新数据">
-            <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
-          </el-tooltip>
-        </div>
-      </div>
-
       <div class="content-card">
         <!-- 表格区域 -->
         <div class="table-container">
@@ -42,7 +42,6 @@
             <!-- 角色名称插槽 -->
             <template #roleName="{ row }">
               <div class="role-name">
-                <el-icon class="role-icon"><User /></el-icon>
                 <span>{{ row.name }}</span>
               </div>
             </template>
@@ -99,7 +98,7 @@ import { usePagination } from "@/common/composables/usePagination"
 import { listRolesApi } from "@/api/role"
 import { changeRoleMenuPermissionApi } from "@/api/permission"
 import { role } from "@/api/role/types/role"
-import { CirclePlus, RefreshRight, Delete, User, Check, Close, Edit, Menu } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, Delete, Check, Close, Edit, Menu } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import createOrUpdate from "./createOrUpdate.vue"
 import MenuPermission from "./menu.vue"
@@ -130,7 +129,7 @@ const tableColumns = [
   {
     prop: "status",
     label: "角色状态",
-    width: 100,
+    width: 120,
     slot: "roleStatus"
   },
   {
@@ -282,9 +281,10 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 .role-manager {
   display: flex;
   flex-direction: column;
-  height: 100vh; /* 使用视口高度确保全屏布局 */
+  height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden; /* 防止整体页面滚动 */
+  overflow: hidden;
+  padding: 20px;
 }
 
 /* 头部区域 */
@@ -294,13 +294,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 20px 24px;
+  padding: 18px 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-shrink: 0; /* 确保头部不会被压缩 */
-  min-height: 70px;
-  margin-bottom: 20px; /* 调整边距 */
+  flex-shrink: 0;
+  min-height: 65px;
+  margin-bottom: 18px;
 
   .header-left {
     display: flex;
@@ -312,14 +312,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
       font-size: 18px;
       font-weight: 600;
       color: #1e293b;
-      line-height: 1.2;
     }
 
     .manager-subtitle {
       margin: 0;
       font-size: 13px;
       color: #64748b;
-      font-weight: 400;
     }
   }
 
@@ -331,41 +329,22 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 
   .action-btn {
     height: 36px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    }
-
-    &.danger {
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-      }
-    }
   }
 
   .refresh-btn {
     width: 36px;
     height: 36px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: rotate(180deg) translateY(-2px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
   }
 }
 
 /* 主内容区域 */
 .manager-content {
-  flex: 1; /* 占据剩余空间 */
-  padding: 20px 24px 24px 24px; /* 调整内边距 */
-  display: flex; /* 添加flex布局 */
-  flex-direction: column; /* 垂直布局 */
-  min-height: 0; /* 允许flex收缩 */
-  overflow: hidden; /* 防止内容区域滚动 */
+  flex: 1;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .content-card {
@@ -376,34 +355,48 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  max-width: 100%;
   display: flex;
   flex-direction: column;
-  flex: 1; /* 占据剩余空间 */
-  min-height: 0; /* 允许flex收缩 */
+  flex: 1;
+  min-height: 0;
 }
 
 /* 表格容器 */
 .table-container {
-  flex: 1; /* 占据剩余空间 */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* 允许flex收缩 */
-  overflow: hidden; /* 防止容器滚动 */
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 角色名称样式 */
+.role-name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  .role-icon {
+    color: #3b82f6;
+  }
+}
+
+/* 标签样式 */
+.code-tag,
+.status-tag {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 /* 对话框样式 */
 .role-dialog {
   :deep(.el-dialog__header) {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     padding: 20px 24px;
-
-    .el-dialog__title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e293b;
-    }
   }
 
   :deep(.el-dialog__body) {
@@ -413,15 +406,9 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 
 .permission-dialog {
   :deep(.el-dialog__header) {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     padding: 20px 24px;
-
-    .el-dialog__title {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e293b;
-    }
   }
 
   :deep(.el-dialog__body) {
@@ -432,12 +419,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 /* 响应式设计 */
 @media (max-width: 768px) {
   .role-manager {
-    height: 100vh; /* 移动端也使用全屏高度 */
+    padding: 16px;
   }
 
   .manager-header {
-    margin-bottom: 16px; /* 移动端调整边距 */
     padding: 16px 20px;
+    margin-bottom: 16px;
 
     .header-left {
       .manager-title {
@@ -463,14 +450,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
         height: 32px;
       }
     }
-  }
-
-  .manager-content {
-    padding: 16px 16px 16px 16px; /* 移动端调整内边距 */
-  }
-
-  .table-container {
-    padding: 16px 0; /* 移动端调整表格容器内边距 */
   }
 }
 </style>
