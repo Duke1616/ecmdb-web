@@ -1,56 +1,38 @@
 <template>
   <div class="app-container">
-    <el-card shadow="never">
-      <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
-        </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listRunnerData" />
-          </el-tooltip>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <el-table :data="runnersData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="worker_name" label="工作节点" align="center" />
-          <el-table-column prop="codebook_uid" label="绑定模版" align="center" />
-          <el-table-column prop="tags" label="标签" align="center">
-            <template #default="scope">
-              <el-tag
-                v-for="tag in scope.row.tags"
-                :key="tag"
-                :style="{ marginRight: '5px' }"
-                effect="plain"
-                type="primary"
-              >
-                {{ tag }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column fixed="right" label="操作" width="150" align="center">
-            <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+    <!-- 头部区域 -->
+    <ManagerHeader
+      title="运行器管理"
+      subtitle="管理工作节点运行器配置"
+      add-button-text="新增运行器"
+      @add="handlerCreate"
+      @refresh="listRunnerData"
+    />
+
+    <!-- 主内容区域 -->
+    <DataTable
+      :data="runnersData"
+      :columns="tableColumns"
+      :actions="tableActions"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      @action="handleTableAction"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 标签列插槽 -->
+      <template #tags="{ row }">
+        <el-tag v-for="tag in row.tags" :key="tag" :style="{ marginRight: '5px' }" effect="plain" type="primary">
+          {{ tag }}
+        </el-tag>
+      </template>
+    </DataTable>
     <el-drawer
       class="drawer-header"
       v-model="dialogVisible"
@@ -79,13 +61,46 @@
 
 <script setup lang="ts">
 import { h, nextTick, ref, watch } from "vue"
-import { CirclePlus, RefreshRight, Close, Check } from "@element-plus/icons-vue"
+import { Close, Check, Edit } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { runner } from "@/api/runner/types/runner"
 import { deleteRunnerApi, listRunnerApi } from "@/api/runner"
 import reigsterRunner from "./registerOrUpdate.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+// 表格列配置
+const tableColumns = [
+  { prop: "name", label: "名称", align: "center" as const },
+  { prop: "worker_name", label: "工作节点", align: "center" as const },
+  { prop: "codebook_uid", label: "绑定模版", align: "center" as const },
+  { prop: "tags", label: "标签", align: "center" as const, slot: "tags" }
+]
+
+// 表格操作配置
+const tableActions = [
+  { key: "edit", label: "修改", type: "primary" as const, icon: Edit },
+  { key: "delete", label: "删除", type: "danger" as const }
+]
+
+// 选中的行
+const selectedRows = ref<runner[]>([])
+
+// 表格操作事件
+const handleTableAction = (action: string, row: runner) => {
+  if (action === "edit") {
+    handleUpdate(row)
+  } else if (action === "delete") {
+    handleDelete(row)
+  }
+}
+
+// 选择变化事件
+const handleSelectionChange = (selection: runner[]) => {
+  selectedRows.value = selection
+}
 
 const runnerApiRef = ref<InstanceType<typeof reigsterRunner>>()
 const dialogVisible = ref<boolean>(false)
@@ -223,19 +238,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRun
 </style>
 
 <style lang="scss" scoped>
-.toolbar-wrapper {
+.app-container {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  padding: 20px;
 }
 
 // 响应式设计

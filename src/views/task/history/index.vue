@@ -1,58 +1,44 @@
 <template>
   <div class="app-container">
-    <el-card shadow="never">
-      <div class="table-wrapper">
-        <el-table :data="tasksData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="order_id" label="工单号" align="center" />
-          <el-table-column prop="codebook_name" label="任务模版" align="center" />
-          <el-table-column prop="worker_name" label="工作节点" align="center" />
-          <el-table-column prop="status" label="状态" align="center">
-            <template #default="{ row }">
-              <EnumTag :value="row.status" :map="statusMap" effect="plain" />
-            </template>
-          </el-table-column>
-          <!-- <el-table-column fixed="right" label="操作" width="150" align="center">
-            <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleInput(scope.row)">输入</el-button>
-              <el-button type="primary" text bg size="small" @click="handleResult(scope.row)">输出</el-button>
-            </template>
-          </el-table-column> -->
-          <el-table-column prop="is_timing" label="定时任务" align="center">
-            <template #default="{ row }">
-              <EnumTag :value="row.is_timing" :map="timingMap" effect="plain" />
-            </template>
-          </el-table-column>
-          <el-table-column prop="run_time" label="执行时间" align="center">
-            <template #default="scope">
-              <span>{{ scope.row.start_time }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column fixed="right" label="操作" width="200" align="center">
-            <template #default="scope">
-              <OperateBtn
-                :items="operateBtnStatus"
-                @routeEvent="operateEvent"
-                :operateItem="scope.row"
-                :maxLength="2"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+    <!-- 头部区域 -->
+    <ManagerHeader title="任务历史" subtitle="查看任务执行历史和状态" @refresh="listTasksData" />
+
+    <!-- 主内容区域 -->
+    <DataTable
+      :data="tasksData"
+      :columns="tableColumns"
+      :actions="[]"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 状态列插槽 -->
+      <template #status="{ row }">
+        <EnumTag :value="row.status" :map="statusMap" effect="plain" />
+      </template>
+
+      <!-- 定时任务列插槽 -->
+      <template #is_timing="{ row }">
+        <EnumTag :value="row.is_timing" :map="timingMap" effect="plain" />
+      </template>
+
+      <!-- 执行时间列插槽 -->
+      <template #run_time="{ row }">
+        <span>{{ row.start_time }}</span>
+      </template>
+
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnStatus" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
+      </template>
+    </DataTable>
     <div>
       <!--  代码块 -->
       <el-dialog v-model="resultVisible" width="40%" @close="onclose" :close-on-click-modal="closeOnClickModal">
@@ -103,8 +89,30 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { TagInfo } from "@/common/components/EnumTag/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+// 表格列配置
+const tableColumns = [
+  { prop: "order_id", label: "工单号", align: "center" as const },
+  { prop: "codebook_name", label: "任务模版", align: "center" as const },
+  { prop: "worker_name", label: "工作节点", align: "center" as const },
+  { prop: "status", label: "状态", align: "center" as const, slot: "status" },
+  { prop: "is_timing", label: "定时任务", align: "center" as const, slot: "is_timing" },
+  { prop: "run_time", label: "执行时间", align: "center" as const, slot: "run_time" },
+  { prop: "actions", label: "操作", align: "center" as const, slot: "actions", width: 200 }
+]
+
+// 选中的行
+const selectedRows = ref<task[]>([])
+
+// 选择变化事件
+const handleSelectionChange = (selection: task[]) => {
+  selectedRows.value = selection
+}
+
 /** 查询模版列表 */
 const tasksData = ref<task[]>([])
 const listTasksData = () => {
@@ -296,19 +304,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTas
 </style>
 
 <style lang="scss" scoped>
-.toolbar-wrapper {
+.app-container {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  padding: 20px;
 }
 
 .code-container {

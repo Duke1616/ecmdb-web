@@ -1,43 +1,31 @@
 <template>
   <div class="app-container">
-    <el-card shadow="never">
-      <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
-        </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listCodebooksData" />
-          </el-tooltip>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <el-table :data="codebooksData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="identifier" label="唯一标识" align="center" />
-          <el-table-column prop="secret" label="密钥" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
-            <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+    <!-- 头部区域 -->
+    <ManagerHeader
+      title="代码本管理"
+      subtitle="管理任务代码本和脚本配置"
+      add-button-text="新增代码本"
+      @add="handlerCreate"
+      @refresh="listCodebooksData"
+    />
+
+    <!-- 主内容区域 -->
+    <DataTable
+      :data="codebooksData"
+      :columns="tableColumns"
+      :actions="tableActions"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      @action="handleTableAction"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
     <!-- 新增/编辑模版 -->
     <el-card v-show="addDialogDrawer">
       <!-- 代码编辑器模式选择器 -->
@@ -72,11 +60,43 @@ import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookAp
 import { ElMessage, ElMessageBox } from "element-plus"
 import InfoPage from "./modal/info.vue"
 import Code from "./modal/code.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
 const wizardRef = ref()
 const codeEditorMode = ref<"simple" | "advanced">("simple")
+
+// 表格列配置
+const tableColumns = [
+  { prop: "name", label: "名称", align: "center" as const },
+  { prop: "identifier", label: "唯一标识", align: "center" as const },
+  { prop: "secret", label: "密钥", align: "center" as const }
+]
+
+// 表格操作配置
+const tableActions = [
+  { key: "edit", label: "修改", type: "primary" as const, icon: Edit },
+  { key: "delete", label: "删除", type: "danger" as const }
+]
+
+// 选中的行
+const selectedRows = ref<codebook[]>([])
+
+// 表格操作事件
+const handleTableAction = (action: string, row: codebook) => {
+  if (action === "edit") {
+    handleUpdate(row)
+  } else if (action === "delete") {
+    handleDelete(row)
+  }
+}
+
+// 选择变化事件
+const handleSelectionChange = (selection: codebook[]) => {
+  selectedRows.value = selection
+}
 
 // 向导步骤配置
 const codebookSteps = computed(() => [
@@ -310,19 +330,13 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listCod
 </style>
 
 <style lang="scss" scoped>
-.toolbar-wrapper {
+.app-container {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  padding: 20px;
 }
 
 /* 代码编辑器模式选择器 */

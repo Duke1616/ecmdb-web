@@ -36,7 +36,7 @@
 
             <!-- 操作列 -->
             <el-table-column
-              v-if="actions && actions.length > 0"
+              v-if="actions && actions.length > 0 && !hasActionsSlot"
               :label="actionColumnLabel"
               :width="actionColumnWidth"
               :fixed="actionColumnFixed"
@@ -85,7 +85,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, useSlots } from "vue"
 
 interface Column {
   prop: string
@@ -141,6 +141,8 @@ const props = withDefaults(defineProps<Props>(), {
   paginationLayout: "total, sizes, prev, pager, next, jumper"
 })
 
+const slots = useSlots()
+
 const emit = defineEmits<{
   action: [key: string, row: any, index: number]
   selectionChange: [selection: any[]]
@@ -157,6 +159,11 @@ const getColumnValue = (row: any, column: Column) => {
 // 如果传入了固定高度，优先使用，否则使用 auto 让 flex 布局控制
 const finalTableHeight = computed(() => {
   return props.tableProps.height || "auto"
+})
+
+// 检查是否有自定义操作列插槽
+const hasActionsSlot = computed(() => {
+  return !!slots.actions
 })
 
 // 处理操作按钮点击

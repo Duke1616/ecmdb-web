@@ -1,40 +1,33 @@
 <template>
   <div class="app-container">
-    <el-card shadow="never">
-      <div class="table-wrapper">
-        <el-table :data="workersData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="topic" label="Topic" align="center" />
-          <el-table-column prop="status" label="状态" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.status === 1" effect="plain" type="primary" disable-transitions>运行</el-tag>
-              <el-tag v-else-if="scope.row.status === 2" effect="plain" type="warning" disable-transitions>禁用</el-tag>
-              <el-tag v-else-if="scope.row.status === 3" effect="plain" type="danger" disable-transitions>离线</el-tag>
-              <el-tag v-else type="info" effect="plain" disable-transitions>未知类型</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="150" align="center">
-            <template #default="scope">
-              <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">禁用</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+    <!-- 头部区域 -->
+    <ManagerHeader title="工作节点管理" subtitle="管理工作节点状态和配置" @refresh="listWorkersData" />
+
+    <!-- 主内容区域 -->
+    <DataTable
+      :data="workersData"
+      :columns="tableColumns"
+      :actions="tableActions"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      @action="handleTableAction"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 状态列插槽 -->
+      <template #status="{ row }">
+        <el-tag v-if="row.status === 1" effect="plain" type="primary" disable-transitions>运行</el-tag>
+        <el-tag v-else-if="row.status === 2" effect="plain" type="warning" disable-transitions>禁用</el-tag>
+        <el-tag v-else-if="row.status === 3" effect="plain" type="danger" disable-transitions>离线</el-tag>
+        <el-tag v-else type="info" effect="plain" disable-transitions>未知类型</el-tag>
+      </template>
+    </DataTable>
   </div>
 </template>
 
@@ -43,7 +36,35 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { worker } from "@/api/worker/types/worker"
 import { listWorkerApi } from "@/api/worker/worker"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+// 表格列配置
+const tableColumns = [
+  { prop: "name", label: "名称", align: "center" as const },
+  { prop: "topic", label: "Topic", align: "center" as const },
+  { prop: "status", label: "状态", align: "center" as const, slot: "status" },
+  { prop: "desc", label: "描述", align: "center" as const }
+]
+
+// 表格操作配置
+const tableActions = [{ key: "disable", label: "禁用", type: "warning" as const }]
+
+// 选中的行
+const selectedRows = ref<worker[]>([])
+
+// 表格操作事件
+const handleTableAction = (action: string, row: worker) => {
+  if (action === "disable") {
+    handleUpdate(row)
+  }
+}
+
+// 选择变化事件
+const handleSelectionChange = (selection: worker[]) => {
+  selectedRows.value = selection
+}
 
 /** 查询模版列表 */
 const workersData = ref<worker[]>([])
@@ -79,18 +100,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listWor
 </style>
 
 <style lang="scss" scoped>
-.toolbar-wrapper {
+.app-container {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  padding: 20px;
 }
 </style>
