@@ -188,7 +188,6 @@ const handleCurrentChange = (page: number) => {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow: hidden;
 }
 
 /* 内容卡片 */
