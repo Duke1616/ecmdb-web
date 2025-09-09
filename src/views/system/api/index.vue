@@ -1,46 +1,29 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <!-- <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
-        </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listCodebooksData" />
-          </el-tooltip>
-        </div>
-      </div> -->
-      <div class="table-wrapper">
-        <el-table :data="endpointsData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="path" label="路径" width="300" />
-          <el-table-column prop="method" label="方法" align="center" />
-          <el-table-column prop="is_auth" label="是否登录" align="center" />
-          <el-table-column prop="is_permission" label="是否鉴权" align="center" />
-          <el-table-column prop="is_audit" label="是否审计" align="center" />
-          <el-table-column prop="desc" label="接口介绍" align="center" />
-          <!-- <el-table-column fixed="right" label="操作" width="150" align="center">
-            <template #default="scope">
-              <el-button type="primary" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
-            </template>
-          </el-table-column> -->
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+  <div class="api-manager">
+    <!-- 头部区域 -->
+    <ManagerHeader title="API 管理" subtitle="管理系统接口和权限配置" @refresh="handleRefresh">
+      <template #actions>
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
+
+    <!-- 主内容区域 -->
+    <DataTable
+      :data="endpointsData"
+      :columns="tableColumns"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{}"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
   </div>
 </template>
 
@@ -49,6 +32,10 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listEndpointApi } from "@/api/endpoint"
 import { endpoint } from "@/api/endpoint/types/endpoint"
+import { RefreshRight } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@@/components/DataTable/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 /** 查询模版列表 */
@@ -69,31 +56,52 @@ const listEndpointsData = () => {
     .finally(() => {})
 }
 
+/** 刷新数据 */
+const handleRefresh = () => {
+  listEndpointsData()
+  ElMessage.success("数据已刷新")
+}
+
+/** 表格列配置 */
+const tableColumns = [
+  { prop: "path", label: "路径", width: 300, align: "left" as const },
+  { prop: "method", label: "方法", align: "center" as const },
+  { prop: "is_auth", label: "是否登录", align: "center" as const },
+  { prop: "is_permission", label: "是否鉴权", align: "center" as const },
+  { prop: "is_audit", label: "是否审计", align: "center" as const },
+  { prop: "desc", label: "接口介绍", align: "center" as const }
+]
+
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listEndpointsData, { immediate: true })
 </script>
 
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
+<style lang="scss" scoped>
+/* API 管理器容器 */
+.api-manager {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* 按钮样式 */
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: rotate(180deg);
   }
 }
-</style>
 
-<style lang="scss" scoped>
-.toolbar-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .api-manager {
+    padding: 16px;
+  }
 }
 </style>

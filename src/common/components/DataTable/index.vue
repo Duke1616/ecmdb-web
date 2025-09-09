@@ -1,81 +1,85 @@
 <template>
-  <div class="data-table-container">
-    <div class="table-wrapper">
-      <el-table
-        :data="data"
-        class="data-table"
-        stripe
-        :height="finalTableHeight"
-        v-bind="tableProps"
-        @selection-change="handleSelectionChange"
-      >
-        <!-- 选择列 -->
-        <el-table-column v-if="showSelection" type="selection" width="50" align="center" />
+  <div class="manager-content">
+    <div class="content-card">
+      <div class="data-table-container">
+        <div class="table-wrapper">
+          <el-table
+            :data="data"
+            class="data-table"
+            stripe
+            :height="finalTableHeight"
+            v-bind="tableProps"
+            @selection-change="handleSelectionChange"
+          >
+            <!-- 选择列 -->
+            <el-table-column v-if="showSelection" type="selection" width="50" align="center" />
 
-        <!-- 动态列 -->
-        <el-table-column
-          v-for="column in columns"
-          :key="column.prop"
-          :prop="column.prop"
-          :label="column.label"
-          :width="column.width"
-          :min-width="column.minWidth"
-          :fixed="column.fixed"
-          :align="column.align || 'center'"
-          :show-overflow-tooltip="column.showOverflowTooltip"
-        >
-          <template #default="scope">
-            <!-- 自定义插槽 -->
-            <slot v-if="column.slot" :name="column.slot" :row="scope.row" :column="column" :index="scope.$index" />
-            <!-- 默认显示 -->
-            <span v-else>{{ getColumnValue(scope.row, column) }}</span>
-          </template>
-        </el-table-column>
+            <!-- 动态列 -->
+            <el-table-column
+              v-for="column in columns"
+              :key="column.prop"
+              :prop="column.prop"
+              :label="column.label"
+              :width="column.width"
+              :min-width="column.minWidth"
+              :fixed="column.fixed"
+              :align="column.align || 'center'"
+              :show-overflow-tooltip="column.showOverflowTooltip"
+            >
+              <template #default="scope">
+                <!-- 自定义插槽 -->
+                <slot v-if="column.slot" :name="column.slot" :row="scope.row" :column="column" :index="scope.$index" />
+                <!-- 默认显示 -->
+                <span v-else>{{ getColumnValue(scope.row, column) }}</span>
+              </template>
+            </el-table-column>
 
-        <!-- 操作列 -->
-        <el-table-column
-          v-if="actions && actions.length > 0"
-          :label="actionColumnLabel"
-          :width="actionColumnWidth"
-          :fixed="actionColumnFixed"
-          align="center"
-        >
-          <template #default="scope">
-            <div class="action-buttons">
-              <el-button
-                v-for="action in actions"
-                :key="action.key"
-                :type="action.type || 'primary'"
-                :plain="action.plain !== false"
-                :size="action.size || 'small'"
-                :disabled="action.disabled && action.disabled(scope.row)"
-                @click="handleAction(action.key, scope.row, scope.$index)"
-                class="action-btn"
-              >
-                <el-icon v-if="action.icon">
-                  <component :is="action.icon" />
-                </el-icon>
-                {{ action.label }}
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
+            <!-- 操作列 -->
+            <el-table-column
+              v-if="actions && actions.length > 0"
+              :label="actionColumnLabel"
+              :width="actionColumnWidth"
+              :fixed="actionColumnFixed"
+              align="center"
+            >
+              <template #default="scope">
+                <div class="action-buttons">
+                  <el-button
+                    v-for="action in actions"
+                    :key="action.key"
+                    :type="action.type || 'primary'"
+                    :plain="action.plain !== false"
+                    :size="action.size || 'small'"
+                    :disabled="action.disabled && action.disabled(scope.row)"
+                    @click="handleAction(action.key, scope.row, scope.$index)"
+                    class="action-btn"
+                  >
+                    <el-icon v-if="action.icon">
+                      <component :is="action.icon" />
+                    </el-icon>
+                    {{ action.label }}
+                  </el-button>
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
 
-    <!-- 分页器 -->
-    <div v-if="showPagination" class="pagination-container">
-      <el-pagination
-        background
-        :layout="paginationLayout"
-        :page-sizes="pageSizes"
-        :total="total"
-        :page-size="pageSize"
-        :current-page="currentPage"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-        class="pagination"
-      />
+        <!-- 分页器 -->
+        <div v-if="showPagination" class="pagination-container">
+          <el-pagination
+            background
+            :layout="paginationLayout"
+            :page-sizes="pageSizes"
+            :total="total"
+            :page-size="pageSize"
+            :current-page="currentPage"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            class="pagination"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -177,12 +181,36 @@ const handleCurrentChange = (page: number) => {
 </script>
 
 <style lang="scss" scoped>
+/* 主内容区域 */
+.manager-content {
+  flex: 1;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* 内容卡片 */
+.content-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .data-table-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  min-height: 400px;
 }
 
 .table-wrapper {
@@ -210,35 +238,35 @@ const handleCurrentChange = (page: number) => {
       background: #f8fafc;
       color: #374151;
       font-weight: 600;
-      height: 42px;
-      padding: 8px 12px;
+      height: 48px;
+      padding: 12px 16px;
     }
   }
 
   :deep(.el-table__body) {
     td {
-      height: 46px;
-      padding: 8px 12px;
+      height: 52px;
+      padding: 12px 16px;
     }
   }
 
   .action-buttons {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     justify-content: center;
     align-items: center;
 
     .action-btn {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      padding: 4px 8px;
-      border-radius: 3px;
-      font-size: 11px;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
       font-weight: 500;
       transition: all 0.3s ease;
       white-space: nowrap;
-      min-height: 24px;
+      min-height: 28px;
 
       &:hover {
         transform: translateY(-1px);

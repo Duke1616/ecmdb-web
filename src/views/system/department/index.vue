@@ -1,8 +1,13 @@
 <template>
   <div class="app-container">
-    <div class="header">
-      <h2>部门管理</h2>
-    </div>
+    <!-- 头部区域 -->
+    <ManagerHeader title="部门管理" subtitle="管理系统部门和人员组织架构" @refresh="handleRefresh">
+      <template #actions>
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
 
     <div class="content">
       <div class="department-panel">
@@ -94,13 +99,14 @@
 
 <script lang="ts" setup>
 import { h, nextTick, onMounted, ref, watch } from "vue"
-import { Search, Edit, Delete } from "@element-plus/icons-vue"
+import { Search, Edit, Delete, RefreshRight } from "@element-plus/icons-vue"
 import DepartmentForm from "./form.vue"
 import Tip from "./tip.vue"
 import User from "./user.vue"
 import { ElMessage, ElMessageBox, ElTree, TabsPaneContext } from "element-plus"
 import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 
 const filterInput = ref("")
 
@@ -125,6 +131,11 @@ const addDepartment = async () => {
   await nextTick(() => {
     departmentCreateRef.value?.resetForm()
   })
+}
+
+const handleRefresh = () => {
+  listDepartmentTreeData()
+  ElMessage.success("数据已刷新")
 }
 
 const handlerCreate = () => {
@@ -303,22 +314,31 @@ watch(filterInput, (val: string) => {
   overflow: hidden; /* 防止整个容器被撑开 */
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  background-color: #ffffff;
+/* 按钮样式 */
+.action-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin-bottom: 20px;
-  flex-shrink: 0;
-  height: 80px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 
-  h2 {
-    margin: 0;
-    color: #1f2937;
-    font-weight: 600;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: rotate(180deg);
   }
 }
 

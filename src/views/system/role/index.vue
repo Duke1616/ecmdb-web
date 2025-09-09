@@ -1,71 +1,66 @@
 <template>
   <div class="role-manager">
     <!-- 头部区域 -->
-    <div class="manager-header">
-      <div class="header-left">
-        <h2 class="manager-title">角色管理</h2>
-        <p class="manager-subtitle">管理系统角色和权限分配</p>
-      </div>
-      <div class="header-right">
-        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handleAddRole"> 新增角色 </el-button>
+    <ManagerHeader
+      title="角色管理"
+      subtitle="管理系统角色和权限分配"
+      add-button-text="新增角色"
+      @add="handleAddRole"
+      @refresh="handleRefresh"
+    >
+      <template #actions>
+        <el-button type="primary" class="action-btn" @click="handleAddRole"> 新增角色 </el-button>
         <el-button type="danger" :icon="Delete" class="action-btn danger" @click="handleBatchDelete">
           批量删除
         </el-button>
         <el-tooltip content="刷新数据">
           <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
         </el-tooltip>
-      </div>
-    </div>
+      </template>
+    </ManagerHeader>
 
     <!-- 主内容区域 -->
-    <div class="manager-content">
-      <div class="content-card">
-        <!-- 表格区域 -->
-        <div class="table-container">
-          <DataTable
-            :data="rolesData"
-            :columns="tableColumns"
-            :actions="tableActions"
-            :show-selection="true"
-            :show-pagination="true"
-            :total="paginationData.total"
-            :page-size="paginationData.pageSize"
-            :current-page="paginationData.currentPage"
-            :page-sizes="paginationData.pageSizes"
-            :pagination-layout="paginationData.layout"
-            :table-props="{}"
-            @action="handleTableAction"
-            @selection-change="handleSelectionChange"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          >
-            <!-- 角色名称插槽 -->
-            <template #roleName="{ row }">
-              <div class="role-name">
-                <span>{{ row.name }}</span>
-              </div>
-            </template>
-
-            <!-- 角色编码插槽 -->
-            <template #roleCode="{ row }">
-              <el-tag type="info" effect="plain" class="code-tag">{{ row.code }}</el-tag>
-            </template>
-
-            <!-- 角色状态插槽 -->
-            <template #roleStatus="{ row }">
-              <el-tag v-if="row.status === true" type="success" effect="dark" class="status-tag">
-                <el-icon><Check /></el-icon>
-                启用
-              </el-tag>
-              <el-tag v-if="row.status === false" type="danger" effect="dark" class="status-tag">
-                <el-icon><Close /></el-icon>
-                禁用
-              </el-tag>
-            </template>
-          </DataTable>
+    <DataTable
+      :data="rolesData"
+      :columns="tableColumns"
+      :actions="tableActions"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{}"
+      @action="handleTableAction"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 角色名称插槽 -->
+      <template #roleName="{ row }">
+        <div class="role-name">
+          <span>{{ row.name }}</span>
         </div>
-      </div>
-    </div>
+      </template>
+
+      <!-- 角色编码插槽 -->
+      <template #roleCode="{ row }">
+        <el-tag type="info" effect="plain" class="code-tag">{{ row.code }}</el-tag>
+      </template>
+
+      <!-- 角色状态插槽 -->
+      <template #roleStatus="{ row }">
+        <el-tag v-if="row.status === true" type="success" effect="dark" class="status-tag">
+          <el-icon><Check /></el-icon>
+          启用
+        </el-tag>
+        <el-tag v-if="row.status === false" type="danger" effect="dark" class="status-tag">
+          <el-icon><Close /></el-icon>
+          禁用
+        </el-tag>
+      </template>
+    </DataTable>
 
     <!-- 新增/编辑角色对话框 -->
     <el-dialog
@@ -98,9 +93,10 @@ import { usePagination } from "@/common/composables/usePagination"
 import { listRolesApi } from "@/api/role"
 import { changeRoleMenuPermissionApi } from "@/api/permission"
 import { role } from "@/api/role/types/role"
-import { CirclePlus, RefreshRight, Delete, Check, Close, Edit, Menu } from "@element-plus/icons-vue"
+import { Delete, Check, Close, Edit, Menu, RefreshRight } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import createOrUpdate from "./createOrUpdate.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import MenuPermission from "./menu.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 
@@ -287,87 +283,42 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
   padding: 20px;
 }
 
-/* 头部区域 */
-.manager-header {
-  background: white;
-  border-radius: 12px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: 18px 22px;
-  display: flex;
-  justify-content: space-between;
+/* 按钮样式 */
+.action-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: inline-flex;
   align-items: center;
-  flex-shrink: 0;
-  min-height: 65px;
-  margin-bottom: 18px;
+  gap: 6px;
 
-  .header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
 
-    .manager-title {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e293b;
-    }
+  &.danger {
+    background: #ef4444;
+    border-color: #ef4444;
 
-    .manager-subtitle {
-      margin: 0;
-      font-size: 13px;
-      color: #64748b;
+    &:hover {
+      background: #dc2626;
+      border-color: #dc2626;
     }
   }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .action-btn {
-    height: 36px;
-  }
-
-  .refresh-btn {
-    width: 36px;
-    height: 36px;
-  }
 }
 
-/* 主内容区域 */
-.manager-content {
-  flex: 1;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-}
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  transition: all 0.3s ease;
 
-.content-card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-}
-
-/* 表格容器 */
-.table-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  &:hover {
+    transform: rotate(180deg);
+  }
 }
 
 /* 角色名称样式 */

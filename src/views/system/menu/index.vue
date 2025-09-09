@@ -6,6 +6,7 @@ import Tip from "./tip.vue"
 import { deleteMenuApi, listMenusByPlatformApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
 import { ElMessage, ElMessageBox, ElTree } from "element-plus"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 const platforms = ref([
   { id: "cmdb", name: "资产管理" },
   { id: "order", name: "工单管理" },
@@ -135,13 +136,6 @@ const filterNode = (value: string, data: Tree) => {
   return typeof data.meta.title === "string" && data.meta.title.includes(value)
 }
 
-// const handlerExpandAll = () => {
-//   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.expand())
-// }
-// const handlerCollapse = () => {
-//   Object.values(treeRef.value.store.nodesMap).forEach((v: any) => v.collapse())
-// }
-
 // const menuData = ref<menu>()
 /** 查询模版列表 */
 const menuTreeData = ref<menu[]>([])
@@ -252,20 +246,22 @@ onMounted(async () => {
 
 <template>
   <div class="app-container">
-    <div class="header">
-      <h2>菜单管理</h2>
-      <div class="platform-buttons">
-        <el-button
-          v-for="platform in platforms"
-          :key="platform.id"
-          :type="currentPlatform === platform.id ? 'primary' : 'default'"
-          @click="handlePlatformChange(platform.id)"
-          class="platform-button"
-        >
-          {{ platform.name }}
-        </el-button>
-      </div>
-    </div>
+    <!-- 头部区域 -->
+    <ManagerHeader title="菜单管理" subtitle="管理系统菜单和权限配置">
+      <template #actions>
+        <div class="platform-buttons">
+          <el-button
+            v-for="platform in platforms"
+            :key="platform.id"
+            :type="currentPlatform === platform.id ? 'primary' : 'default'"
+            @click="handlePlatformChange(platform.id)"
+            class="platform-button"
+          >
+            {{ platform.name }}
+          </el-button>
+        </div>
+      </template>
+    </ManagerHeader>
 
     <div class="content">
       <div class="menu-panel">
@@ -352,22 +348,31 @@ onMounted(async () => {
   overflow: hidden; /* 防止整个容器被撑开 */
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  background-color: #ffffff;
+/* 按钮样式 */
+.action-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  margin-bottom: 20px;
-  flex-shrink: 0;
-  height: 80px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 
-  h2 {
-    margin: 0;
-    color: #1f2937;
-    font-weight: 600;
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: rotate(180deg);
   }
 }
 
