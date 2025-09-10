@@ -522,8 +522,7 @@ defineExpose({
 <style lang="scss" scoped>
 /* 权限管理器主容器 */
 .permission-manager {
-  height: 100%;
-  max-height: 60vh;
+  height: 60vh;
   display: flex;
   flex-direction: column;
   background: #ffffff;
@@ -705,7 +704,6 @@ defineExpose({
   .tree-container {
     flex: 1;
     min-height: 0;
-    max-height: 400px;
     padding: 12px;
     overflow-y: auto;
 
@@ -831,7 +829,6 @@ defineExpose({
   .selected-container {
     flex: 1;
     min-height: 0;
-    max-height: 400px;
     padding: 12px;
     overflow-y: auto;
     display: flex;

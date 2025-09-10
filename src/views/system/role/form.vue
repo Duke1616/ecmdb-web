@@ -80,7 +80,7 @@
 import { ref, computed } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { UserFilled, InfoFilled, Setting, User, Key, Check, Close } from "@element-plus/icons-vue"
+import { InfoFilled, Setting, User, Key, Check, Close } from "@element-plus/icons-vue"
 import { createOrUpdateRoleReq, role } from "@/api/role/types/role"
 import { createRoleApi, updateRoleApi } from "@/api/role"
 
@@ -140,10 +140,6 @@ const setFrom = (row: role) => {
 
 const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
-}
-
-const handleCancel = () => {
-  emits("close")
 }
 
 defineExpose({
