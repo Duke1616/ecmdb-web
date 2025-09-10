@@ -134,23 +134,19 @@ const tableColumns = [
   {
     prop: "username",
     label: "用户名称",
-    minWidth: 120,
     slot: "userName"
   },
   {
     prop: "display_name",
     label: "显示名称",
-    minWidth: 120
   },
   {
     prop: "title",
     label: "岗位",
-    minWidth: 120
   },
   {
     prop: "create_type",
     label: "创建方式",
-    width: 120,
     slot: "createType"
   }
 ]
