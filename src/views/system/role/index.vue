@@ -66,27 +66,31 @@
     </DataTable>
 
     <!-- 新增/编辑角色对话框 -->
-    <el-dialog
+    <FormDialog
       v-model="dialogVisible"
-      class="role-dialog"
-      :show-close="false"
-      :close-on-click-modal="false"
+      :title="isEditMode ? '编辑角色' : '新增角色'"
+      :subtitle="isEditMode ? '修改角色信息' : '创建新的角色'"
       @closed="resetForm"
+      @confirm="handleFormConfirm"
+      @cancel="handleCloseDialog"
     >
-      <createOrUpdate ref="apiRef" @list-roles="listRolesData" @close="handleCloseDialog" />
-    </el-dialog>
+      <Form ref="apiRef" @list-roles="listRolesData" @close="handleCloseDialog" />
+    </FormDialog>
 
     <!-- 菜单权限分配对话框 -->
-    <el-dialog
+    <PermissionDialog
       v-model="dialogPermission"
-      width="60%"
-      class="permission-dialog"
-      :show-close="false"
-      :close-on-click-modal="false"
+      title="菜单权限分配"
+      subtitle="为角色分配相应的菜单访问权限"
+      :selected-count="selectedMenusCount"
+      :total-count="menuTreeData.length"
+      header-icon="Menu"
       @closed="closeMenePermission"
+      @confirm="handlePermissionConfirm"
+      @cancel="closeMenePermission"
     >
       <MenuPermission ref="menuRef" @confirm="handleMenuPermissionConfirm" @cancel="closeMenePermission" />
-    </el-dialog>
+    </PermissionDialog>
   </div>
 </template>
 
@@ -98,20 +102,23 @@ import { changeRoleMenuPermissionApi } from "@/api/permission"
 import { role } from "@/api/role/types/role"
 import { Delete, Check, Close, Edit, Menu, RefreshRight } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import createOrUpdate from "./createOrUpdate.vue"
+import Form from "./form.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import MenuPermission from "./menu.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
+import { FormDialog, PermissionDialog } from "@@/components/Dialogs"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const dialogPermission = ref<boolean>(false)
 const isEditMode = ref<boolean>(false)
-const apiRef = ref<InstanceType<typeof createOrUpdate>>()
+const apiRef = ref<InstanceType<typeof Form>>()
 const menuRef = ref<InstanceType<typeof MenuPermission>>()
 const roleCode = ref<string>("")
 const rolesData = ref<role[]>([])
+const selectedMenusCount = ref<number>(0)
+const menuTreeData = ref<any[]>([])
 
 const tableColumns = [
   {
@@ -161,6 +168,14 @@ const handleRefresh = () => {
 
 const handleCloseDialog = () => {
   dialogVisible.value = false
+}
+
+const handleFormConfirm = () => {
+  apiRef.value?.submitForm()
+}
+
+const handlePermissionConfirm = () => {
+  menuRef.value?.handleConfirm()
 }
 
 const closeMenePermission = () => {
@@ -330,31 +345,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
   align-items: center;
   justify-content: center;
   text-align: center;
-}
-
-/* 对话框样式 */
-.role-dialog {
-  :deep(.el-dialog__header) {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 20px 24px;
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 24px;
-  }
-}
-
-.permission-dialog {
-  :deep(.el-dialog__header) {
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 20px 24px;
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 0;
-  }
 }
 
 /* 响应式设计 */

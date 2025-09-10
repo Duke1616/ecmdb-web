@@ -1,25 +1,5 @@
 <template>
   <div class="permission-manager">
-    <!-- 顶部标题栏 -->
-    <div class="header-section">
-      <div class="header-content">
-        <div class="title-group">
-          <h1 class="main-title">菜单权限分配</h1>
-          <p class="subtitle">为角色分配相应的菜单访问权限</p>
-        </div>
-        <div class="stats-group">
-          <div class="stat-item">
-            <div class="stat-number">{{ selectedMenusCount }}</div>
-            <div class="stat-label">已选择</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-number">{{ menuTreeData.length }}</div>
-            <div class="stat-label">总菜单</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 搜索栏 -->
     <div class="search-section">
       <div class="search-container">
@@ -143,26 +123,6 @@
             </el-tree>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- 底部操作栏 -->
-    <div class="footer-section">
-      <div class="footer-actions">
-        <el-button @click="handleCancel" class="cancel-btn" size="large">
-          <el-icon><Close /></el-icon>
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          @click="handleConfirm"
-          class="confirm-btn"
-          size="large"
-          :disabled="selectedMenusCount === 0"
-        >
-          <el-icon><Check /></el-icon>
-          确认分配 ({{ selectedMenusCount }})
-        </el-button>
       </div>
     </div>
   </div>
@@ -562,75 +522,20 @@ defineExpose({
 <style lang="scss" scoped>
 /* 权限管理器主容器 */
 .permission-manager {
-  height: 70vh;
-  max-height: 600px;
-  min-height: 500px;
+  height: 100%;
+  max-height: 60vh;
+  min-height: 400px;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   overflow: hidden;
 }
 
-/* 顶部标题栏 */
-.header-section {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 16px 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  flex-shrink: 0;
-
-  .header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .title-group {
-      .main-title {
-        margin: 0 0 4px 0;
-        font-size: 20px;
-        font-weight: 700;
-        color: #1e293b;
-        line-height: 1.2;
-      }
-
-      .subtitle {
-        margin: 0;
-        font-size: 14px;
-        color: #64748b;
-        font-weight: 400;
-      }
-    }
-
-    .stats-group {
-      display: flex;
-      gap: 32px;
-
-      .stat-item {
-        text-align: center;
-
-        .stat-number {
-          font-size: 18px;
-          font-weight: 700;
-          color: #3b82f6;
-          line-height: 1;
-          margin-bottom: 2px;
-        }
-
-        .stat-label {
-          font-size: 12px;
-          color: #64748b;
-          font-weight: 500;
-        }
-      }
-    }
-  }
-}
-
 /* 搜索栏 */
 .search-section {
-  background: white;
+  background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
-  padding: 16px 24px;
+  padding: 12px 12px;
   flex-shrink: 0;
 
   .search-container {
@@ -712,14 +617,21 @@ defineExpose({
   display: flex;
   flex: 1;
   gap: 20px;
-  padding: 16px 24px;
+  padding: 12px;
   min-height: 0;
   overflow: hidden;
+
+  /* 确保子面板能够正确填充高度 */
+  .menu-tree-panel,
+  .selected-panel {
+    height: 100%;
+    min-height: 300px;
+  }
 
   @media (max-width: 1200px) {
     flex-direction: column;
     gap: 16px;
-    padding: 16px;
+    padding: 20px;
   }
 }
 
@@ -794,10 +706,10 @@ defineExpose({
 
   .tree-container {
     flex: 1;
-    min-height: 0;
+    min-height: 200px;
+    max-height: 400px;
     padding: 12px;
     overflow-y: auto;
-    max-height: 300px;
 
     .menu-tree {
       :deep(.el-tree-node) {
@@ -921,10 +833,10 @@ defineExpose({
 
   .selected-container {
     flex: 1;
-    min-height: 0;
+    min-height: 200px;
+    max-height: 400px;
     padding: 12px;
     overflow-y: auto;
-    max-height: 300px;
 
     .empty-state {
       display: flex;
@@ -955,6 +867,11 @@ defineExpose({
     }
 
     .selected-tree-container {
+      height: 100%;
+      min-height: 200px;
+      max-height: 400px;
+      overflow-y: auto;
+
       .selected-menu-tree {
         :deep(.el-tree-node) {
           .el-tree-node__content {
@@ -1036,72 +953,10 @@ defineExpose({
   font-weight: 500;
 }
 
-/* 底部操作栏 */
-.footer-section {
-  background: white;
-  border-top: 1px solid #e2e8f0;
-  padding: 16px 24px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
-  flex-shrink: 0;
-
-  .footer-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-
-    .cancel-btn,
-    .confirm-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 14px;
-      border: 2px solid transparent;
-      min-width: 120px;
-      justify-content: center;
-
-      &:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        transform: none;
-      }
-    }
-
-    .cancel-btn {
-      background: white;
-      color: #64748b;
-      border-color: #e2e8f0;
-    }
-
-    .confirm-btn {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      color: white;
-      border-color: #3b82f6;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-  }
-}
-
 /* 响应式设计 */
 @media (max-width: 768px) {
-  .header-section {
-    padding: 12px 16px;
-
-    .header-content {
-      flex-direction: column;
-      gap: 16px;
-      align-items: flex-start;
-
-      .stats-group {
-        gap: 24px;
-      }
-    }
-  }
-
   .search-section {
-    padding: 12px 16px;
+    padding: 16px 20px;
 
     .search-container {
       flex-direction: column;
@@ -1119,11 +974,7 @@ defineExpose({
   }
 
   .content-section {
-    padding: 12px 16px;
-  }
-
-  .footer-section {
-    padding: 12px 16px;
+    padding: 16px 20px;
   }
 }
 </style>

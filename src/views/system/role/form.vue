@@ -1,15 +1,5 @@
 <template>
   <div class="role-form-container">
-    <div class="form-header">
-      <div class="header-icon">
-        <el-icon><UserFilled /></el-icon>
-      </div>
-      <div class="header-text">
-        <h3>{{ isEdit ? "编辑角色" : "新增角色" }}</h3>
-        <p>{{ isEdit ? "修改角色信息" : "创建新的角色" }}</p>
-      </div>
-    </div>
-
     <el-form
       ref="formRef"
       :model="formData"
@@ -83,24 +73,6 @@
         </el-form-item>
       </div>
     </el-form>
-
-    <!-- 底部操作按钮 -->
-    <div class="form-footer">
-      <div class="footer-info">
-        <el-icon class="info-icon"><InfoFilled /></el-icon>
-        <span class="info-text">{{ isEdit ? "修改角色信息后点击保存" : "填写完整信息后点击保存" }}</span>
-      </div>
-      <div class="footer-actions">
-        <el-button @click="handleCancel" class="cancel-btn" size="large">
-          <el-icon><Close /></el-icon>
-          取消
-        </el-button>
-        <el-button type="primary" @click="submitForm" class="confirm-btn" size="large">
-          <el-icon><Check /></el-icon>
-          {{ isEdit ? "更新角色" : "创建角色" }}
-        </el-button>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -183,52 +155,12 @@ defineExpose({
 
 <style lang="scss" scoped>
 .role-form-container {
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  background: transparent;
   max-height: 80vh;
   overflow-y: auto;
 }
 
-.form-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
-
-  .header-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 18px;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  }
-
-  .header-text {
-    h3 {
-      margin: 0 0 2px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1e293b;
-      line-height: 1.2;
-    }
-
-    p {
-      margin: 0;
-      font-size: 13px;
-      color: #64748b;
-      font-weight: 400;
-    }
-  }
-}
 
 .role-form {
   .form-section {
@@ -376,96 +308,11 @@ defineExpose({
   }
 }
 
-/* 底部操作按钮 */
-.form-footer {
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-
-  .footer-info {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    background: #f0f9ff;
-    border: 1px solid #bae6fd;
-    border-radius: 6px;
-    flex: 1;
-
-    .info-icon {
-      font-size: 14px;
-      color: #0ea5e9;
-    }
-
-    .info-text {
-      font-size: 12px;
-      color: #0369a1;
-      font-weight: 500;
-    }
-  }
-
-  .footer-actions {
-    display: flex;
-    gap: 10px;
-    flex-shrink: 0;
-
-    .cancel-btn,
-    .confirm-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 13px;
-      transition: all 0.3s ease;
-      min-width: 100px;
-      justify-content: center;
-
-      &:hover {
-        transform: translateY(-2px);
-      }
-    }
-
-    .cancel-btn {
-      background: white;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-
-      &:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-    }
-
-    .confirm-btn {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      color: white;
-      border: none;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-
-      &:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-  }
-}
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .role-form-container {
-    padding: 16px;
+    padding: 12px;
   }
 
   .form-header {
@@ -504,29 +351,5 @@ defineExpose({
     }
   }
 
-  .form-footer {
-    flex-direction: column;
-    gap: 16px;
-    margin-top: 24px;
-    padding-top: 16px;
-
-    .footer-info {
-      order: 2;
-      text-align: center;
-    }
-
-    .footer-actions {
-      order: 1;
-      width: 100%;
-      justify-content: center;
-
-      .cancel-btn,
-      .confirm-btn {
-        flex: 1;
-        min-width: auto;
-        padding: 10px 20px;
-      }
-    }
-  }
 }
 </style>
