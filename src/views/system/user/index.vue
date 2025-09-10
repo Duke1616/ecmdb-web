@@ -69,6 +69,7 @@
     >
       <Form ref="apiRef" @closed="onClosedCreateOrUpdae" @callback="listUsersData" />
     </FormDialog>
+
     <!-- 角色管理弹窗 -->
     <FormDialog
       v-model="dialogBindRole"
@@ -95,14 +96,9 @@
       v-model="dialogSyncUser"
       title="LDAP 用户同步"
       subtitle="从 LDAP 服务器同步用户信息"
-      width="700px"
-      height="80vh"
       header-icon="Refresh"
-      confirm-text="开始同步"
-      :show-footer-info="false"
+      :show-footer="false"
       @closed="onClosedSyncUser"
-      @confirm="handleSyncConfirm"
-      @cancel="onClosedSyncUser"
     >
       <Sync ref="syncRef" @closed="onClosedSyncUser" @listUsersData="listUsersData" />
     </FormDialog>
@@ -172,11 +168,6 @@ const handleSyncUser = () => {
 
 const onClosedSyncUser = () => {
   dialogSyncUser.value = false
-}
-
-const handleSyncConfirm = () => {
-  // 同步用户功能
-  ElMessage.info("同步功能已触发")
 }
 
 const handleRefresh = () => {

@@ -556,10 +556,30 @@ const getSelectedRoles = (): role[] => {
 /* 空状态样式 */
 .empty-state {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  height: 200px;
-  color: #94a3b8;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 36px;
+    color: #cbd5e1;
+    margin-bottom: 12px;
+  }
+
+  .empty-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    margin: 0 0 6px 0;
+  }
+
+  .empty-hint {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0;
+  }
 }
 
 .role-card {

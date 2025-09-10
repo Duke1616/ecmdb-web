@@ -29,7 +29,7 @@
     </div>
 
     <!-- 底部操作按钮 -->
-    <template #footer>
+    <template v-if="showFooter" #footer>
       <div class="form-dialog-footer">
         <div class="footer-info" v-if="showFooterInfo && dialogType === 'form'">
           <el-icon class="info-icon"><InfoFilled /></el-icon>
@@ -55,6 +55,11 @@
         </div>
       </div>
     </template>
+    
+    <!-- 当 showFooter 为 false 时，提供一个空的 footer 插槽来覆盖默认行为 -->
+    <template v-else #footer>
+      <!-- 空的 footer 插槽 -->
+    </template>
   </BaseDialog>
 </template>
 
@@ -75,6 +80,7 @@ interface Props {
   confirmText?: string
   confirmLoading?: boolean
   confirmDisabled?: boolean
+  showFooter?: boolean
   showFooterInfo?: boolean
   footerInfoText?: string
   dialogType?: "form"
@@ -98,6 +104,7 @@ const props = withDefaults(defineProps<Props>(), {
   confirmText: "确认",
   confirmLoading: false,
   confirmDisabled: false,
+  showFooter: true,
   showFooterInfo: true,
   footerInfoText: "请填写完整信息后点击确认",
   dialogType: "form"

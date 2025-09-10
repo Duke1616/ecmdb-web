@@ -1,86 +1,85 @@
 <template>
-  <div class="never">
-    <div class="header">
-      <el-button type="primary" @click="refreshCacheLdap"> 刷新缓存 </el-button>
-      <el-input
-        v-model="filterInput"
-        size="default"
-        placeholder="输入用户名称进行搜索"
-        :suffix-icon="Search"
-        @input="debouncedSearch"
-        style="width: 200px"
-      />
-    </div>
-    <div class="table-wrapper">
-      <el-table
-        :data="usersData"
-        border
-        :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
-      >
-        <el-table-column type="selection" width="50" align="center" />
-        <el-table-column prop="username" label="用户名称" align="center" />
-        <el-table-column prop="display_name" label="显示名称" align="center" />
-        <el-table-column prop="title" width="150" label="岗位" align="center" />
-        <el-table-column prop="is_system_exist" label="已存在" align="center">
-          <template #default="scope">
-            <span v-if="scope.row.is_system_exist">
-              <el-icon :size="16" style="color: green"><Check /></el-icon>
-            </span>
-            <span v-else>
-              <el-icon :size="16" style="color: red"><Close /></el-icon>
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column fixed="right" label="操作" width="100" align="center">
-          <template #default="scope">
-            <el-button type="primary" plain text bg size="small" @click="handlerSyncLdapUser(scope.row)"
-              >导入</el-button
-            >
-          </template>
-        </el-table-column>
-      </el-table>
-    </div>
-    <div class="footer">
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+  <div class="sync-user-container">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <div class="search-container">
+        <el-input
+          v-model="filterInput"
+          size="large"
+          placeholder="输入用户名称进行搜索..."
+          :prefix-icon="Search"
+          class="search-input"
+          clearable
+          @input="debouncedSearch"
         />
-      </div>
-
-      <div class="button">
-        <el-button @click="onClosedSync">取消</el-button>
-        <el-button type="primary" @click="handlerBatchSyncLdapUser"> 导入 </el-button>
+        <el-button type="primary" :icon="RefreshRight" @click="refreshCacheLdap" class="refresh-btn">
+          刷新缓存
+        </el-button>
       </div>
     </div>
 
-    <el-dialog v-model="dialogVisible" :before-close="onClosedImportUser" title="导入用户" width="500px">
+    <!-- 表格区域 -->
+    <div class="table-section">
+      <DataTable
+        :data="usersData"
+        :columns="tableColumns"
+        :actions="tableActions"
+        :show-pagination="true"
+        :total="paginationData.total"
+        :page-size="paginationData.pageSize"
+        :current-page="paginationData.currentPage"
+        :page-sizes="paginationData.pageSizes"
+        :pagination-layout="paginationData.layout"
+        :table-props="{}"
+        @action="handleTableAction"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      >
+        <!-- 用户名称插槽 -->
+        <template #userName="{ row }">
+          <div class="user-name">
+            <span>{{ row.username }}</span>
+          </div>
+        </template>
+
+        <!-- 状态插槽 -->
+        <template #status="{ row }">
+          <el-tag :type="row.is_system_exist ? 'success' : 'warning'" effect="light" class="status-tag">
+            <el-icon class="status-icon">
+              <Check v-if="row.is_system_exist" />
+              <Close v-else />
+            </el-icon>
+          </el-tag>
+        </template>
+      </DataTable>
+    </div>
+
+    <!-- 导入用户对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      title="导入用户"
+      subtitle="确认导入用户信息"
+      width="500px"
+      header-icon="UserFilled"
+      :show-footer="false"
+      @closed="onClosedImportUser"
+    >
       <Form ref="apiRef" @closed="onClosedImportUser" @callback="callback" />
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handlerImportUser"> 确定 </el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </FormDialog>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, watch, nextTick } from "vue"
 import { refreshCacheLdapApi, searchLdapUserApi } from "@/api/user"
-import { Search } from "@element-plus/icons-vue"
+import { Search, RefreshRight, Check, Close } from "@element-plus/icons-vue"
 import { user } from "@/api/user/types/ldap"
 import { usePagination } from "@/common/composables/usePagination"
 import { debounce } from "lodash-es"
 import { ElMessage } from "element-plus"
 import Form from "./form.vue"
+import { FormDialog } from "@@/components/Dialogs"
+import DataTable from "@/common/components/DataTable/index.vue"
 
 const init = {
   total: 0,
@@ -96,6 +95,43 @@ const apiRef = ref<InstanceType<typeof Form>>()
 const emits = defineEmits(["closed", "listUsersData"])
 const filterInput = ref<string>("")
 const usersData = ref<user[]>([])
+
+// 表格列配置
+const tableColumns = [
+  {
+    prop: "username",
+    label: "用户名称",
+    minWidth: 120,
+    slot: "userName"
+  },
+  {
+    prop: "display_name",
+    label: "显示名称",
+    minWidth: 120
+  },
+  {
+    prop: "title",
+    label: "岗位",
+    minWidth: 150
+  },
+  {
+    prop: "is_system_exist",
+    label: "状态",
+    width: 100,
+    slot: "status"
+  }
+]
+
+// 表格操作配置
+const tableActions = [
+  {
+    key: "import",
+    label: "导入",
+    type: "primary" as const,
+    size: "small" as const,
+    disabled: (row: user) => row.is_system_exist
+  }
+]
 const searchLdapUser = () => {
   searchLdapUserApi({
     keywords: filterInput.value,
@@ -122,11 +158,6 @@ const onClosedImportUser = () => {
   dialogVisible.value = false
 }
 
-// 关闭用户列表
-const onClosedSync = () => {
-  emits("closed")
-}
-
 const refreshCacheLdap = () => {
   refreshCacheLdapApi()
     .then(() => {
@@ -144,25 +175,20 @@ const refreshCacheLdap = () => {
     .finally(() => {})
 }
 
-const handlerSyncLdapUser = (row: user) => {
-  if (row.is_system_exist === true) {
-    ElMessage.warning("该用户已存在, 无需导入")
-    return
+// 处理表格操作
+const handleTableAction = (key: string, row: user) => {
+  if (key === "import") {
+    if (row.is_system_exist === true) {
+      ElMessage.warning("该用户已存在, 无需导入")
+      return
+    }
+
+    dialogVisible.value = true
+
+    nextTick(() => {
+      apiRef.value?.setSyncForm(row)
+    })
   }
-
-  dialogVisible.value = true
-
-  nextTick(() => {
-    apiRef.value?.setSyncForm(row)
-  })
-}
-
-const handlerImportUser = () => {
-  apiRef.value?.submitForm()
-}
-
-const handlerBatchSyncLdapUser = () => {
-  ElMessage.warning("暂不支持批量导入功能")
 }
 
 const debouncedSearch = debounce(() => {
@@ -173,33 +199,144 @@ const debouncedSearch = debounce(() => {
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], searchLdapUser, { immediate: true })
 </script>
-<style lang="scss">
-.toolbar-wrapper {
+<style lang="scss" scoped>
+/* 同步用户容器 */
+.sync-user-container {
+  height: 60vh;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-.table-wrapper {
-  margin-bottom: 20px;
+/* 搜索区域 */
+.search-section {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 12px;
+  flex-shrink: 0;
+
+  .search-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .search-input {
+      flex: 1;
+      max-width: 400px;
+
+      :deep(.el-input__wrapper) {
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 0 12px;
+        height: 40px;
+        transition: all 0.2s ease;
+        box-shadow: none;
+
+        &:hover {
+          border-color: #9ca3af;
+          background: #ffffff;
+        }
+
+        &.is-focus {
+          border-color: #3b82f6;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+      }
+
+      :deep(.el-input__inner) {
+        font-size: 14px;
+        color: #111827;
+        font-weight: 400;
+
+        &::placeholder {
+          color: #6b7280;
+          font-weight: 400;
+        }
+      }
+
+      :deep(.el-input__prefix) {
+        color: #6b7280;
+        font-size: 16px;
+      }
+    }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      }
+    }
+  }
 }
 
-.pager-wrapper {
+/* 表格区域 */
+.table-section {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+
+  .user-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+
+    .user-icon {
+      color: #3b82f6;
+      font-size: 16px;
+    }
+
+    span {
+      font-weight: 500;
+      color: #111827;
+    }
+  }
+
+  .status-tag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border-radius: 4px;
+
+    .status-icon {
+      font-size: 14px;
+    }
+  }
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-section {
+    padding: 14px 0;
 
-.footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
+    .search-container {
+      flex-direction: column;
+      gap: 12px;
+
+      .search-input {
+        max-width: none;
+      }
+    }
+  }
 }
 </style>

@@ -14,29 +14,27 @@
           <span>基本信息</span>
         </div>
 
-        <div class="form-row">
-          <el-form-item prop="name" label="角色名称" class="form-item">
-            <el-input
-              v-model="formData.name"
-              placeholder="请输入角色名称"
-              clearable
-              :prefix-icon="User"
-              class="form-input"
-            />
-          </el-form-item>
+        <el-form-item prop="name" label="角色名称" class="form-item required">
+          <el-input
+            v-model="formData.name"
+            placeholder="请输入角色名称"
+            clearable
+            :prefix-icon="User"
+            class="form-input"
+          />
+        </el-form-item>
 
-          <el-form-item prop="code" label="角色编码" class="form-item">
-            <el-input
-              v-model="formData.code"
-              placeholder="请输入角色编码"
-              clearable
-              :prefix-icon="Key"
-              class="form-input"
-            />
-          </el-form-item>
-        </div>
+        <el-form-item prop="code" label="角色编码" class="form-item required">
+          <el-input
+            v-model="formData.code"
+            placeholder="请输入角色编码"
+            clearable
+            :prefix-icon="Key"
+            class="form-input"
+          />
+        </el-form-item>
 
-        <el-form-item prop="desc" label="角色描述" class="form-item full-width">
+        <el-form-item prop="desc" label="角色描述" class="form-item">
           <el-input
             v-model="formData.desc"
             type="textarea"
@@ -187,29 +185,42 @@ defineExpose({
       }
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+    .form-item {
       margin-bottom: 16px;
 
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-    }
-
-    .form-item {
-      margin-bottom: 0;
-
-      &.full-width {
-        grid-column: 1 / -1;
+      &:last-child {
+        margin-bottom: 0;
       }
 
       :deep(.el-form-item__label) {
         font-weight: 500;
         color: #374151;
         font-size: 13px;
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        &::before {
+          content: "";
+          display: inline-block;
+          width: 16px;
+          flex-shrink: 0;
+        }
+      }
+
+      &.required {
+        :deep(.el-form-item__label) {
+          &::before {
+            content: "*";
+            color: #ef4444;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 0;
+            display: inline-block;
+            width: 16px;
+            text-align: center;
+          }
+        }
       }
 
       .form-input {
