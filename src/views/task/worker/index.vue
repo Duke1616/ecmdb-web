@@ -1,13 +1,17 @@
 <template>
   <div class="app-container">
     <!-- 头部区域 -->
-    <ManagerHeader title="工作节点管理" subtitle="管理工作节点状态和配置" @refresh="listWorkersData" />
+    <ManagerHeader
+      title="工作节点管理"
+      subtitle="管理工作节点状态和配置"
+      :show-add-button="false"
+      @refresh="listWorkersData"
+    />
 
     <!-- 主内容区域 -->
     <DataTable
       :data="workersData"
       :columns="tableColumns"
-      :actions="tableActions"
       :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
@@ -15,7 +19,6 @@
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      @action="handleTableAction"
       @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -26,6 +29,11 @@
         <el-tag v-else-if="row.status === 2" effect="plain" type="warning" disable-transitions>禁用</el-tag>
         <el-tag v-else-if="row.status === 3" effect="plain" type="danger" disable-transitions>离线</el-tag>
         <el-tag v-else type="info" effect="plain" disable-transitions>未知类型</el-tag>
+      </template>
+
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
   </div>
@@ -38,6 +46,7 @@ import { worker } from "@/api/worker/types/worker"
 import { listWorkerApi } from "@/api/worker/worker"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 // 表格列配置
@@ -48,14 +57,14 @@ const tableColumns = [
   { prop: "desc", label: "描述", align: "center" as const }
 ]
 
-// 表格操作配置
-const tableActions = [{ key: "disable", label: "禁用", type: "warning" as const }]
+// 操作按钮配置
+const operateBtnItems = [{ name: "禁用", code: "disable", type: "warning" }]
 
 // 选中的行
 const selectedRows = ref<worker[]>([])
 
-// 表格操作事件
-const handleTableAction = (action: string, row: worker) => {
+// 操作按钮事件
+const handleOperateEvent = (row: worker, action: string) => {
   if (action === "disable") {
     handleUpdate(row)
   }

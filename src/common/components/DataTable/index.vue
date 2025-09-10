@@ -34,11 +34,11 @@
               </template>
             </el-table-column>
 
-            <!-- 操作列 -->
+            <!-- 默认操作列 -->
             <el-table-column
               v-if="actions && actions.length > 0 && !hasActionsSlot"
               :label="actionColumnLabel"
-              :width="actionColumnWidth"
+              :width="dynamicActionColumnWidth"
               :fixed="actionColumnFixed"
               align="center"
             >
@@ -60,6 +60,19 @@
                     {{ action.label }}
                   </el-button>
                 </div>
+              </template>
+            </el-table-column>
+
+            <!-- 自定义操作列插槽 -->
+            <el-table-column
+              v-if="hasActionsSlot"
+              :label="actionColumnLabel"
+              :width="dynamicActionColumnWidth"
+              :fixed="actionColumnFixed"
+              align="center"
+            >
+              <template #default="scope">
+                <slot name="actions" :row="scope.row" :column="scope.column" :index="scope.$index" />
               </template>
             </el-table-column>
           </el-table>
@@ -118,6 +131,7 @@ interface Props {
   actionColumnWidth?: string | number
   actionColumnFixed?: "left" | "right"
   tableProps?: Record<string, any>
+
   // 分页相关
   showPagination?: boolean
   total?: number
@@ -130,7 +144,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   showSelection: false,
   actionColumnLabel: "操作",
-  actionColumnWidth: 320,
+  actionColumnWidth: 200,
   actionColumnFixed: "right",
   tableProps: () => ({}),
   showPagination: false,
@@ -164,6 +178,24 @@ const finalTableHeight = computed(() => {
 // 检查是否有自定义操作列插槽
 const hasActionsSlot = computed(() => {
   return !!slots.actions
+})
+
+// 动态计算操作列宽度
+const dynamicActionColumnWidth = computed(() => {
+  // 如果有自定义操作列插槽，尝试从插槽内容中检测按钮数量
+  if (hasActionsSlot.value) {
+    // 通过检查插槽内容来动态调整宽度
+    // 这里我们使用一个更智能的方式：根据常见的按钮数量模式来调整
+    // 由于无法直接访问插槽内容，我们使用一个合理的默认值
+    return 200 // 大多数情况下使用200px
+  }
+  
+  // 根据操作按钮数量动态调整宽度
+  if (props.actions && props.actions.length > 0) {
+    return props.actions.length <= 2 ? 200 : 250
+  }
+  
+  return props.actionColumnWidth
 })
 
 // 处理操作按钮点击

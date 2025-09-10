@@ -1,13 +1,17 @@
 <template>
   <div class="app-container">
     <!-- 头部区域 -->
-    <ManagerHeader title="任务历史" subtitle="查看任务执行历史和状态" @refresh="listTasksData" />
+    <ManagerHeader
+      title="任务历史"
+      subtitle="查看任务执行历史和状态"
+      :show-add-button="false"
+      @refresh="listTasksData"
+    />
 
     <!-- 主内容区域 -->
     <DataTable
       :data="tasksData"
       :columns="tableColumns"
-      :actions="[]"
       :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
@@ -101,8 +105,7 @@ const tableColumns = [
   { prop: "worker_name", label: "工作节点", align: "center" as const },
   { prop: "status", label: "状态", align: "center" as const, slot: "status" },
   { prop: "is_timing", label: "定时任务", align: "center" as const, slot: "is_timing" },
-  { prop: "run_time", label: "执行时间", align: "center" as const, slot: "run_time" },
-  { prop: "actions", label: "操作", align: "center" as const, slot: "actions", width: 200 }
+  { prop: "run_time", label: "执行时间", align: "center" as const, slot: "run_time", width: 200 }
 ]
 
 // 选中的行

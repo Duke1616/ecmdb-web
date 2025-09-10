@@ -13,7 +13,6 @@
     <DataTable
       :data="runnersData"
       :columns="tableColumns"
-      :actions="tableActions"
       :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
@@ -21,7 +20,6 @@
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      @action="handleTableAction"
       @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -31,6 +29,11 @@
         <el-tag v-for="tag in row.tags" :key="tag" :style="{ marginRight: '5px' }" effect="plain" type="primary">
           {{ tag }}
         </el-tag>
+      </template>
+
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
     <el-drawer
@@ -61,7 +64,7 @@
 
 <script setup lang="ts">
 import { h, nextTick, ref, watch } from "vue"
-import { Close, Check, Edit } from "@element-plus/icons-vue"
+import { Close, Check, Edit, Delete } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { runner } from "@/api/runner/types/runner"
 import { deleteRunnerApi, listRunnerApi } from "@/api/runner"
@@ -69,6 +72,7 @@ import reigsterRunner from "./registerOrUpdate.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 // 表格列配置
@@ -79,17 +83,17 @@ const tableColumns = [
   { prop: "tags", label: "标签", align: "center" as const, slot: "tags" }
 ]
 
-// 表格操作配置
-const tableActions = [
-  { key: "edit", label: "修改", type: "primary" as const, icon: Edit },
-  { key: "delete", label: "删除", type: "danger" as const }
+// 操作按钮配置
+const operateBtnItems = [
+  { name: "修改", code: "edit", type: "primary", icon: Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
 ]
 
 // 选中的行
 const selectedRows = ref<runner[]>([])
 
-// 表格操作事件
-const handleTableAction = (action: string, row: runner) => {
+// 操作按钮事件
+const handleOperateEvent = (row: runner, action: string) => {
   if (action === "edit") {
     handleUpdate(row)
   } else if (action === "delete") {

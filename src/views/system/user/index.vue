@@ -21,7 +21,6 @@
     <DataTable
       :data="usersData"
       :columns="tableColumns"
-      :actions="tableActions"
       :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
@@ -30,7 +29,6 @@
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
       :table-props="{}"
-      @action="handleTableAction"
       @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -51,6 +49,11 @@
           LDAP
         </el-tag>
         <el-tag v-else type="info" effect="plain" class="type-tag" disable-transitions> 未知类型 </el-tag>
+      </template>
+
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
     <div>
@@ -100,6 +103,7 @@ import Sync from "./sync.vue"
 import { ElMessage } from "element-plus"
 import DataTable from "@@/components/DataTable/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
@@ -136,19 +140,10 @@ const tableColumns = [
 ]
 
 // 表格操作配置
-const tableActions = [
-  {
-    key: "edit",
-    label: "修改",
-    type: "primary" as const,
-    icon: Edit
-  },
-  {
-    key: "bindRole",
-    label: "绑定角色",
-    type: "success" as const,
-    icon: UserFilled
-  }
+// 操作按钮配置
+const operateBtnItems = [
+  { name: "修改", code: "edit", type: "primary", icon: Edit },
+  { name: "绑定角色", code: "bindRole", type: "success", icon: UserFilled }
 ]
 
 const handleSyncUser = () => {
@@ -164,13 +159,13 @@ const handleRefresh = () => {
 }
 
 // 表格操作处理
-const handleTableAction = (key: string, row: user) => {
-  switch (key) {
+const handleOperateEvent = (operateItem: user, actionName: string) => {
+  switch (actionName) {
     case "edit":
-      handleUpdate(row)
+      handleUpdate(operateItem)
       break
     case "bindRole":
-      handleBindRole(row)
+      handleBindRole(operateItem)
       break
   }
 }

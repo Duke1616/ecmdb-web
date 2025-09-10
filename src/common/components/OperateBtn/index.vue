@@ -1,18 +1,18 @@
 <template>
   <div v-if="props.items">
     <div v-if="props.items.length > props.maxLength" class="btn-box">
-      <el-tooltip effect="dark" :content="el.name" v-for="(el, i) in showBtn" :key="i">
-        <el-button
-          :type="el.type || 'primary'"
-          size="small"
-          :icon="el.icon ? el.icon : ''"
-          link
-          :disabled="el.disabled"
-          @click="routeEvent(props.operateItem, el.name)"
-        >
-          <span> {{ el.name }}</span>
-        </el-button>
-      </el-tooltip>
+      <el-button
+        v-for="(el, i) in showBtn"
+        :key="i"
+        :type="el.type || 'primary'"
+        size="small"
+        :icon="el.icon ? el.icon : ''"
+        link
+        :disabled="el.disabled"
+        @click="routeEvent(props.operateItem, el.code)"
+      >
+        <span> {{ el.name }}</span>
+      </el-button>
 
       <el-dropdown trigger="hover" @command="handleCommand">
         <span class="el-dropdown-link">
@@ -34,20 +34,18 @@
         </template>
       </el-dropdown>
     </div>
-    <div v-else style="display: flex">
+    <div v-else class="btn-container">
       <div v-for="(item, index) in props.items" :key="index" class="btn-box">
-        <el-tooltip effect="dark" placement="right" :content="item.name">
-          <el-button
-            :type="item.type || 'default'"
-            link
-            :icon="item.icon ? item.icon : ''"
-            size="small"
-            :disabled="item.disabled"
-            @click="routeEvent(operateItem, item.name)"
-          >
-            <span> {{ item.name }}</span>
-          </el-button>
-        </el-tooltip>
+        <el-button
+          :type="item.type || 'default'"
+          link
+          :icon="item.icon ? item.icon : ''"
+          size="small"
+          :disabled="item.disabled"
+          @click="routeEvent(operateItem, item.code)"
+        >
+          <span> {{ item.name }}</span>
+        </el-button>
       </div>
     </div>
   </div>
@@ -60,7 +58,7 @@ interface Item {
   name: string
   code: string
   type?: any
-  icon?: string
+  icon?: any
   disabled?: boolean
 }
 
@@ -105,7 +103,17 @@ const handleCommand = (command: any) => {
   text-align: left;
 }
 
+.btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .btn-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   .el-button {
     min-width: 0px;
     margin-right: 12px;

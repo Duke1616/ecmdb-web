@@ -23,7 +23,6 @@
     <DataTable
       :data="rolesData"
       :columns="tableColumns"
-      :actions="tableActions"
       :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
@@ -32,7 +31,6 @@
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
       :table-props="{}"
-      @action="handleTableAction"
       @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -59,6 +57,11 @@
           <el-icon><Close /></el-icon>
           禁用
         </el-tag>
+      </template>
+
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
 
@@ -99,6 +102,7 @@ import createOrUpdate from "./createOrUpdate.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import MenuPermission from "./menu.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
@@ -136,25 +140,11 @@ const tableColumns = [
   }
 ]
 
-const tableActions = [
-  {
-    key: "edit",
-    label: "修改",
-    type: "primary" as const,
-    icon: Edit
-  },
-  {
-    key: "menu",
-    label: "菜单权限",
-    type: "success" as const,
-    icon: Menu
-  },
-  {
-    key: "delete",
-    label: "删除",
-    type: "danger" as const,
-    icon: Delete
-  }
+// 操作按钮配置
+const operateBtnItems = [
+  { name: "修改", code: "edit", type: "primary", icon: Edit },
+  { name: "菜单权限", code: "menu", type: "success", icon: Menu },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
 ]
 
 const handleAddRole = () => {
@@ -231,16 +221,16 @@ const handleDeleteSingle = async (row: role) => {
   }
 }
 
-const handleTableAction = (key: string, row: role) => {
-  switch (key) {
+const handleOperateEvent = (operateItem: role, actionName: string) => {
+  switch (actionName) {
     case "edit":
-      handleUpdate(row)
+      handleUpdate(operateItem)
       break
     case "menu":
-      handleMenuPermission(row)
+      handleMenuPermission(operateItem)
       break
     case "delete":
-      handleDeleteSingle(row)
+      handleDeleteSingle(operateItem)
       break
   }
 }

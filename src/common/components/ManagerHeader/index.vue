@@ -6,11 +6,18 @@
     </div>
     <div class="header-right">
       <slot name="actions">
-        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="$emit('add')">
+        <el-button v-if="showAddButton" type="primary" :icon="CirclePlus" class="action-btn" @click="$emit('add')">
           {{ addButtonText }}
         </el-button>
         <el-tooltip content="刷新数据">
-          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="$emit('refresh')" />
+          <el-button
+            v-if="showRefreshButton"
+            type="primary"
+            :icon="RefreshRight"
+            circle
+            class="refresh-btn"
+            @click="$emit('refresh')"
+          />
         </el-tooltip>
       </slot>
     </div>
@@ -24,10 +31,14 @@ interface Props {
   title: string
   subtitle: string
   addButtonText?: string
+  showAddButton?: boolean
+  showRefreshButton?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
-  addButtonText: "新增"
+  addButtonText: "新增",
+  showAddButton: true,
+  showRefreshButton: true
 })
 
 defineEmits<{
@@ -41,7 +52,9 @@ defineEmits<{
 .manager-header {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 18px 22px;
   display: flex;
   justify-content: space-between;
@@ -53,7 +66,9 @@ defineEmits<{
   transition: all 0.3s ease;
 
   &:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 }
 

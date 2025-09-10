@@ -251,34 +251,36 @@ watch(
 
 <style lang="scss" scoped>
 .runner-form-container {
-  padding: 24px;
+  padding: 20px;
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 0;
+  box-shadow: none;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .form-header {
-  margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #d1d5db;
 
   .form-title {
-    margin: 0 0 8px 0;
-    font-size: 20px;
+    margin: 0 0 6px 0;
+    font-size: 18px;
     font-weight: 600;
     color: #1f2937;
   }
 
   .form-description {
     margin: 0;
-    font-size: 14px;
+    font-size: 13px;
     color: #6b7280;
   }
 }
 
 .runner-form {
   .form-section {
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 
     &:last-child {
       margin-bottom: 0;
@@ -288,27 +290,28 @@ watch(
   .section-title {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 12px 16px;
+    margin-bottom: 16px;
+    padding: 10px 14px;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 8px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
     border-left: 4px solid #3b82f6;
 
     .section-icon {
-      margin-right: 8px;
-      font-size: 18px;
+      margin-right: 6px;
+      font-size: 16px;
       color: #3b82f6;
     }
 
     span {
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 600;
       color: #374151;
     }
   }
 
   .form-row {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 
     &:last-child {
       margin-bottom: 0;
@@ -321,34 +324,41 @@ watch(
     :deep(.el-form-item__label) {
       font-weight: 500;
       color: #374151;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      font-size: 13px;
     }
 
     :deep(.el-input__wrapper) {
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       transition: all 0.2s ease;
 
       &:hover {
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        border-color: #9ca3af;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       &.is-focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
     }
 
     :deep(.el-select__wrapper) {
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       transition: all 0.2s ease;
 
       &:hover {
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        border-color: #9ca3af;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       &.is-focus {
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
     }
   }
@@ -417,24 +427,33 @@ watch(
   }
 
   .form-header {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 
     .form-title {
-      font-size: 18px;
+      font-size: 16px;
     }
   }
 
   .runner-form {
+    .form-section {
+      margin-bottom: 20px;
+    }
+
     .section-title {
-      padding: 10px 12px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
 
       .section-icon {
-        font-size: 16px;
+        font-size: 14px;
       }
 
       span {
-        font-size: 14px;
+        font-size: 13px;
       }
+    }
+
+    .form-row {
+      margin-bottom: 12px;
     }
   }
 }

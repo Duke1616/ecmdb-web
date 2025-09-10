@@ -13,7 +13,6 @@
     <DataTable
       :data="codebooksData"
       :columns="tableColumns"
-      :actions="tableActions"
       :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
@@ -21,21 +20,17 @@
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      @action="handleTableAction"
       @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
-    />
+    >
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
+      </template>
+    </DataTable>
     <!-- 新增/编辑模版 -->
     <el-card v-show="addDialogDrawer">
-      <!-- 代码编辑器模式选择器 -->
-      <div class="editor-mode-selector">
-        <el-radio-group v-model="codeEditorMode" size="small" :teleported="false">
-          <el-radio-button label="simple">简单模式</el-radio-button>
-          <el-radio-button label="advanced">文件管理模式</el-radio-button>
-        </el-radio-group>
-      </div>
-
       <WizardContainer
         :steps="codebookSteps"
         :formData="formData"
@@ -51,9 +46,10 @@
 
 <script setup lang="ts">
 import { h, ref, watch, computed, nextTick } from "vue"
-import { CirclePlus, RefreshRight, Document, Edit } from "@element-plus/icons-vue"
+import { Document, Edit, Delete } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import WizardContainer from "@@/components/WizardContainer/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { cloneDeep } from "lodash-es"
 import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookApi } from "@/api/codebook"
@@ -72,20 +68,20 @@ const codeEditorMode = ref<"simple" | "advanced">("simple")
 const tableColumns = [
   { prop: "name", label: "名称", align: "center" as const },
   { prop: "identifier", label: "唯一标识", align: "center" as const },
-  { prop: "secret", label: "密钥", align: "center" as const }
+  { prop: "secret", label: "密钥", align: "center" as const, width: 400 }
 ]
 
-// 表格操作配置
-const tableActions = [
-  { key: "edit", label: "修改", type: "primary" as const, icon: Edit },
-  { key: "delete", label: "删除", type: "danger" as const }
+// 操作按钮配置
+const operateBtnItems = [
+  { name: "修改", code: "edit", type: "primary", icon: Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
 ]
 
 // 选中的行
 const selectedRows = ref<codebook[]>([])
 
-// 表格操作事件
-const handleTableAction = (action: string, row: codebook) => {
+// 操作按钮事件
+const handleOperateEvent = (row: codebook, action: string) => {
   if (action === "edit") {
     handleUpdate(row)
   } else if (action === "delete") {
