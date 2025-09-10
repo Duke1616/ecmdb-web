@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
       title="工作节点管理"
@@ -36,7 +36,7 @@
         <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -46,6 +46,7 @@ import { worker } from "@/api/worker/types/worker"
 import { listWorkerApi } from "@/api/worker/worker"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -108,13 +109,4 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listWor
 }
 </style>
 
-<style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-</style>
+<style lang="scss" scoped></style>

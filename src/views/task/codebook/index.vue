@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
       title="代码本管理"
@@ -41,7 +41,7 @@
         ref="wizardRef"
       />
     </el-card>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -58,6 +58,7 @@ import InfoPage from "./modal/info.vue"
 import Code from "./modal/code.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
@@ -326,15 +327,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listCod
 </style>
 
 <style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-
 /* 代码编辑器模式选择器 */
 .editor-mode-selector {
   padding: 16px 24px;

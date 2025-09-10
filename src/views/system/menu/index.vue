@@ -8,6 +8,7 @@ import { menu } from "@/api/menu/types/menu"
 import { ElMessage, ElMessageBox, ElTree, ElScrollbar } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 const platforms = ref([
   { id: "cmdb", name: "资产管理" },
   { id: "order", name: "工单管理" },
@@ -238,7 +239,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-container">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader title="菜单管理" subtitle="管理系统菜单和权限配置">
       <template #actions>
@@ -355,17 +356,10 @@ onMounted(() => {
         />
       </div>
     </FormDialog>
-  </div>
+  </PageContainer>
 </template>
 
 <style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--background);
-  overflow: hidden;
-}
-
 .platform-buttons {
   display: flex;
   gap: 12px;

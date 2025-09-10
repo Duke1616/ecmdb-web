@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
       title="任务历史"
@@ -69,7 +69,7 @@
         </div>
       </el-dialog>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -95,6 +95,7 @@ import { TagInfo } from "@/common/components/EnumTag/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -307,15 +308,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTas
 </style>
 
 <style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-
 .code-container {
   height: 70vh;
   overflow: auto;

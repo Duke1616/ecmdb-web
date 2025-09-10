@@ -1,73 +1,59 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handleCreateTemplate">新增模版</el-button>
-          <el-button type="primary" :icon="CirclePlus" @click="groupDialogVisible = true">新增分组</el-button>
-        </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listTemplatesData" />
-          </el-tooltip>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <el-table :data="templatesData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="group_id" label="所属组" align="center" :formatter="formatGroup" />
-          <el-table-column prop="create_type" label="来源" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.create_type === 1" effect="plain" type="primary" disable-transitions
-                >系统自建</el-tag
-              >
-              <el-tag v-else-if="scope.row.create_type === 2" effect="plain" type="warning" disable-transitions
-                >企业微信</el-tag
-              >
-              <el-tag v-else type="info" effect="plain" disable-transitions>未知类型</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="250" align="center">
-            <template #default="scope">
-              <el-button
-                v-if="scope.row.create_type === 1"
-                type="primary"
-                text
-                bg
-                size="small"
-                @click="handleUpdate(scope.row)"
-                >修改</el-button
-              >
-              <el-button
-                v-if="scope.row.create_type === 2"
-                type="warning"
-                text
-                bg
-                size="small"
-                @click="handlerSync(scope.row)"
-                >流程</el-button
-              >
-              <el-button type="primary" text bg size="small" @click="handleDiscover(scope.row)">自动发现</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+  <PageContainer>
+    <!-- 头部区域 -->
+    <ManagerHeader
+      title="模板管理"
+      subtitle="管理系统模板和分组"
+      add-button-text="新增模版"
+      @add="handleCreateTemplate"
+      @refresh="listTemplatesData"
+    >
+      <template #actions>
+        <el-button type="primary" :icon="CirclePlus" @click="handleCreateTemplate">新增模版</el-button>
+        <el-button type="success" :icon="CirclePlus" @click="groupDialogVisible = true">新增分组</el-button>
+        <el-tooltip content="刷新当前页">
+          <el-button type="primary" :icon="RefreshRight" circle @click="listTemplatesData" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
+
+    <!-- 主内容区域 -->
+    <DataTable
+      :data="templatesData"
+      :columns="tableColumns"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{}"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 所属组插槽 -->
+      <template #groupName="{ row }">
+        {{ formatGroup(row) }}
+      </template>
+
+      <!-- 来源插槽 -->
+      <template #createType="{ row }">
+        <el-tag v-if="row.create_type === 1" effect="plain" type="primary" disable-transitions class="type-tag">
+          系统自建
+        </el-tag>
+        <el-tag v-else-if="row.create_type === 2" effect="plain" type="warning" disable-transitions class="type-tag">
+          企业微信
+        </el-tag>
+        <el-tag v-else type="info" effect="plain" disable-transitions class="type-tag"> 未知类型 </el-tag>
+      </template>
+
+      <!-- 操作插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="getOperateBtnItems(row)" @routeEvent="operateEvent" :operateItem="row" :maxLength="3" />
+      </template>
+    </DataTable>
 
     <!-- 新增或删除模版 -->
     <el-card v-show="templateDialogDrawer">
@@ -109,7 +95,7 @@
         <el-button type="primary" @click="handlerCreateThirdParty">确认</el-button>
       </template>
     </el-dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
@@ -134,12 +120,77 @@ import { COMMON_STEPS } from "@/common/constants/wizard-steps"
 import { getFormRulesByStep } from "@/common/constants/form-rules"
 import Info from "./info.vue"
 import Designer from "./designer.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const templateDialogDrawer = ref<boolean>(false)
 const templateDiscoverDialog = ref<boolean>(false)
 const groupDialogVisible = ref<boolean>(false)
 const thirdpartyDialogVisible = ref<boolean>(false)
+
+// 表格列定义
+const tableColumns = [
+  { prop: "name", label: "名称", showOverflowTooltip: true },
+  { prop: "group_id", label: "所属组", width: 120, slot: "groupName" },
+  { prop: "create_type", label: "来源", width: 120, slot: "createType" },
+  { prop: "desc", label: "描述", showOverflowTooltip: true }
+]
+
+// 选择处理
+const handleSelectionChange = (selection: template[]) => {
+  console.log("Selected templates:", selection)
+}
+
+// 操作按钮配置
+const getOperateBtnItems = (row: template) => {
+  const items = []
+
+  if (row.create_type === 1) {
+    items.push({
+      name: "修改",
+      code: "1",
+      icon: "EditPen"
+    })
+  } else if (row.create_type === 2) {
+    items.push({
+      name: "流程",
+      code: "2",
+      icon: "Connection",
+      type: "warning"
+    })
+  }
+
+  items.push({
+    name: "自动发现",
+    code: "3",
+    icon: "Search"
+  })
+
+  items.push({
+    name: "删除",
+    code: "4",
+    icon: "Delete",
+    type: "danger"
+  })
+
+  return items
+}
+
+// 操作事件处理
+const operateEvent = (data: template, name: string) => {
+  if (name === "修改") {
+    handleUpdate(data)
+  } else if (name === "流程") {
+    handlerSync(data)
+  } else if (name === "自动发现") {
+    handleDiscover(data)
+  } else if (name === "删除") {
+    handleDelete(data)
+  }
+}
 
 // 模板向导相关
 const templateWizardRef = ref()
@@ -330,24 +381,40 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTem
 </script>
 
 <style lang="scss" scoped>
-.toolbar-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
 .add-drawer {
   .el-drawer__header {
     margin: 0;
   }
 }
 
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+/* 类型标签样式 */
+.type-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  min-width: 60px;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-block;
+
+  &.el-tag--primary {
+    color: #3b82f6;
+    background: #eff6ff;
+    border-color: #dbeafe;
+  }
+
+  &.el-tag--warning {
+    color: #d97706;
+    background: #fef3c7;
+    border-color: #fde68a;
+  }
+
+  &.el-tag--info {
+    color: #6b7280;
+    background: #f9fafb;
+    border-color: #e5e7eb;
+  }
 }
 </style>

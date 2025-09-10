@@ -1,66 +1,74 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never" v-show="elCardVisibe">
-      <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handleCreate">新增流程</el-button>
-        </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listFlowsData" />
-          </el-tooltip>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <el-table :data="flowsData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="owner" label="负责人" align="center" :formatter="formatOwner" />
-          <el-table-column prop="is_notify" label="消息通知" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.is_notify === true" effect="plain" type="primary" disable-transitions
-                >开启</el-tag
-              >
-              <el-tag v-else type="warning" effect="plain" disable-transitions>关闭</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="notify_method" label="发送媒介" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.notify_method === 1" effect="plain" type="primary" disable-transitions
-                >飞书</el-tag
-              >
-              <el-tag v-else-if="scope.row.notify_method === 2" effect="plain" type="primary" disable-transitions
-                >微信</el-tag
-              >
-              <el-tag v-else type="info" effect="plain" disable-transitions>暂未开启</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="200" align="center">
-            <template #default="scope">
-              <OperateBtn
-                :items="operateBtnStatus"
-                @routeEvent="operateEvent"
-                :operateItem="scope.row"
-                :maxLength="2"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+  <PageContainer>
+    <!-- 头部区域 -->
+    <ManagerHeader
+      v-show="elCardVisibe"
+      title="流程管理"
+      subtitle="管理工作流程和部署"
+      add-button-text="新增流程"
+      @add="handleCreate"
+      @refresh="listFlowsData"
+    >
+      <template #actions>
+        <el-button type="primary" :icon="CirclePlus" @click="handleCreate">新增流程</el-button>
+        <el-tooltip content="刷新当前页">
+          <el-button type="primary" :icon="RefreshRight" circle @click="listFlowsData" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
+
+    <!-- 主内容区域 -->
+    <DataTable
+      v-show="elCardVisibe"
+      :data="flowsData"
+      :columns="tableColumns"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{}"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 负责人插槽 -->
+      <template #ownerName="{ row }">
+        {{ formatOwner(row) }}
+      </template>
+
+      <!-- 消息通知插槽 -->
+      <template #isNotify="{ row }">
+        <el-tag v-if="row.is_notify === true" effect="plain" type="primary" disable-transitions class="status-tag">
+          开启
+        </el-tag>
+        <el-tag v-else type="warning" effect="plain" disable-transitions class="status-tag"> 关闭 </el-tag>
+      </template>
+
+      <!-- 发送媒介插槽 -->
+      <template #notifyMethod="{ row }">
+        <el-tag v-if="row.notify_method === 1" effect="plain" type="primary" disable-transitions class="method-tag">
+          飞书
+        </el-tag>
+        <el-tag
+          v-else-if="row.notify_method === 2"
+          effect="plain"
+          type="success"
+          disable-transitions
+          class="method-tag"
+        >
+          微信
+        </el-tag>
+        <el-tag v-else type="info" effect="plain" disable-transitions class="method-tag"> 暂未开启 </el-tag>
+      </template>
+
+      <!-- 操作插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnStatus" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
+      </template>
+    </DataTable>
     <!-- 新增模版 -->
     <el-card v-show="visibleWorkflow">
       <WizardContainer
@@ -78,7 +86,7 @@
     <el-dialog v-model="graphPreviewVisible" width="60%" @closed="onPreviewClosed">
       <Preview ref="previewRef" @close="onPreviewClosed" />
     </el-dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
@@ -104,9 +112,26 @@ import Info from "./info.vue"
 import WorkflowEditor from "./lf.vue"
 import Setting from "./setting.vue"
 import { v4 as uuidv4 } from "uuid"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const previewRef = ref<InstanceType<typeof Preview>>()
+
+// 表格列定义
+const tableColumns = [
+  { prop: "name", label: "名称", showOverflowTooltip: true },
+  { prop: "owner", label: "负责人", width: 120, slot: "ownerName" },
+  { prop: "is_notify", label: "消息通知", width: 100, slot: "isNotify" },
+  { prop: "notify_method", label: "发送媒介", width: 120, slot: "notifyMethod" },
+  { prop: "desc", label: "描述", showOverflowTooltip: true }
+]
+
+// 选择处理
+const handleSelectionChange = (selection: workflow[]) => {
+  console.log("Selected workflows:", selection)
+}
 
 // 工作流向导相关
 const workflowWizardRef = ref()
@@ -384,19 +409,60 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listFlo
 </script>
 
 <style lang="scss" scoped>
-.toolbar-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+/* 状态标签样式 */
+.status-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  min-width: 50px;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-block;
+
+  &.el-tag--primary {
+    color: #3b82f6;
+    background: #eff6ff;
+    border-color: #dbeafe;
+  }
+
+  &.el-tag--warning {
+    color: #d97706;
+    background: #fef3c7;
+    border-color: #fde68a;
+  }
 }
 
-.table-wrapper {
-  margin-bottom: 20px;
-}
+/* 方法标签样式 */
+.method-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+  min-width: 60px;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-block;
 
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+  &.el-tag--primary {
+    color: #3b82f6;
+    background: #eff6ff;
+    border-color: #dbeafe;
+  }
+
+  &.el-tag--success {
+    color: #059669;
+    background: #ecfdf5;
+    border-color: #d1fae5;
+  }
+
+  &.el-tag--info {
+    color: #6b7280;
+    background: #f9fafb;
+    border-color: #e5e7eb;
+  }
 }
 
 /* WizardContainer 现在自动处理全屏覆盖，无需额外样式 */

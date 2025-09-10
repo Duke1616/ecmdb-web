@@ -1,5 +1,5 @@
 <template>
-  <div class="user-manager">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
       title="用户管理"
@@ -102,7 +102,7 @@
     >
       <Sync ref="syncRef" @closed="onClosedSyncUser" @listUsersData="listUsersData" />
     </FormDialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -119,6 +119,7 @@ import DataTable from "@@/components/DataTable/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
@@ -138,11 +139,11 @@ const tableColumns = [
   },
   {
     prop: "display_name",
-    label: "显示名称",
+    label: "显示名称"
   },
   {
     prop: "title",
-    label: "岗位",
+    label: "岗位"
   },
   {
     prop: "create_type",
@@ -287,16 +288,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listUse
 </script>
 
 <style lang="scss" scoped>
-/* 用户管理容器 */
-.user-manager {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-
 /* 按钮样式 */
 .action-btn {
   height: 36px;

@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
       title="运行器管理"
@@ -59,7 +59,7 @@
         </div>
       </template>
     </el-drawer>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -72,6 +72,7 @@ import reigsterRunner from "./registerOrUpdate.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -242,15 +243,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRun
 </style>
 
 <style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-
 // 响应式设计
 @media (max-width: 768px) {
   .drawer-footer {

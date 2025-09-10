@@ -1,5 +1,5 @@
 <template>
-  <div class="role-manager">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
       title="角色管理"
@@ -92,7 +92,7 @@
     >
       <MenuPermission ref="menuRef" @confirm="handleMenuPermissionConfirm" @cancel="closeMenePermission" />
     </FormDialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -109,6 +109,7 @@ import MenuPermission from "./menu.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
@@ -277,16 +278,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 </script>
 
 <style lang="scss" scoped>
-/* 角色管理器容器 */
-.role-manager {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-
 /* 按钮样式 */
 .action-btn {
   height: 36px;

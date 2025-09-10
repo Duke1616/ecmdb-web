@@ -1,5 +1,5 @@
 <template>
-  <div class="api-manager">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader title="API 管理" subtitle="管理系统接口和权限配置" @refresh="handleRefresh">
       <template #actions>
@@ -24,7 +24,7 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     />
-  </div>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
@@ -36,6 +36,7 @@ import { RefreshRight } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 /** 查询模版列表 */
@@ -77,16 +78,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listEnd
 </script>
 
 <style lang="scss" scoped>
-/* API 管理器容器 */
-.api-manager {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  overflow: hidden;
-  padding: 20px;
-}
-
 /* 按钮样式 */
 .refresh-btn {
   width: 36px;

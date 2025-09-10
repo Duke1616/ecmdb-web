@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader title="部门管理" subtitle="管理系统部门和人员组织架构" @refresh="handleRefresh">
       <template #actions>
@@ -122,7 +122,7 @@
         />
       </div>
     </FormDialog>
-  </div>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
@@ -136,6 +136,7 @@ import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const filterInput = ref("")
 
@@ -357,13 +358,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--background);
-  overflow: hidden;
-}
-
 .content {
   display: flex;
   flex: 1;
