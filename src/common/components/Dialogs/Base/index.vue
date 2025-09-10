@@ -84,7 +84,7 @@ const handleClosed = () => {
 <style lang="scss" scoped>
 .base-dialog {
   :deep(.el-dialog) {
-    max-height: 90vh;
+    max-height: 80vh;
     display: flex;
     flex-direction: column;
   }
@@ -92,20 +92,22 @@ const handleClosed = () => {
   :deep(.el-dialog__header) {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
-    padding: 20px 24px;
+    padding: 18px 20px;
     margin: 0;
     flex-shrink: 0;
   }
 
   :deep(.el-dialog__body) {
-    padding: 24px;
+    padding: 20px;
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   :deep(.el-dialog__footer) {
-    padding: 16px 24px;
+    padding: 14px 20px;
     background: #f8fafc;
     border-top: 1px solid #e2e8f0;
     flex-shrink: 0;
@@ -118,7 +120,7 @@ const handleClosed = () => {
     }
 
     :deep(.el-dialog__body) {
-      padding: 24px;
+      padding: 20px;
     }
   }
 
@@ -155,15 +157,15 @@ const handleClosed = () => {
     }
 
     :deep(.el-dialog__header) {
-      padding: 16px 20px;
+      padding: 14px 16px;
     }
 
     :deep(.el-dialog__body) {
-      padding: 16px 20px;
+      padding: 16px;
     }
 
     :deep(.el-dialog__footer) {
-      padding: 12px 20px;
+      padding: 12px 16px;
     }
 
     // 移动端不同类型弹窗的高度调整

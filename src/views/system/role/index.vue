@@ -78,19 +78,19 @@
     </FormDialog>
 
     <!-- 菜单权限分配对话框 -->
-    <PermissionDialog
+    <FormDialog
       v-model="dialogPermission"
       title="菜单权限分配"
       subtitle="为角色分配相应的菜单访问权限"
-      :selected-count="selectedMenusCount"
-      :total-count="menuTreeData.length"
       header-icon="Menu"
+      confirm-text="确认分配"
+      :show-footer-info="false"
       @closed="closeMenePermission"
       @confirm="handlePermissionConfirm"
       @cancel="closeMenePermission"
     >
       <MenuPermission ref="menuRef" @confirm="handleMenuPermissionConfirm" @cancel="closeMenePermission" />
-    </PermissionDialog>
+    </FormDialog>
   </div>
 </template>
 
@@ -107,7 +107,7 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import MenuPermission from "./menu.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import { FormDialog, PermissionDialog } from "@@/components/Dialogs"
+import { FormDialog } from "@@/components/Dialogs"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
@@ -117,8 +117,6 @@ const apiRef = ref<InstanceType<typeof Form>>()
 const menuRef = ref<InstanceType<typeof MenuPermission>>()
 const roleCode = ref<string>("")
 const rolesData = ref<role[]>([])
-const selectedMenusCount = ref<number>(0)
-const menuTreeData = ref<any[]>([])
 
 const tableColumns = [
   {

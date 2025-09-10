@@ -21,21 +21,23 @@
           <h4 class="panel-title">可选角色</h4>
           <span class="selection-count">已选择 {{ checkedKeys.length }} 个</span>
         </div>
-        <div class="role-list">
-          <div v-for="role in filteredRoles" :key="role.id" class="role-card" @click="toggleRole(role)">
-            <div class="role-checkbox">
-              <el-checkbox :model-value="isRoleSelected(role)" @change="toggleRole(role)" @click.stop />
-            </div>
-            <div class="role-info">
-              <div class="role-header">
-                <span class="role-name">{{ role.name }}</span>
-                <span class="role-code">{{ role.code }}</span>
+        <div class="role-list-wrapper">
+          <div class="role-list">
+            <div v-for="role in filteredRoles" :key="role.id" class="role-card" @click="toggleRole(role)">
+              <div class="role-checkbox">
+                <el-checkbox :model-value="isRoleSelected(role)" @change="toggleRole(role)" @click.stop />
               </div>
-              <div class="role-desc">{{ role.desc || "暂无描述" }}</div>
+              <div class="role-info">
+                <div class="role-header">
+                  <span class="role-name">{{ role.name }}</span>
+                  <span class="role-code">{{ role.code }}</span>
+                </div>
+                <div class="role-desc">{{ role.desc || "暂无描述" }}</div>
+              </div>
             </div>
-          </div>
-          <div v-if="filteredRoles.length === 0" class="empty-state">
-            <el-empty description="暂无可选角色" :image-size="80" />
+            <div v-if="filteredRoles.length === 0" class="empty-state">
+              <el-empty description="暂无可选角色" :image-size="80" />
+            </div>
           </div>
         </div>
         <!-- 分页 -->
@@ -58,42 +60,35 @@
           <h4 class="panel-title">已选择角色</h4>
           <span class="selection-count">已选择 {{ selectedRolesCount }} 个</span>
         </div>
-        <div class="role-list">
-          <div v-for="role in getSelectedRoles()" :key="role.id" class="role-card selected">
-            <div class="role-info">
-              <div class="role-header">
-                <span class="role-name">{{ role.name }}</span>
-                <span class="role-code">{{ role.code }}</span>
+        <div class="selected-role-list-wrapper">
+          <div v-if="selectedRolesCount === 0" class="empty-state">
+            <el-icon class="empty-icon"><User /></el-icon>
+            <p class="empty-text">暂无选择的角色</p>
+            <p class="empty-hint">请在左侧选择需要分配的角色权限</p>
+          </div>
+          <div v-else class="selected-role-list">
+            <div v-for="role in getSelectedRoles()" :key="role.id" class="role-card selected">
+              <div class="role-info">
+                <div class="role-header">
+                  <span class="role-name">{{ role.name }}</span>
+                  <span class="role-code">{{ role.code }}</span>
+                </div>
+                <div class="role-desc">{{ role.desc || "暂无描述" }}</div>
               </div>
-              <div class="role-desc">{{ role.desc || "暂无描述" }}</div>
+              <button class="remove-btn" @click="removeRole(role)" title="移除">
+                <el-icon><Close /></el-icon>
+              </button>
             </div>
-            <button class="remove-btn" @click="removeRole(role)" title="移除">
-              <el-icon><Close /></el-icon>
-            </button>
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- 底部按钮 -->
-    <div class="role-footer">
-      <el-button @click="handleCancel" class="footer-btn footer-btn-cancel" size="large"> 取消 </el-button>
-      <el-button
-        type="primary"
-        @click="handleConfirm"
-        class="footer-btn footer-btn-confirm"
-        size="large"
-        :disabled="selectedRolesCount === 0"
-      >
-        确认选择 ({{ selectedRolesCount }})
-      </el-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
-import { Search, Close } from "@element-plus/icons-vue"
+import { Search, Close, User } from "@element-plus/icons-vue"
 import type { role } from "@/api/role/types/role"
 import { listRolesApi } from "@/api/role"
 import { usePagination } from "@/common/composables/usePagination"
@@ -103,13 +98,7 @@ interface Props {
   userId?: number
 }
 
-interface Emits {
-  (e: "confirm", roles: Array<{ id: number; name: string; code: string; desc: string }>): void
-  (e: "cancel"): void
-}
-
 const props = defineProps<Props>()
-const emits = defineEmits<Emits>()
 
 const init = {
   currentPage: 1,
@@ -327,61 +316,69 @@ const removeRole = (role: role) => {
 const getSelectedRoles = (): role[] => {
   return selectedRolesData.value
 }
-
-// 处理取消
-const handleCancel = () => {
-  emits("cancel")
-}
-
-// 确认时返回角色数据
-const handleConfirm = () => {
-  const selectedRoles = getSelectedRoles()
-  emits("confirm", selectedRoles)
-}
 </script>
 
 <style lang="scss" scoped>
 /* 角色选择器容器 */
 .role-selector-container {
   height: 100%;
+  max-height: 60vh;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .search-section {
-  padding: 0px 20px 4px;
-  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 12px;
+  flex-shrink: 0;
 
   .search-container {
+    display: flex;
+    align-items: center;
+
     .search-input {
+      width: 100%;
+
       :deep(.el-input__wrapper) {
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        padding: 6px 10px;
-        height: 32px;
-        transition: all 0.3s ease;
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 0 12px;
+        height: 40px;
+        transition: all 0.2s ease;
+        box-shadow: none;
 
         &:hover {
-          border-color: #cbd5e1;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+          border-color: #9ca3af;
+          background: #ffffff;
         }
 
         &.is-focus {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
       }
 
       :deep(.el-input__inner) {
-        font-size: 11px;
-        color: #1e293b;
-        font-weight: 500;
+        font-size: 14px;
+        color: #111827;
+        font-weight: 400;
+
+        &::placeholder {
+          color: #6b7280;
+          font-weight: 400;
+        }
       }
 
       :deep(.el-input__prefix) {
-        color: #64748b;
+        color: #6b7280;
+        font-size: 16px;
       }
     }
   }
@@ -390,16 +387,13 @@ const handleConfirm = () => {
 /* 主要内容区域 */
 .content-wrapper {
   display: flex;
-  gap: 20px;
-  padding: 20px;
+  gap: 12px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
 
   @media (max-width: 1199px) {
     flex-direction: column;
-    gap: 8px;
-    padding: 8px;
+    gap: 12px;
   }
 
   @media (min-width: 1200px) {
@@ -412,12 +406,11 @@ const handleConfirm = () => {
   flex: 1;
   min-width: 0;
   background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 50vh;
 }
 
 /* 右侧：已选择角色面板 */
@@ -425,12 +418,18 @@ const handleConfirm = () => {
   flex: 1;
   min-width: 0;
   background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 50vh;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-section {
+    padding: 14px 0;
+  }
 }
 
 /* 面板头部 */
@@ -438,38 +437,63 @@ const handleConfirm = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 20px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
   flex-shrink: 0;
 
   .panel-title {
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: #1e293b;
+    color: #374151;
   }
 
   .selection-count {
     font-size: 12px;
-    color: #3b82f6;
-    background: rgba(59, 130, 246, 0.1);
-    padding: 4px 12px;
-    border-radius: 16px;
+    color: #6b7280;
     font-weight: 500;
   }
+}
+
+/* 角色列表包装器 */
+.role-list-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* 角色列表 */
 .role-list {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: calc(50vh - 100px); /* 调整高度计算，给内容更多空间 */
+  overflow-y: auto;
+}
+
+/* 已选择角色列表包装器 */
+.selected-role-list-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 已选择角色列表 */
+.selected-role-list {
+  flex: 1;
+  min-height: 0;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
 
   /* 自定义滚动条 */
   &::-webkit-scrollbar {
@@ -541,25 +565,22 @@ const handleConfirm = () => {
 
 .role-card {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s ease;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  transition: all 0.15s ease;
   cursor: pointer;
-  min-height: 70px;
   flex-shrink: 0;
 
   &:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-    transform: translateY(-1px);
+    background: #f3f4f6;
+    border-color: #d1d5db;
   }
 
   &.selected {
-    background: rgba(59, 130, 246, 0.05);
+    background: #eff6ff;
     border-color: #3b82f6;
   }
 
@@ -582,33 +603,24 @@ const handleConfirm = () => {
     }
 
     .role-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e293b;
+      font-size: 13px;
+      font-weight: 500;
+      color: #111827;
     }
 
     .role-code {
-      font-size: 12px;
-      color: #64748b;
-      font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-      background: #f1f5f9;
-      padding: 2px 6px;
-      border-radius: 4px;
+      font-size: 11px;
+      color: #6b7280;
+      font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+      background: #f3f4f6;
+      padding: 1px 4px;
+      border-radius: 3px;
     }
 
     .role-desc {
       font-size: 11px;
-      color: #94a3b8;
-      line-height: 1.4;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      -webkit-box-orient: vertical;
-      max-width: 100%;
-      word-break: break-word;
-      word-wrap: break-word;
+      color: #9ca3af;
+      line-height: 1.3;
     }
   }
 
@@ -635,60 +647,6 @@ const handleConfirm = () => {
 
     .el-icon {
       font-size: 14px;
-    }
-  }
-}
-
-.role-footer {
-  padding: 12px 20px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-shrink: 0; /* 防止被压缩 */
-
-  .footer-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-    min-width: 90px;
-
-    &:hover {
-      transform: translateY(-1px);
-    }
-
-    &:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-  }
-
-  .footer-btn-cancel {
-    background: white;
-    color: #64748b;
-    border-color: #e2e8f0;
-
-    &:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-      color: #475569;
-    }
-  }
-
-  .footer-btn-confirm {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    border-color: #3b82f6;
-
-    &:hover {
-      background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-      border-color: #1d4ed8;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
   }
 }

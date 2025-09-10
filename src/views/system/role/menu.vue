@@ -524,18 +524,19 @@ defineExpose({
 .permission-manager {
   height: 100%;
   max-height: 60vh;
-  min-height: 400px;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: #ffffff;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 /* 搜索栏 */
 .search-section {
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 12px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 12px;
   flex-shrink: 0;
 
   .search-container {
@@ -545,38 +546,42 @@ defineExpose({
 
     .search-input {
       flex: 1;
-      max-width: 300px;
 
       :deep(.el-input__wrapper) {
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 8px 12px;
-        height: 36px;
-        transition: all 0.3s ease;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        background: #f9fafb;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 0 12px;
+        height: 40px;
+        transition: all 0.2s ease;
+        box-shadow: none;
 
         &:hover {
-          border-color: #3b82f6;
-          box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+          border-color: #9ca3af;
+          background: #ffffff;
         }
 
         &.is-focus {
           border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-          background: white;
+          background: #ffffff;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
       }
 
       :deep(.el-input__inner) {
-        font-size: 13px;
-        color: #1e293b;
-        font-weight: 500;
+        font-size: 14px;
+        color: #111827;
+        font-weight: 400;
+
+        &::placeholder {
+          color: #6b7280;
+          font-weight: 400;
+        }
       }
 
       :deep(.el-input__prefix) {
-        color: #64748b;
-        font-size: 14px;
+        color: #6b7280;
+        font-size: 16px;
       }
     }
 
@@ -615,23 +620,17 @@ defineExpose({
 /* 主要内容区域 */
 .content-section {
   display: flex;
+  gap: 12px;
   flex: 1;
-  gap: 20px;
-  padding: 12px;
   min-height: 0;
-  overflow: hidden;
-
-  /* 确保子面板能够正确填充高度 */
-  .menu-tree-panel,
-  .selected-panel {
-    height: 100%;
-    min-height: 300px;
-  }
 
   @media (max-width: 1200px) {
     flex-direction: column;
-    gap: 16px;
-    padding: 20px;
+    gap: 12px;
+  }
+
+  @media (min-width: 1200px) {
+    flex-direction: row;
   }
 }
 
@@ -639,21 +638,20 @@ defineExpose({
 .menu-tree-panel {
   flex: 1;
   min-width: 0;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
     flex-shrink: 0;
 
     .header-info {
@@ -706,7 +704,7 @@ defineExpose({
 
   .tree-container {
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
     max-height: 400px;
     padding: 12px;
     overflow-y: auto;
@@ -766,21 +764,20 @@ defineExpose({
 .selected-panel {
   flex: 1;
   min-width: 0;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 
   .panel-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
-    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-    border-bottom: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
     flex-shrink: 0;
 
     .header-info {
@@ -833,17 +830,19 @@ defineExpose({
 
   .selected-container {
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
     max-height: 400px;
     padding: 12px;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 
     .empty-state {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 150px;
+      flex: 1;
       text-align: center;
 
       .empty-icon {
@@ -867,9 +866,8 @@ defineExpose({
     }
 
     .selected-tree-container {
-      height: 100%;
-      min-height: 200px;
-      max-height: 400px;
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
 
       .selected-menu-tree {
@@ -956,7 +954,7 @@ defineExpose({
 /* 响应式设计 */
 @media (max-width: 768px) {
   .search-section {
-    padding: 16px 20px;
+    padding: 14px 0;
 
     .search-container {
       flex-direction: column;
@@ -974,7 +972,7 @@ defineExpose({
   }
 
   .content-section {
-    padding: 16px 20px;
+    padding: 16px 0;
   }
 }
 </style>

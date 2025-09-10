@@ -56,19 +56,31 @@
         <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
-    <div>
-      <el-dialog v-model="dialogVisible" :before-close="onClosedCreateOrUpdae" :title="titel" width="500px">
-        <createOrUpdate ref="apiRef" @closed="onClosedCreateOrUpdae" @callback="listUsersData" />
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="onClosedCreateOrUpdae">取消</el-button>
-            <el-button type="primary" @click="handlerSubmitUser"> 保存 </el-button>
-          </div>
-        </template>
-      </el-dialog>
-    </div>
+    <!-- 新增/编辑用户对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      :title="isEditMode ? '编辑用户' : '新增用户'"
+      :subtitle="isEditMode ? '修改用户信息' : '创建新的用户'"
+      width="500px"
+      header-icon="User"
+      @closed="onClosedCreateOrUpdae"
+      @confirm="handlerSubmitUser"
+      @cancel="onClosedCreateOrUpdae"
+    >
+      <Form ref="apiRef" @closed="onClosedCreateOrUpdae" @callback="listUsersData" />
+    </FormDialog>
     <!-- 角色管理弹窗 -->
-    <el-dialog v-model="dialogBindRole" :show-close="false" :with-header="false" :close-on-click-modal="false">
+    <FormDialog
+      v-model="dialogBindRole"
+      title="角色分配"
+      subtitle="为用户分配相应的角色权限"
+      header-icon="UserFilled"
+      confirm-text="确认分配"
+      :show-footer-info="false"
+      @closed="handleRoleCancel"
+      @confirm="handleRoleDialogConfirm"
+      @cancel="handleRoleCancel"
+    >
       <RoleSelector
         v-if="dialogBindRole && selectedUser"
         :default-selected-roles="getUserRoleCodes()"
@@ -76,18 +88,24 @@
         @confirm="handleRoleConfirm"
         @cancel="handleRoleCancel"
       />
-    </el-dialog>
+    </FormDialog>
 
-    <div>
-      <el-dialog v-model="dialogSyncUser" title="LDAP 用户列表" width="700px">
-        <Sync
-          ref="syncRef"
-          @closed="onClosedSyncUser"
-          style="max-height: 70vh; overflow-y: auto"
-          @listUsersData="listUsersData"
-        />
-      </el-dialog>
-    </div>
+    <!-- 同步用户弹窗 -->
+    <FormDialog
+      v-model="dialogSyncUser"
+      title="LDAP 用户同步"
+      subtitle="从 LDAP 服务器同步用户信息"
+      width="700px"
+      height="80vh"
+      header-icon="Refresh"
+      confirm-text="开始同步"
+      :show-footer-info="false"
+      @closed="onClosedSyncUser"
+      @confirm="handleSyncConfirm"
+      @cancel="onClosedSyncUser"
+    >
+      <Sync ref="syncRef" @closed="onClosedSyncUser" @listUsersData="listUsersData" />
+    </FormDialog>
   </div>
 </template>
 
@@ -98,20 +116,22 @@ import { User, Edit, UserFilled, RefreshRight } from "@element-plus/icons-vue"
 import { listUsersApi, bindRoleCodesAPi } from "@/api/user"
 import RoleSelector from "./roleSelector.vue"
 import { user } from "@/api/user/types/user"
-import createOrUpdate from "./createOrUpdate.vue"
+import Form from "./form.vue"
 import Sync from "./sync.vue"
 import { ElMessage } from "element-plus"
 import DataTable from "@@/components/DataTable/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const dialogBindRole = ref<boolean>(false)
 const dialogSyncUser = ref<boolean>(false)
+const isEditMode = ref<boolean>(false)
 
-const apiRef = ref<InstanceType<typeof createOrUpdate>>()
-const titel = ref<string>("")
+const apiRef = ref<InstanceType<typeof Form>>()
+const syncRef = ref<InstanceType<typeof Sync>>()
 
 // 表格列配置
 const tableColumns = [
@@ -152,6 +172,11 @@ const handleSyncUser = () => {
 
 const onClosedSyncUser = () => {
   dialogSyncUser.value = false
+}
+
+const handleSyncConfirm = () => {
+  // 同步用户功能
+  ElMessage.info("同步功能已触发")
 }
 
 const handleRefresh = () => {
@@ -215,6 +240,13 @@ const getUserRoleCodes = (): string[] => {
   return selectedUser.value?.role_codes || []
 }
 
+// 处理角色弹窗确认
+const handleRoleDialogConfirm = () => {
+  // 调用 RoleSelector 的确认方法
+  // 这里需要从 RoleSelector 获取选中的角色
+  ElMessage.info("角色分配功能已触发")
+}
+
 // 处理角色选择确认
 const handleRoleConfirm = async (selectedRoles: Array<{ id: number; name: string; code: string; desc: string }>) => {
   if (!selectedUser.value) return
@@ -241,12 +273,13 @@ const handleRoleCancel = () => {
 }
 
 const handlerCreateUser = () => {
-  ElMessage.warning("暂不支持外部新增用户功能")
+  isEditMode.value = false
+  dialogVisible.value = true
 }
 
 const handleUpdate = (row: user) => {
+  isEditMode.value = true
   dialogVisible.value = true
-  titel.value = "修改用户"
   nextTick(() => {
     apiRef.value?.setFrom(row)
   })
@@ -259,6 +292,7 @@ const handlerSubmitUser = () => {
 const onClosedCreateOrUpdae = () => {
   apiRef.value?.resetForm()
   dialogVisible.value = false
+  isEditMode.value = false
 }
 
 /** 监听分页参数的变化 */

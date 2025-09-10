@@ -7,7 +7,7 @@
     :show-close="showClose"
     :close-on-click-modal="closeOnClickModal"
     :before-close="handleBeforeClose"
-    type="form"
+    :type="dialogType"
     @closed="handleClosed"
   >
     <!-- 头部插槽 -->
@@ -23,18 +23,19 @@
       </div>
     </template>
 
-    <!-- 表单内容 -->
-    <div class="form-dialog-content">
+    <!-- 弹窗内容 -->
+    <div class="dialog-content">
       <slot />
     </div>
 
     <!-- 底部操作按钮 -->
     <template #footer>
       <div class="form-dialog-footer">
-        <div class="footer-info" v-if="showFooterInfo">
+        <div class="footer-info" v-if="showFooterInfo && dialogType === 'form'">
           <el-icon class="info-icon"><InfoFilled /></el-icon>
           <span class="info-text">{{ footerInfoText }}</span>
         </div>
+        <div v-else class="footer-spacer"></div>
         <div class="footer-actions">
           <el-button @click="handleCancel" class="cancel-btn" size="large">
             <el-icon><Close /></el-icon>
@@ -76,6 +77,7 @@ interface Props {
   confirmDisabled?: boolean
   showFooterInfo?: boolean
   footerInfoText?: string
+  dialogType?: "form"
   beforeClose?: (done: () => void) => void
 }
 
@@ -90,14 +92,15 @@ const props = withDefaults(defineProps<Props>(), {
   subtitle: "",
   width: "50%",
   height: "80vh",
-  showClose: false,
+  showClose: true,
   closeOnClickModal: false,
   headerIcon: "UserFilled",
   confirmText: "确认",
   confirmLoading: false,
   confirmDisabled: false,
   showFooterInfo: true,
-  footerInfoText: "请填写完整信息后点击确认"
+  footerInfoText: "请填写完整信息后点击确认",
+  dialogType: "form"
 })
 
 const emits = defineEmits<Emits>()
@@ -165,8 +168,11 @@ const handleCancel = () => {
   }
 }
 
-.form-dialog-content {
-  min-height: 200px;
+.dialog-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-dialog-footer {
@@ -174,6 +180,7 @@ const handleCancel = () => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  
 
   .footer-info {
     display: flex;
@@ -195,6 +202,10 @@ const handleCancel = () => {
       color: #0369a1;
       font-weight: 500;
     }
+  }
+
+  .footer-spacer {
+    flex: 1;
   }
 
   .footer-actions {

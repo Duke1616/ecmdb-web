@@ -61,7 +61,7 @@
     </div>
 
     <el-dialog v-model="dialogVisible" :before-close="onClosedImportUser" title="导入用户" width="500px">
-      <createOrUpdate ref="apiRef" @closed="onClosedImportUser" @callback="callback" />
+      <Form ref="apiRef" @closed="onClosedImportUser" @callback="callback" />
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
@@ -80,7 +80,7 @@ import { user } from "@/api/user/types/ldap"
 import { usePagination } from "@/common/composables/usePagination"
 import { debounce } from "lodash-es"
 import { ElMessage } from "element-plus"
-import createOrUpdate from "./createOrUpdate.vue"
+import Form from "./form.vue"
 
 const init = {
   total: 0,
@@ -91,7 +91,7 @@ const init = {
 }
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
 const dialogVisible = ref<boolean>(false)
-const apiRef = ref<InstanceType<typeof createOrUpdate>>()
+const apiRef = ref<InstanceType<typeof Form>>()
 
 const emits = defineEmits(["closed", "listUsersData"])
 const filterInput = ref<string>("")

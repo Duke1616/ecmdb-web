@@ -155,12 +155,11 @@ defineExpose({
 
 <style lang="scss" scoped>
 .role-form-container {
-  padding: 12px;
+  padding: 0;
   background: transparent;
   max-height: 80vh;
   overflow-y: auto;
 }
-
 
 .role-form {
   .form-section {
@@ -308,11 +307,10 @@ defineExpose({
   }
 }
 
-
 /* 响应式设计 */
 @media (max-width: 768px) {
   .role-form-container {
-    padding: 12px;
+    padding: 0;
   }
 
   .form-header {
@@ -350,6 +348,5 @@ defineExpose({
       }
     }
   }
-
 }
 </style>
