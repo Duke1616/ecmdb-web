@@ -1,12 +1,28 @@
 <template>
   <div class="user-picker-container" ref="containerRef">
     <div class="user-picker-input" @click="toggleUserPicker" :class="{ 'is-focus': showUserPicker }">
-      <div v-if="selectedUser" class="selected-user">
+      <!-- 多选模式 -->
+      <div v-if="multiple && selectedUsers.length > 0" class="selected-users">
+        <div v-for="user in selectedUsers" :key="user.id" class="user-tag">
+          <div class="user-avatar" :style="{ background: generateUserColor(user.username || '') }">
+            {{ user.display_name?.charAt(0) || user.username?.charAt(0) }}
+          </div>
+          <span class="user-name">{{ user.display_name || user.username }}</span>
+          <button @click.stop="removeUser(user)" class="remove-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- 单选模式 -->
+      <div v-else-if="!multiple && selectedUser" class="selected-user">
         <div class="user-avatar" :style="{ background: generateUserColor(selectedUser.username || '') }">
           {{ selectedUser.display_name?.charAt(0) || selectedUser.username?.charAt(0) }}
         </div>
         <span class="user-name">{{ selectedUser.display_name || selectedUser.username }}</span>
       </div>
+      <!-- 占位符 -->
       <div v-else class="placeholder-text">{{ placeholder }}</div>
       <div class="picker-arrow" :class="{ 'is-open': showUserPicker }">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -47,7 +63,7 @@
             v-for="user in usersData"
             :key="user.id"
             class="user-item"
-            :class="{ 'is-selected': modelValue === user.username }"
+            :class="{ 'is-selected': isUserSelected(user) }"
             @click="handleUserSelect(user)"
           >
             <div class="user-avatar" :style="{ background: generateUserColor(user.username) }">
@@ -57,7 +73,7 @@
               <div class="user-name">{{ user.display_name || user.username }}</div>
               <div class="user-username">@{{ user.username }}</div>
             </div>
-            <div v-if="modelValue === user.username" class="selected-indicator">
+            <div v-if="isUserSelected(user)" class="selected-indicator">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
               </svg>
@@ -82,14 +98,14 @@
 </template>
 
 <script lang="ts" setup>
-import { watch, onMounted, onUnmounted, ref, computed, nextTick } from "vue"
+import { watch, onMounted, onUnmounted, ref, computed } from "vue"
 import { useUsers } from "@@/composables/useUsers"
 import { useUserStore } from "@/pinia/stores/user"
 import type { user } from "@/api/user/types/user"
 
 const props = defineProps({
   modelValue: {
-    type: String,
+    type: [String, Array],
     default: ""
   },
   placeholder: {
@@ -99,6 +115,10 @@ const props = defineProps({
   defaultToCurrentUser: {
     type: Boolean,
     default: true
+  },
+  multiple: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -115,13 +135,13 @@ const dropdownStyle = computed(() => {
   if (!containerRef.value || !showUserPicker.value) {
     return {}
   }
-  
+
   const rect = containerRef.value.getBoundingClientRect()
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop
   const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-  
+
   return {
-    position: 'fixed' as const,
+    position: "fixed" as const,
     top: `${rect.bottom + scrollTop + 8}px`,
     left: `${rect.left + scrollLeft}px`,
     width: `${rect.width}px`,
@@ -182,10 +202,47 @@ const {
   getUserByUsername
 } = useUsers()
 
+// 多选模式的状态
+const selectedUsers = ref<user[]>([])
+
+// 判断用户是否被选中
+const isUserSelected = (user: user) => {
+  if (props.multiple) {
+    return selectedUsers.value.some((u) => u.id === user.id)
+  } else {
+    return props.modelValue === user.username
+  }
+}
+
+// 移除用户（多选模式）
+const removeUser = (user: user) => {
+  const index = selectedUsers.value.findIndex((u) => u.id === user.id)
+  if (index > -1) {
+    selectedUsers.value.splice(index, 1)
+    const usernames = selectedUsers.value.map((u) => u.username)
+    emits("update:modelValue", usernames)
+  }
+}
+
 const handleUserSelect = (user: user) => {
-  selectUser(user, (selectedUser) => {
-    emits("update:modelValue", selectedUser.username)
-  })
+  if (props.multiple) {
+    // 多选模式
+    const existingIndex = selectedUsers.value.findIndex((u) => u.id === user.id)
+    if (existingIndex > -1) {
+      // 如果已选中，则取消选中
+      selectedUsers.value.splice(existingIndex, 1)
+    } else {
+      // 如果未选中，则添加到选中列表
+      selectedUsers.value.push(user)
+    }
+    const usernames = selectedUsers.value.map((u) => u.username)
+    emits("update:modelValue", usernames)
+  } else {
+    // 单选模式
+    selectUser(user, (selectedUser) => {
+      emits("update:modelValue", selectedUser.username)
+    })
+  }
 }
 
 // 设置默认用户为当前登录用户
@@ -216,13 +273,35 @@ const setDefaultToCurrentUser = async () => {
 watch(
   () => props.modelValue,
   async (newValue) => {
-    if (newValue && newValue !== "") {
-      await getUserByUsername(newValue)
+    if (props.multiple) {
+      // 多选模式
+      if (Array.isArray(newValue) && newValue.length > 0) {
+        // 根据用户名数组获取用户对象
+        const users = []
+        for (const username of newValue) {
+          try {
+            const user = await getUserByUsername(username as string)
+            if (user) {
+              users.push(user)
+            }
+          } catch (error) {
+            console.warn(`Failed to get user ${username}:`, error)
+          }
+        }
+        selectedUsers.value = users
+      } else {
+        selectedUsers.value = []
+      }
     } else {
-      selectedUser.value = null
-      // 如果没有值且启用了默认当前用户，则设置默认值
-      if (props.defaultToCurrentUser) {
-        await setDefaultToCurrentUser()
+      // 单选模式
+      if (typeof newValue === "string" && newValue !== "") {
+        await getUserByUsername(newValue)
+      } else {
+        selectedUser.value = null
+        // 如果没有值且启用了默认当前用户，则设置默认值
+        if (props.defaultToCurrentUser) {
+          await setDefaultToCurrentUser()
+        }
       }
     }
   },
@@ -253,12 +332,12 @@ onMounted(async () => {
   }
 
   // 添加点击外部关闭事件监听
-  document.addEventListener('click', handleClickOutside)
+  document.addEventListener("click", handleClickOutside)
 })
 
 // 组件卸载时清理事件监听
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  document.removeEventListener("click", handleClickOutside)
 })
 </script>
 
@@ -278,7 +357,6 @@ onUnmounted(() => {
   border-radius: 10px;
   padding: 8px 16px;
   min-height: 42px;
-  height: 42px;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -492,5 +570,80 @@ onUnmounted(() => {
   background: #f8fafc;
   display: flex;
   justify-content: center;
+}
+
+/* 多选模式样式 */
+.selected-users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  flex: 1;
+  min-height: 24px;
+}
+
+.user-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #667eea;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 200px;
+}
+
+.user-tag .user-avatar {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  box-shadow: none;
+}
+
+.user-tag .user-name {
+  color: white;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: #ffffff;
+  border: 1px solid #ef4444;
+  border-radius: 50%;
+  color: #ef4444; /* currentColor for svg */
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.remove-btn:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
+}
+
+.remove-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
+.remove-btn svg {
+  width: 12px;
+  height: 12px;
 }
 </style>

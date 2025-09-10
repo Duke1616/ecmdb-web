@@ -4,8 +4,8 @@ export interface department {
   name: string
   sort: number
   enabled: boolean
-  leaders: number[]
-  main_leader: number
+  leaders: string[]
+  main_leader: string
   children: department[]
 }
 
@@ -15,6 +15,6 @@ export interface createOrUpdateDepartment {
   name: string
   sort: number
   enabled: boolean
-  leaders?: number[]
-  main_leader?: number
+  leaders?: string[]
+  main_leader?: string
 }

@@ -30,10 +30,15 @@
               />
               <div class="action-buttons">
                 <el-button size="small" type="primary" @click="addDepartment" :icon="Plus"> 添加部门 </el-button>
-                <el-button size="small" :disabled="!currentNodeKey" @click="addSubMenu" :icon="FolderAdd">
+                <el-button
+                  size="small"
+                  :disabled="!currentNodeKey"
+                  @click="handleCreateSubDepartment"
+                  :icon="FolderAdd"
+                >
                   添加子部门
                 </el-button>
-                <el-button size="small" @click="handleCheckedTreeExpand" :icon="isExpand ? FolderOpened : Folder">
+                <el-button size="small" @click="handleToggleExpand" :icon="isExpand ? FolderOpened : Folder">
                   {{ isExpand ? "收起" : "展开" }}
                 </el-button>
               </div>
@@ -51,7 +56,7 @@
                 :highlight-current="true"
                 :expand-on-click-node="false"
                 @node-click="handleNodeClick"
-                :current-node-key="currentNodeKey"
+                :current-node-key="currentNodeKey || undefined"
                 :props="defaultProps"
                 :filter-node-method="filterNode"
                 class="department-tree"
@@ -70,11 +75,11 @@
                 <DepartmentForm
                   ref="departmentUpdateRef"
                   :departmentData="treeData"
-                  @listDepartmentTreeData="listDepartmentTreeData"
+                  @listDepartmentTreeData="refreshDepartmentData"
                 />
               </el-tab-pane>
               <el-tab-pane lazy label="用户列表" name="user">
-                <User ref="userRef" :departmentId="currentNodeKey" />
+                <User ref="userRef" :departmentId="currentNodeKey || 0" />
               </el-tab-pane>
             </el-tabs>
             <div class="department-actions-bottom">
@@ -95,27 +100,33 @@
       </div>
     </div>
 
-    <!-- 添加部门 dialog 展示 -->
-    <div>
-      <el-dialog v-model="dialogVisible" title="添加部门" @closed="resetForm">
+    <!-- 添加部门对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      title="添加部门"
+      subtitle="创建新的部门"
+      height="80vh"
+      header-icon="Plus"
+      confirm-text="确认"
+      cancel-text="取消"
+      @confirm="handleCreate"
+      @cancel="handleCloseDialog"
+      @closed="handleCloseDialog"
+    >
+      <div class="form-content">
         <DepartmentForm
-          style="max-height: 60vh; overflow-y: auto"
           ref="departmentCreateRef"
           :departmentData="treeData"
-          @listDepartmentTreeData="listDepartmentTreeData"
-          @closed="onClosed"
+          @listDepartmentTreeData="refreshDepartmentData"
+          @closed="handleCloseDialog"
         />
-        <template #footer>
-          <el-button @click="resetForm">取消</el-button>
-          <el-button type="primary" @click="handlerCreate">确认</el-button>
-        </template>
-      </el-dialog>
-    </div>
+      </div>
+    </FormDialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { h, nextTick, onMounted, ref, watch } from "vue"
+import { nextTick, onMounted, ref, watch } from "vue"
 import { Search, Edit, Delete, RefreshRight, Plus, FolderAdd, FolderOpened, Folder } from "@element-plus/icons-vue"
 import DepartmentForm from "./form.vue"
 import Tip from "./tip.vue"
@@ -124,6 +135,7 @@ import { ElMessage, ElMessageBox, ElTree, TabsPaneContext, ElScrollbar } from "e
 import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 
 const filterInput = ref("")
 
@@ -134,67 +146,99 @@ const defaultProps = ref<any>({
   key: "id"
 })
 
+// 状态管理
 const empty = ref<boolean>(false)
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
 const departmentCreateRef = ref<InstanceType<typeof DepartmentForm>>()
 const departmentUpdateRef = ref<InstanceType<typeof DepartmentForm>>()
 const userRef = ref<InstanceType<typeof User>>()
+
+// 部门操作
 const handleUpdate = () => {
   departmentUpdateRef.value?.submitUpdateForm()
 }
 
-const addDepartment = async () => {
-  dialogVisible.value = true
-  await nextTick(() => {
-    departmentCreateRef.value?.resetForm()
+const handleDelete = () => {
+  if (!currentNodeKey.value) return
+
+  const node = findDepartmentById(treeData.value, currentNodeKey.value)
+  if (!node) return
+
+  ElMessageBox({
+    title: "删除确认",
+    message: `确定要删除部门 "${node.name}" 吗？`,
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteDepartmentApi(currentNodeKey.value!).then(() => {
+      ElMessage.success("删除成功")
+      isExpand.value = false
+
+      // 清空当前选中状态，显示空状态
+      currentNodeKey.value = null
+      empty.value = false
+
+      refreshDepartmentData()
+    })
   })
 }
 
-const handleRefresh = () => {
-  listDepartmentTreeData()
-  ElMessage.success("数据已刷新")
-}
-
-const handlerCreate = () => {
+const handleCreate = () => {
   departmentCreateRef.value?.submitCreateForm()
 }
 
-const onClosed = (id: number) => {
-  // 关闭弹窗
-  dialogVisible.value = false
-
-  // 避免触发 update 获取逻辑
-  currentNodeKey.value = id
-  empty.value = true
-}
-
-const resetForm = () => {
-  dialogVisible.value = false
-}
-
-const currentNodeKey = ref<any>(null)
-const handleNodeClick = async (node: department) => {
-  activeName.value = "detail"
-  if (currentNodeKey.value === node.id) {
-    // 如果点击的节点已经是当前高亮节点，则取消高亮
-    currentNodeKey.value = null
-    empty.value = false
-  } else {
-    // 否则设置当前点击的节点为高亮
-    currentNodeKey.value = node.id
-    empty.value = true
-
-    await nextTick(() => {
-      updateDepartmentData(node)
-    })
-  }
-}
-
-const updateDepartmentData = (node: department | null) => {
-  if (node === null) {
+const handleCreateSubDepartment = () => {
+  if (!currentNodeKey.value) {
+    ElMessage.warning("请先选择一个部门")
     return
   }
 
+  dialogVisible.value = true
+  nextTick(() => {
+    departmentCreateRef.value?.resetForm()
+    departmentCreateRef.value?.setFromForPid(currentNodeKey.value!)
+  })
+}
+
+const handleCloseDialog = (id?: number) => {
+  dialogVisible.value = false
+  if (id) {
+    currentNodeKey.value = id
+  }
+}
+
+const handleRefresh = () => {
+  refreshDepartmentData()
+  ElMessage.success("数据已刷新")
+}
+
+// 当前选中的部门节点
+const currentNodeKey = ref<number | null>(null)
+
+// 处理部门节点点击
+const handleNodeClick = async (node: department) => {
+  activeName.value = "detail"
+
+  if (currentNodeKey.value === node.id) {
+    // 取消选中
+    currentNodeKey.value = null
+    empty.value = false
+  } else {
+    // 选中节点
+    currentNodeKey.value = node.id
+    empty.value = true
+
+    await nextTick()
+    loadDepartmentData(node)
+  }
+}
+
+// 加载部门数据到表单
+const loadDepartmentData = (node: department) => {
+  if (!node) return
+
+  // 设置部门数据到更新表单
   departmentUpdateRef.value?.setDepartmentData(node)
 }
 
@@ -202,124 +246,113 @@ interface Tree {
   [key: string]: any
 }
 
+// 搜索过滤
 const filterNode = (value: string, data: Tree) => {
   if (!value) return true
-
-  // 确保data.label存在且是字符串
-  return typeof data.meta.title === "string" && data.meta.title.includes(value)
+  return typeof data.name === "string" && data.name.includes(value)
 }
 
-/** 查询模版列表 */
+// 部门树数据
 const treeData = ref<department[]>([])
-const listDepartmentTreeData = () => {
-  listDepartmentTreeApi()
-    .then(async ({ data }) => {
-      if (data.length === 0) {
-        return
-      }
 
-      treeData.value = data
+// 刷新部门数据
+const refreshDepartmentData = async () => {
+  try {
+    const { data } = await listDepartmentTreeApi()
+    treeData.value = data
 
-      await nextTick(() => {
-        if (currentNodeKey.value) {
-          treeRef.value!.setCurrentKey(currentNodeKey.value)
-          const node = findDepartmentById(data, currentNodeKey.value)
-          updateDepartmentData(node)
-          return
-        }
-      })
-    })
-    .catch(() => {
-      treeData.value = []
-    })
-    .finally(() => {})
-}
+    await nextTick()
 
-const handleDelete = () => {
-  const node = findDepartmentById(treeData.value, currentNodeKey.value)
-  ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除部门: "),
-      h("i", { style: "color: red" }, `${node?.name}`),
-      h("span", null, " 确认删除？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    deleteDepartmentApi(currentNodeKey.value).then(() => {
-      ElMessage.success("删除成功")
-      isExpand.value = false
-      listDepartmentTreeData()
-
-      if (treeData.value.length === 1) {
-        empty.value = false
+    // 如果之前有选中的节点，重新选中并加载数据
+    if (currentNodeKey.value && treeRef.value) {
+      treeRef.value.setCurrentKey(currentNodeKey.value)
+      const node = findDepartmentById(data, currentNodeKey.value)
+      if (node) {
+        loadDepartmentData(node)
+      } else {
+        // 如果节点不存在（被删除了），清空选中状态
         currentNodeKey.value = null
+        empty.value = false
       }
-    })
-  })
+    }
+  } catch (error) {
+    console.error("加载部门数据失败:", error)
+    treeData.value = []
+  }
 }
 
+// 查找部门节点
 const findDepartmentById = (departments: department[], id: number): department | null => {
   for (const department of departments) {
-    if (department.id === id) {
-      return department
-    }
-
-    if (department.children.length > 0) {
+    if (department.id === id) return department
+    if (department.children?.length > 0) {
       const found = findDepartmentById(department.children, id)
-      if (found) {
-        return found
-      }
+      if (found) return found
     }
   }
   return null
 }
 
-const recursionFn = (arr: department[]) => {
+// 展开/收起所有节点
+const toggleAllNodes = (expanded: boolean) => {
   const nodes = treeRef.value?.store?.nodesMap
-  if (arr.length > 0) {
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i]?.children?.length > 0) {
-        nodes[arr[i].id].expanded = isExpand.value
-        recursionFn(arr[i]?.children)
+  if (!nodes) return
+
+  const toggleRecursive = (departmentList: department[]) => {
+    for (const department of departmentList) {
+      if (nodes[department.id]) {
+        nodes[department.id].expanded = expanded
+      }
+      if (department.children?.length > 0) {
+        toggleRecursive(department.children)
       }
     }
   }
+
+  toggleRecursive(treeData.value)
 }
 
+// 展开/收起状态
 const isExpand = ref(false)
-const handleCheckedTreeExpand = () => {
+
+// 切换展开/收起
+const handleToggleExpand = () => {
   isExpand.value = !isExpand.value
-  const treeList = treeData.value
-  recursionFn(treeList)
+  toggleAllNodes(isExpand.value)
 }
 
-const addSubMenu = async () => {
+// 添加部门
+const addDepartment = () => {
   dialogVisible.value = true
-  await nextTick()
-  departmentCreateRef.value?.resetForm()
-
-  // 插入特性数据
-  departmentCreateRef.value?.setFromForPid(currentNodeKey.value)
+  nextTick(() => {
+    departmentCreateRef.value?.resetForm()
+  })
 }
 
+// 标签页管理
 const activeName = ref("detail")
 const handleClick = (tab: TabsPaneContext) => {
   if (tab.paneName === "detail") {
-    console.log("detail")
+    // 详情标签页
   } else if (tab.paneName === "user") {
     userRef.value?.listUsersData()
   }
 }
 
-onMounted(() => {
-  listDepartmentTreeData()
+// 搜索防抖
+let searchTimer: NodeJS.Timeout | null = null
+watch(filterInput, (val: string) => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  searchTimer = setTimeout(() => {
+    treeRef.value?.filter(val)
+  }, 300)
 })
 
-watch(filterInput, (val: string) => {
-  treeRef.value!.filter(val)
+// 组件挂载时加载数据
+onMounted(() => {
+  refreshDepartmentData()
 })
 </script>
 
@@ -554,5 +587,11 @@ watch(filterInput, (val: string) => {
       justify-content: center;
     }
   }
+}
+
+.form-content {
+  height: 60vh;
+  overflow-y: auto;
+  padding: 16px;
 }
 </style>

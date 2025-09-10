@@ -194,10 +194,10 @@
 import { createOrUpdateMenuReq, endpoint as menuEndpoint, menu } from "@/api/menu/types/menu"
 import { endpoint as apiEndpoint } from "@/api/endpoint/types/endpoint"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { ref, computed, watch } from "vue"
+import { ref, computed } from "vue"
 import { cloneDeep } from "lodash-es"
 import { createMenuApi, updateMenuApi } from "@/api/menu"
-import { InfoFilled, Setting, Connection, Plus, Delete } from "@element-plus/icons-vue"
+import { InfoFilled, Setting, Connection, Plus } from "@element-plus/icons-vue"
 import Api from "./api.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
@@ -446,10 +446,6 @@ const submitCreateForm = (platform: string) => {
 
 // 控制添加API接口的dialog
 const dialogVisible = ref<boolean>(false)
-
-const handleAddAPi = () => {
-  dialogVisible.value = true
-}
 
 // 重置表单
 const resetForm = () => {
