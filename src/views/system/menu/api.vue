@@ -1,34 +1,64 @@
 <template>
-  <div class="app-container">
-    <div class="search-container">
-      <el-input v-model="filterInput" style="width: 240px" placeholder="根据路径进行搜索" />
-      <el-button type="primary" @click="listEndpointsData()">搜索</el-button>
+  <div class="api-container">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-input
+        v-model="filterInput"
+        size="large"
+        placeholder="根据路径进行搜索..."
+        :prefix-icon="Search"
+        class="search-input"
+        clearable
+        @input="debouncedSearch"
+      />
+      <el-button type="primary" :icon="RefreshRight" @click="refreshData" class="refresh-btn"> 刷新数据 </el-button>
     </div>
 
-    <el-card shadow="never">
-      <div class="table-wrapper">
-        <el-table ref="tableRef" :data="endpointsData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="path" label="路径" width="260" />
-          <el-table-column prop="method" label="方法" align="center" />
-          <el-table-column prop="is_auth" label="是否登录" align="center" />
-          <el-table-column prop="is_permission" label="是否鉴权" align="center" />
-          <el-table-column prop="desc" label="接口介绍" align="center" width="260" />
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+    <!-- 表格区域 -->
+    <div class="table-section">
+      <DataTable
+        :data="endpointsData"
+        :columns="tableColumns"
+        :show-selection="true"
+        :show-pagination="true"
+        :total="paginationData.total"
+        :page-size="paginationData.pageSize"
+        :current-page="paginationData.currentPage"
+        :page-sizes="paginationData.pageSizes"
+        :pagination-layout="paginationData.layout"
+        :table-props="{}"
+        @selection-change="handleSelectionChange"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      >
+        <!-- 接口方法插槽 -->
+        <template #method="{ row }">
+          <el-tag :type="getMethodTagType(row.method)" size="small">
+            {{ row.method || "N/A" }}
+          </el-tag>
+        </template>
+
+        <!-- 是否登录插槽 -->
+        <template #isAuth="{ row }">
+          <el-tag :type="row.is_auth ? 'success' : 'info'" effect="light" class="status-tag">
+            <el-icon class="status-icon">
+              <Check v-if="row.is_auth" />
+              <Close v-else />
+            </el-icon>
+          </el-tag>
+        </template>
+
+        <!-- 是否鉴权插槽 -->
+        <template #isPermission="{ row }">
+          <el-tag :type="row.is_permission ? 'success' : 'info'" effect="light" class="status-tag">
+            <el-icon class="status-icon">
+              <Check v-if="row.is_permission" />
+              <Close v-else />
+            </el-icon>
+          </el-tag>
+        </template>
+      </DataTable>
+    </div>
   </div>
 </template>
 
@@ -37,11 +67,52 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listEndpointApi } from "@/api/endpoint"
 import { endpoint } from "@/api/endpoint/types/endpoint"
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+import { Search, RefreshRight, Check, Close } from "@element-plus/icons-vue"
+import { debounce } from "lodash-es"
+import DataTable from "@/common/components/DataTable/index.vue"
+
+const init = {
+  total: 0,
+  currentPage: 1,
+  pageSizes: [10, 20, 50],
+  pageSize: 10,
+  layout: "total, prev, pager, next"
+}
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
+
+// 定义事件
+const emits = defineEmits<{
+  confirm: [endpoints: endpoint[]]
+}>()
+
+// 表格配置
+const tableColumns = [
+  { prop: "path", label: "接口路径", minWidth: 260 },
+  { prop: "method", label: "方法", width: 100, slot: "method" },
+  { prop: "is_auth", label: "是否登录", width: 100, slot: "isAuth" },
+  { prop: "is_permission", label: "是否鉴权", width: 100, slot: "isPermission" },
+  { prop: "desc", label: "接口介绍", minWidth: 260 }
+]
+
+// 获取接口方法标签类型
+const getMethodTagType = (method: string | undefined): "success" | "primary" | "warning" | "info" | "danger" => {
+  if (!method) return "info"
+
+  const methodMap: Record<string, "success" | "primary" | "warning" | "info" | "danger"> = {
+    GET: "success",
+    POST: "primary",
+    PUT: "warning",
+    DELETE: "danger",
+    PATCH: "info"
+  }
+  return methodMap[method.toUpperCase()] || "info"
+}
 
 /** 查询模版列表 */
 const filterInput = ref<string>("")
 const endpointsData = ref<endpoint[]>([])
+const selectedEndpoints = ref<endpoint[]>([])
+
 const listEndpointsData = () => {
   listEndpointApi({
     path: filterInput.value,
@@ -58,15 +129,39 @@ const listEndpointsData = () => {
     .finally(() => {})
 }
 
-const tableRef = ref()
+// 防抖搜索
+const debouncedSearch = debounce(() => {
+  paginationData.currentPage = 1
+  listEndpointsData()
+}, 300)
 
-const getSelectionTableData = () => {
-  const tableData = tableRef.value.getSelectionRows()
-  return tableData
+// 刷新数据
+const refreshData = () => {
+  listEndpointsData()
 }
 
+// 处理选择变化
+const handleSelectionChange = (selection: endpoint[]) => {
+  selectedEndpoints.value = selection
+}
+
+// 清空选择
 const clearSelection = () => {
-  tableRef.value.clearSelection()
+  selectedEndpoints.value = []
+  // 这里需要调用 DataTable 的清空选择方法
+}
+
+// 确认选择
+const confirmSelection = () => {
+  if (selectedEndpoints.value.length > 0) {
+    // 触发选择确认事件，将选中的接口传递给父组件
+    emits("confirm", selectedEndpoints.value)
+  }
+}
+
+// 保持原有的方法用于外部调用
+const getSelectionTableData = () => {
+  return selectedEndpoints.value
 }
 
 const resetFilterInput = () => {
@@ -76,6 +171,7 @@ const resetFilterInput = () => {
 defineExpose({
   getSelectionTableData,
   clearSelection,
+  confirmSelection,
   resetFilterInput
 })
 
@@ -84,13 +180,103 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listEnd
 </script>
 
 <style lang="scss" scoped>
-.search-container {
+.api-container {
+  height: 60vh;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 10px;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
-.pager-wrapper {
-  margin-top: 10px;
+
+.search-section {
+  padding-bottom: 12px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .search-input {
+    flex: 1;
+  }
+
+  .refresh-btn {
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+.table-section {
+  flex: 1;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .status-tag {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 24px;
+    padding: 0;
+    border-radius: 4px;
+
+    .status-icon {
+      font-size: 12px;
+    }
+  }
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .selection-info {
+    .selection-count {
+      font-size: 14px;
+      color: #6b7280;
+      font-weight: 500;
+    }
+  }
+
+  .footer-actions {
+    display: flex;
+    gap: 12px;
+
+    .el-button {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-section {
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+
+    .search-input {
+      width: 100%;
+    }
+  }
+
+  .table-section {
+    padding: 12px;
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { h, nextTick, onMounted, ref, watch } from "vue"
+import { nextTick, onMounted, ref, watch } from "vue"
 import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
@@ -7,6 +7,7 @@ import { deleteMenuApi, listMenusByPlatformApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
 import { ElMessage, ElMessageBox, ElTree, ElScrollbar } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 const platforms = ref([
   { id: "cmdb", name: "资产管理" },
   { id: "order", name: "工单管理" },
@@ -16,23 +17,18 @@ const platforms = ref([
 
 const currentPlatform = ref<string>("cmdb")
 
+// 切换平台
 const handlePlatformChange = (platformId: string) => {
-  if (currentPlatform.value === platformId) {
-    return // 如果点击的是当前平台，不做任何操作
-  }
+  if (currentPlatform.value === platformId) return
 
-  // 更新当前平台
   currentPlatform.value = platformId
-
-  // 清空当前选中的节点
   currentNodeKey.value = null
   empty.value = false
 
-  // 重新加载对应平台的菜单数据
-  listMenusTreeData()
+  refreshMenuData()
 
-  // 可选：显示切换成功的提示
-  ElMessage.success(`已切换到${platforms.value.find((p) => p.id === platformId)?.name}`)
+  const platformName = platforms.value.find((p) => p.id === platformId)?.name
+  ElMessage.success(`已切换到${platformName}`)
 }
 
 const filterInput = ref("")
@@ -48,80 +44,77 @@ const empty = ref<boolean>(false)
 const treeRef = ref<InstanceType<typeof ElTree>>() as any
 const menuCreateRef = ref<InstanceType<typeof MenuForm>>()
 const menuUpdateRef = ref<InstanceType<typeof MenuForm>>()
+// 菜单操作
 const handleUpdate = () => {
   menuUpdateRef.value?.submitUpdateForm()
 }
 
 const handleDelete = () => {
+  if (!currentNodeKey.value) return
+
   const node = findMenuById(menuTreeData.value, currentNodeKey.value)
+  if (!node) return
+
   ElMessageBox({
     title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除菜单: "),
-      h("i", { style: "color: red" }, `${node?.meta.title}`),
-      h("span", null, " 确认删除？")
-    ]),
+    message: `确定要删除菜单 "${node.meta.title}" 吗？`,
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteMenuApi(currentNodeKey.value).then(() => {
+    deleteMenuApi(currentNodeKey.value!).then(() => {
       ElMessage.success("删除成功")
       isExpand.value = false
-      listMenusTreeData()
+
+      // 清空当前选中状态，显示空状态
+      currentNodeKey.value = null
+      empty.value = false
+
+      refreshMenuData()
     })
   })
 }
 
-const handlerCreate = () => {
+const handleCreate = () => {
   menuCreateRef.value?.submitCreateForm(currentPlatform.value)
 }
 
-const onClosed = (id: number) => {
-  // 关闭弹窗
+const handleCloseDialog = (id?: number) => {
   dialogVisible.value = false
-
-  // 避免触发 update 获取逻辑
-  currentNodeKey.value = id
+  if (id) {
+    currentNodeKey.value = id
+  }
 }
 
-const resetForm = () => {
-  dialogVisible.value = false
-}
+// 当前选中的菜单节点
+const currentNodeKey = ref<number | null>(null)
 
-const currentNodeKey = ref<any>(null)
+// 处理菜单节点点击
 const handleNodeClick = async (node: menu) => {
   if (currentNodeKey.value === node.id) {
-    // 如果点击的节点已经是当前高亮节点，则取消高亮
+    // 取消选中
     currentNodeKey.value = null
     empty.value = false
   } else {
-    // 否则设置当前点击的节点为高亮
+    // 选中节点
     currentNodeKey.value = node.id
     empty.value = true
 
-    // 添加数据
     await nextTick()
-
-    updateMenuData(node)
+    loadMenuData(node)
   }
 }
 
-const updateMenuData = (node: menu | null) => {
-  if (node === null) {
-    return
+// 加载菜单数据到表单
+const loadMenuData = (node: menu) => {
+  if (!node) return
+
+  // 确保 platform 字段正确
+  if (node.meta) {
+    node.meta.platform = currentPlatform.value
   }
 
-  // 插入特性数据
-  const me = ref<string[]>([])
-  me.value.push(node.meta.is_affix ? "affix" : "")
-  me.value.push(node.meta.is_hidden ? "hidden" : "")
-  me.value.push(node.meta.is_keepalive ? "keepalive" : "")
-  me.value.push(node.meta.platform)
-  me.value = me.value.filter(Boolean)
-
-  // 调用setCheckedCities，传入过滤后的me.value
-  menuUpdateRef.value?.setCheckedCities(me.value)
+  // 设置菜单数据到更新表单
   menuUpdateRef.value?.setMenuData(node)
 }
 
@@ -136,111 +129,111 @@ const filterNode = (value: string, data: Tree) => {
   return typeof data.meta.title === "string" && data.meta.title.includes(value)
 }
 
-// const menuData = ref<menu>()
-/** 查询模版列表 */
+// 菜单树数据
 const menuTreeData = ref<menu[]>([])
-const listMenusTreeData = async () => {
-  listMenusByPlatformApi(currentPlatform.value)
-    .then(async ({ data }) => {
-      menuTreeData.value = data
 
-      await nextTick()
-      // 设置当前节点
-      if (currentNodeKey.value && treeRef.value) {
-        treeRef.value.setCurrentKey(currentNodeKey.value)
-        // 录入数据
-        const node = findMenuById(data, currentNodeKey.value)
-        updateMenuData(node)
-        return
+// 刷新菜单数据
+const refreshMenuData = async () => {
+  try {
+    const { data } = await listMenusByPlatformApi(currentPlatform.value)
+    menuTreeData.value = data
+
+    await nextTick()
+
+    // 如果之前有选中的节点，重新选中并加载数据
+    if (currentNodeKey.value && treeRef.value) {
+      treeRef.value.setCurrentKey(currentNodeKey.value)
+      const node = findMenuById(data, currentNodeKey.value)
+      if (node) {
+        loadMenuData(node)
+      } else {
+        // 如果节点不存在（被删除了），清空选中状态
+        currentNodeKey.value = null
+        empty.value = false
       }
-    })
-    .catch(() => {
-      menuTreeData.value = []
-    })
-    .finally(() => {})
-}
-
-const menuCache = new Map<number, menu>()
-
-const clearCache = () => {
-  menuCache.clear()
-}
-
-const findMenuById = (menus: menu[], id: number): menu | null => {
-  if (menuCache.has(id)) {
-    return menuCache.get(id) || null
+    }
+  } catch (error) {
+    console.error("加载菜单数据失败:", error)
+    menuTreeData.value = []
   }
+}
 
-  const findRecursive = (menuList: menu[]): menu | null => {
+// 查找菜单节点
+const findMenuById = (menus: menu[], id: number): menu | null => {
+  for (const menu of menus) {
+    if (menu.id === id) return menu
+    if (menu.children?.length > 0) {
+      const found = findMenuById(menu.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+// 展开/收起所有节点
+const toggleAllNodes = (expanded: boolean) => {
+  const nodes = treeRef.value?.store?.nodesMap
+  if (!nodes) return
+
+  const toggleRecursive = (menuList: menu[]) => {
     for (const menu of menuList) {
-      if (menu.id === id) {
-        menuCache.set(id, menu)
-        return menu
+      if (nodes[menu.id]) {
+        nodes[menu.id].expanded = expanded
       }
       if (menu.children?.length > 0) {
-        const found = findRecursive(menu.children)
-        if (found) return found
-      }
-    }
-    return null
-  }
-
-  return findRecursive(menus)
-}
-
-const recursionFn = (arr: menu[]) => {
-  const nodes = treeRef.value?.store?.nodesMap
-  if (arr.length > 0) {
-    for (let i = 0; i < arr.length; i++) {
-      if (arr[i]?.children?.length > 0) {
-        nodes[arr[i].id].expanded = isExpand.value
-        recursionFn(arr[i]?.children)
+        toggleRecursive(menu.children)
       }
     }
   }
+
+  toggleRecursive(menuTreeData.value)
 }
 
+// 展开/收起状态
 const isExpand = ref(false)
-const handleCheckedTreeExpand = () => {
+
+// 切换展开/收起
+const handleToggleExpand = () => {
   isExpand.value = !isExpand.value
-  const treeList = menuTreeData.value
-  recursionFn(treeList)
+  toggleAllNodes(isExpand.value)
 }
 
-const addSubMenu = async () => {
+// 添加子菜单
+const addSubMenu = () => {
+  if (!currentNodeKey.value) {
+    ElMessage.warning("请先选择一个菜单")
+    return
+  }
+
   dialogVisible.value = true
-  await nextTick()
-  menuCreateRef.value?.resetForm()
-
-  // 插入特性数据
-  menuCreateRef.value?.setMenuType(2)
-  menuCreateRef.value?.setFromForPid(currentNodeKey.value)
+  nextTick(() => {
+    menuCreateRef.value?.resetForm()
+    menuCreateRef.value?.setMenuType(2)
+    menuCreateRef.value?.setFromForPid(currentNodeKey.value!)
+  })
 }
-const addMenu = async () => {
+// 添加菜单
+const addMenu = () => {
   dialogVisible.value = true
-  await nextTick()
-  menuCreateRef.value?.resetForm()
+  nextTick(() => {
+    menuCreateRef.value?.resetForm()
+  })
 }
 
+// 搜索防抖
 let searchTimer: NodeJS.Timeout | null = null
 watch(filterInput, (val: string) => {
   if (searchTimer) {
     clearTimeout(searchTimer)
   }
-
   searchTimer = setTimeout(() => {
-    if (treeRef.value) {
-      treeRef.value.filter(val)
-    }
+    treeRef.value?.filter(val)
   }, 300)
 })
 
-watch(currentPlatform, () => {
-  clearCache()
-})
-
-onMounted(async () => {
-  await listMenusTreeData()
+// 组件挂载时加载数据
+onMounted(() => {
+  refreshMenuData()
 })
 </script>
 
@@ -287,7 +280,7 @@ onMounted(async () => {
                 <el-button size="small" :disabled="!currentNodeKey" @click="addSubMenu" :icon="FolderAdd">
                   添加子菜单
                 </el-button>
-                <el-button size="small" @click="handleCheckedTreeExpand" :icon="isExpand ? FolderOpened : Folder">
+                <el-button size="small" @click="handleToggleExpand" :icon="isExpand ? FolderOpened : Folder">
                   {{ isExpand ? "收起" : "展开" }}
                 </el-button>
               </div>
@@ -305,7 +298,7 @@ onMounted(async () => {
                 :highlight-current="true"
                 :expand-on-click-node="false"
                 @node-click="handleNodeClick"
-                :current-node-key="currentNodeKey"
+                :current-node-key="currentNodeKey || undefined"
                 :props="defaultProps"
                 :filter-node-method="filterNode"
                 class="menu-tree"
@@ -318,9 +311,11 @@ onMounted(async () => {
       <!-- 右侧内容区域 -->
       <div class="menu-details">
         <el-card class="details-card">
-          <div v-if="empty">
-            <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="listMenusTreeData" />
-            <div class="menu-actions-bottom">
+          <div v-if="empty" class="menu-content-wrapper">
+            <div class="menu-form-container">
+              <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="refreshMenuData" />
+            </div>
+            <div class="menu-actions-footer">
               <el-button type="primary" @click="handleUpdate">
                 <el-icon><Edit /></el-icon>
                 修改
@@ -331,7 +326,7 @@ onMounted(async () => {
               </el-button>
             </div>
           </div>
-          <div>
+          <div v-else>
             <Tip :empty="empty" />
           </div>
         </el-card>
@@ -339,21 +334,27 @@ onMounted(async () => {
     </div>
 
     <!-- 添加菜单 dialog 展示 -->
-    <div>
-      <el-dialog v-model="dialogVisible" title="添加菜单" @closed="resetForm">
+    <FormDialog
+      v-model="dialogVisible"
+      title="添加菜单"
+      subtitle="创建新的菜单项"
+      height="80vh"
+      header-icon="Plus"
+      confirm-text="确认"
+      cancel-text="取消"
+      @confirm="handleCreate"
+      @cancel="handleCloseDialog"
+      @closed="handleCloseDialog"
+    >
+      <div class="form-content">
         <MenuForm
-          style="max-height: 60vh; overflow-y: auto"
           ref="menuCreateRef"
           :menuData="menuTreeData"
-          @listMenusTreeData="listMenusTreeData"
-          @closed="onClosed"
+          @listMenusTreeData="refreshMenuData"
+          @closed="handleCloseDialog"
         />
-        <template #footer>
-          <el-button @click="resetForm">取消</el-button>
-          <el-button type="primary" @click="handlerCreate">确认</el-button>
-        </template>
-      </el-dialog>
-    </div>
+      </div>
+    </FormDialog>
   </div>
 </template>
 
@@ -591,6 +592,98 @@ onMounted(async () => {
     .el-button {
       width: 100%;
       justify-content: center;
+    }
+  }
+}
+
+/* 表单内容区域样式 */
+.form-content {
+  height: 60vh;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+}
+
+/* 菜单内容包装器 - 参考 DataTable 布局 */
+.menu-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* 菜单表单容器 - 可滚动内容区域 */
+.menu-form-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+}
+
+/* 菜单操作底部 - 固定底部按钮 */
+.menu-actions-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 20px 24px;
+  margin-top: auto;
+
+  .el-button {
+    height: 40px;
+    padding: 0 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .el-icon {
+      margin-right: 6px;
+      font-size: 16px;
+    }
+
+    /* 修改按钮样式 */
+    &[type="primary"] {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border: none;
+      color: #ffffff;
+
+      &:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      }
+
+      &:active {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      }
+    }
+
+    /* 删除按钮样式 */
+    &[type="danger"] {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: none;
+      color: #ffffff;
+
+      &:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+      }
+
+      &:active {
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      }
     }
   }
 }

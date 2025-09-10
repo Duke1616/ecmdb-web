@@ -70,6 +70,7 @@
       v-model="dialogVisible"
       :title="isEditMode ? '编辑角色' : '新增角色'"
       :subtitle="isEditMode ? '修改角色信息' : '创建新的角色'"
+      width="500px"
       @closed="resetForm"
       @confirm="handleFormConfirm"
       @cancel="handleCloseDialog"

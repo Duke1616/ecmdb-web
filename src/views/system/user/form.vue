@@ -98,15 +98,15 @@
 import { onMounted, ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { 
-  User, 
-  UserFilled, 
-  Message, 
-  OfficeBuilding, 
+import {
+  User,
+  UserFilled,
+  Message,
+  OfficeBuilding,
   InfoFilled,
   Setting,
-  ChatDotRound, 
-  ChatDotSquare 
+  ChatDotRound,
+  ChatDotSquare
 } from "@element-plus/icons-vue"
 import { createOrUpdateUserReq, feishuInfo, user, wechatInfo } from "@/api/user/types/user"
 import { updateUserApi, syncLdapUserApi } from "@/api/user"
@@ -258,9 +258,9 @@ defineExpose({
         position: relative;
         display: flex;
         align-items: center;
-        
+
         &::before {
-          content: '';
+          content: "";
           display: inline-block;
           width: 16px;
           flex-shrink: 0;
@@ -270,7 +270,7 @@ defineExpose({
       &.required {
         :deep(.el-form-item__label) {
           &::before {
-            content: '*';
+            content: "*";
             color: #ef4444;
             font-size: 14px;
             font-weight: 600;

@@ -35,7 +35,7 @@
           <el-icon class="info-icon"><InfoFilled /></el-icon>
           <span class="info-text">{{ footerInfoText }}</span>
         </div>
-        <div v-else class="footer-spacer"></div>
+        <div v-else class="footer-spacer" />
         <div class="footer-actions">
           <el-button @click="handleCancel" class="cancel-btn" size="large">
             <el-icon><Close /></el-icon>
@@ -55,7 +55,7 @@
         </div>
       </div>
     </template>
-    
+
     <!-- 当 showFooter 为 false 时，提供一个空的 footer 插槽来覆盖默认行为 -->
     <template v-else #footer>
       <!-- 空的 footer 插槽 -->
@@ -187,7 +187,6 @@ const handleCancel = () => {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  
 
   .footer-info {
     display: flex;

@@ -2,20 +2,18 @@
   <div class="sync-user-container">
     <!-- 搜索区域 -->
     <div class="search-section">
-      <div class="search-container">
-        <el-input
-          v-model="filterInput"
-          size="large"
-          placeholder="输入用户名称进行搜索..."
-          :prefix-icon="Search"
-          class="search-input"
-          clearable
-          @input="debouncedSearch"
-        />
-        <el-button type="primary" :icon="RefreshRight" @click="refreshCacheLdap" class="refresh-btn">
-          刷新缓存
-        </el-button>
-      </div>
+      <el-input
+        v-model="filterInput"
+        size="large"
+        placeholder="输入用户名称进行搜索..."
+        :prefix-icon="Search"
+        class="search-input"
+        clearable
+        @input="debouncedSearch"
+      />
+      <el-button type="primary" size="large" :icon="RefreshRight" @click="refreshCacheLdap" class="refresh-btn">
+        刷新缓存
+      </el-button>
     </div>
 
     <!-- 表格区域 -->
@@ -61,7 +59,10 @@
       subtitle="确认导入用户信息"
       width="500px"
       header-icon="UserFilled"
-      :show-footer="false"
+      confirm-text="确认导入"
+      cancel-text="取消"
+      @confirm="handleSyncConfirm"
+      @cancel="handleSyncCancel"
       @closed="onClosedImportUser"
     >
       <Form ref="apiRef" @closed="onClosedImportUser" @callback="callback" />
@@ -149,13 +150,19 @@ const searchLdapUser = () => {
 }
 
 const callback = () => {
+  // 导入成功后刷新数据
   searchLdapUser()
   emits("listUsersData")
+  ElMessage.success("用户导入成功")
 }
 
 // 关闭导入用户页面
 const onClosedImportUser = () => {
   dialogVisible.value = false
+  // 重置表单数据
+  if (apiRef.value) {
+    apiRef.value.resetForm()
+  }
 }
 
 const refreshCacheLdap = () => {
@@ -179,14 +186,26 @@ const refreshCacheLdap = () => {
 const handleTableAction = (key: string, row: user) => {
   if (key === "import") {
     if (row.is_system_exist === true) {
-      ElMessage.warning("该用户已存在, 无需导入")
+      ElMessage.warning("该用户已存在，无需导入")
+      return
+    }
+
+    // 检查用户信息是否完整
+    if (!row.username || !row.display_name) {
+      ElMessage.error("用户信息不完整，无法导入")
       return
     }
 
     dialogVisible.value = true
 
     nextTick(() => {
-      apiRef.value?.setSyncForm(row)
+      if (apiRef.value) {
+        apiRef.value.setSyncForm(row)
+        ElMessage.warning(`准备导入用户: ${row.display_name || row.username}`)
+      } else {
+        ElMessage.error("表单初始化失败，请重试")
+        dialogVisible.value = false
+      }
     })
   }
 }
@@ -195,6 +214,30 @@ const debouncedSearch = debounce(() => {
   paginationData.currentPage = 1
   searchLdapUser()
 }, 388)
+
+// 处理导入用户确认
+const handleSyncConfirm = () => {
+  if (apiRef.value) {
+    try {
+      // 调用 Form 组件的 submitForm 方法
+      apiRef.value.submitForm()
+    } catch (error) {
+      console.error("导入用户失败:", error)
+      ElMessage.error("导入用户失败，请重试")
+    }
+  } else {
+    ElMessage.warning("表单未初始化，请重试")
+  }
+}
+
+// 处理导入用户取消
+const handleSyncCancel = () => {
+  dialogVisible.value = false
+  // 重置表单数据
+  if (apiRef.value) {
+    apiRef.value.resetForm()
+  }
+}
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], searchLdapUser, { immediate: true })
@@ -217,68 +260,66 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], searchL
   border-bottom: 1px solid #e5e7eb;
   padding-bottom: 12px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-  .search-container {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+  .search-input {
+    flex: 1;
 
-    .search-input {
-      flex: 1;
-      max-width: 400px;
+    :deep(.el-input__wrapper) {
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 0 12px;
+      height: 40px;
+      transition: all 0.2s ease;
+      box-shadow: none;
 
-      :deep(.el-input__wrapper) {
-        background: #f9fafb;
-        border: 1px solid #d1d5db;
-        border-radius: 6px;
-        padding: 0 12px;
-        height: 40px;
-        transition: all 0.2s ease;
-        box-shadow: none;
-
-        &:hover {
-          border-color: #9ca3af;
-          background: #ffffff;
-        }
-
-        &.is-focus {
-          border-color: #3b82f6;
-          background: #ffffff;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
+      &:hover {
+        border-color: #9ca3af;
+        background: #ffffff;
       }
 
-      :deep(.el-input__inner) {
-        font-size: 14px;
-        color: #111827;
-        font-weight: 400;
-
-        &::placeholder {
-          color: #6b7280;
-          font-weight: 400;
-        }
-      }
-
-      :deep(.el-input__prefix) {
-        color: #6b7280;
-        font-size: 16px;
+      &.is-focus {
+        border-color: #3b82f6;
+        background: #ffffff;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
       }
     }
 
-    .refresh-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-weight: 500;
+    :deep(.el-input__inner) {
       font-size: 14px;
-      transition: all 0.2s ease;
+      color: #111827;
+      font-weight: 400;
 
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      &::placeholder {
+        color: #6b7280;
+        font-weight: 400;
       }
+    }
+
+    :deep(.el-input__prefix) {
+      color: #6b7280;
+      font-size: 16px;
+    }
+  }
+
+  .refresh-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    white-space: nowrap;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
   }
 }
@@ -327,15 +368,12 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], searchL
 /* 响应式设计 */
 @media (max-width: 768px) {
   .search-section {
-    padding: 14px 0;
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
 
-    .search-container {
-      flex-direction: column;
-      gap: 12px;
-
-      .search-input {
-        max-width: none;
-      }
+    .search-input {
+      width: 100%;
     }
   }
 }

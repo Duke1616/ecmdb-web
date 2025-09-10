@@ -1,11 +1,23 @@
 <template>
-  <div class="form-container">
-    <el-divider content-position="left">基础设置</el-divider>
-    <el-form ref="formRef" :model="formData" :inline-message="true" hide-required-asterisk :rules="formRules">
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="菜单类型" prop="type">
-            <el-radio-group v-model="formData.type" size="default" is-button>
+  <div>
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-width="100px"
+      class="menu-form"
+      label-position="left"
+    >
+      <!-- 基础设置区域 -->
+      <div class="form-section">
+        <div class="section-title">
+          <el-icon><InfoFilled /></el-icon>
+          <span>基础设置</span>
+        </div>
+
+        <div class="form-row">
+          <el-form-item label="菜单类型" prop="type" class="form-item required">
+            <el-radio-group v-model="currentType" size="default" class="form-radio-group">
               <el-radio-button
                 v-for="item in typeOptions"
                 :key="item.label"
@@ -17,9 +29,8 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="上级目录" prop="pid">
+
+          <el-form-item label="上级目录" prop="pid" class="form-item">
             <el-tree-select
               v-model="formData.pid"
               :data="props.menuData"
@@ -30,72 +41,79 @@
               check-strictly
               check-on-click-node
               :props="defaultProps"
+              placeholder="请选择上级目录"
+              clearable
+              class="form-input modern-select"
             />
           </el-form-item>
-        </el-col>
-      </el-row>
+        </div>
 
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item :label="showLableName(formData.type)" prop="title">
-            <el-input v-model="formData.meta.title" clearable />
+        <div class="form-row">
+          <el-form-item :label="showLableName(formData.type)" prop="title" class="form-item required">
+            <el-input
+              v-model="formData.meta.title"
+              :placeholder="`请输入${showLableName(formData.type)}`"
+              clearable
+              class="form-input"
+            />
           </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item v-if="formData.type !== 3" label="菜单图标" prop="icon">
-            <el-input v-model="formData.meta.icon" clearable />
-          </el-form-item>
-          <el-form-item v-if="formData.type == 3" label="按钮标识" prop="icon">
-            <el-input v-model="formData.name" clearable />
-          </el-form-item>
-        </el-col>
-      </el-row>
 
-      <el-row :gutter="20" v-if="formData.type !== 3">
-        <el-col :span="12">
-          <el-form-item label="路由地址" prop="path">
-            <el-input v-model="formData.path" clearable />
+          <el-form-item v-if="formData.type !== 3" label="菜单图标" prop="icon" class="form-item">
+            <el-input v-model="formData.meta.icon" placeholder="请输入菜单图标" clearable class="form-input" />
           </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="路由名称" prop="path">
-            <el-input v-model="formData.name" clearable />
-          </el-form-item>
-        </el-col>
-      </el-row>
 
-      <el-row :gutter="20" v-if="formData.type === 1">
-        <el-col :span="12">
-          <el-form-item label="菜单布局" prop="path">
-            <el-input v-model="formData.component" clearable />
+          <el-form-item v-if="formData.type == 3" label="按钮标识" prop="icon" class="form-item required">
+            <el-input v-model="formData.name" placeholder="请输入按钮标识" clearable class="form-input" />
           </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="默认跳转" prop="redirect">
-            <el-input v-model="formData.redirect" clearable />
-          </el-form-item>
-        </el-col>
-      </el-row>
+        </div>
 
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item v-if="formData.type === 2" label="组件路径" prop="path">
-            <el-input v-model="formData.component" clearable />
+        <div class="form-row" v-if="formData.type !== 3">
+          <el-form-item label="路由地址" prop="path" class="form-item">
+            <el-input v-model="formData.path" placeholder="请输入路由地址" clearable class="form-input" />
           </el-form-item>
-        </el-col>
-      </el-row>
-      <div class="divider">
-        <el-divider content-position="left">功能设置</el-divider>
+
+          <el-form-item label="路由名称" prop="name" class="form-item">
+            <el-input v-model="formData.name" placeholder="请输入路由名称" clearable class="form-input" />
+          </el-form-item>
+        </div>
+
+        <div class="form-row" v-if="formData.type === 1">
+          <el-form-item label="菜单布局" prop="component" class="form-item">
+            <el-input v-model="formData.component" placeholder="请输入菜单布局" clearable class="form-input" />
+          </el-form-item>
+
+          <el-form-item label="默认跳转" prop="redirect" class="form-item">
+            <el-input v-model="formData.redirect" placeholder="请输入默认跳转地址" clearable class="form-input" />
+          </el-form-item>
+        </div>
+
+        <div class="form-row" v-if="formData.type === 2">
+          <el-form-item label="组件路径" prop="component" class="form-item">
+            <el-input v-model="formData.component" placeholder="请输入组件路径" clearable class="form-input" />
+          </el-form-item>
+        </div>
       </div>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="菜单排序" prop="sort">
-            <el-input-number v-model="formData.sort" />
+
+      <!-- 功能设置区域 -->
+      <div class="form-section">
+        <div class="section-title">
+          <el-icon><Setting /></el-icon>
+          <span>功能设置</span>
+        </div>
+
+        <div class="form-row">
+          <el-form-item label="菜单排序" prop="sort" class="form-item">
+            <el-input-number
+              v-model="formData.sort"
+              :min="0"
+              :max="999"
+              placeholder="请输入排序值"
+              class="form-input-number"
+            />
           </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="菜单状态" prop="status">
-            <el-radio-group v-model="formData.status" is-button>
+
+          <el-form-item label="菜单状态" prop="status" class="form-item required">
+            <el-radio-group v-model="currentStatus" class="form-radio-group">
               <el-radio-button
                 v-for="item in statusOptions"
                 :key="item.label"
@@ -107,59 +125,82 @@
               </el-radio-button>
             </el-radio-group>
           </el-form-item>
-        </el-col>
-      </el-row>
-      <el-form-item v-if="formData.type !== 3" label="高级选项" prop="meta">
-        <el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange">
-          <el-checkbox
-            v-for="option in metaOptions"
-            :key="option.label"
-            :value="option.label"
-            :name="option.name"
-            :disabled="option.disabled"
-          >
-            {{ option.name }}
-          </el-checkbox>
-        </el-checkbox-group>
-      </el-form-item>
-      <div class="divider">
-        <el-divider content-position="left"> 接口设置 </el-divider>
-        <el-button text type="primary" @click="handleAddAPi"> 添加接口</el-button>
+        </div>
+
+        <el-form-item v-if="formData.type !== 3" label="高级选项" prop="meta" class="form-item full-width">
+          <el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange" class="form-checkbox-group">
+            <el-checkbox
+              v-for="option in metaOptions"
+              :key="option.label"
+              :value="option.label"
+              :name="option.name"
+              :disabled="option.disabled"
+            >
+              {{ option.name }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
       </div>
-      <el-table
-        :data="formData.endpoints"
-        border
-        :header-cell-style="{ background: '#F6F6F6', height: '10px', 'text-align': 'center' }"
-      >
-        <el-table-column prop="path" label="接口路径" align="center" />
-        <el-table-column prop="method" label="接口方法" align="center" />
-        <el-table-column prop="desc" label="接口介绍" align="center" />
-        <el-table-column fixed="right" label="操作" width="150" align="center">
-          <template #default="scope">
-            <el-button type="danger" text bg size="small" @click="handleDeleteEndpoint(scope.row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+
+      <!-- 接口设置区域 -->
+      <div class="form-section">
+        <div class="section-title">
+          <el-icon><Connection /></el-icon>
+          <span>接口设置</span>
+          <el-button type="primary" size="small" @click="openAddApiDialog" :icon="Plus" class="add-api-btn">
+            添加接口
+          </el-button>
+        </div>
+
+        <div class="api-table-container">
+          <DataTable
+            :data="apiEndpoints"
+            :columns="apiTableColumns"
+            :actions="apiTableActions"
+            :show-pagination="false"
+            :table-props="{}"
+            @action="(action, row, index) => removeEndpoint(index)"
+          >
+            <!-- 接口方法插槽 -->
+            <template #method="{ row }">
+              <el-tag :type="getMethodTagType(row.method)" size="small">
+                {{ row.method || "N/A" }}
+              </el-tag>
+            </template>
+          </DataTable>
+        </div>
+      </div>
     </el-form>
-    <div>
-      <el-dialog v-model="dialogVisible" @closed="closeApiPermission" title="添加接口">
-        <Api ref="apiRef" style="max-height: 60vh; overflow-y: auto" />
-        <template #footer>
-          <el-button @click="closeApiPermission">取消</el-button>
-          <el-button type="primary" @click="handlerAddApi">添加</el-button>
-        </template>
-      </el-dialog>
-    </div>
+
+    <!-- 添加接口对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      title="添加接口"
+      subtitle="选择需要添加的接口"
+      width="800px"
+      header-icon="Connection"
+      confirm-text="确认添加"
+      cancel-text="取消"
+      @confirm="handleDialogConfirm"
+      @cancel="closeApiPermission"
+      @closed="closeApiPermission"
+    >
+      <Api ref="apiRef" />
+    </FormDialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { createOrUpdateMenuReq, endpoint, menu } from "@/api/menu/types/menu"
+import { createOrUpdateMenuReq, endpoint as menuEndpoint, menu } from "@/api/menu/types/menu"
+import { endpoint as apiEndpoint } from "@/api/endpoint/types/endpoint"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { ref } from "vue"
+import { ref, computed, watch } from "vue"
 import { cloneDeep } from "lodash-es"
 import { createMenuApi, updateMenuApi } from "@/api/menu"
+import { InfoFilled, Setting, Connection, Plus, Delete } from "@element-plus/icons-vue"
 import Api from "./api.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 
 const apiRef = ref<InstanceType<typeof Api>>()
 const defaultProps = ref<any>({
@@ -222,6 +263,20 @@ const showLableName = (type: number) => {
   }
 }
 
+// 获取接口方法标签类型
+const getMethodTagType = (method: string | undefined): "success" | "primary" | "warning" | "info" | "danger" => {
+  if (!method) return "info"
+
+  const methodMap: Record<string, "success" | "primary" | "warning" | "info" | "danger"> = {
+    GET: "success",
+    POST: "primary",
+    PUT: "warning",
+    DELETE: "danger",
+    PATCH: "info"
+  }
+  return methodMap[method.toUpperCase()] || "info"
+}
+
 const closeApiPermission = () => {
   apiRef.value?.resetFilterInput()
   dialogVisible.value = false
@@ -243,21 +298,78 @@ const handleCheckedCitiesChange = (value: any) => {
   })
 }
 
-const handleDeleteEndpoint = (row: endpoint) => {
-  formData.value.endpoints = formData.value.endpoints.filter(
-    (endpoint) => endpoint.name + endpoint.path !== row.name + row.path
-  )
+// API 表格配置
+const apiTableColumns = [
+  { prop: "path", label: "接口路径", minWidth: 200 },
+  { prop: "method", label: "接口方法", width: 120, slot: "method" },
+  { prop: "desc", label: "接口介绍", minWidth: 150 }
+]
+
+const apiTableActions = [
+  {
+    key: "delete",
+    type: "danger" as const,
+    size: "small" as const,
+    text: true,
+    label: "删除",
+    icon: "Delete"
+  }
+]
+
+// 接口管理
+const apiEndpoints = ref<menuEndpoint[]>([])
+
+// 初始化接口数据
+const initEndpoints = (endpoints: menuEndpoint[] = []) => {
+  apiEndpoints.value = [...endpoints]
 }
-const handlerAddApi = () => {
-  const endpointApi = apiRef.value?.getSelectionTableData()
-  if (!endpointApi) return
-  const uniqueEndpoints = endpointApi.filter((endpoint: endpoint) => {
-    return !formData.value.endpoints.some(
-      (existingEndpoint) => endpoint.name + endpoint.path === existingEndpoint.name + existingEndpoint.path
-    )
+
+// 添加接口
+const addEndpoints = (newEndpoints: apiEndpoint[]) => {
+  if (!newEndpoints || newEndpoints.length === 0) {
+    ElMessage.warning("请选择要添加的接口")
+    return
+  }
+
+  const convertedEndpoints = newEndpoints.map(convertApiEndpointToMenuEndpoint)
+  const uniqueEndpoints = convertedEndpoints.filter((endpoint) => {
+    return !apiEndpoints.value.some((existing) => {
+      return endpoint.path === existing.path && endpoint.name === existing.name
+    })
   })
 
-  formData.value.endpoints = formData.value.endpoints.concat(uniqueEndpoints)
+  if (uniqueEndpoints.length === 0) {
+    ElMessage.warning("所选接口已存在，无需重复添加")
+    return
+  }
+
+  apiEndpoints.value.push(...uniqueEndpoints)
+}
+
+// 删除接口
+const removeEndpoint = (index: number) => {
+  apiEndpoints.value.splice(index, 1)
+}
+
+// 转换 API 接口格式
+const convertApiEndpointToMenuEndpoint = (apiEndpoint: apiEndpoint): menuEndpoint => {
+  return {
+    name: apiEndpoint.resource || apiEndpoint.path,
+    path: apiEndpoint.path,
+    method: apiEndpoint.method,
+    desc: apiEndpoint.desc
+  }
+}
+
+// 打开添加接口对话框
+const openAddApiDialog = () => {
+  dialogVisible.value = true
+}
+
+// 处理对话框确认
+const handleDialogConfirm = () => {
+  const selectedEndpoints = apiRef.value?.getSelectionTableData() || []
+  addEndpoints(selectedEndpoints)
   apiRef.value?.clearSelection()
   dialogVisible.value = false
 }
@@ -268,9 +380,33 @@ const formRules: FormRules = {
   // title: [{ required: true, message: "名称不能为空" }]
 }
 
+// 计算属性确保数据同步
+const currentType = computed({
+  get: () => formData.value.type,
+  set: (value) => {
+    formData.value.type = value
+  }
+})
+
+const currentStatus = computed({
+  get: () => formData.value.status,
+  set: (value) => {
+    formData.value.status = value
+  }
+})
+
 const submitUpdateForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
+
+    // 确保 platform 字段被正确设置
+    if (formData.value.meta) {
+      formData.value.meta.platform = formData.value.meta.platform || "cmdb"
+    }
+
+    // 同步接口数据到表单数据
+    formData.value.endpoints = [...apiEndpoints.value]
+
     updateMenuApi(formData.value)
       .then(() => {
         ElMessage.success("保存成功")
@@ -287,7 +423,12 @@ const submitUpdateForm = () => {
 const submitCreateForm = (platform: string) => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
+
     formData.value.meta.platform = platform
+
+    // 同步接口数据到表单数据
+    formData.value.endpoints = [...apiEndpoints.value]
+
     createMenuApi(formData.value)
       .then((data) => {
         ElMessage.success("保存成功")
@@ -305,6 +446,7 @@ const submitCreateForm = (platform: string) => {
 
 // 控制添加API接口的dialog
 const dialogVisible = ref<boolean>(false)
+
 const handleAddAPi = () => {
   dialogVisible.value = true
 }
@@ -313,6 +455,8 @@ const handleAddAPi = () => {
 const resetForm = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  checkedCities.value = []
+  apiEndpoints.value = []
 }
 
 // 设置菜单数据
@@ -320,49 +464,268 @@ const setMenuData = (form: menu) => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(form)
 
+  // 确保 type 和 status 是数字类型
+  formData.value.type = Number(formData.value.type)
+  formData.value.status = Number(formData.value.status)
+
+  // 初始化接口数据
+  initEndpoints(formData.value.endpoints || [])
+
+  // 清理空值
   Object.keys(formData.value).forEach((key) => {
     const typedKey = key as keyof typeof formData.value
     if (formData.value[typedKey] === 0 || formData.value[typedKey] === null || formData.value[typedKey] === "") {
       delete formData.value[typedKey]
     }
   })
+
+  // 初始化高级选项的选中状态
+  const checkedOptions: string[] = []
+  if (formData.value.meta?.is_hidden) checkedOptions.push("hidden")
+  if (formData.value.meta?.is_affix) checkedOptions.push("affix")
+  if (formData.value.meta?.is_keepalive) checkedOptions.push("keepalive")
+  checkedCities.value = checkedOptions
 }
 
-// 设置按钮类型
-const setMenuType = (value: number) => {
-  formData.value.type = value
+// 设置菜单类型
+const setMenuType = (type: number) => {
+  formData.value.type = type
 }
+
 // 设置上级目录
-const setFromForPid = (pid: number | null) => {
-  if (pid === null) {
-    return
-  }
+const setFromForPid = (pid: number) => {
   formData.value.pid = pid
-}
-
-// 初始化选中的高级选项
-const setCheckedCities = (value: string[]) => {
-  checkedCities.value = value
 }
 
 defineExpose({
   submitCreateForm,
   submitUpdateForm,
   resetForm,
-  setMenuType,
   setMenuData,
+  setMenuType,
   setFromForPid,
-  setCheckedCities
+  initEndpoints
 })
 </script>
 
 <style lang="scss" scoped>
-.divider .el-divider__text {
-  font-size: 20px; /* 您可以根据需要调整这个值 */
+.menu-form {
+  .form-section {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+
+      .el-icon {
+        font-size: 14px;
+        color: #3b82f6;
+      }
+
+      span {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+      }
+
+      .add-api-btn {
+        margin-left: auto;
+        height: 28px;
+        font-size: 12px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+
+      @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
+
+    .form-item {
+      margin-bottom: 0;
+
+      &.full-width {
+        grid-column: 1 / -1;
+      }
+
+      :deep(.el-form-item__label) {
+        font-weight: 500;
+        color: #374151;
+        font-size: 13px;
+        position: relative;
+        display: flex;
+        align-items: center;
+
+        &::before {
+          content: "";
+          display: inline-block;
+          width: 16px;
+          flex-shrink: 0;
+        }
+      }
+
+      &.required {
+        :deep(.el-form-item__label) {
+          &::before {
+            content: "*";
+            color: #ef4444;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 0;
+            display: inline-block;
+            width: 16px;
+            text-align: center;
+          }
+        }
+      }
+
+      .form-input {
+        :deep(.el-input__wrapper) {
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: #9ca3af;
+          }
+
+          &.is-focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          }
+        }
+
+        :deep(.el-input__inner) {
+          font-size: 13px;
+          color: #374151;
+        }
+      }
+
+      .form-input-number {
+        :deep(.el-input__wrapper) {
+          border-radius: 8px;
+          border: 1px solid #d1d5db;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: #9ca3af;
+          }
+
+          &.is-focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          }
+        }
+      }
+
+      .form-radio-group {
+        :deep(.el-radio-button__inner) {
+          border-radius: 6px;
+          border: 1px solid #d1d5db;
+          background: #ffffff;
+          color: #374151;
+          font-size: 13px;
+          padding: 8px 16px;
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+          }
+        }
+
+        :deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
+          background: #409eff !important;
+          border-color: #409eff !important;
+          color: #ffffff !important;
+          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+
+        :deep(.el-radio-button.is-active .el-radio-button__inner) {
+          background: #409eff !important;
+          border-color: #409eff !important;
+          color: #ffffff !important;
+          box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+        }
+      }
+
+      .form-checkbox-group {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        :deep(.el-checkbox) {
+          .el-checkbox__label {
+            font-size: 13px;
+            color: #374151;
+          }
+        }
+      }
+
+      // 只保留圆角样式
+      .modern-select :deep(.el-select__wrapper) {
+        border-radius: 10px;
+      }
+    }
+  }
 }
 
-.form-container {
-  padding-left: 10px;
-  padding-right: 10px;
+.api-table-container {
+  margin-top: 16px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .menu-form-container {
+    padding: 0;
+  }
+
+  .menu-form {
+    .form-section {
+      margin-bottom: 24px;
+
+      .section-title {
+        padding: 10px 12px;
+        margin-bottom: 16px;
+
+        span {
+          font-size: 13px;
+        }
+
+        .add-api-btn {
+          height: 26px;
+          font-size: 11px;
+          padding: 4px 6px;
+          border-radius: 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+  }
 }
 </style>

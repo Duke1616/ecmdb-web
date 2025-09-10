@@ -28,6 +28,7 @@ export interface meta {
 export interface endpoint {
   name: string
   path: string
+  method: string
   desc: string
 }
 
