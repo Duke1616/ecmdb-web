@@ -99,7 +99,8 @@ defineEmits<{
   gap: 12px;
 }
 
-.action-btn {
+/* 全局按钮样式 - 使用 :deep() 确保覆盖所有子元素 */
+:deep(.action-btn) {
   height: 36px;
   padding: 0 16px;
   font-size: 14px;
@@ -126,7 +127,7 @@ defineEmits<{
   }
 }
 
-.refresh-btn {
+:deep(.refresh-btn) {
   width: 36px;
   height: 36px;
   transition: all 0.3s ease;

@@ -38,8 +38,8 @@
     <template #footer v-if="showFooter">
       <div class="drawer-footer">
         <slot name="footer">
-          <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" @click="handleConfirm">确定</el-button>
+          <el-button @click="handleCancel">{{ cancelButtonText }}</el-button>
+          <el-button type="primary" @click="handleConfirm">{{ confirmButtonText }}</el-button>
         </slot>
       </div>
     </template>
@@ -62,6 +62,8 @@ interface Props {
   headerIcon?: any
   beforeClose?: (done: () => void) => void
   class?: string
+  cancelButtonText?: string
+  confirmButtonText?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -69,8 +71,10 @@ const props = withDefaults(defineProps<Props>(), {
   direction: "rtl",
   showClose: true,
   closeOnClickModal: true,
-  showFooter: false,
-  class: ""
+  showFooter: true,
+  class: "",
+  cancelButtonText: "取消",
+  confirmButtonText: "确定"
 })
 
 const emits = defineEmits<{
@@ -217,14 +221,66 @@ const handleConfirm = () => {
   }
 
   .drawer-footer {
-    padding: 16px 24px;
-    background: white;
-    border-top: 1px solid #e4e7ed;
+    padding: 20px 24px;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
     margin: 0 20px 12px 20px;
     border-radius: 0 0 6px 6px;
+
+    .el-button {
+      min-width: 100px;
+      height: 44px;
+      border-radius: 8px;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+
+      &:not(.el-button--primary) {
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #6b7280;
+
+        &:hover {
+          border-color: #9ca3af;
+          color: #374151;
+          background: #f9fafb;
+        }
+
+        .el-icon {
+          margin-right: 6px;
+          font-size: 16px;
+        }
+      }
+
+      &.el-button--primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+
+        &:hover {
+          background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+          box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+          transform: translateY(-1px);
+        }
+
+        &:active {
+          transform: translateY(0);
+        }
+
+        .el-icon {
+          margin-right: 6px;
+          font-size: 16px;
+        }
+      }
+    }
   }
 }
 
@@ -260,8 +316,15 @@ const handleConfirm = () => {
     }
 
     .drawer-footer {
-      padding: 12px 16px;
+      padding: 16px;
       margin: 0 16px 8px 16px;
+      flex-direction: column;
+      gap: 8px;
+
+      .el-button {
+        width: 100%;
+        min-width: auto;
+      }
     }
   }
 }

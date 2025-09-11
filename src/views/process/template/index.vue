@@ -393,34 +393,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTem
   }
 }
 
-/* 按钮样式 */
-.action-btn {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-}
-
-.refresh-btn {
-  width: 36px;
-  height: 36px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(180deg);
-  }
-}
-
 /* 类型标签样式 */
 .type-tag {
   font-size: 11px;

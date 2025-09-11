@@ -37,44 +37,25 @@
     </div>
 
     <div class="content-tabs">
-      <div class="tabs-card">
-        <div class="tabs-header">
-          <div class="tab-buttons">
-            <button
-              :class="['tab-button', { active: activeName === 'model-field' }]"
-              @click="activeName = 'model-field'"
-            >
-              模型字段
-            </button>
-            <button
-              :class="['tab-button', { active: activeName === 'model-relation' }]"
-              @click="activeName = 'model-relation'"
-            >
-              模型关联
-            </button>
-          </div>
-        </div>
-        <div class="tab-content">
-          <div v-show="activeName === 'model-field'">
-            <model-field :model-uid="modelUid" />
-          </div>
-          <div v-show="activeName === 'model-relation'">
-            <model-relation :model-uid="modelUid" />
-          </div>
-        </div>
-      </div>
+      <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange">
+        <template #default="{ activeTab }">
+          <model-field v-if="activeTab === 'model-field'" :model-uid="modelUid" />
+          <model-relation v-if="activeTab === 'model-relation'" :model-uid="modelUid" />
+        </template>
+      </CustomTabs>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref } from "vue"
-import modelField from "./c-cnps/model-field.vue"
-import modelRelation from "./c-cnps/model-relation.vue"
+import modelField from "./components/model-field/index.vue"
+import modelRelation from "./components/model-relation/index.vue"
 import router from "@/router"
 import { useRoute } from "vue-router"
 import { deleteModelApi } from "@/api/model"
 import { ElMessageBox } from "element-plus"
+import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 
 const route = useRoute()
 const modelUid = route.query.uid as string
@@ -85,6 +66,17 @@ const goBack = () => {
 }
 
 const activeName = ref("model-field")
+
+// tabs 配置
+const tabs = [
+  { name: "model-field", label: "模型字段" },
+  { name: "model-relation", label: "模型关联" }
+]
+
+// 处理 tab 切换
+const handleTabChange = (tabName: string) => {
+  activeName.value = tabName
+}
 
 const handleDisableModel = () => {
   ElMessageBox({
@@ -126,7 +118,17 @@ const handleDeleteModel = () => {
 .modern-container {
   padding: 16px;
   background: var(--background, #fafafa);
-  height: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 16px;
 }
 
 .merged-header-card {
@@ -134,7 +136,6 @@ const handleDeleteModel = () => {
   border: 1px solid var(--border, #e5e7eb);
   border-radius: 8px;
   padding: 16px;
-  margin-bottom: 10px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
   .header-section {
@@ -286,58 +287,6 @@ const handleDeleteModel = () => {
         }
       }
     }
-  }
-}
-
-.content-tabs {
-  .tabs-card {
-    background: var(--card, #ffffff);
-    border: 1px solid var(--border, #e5e7eb);
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    overflow: hidden;
-  }
-
-  .tabs-header {
-    background: var(--muted, #f9fafb);
-    border-bottom: 1px solid var(--border, #e5e7eb);
-    padding: 4px;
-  }
-
-  .tab-buttons {
-    display: flex;
-    gap: 2px;
-  }
-
-  .tab-button {
-    flex: 1;
-    padding: 10px 16px;
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--muted-foreground, #6b7280);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-
-    &:hover {
-      background: var(--background, #ffffff);
-      color: var(--foreground, #111827);
-    }
-
-    &.active {
-      background: var(--background, #ffffff);
-      color: var(--primary, #3b82f6);
-      font-weight: 600;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-  }
-
-  .tab-content {
-    padding: 0;
-    background: var(--card, #ffffff);
   }
 }
 </style>

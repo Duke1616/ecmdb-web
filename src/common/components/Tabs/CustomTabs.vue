@@ -71,6 +71,9 @@ defineExpose({
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .tabs-header {
     display: flex;
@@ -124,6 +127,7 @@ defineExpose({
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
   }
 }
 

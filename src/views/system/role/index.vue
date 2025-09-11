@@ -9,7 +9,7 @@
       @refresh="handleRefresh"
     >
       <template #actions>
-        <el-button type="primary" class="action-btn" @click="handleAddRole"> 新增角色 </el-button>
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handleAddRole"> 新增角色 </el-button>
         <el-button type="danger" :icon="Delete" class="action-btn danger" @click="handleBatchDelete">
           批量删除
         </el-button>
@@ -101,7 +101,7 @@ import { usePagination } from "@/common/composables/usePagination"
 import { listRolesApi } from "@/api/role"
 import { changeRoleMenuPermissionApi } from "@/api/permission"
 import { role } from "@/api/role/types/role"
-import { Delete, Check, Close, Edit, Menu, RefreshRight } from "@element-plus/icons-vue"
+import { Delete, Check, Close, Edit, Menu, RefreshRight, CirclePlus } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import Form from "./form.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -278,43 +278,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 </script>
 
 <style lang="scss" scoped>
-/* 按钮样式 */
-.action-btn {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  &.danger {
-    background: #ef4444;
-    border-color: #ef4444;
-
-    &:hover {
-      background: #dc2626;
-      border-color: #dc2626;
-    }
-  }
-}
-
-.refresh-btn {
-  width: 36px;
-  height: 36px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(180deg);
-  }
-}
 
 /* 角色名称样式 */
 .role-name {

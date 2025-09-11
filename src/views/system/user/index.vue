@@ -9,7 +9,7 @@
       @refresh="handleRefresh"
     >
       <template #actions>
-        <el-button type="primary" class="action-btn" @click="handlerCreateUser"> 新增用户 </el-button>
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreateUser"> 新增用户 </el-button>
         <el-button type="success" :icon="User" class="action-btn" @click="handleSyncUser"> 同步用户 </el-button>
         <el-tooltip content="刷新数据">
           <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
@@ -109,7 +109,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { User, Edit, UserFilled, RefreshRight } from "@element-plus/icons-vue"
+import { User, Edit, UserFilled, RefreshRight, CirclePlus } from "@element-plus/icons-vue"
 import { listUsersApi, bindRoleCodesAPi } from "@/api/user"
 import RoleSelector from "./roleSelector.vue"
 import { user } from "@/api/user/types/user"
@@ -289,33 +289,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listUse
 </script>
 
 <style lang="scss" scoped>
-/* 按钮样式 */
-.action-btn {
-  height: 36px;
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-}
-
-.refresh-btn {
-  width: 36px;
-  height: 36px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: rotate(180deg);
-  }
-}
 
 /* 用户名称样式 */
 .user-name {

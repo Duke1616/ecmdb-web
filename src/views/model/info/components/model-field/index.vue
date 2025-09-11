@@ -1,20 +1,12 @@
 <template>
   <div class="field-management">
-    <!-- 移除外层容器的padding，让它与model-detail-page保持一致 -->
-    <div class="field-header">
-      <div class="header-left">
-        <el-button type="primary" size="default" :icon="CirclePlus" @click="dialogAttrGroupVisible = true">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-input v-model="searchInput" placeholder="搜索字段..." :suffix-icon="Search" style="width: 300px" clearable />
+      <div class="search-actions">
+        <el-button type="primary" :icon="CirclePlus" @click="dialogAttrGroupVisible = true" size="default">
           新增分组
         </el-button>
-        <el-input
-          v-model="searchInput"
-          placeholder="搜索字段..."
-          :suffix-icon="Search"
-          style="width: 240px"
-          clearable
-        />
-      </div>
-      <div class="header-right">
         <el-button :icon="allExpanded ? Expand : ArrowUp" @click="toggleAllGroups" size="default">
           {{ allExpanded ? "全部收起" : "全部展开" }}
         </el-button>
@@ -76,50 +68,59 @@
       </div>
     </div>
 
-    <el-dialog
+    <FormDialog
       v-model="dialogAttrGroupVisible"
       title="新增分组"
+      subtitle="创建新的属性分组"
+      width="500px"
+      header-icon="Folder"
       @closed="resetAttrGroupFrom"
-      width="400px"
-      class="modern-dialog"
+      @confirm="handlerAddAttributeGroup"
+      @cancel="dialogAttrGroupVisible = false"
     >
       <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="80px" class="dialog-form">
         <el-form-item prop="group_name" label="组名称">
           <el-input v-model="AttrGroup.group_name" placeholder="请输入分组名称" class="form-input" />
         </el-form-item>
       </el-form>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogAttrGroupVisible = false" class="cancel-btn">取消</el-button>
-          <el-button type="primary" @click="handlerAddAttributeGroup" :loading="loading" class="confirm-btn">
-            确认
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+    </FormDialog>
 
-    <el-drawer
+    <Drawer
       v-model="attrFieldVisible"
-      :show-close="false"
-      :with-header="false"
-      :before-close="handleClose"
-      class="modern-drawer"
+      title="字段管理"
+      subtitle="添加或编辑模型字段"
+      size="35%"
+      direction="rtl"
+      header-icon="Edit"
+      :show-footer="true"
+      cancel-button-text="取消"
+      confirm-button-text="保存字段"
+      @cancel="() => onClosed(false)"
+      @confirm="handleFieldConfirm"
+      @closed="() => onClosed(false)"
     >
-      <createOrUpdateField
+      <create-or-update
         ref="apiFieldRef"
         :model-uid="props.modelUid"
         :group-id="groupId"
         @close="onClosed"
         @getAttributesData="getAttributesData"
       />
-    </el-drawer>
+    </Drawer>
 
-    <el-drawer
+    <Drawer
       v-model="sortFieldVisibe"
-      class="sort-drawer"
-      :show-close="false"
-      :with-header="false"
-      title="表格排序设置"
+      title="排序设置"
+      subtitle="设置字段显示顺序"
+      size="35%"
+      direction="rtl"
+      header-icon="Setting"
+      :show-footer="true"
+      cancel-button-text="取消"
+      confirm-button-text="保存设置"
+      @cancel="() => sortClose(false)"
+      @confirm="handleSortConfirm"
+      @closed="() => sortClose(false)"
     >
       <sortField
         ref="sortFieldRef"
@@ -128,7 +129,7 @@
         @close="sortClose"
         @getAttributesData="getAttributesData"
       />
-    </el-drawer>
+    </Drawer>
   </div>
 </template>
 
@@ -140,8 +141,9 @@ import { type AttributeGroup, type Attribute, CreateAttributeGroupReq } from "@/
 import { usePagination } from "@/common/composables/usePagination"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import createOrUpdateField from "./createOrUpdateField.vue"
-import sortField from "./sort-field.vue"
+import { FormDialog, Drawer } from "@@/components/Dialogs"
+import createOrUpdateField from "./create-or-update.vue"
+import sortField from "./sort.vue"
 
 const { paginationData } = usePagination()
 const searchInput = ref("")
@@ -211,16 +213,26 @@ const onClosed = (val: boolean) => {
   attrFieldVisible.value = val
 }
 
-const handleClose = () => {
-  attrFieldVisible.value = false
-  apiFieldRef.value?.resetForm()
-}
 //** 属性表格展示排序 */
 const sortFieldRef = ref<InstanceType<typeof sortField>>()
 const sortFieldVisibe = ref<boolean>(false)
 
 const sortClose = (val: boolean) => {
   sortFieldVisibe.value = val
+}
+
+const handleSortConfirm = async () => {
+  const success = await sortFieldRef.value?.handlerCustomAttributeFieldColumns()
+  if (success) {
+    sortClose(false)
+  }
+}
+
+const handleFieldConfirm = async () => {
+  const success = await apiFieldRef.value?.handlerCreateOrUpdateAttribute()
+  if (success) {
+    onClosed(false)
+  }
 }
 
 //** 组展开 */
@@ -328,209 +340,222 @@ function toggleAllGroups() {
 </script>
 
 <style lang="scss" scoped>
-/* 重新设计样式系统，与model-detail-page完全一致 */
-.field-management {
-  /* 移除所有外层padding，让父容器控制间距 */
+/* 搜索区域样式 */
+.search-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 0;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
-  .field-header {
+  .search-actions {
     display: flex;
-    justify-content: space-between;
+    gap: 12px;
     align-items: center;
-    margin-bottom: 16px;
-    padding: 16px 20px;
+  }
+}
+
+/* 字段管理样式 */
+.field-management {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+.groups-container {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  .group-card {
     background: #ffffff;
     border: 1px solid #d1d5db;
     border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
 
-    .header-left {
+    .group-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 16px;
-    }
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #d1d5db;
+      cursor: pointer;
+      transition: background-color 0.2s;
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-  }
-
-  .groups-container {
-    .group-card {
-      background: #ffffff;
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      overflow: hidden;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-
-      .group-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 20px;
-        background: #f8fafc;
-        border-bottom: 1px solid #d1d5db;
-        cursor: pointer;
-        transition: background-color 0.2s;
-
-        &:hover {
-          background: #f1f5f9;
-        }
-
-        .group-info {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-
-          .toggle-icon {
-            transition: transform 0.2s ease;
-            color: #6b7280;
-
-            &.expanded {
-              transform: rotate(90deg);
-            }
-          }
-
-          .group-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #111827;
-            margin: 0;
-          }
-        }
+      &:hover {
+        background: #f1f5f9;
       }
 
-      .fields-container {
-        padding: 20px;
+      .group-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
 
-        .fields-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-          gap: 16px;
+        .toggle-icon {
+          transition: transform 0.2s ease;
+          color: #6b7280;
 
-          .field-item {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            min-height: 85px;
+          &.expanded {
+            transform: rotate(90deg);
+          }
+        }
 
-            &:hover {
-              border-color: #2563eb;
-              box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
-              transform: translateY(-2px);
+        .group-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #111827;
+          margin: 0;
+        }
+      }
+    }
+
+    .fields-container {
+      padding: 20px;
+
+      .fields-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+
+        .field-item {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 14px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+          min-height: 85px;
+
+          &:hover {
+            border-color: #2563eb;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+            transform: translateY(-2px);
+
+            .field-actions {
+              opacity: 1 !important;
+              visibility: visible !important;
+            }
+          }
+
+          .field-content {
+            .field-header-info {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 8px;
+              position: relative;
+
+              .field-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1f2937;
+                margin: 0;
+                flex: 1;
+                line-height: 1.3;
+                padding-right: 50px;
+              }
 
               .field-actions {
-                opacity: 1 !important;
-                visibility: visible !important;
-              }
-            }
-
-            .field-content {
-              .field-header-info {
                 display: flex;
-                justify-content: space-between;
-                align-items: flex-start;
-                margin-bottom: 8px;
-                position: relative;
+                flex-direction: row;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.2s ease;
+                position: absolute;
+                right: 8px;
+                top: 0;
 
-                .field-name {
-                  font-size: 14px;
-                  font-weight: 600;
-                  color: #1f2937;
-                  margin: 0;
-                  flex: 1;
-                  line-height: 1.3;
-                  padding-right: 50px;
-                }
-
-                .field-actions {
+                .action-btn {
+                  width: 22px;
+                  height: 22px;
+                  padding: 0;
+                  border-radius: 4px;
                   display: flex;
-                  flex-direction: row;
                   align-items: center;
                   justify-content: center;
-                  gap: 6px;
-                  opacity: 0;
-                  visibility: hidden;
+                  border: none;
+                  font-size: 12px;
                   transition: all 0.2s ease;
-                  position: absolute;
-                  right: 8px;
-                  top: 0;
+                  min-width: 22px;
 
-                  .action-btn {
-                    width: 22px;
-                    height: 22px;
-                    padding: 0;
-                    border-radius: 4px;
+                  :deep(.el-icon) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    border: none;
-                    font-size: 12px;
-                    transition: all 0.2s ease;
-                    min-width: 22px;
+                    width: 100%;
+                    height: 100%;
+                    margin: 0;
+                  }
 
-                    :deep(.el-icon) {
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      width: 100%;
-                      height: 100%;
-                      margin: 0;
+                  &.edit-btn {
+                    background: #dbeafe;
+                    color: #1d4ed8;
+
+                    &:hover {
+                      background: #1d4ed8;
+                      color: white;
+                      transform: scale(1.1);
                     }
+                  }
 
-                    &.edit-btn {
-                      background: #dbeafe;
-                      color: #1d4ed8;
+                  &.delete-btn {
+                    background: #fee2e2;
+                    color: #dc2626;
 
-                      &:hover {
-                        background: #1d4ed8;
-                        color: white;
-                        transform: scale(1.1);
-                      }
-                    }
-
-                    &.delete-btn {
-                      background: #fee2e2;
-                      color: #dc2626;
-
-                      &:hover {
-                        background: #dc2626;
-                        color: white;
-                        transform: scale(1.1);
-                      }
+                    &:hover {
+                      background: #dc2626;
+                      color: white;
+                      transform: scale(1.1);
                     }
                   }
                 }
               }
+            }
 
-              .field-details {
-                display: flex;
-                align-items: center;
-                gap: 8px;
+            .field-details {
+              display: flex;
+              align-items: center;
+              gap: 8px;
 
-                :deep(.el-tag) {
-                  background: #eff6ff;
-                  color: #1e40af;
-                  border: 1px solid #bfdbfe;
-                  font-weight: 500;
-                }
+              :deep(.el-tag) {
+                background: #eff6ff;
+                color: #1e40af;
+                border: 1px solid #bfdbfe;
+                font-weight: 500;
+              }
 
-                .field-uid {
-                  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-                  font-size: 11px;
-                  color: #4b5563;
-                  background: #f9fafb;
-                  padding: 3px 6px;
-                  border-radius: 4px;
-                  border: 1px solid #d1d5db;
-                  font-weight: 500;
-                }
+              .field-uid {
+                font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+                font-size: 11px;
+                color: #4b5563;
+                background: #f9fafb;
+                padding: 3px 6px;
+                border-radius: 4px;
+                border: 1px solid #d1d5db;
+                font-weight: 500;
               }
             }
           }

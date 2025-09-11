@@ -1,28 +1,36 @@
 <template>
-  <div class="app-container">
-    <!-- 头部空间-->
-    <div class="header">
-      <div class="header-actions">
-        <el-button type="primary" :icon="CirclePlus" @click="handlerDialogModelCreate"> 新增模型 </el-button>
-        <el-button type="primary" :icon="CirclePlus" @click="handlerDialogModelGroupCreate"> 新建分组 </el-button>
-      </div>
+  <PageContainer>
+    <!-- 头部区域 -->
+    <ManagerHeader title="模型管理" subtitle="管理CMDB模型和分组信息" :show-add-button="false" @refresh="getModelsData">
+      <template #actions>
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerDialogModelCreate">
+          新增模型
+        </el-button>
+        <el-button type="success" :icon="CirclePlus" class="action-btn" @click="handlerDialogModelGroupCreate">
+          新建分组
+        </el-button>
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="getModelsData" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
 
-      <div class="search-section">
-        <div class="search-wrapper">
-          <el-input
-            v-model="searchInput"
-            placeholder="搜索模型信息..."
-            :suffix-icon="Search"
-            class="search-input"
-            clearable
-            @input="search"
-          />
-          <el-radio-group v-model="modelStatus" class="status-filter" size="default">
-            <el-radio-button value="all">全部</el-radio-button>
-            <el-radio-button value="open">启用中</el-radio-button>
-            <el-radio-button value="close">已停用</el-radio-button>
-          </el-radio-group>
-        </div>
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <div class="search-wrapper">
+        <el-input
+          v-model="searchInput"
+          placeholder="搜索模型信息..."
+          :suffix-icon="Search"
+          class="search-input"
+          clearable
+          @input="search"
+        />
+        <el-radio-group v-model="modelStatus" class="status-filter" size="default">
+          <el-radio-button value="all">全部</el-radio-button>
+          <el-radio-button value="open">启用中</el-radio-button>
+          <el-radio-button value="close">已停用</el-radio-button>
+        </el-radio-group>
       </div>
     </div>
 
@@ -116,7 +124,16 @@
     </div>
 
     <!-- 新增模型 -->
-    <el-dialog v-model="dialogModelVisible" :title="'新增模型'" @closed="resetForm" width="30%">
+    <FormDialog
+      v-model="dialogModelVisible"
+      title="新增模型"
+      subtitle="创建新的CMDB模型"
+      width="500px"
+      header-icon="Document"
+      @closed="resetForm"
+      @confirm="handlerCreateModel"
+      @cancel="dialogModelVisible = false"
+    >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
         <el-form-item prop="group_id" label="所属分组">
           <el-select v-model="formData.group_id" placeholder="请选择">
@@ -138,39 +155,43 @@
           <CustomIconSelect v-model="formData.iconData" iconType="cmdb" @change="handleIconChange" />
         </el-form-item>
       </el-form>
-      <template #footer>
-        <el-button @click="dialogModelVisible = false">取消</el-button>
-        <el-button type="primary" @click="handlerCreateModel" :loading="loading">确认</el-button>
-      </template>
-    </el-dialog>
+    </FormDialog>
     <!-- 新增分组 -->
-    <el-dialog v-model="dialogModelGroupVisible" :title="'新增分组'" @closed="resetForm" width="30%">
+    <FormDialog
+      v-model="dialogModelGroupVisible"
+      title="新增分组"
+      subtitle="创建新的模型分组"
+      width="500px"
+      header-icon="Folder"
+      @closed="resetForm"
+      @confirm="handlerCreateModelGroup"
+      @cancel="dialogModelGroupVisible = false"
+    >
       <el-form
         ref="formGroupRef"
         :model="formModelGroupData"
         :rules="{ name: [{ required: true, message: '必须输入名称', trigger: 'blur' }] }"
         label-width="100px"
-        label-position="left"
+        label-position="top"
       >
         <el-form-item prop="name" label="名称">
           <el-input v-model="formModelGroupData.name" placeholder="请输入名称" />
         </el-form-item>
       </el-form>
-      <template #footer>
-        <el-button @click="dialogModelGroupVisible = false">取消</el-button>
-        <el-button type="primary" @click="handlerCreateModelGroup" :loading="loading">确认</el-button>
-      </template>
-    </el-dialog>
-  </div>
+    </FormDialog>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
 import { h, ref, computed, onMounted, onUnmounted } from "vue"
-import { CirclePlus, Search, Document } from "@element-plus/icons-vue"
+import { CirclePlus, Search, Document, RefreshRight, Folder } from "@element-plus/icons-vue"
 import { CreateModelApi, CreateModelGroupApi, deleteModelGroupApi } from "@/api/model"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq } from "@/api/model/types/model"
 import CustomIconSelect from "@/common/components/CustomIconSelect/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 
 import { cloneDeep } from "lodash-es"
 import { useRouter } from "vue-router"
@@ -178,7 +199,6 @@ import { useModelStore } from "@/pinia/stores/model"
 
 const searchInput = ref("")
 const modelStatus = ref<"all" | "open" | "close">("all")
-const loading = ref<boolean>(false)
 const router = useRouter()
 
 const empty = ref<boolean>(false)
@@ -292,7 +312,6 @@ const resetForm = () => {
 const handlerCreateModelGroup = () => {
   formGroupRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    loading.value = true
     CreateModelGroupApi(formModelGroupData.value)
       .then(() => {
         ElMessage.success("操作成功")
@@ -303,9 +322,6 @@ const handlerCreateModelGroup = () => {
         console.error("创建分组失败:", error)
         ElMessage.error("创建分组失败")
       })
-      .finally(() => {
-        loading.value = false
-      })
   })
 }
 
@@ -313,7 +329,6 @@ const handlerCreateModelGroup = () => {
 const handlerCreateModel = () => {
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    loading.value = true
 
     // 只发送API需要的字段
     const apiData: CreateModelReq = {
@@ -333,9 +348,6 @@ const handlerCreateModel = () => {
         console.error("创建模型失败:", error)
         ElMessage.error("创建模型失败")
       })
-      .finally(() => {
-        loading.value = false
-      })
   })
 }
 
@@ -343,7 +355,6 @@ const ModelsData = ref<Models[]>([])
 const filterData = ref<Models[]>([])
 // ** 获取数据 */
 const getModelsData = () => {
-  loading.value = true
   useModelStore()
     .ListModelsByGroup()
     .then(({ data }) => {
@@ -368,9 +379,6 @@ const getModelsData = () => {
     })
     .catch(() => {
       ModelsData.value = []
-    })
-    .finally(() => {
-      loading.value = false
     })
 }
 
@@ -458,50 +466,20 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  height: calc(100vh - 40px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* 压缩头部区域空间占用 */
-.header {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 20px;
-  padding: 16px 20px;
+/* 搜索区域样式 */
+.search-section {
   background: white;
   border-radius: 12px;
+  padding: 16px 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.search-section {
-  flex: 1;
-  max-width: 600px;
+  border: 1px solid #e2e8f0;
 }
 
 .search-wrapper {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 600px;
 
   @media (min-width: 640px) {
     flex-direction: row;
@@ -518,11 +496,11 @@ onUnmounted(() => {
   flex-shrink: 0;
 }
 
-/* 修复左右两栏间隙问题，设置统一背景色 */
+/* 主内容区域 */
 .main-content {
   display: flex;
   gap: 0;
-  background: #f8fafc; /* 设置与header相同的背景色，覆盖所有间隙 */
+  background: #f8fafc;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
@@ -531,6 +509,7 @@ onUnmounted(() => {
   align-items: stretch;
   justify-content: flex-start;
   border: 1px solid #e2e8f0;
+  margin-top: 20px;
 }
 
 /* 同步左侧边栏样式，改进配色方案 */
@@ -925,16 +904,6 @@ onUnmounted(() => {
 
 /* 同步响应式设计优化 */
 @media (max-width: 768px) {
-  .app-container {
-    padding: 16px;
-    height: 100vh;
-  }
-
-  .header {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
   .main-content {
     flex-direction: column;
     gap: 0;
@@ -986,19 +955,6 @@ onUnmounted(() => {
 }
 
 @media (max-width: 480px) {
-  .app-container {
-    padding: 12px;
-  }
-
-  .header {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .header-actions {
-    gap: 8px;
-  }
-
   .search-wrapper {
     gap: 12px;
   }
@@ -1018,10 +974,6 @@ onUnmounted(() => {
 
 /* 添加高分辨率显示器优化 */
 @media (min-width: 1440px) {
-  .app-container {
-    padding: 24px;
-  }
-
   .sidebar {
     width: 320px;
     min-width: 320px;

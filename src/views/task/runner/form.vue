@@ -1,10 +1,5 @@
 <template>
   <div class="runner-form-container">
-    <div class="form-header">
-      <h3 class="form-title">执行器配置</h3>
-      <p class="form-description">配置执行器的基本信息和运行参数</p>
-    </div>
-
     <el-form
       ref="formRef"
       label-position="top"
@@ -259,24 +254,6 @@ watch(
   overflow-y: auto;
 }
 
-.form-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #d1d5db;
-
-  .form-title {
-    margin: 0 0 6px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-  }
-
-  .form-description {
-    margin: 0;
-    font-size: 13px;
-    color: #6b7280;
-  }
-}
 
 .runner-form {
   .form-section {
@@ -426,13 +403,6 @@ watch(
     padding: 16px;
   }
 
-  .form-header {
-    margin-bottom: 20px;
-
-    .form-title {
-      font-size: 16px;
-    }
-  }
 
   .runner-form {
     .form-section {

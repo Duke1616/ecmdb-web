@@ -1,10 +1,6 @@
 <template>
+  <!-- 主内容区域 -->
   <div class="sort-interface">
-    <div class="sort-description">
-      <h3>字段排序设置</h3>
-      <p>拖拽字段到右侧列表来设置显示顺序，左侧为隐藏字段</p>
-    </div>
-
     <div class="sort-columns">
       <div class="sort-column">
         <div class="column-header">
@@ -82,11 +78,6 @@
         </div>
       </div>
     </div>
-
-    <div class="sort-actions">
-      <el-button @click="onClosed()" class="cancel-btn">取消</el-button>
-      <el-button type="primary" @click="handlerCustomAttributeFieldColumns()" class="save-btn"> 保存设置 </el-button>
-    </div>
   </div>
 </template>
 
@@ -109,9 +100,6 @@ interface Props {
 const props = defineProps<Props>()
 
 const emits = defineEmits(["close", "getAttributesData"])
-const onClosed = () => {
-  emits("close", false)
-}
 
 const animationDuration = ref<number>(150)
 
@@ -144,13 +132,15 @@ const handlerCustomAttributeFieldColumns = () => {
     custom_field_name: rightList.value.map((item) => item.name)
   }
 
-  CustomAttributeFieldColumnsApi(req)
+  return CustomAttributeFieldColumnsApi(req)
     .then(() => {
       ElMessage.success("操作成功")
-      emits("close", false)
       emits("getAttributesData")
+      return true
     })
-    .catch(() => {})
+    .catch(() => {
+      return false
+    })
 }
 
 function removeAndToLeftList(index: number, item: any) {
@@ -173,7 +163,8 @@ const onEnd = () => {
 }
 
 defineExpose({
-  handleSortFilter
+  handleSortFilter,
+  handlerCustomAttributeFieldColumns
 })
 </script>
 
@@ -182,24 +173,10 @@ defineExpose({
   height: 100%;
   display: flex;
   flex-direction: column;
-
-  .sort-description {
-    margin-bottom: 16px;
-
-    h3 {
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 0 0 6px 0;
-    }
-
-    p {
-      color: #6b7280;
-      margin: 0;
-      line-height: 1.4;
-      font-size: 14px;
-    }
-  }
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 
   .sort-columns {
     display: flex;
@@ -335,33 +312,6 @@ defineExpose({
           }
         }
       }
-    }
-  }
-
-  .sort-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid #e5e7eb;
-
-    .cancel-btn {
-      background: #f9fafb;
-      color: #6b7280;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-size: 14px;
-    }
-
-    .save-btn {
-      background: #3b82f6;
-      border-color: #3b82f6;
-      border-radius: 6px;
-      padding: 8px 16px;
-      font-weight: 600;
-      font-size: 14px;
     }
   }
 }
