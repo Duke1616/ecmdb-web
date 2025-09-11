@@ -126,6 +126,7 @@ const operateEvent = (data: order, action: string) => {
 }
 
 const handleUrging = (row: order) => {
+  console.log(row)
   ElMessage.error("暂不支持功能")
 }
 

@@ -1,6 +1,6 @@
 <template>
   <PageContainer>
-    <ManagerHeader title="工单管理" subtitle="管理工单的创建、审批和跟踪" />
+    <ManagerHeader title="工单管理" subtitle="管理工单的创建、审批和跟踪" :show-add-button="false" />
 
     <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange" class="order-tabs">
       <template #default="{ activeTab }">

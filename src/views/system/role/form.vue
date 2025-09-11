@@ -53,7 +53,7 @@
           <span>状态设置</span>
         </div>
 
-        <el-form-item prop="status" label="角色状态" class="form-item full-width">
+        <el-form-item prop="status" label="角色状态" class="form-item">
           <div class="status-container">
             <el-switch
               v-model="formData.status"
@@ -271,41 +271,64 @@ defineExpose({
 
 .status-container {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  height: 32px; // 固定容器高度
 
   .status-switch {
+    :deep(.el-switch) {
+      display: flex;
+      align-items: center;
+      height: 32px;
+    }
+
+    :deep(.el-switch__core) {
+      height: 20px;
+      line-height: 20px;
+    }
+
     :deep(.el-switch__label) {
+      height: 32px;
+      line-height: 32px;
+      display: flex;
+      align-items: center;
       font-weight: 500;
       color: #374151;
+
+      &.is-left {
+        margin-right: 8px;
+      }
+
+      &.is-right {
+        margin-left: 8px;
+      }
+    }
+  }
+}
+
+.status-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+
+  .status-icon {
+    font-size: 14px;
+
+    &.enabled {
+      color: #22c55e;
+    }
+
+    &.disabled {
+      color: #ef4444;
     }
   }
 
-  .status-hint {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    background: #f8fafc;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
-
-    .status-icon {
-      font-size: 14px;
-
-      &.enabled {
-        color: #22c55e;
-      }
-
-      &.disabled {
-        color: #ef4444;
-      }
-    }
-
-    span {
-      font-size: 12px;
-      color: #64748b;
-    }
+  span {
+    font-size: 12px;
+    color: #64748b;
   }
 }
 

@@ -10,8 +10,8 @@
     :pagination-layout="paginationData.layout"
     :loading="loading"
     :table-props="{
-      'stripe': false,
-      'border': true,
+      stripe: false,
+      border: true,
       'header-cell-style': { background: '#F6F6F6', height: '10px', 'text-align': 'center' }
     }"
     @size-change="handleSizeChange"
@@ -29,12 +29,7 @@
     </template>
 
     <template #actions="{ row }">
-      <OperateBtn
-        :items="getOperateBtnItems(row)"
-        :operate-item="row"
-        :max-length="2"
-        @route-event="operateEvent"
-      />
+      <OperateBtn :items="getOperateBtnItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
     </template>
   </DataTable>
 
@@ -75,16 +70,14 @@ const tableColumns = [
   { prop: "starter", label: "提单人", align: "center" as const },
   { prop: "current_step", label: "当前步骤", align: "center" as const },
   { prop: "approved_by", label: "当前处理人", align: "center" as const },
-  { prop: "proc_inst_create_time", label: "流程提交时间", align: "center" as const },
+  { prop: "proc_inst_create_time", label: "流程提交时间", align: "center" as const }
 ]
 
 // 操作按钮配置
 const getOperateBtnItems = (row: order) => {
-  const items = [
-    { name: "处理", code: "approve", type: "success", icon: Check }
-  ]
+  const items = [{ name: "处理", code: "approve", type: "success", icon: Check }]
 
-  if (row.current_step?.startsWith('自动化-') && row.approved_by?.includes('automation')) {
+  if (row.current_step?.startsWith("自动化-") && row.approved_by?.includes("automation")) {
     items.push({ name: "刷新", code: "refresh", type: "primary", icon: Refresh })
   }
 

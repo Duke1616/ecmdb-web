@@ -10,8 +10,8 @@
     :pagination-layout="paginationData.layout"
     :loading="loading"
     :table-props="{
-      'stripe': false,
-      'border': true,
+      stripe: false,
+      border: true,
       'header-cell-style': { background: '#F6F6F6', height: '10px', 'text-align': 'center' }
     }"
     @size-change="handleSizeChange"
@@ -29,12 +29,7 @@
     </template>
 
     <template #actions="{ row }">
-      <OperateBtn
-        :items="operateBtnItems"
-        :operate-item="row"
-        :max-length="2"
-        @route-event="operateEvent"
-      />
+      <OperateBtn :items="operateBtnItems" :operate-item="row" :max-length="2" @route-event="operateEvent" />
     </template>
   </DataTable>
 
@@ -78,9 +73,7 @@ const tableColumns = [
 ]
 
 // 操作按钮配置
-const operateBtnItems = [
-  { name: "处理", code: "approve", type: "success", icon: Check }
-]
+const operateBtnItems = [{ name: "处理", code: "approve", type: "success", icon: Check }]
 
 /** 查询工单列表 */
 const ordersData = ref<order[]>([])
