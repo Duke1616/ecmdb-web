@@ -119,6 +119,7 @@ defineExpose({
 
   .tabs-content {
     background: white;
+    margin: 12px;
     flex: 1;
     display: flex;
     flex-direction: column;

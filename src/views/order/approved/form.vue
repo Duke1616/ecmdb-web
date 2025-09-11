@@ -223,6 +223,7 @@ defineExpose({})
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .form-section {
@@ -250,12 +251,18 @@ defineExpose({})
   }
 }
 .form-actions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
   display: flex;
   justify-content: flex-end;
   gap: 16px;
-  margin-top: 24px;
-  padding-top: 24px;
+  padding: 20px;
   border-top: 1px solid #e4e7ed;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 
   .el-button {
     padding: 10px 20px;
