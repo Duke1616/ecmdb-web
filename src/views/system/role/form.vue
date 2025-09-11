@@ -62,11 +62,6 @@
               :inactive-text="formData.status ? '启用' : '禁用'"
               class="status-switch"
             />
-            <div class="status-hint">
-              <el-icon v-if="formData.status" class="status-icon enabled"><Check /></el-icon>
-              <el-icon v-else class="status-icon disabled"><Close /></el-icon>
-              <span>{{ formData.status ? "角色已启用，可以正常使用" : "角色已禁用，无法使用" }}</span>
-            </div>
           </div>
         </el-form-item>
       </div>
@@ -78,7 +73,7 @@
 import { ref, computed } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { InfoFilled, Setting, User, Key, Check, Close } from "@element-plus/icons-vue"
+import { InfoFilled, Setting, User, Key } from "@element-plus/icons-vue"
 import { createOrUpdateRoleReq, role } from "@/api/role/types/role"
 import { createRoleApi, updateRoleApi } from "@/api/role"
 

@@ -1,107 +1,85 @@
 <template>
-  <div class="app-container">
+  <div class="task-container">
     <el-empty v-if="tasksData.length === 0" :image-size="200" />
-    <el-card v-if="tasksData.length !== 0" shadow="never">
-      <div class="table-wrapper">
-        <el-table :data="tasksData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="codebook_name" label="任务模版" align="center" />
-          <el-table-column prop="worker_name" label="工作节点" align="center" />
-          <el-table-column prop="status" label="状态" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.status === 3" type="primary" effect="plain"> 运行中 </el-tag>
-              <el-tag v-if="scope.row.status === 4 || scope.row.status === 8" type="warning" effect="plain">
-                等待中
-              </el-tag>
-              <el-tag v-if="scope.row.status === 5" type="warning" effect="plain"> 暂停中 </el-tag>
-              <el-tag v-if="scope.row.status === 6" type="warning" effect="plain"> 调度中 </el-tag>
-              <el-tag v-if="scope.row.status === 7" type="warning" effect="plain"> 重试 </el-tag>
-              <el-tag v-if="scope.row.status === 1" type="success" effect="plain"> 成功 </el-tag>
-              <el-tag v-if="scope.row.status === 2" type="danger" effect="plain"> 失败 </el-tag>
-              <el-tag v-if="scope.row.status === 0" type="info" effect="plain"> 未知 </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="is_timing" label="定时任务" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.is_timing === true" type="primary"> 是 </el-tag>
-              <el-tag v-if="scope.row.is_timing === false" type="warning"> 否 </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="run_time" label="执行时间" align="center">
-            <template #default="scope">
-              <span>{{ scope.row.start_time }}</span>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+    <DataTable
+      v-if="tasksData.length !== 0"
+      :data="tasksData"
+      :columns="tableColumns"
+      :show-pagination="false"
+      :table-props="{
+        stripe: false,
+        border: true,
+        'header-cell-style': { background: '#F6F6F6', height: '10px', 'text-align': 'center' }
+      }"
+    >
+      <template #status="{ row }">
+        <el-tag v-if="row.status === 3" type="primary" effect="plain"> 运行中 </el-tag>
+        <el-tag v-else-if="row.status === 4 || row.status === 8" type="warning" effect="plain"> 等待中 </el-tag>
+        <el-tag v-else-if="row.status === 5" type="warning" effect="plain"> 暂停中 </el-tag>
+        <el-tag v-else-if="row.status === 6" type="warning" effect="plain"> 调度中 </el-tag>
+        <el-tag v-else-if="row.status === 7" type="warning" effect="plain"> 重试 </el-tag>
+        <el-tag v-else-if="row.status === 1" type="success" effect="plain"> 成功 </el-tag>
+        <el-tag v-else-if="row.status === 2" type="danger" effect="plain"> 失败 </el-tag>
+        <el-tag v-else type="info" effect="plain"> 未知 </el-tag>
+      </template>
+
+      <template #timing="{ row }">
+        <el-tag v-if="row.is_timing === true" type="primary"> 是 </el-tag>
+        <el-tag v-else type="warning"> 否 </el-tag>
+      </template>
+    </DataTable>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { usePagination } from "@/common/composables/usePagination"
 import { task } from "@/api/task/types/task"
 import { listTasksByInstanceIdApi } from "@/api/task"
-
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+import DataTable from "@@/components/DataTable/index.vue"
 
 interface Props {
   processInstId: number | undefined
 }
 const props = defineProps<Props>()
 
-/** 查询模版列表 */
 const tasksData = ref<task[]>([])
-const listTasksData = () => {
-  listTasksByInstanceIdApi({
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize,
-    instance_id: props.processInstId ? props.processInstId : 0
-  })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      tasksData.value = data.tasks
+const loading = ref<boolean>(false)
+
+// 表格列配置
+const tableColumns = [
+  { prop: "codebook_name", label: "任务模版", align: "center" as const },
+  { prop: "worker_name", label: "工作节点", align: "center" as const },
+  { prop: "status", label: "状态", slot: "status", align: "center" as const },
+  { prop: "is_timing", label: "定时任务", slot: "timing", align: "center" as const },
+  { prop: "run_time", label: "执行时间", align: "center" as const },
+  { prop: "start_time", label: "开始时间", align: "center" as const },
+  { prop: "end_time", label: "结束时间", align: "center" as const }
+]
+
+/** 查询任务列表 */
+const listTasksData = async () => {
+  if (!props.processInstId) return
+
+  loading.value = true
+  try {
+    const { data } = await listTasksByInstanceIdApi({
+      offset: 0,
+      limit: 1000,
+      instance_id: props.processInstId
     })
-    .catch(() => {
-      tasksData.value = []
-    })
-    .finally(() => {})
+
+    tasksData.value = data.tasks || []
+  } catch (error) {
+    tasksData.value = []
+  } finally {
+    loading.value = false
+  }
 }
+
+/** 监听分页参数的变化 */
+watch(() => props.processInstId, listTasksData, { immediate: true })
 
 defineExpose({
   listTasksData
 })
-
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listTasksData, { immediate: true })
 </script>
-
-<style lang="scss">
-.toolbar-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
-}
-</style>
