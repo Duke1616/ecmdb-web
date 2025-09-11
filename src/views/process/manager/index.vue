@@ -8,14 +8,7 @@
       add-button-text="新增流程"
       @add="handleCreate"
       @refresh="listFlowsData"
-    >
-      <template #actions>
-        <el-button type="primary" :icon="CirclePlus" @click="handleCreate">新增流程</el-button>
-        <el-tooltip content="刷新当前页">
-          <el-button type="primary" :icon="RefreshRight" circle @click="listFlowsData" />
-        </el-tooltip>
-      </template>
-    </ManagerHeader>
+    />
 
     <!-- 主内容区域 -->
     <DataTable
@@ -91,7 +84,6 @@
 
 <script lang="ts" setup>
 import { h, ref, watch, nextTick, computed } from "vue"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import {
   deleteWorkflowApi,
@@ -122,9 +114,9 @@ const previewRef = ref<InstanceType<typeof Preview>>()
 // 表格列定义
 const tableColumns = [
   { prop: "name", label: "名称", showOverflowTooltip: true },
-  { prop: "owner", label: "负责人", width: 120, slot: "ownerName" },
-  { prop: "is_notify", label: "消息通知", width: 100, slot: "isNotify" },
-  { prop: "notify_method", label: "发送媒介", width: 120, slot: "notifyMethod" },
+  { prop: "owner", label: "负责人", slot: "ownerName" },
+  { prop: "is_notify", label: "消息通知", slot: "isNotify" },
+  { prop: "notify_method", label: "发送媒介", slot: "notifyMethod" },
   { prop: "desc", label: "描述", showOverflowTooltip: true }
 ]
 
@@ -319,25 +311,17 @@ const formatOwner = (row: workflow) => {
   return userMaps.value.get(row.owner) || "未知用户"
 }
 
-const operateEvent = (data: workflow, name: string) => {
-  if (name === "预览") {
+const operateEvent = (data: workflow, action: string) => {
+  if (action === "preview") {
     graphPreviewVisible.value = true
     nextTick(() => {
       previewRef.value?.initLf(data.flow_data)
     })
-  }
-
-  if (name === "部署") {
+  } else if (action === "deploy") {
     deployWorkflow(data)
-  }
-
-  // 编辑
-  if (name === "3") {
+  } else if (action === "edit") {
     handleUpdate(data)
-  }
-
-  // 删除
-  if (name === "4") {
+  } else if (action === "delete") {
     handleDelete(data)
   }
 }
@@ -383,22 +367,22 @@ const deployWorkflow = (row: workflow) => {
 const operateBtnStatus = ref([
   {
     name: "部署",
-    code: "1",
+    code: "deploy",
     icon: "Open"
   },
   {
     name: "预览",
-    code: "2",
+    code: "preview",
     icon: "View"
   },
   {
     name: "编辑",
-    code: "3",
+    code: "edit",
     icon: "EditPen"
   },
   {
     name: "删除",
-    code: "4",
+    code: "delete",
     icon: "Delete",
     type: "danger"
   }

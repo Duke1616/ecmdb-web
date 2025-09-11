@@ -9,10 +9,14 @@
       @refresh="listTemplatesData"
     >
       <template #actions>
-        <el-button type="primary" :icon="CirclePlus" @click="handleCreateTemplate">新增模版</el-button>
-        <el-button type="success" :icon="CirclePlus" @click="groupDialogVisible = true">新增分组</el-button>
-        <el-tooltip content="刷新当前页">
-          <el-button type="primary" :icon="RefreshRight" circle @click="listTemplatesData" />
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handleCreateTemplate"
+          >新增模版</el-button
+        >
+        <el-button type="success" :icon="CirclePlus" class="action-btn" @click="groupDialogVisible = true"
+          >新增分组</el-button
+        >
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="listTemplatesData" />
         </el-tooltip>
       </template>
     </ManagerHeader>
@@ -51,7 +55,7 @@
 
       <!-- 操作插槽 -->
       <template #actions="{ row }">
-        <OperateBtn :items="getOperateBtnItems(row)" @routeEvent="operateEvent" :operateItem="row" :maxLength="3" />
+        <OperateBtn :items="getOperateBtnItems(row)" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
 
@@ -69,38 +73,33 @@
     </el-card>
 
     <!-- 新增分组 -->
-    <el-dialog v-model="groupDialogVisible" :before-close="onClosedTemplateGroup" :title="'新增模版分组'" width="30%">
-      <TemplateGroup ref="tgRef" @closed="onClosedTemplateGroup" />
-      <template #footer>
-        <el-button @click="onClosedTemplateGroup">取消</el-button>
-        <el-button type="primary" @click="handlerCreateTemplateGroup">确认</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 自动发现 -->
-    <el-dialog v-model="templateDiscoverDialog" :fullscreen="true" :before-close="onClosedDiscover" :title="'自动发现'">
-      <Discovery ref="discoveryRef" @closed="onClosedDiscover" />
-    </el-dialog>
+    <FormDialog
+      v-model="groupDialogVisible"
+      title="新增模版分组"
+      width="30%"
+      @confirm="handlerCreateTemplateGroup"
+      @cancel="onClosedTemplateGroup"
+    >
+      <TemplateGroup ref="tgRef" @closed="onClosedTemplateGroup" @success="handleGroupSuccess" />
+    </FormDialog>
 
     <!-- 第三方流程绑定、如对接企业微信 OR 飞书 -->
-    <el-dialog
+    <FormDialog
       v-model="thirdpartyDialogVisible"
-      :before-close="onClosedThirdParty"
-      :title="'绑定第三方流程'"
+      title="绑定第三方流程"
       width="35%"
+      @confirm="handlerCreateThirdParty"
+      @cancel="onClosedThirdParty"
     >
-      <thirdParty ref="thirdRef" @closed="onClosedThirdParty" />
-      <template #footer>
-        <el-button @click="onClosedThirdParty">取消</el-button>
-        <el-button type="primary" @click="handlerCreateThirdParty">确认</el-button>
-      </template>
-    </el-dialog>
+      <thirdParty ref="thirdRef" @closed="onClosedThirdParty" @success="handleThirdPartySuccess" />
+    </FormDialog>
   </PageContainer>
 </template>
 
 <script lang="ts" setup>
 import { h, nextTick, ref, watch, computed } from "vue"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { useRouter } from "vue-router"
+import { CirclePlus, RefreshRight, EditPen, Connection, Search, Delete } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { template, createOrUpdateTemplateReq } from "@/api/template/types/template"
 import {
@@ -114,7 +113,6 @@ import TemplateGroup from "./group/index.vue"
 import thirdParty from "./thirdparty.vue"
 import { ElMessageBox } from "element-plus"
 import { ElMessage } from "element-plus"
-import Discovery from "./discovery/index.vue"
 import WizardContainer from "@/common/components/WizardContainer/index.vue"
 import { COMMON_STEPS } from "@/common/constants/wizard-steps"
 import { getFormRulesByStep } from "@/common/constants/form-rules"
@@ -124,18 +122,19 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 
+const router = useRouter()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const templateDialogDrawer = ref<boolean>(false)
-const templateDiscoverDialog = ref<boolean>(false)
 const groupDialogVisible = ref<boolean>(false)
 const thirdpartyDialogVisible = ref<boolean>(false)
 
 // 表格列定义
 const tableColumns = [
   { prop: "name", label: "名称", showOverflowTooltip: true },
-  { prop: "group_id", label: "所属组", width: 120, slot: "groupName" },
-  { prop: "create_type", label: "来源", width: 120, slot: "createType" },
+  { prop: "group_id", label: "所属组", slot: "groupName" },
+  { prop: "create_type", label: "来源", slot: "createType" },
   { prop: "desc", label: "描述", showOverflowTooltip: true }
 ]
 
@@ -151,43 +150,44 @@ const getOperateBtnItems = (row: template) => {
   if (row.create_type === 1) {
     items.push({
       name: "修改",
-      code: "1",
-      icon: "EditPen"
+      code: "edit",
+      type: "primary",
+      icon: EditPen
     })
   } else if (row.create_type === 2) {
     items.push({
       name: "流程",
-      code: "2",
-      icon: "Connection",
-      type: "warning"
+      code: "sync",
+      type: "warning",
+      icon: Connection
     })
   }
 
   items.push({
     name: "自动发现",
-    code: "3",
-    icon: "Search"
+    code: "discover",
+    icon: Search
   })
 
   items.push({
     name: "删除",
-    code: "4",
-    icon: "Delete",
-    type: "danger"
+    code: "delete",
+    type: "danger",
+    icon: Delete
   })
 
   return items
 }
 
 // 操作事件处理
-const operateEvent = (data: template, name: string) => {
-  if (name === "修改") {
+const operateEvent = (data: template, action: string) => {
+  if (action === "edit") {
     handleUpdate(data)
-  } else if (name === "流程") {
+  } else if (action === "sync") {
     handlerSync(data)
-  } else if (name === "自动发现") {
+  } else if (action === "discover") {
     handleDiscover(data)
-  } else if (name === "删除") {
+  } else if (action === "delete") {
     handleDelete(data)
   }
 }
@@ -225,7 +225,6 @@ const templateFormRules = computed(() => {
 
 const tgRef = ref<InstanceType<typeof TemplateGroup>>()
 const thirdRef = ref<InstanceType<typeof thirdParty>>()
-const discoveryRef = ref<InstanceType<typeof Discovery>>()
 
 /** 查询模版列表 */
 const templatesData = ref<template[]>([])
@@ -279,11 +278,6 @@ const onClosedTemplateGroup = () => {
   tgRef.value?.resetForm()
   groupDialogVisible.value = false
 }
-const onClosedDiscover = () => {
-  templateDiscoverDialog.value = false
-
-  discoveryRef.value?.resetMap()
-}
 
 // 模板向导相关函数
 const updateTemplateFormData = (data: createOrUpdateTemplateReq) => {
@@ -326,11 +320,23 @@ const handlerCreateTemplateGroup = () => {
   tgRef.value?.handlerCreate()
 }
 
-const handleDiscover = (row: template) => {
-  templateDiscoverDialog.value = true
+const handleGroupSuccess = () => {
+  // 分组创建成功后刷新模板列表
+  listTemplatesData()
+}
 
-  nextTick(() => {
-    discoveryRef.value?.setForm(row)
+const handleThirdPartySuccess = () => {
+  // 第三方流程绑定成功后刷新模板列表
+  listTemplatesData()
+}
+
+const handleDiscover = (row: template) => {
+  // 跳转到自动发现页面
+  router.push({
+    path: "/process/template/discovery",
+    query: {
+      id: row.id
+    }
   })
 }
 
@@ -384,6 +390,34 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listTem
 .add-drawer {
   .el-drawer__header {
     margin: 0;
+  }
+}
+
+/* 按钮样式 */
+.action-btn {
+  height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: rotate(180deg);
   }
 }
 

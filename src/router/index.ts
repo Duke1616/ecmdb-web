@@ -67,6 +67,16 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       hidden: true
     }
+  },
+  {
+    path: "/process/template/discovery",
+    component: () => import("@/views/process/discovery/index.vue"),
+    name: "process-template-discovery",
+    meta: {
+      title: "自动发现",
+      svgIcon: "search",
+      hidden: true // 隐藏菜单，只能通过编程式导航访问
+    }
   }
 ]
 
@@ -494,7 +504,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  }
+  },
 ]
 
 const router = createRouter({

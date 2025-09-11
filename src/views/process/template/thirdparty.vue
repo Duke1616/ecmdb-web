@@ -1,24 +1,24 @@
 <template>
-  <div>
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" class="add-form">
+  <div class="thirdparty-form">
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="left">
       <el-form-item prop="name" label="模版名称">
         <el-input v-model="formData.name" placeholder="请输入名称" />
       </el-form-item>
       <el-form-item prop="group_id" label="所属分组">
-        <el-select v-model="formData.group_id" placeholder="请选择">
+        <el-select v-model="formData.group_id" placeholder="请选择分组" class="full-width">
           <el-option v-for="item in templateGroupsData" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
       </el-form-item>
-      <el-form-item prop="icon" label="绑定流程">
-        <el-select v-model="formData.workflow_id" placeholder="请选择">
+      <el-form-item prop="workflow_id" label="绑定流程">
+        <el-select v-model="formData.workflow_id" placeholder="请选择流程" class="full-width">
           <el-option v-for="item in workFlowsData" :key="item.id" :label="item.name" :value="item.id" />
         </el-select>
       </el-form-item>
       <el-form-item prop="icon" label="应用图标">
-        <e-icon-picker v-model="formData.icon" placeholder="请选择图标" class="icon-picker" />
+        <e-icon-picker v-model="formData.icon" placeholder="请选择图标" class="icon-picker full-width" />
       </el-form-item>
       <el-form-item prop="desc" label="模版描述">
-        <el-input v-model="formData.desc" type="textarea" d />
+        <el-input v-model="formData.desc" type="textarea" :rows="3" placeholder="请输入模版描述" />
       </el-form-item>
     </el-form>
   </div>
@@ -33,7 +33,7 @@ import "vue3-icon-picker/dist/style.css"
 import { workflow } from "@/api/workflow/types/workflow"
 import { listWorkflowApi } from "@/api/workflow/workflow"
 
-const emits = defineEmits(["closed", "list-templates"])
+const emits = defineEmits(["closed", "list-templates", "success"])
 const onClosed = () => {
   emits("closed")
 }
@@ -66,12 +66,14 @@ const handleCreate = () => {
     const api = formData.value.id === undefined ? createTemplateApi : updateTemplateApi
     api(formData.value)
       .then(() => {
-        onClosed()
         ElMessage.success("保存成功")
+        emits("success")
         emits("list-templates")
+        onClosed()
       })
       .catch((error) => {
         console.log("catch", error)
+        ElMessage.error("保存失败")
       })
       .finally(() => {})
   })
@@ -137,8 +139,41 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+.full-width {
+  width: 100%;
+}
+
 .icon-picker {
   width: 100%;
+}
+
+/* 表单项样式优化 */
+:deep(.el-form-item) {
+  margin-bottom: 20px;
+}
+
+:deep(.el-form-item__label) {
+  font-weight: 500;
+  color: #374151;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+}
+
+:deep(.el-select .el-input__wrapper) {
+  border-radius: 8px;
+}
+
+:deep(.el-textarea__inner) {
+  border-radius: 8px;
+  resize: vertical;
+  min-height: 80px;
 }
 </style>

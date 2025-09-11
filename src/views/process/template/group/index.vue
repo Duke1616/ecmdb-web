@@ -16,7 +16,7 @@ import { createTemplateGroupReq } from "@/api/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 
-const emits = defineEmits(["closed", "list-templates"])
+const emits = defineEmits(["closed", "list-templates", "success"])
 const DEFAULT_FORM_DATA: createTemplateGroupReq = {
   name: "",
   icon: ""
@@ -38,12 +38,13 @@ const handlerCreate = () => {
     if (!valid) return console.error("表单校验不通过", fields)
     createTemplateGroupApi(formData.value)
       .then(() => {
-        onClosed()
-
         ElMessage.success("保存成功")
+        emits("success")
+        onClosed()
       })
       .catch((error) => {
         console.log("catch", error)
+        ElMessage.error("保存失败")
       })
       .finally(() => {})
   })
