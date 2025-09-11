@@ -99,7 +99,7 @@
       @confirm="handleFieldConfirm"
       @closed="() => onClosed(false)"
     >
-      <create-or-update
+      <createOrUpdateField
         ref="apiFieldRef"
         :model-uid="props.modelUid"
         :group-id="groupId"

@@ -1,8 +1,25 @@
 <template>
   <div class="manager-header">
-    <div class="header-left">
-      <h2 class="manager-title">{{ title }}</h2>
-      <p class="manager-subtitle">{{ subtitle }}</p>
+    <div class="header-left" :class="{ 'has-back-button': showBackButton }">
+      <div class="title-section">
+        <button v-if="showBackButton" @click="$emit('back')" class="back-button">
+          <span class="back-icon">←</span>
+        </button>
+        <div class="title-content">
+          <h2 class="manager-title">{{ title }}</h2>
+          <p class="manager-subtitle">{{ subtitle }}</p>
+        </div>
+      </div>
+
+      <!-- 可选的详细信息区域 -->
+      <div v-if="$slots.details" class="details-section">
+        <slot name="details" />
+      </div>
+
+      <!-- 可选的额外信息区域 -->
+      <div v-if="$slots.extra" class="extra-section">
+        <slot name="extra" />
+      </div>
     </div>
     <div class="header-right">
       <slot name="actions">
@@ -33,17 +50,20 @@ interface Props {
   addButtonText?: string
   showAddButton?: boolean
   showRefreshButton?: boolean
+  showBackButton?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   addButtonText: "新增",
   showAddButton: true,
-  showRefreshButton: true
+  showRefreshButton: true,
+  showBackButton: false
 })
 
 defineEmits<{
   add: []
   refresh: []
+  back: []
 }>()
 </script>
 
@@ -76,6 +96,56 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   gap: 4px;
+
+  .title-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        border-color: #9ca3af;
+        background: #f9fafb;
+      }
+
+      &:active {
+        transform: translateY(1px);
+      }
+
+      .back-icon {
+        font-size: 16px;
+        font-weight: 600;
+        color: #374151;
+        line-height: 1;
+      }
+    }
+
+    .title-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+  }
+
+  .details-section {
+    margin-top: 12px;
+  }
+
+  .extra-section {
+    margin-top: 8px;
+  }
 }
 
 .manager-title {

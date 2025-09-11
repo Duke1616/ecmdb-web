@@ -1,150 +1,153 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
+  <div class="resource-list">
+    <ManagerHeader
+      title="资源管理"
+      subtitle="管理仓库中的资源数据"
+      add-button-text="新增资源"
+      :show-back-button="true"
+      @add="handlerCreate"
+      @refresh="listAttributeFields"
+      @back="goBack"
+    >
+      <template #details>
+        <div class="model-identity">
+          <div class="identity-badge">
+            <span class="badge-label">模型标识</span>
+            <code class="identity-code">{{ modelUid }}</code>
+          </div>
+          <div class="model-name-section">
+            <h2 class="model-name">{{ modelName }}</h2>
+          </div>
         </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listAttributeFields" />
-          </el-tooltip>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <el-table :data="resourcesData">
-          <el-table-column type="selection" width="50" align="center" />
+      </template>
+    </ManagerHeader>
 
-          <el-table-column
-            v-for="item in displayFileds"
-            :key="item.id"
-            :prop="`data.${item.field_uid}`"
-            :label="item.field_name"
-            align="center"
+    <DataTable
+      :data="resourcesData"
+      :columns="tableColumns"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 动态字段列插槽 -->
+      <template v-for="item in displayFileds" :key="item.id" #[`data.${item.field_uid}`]="{ row }">
+        <template v-if="item.secure">
+          <el-button
+            v-if="!secureDisplay.get(row.id)"
+            type="primary"
+            size="small"
+            @click="handleSecureClick(row, item)"
           >
-            <template #default="scope">
-              <template v-if="item.secure">
-                <el-button
-                  v-if="!secureDisplay.get(scope.row.id)"
-                  type="primary"
-                  size="small"
-                  @click="handleSecureClick(scope.row, item)"
+            查看
+          </el-button>
+          <div v-if="secureDisplay.get(row.id)">
+            {{ row.data[item.field_uid] }}
+          </div>
+        </template>
+        <template v-else-if="item.link">
+          <el-button type="text" @click="openNewPage(row.data[item.field_uid])">
+            {{ row.data[item.field_uid] }}
+          </el-button>
+        </template>
+        <template v-else-if="item.field_type === 'file'">
+          <div v-if="row.data[item.field_uid] === undefined || row.data[item.field_uid].length === 0">
+            <el-upload
+              v-model:file-list="row.data[item.field_uid]"
+              class="upload-file"
+              action="#"
+              multiple
+              show-file-list
+              :http-request="(action: UploadRequestOptions) => uploadFile(action, row, item.field_uid)"
+              :limit="5"
+              :on-exceed="handleExceed"
+              :on-progress="handleProgress"
+            >
+              <el-button type="warning" text bg size="small">上传</el-button>
+            </el-upload>
+          </div>
+          <div v-else>
+            <el-popover width="300px" trigger="click" placement="top">
+              <div class="upload-container">
+                <el-upload
+                  v-model:file-list="row.data[item.field_uid]"
+                  class="upload-file"
+                  action="#"
+                  multiple
+                  show-file-list
+                  :http-request="(action: UploadRequestOptions) => uploadFile(action, row, item.field_uid)"
+                  :limit="5"
+                  :on-exceed="handleExceed"
+                  :on-progress="handleProgress"
+                  :on-preview="handlePreview"
+                  :on-remove="createHandleRemove(row, item.field_uid)"
+                  :before-remove="beforeRemove"
                 >
-                  查看
-                </el-button>
-                <div v-if="secureDisplay.get(scope.row.id)">
-                  {{ scope.row.data[item.field_uid] }}
-                </div>
+                  <el-button type="primary" text bg size="default" style="width: 100%; text-align: center">
+                    新增文件
+                  </el-button>
+                </el-upload>
+              </div>
+              <template #reference>
+                <el-button type="primary" text bg size="small"> 查看 </el-button>
               </template>
-              <template v-else-if="item.link">
-                <el-button type="text" @click="openNewPage(scope.row.data[item.field_uid])">
-                  {{ scope.row.data[item.field_uid] }}
-                </el-button>
-              </template>
-              <template v-else-if="item.field_type === 'file'">
-                <div v-if="scope.row.data[item.field_uid] === undefined || scope.row.data[item.field_uid].length === 0">
-                  <el-upload
-                    v-model:file-list="scope.row.data[item.field_uid]"
-                    class="upload-file"
-                    action="#"
-                    multiple
-                    show-file-list
-                    :http-request="(action: UploadRequestOptions) => uploadFile(action, scope.row, item.field_uid)"
-                    :limit="5"
-                    :on-exceed="handleExceed"
-                    :on-progress="handleProgress"
-                  >
-                    <el-button type="warning" text bg size="small">上传</el-button>
-                  </el-upload>
-                </div>
-                <div v-else>
-                  <el-popover width="300px" trigger="click" placement="top">
-                    <div class="upload-container">
-                      <el-upload
-                        v-model:file-list="scope.row.data[item.field_uid]"
-                        class="upload-file"
-                        action="#"
-                        multiple
-                        show-file-list
-                        :http-request="(action: UploadRequestOptions) => uploadFile(action, scope.row, item.field_uid)"
-                        :limit="5"
-                        :on-exceed="handleExceed"
-                        :on-progress="handleProgress"
-                        :on-preview="handlePreview"
-                        :on-remove="createHandleRemove(scope.row, item.field_uid)"
-                        :before-remove="beforeRemove"
-                      >
-                        <el-button type="primary" text bg size="default" style="width: 100%; text-align: center">
-                          新增文件
-                        </el-button>
-                      </el-upload>
-                    </div>
-                    <template #reference>
-                      <el-button type="primary" text bg size="small"> 查看 </el-button>
-                    </template>
-                  </el-popover>
-                </div>
-              </template>
-              <template v-else>
-                {{ scope.row.data[item.field_uid] }}
-              </template>
-            </template>
-          </el-table-column>
-          <el-table-column fixed="right" label="操作" width="300" align="center">
-            <template #default="scope">
-              <router-link
-                v-if="modelUid === 'host'"
-                :to="{ path: '/terminal', query: { resource_id: scope.row.id, title: scope.row.name } }"
-                target="_blank"
-              >
-                <el-button type="primary" text bg size="small">终端</el-button>
-              </router-link>
-              <el-button type="primary" text bg size="small" @click="handleDetailClick(scope.row)">详情</el-button>
-              <el-button type="warning" text bg size="small" @click="handleUpdate(scope.row)">修改</el-button>
-              <el-button type="danger" text bg size="small" @click="handleDelete(scope.row)">删除</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div class="pager-wrapper">
-          <el-pagination
-            background
-            :layout="paginationData.layout"
-            :page-sizes="paginationData.pageSizes"
-            :total="paginationData.total"
-            :page-size="paginationData.pageSize"
-            :currentPage="paginationData.currentPage"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
-      </div>
-    </el-card>
-    <!-- 新增或删除 -->
-    <el-drawer class="drawer-container" v-model="drawerVisible" :title="title" @closed="onClosed" size="30%">
-      <createOrUpdate
+            </el-popover>
+          </div>
+        </template>
+        <template v-else>
+          {{ row.data[item.field_uid] }}
+        </template>
+      </template>
+
+      <!-- 操作列插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
+      </template>
+    </DataTable>
+    <!-- 新增或编辑资源 -->
+    <Drawer
+      v-model="drawerVisible"
+      :title="title"
+      subtitle="配置资源的基本信息和属性"
+      size="40%"
+      direction="rtl"
+      :header-icon="Setting"
+      :show-footer="true"
+      cancel-button-text="取消"
+      confirm-button-text="保存"
+      @cancel="onClosed"
+      @confirm="handleCreate"
+      @closed="onClosed"
+    >
+      <Form
         ref="apiRef"
         :attributeFiledsData="attributeFiledsData"
         :modelUid="modelUid"
         @list="listResourceByModelUid"
         @closed="onClosed"
       />
-      <template #footer>
-        <el-button @click="onClosed">取消</el-button>
-        <el-button type="primary" @click="handleCreate">确认</el-button>
-      </template>
-    </el-drawer>
+    </Drawer>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, h, reactive, nextTick } from "vue"
+import { onMounted, ref, watch, h, reactive, nextTick, computed } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
 import { listResourceApi, deleteResourceApi, findSecureData, setCustomFieldApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { CirclePlus, Edit, Delete, View, Setting } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
+import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import DataTable from "@@/components/DataTable/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
+import { Drawer } from "@@/components/Dialogs"
 import {
   ElLoading,
   ElMessage,
@@ -158,7 +161,7 @@ import {
 } from "element-plus"
 import router from "@/router"
 
-import createOrUpdate from "./createOrUpdate.vue"
+import Form from "./form.vue"
 import { getMinioPresignedUrl, putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import axios from "axios"
 import { decodedUrlPath, getLocalMinioUrl } from "../../../../common/utils/url"
@@ -166,12 +169,40 @@ import { decodedUrlPath, getLocalMinioUrl } from "../../../../common/utils/url"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
 const modelUid = route.query.uid as string
+const modelName = route.query.name as string
 const attributeFiledsData = ref<Attribute[]>([])
 
 const displayFileds = ref<Attribute[]>([])
 const drawerVisible = ref<boolean>(false)
 
 const title = ref<string>("")
+
+// 表格列配置
+const tableColumns = computed(() => {
+  const columns = displayFileds.value.map((item) => ({
+    prop: `data.${item.field_uid}`,
+    label: item.field_name,
+    align: "center" as const,
+    slot: `data.${item.field_uid}`
+  }))
+  return columns
+})
+
+// 操作按钮配置
+const operateBtnItems = computed(() => {
+  const items = [
+    { name: "详情", code: "detail", type: "primary", icon: View },
+    { name: "修改", code: "edit", type: "warning", icon: Edit },
+    { name: "删除", code: "delete", type: "danger", icon: Delete }
+  ]
+
+  // 如果是主机模型，添加终端按钮
+  if (modelUid === "host") {
+    items.unshift({ name: "终端", code: "terminal", type: "info", icon: CirclePlus })
+  }
+
+  return items
+})
 
 const handleExceed: UploadProps["onExceed"] = (files) => {
   ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
@@ -384,7 +415,7 @@ const handleSecureClick = (row: Resource, item: Attribute) => {
   })
 }
 
-const apiRef = ref<InstanceType<typeof createOrUpdate>>()
+const apiRef = ref<InstanceType<typeof Form>>()
 const handlerCreate = () => {
   title.value = "新增资产"
   drawerVisible.value = true
@@ -399,6 +430,20 @@ const handleUpdate = (row: Resource) => {
   })
 }
 
+// 操作按钮事件
+const handleOperateEvent = (row: Resource, action: string) => {
+  if (action === "terminal") {
+    // 跳转到终端页面
+    window.open(`/terminal?resource_id=${row.id}&title=${row.name}`, "_blank")
+  } else if (action === "detail") {
+    handleDetailClick(row)
+  } else if (action === "edit") {
+    handleUpdate(row)
+  } else if (action === "delete") {
+    handleDelete(row)
+  }
+}
+
 const onClosed = () => {
   console.log("onClosed")
   apiRef.value?.resetForm()
@@ -407,6 +452,11 @@ const onClosed = () => {
 
 const handleCreate = () => {
   apiRef.value?.handleSubmit()
+}
+
+// 返回上一页
+const goBack = () => {
+  router.back()
 }
 
 onMounted(() => {
@@ -418,23 +468,55 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRes
 </script>
 
 <style lang="scss" scoped>
-:deep(.el-drawer__header) {
-  margin-bottom: 0px;
-}
-
-.toolbar-wrapper {
+.resource-list {
+  height: 100%;
+  padding: 20px;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
+  flex-direction: column;
+  overflow: hidden;
 
-.table-wrapper {
-  margin-bottom: 20px;
-}
+  .model-identity {
+    display: flex;
+    align-items: center;
+    gap: 16px;
 
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+    .identity-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--muted, #f9fafb);
+      padding: 4px 8px;
+      border-radius: 6px;
+
+      .badge-label {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--muted-foreground, #6b7280);
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .identity-code {
+        font-family: var(--font-mono, "Monaco", "Menlo", "Ubuntu Mono", monospace);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--primary, #3b82f6);
+        background: var(--background, #ffffff);
+        padding: 2px 6px;
+        border-radius: 3px;
+      }
+    }
+
+    .model-name-section {
+      .model-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--foreground, #111827);
+        margin: 0;
+        line-height: 1.3;
+      }
+    }
+  }
 }
 
 .file-item {

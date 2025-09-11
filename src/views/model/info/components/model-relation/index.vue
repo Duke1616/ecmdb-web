@@ -95,7 +95,6 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import CreateRelation from "./create.vue"
 
-
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const modelData = useModelStore().modelsData
 

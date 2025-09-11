@@ -1,11 +1,5 @@
 <template>
   <div class="app-container">
-    <!-- 头部区域 -->
-    <!-- <div class="header-section">
-      <h1 class="page-title">模型中心</h1>
-      <p class="page-subtitle">浏览和管理您的模型资源</p>
-    </div> -->
-
     <!-- 空状态显示 -->
     <div v-if="empty" class="empty-state">
       <el-empty :image-size="160" description="暂无模型数据" class="custom-empty">
@@ -128,7 +122,7 @@ const getModelsData = () => {
 const handleModelClick = (model: Model) => {
   router.push({
     path: "/cmdb/resource/list",
-    query: { uid: model.uid }
+    query: { uid: model.uid, name: model.name }
   })
 }
 
