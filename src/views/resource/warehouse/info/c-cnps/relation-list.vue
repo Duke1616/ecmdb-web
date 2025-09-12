@@ -4,11 +4,11 @@
     title="关联管理"
     subtitle="管理资源之间的关联关系"
     add-button-text="新增关联"
-    @add="handlerDrawerVisible"
+    @add="handlerDialogVisible"
     @refresh="listRelatedAssetsData"
   >
     <template #actions>
-      <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerDrawerVisible">
+      <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerDialogVisible">
         新增关联
       </el-button>
       <el-tooltip content="刷新数据">
@@ -115,15 +115,16 @@
     </div>
   </div>
 
-  <!-- 新增关联抽屉 -->
-  <Drawer
-    v-model="drawerVisible"
+  <!-- 新增关联对话框 -->
+  <FormDialog
+    v-model="dialogVisible"
     title="新增关联"
     subtitle="选择关联类型并添加资源关联"
     :header-icon="Link"
-    size="35%"
+    width="80%"
     :show-footer="false"
-    class="drawer-container"
+    :close-on-click-modal="false"
+    @closed="handleDialogClosed"
   >
     <AddRelationDrawer
       :model-relation-data="modelRelationData"
@@ -134,7 +135,7 @@
       :related-resource-ids="getRelatedResourceIds"
       @relation-created="handleRelationCreated"
     />
-  </Drawer>
+  </FormDialog>
 </template>
 
 <script lang="ts" setup>
@@ -149,7 +150,7 @@ import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from
 import { CirclePlus, RefreshRight, ArrowRight, Connection, Link } from "@element-plus/icons-vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
-import { Drawer } from "@/common/components/Dialogs"
+import { FormDialog } from "@/common/components/Dialogs"
 import { findSecureData, listResourceByIdsApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { Attribute } from "@/api/attribute/types/attribute"
@@ -164,7 +165,7 @@ interface Props {
   resourceId: string
 }
 const props = defineProps<Props>()
-const drawerVisible = ref<boolean>(false)
+const dialogVisible = ref<boolean>(false)
 
 // 处理关联创建成功
 const handleRelationCreated = () => {
@@ -172,9 +173,14 @@ const handleRelationCreated = () => {
   listRelatedAssetsData()
 }
 
-// 打开抽屉
-const handlerDrawerVisible = () => {
-  drawerVisible.value = true
+// 打开对话框
+const handlerDialogVisible = () => {
+  dialogVisible.value = true
+}
+
+// 处理对话框关闭
+const handleDialogClosed = () => {
+  dialogVisible.value = false
 }
 
 // ** 获取模型关联类型 */
@@ -563,9 +569,7 @@ watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTyp
 .relation-layout {
   display: flex;
   gap: 20px;
-  height: calc(100vh - 200px);
-  min-height: 600px;
-  margin-top: 16px;
+  height: 100%;
 }
 
 /* 左侧关联类型列表 */

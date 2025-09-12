@@ -1,135 +1,143 @@
 <template>
   <div class="add-relation-drawer">
-    <!-- 关联类型选择 -->
-    <div class="form-section">
-      <div class="section-title">
-        <el-icon class="section-icon"><Connection /></el-icon>
-        <span>关联模型</span>
-      </div>
-      <div class="form-row">
-        <el-form-item label="关联模型" class="form-item" label-position="top">
-          <el-select
-            v-model="filterForm.relationName"
-            placeholder="请选择关联类型"
-            size="large"
-            @change="handleRelationChange"
-          >
-            <el-option
-              v-for="item in modelRelationData"
-              :key="item.id"
-              :label="displayMap.get(item.relation_name)"
-              :value="item.relation_name"
-            />
-          </el-select>
-        </el-form-item>
-      </div>
-    </div>
-
-    <!-- 筛选条件 -->
-    <div class="form-section" v-if="filterForm.relationName">
-      <div class="section-title">
-        <el-icon class="section-icon"><Filter /></el-icon>
-        <span>筛选条件</span>
-      </div>
-
-      <div class="form-row">
-        <el-form-item label="字段名称" class="form-item" label-position="top">
-          <el-select v-model="filterForm.fieldName" placeholder="请选择字段" size="large" @change="handleFieldName">
-            <el-option
-              v-for="item in attributeFieldsData"
-              :key="item.id"
-              :label="item.field_name"
-              :value="item.field_uid"
-            />
-          </el-select>
-        </el-form-item>
-      </div>
-
-      <div class="form-row">
-        <el-form-item label="筛选条件" class="form-item" label-position="top">
-          <div class="condition-buttons">
-            <el-button
-              v-for="option in options"
-              :key="option.value"
-              :type="filterForm.condition === option.value ? 'primary' : 'default'"
-              size="default"
-              @click="handleConditionClick(option.value)"
-            >
-              {{ option.label }}
-            </el-button>
+    <div class="layout-container">
+      <!-- 左侧筛选表单 -->
+      <div class="left-panel">
+        <!-- 关联类型选择 -->
+        <div class="form-section">
+          <div class="section-title">
+            <el-icon class="section-icon"><Connection /></el-icon>
+            <span>关联模型</span>
           </div>
-        </el-form-item>
-      </div>
+          <div class="form-row">
+            <el-form-item label="关联模型" class="form-item" label-position="top">
+              <el-select
+                v-model="filterForm.relationName"
+                placeholder="请选择关联类型"
+                size="large"
+                @change="handleRelationChange"
+              >
+                <el-option
+                  v-for="item in modelRelationData"
+                  :key="item.id"
+                  :label="displayMap.get(item.relation_name)"
+                  :value="item.relation_name"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
+        </div>
 
-      <div class="form-row">
-        <el-form-item label="搜索内容" class="form-item" label-position="top">
-          <el-input v-model="filterForm.inputSearch" placeholder="请输入搜索内容" size="large" clearable />
-        </el-form-item>
-      </div>
+        <!-- 筛选条件 -->
+        <div class="form-section" v-if="filterForm.relationName">
+          <div class="section-title">
+            <el-icon class="section-icon"><Filter /></el-icon>
+            <span>筛选条件</span>
+          </div>
 
-      <div class="form-row">
-        <div class="form-actions">
-          <el-button
-            type="primary"
-            size="large"
-            @click="handleSearch"
-            :disabled="!filterForm.fieldName || !filterForm.condition"
-          >
-            <el-icon><Search /></el-icon>
-            搜索资源
-          </el-button>
-          <el-button v-if="isFiltering" size="large" @click="handleClearFilter">
-            <el-icon><Refresh /></el-icon>
-            清除筛选
-          </el-button>
+          <div class="form-row">
+            <el-form-item label="字段名称" class="form-item" label-position="top">
+              <el-select v-model="filterForm.fieldName" placeholder="请选择字段" size="large" @change="handleFieldName">
+                <el-option
+                  v-for="item in attributeFieldsData"
+                  :key="item.id"
+                  :label="item.field_name"
+                  :value="item.field_uid"
+                />
+              </el-select>
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
+            <el-form-item label="筛选条件" class="form-item" label-position="top">
+              <div class="condition-buttons">
+                <el-button
+                  v-for="option in options"
+                  :key="option.value"
+                  :type="filterForm.condition === option.value ? 'primary' : 'default'"
+                  size="default"
+                  @click="handleConditionClick(option.value)"
+                >
+                  {{ option.label }}
+                </el-button>
+              </div>
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
+            <el-form-item label="搜索内容" class="form-item" label-position="top">
+              <el-input v-model="filterForm.inputSearch" placeholder="请输入搜索内容" size="large" clearable />
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
+            <div class="form-actions">
+              <el-button
+                type="primary"
+                size="large"
+                @click="handleSearch"
+                :disabled="!filterForm.fieldName || !filterForm.condition"
+              >
+                <el-icon><Search /></el-icon>
+                搜索资源
+              </el-button>
+              <el-button v-if="isFiltering" size="large" @click="handleClearFilter">
+                <el-icon><Refresh /></el-icon>
+                清除筛选
+              </el-button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- 资源表格 -->
-    <div class="table-section" v-if="filterForm.relationName">
-      <DataTable
-        :data="resourcesData"
-        :columns="getTableColumns()"
-        :table-props="{ border: true, stripe: true }"
-        :show-pagination="true"
-        :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :current-page="paginationData.currentPage"
-        :page-sizes="paginationData.pageSizes"
-        :pagination-layout="paginationData.layout"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      >
-        <!-- 字段值插槽 -->
-        <template v-for="field in visibleColumns" :key="`field-${field.id}`" #[field.field_uid]="{ row }">
-          <span>{{ row.data[field.field_uid] || "暂无数据" }}</span>
-        </template>
-
-        <!-- 操作列插槽 -->
-        <template #actions="{ row }">
-          <el-button
-            :type="localRelatedResourceIds.has(row.id) ? 'danger' : 'primary'"
-            text
-            bg
-            size="small"
-            @click="handleTableAction('toggle-relation', row)"
+      <!-- 右侧表格数据 -->
+      <div class="right-panel">
+        <!-- 资源表格 -->
+        <div class="table-section" v-if="filterForm.relationName">
+          <DataTable
+            :data="resourcesData"
+            :columns="getTableColumns()"
+            :table-props="{ border: true, stripe: true }"
+            :show-pagination="true"
+            :total="paginationData.total"
+            :page-size="paginationData.pageSize"
+            :current-page="paginationData.currentPage"
+            :page-sizes="paginationData.pageSizes"
+            :pagination-layout="paginationData.layout"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
           >
-            {{ localRelatedResourceIds.has(row.id) ? "取消关联" : "关联" }}
-          </el-button>
-        </template>
-      </DataTable>
-    </div>
+            <!-- 字段值插槽 -->
+            <template v-for="field in visibleColumns" :key="`field-${field.id}`" #[field.field_uid]="{ row }">
+              <span>{{ row.data[field.field_uid] || "暂无数据" }}</span>
+            </template>
 
-    <!-- 空状态 -->
-    <div v-else class="empty-state">
-      <el-empty description="请先选择关联类型" :image-size="80">
-        <template #image>
-          <el-icon size="60" color="#c0c4cc">
-            <Link />
-          </el-icon>
-        </template>
-      </el-empty>
+            <!-- 操作列插槽 -->
+            <template #actions="{ row }">
+              <el-button
+                :type="localRelatedResourceIds.has(row.id) ? 'danger' : 'primary'"
+                text
+                bg
+                size="small"
+                @click="handleTableAction('toggle-relation', row)"
+              >
+                {{ localRelatedResourceIds.has(row.id) ? "取消关联" : "关联" }}
+              </el-button>
+            </template>
+          </DataTable>
+        </div>
+
+        <!-- 空状态 -->
+        <div v-else class="empty-state">
+          <el-empty description="请先选择关联类型" :image-size="80">
+            <template #image>
+              <el-icon size="60" color="#c0c4cc">
+                <Link />
+              </el-icon>
+            </template>
+          </el-empty>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -415,12 +423,32 @@ const handleDeleteRelation = async (row: Resource) => {
 
 <style lang="scss" scoped>
 .add-relation-drawer {
+  height: 65vh;
+  overflow-y: auto;
+}
+
+.layout-container {
   height: 100%;
   display: flex;
+  gap: 20px;
+}
+
+.left-panel {
+  width: 350px;
+  flex-shrink: 0;
+  display: flex;
   flex-direction: column;
-  background: #f5f7fa;
-  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow-y: auto;
+}
+
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .form-section {
@@ -546,11 +574,13 @@ const handleDeleteRelation = async (row: Resource) => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 
   :deep(.data-table-container) {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;
 
     .el-table {
       flex: 1;
@@ -574,24 +604,82 @@ const handleDeleteRelation = async (row: Resource) => {
 }
 
 /* 响应式设计 */
+@media (max-width: 1024px) {
+  .layout-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .left-panel {
+    width: 100%;
+    max-height: 300px;
+    padding: 16px;
+  }
+
+  .right-panel {
+    flex: 1;
+    min-height: 300px;
+  }
+}
+
 @media (max-width: 768px) {
   .add-relation-drawer {
-    padding: 16px;
+    padding: 12px;
+  }
+
+  .left-panel {
+    padding: 12px;
+    max-height: 250px;
+  }
+
+  .form-section {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .section-title {
+    margin-bottom: 12px;
+    padding: 8px 12px;
+
+    .section-icon {
+      font-size: 14px;
+    }
+
+    span {
+      font-size: 13px;
+    }
+  }
+
+  .form-row {
+    margin-bottom: 12px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
   .condition-buttons {
     flex-direction: column;
+    gap: 6px;
 
     .el-button {
       width: 100%;
+      font-size: 12px;
+      padding: 6px 12px;
     }
   }
 
   .form-actions {
     flex-direction: column;
+    gap: 8px;
 
     .el-button {
       width: 100%;
+      font-size: 12px;
+      padding: 8px 16px;
     }
   }
 }

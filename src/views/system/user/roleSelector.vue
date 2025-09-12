@@ -321,7 +321,7 @@ const getSelectedRoles = (): role[] => {
 <style lang="scss" scoped>
 /* 角色选择器容器 */
 .role-selector-container {
-  height: 60vh;
+  height: 65vh;
   display: flex;
   flex-direction: column;
   background: #ffffff;
