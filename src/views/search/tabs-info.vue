@@ -74,11 +74,14 @@
                   v-if="!secureDisplay.get(row.id)"
                   type="primary"
                   size="small"
+                  plain
+                  :icon="View"
                   @click="handleSecureClick(row, field)"
+                  class="secure-button"
                 >
                   查看
                 </el-button>
-                <div v-if="secureDisplay.get(row.id)">
+                <div v-if="secureDisplay.get(row.id)" class="secure-content">
                   {{ row[field.field_uid] }}
                 </div>
               </div>
@@ -106,9 +109,12 @@
                       />
                     </div>
                     <template #reference>
-                      <el-button type="primary" text bg size="small"> 查看 </el-button>
+                      <el-button type="primary" size="small" plain :icon="Download" class="download-button">
+                        下载 ({{ row[field.field_uid]?.length || 0 }})
+                      </el-button>
                     </template>
                   </el-popover>
+                  <el-tag v-else type="info" size="small" class="no-files-tag"> 暂无文件 </el-tag>
                 </div>
               </div>
 
@@ -143,7 +149,7 @@
 
 <script lang="ts" setup>
 import { h, onMounted, reactive, ref, computed } from "vue"
-import { Search, View } from "@element-plus/icons-vue"
+import { Search, View, Download } from "@element-plus/icons-vue"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -156,6 +162,7 @@ import { ListAttributeFieldApi } from "@/api/attribute"
 import { useSearchStore } from "@/pinia/stores/search"
 import { useModelStore } from "@/pinia/stores/model"
 import { useRouter } from "vue-router"
+import { usePagination } from "@/common/composables/usePagination"
 import { ElMessage, ElMessageBox, UploadProps } from "element-plus"
 import { getMinioPresignedUrl } from "@/api/tools"
 import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
@@ -163,18 +170,11 @@ import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
 const router = useRouter()
 const route = useRoute()
 const modelStore = useModelStore()
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const inputSearch = ref<string>(route.query.text as string)
 let oldSearch = route.query.text as string
 
-// 分页状态
-const paginationData = reactive({
-  currentPage: 1,
-  pageSize: 10,
-  total: 0,
-  pageSizes: [10, 20, 50, 100],
-  layout: "total, sizes, prev, pager, next, jumper"
-})
 const search = () => {
   if (inputSearch.value.trim() === "") {
     ElMessage.error("搜索内容不成为空")
@@ -203,15 +203,6 @@ const goBack = () => {
 }
 
 // 分页处理方法
-const handleSizeChange = (size: number) => {
-  paginationData.pageSize = size
-  paginationData.currentPage = 1
-}
-
-const handleCurrentChange = (page: number) => {
-  paginationData.currentPage = page
-}
-
 // 获取分页数据
 const getPaginatedData = (data: any[]) => {
   if (!data || data.length === 0) return []
@@ -565,6 +556,20 @@ onMounted(() => {
 .secure-content {
   color: #67c23a;
   font-weight: 500;
+}
+
+.download-button {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(64, 158, 255, 0.3);
+  }
+}
+
+.no-files-tag {
+  font-style: italic;
+  opacity: 0.8;
 }
 
 .upload-container {
