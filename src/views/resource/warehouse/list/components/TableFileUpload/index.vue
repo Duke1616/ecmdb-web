@@ -60,10 +60,9 @@ import {
   ElLoading
 } from "element-plus"
 import { h } from "vue"
-import { putMinioPresignedUrl, removeMinioObject, getMinioPresignedUrl } from "@/api/tools"
-import { setCustomFieldApi } from "@/api/resource"
-import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
+import { getMinioPresignedUrl } from "@/api/tools"
+import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
+import { useFileUpload } from "../../composables/useFileUpload"
 import type { Resource } from "@/api/resource/types/resource"
 
 interface Props {
@@ -87,6 +86,9 @@ const emits = defineEmits<{
 }>()
 
 const fileList = ref<UploadUserFile[]>(props.modelValue || [])
+
+// 使用文件上传 composables
+const { uploadFileToMinio, deleteFileFromMinio, updateCustomFieldData, createUploadedFile } = useFileUpload()
 
 // 监听外部值变化
 watch(
@@ -112,25 +114,9 @@ const handleUpload = (action: UploadRequestOptions) => {
     background: "rgba(0, 0, 0, 0.7)"
   })
 
-  const objectName = action.file.uid + "/" + action.file.name
-  return putMinioPresignedUrl(objectName)
-    .then((res: any) => {
-      const url = getLocalMinioUrl(res.data)
-
-      return axios
-        .put(url, action.file, {
-          headers: {
-            "Content-Type": action.file.type
-          },
-          onUploadProgress: (progressEvent) => {
-            if (progressEvent.total) {
-              const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-              loading.setText(`已上传 ${percentCompleted.toFixed(1)}%`)
-            }
-          }
-        })
-        .then(() => res.data)
-    })
+  return uploadFileToMinio(action, (percent) => {
+    loading.setText(`已上传 ${percent.toFixed(1)}%`)
+  })
     .then((resData) => {
       loading.close()
 
@@ -142,17 +128,8 @@ const handleUpload = (action: UploadRequestOptions) => {
       }
 
       // 调用接口更新字段信息
-      return setCustomFieldApi({
-        id: props.row.id,
-        field: props.fieldUid,
-        data: fileList
-      }).then(() => {
-        const uploadedFile: UploadUserFile = {
-          name: action.file.name,
-          url: getLocalMinioUrl(resData),
-          uid: action.file.uid,
-          status: "success"
-        }
+      return updateCustomFieldData(props.row.id, props.fieldUid, fileList).then(() => {
+        const uploadedFile = createUploadedFile(action, resData)
         emits("upload-success", uploadedFile, props.fieldUid, props.row)
       })
     })
@@ -170,15 +147,11 @@ const handleRemove: UploadProps["onRemove"] = (file) => {
     return
   }
 
-  removeMinioObject(decodedUrlPath(file.url))
+  deleteFileFromMinio(file.url)
     .then(() => {
       const updatedFiles = fileList.value.map((item: UploadUserFile) => (item.name === file.name ? { ...item } : item))
 
-      return setCustomFieldApi({
-        id: props.row.id,
-        field: props.fieldUid,
-        data: updatedFiles
-      }).then(() => {
+      return updateCustomFieldData(props.row.id, props.fieldUid, updatedFiles).then(() => {
         emits("remove-success", file, props.fieldUid, props.row)
       })
     })
