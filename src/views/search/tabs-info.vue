@@ -70,20 +70,14 @@
             >
               <div v-if="field.secure">
                 <!-- 安全字段优先处理 -->
-                <el-button
-                  v-if="!secureDisplay.get(row.id)"
-                  type="primary"
-                  size="small"
-                  plain
-                  :icon="View"
-                  @click="handleSecureClick(row, field)"
-                  class="secure-button"
-                >
-                  查看
-                </el-button>
-                <div v-if="secureDisplay.get(row.id)" class="secure-content">
-                  {{ row[field.field_uid] }}
-                </div>
+                <SecureFieldView
+                  :content="row[field.field_uid]"
+                  :is-displaying="!!row[`${field.field_uid}_secure_display`]"
+                  :copy-only="true"
+                  @view-click="handleSecureClick(row, field)"
+                  @display-change="(isDisplaying) => handleSecureDisplayChange(row, field, isDisplaying)"
+                  @copy="(content) => handleCopySecureContent(content, row.id)"
+                />
               </div>
 
               <div v-else-if="field.field_type === 'file'">
@@ -148,12 +142,13 @@
 </template>
 
 <script lang="ts" setup>
-import { h, onMounted, reactive, ref, computed } from "vue"
+import { h, onMounted, ref, computed } from "vue"
 import { Search, View, Download } from "@element-plus/icons-vue"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
 import { globalSearchData } from "@/api/resource/types/resource"
 import { findSecureData, globalSearchApi } from "@/api/resource"
 import { useRoute } from "vue-router"
@@ -366,7 +361,6 @@ const handlerDetailClick = (row: any) => {
   })
 }
 
-const secureDisplay = reactive(new Map())
 const handleSecureClick = (row: any, item: Attribute) => {
   findSecureData({
     id: row.id,
@@ -374,11 +368,21 @@ const handleSecureClick = (row: any, item: Attribute) => {
   })
     .then((data) => {
       row[item.field_uid] = data.data
-      secureDisplay.set(row.id, true)
+      // 在 copy-only 模式下不设置显示状态，避免显示内容区域
+      // row[`${item.field_uid}_secure_display`] = true
     })
     .catch(() => {
       ElMessage.error("获取数据失败")
     })
+}
+
+const handleSecureDisplayChange = (row: any, item: Attribute, isDisplaying: boolean) => {
+  row[`${item.field_uid}_secure_display`] = isDisplaying
+}
+
+const handleCopySecureContent = (content: string, rowId: number) => {
+  // 复制逻辑已移到 SecureFieldView 组件内部
+  console.log("Content copied:", content, "for row:", rowId)
 }
 
 const handleExceed: UploadProps["onExceed"] = (files) => {
@@ -549,11 +553,6 @@ onMounted(() => {
 
 .field-content {
   color: #606266;
-}
-
-.secure-content {
-  color: #67c23a;
-  font-weight: 500;
 }
 
 .download-button {

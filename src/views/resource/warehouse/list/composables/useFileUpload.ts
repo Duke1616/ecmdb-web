@@ -2,7 +2,7 @@ import axios from "axios"
 import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
 import { setCustomFieldApi } from "@/api/resource"
 import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
-import type { UploadRequestOptions, UploadProgressEvent, UploadUserFile } from "element-plus"
+import type { UploadRequestOptions, UploadUserFile } from "element-plus"
 
 /**
  * 文件上传相关的组合式函数

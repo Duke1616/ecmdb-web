@@ -13,7 +13,7 @@
         :on-exceed="handleExceed"
         :on-progress="handleProgress"
       >
-        <el-button type="warning" text bg size="small">上传</el-button>
+        <el-button type="primary" size="small" plain :icon="Upload"> 上传文件 </el-button>
       </el-upload>
     </div>
 
@@ -35,13 +35,11 @@
             :on-remove="handleRemove"
             :before-remove="beforeRemove"
           >
-            <el-button type="primary" text bg size="default" style="width: 100%; text-align: center">
-              新增文件
-            </el-button>
+            <el-button type="success" size="default" plain :icon="Plus" style="width: 100%"> 新增文件 </el-button>
           </el-upload>
         </div>
         <template #reference>
-          <el-button type="primary" text bg size="small"> 查看 ({{ fileList.length }}) </el-button>
+          <el-button type="primary" size="small" plain :icon="View"> 查看 ({{ fileList.length }}) </el-button>
         </template>
       </el-popover>
     </div>
@@ -59,6 +57,7 @@ import {
   ElMessageBox,
   ElLoading
 } from "element-plus"
+import { Upload, Plus, View } from "@element-plus/icons-vue"
 import { h } from "vue"
 import { getMinioPresignedUrl } from "@/api/tools"
 import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
@@ -141,7 +140,7 @@ const handleUpload = (action: UploadRequestOptions) => {
     })
 }
 
-const handleRemove: UploadProps["onRemove"] = (file) => {
+const handleRemove: UploadProps["onRemove"] = (file, fileList) => {
   console.log("handleRemove", file)
   if (file.url === undefined) {
     return
@@ -149,7 +148,7 @@ const handleRemove: UploadProps["onRemove"] = (file) => {
 
   deleteFileFromMinio(file.url)
     .then(() => {
-      const updatedFiles = fileList.value.map((item: UploadUserFile) => (item.name === file.name ? { ...item } : item))
+      const updatedFiles = fileList.map((item: UploadUserFile) => (item.name === file.name ? { ...item } : item))
 
       return updateCustomFieldData(props.row.id, props.fieldUid, updatedFiles).then(() => {
         emits("remove-success", file, props.fieldUid, props.row)
@@ -217,6 +216,16 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
 
     ::v-deep .el-upload-list__item {
       transition: none !important;
+    }
+  }
+
+  // 按钮样式优化
+  .el-button {
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
   }
 }

@@ -38,17 +38,14 @@
       <!-- 动态字段列插槽 -->
       <template v-for="item in displayFileds" :key="item.id" #[`data.${item.field_uid}`]="{ row }">
         <template v-if="item.secure">
-          <el-button
-            v-if="!secureDisplay.get(row.id)"
-            type="primary"
-            size="small"
-            @click="handleSecureClick(row, item)"
-          >
-            查看
-          </el-button>
-          <div v-if="secureDisplay.get(row.id)">
-            {{ row.data[item.field_uid] }}
-          </div>
+          <SecureFieldView
+            :content="row.data[item.field_uid]"
+            :is-displaying="!!row.data[`${item.field_uid}_secure_display`]"
+            :copy-only="true"
+            @view-click="handleSecureClick(row, item)"
+            @display-change="(isDisplaying) => handleSecureDisplayChange(row, item, isDisplaying)"
+            @copy="(content) => handleCopySecureContent(content, row.id)"
+          />
         </template>
         <template v-else-if="item.link">
           <el-button type="text" @click="openNewPage(row.data[item.field_uid])">
@@ -106,7 +103,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch, h, reactive, nextTick, computed } from "vue"
+import { onMounted, onUnmounted, ref, watch, h, nextTick, computed } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { getModelAttributesWithGroupsApi } from "@/api/attribute"
@@ -123,6 +120,7 @@ import router from "@/router"
 
 import Form from "./form.vue"
 import TableFileUpload from "./components/TableFileUpload/index.vue"
+import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
@@ -271,15 +269,24 @@ const handleDelete = (row: Resource) => {
   })
 }
 
-const secureDisplay = reactive(new Map())
 const handleSecureClick = (row: Resource, item: Attribute) => {
   findSecureData({
     id: row.id,
     field_uid: item.field_uid
   }).then((data) => {
+    // 存储安全数据到 row 中，这样切换页面后数据不会丢失
     row.data[item.field_uid] = data.data
-    secureDisplay.set(row.id, true)
+    // row.data[`${item.field_uid}_secure_display`] = true
   })
+}
+
+const handleSecureDisplayChange = (row: Resource, item: Attribute, isDisplaying: boolean) => {
+  row.data[`${item.field_uid}_secure_display`] = isDisplaying
+}
+
+const handleCopySecureContent = (content: string, rowId: number) => {
+  // 复制逻辑已移到 SecureFieldView 组件内部
+  console.log("Content copied:", content, "for row:", rowId)
 }
 
 const apiRef = ref<InstanceType<typeof Form>>()
@@ -328,6 +335,10 @@ const goBack = () => {
 
 onMounted(() => {
   listAttributeFields()
+})
+
+onUnmounted(() => {
+  // 组件销毁时的清理工作
 })
 
 /** 监听分页参数的变化 */
