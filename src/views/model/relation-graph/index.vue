@@ -10,8 +10,8 @@
         @refresh="refreshGraph"
       >
         <template #actions>
-          <el-button :icon="Download" @click="downloadGraph"> 导出图片 </el-button>
-          <el-button :icon="FullScreen" @click="toggleFullscreen"> 全屏 </el-button>
+          <el-button type="primary" :icon="Download" class="action-btn" @click="downloadGraph"> 导出图片 </el-button>
+          <el-button type="success" :icon="FullScreen" class="action-btn" @click="toggleFullscreen"> 全屏 </el-button>
         </template>
       </ManagerHeader>
 
@@ -382,6 +382,15 @@ onMounted(() => {
       white-space: normal;
       max-width: 150px;
     }
+  }
+}
+
+// 按钮样式 - 参考 process/template/index.vue
+.action-btn {
+  margin-right: 8px;
+
+  &:last-child {
+    margin-right: 0;
   }
 }
 
