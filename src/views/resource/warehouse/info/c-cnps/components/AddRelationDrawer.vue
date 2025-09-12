@@ -424,6 +424,7 @@ const handleDeleteRelation = async (row: Resource) => {
 <style lang="scss" scoped>
 .add-relation-drawer {
   height: 65vh;
+  background: #f5f7fa;
   overflow-y: auto;
 }
 
@@ -437,6 +438,7 @@ const handleDeleteRelation = async (row: Resource) => {
   width: 350px;
   flex-shrink: 0;
   display: flex;
+  padding: 0px 10px 0px 0px;
   flex-direction: column;
   background: white;
   border-radius: 8px;

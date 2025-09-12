@@ -784,4 +784,57 @@ watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTyp
 :deep(.el-collapse:last-child) {
   margin-bottom: 0;
 }
+
+/* 小屏幕优化 - Mac 等设备 - 强制应用 */
+@media (max-width: 2000px) {
+  .relation-sidebar {
+    .sidebar-header {
+      padding: 12px 16px !important;
+
+      h3 {
+        font-size: 14px !important;
+      }
+    }
+
+    .relation-list {
+      .relation-item {
+        padding: 12px 16px !important;
+
+        .relation-info {
+          .relation-name {
+            font-size: 12px !important;
+          }
+        }
+
+        .relation-right {
+          .relation-count {
+            font-size: 10px !important;
+            padding: 2px 6px !important;
+          }
+
+          .relation-arrow {
+            font-size: 10px !important;
+          }
+        }
+      }
+    }
+  }
+
+  .relation-main {
+    .table-container {
+      .table-header {
+        padding: 12px 16px !important;
+
+        h3 {
+          font-size: 14px !important;
+        }
+
+        .resource-count {
+          font-size: 12px !important;
+          padding: 3px 8px !important;
+        }
+      }
+    }
+  }
+}
 </style>
