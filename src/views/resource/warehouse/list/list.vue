@@ -127,6 +127,7 @@
       <Form
         ref="apiRef"
         :attributeFiledsData="attributeFiledsData"
+        :attributeGroupsData="attributeGroupsData"
         :modelUid="modelUid"
         @list="listResourceByModelUid"
         @closed="onClosed"
@@ -139,7 +140,7 @@
 import { onMounted, ref, watch, h, reactive, nextTick, computed } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
-import { ListAttributeFieldApi } from "@/api/attribute"
+import { getModelAttributesWithGroupsApi } from "@/api/attribute"
 import { listResourceApi, deleteResourceApi, findSecureData, setCustomFieldApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, Edit, Delete, View, Setting } from "@element-plus/icons-vue"
@@ -171,7 +172,7 @@ const route = useRoute()
 const modelUid = route.query.uid as string
 const modelName = route.query.name as string
 const attributeFiledsData = ref<Attribute[]>([])
-
+const attributeGroupsData = ref<any[]>([]) // 存储分组数据
 const displayFileds = ref<Attribute[]>([])
 const drawerVisible = ref<boolean>(false)
 
@@ -338,13 +339,24 @@ const handleDetailClick = (resource: Resource) => {
 
 // ** 获取资产字段信息 */
 const listAttributeFields = () => {
-  ListAttributeFieldApi(modelUid)
+  getModelAttributesWithGroupsApi(modelUid)
     .then(({ data }) => {
-      attributeFiledsData.value = data.attribute_fields
+      // 保存分组数据
+      attributeGroupsData.value = data.attribute_groups
+
+      // 将分组数据转换为平铺的字段列表
+      const allFields: Attribute[] = []
+      data.attribute_groups.forEach((group) => {
+        if (group.attributes) {
+          allFields.push(...group.attributes)
+        }
+      })
+      attributeFiledsData.value = allFields
       sortFields()
     })
     .catch(() => {
       attributeFiledsData.value = []
+      attributeGroupsData.value = []
     })
     .finally(() => {
       // ...

@@ -349,8 +349,6 @@ const listAttributeFields = async (modelUid: string) => {
   await ListAttributeFieldApi(modelUid)
     .then(({ data }) => {
       attributeFiledsData.value = data.attribute_fields
-
-      console.log("attribute result", attributeFiledsData.value)
     })
     .catch((error) => {
       console.log("报错", error)

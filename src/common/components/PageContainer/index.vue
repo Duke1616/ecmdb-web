@@ -13,7 +13,7 @@
 .page-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   overflow: hidden;
   padding: 20px;

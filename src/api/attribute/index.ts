@@ -3,8 +3,8 @@ import type * as attribute from "./types/attribute"
 import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
-/** 获取模型字段列表 */
-export function listAttributesByModelUidApi(modelUid: string) {
+/** 获取模型字段列表（包含分组信息） */
+export function getModelAttributesWithGroupsApi(modelUid: string) {
   return instance.post<attribute.listAttributesResponseData>({
     url: `${API_SERVICE.CMDB}/attribute/list`,
     data: { model_uid: modelUid }

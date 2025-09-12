@@ -1,37 +1,35 @@
 <template>
   <div class="form-container">
-    <el-form 
-      ref="formRef" 
-      :model="formData" 
-      :rules="formRules" 
-      size="large" 
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      size="default"
       label-position="top"
       class="resource-form"
     >
-      <div class="form-section">
+      <!-- 按分组展示字段 -->
+      <div v-for="group in props.attributeGroupsData" :key="group.group_id" class="form-section">
         <div class="section-title">
           <el-icon class="section-icon"><Setting /></el-icon>
-          <span>基础属性</span>
+          <span>{{ group.group_name }}</span>
+          <el-tag size="small" type="info">{{ group.attributes?.length || 0 }} 个字段</el-tag>
         </div>
 
         <!-- 字符串和列表字段 - 两列布局 -->
-        <el-row :gutter="20">
-          <el-col :span="12" v-for="(item, index) of nonFileFields" :key="index">
+        <el-row :gutter="16">
+          <el-col :span="12" v-for="(item, index) of getNonFileFields(group.attributes || [])" :key="index">
             <div class="form-row">
               <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
                 <template v-if="item.field_type === 'string'">
-                  <el-input 
-                    v-model="formData.data[item.field_uid]" 
+                  <el-input
+                    v-model="formData.data[item.field_uid]"
                     :placeholder="handlerPlaceholder(item.field_name)"
                     clearable
                   />
                 </template>
                 <template v-if="item.field_type === 'list'">
-                  <el-select 
-                    v-model="formData.data[item.field_uid]" 
-                    placeholder="请选择"
-                    clearable
-                  >
+                  <el-select v-model="formData.data[item.field_uid]" placeholder="请选择" clearable>
                     <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
                   </el-select>
                 </template>
@@ -40,9 +38,9 @@
           </el-col>
         </el-row>
 
-        <!-- 多行文本字段 - 两列布局 -->
-        <el-row :gutter="20">
-          <el-col :span="12" v-for="(item, index) of multilineFields" :key="index">
+        <!-- 多行文本字段 - 独占一行 -->
+        <el-row :gutter="16">
+          <el-col :span="24" v-for="(item, index) of getMultilineFields(group.attributes || [])" :key="index">
             <div class="form-row">
               <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
                 <el-input
@@ -56,9 +54,9 @@
           </el-col>
         </el-row>
 
-        <!-- 文件上传字段 - 两列布局 -->
-        <el-row :gutter="20">
-          <el-col :span="12" v-for="(item, index) of fileFields" :key="index">
+        <!-- 文件上传字段 - 独占一行 -->
+        <el-row :gutter="16">
+          <el-col :span="24" v-for="(item, index) of getFileFields(group.attributes || [])" :key="index">
             <div class="form-row">
               <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
                 <div class="upload-wrapper">
@@ -75,8 +73,15 @@
                     :limit="5"
                     :on-exceed="handleExceed"
                     :on-progress="handleProgress"
+                    drag
                   >
-                    <el-button type="primary" :icon="Upload">文件上传</el-button>
+                    <div class="upload-dragger">
+                      <el-icon class="upload-icon"><Upload /></el-icon>
+                      <div class="upload-text">
+                        <p class="upload-title">点击或拖拽文件到此处上传</p>
+                        <p class="upload-hint">支持多文件上传，最多5个文件</p>
+                      </div>
+                    </div>
                   </el-upload>
                 </div>
               </el-form-item>
@@ -113,11 +118,11 @@ import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
 interface Props {
   modelUid: string
   attributeFiledsData: Attribute[]
+  attributeGroupsData: any[] // 分组数据
 }
 
 const props = defineProps<Props>()
 const emits = defineEmits(["list", "closed"])
-const activeNames = ref<string[]>(["0", "1"])
 const DEFAULT_FORM_DATA: CreateOrUpdateResourceReq = {
   name: "",
   model_uid: props.modelUid,
@@ -243,17 +248,18 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
   }).then(() => true)
 }
 
-const nonFileFields = computed(() => {
-  return props.attributeFiledsData.filter((item) => item.field_type !== "file" && item.field_type !== "multiline")
-})
+// 按分组过滤字段的方法
+const getNonFileFields = (fields: Attribute[]) => {
+  return fields.filter((item) => item.field_type !== "file" && item.field_type !== "multiline")
+}
 
-const fileFields = computed(() => {
-  return props.attributeFiledsData.filter((item) => item.field_type === "file")
-})
+const getFileFields = (fields: Attribute[]) => {
+  return fields.filter((item) => item.field_type === "file")
+}
 
-const multilineFields = computed(() => {
-  return props.attributeFiledsData.filter((item) => item.field_type === "multiline")
-})
+const getMultilineFields = (fields: Attribute[]) => {
+  return fields.filter((item) => item.field_type === "multiline")
+}
 
 /** 新增关联类型 */
 const handleSubmit = () => {
@@ -292,34 +298,34 @@ defineExpose({
 
 <style lang="scss" scoped>
 .form-container {
-  padding: 20px;
+  padding: 16px;
   height: 100%;
   overflow-y: auto;
 }
 
 .resource-form {
   .form-section {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 
     .section-title {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
       border-bottom: 1px solid #e5e7eb;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       color: #374151;
 
       .section-icon {
         color: #3b82f6;
-        font-size: 18px;
+        font-size: 16px;
       }
     }
 
     .form-row {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
 
       .form-item {
         margin-bottom: 0;
@@ -327,8 +333,8 @@ defineExpose({
         :deep(.el-form-item__label) {
           font-weight: 500;
           color: #374151;
-          margin-bottom: 8px;
-          font-size: 14px;
+          margin-bottom: 6px;
+          font-size: 13px;
         }
 
         :deep(.el-input) {
@@ -398,20 +404,93 @@ defineExpose({
               width: 100%;
             }
 
+            :deep(.el-upload-dragger) {
+              width: 100%;
+              height: 120px;
+              border: 2px dashed #d1d5db;
+              border-radius: 8px;
+              background: #fafafa;
+              transition: all 0.3s ease;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+
+              &:hover {
+                border-color: #3b82f6;
+                background: #f0f9ff;
+              }
+            }
+
+            .upload-dragger {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              text-align: center;
+
+              .upload-icon {
+                font-size: 32px;
+                color: #9ca3af;
+                margin-bottom: 12px;
+                transition: color 0.3s ease;
+              }
+
+              .upload-text {
+                .upload-title {
+                  font-size: 14px;
+                  color: #374151;
+                  margin: 0 0 4px 0;
+                  font-weight: 500;
+                }
+
+                .upload-hint {
+                  font-size: 12px;
+                  color: #6b7280;
+                  margin: 0;
+                }
+              }
+            }
+
+            :deep(.el-upload-list) {
+              margin-top: 12px;
+            }
+
             :deep(.el-upload-list__item) {
-              transition: none !important;
+              transition: all 0.3s ease !important;
               border-radius: 6px;
               border: 1px solid #e5e7eb;
               margin-top: 8px;
+              padding: 8px 12px;
+              background: #fff;
+              box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+              &:hover {
+                border-color: #3b82f6;
+                box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+              }
             }
 
             :deep(.el-upload-list__item-name) {
               color: #374151;
-              font-size: 14px;
+              font-size: 13px;
+              font-weight: 500;
             }
 
             :deep(.el-upload-list__item-status-label) {
               color: #10b981;
+              font-size: 12px;
+            }
+
+            :deep(.el-upload-list__item-delete) {
+              color: #ef4444;
+              font-size: 14px;
+
+              &:hover {
+                color: #dc2626;
+              }
             }
           }
         }
@@ -423,18 +502,18 @@ defineExpose({
 // 响应式设计
 @media (max-width: 768px) {
   .form-container {
-    padding: 16px;
+    padding: 12px;
   }
 
   .resource-form {
     .form-section {
       .section-title {
-        font-size: 15px;
-        margin-bottom: 16px;
+        font-size: 14px;
+        margin-bottom: 12px;
       }
 
       .form-row {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
       }
 
       // 在小屏幕上改为单列布局
@@ -455,7 +534,7 @@ defineExpose({
       :deep(.el-row) {
         margin: 0 -10px;
       }
-      
+
       :deep(.el-col) {
         padding: 0 10px;
       }

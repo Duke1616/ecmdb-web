@@ -79,7 +79,7 @@
       @cancel="dialogAttrGroupVisible = false"
     >
       <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="80px" class="dialog-form">
-        <el-form-item prop="group_name" label="组名称">
+        <el-form-item prop="group_name" label-position="top" label="组名称">
           <el-input v-model="AttrGroup.group_name" placeholder="请输入分组名称" class="form-input" />
         </el-form-item>
       </el-form>
@@ -136,7 +136,7 @@
 <script lang="ts" setup>
 import { h, nextTick, ref, watch } from "vue"
 import { Search, CirclePlus, Edit, Delete, Setting, ArrowRight, Expand, ArrowUp } from "@element-plus/icons-vue"
-import { listAttributesByModelUidApi, DeleteAttributeApi, createAttributeGroupApi } from "@/api/attribute"
+import { getModelAttributesWithGroupsApi, DeleteAttributeApi, createAttributeGroupApi } from "@/api/attribute"
 import { type AttributeGroup, type Attribute, CreateAttributeGroupReq } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/common/composables/usePagination"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
@@ -176,7 +176,7 @@ const handleSortDrawer = () => {
 const AttributesData = ref<AttributeGroup[]>([])
 function getAttributesData() {
   loading.value = true
-  listAttributesByModelUidApi(props.modelUid)
+  getModelAttributesWithGroupsApi(props.modelUid)
     .then(({ data }) => {
       AttributesData.value = data.attribute_groups
       filterData.value = data.attribute_groups

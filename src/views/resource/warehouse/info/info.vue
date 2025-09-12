@@ -1,5 +1,5 @@
 <template>
-  <div class="modern-container">
+  <PageContainer>
     <ManagerHeader
       title="资源详情"
       subtitle=""
@@ -18,22 +18,20 @@
       </template>
     </ManagerHeader>
 
-    <div class="content-tabs">
-      <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange">
-        <template #default="{ activeTab }">
-          <resourceDesc v-if="activeTab === 'resource-desc'" :resource-id="resourceId" :model-uid="modelUid" />
-          <resourceList v-if="activeTab === 'resource-list'" :model-uid="modelUid" :resource-id="resourceId" />
-          <resourceRelation
-            v-if="activeTab === 'resource-relation'"
-            :model-uid="modelUid"
-            :resource-id="resourceId"
-            :activeName="activeName"
-            :resource-name="resourceName"
-          />
-        </template>
-      </CustomTabs>
-    </div>
-  </div>
+    <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange">
+      <template #default="{ activeTab }">
+        <resourceDesc v-if="activeTab === 'resource-desc'" :resource-id="resourceId" :model-uid="modelUid" />
+        <resourceList v-if="activeTab === 'resource-list'" :model-uid="modelUid" :resource-id="resourceId" />
+        <resourceRelation
+          v-if="activeTab === 'resource-relation'"
+          :model-uid="modelUid"
+          :resource-id="resourceId"
+          :activeName="activeName"
+          :resource-name="resourceName"
+        />
+      </template>
+    </CustomTabs>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
@@ -45,6 +43,7 @@ import resourceList from "./c-cnps/relation-list.vue"
 import router from "@/router"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const route = useRoute()
 const modelUid = route.query.model_uid as string
@@ -71,20 +70,7 @@ const goBack = () => {
 </script>
 
 <style lang="scss" scoped>
-.modern-container {
-  padding: 16px;
-  background: var(--background, #fafafa);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.content-tabs {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
+// 移除自定义容器样式，使用 PageContainer
 
 .resource-identity {
   .identity-badge {
