@@ -1,13 +1,17 @@
 <template>
   <div class="add-relation-drawer">
-    <!-- 筛选表单 -->
-    <div class="filter-section">
-      <el-form :model="filterForm" label-width="80px">
-        <el-form-item label="关联类型">
+    <!-- 关联类型选择 -->
+    <div class="form-section">
+      <div class="section-title">
+        <el-icon class="section-icon"><Connection /></el-icon>
+        <span>关联模型</span>
+      </div>
+      <div class="form-row">
+        <el-form-item label="关联模型" class="form-item" label-position="top">
           <el-select
-            v-model="relationName"
+            v-model="filterForm.relationName"
             placeholder="请选择关联类型"
-            style="width: 100%"
+            size="large"
             @change="handleRelationChange"
           >
             <el-option
@@ -18,30 +22,72 @@
             />
           </el-select>
         </el-form-item>
+      </div>
+    </div>
 
-        <el-form-item label="条件筛选" v-if="relationName">
-          <div class="filter-row">
-            <el-select v-model="fieldName" placeholder="字段名称" style="width: 25%" @change="handleFieldName">
-              <el-option
-                v-for="item in attributeFieldsData"
-                :key="item.id"
-                :label="item.field_name"
-                :value="item.field_uid"
-              />
-            </el-select>
-            <el-select v-model="condition" placeholder="条件" style="width: 20%" @change="handleCondition">
-              <el-option v-for="item in options" :key="item.label" :label="item.label" :value="item.value" />
-            </el-select>
-            <el-input v-model="inputSearch" placeholder="请输入搜索内容" style="width: 35%" clearable />
-            <el-button type="primary" @click="handleSearch">搜索</el-button>
-            <el-button v-if="isFiltering" @click="handleClearFilter">清除筛选</el-button>
+    <!-- 筛选条件 -->
+    <div class="form-section" v-if="filterForm.relationName">
+      <div class="section-title">
+        <el-icon class="section-icon"><Filter /></el-icon>
+        <span>筛选条件</span>
+      </div>
+
+      <div class="form-row">
+        <el-form-item label="字段名称" class="form-item" label-position="top">
+          <el-select v-model="filterForm.fieldName" placeholder="请选择字段" size="large" @change="handleFieldName">
+            <el-option
+              v-for="item in attributeFieldsData"
+              :key="item.id"
+              :label="item.field_name"
+              :value="item.field_uid"
+            />
+          </el-select>
+        </el-form-item>
+      </div>
+
+      <div class="form-row">
+        <el-form-item label="筛选条件" class="form-item" label-position="top">
+          <div class="condition-buttons">
+            <el-button
+              v-for="option in options"
+              :key="option.value"
+              :type="filterForm.condition === option.value ? 'primary' : 'default'"
+              size="default"
+              @click="handleConditionClick(option.value)"
+            >
+              {{ option.label }}
+            </el-button>
           </div>
         </el-form-item>
-      </el-form>
+      </div>
+
+      <div class="form-row">
+        <el-form-item label="搜索内容" class="form-item" label-position="top">
+          <el-input v-model="filterForm.inputSearch" placeholder="请输入搜索内容" size="large" clearable />
+        </el-form-item>
+      </div>
+
+      <div class="form-row">
+        <div class="form-actions">
+          <el-button
+            type="primary"
+            size="large"
+            @click="handleSearch"
+            :disabled="!filterForm.fieldName || !filterForm.condition"
+          >
+            <el-icon><Search /></el-icon>
+            搜索资源
+          </el-button>
+          <el-button v-if="isFiltering" size="large" @click="handleClearFilter">
+            <el-icon><Refresh /></el-icon>
+            清除筛选
+          </el-button>
+        </div>
+      </div>
     </div>
 
     <!-- 资源表格 -->
-    <div class="table-section" v-if="relationName">
+    <div class="table-section" v-if="filterForm.relationName">
       <DataTable
         :data="resourcesData"
         :columns="getTableColumns()"
@@ -91,7 +137,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted } from "vue"
 import { ElMessage } from "element-plus"
-import { Link } from "@element-plus/icons-vue"
+import { Link, Search, Refresh, Connection, Filter } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { canBeRelatedFilterResourceApi } from "@/api/resource"
 import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
@@ -128,23 +174,17 @@ const isFiltering = ref(false)
 // 重写分页处理函数，在分页变化时重新加载数据
 const handleCurrentChange = (page: number) => {
   originalHandleCurrentChange(page)
-  if (relationName.value) {
-    loadResources(relationName.value, isFiltering.value)
+  if (filterForm.value.relationName) {
+    loadResources(filterForm.value.relationName, isFiltering.value)
   }
 }
 
 const handleSizeChange = (size: number) => {
   originalHandleSizeChange(size)
-  if (relationName.value) {
-    loadResources(relationName.value, isFiltering.value)
+  if (filterForm.value.relationName) {
+    loadResources(filterForm.value.relationName, isFiltering.value)
   }
 }
-
-// 表单数据
-const relationName = ref("")
-const fieldName = ref("")
-const condition = ref("")
-const inputSearch = ref("")
 
 // 筛选表单
 const filterForm = ref({
@@ -204,10 +244,10 @@ onMounted(() => {
 
 // 重置表单
 const resetForm = () => {
-  relationName.value = ""
-  fieldName.value = ""
-  condition.value = ""
-  inputSearch.value = ""
+  filterForm.value.relationName = ""
+  filterForm.value.fieldName = ""
+  filterForm.value.condition = ""
+  filterForm.value.inputSearch = ""
   resourcesData.value = []
   attributeFieldsData.value = []
   isFiltering.value = false
@@ -266,10 +306,10 @@ const loadResources = async (relationName: string, useFilter = false) => {
     }
 
     // 如果使用筛选条件，添加筛选参数
-    if (useFilter && fieldName.value && condition.value && inputSearch.value) {
-      params.filter_name = fieldName.value
-      params.filter_condition = condition.value
-      params.filter_input = inputSearch.value
+    if (useFilter && filterForm.value.fieldName && filterForm.value.condition && filterForm.value.inputSearch) {
+      params.filter_name = filterForm.value.fieldName
+      params.filter_condition = filterForm.value.condition
+      params.filter_input = filterForm.value.inputSearch
     }
 
     console.log("加载资源参数:", params)
@@ -287,37 +327,37 @@ const handleFieldName = () => {
   // 可以在这里添加字段变化逻辑
 }
 
-// 处理条件变化
-const handleCondition = () => {
-  // 可以在这里添加条件变化逻辑
+// 处理条件按钮点击
+const handleConditionClick = (value: string) => {
+  filterForm.value.condition = value
 }
 
 // 处理搜索
 const handleSearch = async () => {
-  if (!relationName.value) {
+  if (!filterForm.value.relationName) {
     ElMessage.warning("请先选择关联类型")
     return
   }
 
   // 设置筛选状态
-  isFiltering.value = !!(fieldName.value && condition.value && inputSearch.value)
+  isFiltering.value = !!(filterForm.value.fieldName && filterForm.value.condition && filterForm.value.inputSearch)
 
   // 重置到第一页
   paginationData.currentPage = 1
-  await loadResources(relationName.value, isFiltering.value)
+  await loadResources(filterForm.value.relationName, isFiltering.value)
 }
 
 // 处理清除筛选
 const handleClearFilter = async () => {
-  fieldName.value = ""
-  condition.value = ""
-  inputSearch.value = ""
+  filterForm.value.fieldName = ""
+  filterForm.value.condition = ""
+  filterForm.value.inputSearch = ""
   isFiltering.value = false
 
   // 重置到第一页并重新加载数据
   paginationData.currentPage = 1
-  if (relationName.value) {
-    await loadResources(relationName.value, false)
+  if (filterForm.value.relationName) {
+    await loadResources(filterForm.value.relationName, false)
   }
 }
 
@@ -325,7 +365,7 @@ const handleClearFilter = async () => {
 const handleCreateRelation = async (row: Resource) => {
   try {
     // 根据关联类型确定源和目标资源ID
-    const src = relationName.value.split("_")[0]
+    const src = filterForm.value.relationName.split("_")[0]
     let src_resource_id = parseInt(props.resourceId)
     let dst_resource_id = row.id
 
@@ -337,7 +377,7 @@ const handleCreateRelation = async (row: Resource) => {
 
     await CreateResourceRelationApi({
       source_resource_id: src_resource_id,
-      relation_name: relationName.value,
+      relation_name: filterForm.value.relationName,
       target_resource_id: dst_resource_id
     })
 
@@ -357,7 +397,7 @@ const handleDeleteRelation = async (row: Resource) => {
   try {
     await deleteResourceRelationApi({
       resource_id: row.id,
-      relation_name: relationName.value,
+      relation_name: filterForm.value.relationName,
       model_uid: row.model_uid
     })
 
@@ -379,99 +419,179 @@ const handleDeleteRelation = async (row: Resource) => {
   display: flex;
   flex-direction: column;
   background: #f5f7fa;
-  border-radius: 8px;
-  overflow: hidden;
+  padding: 20px;
+  overflow-y: auto;
+}
 
-  .filter-section {
-    background: white;
-    padding: 20px;
-    border-bottom: 1px solid #e4e7ed;
-    flex-shrink: 0;
+.form-section {
+  margin-bottom: 24px;
 
-    .filter-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      width: 100%;
-
-      .el-button {
-        flex-shrink: 0;
-        margin-left: 8px;
-      }
-    }
-
-    .el-form-item {
-      margin-bottom: 16px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-  }
-
-  .table-section {
-    flex: 1;
-    padding: 20px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-
-    :deep(.data-table-container) {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-
-      .el-table {
-        flex: 1;
-      }
-    }
-  }
-
-  .empty-state {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: white;
-    margin: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  &:last-child {
+    margin-bottom: 0;
   }
 }
 
-// 响应式设计
+.section-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #3b82f6;
+
+  .section-icon {
+    margin-right: 6px;
+    font-size: 16px;
+    color: #3b82f6;
+  }
+
+  span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+  }
+}
+
+.form-row {
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-item {
+  margin-bottom: 0;
+
+  :deep(.el-form-item__label) {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+
+  :deep(.el-input__wrapper) {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+  }
+
+  :deep(.el-select__wrapper) {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+  }
+}
+
+.condition-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .el-button {
+    margin: 0;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+
+  .el-button {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+}
+
+.table-section {
+  flex: 1;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  :deep(.data-table-container) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+
+    .el-table {
+      flex: 1;
+    }
+  }
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  :deep(.el-empty__description) {
+    color: #6b7280;
+    font-size: 16px;
+  }
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
   .add-relation-drawer {
-    .filter-section {
-      padding: 16px;
+    padding: 16px;
+  }
 
-      .filter-row {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 8px;
+  .condition-buttons {
+    flex-direction: column;
 
-        .el-select,
-        .el-input {
-          width: 100% !important;
-        }
-
-        .el-button {
-          margin-left: 0;
-          width: 100%;
-        }
-      }
+    .el-button {
+      width: 100%;
     }
+  }
 
-    .table-section {
-      margin: 0 16px 16px 16px;
-      padding: 16px;
-    }
+  .form-actions {
+    flex-direction: column;
 
-    .empty-state {
-      margin: 16px;
+    .el-button {
+      width: 100%;
     }
   }
 }
