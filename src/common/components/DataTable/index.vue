@@ -98,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from "vue"
+import { computed, useSlots, ref, onMounted, onUnmounted } from "vue"
 
 interface Column {
   prop: string
@@ -152,6 +152,22 @@ const props = withDefaults(defineProps<Props>(), {
 
 const slots = useSlots()
 
+// 窗口宽度响应式变量
+const windowWidth = ref(window.innerWidth)
+
+// 监听窗口大小变化
+const handleResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener("resize", handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize)
+})
+
 const emit = defineEmits<{
   action: [key: string, row: any, index: number]
   selectionChange: [selection: any[]]
@@ -185,17 +201,58 @@ const hasActionsSlot = computed(() => {
 
 // 动态计算操作列宽度
 const dynamicActionColumnWidth = computed(() => {
-  // 如果有自定义操作列插槽，尝试从插槽内容中检测按钮数量
+  // 如果有自定义操作列插槽，尝试从插槽内容中获取实际按钮信息
   if (hasActionsSlot.value) {
-    // 通过检查插槽内容来动态调整宽度
-    // 这里我们使用一个更智能的方式：根据常见的按钮数量模式来调整
-    // 由于无法直接访问插槽内容，我们使用一个合理的默认值
-    return 200 // 大多数情况下使用200px
+    // 基于窗口宽度和数据量来动态计算
+    const dataLength = props.data?.length || 0
+    const isSmallScreen = windowWidth.value < 1400
+
+    // 基础宽度 - 确保能容纳4字按钮
+    let baseWidth = 200
+
+    // 根据屏幕大小调整
+    if (isSmallScreen) {
+      baseWidth = 220 // 小屏幕也需要足够宽度显示4字按钮
+    } else if (windowWidth.value > 1920) {
+      baseWidth = 280 // 大屏幕可以使用更宽的列
+    }
+
+    // 根据数据量调整
+    if (dataLength > 100) {
+      baseWidth += 40 // 大量数据可能需要更多操作
+    }
+
+    // 确保最小宽度能容纳2个4字按钮
+    const minWidthForTwoButtons = 180 // 2个4字按钮的最小宽度
+    baseWidth = Math.max(baseWidth, minWidthForTwoButtons)
+
+    return baseWidth
   }
 
   // 根据操作按钮数量动态调整宽度
   if (props.actions && props.actions.length > 0) {
-    return props.actions.length <= 2 ? 200 : 250
+    // 分析按钮文字长度，计算实际需要的宽度
+    let maxTextLength = 0
+    props.actions.forEach((action) => {
+      const textLength = action.label ? action.label.length : 0
+      maxTextLength = Math.max(maxTextLength, textLength)
+    })
+
+    // 中文字符宽度计算：9px字体
+    const chineseCharWidth = 9
+    const buttonPadding = 12 // 按钮内边距
+    const buttonSpacing = 6 // 按钮间距
+    const columnPadding = 16 // 列内边距
+    const iconWidth = 12 // 图标宽度（如果有）
+
+    // 计算单个按钮的宽度
+    const singleButtonWidth = maxTextLength * chineseCharWidth + buttonPadding + iconWidth
+
+    // 计算总宽度
+    const totalWidth =
+      props.actions.length * singleButtonWidth + (props.actions.length - 1) * buttonSpacing + columnPadding
+
+    return Math.max(120, totalWidth)
   }
 
   return props.actionColumnWidth
@@ -289,16 +346,17 @@ const handleCurrentChange = (page: number) => {
       background: #f8fafc;
       color: #374151;
       font-weight: 600;
-      height: 48px;
-      padding: 12px 16px;
-      font-size: 14px;
+      height: 38px;
+      padding: 6px 10px;
+      font-size: 11px;
     }
   }
 
   :deep(.el-table__body) {
     td {
-      font-size: 14px;
-      padding: 12px 16px;
+      font-size: 11px;
+      padding: 6px 10px;
+      height: 42px;
     }
   }
 
@@ -318,14 +376,14 @@ const handleCurrentChange = (page: number) => {
     .action-btn {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 6px 12px;
+      gap: 3px;
+      padding: 2px 6px;
       border-radius: 4px;
-      font-size: 12px;
+      font-size: 9px;
       font-weight: 500;
       transition: all 0.3s ease;
       white-space: nowrap;
-      min-height: 28px;
+      min-height: 20px;
 
       &:hover {
         transform: translateY(-1px);
@@ -339,10 +397,139 @@ const handleCurrentChange = (page: number) => {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  padding: 16px 20px;
+  padding: 10px 14px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-width: 1440px) {
+  .data-table {
+    :deep(.el-table__header) {
+      th {
+        font-size: 15px;
+        height: 52px;
+        padding: 14px 18px;
+      }
+    }
+
+    :deep(.el-table__body) {
+      td {
+        font-size: 15px;
+        padding: 14px 18px;
+        height: 56px;
+      }
+    }
+  }
+
+  .action-buttons {
+    .action-btn {
+      font-size: 13px;
+      padding: 8px 14px;
+      min-height: 32px;
+    }
+  }
+
+  .pagination-container {
+    padding: 18px 22px;
+
+    :deep(.el-pagination) {
+      font-size: 15px;
+
+      .el-pagination__sizes,
+      .el-pagination__total,
+      .el-pagination__jump {
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+/* 小屏幕优化 - Mac 等设备 - 强制应用 */
+@media (max-width: 2000px) {
+  .data-table {
+    :deep(.el-table__header) {
+      th {
+        font-size: 11px !important;
+        height: 38px !important;
+        padding: 6px 10px !important;
+      }
+    }
+
+    :deep(.el-table__body) {
+      td {
+        font-size: 11px !important;
+        padding: 6px 10px !important;
+        height: 42px !important;
+      }
+    }
+  }
+
+  .action-buttons {
+    .action-btn {
+      font-size: 9px !important;
+      padding: 2px 6px !important;
+      min-height: 20px !important;
+    }
+  }
+
+  .pagination-container {
+    padding: 10px 14px !important;
+
+    :deep(.el-pagination) {
+      font-size: 11px !important;
+
+      .el-pagination__sizes,
+      .el-pagination__total,
+      .el-pagination__jump {
+        font-size: 11px !important;
+      }
+    }
+  }
+}
+
+/* 中等屏幕优化 */
+@media (max-width: 1023px) and (min-width: 769px) {
+  .data-table {
+    :deep(.el-table__header) {
+      th {
+        font-size: 12px;
+        height: 42px;
+        padding: 8px 12px;
+      }
+    }
+
+    :deep(.el-table__body) {
+      td {
+        font-size: 12px;
+        padding: 8px 12px;
+        height: 46px;
+      }
+    }
+  }
+
+  .action-buttons {
+    .action-btn {
+      font-size: 10px;
+      padding: 3px 8px;
+      min-height: 24px;
+    }
+  }
+
+  .pagination-container {
+    padding: 12px 16px;
+
+    :deep(.el-pagination) {
+      font-size: 12px;
+
+      .el-pagination__sizes,
+      .el-pagination__total,
+      .el-pagination__jump {
+        font-size: 12px;
+      }
+    }
+  }
 }
 
 /* 高分辨率屏幕优化 */

@@ -207,7 +207,239 @@ defineEmits<{
   }
 }
 
-/* 响应式设计 */
+/* 高分辨率屏幕优化 */
+@media (min-width: 1440px) {
+  .manager-header {
+    padding: 20px 24px;
+    min-height: 70px;
+    margin-bottom: 20px;
+  }
+
+  .manager-title {
+    font-size: 22px;
+  }
+
+  .manager-subtitle {
+    font-size: 15px;
+  }
+
+  .header-left {
+    gap: 6px;
+
+    .title-section {
+      gap: 14px;
+
+      .back-button {
+        width: 36px;
+        height: 36px;
+
+        .back-icon {
+          font-size: 18px;
+        }
+      }
+    }
+
+    .details-section {
+      margin-top: 14px;
+    }
+
+    .extra-section {
+      margin-top: 10px;
+    }
+  }
+
+  .header-right {
+    gap: 14px;
+  }
+
+  :deep(.action-btn) {
+    height: 40px;
+    padding: 0 18px;
+    font-size: 15px;
+    gap: 8px;
+  }
+
+  :deep(.refresh-btn) {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* 超高分辨率屏幕优化 */
+@media (min-width: 1920px) {
+  .manager-header {
+    padding: 22px 26px;
+    min-height: 75px;
+    margin-bottom: 22px;
+  }
+
+  .manager-title {
+    font-size: 24px;
+  }
+
+  .manager-subtitle {
+    font-size: 16px;
+  }
+
+  .header-left {
+    gap: 8px;
+
+    .title-section {
+      gap: 16px;
+
+      .back-button {
+        width: 40px;
+        height: 40px;
+
+        .back-icon {
+          font-size: 20px;
+        }
+      }
+    }
+
+    .details-section {
+      margin-top: 16px;
+    }
+
+    .extra-section {
+      margin-top: 12px;
+    }
+  }
+
+  .header-right {
+    gap: 16px;
+  }
+
+  :deep(.action-btn) {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 16px;
+    gap: 10px;
+  }
+
+  :deep(.refresh-btn) {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* 小屏幕优化 - Mac 等设备 - 强制应用 */
+@media (max-width: 2000px) {
+  .manager-header {
+    padding: 12px 16px !important;
+    min-height: 50px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .manager-title {
+    font-size: 16px !important;
+  }
+
+  .manager-subtitle {
+    font-size: 12px !important;
+  }
+
+  .header-left {
+    gap: 3px;
+
+    .title-section {
+      gap: 10px;
+
+      .back-button {
+        width: 30px;
+        height: 30px;
+
+        .back-icon {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .details-section {
+      margin-top: 10px;
+    }
+
+    .extra-section {
+      margin-top: 6px;
+    }
+  }
+
+  .header-right {
+    gap: 10px;
+  }
+
+  :deep(.action-btn) {
+    height: 28px !important;
+    padding: 0 12px !important;
+    font-size: 12px !important;
+    gap: 3px !important;
+  }
+
+  :deep(.refresh-btn) {
+    width: 28px !important;
+    height: 28px !important;
+  }
+}
+
+/* 中等屏幕优化 */
+@media (max-width: 1023px) and (min-width: 769px) {
+  .manager-header {
+    padding: 14px 18px;
+    min-height: 55px;
+    margin-bottom: 14px;
+  }
+
+  .manager-title {
+    font-size: 17px;
+  }
+
+  .manager-subtitle {
+    font-size: 12px;
+  }
+
+  .header-left {
+    gap: 2px;
+
+    .title-section {
+      gap: 8px;
+
+      .back-button {
+        width: 28px;
+        height: 28px;
+
+        .back-icon {
+          font-size: 13px;
+        }
+      }
+    }
+
+    .details-section {
+      margin-top: 8px;
+    }
+
+    .extra-section {
+      margin-top: 4px;
+    }
+  }
+
+  .header-right {
+    gap: 8px;
+  }
+
+  :deep(.action-btn) {
+    height: 30px;
+    padding: 0 12px;
+    font-size: 12px;
+    gap: 3px;
+  }
+
+  :deep(.refresh-btn) {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* 移动端响应式设计 */
 @media (max-width: 768px) {
   .manager-header {
     padding: 16px 18px;

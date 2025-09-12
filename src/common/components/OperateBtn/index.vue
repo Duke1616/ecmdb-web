@@ -116,7 +116,10 @@ const handleCommand = (command: any) => {
 
   .el-button {
     min-width: 0px;
-    margin-right: 12px;
+    margin-right: 6px;
+    font-size: 9px;
+    padding: 2px 6px;
+    min-height: 18px;
   }
 }
 
@@ -126,5 +129,77 @@ const handleCommand = (command: any) => {
 
 .el-dropdown {
   vertical-align: middle;
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-width: 1440px) {
+  .btn-box {
+    .el-button {
+      font-size: 11px;
+      padding: 6px 10px;
+      min-height: 26px;
+      margin-right: 10px;
+    }
+  }
+
+  .link-text .el-button {
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 26px;
+  }
+}
+
+/* 中等屏幕优化 */
+@media (max-width: 1023px) and (min-width: 769px) {
+  .btn-box {
+    .el-button {
+      font-size: 10px;
+      padding: 3px 8px;
+      min-height: 24px;
+      margin-right: 8px;
+    }
+  }
+
+  .link-text .el-button {
+    font-size: 10px;
+    padding: 3px 8px;
+    min-height: 24px;
+  }
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-width: 1440px) {
+  .btn-box {
+    .el-button {
+      font-size: 11px;
+      padding: 6px 10px;
+      min-height: 26px;
+      margin-right: 10px;
+    }
+  }
+
+  .link-text .el-button {
+    font-size: 11px;
+    padding: 6px 10px;
+    min-height: 26px;
+  }
+}
+
+/* 超高分辨率屏幕优化 */
+@media (min-width: 1920px) {
+  .btn-box {
+    .el-button {
+      font-size: 14px;
+      padding: 10px 16px;
+      min-height: 36px;
+      margin-right: 16px;
+    }
+  }
+
+  .link-text .el-button {
+    font-size: 14px;
+    padding: 10px 16px;
+    min-height: 36px;
+  }
 }
 </style>
