@@ -59,31 +59,18 @@
           <el-col :span="24" v-for="(item, index) of getFileFields(group.attributes || [])" :key="index">
             <div class="form-row">
               <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
-                <div class="upload-wrapper">
-                  <el-upload
-                    v-model:file-list="formData.data[item.field_uid]"
-                    class="upload-file"
-                    action="#"
-                    multiple
-                    show-file-list
-                    :http-request="(action: UploadRequestOptions) => uploadFile(action, item.field_uid)"
-                    :on-preview="handlePreview"
-                    :on-remove="createHandleRemove(item.field_uid)"
-                    :before-remove="beforeRemove"
-                    :limit="5"
-                    :on-exceed="handleExceed"
-                    :on-progress="handleProgress"
-                    drag
-                  >
-                    <div class="upload-dragger">
-                      <el-icon class="upload-icon"><Upload /></el-icon>
-                      <div class="upload-text">
-                        <p class="upload-title">点击或拖拽文件到此处上传</p>
-                        <p class="upload-hint">支持多文件上传，最多5个文件</p>
-                      </div>
-                    </div>
-                  </el-upload>
-                </div>
+                <FileUpload
+                  v-model="formData.data[item.field_uid]"
+                  :field-uid="item.field_uid"
+                  :resource-id="formData.id"
+                  :title="`点击或拖拽文件到此处上传`"
+                  :hint="`支持多文件上传，最多5个文件`"
+                  :limit="5"
+                  @upload-success="handleUploadSuccess"
+                  @upload-error="handleUploadError"
+                  @remove-success="handleRemoveSuccess"
+                  @remove-error="handleRemoveError"
+                />
               </el-form-item>
             </div>
           </el-col>
@@ -94,25 +81,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, h } from "vue"
-import { Setting, Upload } from "@element-plus/icons-vue"
-import { createResourceApi, setCustomFieldApi, updateResourceApi } from "@/api/resource"
+import { ref, computed } from "vue"
+import { Setting } from "@element-plus/icons-vue"
+import FileUpload from "./components/FileUpload/index.vue"
+import { createResourceApi, updateResourceApi } from "@/api/resource"
 import { Resource, type CreateOrUpdateResourceReq } from "@/api/resource/types/resource"
 import { cloneDeep } from "lodash-es"
-import {
-  type FormInstance,
-  type FormRules,
-  ElMessage,
-  ElMessageBox,
-  UploadProgressEvent,
-  UploadProps,
-  UploadRequestOptions,
-  UploadUserFile
-} from "element-plus"
+import { type FormInstance, type FormRules, ElMessage, UploadUserFile } from "element-plus"
 import { Attribute } from "@/api/attribute/types/attribute"
-import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
-import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
 
 // 接收父组建传递
 interface Props {
@@ -150,102 +126,23 @@ const handlerPlaceholder = (name: string) => {
   return `请输入${name}`
 }
 
-const uploadFile = (action: UploadRequestOptions, fieldUid: string) => {
-  const objectName = action.file.uid + "/" + action.file.name
-  return putMinioPresignedUrl(objectName).then((res: any) => {
-    const url = getLocalMinioUrl(res.data)
-    // 请求上传
-    axios
-      .put(url, action.file, {
-        headers: {
-          "Content-Type": action.file.type
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            action.onProgress({
-              percent: percentCompleted
-            } as UploadProgressEvent)
-
-            if (percentCompleted === 100) {
-              action.onSuccess && action.onSuccess(action.file)
-            }
-          }
-        }
-      })
-      .then(() => {
-        const fileList = formData.value.data[fieldUid]
-        const file = fileList.find((item: UploadUserFile) => item.name === action.file.name)
-        if (file) {
-          file.url = res.data.split("?")[0]
-        }
-
-        // 当为修改的时候，主动调用接口更新字段信息，防止文件已经删除，页面依旧展示
-        // 如果新增情况下，主动上传文件不触发保存 Minio 会存在脏数据情况，暂时不处理
-        if (formData.value.id !== undefined) {
-          setCustomFieldApi({
-            id: formData.value.id,
-            field: fieldUid,
-            data: fileList
-          }).catch(() => {
-            ElMessage.error("上传失败")
-          })
-        }
-      })
-      .catch(() => {
-        ElMessage.error("上传失败")
-      })
-  })
+// 文件上传事件处理
+const handleUploadSuccess = (file: UploadUserFile, fieldUid: string) => {
+  console.log("Upload success:", file, fieldUid)
 }
 
-const createHandleRemove = (field: string) => {
-  const handleRemove: UploadProps["onRemove"] = (file) => {
-    if (file.url === undefined) {
-      return
-    }
-
-    removeMinioObject(decodedUrlPath(file.url)).then(() => {
-      formData.value.data[field] = formData.value.data[field].map((item: UploadUserFile) =>
-        item.name === file.name ? { ...item } : item
-      )
-
-      setCustomFieldApi({
-        id: formData.value.id as number,
-        field: field,
-        data: formData.value.data[field]
-      }).catch(() => {
-        ElMessage.error("上传失败")
-      })
-    })
-  }
-
-  return handleRemove
+const handleUploadError = (error: any, fieldUid: string) => {
+  console.error("Upload error:", error, fieldUid)
+  ElMessage.error("上传失败")
 }
 
-const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
-  file.percentage = event.percent
+const handleRemoveSuccess = (file: UploadUserFile, fieldUid: string) => {
+  console.log("Remove success:", file, fieldUid)
 }
 
-const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
-  console.log(uploadFile)
-}
-
-const handleExceed: UploadProps["onExceed"] = (files) => {
-  ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
-}
-
-const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
-  return ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除文件: "),
-      h("i", { style: "color: red" }, `${uploadFile.name}`),
-      h("span", null, " 确认删除？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => true)
+const handleRemoveError = (error: any, fieldUid: string) => {
+  console.error("Remove error:", error, fieldUid)
+  ElMessage.error("删除失败")
 }
 
 // 按分组过滤字段的方法
@@ -393,150 +290,6 @@ defineExpose({
             }
           }
         }
-
-        .upload-wrapper {
-          width: 100%;
-
-          .upload-file {
-            width: 100%;
-
-            :deep(.el-upload) {
-              width: 100%;
-            }
-
-            :deep(.el-upload-dragger) {
-              width: 100%;
-              height: 120px;
-              border: 2px dashed #d1d5db;
-              border-radius: 8px;
-              background: #fafafa;
-              transition: all 0.3s ease;
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-
-              &:hover {
-                border-color: #3b82f6;
-                background: #f0f9ff;
-              }
-            }
-
-            .upload-dragger {
-              display: flex;
-              flex-direction: column;
-              align-items: center;
-              justify-content: center;
-              height: 100%;
-              text-align: center;
-
-              .upload-icon {
-                font-size: 32px;
-                color: #9ca3af;
-                margin-bottom: 12px;
-                transition: color 0.3s ease;
-              }
-
-              .upload-text {
-                .upload-title {
-                  font-size: 14px;
-                  color: #374151;
-                  margin: 0 0 4px 0;
-                  font-weight: 500;
-                }
-
-                .upload-hint {
-                  font-size: 12px;
-                  color: #6b7280;
-                  margin: 0;
-                }
-              }
-            }
-
-            :deep(.el-upload-list) {
-              margin-top: 12px;
-            }
-
-            :deep(.el-upload-list__item) {
-              transition: all 0.3s ease !important;
-              border-radius: 6px;
-              border: 1px solid #e5e7eb;
-              margin-top: 8px;
-              padding: 8px 12px;
-              background: #fff;
-              box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-
-              &:hover {
-                border-color: #3b82f6;
-                box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
-              }
-            }
-
-            :deep(.el-upload-list__item-name) {
-              color: #374151;
-              font-size: 13px;
-              font-weight: 500;
-            }
-
-            :deep(.el-upload-list__item-status-label) {
-              color: #10b981;
-              font-size: 12px;
-            }
-
-            :deep(.el-upload-list__item-delete) {
-              color: #ef4444;
-              font-size: 14px;
-
-              &:hover {
-                color: #dc2626;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-  .form-container {
-    padding: 12px;
-  }
-
-  .resource-form {
-    .form-section {
-      .section-title {
-        font-size: 14px;
-        margin-bottom: 12px;
-      }
-
-      .form-row {
-        margin-bottom: 12px;
-      }
-
-      // 在小屏幕上改为单列布局
-      :deep(.el-col) {
-        width: 100% !important;
-        flex: 0 0 100% !important;
-        max-width: 100% !important;
-      }
-    }
-  }
-}
-
-// 中等屏幕优化
-@media (max-width: 1024px) and (min-width: 769px) {
-  .resource-form {
-    .form-section {
-      // 在中等屏幕上保持两列，但调整间距
-      :deep(.el-row) {
-        margin: 0 -10px;
-      }
-
-      :deep(.el-col) {
-        padding: 0 10px;
       }
     }
   }

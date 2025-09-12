@@ -56,48 +56,17 @@
           </el-button>
         </template>
         <template v-else-if="item.field_type === 'file'">
-          <div v-if="row.data[item.field_uid] === undefined || row.data[item.field_uid].length === 0">
-            <el-upload
-              v-model:file-list="row.data[item.field_uid]"
-              class="upload-file"
-              action="#"
-              multiple
-              show-file-list
-              :http-request="(action: UploadRequestOptions) => uploadFile(action, row, item.field_uid)"
-              :limit="5"
-              :on-exceed="handleExceed"
-              :on-progress="handleProgress"
-            >
-              <el-button type="warning" text bg size="small">上传</el-button>
-            </el-upload>
-          </div>
-          <div v-else>
-            <el-popover width="300px" trigger="click" placement="top">
-              <div class="upload-container">
-                <el-upload
-                  v-model:file-list="row.data[item.field_uid]"
-                  class="upload-file"
-                  action="#"
-                  multiple
-                  show-file-list
-                  :http-request="(action: UploadRequestOptions) => uploadFile(action, row, item.field_uid)"
-                  :limit="5"
-                  :on-exceed="handleExceed"
-                  :on-progress="handleProgress"
-                  :on-preview="handlePreview"
-                  :on-remove="createHandleRemove(row, item.field_uid)"
-                  :before-remove="beforeRemove"
-                >
-                  <el-button type="primary" text bg size="default" style="width: 100%; text-align: center">
-                    新增文件
-                  </el-button>
-                </el-upload>
-              </div>
-              <template #reference>
-                <el-button type="primary" text bg size="small"> 查看 </el-button>
-              </template>
-            </el-popover>
-          </div>
+          <TableFileUpload
+            v-model="row.data[item.field_uid]"
+            :field-uid="item.field_uid"
+            :row="row"
+            :limit="5"
+            @upload-success="handleUploadSuccess"
+            @upload-error="handleUploadError"
+            @remove-success="handleRemoveSuccess"
+            @remove-error="handleRemoveError"
+            @preview="handlePreview"
+          />
         </template>
         <template v-else>
           {{ row.data[item.field_uid] }}
@@ -141,7 +110,7 @@ import { onMounted, ref, watch, h, reactive, nextTick, computed } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { getModelAttributesWithGroupsApi } from "@/api/attribute"
-import { listResourceApi, deleteResourceApi, findSecureData, setCustomFieldApi } from "@/api/resource"
+import { listResourceApi, deleteResourceApi, findSecureData } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { CirclePlus, Edit, Delete, View, Setting } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
@@ -149,23 +118,11 @@ import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { Drawer } from "@@/components/Dialogs"
-import {
-  ElLoading,
-  ElMessage,
-  ElMessageBox,
-  ElPopover,
-  UploadFile,
-  UploadProgressEvent,
-  UploadProps,
-  UploadRequestOptions,
-  UploadUserFile
-} from "element-plus"
+import { ElMessage, UploadUserFile } from "element-plus"
 import router from "@/router"
 
 import Form from "./form.vue"
-import { getMinioPresignedUrl, putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
-import axios from "axios"
-import { decodedUrlPath, getLocalMinioUrl } from "../../../../common/utils/url"
+import TableFileUpload from "./components/TableFileUpload/index.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
@@ -205,129 +162,27 @@ const operateBtnItems = computed(() => {
   return items
 })
 
-const handleExceed: UploadProps["onExceed"] = (files) => {
-  ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
+// 文件上传事件处理
+const handleUploadSuccess = (file: UploadUserFile, fieldUid: string, row: Resource) => {
+  console.log("Upload success:", file, fieldUid, row)
 }
 
-const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
-  file.percentage = event.percent
+const handleUploadError = (error: any, fieldUid: string, row: Resource) => {
+  console.error("Upload error:", error, fieldUid, row)
+  ElMessage.error("上传失败")
 }
 
-// 下载文件
-const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
-  ElMessageBox({
-    title: "下载确认",
-    message: h("p", null, [
-      h("span", null, "正在下载文件: "),
-      h("i", { style: "color: red" }, `${uploadFile.name}`),
-      h("span", null, " 确认下载？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    if (uploadFile?.url === undefined) {
-      return
-    }
-
-    getMinioPresignedUrl(decodedUrlPath(uploadFile.url)).then((res: any) => {
-      window.location.href = getLocalMinioUrl(res.data)
-    })
-  })
+const handleRemoveSuccess = (file: UploadUserFile, fieldUid: string, row: Resource) => {
+  console.log("Remove success:", file, fieldUid, row)
 }
 
-const createHandleRemove = (row: Resource, filed: string) => {
-  const handleRemove: UploadProps["onRemove"] = (file: UploadFile) => {
-    if (file.url === undefined) {
-      return
-    }
-
-    removeMinioObject(decodedUrlPath(file.url)).then(() => {
-      if (row === undefined) {
-        return
-      }
-
-      if (row.data[filed]) {
-        // 删除数据
-        row.data[filed] = row.data[filed].map((item: UploadUserFile) =>
-          item.name === file.name ? { ...item, url: "" } : item
-        )
-
-        // 变更字段数据
-        setCustomFieldApi({
-          id: row.id,
-          field: filed,
-          data: row.data[filed]
-        }).then(() => {
-          ElMessage.success("删除成功")
-        })
-      }
-    })
-  }
-
-  return handleRemove
+const handleRemoveError = (error: any, fieldUid: string, row: Resource) => {
+  console.error("Remove error:", error, fieldUid, row)
+  ElMessage.error("删除失败")
 }
 
-const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
-  return ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除文件: "),
-      h("i", { style: "color: red" }, `${uploadFile.name}`),
-      h("span", null, " 确认删除？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => true)
-}
-
-// 上传文件
-const uploadFile = (action: UploadRequestOptions, row: Resource, filedUid: string) => {
-  const loading = ElLoading.service({
-    text: "正在上传...",
-    background: "rgba(0, 0, 0, 0.7)"
-  })
-
-  const objectName = action.file.uid + "/" + action.file.name
-  return putMinioPresignedUrl(objectName).then((res: any) => {
-    const url = getLocalMinioUrl(res.data)
-
-    axios
-      .put(url, action.file, {
-        headers: {
-          "Content-Type": action.file.type
-        },
-        onUploadProgress: (progressEvent) => {
-          if (progressEvent.total) {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            loading.setText(`已上传 ${percentCompleted.toFixed(1)}%`)
-          }
-        }
-      })
-      .then(() => {
-        // 填写URL信息
-        row.data[filedUid] = row.data[filedUid].map((item: UploadUserFile) =>
-          item.name === action.file.name ? { ...item, url: res.data.split("?")[0] } : item
-        )
-
-        // 变更字段数据
-        setCustomFieldApi({
-          id: row.id,
-          field: filedUid,
-          data: row.data[filedUid]
-        }).then(() => {
-          ElMessage.success("上传成功")
-        })
-      })
-      .catch(() => {
-        ElMessage.error("上传失败")
-      })
-      .finally(() => {
-        // 关闭 loading
-        loading.close()
-      })
-  })
+const handlePreview = (uploadFile: UploadUserFile) => {
+  console.log("Preview file:", uploadFile)
 }
 
 const handleDetailClick = (resource: Resource) => {
@@ -536,16 +391,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRes
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
-}
-
-.upload-file {
-  :deep(.el-upload) {
-    width: 100%;
-  }
-
-  ::v-deep .el-upload-list__item {
-    transition: none !important;
-  }
 }
 
 .file-name {
