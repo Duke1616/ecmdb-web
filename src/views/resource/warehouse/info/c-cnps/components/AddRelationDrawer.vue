@@ -1,84 +1,104 @@
 <template>
-  <el-form>
-    <el-form-item label="关联列表">
-      <el-select v-model="relationName" placeholder="关联模型" style="width: 42%" @change="handleRelationChange">
-        <el-option
-          v-for="item in modelRelationData"
-          :key="item.id"
-          :label="displayMap.get(item.relation_name)"
-          :value="item.relation_name"
-        />
-      </el-select>
-    </el-form-item>
-    <el-form-item label="条件筛选" class="form-item-content">
-      <el-select v-model="fieldName" class="field-name" placeholder="字段名称" @change="handleFieldName">
-        <el-option
-          v-for="item in attributeFieldsData"
-          :key="item.id"
-          :label="item.field_name"
-          :value="item.field_uid"
-        />
-      </el-select>
-      <el-select v-model="condition" class="condition" placeholder="条件" @change="handleCondition">
-        <el-option v-for="item in options" :key="item.label" :label="item.label" :value="item.value" />
-      </el-select>
-      <el-input v-model="inputSearch" class="input-content" clearable placeholder="请输入搜索内容" />
-      <el-button class="search-button" type="primary" @click="handleSearch"> 搜索 </el-button>
-      <el-button v-if="isFiltering" class="clear-button" @click="handleClearFilter"> 清除筛选 </el-button>
-    </el-form-item>
-  </el-form>
+  <div class="add-relation-drawer">
+    <!-- 筛选表单 -->
+    <div class="filter-section">
+      <el-form :model="filterForm" label-width="80px">
+        <el-form-item label="关联类型">
+          <el-select
+            v-model="relationName"
+            placeholder="请选择关联类型"
+            style="width: 100%"
+            @change="handleRelationChange"
+          >
+            <el-option
+              v-for="item in modelRelationData"
+              :key="item.id"
+              :label="displayMap.get(item.relation_name)"
+              :value="item.relation_name"
+            />
+          </el-select>
+        </el-form-item>
 
-  <el-table border :data="resourcesData">
-    <el-table-column type="selection" width="50" align="center" />
-    <el-table-column
-      v-for="item in visibleColumns"
-      :key="item.id"
-      :prop="`data.${item.field_uid}`"
-      :label="item.field_name"
-      align="center"
-    />
-    <el-table-column fixed="right" label="操作" width="150" align="center">
-      <template #default="scope">
-        <el-button
-          v-if="!localRelatedResourceIds.has(scope.row.id)"
-          type="primary"
-          text
-          bg
-          size="small"
-          @click="handleCreateRelation(scope.row)"
-        >
-          关联
-        </el-button>
-        <el-button v-else type="danger" text bg size="small" @click="handleDeleteRelation(scope.row)">
-          取消关联
-        </el-button>
-      </template>
-    </el-table-column>
-  </el-table>
+        <el-form-item label="条件筛选" v-if="relationName">
+          <div class="filter-row">
+            <el-select v-model="fieldName" placeholder="字段名称" style="width: 25%" @change="handleFieldName">
+              <el-option
+                v-for="item in attributeFieldsData"
+                :key="item.id"
+                :label="item.field_name"
+                :value="item.field_uid"
+              />
+            </el-select>
+            <el-select v-model="condition" placeholder="条件" style="width: 20%" @change="handleCondition">
+              <el-option v-for="item in options" :key="item.label" :label="item.label" :value="item.value" />
+            </el-select>
+            <el-input v-model="inputSearch" placeholder="请输入搜索内容" style="width: 35%" clearable />
+            <el-button type="primary" @click="handleSearch">搜索</el-button>
+            <el-button v-if="isFiltering" @click="handleClearFilter">清除筛选</el-button>
+          </div>
+        </el-form-item>
+      </el-form>
+    </div>
 
-  <div class="pager-wrapper">
-    <el-pagination
-      background
-      :layout="paginationData.layout"
-      :page-sizes="paginationData.pageSizes"
-      :total="paginationData.total"
-      :page-size="paginationData.pageSize"
-      :current-page="paginationData.currentPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+    <!-- 资源表格 -->
+    <div class="table-section" v-if="relationName">
+      <DataTable
+        :data="resourcesData"
+        :columns="getTableColumns()"
+        :table-props="{ border: true, stripe: true }"
+        :show-pagination="true"
+        :total="paginationData.total"
+        :page-size="paginationData.pageSize"
+        :current-page="paginationData.currentPage"
+        :page-sizes="paginationData.pageSizes"
+        :pagination-layout="paginationData.layout"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      >
+        <!-- 字段值插槽 -->
+        <template v-for="field in visibleColumns" :key="`field-${field.id}`" #[field.field_uid]="{ row }">
+          <span>{{ row.data[field.field_uid] || "暂无数据" }}</span>
+        </template>
+
+        <!-- 操作列插槽 -->
+        <template #actions="{ row }">
+          <el-button
+            :type="localRelatedResourceIds.has(row.id) ? 'danger' : 'primary'"
+            text
+            bg
+            size="small"
+            @click="handleTableAction('toggle-relation', row)"
+          >
+            {{ localRelatedResourceIds.has(row.id) ? "取消关联" : "关联" }}
+          </el-button>
+        </template>
+      </DataTable>
+    </div>
+
+    <!-- 空状态 -->
+    <div v-else class="empty-state">
+      <el-empty description="请先选择关联类型" :image-size="80">
+        <template #image>
+          <el-icon size="60" color="#c0c4cc">
+            <Link />
+          </el-icon>
+        </template>
+      </el-empty>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, computed, onMounted } from "vue"
 import { ElMessage } from "element-plus"
+import { Link } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { canBeRelatedFilterResourceApi } from "@/api/resource"
 import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
 import { ListAttributeFieldApi } from "@/api/attribute"
 import { CreateResourceRelationApi, deleteResourceRelationApi } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData } from "@/api/relation/types/relation"
+import DataTable from "@/common/components/DataTable/index.vue"
 
 interface Props {
   modelRelationData: ModelRelation[]
@@ -126,6 +146,14 @@ const fieldName = ref("")
 const condition = ref("")
 const inputSearch = ref("")
 
+// 筛选表单
+const filterForm = ref({
+  relationName: "",
+  fieldName: "",
+  condition: "",
+  inputSearch: ""
+})
+
 // 表格数据
 const resourcesData = ref<Resource[]>([])
 const attributeFieldsData = ref<any[]>([])
@@ -144,6 +172,30 @@ const options = [
 const visibleColumns = computed(() => {
   return attributeFieldsData.value.filter((item) => item.visible !== false)
 })
+
+// 生成表格列配置
+const getTableColumns = () => {
+  const columns: any[] = visibleColumns.value.map((field: any) => ({
+    prop: `data.${field.field_uid}`,
+    label: field.field_name,
+    align: "center" as const,
+    slot: field.field_uid,
+    showOverflowTooltip: true
+  }))
+
+  return columns
+}
+
+// 处理表格操作
+const handleTableAction = (key: string, row: any) => {
+  if (key === "toggle-relation") {
+    if (localRelatedResourceIds.value.has(row.id)) {
+      handleDeleteRelation(row)
+    } else {
+      handleCreateRelation(row)
+    }
+  }
+}
 
 // 组件挂载时重置表单
 onMounted(() => {
@@ -322,32 +374,105 @@ const handleDeleteRelation = async (row: Resource) => {
 </script>
 
 <style lang="scss" scoped>
-.form-item-content {
+.add-relation-drawer {
+  height: 100%;
   display: flex;
-  justify-content: space-between;
-  width: 100%;
+  flex-direction: column;
+  background: #f5f7fa;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .filter-section {
+    background: white;
+    padding: 20px;
+    border-bottom: 1px solid #e4e7ed;
+    flex-shrink: 0;
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+
+      .el-button {
+        flex-shrink: 0;
+        margin-left: 8px;
+      }
+    }
+
+    .el-form-item {
+      margin-bottom: 16px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  .table-section {
+    flex: 1;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    :deep(.data-table-container) {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+
+      .el-table {
+        flex: 1;
+      }
+    }
+  }
+
+  .empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
 }
 
-.field-name,
-.condition,
-.input-content,
-.search-button,
-.clear-button {
-  margin-right: 2%;
-}
+// 响应式设计
+@media (max-width: 768px) {
+  .add-relation-drawer {
+    .filter-section {
+      padding: 16px;
 
-.field-name,
-.condition {
-  width: 20%;
-}
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
 
-.input-content {
-  width: 40%;
-}
+        .el-select,
+        .el-input {
+          width: 100% !important;
+        }
 
-.pager-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
+        .el-button {
+          margin-left: 0;
+          width: 100%;
+        }
+      }
+    }
+
+    .table-section {
+      margin: 0 16px 16px 16px;
+      padding: 16px;
+    }
+
+    .empty-state {
+      margin: 16px;
+    }
+  }
 }
 </style>

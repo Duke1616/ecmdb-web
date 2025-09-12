@@ -299,12 +299,12 @@ const handleCurrentChange = (page: number) => {
     }
   }
 
-  :deep(.el-table__body) {
-    td {
-      height: 52px;
-      padding: 12px 16px;
-    }
-  }
+  // :deep(.el-table__body) {
+  //   td {
+  //     height: 52px;
+  //     padding: 12px 16px;
+  //   }
+  // }
 
   .action-buttons {
     display: flex;

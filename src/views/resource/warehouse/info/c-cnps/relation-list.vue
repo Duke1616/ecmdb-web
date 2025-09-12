@@ -116,7 +116,15 @@
   </div>
 
   <!-- 新增关联抽屉 -->
-  <el-drawer class="drawer-container" v-model="drawerVisible" title="新增关联" size="40%">
+  <Drawer
+    v-model="drawerVisible"
+    title="新增关联"
+    subtitle="选择关联类型并添加资源关联"
+    :header-icon="Link"
+    size="35%"
+    :show-footer="false"
+    class="drawer-container"
+  >
     <AddRelationDrawer
       :model-relation-data="modelRelationData"
       :relation-type-data="relationTypeData"
@@ -126,7 +134,7 @@
       :related-resource-ids="getRelatedResourceIds"
       @relation-created="handleRelationCreated"
     />
-  </el-drawer>
+  </Drawer>
 </template>
 
 <script lang="ts" setup>
@@ -138,9 +146,10 @@ import {
   deleteResourceRelationApi
 } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
-import { CirclePlus, RefreshRight, ArrowRight, Connection } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, ArrowRight, Connection, Link } from "@element-plus/icons-vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import { Drawer } from "@/common/components/Dialogs"
 import { findSecureData, listResourceByIdsApi } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
 import { Attribute } from "@/api/attribute/types/attribute"
