@@ -8,7 +8,7 @@
       :show-refresh-button="false"
       @back="goBack"
     >
-      <template #details>
+      <template #actions>
         <div class="resource-identity">
           <div class="identity-badge">
             <span class="badge-label">资源名称</span>
@@ -76,27 +76,40 @@ const goBack = () => {
   .identity-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: var(--muted, #f9fafb);
-    padding: 4px 8px;
-    border-radius: 6px;
+    gap: 8px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transform: translateY(-1px);
+    }
 
     .badge-label {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--muted-foreground, #6b7280);
+      font-size: 12px;
+      font-weight: 600;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
     }
 
     .identity-code {
       font-family: var(--font-mono, "Monaco", "Menlo", "Ubuntu Mono", monospace);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--primary, #3b82f6);
-      background: var(--background, #ffffff);
-      padding: 2px 6px;
-      border-radius: 3px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1e40af;
+      background: #ffffff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #dbeafe;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

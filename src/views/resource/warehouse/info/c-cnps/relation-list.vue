@@ -1,19 +1,32 @@
 <template>
-  <div class="toolbar-wrapper">
-    <div>
-      <el-button type="primary" :icon="CirclePlus" @click="handlerDrawerVisible">新增关联</el-button>
-      <el-button type="primary" :icon="CirclePlus" @click="handlerExpandAll">{{
-        allPanelsExpanded ? "折叠所有" : "展开所有"
-      }}</el-button>
-    </div>
-    <div>
-      <el-tooltip content="刷新当前页">
-        <el-button type="primary" :icon="RefreshRight" circle @click="listRelatedAssetsData" />
+  <!-- 头部区域 -->
+  <ManagerHeader
+    title="关联管理"
+    subtitle="管理资源之间的关联关系"
+    add-button-text="新增关联"
+    @add="handlerDrawerVisible"
+    @refresh="listRelatedAssetsData"
+  >
+    <template #actions>
+      <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerDrawerVisible">
+        新增关联
+      </el-button>
+      <el-button 
+        type="default" 
+        :icon="allPanelsExpanded ? 'ArrowUp' : 'ArrowDown'" 
+        class="action-btn" 
+        @click="handlerExpandAll"
+      >
+        {{ allPanelsExpanded ? "折叠所有" : "展开所有" }}
+      </el-button>
+      <el-tooltip content="刷新数据">
+        <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="listRelatedAssetsData" />
       </el-tooltip>
-    </div>
-  </div>
-  <div>
-    <el-collapse v-for="(item, index) in assetsData" :key="index" v-model="activeNames">
+    </template>
+  </ManagerHeader>
+  <!-- 关联列表内容 -->
+  <div class="relation-content">
+    <el-collapse v-for="(item, index) in assetsData" :key="index" v-model="activeNames" class="relation-collapse">
       <el-collapse-item :name="item.relation_name">
         <template #title>
           <span class="collapse-title">{{ displayMap.get(item.relation_name) }} ({{ item.total }})</span>
@@ -136,7 +149,8 @@ import {
   deleteResourceRelationApi
 } from "@/api/relation"
 import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from "@/api/relation/types/relation"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, ArrowUp, ArrowDown } from "@element-plus/icons-vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { canBeRelatedFilterResourceApi, findSecureData, listResourceByIdsApi } from "@/api/resource"
 import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
 import { usePagination } from "@/common/composables/usePagination"
@@ -215,6 +229,7 @@ const getRealtionTypeData = () => {
 const openNewPage = (url: string) => {
   window.open(url, "_blank")
 }
+
 
 // ** 获取模型关联列表 */
 const modelRelationData = ref<ModelRelation[]>([])
@@ -633,10 +648,60 @@ watch(
 </script>
 
 <style scoped>
-.toolbar-wrapper {
+/* 关联内容区域 */
+.relation-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+/* 折叠面板样式 */
+.relation-collapse {
+  border: none;
+  
+  :deep(.el-collapse-item) {
+    border-bottom: 1px solid #f1f5f9;
+    
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+  
+  :deep(.el-collapse-item__header) {
+    background: #f8fafc;
+    border: none;
+    padding: 16px 20px;
+    font-weight: 600;
+    color: #374151;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: #f1f5f9;
+    }
+  }
+  
+  :deep(.el-collapse-item__content) {
+    padding: 0;
+    border: none;
+  }
+  
+  :deep(.el-collapse-item__wrap) {
+    border: none;
+  }
+}
+
+.collapse-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.pager-wrapper {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 14px;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .form-item-content {

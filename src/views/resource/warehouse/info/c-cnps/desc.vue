@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue"
+import { onMounted, ref } from "vue"
 import { Download, Link, Setting, Document } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { getModelAttributesWithGroupsApi } from "@/api/attribute"
@@ -507,6 +507,7 @@ onMounted(() => {
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.6;
+  width: 100%;
   color: #374151;
   background: #f8fafc;
   padding: 12px;
