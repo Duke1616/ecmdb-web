@@ -223,15 +223,20 @@ onUnmounted(() => {
   justify-content: center;
   align-items: center;
   width: 100%;
+  min-width: 0;
+  position: relative;
   
   .secure-button {
     border-color: #409eff;
     color: #409eff;
-    font-size: 12px;
-    padding: 4px 8px;
-    height: 24px;
+    font-size: 11px;
+    padding: 3px 6px;
+    height: 22px;
     border-radius: 4px;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 0;
+    flex-shrink: 0;
 
     &:hover {
       background-color: #409eff;
@@ -246,16 +251,20 @@ onUnmounted(() => {
     align-items: center;
     justify-content: center;
     width: 100%;
+    min-width: 0;
   }
 
   .copy-only-button {
     border-color: #67c23a;
     color: #67c23a;
-    font-size: 12px;
-    padding: 4px 8px;
-    height: 24px;
+    font-size: 11px;
+    padding: 3px 6px;
+    height: 22px;
     border-radius: 4px;
     transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 0;
+    flex-shrink: 0;
 
     &:hover:not(:disabled) {
       background-color: #67c23a;
@@ -273,13 +282,18 @@ onUnmounted(() => {
   .secure-content {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     padding: 8px 12px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border: 1px solid #dee2e6;
     border-radius: 6px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    position: relative;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    width: 100%;
 
     word-wrap: break-word;
     overflow-wrap: break-word;
