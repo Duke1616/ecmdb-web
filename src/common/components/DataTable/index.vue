@@ -147,12 +147,7 @@ const props = withDefaults(defineProps<Props>(), {
   actionColumnWidth: 200,
   actionColumnFixed: "right",
   tableProps: () => ({}),
-  showPagination: false,
-  total: 0,
-  pageSize: 10,
-  currentPage: 1,
-  pageSizes: () => [10, 20, 50, 100],
-  paginationLayout: "total, sizes, prev, pager, next, jumper"
+  showPagination: false
 })
 
 const slots = useSlots()
@@ -197,12 +192,12 @@ const dynamicActionColumnWidth = computed(() => {
     // 由于无法直接访问插槽内容，我们使用一个合理的默认值
     return 200 // 大多数情况下使用200px
   }
-  
+
   // 根据操作按钮数量动态调整宽度
   if (props.actions && props.actions.length > 0) {
     return props.actions.length <= 2 ? 200 : 250
   }
-  
+
   return props.actionColumnWidth
 })
 
@@ -296,6 +291,14 @@ const handleCurrentChange = (page: number) => {
       font-weight: 600;
       height: 48px;
       padding: 12px 16px;
+      font-size: 14px;
+    }
+  }
+
+  :deep(.el-table__body) {
+    td {
+      font-size: 14px;
+      padding: 12px 16px;
     }
   }
 
@@ -340,5 +343,91 @@ const handleCurrentChange = (page: number) => {
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-width: 1440px) {
+  .data-table {
+    :deep(.el-table__header) {
+      th {
+        font-size: 15px;
+        height: 52px;
+        padding: 14px 18px;
+      }
+    }
+
+    :deep(.el-table__body) {
+      td {
+        font-size: 15px;
+        padding: 14px 18px;
+        height: 56px;
+      }
+    }
+  }
+
+  .action-buttons {
+    .action-btn {
+      font-size: 13px;
+      padding: 8px 14px;
+      min-height: 32px;
+    }
+  }
+
+  .pagination-container {
+    padding: 18px 22px;
+
+    :deep(.el-pagination) {
+      font-size: 15px;
+
+      .el-pagination__sizes,
+      .el-pagination__total,
+      .el-pagination__jump {
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+/* 超高分辨率屏幕优化 */
+@media (min-width: 1920px) {
+  .data-table {
+    :deep(.el-table__header) {
+      th {
+        font-size: 16px;
+        height: 56px;
+        padding: 16px 20px;
+      }
+    }
+
+    :deep(.el-table__body) {
+      td {
+        font-size: 16px;
+        padding: 16px 20px;
+        height: 60px;
+      }
+    }
+  }
+
+  .action-buttons {
+    .action-btn {
+      font-size: 14px;
+      padding: 10px 16px;
+      min-height: 36px;
+    }
+  }
+
+  .pagination-container {
+    padding: 20px 24px;
+
+    :deep(.el-pagination) {
+      font-size: 16px;
+
+      .el-pagination__sizes,
+      .el-pagination__total,
+      .el-pagination__jump {
+        font-size: 16px;
+      }
+    }
+  }
 }
 </style>

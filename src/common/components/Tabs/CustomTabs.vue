@@ -97,6 +97,10 @@ defineExpose({
     color: #606266;
     border: none;
     background: transparent;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
       color: #409eff;
@@ -130,7 +134,7 @@ defineExpose({
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
-    
+
     &.no-margin {
       margin: 0;
     }
@@ -143,10 +147,41 @@ defineExpose({
     .tab-item {
       padding: 10px 12px;
       font-size: 13px;
+      min-height: 40px;
     }
 
     .tabs-content {
       padding: 16px;
+    }
+  }
+}
+
+/* 高分辨率屏幕优化 */
+@media (min-width: 1440px) {
+  .custom-tabs {
+    .tab-item {
+      padding: 14px 18px;
+      font-size: 15px;
+      min-height: 48px;
+    }
+
+    .tabs-content {
+      margin: 14px;
+    }
+  }
+}
+
+/* 超高分辨率屏幕优化 */
+@media (min-width: 1920px) {
+  .custom-tabs {
+    .tab-item {
+      padding: 16px 20px;
+      font-size: 16px;
+      min-height: 52px;
+    }
+
+    .tabs-content {
+      margin: 16px;
     }
   }
 }
