@@ -1,5 +1,5 @@
 <template>
-  <div class="modern-container">
+  <PageContainer>
     <ManagerHeader title="模型详情" subtitle="" :show-back-button="true" @back="goBack">
       <template #details>
         <div class="model-identity">
@@ -25,19 +25,17 @@
       </template>
     </ManagerHeader>
 
-    <div class="content-tabs">
-      <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange">
-        <template #default="{ activeTab }">
-          <model-field v-if="activeTab === 'model-field'" :model-uid="modelUid" />
-          <model-relation v-if="activeTab === 'model-relation'" :model-uid="modelUid" />
-        </template>
-      </CustomTabs>
-    </div>
-  </div>
+    <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange">
+      <template #default="{ activeTab }">
+        <model-field v-if="activeTab === 'model-field'" :model-uid="modelUid" />
+        <model-relation v-if="activeTab === 'model-relation'" :model-uid="modelUid" />
+      </template>
+    </CustomTabs>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
+import { ref, h } from "vue"
 import modelField from "./components/model-field/index.vue"
 import modelRelation from "./components/model-relation/index.vue"
 import router from "@/router"
@@ -46,6 +44,7 @@ import { deleteModelApi } from "@/api/model"
 import { ElMessageBox } from "element-plus"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 
 const route = useRoute()
 const modelUid = route.query.uid as string
@@ -105,20 +104,7 @@ const handleDeleteModel = () => {
 </script>
 
 <style lang="scss" scoped>
-.modern-container {
-  padding: 16px;
-  background: var(--background, #fafafa);
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.content-tabs {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
+// 移除自定义容器样式，使用 PageContainer
 
 .model-identity {
   display: flex;
