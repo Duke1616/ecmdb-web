@@ -73,7 +73,9 @@
         >
           <!-- 安全字段和链接字段插槽 -->
           <template
-            v-for="field in getActiveRelationData()?.display_field || []"
+            v-for="field in attributeFieldsData
+              .filter((f) => f.display === true)
+              .sort((a, b) => (a.index || 100) - (b.index || 100))"
             :key="`field-${field.id}`"
             #[field.field_uid]="{ row }"
           >
@@ -96,7 +98,7 @@
               </el-button>
             </template>
             <template v-else>
-              {{ row.data[field.field_uid] }}
+              {{ parseFieldValue(field, row.data[field.field_uid]) }}
             </template>
           </template>
         </DataTable>
@@ -113,68 +115,23 @@
     </div>
   </div>
 
+  <!-- 新增关联抽屉 -->
   <el-drawer class="drawer-container" v-model="drawerVisible" title="新增关联" size="40%">
-    <el-form>
-      <el-form-item label="关联列表">
-        <el-select v-model="relationName" placeholder="关联模型" style="width: 42%" @change="handlerChangeRelationList">
-          <el-option
-            v-for="item in modelRelationData"
-            :key="item.id"
-            :label="displayMap.get(item.relation_name)"
-            :value="item.relation_name"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="条件筛选" class="form-item-content">
-        <el-select v-model="fieldName" class="field-name" placeholder="字段名称" @change="handleFieldName">
-          <el-option
-            v-for="item in attributeFiledsData"
-            :key="item.id"
-            :label="item.field_name"
-            :value="item.field_uid"
-          />
-        </el-select>
-        <el-select v-model="condition" class="condition" placeholder="条件" @change="handleCondition">
-          <el-option v-for="item in options" :key="item.label" :label="item.label" :value="item.value" />
-        </el-select>
-        <el-input class="input-content" clearable v-model="inputSearch" placeholder="请输入搜索内容" />
-        <el-button class="search-button" type="primary" @click="handlerFilterSearchClick()">搜索</el-button>
-      </el-form-item>
-    </el-form>
-    <el-table border :data="resourcesData">
-      <el-table-column type="selection" width="50" align="center" />
-      <el-table-column
-        v-for="item in visibleColumns"
-        :key="item.id"
-        :prop="`data.${item.field_uid}`"
-        :label="item.field_name"
-        align="center"
-      />
-      <el-table-column fixed="right" label="操作" width="150" align="center">
-        <template #default="scope">
-          <el-button type="primary" text bg size="small" @click="handlerCreateRealtion(scope.row)">关联</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <div class="pager-wrapper">
-      <el-pagination
-        background
-        :layout="paginationData.layout"
-        :page-sizes="paginationData.pageSizes"
-        :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :currentPage="paginationData.currentPage"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <AddRelationDrawer
+      :model-relation-data="modelRelationData"
+      :relation-type-data="relationTypeData"
+      :display-map="displayMap"
+      :resource-id="resourceId"
+      :model-uid="modelUid"
+      :related-resource-ids="getRelatedResourceIds"
+      @relation-created="handleRelationCreated"
+    />
   </el-drawer>
 </template>
 
 <script lang="ts" setup>
 import { computed, h, onMounted, reactive, ref, watch, nextTick } from "vue"
 import {
-  CreateResourceRelationApi,
   ListModelRelationApi,
   ListRelatedAssetsApi,
   ListRelationTypeApi,
@@ -184,15 +141,14 @@ import { type ModelRelation, type ListRelationTypeData, relatedAssetsData } from
 import { CirclePlus, RefreshRight, ArrowRight, Connection } from "@element-plus/icons-vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
-import { canBeRelatedFilterResourceApi, findSecureData, listResourceByIdsApi } from "@/api/resource"
-import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
-import { usePagination } from "@/common/composables/usePagination"
+import { findSecureData, listResourceByIdsApi } from "@/api/resource"
+import { type Resource } from "@/api/resource/types/resource"
 import { Attribute } from "@/api/attribute/types/attribute"
 import { ListAttributeFieldApi } from "@/api/attribute"
 import { useModelStore } from "@/pinia/stores/model"
 import { ElMessage, ElMessageBox } from "element-plus"
+import AddRelationDrawer from "./components/AddRelationDrawer.vue"
 
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const modelStore = useModelStore()
 interface Props {
   modelUid: string
@@ -201,44 +157,16 @@ interface Props {
 const props = defineProps<Props>()
 const drawerVisible = ref<boolean>(false)
 
-// ** 新建抽屉，第一次打开，初始化数据 */
-const firstRelationName = ref<string>("")
+// 处理关联创建成功
+const handleRelationCreated = () => {
+  // 不自动关闭抽屉，让用户主动关闭
+  listRelatedAssetsData()
+}
+
+// 打开抽屉
 const handlerDrawerVisible = () => {
   drawerVisible.value = true
-  canBeRelatedFilterResource(firstRelationName.value)
 }
-
-// 新增关联 selected 信息
-const relationName = ref<string>("")
-const fieldName = ref<string>("name")
-const condition = ref<string>("contains")
-const inputSearch = ref<string>("")
-
-// 计算出需要展示的字段
-const dynamicDisplayColumns = ref<string>("")
-const handleFieldName = (value: string) => {
-  dynamicDisplayColumns.value = value
-}
-
-const visibleColumns = computed(() => {
-  return attributeFiledsData.value.filter((item) => dynamicDisplayColumns.value.includes(item.field_uid))
-})
-
-const handleCondition = () => {}
-const options = [
-  {
-    label: "包含",
-    value: "contains"
-  },
-  {
-    label: "等于",
-    value: "equal"
-  },
-  {
-    label: "不等于",
-    value: "not_equal"
-  }
-]
 
 // ** 获取模型关联类型 */
 const relationTypeData = ref<ListRelationTypeData[]>([])
@@ -298,7 +226,6 @@ const reverseDisplayLabel = () => {
     return // 模型关联数据为空，不执行后续操作
   }
 
-  firstRelationName.value = modelRelationData.value[0].relation_name
   modelRelationData.value.forEach((model) => {
     const relationInfo = relationTypeData.value.find((item) => model.relation_type_uid.toLowerCase().includes(item.uid))
     console.log("查询关联的类型信息", model.relation_name, relationInfo)
@@ -331,58 +258,6 @@ const setDisplayMap = (model: ModelRelation) => {
   // 拼接最终的 display 值
   const display = resolvedSuffix ? `${prefix}-${resolvedSuffix}` : prefix
   displayMap.set(model.relation_name, display as string)
-}
-
-const handlerChangeRelationList = (value: string) => {
-  fieldName.value = "name"
-  inputSearch.value = ""
-  isFilter.value = false
-  canBeRelatedFilterResource(value)
-}
-
-const isFilter = ref<boolean>(false)
-const handlerFilterSearchClick = () => {
-  isFilter.value = true
-  canBeRelatedFilterResource(relationName.value)
-}
-
-// ** 获取资产列表 */
-const resourcesData = ref<Resource[]>([])
-const canBeRelatedFilterResource = async (value: string) => {
-  relationName.value = value
-  const requestOptions: canBeRelationFilterReq = {
-    model_uid: props.modelUid,
-    resource_id: parseInt(props.resourceId, 10),
-    relation_name: value,
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
-  }
-
-  if (inputSearch.value && isFilter.value === true) {
-    requestOptions.filter_name = fieldName.value
-    requestOptions.filter_condition = condition.value
-    requestOptions.filter_input = inputSearch.value
-  }
-
-  canBeRelatedFilterResourceApi(requestOptions)
-    .then(async ({ data }) => {
-      // TODO 当关联成功，重新请求避免多次调用获取模型字段接口
-      const src: string = value.split("_")[0]
-      // 判断当前数据是正向还是反向
-      if (src === props.modelUid) {
-        await listAttributeFields(value.split("_")[2])
-      } else {
-        await listAttributeFields(src)
-      }
-
-      handleFieldName(fieldName.value)
-      resourcesData.value = data.resources
-      paginationData.total = data.total
-    })
-    .catch((error) => {
-      console.log(error)
-    })
-    .finally(() => {})
 }
 
 /** 获取指定资产所关联的所有其他资产信息 */
@@ -483,7 +358,7 @@ const updateActivePanelData = async (changedAssetsData: relatedAssetsData[]) => 
 // const resourcesByIdsData = ref<Resource[]>([])
 const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
   // 先处理排序字段
-  const displayFileds = await sortFields(modelUid)
+  const displayFileds = await sortFields()
 
   await listResourceByIdsApi(modelUid, resourceIds)
     .then(({ data }) => {
@@ -503,78 +378,119 @@ const listResourceByIds = async (modelUid: string, resourceIds: number[]) => {
 }
 
 // ** 过滤展示字段，并排序 */
-const sortFields = async (modelUid: string) => {
+const sortFields = async () => {
   const displayFileds = ref<Attribute[]>([])
-  await listAttributeFields(modelUid)
-  console.log("返回结果", attributeFiledsData.value)
-  displayFileds.value = attributeFiledsData.value
-    .filter((item) => item.display === true)
-    .sort((a, b) => {
-      const indexA = a.index ?? 100
-      const indexB = b.index ?? 100
-      return indexA - indexB
-    })
-
+  // 这里需要根据实际需求实现字段排序逻辑
+  // 暂时返回空数组，因为字段数据现在在子组件中管理
   return displayFileds
 }
-// ** 获取资产字段信息 */
-const attributeFiledsData = ref<Attribute[]>([])
+
+// ** 打开折叠面板
+const activeRelationName = ref<string>("")
+
+// 获取属性字段数据
+const attributeFieldsData = ref<Attribute[]>([])
 const listAttributeFields = async (modelUid: string) => {
-  console.log("modelUid-Attribute", modelUid)
   await ListAttributeFieldApi(modelUid)
     .then(({ data }) => {
-      attributeFiledsData.value = data.attribute_fields
-
-      console.log("attribute result", attributeFiledsData.value)
+      attributeFieldsData.value = data.attribute_fields
     })
     .catch((error) => {
-      console.log("报错", error)
-      attributeFiledsData.value = []
-    })
-    .finally(() => {
-      // ...
+      console.log("获取属性字段失败", error)
+      attributeFieldsData.value = []
     })
 }
 
-// 新增关联关系
-const handlerCreateRealtion = (row: Resource) => {
-  ElMessageBox({
-    title: "关联确认",
-    message: h("p", null, [
-      h("span", null, "正在关联数据名称: "),
-      h("i", { style: "color: red" }, `${row.name}`),
-      h("span", null, " 确认关联？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    const src = relationName.value.split("_")[0]
-    let src_resource_id = parseInt(props.resourceId, 10)
-    let dst_resource_id = row.id
+// 选择关联类型
+const selectRelation = (relationName: string) => {
+  activeRelationName.value = relationName
+  // 加载对应的资源数据
+  const relationItem = assetsData.value?.find((item) => item.relation_name === relationName)
+  if (relationItem) {
+    // 获取属性字段数据
+    listAttributeFields(relationItem.model_uid)
+    // 加载资源数据
+    listResourceByIds(relationItem.model_uid, relationItem.resource_ids)
+  }
+}
 
-    if (src === row.model_uid) {
-      src_resource_id = row.id
-      dst_resource_id = parseInt(props.resourceId, 10)
+// 获取当前选中的关联数据
+const getActiveRelationData = () => {
+  return assetsData.value?.find((item) => item.relation_name === activeRelationName.value)
+}
+
+// 获取当前选中关联类型的已关联资源ID列表
+const getRelatedResourceIds = computed(() => {
+  const activeData = getActiveRelationData()
+  if (!activeData?.resources) return []
+  return activeData.resources.map((resource: any) => resource.id)
+})
+
+// 解析字段值，将 UID 转换为显示名称
+const parseFieldValue = (field: any, value: any) => {
+  if (!value) return "暂无数据"
+
+  // 如果是安全字段或链接字段，直接返回原值
+  if (field.secure || field.link) {
+    return value
+  }
+
+  // 根据字段类型判断是否需要解析 UID
+  switch (field.field_type) {
+    case "relation":
+    case "foreign_key":
+      // 关联字段，尝试解析为模型名称
+      return modelStore.getModelName(value) || value
+    case "select":
+    case "list":
+      // 选择字段，如果 option 是数组，尝试匹配
+      if (Array.isArray(field.option)) {
+        const option = field.option.find((opt: any) => opt.value === value || opt.id === value)
+        return option ? option.label || option.name || option.value : value
+      }
+      return value
+    default:
+      // 其他类型直接返回原值
+      return value
+  }
+}
+
+// 生成资源表格列配置
+const getResourceTableColumns = () => {
+  if (!attributeFieldsData.value || attributeFieldsData.value.length === 0) return []
+
+  // 过滤出需要显示的字段
+  const displayFields = attributeFieldsData.value
+    .filter((field) => field.display === true)
+    .sort((a, b) => (a.index || 100) - (b.index || 100))
+
+  return displayFields.map((field: any) => ({
+    prop: `data.${field.field_uid}`,
+    label: field.field_name,
+    align: "center" as const,
+    slot: field.secure || field.link ? field.field_uid : undefined,
+    showOverflowTooltip: true,
+    formatter: (row: any) => {
+      // 使用解析函数处理字段值
+      return parseFieldValue(field, row.data[field.field_uid])
     }
-
-    CreateResourceRelationApi({
-      source_resource_id: src_resource_id,
-      target_resource_id: dst_resource_id,
-      relation_name: relationName.value
-    }).then(() => {
-      ElMessage.success("关联成功")
-      canBeRelatedFilterResource(relationName.value)
-
-      // 判断是否存在折叠面板是否打开，如果打开，则更新数据、或者手动写入数据
-      listRelatedAssetsData()
-
-      console.log("assetsData", assetsData.value)
-    })
-  })
+  }))
 }
 
-// 删除关联 deleteResourceRelationApi
+// 生成资源表格操作配置
+const getResourceTableActions = () => {
+  return [
+    {
+      key: "delete",
+      label: "取消关联",
+      type: "primary" as const,
+      plain: true,
+      size: "small" as const
+    }
+  ]
+}
+
+// 删除关联
 const handlerDeleteRealtion = (relationName: string, row: Resource) => {
   ElMessageBox({
     title: "取消关联",
@@ -594,59 +510,9 @@ const handlerDeleteRealtion = (relationName: string, row: Resource) => {
     }).then(() => {
       console.log("删除信息", relationName, row)
       ElMessage.success("删除成功")
-      // deleteAssetResource(row.id)
       listRelatedAssetsData()
     })
   })
-}
-
-// ** 打开折叠面板
-const activeRelationName = ref<string>("")
-
-// 选择关联类型
-const selectRelation = (relationName: string) => {
-  activeRelationName.value = relationName
-  // 加载对应的资源数据
-  const relationItem = assetsData.value?.find((item) => item.relation_name === relationName)
-  if (relationItem) {
-    listResourceByIds(relationItem.model_uid, relationItem.resource_ids)
-  }
-}
-
-// 获取当前选中的关联数据
-const getActiveRelationData = () => {
-  return assetsData.value?.find((item) => item.relation_name === activeRelationName.value)
-}
-
-// 生成资源表格列配置
-const getResourceTableColumns = () => {
-  const activeData = getActiveRelationData()
-  if (!activeData?.display_field) return []
-
-  return activeData.display_field.map((field: any) => ({
-    prop: `data.${field.field_uid}`,
-    label: field.field_name,
-    align: "center" as const,
-    slot: field.secure || field.link ? field.field_uid : undefined,
-    showOverflowTooltip: true,
-    formatter: (row: any) => {
-      // 对于非插槽列，直接返回数据值
-      return row.data[field.field_uid] || "暂无数据"
-    }
-  }))
-}
-
-// 生成资源表格操作配置
-const getResourceTableActions = () => {
-  return [
-    {
-      key: "delete",
-      label: "取消关联",
-      type: "primary" as const,
-      plain: true,
-      size: "small" as const
-    }
-  ]
 }
 
 // 处理资源表格操作
@@ -680,10 +546,6 @@ watch([modelRelationData, relationTypeData], ([newModelRelations, newRelationTyp
   }
 })
 
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
-  canBeRelatedFilterResource(relationName.value)
-})
 // watchEffect((onInvalidate) => {
 </script>
 
@@ -891,39 +753,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
     background: #fafbfc;
     padding: 40px 20px;
   }
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.form-item-content {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.field-name,
-.condition,
-.input-content,
-.search-button {
-  margin-right: 2%; /* 调整间距 */
-}
-
-.field-name,
-.condition {
-  width: 20%;
-}
-
-.input-content {
-  width: 40%;
-}
-
-.search-button {
-  width: 14%;
-  margin-right: 0; /* 最后一个元素不需要右间距 */
 }
 
 :deep(.el-collapse-item__header) {
