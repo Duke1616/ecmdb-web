@@ -112,7 +112,7 @@ const handleUpload = (action: UploadRequestOptions) => {
       // 更新文件对象的 URL
       const fileIndex = fileList.value.findIndex((f) => f.name === action.file.name)
       if (fileIndex !== -1) {
-        fileList.value[fileIndex].url = getLocalMinioUrl(resData)
+        fileList.value[fileIndex].url = resData.split("?")[0]
         fileList.value[fileIndex].status = "success"
       }
 
