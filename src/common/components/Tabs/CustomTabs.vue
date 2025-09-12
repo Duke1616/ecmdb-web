@@ -11,7 +11,7 @@
         {{ tab.label }}
       </button>
     </div>
-    <div class="tabs-content">
+    <div class="tabs-content" :class="{ 'no-margin': noMargin }">
       <slot :activeTab="activeTab" />
     </div>
   </div>
@@ -28,10 +28,12 @@ interface Tab {
 interface Props {
   tabs: Tab[]
   defaultActive?: string
+  noMargin?: boolean // 是否移除内容区域的 margin
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  defaultActive: ""
+  defaultActive: "",
+  noMargin: false
 })
 
 const emits = defineEmits<{
@@ -128,6 +130,10 @@ defineExpose({
     flex-direction: column;
     overflow: hidden;
     min-height: 0;
+    
+    &.no-margin {
+      margin: 0;
+    }
   }
 }
 

@@ -170,9 +170,17 @@ const getColumnValue = (row: any, column: Column) => {
   return column.formatter ? column.formatter(row, column, value) : value
 }
 
-// 如果传入了固定高度，优先使用，否则使用 auto 让 flex 布局控制
+// 如果传入了固定高度，优先使用，否则根据是否有分页来决定高度
 const finalTableHeight = computed(() => {
-  return props.tableProps.height || "auto"
+  if (props.tableProps.height) {
+    return props.tableProps.height
+  }
+  // 如果没有分页，使用 100% 让表格填充容器
+  if (!props.showPagination) {
+    return "100%"
+  }
+  // 有分页时使用 auto
+  return "auto"
 })
 
 // 检查是否有自定义操作列插槽
@@ -262,13 +270,23 @@ const handleCurrentChange = (page: number) => {
   flex: 1;
   width: 100%;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
 
   :deep(.el-table) {
+    flex: 1;
     height: 100%;
+    display: flex;
+    flex-direction: column;
   }
 
   :deep(.el-table__body-wrapper) {
+    flex: 1;
     overflow-y: auto;
+  }
+
+  :deep(.el-table__header-wrapper) {
+    flex-shrink: 0;
   }
 
   :deep(.el-table__header) {

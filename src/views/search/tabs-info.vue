@@ -1,94 +1,153 @@
 <template>
-  <div class="app-container">
-    <div class="centered-container">
-      <el-input clearable v-model="inputSearch" placeholder="请输入搜索内容">
-        <template #append>
-          <el-button class="centered-button" type="primary" @click="search">搜索</el-button>
-        </template>
-      </el-input>
-      <el-button type="primary" @click="goBack" :icon="Back">返回主页</el-button>
+  <PageContainer>
+    <ManagerHeader
+      title="搜索结果"
+      :subtitle="`找到 ${getTotalResults()} 条相关数据`"
+      :show-back-button="true"
+      :show-add-button="false"
+      :show-refresh-button="false"
+      @back="goBack"
+    >
+      <template #actions>
+        <div class="elegant-search-container">
+          <div class="search-card">
+            <div class="search-input-group">
+              <el-icon class="search-icon"><Search /></el-icon>
+              <el-input
+                v-model="inputSearch"
+                placeholder="搜索资源..."
+                size="large"
+                clearable
+                @keyup.enter="search"
+                class="elegant-search-input"
+              />
+              <el-button type="primary" @click="search" class="elegant-search-button" :icon="Search" size="large">
+                搜索
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </ManagerHeader>
+
+    <div v-if="searchResourcesData.length === 0" class="no-results">
+      <el-empty description="暂无搜索结果" />
     </div>
-    <el-divider />
-    <div>
-      <el-card v-if="searchResourcesData.length > 0">
-        <el-tabs v-model="activeName" class="demo-tabs" @tab-change="handleTabClick">
-          <el-tab-pane
-            v-for="(tab, index) in searchResourcesData"
-            :key="index"
-            :label="modelStore.getModelName(tab.model_uid) + ' ( ' + tab.total + ' )'"
-            :name="tab.model_uid"
-          >
-            <el-table :data="tab.data">
-              <el-table-column fixed="left" prop="id" width="50" label="ID" align="center" />
-              <el-table-column
-                v-for="(item, index) in displayFileds.get(tab.model_uid)"
-                :key="index"
-                :prop="`${item.field_uid}`"
-                :label="item.field_name"
-                align="center"
-              >
-                <template #default="scope">
-                  <!-- 判断只有是文字类型的才会进行展示颜色检索 -->
-                  <template v-if="item.field_type === 'string' || item.field_type === 'list'">
-                    <span :style="{ color: textColor(scope.row[item.field_uid]) }">
-                      {{ scope.row[item.field_uid] }}
-                    </span>
-                  </template>
-                  <template v-if="item.field_type === 'file'">
+
+    <div v-else class="search-results-container">
+      <CustomTabs
+        :tabs="tabs"
+        :default-active="activeName || (tabs.length > 0 ? tabs[0].name : '')"
+        :no-margin="false"
+        @tab-change="handleTabClick"
+        class="search-tabs"
+      >
+        <template #default>
+          <DataTable
+            v-if="currentTabData && currentTabData.data && currentTabData.data.length > 0"
+            :data="getPaginatedData(currentTabData.data)"
+            :columns="getTableColumns(currentTabData.model_uid)"
+            :loading="false"
+            :show-pagination="true"
+            :total="currentTabData.data.length"
+            :page-size="paginationData.pageSize"
+            :current-page="paginationData.currentPage"
+            :page-sizes="paginationData.pageSizes"
+            :pagination-layout="paginationData.layout"
+            :table-props="{
+              stripe: false,
+              border: true,
+              'header-cell-style': { background: '#F6F6F6', height: '10px', 'text-align': 'center' }
+            }"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            >"
+            <!-- 自定义列内容插槽 -->
+            <template
+              v-for="field in displayFileds.get(currentTabData?.model_uid) || []"
+              :key="field.field_uid"
+              #[`${field.field_uid}`]="{ row }"
+            >
+              <div v-if="field.secure">
+                <!-- 安全字段优先处理 -->
+                <el-button
+                  v-if="!secureDisplay.get(row.id)"
+                  type="primary"
+                  size="small"
+                  @click="handleSecureClick(row, field)"
+                >
+                  查看
+                </el-button>
+                <div v-if="secureDisplay.get(row.id)">
+                  {{ row[field.field_uid] }}
+                </div>
+              </div>
+
+              <div v-else-if="field.field_type === 'file'">
+                <!-- 文件类型字段 -->
+                <div class="upload-container">
+                  <el-popover
+                    v-if="row[field.field_uid] !== undefined && row[field.field_uid].length > 0"
+                    width="300px"
+                    trigger="click"
+                    placement="top"
+                  >
                     <div class="upload-container">
-                      <el-popover
-                        v-if="scope.row[item.field_uid] !== undefined && scope.row[item.field_uid].length > 0"
-                        width="300px"
-                        trigger="click"
-                        placement="top"
-                      >
-                        <div class="upload-container">
-                          <el-upload
-                            v-model:file-list="scope.row[item.field_uid]"
-                            class="upload-file"
-                            action="#"
-                            multiple
-                            show-file-list
-                            :limit="5"
-                            :disabled="true"
-                            :on-exceed="handleExceed"
-                            :on-preview="handlePreview"
-                          />
-                        </div>
-                        <template #reference>
-                          <el-button type="primary" text bg size="small"> 查看 </el-button>
-                        </template>
-                      </el-popover>
+                      <el-upload
+                        v-model:file-list="row[field.field_uid]"
+                        class="upload-file"
+                        action="#"
+                        multiple
+                        show-file-list
+                        :limit="5"
+                        :disabled="true"
+                        :on-exceed="handleExceed"
+                        :on-preview="handlePreview"
+                      />
                     </div>
-                  </template>
-                  <template v-if="item.secure">
-                    <el-button
-                      v-if="!secureDisplay.get(scope.row.id)"
-                      type="primary"
-                      size="small"
-                      @click="handleSecureClick(scope.row, item)"
-                    >
-                      查看
-                    </el-button>
-                  </template>
-                </template>
-              </el-table-column>
-              <el-table-column fixed="right" label="操作" width="150" align="center">
-                <template #default="scope">
-                  <el-button type="primary" text bg size="small" @click="handlerDetailClick(scope.row)">详情</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-          </el-tab-pane>
-        </el-tabs>
-      </el-card>
+                    <template #reference>
+                      <el-button type="primary" text bg size="small"> 查看 </el-button>
+                    </template>
+                  </el-popover>
+                </div>
+              </div>
+
+              <div v-else-if="field.field_type === 'string' || field.field_type === 'list'">
+                <!-- 判断只有是文字类型的才会进行展示颜色检索 -->
+                <span :style="{ color: textColor(row[field.field_uid]) }">
+                  {{ row[field.field_uid] }}
+                </span>
+              </div>
+
+              <div v-else>
+                <!-- 其他类型字段 -->
+                <span class="field-content">
+                  {{ row[field.field_uid] }}
+                </span>
+              </div>
+            </template>
+
+            <!-- 操作列插槽 -->
+            <template #actions="{ row }">
+              <el-button type="primary" text size="small" @click="handlerDetailClick(row)">
+                <el-icon><View /></el-icon>
+                详情
+              </el-button>
+            </template>
+          </DataTable>
+        </template>
+      </CustomTabs>
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
-import { h, onMounted, reactive, ref } from "vue"
-import { Back } from "@element-plus/icons-vue"
+import { h, onMounted, reactive, ref, computed } from "vue"
+import { Search, View } from "@element-plus/icons-vue"
+import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import PageContainer from "@/common/components/PageContainer/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
 import { globalSearchData } from "@/api/resource/types/resource"
 import { findSecureData, globalSearchApi } from "@/api/resource"
 import { useRoute } from "vue-router"
@@ -107,6 +166,15 @@ const modelStore = useModelStore()
 
 const inputSearch = ref<string>(route.query.text as string)
 let oldSearch = route.query.text as string
+
+// 分页状态
+const paginationData = reactive({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0,
+  pageSizes: [10, 20, 50, 100],
+  layout: "total, sizes, prev, pager, next, jumper"
+})
 const search = () => {
   if (inputSearch.value.trim() === "") {
     ElMessage.error("搜索内容不成为空")
@@ -134,9 +202,69 @@ const goBack = () => {
   })
 }
 
-const activeName = ref("first")
-const handleTabClick = () => {
-  sortFields(activeName.value)
+// 分页处理方法
+const handleSizeChange = (size: number) => {
+  paginationData.pageSize = size
+  paginationData.currentPage = 1
+}
+
+const handleCurrentChange = (page: number) => {
+  paginationData.currentPage = page
+}
+
+// 获取分页数据
+const getPaginatedData = (data: any[]) => {
+  if (!data || data.length === 0) return []
+
+  const start = (paginationData.currentPage - 1) * paginationData.pageSize
+  const end = start + paginationData.pageSize
+  return data.slice(start, end)
+}
+
+// 获取当前选中的 tab 数据
+const currentTabData = computed(() => {
+  return searchResourcesData.value.find((tab) => tab.model_uid === activeName.value)
+})
+
+const activeName = ref("")
+
+// 计算 tabs 数据
+const tabs = computed(() => {
+  return searchResourcesData.value.map((tab) => ({
+    name: tab.model_uid,
+    label: `${modelStore.getModelName(tab.model_uid)} (${tab.total})`
+  }))
+})
+
+const handleTabClick = (tabName: string) => {
+  activeName.value = tabName
+  sortFields(tabName)
+}
+
+// 获取总结果数
+const getTotalResults = () => {
+  return searchResourcesData.value.reduce((total, tab) => total + tab.total, 0)
+}
+
+// 获取表格列配置
+const getTableColumns = (modelUid: string) => {
+  const fields = displayFileds.value.get(modelUid) || []
+  const columns = [
+    {
+      prop: "id",
+      label: "ID",
+      width: 80,
+      align: "center" as const
+    },
+    ...fields.map((field) => ({
+      prop: field.field_uid,
+      label: field.field_name,
+      align: "center" as const,
+      minWidth: 120,
+      slot: field.field_uid
+    }))
+  ]
+  return columns
 }
 
 const textColor = (fieldValue: string) => {
@@ -296,19 +424,147 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.centered-container {
+<style scoped lang="scss">
+.elegant-search-container {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  justify-content: center;
+
+  .search-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    padding: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .search-input-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px;
+
+      .search-icon {
+        color: #64748b;
+        font-size: 18px;
+        margin-left: 6px;
+        transition: color 0.3s ease;
+      }
+
+      .elegant-search-input {
+        flex: 1;
+        min-width: 240px;
+
+        :deep(.el-input__wrapper) {
+          border: none;
+          box-shadow: none;
+          background: transparent;
+          padding: 0;
+          border-radius: 0;
+
+          &:hover,
+          &.is-focus {
+            box-shadow: none;
+            border: none;
+          }
+
+          .el-input__inner {
+            font-size: 14px;
+            color: #1e293b;
+            font-weight: 500;
+
+            &::placeholder {
+              color: #94a3b8;
+              font-weight: 400;
+            }
+          }
+        }
+      }
+
+      .elegant-search-button {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 600;
+        font-size: 13px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+          background: linear-gradient(135deg, #5b5bd6 0%, #7c3aed 100%);
+          box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+          transform: translateY(-1px);
+        }
+
+        &:active {
+          transform: translateY(0);
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+        }
+      }
+    }
+  }
 }
 
-.el-input {
-  width: 40%; /* 根据需要调整宽度 */
-  height: 40px;
+.no-results {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.centered-button {
-  height: 40px;
+.search-results-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.search-tabs {
+  flex-shrink: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  margin-bottom: 18px;
+}
+
+.table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// 字段内容样式
+.highlight-text {
+  font-weight: 500;
+
+  &:hover {
+    background: #fff3cd;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+}
+
+.field-content {
+  color: #606266;
+}
+
+.secure-content {
+  color: #67c23a;
+  font-weight: 500;
 }
 
 .upload-container {
@@ -316,7 +572,17 @@ onMounted(() => {
     display: none;
   }
 
-  ::v-deep .el-upload-list__item {
+  :deep(.el-upload-list__item) {
+    transition: none !important;
+  }
+}
+
+.file-preview {
+  :deep(.el-upload) {
+    display: none;
+  }
+
+  :deep(.el-upload-list__item) {
     transition: none !important;
   }
 }
