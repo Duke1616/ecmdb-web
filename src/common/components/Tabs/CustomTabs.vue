@@ -160,13 +160,13 @@ defineExpose({
 @media (max-width: 2000px) {
   .custom-tabs {
     .tab-item {
-      padding: 5px 8px !important;
-      font-size: 10px !important;
-      min-height: 26px !important;
+      padding: 8px 12px !important;
+      font-size: 12px !important;
+      min-height: 32px !important;
     }
 
     .tabs-content {
-      margin: 8px !important;
+      margin: 10px !important;
     }
   }
 }
