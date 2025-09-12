@@ -355,10 +355,22 @@ const listAttributeFields = async (modelUid: string) => {
 }
 
 const handlerDetailClick = (row: any) => {
-  router.push({
+  console.log("搜索页面准备跳转到详情页面:", {
     path: "/cmdb/resource/info",
     query: { model_uid: row.model_uid, name: row.name, id: row.id }
   })
+
+  router
+    .push({
+      path: "/cmdb/resource/info",
+      query: { model_uid: row.model_uid, name: row.name, id: row.id }
+    })
+    .then(() => {
+      console.log("搜索页面路由跳转成功")
+    })
+    .catch((error) => {
+      console.error("搜索页面路由跳转失败:", error)
+    })
 }
 
 const handleSecureClick = (row: any, item: Attribute) => {

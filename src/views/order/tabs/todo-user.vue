@@ -146,10 +146,4 @@ defineExpose({
   justify-content: flex-end;
 }
 
-/* 使用全局样式强制覆盖 DataTable 的圆角 */
-:global(.manager-content .content-card) {
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  border: none !important;
-}
 </style>
