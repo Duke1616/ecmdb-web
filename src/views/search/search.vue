@@ -45,7 +45,7 @@
       </div>
 
       <div v-else class="empty-history">
-        <el-empty description="暂无搜索历史" />
+        <div class="empty-text">暂无搜索历史</div>
       </div>
     </div>
   </div>
@@ -261,7 +261,14 @@ const handlerTagClick = (history: string) => {
 }
 
 .empty-history {
-  padding: 40px 0;
+  padding: 16px 0;
+  text-align: center;
+
+  .empty-text {
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 400;
+  }
 }
 
 // 响应式设计
