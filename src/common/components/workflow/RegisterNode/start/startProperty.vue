@@ -1,47 +1,37 @@
 <template>
-  <PropertyContainer
-    title="开始节点配置"
-    subtitle="配置工作流的起始节点属性"
-    icon-name="start"
-    theme="green"
-    :in-drawer="true"
-    @confirm="confirmFunc"
-    @cancel="cancelFunc"
+  <el-form
+    ref="formRef"
+    :model="propertyForm"
+    :inline-message="true"
+    :rules="formRules"
+    label-position="top"
+    :disabled="flowDetail.status == '2'"
+    class="property-form"
   >
-    <el-form
-      ref="formRef"
-      :model="propertyForm"
-      :inline-message="true"
-      :rules="formRules"
-      label-position="top"
-      :disabled="flowDetail.status == '2'"
-      class="property-form"
-    >
-      <FormSection title="通知设置" icon="🔔">
-        <el-form-item label="消息通知" prop="is_notify" class="form-item">
-          <div class="toggle-container">
-            <div class="toggle-switch" @click="toggleNotify" :class="{ disabled: flowDetail.status == '2' }">
-              <div class="toggle-track" :class="{ active: propertyForm.is_notify }">
-                <div class="toggle-thumb" :class="{ active: propertyForm.is_notify }">
-                  <span class="toggle-icon">{{ propertyForm.is_notify ? "✓" : "✕" }}</span>
-                </div>
+    <FormSection title="通知设置" icon="🔔">
+      <el-form-item label="消息通知" prop="is_notify" class="form-item">
+        <div class="toggle-container">
+          <div class="toggle-switch" @click="toggleNotify" :class="{ disabled: flowDetail.status == '2' }">
+            <div class="toggle-track" :class="{ active: propertyForm.is_notify }">
+              <div class="toggle-thumb" :class="{ active: propertyForm.is_notify }">
+                <span class="toggle-icon">{{ propertyForm.is_notify ? "✓" : "✕" }}</span>
               </div>
-              <span class="toggle-label">{{ propertyForm.is_notify ? "开启" : "关闭" }}</span>
             </div>
+            <span class="toggle-label">{{ propertyForm.is_notify ? "开启" : "关闭" }}</span>
           </div>
-          <FormHelp
-            :text="propertyForm.is_notify ? '开启后，工作流启动时会发送通知消息' : '关闭后，工作流启动时不会发送通知'"
-          />
-        </el-form-item>
-      </FormSection>
-    </el-form>
-  </PropertyContainer>
+        </div>
+        <FormHelp
+          :text="propertyForm.is_notify ? '开启后，工作流启动时会发送通知消息' : '关闭后，工作流启动时不会发送通知'"
+        />
+      </el-form-item>
+    </FormSection>
+  </el-form>
 </template>
 
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import { PropertyContainer, FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection, FormHelp } from "../../PropertySetting"
 
 const props = defineProps({
   nodeData: Object,
@@ -85,13 +75,13 @@ const confirmFunc = () => {
   })
 }
 
-//取消
-const cancelFunc = () => {
-  emits("closed")
-}
-
 onMounted(() => {
   propertyForm.is_notify = props.nodeData?.properties.is_notify ? props.nodeData.properties.is_notify : false
+})
+
+// 暴露方法给父组件
+defineExpose({
+  confirmFunc
 })
 </script>
 

@@ -145,22 +145,22 @@ const handleCancel = () => {
   gap: 12px;
 
   .header-icon {
-    width: 40px;
-    height: 40px;
+    width: calc(2rem + 0.5vw);
+    height: calc(2rem + 0.5vw);
     background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    border-radius: 10px;
+    border-radius: calc(0.5rem + 0.1vw);
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 18px;
+    font-size: calc(0.9rem + 0.2vw);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   }
 
   .header-text {
     h3 {
-      margin: 0 0 2px 0;
-      font-size: 18px;
+      margin: 0 0 calc(0.1rem + 0.05vw) 0;
+      font-size: calc(0.9rem + 0.2vw);
       font-weight: 600;
       color: #1e293b;
       line-height: 1.2;
@@ -168,7 +168,7 @@ const handleCancel = () => {
 
     p {
       margin: 0;
-      font-size: 13px;
+      font-size: calc(0.65rem + 0.15vw);
       color: #64748b;
       font-weight: 400;
     }
@@ -186,25 +186,25 @@ const handleCancel = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: calc(0.6rem + 0.2vw);
 
   .footer-info {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
+    gap: calc(0.3rem + 0.1vw);
+    padding: calc(0.3rem + 0.1vw) calc(0.5rem + 0.2vw);
     background: #f0f9ff;
     border: 1px solid #bae6fd;
-    border-radius: 6px;
+    border-radius: calc(0.3rem + 0.1vw);
     flex: 1;
 
     .info-icon {
-      font-size: 14px;
+      font-size: calc(0.7rem + 0.15vw);
       color: #0ea5e9;
     }
 
     .info-text {
-      font-size: 12px;
+      font-size: calc(0.6rem + 0.15vw);
       color: #0369a1;
       font-weight: 500;
     }
@@ -216,20 +216,20 @@ const handleCancel = () => {
 
   .footer-actions {
     display: flex;
-    gap: 10px;
+    gap: calc(0.5rem + 0.2vw);
     flex-shrink: 0;
 
     .cancel-btn,
     .confirm-btn {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 10px 20px;
-      border-radius: 6px;
+      gap: calc(0.3rem + 0.1vw);
+      padding: calc(0.5rem + 0.2vw) calc(1rem + 0.4vw);
+      border-radius: calc(0.3rem + 0.1vw);
       font-weight: 600;
-      font-size: 13px;
+      font-size: calc(0.65rem + 0.15vw);
       transition: all 0.3s ease;
-      min-width: 100px;
+      min-width: calc(5rem + 1vw);
       justify-content: center;
 
       &:hover {
@@ -263,32 +263,6 @@ const handleCancel = () => {
 
       &:active {
         transform: translateY(0);
-      }
-    }
-  }
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-  .form-dialog-footer {
-    flex-direction: column;
-    gap: 16px;
-
-    .footer-info {
-      order: 2;
-      text-align: center;
-    }
-
-    .footer-actions {
-      order: 1;
-      width: 100%;
-      justify-content: center;
-
-      .cancel-btn,
-      .confirm-btn {
-        flex: 1;
-        min-width: auto;
-        padding: 10px 20px;
       }
     }
   }

@@ -1,101 +1,91 @@
 <template>
-  <PropertyContainer
-    title="连线配置"
-    subtitle="配置工作流节点间的连接关系和条件"
-    icon-name="click"
-    theme="cyan"
-    :in-drawer="true"
-    @confirm="confirmFunc"
-    @cancel="cancelFunc"
+  <el-form
+    ref="formRef"
+    :model="propertyForm"
+    :inline-message="true"
+    :rules="formRules"
+    label-position="top"
+    class="property-form"
   >
-    <el-form
-      ref="formRef"
-      :model="propertyForm"
-      :inline-message="true"
-      :rules="formRules"
-      label-position="top"
-      class="property-form"
-    >
-      <FormSection title="基本信息" icon="🔗">
-        <el-form-item label="关系名称" prop="name" class="form-item">
-          <el-input v-model="propertyForm.name" placeholder="请输入连线关系名称" class="modern-input" />
-          <FormHelp text="连线名称用于标识节点间的关系，建议使用描述性名称" />
-        </el-form-item>
-      </FormSection>
+    <FormSection title="基本信息" icon="🔗">
+      <el-form-item label="关系名称" prop="name" class="form-item">
+        <el-input v-model="propertyForm.name" placeholder="请输入连线关系名称" class="modern-input" />
+        <FormHelp text="连线名称用于标识节点间的关系，建议使用描述性名称" />
+      </el-form-item>
+    </FormSection>
 
-      <FormSection title="条件配置" icon="⚙️">
-        <el-form-item label="关系表达式" prop="expression" class="form-item">
-          <el-input
-            v-model="propertyForm.expression"
-            placeholder="请点击右侧按钮生成表达式"
-            class="modern-input"
-            readonly
-          >
-            <template #append>
-              <el-button @click="handleOpenExpression" class="expression-btn" :icon="Setting"> 生成表达式 </el-button>
-            </template>
-          </el-input>
-          <FormHelp text="通过表达式编辑器配置连线的执行条件" />
-        </el-form-item>
-      </FormSection>
+    <FormSection title="条件配置" icon="⚙️">
+      <el-form-item label="关系表达式" prop="expression" class="form-item">
+        <el-input
+          v-model="propertyForm.expression"
+          placeholder="请点击右侧按钮生成表达式"
+          class="modern-input"
+          readonly
+        >
+          <template #append>
+            <el-button @click="handleOpenExpression" class="expression-btn" :icon="Setting"> 生成表达式 </el-button>
+          </template>
+        </el-input>
+        <FormHelp text="通过表达式编辑器配置连线的执行条件" />
+      </el-form-item>
+    </FormSection>
 
-      <FormSection title="使用说明" icon="💡">
-        <div class="edge-tips">
-          <div class="tip-item">
-            <div class="tip-icon">🔗</div>
-            <div class="tip-content">
-              <h4 class="tip-title">连线关系</h4>
-              <p class="tip-desc">定义节点间的连接关系，支持条件分支和并行执行</p>
-            </div>
-          </div>
-
-          <div class="tip-item">
-            <div class="tip-icon">⚡</div>
-            <div class="tip-content">
-              <h4 class="tip-title">条件判断</h4>
-              <p class="tip-desc">通过表达式设置连线的执行条件，实现动态流程控制</p>
-            </div>
-          </div>
-        </div>
-      </FormSection>
-    </el-form>
-
-    <!-- 表达式编辑器弹窗 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :fullscreen="false"
-      :modal="true"
-      :lock-scroll="true"
-      :close-on-click-modal="false"
-      :close-on-press-escape="true"
-      :show-close="false"
-      :before-close="handleExpressionClose"
-      :width="'70%'"
-      align-center
-      destroy-on-close
-      class="expression-dialog"
-    >
-      <div class="expression-content">
-        <div class="expression-header">
-          <div class="header-info">
-            <h3 class="content-title">配置连线执行条件</h3>
-            <p class="content-subtitle">通过表达式编辑器设置连线的执行条件，支持模板字段和自定义逻辑</p>
+    <FormSection title="使用说明" icon="💡">
+      <div class="edge-tips">
+        <div class="tip-item">
+          <div class="tip-icon">🔗</div>
+          <div class="tip-content">
+            <h4 class="tip-title">连线关系</h4>
+            <p class="tip-desc">定义节点间的连接关系，支持条件分支和并行执行</p>
           </div>
         </div>
 
-        <div class="expression-body">
-          <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
+        <div class="tip-item">
+          <div class="tip-icon">⚡</div>
+          <div class="tip-content">
+            <h4 class="tip-title">条件判断</h4>
+            <p class="tip-desc">通过表达式设置连线的执行条件，实现动态流程控制</p>
+          </div>
+        </div>
+      </div>
+    </FormSection>
+  </el-form>
+
+  <!-- 表达式编辑器弹窗 -->
+  <el-dialog
+    v-model="dialogVisible"
+    :fullscreen="false"
+    :modal="true"
+    :lock-scroll="true"
+    :close-on-click-modal="false"
+    :close-on-press-escape="true"
+    :show-close="false"
+    :before-close="handleExpressionClose"
+    :width="'70%'"
+    align-center
+    destroy-on-close
+    class="expression-dialog"
+  >
+    <div class="expression-content">
+      <div class="expression-header">
+        <div class="header-info">
+          <h3 class="content-title">配置连线执行条件</h3>
+          <p class="content-subtitle">通过表达式编辑器设置连线的执行条件，支持模板字段和自定义逻辑</p>
         </div>
       </div>
 
-      <template #footer>
-        <div class="expression-footer">
-          <el-button @click="dialogVisible = false" class="footer-btn footer-btn-cancel">取消</el-button>
-          <el-button type="primary" @click="saveExpression()" class="footer-btn footer-btn-confirm">确认</el-button>
-        </div>
-      </template>
-    </el-dialog>
-  </PropertyContainer>
+      <div class="expression-body">
+        <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
+      </div>
+    </div>
+
+    <template #footer>
+      <div class="expression-footer">
+        <el-button @click="dialogVisible = false" class="footer-btn footer-btn-cancel">取消</el-button>
+        <el-button type="primary" @click="saveExpression()" class="footer-btn footer-btn-confirm">确认</el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
@@ -103,7 +93,7 @@ import Expression from "./expression.vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { getTemplateByWorkflowIdApi } from "@/api/template"
 import { template } from "@/api/template/types/template"
-import { PropertyContainer, FormSection, FormHelp } from "../PropertySetting"
+import { FormSection, FormHelp } from "../PropertySetting"
 import { Setting } from "@element-plus/icons-vue"
 
 const props = defineProps({
@@ -188,15 +178,14 @@ const confirmFunc = () => {
   })
 }
 
-//取消
-const cancelFunc = () => {
-  emits("closed")
-}
-
 onMounted(() => {
   propertyForm.value.name = props.nodeData?.properties.name ? props.nodeData?.properties.name : ""
   propertyForm.value.is_pass = props.nodeData?.properties.is_pass ? props.nodeData.properties.is_pass : false
   propertyForm.value.expression = props.nodeData?.properties.expression ? props.nodeData.properties.expression : ""
+})
+
+defineExpose({
+  confirmFunc
 })
 </script>
 <style scoped lang="scss">

@@ -1,183 +1,168 @@
 <template>
-  <PropertyContainer
-    title="用户节点配置"
-    subtitle="配置审批流程的用户节点属性"
-    icon-name="user"
-    theme="blue"
-    :in-drawer="true"
-    @confirm="confirmFunc"
-    @cancel="cancelFunc"
+  <el-form
+    ref="formRef"
+    :model="propertyForm"
+    :inline-message="true"
+    :rules="formRules"
+    label-position="top"
+    :disabled="flowDetail.status == '2'"
+    class="property-form"
   >
-    <el-form
-      ref="formRef"
-      :model="propertyForm"
-      :inline-message="true"
-      :rules="formRules"
-      label-position="top"
-      :disabled="flowDetail.status == '2'"
-      class="property-form"
-    >
-      <FormSection title="基本信息" icon="📝">
-        <el-form-item label="节点名称" prop="name" class="form-item">
-          <el-input
-            v-model="propertyForm.name"
-            placeholder="请输入节点名称"
-            class="modern-input"
-            :disabled="flowDetail.status == '2'"
-          />
-          <FormHelp text="节点名称用于标识审批步骤，建议使用描述性名称" />
-        </el-form-item>
-      </FormSection>
+    <FormSection title="基本信息" icon="📝">
+      <el-form-item label="节点名称" prop="name" class="form-item">
+        <el-input
+          v-model="propertyForm.name"
+          placeholder="请输入节点名称"
+          class="modern-input"
+          :disabled="flowDetail.status == '2'"
+        />
+        <FormHelp text="节点名称用于标识审批步骤，建议使用描述性名称" />
+      </el-form-item>
+    </FormSection>
 
-      <FormSection title="审批配置" icon="⚙️">
-        <el-form-item label="审批规则" prop="rule" class="form-item">
-          <el-select
-            v-model="propertyForm.rule"
-            placeholder="请选择审批规则"
-            class="modern-select"
-            size="large"
-            :disabled="flowDetail.status == '2'"
-            @change="handleChange"
-          >
-            <el-option
-              v-for="item in options"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-              class="modern-option"
-            />
-          </el-select>
-          <FormHelp text="选择审批人员的确定方式，影响后续的参与者配置" />
-        </el-form-item>
-
-        <!-- 模板字段配置 -->
-        <div v-if="propertyForm.rule === 'template'" class="conditional-section">
-          <div class="form-row">
-            <el-form-item label="模版名称" prop="template_id" class="form-item">
-              <el-select
-                v-model="propertyForm.template_id"
-                placeholder="请选择模版"
-                class="modern-select"
-                :disabled="flowDetail.status == '2'"
-              >
-                <el-option
-                  v-for="item in templateRules"
-                  :key="item.id"
-                  :label="item.name"
-                  :value="item.id"
-                  class="modern-option"
-                />
-              </el-select>
-            </el-form-item>
-
-            <el-form-item label="模版字段" prop="template_field" class="form-item">
-              <el-select
-                v-model="propertyForm.template_field"
-                :disabled="!propertyForm.template_id || flowDetail.status == '2'"
-                placeholder="请选择模版字段"
-                class="modern-select"
-              >
-                <el-option
-                  v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id))"
-                  :key="field"
-                  :label="title"
-                  :value="field"
-                  class="modern-option"
-                />
-              </el-select>
-            </el-form-item>
-          </div>
-        </div>
-
-        <!-- 参与者配置 -->
-        <el-form-item
-          v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
-          :label="getLabel(propertyForm.rule)"
-          prop="approved"
+    <FormSection title="审批配置" icon="⚙️">
+      <el-form-item label="审批规则" prop="rule" class="form-item">
+        <el-select
+          v-model="propertyForm.rule"
+          placeholder="请选择审批规则"
+          class="modern-select"
           size="large"
-          class="form-item"
+          :disabled="flowDetail.status == '2'"
+          @change="handleChange"
         >
-          <div class="select-container">
+          <el-option
+            v-for="item in options"
+            :key="item.value"
+            :label="item.label"
+            :value="item.value"
+            class="modern-option"
+          />
+        </el-select>
+        <FormHelp text="选择审批人员的确定方式，影响后续的参与者配置" />
+      </el-form-item>
+
+      <!-- 模板字段配置 -->
+      <div v-if="propertyForm.rule === 'template'" class="conditional-section">
+        <div class="form-row">
+          <el-form-item label="模版名称" prop="template_id" class="form-item">
             <el-select
-              v-model="propertyForm.approved"
-              multiple
-              placeholder="请选择参与者"
-              :show-arrow="false"
-              suffix-icon=""
-              tag-type="info"
-              size="large"
-              :disabled="approvalInputDisabled || flowDetail.status == '2'"
+              v-model="propertyForm.template_id"
+              placeholder="请选择模版"
               class="modern-select"
+              :disabled="flowDetail.status == '2'"
             >
               <el-option
-                v-for="item in approvedOptions"
-                :key="item.name"
-                :label="item.display_name"
-                :value="item.name"
+                v-for="item in templateRules"
+                :key="item.id"
+                :label="item.name"
+                :value="item.id"
                 class="modern-option"
               />
             </el-select>
-            <el-button
-              class="select-button"
-              :icon="UserFilled"
-              @click="openUser"
-              :disabled="flowDetail.status == '2'"
+          </el-form-item>
+
+          <el-form-item label="模版字段" prop="template_field" class="form-item">
+            <el-select
+              v-model="propertyForm.template_field"
+              :disabled="!propertyForm.template_id || flowDetail.status == '2'"
+              placeholder="请选择模版字段"
+              class="modern-select"
+            >
+              <el-option
+                v-for="[title, field] in Array.from(getTemplateFieldOptions(propertyForm.template_id))"
+                :key="field"
+                :label="title"
+                :value="field"
+                class="modern-option"
+              />
+            </el-select>
+          </el-form-item>
+        </div>
+      </div>
+
+      <!-- 参与者配置 -->
+      <el-form-item
+        v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
+        :label="getLabel(propertyForm.rule)"
+        prop="approved"
+        size="large"
+        class="form-item"
+      >
+        <div class="select-container">
+          <el-select
+            v-model="propertyForm.approved"
+            multiple
+            placeholder="请选择参与者"
+            :show-arrow="false"
+            suffix-icon=""
+            tag-type="info"
+            size="large"
+            :disabled="approvalInputDisabled || flowDetail.status == '2'"
+            class="modern-select"
+          >
+            <el-option
+              v-for="item in approvedOptions"
+              :key="item.name"
+              :label="item.display_name"
+              :value="item.name"
+              class="modern-option"
             />
-          </div>
-          <FormHelp text="点击右侧按钮选择具体的审批人员" />
-        </el-form-item>
-      </FormSection>
+          </el-select>
+          <el-button class="select-button" :icon="UserFilled" @click="openUser" :disabled="flowDetail.status == '2'" />
+        </div>
+        <FormHelp text="点击右侧按钮选择具体的审批人员" />
+      </el-form-item>
+    </FormSection>
 
-      <FormSection title="流程设置" icon="🔔">
-        <div class="settings-grid">
-          <div class="setting-item">
-            <el-form-item label="是否会签" prop="is_cosigned">
-              <el-switch
-                v-model="propertyForm.is_cosigned"
-                size="default"
-                :disabled="flowDetail.status == '2'"
-                active-color="var(--primary)"
-                inactive-color="var(--border)"
-              />
-            </el-form-item>
-          </div>
-
-          <div class="setting-item">
-            <el-form-item label="仅抄送" prop="is_cc">
-              <el-switch
-                v-model="propertyForm.is_cc"
-                size="default"
-                :disabled="flowDetail.status == '2'"
-                active-color="var(--primary)"
-                inactive-color="var(--border)"
-              />
-            </el-form-item>
-          </div>
+    <FormSection title="流程设置" icon="🔔">
+      <div class="settings-grid">
+        <div class="setting-item">
+          <el-form-item label="是否会签" prop="is_cosigned">
+            <el-switch
+              v-model="propertyForm.is_cosigned"
+              size="default"
+              :disabled="flowDetail.status == '2'"
+              active-color="var(--primary)"
+              inactive-color="var(--border)"
+            />
+          </el-form-item>
         </div>
 
-        <div class="settings-help">
-          <div class="help-item">
-            <span class="help-icon">ℹ️</span>
-            <span class="help-text">会签：开启后需要所有参与者都同意才能通过</span>
-          </div>
-          <div class="help-item">
-            <span class="help-icon">ℹ️</span>
-            <span class="help-text">抄送：开启后该节点仅用于通知，无需审批</span>
-          </div>
+        <div class="setting-item">
+          <el-form-item label="仅抄送" prop="is_cc">
+            <el-switch
+              v-model="propertyForm.is_cc"
+              size="default"
+              :disabled="flowDetail.status == '2'"
+              active-color="var(--primary)"
+              inactive-color="var(--border)"
+            />
+          </el-form-item>
         </div>
-      </FormSection>
-    </el-form>
+      </div>
 
-    <!-- 用户选择器组件 -->
-    <UserSelector v-model="approvalVisible" :default-checked-keys="checkedKeys" @confirm="handleUserSelected" />
-  </PropertyContainer>
+      <div class="settings-help">
+        <div class="help-item">
+          <span class="help-icon">ℹ️</span>
+          <span class="help-text">会签：开启后需要所有参与者都同意才能通过</span>
+        </div>
+        <div class="help-item">
+          <span class="help-icon">ℹ️</span>
+          <span class="help-text">抄送：开启后该节点仅用于通知，无需审批</span>
+        </div>
+      </div>
+    </FormSection>
+  </el-form>
+
+  <!-- 用户选择器组件 -->
+  <UserSelector v-model="approvalVisible" :default-checked-keys="checkedKeys" @confirm="handleUserSelected" />
 </template>
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { UserFilled } from "@element-plus/icons-vue"
 import { findByUsernamesApi } from "@/api/user"
-import { PropertyContainer, FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection, FormHelp } from "../../PropertySetting"
 import UserSelector from "./UserSelector.vue"
 
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
@@ -334,11 +319,6 @@ const confirmFunc = () => {
   })
 }
 
-//取消
-const cancelFunc = () => {
-  emits("closed")
-}
-
 onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || ""
   propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
@@ -364,6 +344,11 @@ onMounted(async () => {
       })
     }
   }
+})
+
+// 暴露方法给父组件
+defineExpose({
+  confirmFunc
 })
 </script>
 <style scoped lang="scss">

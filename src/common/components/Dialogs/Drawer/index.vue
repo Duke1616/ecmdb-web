@@ -1,7 +1,6 @@
 <template>
   <el-drawer
     v-model="visible"
-    :title="title"
     :size="size"
     :direction="direction"
     :show-close="false"
@@ -15,8 +14,10 @@
     <template #header>
       <div class="drawer-header">
         <div class="header-left">
-          <div class="header-icon" v-if="headerIcon">
-            <el-icon><component :is="headerIcon" /></el-icon>
+          <div class="header-icon" v-if="headerIcon || $slots['header-icon']">
+            <slot name="header-icon">
+              <el-icon><component :is="headerIcon" /></el-icon>
+            </slot>
           </div>
           <div class="header-text">
             <h3>{{ title }}</h3>
@@ -132,68 +133,73 @@ const handleConfirm = () => {
   flex-direction: column;
 
   .drawer-header {
-    padding: 16px 20px;
+    padding: calc(0.8rem + 0.3vw) calc(1rem + 0.4vw);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     background: #fafafa;
     border-bottom: 1px solid #e4e7ed;
-    margin-bottom: -32px;
+    margin-bottom: calc(-1.6rem + 0.2vw);
+    text-align: left;
 
     .header-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: calc(0.5rem + 0.2vw);
       flex: 1;
     }
 
     .header-right {
       display: flex;
       align-items: center;
+      margin-left: auto;
     }
 
     .header-icon {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 40px;
-      height: 40px;
+      width: calc(2rem + 0.5vw);
+      height: calc(2rem + 0.5vw);
       background: #409eff;
-      border-radius: 8px;
+      border-radius: calc(0.4rem + 0.1vw);
       color: white;
 
       .el-icon {
-        font-size: 22px;
+        font-size: calc(1.1rem + 0.25vw);
       }
     }
 
     .header-text {
       flex: 1;
+      text-align: left;
 
       h3 {
         margin: 0;
-        font-size: 16px;
+        font-size: calc(0.8rem + 0.2vw);
         font-weight: 600;
         color: #303133;
         line-height: 1.3;
+        text-align: left;
       }
 
       p {
-        margin: 2px 0 0 0;
-        font-size: 13px;
+        margin: calc(0.1rem + 0.05vw) 0 0 0;
+        font-size: calc(0.65rem + 0.15vw);
         color: #909399;
         line-height: 1.3;
+        text-align: left;
       }
     }
 
     .close-btn {
-      width: 40px;
-      height: 40px;
+      width: calc(2rem + 0.5vw);
+      height: calc(2rem + 0.5vw);
       padding: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 8px;
+      border-radius: calc(0.4rem + 0.1vw);
       color: #303133;
       transition: all 0.2s ease;
 
@@ -203,7 +209,7 @@ const handleConfirm = () => {
       }
 
       .el-icon {
-        font-size: 26px;
+        font-size: calc(1.3rem + 0.3vw);
       }
     }
   }
@@ -221,26 +227,26 @@ const handleConfirm = () => {
   }
 
   .drawer-footer {
-    padding: 20px 24px;
+    padding: calc(1rem + 0.4vw) calc(1.2rem + 0.5vw);
     background: #f8fafc;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
-    gap: 12px;
-    margin: 0 20px 12px 20px;
-    border-radius: 0 0 6px 6px;
+    gap: calc(0.6rem + 0.2vw);
+    margin: 0 calc(1rem + 0.4vw) calc(0.6rem + 0.2vw) calc(1rem + 0.4vw);
+    border-radius: 0 0 calc(0.3rem + 0.1vw) calc(0.3rem + 0.1vw);
 
     .el-button {
-      min-width: 100px;
-      height: 44px;
-      border-radius: 8px;
+      min-width: calc(5rem + 1vw);
+      height: calc(2.2rem + 0.5vw);
+      border-radius: calc(0.4rem + 0.1vw);
       font-weight: 500;
-      font-size: 14px;
+      font-size: calc(0.7rem + 0.15vw);
       transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: calc(0.3rem + 0.1vw);
 
       &:not(.el-button--primary) {
         border: 1px solid #d1d5db;
@@ -285,47 +291,4 @@ const handleConfirm = () => {
 }
 
 // 标签页样式已移动到 detail.vue 中
-
-// 响应式设计
-@media (max-width: 768px) {
-  .custom-drawer {
-    .drawer-header {
-      padding: 12px 16px;
-      gap: 8px;
-
-      .header-icon {
-        width: 28px;
-        height: 28px;
-
-        .el-icon {
-          font-size: 12px;
-        }
-      }
-
-      .header-text h3 {
-        font-size: 15px;
-      }
-
-      .header-text p {
-        font-size: 12px;
-      }
-    }
-
-    .drawer-content {
-      margin: 0 16px 8px 16px;
-    }
-
-    .drawer-footer {
-      padding: 16px;
-      margin: 0 16px 8px 16px;
-      flex-direction: column;
-      gap: 8px;
-
-      .el-button {
-        width: 100%;
-        min-width: auto;
-      }
-    }
-  }
-}
 </style>

@@ -1,52 +1,42 @@
 <template>
-  <PropertyContainer
-    title="条件节点配置"
-    subtitle="配置工作流分支条件节点的属性"
-    icon-name="condition"
-    theme="orange"
-    :in-drawer="true"
-    @confirm="confirmFunc"
-    @cancel="cancelFunc"
+  <el-form
+    ref="formRef"
+    :model="propertyForm"
+    :inline-message="true"
+    :rules="formRules"
+    label-position="top"
+    :disabled="flowDetail.status == '2'"
+    class="property-form"
   >
-    <el-form
-      ref="formRef"
-      :model="propertyForm"
-      :inline-message="true"
-      :rules="formRules"
-      label-position="top"
-      :disabled="flowDetail.status == '2'"
-      class="property-form"
-    >
-      <FormSection title="基本信息" icon="📝">
-        <el-form-item label="节点名称" prop="name" class="form-item">
-          <el-input
-            v-model="propertyForm.name"
-            placeholder="请输入条件节点名称"
-            class="modern-input"
-            :disabled="flowDetail.status == '2'"
-          />
-          <FormHelp text="条件节点名称用于标识分支判断点，建议使用描述性名称" />
-        </el-form-item>
-      </FormSection>
+    <FormSection title="基本信息" icon="📝">
+      <el-form-item label="节点名称" prop="name" class="form-item">
+        <el-input
+          v-model="propertyForm.name"
+          placeholder="请输入条件节点名称"
+          class="modern-input"
+          :disabled="flowDetail.status == '2'"
+        />
+        <FormHelp text="条件节点名称用于标识分支判断点，建议使用描述性名称" />
+      </el-form-item>
+    </FormSection>
 
-      <FormSection title="条件配置" icon="⚙️">
-        <div class="condition-tips">
-          <div class="tip-item">
-            <div class="tip-icon">🔗</div>
-            <div class="tip-content">
-              <h4 class="tip-title">连线设置</h4>
-              <p class="tip-desc">通过连线设置不同的分支条件，支持多个出口路径</p>
-            </div>
+    <FormSection title="条件配置" icon="⚙️">
+      <div class="condition-tips">
+        <div class="tip-item">
+          <div class="tip-icon">🔗</div>
+          <div class="tip-content">
+            <h4 class="tip-title">连线设置</h4>
+            <p class="tip-desc">通过连线设置不同的分支条件，支持多个出口路径</p>
           </div>
         </div>
-      </FormSection>
-    </el-form>
-  </PropertyContainer>
+      </div>
+    </FormSection>
+  </el-form>
 </template>
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import { PropertyContainer, FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection, FormHelp } from "../../PropertySetting"
 
 const props = defineProps({
   nodeData: Object,
@@ -94,13 +84,13 @@ const confirmFunc = () => {
   })
 }
 
-//取消
-const cancelFunc = () => {
-  emits("closed")
-}
-
 onMounted(() => {
   propertyForm.name = props.nodeData?.properties.name
+})
+
+// 暴露方法给父组件
+defineExpose({
+  confirmFunc
 })
 </script>
 <style scoped lang="scss">

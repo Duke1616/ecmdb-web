@@ -16,13 +16,6 @@
   height: 100%;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   overflow: hidden;
-  padding: 20px;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .page-container {
-    padding: 16px;
-  }
+  padding: calc(1rem + 0.4vw);
 }
 </style>

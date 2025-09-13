@@ -129,7 +129,7 @@ defineExpose({
 }
 
 .wizard-header {
-  padding: 20px 0;
+  padding: calc(1rem + 0.4vw) 0;
   background: white;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -140,7 +140,7 @@ defineExpose({
   display: flex;
   justify-content: center;
   align-items: center;
-  max-width: 800px;
+  max-width: calc(40rem + 10vw);
   margin: 0 auto;
   position: relative;
 }
@@ -151,12 +151,12 @@ defineExpose({
   align-items: center;
   position: relative;
   flex: 1;
-  max-width: 200px;
+  max-width: calc(10rem + 2vw);
 }
 
 .step-circle {
-  width: 32px;
-  height: 32px;
+  width: calc(1.6rem + 0.4vw);
+  height: calc(1.6rem + 0.4vw);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -164,7 +164,7 @@ defineExpose({
   background: #f1f5f9;
   border: 2px solid #e5e7eb;
   transition: all 0.3s ease;
-  margin-bottom: 6px;
+  margin-bottom: calc(0.3rem + 0.1vw);
   position: relative;
   z-index: 2;
 }
@@ -184,20 +184,20 @@ defineExpose({
 }
 
 .step-icon {
-  width: 16px;
-  height: 16px;
+  width: calc(0.8rem + 0.2vw);
+  height: calc(0.8rem + 0.2vw);
 }
 
 .step-check-icon {
-  width: 16px;
-  height: 16px;
+  width: calc(0.8rem + 0.2vw);
+  height: calc(0.8rem + 0.2vw);
 }
 
 .step-title {
   font-weight: 600;
   color: #374151;
-  font-size: 12px;
-  margin-bottom: 2px;
+  font-size: calc(0.6rem + 0.15vw);
+  margin-bottom: calc(0.1rem + 0.05vw);
 }
 
 .step-item.step-active .step-title {
@@ -205,13 +205,13 @@ defineExpose({
 }
 
 .step-description {
-  font-size: 10px;
+  font-size: calc(0.5rem + 0.1vw);
   color: #6b7280;
 }
 
 .step-connector {
   position: absolute;
-  top: 16px;
+  top: calc(0.8rem + 0.2vw);
   left: 60%;
   right: -40%;
   height: 2px;
@@ -242,7 +242,7 @@ defineExpose({
   display: flex;
   text-align: center;
   flex-direction: column;
-  padding: 10px 0px;
+  padding: 8px 0px;
   min-height: 0;
 }
 </style>

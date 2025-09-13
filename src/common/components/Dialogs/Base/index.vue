@@ -92,13 +92,13 @@ const handleClosed = () => {
   :deep(.el-dialog__header) {
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
-    padding: 18px 20px;
+    padding: calc(0.9rem + 0.3vw) calc(1rem + 0.4vw);
     margin: 0;
     flex-shrink: 0;
   }
 
   :deep(.el-dialog__body) {
-    padding: 20px;
+    padding: calc(1rem + 0.4vw);
     flex: 1;
     overflow: hidden;
     min-height: 0;
@@ -107,7 +107,7 @@ const handleClosed = () => {
   }
 
   :deep(.el-dialog__footer) {
-    padding: 14px 20px;
+    padding: calc(0.7rem + 0.25vw) calc(1rem + 0.4vw);
     background: #f8fafc;
     border-top: 1px solid #e2e8f0;
     flex-shrink: 0;
@@ -120,7 +120,7 @@ const handleClosed = () => {
     }
 
     :deep(.el-dialog__body) {
-      padding: 20px;
+      padding: calc(1rem + 0.4vw);
     }
   }
 
@@ -144,47 +144,6 @@ const handleClosed = () => {
 
     :deep(.el-dialog__body) {
       padding: 0;
-    }
-  }
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-  .base-dialog {
-    :deep(.el-dialog) {
-      max-height: 95vh;
-      margin: 5vh auto;
-    }
-
-    :deep(.el-dialog__header) {
-      padding: 14px 16px;
-    }
-
-    :deep(.el-dialog__body) {
-      padding: 16px;
-    }
-
-    :deep(.el-dialog__footer) {
-      padding: 12px 16px;
-    }
-
-    // 移动端不同类型弹窗的高度调整
-    &--form {
-      :deep(.el-dialog) {
-        max-height: 90vh;
-      }
-    }
-
-    &--permission {
-      :deep(.el-dialog) {
-        max-height: 95vh;
-      }
-    }
-
-    &--custom {
-      :deep(.el-dialog) {
-        max-height: 95vh;
-      }
     }
   }
 }
