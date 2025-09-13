@@ -383,16 +383,21 @@ onMounted(() => {
   border-radius: calc(0.4rem + 0.1vw);
   overflow: hidden;
   background: white;
+  display: flex;
+  flex-direction: column;
 
   :deep(.el-card__body) {
     padding: 0;
     height: 100%;
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 0;
   }
 }
 
 .card-header {
+  flex-shrink: 0;
   padding: calc(0.8rem + 0.2vw);
   border-bottom: 1px solid #f3f4f6;
   background: #fafafa;
@@ -536,16 +541,24 @@ onMounted(() => {
   flex: 1;
   overflow: hidden;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .details-card {
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     border: 1px solid #e5e7eb;
     border-radius: calc(0.4rem + 0.1vw);
     background: white;
+    display: flex;
+    flex-direction: column;
 
     :deep(.el-card__body) {
-      height: 100%;
-      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
     }
   }
 }
