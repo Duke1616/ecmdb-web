@@ -3,6 +3,7 @@ import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
 import { ArrowRight } from "@element-plus/icons-vue"
 import type * as ElementPlusIconsVue from "@element-plus/icons-vue"
+import { getNavigationCards } from "@/common/constants/platforms"
 
 const router = useRouter()
 
@@ -18,62 +19,7 @@ interface NavigationCard {
   permission?: string
 }
 
-const navigationCards = ref<NavigationCard[]>([
-  {
-    id: "cmdb",
-    title: "CMDB",
-    description: "配置管理数据库，管理IT基础设施和配置项",
-    icon: "DataBoard",
-    color: "#3B82F6", // 更现代的蓝色
-    route: "/cmdb/dashboard",
-    permission: "cmdb"
-  },
-  {
-    id: "order",
-    title: "工单",
-    description: "处理变更申请和工单流程",
-    icon: "Tickets",
-    color: "#EF4444", // 更现代的红色
-    route: "/cmdb/order/start",
-    permission: "order"
-  },
-  {
-    id: "alert",
-    title: "告警平台",
-    description: "监控告警管理和处理",
-    icon: "Monitor",
-    color: "#F59E0B", // 更现代的橙色
-    route: "/alert",
-    permission: "alert"
-  },
-  {
-    id: "system",
-    title: "系统配置",
-    description: "用户、角色、权限等系统配置",
-    icon: "Setting",
-    color: "#8B5CF6", // 更现代的紫色
-    route: "/cmdb/system/menu",
-    permission: "system"
-  },
-  {
-    id: "change",
-    title: "变更平台",
-    description: "IT变更管理和审批流程",
-    icon: "Connection",
-    color: "#10B981", // 更现代的绿色
-    route: "/cmdb/rota",
-    permission: "change"
-  },
-  {
-    id: "automation",
-    title: "自动化平台",
-    description: "自动化任务和流程管理",
-    icon: "List",
-    color: "#6B7280", // 更现代的灰色
-    route: "/cmdb/task/codebook",
-    permission: "automation"
-  }
-])
+const navigationCards = ref<NavigationCard[]>(getNavigationCards())
 
 const filteredCards = computed(() => {
   // 临时显示所有卡片，不进行权限过滤
@@ -126,8 +72,8 @@ const handleCardClick = (card: NavigationCard) => {
 
 <style lang="scss" scoped>
 .navigation-page {
-  padding: 2.5rem;
-  /* 使用更现代的渐变背景 */
+  /* 使用 clamp 函数精确控制尺寸范围 */
+  padding: clamp(1rem, 2.5vw, 3rem);
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
   position: relative;
   height: 100%;
@@ -149,23 +95,23 @@ const handleCardClick = (card: NavigationCard) => {
 
 .navigation-header {
   text-align: center;
-  margin-bottom: 4rem;
+  /* 使用 clamp 精确控制间距 */
+  margin-bottom: clamp(1.5rem, 4vw, 4rem);
   position: relative;
   z-index: 1;
 
   .page-title {
-    /* 改进了字体大小和权重 */
-    font-size: 2.5rem;
+    /* 使用 clamp 控制字体大小范围 */
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
     font-weight: 700;
     color: #1e293b;
-    margin-bottom: 1rem;
-    /* 添加文字阴影增强可读性 */
+    margin-bottom: clamp(0.5rem, 1.5vw, 1.5rem);
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     letter-spacing: -0.025em;
   }
 
   .page-subtitle {
-    font-size: 1.125rem;
+    font-size: clamp(0.8rem, 2vw, 1.2rem);
     color: #64748b;
     margin: 0;
     font-weight: 500;
@@ -174,10 +120,10 @@ const handleCardClick = (card: NavigationCard) => {
 
 .navigation-grid {
   display: grid;
-  /* 优化了网格布局，更好的响应式设计 */
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
-  max-width: 1400px;
+  /* 固定3列布局，确保每行显示3个卡片 */
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1rem, 2.5vw, 2.5rem);
+  max-width: clamp(800px, 90vw, 1400px);
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -185,21 +131,20 @@ const handleCardClick = (card: NavigationCard) => {
 
 .navigation-card {
   background: rgba(255, 255, 255, 0.95);
-  /* 更现代的圆角和阴影效果 */
-  border-radius: 1.25rem;
-  padding: 2rem;
+  /* 使用 clamp 精确控制圆角和内边距 */
+  border-radius: clamp(0.5rem, 1.5vw, 1.5rem);
+  padding: clamp(1rem, 2.5vw, 2.5rem);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
   cursor: pointer;
-  /* 更流畅的过渡动画 */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 1.5rem;
-  /* 添加边框增强视觉效果 */
+  /* 使用 clamp 控制间距 */
+  gap: clamp(0.8rem, 2vw, 2rem);
   border: 1px solid rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(10px);
 
@@ -260,16 +205,15 @@ const handleCardClick = (card: NavigationCard) => {
 
   .card-icon {
     flex-shrink: 0;
-    width: 4rem;
-    height: 4rem;
-    border-radius: 1rem;
-    /* 使用渐变背景增强视觉效果 */
+    /* 使用 clamp 精确控制图标尺寸 */
+    width: clamp(2.5rem, 5vw, 4rem);
+    height: clamp(2.5rem, 5vw, 4rem);
+    border-radius: clamp(0.4rem, 1vw, 1rem);
     background: linear-gradient(135deg, var(--card-color), color-mix(in srgb, var(--card-color) 85%, black));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    /* 添加过渡动画 */
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
@@ -278,16 +222,17 @@ const handleCardClick = (card: NavigationCard) => {
     flex: 1;
 
     .card-title {
-      font-size: 1.25rem;
+      /* 使用 clamp 精确控制字体大小 */
+      font-size: clamp(0.9rem, 2.5vw, 1.4rem);
       font-weight: 600;
       color: #1e293b;
-      margin: 0 0 0.5rem 0;
-      /* 改进字体渲染 */
+      margin: 0 0 clamp(0.3rem, 0.8vw, 0.8rem) 0;
       letter-spacing: -0.025em;
     }
 
     .card-description {
-      font-size: 0.875rem;
+      /* 使用 clamp 精确控制字体大小 */
+      font-size: clamp(0.7rem, 1.8vw, 1rem);
       color: #64748b;
       margin: 0;
       line-height: 1.6;
@@ -304,47 +249,47 @@ const handleCardClick = (card: NavigationCard) => {
   }
 }
 
-/* 优化移动端响应式设计 */
+/* 优化移动端响应式设计 - 进一步减少差异 */
+@media (max-width: 1024px) {
+  .navigation-grid {
+    /* 中等屏幕下使用2列布局 */
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   .navigation-page {
-    padding: 1.5rem;
-    height: 100%;
-  }
-
-  .navigation-header {
-    margin-bottom: 2.5rem;
-
-    .page-title {
-      font-size: 2rem;
-    }
-
-    .page-subtitle {
-      font-size: 1rem;
-    }
+    padding: clamp(0.8rem, 3vw, 1.5rem);
   }
 
   .navigation-grid {
+    /* 小屏幕下使用单列布局，保持一致的间距 */
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: clamp(1rem, 3vw, 2rem);
+  }
+}
+
+/* 针对超小屏幕的额外优化 */
+@media (max-width: 480px) {
+  .navigation-header {
+    margin-bottom: clamp(1rem, 5vw, 2rem);
+
+    .page-title {
+      font-size: clamp(1.2rem, 6vw, 1.8rem);
+    }
+
+    .page-subtitle {
+      font-size: clamp(0.7rem, 3vw, 1rem);
+    }
   }
 
   .navigation-card {
-    padding: 1.5rem;
-    gap: 1rem;
+    padding: clamp(0.8rem, 4vw, 1.5rem);
+    gap: clamp(0.6rem, 3vw, 1.2rem);
 
     .card-icon {
-      width: 3rem;
-      height: 3rem;
-    }
-
-    .card-content {
-      .card-title {
-        font-size: 1.125rem;
-      }
-
-      .card-description {
-        font-size: 0.8125rem;
-      }
+      width: clamp(2rem, 8vw, 3rem);
+      height: clamp(2rem, 8vw, 3rem);
     }
   }
 }

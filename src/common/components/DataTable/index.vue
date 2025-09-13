@@ -348,7 +348,7 @@ const handleCurrentChange = (page: number) => {
       font-weight: 600;
       height: calc(2.4rem + 0.4vw);
       padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
-      font-size: calc(0.7rem + 0.25vw);
+      font-size: calc(0.6rem + 0.2vw);
     }
   }
 

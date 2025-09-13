@@ -23,16 +23,6 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
-    path: "/navigation",
-    component: () => import("@/pages/navigation/index.vue"),
-    name: "Navigation",
-    meta: {
-      title: "首页导航",
-      svgIcon: "dashboard",
-      affix: true
-    }
-  },
-  {
     path: "/403",
     component: () => import("@/pages/error/403.vue"),
     meta: {
@@ -77,10 +67,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       svgIcon: "search",
       hidden: true // 隐藏菜单，只能通过编程式导航访问
     }
-  }
-]
-
-export const defaultRoutes: RouteRecordRaw[] = [
+  },
   {
     path: "/",
     component: Layouts,
@@ -95,7 +82,22 @@ export const defaultRoutes: RouteRecordRaw[] = [
           svgIcon: "dashboard",
           affix: true
         }
-      },
+      }
+    ]
+  }
+]
+
+export const defaultRoutes: RouteRecordRaw[] = [
+  {
+    path: "/cmdb",
+    component: Layouts,
+    redirect: "/cmdb/dashboard",
+    meta: {
+      title: "CMDB",
+      svgIcon: "dashboard",
+      platforms: ["cmdb"]
+    },
+    children: [
       {
         path: "/cmdb/dashboard",
         component: () => import("@/views/search/search.vue"),

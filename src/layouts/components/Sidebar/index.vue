@@ -64,24 +64,47 @@ const hiddenScrollbarVerticalBar = computed(() => {
 //   }
 // )
 
-/** 不同应用平台的路由 */
-const hasPlatformNavigation = (currentPath: string, route: RouteRecordRaw) => {
-  const routePlatforms = route.meta?.platforms
-  if (routePlatforms) {
-    return routePlatforms.includes(currentPath)
-  }
-  return true
+/** 获取当前平台标识 */
+const getCurrentPlatform = (path: string) => {
+  // 从路径中提取平台标识，如 /cmdb/dashboard -> cmdb
+  const pathSegments = path.split("/").filter(Boolean)
+  return pathSegments[0] || ""
 }
 
-const filterPlatformRoutes = (routes: RouteRecordRaw[], currentPath: string) => {
+/** 检查路由是否属于当前平台 */
+const hasPlatformNavigation = (currentPlatform: string, route: RouteRecordRaw) => {
+  const routePlatforms = route.meta?.platforms
+
+  // 如果没有设置 platforms，则始终显示（如 navigation 等通用菜单）
+  if (!routePlatforms || routePlatforms.length === 0) {
+    return true
+  }
+
+  // 如果当前没有平台标识（如访问 /navigation），则显示所有没有 platforms 限制的路由
+  if (!currentPlatform) {
+    return true
+  }
+
+  // 检查路由是否属于当前平台
+  return routePlatforms.includes(currentPlatform)
+}
+
+/** 过滤平台路由 */
+const filterPlatformRoutes = (routes: RouteRecordRaw[], currentPlatform: string) => {
   const res: RouteRecordRaw[] = []
   routes.forEach((route) => {
     const tempRoute = { ...route }
-    if (hasPlatformNavigation(currentPath, tempRoute)) {
-      if (tempRoute.children) {
-        tempRoute.children = filterPlatformRoutes(tempRoute.children, currentPath)
+    if (hasPlatformNavigation(currentPlatform, tempRoute)) {
+      if (tempRoute.children && tempRoute.children.length > 0) {
+        tempRoute.children = filterPlatformRoutes(tempRoute.children, currentPlatform)
+        // 如果过滤后还有子路由，则保留父路由
+        if (tempRoute.children.length > 0) {
+          res.push(tempRoute)
+        }
+      } else {
+        // 没有子路由的叶子节点直接添加
+        res.push(tempRoute)
       }
-      res.push(tempRoute)
     }
   })
 
@@ -93,7 +116,10 @@ const currentroutes = ref<RouteRecordRaw[]>([])
 watch(
   () => route,
   (newval) => {
-    const filteredRoutes = filterPlatformRoutes(noHiddenRoutes.value, newval.path.split("/")[1])
+    const currentPlatform = getCurrentPlatform(newval.path)
+    console.log("当前平台:", currentPlatform, "当前路径:", newval.path)
+    const filteredRoutes = filterPlatformRoutes(noHiddenRoutes.value, currentPlatform)
+    console.log("过滤后的路由:", filteredRoutes)
     currentroutes.value = filteredRoutes
   },
   {

@@ -361,16 +361,16 @@ onMounted(() => {
 .content {
   display: flex;
   flex: 1;
-  gap: 16px;
+  gap: calc(0.8rem + 0.2vw);
   overflow: hidden;
   min-height: 0;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
+  height: calc(100vh - 7.5rem);
+  max-height: calc(100vh - 7.5rem);
   position: relative;
 }
 
 .department-panel {
-  flex: 0 0 380px;
+  flex: 0 0 calc(19rem + 2vw);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -380,7 +380,7 @@ onMounted(() => {
 .department-card {
   height: 100%;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: calc(0.4rem + 0.1vw);
   overflow: hidden;
   background: white;
 
@@ -393,7 +393,7 @@ onMounted(() => {
 }
 
 .card-header {
-  padding: 16px;
+  padding: calc(0.8rem + 0.2vw);
   border-bottom: 1px solid #f3f4f6;
   background: #fafafa;
 
@@ -401,11 +401,11 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: calc(0.6rem + 0.1vw);
 
     .card-title {
       margin: 0;
-      font-size: 16px;
+      font-size: calc(0.8rem + 0.1vw);
       font-weight: 600;
       color: #374151;
     }
@@ -413,20 +413,20 @@ onMounted(() => {
     .department-count {
       background: #f3f4f6;
       color: #6b7280;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: calc(0.1rem + 0.05vw) calc(0.4rem + 0.1vw);
+      border-radius: calc(0.2rem + 0.05vw);
+      font-size: calc(0.6rem + 0.1vw);
     }
   }
 
   .header-actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: calc(0.6rem + 0.1vw);
 
     .search-input {
       :deep(.el-input__wrapper) {
-        border-radius: 6px;
+        border-radius: calc(0.3rem + 0.1vw);
         border: 1px solid #d1d5db;
         background: white;
         box-shadow: none;
@@ -442,38 +442,38 @@ onMounted(() => {
       }
 
       :deep(.el-input__inner) {
-        height: 32px;
-        font-size: 14px;
+        height: calc(1.6rem + 0.2vw);
+        font-size: calc(0.7rem + 0.1vw);
       }
     }
 
     .action-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 4px;
+      gap: calc(0.2rem + 0.05vw);
       width: 100%;
 
       .el-button {
-        border-radius: 6px;
-        font-size: 12px;
-        padding: 6px 8px;
+        border-radius: calc(0.3rem + 0.1vw);
+        font-size: calc(0.6rem + 0.1vw);
+        padding: calc(0.3rem + 0.1vw) calc(0.4rem + 0.1vw);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
 
         &.el-button--small {
-          height: 28px;
+          height: calc(1.4rem + 0.2vw);
           min-width: 0;
         }
 
         &:first-child {
-          border-top-right-radius: 6px;
-          border-bottom-right-radius: 6px;
+          border-top-right-radius: calc(0.3rem + 0.1vw);
+          border-bottom-right-radius: calc(0.3rem + 0.1vw);
         }
 
         &:last-child {
-          border-top-left-radius: 6px;
-          border-bottom-left-radius: 6px;
+          border-top-left-radius: calc(0.3rem + 0.1vw);
+          border-bottom-left-radius: calc(0.3rem + 0.1vw);
         }
       }
     }
@@ -483,7 +483,7 @@ onMounted(() => {
 .tree-container {
   flex: 1;
   min-height: 0;
-  padding: 8px;
+  padding: calc(0.6rem + 0.2vw);
 
   .tree-scrollbar {
     height: 100%;
@@ -494,11 +494,13 @@ onMounted(() => {
 
     :deep(.el-tree-node) {
       .el-tree-node__content {
-        height: 32px;
-        padding: 0 8px;
-        border-radius: 4px;
-        margin-bottom: 1px;
-        transition: background-color 0.2s;
+        height: calc(1.8rem + 0.3vw);
+        padding: 0 calc(0.6rem + 0.2vw);
+        border-radius: calc(0.3rem + 0.1vw);
+        margin-bottom: calc(0.1rem + 0.05vw);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
 
         &:hover {
           background: #f9fafb;
@@ -513,7 +515,18 @@ onMounted(() => {
 
       .el-tree-node__expand-icon {
         color: #9ca3af;
-        font-size: 12px;
+        font-size: calc(0.7rem + 0.1vw);
+        margin-right: calc(0.4rem + 0.1vw);
+      }
+
+      .el-tree-node__label {
+        font-size: calc(0.7rem + 0.1vw);
+        color: #374151;
+        font-weight: 500;
+      }
+
+      .el-checkbox {
+        margin-right: calc(0.4rem + 0.1vw);
       }
     }
   }
@@ -527,7 +540,7 @@ onMounted(() => {
   .details-card {
     height: 100%;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: calc(0.4rem + 0.1vw);
     background: white;
 
     :deep(.el-card__body) {
@@ -537,48 +550,20 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 1200px) {
-  .department-panel {
-    flex: 0 0 320px;
-  }
-}
-
 .department-actions-bottom {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: calc(0.4rem + 0.1vw);
+  margin-top: calc(0.8rem + 0.2vw);
+  padding-top: calc(0.8rem + 0.2vw);
   border-top: 1px solid #f3f4f6;
 
   .el-button {
-    border-radius: 6px;
+    border-radius: calc(0.3rem + 0.1vw);
     font-weight: 500;
 
     .el-icon {
-      margin-right: 4px;
-    }
-  }
-}
-
-@media (max-width: 768px) {
-  .content {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .department-panel {
-    flex: none;
-    height: 400px;
-  }
-
-  .card-header .header-actions .action-buttons {
-    grid-template-columns: 1fr;
-    gap: 4px;
-
-    .el-button {
-      width: 100%;
-      justify-content: center;
+      margin-right: calc(0.2rem + 0.05vw);
     }
   }
 }
@@ -586,6 +571,6 @@ onMounted(() => {
 .form-content {
   height: 60vh;
   overflow-y: auto;
-  padding: 16px;
+  padding: calc(0.8rem + 0.2vw);
 }
 </style>

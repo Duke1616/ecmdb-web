@@ -31,7 +31,9 @@ export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
           svgIcon: route.meta.icon,
           affix: route.meta.is_affix,
           hidden: route.meta.is_hidden,
-          buttons: route.meta.buttons
+          buttons: route.meta.buttons,
+          // 将后端的 platform 字符串转换为前端的 platforms 数组
+          platforms: route.meta.platform ? [route.meta.platform] : undefined
         },
         children: transformDynamicRoutes(route.children)
       }
@@ -46,7 +48,9 @@ export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
           svgIcon: route.meta.icon,
           hidden: route.meta.is_hidden,
           keepAlive: route.meta.is_keepalive,
-          buttons: route.meta.buttons
+          buttons: route.meta.buttons,
+          // 将后端的 platform 字符串转换为前端的 platforms 数组
+          platforms: route.meta.platform ? [route.meta.platform] : undefined
         }
       }
     }

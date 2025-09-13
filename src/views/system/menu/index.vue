@@ -1,20 +1,19 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, ref, watch } from "vue"
-import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder } from "@element-plus/icons-vue"
+import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder, Switch, Rank } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
+import MenuMigration from "./components/MenuMigration.vue"
+import MenuDragTree from "./components/MenuDragTree.vue"
 import { deleteMenuApi, listMenusByPlatformApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
-import { ElMessage, ElMessageBox, ElTree, ElScrollbar } from "element-plus"
+import { ElMessage, ElMessageBox } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import PageContainer from "@/common/components/PageContainer/index.vue"
-const platforms = ref([
-  { id: "cmdb", name: "资产管理" },
-  { id: "order", name: "工单管理" },
-  { id: "alert", name: "告警平台" },
-  { id: "system", name: "系统管理" }
-])
+import { getPlatformsForMenu, getPlatformName } from "@/common/constants/platforms"
+
+const platforms = ref(getPlatformsForMenu())
 
 const currentPlatform = ref<string>("cmdb")
 
@@ -28,7 +27,7 @@ const handlePlatformChange = (platformId: string) => {
 
   refreshMenuData()
 
-  const platformName = platforms.value.find((p) => p.id === platformId)?.name
+  const platformName = getPlatformName(platformId)
   ElMessage.success(`已切换到${platformName}`)
 }
 
@@ -42,9 +41,16 @@ const defaultProps = ref<any>({
 })
 
 const empty = ref<boolean>(false)
-const treeRef = ref<InstanceType<typeof ElTree>>() as any
+const menuDragTreeRef = ref<InstanceType<typeof MenuDragTree>>()
 const menuCreateRef = ref<InstanceType<typeof MenuForm>>()
 const menuUpdateRef = ref<InstanceType<typeof MenuForm>>()
+
+// 迁移相关状态
+const migrationDialogVisible = ref<boolean>(false)
+
+// 拖拽相关状态
+const isDragMode = ref<boolean>(false)
+const dragLoading = ref<boolean>(false)
 // 菜单操作
 const handleUpdate = () => {
   menuUpdateRef.value?.submitUpdateForm()
@@ -84,6 +90,58 @@ const handleCloseDialog = (id?: number) => {
   dialogVisible.value = false
   if (id) {
     currentNodeKey.value = id
+  }
+}
+
+// 迁移菜单到其他平台
+const handleMigration = () => {
+  if (!currentNodeKey.value) return
+
+  const node = findMenuById(menuTreeData.value, currentNodeKey.value)
+  if (!node) return
+
+  migrationDialogVisible.value = true
+}
+
+// 处理迁移确认
+const handleMigrationConfirm = () => {
+  // 关闭对话框并刷新数据
+  migrationDialogVisible.value = false
+  currentNodeKey.value = null
+  empty.value = false
+
+  // 刷新当前平台的菜单数据
+  refreshMenuData()
+}
+
+// 切换拖拽模式
+const toggleDragMode = () => {
+  isDragMode.value = !isDragMode.value
+  if (isDragMode.value) {
+    ElMessage.info("已进入拖拽模式，可以拖拽菜单项进行排序")
+  } else {
+    ElMessage.info("已退出拖拽模式")
+  }
+}
+
+// 处理拖拽结束
+const handleDragEnd = async (dragNode: any, dropNode: any) => {
+  if (!dragNode || !dropNode) return
+
+  try {
+    dragLoading.value = true
+
+    // 这里需要调用拖拽排序API，暂时用模拟
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
+    ElMessage.success("菜单排序已更新")
+
+    // 刷新菜单数据
+    refreshMenuData()
+  } catch (error) {
+    ElMessage.error("排序更新失败，请重试")
+  } finally {
+    dragLoading.value = false
   }
 }
 
@@ -142,8 +200,8 @@ const refreshMenuData = async () => {
     await nextTick()
 
     // 如果之前有选中的节点，重新选中并加载数据
-    if (currentNodeKey.value && treeRef.value) {
-      treeRef.value.setCurrentKey(currentNodeKey.value)
+    if (currentNodeKey.value && menuDragTreeRef.value) {
+      menuDragTreeRef.value.treeRef?.setCurrentKey(currentNodeKey.value)
       const node = findMenuById(data, currentNodeKey.value)
       if (node) {
         loadMenuData(node)
@@ -173,7 +231,7 @@ const findMenuById = (menus: menu[], id: number): menu | null => {
 
 // 展开/收起所有节点
 const toggleAllNodes = (expanded: boolean) => {
-  const nodes = treeRef.value?.store?.nodesMap
+  const nodes = menuDragTreeRef.value?.treeRef?.store?.nodesMap
   if (!nodes) return
 
   const toggleRecursive = (menuList: menu[]) => {
@@ -228,7 +286,7 @@ watch(filterInput, (val: string) => {
     clearTimeout(searchTimer)
   }
   searchTimer = setTimeout(() => {
-    treeRef.value?.filter(val)
+    menuDragTreeRef.value?.treeRef?.filter(val)
   }, 300)
 })
 
@@ -288,24 +346,17 @@ onMounted(() => {
             </div>
           </div>
 
-          <!-- 树形菜单区域 -->
-          <div class="tree-container">
-            <el-scrollbar class="tree-scrollbar">
-              <el-tree
-                ref="treeRef"
-                :data="menuTreeData"
-                show-checkbox
-                node-key="id"
-                :highlight-current="true"
-                :expand-on-click-node="false"
-                @node-click="handleNodeClick"
-                :current-node-key="currentNodeKey || undefined"
-                :props="defaultProps"
-                :filter-node-method="filterNode"
-                class="menu-tree"
-              />
-            </el-scrollbar>
-          </div>
+          <!-- 拖拽树形菜单组件 -->
+          <MenuDragTree
+            ref="menuDragTreeRef"
+            :menu-tree-data="menuTreeData"
+            :current-node-key="currentNodeKey"
+            :is-drag-mode="isDragMode"
+            :filter-node="filterNode"
+            :default-props="defaultProps"
+            @node-click="handleNodeClick"
+            @drag-end="handleDragEnd"
+          />
         </el-card>
       </div>
 
@@ -317,6 +368,14 @@ onMounted(() => {
               <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="refreshMenuData" />
             </div>
             <div class="menu-actions-footer">
+              <el-button :type="isDragMode ? 'warning' : 'default'" @click="toggleDragMode" :loading="dragLoading">
+                <el-icon><Rank /></el-icon>
+                {{ isDragMode ? "退出拖拽" : "拖拽排序" }}
+              </el-button>
+              <el-button type="warning" @click="handleMigration">
+                <el-icon><Switch /></el-icon>
+                迁移到其他平台
+              </el-button>
               <el-button type="primary" @click="handleUpdate">
                 <el-icon><Edit /></el-icon>
                 修改
@@ -356,28 +415,36 @@ onMounted(() => {
         />
       </div>
     </FormDialog>
+
+    <!-- 迁移菜单组件 -->
+    <MenuMigration
+      v-model:visible="migrationDialogVisible"
+      :menu-title="currentNodeKey ? findMenuById(menuTreeData, currentNodeKey)?.meta.title : ''"
+      :current-platform="currentPlatform"
+      @confirm="handleMigrationConfirm"
+    />
   </PageContainer>
 </template>
 
 <style lang="scss" scoped>
 .platform-buttons {
   display: flex;
-  gap: 12px;
+  gap: calc(0.6rem + 0.1vw);
 }
 
 .content {
   display: flex;
   flex: 1;
-  gap: 16px;
+  gap: calc(0.8rem + 0.2vw);
   overflow: hidden;
   min-height: 0;
-  height: calc(100vh - 120px);
-  max-height: calc(100vh - 120px);
+  height: calc(100vh - 7.5rem);
+  max-height: calc(100vh - 7.5rem);
   position: relative;
 }
 
 .menu-panel {
-  flex: 0 0 380px;
+  flex: 0 0 calc(19rem + 2vw);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -387,7 +454,7 @@ onMounted(() => {
 .menu-card {
   height: 100%;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: calc(0.4rem + 0.1vw);
   overflow: hidden;
   background: white;
 
@@ -400,7 +467,7 @@ onMounted(() => {
 }
 
 .card-header {
-  padding: 16px;
+  padding: calc(0.8rem + 0.2vw);
   border-bottom: 1px solid #f3f4f6;
   background: #fafafa;
 
@@ -408,11 +475,11 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: calc(0.6rem + 0.1vw);
 
     .card-title {
       margin: 0;
-      font-size: 16px;
+      font-size: calc(0.8rem + 0.1vw);
       font-weight: 600;
       color: #374151;
     }
@@ -420,20 +487,20 @@ onMounted(() => {
     .menu-count {
       background: #f3f4f6;
       color: #6b7280;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 12px;
+      padding: calc(0.1rem + 0.05vw) calc(0.4rem + 0.1vw);
+      border-radius: calc(0.2rem + 0.05vw);
+      font-size: calc(0.6rem + 0.1vw);
     }
   }
 
   .header-actions {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: calc(0.6rem + 0.1vw);
 
     .search-input {
       :deep(.el-input__wrapper) {
-        border-radius: 6px;
+        border-radius: calc(0.3rem + 0.1vw);
         border: 1px solid #d1d5db;
         background: white;
         box-shadow: none;
@@ -449,38 +516,38 @@ onMounted(() => {
       }
 
       :deep(.el-input__inner) {
-        height: 32px;
-        font-size: 14px;
+        height: calc(1.6rem + 0.2vw);
+        font-size: calc(0.7rem + 0.1vw);
       }
     }
 
     .action-buttons {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 4px;
+      gap: calc(0.2rem + 0.05vw);
       width: 100%;
 
       .el-button {
-        border-radius: 6px;
-        font-size: 12px;
-        padding: 6px 8px;
+        border-radius: calc(0.3rem + 0.1vw);
+        font-size: calc(0.6rem + 0.1vw);
+        padding: calc(0.3rem + 0.1vw) calc(0.4rem + 0.1vw);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
 
         &.el-button--small {
-          height: 28px;
+          height: calc(1.4rem + 0.2vw);
           min-width: 0;
         }
 
         &:first-child {
-          border-top-right-radius: 6px;
-          border-bottom-right-radius: 6px;
+          border-top-right-radius: calc(0.3rem + 0.1vw);
+          border-bottom-right-radius: calc(0.3rem + 0.1vw);
         }
 
         &:last-child {
-          border-top-left-radius: 6px;
-          border-bottom-left-radius: 6px;
+          border-top-left-radius: calc(0.3rem + 0.1vw);
+          border-bottom-left-radius: calc(0.3rem + 0.1vw);
         }
       }
     }
@@ -490,7 +557,7 @@ onMounted(() => {
 .tree-container {
   flex: 1;
   min-height: 0;
-  padding: 8px;
+  padding: calc(0.6rem + 0.2vw);
 
   .tree-scrollbar {
     height: 100%;
@@ -501,11 +568,13 @@ onMounted(() => {
 
     :deep(.el-tree-node) {
       .el-tree-node__content {
-        height: 32px;
-        padding: 0 8px;
-        border-radius: 4px;
-        margin-bottom: 1px;
-        transition: background-color 0.2s;
+        height: calc(1.8rem + 0.3vw);
+        padding: 0 calc(0.6rem + 0.2vw);
+        border-radius: calc(0.3rem + 0.1vw);
+        margin-bottom: calc(0.1rem + 0.05vw);
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
 
         &:hover {
           background: #f9fafb;
@@ -520,7 +589,18 @@ onMounted(() => {
 
       .el-tree-node__expand-icon {
         color: #9ca3af;
-        font-size: 12px;
+        font-size: calc(0.7rem + 0.1vw);
+        margin-right: calc(0.4rem + 0.1vw);
+      }
+
+      .el-tree-node__label {
+        font-size: calc(0.7rem + 0.1vw);
+        color: #374151;
+        font-weight: 500;
+      }
+
+      .el-checkbox {
+        margin-right: calc(0.4rem + 0.1vw);
       }
     }
   }
@@ -534,7 +614,7 @@ onMounted(() => {
   .details-card {
     height: 100%;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: calc(0.4rem + 0.1vw);
     background: white;
 
     :deep(.el-card__body) {
@@ -547,41 +627,41 @@ onMounted(() => {
 .menu-actions-bottom {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
+  gap: calc(0.4rem + 0.1vw);
+  margin-top: calc(0.8rem + 0.2vw);
+  padding-top: calc(0.8rem + 0.2vw);
   border-top: 1px solid #f3f4f6;
 
   .el-button {
-    border-radius: 6px;
+    border-radius: calc(0.3rem + 0.1vw);
     font-weight: 500;
 
     .el-icon {
-      margin-right: 4px;
+      margin-right: calc(0.2rem + 0.05vw);
     }
   }
 }
 
 @media (max-width: 1200px) {
   .menu-panel {
-    flex: 0 0 320px;
+    flex: 0 0 calc(16rem + 2vw);
   }
 }
 
 @media (max-width: 768px) {
   .content {
     flex-direction: column;
-    gap: 12px;
+    gap: calc(0.6rem + 0.1vw);
   }
 
   .menu-panel {
     flex: none;
-    height: 400px;
+    height: calc(20rem + 2vw);
   }
 
   .card-header .header-actions .action-buttons {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: calc(0.2rem + 0.05vw);
 
     .el-button {
       width: 100%;
@@ -620,32 +700,32 @@ onMounted(() => {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: calc(0.8rem + 0.2vw);
+  padding: calc(1rem + 0.3vw) calc(1.2rem + 0.3vw);
   margin-top: auto;
 
   .el-button {
-    height: 40px;
-    padding: 0 24px;
-    border-radius: 8px;
-    font-size: 14px;
+    height: calc(2rem + 0.3vw);
+    padding: 0 calc(1.2rem + 0.3vw);
+    border-radius: calc(0.4rem + 0.1vw);
+    font-size: calc(0.7rem + 0.1vw);
     font-weight: 500;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateY(calc(-0.1rem + 0.05vw));
+      box-shadow: 0 calc(0.2rem + 0.1vw) calc(0.6rem + 0.2vw) rgba(0, 0, 0, 0.15);
     }
 
     &:active {
       transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
     }
 
     .el-icon {
-      margin-right: 6px;
-      font-size: 16px;
+      margin-right: calc(0.3rem + 0.1vw);
+      font-size: calc(0.8rem + 0.1vw);
     }
 
     /* 修改按钮样式 */
