@@ -3,7 +3,7 @@ import { computed } from "vue"
 import { type RouteRecordRaw } from "vue-router"
 import SidebarItemLink from "./SidebarItemLink.vue"
 import { isExternal } from "@/common/utils/validate"
-import path from "path-browserify"
+// import path from "path-browserify"
 
 interface Props {
   item: RouteRecordRaw
@@ -48,7 +48,13 @@ const resolvePath = (routePath: string) => {
     case isExternal(props.basePath):
       return props.basePath
     default:
-      return path.resolve(props.basePath, routePath)
+      // 简单的路径拼接，避免使用 path-browserify
+      if (!props.basePath) return routePath
+      if (!routePath) return props.basePath
+      
+      const basePath = props.basePath.endsWith('/') ? props.basePath.slice(0, -1) : props.basePath
+      const route = routePath.startsWith('/') ? routePath : `/${routePath}`
+      return `${basePath}${route}`
   }
 }
 </script>

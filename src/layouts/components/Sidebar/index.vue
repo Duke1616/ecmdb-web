@@ -4,6 +4,7 @@ import { RouteRecordRaw, useRoute } from "vue-router"
 import { useAppStore } from "@/pinia/stores/app"
 import { usePermissionStore } from "@/pinia/stores/permission"
 import { useSettingsStore } from "@/pinia/stores/settings"
+import { useSidebarStore } from "@/pinia/stores/sidebar"
 import SidebarItem from "./SidebarItem.vue"
 import Logo from "../Logo/index.vue"
 import { useDevice } from "@/common/composables/useDevice"
@@ -20,6 +21,7 @@ const route = useRoute()
 const appStore = useAppStore()
 const permissionStore = usePermissionStore()
 const settingsStore = useSettingsStore()
+const sidebarStore = useSidebarStore()
 const activeMenu = computed(() => {
   const {
     meta: { activeMenu },
@@ -27,7 +29,19 @@ const activeMenu = computed(() => {
   } = route
   return activeMenu ? activeMenu : path
 })
-const noHiddenRoutes = computed(() => permissionStore.routes.filter((item) => !item.meta?.hidden))
+// 结合权限过滤和平台过滤
+const currentroutes = computed(() => {
+  // 首先进行权限过滤
+  const permissionFilteredRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
+  
+  // 如果侧边栏存储有平台过滤，则应用平台过滤
+  if (sidebarStore.currentPlatform) {
+    return sidebarStore.filteredRoutes
+  }
+  
+  // 否则返回权限过滤后的路由
+  return permissionFilteredRoutes
+})
 const isCollapse = computed(() => !appStore.sidebar.opened)
 const isLogo = computed(() => isLeft.value && settingsStore.showLogo)
 const backgroundColor = computed(() => (isLeft.value ? v3SidebarMenuBgColor : undefined))
@@ -47,80 +61,40 @@ const hiddenScrollbarVerticalBar = computed(() => {
   return isTop.value ? "none" : "block"
 })
 
-// const currentroutes = ref<RouteRecordRaw[]>([])
-// console.log("noHiddenRoutes", noHiddenRoutes, route)
-// watch(
-//   () => route,
-//   (newval) => {
-//     // const arr = lodash.filter(noHiddenRoutes.value, { path: newval.path })
-//     console.log(newval.meta.platforms, "platforms")
-//     console.log(newval, "newval")
-//     const tempArr = filterPlatformRoutes(noHiddenRoutes.value, newval.path)
-//     currentroutes.value = tempArr
-//   },
-//   {
-//     immediate: true,
-//     deep: true
-//   }
-// )
-
-/** 获取当前平台标识 */
-const getCurrentPlatform = (path: string) => {
-  // 从路径中提取平台标识，如 /cmdb/dashboard -> cmdb
-  const pathSegments = path.split("/").filter(Boolean)
-  return pathSegments[0] || ""
-}
-
-/** 检查路由是否属于当前平台 */
-const hasPlatformNavigation = (currentPlatform: string, route: RouteRecordRaw) => {
-  const routePlatforms = route.meta?.platforms
-
-  // 如果没有设置 platforms，则始终显示（如 navigation 等通用菜单）
-  if (!routePlatforms || routePlatforms.length === 0) {
-    return true
+/** 获取当前页面的平台标识 */
+const getCurrentPlatform = (currentRoute: any) => {
+  // 从当前路由的 meta.platforms 中获取平台标识
+  const routePlatforms = currentRoute.meta?.platforms
+  if (routePlatforms && routePlatforms.length > 0) {
+    return routePlatforms[0] // 取第一个平台作为当前平台
   }
 
-  // 如果当前没有平台标识（如访问 /navigation），则显示所有没有 platforms 限制的路由
-  if (!currentPlatform) {
-    return true
-  }
-
-  // 检查路由是否属于当前平台
-  return routePlatforms.includes(currentPlatform)
+  return ""
 }
 
-/** 过滤平台路由 */
-const filterPlatformRoutes = (routes: RouteRecordRaw[], currentPlatform: string) => {
-  const res: RouteRecordRaw[] = []
-  routes.forEach((route) => {
-    const tempRoute = { ...route }
-    if (hasPlatformNavigation(currentPlatform, tempRoute)) {
-      if (tempRoute.children && tempRoute.children.length > 0) {
-        tempRoute.children = filterPlatformRoutes(tempRoute.children, currentPlatform)
-        // 如果过滤后还有子路由，则保留父路由
-        if (tempRoute.children.length > 0) {
-          res.push(tempRoute)
-        }
-      } else {
-        // 没有子路由的叶子节点直接添加
-        res.push(tempRoute)
-      }
-    }
-  })
-
-  return res
-}
-
-const currentroutes = ref<RouteRecordRaw[]>([])
-
+// 监听路由变化，更新平台过滤
 watch(
   () => route,
   (newval) => {
-    const currentPlatform = getCurrentPlatform(newval.path)
-    console.log("当前平台:", currentPlatform, "当前路径:", newval.path)
-    const filteredRoutes = filterPlatformRoutes(noHiddenRoutes.value, currentPlatform)
-    console.log("过滤后的路由:", filteredRoutes)
-    currentroutes.value = filteredRoutes
+    // 如果是 navigation 页面，显示所有菜单，不进行平台过滤
+    if (newval.path === '/navigation') {
+      const noHiddenRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
+      sidebarStore.setPlatformFilter('', noHiddenRoutes, false) // 不是来自 navigation 跳转
+      return
+    }
+    
+    const currentPlatform = getCurrentPlatform(newval)
+    
+    // 如果来自 navigation 跳转，保持当前的平台过滤
+    if (sidebarStore.isFromNavigation) {
+      return
+    }
+    
+    if (currentPlatform !== sidebarStore.currentPlatform) {
+      // 通过菜单选择，不进行平台过滤和扁平化，显示所有菜单
+      const noHiddenRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
+      sidebarStore.setPlatformFilter('', noHiddenRoutes, false) // 空字符串表示显示所有，不扁平化
+    }
   },
   {
     immediate: true,

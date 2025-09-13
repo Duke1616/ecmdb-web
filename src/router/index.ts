@@ -69,6 +69,26 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/change",
+    component: () => import("@/pages/change/index.vue"),
+    meta: {
+      title: "变更平台",
+      svgIcon: "component",
+      platforms: ["change"],
+      hidden: true
+    },
+  },
+  {
+    path: "/alert",
+    component: () => import("@/pages/alert/index.vue"),
+    meta: {
+      title: "告警平台",
+      svgIcon: "component",
+      platforms: ["change"],
+      hidden: true
+    },
+  },
+  {
     path: "/",
     component: Layouts,
     redirect: "/navigation",
@@ -80,11 +100,11 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "首页导航",
           svgIcon: "dashboard",
-          affix: true
+          affix: true,
         }
       }
     ]
-  }
+  },
 ]
 
 export const defaultRoutes: RouteRecordRaw[] = [

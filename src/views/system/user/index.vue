@@ -86,6 +86,7 @@
       @cancel="handleRoleCancel"
     >
       <RoleSelector
+        ref="roleSelectorRef"
         v-if="dialogBindRole && selectedUser"
         :default-selected-roles="getUserRoleCodes()"
         :user-id="selectedUser.id"
@@ -132,6 +133,7 @@ const isEditMode = ref<boolean>(false)
 
 const apiRef = ref<InstanceType<typeof Form>>()
 const syncRef = ref<InstanceType<typeof Sync>>()
+const roleSelectorRef = ref<InstanceType<typeof RoleSelector>>()
 
 // 表格列配置
 const tableColumns = [
@@ -233,9 +235,12 @@ const getUserRoleCodes = (): string[] => {
 
 // 处理角色弹窗确认
 const handleRoleDialogConfirm = () => {
-  // 调用 RoleSelector 的确认方法
-  // 这里需要从 RoleSelector 获取选中的角色
-  ElMessage.info("角色分配功能已触发")
+  if (roleSelectorRef.value) {
+    const selectedRoles = roleSelectorRef.value.getSelectedRoles()
+    handleRoleConfirm(selectedRoles)
+  } else {
+    ElMessage.error("无法获取选中的角色")
+  }
 }
 
 // 处理角色选择确认

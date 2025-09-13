@@ -98,7 +98,13 @@ interface Props {
   userId?: number
 }
 
+interface Emits {
+  confirm: [selectedRoles: role[]]
+  cancel: []
+}
+
 const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
 const init = {
   currentPage: 1,
@@ -316,6 +322,31 @@ const removeRole = (role: role) => {
 const getSelectedRoles = (): role[] => {
   return selectedRolesData.value
 }
+
+// 获取已选择的角色代码
+const getSelectedRoleCodes = (): string[] => {
+  return checkedKeys.value
+}
+
+// 确认选择
+const handleConfirm = () => {
+  emit('confirm', getSelectedRoles())
+}
+
+// 取消选择
+const handleCancel = () => {
+  emit('cancel')
+}
+
+// 向父组件暴露方法
+defineExpose({
+  getSelectedRoles,
+  getSelectedRoleCodes,
+  checkedKeys,
+  selectedRolesData,
+  handleConfirm,
+  handleCancel
+})
 </script>
 
 <style lang="scss" scoped>

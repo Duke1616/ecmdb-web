@@ -4,7 +4,7 @@ import { type RouteLocationNormalizedLoaded, type RouteRecordRaw, RouterLink, us
 import { type TagView, useTagsViewStore } from "@/pinia/stores/tags-view"
 import { usePermissionStore } from "@/pinia/stores/permission"
 import { useRouteListener } from "@/common/composables/useRouteListener"
-import path from "path-browserify"
+// import path from "path-browserify"
 import ScrollPane from "./ScrollPane.vue"
 import { Close } from "@element-plus/icons-vue"
 
@@ -44,7 +44,8 @@ const filterAffixTags = (routes: RouteRecordRaw[], basePath = "/") => {
   const tags: TagView[] = []
   routes.forEach((route) => {
     if (isAffix(route)) {
-      const tagPath = path.resolve(basePath, route.path)
+      // 简单的路径拼接，避免使用 path-browserify
+      const tagPath = basePath ? `${basePath}/${route.path}`.replace(/\/+/g, '/') : route.path
       tags.push({
         fullPath: tagPath,
         path: tagPath,

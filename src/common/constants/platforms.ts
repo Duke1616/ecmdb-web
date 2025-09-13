@@ -60,7 +60,7 @@ export const PLATFORMS: PlatformConfig[] = [
     description: "用户、角色、权限等系统配置",
     icon: "Setting",
     color: "#8B5CF6",
-    route: "/cmdb/system/menu",
+    route: "/cmdb/system/user",
     permission: "system"
   },
   {
@@ -70,7 +70,7 @@ export const PLATFORMS: PlatformConfig[] = [
     description: "IT变更管理和审批流程",
     icon: "Connection",
     color: "#10B981",
-    route: "/cmdb/rota",
+    route: "/change",
     permission: "change"
   },
   {

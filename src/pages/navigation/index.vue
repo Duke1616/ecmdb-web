@@ -4,8 +4,12 @@ import { useRouter } from "vue-router"
 import { ArrowRight } from "@element-plus/icons-vue"
 import type * as ElementPlusIconsVue from "@element-plus/icons-vue"
 import { getNavigationCards } from "@/common/constants/platforms"
+import { useSidebarStore } from "@/pinia/stores/sidebar"
+import { usePermissionStore } from "@/pinia/stores/permission"
 
 const router = useRouter()
+const sidebarStore = useSidebarStore()
+const permissionStore = usePermissionStore()
 
 type ElementPlusIconsName = keyof typeof ElementPlusIconsVue
 
@@ -31,6 +35,21 @@ const filteredCards = computed(() => {
 })
 
 const handleCardClick = (card: NavigationCard) => {
+  // 根据卡片ID设置平台过滤
+  const platformMap: Record<string, string> = {
+    'cmdb': 'cmdb',
+    'order': 'order', 
+    'automation': 'automation',
+    'system': 'system',
+    'change': 'change',
+    'alert': 'alert'
+  }
+  
+  const platform = platformMap[card.id] || ''
+  if (platform) {
+    sidebarStore.setPlatformFilter(platform, permissionStore.routes, true) // 标记为来自 navigation 跳转
+  }
+  
   router.push(card.route)
 }
 </script>
