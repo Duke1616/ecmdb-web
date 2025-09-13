@@ -76,10 +76,13 @@ const getCurrentPlatform = (currentRoute: any) => {
 watch(
   () => route,
   (newval) => {
+    // 把需要隐藏的路由过滤出去
+    const noHiddenRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
+
     // 如果是 navigation 页面，显示所有菜单，不进行平台过滤
     if (newval.path === "/navigation") {
-      const noHiddenRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
-      sidebarStore.setPlatformFilter("", noHiddenRoutes, false) // 不是来自 navigation 跳转
+      // 不是来自 navigation 跳转
+      sidebarStore.setPlatformFilter("", noHiddenRoutes, false)
       return
     }
 
@@ -92,7 +95,6 @@ watch(
 
     if (currentPlatform !== sidebarStore.currentPlatform) {
       // 通过菜单选择，不进行平台过滤和扁平化，显示所有菜单
-      const noHiddenRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
       sidebarStore.setPlatformFilter("", noHiddenRoutes, false) // 空字符串表示显示所有，不扁平化
     }
   },

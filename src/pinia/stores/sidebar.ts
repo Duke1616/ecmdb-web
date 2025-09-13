@@ -24,40 +24,40 @@ export const useSidebarStore = defineStore("sidebar", () => {
   /** 过滤平台路由并扁平化显示 */
   const filterPlatformRoutes = (routes: RouteRecordRaw[], platform: string): RouteRecordRaw[] => {
     const res: RouteRecordRaw[] = []
-    
+
     routes.forEach((route) => {
       if (!hasPlatformNavigation(platform, route)) return
-      
+
       // 没有子路由，直接添加
       if (!route.children?.length) {
         res.push(route)
         return
       }
-      
+
       // 递归过滤子路由
       const filteredChildren = filterPlatformRoutes(route.children, platform)
       if (!filteredChildren.length) return
-      
+
       // 如果是 navigation 页面（platform 为空）或者不是来自 navigation 跳转，不进行扁平化
       if (!platform || !isFromNavigation.value) {
         res.push({ ...route, children: filteredChildren })
         return
       }
-      
+
       // 判断是否为平台目录（需要扁平化）
       const isPlatformRoot = route.meta?.platforms?.includes(platform)
-      
+
       if (isPlatformRoot) {
         // 平台目录：扁平化子路由
         const visibleChildren = filteredChildren
-          .filter(child => !child.meta?.hidden)
-          .map(child => {
+          .filter((child) => !child.meta?.hidden)
+          .map((child) => {
             // 如果子路由路径已经是绝对路径，直接使用
-            if (child.path.startsWith('/')) {
+            if (child.path.startsWith("/")) {
               return child
             }
             // 否则拼接父路由路径
-            const parentPath = route.path.endsWith('/') ? route.path.slice(0, -1) : route.path
+            const parentPath = route.path.endsWith("/") ? route.path.slice(0, -1) : route.path
             return {
               ...child,
               path: `${parentPath}/${child.path}`
@@ -69,7 +69,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
         res.push({ ...route, children: filteredChildren })
       }
     })
-    
+
     return res
   }
 
@@ -91,8 +91,8 @@ export const useSidebarStore = defineStore("sidebar", () => {
   }
 
   return {
-    currentPlatform, 
-    filteredRoutes, 
+    currentPlatform,
+    filteredRoutes,
     isFromNavigation,
     setPlatformFilter,
     resetPlatformFilter
