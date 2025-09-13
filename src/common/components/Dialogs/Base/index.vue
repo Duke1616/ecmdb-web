@@ -95,6 +95,7 @@ const handleClosed = () => {
     padding: calc(0.9rem + 0.3vw) calc(1rem + 0.4vw);
     margin: 0;
     flex-shrink: 0;
+    text-align: left;
   }
 
   :deep(.el-dialog__body) {

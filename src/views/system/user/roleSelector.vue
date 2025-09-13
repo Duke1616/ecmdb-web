@@ -321,13 +321,15 @@ const getSelectedRoles = (): role[] => {
 <style lang="scss" scoped>
 /* 角色选择器容器 */
 .role-selector-container {
-  height: 65vh;
   display: flex;
   flex-direction: column;
   background: #ffffff;
   overflow: hidden;
   margin: 0;
   padding: 0;
+  height: 60vh;
+  min-height: 60vh;
+  max-height: 80vh;
 }
 
 .search-section {
@@ -389,6 +391,7 @@ const getSelectedRoles = (): role[] => {
   gap: 12px;
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 
   @media (max-width: 1199px) {
     flex-direction: column;
@@ -424,13 +427,6 @@ const getSelectedRoles = (): role[] => {
   flex-direction: column;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .search-section {
-    padding: 14px 0;
-  }
-}
-
 /* 面板头部 */
 .panel-header {
   display: flex;
@@ -462,17 +458,36 @@ const getSelectedRoles = (): role[] => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 16px;
 }
 
 /* 角色列表 */
 .role-list {
   flex: 1;
   min-height: 0;
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
+
+  /* 自定义滚动条 */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
 }
 
 /* 已选择角色列表包装器 */
@@ -482,13 +497,13 @@ const getSelectedRoles = (): role[] => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  padding: 16px;
 }
 
 /* 已选择角色列表 */
 .selected-role-list {
   flex: 1;
   min-height: 0;
-  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;

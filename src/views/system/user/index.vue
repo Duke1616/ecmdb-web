@@ -9,7 +9,9 @@
       @refresh="handleRefresh"
     >
       <template #actions>
-        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreateUser"> 新增用户 </el-button>
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreateUser">
+          新增用户
+        </el-button>
         <el-button type="success" :icon="User" class="action-btn" @click="handleSyncUser"> 同步用户 </el-button>
         <el-tooltip content="刷新数据">
           <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
@@ -289,7 +291,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listUse
 </script>
 
 <style lang="scss" scoped>
-
 /* 用户名称样式 */
 .user-name {
   display: flex;

@@ -154,8 +154,25 @@
     </FormSection>
   </el-form>
 
-  <!-- 用户选择器组件 -->
-  <UserSelector v-model="approvalVisible" :default-checked-keys="checkedKeys" @confirm="handleUserSelected" />
+  <!-- 用户选择器弹窗 -->
+  <FormDialog
+    v-model="approvalVisible"
+    title="选择审批人员"
+    subtitle="从组织架构中选择需要参与审批的人员"
+    confirm-text="确认选择"
+    :show-footer-info="false"
+    @closed="handleUserDialogCancel"
+    @confirm="handleUserDialogConfirm"
+    @cancel="handleUserDialogCancel"
+  >
+    <UserSelector
+      ref="userSelectorRef"
+      v-if="approvalVisible"
+      :default-checked-keys="checkedKeys"
+      @confirm="handleUserSelected"
+      @cancel="handleUserDialogCancel"
+    />
+  </FormDialog>
 </template>
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
@@ -163,6 +180,7 @@ import { ref, onMounted, reactive } from "vue"
 import { UserFilled } from "@element-plus/icons-vue"
 import { findByUsernamesApi } from "@/api/user"
 import { FormSection, FormHelp } from "../../PropertySetting"
+import FormDialog from "@@/components/Dialogs/Form/index.vue"
 import UserSelector from "./UserSelector.vue"
 
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
@@ -266,25 +284,37 @@ const openUser = () => {
 
 // 处理用户选择确认
 const handleUserSelected = (users: Array<{ name: string; display_name: string; id: number }>) => {
-  console.log("父组件收到用户选择确认事件:", users)
-
   // 填充数据
   propertyForm.approved = users.map((user) => user.name)
-  console.log("更新后的 propertyForm.approved:", propertyForm.approved)
 
   // 填充默认值
   checkedKeys.value = users.map((user) => user.id)
-  console.log("更新后的 checkedKeys:", checkedKeys.value)
 
   // 填充选项
   approvedOptions.value = users.map((user) => ({
     display_name: user.display_name,
     name: user.name
   }))
-  console.log("更新后的 approvedOptions:", approvedOptions.value)
+
+  // 关闭对话框
+  approvalVisible.value = false
+}
+
+// 处理用户选择器弹窗确认
+const handleUserDialogConfirm = () => {
+  // 直接调用 UserSelector 的确认逻辑
+  if (userSelectorRef.value) {
+    userSelectorRef.value.handleConfirm()
+  }
+}
+
+// 处理用户选择器弹窗取消
+const handleUserDialogCancel = () => {
+  approvalVisible.value = false
 }
 
 const formRef = ref<FormInstance | null>(null)
+const userSelectorRef = ref()
 const formRules: FormRules = {
   name: [
     { required: true, message: "名称不能为空" },
@@ -417,54 +447,6 @@ defineExpose({
   }
 }
 
-.modern-select {
-  width: 100%;
-
-  :deep(.el-input__wrapper) {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 14px 18px;
-    height: 52px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: #cbd5e1;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-    }
-
-    &.is-focus {
-      border-color: #3b82f6;
-      background: #ffffff;
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-      transform: translateY(-2px);
-    }
-  }
-
-  :deep(.el-input__inner) {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 500;
-  }
-}
-
-.modern-option {
-  :deep(.el-select-dropdown__item) {
-    padding: 12px 16px;
-    font-size: 14px;
-
-    &.selected {
-      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      color: white;
-    }
-
-    &:hover {
-      background: #f1f5f9;
-    }
-  }
-}
-
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -566,55 +548,6 @@ defineExpose({
       transform: none;
       box-shadow: none;
     }
-  }
-}
-
-.dialog-footer {
-  padding: 16px 24px 20px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.footer-btn {
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.footer-btn-cancel {
-  background: #ffffff;
-  color: #64748b;
-  border-color: #e2e8f0;
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #475569;
-  }
-}
-
-.footer-btn-confirm {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  border-color: #3b82f6;
-
-  &:hover {
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-    border-color: #1d4ed8;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
   }
 }
 </style>

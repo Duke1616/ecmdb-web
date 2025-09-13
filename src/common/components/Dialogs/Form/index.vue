@@ -143,6 +143,7 @@ const handleCancel = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  text-align: left;
 
   .header-icon {
     width: calc(2rem + 0.5vw);
