@@ -87,17 +87,17 @@ defineExpose({
 
   .tab-item {
     flex: 1;
-    padding: 6px 10px;
+    padding: calc(0.4rem + 0.15vw) calc(0.6rem + 0.25vw);
     text-align: center;
     cursor: pointer;
     position: relative;
     transition: all 0.2s ease;
-    font-size: 11px;
+    font-size: calc(0.7rem + 0.2vw);
     font-weight: 500;
     color: #606266;
     border: none;
     background: transparent;
-    min-height: 28px;
+    min-height: calc(1.6rem + 0.4vw);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -128,7 +128,7 @@ defineExpose({
 
   .tabs-content {
     background: white;
-    margin: 10px;
+    margin: calc(0.6rem + 0.25vw);
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -137,96 +137,6 @@ defineExpose({
 
     &.no-margin {
       margin: 0;
-    }
-  }
-}
-
-/* 高分辨率屏幕优化 */
-@media (min-width: 1440px) {
-  .custom-tabs {
-    .tab-item {
-      padding: 14px 18px;
-      font-size: 15px;
-      min-height: 48px;
-    }
-
-    .tabs-content {
-      margin: 14px;
-    }
-  }
-}
-
-/* 小屏幕优化 - Mac 等设备 - 强制应用 */
-@media (max-width: 2000px) {
-  .custom-tabs {
-    .tab-item {
-      padding: 8px 12px !important;
-      font-size: 12px !important;
-      min-height: 32px !important;
-    }
-
-    .tabs-content {
-      margin: 10px !important;
-    }
-  }
-}
-
-/* 中等屏幕优化 */
-@media (max-width: 1023px) and (min-width: 769px) {
-  .custom-tabs {
-    .tab-item {
-      padding: 8px 12px;
-      font-size: 12px;
-      min-height: 36px;
-    }
-
-    .tabs-content {
-      margin: 8px;
-    }
-  }
-}
-
-// 响应式设计
-@media (max-width: 768px) {
-  .custom-tabs {
-    .tab-item {
-      padding: 10px 12px;
-      font-size: 13px;
-      min-height: 40px;
-    }
-
-    .tabs-content {
-      padding: 16px;
-    }
-  }
-}
-
-/* 高分辨率屏幕优化 */
-@media (min-width: 1440px) {
-  .custom-tabs {
-    .tab-item {
-      padding: 14px 18px;
-      font-size: 15px;
-      min-height: 48px;
-    }
-
-    .tabs-content {
-      margin: 14px;
-    }
-  }
-}
-
-/* 超高分辨率屏幕优化 */
-@media (min-width: 1920px) {
-  .custom-tabs {
-    .tab-item {
-      padding: 16px 20px;
-      font-size: 16px;
-      min-height: 52px;
-    }
-
-    .tabs-content {
-      margin: 16px;
     }
   }
 }

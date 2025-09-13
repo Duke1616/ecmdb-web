@@ -346,17 +346,17 @@ const handleCurrentChange = (page: number) => {
       background: #f8fafc;
       color: #374151;
       font-weight: 600;
-      height: 38px;
-      padding: 6px 10px;
-      font-size: 11px;
+      height: calc(2.4rem + 0.4vw);
+      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      font-size: calc(0.7rem + 0.25vw);
     }
   }
 
   :deep(.el-table__body) {
     td {
-      font-size: 11px;
-      padding: 6px 10px;
-      height: 42px;
+      font-size: calc(0.7rem + 0.25vw);
+      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      height: calc(2.6rem + 0.4vw);
     }
   }
 
@@ -369,21 +369,21 @@ const handleCurrentChange = (page: number) => {
 
   .action-buttons {
     display: flex;
-    gap: 6px;
+    gap: calc(0.4rem + 0.15vw);
     justify-content: center;
     align-items: center;
 
     .action-btn {
       display: inline-flex;
       align-items: center;
-      gap: 3px;
-      padding: 2px 6px;
+      gap: calc(0.2rem + 0.08vw);
+      padding: calc(0.15rem + 0.08vw) calc(0.4rem + 0.15vw);
       border-radius: 4px;
-      font-size: 9px;
+      font-size: calc(0.6rem + 0.15vw);
       font-weight: 500;
       transition: all 0.3s ease;
       white-space: nowrap;
-      min-height: 20px;
+      min-height: calc(1.4rem + 0.3vw);
 
       &:hover {
         transform: translateY(-1px);
@@ -397,224 +397,9 @@ const handleCurrentChange = (page: number) => {
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  padding: 10px 14px;
+  padding: calc(0.6rem + 0.25vw) calc(0.8rem + 0.35vw);
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
-}
-
-/* 高分辨率屏幕优化 */
-@media (min-width: 1440px) {
-  .data-table {
-    :deep(.el-table__header) {
-      th {
-        font-size: 15px;
-        height: 52px;
-        padding: 14px 18px;
-      }
-    }
-
-    :deep(.el-table__body) {
-      td {
-        font-size: 15px;
-        padding: 14px 18px;
-        height: 56px;
-      }
-    }
-  }
-
-  .action-buttons {
-    .action-btn {
-      font-size: 13px;
-      padding: 8px 14px;
-      min-height: 32px;
-    }
-  }
-
-  .pagination-container {
-    padding: 18px 22px;
-
-    :deep(.el-pagination) {
-      font-size: 15px;
-
-      .el-pagination__sizes,
-      .el-pagination__total,
-      .el-pagination__jump {
-        font-size: 15px;
-      }
-    }
-  }
-}
-
-/* 小屏幕优化 - Mac 等设备 - 强制应用 */
-@media (max-width: 2000px) {
-  .data-table {
-    :deep(.el-table__header) {
-      th {
-        font-size: 11px !important;
-        height: 38px !important;
-        padding: 6px 10px !important;
-      }
-    }
-
-    :deep(.el-table__body) {
-      td {
-        font-size: 11px !important;
-        padding: 6px 10px !important;
-        height: 42px !important;
-      }
-    }
-  }
-
-  .action-buttons {
-    .action-btn {
-      font-size: 9px !important;
-      padding: 2px 6px !important;
-      min-height: 20px !important;
-    }
-  }
-
-  .pagination-container {
-    padding: 10px 14px !important;
-
-    :deep(.el-pagination) {
-      font-size: 11px !important;
-
-      .el-pagination__sizes,
-      .el-pagination__total,
-      .el-pagination__jump {
-        font-size: 11px !important;
-      }
-    }
-  }
-}
-
-/* 中等屏幕优化 */
-@media (max-width: 1023px) and (min-width: 769px) {
-  .data-table {
-    :deep(.el-table__header) {
-      th {
-        font-size: 12px;
-        height: 42px;
-        padding: 8px 12px;
-      }
-    }
-
-    :deep(.el-table__body) {
-      td {
-        font-size: 12px;
-        padding: 8px 12px;
-        height: 46px;
-      }
-    }
-  }
-
-  .action-buttons {
-    .action-btn {
-      font-size: 10px;
-      padding: 3px 8px;
-      min-height: 24px;
-    }
-  }
-
-  .pagination-container {
-    padding: 12px 16px;
-
-    :deep(.el-pagination) {
-      font-size: 12px;
-
-      .el-pagination__sizes,
-      .el-pagination__total,
-      .el-pagination__jump {
-        font-size: 12px;
-      }
-    }
-  }
-}
-
-/* 高分辨率屏幕优化 */
-@media (min-width: 1440px) {
-  .data-table {
-    :deep(.el-table__header) {
-      th {
-        font-size: 15px;
-        height: 52px;
-        padding: 14px 18px;
-      }
-    }
-
-    :deep(.el-table__body) {
-      td {
-        font-size: 15px;
-        padding: 14px 18px;
-        height: 56px;
-      }
-    }
-  }
-
-  .action-buttons {
-    .action-btn {
-      font-size: 13px;
-      padding: 8px 14px;
-      min-height: 32px;
-    }
-  }
-
-  .pagination-container {
-    padding: 18px 22px;
-
-    :deep(.el-pagination) {
-      font-size: 15px;
-
-      .el-pagination__sizes,
-      .el-pagination__total,
-      .el-pagination__jump {
-        font-size: 15px;
-      }
-    }
-  }
-}
-
-/* 超高分辨率屏幕优化 */
-@media (min-width: 1920px) {
-  .data-table {
-    :deep(.el-table__header) {
-      th {
-        font-size: 16px;
-        height: 56px;
-        padding: 16px 20px;
-      }
-    }
-
-    :deep(.el-table__body) {
-      td {
-        font-size: 16px;
-        padding: 16px 20px;
-        height: 60px;
-      }
-    }
-  }
-
-  .action-buttons {
-    .action-btn {
-      font-size: 14px;
-      padding: 10px 16px;
-      min-height: 36px;
-    }
-  }
-
-  .pagination-container {
-    padding: 20px 24px;
-
-    :deep(.el-pagination) {
-      font-size: 16px;
-
-      .el-pagination__sizes,
-      .el-pagination__total,
-      .el-pagination__jump {
-        font-size: 16px;
-      }
-    }
-  }
 }
 </style>

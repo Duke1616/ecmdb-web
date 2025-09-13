@@ -426,19 +426,20 @@ const handleDeleteRelation = async (row: Resource) => {
   height: 65vh;
   background: #f5f7fa;
   overflow-y: auto;
+  font-size: calc(0.7rem + 0.2vw);
 }
 
 .layout-container {
   height: 100%;
   display: flex;
-  gap: 20px;
+  gap: calc(0.8rem + 0.5vw);
 }
 
 .left-panel {
-  width: 350px;
+  width: calc(18rem + 2vw);
   flex-shrink: 0;
   display: flex;
-  padding: 0px 10px 0px 0px;
+  padding: calc(0.8rem + 0.5vw);
   flex-direction: column;
   background: white;
   border-radius: 8px;
@@ -454,7 +455,7 @@ const handleDeleteRelation = async (row: Resource) => {
 }
 
 .form-section {
-  margin-bottom: 24px;
+  margin-bottom: calc(1rem + 0.3vw);
 
   &:last-child {
     margin-bottom: 0;
@@ -464,28 +465,28 @@ const handleDeleteRelation = async (row: Resource) => {
 .section-title {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
-  padding: 10px 14px;
+  margin-bottom: calc(0.8rem + 0.3vw);
+  padding: calc(0.5rem + 0.2vw) calc(0.6rem + 0.3vw);
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 6px;
   border: 1px solid #e2e8f0;
   border-left: 4px solid #3b82f6;
 
   .section-icon {
-    margin-right: 6px;
-    font-size: 16px;
+    margin-right: calc(0.2rem + 0.1vw);
+    font-size: calc(0.8rem + 0.2vw);
     color: #3b82f6;
   }
 
   span {
-    font-size: 14px;
+    font-size: calc(0.7rem + 0.2vw);
     font-weight: 600;
     color: #374151;
   }
 }
 
 .form-row {
-  margin-bottom: 16px;
+  margin-bottom: calc(0.8rem + 0.2vw);
 
   &:last-child {
     margin-bottom: 0;
@@ -539,13 +540,15 @@ const handleDeleteRelation = async (row: Resource) => {
 
 .condition-buttons {
   display: flex;
-  gap: 8px;
+  gap: calc(0.4rem + 0.1vw);
   flex-wrap: wrap;
 
   .el-button {
     margin: 0;
     border-radius: 6px;
     font-weight: 500;
+    font-size: calc(0.6rem + 0.1vw);
+    padding: calc(0.2rem + 0.1vw) calc(0.4rem + 0.2vw);
     transition: all 0.2s ease;
 
     &:hover {
@@ -557,14 +560,16 @@ const handleDeleteRelation = async (row: Resource) => {
 
 .form-actions {
   display: flex;
-  gap: 12px;
+  gap: calc(0.6rem + 0.2vw);
   align-items: center;
 
   .el-button {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: calc(0.1rem + 0.05vw);
+    font-size: calc(0.6rem + 0.1vw);
+    padding: calc(0.3rem + 0.1vw) calc(0.6rem + 0.2vw);
   }
 }
 

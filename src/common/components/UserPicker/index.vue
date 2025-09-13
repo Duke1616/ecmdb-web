@@ -355,7 +355,6 @@ onUnmounted(() => {
   background: #f8fafc;
   border: 2px solid #e2e8f0;
   border-radius: 10px;
-  padding: 8px 16px;
   min-height: 42px;
   cursor: pointer;
   transition: all 0.3s ease;
