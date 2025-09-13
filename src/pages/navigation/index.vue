@@ -26,28 +26,41 @@ interface NavigationCard {
 const navigationCards = ref<NavigationCard[]>(getNavigationCards())
 
 const filteredCards = computed(() => {
-  // 临时显示所有卡片，不进行权限过滤
-  return navigationCards.value
-  // return navigationCards.value.filter(card => {
-  //   if (!card.permission) return true
-  //   return roles.value.includes(card.permission)
-  // })
+  return navigationCards.value.filter((card) => {
+    // 检查用户是否有该平台的路由权限
+    return hasPlatformRoutes(card.id)
+  })
 })
 
-const handleCardClick = (card: NavigationCard) => {
-  // 根据卡片ID设置平台过滤
-  const platformMap: Record<string, string> = {
-    cmdb: "cmdb",
-    order: "order",
-    automation: "automation",
-    system: "system",
-    change: "change",
-    alert: "alert"
+// 检查用户是否有指定平台的路由权限
+const hasPlatformRoutes = (platformId: string): boolean => {
+  if (!permissionStore.routes || permissionStore.routes.length === 0) {
+    return false
   }
+  
+  // 递归检查路由中是否有该平台的路由
+  const checkRoutes = (routes: any[]): boolean => {
+    for (const route of routes) {
+      // 检查当前路由是否属于该平台
+      if (route.meta?.platforms?.includes(platformId)) {
+        return true
+      }
+      // 递归检查子路由
+      if (route.children && checkRoutes(route.children)) {
+        return true
+      }
+    }
+    return false
+  }
+  
+  return checkRoutes(permissionStore.routes)
+}
 
-  const platform = platformMap[card.id] || ""
-  if (platform) {
-    sidebarStore.setPlatformFilter(platform, permissionStore.routes, true) // 标记为来自 navigation 跳转
+const handleCardClick = (card: NavigationCard) => {
+  // 直接使用卡片ID作为平台标识
+  if (card.id) {
+    // 标记为来自 navigation 跳转
+    sidebarStore.setPlatformFilter(card.id, permissionStore.routes, true)
   }
 
   router.push(card.route)

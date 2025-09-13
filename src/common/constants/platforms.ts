@@ -91,7 +91,7 @@ export const PLATFORMS: PlatformConfig[] = [
  * @returns 平台配置对象
  */
 export const getPlatformConfig = (platformId: string): PlatformConfig | undefined => {
-  return PLATFORMS.find(platform => platform.id === platformId)
+  return PLATFORMS.find((platform) => platform.id === platformId)
 }
 
 /**
@@ -99,7 +99,7 @@ export const getPlatformConfig = (platformId: string): PlatformConfig | undefine
  * @returns 平台基础信息数组
  */
 export const getPlatformsForMenu = () => {
-  return PLATFORMS.map(platform => ({
+  return PLATFORMS.map((platform) => ({
     id: platform.id,
     name: platform.name
   }))
@@ -110,7 +110,7 @@ export const getPlatformsForMenu = () => {
  * @returns 导航卡片数组
  */
 export const getNavigationCards = () => {
-  return PLATFORMS.map(platform => ({
+  return PLATFORMS.map((platform) => ({
     id: platform.id,
     title: platform.title,
     description: platform.description,

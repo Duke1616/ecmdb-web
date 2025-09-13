@@ -84,7 +84,7 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: {
       title: "告警平台",
       svgIcon: "component",
-      platforms: ["change"],
+      platforms: ["alert"],
       hidden: true
     },
   },
