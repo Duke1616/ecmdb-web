@@ -458,7 +458,7 @@ const reset = () => {
 
 /* Updated sidebar with scrollable navigation */
 .sidebar {
-  width: 240px;
+  width: calc(12rem + 2vw);
   background: white;
   border-right: 1px solid #e2e8f0;
   display: flex;
@@ -475,7 +475,7 @@ const reset = () => {
   }
 
   @media (min-width: 1280px) and (max-width: 1440px) {
-    width: 220px;
+    width: calc(11rem + 1.5vw);
     height: calc(100vh - 3rem);
     max-height: calc(100vh - 3rem);
   }
@@ -488,24 +488,24 @@ const reset = () => {
 }
 
 .sidebar-header {
-  padding: 1.25rem;
+  padding: calc(0.8rem + 0.2vw);
   margin-bottom: 0;
-  padding-bottom: 1rem;
+  padding-bottom: calc(0.6rem + 0.1vw);
   border-bottom: 1px solid #f1f5f9;
   flex-shrink: 0;
 
   @media (max-width: 768px) {
-    padding: 1rem;
+    padding: calc(0.6rem + 0.1vw);
   }
 }
 
 .category-nav-container {
   flex: 1;
   overflow-y: auto;
-  padding: 0 1.25rem 2rem;
+  padding: 0 calc(0.8rem + 0.2vw) calc(1.2rem + 0.3vw);
 
   @media (max-width: 768px) {
-    padding: 0 1rem 1.5rem;
+    padding: 0 calc(0.6rem + 0.1vw) calc(1rem + 0.2vw);
     overflow-y: visible;
   }
 }
@@ -513,15 +513,15 @@ const reset = () => {
 .category-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: calc(0.15rem + 0.05vw);
 }
 
 .category-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
+  gap: calc(0.5rem + 0.1vw);
+  padding: calc(0.5rem + 0.1vw);
+  border-radius: calc(0.4rem + 0.1vw);
   cursor: pointer;
   transition: all 0.2s ease;
 
@@ -546,13 +546,13 @@ const reset = () => {
 }
 
 .category-icon {
-  width: 32px;
-  height: 32px;
+  width: calc(1.6rem + 0.2vw);
+  height: calc(1.6rem + 0.2vw);
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f1f5f9;
-  border-radius: 6px;
+  border-radius: calc(0.3rem + 0.1vw);
   color: #64748b;
   transition: all 0.2s ease;
 }
@@ -565,17 +565,17 @@ const reset = () => {
 }
 
 .category-name {
-  font-size: 0.875rem;
+  font-size: calc(0.7rem + 0.1vw);
   font-weight: 500;
   color: #374151;
 }
 
 .category-count {
-  font-size: 0.75rem;
+  font-size: calc(0.6rem + 0.1vw);
   color: #9ca3af;
   background: #f9fafb;
-  padding: 0.125rem 0.5rem;
-  border-radius: 10px;
+  padding: calc(0.1rem + 0.05vw) calc(0.3rem + 0.1vw);
+  border-radius: calc(0.5rem + 0.1vw);
 }
 
 /* Updated content area with scrollable container */
@@ -598,22 +598,22 @@ const reset = () => {
 }
 
 .content-header {
-  padding: 1.25rem 1.25rem 0;
+  padding: calc(0.8rem + 0.2vw) calc(0.8rem + 0.2vw) 0;
   flex-shrink: 0;
 
   @media (max-width: 768px) {
-    padding: 1rem 1rem 0;
+    padding: calc(0.6rem + 0.1vw) calc(0.6rem + 0.1vw) 0;
   }
 }
 
 .templates-container {
   flex: 1;
   overflow-y: auto;
-  padding: 1.25rem 1.25rem 0.75rem;
+  padding: calc(0.8rem + 0.2vw) calc(0.8rem + 0.2vw) calc(0.5rem + 0.1vw);
   scroll-behavior: smooth;
 
   @media (max-width: 768px) {
-    padding: 1rem 1rem 2rem;
+    padding: calc(0.6rem + 0.1vw) calc(0.6rem + 0.1vw) calc(1.2rem + 0.3vw);
     overflow-y: visible;
   }
 }
@@ -622,32 +622,32 @@ const reset = () => {
 .grouped-templates {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 1rem;
+  gap: calc(1.2rem + 0.3vw);
+  margin-bottom: calc(0.6rem + 0.1vw);
 }
 
 .template-group {
   .group-header {
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
+    margin-bottom: calc(0.6rem + 0.1vw);
+    padding-bottom: calc(0.5rem + 0.1vw);
     border-bottom: 2px solid #f1f5f9;
   }
 
   .group-title {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    font-size: 1.125rem;
+    gap: calc(0.3rem + 0.1vw);
+    font-size: calc(0.9rem + 0.1vw);
     font-weight: 600;
     color: #1e293b;
 
     .group-icon {
       color: #3b82f6;
-      font-size: 1.25rem;
+      font-size: calc(1rem + 0.1vw);
     }
 
     .group-count {
-      font-size: 0.875rem;
+      font-size: calc(0.7rem + 0.1vw);
       color: #64748b;
       font-weight: 400;
     }
@@ -703,16 +703,16 @@ const reset = () => {
 
   /* Enhanced submit button styling */
   .submit-button {
-    min-width: 120px;
-    height: 44px;
-    border-radius: 10px;
+    min-width: calc(6rem + 1vw);
+    height: calc(2.2rem + 0.3vw);
+    border-radius: calc(0.5rem + 0.1vw);
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: calc(0.7rem + 0.1vw);
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     border: none;
     color: #ffffff;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 calc(0.2rem + 0.1vw) calc(0.6rem + 0.2vw) rgba(59, 130, 246, 0.3);
     position: relative;
     overflow: hidden;
 
@@ -729,8 +729,8 @@ const reset = () => {
 
     &:hover:not(:disabled):not(.is-loading) {
       background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(calc(-0.1rem + 0.05vw));
+      box-shadow: 0 calc(0.5rem + 0.2vw) calc(1.2rem + 0.3vw) rgba(59, 130, 246, 0.4);
 
       &::before {
         left: 100%;
@@ -738,8 +738,8 @@ const reset = () => {
     }
 
     &:active:not(:disabled):not(.is-loading) {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transform: translateY(calc(-0.05rem + 0.02vw));
+      box-shadow: 0 calc(0.2rem + 0.1vw) calc(0.6rem + 0.2vw) rgba(59, 130, 246, 0.3);
     }
 
     &.is-loading {
@@ -749,14 +749,14 @@ const reset = () => {
       .loading-content {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: calc(0.3rem + 0.1vw);
       }
 
       .loading-spinner {
-        width: 16px;
-        height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top: 2px solid #ffffff;
+        width: calc(0.8rem + 0.1vw);
+        height: calc(0.8rem + 0.1vw);
+        border: calc(0.1rem + 0.05vw) solid rgba(255, 255, 255, 0.3);
+        border-top: calc(0.1rem + 0.05vw) solid #ffffff;
         border-radius: 50%;
         animation: spin 1s linear infinite;
       }
@@ -790,21 +790,21 @@ const reset = () => {
 }
 
 .dialog-footer {
-  padding: 1rem;
+  padding: calc(0.6rem + 0.1vw);
   border-top: 1px solid #f1f5f9;
 
   @media (max-width: 768px) {
-    padding: 1.25rem;
+    padding: calc(0.8rem + 0.2vw);
   }
 }
 
 .template-card {
   background: white;
-  border-radius: 10px;
-  padding: 1.25rem;
+  border-radius: calc(0.5rem + 0.1vw);
+  padding: calc(0.8rem + 0.2vw);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
   position: relative;
   display: flex;
@@ -812,12 +812,12 @@ const reset = () => {
   height: 100%;
 
   @media (min-width: 1280px) and (max-width: 1440px) {
-    padding: 1rem;
+    padding: calc(0.6rem + 0.1vw);
   }
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transform: translateY(calc(-0.1rem + 0.05vw));
+    box-shadow: 0 calc(0.5rem + 0.2vw) calc(1.5rem + 0.3vw) rgba(0, 0, 0, 0.15);
     border-color: #3b82f6;
 
     .template-icon {
@@ -826,7 +826,7 @@ const reset = () => {
     }
 
     .template-arrow {
-      transform: translateX(4px);
+      transform: translateX(calc(0.2rem + 0.1vw));
     }
 
     .action-text {
@@ -843,22 +843,22 @@ const reset = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: calc(0.6rem + 0.1vw);
 }
 
 .template-icon-wrapper {
-  width: 48px;
-  height: 48px;
+  width: calc(2.4rem + 0.3vw);
+  height: calc(2.4rem + 0.3vw);
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f1f5f9;
-  border-radius: 10px;
+  border-radius: calc(0.5rem + 0.1vw);
   border: 1px solid #e2e8f0;
 }
 
 .template-icon {
-  font-size: 20px;
+  font-size: calc(1rem + 0.1vw);
   color: #64748b;
   transition: all 0.2s ease;
 }
@@ -866,27 +866,27 @@ const reset = () => {
 .template-badge {
   background: #dbeafe;
   color: #1d4ed8;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
+  padding: calc(0.15rem + 0.05vw) calc(0.3rem + 0.1vw);
+  border-radius: calc(0.3rem + 0.1vw);
+  font-size: calc(0.6rem + 0.1vw);
   font-weight: 500;
 }
 
 .template-card-body {
   flex: 1;
-  margin-bottom: 1rem;
+  margin-bottom: calc(0.6rem + 0.1vw);
 }
 
 .template-name {
-  font-size: 1rem;
+  font-size: calc(0.8rem + 0.1vw);
   font-weight: 600;
   color: #1e293b;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 calc(0.3rem + 0.05vw) 0;
   line-height: 1.4;
 }
 
 .template-description {
-  font-size: 0.875rem;
+  font-size: calc(0.7rem + 0.1vw);
   color: #64748b;
   margin: 0;
   line-height: 1.5;
@@ -896,12 +896,12 @@ const reset = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 0.75rem;
+  padding-top: calc(0.5rem + 0.1vw);
   border-top: 1px solid #f1f5f9;
 }
 
 .action-text {
-  font-size: 0.875rem;
+  font-size: calc(0.7rem + 0.1vw);
   font-weight: 500;
   color: #64748b;
   transition: color 0.2s ease;
@@ -912,26 +912,26 @@ const reset = () => {
   transition: all 0.2s ease;
 
   .el-icon {
-    font-size: 16px;
+    font-size: calc(0.8rem + 0.1vw);
   }
 }
 
 /* Completely redesigned dialog styles */
 :deep(.create-order-dialog) {
   .el-dialog {
-    border-radius: 12px;
+    border-radius: calc(0.6rem + 0.1vw);
     overflow: hidden;
-    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 calc(1.2rem + 0.3vw) calc(2.4rem + 0.5vw) calc(-0.6rem + 0.1vw) rgba(0, 0, 0, 0.25);
     border: 1px solid #e2e8f0;
 
     @media (max-width: 768px) {
-      margin: 1rem;
-      width: calc(100% - 2rem) !important;
+      margin: calc(0.6rem + 0.1vw);
+      width: calc(100% - 1.2rem) !important;
       max-width: none !important;
     }
 
     @media (min-width: 1280px) and (max-width: 1440px) {
-      width: 480px !important;
+      width: calc(24rem + 2vw) !important;
     }
   }
 
@@ -953,7 +953,6 @@ const reset = () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid #f1f5f9;
   background: #fff;
   /* Added positioning to ensure header stays at top */
@@ -964,7 +963,7 @@ const reset = () => {
 .dialog-header-content {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: calc(0.5rem + 0.1vw);
   flex: 1;
 }
 
@@ -975,15 +974,15 @@ const reset = () => {
 
 .dialog-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: calc(1rem + 0.1vw);
   font-weight: 600;
   color: #1f2937;
   line-height: 1.5;
 }
 
 .dialog-subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
+  margin: calc(0.15rem + 0.05vw) 0 0;
+  font-size: calc(0.7rem + 0.1vw);
   color: #6b7280;
   line-height: 1.4;
 }
@@ -992,10 +991,10 @@ const reset = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: calc(2.5rem + 0.5vw);
+  height: calc(2.5rem + 0.5vw);
   background: #f3f4f6;
-  border-radius: 0.5rem;
+  border-radius: calc(0.5rem + 0.1vw);
   color: #4f46e5;
   flex-shrink: 0;
 }
@@ -1004,11 +1003,11 @@ const reset = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: calc(1.2rem + 0.2vw);
+  height: calc(1.2rem + 0.2vw);
   background: none;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: calc(0.2rem + 0.05vw);
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s;
@@ -1025,36 +1024,36 @@ const reset = () => {
   display: flex;
   gap: 0;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: calc(0.8rem + 0.2vw);
+  box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
   overflow: hidden;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    border-radius: 12px;
+    border-radius: calc(0.6rem + 0.1vw);
   }
 }
 
 /* 优化网格布局尺寸 */
 .templates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(calc(12rem + 2vw), 1fr));
+  gap: calc(0.8rem + 0.2vw);
+  margin-bottom: calc(0.6rem + 0.1vw);
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
+    gap: calc(0.6rem + 0.1vw);
+    margin-bottom: calc(0.3rem + 0.05vw);
   }
 
   @media (min-width: 1024px) {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(calc(14rem + 2.5vw), 1fr));
   }
 
   @media (min-width: 1280px) and (max-width: 1440px) {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(calc(12rem + 2vw), 1fr));
+    gap: calc(0.6rem + 0.1vw);
   }
 }
 </style>

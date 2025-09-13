@@ -20,7 +20,7 @@ export interface meta {
   is_hidden: boolean
   is_affix: boolean
   is_keepalive: boolean
-  platform: string
+  platforms: string[]
   icon?: SvgName
   buttons: string[]
 }

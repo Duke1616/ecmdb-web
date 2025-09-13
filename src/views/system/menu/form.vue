@@ -127,6 +127,36 @@
           </el-form-item>
         </div>
 
+        <div class="form-row">
+          <el-form-item label="所属平台" prop="meta.platforms" class="form-item required">
+            <el-select
+              v-model="formData.meta.platforms"
+              placeholder="请选择所属平台（可多选）"
+              multiple
+              clearable
+              collapse-tags
+              collapse-tags-tooltip
+              :max-collapse-tags="2"
+              class="form-input modern-select"
+            >
+              <el-option
+                v-for="platform in platforms"
+                :key="platform.id"
+                :label="platform.name"
+                :value="platform.id"
+              >
+                <div class="platform-option">
+                  <el-icon class="platform-icon" v-if="(platform as any).icon">
+                    <component :is="(platform as any).icon" />
+                  </el-icon>
+                  <span class="platform-name">{{ platform.name }}</span>
+                  <span class="platform-desc" v-if="(platform as any).description">{{ (platform as any).description }}</span>
+                </div>
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </div>
+
         <el-form-item v-if="formData.type !== 3" label="高级选项" prop="meta" class="form-item full-width">
           <el-checkbox-group v-model="checkedCities" @change="handleCheckedCitiesChange" class="form-checkbox-group">
             <el-checkbox
@@ -201,6 +231,7 @@ import { InfoFilled, Setting, Connection, Plus } from "@element-plus/icons-vue"
 import Api from "./api.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import { getPlatformsForMenu, getPlatformName } from "@/common/constants/platforms"
 
 const apiRef = ref<InstanceType<typeof Api>>()
 const defaultProps = ref<any>({
@@ -234,6 +265,8 @@ const metaOptions = ref([
   { label: "keepalive", name: "缓存路由", disabled: false }
 ])
 
+const platforms = ref(getPlatformsForMenu())
+
 const DEFAULT_FORM_DATA: createOrUpdateMenuReq = {
   type: 1,
   redirect: "",
@@ -246,7 +279,7 @@ const DEFAULT_FORM_DATA: createOrUpdateMenuReq = {
     title: "",
     is_hidden: false,
     is_affix: false,
-    platform: "",
+    platforms: [],
     is_keepalive: false,
     buttons: []
   },
@@ -377,7 +410,11 @@ const handleDialogConfirm = () => {
 const formData = ref<createOrUpdateMenuReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
-  // title: [{ required: true, message: "名称不能为空" }]
+  // title: [{ required: true, message: "名称不能为空" }],
+  "meta.platforms": [
+    { required: true, message: "请选择所属平台", trigger: "change" },
+    { type: "array", min: 1, message: "至少选择一个平台", trigger: "change" }
+  ]
 }
 
 // 计算属性确保数据同步
@@ -399,9 +436,9 @@ const submitUpdateForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
 
-    // 确保 platform 字段被正确设置
+    // 确保 platforms 字段被正确设置
     if (formData.value.meta) {
-      formData.value.meta.platform = formData.value.meta.platform || "cmdb"
+      formData.value.meta.platforms = formData.value.meta.platforms || ["cmdb"]
     }
 
     // 同步接口数据到表单数据
@@ -420,11 +457,14 @@ const submitUpdateForm = () => {
   })
 }
 
-const submitCreateForm = (platform: string) => {
+const submitCreateForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
 
-    formData.value.meta.platform = platform
+    // 确保 platforms 字段被正确设置
+    if (formData.value.meta) {
+      formData.value.meta.platforms = formData.value.meta.platforms || ["cmdb"]
+    }
 
     // 同步接口数据到表单数据
     formData.value.endpoints = [...apiEndpoints.value]
@@ -463,6 +503,17 @@ const setMenuData = (form: menu) => {
   // 确保 type 和 status 是数字类型
   formData.value.type = Number(formData.value.type)
   formData.value.status = Number(formData.value.status)
+
+  // 处理平台数据：如果是单个平台字符串，转换为数组
+  if (formData.value.meta) {
+    const meta = formData.value.meta as any
+    if (typeof meta.platform === 'string') {
+      formData.value.meta.platforms = [meta.platform]
+      delete meta.platform
+    } else if (!formData.value.meta.platforms) {
+      formData.value.meta.platforms = ["cmdb"]
+    }
+  }
 
   // 初始化接口数据
   initEndpoints(formData.value.endpoints || [])
@@ -684,6 +735,69 @@ defineExpose({
       // 只保留圆角样式
       .modern-select :deep(.el-select__wrapper) {
         border-radius: 10px;
+      }
+
+      // 平台选项样式
+      .platform-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+
+        .platform-icon {
+          font-size: 16px;
+          color: #6366f1;
+          flex-shrink: 0;
+        }
+
+        .platform-name {
+          font-weight: 500;
+          color: #374151;
+          flex: 1;
+        }
+
+        .platform-desc {
+          font-size: 12px;
+          color: #9ca3af;
+          flex-shrink: 0;
+        }
+      }
+
+      // 多选平台选择器样式
+      .modern-select {
+        :deep(.el-select__tags) {
+          .el-tag {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border: 1px solid #bae6fd;
+            color: #0369a1;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 2px 8px;
+            margin: 2px 4px 2px 0;
+
+            .el-tag__close {
+              color: #0369a1;
+              font-size: 12px;
+              margin-left: 4px;
+
+              &:hover {
+                background: #0369a1;
+                color: white;
+              }
+            }
+          }
+        }
+
+        :deep(.el-select__placeholder) {
+          color: #9ca3af;
+          font-size: 13px;
+        }
+
+        :deep(.el-select__input) {
+          color: #374151;
+          font-size: 13px;
+        }
       }
     }
   }

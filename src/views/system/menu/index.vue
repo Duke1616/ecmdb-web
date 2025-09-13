@@ -14,8 +14,7 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import { getPlatformsForMenu, getPlatformName } from "@/common/constants/platforms"
 
 const platforms = ref(getPlatformsForMenu())
-
-const currentPlatform = ref<string>("cmdb")
+const currentPlatform = ref<string>("all")
 
 // 切换平台
 const handlePlatformChange = (platformId: string) => {
@@ -27,7 +26,7 @@ const handlePlatformChange = (platformId: string) => {
 
   refreshMenuData()
 
-  const platformName = getPlatformName(platformId)
+  const platformName = platformId === 'all' ? '全部菜单' : getPlatformName(platformId)
   ElMessage.success(`已切换到${platformName}`)
 }
 
@@ -57,7 +56,7 @@ const handleUpdate = () => {
 }
 
 const handleDelete = () => {
-  if (!currentNodeKey.value) return
+  if (!currentNodeKey.value || !menuTreeData.value) return
 
   const node = findMenuById(menuTreeData.value, currentNodeKey.value)
   if (!node) return
@@ -83,7 +82,7 @@ const handleDelete = () => {
 }
 
 const handleCreate = () => {
-  menuCreateRef.value?.submitCreateForm(currentPlatform.value)
+  menuCreateRef.value?.submitCreateForm()
 }
 
 const handleCloseDialog = (id?: number) => {
@@ -95,7 +94,7 @@ const handleCloseDialog = (id?: number) => {
 
 // 迁移菜单到其他平台
 const handleMigration = () => {
-  if (!currentNodeKey.value) return
+  if (!currentNodeKey.value || !menuTreeData.value) return
 
   const node = findMenuById(menuTreeData.value, currentNodeKey.value)
   if (!node) return
@@ -168,9 +167,15 @@ const handleNodeClick = async (node: menu) => {
 const loadMenuData = (node: menu) => {
   if (!node) return
 
-  // 确保 platform 字段正确
+  // 处理平台数据：如果是单个平台字符串，转换为数组
   if (node.meta) {
-    node.meta.platform = currentPlatform.value
+    const meta = node.meta as any
+    if (typeof meta.platform === 'string') {
+      meta.platforms = [meta.platform]
+      delete meta.platform
+    } else if (!meta.platforms) {
+      meta.platforms = currentPlatform.value === 'all' ? [] : [currentPlatform.value]
+    }
   }
 
   // 设置菜单数据到更新表单
@@ -194,7 +199,9 @@ const menuTreeData = ref<menu[]>([])
 // 刷新菜单数据
 const refreshMenuData = async () => {
   try {
-    const { data } = await listMenusByPlatformApi(currentPlatform.value)
+    // 如果是全部菜单，传递空字符串给后端
+    const platformParam = currentPlatform.value === 'all' ? '' : currentPlatform.value
+    const { data } = await listMenusByPlatformApi(platformParam)
     menuTreeData.value = data
 
     await nextTick()
@@ -245,7 +252,7 @@ const toggleAllNodes = (expanded: boolean) => {
     }
   }
 
-  toggleRecursive(menuTreeData.value)
+  toggleRecursive(menuTreeData.value || [])
 }
 
 // 展开/收起状态
@@ -303,6 +310,13 @@ onMounted(() => {
       <template #actions>
         <div class="platform-buttons">
           <el-button
+            :type="currentPlatform === 'all' ? 'primary' : 'default'"
+            @click="handlePlatformChange('all')"
+            class="platform-button"
+          >
+            全部菜单
+          </el-button>
+          <el-button
             v-for="platform in platforms"
             :key="platform.id"
             :type="currentPlatform === platform.id ? 'primary' : 'default'"
@@ -323,7 +337,9 @@ onMounted(() => {
           <div class="card-header">
             <div class="header-top">
               <h3 class="card-title">菜单列表</h3>
-              <span class="menu-count">{{ menuTreeData.length }} 个菜单</span>
+              <span class="menu-count">
+                {{ menuTreeData?.length || 0 }} 个菜单
+              </span>
             </div>
 
             <div class="header-actions">
@@ -365,17 +381,17 @@ onMounted(() => {
         <el-card class="details-card">
           <div v-if="empty" class="menu-content-wrapper">
             <div class="menu-form-container">
-              <MenuForm ref="menuUpdateRef" :menuData="menuTreeData" @listMenusTreeData="refreshMenuData" />
+              <MenuForm ref="menuUpdateRef" :menuData="menuTreeData || []" @listMenusTreeData="refreshMenuData" />
             </div>
             <div class="menu-actions-footer">
-              <el-button :type="isDragMode ? 'warning' : 'default'" @click="toggleDragMode" :loading="dragLoading">
+              <!-- <el-button :type="isDragMode ? 'warning' : 'default'" @click="toggleDragMode" :loading="dragLoading">
                 <el-icon><Rank /></el-icon>
                 {{ isDragMode ? "退出拖拽" : "拖拽排序" }}
               </el-button>
               <el-button type="warning" @click="handleMigration">
                 <el-icon><Switch /></el-icon>
                 迁移到其他平台
-              </el-button>
+              </el-button> -->
               <el-button type="primary" @click="handleUpdate">
                 <el-icon><Edit /></el-icon>
                 修改
@@ -409,7 +425,7 @@ onMounted(() => {
       <div class="form-content">
         <MenuForm
           ref="menuCreateRef"
-          :menuData="menuTreeData"
+          :menuData="menuTreeData || []"
           @listMenusTreeData="refreshMenuData"
           @closed="handleCloseDialog"
         />
@@ -419,7 +435,7 @@ onMounted(() => {
     <!-- 迁移菜单组件 -->
     <MenuMigration
       v-model:visible="migrationDialogVisible"
-      :menu-title="currentNodeKey ? findMenuById(menuTreeData, currentNodeKey)?.meta.title : ''"
+      :menu-title="currentNodeKey && menuTreeData ? findMenuById(menuTreeData, currentNodeKey)?.meta.title : ''"
       :current-platform="currentPlatform"
       @confirm="handleMigrationConfirm"
     />
@@ -429,7 +445,85 @@ onMounted(() => {
 <style lang="scss" scoped>
 .platform-buttons {
   display: flex;
-  gap: calc(0.6rem + 0.1vw);
+  gap: calc(0.2rem + 0.05vw);
+  padding: calc(0.2rem + 0.05vw);
+  border-radius: calc(0.4rem + 0.1vw);
+
+
+  .platform-button {
+    border-radius: calc(0.3rem + 0.1vw);
+    font-size: calc(0.7rem + 0.1vw);
+    font-weight: 500;
+    padding: calc(0.4rem + 0.1vw) calc(0.8rem + 0.2vw);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+
+    &:hover {
+      transform: translateY(calc(-0.05rem + 0.02vw));
+      box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.3rem + 0.1vw) rgba(0, 0, 0, 0.1);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    // 默认状态
+    &:not(.el-button--primary) {
+      background: white;
+      color: #64748b;
+      border-color: #e2e8f0;
+
+      &:hover {
+        background: #f1f5f9;
+        color: #475569;
+        border-color: #cbd5e1;
+      }
+    }
+
+    // 选中状态
+    &.el-button--primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-color: #3b82f6;
+      color: white;
+      box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.3rem + 0.1vw) rgba(59, 130, 246, 0.3);
+
+      &:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 calc(0.2rem + 0.1vw) calc(0.4rem + 0.1vw) rgba(59, 130, 246, 0.4);
+      }
+
+      &:active {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.3rem + 0.1vw) rgba(59, 130, 246, 0.3);
+      }
+    }
+
+    // 全部菜单按钮特殊样式
+    &:first-child {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      color: #374151;
+      font-weight: 600;
+      border-color: #d1d5db;
+
+      &:hover {
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        color: #1f2937;
+        border-color: #9ca3af;
+      }
+
+      &.el-button--primary {
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+        border-color: #6366f1;
+        color: white;
+
+        &:hover {
+          background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+        }
+      }
+    }
+  }
 }
 
 .content {
