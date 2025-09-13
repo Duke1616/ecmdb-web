@@ -51,9 +51,9 @@ const resolvePath = (routePath: string) => {
       // 简单的路径拼接，避免使用 path-browserify
       if (!props.basePath) return routePath
       if (!routePath) return props.basePath
-      
-      const basePath = props.basePath.endsWith('/') ? props.basePath.slice(0, -1) : props.basePath
-      const route = routePath.startsWith('/') ? routePath : `/${routePath}`
+
+      const basePath = props.basePath.endsWith("/") ? props.basePath.slice(0, -1) : props.basePath
+      const route = routePath.startsWith("/") ? routePath : `/${routePath}`
       return `${basePath}${route}`
   }
 }

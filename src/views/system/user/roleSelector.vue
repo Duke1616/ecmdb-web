@@ -330,12 +330,12 @@ const getSelectedRoleCodes = (): string[] => {
 
 // 确认选择
 const handleConfirm = () => {
-  emit('confirm', getSelectedRoles())
+  emit("confirm", getSelectedRoles())
 }
 
 // 取消选择
 const handleCancel = () => {
-  emit('cancel')
+  emit("cancel")
 }
 
 // 向父组件暴露方法
