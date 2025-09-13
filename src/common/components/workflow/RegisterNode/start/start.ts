@@ -3,18 +3,21 @@ export default function registerStart(lf: any) {
     class StartNode extends CircleNode {
       getLabelShape() {
         const { model } = this.props
-        const { x, y } = model
+        const { x, y, width, height } = model
+        const stroke = "#404040"
         return h(
-          "text",
+          "svg",
           {
-            fill: "#000000",
-            fontSize: 12,
-            x: x - 12,
-            y: y + 4,
-            width: 50,
-            height: 25
+            x: x - width / 2,
+            y: y - height / 2,
+            width: 40,
+            height: 40,
+            viewBox: "0 0 1024 1024"
           },
-          "Start"
+          h("path", {
+            fill: stroke,
+            d: "M429.504 309.952c-12.928-13.056-39.104-4.224-39.104 17.344v380.672c0 17.344 21.76 30.528 39.104 17.344l191.104-176.256a42.24 42.24 0 0 0 0-60.928l-191.104-178.176z"
+          })
         )
       }
       getShape() {
