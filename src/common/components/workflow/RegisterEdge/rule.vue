@@ -107,7 +107,8 @@
               v-for="op in operatorOptions"
               :key="op.value"
               :class="['operator-btn', { active: formData.operator === op.value }]"
-              @click="selectOperator(op.value)"
+              @click.prevent="selectOperator(op.value)"
+              type="button"
             >
               <span class="operator-symbol">{{ op.symbol }}</span>
               <span class="operator-text">{{ op.label }}</span>
@@ -131,7 +132,6 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue"
-import { FormInstance } from "element-plus"
 import { template } from "@/api/template/types/template"
 
 interface Props {
@@ -139,7 +139,6 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const formRef = ref<FormInstance | null>(null)
 
 const templatesMap = computed(() => {
   const map = new Map<string, template>()
@@ -175,6 +174,7 @@ const operatorOptions = [
 // 选择运算符
 const selectOperator = (value: string) => {
   formData.operator = value
+  console.log('选择运算符:', value)
 }
 
 const selectOptionsMap = ref(new Map<string, Array<{ value: string; label: string }>>())
@@ -239,20 +239,13 @@ const getExpressionPreview = () => {
 }
 
 const getForm = () => {
-  let isValid = true
-
-  formRef.value?.validate((valid: boolean, fields: any) => {
-    if (!valid) {
-      console.error("表单校验不通过", fields)
-      isValid = false
-    }
-  })
-
-  if (!isValid) {
-    return
+  // 简单的数据验证
+  if (!formData.leftValueData || !formData.operator || !formData.rightValueData) {
+    console.error("表单数据不完整")
+    return null
   }
 
-  console.log("表单校验通过，继续执行后续逻辑")
+  console.log("表单数据验证通过，继续执行后续逻辑")
   return formData
 }
 
