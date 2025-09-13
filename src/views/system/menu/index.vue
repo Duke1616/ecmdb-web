@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, ref, watch } from "vue"
-import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder, Switch, Rank } from "@element-plus/icons-vue"
+import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
 import MenuMigration from "./components/MenuMigration.vue"
@@ -26,7 +26,7 @@ const handlePlatformChange = (platformId: string) => {
 
   refreshMenuData()
 
-  const platformName = platformId === 'all' ? '全部菜单' : getPlatformName(platformId)
+  const platformName = platformId === "all" ? "全部菜单" : getPlatformName(platformId)
   ElMessage.success(`已切换到${platformName}`)
 }
 
@@ -93,14 +93,14 @@ const handleCloseDialog = (id?: number) => {
 }
 
 // 迁移菜单到其他平台
-const handleMigration = () => {
-  if (!currentNodeKey.value || !menuTreeData.value) return
+// const handleMigration = () => {
+//   if (!currentNodeKey.value || !menuTreeData.value) return
 
-  const node = findMenuById(menuTreeData.value, currentNodeKey.value)
-  if (!node) return
+//   const node = findMenuById(menuTreeData.value, currentNodeKey.value)
+//   if (!node) return
 
-  migrationDialogVisible.value = true
-}
+//   migrationDialogVisible.value = true
+// }
 
 // 处理迁移确认
 const handleMigrationConfirm = () => {
@@ -114,14 +114,14 @@ const handleMigrationConfirm = () => {
 }
 
 // 切换拖拽模式
-const toggleDragMode = () => {
-  isDragMode.value = !isDragMode.value
-  if (isDragMode.value) {
-    ElMessage.info("已进入拖拽模式，可以拖拽菜单项进行排序")
-  } else {
-    ElMessage.info("已退出拖拽模式")
-  }
-}
+// const toggleDragMode = () => {
+//   isDragMode.value = !isDragMode.value
+//   if (isDragMode.value) {
+//     ElMessage.info("已进入拖拽模式，可以拖拽菜单项进行排序")
+//   } else {
+//     ElMessage.info("已退出拖拽模式")
+//   }
+// }
 
 // 处理拖拽结束
 const handleDragEnd = async (dragNode: any, dropNode: any) => {
@@ -170,11 +170,11 @@ const loadMenuData = (node: menu) => {
   // 处理平台数据：如果是单个平台字符串，转换为数组
   if (node.meta) {
     const meta = node.meta as any
-    if (typeof meta.platform === 'string') {
+    if (typeof meta.platform === "string") {
       meta.platforms = [meta.platform]
       delete meta.platform
     } else if (!meta.platforms) {
-      meta.platforms = currentPlatform.value === 'all' ? [] : [currentPlatform.value]
+      meta.platforms = currentPlatform.value === "all" ? [] : [currentPlatform.value]
     }
   }
 
@@ -200,7 +200,7 @@ const menuTreeData = ref<menu[]>([])
 const refreshMenuData = async () => {
   try {
     // 如果是全部菜单，传递空字符串给后端
-    const platformParam = currentPlatform.value === 'all' ? '' : currentPlatform.value
+    const platformParam = currentPlatform.value === "all" ? "" : currentPlatform.value
     const { data } = await listMenusByPlatformApi(platformParam)
     menuTreeData.value = data
 
@@ -337,9 +337,7 @@ onMounted(() => {
           <div class="card-header">
             <div class="header-top">
               <h3 class="card-title">菜单列表</h3>
-              <span class="menu-count">
-                {{ menuTreeData?.length || 0 }} 个菜单
-              </span>
+              <span class="menu-count"> {{ menuTreeData?.length || 0 }} 个菜单 </span>
             </div>
 
             <div class="header-actions">
@@ -448,7 +446,6 @@ onMounted(() => {
   gap: calc(0.2rem + 0.05vw);
   padding: calc(0.2rem + 0.05vw);
   border-radius: calc(0.4rem + 0.1vw);
-
 
   .platform-button {
     border-radius: calc(0.3rem + 0.1vw);
