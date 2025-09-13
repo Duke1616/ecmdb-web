@@ -106,7 +106,10 @@ defineExpose({
 <style lang="scss" scoped>
 .menu-drag-tree {
   position: relative;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .drag-tip {
@@ -132,18 +135,22 @@ defineExpose({
 }
 
 .tree-container {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   position: relative;
   padding: calc(0.6rem + 0.2vw);
+  overflow: hidden;
 }
 
 .tree-scrollbar {
   height: 100%;
+  max-height: 100%;
 }
 
 /* 树形节点样式 */
 .menu-tree {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
 
   :deep(.el-tree-node) {
     .el-tree-node__content {

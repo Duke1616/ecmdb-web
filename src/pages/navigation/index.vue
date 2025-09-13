@@ -37,7 +37,7 @@ const hasPlatformRoutes = (platformId: string): boolean => {
   if (!permissionStore.routes || permissionStore.routes.length === 0) {
     return false
   }
-  
+
   // 递归检查路由中是否有该平台的路由
   const checkRoutes = (routes: any[]): boolean => {
     for (const route of routes) {
@@ -52,7 +52,7 @@ const hasPlatformRoutes = (platformId: string): boolean => {
     }
     return false
   }
-  
+
   return checkRoutes(permissionStore.routes)
 }
 
