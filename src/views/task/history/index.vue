@@ -43,59 +43,42 @@
         <OperateBtn :items="operateBtnStatus" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
       </template>
     </DataTable>
-    <div>
-      <!--  代码块 -->
-      <el-dialog v-model="resultVisible" width="40%" @close="onclose" :close-on-click-modal="closeOnClickModal">
-        <div class="code-container">
-          <prism-editor
-            v-if="language !== 'json'"
-            class="my-editor"
-            v-model="result"
-            :readonly="true"
-            :highlight="highlighter"
-            line-numbers
-          />
-          <div v-if="language === 'json'">
-            <vue-json-pretty
-              :deep="3"
-              v-model:data="result"
-              selectableType="single"
-              :editable="true"
-              :showLineNumber="true"
-              :showLine="true"
-              path="res"
-            />
-          </div>
-        </div>
-      </el-dialog>
-    </div>
+    <!-- 任务结果查看对话框 -->
+    <TaskResultDialog
+      v-model="resultVisible"
+      :result="result"
+      :language="language"
+      :type="currentDialogType"
+      :task-id="taskId"
+      @closed="onResultDialogClosed"
+      @save="handleSaveResult"
+    />
+
+    <!-- 任务重试确认对话框 -->
+    <TaskRetryDialog
+      v-model="retryDialogVisible"
+      :task-id="taskId"
+      width="400px"
+      :loading="retryLoading"
+      @confirm="handleRetryConfirm"
+    />
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { h, ref, watch } from "vue"
+import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { task } from "@/api/task/types/task"
 import { listTasksApi, retryTaskApi, updateTaskArgsApi, updateTaskVariablesApi } from "@/api/task"
-import { PrismEditor } from "vue-prism-editor"
-import "vue-prism-editor/dist/prismeditor.min.css"
-import { highlight, languages } from "prismjs/components/prism-core"
-import "prismjs/components/prism-clike"
-import "prismjs/components/prism-javascript"
-import "prismjs/components/prism-python"
-import "prismjs/components/prism-bash"
-import "prismjs/components/prism-json"
-import "prismjs/themes/prism-dark.css"
-
-import VueJsonPretty from "vue-json-pretty"
-import "vue-json-pretty/lib/styles.css"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage } from "element-plus"
 import { TagInfo } from "@/common/components/EnumTag/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
+import TaskResultDialog from "./components/TaskResultDialog.vue"
+import TaskRetryDialog from "./components/TaskRetryDialog.vue"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -154,88 +137,111 @@ const statusMap: Record<number, TagInfo> = {
 const operateBtnStatus = ref([
   {
     name: "输入",
-    code: "1",
+    code: "input",
     icon: "View"
   },
   {
     name: "输出",
-    code: "2",
+    code: "output",
     icon: "View"
   },
   {
     name: "调参",
-    code: "3",
+    code: "args",
     icon: "Tools",
     type: "primary"
   },
   {
     name: "变量",
-    code: "4",
+    code: "variables",
     icon: "Shop",
     type: "primary"
   },
   {
     name: "重试",
-    code: "5",
+    code: "retry",
     icon: "Refresh",
     type: "primary"
   }
 ])
 
-const active = ref<string>("")
+const currentDialogType = ref<"input" | "output" | "args" | "variables">("input")
+const retryDialogVisible = ref<boolean>(false)
+const retryLoading = ref<boolean>(false)
+
 const operateEvent = (data: task, name: string) => {
   taskId.value = data.id
-  resultVisible.value = true
 
   switch (name) {
-    case "输入":
+    case "input":
       result.value = data.code
       language.value = data.language
+      currentDialogType.value = "input"
+      resultVisible.value = true
       break
-    case "输出":
+    case "output":
       result.value = data.result
       language.value = data.language
+      currentDialogType.value = "output"
+      resultVisible.value = true
       break
-    case "3":
+    case "args":
       tempResult.value = JSON.parse(data.args)
       result.value = JSON.parse(data.args)
-      closeOnClickModal.value = false
-      active.value = "参数"
+      currentDialogType.value = "args"
       language.value = "json"
+      resultVisible.value = true
       break
-    case "4":
+    case "variables":
       tempResult.value = JSON.parse(data.variables)
       result.value = JSON.parse(data.variables)
-      closeOnClickModal.value = false
-      active.value = "变量"
+      currentDialogType.value = "variables"
       language.value = "json"
+      resultVisible.value = true
       break
-    case "5":
-      resultVisible.value = false
-      retryTask()
+    case "retry":
+      retryDialogVisible.value = true
       break
   }
 }
 
-const onclose = () => {
-  if (language.value === "json") {
-    if (JSON.stringify(tempResult.value) !== JSON.stringify(result.value)) {
-      switch (active.value) {
-        case "参数":
-          handlerUpdateArgs()
-          break
-        case "变量":
-          handlerUpdateVaribales()
-          break
-      }
-    }
-  }
-
+const onResultDialogClosed = () => {
   result.value = ""
   language.value = ""
   resultVisible.value = false
-  closeOnClickModal.value = true
   taskId.value = 0
+}
+
+const handleSaveResult = async (data: { taskId: number; result: any; type: string }) => {
+  try {
+    switch (data.type) {
+      case "args":
+        await handlerUpdateArgs(data.taskId, data.result)
+        break
+      case "variables":
+        await handlerUpdateVariables(data.taskId, data.result)
+        break
+    }
+  } catch (error) {
+    console.error("保存失败:", error)
+  }
+}
+
+const handleRetryConfirm = () => {
+  retryLoading.value = true
+  retryTaskApi(taskId.value)
+    .then(() => {
+      ElMessage.success("重试已提交，请稍后查看结果")
+      retryDialogVisible.value = false
+      listTasksData()
+    })
+    .catch((error) => {
+      console.error("重试任务失败:", error)
+      ElMessage.error("重试任务失败")
+    })
+    .finally(() => {
+      retryLoading.value = false
+    })
 }
 
 const taskId = ref<number>(0)
@@ -243,73 +249,85 @@ const tempResult = ref<any>("")
 const result = ref<any>("")
 const language = ref<string>("")
 const resultVisible = ref<boolean>(false)
-const closeOnClickModal = ref<boolean>(true)
-const highlighter = (code: string) => {
-  switch (language.value) {
-    case "json":
-      return highlight(code, languages.bash)
-    case "python":
-      return highlight(code, languages.python)
-    case "shell":
-      return highlight(code, languages.bash)
-    case "javascript":
-      return highlight(code, languages.javascript)
+
+const handlerUpdateArgs = async (id: number, args: any) => {
+  try {
+    await updateTaskArgsApi({
+      id: id,
+      args: args
+    })
+    listTasksData()
+    ElMessage.success("修改传递参数成功")
+  } catch (error) {
+    ElMessage.error("修改传递参数失败")
+    throw error
   }
 }
 
-const handlerUpdateArgs = () => {
-  updateTaskArgsApi({
-    id: taskId.value,
-    args: result.value
-  }).then(() => {
-    listTasksData()
-    ElMessage.success("修改传递参数成功")
-  })
-}
-
-const handlerUpdateVaribales = () => {
-  updateTaskVariablesApi({
-    id: taskId.value,
-    variables: JSON.stringify(result.value)
-  }).then(() => {
+const handlerUpdateVariables = async (id: number, variables: any) => {
+  try {
+    await updateTaskVariablesApi({
+      id: id,
+      variables: JSON.stringify(variables)
+    })
     listTasksData()
     ElMessage.success("修改传递变量成功")
-  })
-}
-
-const retryTask = () => {
-  ElMessageBox({
-    title: "重试任务",
-    message: h("p", null, [
-      h("span", null, "正在重试任务ID: "),
-      h("i", { style: "color: red" }, `${taskId.value}`),
-      h("span", null, " 确认？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    retryTaskApi(taskId.value).then(() => {
-      ElMessage.success("重试已提交，请稍后查看结果")
-    })
-  })
+  } catch (error) {
+    ElMessage.error("修改传递变量失败")
+    throw error
+  }
 }
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listTasksData, { immediate: true })
 </script>
 
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
+<style scoped lang="scss">
+// 任务历史页面样式优化
+.task-history-container {
+  .el-table {
+    .el-table__header {
+      th {
+        background: #f8fafc;
+        color: #374151;
+        font-weight: 600;
+      }
+    }
+
+    .el-table__row {
+      &:hover {
+        background: #f8fafc;
+      }
+    }
   }
 }
-</style>
 
-<style lang="scss" scoped>
-.code-container {
-  height: 70vh;
-  overflow: auto;
+// 操作按钮样式优化
+.operate-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  .el-button {
+    font-size: 12px;
+    padding: 4px 8px;
+    height: auto;
+    min-height: 28px;
+  }
+}
+
+// 状态标签样式优化
+.status-tag {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+// 时间显示样式优化
+.time-display {
+  font-family: "Monaco", "Consolas", monospace;
+  font-size: 12px;
+  color: #6b7280;
 }
 </style>
