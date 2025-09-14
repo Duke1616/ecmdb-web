@@ -411,7 +411,6 @@ defineExpose({
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
-  padding: calc(1rem + 0.3vw);
 
   .form-layout {
     display: grid;
