@@ -1,6 +1,11 @@
 <template>
   <PageContainer>
-    <ManagerHeader title="排班详情" subtitle="查看和管理排班规则及日程安排">
+    <ManagerHeader 
+      title="排班详情" 
+      subtitle="查看和管理排班规则及日程安排"
+      :show-back-button="true"
+      @back="goBack"
+    >
       <template #actions>
         <el-button type="primary" :icon="Plus" @click="addShifSchedulingRule" class="action-btn"> 新增规则 </el-button>
         <el-button type="primary" :icon="Setting" @click="listShifSchedulingRule" class="action-btn">
@@ -174,6 +179,11 @@ const handlerSubmitAdjustmentRule = () => {
 // 跳转到今天
 const goToToday = () => {
   calendarRef.value?.getApi().today()
+}
+
+// 返回上一页
+const goBack = () => {
+  window.history.back()
 }
 
 const calendarOptions = reactive<any>({
