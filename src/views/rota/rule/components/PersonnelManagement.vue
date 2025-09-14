@@ -259,6 +259,15 @@ const removeMemberFromGroup = (groupId: number, memberIndex: number) => {
 // 删除组
 const removeGroup = (groupId: number) => {
   rotaGroups.value = rotaGroups.value.filter((g) => g.id !== groupId)
+
+  // 删除组后重新命名，保持字母顺序
+  rotaGroups.value.forEach((group, index) => {
+    group.name = `${String.fromCharCode(65 + index)}`
+  })
+
+  // 强制触发响应式更新
+  rotaGroups.value = [...rotaGroups.value]
+  renderKey.value++
 }
 
 // 处理拖拽开始事件
