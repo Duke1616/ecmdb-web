@@ -287,6 +287,12 @@ const handleCurrentChange = (page: number) => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  
+  /* 强制设置表格样式变量 */
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-row-hover-bg-color: #f5f7fa;
+  --el-table-stripe-bg-color: #fafafa;
 }
 
 /* 内容卡片 */
@@ -360,7 +366,7 @@ const handleCurrentChange = (page: number) => {
     }
   }
 
-  // 确保所有列都有一致的背景色
+  // 确保所有列都有一致的背景色 - 使用更高优先级的选择器
   :deep(.el-table__body) {
     // 重置所有单元格的背景色，让斑马纹效果统一
     tr {
@@ -371,7 +377,7 @@ const handleCurrentChange = (page: number) => {
     
     // 斑马纹样式 - 确保整行包括所有列都有一致背景
     tr.el-table__row--striped {
-      background-color: #fafafa;
+      background-color: #fafafa !important;
       
       td {
         background-color: #fafafa !important;
@@ -380,7 +386,7 @@ const handleCurrentChange = (page: number) => {
     
     // 斑马纹悬停样式
     tr.el-table__row--striped:hover {
-      background-color: #f5f7fa;
+      background-color: #f5f7fa !important;
       
       td {
         background-color: #f5f7fa !important;
@@ -389,7 +395,7 @@ const handleCurrentChange = (page: number) => {
     
     // 普通行悬停样式
     tr:hover {
-      background-color: #f5f7fa;
+      background-color: #f5f7fa !important;
       
       td {
         background-color: #f5f7fa !important;
@@ -397,35 +403,62 @@ const handleCurrentChange = (page: number) => {
     }
   }
 
-  // :deep(.el-table__body) {
-  //   td {
-  //     height: 52px;
-  //     padding: 12px 16px;
-  //   }
-  // }
+  // 额外加强操作列的样式特异性
+  :deep(.el-table__body tr td:last-child) {
+    background-color: transparent !important;
+  }
+  
+  :deep(.el-table__body tr.el-table__row--striped td:last-child) {
+    background-color: #fafafa !important;
+  }
+  
+  :deep(.el-table__body tr.el-table__row--striped:hover td:last-child) {
+    background-color: #f5f7fa !important;
+  }
+  
+  :deep(.el-table__body tr:hover td:last-child) {
+    background-color: #f5f7fa !important;
+  }
+}
 
-  .action-buttons {
-    display: flex;
-    gap: calc(0.4rem + 0.15vw);
-    justify-content: center;
+/* 全局样式覆盖 - 确保生产环境也能生效 */
+:global(.data-table .el-table__body tr td) {
+  background-color: transparent !important;
+}
+
+:global(.data-table .el-table__body tr.el-table__row--striped td) {
+  background-color: #fafafa !important;
+}
+
+:global(.data-table .el-table__body tr.el-table__row--striped:hover td) {
+  background-color: #f5f7fa !important;
+}
+
+:global(.data-table .el-table__body tr:hover td) {
+  background-color: #f5f7fa !important;
+}
+
+.action-buttons {
+  display: flex;
+  gap: calc(0.4rem + 0.15vw);
+  justify-content: center;
+  align-items: center;
+
+  .action-btn {
+    display: inline-flex;
     align-items: center;
+    gap: calc(0.2rem + 0.08vw);
+    padding: calc(0.15rem + 0.08vw) calc(0.4rem + 0.15vw);
+    border-radius: 4px;
+    font-size: calc(0.6rem + 0.15vw);
+    font-weight: 500;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-height: calc(1.4rem + 0.3vw);
 
-    .action-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: calc(0.2rem + 0.08vw);
-      padding: calc(0.15rem + 0.08vw) calc(0.4rem + 0.15vw);
-      border-radius: 4px;
-      font-size: calc(0.6rem + 0.15vw);
-      font-weight: 500;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-      min-height: calc(1.4rem + 0.3vw);
-
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      }
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
   }
 }

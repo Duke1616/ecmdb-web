@@ -127,7 +127,7 @@ watch(
   { immediate: true }
 )
 
-// 监听内部数据变化 - 使用 immediate: false 避免初始化时触发
+// 监听内部数据变化
 watch(
   rotaGroups,
   (newValue) => {

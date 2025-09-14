@@ -1,18 +1,16 @@
 import { ref } from "vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import { addRuleReq, rotaGroup } from "@/api/rota/types/rota"
+import { addRuleReq } from "@/api/rota/types/rota"
 import { addShifSchedulingRuleApi } from "@/api/rota"
 
 export function useRuleForm() {
-  const rotaGroups = ref<rotaGroup[]>([])
-
   const DEFAULT_FORM_DATA: addRuleReq = {
     id: 0,
     rota_rule: {
       start_time: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
       end_time: 0,
-      rota_groups: rotaGroups.value,
+      rota_groups: [],
       rotate: {
         time_unit: 4,
         time_duration: 1
