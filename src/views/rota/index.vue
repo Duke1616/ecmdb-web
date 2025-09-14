@@ -1,117 +1,159 @@
 <template>
-  <div class="app-container">
-    <el-card shadow="never">
-      <div class="toolbar-wrapper">
-        <div>
-          <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
-        </div>
-        <div>
-          <el-tooltip content="刷新当前页">
-            <el-button type="primary" :icon="RefreshRight" circle @click="listRotasData" />
-          </el-tooltip>
-        </div>
-      </div>
-      <div class="table-wrapper">
-        <el-table :data="rotasData">
-          <el-table-column type="selection" width="50" align="center" />
-          <el-table-column prop="name" label="名称" align="center" />
-          <el-table-column prop="enabled" label="状态" align="center">
-            <template #default="scope">
-              <el-tag v-if="scope.row.enabled === true" effect="plain" type="primary">启用</el-tag>
-              <el-tag v-else type="info" effect="plain">禁用</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="owner" label="管理员" align="center">
-            <template #default="scope">
-              {{ userToolsStore.getOnlyDisplayName(scope.row.owner) }}
-            </template>
-          </el-table-column>
-          <el-table-column prop="desc" label="描述" align="center" />
-          <el-table-column fixed="right" label="操作" width="200" align="center">
-            <template #default="scope">
-              <OperateBtn
-                :items="operateBtnStatus"
-                @routeEvent="operateEvent"
-                :operateItem="scope.row"
-                :maxLength="2"
-              />
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div class="pager-wrapper">
-        <el-pagination
-          background
-          :layout="paginationData.layout"
-          :page-sizes="paginationData.pageSizes"
-          :total="paginationData.total"
-          :page-size="paginationData.pageSize"
-          :currentPage="paginationData.currentPage"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+  <PageContainer>
+    <!-- 头部区域 -->
+    <ManagerHeader title="排班管理" subtitle="管理系统排班和值班安排" @refresh="handleRefresh">
+      <template #actions>
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreate"> 新增排班 </el-button>
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
 
-    <div>
-      <el-dialog v-model="dialogVisible" title="添加排班" :before-close="onClosed" width="500">
-        <createOrUpdate ref="apiRef" @callback="listRotasData" @closed="onClosed" />
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="onClosed">取消</el-button>
-            <el-button type="primary" @click="handlerSubmitRota"> 保存 </el-button>
-          </div>
-        </template>
-      </el-dialog>
-    </div>
-  </div>
+    <!-- 数据表格 -->
+    <DataTable
+      :data="rotasData"
+      :columns="tableColumns"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{ loading, stripe: true, height: 'calc(100vh - 12rem)' }"
+      @selection-change="handleSelectionChange"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 状态列自定义插槽 -->
+      <template #status="{ row }">
+        <el-tag v-if="row.enabled === true" effect="plain" type="primary">启用</el-tag>
+        <el-tag v-else type="info" effect="plain">禁用</el-tag>
+      </template>
+
+      <!-- 管理员列自定义插槽 -->
+      <template #owner="{ row }">
+        {{ userToolsStore.getOnlyDisplayName(row.owner) }}
+      </template>
+
+      <!-- 操作列自定义插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnStatus" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
+      </template>
+    </DataTable>
+
+    <!-- 添加/编辑排班对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="500px"
+      subtitle="配置排班信息"
+      header-icon="Calendar"
+      confirm-text="保存"
+      cancel-text="取消"
+      @confirm="handlerSubmitRota"
+      @cancel="onClosed"
+      @closed="onClosed"
+    >
+      <div class="form-content">
+        <Form ref="apiRef" @callback="listRotasData" @closed="onClosed" />
+      </div>
+    </FormDialog>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h } from "vue"
+import { ref, watch, nextTick, h, computed } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
 import { rota } from "@/api/rota/types/rota"
 import { deleteRotaApi, listRotasApi } from "@/api/rota"
-import createOrUpdate from "./createOrUpdate.vue"
+import Form from "./form.vue"
 import router from "@/router"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
+import PageContainer from "@/common/components/PageContainer/index.vue"
 const userToolsStore = useUserToolsStore()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const dialogVisible = ref<boolean>(false)
-const apiRef = ref<InstanceType<typeof createOrUpdate>>()
+const loading = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const apiRef = ref<InstanceType<typeof Form>>()
 
+// 对话框标题
+const dialogTitle = computed(() => (isEdit.value ? "编辑排班" : "添加排班"))
+
+// 表格列配置
+const tableColumns = [
+  {
+    prop: "name",
+    label: "名称",
+    align: "center" as const
+  },
+  {
+    prop: "enabled",
+    label: "状态",
+    align: "center" as const,
+    slot: "status"
+  },
+  {
+    prop: "owner",
+    label: "管理员",
+    align: "center" as const,
+    slot: "owner"
+  },
+  {
+    prop: "desc",
+    label: "描述",
+    align: "center" as const
+  }
+]
+
+// OperateBtn 配置
 const operateBtnStatus = ref([
   {
     name: "详情",
-    code: "1",
+    code: "view",
     icon: "View"
   },
   {
     name: "修改",
-    code: "2",
+    code: "edit",
     icon: "Edit"
   },
   {
     name: "删除",
-    code: "3",
+    code: "delete",
     icon: "Delete",
     type: "danger"
   }
 ])
 
+// 选中的行
+const selectedRows = ref<rota[]>([])
+
+// 选择变化事件
+const handleSelectionChange = (selection: rota[]) => {
+  selectedRows.value = selection
+}
+
+// OperateBtn 操作事件处理
 const operateEvent = (data: rota, name: string) => {
+  console.log("OperateBtn action triggered:", name, data)
   switch (name) {
-    case "详情":
+    case "view":
       handleDetailClick(data)
       break
-    case "修改":
+    case "edit":
       handleUpdateClick(data)
       break
-    case "3":
+    case "delete":
       handleDeleteClick(data)
       break
   }
@@ -125,6 +167,7 @@ const handleDetailClick = (row: rota) => {
 }
 
 const handleUpdateClick = (row: rota) => {
+  isEdit.value = true
   dialogVisible.value = true
   nextTick(() => {
     apiRef.value?.setFrom(row)
@@ -134,6 +177,7 @@ const handleUpdateClick = (row: rota) => {
 const onClosed = () => {
   apiRef.value?.resetForm()
   dialogVisible.value = false
+  isEdit.value = false
 }
 
 const handlerSubmitRota = () => {
@@ -141,16 +185,19 @@ const handlerSubmitRota = () => {
 }
 
 const handlerCreate = () => {
+  isEdit.value = false
   dialogVisible.value = true
-
-  nextTick(() => {
-    apiRef.value?.setOwnerForm()
-  })
 }
 
-/** 查询模版列表 */
+const handleRefresh = () => {
+  listRotasData()
+  ElMessage.success("数据已刷新")
+}
+
+/** 查询排班列表 */
 const rotasData = ref<rota[]>([])
 const listRotasData = () => {
+  loading.value = true
   listRotasApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
@@ -159,22 +206,24 @@ const listRotasData = () => {
       paginationData.total = data.total
       rotasData.value = data.rotas
 
-      const userIds = rotasData.value.map((item) => item.owner)
-      if (userIds.length > 0) {
-        userToolsStore.setByUserIds(userIds)
+      const usernames = rotasData.value.map((item) => item.owner)
+      if (usernames.length > 0) {
+        userToolsStore.setByUsernames(usernames)
       }
     })
     .catch(() => {
       rotasData.value = []
     })
-    .finally(() => {})
+    .finally(() => {
+      loading.value = false
+    })
 }
 
 const handleDeleteClick = (row: rota) => {
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
-      h("span", null, "正在删除模版: "),
+      h("span", null, "正在删除排班: "),
       h("i", { style: "color: red" }, `${row.name}`),
       h("span", null, " 确认删除？")
     ]),
@@ -193,27 +242,10 @@ const handleDeleteClick = (row: rota) => {
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listRotasData, { immediate: true })
 </script>
 
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
-  }
-}
-</style>
-
 <style lang="scss" scoped>
-.toolbar-wrapper {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.table-wrapper {
-  margin-bottom: 20px;
-}
-
-.pager-wrapper {
-  display: flex;
-  justify-content: flex-end;
+.form-content {
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
 }
 </style>

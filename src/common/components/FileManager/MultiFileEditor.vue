@@ -134,7 +134,6 @@ const themeOptions = ref([
   "tomorrow"
 ])
 
-
 // 动态加载主题选项
 const loadThemeOptions = () => {
   try {
@@ -279,8 +278,7 @@ const handleThemeChange = (theme: string) => {
 }
 
 // 保存所有文件
-const saveAllFiles = () => {
-}
+const saveAllFiles = () => {}
 
 // 暴露方法
 defineExpose({

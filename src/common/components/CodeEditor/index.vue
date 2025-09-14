@@ -90,15 +90,15 @@ const getDefaultCode = () => {
 const getLanguageConfig = (language: string) => {
   // 导入所有语言配置
   const languages = import.meta.glob("./lang-code/*/index.ts", { eager: true })
-  
+
   // 根据语言名称获取对应的配置
   const languageKey = `./lang-code/${language}/index.ts`
   const languageModule = languages[languageKey] as any
-  
+
   if (languageModule && languageModule.default) {
     return languageModule.default
   }
-  
+
   // 如果找不到对应语言，返回默认的 Python 配置
   return {
     language: python,

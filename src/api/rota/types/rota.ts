@@ -9,7 +9,7 @@ export interface createOrUpdateRotaReq {
   id?: number
   name: string
   desc: string
-  owner: number
+  owner: string
   enabled: boolean
 }
 
@@ -35,7 +35,7 @@ export interface rota {
   name: string // 名称
   desc: string // 描述
   enabled: boolean // 是否启用
-  owner: number // 所有者 ID
+  owner: string // 所有者 ID
   rules: rotaRule[] // 值班规则
   temp_rules: rotaRule[] // 临时调班规则
 }
@@ -66,7 +66,7 @@ export interface rotaAdjustmentRule {
 export interface rotaGroup {
   id: number
   name: string // 组名
-  members: number[] // 成员 ID 数组
+  members: string[] // 成员 ID 数组
 }
 
 // Rotate 轮换相关参数
@@ -93,7 +93,7 @@ export interface shiftRostered {
   final_schedule: schedule[]
   current_schedule: schedule
   next_schedule: schedule
-  members: number[]
+  members: string[]
 }
 
 export interface schedule {

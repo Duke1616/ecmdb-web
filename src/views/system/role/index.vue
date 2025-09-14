@@ -278,7 +278,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
 </script>
 
 <style lang="scss" scoped>
-
 /* 角色名称样式 */
 .role-name {
   display: flex;
@@ -298,42 +297,5 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listRol
   align-items: center;
   justify-content: center;
   text-align: center;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .role-manager {
-    padding: 16px;
-  }
-
-  .manager-header {
-    padding: 16px 20px;
-    margin-bottom: 16px;
-
-    .header-left {
-      .manager-title {
-        font-size: 16px;
-      }
-
-      .manager-subtitle {
-        font-size: 12px;
-      }
-    }
-
-    .header-right {
-      gap: 8px;
-
-      .action-btn {
-        height: 32px;
-        font-size: 12px;
-        padding: 0 12px;
-      }
-
-      .refresh-btn {
-        width: 32px;
-        height: 32px;
-      }
-    }
-  }
 }
 </style>

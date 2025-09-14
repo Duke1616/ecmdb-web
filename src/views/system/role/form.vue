@@ -146,8 +146,6 @@ defineExpose({
 .role-form-container {
   padding: 0;
   background: transparent;
-  max-height: 80vh;
-  overflow-y: auto;
 }
 
 .role-form {

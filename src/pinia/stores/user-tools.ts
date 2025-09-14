@@ -1,31 +1,31 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
 import store from "@/pinia"
-import { findByIdsApi } from "@/api/user"
+import { findByUsernamesApi } from "@/api/user"
 
 export const useUserToolsStore = defineStore("user-tools", () => {
-  const userMap = ref(new Map<number, string>())
+  const userMap = ref(new Map<string, string>())
 
-  const setByUserIds = (members: number[]) => {
+  const setByUsernames = (members: string[]) => {
     // 查看是否为空
     if (!members || members.length === 0) return
 
     // 去重
     const uniqueMembers = Array.from(new Set(members))
 
-    // 筛选出 userMap 中没有的用户 ID
-    const missingMembers = uniqueMembers.filter((id) => !userMap.value.has(id))
+    // 筛选出 userMap 中没有的用户名
+    const missingMembers = uniqueMembers.filter((username) => !userMap.value.has(username))
 
     // 如果所有用户都已存在，则不处理
     if (missingMembers.length === 0) return
 
     // 获取用户信息存储到 map 中
-    findByIdsApi(missingMembers)
+    findByUsernamesApi(missingMembers)
       .then((data) => {
         const newUsers = new Map(
-          data.data.users.map((user) => [user.id, user.display_name + " [" + user.username + "] "])
+          data.data.users.map((user) => [user.username, user.display_name + " [" + user.username + "] "])
         )
-        newUsers.forEach((name, id) => userMap.value.set(id, name))
+        newUsers.forEach((name, username) => userMap.value.set(username, name))
       })
       .catch((error) => {
         console.log("catch", error)
@@ -33,18 +33,18 @@ export const useUserToolsStore = defineStore("user-tools", () => {
       .finally(() => {})
   }
 
-  const setToMap = (id: number, name: string) => {
-    userMap.value.set(id, name)
+  const setToMap = (username: string, name: string) => {
+    userMap.value.set(username, name)
   }
 
-  const getUsernme = (id: number) => {
-    return userMap.value.get(id)
+  const getUsername = (username: string) => {
+    return userMap.value.get(username)
   }
 
-  const getOnlyDisplayName = (id: number) => {
-    return userMap.value.get(id)?.split(" [")[0]
+  const getOnlyDisplayName = (username: string) => {
+    return userMap.value.get(username)?.split(" [")[0]
   }
-  return { userMap, setByUserIds, setToMap, getUsernme, getOnlyDisplayName }
+  return { userMap, setByUsernames, setToMap, getUsername, getOnlyDisplayName }
 })
 
 /** 在 setup 外使用 */

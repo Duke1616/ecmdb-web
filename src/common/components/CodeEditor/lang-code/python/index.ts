@@ -49,7 +49,7 @@ const simpleCompletionSource = (context: any) => {
 }
 
 export default {
-  language:  StreamLanguage.define(python),
+  language: StreamLanguage.define(python),
   tabSize: 4,
   code,
   extensions: [

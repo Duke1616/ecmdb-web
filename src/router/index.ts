@@ -76,7 +76,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       svgIcon: "component",
       platforms: ["change"],
       hidden: true
-    },
+    }
   },
   {
     path: "/alert",
@@ -86,7 +86,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       svgIcon: "component",
       platforms: ["alert"],
       hidden: true
-    },
+    }
   },
   {
     path: "/",
@@ -100,11 +100,11 @@ export const constantRoutes: RouteRecordRaw[] = [
         meta: {
           title: "首页导航",
           svgIcon: "dashboard",
-          affix: true,
+          affix: true
         }
       }
     ]
-  },
+  }
 ]
 
 export const defaultRoutes: RouteRecordRaw[] = [
@@ -526,7 +526,7 @@ export const dynamicRoutes: RouteRecordRaw[] = [
         }
       }
     ]
-  },
+  }
 ]
 
 const router = createRouter({

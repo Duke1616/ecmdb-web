@@ -174,7 +174,7 @@ const operatorOptions = [
 // 选择运算符
 const selectOperator = (value: string) => {
   formData.operator = value
-  console.log('选择运算符:', value)
+  console.log("选择运算符:", value)
 }
 
 const selectOptionsMap = ref(new Map<string, Array<{ value: string; label: string }>>())

@@ -1,107 +1,183 @@
 <template>
-  <div>
-    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" label-position="top">
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item prop="desc" label="开始时间">
-            <el-date-picker
-              v-model="formData.rota_rule.start_time"
-              type="datetime"
-              placeholder="选择日期和时间"
-              format="YYYY-MM-DD HH:mm"
-              @change="handleStartDateTimeChange"
-            />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item prop="desc">
-            <!-- 使用 template 来包裹内容 -->
-            <template #label>
-              <div class="end-form-item">
-                <span style="margin-right: 10px">结束时间</span>
-                <el-switch size="small" v-model="isEndTimeVisible" @change="handleSwitchChange" />
+  <div class="rule-form-container">
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="formRules"
+      label-width="100px"
+      class="rule-form"
+      label-position="left"
+    >
+      <div class="form-layout">
+        <!-- 左侧：时间和轮换设置 -->
+        <div class="left-section">
+          <div class="form-section">
+            <div class="section-title">
+              <el-icon><Calendar /></el-icon>
+              <span>时间设置</span>
+            </div>
+
+            <el-form-item prop="start_time" label="开始时间" class="form-item required">
+              <el-date-picker
+                v-model="formData.rota_rule.start_time"
+                type="datetime"
+                placeholder="选择开始时间"
+                format="YYYY-MM-DD HH:mm"
+                @change="handleStartDateTimeChange"
+                class="form-input"
+                style="width: 100%"
+              />
+            </el-form-item>
+
+            <el-form-item prop="end_time" label="结束时间" class="form-item">
+              <div class="end-time-container">
+                <el-switch
+                  v-model="isEndTimeVisible"
+                  @change="handleSwitchChange"
+                  size="default"
+                  :active-text="isEndTimeVisible ? '设置结束时间' : '无结束时间'"
+                  class="end-switch"
+                />
+                <el-date-picker
+                  v-if="isEndTimeVisible"
+                  v-model="formData.rota_rule.end_time"
+                  type="datetime"
+                  placeholder="选择结束时间"
+                  format="YYYY-MM-DD HH:mm"
+                  @change="handleEndDateTimeChange"
+                  class="form-input end-time-picker"
+                  style="width: 100%"
+                />
               </div>
-            </template>
+            </el-form-item>
+          </div>
 
-            <span v-if="!isEndTimeVisible" style="color: #888">无结束时间</span>
-            <!-- 当开关为 true 时显示日期选择器 -->
-            <el-date-picker
-              v-if="isEndTimeVisible"
-              v-model="formData.rota_rule.end_time"
-              type="datetime"
-              placeholder="选择日期和时间"
-              format="YYYY-MM-DD HH:mm"
-              @change="handleEndDateTimeChange"
-            />
-          </el-form-item>
-        </el-col>
-      </el-row>
+          <div class="form-section">
+            <div class="section-title">
+              <el-icon><RefreshRight /></el-icon>
+              <span>轮换设置</span>
+            </div>
 
-      <el-row>
-        <el-col :span="12">
-          <el-form-item prop="desc" label="轮换周期">
-            <el-select v-model="formData.rota_rule.rotate.time_duration" placeholder="Select" style="width: 100%">
-              <el-option v-for="num in 30" :key="num" :label="num.toString()" :value="num" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item prop="desc" label="单位">
-            <el-select v-model="formData.rota_rule.rotate.time_unit" placeholder="选择单位" style="width: 100%">
-              <el-option label="小时" :value="5" />
-              <el-option label="天" :value="4" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-      </el-row>
-
-      <div>
-        <div class="group-header">
-          <span>班排人员</span>
-          <UserPopover :add-rota-group="addRotaGroup" />
-        </div>
-        <div>
-          <div v-for="group in formData.rota_rule.rota_groups" :key="group.id">
-            <div v-if="group.members.length > 0">
-              <div class="empty-group">
-                <span>{{ `组 ` }} {{ group.name }}</span>
-              </div>
-              <VueDraggable
-                v-model="group.members"
-                :animation="200"
-                group="rotaGroup"
-                ghostClass="ghost"
-                chosenClass="chosen"
-                handle=".handle"
-                @start="onStart"
-                @end="onEnd"
-                itemKey="id"
-                class="flex flex-col gap-4 p-0 rounded"
-              >
-                <div
-                  v-for="(member, itemIndex) in group.members"
-                  :key="member"
-                  class="h-40px bg-gray-500/5 px-2 rounded flex items-center"
-                >
-                  <div class="flex-1 flex">
-                    <el-text truncated class="sort-text">{{ getUserById(member) }}</el-text>
-                  </div>
-
-                  <div class="flex items-center space-x-2">
-                    <el-icon @click="removeAndToLeftList(itemIndex, member, group)" class="cursor-pointer">
-                      <Close />
-                    </el-icon>
-                    <el-icon name="sort" class="handle cursor-move">
-                      <Grid />
-                    </el-icon>
+            <!-- 轮换设置 -->
+            <div class="rotation-settings">
+              <!-- 轮换周期 -->
+              <div class="rotation-period">
+                <div class="period-label">轮换周期</div>
+                <div class="period-controls">
+                  <div class="period-slider-container">
+                    <div class="period-value-display">
+                      <span class="period-number">{{ formData.rota_rule.rotate.time_duration }}</span>
+                      <span class="period-unit">
+                        {{ formData.rota_rule.rotate.time_unit === 4 ? "天" : "小时" }}
+                      </span>
+                    </div>
+                    <el-slider
+                      v-model="formData.rota_rule.rotate.time_duration"
+                      :min="1"
+                      :max="30"
+                      :step="1"
+                      :show-tooltip="false"
+                      class="period-slider"
+                    />
                   </div>
                 </div>
-              </VueDraggable>
+                <div class="period-presets">
+                  <el-button
+                    v-for="preset in [1, 3, 7, 14, 30]"
+                    :key="preset"
+                    size="small"
+                    :type="formData.rota_rule.rotate.time_duration === preset ? 'primary' : 'default'"
+                    @click="selectDuration(preset)"
+                    class="preset-btn"
+                  >
+                    {{ preset }}
+                  </el-button>
+                </div>
+              </div>
+
+              <!-- 时间单位 -->
+              <div class="rotation-unit">
+                <div class="unit-label">时间单位</div>
+                <div class="unit-options">
+                  <div
+                    class="unit-option"
+                    :class="{ active: formData.rota_rule.rotate.time_unit === 4 }"
+                    @click="selectUnit(4)"
+                  >
+                    <el-icon><Calendar /></el-icon>
+                    <span>天</span>
+                  </div>
+                  <div
+                    class="unit-option"
+                    :class="{ active: formData.rota_rule.rotate.time_unit === 5 }"
+                    @click="selectUnit(5)"
+                  >
+                    <el-icon><Clock /></el-icon>
+                    <span>小时</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：排班人员 -->
+        <div class="right-section">
+          <div class="form-section">
+            <div class="section-title">
+              <el-icon><User /></el-icon>
+              <span>班排人员</span>
+              <UserPopover :add-rota-group="addRotaGroup" />
+            </div>
+
+            <div class="personnel-content">
+              <div v-for="group in formData.rota_rule.rota_groups" :key="group.id" class="group-container">
+                <div v-if="group.members.length > 0">
+                  <div class="group-header">
+                    <span class="group-title">{{ `组 ${group.name}` }}</span>
+                    <span class="group-count">{{ group.members.length }} 人</span>
+                  </div>
+                  <VueDraggable
+                    v-model="group.members"
+                    :animation="200"
+                    group="rotaGroup"
+                    ghostClass="ghost"
+                    chosenClass="chosen"
+                    handle=".handle"
+                    @start="onStart"
+                    @end="onEnd"
+                    itemKey="id"
+                    class="members-list"
+                  >
+                    <div v-for="(member, itemIndex) in group.members" :key="member" class="member-item">
+                      <div class="member-info">
+                        <el-icon class="member-avatar">
+                          <User />
+                        </el-icon>
+                        <span class="member-name">{{ getUserByUsername(member) }}</span>
+                      </div>
+                      <div class="member-actions">
+                        <el-icon @click="removeAndToLeftList(itemIndex, member, group)" class="action-btn remove-btn">
+                          <Close />
+                        </el-icon>
+                        <el-icon class="action-btn handle-btn handle cursor-move">
+                          <Grid />
+                        </el-icon>
+                      </div>
+                    </div>
+                  </VueDraggable>
+                </div>
+              </div>
+              <div v-if="formData.rota_rule.rota_groups.length === 0" class="empty-personnel">
+                <el-icon class="empty-icon">
+                  <User />
+                </el-icon>
+                <div class="empty-text">暂无人员，请添加成员</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <el-divider style="margin: 10px 10px" />
     </el-form>
   </div>
 </template>
@@ -115,11 +191,12 @@ import { user as userInfo } from "@/api/user/types/user"
 import UserPopover from "./user-popover.vue"
 import { addShifSchedulingRuleApi } from "@/api/rota"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
+import { Calendar, Clock, Close, Grid, RefreshRight, User } from "@element-plus/icons-vue"
 const userToolsStore = useUserToolsStore()
 
 const emits = defineEmits(["closed", "callback"])
-const getUserById = (id: number) => {
-  return userToolsStore.getUsernme(id)
+const getUserByUsername = (username: string) => {
+  return userToolsStore.getUsername(username)
 }
 
 // 添加用户并创建新组
@@ -128,10 +205,10 @@ const addRotaGroup = (user: userInfo) => {
   const newGroup = {
     id: Date.now(),
     name: newGroupName,
-    members: [user.id]
+    members: [user.username]
   }
 
-  userToolsStore.setToMap(user.id, user.display_name + " [" + user.username + "] ")
+  userToolsStore.setToMap(user.username, user.display_name + " [" + user.username + "] ")
   formData.value.rota_rule.rota_groups.push(newGroup)
 }
 
@@ -154,7 +231,7 @@ const onEnd = () => {
 }
 
 // 将成员从当前组移到另一组（或者做其他操作）
-const removeAndToLeftList = (index: number, member: number, group: rotaGroup) => {
+const removeAndToLeftList = (index: number, member: string, group: rotaGroup) => {
   // 从当前组中移除成员
   group.members.splice(index, 1)
 
@@ -217,6 +294,16 @@ const handleSwitchChange = () => {
   }
 }
 
+// 选择单位
+const selectUnit = (unit: number) => {
+  formData.value.rota_rule.rotate.time_unit = unit
+}
+
+// 选择周期
+const selectDuration = (duration: number) => {
+  formData.value.rota_rule.rotate.time_duration = duration
+}
+
 const setFrom = (row: addRuleReq) => {
   formData.value = cloneDeep(row)
 
@@ -225,7 +312,7 @@ const setFrom = (row: addRuleReq) => {
   }
 
   // 获取所有的成员
-  const members = ref<number[]>([])
+  const members = ref<string[]>([])
 
   row.rota_rule.rota_groups.forEach((group) => {
     group.members.forEach((member) => {
@@ -234,7 +321,7 @@ const setFrom = (row: addRuleReq) => {
   })
 
   // 获取所有的用户信息
-  userToolsStore.setByUserIds(members.value)
+  userToolsStore.setByUsernames(members.value)
 }
 
 const getFrom = () => {
@@ -306,5 +393,492 @@ defineExpose({
 .empty-group {
   padding: 10px;
   text-align: center;
+}
+
+.rule-form-container {
+  padding: 0;
+  background: transparent;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.rule-form {
+  .form-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+
+  .left-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .right-section {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    height: 100%;
+  }
+
+  .form-section {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border-left: 3px solid #3b82f6;
+
+      .el-icon {
+        font-size: 14px;
+        color: #3b82f6;
+      }
+
+      span {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+      }
+    }
+  }
+
+  .right-section .form-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .form-item {
+    margin-bottom: 20px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    :deep(.el-form-item__label) {
+      font-weight: 600;
+      color: #1f2937;
+      font-size: 14px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+
+      &::before {
+        content: "";
+        display: inline-block;
+        width: 16px;
+        flex-shrink: 0;
+      }
+    }
+
+    &.required {
+      :deep(.el-form-item__label) {
+        &::before {
+          content: "*";
+          color: #ef4444;
+          font-size: 16px;
+          font-weight: 700;
+          margin-right: 0;
+          display: inline-block;
+          width: 16px;
+          text-align: center;
+        }
+      }
+    }
+
+    .form-input {
+      width: 100%;
+
+      :deep(.el-input__wrapper) {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+
+        &:hover {
+          border-color: #9ca3af;
+        }
+
+        &.is-focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+      }
+
+      :deep(.el-input__inner) {
+        font-size: 13px;
+        color: #374151;
+      }
+
+      :deep(.el-input__prefix) {
+        color: #9ca3af;
+      }
+    }
+  }
+}
+
+/* 结束时间容器 */
+.end-time-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.end-time-picker {
+  width: 100% !important;
+  margin-top: 0 !important;
+
+  :deep(.el-input__wrapper) {
+    width: 100% !important;
+  }
+}
+
+/* 轮换设置 */
+.rotation-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.rotation-period {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.period-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.period-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.period-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.period-value-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.period-number {
+  font-size: 24px;
+  font-weight: 700;
+  color: #3b82f6;
+  min-width: 40px;
+  text-align: center;
+}
+
+.period-unit {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  padding: 4px 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.period-slider {
+  :deep(.el-slider__runway) {
+    background: #e5e7eb;
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  :deep(.el-slider__bar) {
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 3px;
+  }
+
+  :deep(.el-slider__button) {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #3b82f6;
+    background: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+
+    &:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+    }
+  }
+}
+
+.period-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.preset-btn {
+  min-width: 28px;
+  height: 24px;
+  font-size: 11px;
+  border-radius: 3px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #3b82f6;
+  }
+
+  &.el-button--primary {
+    background: #3b82f6;
+    border-color: #3b82f6;
+  }
+}
+
+.rotation-unit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.unit-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.unit-options {
+  display: flex;
+  gap: 8px;
+}
+
+.unit-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  &.active {
+    border-color: #3b82f6;
+    background: #eff6ff;
+
+    .el-icon {
+      color: #3b82f6;
+    }
+
+    span {
+      color: #3b82f6;
+      font-weight: 600;
+    }
+  }
+
+  .el-icon {
+    font-size: 14px;
+    color: #6b7280;
+    transition: color 0.2s ease;
+  }
+
+  span {
+    font-size: 12px;
+    color: #374151;
+    transition: all 0.2s ease;
+  }
+}
+
+/* 人员内容 */
+.personnel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.group-container {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.group-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.group-count {
+  font-size: 11px;
+  color: #6b7280;
+  background: #e5e7eb;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #f3f4f6;
+  }
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.member-avatar {
+  font-size: 14px;
+  color: #3b82f6;
+  background: #eff6ff;
+  padding: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.member-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.member-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-btn {
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.remove-btn {
+    color: #ef4444;
+
+    &:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+  }
+
+  &.handle-btn {
+    color: #6b7280;
+
+    &:hover {
+      background: #f3f4f6;
+      color: #3b82f6;
+    }
+  }
+}
+
+.empty-personnel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #9ca3af;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+}
+
+.empty-icon {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: #d1d5db;
+}
+
+.empty-text {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 拖拽样式 */
+.ghost {
+  opacity: 0.5;
+  background: #eff6ff;
+}
+
+.chosen {
+  background: #eff6ff;
+  border-color: #3b82f6;
 }
 </style>

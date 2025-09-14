@@ -3,7 +3,6 @@
     v-model="visible"
     :title="title"
     :width="width"
-    :height="height"
     :show-close="showClose"
     :close-on-click-modal="closeOnClickModal"
     :before-close="handleBeforeClose"
@@ -73,7 +72,6 @@ interface Props {
   title: string
   subtitle?: string
   width?: string | number
-  height?: string | number
   showClose?: boolean
   closeOnClickModal?: boolean
   headerIcon?: any
@@ -97,7 +95,6 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   subtitle: "",
   width: "50%",
-  height: "80vh",
   showClose: true,
   closeOnClickModal: false,
   headerIcon: "UserFilled",
@@ -174,13 +171,6 @@ const handleCancel = () => {
       font-weight: 400;
     }
   }
-}
-
-.dialog-content {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .form-dialog-footer {

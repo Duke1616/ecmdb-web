@@ -50,7 +50,7 @@
               class="h-40px bg-gray-500/5 px-2 rounded flex items-center"
             >
               <div class="flex-1 flex">
-                <el-text truncated class="sort-text">{{ getUserById(member) }}</el-text>
+                <el-text truncated class="sort-text">{{ getUserByUsername(member) }}</el-text>
               </div>
 
               <div class="flex items-center space-x-2">
@@ -81,18 +81,18 @@ const userToolsStore = useUserToolsStore()
 
 const emits = defineEmits(["closed", "callback"])
 
-const getUserById = (id: number) => {
-  return userToolsStore.getUsernme(id)
+const getUserByUsername = (username: string) => {
+  return userToolsStore.getUsername(username)
 }
 
 // 添加用户并创建新组
 const addRotaGroup = (user: userInfo) => {
   // 只需要一个组即可
   const existingGroup = formData.value.rota_rule.rota_group
-  existingGroup.members.push(user.id)
+  existingGroup.members.push(user.username)
 
   // 更新用户映射
-  userToolsStore.setToMap(user.id, user.display_name + " [" + user.username + "] ")
+  userToolsStore.setToMap(user.username, user.display_name + " [" + user.username + "] ")
 }
 
 const removeAndToLeftList = (index: number) => {
@@ -176,11 +176,11 @@ const setGroupId = (groupId: number) => {
   memberLen.value = formData.value.rota_rule.rota_group.members.length
 }
 
-const setMembers = (members: number[]) => {
+const setMembers = (members: string[]) => {
   formData.value.rota_rule.rota_group.members = members
 
   // 获取所有的用户信息
-  userToolsStore.setByUserIds(members)
+  userToolsStore.setByUsernames(members)
 }
 
 const memberLen = ref<number>(0)

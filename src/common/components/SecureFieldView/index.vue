@@ -12,7 +12,7 @@
     >
       查看
     </el-button>
-    
+
     <!-- 只显示复制按钮模式 -->
     <div v-if="copyOnly" class="copy-only-container">
       <el-button
@@ -26,10 +26,10 @@
         class="copy-only-button"
         title="点击复制安全内容到剪贴板"
       >
-        {{ isCopying ? '获取中...' : '复制内容' }}
+        {{ isCopying ? "获取中..." : "复制内容" }}
       </el-button>
     </div>
-    
+
     <!-- 显示内容模式 -->
     <div v-if="isDisplaying && showContent" class="secure-content">
       <div class="secure-text">{{ content }}</div>
@@ -45,7 +45,7 @@
         />
       </div>
     </div>
-    
+
     <!-- 不显示内容但显示复制按钮模式 -->
     <div v-if="isDisplaying && !showContent" class="secure-actions-only">
       <span class="auto-close-tip">{{ countdown }}秒后自动关闭</span>
@@ -110,15 +110,19 @@ const isCopying = ref(false)
 let timer: NodeJS.Timeout | null = null
 
 // 监听 content 变化，更新内部内容
-watch(() => props.content, (newContent) => {
-  if (newContent) {
-    internalContent.value = newContent
-  }
-}, { immediate: true })
+watch(
+  () => props.content,
+  (newContent) => {
+    if (newContent) {
+      internalContent.value = newContent
+    }
+  },
+  { immediate: true }
+)
 
 const handleViewClick = () => {
   emits("view-click")
-  
+
   if (props.enableAutoClose && !props.copyOnly) {
     startCountdown()
   }
@@ -129,12 +133,12 @@ const startCountdown = () => {
   if (timer) {
     clearInterval(timer)
   }
-  
+
   countdown.value = props.autoCloseTime
-  
+
   timer = setInterval(() => {
     countdown.value--
-    
+
     if (countdown.value <= 0) {
       clearInterval(timer!)
       timer = null
@@ -148,15 +152,15 @@ const handleCopyClick = async () => {
   if (props.copyOnly) {
     emits("view-click")
     // 等待一下让父组件处理数据获取
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
+    await new Promise((resolve) => setTimeout(resolve, 200))
+
     const contentToCopy = internalContent.value || props.content
-    
+
     if (!contentToCopy) {
       ElMessage.error("没有可复制的内容")
       return
     }
-    
+
     try {
       await navigator.clipboard.writeText(contentToCopy)
       ElMessage.success("复制成功")
@@ -179,15 +183,15 @@ const handleCopyClick = async () => {
     }
     return
   }
-  
+
   // 非 copy-only 模式的正常复制逻辑
   const contentToCopy = internalContent.value || props.content
-  
+
   if (!contentToCopy) {
     ElMessage.error("没有可复制的内容")
     return
   }
-  
+
   try {
     await navigator.clipboard.writeText(contentToCopy)
     ElMessage.success("复制成功")
@@ -218,14 +222,14 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-  .secure-field-view {
+.secure-field-view {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   min-width: 0;
   position: relative;
-  
+
   .secure-button {
     border-color: #409eff;
     color: #409eff;

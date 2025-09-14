@@ -139,18 +139,15 @@
               :max-collapse-tags="2"
               class="form-input modern-select"
             >
-              <el-option
-                v-for="platform in platforms"
-                :key="platform.id"
-                :label="platform.name"
-                :value="platform.id"
-              >
+              <el-option v-for="platform in platforms" :key="platform.id" :label="platform.name" :value="platform.id">
                 <div class="platform-option">
                   <el-icon class="platform-icon" v-if="(platform as any).icon">
                     <component :is="(platform as any).icon" />
                   </el-icon>
                   <span class="platform-name">{{ platform.name }}</span>
-                  <span class="platform-desc" v-if="(platform as any).description">{{ (platform as any).description }}</span>
+                  <span class="platform-desc" v-if="(platform as any).description">{{
+                    (platform as any).description
+                  }}</span>
                 </div>
               </el-option>
             </el-select>
@@ -507,7 +504,7 @@ const setMenuData = (form: menu) => {
   // 处理平台数据：如果是单个平台字符串，转换为数组
   if (formData.value.meta) {
     const meta = formData.value.meta as any
-    if (typeof meta.platform === 'string') {
+    if (typeof meta.platform === "string") {
       formData.value.meta.platforms = [meta.platform]
       delete meta.platform
     } else if (!formData.value.meta.platforms) {

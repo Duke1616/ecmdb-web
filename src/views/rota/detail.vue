@@ -1,64 +1,105 @@
 <template>
-  <div class="app-container">
-    <div class="app-sidebar">
-      <div class="app-sidebar-section">
-        <!-- 当前值班 -->
-        <ScheduleCard title="当前值班" :schedule="currentSchecule" :formatTimestamp="formatTimestamp" />
-        <!-- 下期值班 -->
-        <ScheduleCard title="下期值班" :schedule="nextSchecule" :formatTimestamp="formatTimestamp" />
-      </div>
-    </div>
-    <el-card class="app-calendar">
-      <div class="app-main">
-        <FullCalendar ref="calendarRef" class="demo-app-calendar" :options="calendarOptions">
-          <template v-slot:eventContent="arg">
-            <b>{{ arg.timeText }}</b>
-            <i>{{ arg.event.title }}</i>
-          </template>
-        </FullCalendar>
-      </div>
-    </el-card>
-    <div>
-      <el-dialog v-model="dialogVisible" title="新增规则" :before-close="onClosed" max-height="500" width="400">
-        <Rule ref="ruleRef" @closed="onClosed" />
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="onClosed">取消</el-button>
-            <el-button type="primary" @click="handlerSubmitRotaRule"> 保存 </el-button>
-          </div>
-        </template>
-      </el-dialog>
-    </div>
-    <div>
-      <el-dialog
-        v-model="dialogListRuleVisible"
-        title="规则列表"
-        :before-close="onRuleListClosed"
-        width="400"
-        height="500"
-      >
-        <ListRule ref="ruleListRef" @closed="onRuleListClosed" @callback="preview" />
-      </el-dialog>
-    </div>
+  <PageContainer>
+    <ManagerHeader title="排班详情" subtitle="查看和管理排班规则及日程安排">
+      <template #actions>
+        <el-button type="primary" :icon="Plus" @click="addShifSchedulingRule" class="action-btn"> 新增规则 </el-button>
+        <el-button type="primary" :icon="Setting" @click="listShifSchedulingRule" class="action-btn">
+          查看规则
+        </el-button>
+        <el-tooltip content="刷新数据">
+          <el-button type="primary" :icon="RefreshRight" circle @click="preview" class="refresh-btn" />
+        </el-tooltip>
+      </template>
+    </ManagerHeader>
 
-    <div>
-      <el-dialog
-        v-model="dialogAdjustmentRuleVisible"
-        title="临时调班"
-        :before-close="onAdjustmentRuleClosed"
-        width="400"
-        height="500"
-      >
-        <AdjustmentRule ref="adjustmentRuleRef" @closed="onAdjustmentRuleClosed" @callback="preview" />
-        <template #footer>
-          <div class="dialog-footer">
-            <el-button @click="onAdjustmentRuleClosed">取消</el-button>
-            <el-button type="primary" @click="handlerSubmitAdjustmentRule"> 保存 </el-button>
+    <div class="detail-content">
+      <div class="schedule-cards">
+        <!-- 当前值班 -->
+        <div class="schedule-card-wrapper">
+          <ScheduleCard title="当前值班" :schedule="currentSchecule" :formatTimestamp="formatTimestamp" />
+        </div>
+        <!-- 下期值班 -->
+        <div class="schedule-card-wrapper">
+          <ScheduleCard title="下期值班" :schedule="nextSchecule" :formatTimestamp="formatTimestamp" />
+        </div>
+      </div>
+
+      <el-card class="calendar-card" shadow="hover">
+        <template #header>
+          <div class="calendar-header">
+            <div class="calendar-title">
+              <el-icon class="title-icon">
+                <Calendar />
+              </el-icon>
+              <span>排班日历</span>
+            </div>
+            <div class="calendar-actions">
+              <el-tooltip content="今天">
+                <el-button size="small" :icon="Calendar" circle @click="goToToday" />
+              </el-tooltip>
+              <el-tooltip content="刷新">
+                <el-button size="small" :icon="RefreshRight" circle @click="preview" />
+              </el-tooltip>
+            </div>
           </div>
         </template>
-      </el-dialog>
+        <div class="calendar-container">
+          <FullCalendar ref="calendarRef" class="demo-app-calendar" :options="calendarOptions">
+            <template v-slot:eventContent="arg">
+              <div class="event-content">
+                <span class="event-time">{{ arg.timeText }}</span>
+                <span class="event-title">{{ arg.event.title }}</span>
+              </div>
+            </template>
+          </FullCalendar>
+        </div>
+      </el-card>
     </div>
-  </div>
+    <!-- 新增规则对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      title="新增规则"
+      subtitle="配置新的排班规则"
+      header-icon="Calendar"
+      confirm-text="保存"
+      cancel-text="取消"
+      @confirm="handlerSubmitRotaRule"
+      @cancel="onClosed"
+      @closed="onClosed"
+    >
+      <Rule ref="ruleRef" @closed="onClosed" />
+    </FormDialog>
+
+    <!-- 规则列表对话框 -->
+    <FormDialog
+      v-model="dialogListRuleVisible"
+      title="规则列表"
+      subtitle="查看和管理现有规则"
+      header-icon="List"
+      :show-footer="false"
+      @cancel="onRuleListClosed"
+      @closed="onRuleListClosed"
+    >
+      <ListRule ref="ruleListRef" @closed="onRuleListClosed" @callback="preview" />
+    </FormDialog>
+
+    <!-- 临时调班对话框 -->
+    <FormDialog
+      v-model="dialogAdjustmentRuleVisible"
+      title="临时调班"
+      subtitle="调整值班安排"
+      header-icon="Refresh"
+      width="500px"
+      :show-footer="true"
+      confirm-text="保存"
+      cancel-text="取消"
+      @confirm="handlerSubmitAdjustmentRule"
+      @cancel="onAdjustmentRuleClosed"
+      @closed="onAdjustmentRuleClosed"
+    >
+      <AdjustmentRule ref="adjustmentRuleRef" @closed="onAdjustmentRuleClosed" @callback="preview" />
+    </FormDialog>
+  </PageContainer>
 </template>
 
 <script lang="ts" setup>
@@ -78,7 +119,8 @@ import AdjustmentRule from "./rule/adjustment-rule.vue"
 import { useRoute } from "vue-router"
 import { deleteShifAdjustmentRuleApi, getRotaRuleById, previewSchedule } from "@/api/rota"
 import { rotaRule, schedule } from "@/api/rota/types/rota"
-import { ElButton, ElDivider, ElMessage } from "element-plus"
+import { ElButton, ElDivider, ElMessage, ElTooltip } from "element-plus"
+import { Plus, Setting, RefreshRight, Calendar } from "@element-plus/icons-vue"
 import tippy, { followCursor } from "tippy.js"
 import "tippy.js/dist/tippy.css"
 import "tippy.js/themes/light.css"
@@ -87,6 +129,9 @@ import { formatDate, formatTimestamp } from "@/common/utils/day"
 import { isEqual } from "lodash-es"
 import { useAppStore } from "@/pinia/stores/app"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
+import PageContainer from "@/common/components/PageContainer/index.vue"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
 const appStore = useAppStore()
 const userToolsStore = useUserToolsStore()
 
@@ -126,41 +171,36 @@ const handlerSubmitAdjustmentRule = () => {
   adjustmentRuleRef.value?.submitForm(Number(rotaId))
 }
 
+// 跳转到今天
+const goToToday = () => {
+  calendarRef.value?.getApi().today()
+}
+
 const calendarOptions = reactive<any>({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, rrulePlugin],
   locales: [zhLocale],
   headerToolbar: {
-    left: "title",
-    right: "today,dayGridMonth,prev,next,rule,settings",
-    center: ""
+    left: "dayGridMonth,timeGridWeek,timeGridDay",
+    right: "prev,next",
+    center: "title"
   },
   initialView: "dayGridMonth",
-  aspectRatio: 2.2,
   editable: false,
   selectable: false,
   selectMirror: true,
-  dayMaxEvents: 2,
+  dayMaxEvents: 3,
   unselectAuto: true,
   weekends: true,
   buttonText: {
-    today: "当前",
-    month: "月视图",
-    week: "周视图",
-    day: "天视图",
+    today: "今天",
+    month: "月",
+    week: "周",
+    day: "日",
     list: "列表"
-  },
-  customButtons: {
-    rule: {
-      text: "新增规则",
-      click: addShifSchedulingRule
-    },
-    settings: {
-      text: "查看规则",
-      click: listShifSchedulingRule
-    }
   },
   contentHeight: "auto",
   height: "auto",
+  aspectRatio: 1.8,
   handleWindowResize: true,
   windowResizeDelay: 500,
   datesSet: function (info) {
@@ -171,7 +211,6 @@ const calendarOptions = reactive<any>({
   },
   select: handleDateSelect,
   eventMouseEnter: handleEventMouseEnter,
-  // eventMouseLeave: handleEventMouseLeave,
   eventsSet: handleEvents
 } as CalendarOptions)
 
@@ -186,7 +225,7 @@ const event = ref<EventInput[]>([])
 async function addShifSchedulingRule() {
   await getRuleList()
 
-  if (rotaRuleData.value.length >= 1) {
+  if (rotaRuleData.value.length >= 2) {
     ElMessage.warning("当前最多只能添加 1 个规则")
     return
   }
@@ -210,7 +249,7 @@ const getRuleList = async () => {
 function handleEventMouseEnter(info: EventHoveringArg) {
   // 创建 Vue 应用程序
   const memberNames = (info.event.extendedProps.members || [])
-    .map((memberId: number) => userToolsStore.getOnlyDisplayName(memberId) || memberId)
+    .map((username: string) => userToolsStore.getOnlyDisplayName(username) || username)
     .join("、")
 
   console.log(info.event.start)
@@ -346,7 +385,7 @@ function handleDateSelect(selectInfo: DateSelectArg) {
   }
 }
 
-const members = ref<number[]>([])
+const members = ref<string[]>([])
 const preview = () => {
   previewSchedule({
     id: Number(rotaId),
@@ -399,7 +438,7 @@ watch(
   (newMembers, oldMembers) => {
     if (!isEqual(newMembers, oldMembers)) {
       // 例如，重新加载数据或更新视图
-      userToolsStore.setByUserIds(newMembers)
+      userToolsStore.setByUsernames(newMembers)
     }
   },
   { deep: true }
@@ -417,39 +456,204 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-.app-sidebar-header {
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 8rem);
+  overflow: hidden;
+}
+
+.schedule-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: calc(1rem + 0.4vw);
+  margin-bottom: calc(0.9rem + 0.2vw);
+  flex-shrink: 0;
+}
+
+.schedule-card-wrapper {
+  min-height: 120px;
+}
+
+.calendar-card {
+  flex: 1;
+  min-height: 0;
+  border-radius: calc(0.5rem + 0.1vw);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  :deep(.el-card__header) {
+    padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    flex-shrink: 0;
+  }
+
+  :deep(.el-card__body) {
+    padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}
+
+.calendar-header {
   display: flex;
   justify-content: space-between;
-  min-height: 100%;
-  font-family:
-    Arial,
-    Helvetica Neue,
-    Helvetica,
-    sans-serif;
-  font-size: 14px;
+  align-items: center;
 }
 
-.app-sidebar-section {
+.calendar-title {
   display: flex;
-  justify-content: center;
-  gap: 20px;
+  align-items: center;
+  gap: calc(0.5rem + 0.1vw);
+  font-size: calc(1rem + 0.2vw);
+  font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
-.card-item {
+.title-icon {
+  font-size: calc(1.25rem + 0.2vw);
+  color: var(--el-color-primary);
+}
+
+.calendar-actions {
+  display: flex;
+  gap: calc(0.5rem + 0.1vw);
+}
+
+.calendar-container {
+  height: 100%;
+  min-height: 0;
+  border-radius: calc(0.375rem + 0.05vw);
+  overflow: auto;
   flex: 1;
-  margin-bottom: 20px;
-}
 
-.demo-app-sidebar-section {
-  padding: 2em;
+  /* 自定义滚动条样式 */
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--el-fill-color-lighter);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--el-fill-color-dark);
+    border-radius: 3px;
+
+    &:hover {
+      background: var(--el-fill-color-darker);
+    }
+  }
 }
 
 .fc {
   height: 100%;
   width: 100%;
+  border-radius: calc(0.375rem + 0.05vw);
 }
 
 :deep(.fc .fc-icon) {
   font-family: fcicons !important;
+}
+
+:deep(.fc .fc-toolbar) {
+  margin-bottom: calc(0.75rem + 0.2vw);
+  padding: calc(0.5rem + 0.1vw) 0;
+}
+
+:deep(.fc .fc-toolbar-title) {
+  font-size: calc(1.125rem + 0.2vw);
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+:deep(.fc .fc-button) {
+  font-size: calc(0.8rem + 0.1vw);
+  padding: calc(0.375rem + 0.1vw) calc(0.75rem + 0.2vw);
+  border-radius: calc(0.375rem + 0.05vw);
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+:deep(.fc .fc-button-primary) {
+  background: var(--el-color-primary);
+  border-color: var(--el-color-primary);
+
+  &:hover {
+    background: var(--el-color-primary-light-3);
+    border-color: var(--el-color-primary-light-3);
+  }
+}
+
+:deep(.fc .fc-daygrid-event) {
+  font-size: calc(0.75rem + 0.1vw);
+  padding: calc(0.25rem + 0.05vw) calc(0.375rem + 0.1vw);
+  border-radius: calc(0.25rem + 0.05vw);
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.event-content {
+  display: flex;
+  flex-direction: column;
+  gap: calc(0.125rem + 0.05vw);
+}
+
+.event-time {
+  font-size: calc(0.7rem + 0.1vw);
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.event-title {
+  font-size: calc(0.75rem + 0.1vw);
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+:deep(.fc .fc-daygrid-day) {
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: var(--el-fill-color-lighter);
+  }
+}
+
+:deep(.fc .fc-daygrid-day-number) {
+  font-size: calc(0.875rem + 0.1vw);
+  font-weight: 500;
+  padding: calc(0.5rem + 0.1vw);
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--el-color-primary-light-9);
+    color: var(--el-color-primary);
+    border-radius: calc(0.25rem + 0.05vw);
+  }
+}
+
+:deep(.fc .fc-day-today) {
+  background-color: var(--el-color-primary-light-9);
+
+  .fc-daygrid-day-number {
+    background-color: var(--el-color-primary);
+    color: white;
+    border-radius: calc(0.25rem + 0.05vw);
+  }
 }
 </style>
