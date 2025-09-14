@@ -74,7 +74,7 @@ import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 import { ref } from "vue"
 import { user as userInfo } from "@/api/user/types/user"
-import UserPopover from "./user-popover.vue"
+import UserPopover from "../components/userPopover.vue"
 import { addShifAdjustmentRuleApi, updateShifAdjustmentRuleApi } from "@/api/rota"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 const userToolsStore = useUserToolsStore()
