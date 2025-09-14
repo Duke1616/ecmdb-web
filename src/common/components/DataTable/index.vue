@@ -421,9 +421,10 @@ const handleCurrentChange = (page: number) => {
   }
 }
 
-/* 如果上面的选择器不够，使用更具体的选择器 */
-.data-table :deep(.el-table.is-scrolling-none th.el-table-fixed-column--left),
-.data-table :deep(.el-table.is-scrolling-none th.el-table-fixed-column--right) {
+:deep(
+  .el-table.is-scrolling-none th.el-table-fixed-column--left,
+  .el-table.is-scrolling-none th.el-table-fixed-column--right
+) {
   background-color: #f8fafc !important;
 }
 
