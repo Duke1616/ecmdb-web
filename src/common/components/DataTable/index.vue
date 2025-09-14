@@ -287,7 +287,7 @@ const handleCurrentChange = (page: number) => {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  
+
   /* 强制设置表格样式变量 */
   --el-table-bg-color: transparent;
   --el-table-tr-bg-color: transparent;
@@ -374,29 +374,29 @@ const handleCurrentChange = (page: number) => {
         background-color: transparent !important;
       }
     }
-    
+
     // 斑马纹样式 - 确保整行包括所有列都有一致背景
     tr.el-table__row--striped {
       background-color: #fafafa !important;
-      
+
       td {
         background-color: #fafafa !important;
       }
     }
-    
+
     // 斑马纹悬停样式
     tr.el-table__row--striped:hover {
       background-color: #f5f7fa !important;
-      
+
       td {
         background-color: #f5f7fa !important;
       }
     }
-    
+
     // 普通行悬停样式
     tr:hover {
       background-color: #f5f7fa !important;
-      
+
       td {
         background-color: #f5f7fa !important;
       }
@@ -407,15 +407,15 @@ const handleCurrentChange = (page: number) => {
   :deep(.el-table__body tr td:last-child) {
     background-color: transparent !important;
   }
-  
+
   :deep(.el-table__body tr.el-table__row--striped td:last-child) {
     background-color: #fafafa !important;
   }
-  
+
   :deep(.el-table__body tr.el-table__row--striped:hover td:last-child) {
     background-color: #f5f7fa !important;
   }
-  
+
   :deep(.el-table__body tr:hover td:last-child) {
     background-color: #f5f7fa !important;
   }
