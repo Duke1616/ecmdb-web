@@ -26,15 +26,9 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
   // 添加新组
   const addNewGroup = () => {
     try {
-      console.log("开始添加新组，当前组数:", rotaGroups.value.length)
       const newGroup = createNewGroup()
-      console.log("创建新组:", newGroup)
-
       rotaGroups.value = [...rotaGroups.value, newGroup]
-      console.log("添加后组数:", rotaGroups.value.length)
-
       renderKey.value++
-      console.log("添加新组完成")
     } catch (error) {
       console.error("添加新组时出错:", error)
       ElMessage.error("添加组失败，请重试")

@@ -122,24 +122,18 @@ const userPopoverRef = ref()
 watch(
   () => props.modelValue,
   (newValue) => {
-    // 避免无限循环：只有当数据真正不同时才更新
-    if (JSON.stringify(rotaGroups.value) !== JSON.stringify(newValue)) {
-      rotaGroups.value = [...newValue]
-    }
+    rotaGroups.value = [...newValue]
   },
-  { deep: true }
+  { immediate: true }
 )
 
-// 监听内部数据变化
+// 监听内部数据变化 - 使用 immediate: false 避免初始化时触发
 watch(
   rotaGroups,
   (newValue) => {
-    // 避免无限循环：只有当数据真正不同时才触发更新
-    if (JSON.stringify(props.modelValue) !== JSON.stringify(newValue)) {
-      emits("update:modelValue", newValue)
-    }
+    emits("update:modelValue", newValue)
   },
-  { deep: true }
+  { deep: true, immediate: false }
 )
 
 const getUserByUsername = (username: string) => {

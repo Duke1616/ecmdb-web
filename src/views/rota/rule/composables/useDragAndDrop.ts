@@ -48,9 +48,17 @@ export function useDragAndDrop() {
   // 处理拖拽开始
   const onDragStart = () => {
     resetDragState()
-    // 添加拖拽类，禁用文字选择
-    const allMembersLists = document.querySelectorAll(".members-list")
-    allMembersLists.forEach((list) => list.classList.add("dragging"))
+    // 添加拖拽类，禁用文字选择 - 使用更安全的方式
+    try {
+      const allMembersLists = document.querySelectorAll(".members-list")
+      allMembersLists.forEach((list) => {
+        if (list && list.classList) {
+          list.classList.add("dragging")
+        }
+      })
+    } catch (error) {
+      console.warn("添加拖拽类失败:", error)
+    }
   }
 
   // 处理拖拽移动（检查重复）
@@ -128,9 +136,17 @@ export function useDragAndDrop() {
 
   // 处理拖拽结束
   const onDragEnd = async (rotaGroups: any[], updateGroups: (groups: any[]) => void) => {
-    // 移除拖拽类
-    const allMembersLists = document.querySelectorAll(".members-list")
-    allMembersLists.forEach((list) => list.classList.remove("dragging"))
+    // 移除拖拽类 - 使用更安全的方式
+    try {
+      const allMembersLists = document.querySelectorAll(".members-list")
+      allMembersLists.forEach((list) => {
+        if (list && list.classList) {
+          list.classList.remove("dragging")
+        }
+      })
+    } catch (error) {
+      console.warn("移除拖拽类失败:", error)
+    }
 
     // 重新命名组
     const newGroups = rotaGroups.map((group, index) => ({
