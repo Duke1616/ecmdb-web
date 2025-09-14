@@ -122,7 +122,10 @@ const userPopoverRef = ref()
 watch(
   () => props.modelValue,
   (newValue) => {
-    rotaGroups.value = [...newValue]
+    // 避免无限循环：只有当数据真正不同时才更新
+    if (JSON.stringify(rotaGroups.value) !== JSON.stringify(newValue)) {
+      rotaGroups.value = [...newValue]
+    }
   },
   { deep: true }
 )
@@ -131,7 +134,10 @@ watch(
 watch(
   rotaGroups,
   (newValue) => {
-    emits("update:modelValue", newValue)
+    // 避免无限循环：只有当数据真正不同时才触发更新
+    if (JSON.stringify(props.modelValue) !== JSON.stringify(newValue)) {
+      emits("update:modelValue", newValue)
+    }
   },
   { deep: true }
 )

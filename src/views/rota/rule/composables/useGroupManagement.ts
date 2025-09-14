@@ -25,21 +25,34 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
 
   // 添加新组
   const addNewGroup = () => {
-    const newGroup = createNewGroup()
-    rotaGroups.value = [...rotaGroups.value, newGroup]
-    renderKey.value++
+    try {
+      console.log("开始添加新组，当前组数:", rotaGroups.value.length)
+      const newGroup = createNewGroup()
+      console.log("创建新组:", newGroup)
+
+      rotaGroups.value = [...rotaGroups.value, newGroup]
+      console.log("添加后组数:", rotaGroups.value.length)
+
+      renderKey.value++
+      console.log("添加新组完成")
+    } catch (error) {
+      console.error("添加新组时出错:", error)
+      ElMessage.error("添加组失败，请重试")
+    }
   }
 
   // 删除组
   const removeGroup = (groupId: number) => {
-    rotaGroups.value = rotaGroups.value.filter((g: rotaGroup) => g.id !== groupId)
+    // 先过滤掉要删除的组
+    const filteredGroups = rotaGroups.value.filter((g: rotaGroup) => g.id !== groupId)
 
     // 重新命名剩余组
-    rotaGroups.value.forEach((group: rotaGroup, index: number) => {
-      group.name = `${String.fromCharCode(65 + index)}`
-    })
+    const renamedGroups = filteredGroups.map((group: rotaGroup, index: number) => ({
+      ...group,
+      name: `${String.fromCharCode(65 + index)}`
+    }))
 
-    rotaGroups.value = [...rotaGroups.value]
+    rotaGroups.value = renamedGroups
     renderKey.value++
   }
 
@@ -58,13 +71,14 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
 
     // 添加用户
     const newMembers = [...group.members, user.username]
-    rotaGroups.value = rotaGroups.value.map((g: rotaGroup, index: number) => {
+    const newGroups = rotaGroups.value.map((g: rotaGroup, index: number) => {
       if (index === groupIndex) {
         return { ...g, members: newMembers }
       }
-      return g
+      return { ...g }
     })
 
+    rotaGroups.value = newGroups
     renderKey.value++
     return true
   }
@@ -77,13 +91,14 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
     const group = rotaGroups.value[groupIndex]
     const newMembers = group.members.filter((_: string, index: number) => index !== memberIndex)
 
-    rotaGroups.value = rotaGroups.value.map((g: rotaGroup, index: number) => {
+    const newGroups = rotaGroups.value.map((g: rotaGroup, index: number) => {
       if (index === groupIndex) {
         return { ...g, members: newMembers }
       }
-      return g
+      return { ...g }
     })
 
+    rotaGroups.value = newGroups
     renderKey.value++
   }
 
@@ -92,13 +107,14 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
     const groupIndex = rotaGroups.value.findIndex((g: rotaGroup) => g.id === groupId)
     if (groupIndex === -1) return
 
-    rotaGroups.value = rotaGroups.value.map((group: rotaGroup, index: number) => {
+    const newGroups = rotaGroups.value.map((group: rotaGroup, index: number) => {
       if (index === groupIndex) {
         return { ...group, members: [...newMembers] }
       }
-      return group
+      return { ...group }
     })
 
+    rotaGroups.value = newGroups
     renderKey.value++
   }
 

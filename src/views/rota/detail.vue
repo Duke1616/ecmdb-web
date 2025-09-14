@@ -67,7 +67,7 @@
       @cancel="onClosed"
       @closed="onClosed"
     >
-      <Rule ref="ruleRef" @closed="onClosed" />
+      <Rule ref="ruleRef" @closed="onClosed" @callback="preview" />
     </FormDialog>
 
     <!-- 规则列表对话框 -->

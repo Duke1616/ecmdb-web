@@ -48,6 +48,8 @@ const submitForm = (rotaId: number) => {
   return submitFormApi(rotaId)
     .then(() => {
       onClosed()
+      // 通知父组件刷新数据
+      emits("callback")
     })
     .catch((error) => {
       console.log("catch", error)
