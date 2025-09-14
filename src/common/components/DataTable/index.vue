@@ -360,6 +360,43 @@ const handleCurrentChange = (page: number) => {
     }
   }
 
+  // 确保所有列都有一致的背景色
+  :deep(.el-table__body) {
+    // 重置所有单元格的背景色，让斑马纹效果统一
+    tr {
+      td {
+        background-color: transparent !important;
+      }
+    }
+    
+    // 斑马纹样式 - 确保整行包括所有列都有一致背景
+    tr.el-table__row--striped {
+      background-color: #fafafa;
+      
+      td {
+        background-color: #fafafa !important;
+      }
+    }
+    
+    // 斑马纹悬停样式
+    tr.el-table__row--striped:hover {
+      background-color: #f5f7fa;
+      
+      td {
+        background-color: #f5f7fa !important;
+      }
+    }
+    
+    // 普通行悬停样式
+    tr:hover {
+      background-color: #f5f7fa;
+      
+      td {
+        background-color: #f5f7fa !important;
+      }
+    }
+  }
+
   // :deep(.el-table__body) {
   //   td {
   //     height: 52px;

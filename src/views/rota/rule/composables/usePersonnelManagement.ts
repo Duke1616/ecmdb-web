@@ -9,6 +9,14 @@ export function usePersonnelManagement() {
 
   // 添加人员到轮换组
   const addRotaGroup = (user: userInfo, rotaGroups: rotaGroup[]) => {
+    // 检查用户是否已经存在于任何组中
+    const userExists = rotaGroups.some((group) => group.members.includes(user.username))
+
+    if (userExists) {
+      console.log("用户已存在，跳过添加")
+      return
+    }
+
     const newGroupName = `${String.fromCharCode(65 + rotaGroups.length)}`
     const newGroup = {
       id: Date.now(),

@@ -87,8 +87,16 @@ const getUserByUsername = (username: string) => {
 
 // 添加用户并创建新组
 const addRotaGroup = (user: userInfo) => {
-  // 只需要一个组即可
+  // 检查用户是否已经存在
   const existingGroup = formData.value.rota_rule.rota_group
+  const userExists = existingGroup.members.includes(user.username)
+
+  if (userExists) {
+    console.log("用户已存在，跳过添加")
+    return
+  }
+
+  // 只需要一个组即可
   existingGroup.members.push(user.username)
 
   // 更新用户映射

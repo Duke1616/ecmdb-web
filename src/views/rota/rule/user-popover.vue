@@ -1,148 +1,290 @@
 <template>
-  <el-popover ref="popoverRef" placement="bottom" :width="200" trigger="click">
-    <template #reference>
-      <el-button @click="listUsers">添加成员</el-button>
-    </template>
+  <!-- 使用 Teleport 将弹窗渲染到 body 中 -->
+  <Teleport to="body">
+    <div v-if="visible" class="user-popover-overlay" @click="handleOverlayClick">
+      <div class="user-popover-content" :style="popoverStyle" @click.stop>
+        <div class="search-wrapper">
+          <el-input
+            v-model="keyword"
+            @input="handleSearch"
+            placeholder="输入内容检索"
+            clearable
+            class="search-input"
+            prefix-icon="Search"
+          />
+        </div>
 
-    <div class="search-wrapper">
-      <el-input
-        v-model="keyword"
-        @input="debouncedSearch"
-        placeholder="输入内容检索"
-        clearable
-        class="search-input"
-        prefix-icon="Search"
-      />
-    </div>
+        <!-- 加载状态 -->
+        <div v-if="loading" class="loading-wrapper">
+          <el-icon class="is-loading">
+            <Loading />
+          </el-icon>
+          <span>加载中...</span>
+        </div>
 
-    <!-- 用户数据列表 -->
-    <div
-      v-for="user in usersData"
-      :key="user.id"
-      class="user-item"
-      @click="handleUserClick(user)"
-      @mouseenter="hoverUser(user.id, true)"
-      @mouseleave="hoverUser(user.id, false)"
-      :style="{ boxShadow: hoverState.get(user.id) ? '0 4px 8px rgba(0, 0, 0, 0.2)' : '' }"
-    >
-      <span>{{ user.display_name + " [" + user.username + "] " }}</span>
-    </div>
+        <!-- 用户数据列表 -->
+        <div v-else-if="usersData.length > 0" class="users-list">
+          <div
+            v-for="user in usersData"
+            :key="user.id"
+            class="user-item"
+            :class="{ 'user-disabled': isUserExists(user.username) }"
+            @click="handleUserClick(user)"
+          >
+            <span class="user-name">{{ user.display_name + " [" + user.username + "] " }}</span>
+            <el-icon v-if="isUserExists(user.username)" class="disabled-icon">
+              <Check />
+            </el-icon>
+          </div>
+        </div>
 
-    <!-- 分页控件 -->
-    <div class="pager-wrapper">
-      <el-pagination
-        background
-        :layout="paginationData.layout"
-        :page-sizes="paginationData.pageSizes"
-        :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :current-page="paginationData.currentPage"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
+        <!-- 空状态 -->
+        <div v-else class="empty-wrapper">
+          <span>暂无用户数据</span>
+        </div>
+
+        <!-- 分页控件和操作按钮 -->
+        <div class="footer-wrapper">
+          <div v-if="!loading && usersData.length > 0" class="pager-wrapper">
+            <el-pagination
+              background
+              :layout="paginationData.layout"
+              :page-sizes="paginationData.pageSizes"
+              :total="paginationData.total"
+              :page-size="paginationData.pageSize"
+              :current-page="paginationData.currentPage"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+            />
+          </div>
+
+          <div class="action-buttons">
+            <el-button size="small" @click="handleCancel">取消</el-button>
+          </div>
+        </div>
+      </div>
     </div>
-  </el-popover>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { listUsersApi, listUsersByKeywordApi } from "@/api/user"
 import { user as userInfo } from "@/api/user/types/user"
-import { usePagination } from "@/common/composables/usePagination"
-import { ElPopover } from "element-plus"
+import { Loading, Check } from "@element-plus/icons-vue"
 import { debounce } from "lodash-es"
-import { ref, watch } from "vue"
+import { ref, onUnmounted, nextTick } from "vue"
 
-const init = {
+interface Props {
+  addRotaGroup: (user: userInfo) => void
+  existingUsers?: string[] // 已存在的用户名列表
+}
+
+const props = defineProps<Props>()
+
+// 基础状态
+const visible = ref<boolean>(false)
+const loading = ref<boolean>(false)
+const keyword = ref<string>("")
+const usersData = ref<userInfo[]>([])
+const popoverStyle = ref<Record<string, string>>({})
+
+// 分页状态
+const paginationData = ref({
   total: 0,
   currentPage: 1,
   pageSizes: [10, 20, 50],
   pageSize: 5,
   layout: "total, prev, next"
-}
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(init)
-// 引用popover实例
-const popoverRef = ref<InstanceType<typeof ElPopover>>()
-interface Props {
-  addRotaGroup: (user: userInfo) => void
-}
-const props = defineProps<Props>()
+})
 
-// 搜索框的输入值
-const keyword = ref<string>("")
-const usersData = ref<userInfo[]>([])
-// 存储每个用户的 hover 状态
-const hoverState = ref<Map<number, boolean>>(new Map())
+// 请求控制器
+let abortController: AbortController | null = null
 
-const listUsersData = () => {
-  listUsersApi({
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
-  })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      usersData.value = data.users.map((user) => ({ ...user, isHovered: false }))
-    })
-    .catch(() => {
-      usersData.value = []
-    })
-    .finally(() => {})
-}
-
-const listUsersRegexData = () => {
-  listUsersByKeywordApi({
-    keyword: keyword.value,
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
-  })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      usersData.value = data.users.map((user) => ({ ...user, isHovered: false }))
-    })
-    .catch(() => {
-      usersData.value = []
-    })
-    .finally(() => {})
-}
-
+// 防抖搜索
 const debouncedSearch = debounce(() => {
-  paginationData.currentPage = 1
-  listUsers()
-}, 388)
+  paginationData.value.currentPage = 1
+  loadUsers()
+}, 300)
 
-const listUsers = () => {
-  if (keyword.value) {
-    listUsersRegexData()
-  } else {
-    listUsersData()
+// 加载用户数据
+const loadUsers = async (): Promise<void> => {
+  // 取消之前的请求
+  if (abortController) {
+    abortController.abort()
+  }
+
+  // 创建新的请求控制器
+  abortController = new AbortController()
+  loading.value = true
+
+  try {
+    const params = {
+      offset: (paginationData.value.currentPage - 1) * paginationData.value.pageSize,
+      limit: paginationData.value.pageSize
+    }
+
+    const response = keyword.value
+      ? await listUsersByKeywordApi({ ...params, keyword: keyword.value })
+      : await listUsersApi(params)
+
+    if (!abortController.signal.aborted) {
+      paginationData.value.total = response.data.total
+      usersData.value = response.data.users || []
+    }
+  } catch (error: any) {
+    if (error.name !== "AbortError") {
+      console.error("加载用户数据失败:", error)
+      usersData.value = []
+    }
+  } finally {
+    if (!abortController?.signal.aborted) {
+      loading.value = false
+    }
+    abortController = null
   }
 }
 
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listUsers, { immediate: false })
+// 处理搜索
+const handleSearch = (): void => {
+  debouncedSearch()
+}
 
-// 处理用户点击事件
-const handleUserClick = (user: userInfo) => {
+// 处理分页变化
+const handleSizeChange = (size: number): void => {
+  paginationData.value.pageSize = size
+  paginationData.value.currentPage = 1
+  loadUsers()
+}
+
+const handleCurrentChange = (page: number): void => {
+  paginationData.value.currentPage = page
+  loadUsers()
+}
+
+// 暴露给父组件的方法
+const show = async (targetElement?: HTMLElement): Promise<void> => {
+  if (targetElement) {
+    // 计算弹窗位置 - 在按钮下方居中
+    const rect = targetElement.getBoundingClientRect()
+    const popoverWidth = 320
+    const windowWidth = window.innerWidth
+
+    // 计算居中位置
+    let left = rect.left + (rect.width - popoverWidth) / 2
+
+    // 边界检测 - 确保弹窗不会超出屏幕
+    if (left < 8) {
+      left = 8 // 距离左边至少8px
+    } else if (left + popoverWidth > windowWidth - 8) {
+      left = windowWidth - popoverWidth - 8 // 距离右边至少8px
+    }
+
+    popoverStyle.value = {
+      position: "fixed",
+      left: `${left}px`,
+      top: `${rect.bottom + 8}px`,
+      width: "320px",
+      zIndex: "9999"
+    }
+  }
+
+  // 显示弹窗并加载数据
+  visible.value = true
+  await nextTick()
+  loadUsers()
+}
+
+// 暴露方法
+defineExpose({
+  show
+})
+
+// 检查用户是否已存在
+const isUserExists = (username: string): boolean => {
+  return props.existingUsers?.includes(username) || false
+}
+
+// 处理用户点击
+const handleUserClick = (user: userInfo): void => {
+  console.log("用户点击:", user)
+
+  // 如果用户已存在，不执行添加操作
+  if (isUserExists(user.username)) {
+    console.log("用户已存在，跳过添加")
+    return
+  }
+
   props.addRotaGroup(user)
-
-  // 关闭popover
-  popoverRef.value?.hide()
+  visible.value = false
+  cleanup()
 }
 
-// 鼠标悬停时更新 hover 状态
-const hoverUser = (userId: number, isHovered: boolean) => {
-  hoverState.value.set(userId, isHovered)
+// 处理取消按钮
+const handleCancel = (): void => {
+  visible.value = false
+  cleanup()
 }
+
+// 处理遮罩层点击
+const handleOverlayClick = (): void => {
+  visible.value = false
+  cleanup()
+}
+
+// 清理资源
+const cleanup = (): void => {
+  // 取消进行中的请求
+  if (abortController) {
+    abortController.abort()
+    abortController = null
+  }
+
+  // 重置状态
+  keyword.value = ""
+  usersData.value = []
+  loading.value = false
+  paginationData.value.currentPage = 1
+  paginationData.value.total = 0
+
+  // 取消防抖
+  debouncedSearch.cancel()
+}
+
+// 组件卸载时清理
+onUnmounted(() => {
+  cleanup()
+})
 </script>
 
 <style scoped>
-/* 让popover的内边距为0，确保内容紧贴边缘 */
-.popover-custom .el-popover__content {
-  padding: 0;
+/* 遮罩层 */
+.user-popover-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  background-color: transparent;
+}
+
+/* 弹窗内容容器 */
+.user-popover-content {
+  max-height: 500px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 16px;
 }
 
 /* 搜索框容器 */
 .search-wrapper {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 /* 搜索框样式 */
@@ -150,29 +292,121 @@ const hoverUser = (userId: number, isHovered: boolean) => {
   width: 100%;
 }
 
+/* 用户列表容器 */
+.users-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 300px;
+  margin-bottom: 12px;
+}
+
 /* 用户项样式 */
 .user-item {
-  margin-bottom: 8px;
-  padding: 8px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
   cursor: pointer;
-  transition:
-    box-shadow 0.3s ease,
-    background-color 0.3s ease;
-  border-radius: 4px; /* 圆角效果 */
-  background-color: rgba(0, 0, 0, 0.05); /* 背景颜色 */
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* 鼠标悬停时阴影效果 */
-.user-item.hover-shadow {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  background-color: rgba(0, 0, 0, 0.1); /* 更深的背景色 */
+/* 用户名称样式 */
+.user-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 分页控件的布局 */
+.user-item:hover {
+  background-color: rgba(64, 158, 255, 0.1);
+  border-color: rgba(64, 158, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 已存在用户样式 */
+.user-item.user-disabled {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.user-item.user-disabled:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: transparent;
+  transform: none;
+}
+
+/* 已存在图标样式 */
+.disabled-icon {
+  color: #22c55e;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+/* 加载状态样式 */
+.loading-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #666;
+  gap: 8px;
+}
+
+/* 空状态样式 */
+.empty-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* 底部容器 */
+.footer-wrapper {
+  flex-shrink: 0;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* 分页控件容器 */
+.pager-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
 .pager-wrapper .el-pagination {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  margin-top: 10px;
+}
+
+/* 操作按钮容器 */
+.action-buttons {
+  flex-shrink: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .popover-content {
+    max-height: 300px;
+  }
+
+  .users-list {
+    max-height: 150px;
+  }
 }
 </style>
