@@ -421,7 +421,7 @@ const handleCurrentChange = (page: number) => {
   }
 }
 
-:deep(
+:global(
   .el-table.is-scrolling-none th.el-table-fixed-column--left,
   .el-table.is-scrolling-none th.el-table-fixed-column--right
 ) {

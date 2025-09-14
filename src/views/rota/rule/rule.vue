@@ -32,9 +32,9 @@
 </template>
 <script setup lang="ts">
 import { useRuleForm } from "./composables/useRuleForm"
-import TimeSettings from "./components/TimeSettings.vue"
-import RotationSettings from "./components/RotationSettings.vue"
-import PersonnelManagement from "./components/PersonnelManagement.vue"
+import TimeSettings from "./components/timeSettings.vue"
+import RotationSettings from "./components/rotationSettings.vue"
+import PersonnelManagement from "./components/personnelManagement.vue"
 
 const emits = defineEmits(["closed", "callback"])
 
