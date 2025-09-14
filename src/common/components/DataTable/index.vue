@@ -419,23 +419,12 @@ const handleCurrentChange = (page: number) => {
   :deep(.el-table__body tr:hover td:last-child) {
     background-color: #f5f7fa !important;
   }
-}
 
-/* 全局样式覆盖 - 确保生产环境也能生效 */
-:global(.data-table .el-table__body tr td) {
-  background-color: transparent !important;
-}
-
-:global(.data-table .el-table__body tr.el-table__row--striped td) {
-  background-color: #fafafa !important;
-}
-
-:global(.data-table .el-table__body tr.el-table__row--striped:hover td) {
-  background-color: #f5f7fa !important;
-}
-
-:global(.data-table .el-table__body tr:hover td) {
-  background-color: #f5f7fa !important;
+  /* 覆盖 Element Plus 固定列表头的背景色 */
+  :deep(.el-table.is-scrolling-none th.el-table-fixed-column--left),
+  :deep(.el-table.is-scrolling-none th.el-table-fixed-column--right) {
+    background-color: #f8fafc !important;
+  }
 }
 
 .action-buttons {
