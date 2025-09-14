@@ -396,25 +396,37 @@ defineExpose({
 }
 
 .rule-form-container {
-  padding: 0;
-  background: transparent;
-  height: 100%;
+  height: 60vh;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 .rule-form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding: calc(1rem + 0.3vw);
+
   .form-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 32px;
     align-items: start;
+    flex: 1;
+    min-height: 0;
   }
 
   .left-section {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    height: 100%;
   }
 
   .right-section {
@@ -458,6 +470,8 @@ defineExpose({
     display: flex;
     flex-direction: column;
     height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .form-item {
@@ -734,6 +748,30 @@ defineExpose({
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  padding: 12px;
+}
+
+/* 自定义滚动条样式 */
+.rule-form::-webkit-scrollbar,
+.personnel-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rule-form::-webkit-scrollbar-track,
+.personnel-content::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.rule-form::-webkit-scrollbar-thumb,
+.personnel-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.rule-form::-webkit-scrollbar-thumb:hover,
+.personnel-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .group-container {
@@ -776,16 +814,21 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-bottom: 1px solid #e5e7eb;
   transition: all 0.2s ease;
+  background: white;
+  border-radius: 4px;
+  margin-bottom: 4px;
 
   &:last-child {
     border-bottom: none;
+    margin-bottom: 0;
   }
 
   &:hover {
-    background: #f3f4f6;
+    background: #f8fafc;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 }
 
@@ -818,31 +861,45 @@ defineExpose({
 .member-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 2px;
 }
 
 .action-btn {
-  font-size: 12px;
-  padding: 4px;
-  border-radius: 3px;
+  font-size: 14px;
+  padding: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
 
   &.remove-btn {
     color: #ef4444;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
 
     &:hover {
-      background: #fef2f2;
+      background: #fee2e2;
       color: #dc2626;
+      border-color: #fca5a5;
+      transform: scale(1.05);
     }
   }
 
   &.handle-btn {
     color: #6b7280;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
 
     &:hover {
-      background: #f3f4f6;
+      background: #e2e8f0;
       color: #3b82f6;
+      border-color: #cbd5e1;
+      transform: scale(1.05);
     }
   }
 }
