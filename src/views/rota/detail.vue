@@ -1,11 +1,6 @@
 <template>
   <PageContainer>
-    <ManagerHeader 
-      title="排班详情" 
-      subtitle="查看和管理排班规则及日程安排"
-      :show-back-button="true"
-      @back="goBack"
-    >
+    <ManagerHeader title="排班详情" subtitle="查看和管理排班规则及日程安排" :show-back-button="true" @back="goBack">
       <template #actions>
         <el-button type="primary" :icon="Plus" @click="addShifSchedulingRule" class="action-btn"> 新增规则 </el-button>
         <el-button type="primary" :icon="Setting" @click="listShifSchedulingRule" class="action-btn">
@@ -235,7 +230,7 @@ const event = ref<EventInput[]>([])
 async function addShifSchedulingRule() {
   await getRuleList()
 
-  if (rotaRuleData.value.length >= 2) {
+  if (rotaRuleData.value.length >= 1) {
     ElMessage.warning("当前最多只能添加 1 个规则")
     return
   }
