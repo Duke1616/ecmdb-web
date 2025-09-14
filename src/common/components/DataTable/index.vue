@@ -419,12 +419,12 @@ const handleCurrentChange = (page: number) => {
   :deep(.el-table__body tr:hover td:last-child) {
     background-color: #f5f7fa !important;
   }
+}
 
-  /* 覆盖 Element Plus 固定列表头的背景色 */
-  :deep(.el-table.is-scrolling-none th.el-table-fixed-column--left),
-  :deep(.el-table.is-scrolling-none th.el-table-fixed-column--right) {
-    background-color: #f8fafc !important;
-  }
+/* 如果上面的选择器不够，使用更具体的选择器 */
+.data-table :deep(.el-table.is-scrolling-none th.el-table-fixed-column--left),
+.data-table :deep(.el-table.is-scrolling-none th.el-table-fixed-column--right) {
+  background-color: #f8fafc !important;
 }
 
 .action-buttons {
