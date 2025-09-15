@@ -1,11 +1,12 @@
 <template>
-  <div class="form-section">
-    <div class="section-header">
-      <div class="section-title">
+  <div class="settings-group">
+    <!-- 标题区域 -->
+    <div class="personnel-header">
+      <div class="header-title">
         <el-icon><User /></el-icon>
-        <span>班排人员</span>
+        <span>排班人员</span>
       </div>
-      <el-button type="primary" :icon="Plus" @click="addNewGroup"> 添加组 </el-button>
+      <el-button type="primary" :icon="Plus" @click="addNewGroup" class="add-group-btn"> 添加组 </el-button>
     </div>
 
     <div class="personnel-content">
@@ -14,10 +15,24 @@
           <span class="group-title">{{ `组 ${group.name}` }}</span>
           <div class="group-actions">
             <span class="group-count">{{ group.members.length }} 人</span>
-            <el-button size="small" type="primary" plain :icon="Plus" @click="addMemberToGroup(group.id, $event)">
+            <el-button
+              size="small"
+              type="primary"
+              plain
+              :icon="Plus"
+              @click="addMemberToGroup(group.id, $event)"
+              class="action-btn"
+            >
               添加成员
             </el-button>
-            <el-button size="small" type="danger" plain :icon="Delete" @click="removeGroup(group.id)">
+            <el-button
+              size="small"
+              type="danger"
+              plain
+              :icon="Delete"
+              @click="removeGroup(group.id)"
+              class="action-btn"
+            >
               删除组
             </el-button>
           </div>
@@ -177,36 +192,41 @@ const handleDragEnd = async () => {
 </script>
 
 <style scoped lang="scss">
-.form-section {
+.settings-group {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 0; // 确保可以收缩
 }
 
-.section-header {
+.personnel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
-  padding: 0 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
 }
 
-.section-title {
+.header-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: #374151;
+
+  .el-icon {
+    font-size: 16px;
+    color: #3b82f6;
+  }
 }
 
 .personnel-content {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow-y: auto;
   padding-right: 4px;
+  margin-bottom: 16px;
 }
 
 .group-container {
@@ -229,12 +249,18 @@ const handleDragEnd = async () => {
   padding: 12px 16px;
   background: #f8fafc;
   border-bottom: 1px solid #e5e7eb;
+  min-width: 0; /* 允许内容收缩 */
 }
 
 .group-title {
   font-size: 14px;
   font-weight: 600;
   color: #374151;
+  flex-shrink: 1; /* 允许标题收缩 */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .group-actions {
@@ -249,6 +275,8 @@ const handleDragEnd = async () => {
   margin-right: 8px;
 }
 
+// 移除 action-btn 样式，使用默认样式
+
 .members-container {
   padding: 12px;
   min-height: 60px;
@@ -261,15 +289,19 @@ const handleDragEnd = async () => {
   min-height: 40px;
 
   &.empty-group {
-    min-height: 60px;
-    border: 2px dashed #d1d5db;
-    border-radius: 6px;
-    background: #f9fafb;
-    transition: all 0.2s ease;
+    min-height: 80px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     &:hover {
       border-color: #3b82f6;
-      background: #eff6ff;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      transform: scale(1.02);
     }
   }
 }

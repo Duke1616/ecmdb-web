@@ -65,6 +65,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+// 规则表单样式
 .rule-form-container {
   height: 60vh;
   display: flex;
@@ -80,15 +81,15 @@ defineExpose({
   display: flex;
   flex-direction: column;
   min-height: 0;
-  overflow-y: auto;
 
   .form-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    align-items: start;
+    gap: 20px;
+    align-items: stretch; // 改为 stretch，让两侧高度一致
     flex: 1;
     min-height: 0;
+    height: 100%;
   }
 }
 
@@ -97,13 +98,19 @@ defineExpose({
   flex-direction: column;
   gap: 24px;
   height: 100%;
+  min-height: 0; // 确保可以收缩
 }
 
 .right-section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  height: 100%;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-y: auto; // 允许垂直滚动
+  max-height: 100%; // 限制最大高度，超出时显示滚动条
 }
 
 .form-section {
@@ -116,32 +123,52 @@ defineExpose({
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto; // 允许垂直滚动
+  max-height: 100%; // 限制最大高度
 
   .settings-content {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    overflow-y: auto;
+    flex: 1; // 占据剩余空间
   }
 }
 
-/* 自定义滚动条样式 */
-.rule-form::-webkit-scrollbar {
+/* 左侧滚动条样式 */
+.form-section::-webkit-scrollbar {
   width: 6px;
 }
 
-.rule-form::-webkit-scrollbar-track {
+.form-section::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 3px;
 }
 
-.rule-form::-webkit-scrollbar-thumb {
+.form-section::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
 }
 
-.rule-form::-webkit-scrollbar-thumb:hover {
+.form-section::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* 右侧滚动条样式 */
+.right-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.right-section::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.right-section::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.right-section::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 </style>
