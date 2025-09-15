@@ -369,43 +369,6 @@ useModelData()
   align-content: start;
 }
 
-@media (max-width: 480px) {
-  .models-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-    padding: 16px;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1024px) {
-  .models-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 14px;
-  }
-}
-
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .models-grid {
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 14px;
-    padding: 18px;
-  }
-}
-
-@media (min-width: 1440px) {
-  .models-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 18px;
-    padding: 22px;
-  }
-}
-
-@media (min-width: 1920px) {
-  .models-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 20px;
-  }
-}
 
 .model-card-wrapper {
   cursor: pointer;
@@ -465,24 +428,10 @@ useModelData()
   flex-shrink: 0;
 }
 
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .model-icon-wrapper {
-    width: 32px;
-    height: 32px;
-  }
-}
-
 .model-icon {
   width: 22px;
   height: 22px;
   object-fit: contain;
-}
-
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .model-icon {
-    width: 20px;
-    height: 20px;
-  }
 }
 
 .model-info {
@@ -499,12 +448,6 @@ useModelData()
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .model-name {
-    font-size: 0.9rem;
-  }
 }
 
 .model-uid {
@@ -534,105 +477,5 @@ useModelData()
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* 同步响应式设计优化 */
-@media (max-width: 768px) {
-  .model-display-container {
-    padding: 16px;
-    height: 100vh;
-  }
-
-  .header-section {
-    padding: 12px 0;
-    margin-bottom: 16px;
-  }
-
-  .main-layout {
-    flex-direction: column;
-    gap: 0;
-    height: auto;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
-    max-height: 180px;
-    min-height: 150px;
-  }
-
-  .groups-list {
-    display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding: 12px;
-  }
-
-  .group-list-item {
-    min-width: 180px;
-    margin-bottom: 0;
-  }
-
-  .content-area {
-    flex: 1;
-    min-height: 0;
-  }
-
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    margin-bottom: 16px;
-    padding: 16px;
-  }
-
-  .section-header .section-title {
-    font-size: 1.1rem;
-  }
-
-  .page-title {
-    font-size: 1.6rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .model-display-container {
-    padding: 12px;
-  }
-
-  .header-section {
-    padding: 8px 0;
-  }
-
-  .sidebar {
-    max-height: 160px;
-  }
-
-  .group-list-item {
-    min-width: 140px;
-  }
-
-  .model-card {
-    padding: 14px;
-  }
-
-  .page-title {
-    font-size: 1.4rem;
-  }
-}
-
-/* 添加高分辨率显示器优化 */
-@media (min-width: 1440px) {
-  .model-display-container {
-    padding: 24px;
-  }
-
-  .sidebar {
-    width: 320px;
-    min-width: 320px;
-  }
 }
 </style>
