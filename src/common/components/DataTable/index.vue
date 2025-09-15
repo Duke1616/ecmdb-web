@@ -353,7 +353,7 @@ const handleCurrentChange = (page: number) => {
 
   :deep(.el-table__header) {
     th {
-      background: #f8fafc;
+      background: #f8fafc !important;
       color: #374151;
       font-weight: 600;
       height: calc(2.4rem + 0.4vw);
