@@ -184,7 +184,7 @@
 
 <script lang="ts" setup>
 import { h, ref, computed, onMounted, onUnmounted } from "vue"
-import { CirclePlus, Search, Document, RefreshRight, Folder } from "@element-plus/icons-vue"
+import { CirclePlus, Search, Document, RefreshRight } from "@element-plus/icons-vue"
 import { CreateModelApi, CreateModelGroupApi, deleteModelGroupApi } from "@/api/model"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { type Models, type Model, type CreateModelReq, type CreateModelGroupReq } from "@/api/model/types/model"

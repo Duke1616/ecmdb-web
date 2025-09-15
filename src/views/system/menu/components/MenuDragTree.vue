@@ -42,7 +42,7 @@ interface Emits {
   (e: "drag-end", dragNode: any, dropNode: any, dropType: string): void
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   menuTreeData: () => [],
   currentNodeKey: null,
   isDragMode: false,

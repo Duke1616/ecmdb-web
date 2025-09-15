@@ -74,8 +74,8 @@
           <!-- 安全字段和链接字段插槽 -->
           <template
             v-for="field in attributeFieldsData
-              .filter((f) => f.display === true)
-              .sort((a, b) => (a.index || 100) - (b.index || 100))"
+              .filter(() => f.display === true)
+              .sort(() => (a.index || 100) - (b.index || 100))"
             :key="`field-${field.id}`"
             #[field.field_uid]="{ row }"
           >

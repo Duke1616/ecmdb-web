@@ -10,6 +10,9 @@
             :height="finalTableHeight"
             v-bind="tableProps"
             @selection-change="handleSelectionChange"
+            :style="{
+              '--fixed-column-bg': '#f8fafc'
+            }"
           >
             <!-- 选择列 -->
             <el-table-column v-if="showSelection" type="selection" width="50" align="center" />
@@ -419,6 +422,12 @@ const handleCurrentChange = (page: number) => {
   :deep(.el-table__body tr:hover td:last-child) {
     background-color: #f5f7fa !important;
   }
+
+  // 固定列头部背景色 - 组件内部规则
+  :deep(.el-table.is-scrolling-none th.el-table-fixed-column--left),
+  :deep(.el-table.is-scrolling-none th.el-table-fixed-column--right) {
+    background-color: #f8fafc !important;
+  }
 }
 
 :global(
@@ -426,6 +435,24 @@ const handleCurrentChange = (page: number) => {
   .el-table.is-scrolling-none th.el-table-fixed-column--right
 ) {
   background-color: #f8fafc !important;
+}
+
+/* 更高特异性的规则，确保在产线环境生效 */
+:global(
+  .data-table .el-table.is-scrolling-none th.el-table-fixed-column--left,
+  .data-table .el-table.is-scrolling-none th.el-table-fixed-column--right,
+  .el-table.is-scrolling-none th.el-table-fixed-column--left[class*="el-table"],
+  .el-table.is-scrolling-none th.el-table-fixed-column--right[class*="el-table"]
+) {
+  background-color: #f8fafc !important;
+}
+
+/* 使用 CSS 变量的规则，作为最后保障 */
+:global(
+  .data-table[style*="--fixed-column-bg"] .el-table.is-scrolling-none th.el-table-fixed-column--left,
+  .data-table[style*="--fixed-column-bg"] .el-table.is-scrolling-none th.el-table-fixed-column--right
+) {
+  background-color: var(--fixed-column-bg, #f8fafc) !important;
 }
 
 .action-buttons {

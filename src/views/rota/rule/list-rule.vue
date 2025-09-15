@@ -40,7 +40,7 @@
           <!-- 规则详情内容 -->
           <div v-if="activeCollapse.includes(ruleIndex)" class="rule-card-content">
             <div class="rule-details">
-              <Rule :ref="(el) => setRuleRef(el, ruleIndex)" />
+              <Rule :ref="(el: any) => setRuleRef(el, ruleIndex)" />
             </div>
 
             <!-- 操作按钮 -->

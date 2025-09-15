@@ -75,8 +75,8 @@
                   :is-displaying="!!row[`${field.field_uid}_secure_display`]"
                   :copy-only="true"
                   @view-click="handleSecureClick(row, field)"
-                  @display-change="(isDisplaying) => handleSecureDisplayChange(row, field, isDisplaying)"
-                  @copy="(content) => handleCopySecureContent(content, row.id)"
+                  @display-change="(isDisplaying: boolean) => handleSecureDisplayChange(row, field, isDisplaying)"
+                  @copy="(content: string) => handleCopySecureContent(content, row.id)"
                 />
               </div>
 
