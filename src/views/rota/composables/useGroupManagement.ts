@@ -27,10 +27,10 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
   const addNewGroup = () => {
     try {
       const newGroup = createNewGroup()
+      // 确保触发响应式更新
       rotaGroups.value = [...rotaGroups.value, newGroup]
       renderKey.value++
     } catch (error) {
-      console.error("添加新组时出错:", error)
       ElMessage.error("添加组失败，请重试")
     }
   }
@@ -96,20 +96,22 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
     renderKey.value++
   }
 
-  // 更新组成员
+  // 更新组成员 - 简化版本
   const updateGroupMembers = (groupId: number, newMembers: string[]) => {
     const groupIndex = rotaGroups.value.findIndex((g: rotaGroup) => g.id === groupId)
-    if (groupIndex === -1) return
+    if (groupIndex === -1) {
+      console.log("组不存在:", groupId)
+      return
+    }
 
-    const newGroups = rotaGroups.value.map((group: rotaGroup, index: number) => {
-      if (index === groupIndex) {
-        return { ...group, members: [...newMembers] }
-      }
-      return { ...group }
-    })
+    // 直接更新数据
+    const newGroups = [...rotaGroups.value]
+    newGroups[groupIndex] = {
+      ...newGroups[groupIndex],
+      members: [...newMembers]
+    }
 
     rotaGroups.value = newGroups
-    renderKey.value++
   }
 
   return {

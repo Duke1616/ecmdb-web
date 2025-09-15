@@ -14,31 +14,88 @@
           <div class="form-section">
             <div class="settings-content">
               <!-- 时间设置 -->
-              <TimeSettings v-model="formData.rota_rule" />
+              <TimeSettings v-model:rotaRuleForm="formData.rota_rule" />
 
               <!-- 轮换设置 -->
-              <RotationSettings v-model="formData.rota_rule.rotate" />
+              <RotationSettings
+                v-model:time_duration="formData.rota_rule.rotate.time_duration"
+                v-model:time_unit="formData.rota_rule.rotate.time_unit"
+              />
             </div>
           </div>
         </div>
 
         <!-- 右侧：排班人员 -->
         <div class="right-section">
-          <PersonnelManagement v-model="formData.rota_rule.rota_groups" />
+          <PersonnelManagement v-model:rotaGroupsForm="formData.rota_rule.rota_groups" />
         </div>
       </div>
     </el-form>
   </div>
 </template>
 <script setup lang="ts">
-import { useRuleForm } from "../composables/useRuleForm"
+import { ref } from "vue"
+import { ElMessage, FormInstance, FormRules } from "element-plus"
+import { cloneDeep } from "lodash-es"
+import { addRuleReq } from "@/api/rota/types/rota"
+import { addShifSchedulingRuleApi } from "@/api/rota"
 import TimeSettings from "../components/timeSettings.vue"
 import RotationSettings from "../components/rotationSettings.vue"
 import PersonnelManagement from "../components/personnelManagement.vue"
 
 const emits = defineEmits(["closed", "callback"])
 
-const { formData, formRef, formRules, setFrom, getFrom, resetForm, submitForm: submitFormApi } = useRuleForm()
+// 表单数据
+const DEFAULT_FORM_DATA: addRuleReq = {
+  id: 0,
+  rota_rule: {
+    start_time: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
+    end_time: 0,
+    rota_groups: [],
+    rotate: {
+      time_unit: 4,
+      time_duration: 1
+    }
+  }
+}
+
+const formData = ref<addRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formRef = ref<FormInstance | null>(null)
+
+const formRules: FormRules = {
+  name: [{ required: true, message: "必须输入值班名称", trigger: "blur" }],
+  owner: [{ required: true, message: "必须输入值班管理人员", trigger: "blur" }]
+}
+
+const setFrom = (row: addRuleReq) => {
+  formData.value = cloneDeep(row)
+}
+
+const getFrom = () => {
+  return formData
+}
+
+const resetForm = () => {
+  // formRef.value?.resetFields()
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+const submitFormApi = (rotaId: number) => {
+  formData.value.id = rotaId
+  if (formData.value.id === 0) {
+    ElMessage.error("值班不存在，无法保存")
+    return Promise.reject("值班不存在")
+  }
+
+  return addShifSchedulingRuleApi(formData.value)
+    .then(() => {
+      ElMessage.success("保存成功")
+    })
+    .catch((error) => {
+      console.log("catch", error)
+      throw error
+    })
+}
 
 const onClosed = () => {
   emits("closed")

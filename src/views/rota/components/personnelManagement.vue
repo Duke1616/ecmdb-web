@@ -10,7 +10,7 @@
     </div>
 
     <div class="personnel-content">
-      <div v-for="group in rotaGroups" :key="group.id" class="group-container" :data-group-id="group.id">
+      <div v-for="group in rotaGroupsForm" :key="group.id" class="group-container" :data-group-id="group.id">
         <div class="group-header">
           <span class="group-title">{{ `组 ${group.name}` }}</span>
           <div class="group-actions">
@@ -40,23 +40,20 @@
 
         <div class="members-container">
           <VueDraggable
-            :model-value="group.members"
-            :key="`${group.id}-${renderKey}`"
+            v-model="group.members"
             :animation="200"
             group="rotaGroup"
             ghostClass="ghost"
             chosenClass="chosen"
             handle=".handle"
             @start="onDragStart"
-            @end="handleDragEnd"
+            @end="onDragEnd"
             @change="handleDragChange"
-            @move="handleDragMove"
-            @update:model-value="(newMembers: string[]) => updateGroupMembers(group.id, newMembers)"
             :forceFallback="true"
             class="members-list"
             :class="{ 'empty-group': group.members.length === 0 }"
           >
-            <div v-for="(member, itemIndex) in group.members" :key="member" class="member-item">
+            <div v-for="(member, itemIndex) in group.members" :key="member" class="member-item" :data-member="member">
               <div class="member-info">
                 <el-icon class="member-avatar">
                   <User />
@@ -81,7 +78,7 @@
         </div>
       </div>
 
-      <div v-if="rotaGroups.length === 0" class="empty-personnel">
+      <div v-if="rotaGroupsForm.length === 0" class="empty-personnel">
         <el-icon class="empty-icon">
           <User />
         </el-icon>
@@ -95,61 +92,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
 import { User, Close, Grid, Plus, Delete } from "@element-plus/icons-vue"
-import { rotaGroup } from "@/api/rota/types/rota"
+import type { rotaGroup } from "@/api/rota/types/rota"
 import { user as userInfo } from "@/api/user/types/user"
 import UserPopover from "./userPopover.vue"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
-import { useDragAndDrop } from "../composables/useDragAndDrop"
 import { useGroupManagement } from "../composables/useGroupManagement"
 
-interface Props {
-  modelValue: rotaGroup[]
-}
-
-interface Emits {
-  (e: "update:modelValue", value: rotaGroup[]): void
-}
-
-const props = defineProps<Props>()
-const emits = defineEmits<Emits>()
-
+const rotaGroupsForm = defineModel<rotaGroup[]>("rotaGroupsForm", { default: () => [] })
 const userToolsStore = useUserToolsStore()
-const rotaGroups = ref<rotaGroup[]>([...props.modelValue])
+
+// 渲染键
+const renderKey = ref(0)
 
 // 使用 composables
-const { renderKey, onDragStart, onDragMove, onDragChange, onDragEnd } = useDragAndDrop()
-const {
-  currentAddingGroupId,
-  existingUsers,
-  addNewGroup,
-  removeGroup,
-  addUserToGroup,
-  removeUserFromGroup,
-  updateGroupMembers
-} = useGroupManagement(rotaGroups, renderKey)
+const { currentAddingGroupId, existingUsers, addNewGroup, removeGroup, addUserToGroup, removeUserFromGroup } =
+  useGroupManagement(rotaGroupsForm, renderKey)
 
 const userPopoverRef = ref()
-
-// 监听外部数据变化
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    rotaGroups.value = [...newValue]
-  },
-  { immediate: true }
-)
-
-// 监听内部数据变化
-watch(
-  rotaGroups,
-  (newValue) => {
-    emits("update:modelValue", newValue)
-  },
-  { deep: true, immediate: false }
-)
 
 const getUserByUsername = (username: string) => {
   return userToolsStore.getUsername(username)
@@ -173,21 +135,67 @@ const addRotaGroup = (user: userInfo) => {
   currentAddingGroupId.value = null
 }
 
-// 拖拽事件处理
-const handleDragMove = (evt: any) => {
-  return onDragMove(evt, rotaGroups.value)
+// 拖拽状态
+const draggedMember = ref("")
+const sourceGroupId = ref(0)
+
+// 拖拽开始
+const onDragStart = (evt: any) => {
+  draggedMember.value = evt.item.dataset.member || ""
+  sourceGroupId.value = parseInt(evt.from.closest(".group-container")?.dataset.groupId || "0")
 }
 
-const handleDragChange = async (evt: any) => {
-  await onDragChange(evt, rotaGroups.value, (newGroups) => {
-    rotaGroups.value = newGroups
-  })
+// 拖拽结束
+const onDragEnd = () => {
+  draggedMember.value = ""
+  sourceGroupId.value = 0
+  renderKey.value++
 }
 
-const handleDragEnd = async () => {
-  await onDragEnd(rotaGroups.value, (newGroups) => {
-    rotaGroups.value = newGroups
-  })
+// 处理拖拽变化 - 修复重复用户检查
+const handleDragChange = (evt: any) => {
+  if (evt.added && draggedMember.value) {
+    const targetGroupId = parseInt(evt.to.closest(".group-container")?.dataset.groupId || "0")
+
+    if (targetGroupId && sourceGroupId.value && targetGroupId !== sourceGroupId.value) {
+      // 检查目标组是否已存在该用户
+      const targetGroup = rotaGroupsForm.value.find((group) => group.id === targetGroupId)
+      if (targetGroup && targetGroup.members.includes(draggedMember.value)) {
+        ElMessage.warning(`该用户已存在于目标组中，无法重复添加`)
+
+        // 恢复源组数据，取消拖拽
+        const newGroups = rotaGroupsForm.value.map((group) => {
+          if (group.id === sourceGroupId.value) {
+            return {
+              ...group,
+              members: [...group.members, draggedMember.value]
+            }
+          }
+          return group
+        })
+        rotaGroupsForm.value = newGroups
+        return
+      }
+
+      // 从源组移除该用户（只移除一个）
+      const newGroups = rotaGroupsForm.value.map((group) => {
+        if (group.id === sourceGroupId.value) {
+          const newMembers = [...group.members]
+          const index = newMembers.indexOf(draggedMember.value)
+          if (index > -1) {
+            newMembers.splice(index, 1)
+          }
+          return {
+            ...group,
+            members: newMembers
+          }
+        }
+        return group
+      })
+
+      rotaGroupsForm.value = newGroups
+    }
+  }
 }
 </script>
 
@@ -424,11 +432,25 @@ const handleDragEnd = async () => {
 .ghost {
   opacity: 0.5;
   background: #eff6ff;
+  transform: rotate(5deg);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .chosen {
   background: #eff6ff;
   border-color: #3b82f6;
+  transform: scale(1.02);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+/* 拖拽时的过渡效果 */
+.member-item {
+  transition: all 0.2s ease;
+}
+
+.member-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* 禁用拖拽时的文字选择 */

@@ -7,7 +7,7 @@
 
     <el-form-item prop="start_time" label="开始时间" class="form-item required">
       <el-date-picker
-        v-model="formData.start_time"
+        v-model="rotaRuleForm.start_time"
         type="datetime"
         placeholder="选择开始时间"
         format="YYYY-MM-DD HH:mm"
@@ -28,7 +28,7 @@
         />
         <el-date-picker
           v-if="isEndTimeVisible"
-          v-model="formData.end_time"
+          v-model="rotaRuleForm.end_time"
           type="datetime"
           placeholder="选择结束时间"
           format="YYYY-MM-DD HH:mm"
@@ -45,72 +45,46 @@
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Calendar } from "@element-plus/icons-vue"
+import type { rotaRule } from "@/api/rota/types/rota"
 
-interface TimeData {
-  start_time: number
-  end_time: number
-}
-
-interface Props {
-  modelValue: TimeData
-}
-
-interface Emits {
-  (e: "update:modelValue", value: TimeData): void
-}
-
-const props = defineProps<Props>()
-const emits = defineEmits<Emits>()
-
-const formData = ref<TimeData>({ ...props.modelValue })
+// 接收 v-model:rotaRuleForm
+const rotaRuleForm = defineModel<rotaRule>("rotaRuleForm", { required: true })
 const isEndTimeVisible = ref<boolean>(false)
 
-// 监听外部数据变化
+// 根据 end_time 初始化开关状态（加上安全判断）
 watch(
-  () => props.modelValue,
-  (newValue) => {
-    formData.value = { ...newValue }
-    if (newValue.end_time !== 0) {
-      isEndTimeVisible.value = true
-    }
+  () => rotaRuleForm.value?.end_time,
+  (val) => {
+    isEndTimeVisible.value = !!val && val !== 0
   },
-  { deep: true }
-)
-
-// 监听内部数据变化
-watch(
-  formData,
-  (newValue) => {
-    emits("update:modelValue", newValue)
-  },
-  { deep: true }
+  { immediate: true }
 )
 
 const handleStartDateTimeChange = (date: Date | null) => {
   if (date) {
-    formData.value.start_time = date.getTime()
+    rotaRuleForm.value!.start_time = date.getTime()
   }
 }
 
 const handleEndDateTimeChange = (date: Date | null) => {
   if (date) {
     const endTime = date.getTime()
-    const startTime = formData.value.start_time
+    const startTime = rotaRuleForm.value?.start_time
 
     if (startTime && endTime < startTime) {
       ElMessage.error("结束时间不能小于开始时间")
-      formData.value.end_time = 0
+      rotaRuleForm.value!.end_time = 0
     } else {
-      formData.value.end_time = endTime
+      rotaRuleForm.value!.end_time = endTime
     }
   } else {
-    formData.value.end_time = 0
+    rotaRuleForm.value!.end_time = 0
   }
 }
 
 const handleSwitchChange = () => {
   if (!isEndTimeVisible.value) {
-    formData.value.end_time = 0
+    rotaRuleForm.value!.end_time = 0
   }
 }
 </script>
