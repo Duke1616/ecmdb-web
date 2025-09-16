@@ -35,14 +35,22 @@
 
         <div class="form-row">
           <el-form-item label="字段类型" prop="field_type" class="form-item">
-            <el-select v-model="formData.field_type" placeholder="请选择字段类型" size="large" clearable>
-              <el-option v-for="item in mapping" :key="item.label" :label="item.label" :value="item.value">
-                <div class="option-content">
-                  <span class="option-label">{{ item.label }}</span>
-                  <span class="option-value">{{ item.value }}</span>
+            <div class="field-type-selector">
+              <div
+                v-for="item in fieldTypeOptions"
+                :key="item.value"
+                :class="['field-type-card', { active: formData.field_type === item.value }]"
+                @click="selectFieldType(item.value)"
+              >
+                <div class="card-icon">
+                  <el-icon><component :is="item.icon" /></el-icon>
                 </div>
-              </el-option>
-            </el-select>
+                <div class="card-content">
+                  <div class="card-title">{{ item.label }}</div>
+                  <div class="card-description">{{ item.description }}</div>
+                </div>
+              </div>
+            </div>
           </el-form-item>
         </div>
       </div>
@@ -99,19 +107,19 @@
         </div>
         <div class="form-row">
           <div class="settings-grid">
-            <div class="setting-item">
+            <div v-if="availableSettings.includes('required')" class="setting-item">
               <el-form-item label="是否必填" prop="required">
                 <el-switch v-model="formData.required" active-color="var(--primary)" inactive-color="var(--border)" />
               </el-form-item>
             </div>
 
-            <div class="setting-item">
+            <div v-if="availableSettings.includes('secure')" class="setting-item">
               <el-form-item label="加密属性" prop="secure">
                 <el-switch v-model="formData.secure" active-color="var(--primary)" inactive-color="var(--border)" />
               </el-form-item>
             </div>
 
-            <div class="setting-item">
+            <div v-if="availableSettings.includes('link')" class="setting-item">
               <el-form-item label="是否外链" prop="link">
                 <el-switch v-model="formData.link" active-color="var(--primary)" inactive-color="var(--border)" />
               </el-form-item>
@@ -124,7 +132,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
 import { CreateAttributeApi, UpdateAttributeApi } from "@/api/attribute"
 import { Attribute, type createOrUpdateAttributeReq } from "@/api/attribute/types/attribute"
@@ -142,22 +150,30 @@ interface Props {
 
 const props = defineProps<Props>()
 const emits = defineEmits(["close", "getAttributesData"])
-const mapping = [
+const fieldTypeOptions = [
   {
     value: "string",
-    label: "字符串"
+    label: "字符串",
+    description: "单行文本输入",
+    icon: "Document"
   },
   {
     value: "multiline",
-    label: "多行文本"
+    label: "多行文本",
+    description: "多行文本输入",
+    icon: "Edit"
   },
   {
     value: "list",
-    label: "列表"
+    label: "列表",
+    description: "下拉选择列表",
+    icon: "List"
   },
   {
     value: "file",
-    label: "文件"
+    label: "文件",
+    description: "文件上传",
+    icon: "Folder"
   }
 ]
 
@@ -186,6 +202,39 @@ const changeText = (index: number) => {
   }
   formData.value.option.push(list.value[index].name)
 }
+
+// 获取字段类型对应的可用设置项
+const getAvailableSettings = (fieldType: string) => {
+  const settingsMap = {
+    string: ["required", "secure", "link"],
+    multiline: ["required", "secure"],
+    list: ["required"],
+    file: ["required"]
+  }
+  return settingsMap[fieldType as keyof typeof settingsMap] || []
+}
+
+// 重置不相关的设置项
+const resetUnrelatedSettings = (fieldType: string) => {
+  const availableSettings = getAvailableSettings(fieldType)
+
+  if (!availableSettings.includes("secure")) {
+    formData.value.secure = false
+  }
+  if (!availableSettings.includes("link")) {
+    formData.value.link = false
+  }
+}
+
+const selectFieldType = (fieldType: string) => {
+  formData.value.field_type = fieldType
+  resetUnrelatedSettings(fieldType)
+}
+
+// 当前可用的设置项
+const availableSettings = computed(() => {
+  return getAvailableSettings(formData.value.field_type)
+})
 
 const DEFAULT_FORM_DATA: createOrUpdateAttributeReq = {
   model_uid: props.modelUid,
@@ -363,6 +412,89 @@ defineExpose({
     }
   }
 
+  .field-type-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+    width: 100%;
+
+    .field-type-card {
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      width: 100%;
+      min-width: 0;
+
+      &:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        transform: translateY(-2px);
+      }
+
+      &.active {
+        border-color: #3b82f6;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+
+        .card-icon {
+          background: #3b82f6;
+          color: #ffffff;
+        }
+
+        .card-title {
+          color: #1e40af;
+          font-weight: 600;
+        }
+      }
+
+      .card-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: #f3f4f6;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+      }
+
+      .card-content {
+        flex: 1;
+        min-width: 0;
+        width: 100%;
+
+        .card-title {
+          font-size: 13px;
+          font-weight: 500;
+          color: #374151;
+          margin-bottom: 2px;
+          transition: all 0.2s ease;
+          word-break: break-word;
+        }
+
+        .card-description {
+          font-size: 11px;
+          color: #6b7280;
+          line-height: 1.3;
+          word-break: break-word;
+        }
+      }
+    }
+  }
+
   .settings-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -477,29 +609,6 @@ defineExpose({
       .chosen-item {
         box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
       }
-    }
-  }
-}
-
-:deep(.option-content .el-select) {
-  .option-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-
-    .option-label {
-      font-weight: 500;
-      color: #1f2937;
-    }
-
-    .option-value {
-      font-size: 12px;
-      color: #6b7280;
-      font-family: "Monaco", "Menlo", monospace;
-      background: #f3f4f6;
-      padding: 2px 6px;
-      border-radius: 3px;
     }
   }
 }
