@@ -20,12 +20,26 @@
         <el-row :gutter="16">
           <el-col :span="12" v-for="(item, index) of getNonFileFields(group.attributes || [])" :key="index">
             <div class="form-row">
-              <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
+              <el-form-item
+                :prop="'data.' + item.field_uid"
+                :label="item.field_name"
+                :class="['form-item', { 'secure-field': item.secure }]"
+              >
                 <template v-if="item.field_type === 'string'">
                   <el-input
+                    v-if="!item.secure"
                     v-model="formData.data[item.field_uid]"
                     :placeholder="handlerPlaceholder(item.field_name)"
                     clearable
+                  />
+                  <el-input
+                    v-else
+                    v-model="formData.data[item.field_uid]"
+                    :placeholder="isEditMode ? '不修改则保留原值' : handlerPlaceholder(item.field_name)"
+                    type="password"
+                    show-password
+                    clearable
+                    class="secure-input"
                   />
                 </template>
                 <template v-if="item.field_type === 'list'">
@@ -38,11 +52,15 @@
           </el-col>
         </el-row>
 
-        <!-- 多行文本字段 - 独占一行 -->
+        <!-- 多行文本字段 - 非加密，独占一行 -->
         <el-row :gutter="16">
-          <el-col :span="24" v-for="(item, index) of getMultilineFields(group.attributes || [])" :key="index">
+          <el-col :span="24" v-for="(item, index) of getNonSecureMultilineFields(group.attributes || [])" :key="index">
             <div class="form-row">
-              <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
+              <el-form-item
+                :prop="'data.' + item.field_uid"
+                :label="item.field_name"
+                :class="['form-item', { 'secure-field': item.secure }]"
+              >
                 <el-input
                   v-model="formData.data[item.field_uid]"
                   :autosize="{ minRows: 2, maxRows: 4 }"
@@ -54,11 +72,49 @@
           </el-col>
         </el-row>
 
+        <!-- 多行文本字段 - 加密，独占一行 -->
+        <el-row :gutter="16" v-if="getSecureMultilineFields(group.attributes || []).length > 0">
+          <el-col :span="24" v-for="(item, index) of getSecureMultilineFields(group.attributes || [])" :key="index">
+            <div class="form-row">
+              <el-form-item
+                :prop="'data.' + item.field_uid"
+                :label="item.field_name"
+                :class="['form-item', { 'secure-field': item.secure }]"
+              >
+                <div class="secure-textarea-wrapper">
+                  <el-input
+                    :model-value="
+                      showPassword[item.field_uid]
+                        ? formData.data[item.field_uid]
+                        : '●'.repeat(formData.data[item.field_uid]?.length || 0)
+                    "
+                    @input="handleSecureTextareaInput(item.field_uid, $event)"
+                    :autosize="{ minRows: 2, maxRows: 4 }"
+                    type="textarea"
+                    :placeholder="isEditMode ? '不修改则保留原值' : handlerPlaceholder(item.field_name)"
+                    class="secure-textarea"
+                  />
+                  <div class="password-toggle" @click="togglePassword(item.field_uid)">
+                    <el-icon>
+                      <View v-if="!showPassword[item.field_uid]" />
+                      <Hide v-else />
+                    </el-icon>
+                  </div>
+                </div>
+              </el-form-item>
+            </div>
+          </el-col>
+        </el-row>
+
         <!-- 文件上传字段 - 独占一行 -->
         <el-row :gutter="16">
           <el-col :span="24" v-for="(item, index) of getFileFields(group.attributes || [])" :key="index">
             <div class="form-row">
-              <el-form-item :prop="'data.' + item.field_uid" :label="item.field_name" class="form-item">
+              <el-form-item
+                :prop="'data.' + item.field_uid"
+                :label="item.field_name"
+                :class="['form-item', { 'secure-field': item.secure }]"
+              >
                 <FileUpload
                   v-model="formData.data[item.field_uid]"
                   :field-uid="item.field_uid"
@@ -82,7 +138,7 @@
 
 <script lang="ts" setup>
 import { ref, computed } from "vue"
-import { Setting } from "@element-plus/icons-vue"
+import { Setting, View, Hide } from "@element-plus/icons-vue"
 import FileUpload from "./components/FileUpload/index.vue"
 import { createResourceApi, updateResourceApi } from "@/api/resource"
 import { Resource, type CreateOrUpdateResourceReq } from "@/api/resource/types/resource"
@@ -107,6 +163,13 @@ const DEFAULT_FORM_DATA: CreateOrUpdateResourceReq = {
 
 const formRef = ref<FormInstance | null>(null)
 const formData = ref<CreateOrUpdateResourceReq>(cloneDeep(DEFAULT_FORM_DATA))
+
+// 密码显示状态管理
+const showPassword = ref<Record<string, boolean>>({})
+
+// 是否为编辑模式
+const isEditMode = ref(false)
+
 const formRules = computed<FormRules>(() => {
   const rules: FormRules = {}
   props.attributeFiledsData.forEach((field) => {
@@ -124,6 +187,37 @@ const formRules = computed<FormRules>(() => {
 
 const handlerPlaceholder = (name: string) => {
   return `请输入${name}`
+}
+
+// 切换密码显示状态
+const togglePassword = (fieldUid: string) => {
+  showPassword.value[fieldUid] = !showPassword.value[fieldUid]
+}
+
+// 处理加密多行文本输入
+const handleSecureTextareaInput = (fieldUid: string, value: string) => {
+  if (showPassword.value[fieldUid]) {
+    // 显示模式：直接更新数据
+    formData.value.data[fieldUid] = value
+  } else {
+    // 隐藏模式：需要特殊处理
+    const currentValue = formData.value.data[fieldUid] || ""
+    const currentLength = currentValue.length
+    const newLength = value.length
+
+    if (newLength > currentLength) {
+      // 添加字符：从末尾添加
+      const addedChars = value.slice(currentLength)
+      formData.value.data[fieldUid] = currentValue + addedChars
+    } else if (newLength < currentLength) {
+      // 删除字符：从末尾删除
+      const deleteCount = currentLength - newLength
+      formData.value.data[fieldUid] = currentValue.slice(0, -deleteCount)
+    } else {
+      // 长度相同：可能是替换，直接更新
+      formData.value.data[fieldUid] = value
+    }
+  }
 }
 
 // 文件上传事件处理
@@ -154,8 +248,12 @@ const getFileFields = (fields: Attribute[]) => {
   return fields.filter((item) => item.field_type === "file")
 }
 
-const getMultilineFields = (fields: Attribute[]) => {
-  return fields.filter((item) => item.field_type === "multiline")
+const getSecureMultilineFields = (fields: Attribute[]) => {
+  return fields.filter((item) => item.field_type === "multiline" && item.secure)
+}
+
+const getNonSecureMultilineFields = (fields: Attribute[]) => {
+  return fields.filter((item) => item.field_type === "multiline" && !item.secure)
 }
 
 /** 新增关联类型 */
@@ -174,6 +272,7 @@ const handleSubmit = () => {
 }
 
 const setForm = (row: Resource) => {
+  isEditMode.value = true
   formData.value = cloneDeep(row)
 }
 
@@ -182,6 +281,7 @@ const onClosed = () => {
 }
 
 const resetForm = () => {
+  isEditMode.value = false
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
 }
@@ -230,8 +330,28 @@ defineExpose({
         :deep(.el-form-item__label) {
           font-weight: 500;
           color: #374151;
-          margin-bottom: 6px;
           font-size: 13px;
+        }
+
+        // 安全字段标签样式
+        &.secure-field {
+          :deep(.el-form-item__label) {
+            position: relative;
+
+            &::after {
+              content: "加密";
+              display: inline-block;
+              margin-left: 8px;
+              padding: 2px 6px;
+              background-color: #fef3cd;
+              color: #b45309;
+              border: 1px solid #fbbf24;
+              border-radius: 4px;
+              font-size: 10px;
+              line-height: 1.2;
+              font-weight: 500;
+            }
+          }
         }
 
         :deep(.el-input) {
@@ -287,6 +407,45 @@ defineExpose({
             &:focus {
               border-color: #3b82f6;
               box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+          }
+        }
+
+        // 多行文本加密字段样式
+        .secure-textarea-wrapper {
+          position: relative;
+          width: 100%;
+
+          .secure-textarea {
+            width: 100%;
+
+            :deep(.el-textarea) {
+              width: 100%;
+
+              .el-textarea__inner {
+                // 为密码按钮预留空间
+                padding-right: 40px;
+                width: 100%;
+              }
+            }
+          }
+
+          // 密码切换按钮
+          .password-toggle {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            z-index: 10;
+            cursor: pointer;
+            color: #909399;
+            transition: color 0.2s ease;
+
+            &:hover {
+              color: #409eff;
+            }
+
+            .el-icon {
+              font-size: 16px;
             }
           }
         }
