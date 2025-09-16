@@ -259,13 +259,25 @@ const getNonSecureMultilineFields = (fields: Attribute[]) => {
 /** 新增关联类型 */
 const handleSubmit = () => {
   formRef.value?.validate((valid: boolean, fields) => {
-    if (!valid) return console.error("表单校验不通过", fields)
-    const api = formData.value.id === undefined ? createResourceApi : updateResourceApi
+    if (!valid) {
+      ElMessage.error("表单校验不通过，请检查必填项")
+      return console.error("表单校验不通过", fields)
+    }
+
+    const isEdit = formData.value.id !== undefined
+    const actionText = isEdit ? "修改" : "新增"
+
+    ElMessage.info(`正在${actionText}资产，请稍候...`)
+
+    const api = isEdit ? updateResourceApi : createResourceApi
     api(formData.value)
       .then(() => {
-        ElMessage.success("操作成功")
+        ElMessage.success(`${actionText}资产成功`)
         onClosed()
         emits("list")
+      })
+      .catch((error) => {
+        ElMessage.error(`${actionText}资产失败：${error.message || "未知错误"}`)
       })
       .finally(() => {})
   })

@@ -291,11 +291,13 @@ const handleCopySecureContent = (content: string, rowId: number) => {
 
 const apiRef = ref<InstanceType<typeof Form>>()
 const handlerCreate = () => {
+  ElMessage.info("准备新增资产，请填写相关信息")
   title.value = "新增资产"
   drawerVisible.value = true
 }
 
 const handleUpdate = (row: Resource) => {
+  ElMessage.info(`准备修改资产：${row.name}`)
   title.value = "修改资产"
 
   drawerVisible.value = true
