@@ -1,5 +1,5 @@
 <template>
-  <PageContainer>
+  <div class="app-container">
     <ManagerHeader title="排班详情" subtitle="查看和管理排班规则及日程安排" :show-back-button="true" @back="goBack">
       <template #actions>
         <el-button type="primary" :icon="Plus" @click="addShifSchedulingRule" class="action-btn"> 新增规则 </el-button>
@@ -44,7 +44,7 @@
           </div>
         </template>
         <div class="calendar-container">
-          <FullCalendar ref="calendarRef" class="demo-app-calendar" :options="calendarOptions">
+          <FullCalendar ref="calendarRef" class="app-calendar" :options="calendarOptions">
             <template v-slot:eventContent="arg">
               <div class="event-content">
                 <span class="event-time">{{ arg.timeText }}</span>
@@ -99,7 +99,7 @@
     >
       <AdjustmentRule ref="adjustmentRuleRef" @closed="onAdjustmentRuleClosed" @callback="preview" />
     </FormDialog>
-  </PageContainer>
+  </div>
 </template>
 
 <script lang="ts" setup>
@@ -129,7 +129,6 @@ import { formatDate, formatTimestamp } from "@/common/utils/day"
 import { isEqual } from "lodash-es"
 import { useAppStore } from "@/pinia/stores/app"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
-import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 const appStore = useAppStore()
@@ -461,18 +460,25 @@ watch(
 </script>
 
 <style lang="scss" scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: calc(1rem + 0.4vw);
+}
+
 .detail-content {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 8rem);
-  overflow: hidden;
+  flex: 1;
+  gap: calc(0.9rem + 0.2vw);
 }
 
 .schedule-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: calc(1rem + 0.4vw);
-  margin-bottom: calc(0.9rem + 0.2vw);
   flex-shrink: 0;
 }
 
@@ -482,11 +488,10 @@ watch(
 
 .calendar-card {
   flex: 1;
-  min-height: 0;
+  min-height: 500px; /* 适中的最小高度 */
   border-radius: calc(0.5rem + 0.1vw);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 
   :deep(.el-card__header) {
     padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);
@@ -498,7 +503,6 @@ watch(
     padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);
     flex: 1;
     min-height: 0;
-    overflow: hidden;
   }
 }
 
@@ -531,28 +535,7 @@ watch(
   height: 100%;
   min-height: 0;
   border-radius: calc(0.375rem + 0.05vw);
-  overflow: auto;
   flex: 1;
-
-  /* 自定义滚动条样式 */
-  &::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: var(--el-fill-color-lighter);
-    border-radius: 3px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--el-fill-color-dark);
-    border-radius: 3px;
-
-    &:hover {
-      background: var(--el-fill-color-darker);
-    }
-  }
 }
 
 .fc {

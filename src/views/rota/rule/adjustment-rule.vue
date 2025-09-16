@@ -31,7 +31,7 @@
       <div>
         <div class="group-header">
           <span>班排人员</span>
-          <UserPopover :add-rota-group="addRotaGroup" />
+          <el-button type="primary" :icon="Plus" @click="addMember" class="add-member-btn"> 添加成员 </el-button>
         </div>
         <div>
           <VueDraggable
@@ -64,6 +64,9 @@
       </div>
       <el-divider style="margin-bottom: 10px" />
     </el-form>
+
+    <!-- 用户选择器 -->
+    <UserPopover ref="userPopoverRef" :add-rota-group="addRotaGroup" :existing-users="existingUsers" />
   </div>
 </template>
 
@@ -72,17 +75,32 @@ import { addOrUpdateAdjustmentRuleReq, rotaGroup } from "@/api/rota/types/rota"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { user as userInfo } from "@/api/user/types/user"
 import UserPopover from "../components/userPopover.vue"
 import { addShifAdjustmentRuleApi, updateShifAdjustmentRuleApi } from "@/api/rota"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
+import { Plus, Close } from "@element-plus/icons-vue"
 const userToolsStore = useUserToolsStore()
 
 const emits = defineEmits(["closed", "callback"])
 
+// 用户选择器引用
+const userPopoverRef = ref()
+
+// 已存在的用户列表
+const existingUsers = computed(() => {
+  return formData.value.rota_rule.rota_group.members
+})
+
 const getUserByUsername = (username: string) => {
   return userToolsStore.getUsername(username)
+}
+
+// 添加成员按钮点击事件
+const addMember = (event: Event) => {
+  const buttonElement = event.target as HTMLElement
+  userPopoverRef.value?.show(buttonElement)
 }
 
 // 添加用户并创建新组
@@ -256,6 +274,12 @@ defineExpose({
   justify-items: center;
   align-items: center;
   margin-bottom: 10px;
+}
+
+.add-member-btn {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 14px;
 }
 .empty-group {
   padding: 10px;

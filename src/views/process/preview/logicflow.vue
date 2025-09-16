@@ -153,7 +153,6 @@ const registerNode = () => {
 }
 
 onMounted(() => {
-  console.log(window.__DATA__)
   if (window.__DATA__) {
     initLf(window.__DATA__)
   } else {
