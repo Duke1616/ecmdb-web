@@ -1,54 +1,49 @@
 import { type Router, type RouteRecordNormalized, type RouteRecordRaw, createRouter } from "vue-router"
 import { cloneDeep, omit } from "lodash-es"
-import { menu } from "@/api/menu/types/menu"
+import { menu, meta } from "@/api/menu/types/menu"
 import { routerConfig } from "@/router/config"
 
 const Layouts = import.meta.glob("../layouts/index.vue")
 const modules = import.meta.glob("../views/**/*.vue")
 
-/** 将获取的后端路由数据格式调整成前端格式 */
-export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
-  return backendRoutes.map((route): RouteRecordRaw => {
-    // 定义一个 dd空的 RouteRecordRaw 对象
-    let tmpRouteItem: RouteRecordRaw = {} as RouteRecordRaw
+// 公共的 meta 转换函数
+const transformMeta = (meta: meta) => ({
+  title: meta.title,
+  svgIcon: meta.icon,
+  affix: meta.is_affix,
+  hidden: meta.is_hidden,
+  keepAlive: meta.is_keepalive,
+  buttons: meta.buttons,
+  platforms: meta.platforms
+})
 
-    // console.log(backendRoutes, route)
-    // 如果有子路由，则递归调用此函数将其也转化为前端格式
+/** 将后端路由数据转为前端格式 */
+export const transformDynamicRoutes = (backendRoutes: menu[] = []): RouteRecordRaw[] => {
+  return backendRoutes.map((route): RouteRecordRaw => {
+    // layout 类型（目录）
     if (route.children && route.type === 1) {
-      tmpRouteItem = {
+      return {
         path: route.path,
         component: Layouts["../layouts/index.vue"],
         name: route.name,
         redirect: route.redirect,
-        meta: {
-          title: route.meta.title,
-          svgIcon: route.meta.icon,
-          affix: route.meta.is_affix,
-          hidden: route.meta.is_hidden,
-          buttons: route.meta.buttons,
-          // 将后端的 platform 字符串转换为前端的 platforms 数组
-          platforms: route.meta.platforms
-        },
+        meta: transformMeta(route.meta),
         children: transformDynamicRoutes(route.children)
       }
-    } else {
-      tmpRouteItem = {
-        path: route.path,
-        component: modules[`..${route.component}`],
-        name: route.name,
-        meta: {
-          title: route.meta.title,
-          affix: route.meta.is_affix,
-          svgIcon: route.meta.icon,
-          hidden: route.meta.is_hidden,
-          keepAlive: route.meta.is_keepalive,
-          buttons: route.meta.buttons,
-          // 将后端的 platform 字符串转换为前端的 platforms 数组
-          platforms: route.meta.platforms
-        }
-      }
     }
-    return tmpRouteItem
+
+    // 普通页面
+    const component = modules[`..${route.component}`]
+    if (!component) {
+      console.warn(`未找到组件路径: ${route.component}`)
+    }
+
+    return {
+      path: route.path,
+      component: component,
+      name: route.name,
+      meta: transformMeta(route.meta)
+    }
   })
 }
 
