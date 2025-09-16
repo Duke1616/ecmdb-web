@@ -1,13 +1,7 @@
-import {
-  type Router,
-  type RouteRecordNormalized,
-  type RouteRecordRaw,
-  createRouter,
-  createWebHashHistory,
-  createWebHistory
-} from "vue-router"
+import { type Router, type RouteRecordNormalized, type RouteRecordRaw, createRouter } from "vue-router"
 import { cloneDeep, omit } from "lodash-es"
 import { menu } from "@/api/menu/types/menu"
+import { routerConfig } from "@/router/config"
 
 const Layouts = import.meta.glob("../layouts/index.vue")
 const modules = import.meta.glob("../views/**/*.vue")
@@ -58,12 +52,6 @@ export const transformDynamicRoutes = (backendRoutes: menu[] | []) => {
   })
 }
 
-/** 路由模式 */
-export const history =
-  import.meta.env.VITE_ROUTER_HISTORY === "hash"
-    ? createWebHashHistory(import.meta.env.VITE_PUBLIC_PATH)
-    : createWebHistory(import.meta.env.VITE_PUBLIC_PATH)
-
 /** 路由降级（把三级及其以上的路由转化为二级路由） */
 export const flatMultiLevelRoutes = (routes: RouteRecordRaw[]) => {
   const routesMirror = cloneDeep(routes)
@@ -88,7 +76,7 @@ const isMultipleRoute = (route: RouteRecordRaw) => {
 const promoteRouteLevel = (route: RouteRecordRaw) => {
   // 创建 router 实例是为了获取到当前传入的 route 的所有路由信息
   let router: Router | null = createRouter({
-    history,
+    history: routerConfig.history,
     routes: [route]
   })
   const routes = router.getRoutes()

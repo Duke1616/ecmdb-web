@@ -4,7 +4,7 @@ import App from "@/App.vue"
 import pinia from "@/pinia"
 import router from "@/router"
 
-import "@/router/permission"
+import "@/router/guard"
 // load
 import { installPlugins } from "@/plugins"
 import { loadDirectives } from "@/directives"

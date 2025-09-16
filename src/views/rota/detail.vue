@@ -492,6 +492,7 @@ watch(
   border-radius: calc(0.5rem + 0.1vw);
   display: flex;
   flex-direction: column;
+  margin-bottom: calc(1rem + 0.1vw);
 
   :deep(.el-card__header) {
     padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);

@@ -369,7 +369,6 @@ useModelData()
   align-content: start;
 }
 
-
 .model-card-wrapper {
   cursor: pointer;
   transition: all 0.3s ease;
