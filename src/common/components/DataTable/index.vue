@@ -423,10 +423,7 @@ const handleCurrentChange = (page: number) => {
   :deep(.el-table__body tr:hover td:last-child) {
     background-color: #f5f7fa !important;
   }
-
-
 }
-
 
 .action-buttons {
   display: flex;
