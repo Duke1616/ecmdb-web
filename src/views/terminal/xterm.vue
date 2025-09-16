@@ -55,8 +55,9 @@ const initXterm = () => {
   xterm.value.focus()
 
   socket.value = new WebSocket(
-    `${props.prefix?.wsServer}/api/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
+    `${props.prefix?.wsServer}/api/cmdb/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
   )
+
   socketOnClose()
   socketOnOpen()
   socketOnMessage()

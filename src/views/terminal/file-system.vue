@@ -39,7 +39,7 @@ interface RequestConfig {
 
 const request = {
   // baseUrl: `http://127.0.0.1:8005`,
-  baseUrl: `${props.prefix?.prefix}/api/finder/index`,
+  baseUrl: `${props.prefix?.prefix}/api/cmdb/finder/index`,
   params: { id: Number(props.resource_id) },
   transformRequest: (req: RequestConfig) => {
     switch (req.params.q) {
