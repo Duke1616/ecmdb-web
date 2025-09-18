@@ -197,6 +197,10 @@ const attrFieldVisible = ref<boolean>(false)
 function handleAddAttr(group_id: number) {
   attrFieldVisible.value = true
   groupId.value = group_id
+  // 重置表单数据
+  nextTick(() => {
+    apiFieldRef.value?.resetForm()
+  })
 }
 
 function handleUpdateAttr(group_id: number, row: Attribute) {
@@ -211,6 +215,12 @@ function handleUpdateAttr(group_id: number, row: Attribute) {
 
 const onClosed = (val: boolean) => {
   attrFieldVisible.value = val
+  // 关闭弹窗时重置表单数据
+  if (!val) {
+    nextTick(() => {
+      apiFieldRef.value?.resetForm()
+    })
+  }
 }
 
 //** 属性表格展示排序 */

@@ -53,7 +53,8 @@ export interface createOrUpdateUserReq {
   display_name: string
   title?: string
   email?: string
-  role_codes?: string[]
+  password?: string
+  re_password?: string
   feishu_info: feishuInfo
   wechat_info: wechatInfo
 }

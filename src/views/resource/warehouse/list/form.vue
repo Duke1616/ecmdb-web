@@ -269,8 +269,14 @@ const handleSubmit = () => {
 
     ElMessage.info(`正在${actionText}资产，请稍候...`)
 
+    // 确保包含 model_uid 参数
+    const submitData = {
+      ...formData.value,
+      model_uid: props.modelUid
+    }
+
     const api = isEdit ? updateResourceApi : createResourceApi
-    api(formData.value)
+    api(submitData)
       .then(() => {
         ElMessage.success(`${actionText}资产成功`)
         onClosed()

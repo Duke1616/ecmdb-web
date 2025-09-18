@@ -45,6 +45,30 @@
           />
         </el-form-item>
 
+        <el-form-item prop="password" label="用户密码" class="form-item required" v-if="!formData.id">
+          <el-input
+            v-model="formData.password"
+            type="password"
+            placeholder="请输入密码"
+            show-password
+            clearable
+            :prefix-icon="Lock"
+            class="form-input"
+          />
+        </el-form-item>
+
+        <el-form-item prop="re_password" label="确认密码" class="form-item required" v-if="!formData.id">
+          <el-input
+            v-model="formData.re_password"
+            type="password"
+            placeholder="请再次输入密码"
+            show-password
+            clearable
+            :prefix-icon="Lock"
+            class="form-input"
+          />
+        </el-form-item>
+
         <el-form-item prop="department" label="所属部门" class="form-item">
           <el-tree-select
             v-model="formData.department_id"
@@ -106,10 +130,11 @@ import {
   InfoFilled,
   Setting,
   ChatDotRound,
-  ChatDotSquare
+  ChatDotSquare,
+  Lock
 } from "@element-plus/icons-vue"
 import { createOrUpdateUserReq, feishuInfo, user, wechatInfo } from "@/api/user/types/user"
-import { updateUserApi, syncLdapUserApi } from "@/api/user"
+import { updateUserApi, registerSystemUserApi } from "@/api/user"
 import { listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
 import { user as syncUser } from "@/api/user/types/ldap"
@@ -125,6 +150,8 @@ const WechatInfo: wechatInfo = {}
 const DEFAULT_FORM_DATA: createOrUpdateUserReq = {
   username: "",
   display_name: "",
+  password: "",
+  re_password: "",
   feishu_info: FeishuInfo,
   wechat_info: WechatInfo
 }
@@ -139,13 +166,30 @@ const formData = ref<createOrUpdateUserReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   display_name: [{ required: true, message: "必须输入用户展示名称", trigger: "blur" }],
-  username: [{ required: true, message: "必须输入用户名称（唯一值）", trigger: "blur" }]
+  username: [{ required: true, message: "必须输入用户名称（唯一值）", trigger: "blur" }],
+  password: [
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 6, message: "密码长度不能少于6位", trigger: "blur" }
+  ],
+  re_password: [
+    { required: true, message: "请确认密码", trigger: "blur" },
+    {
+      validator: (rule: any, value: any, callback: any) => {
+        if (value && formData.value.password && value !== formData.value.password) {
+          callback(new Error("两次输入的密码不一致"))
+        } else {
+          callback()
+        }
+      },
+      trigger: "blur"
+    }
+  ]
 }
 
 const submitForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    const api = formData.value.id === undefined ? syncLdapUserApi : updateUserApi
+    const api = formData.value.id === undefined ? registerSystemUserApi : updateUserApi
     api(formData.value)
       .then(() => {
         onClosed()
@@ -185,6 +229,8 @@ const setFrom = (row: user) => {
 const setSyncForm = (row: syncUser) => {
   formData.value = {
     ...cloneDeep(row),
+    password: "",
+    re_password: "",
     feishu_info: {},
     wechat_info: {}
   }
@@ -210,7 +256,7 @@ defineExpose({
 .user-form-container {
   padding: 0;
   background: transparent;
-  max-height: 80vh;
+  max-height: 70vh;
   overflow-y: auto;
 }
 
@@ -339,25 +385,4 @@ defineExpose({
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .user-form-container {
-    padding: 0;
-  }
-
-  .user-form {
-    .form-section {
-      margin-bottom: 24px;
-
-      .section-title {
-        padding: 10px 12px;
-        margin-bottom: 16px;
-
-        span {
-          font-size: 13px;
-        }
-      }
-    }
-  }
-}
 </style>

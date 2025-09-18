@@ -111,6 +111,15 @@ export function refreshCacheLdapApi() {
   })
 }
 
+
+/** 同步 LDAP 用户 */
+export function registerSystemUserApi(data: user.createOrUpdateUserReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/user/register`,
+    data: data
+  })
+}
+
 /** 同步 LDAP 用户 */
 export function syncLdapUserApi(data: user.createOrUpdateUserReq) {
   return instance.post<number>({

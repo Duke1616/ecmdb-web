@@ -321,7 +321,6 @@ const handleOperateEvent = (row: Resource, action: string) => {
 }
 
 const onClosed = () => {
-  console.log("onClosed")
   apiRef.value?.resetForm()
   drawerVisible.value = false
 }

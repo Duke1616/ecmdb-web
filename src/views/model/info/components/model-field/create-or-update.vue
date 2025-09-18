@@ -137,7 +137,7 @@ import { VueDraggable } from "vue-draggable-plus"
 import { CreateAttributeApi, UpdateAttributeApi } from "@/api/attribute"
 import { Attribute, type createOrUpdateAttributeReq } from "@/api/attribute/types/attribute"
 import { cloneDeep } from "lodash-es"
-import { ElMessage, FormInstance, FormRules } from "element-plus"
+import { ElMessage, ElMessageBox, FormInstance, FormRules } from "element-plus"
 import { Setting } from "@element-plus/icons-vue"
 import { v4 as uuidv4 } from "uuid"
 import { Minus, Plus, Grid } from "@element-plus/icons-vue"
@@ -249,6 +249,7 @@ const DEFAULT_FORM_DATA: createOrUpdateAttributeReq = {
 }
 
 const formData = ref<createOrUpdateAttributeReq>(cloneDeep(DEFAULT_FORM_DATA))
+const originalFormData = ref<createOrUpdateAttributeReq | null>(null)
 const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
   field_uid: [
@@ -263,36 +264,78 @@ const fieldRules: FormRules = {
   field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
 }
 
-const handlerCreateOrUpdateAttribute = () => {
-  return new Promise((resolve, reject) => {
-    formRef.value?.validate((valid: boolean, fields: any) => {
-      if (!valid) {
-        console.error("表单校验不通过", fields)
-        reject(false)
-        return
-      }
-      const api = formData.value.id === undefined ? CreateAttributeApi : UpdateAttributeApi
-      api(formData.value)
-        .then(() => {
-          ElMessage.success("保存成功")
-          emits("getAttributesData")
-          resolve(true)
-        })
-        .catch((error) => {
-          console.log("catch", error)
-          reject(false)
-        })
+/** 检测安全字段是否被修改 */
+const hasSecureFieldChanges = () => {
+  if (!originalFormData.value) return false
+
+  // 检查 secure 字段是否被修改
+  return formData.value.secure !== originalFormData.value.secure
+}
+
+/** 显示安全字段修改确认弹窗 */
+const showSecureFieldWarning = () => {
+  return ElMessageBox.confirm(
+    "检测到您修改了字段的加密属性，这会影响该字段在资源管理中的显示和存储方式。\n\n请确认是否继续保存？",
+    "字段加密属性修改提醒",
+    {
+      confirmButtonText: "确认保存",
+      cancelButtonText: "取消",
+      type: "warning",
+      dangerouslyUseHTMLString: false,
+      customClass: "secure-field-warning-dialog"
+    }
+  )
+}
+
+const handlerCreateOrUpdateAttribute = async () => {
+  try {
+    // 表单验证
+    const isValid = await new Promise<boolean>((resolve) => {
+      formRef.value?.validate((valid: boolean) => {
+        resolve(valid)
+      })
     })
-  })
+
+    if (!isValid) {
+      ElMessage.error("表单校验不通过，请检查必填项")
+      return false
+    }
+
+    const isEdit = formData.value.id !== undefined
+
+    // 如果是修改模式且包含安全字段修改，显示确认弹窗
+    if (isEdit && hasSecureFieldChanges()) {
+      try {
+        await showSecureFieldWarning()
+      } catch {
+        // 用户取消操作
+        return false
+      }
+    }
+
+    // 调用 API
+    const api = isEdit ? UpdateAttributeApi : CreateAttributeApi
+    await api(formData.value)
+
+    ElMessage.success("保存成功")
+    emits("getAttributesData")
+    return true
+  } catch (error) {
+    console.error("保存失败:", error)
+    ElMessage.error("保存失败，请重试")
+    return false
+  }
 }
 
 const resetForm = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  originalFormData.value = null // 清空原始数据
 }
 
 const setFrom = (row: Attribute) => {
   formData.value = cloneDeep(row)
+  originalFormData.value = cloneDeep(row) // 保存原始数据用于比较
   if (!Array.isArray(row.option)) return
 
   list.value = []
@@ -608,6 +651,31 @@ defineExpose({
 
       .chosen-item {
         box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+      }
+    }
+  }
+}
+
+// 安全字段警告弹窗样式
+:deep(.secure-field-warning-dialog) {
+  .el-message-box__title {
+    color: #e6a23c;
+    font-weight: 600;
+  }
+
+  .el-message-box__content {
+    color: #606266;
+    line-height: 1.6;
+  }
+
+  .el-message-box__btns {
+    .el-button--primary {
+      background-color: #e6a23c;
+      border-color: #e6a23c;
+
+      &:hover {
+        background-color: #d4a574;
+        border-color: #d4a574;
       }
     }
   }
