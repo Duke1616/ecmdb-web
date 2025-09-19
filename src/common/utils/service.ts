@@ -1,4 +1,4 @@
-import { setToken } from "@@/utils/cache/cookies"
+import { useUserStore } from "@/pinia/stores/user"
 import HyRequest from "@@/utils/request"
 
 export type ApiService = keyof typeof API_SERVICE
@@ -10,18 +10,13 @@ export const API_SERVICE = {
 const instance = new HyRequest({
   baseURL: import.meta.env.VITE_BASE_API,
   timeout: 5000,
+  withCredentials: true,
   interceptors: {
-    // requestInterceptor: (config) => {
-    //   const token = localCache.getCache("access_token")
-    //   if (config.headers && token) {
-    //     config.headers.Authorization = "Bearer " + localCache.getCache("access_token")
-    //   }
-    //   return config
-    // }
     responseInterceptor: (response) => {
-      const token = response.headers?.["x-access-token"] || response.headers?.["X-Access-Token"]
+      const userStore = useUserStore()
+      const token = response.headers?.["x-access-token"]
       if (token) {
-        setToken(token)
+        userStore.setToken(token)
       }
       return response
     }

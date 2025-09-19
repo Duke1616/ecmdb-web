@@ -228,7 +228,7 @@ import { InfoFilled, Setting, Connection, Plus } from "@element-plus/icons-vue"
 import Api from "./api.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
-import { getPlatformsForMenu, getPlatformName } from "@/common/constants/platforms"
+import { getPlatformsForMenu } from "@/common/constants/platforms"
 
 const apiRef = ref<InstanceType<typeof Api>>()
 const defaultProps = ref<any>({

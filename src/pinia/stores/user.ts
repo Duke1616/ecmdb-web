@@ -6,9 +6,10 @@ import { useSettingsStore } from "./settings"
 import { resetRouter } from "@/router"
 import { getUserInfoApi } from "@/api/user"
 import { usePermissionStoreHook } from "./permission"
-import { removeToken } from "@@/utils/cache/cookies"
+import { removeToken, getToken, setToken as _setToken } from "@@/utils/cache/cookies"
 
 export const useUserStore = defineStore("user", () => {
+  const token = ref<string>("")
   const roles = ref<string[]>([])
   const username = ref<string>("")
   const userId = ref<number>(0)
@@ -26,12 +27,32 @@ export const useUserStore = defineStore("user", () => {
     // roles.value = data.role_codes?.length > 0 ? data.role_codes : routeSettings.defaultRoles
   }
 
+  // 设置 Token
+  const setToken = (value: string) => {
+    // 如果已经拥有了 token，则覆盖一下数据
+    if (getToken() !== "") {
+      _setToken(value)
+      token.value = value
+      return
+    }
+
+    // 如果 token 未改变，则不进行任何操作
+    if (token.value === value) {
+      return
+    }
+
+    // 设置token
+    _setToken(value)
+    token.value = value
+  }
+
   /** 模拟角色变化 */
   const changeRoles = async (role: string) => {
     console.log(role)
     // 用刷新页面代替重新登录
     window.location.reload()
   }
+
   /** 登出 */
   const logout = () => {
     removeToken()
@@ -39,6 +60,7 @@ export const useUserStore = defineStore("user", () => {
     resetRouter()
     _resetTagsView()
   }
+
   /** 重置 Token */
   const resetToken = () => {
     removeToken()
@@ -53,7 +75,7 @@ export const useUserStore = defineStore("user", () => {
     }
   }
 
-  return { roles, username, userId, getInfo, changeRoles, logout, resetToken }
+  return { roles, username, userId, setToken, getInfo, changeRoles, logout, resetToken }
 })
 
 /** 在 setup 外使用 */
