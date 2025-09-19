@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.6.1](https://github.com/Duke1616/ecmdb-web/releases/tag/v1.6.1) - 2025-09-18
+
+- [`ee488c3`](https://github.com/Duke1616/ecmdb-web/commit/ee488c3190e424cfec8e95e525d285c99ae3829d) chore: 优化部分消息提示，用户页面添加密码选项
+- [`f9c778a`](https://github.com/Duke1616/ecmdb-web/commit/f9c778ad65d28fb3b43bb540672acbea41f13373) chore: 优化新增资产 form 表单提示
+- [`efd0a0e`](https://github.com/Duke1616/ecmdb-web/commit/efd0a0e35353a0e89d90a7d28ad4f0866491a1f5) chore: 优化创建模型字段类型
+- [`405bf62`](https://github.com/Duke1616/ecmdb-web/commit/405bf626867f0c6a9bf5a272c8dcc685a3fcf8a5) chore: 优化加密字段处理、term 页面 UI
+- [`99963ca`](https://github.com/Duke1616/ecmdb-web/commit/99963ca4d4c94eea1723369aea53e424b9f986ae) fix: term 连接失败，因为路由发生改变
+- [`85a2b02`](https://github.com/Duke1616/ecmdb-web/commit/85a2b029d84480fef23b7d132da14a141f4d7853) chore: transformDynamicRoutes 函数优化
+- [`f8d4789`](https://github.com/Duke1616/ecmdb-web/commit/f8d4789f13d4f4f8fc62a22155d680657c452680) chore: 路由文件重新组织
+- [`f1e4cb4`](https://github.com/Duke1616/ecmdb-web/commit/f1e4cb47795d2306cb6147033cc1cbc030e589a8) chore: 排班日历页面进行优化，滚轮移动到外侧
+- [`75b691b`](https://github.com/Duke1616/ecmdb-web/commit/75b691bdfc732abab70b9124327a0f42063e881f) chore: 修改获取进度图方式，代码更严谨
+
 ## [v1.6.0](https://github.com/Duke1616/ecmdb-web/releases/tag/v1.6.0) - 2025-09-15
 
 - [`608babd`](https://github.com/Duke1616/ecmdb-web/commit/608babd7c09f71dead75a6a3cde24084827750f4) fix: 修复操作列颜色不一致
