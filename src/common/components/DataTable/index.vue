@@ -180,7 +180,14 @@ const emit = defineEmits<{
 
 // 获取列值
 const getColumnValue = (row: any, column: Column) => {
-  const value = row[column.prop]
+  // 支持嵌套属性访问，如 "http.url"
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split('.').reduce((current, key) => {
+      return current && current[key] !== undefined ? current[key] : ''
+    }, obj)
+  }
+  
+  const value = getNestedValue(row, column.prop)
   return column.formatter ? column.formatter(row, column, value) : value
 }
 

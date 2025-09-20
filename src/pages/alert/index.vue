@@ -64,6 +64,14 @@
             </div>
           </div>
 
+          <div class="feature-item" @click="goToDatasource">
+            <el-icon class="feature-icon"><Connection /></el-icon>
+            <div class="feature-content">
+              <h3>数据源管理</h3>
+              <p>管理 Prometheus、VictoriaMetrics、Loki 等数据源</p>
+            </div>
+          </div>
+
           <div class="feature-item">
             <el-icon class="feature-icon"><Setting /></el-icon>
             <div class="feature-content">
@@ -104,7 +112,8 @@ import {
   Tools,
   Setting,
   InfoFilled,
-  ArrowLeft
+  ArrowLeft,
+  Connection
 } from "@element-plus/icons-vue"
 import { useRouter } from "vue-router"
 
@@ -112,6 +121,10 @@ const router = useRouter()
 
 const goToNavigation = () => {
   router.push("/navigation")
+}
+
+const goToDatasource = () => {
+  router.push("/alert/datasource")
 }
 </script>
 

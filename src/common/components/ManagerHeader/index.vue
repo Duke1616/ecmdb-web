@@ -1,5 +1,5 @@
 <template>
-  <div class="manager-header">
+  <div class="manager-header" :class="{ 'sticky-header': sticky }">
     <div class="header-left" :class="{ 'has-back-button': showBackButton }">
       <div class="title-section">
         <button v-if="showBackButton" @click="$emit('back')" class="back-button">
@@ -51,13 +51,15 @@ interface Props {
   showAddButton?: boolean
   showRefreshButton?: boolean
   showBackButton?: boolean
+  sticky?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
   addButtonText: "新增",
   showAddButton: true,
   showRefreshButton: true,
-  showBackButton: false
+  showBackButton: false,
+  sticky: false
 })
 
 defineEmits<{
@@ -89,6 +91,21 @@ defineEmits<{
     box-shadow:
       0 10px 15px -3px rgba(0, 0, 0, 0.1),
       0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  /* 固定头部样式 */
+  &.sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    margin-bottom: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    // margin-left: calc(1rem + 0.4vw);
+    // margin-right: calc(1rem + 0.4vw);
+    // border-radius: calc(0.6rem + 0.1vw);
   }
 }
 

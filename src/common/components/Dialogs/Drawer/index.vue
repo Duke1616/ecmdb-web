@@ -139,8 +139,9 @@ const handleConfirm = () => {
     justify-content: flex-start;
     background: #fafafa;
     border-bottom: 1px solid #e4e7ed;
-    margin-bottom: calc(-1.6rem + 0.2vw);
+    margin-bottom: calc(-2.2rem + 0.2vw);
     text-align: left;
+
 
     .header-left {
       display: flex;
@@ -228,7 +229,6 @@ const handleConfirm = () => {
 
   .drawer-footer {
     padding: calc(1rem + 0.4vw) calc(1.2rem + 0.5vw);
-    background: #f8fafc;
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
