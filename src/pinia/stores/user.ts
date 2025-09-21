@@ -29,12 +29,12 @@ export const useUserStore = defineStore("user", () => {
 
   // 设置 Token
   const setToken = (value: string) => {
-    // 如果已经拥有了 token，则覆盖一下数据
-    if (getToken() !== "") {
-      _setToken(value)
+    if (getToken() !== undefined ) {
       token.value = value
       return
     }
+
+    console.log("设置 token")
 
     // 如果 token 未改变，则不进行任何操作
     if (token.value === value) {

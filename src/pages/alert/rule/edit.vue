@@ -23,52 +23,29 @@
       <div class="scrollable-content">
         <!-- 表单内容 -->
         <div class="rule-form-container">
-          <el-form
-            ref="formRef"
-            :model="formData"
-            :rules="formRules"
-            label-width="120px"
-            size="large"
-          >
+          <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" size="large">
             <!-- 基本信息 -->
             <div class="form-section">
               <h3 class="section-title">基本信息</h3>
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="规则名称" prop="name">
-                    <el-input
-                      v-model="formData.name"
-                      placeholder="请输入规则名称"
-                      clearable
-                    />
+                    <el-input v-model="formData.name" placeholder="请输入规则名称" clearable />
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="规则组" prop="group_id">
-                    <el-select
-                      v-model="formData.group_id"
-                      placeholder="请选择规则组"
-                      style="width: 100%"
-                    >
-                      <el-option
-                        v-for="group in ruleGroups"
-                        :key="group.id"
-                        :label="group.name"
-                        :value="group.id"
-                      />
+                    <el-select v-model="formData.group_id" placeholder="请选择规则组" style="width: 100%">
+                      <el-option v-for="group in ruleGroups" :key="group.id" :label="group.name" :value="group.id" />
                     </el-select>
                   </el-form-item>
                 </el-col>
               </el-row>
-              
+
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item label="告警级别" prop="level">
-                    <el-select
-                      v-model="formData.level"
-                      placeholder="请选择告警级别"
-                      style="width: 100%"
-                    >
+                    <el-select v-model="formData.level" placeholder="请选择告警级别" style="width: 100%">
                       <el-option
                         v-for="option in ALERT_LEVEL_OPTIONS"
                         :key="option.value"
@@ -80,11 +57,7 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item label="检测频率" prop="eval_interval">
-                    <el-select
-                      v-model="formData.eval_interval"
-                      placeholder="请选择检测频率"
-                      style="width: 100%"
-                    >
+                    <el-select v-model="formData.eval_interval" placeholder="请选择检测频率" style="width: 100%">
                       <el-option
                         v-for="option in EVAL_INTERVAL_OPTIONS"
                         :key="option.value"
@@ -151,14 +124,9 @@
             <div class="form-section">
               <h3 class="section-title">规则配置</h3>
               <el-form-item label="PromQL查询" prop="prom_ql">
-                <el-input
-                  v-model="formData.prom_ql"
-                  type="textarea"
-                  :rows="4"
-                  placeholder="请输入PromQL查询语句"
-                />
+                <el-input v-model="formData.prom_ql" type="textarea" :rows="4" placeholder="请输入PromQL查询语句" />
               </el-form-item>
-              
+
               <el-form-item label="外部标签" prop="external_labels">
                 <el-input
                   v-model="externalLabelsInput"
@@ -174,11 +142,7 @@
             <div class="form-section">
               <h3 class="section-title">状态配置</h3>
               <el-form-item label="启用状态" prop="enabled">
-                <el-switch
-                  v-model="formData.enabled"
-                  active-text="启用"
-                  inactive-text="禁用"
-                />
+                <el-switch v-model="formData.enabled" active-text="启用" inactive-text="禁用" />
               </el-form-item>
             </div>
           </el-form>
@@ -189,21 +153,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from "vue"
+import { ref, reactive, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Check } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
-import { 
-  getRuleApi,
-  updateRuleApi,
-  listRuleGroupsApi
-} from "@/api/alert/rule"
-import { 
-  listDataSourceByTypeApi
-} from "@/api/alert/datasource"
-import { 
+import { getRuleApi, updateRuleApi, listRuleGroupsApi } from "@/api/alert/rule"
+import { listDataSourceByTypeApi } from "@/api/alert/datasource"
+import {
   ALERT_LEVEL_OPTIONS,
   EVAL_INTERVAL_OPTIONS,
   type RuleGroup,
@@ -227,19 +185,19 @@ const ruleGroups = ref<RuleGroup[]>([])
 const datasources = ref<Datasource[]>([])
 
 // 输入框数据
-const externalLabelsInput = ref('')
+const externalLabelsInput = ref("")
 
 // 表单数据
 const formData = reactive<UpdateRuleReq>({
   id: 0,
-  name: '',
+  name: "",
   group_id: 0,
   level: 1,
-  description: '',
-  datasource_type: 'PROMETHEUS',
+  description: "",
+  datasource_type: "PROMETHEUS",
   datasource_ids: [],
   workspace_ids: [],
-  prom_ql: '',
+  prom_ql: "",
   eval_interval: 60,
   enabled: true,
   external_labels: {}
@@ -248,41 +206,27 @@ const formData = reactive<UpdateRuleReq>({
 // 表单验证规则
 const formRules: FormRules = {
   name: [
-    { required: true, message: '请输入规则名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '规则名称长度在 2 到 50 个字符', trigger: 'blur' }
+    { required: true, message: "请输入规则名称", trigger: "blur" },
+    { min: 2, max: 50, message: "规则名称长度在 2 到 50 个字符", trigger: "blur" }
   ],
-  group_id: [
-    { required: true, message: '请选择规则组', trigger: 'change' }
-  ],
-  level: [
-    { required: true, message: '请选择告警级别', trigger: 'change' }
-  ],
-  datasource_type: [
-    { required: true, message: '请选择数据源类型', trigger: 'change' }
-  ],
-  datasource_ids: [
-    { required: true, message: '请选择数据源', trigger: 'change' }
-  ],
-  prom_ql: [
-    { required: true, message: '请输入PromQL查询语句', trigger: 'blur' }
-  ],
-  eval_interval: [
-    { required: true, message: '请选择检测频率', trigger: 'change' }
-  ]
+  group_id: [{ required: true, message: "请选择规则组", trigger: "change" }],
+  level: [{ required: true, message: "请选择告警级别", trigger: "change" }],
+  datasource_type: [{ required: true, message: "请选择数据源类型", trigger: "change" }],
+  datasource_ids: [{ required: true, message: "请选择数据源", trigger: "change" }],
+  prom_ql: [{ required: true, message: "请输入PromQL查询语句", trigger: "blur" }],
+  eval_interval: [{ required: true, message: "请选择检测频率", trigger: "change" }]
 }
 
 // 处理外部标签输入
 const handleExternalLabelsChange = () => {
   if (externalLabelsInput.value) {
     const labels: Record<string, string> = {}
-    externalLabelsInput.value
-      .split(',')
-      .forEach(pair => {
-        const [key, value] = pair.split('=').map(s => s.trim())
-        if (key && value) {
-          labels[key] = value
-        }
-      })
+    externalLabelsInput.value.split(",").forEach((pair) => {
+      const [key, value] = pair.split("=").map((s) => s.trim())
+      if (key && value) {
+        labels[key] = value
+      }
+    })
     formData.external_labels = labels
   } else {
     formData.external_labels = {}
@@ -325,13 +269,13 @@ const loadRuleDetail = async (ruleId: number) => {
     loading.value = true
     const response = await getRuleApi(ruleId)
     const rule = response.data
-    
+
     // 填充表单数据
     formData.id = rule.id
     formData.name = rule.name
     formData.group_id = rule.group_id
     formData.level = rule.level
-    formData.description = rule.description || ''
+    formData.description = rule.description || ""
     formData.datasource_type = rule.datasource_type
     formData.datasource_ids = rule.datasource_ids || []
     formData.workspace_ids = rule.workspace_ids || []
@@ -339,14 +283,14 @@ const loadRuleDetail = async (ruleId: number) => {
     formData.eval_interval = rule.eval_interval
     formData.enabled = rule.enabled
     formData.external_labels = rule.external_labels || {}
-    
+
     // 处理外部标签显示
     if (rule.external_labels && Object.keys(rule.external_labels).length > 0) {
       externalLabelsInput.value = Object.entries(rule.external_labels)
         .map(([key, value]) => `${key}=${value}`)
-        .join(',')
+        .join(",")
     }
-    
+
     // 加载对应类型的数据源
     await loadDatasources(rule.datasource_type as DatasourceTypeEnum)
   } catch (error) {
@@ -360,19 +304,19 @@ const loadRuleDetail = async (ruleId: number) => {
 // 保存规则
 const handleSave = async () => {
   if (!formRef.value) return
-  
+
   try {
     const isValid = await formRef.value.validate()
     if (!isValid) return
-    
+
     saving.value = true
     await updateRuleApi(formData)
-    ElMessage.success('规则更新成功')
-    
+    ElMessage.success("规则更新成功")
+
     // 返回规则列表页面
-    router.push('/alert/rule')
+    router.push("/alert/rule")
   } catch (error) {
-    ElMessage.error('规则更新失败')
+    ElMessage.error("规则更新失败")
   } finally {
     saving.value = false
   }
@@ -380,25 +324,17 @@ const handleSave = async () => {
 
 // 取消操作
 const handleCancel = () => {
-  ElMessageBox.confirm(
-    '确定要离开吗？未保存的数据将丢失。',
-    '确认离开',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    router.push('/alert/rule')
-  }).catch(() => {
-    // 用户取消
+  ElMessageBox.confirm("确定要离开吗？未保存的数据将丢失。", "确认离开", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
   })
-}
-
-// 刷新
-const handleRefresh = () => {
-  loadRuleGroups()
-  loadDatasources(formData.datasource_type as DatasourceTypeEnum)
+    .then(() => {
+      router.push("/alert/rule")
+    })
+    .catch(() => {
+      // 用户取消
+    })
 }
 
 // 页面初始化
@@ -408,8 +344,8 @@ onMounted(() => {
     loadRuleGroups()
     loadRuleDetail(Number(ruleId))
   } else {
-    ElMessage.error('规则ID不存在')
-    router.push('/alert/rule')
+    ElMessage.error("规则ID不存在")
+    router.push("/alert/rule")
   }
 })
 </script>
@@ -420,7 +356,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  
+
   :deep(.page-container) {
     height: 100%;
     display: flex;
@@ -429,7 +365,7 @@ onMounted(() => {
     padding: 0;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   }
-  
+
   .scrollable-content {
     flex: 1;
     overflow-y: auto;
@@ -448,7 +384,7 @@ onMounted(() => {
 
 .form-section {
   margin-bottom: 2rem;
-  
+
   .section-title {
     font-size: 1rem;
     font-weight: 600;
@@ -461,21 +397,21 @@ onMounted(() => {
 
 :deep(.el-form-item) {
   margin-bottom: 1.5rem;
-  
+
   .el-form-item__label {
     font-weight: 500;
     color: #374151;
   }
-  
+
   .el-input__wrapper {
     border-radius: 0.5rem;
   }
-  
+
   .el-textarea__inner {
     border-radius: 0.5rem;
     resize: none;
   }
-  
+
   .el-select {
     .el-input__wrapper {
       border-radius: 0.5rem;

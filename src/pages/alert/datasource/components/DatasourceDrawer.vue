@@ -30,12 +30,7 @@
 
           <div class="form-row">
             <el-form-item prop="name" label="数据源名称" class="form-item">
-              <el-input
-                v-model="formData.name"
-                placeholder="请输入数据源名称"
-                size="large"
-                clearable
-              />
+              <el-input v-model="formData.name" placeholder="请输入数据源名称" size="large" clearable />
             </el-form-item>
           </div>
 
@@ -50,11 +45,7 @@
                   @click="handleTypeSelect(type.type)"
                 >
                   <div class="type-icon">
-                    <img 
-                      :src="getTypeLogo(type.type)" 
-                      :alt="type.name"
-                      class="type-logo"
-                    />
+                    <img :src="getTypeLogo(type.type)" :alt="type.name" class="type-logo" />
                   </div>
                   <div class="type-info">
                     <div class="type-name">{{ type.name }}</div>
@@ -97,25 +88,14 @@
 
           <div class="form-row">
             <el-form-item prop="http.url" label="连接地址" class="form-item">
-              <el-input
-                v-model="formData.http.url"
-                placeholder="请输入数据源连接地址"
-                size="large"
-                clearable
-              />
+              <el-input v-model="formData.http.url" placeholder="请输入数据源连接地址" size="large" clearable />
             </el-form-item>
           </div>
 
           <div class="form-row">
             <div class="form-col-group">
               <el-form-item prop="http.timeout" label="超时时间(秒)" class="form-item">
-                <el-input-number
-                  v-model="formData.http.timeout"
-                  :min="1"
-                  :max="300"
-                  size="large"
-                  style="width: 100%"
-                />
+                <el-input-number v-model="formData.http.timeout" :min="1" :max="300" size="large" style="width: 100%" />
               </el-form-item>
               <el-form-item prop="http.dial_timeout" label="连接超时(秒)" class="form-item">
                 <el-input-number
@@ -157,12 +137,7 @@
           <template v-if="formData.auth.basic_auth">
             <div class="form-row">
               <el-form-item prop="auth.basic_auth_user" label="用户名" class="form-item">
-                <el-input
-                  v-model="formData.auth.basic_auth_user"
-                  placeholder="请输入用户名"
-                  size="large"
-                  clearable
-                />
+                <el-input v-model="formData.auth.basic_auth_user" placeholder="请输入用户名" size="large" clearable />
               </el-form-item>
             </div>
 
@@ -186,19 +161,9 @@
     <!-- 自定义底部按钮 -->
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button 
-        type="info" 
-        @click="handleTest" 
-        :loading="testLoading"
-      >
-        测试连接
-      </el-button>
-      <el-button 
-        type="primary" 
-        @click="handleSubmit" 
-        :loading="submitLoading"
-      >
-        {{ isEdit ? '更新' : '保存' }}
+      <el-button type="info" @click="handleTest" :loading="testLoading"> 测试连接 </el-button>
+      <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
+        {{ isEdit ? "更新" : "保存" }}
       </el-button>
     </template>
   </CustomDrawer>
@@ -206,8 +171,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue"
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
-import { Setting, Monitor, Document, Check } from "@element-plus/icons-vue"
+import { ElMessage, type FormInstance, type FormRules } from "element-plus"
+import { Setting, Monitor, Check } from "@element-plus/icons-vue"
 import type { Datasource, DatasourceType } from "@/api/alert/datasource/types/datasource"
 import { DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
 import { saveDatasourceApi, testDatasourceApi } from "@/api/alert/datasource"
@@ -274,23 +239,17 @@ const formRules: FormRules = {
     { required: true, message: "请输入数据源名称", trigger: "blur" },
     { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" }
   ],
-  type: [
-    { required: true, message: "请选择数据源类型", trigger: "change" }
-  ],
+  type: [{ required: true, message: "请选择数据源类型", trigger: "change" }],
   "http.url": [
     { required: true, message: "请输入连接地址", trigger: "blur" },
     { type: "url", message: "请输入正确的URL格式", trigger: "blur" }
   ],
-  "http.timeout": [
-    { required: true, message: "请输入超时时间", trigger: "blur" }
-  ],
-  "http.dial_timeout": [
-    { required: true, message: "请输入连接超时时间", trigger: "blur" }
-  ],
+  "http.timeout": [{ required: true, message: "请输入超时时间", trigger: "blur" }],
+  "http.dial_timeout": [{ required: true, message: "请输入连接超时时间", trigger: "blur" }],
   "auth.basic_auth_user": [
-    { 
-      required: true, 
-      message: "请输入用户名", 
+    {
+      required: true,
+      message: "请输入用户名",
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.auth.basic_auth && !value) {
@@ -302,9 +261,9 @@ const formRules: FormRules = {
     }
   ],
   "auth.basic_auth_password": [
-    { 
-      required: true, 
-      message: "请输入密码", 
+    {
+      required: true,
+      message: "请输入密码",
       trigger: "blur",
       validator: (rule, value, callback) => {
         if (formData.auth.basic_auth && !value) {
@@ -381,13 +340,13 @@ const resetFormData = () => {
 // 数据源类型选择处理
 const handleTypeSelect = (type: DatasourceTypeEnum) => {
   formData.type = type
-  
+
   // 根据类型设置默认URL
   const defaultUrls = {
     [DatasourceTypeEnum.PROMETHEUS]: "http://localhost:9090",
     [DatasourceTypeEnum.LOKI]: "http://localhost:3100"
   }
-  
+
   if (defaultUrls[type] && !formData.http.url) {
     formData.http.url = defaultUrls[type]
   }
@@ -396,10 +355,10 @@ const handleTypeSelect = (type: DatasourceTypeEnum) => {
 // 获取数据源类型 Logo
 const getTypeLogo = (type: DatasourceTypeEnum) => {
   const logoMap = {
-    [DatasourceTypeEnum.PROMETHEUS]: '/src/pages/alert/datasource/logo/prometheus.svg',
-    [DatasourceTypeEnum.LOKI]: '/src/pages/alert/datasource/logo/loki.png'
+    [DatasourceTypeEnum.PROMETHEUS]: "/src/pages/alert/datasource/logo/prometheus.svg",
+    [DatasourceTypeEnum.LOKI]: "/src/pages/alert/datasource/logo/loki.png"
   }
-  return logoMap[type] || '/src/pages/alert/datasource/logo/prometheus.svg'
+  return logoMap[type] || "/src/pages/alert/datasource/logo/prometheus.svg"
 }
 
 // 切换启用状态
@@ -421,31 +380,23 @@ const toggleBasicAuth = () => {
   }
 }
 
-// 基础认证开关变化处理
-const handleBasicAuthChange = (value: string | number | boolean) => {
-  if (!value) {
-    formData.auth.basic_auth_user = ""
-    formData.auth.basic_auth_password = ""
-  }
-}
-
 // 测试连接
 const handleTest = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validateField(["type", "http.url"])
-    
+
     testLoading.value = true
-    
+
     const testData = {
       type: formData.type as DatasourceTypeEnum,
       http: formData.http,
       auth: formData.auth
     }
-    
+
     const { data } = await testDatasourceApi(testData)
-    
+
     if (data.success) {
       ElMessage.success(`连接成功！${data.message}`)
     } else {
@@ -463,12 +414,12 @@ const handleTest = async () => {
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
-    
+
     submitLoading.value = true
-    
+
     const submitData = {
       ...(isEdit.value && props.datasource ? { id: props.datasource.id } : {}),
       name: formData.name,
@@ -478,9 +429,9 @@ const handleSubmit = async () => {
       http: formData.http,
       auth: formData.auth
     }
-    
+
     await saveDatasourceApi(submitData)
-    
+
     ElMessage.success(isEdit.value ? "更新成功" : "保存成功")
     emit("success")
     handleClose()
@@ -700,7 +651,7 @@ const handleClosed = () => {
     &:hover {
       .checkbox-icon {
         border-color: #9ca3af;
-        
+
         &.checked {
           background: #2563eb;
           border-color: #2563eb;
@@ -733,20 +684,20 @@ const handleClosed = () => {
     max-width: 8rem;
     justify-content: center;
     flex-shrink: 0;
-    
+
     &:hover {
       border-color: #3b82f6;
       box-shadow: 0 0.125rem 0.5rem rgba(59, 130, 246, 0.15);
       transform: translateY(-0.0625rem);
     }
-    
+
     &.active {
       border-color: #3b82f6;
       background: #eff6ff;
       box-shadow: 0 0.125rem 0.5rem rgba(59, 130, 246, 0.25);
       transform: translateY(-0.0625rem);
     }
-    
+
     .type-icon {
       display: flex;
       align-items: center;
@@ -757,7 +708,7 @@ const handleClosed = () => {
       border-radius: 0.375rem;
       margin-bottom: 0.375rem;
       padding: 0.125rem;
-      
+
       .type-logo {
         width: 100%;
         height: 100%;
@@ -765,10 +716,10 @@ const handleClosed = () => {
         border-radius: 0.25rem;
       }
     }
-    
+
     .type-info {
       flex: 1;
-      
+
       .type-name {
         font-size: 0.75rem;
         font-weight: 600;
@@ -808,5 +759,4 @@ const handleClosed = () => {
     }
   }
 }
-
 </style>

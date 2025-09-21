@@ -1,17 +1,15 @@
 <template>
   <PageContainer>
     <!-- 头部区域 -->
-    <ManagerHeader 
-      title="数据源管理" 
+    <ManagerHeader
+      title="数据源管理"
       subtitle="管理 Prometheus、VictoriaMetrics、Loki 等监控数据源"
       @refresh="handleRefresh"
     >
       <template #actions>
-        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleAdd">
-          添加数据源
-        </el-button>
+        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleAdd"> 添加数据源 </el-button>
         <el-tooltip content="刷新数据">
-          <el-button :icon="RefreshRight"  class="action-btn" @click="handleRefresh" />
+          <el-button :icon="RefreshRight" class="action-btn" @click="handleRefresh" />
         </el-tooltip>
       </template>
     </ManagerHeader>
@@ -36,12 +34,7 @@
             @change="handleSearch"
             style="width: 150px"
           >
-            <el-option
-              v-for="type in datasourceTypes"
-              :key="type.type"
-              :label="type.name"
-              :value="type.type"
-            />
+            <el-option v-for="type in datasourceTypes" :key="type.type" :label="type.name" :value="type.type" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -57,55 +50,46 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">
-            搜索
-          </el-button>
-          <el-button :icon="Refresh" @click="handleReset">
-            重置
-          </el-button>
+          <el-button type="primary" :icon="Search" @click="handleSearch"> 搜索 </el-button>
+          <el-button :icon="Refresh" @click="handleReset"> 重置 </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 数据表格 -->
-      <DataTable
-        :data="datasources"
-        :columns="tableColumns"
-        :show-selection="true"
-        :show-pagination="true"
-        :total="paginationData.total"
-        :page-size="paginationData.pageSize"
-        :current-page="paginationData.currentPage"
-        :page-sizes="paginationData.pageSizes"
-        :pagination-layout="paginationData.layout"
-        :table-props="{}"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      >
-        <!-- 数据源类型插槽 -->
-        <template #type="{ row }">
-          <el-tag :type="getTypeTagType(row.type) as any">
-            {{ getTypeName(row.type) }}
-          </el-tag>
-        </template>
+    <DataTable
+      :data="datasources"
+      :columns="tableColumns"
+      :show-selection="true"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{}"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 数据源类型插槽 -->
+      <template #type="{ row }">
+        <el-tag :type="getTypeTagType(row.type) as any">
+          {{ getTypeName(row.type) }}
+        </el-tag>
+      </template>
 
-        <!-- 状态插槽 -->
-        <template #enabled="{ row }">
-          <el-tag :type="row.enabled ? 'success' : 'info'">
-            {{ row.enabled ? '启用' : '禁用' }}
-          </el-tag>
-        </template>
+      <!-- 状态插槽 -->
+      <template #enabled="{ row }">
+        <el-tag :type="row.enabled ? 'success' : 'info'">
+          {{ row.enabled ? "启用" : "禁用" }}
+        </el-tag>
+      </template>
 
-        <!-- 操作插槽 -->
-        <template #actions="{ row }">
-          <OperateBtn
-            :items="getOperateItems(row)"
-            :operate-item="row"
-            :max-length="2"
-            @route-event="handleOperateEvent"
-          />
-        </template>
-      </DataTable>
+      <!-- 操作插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="getOperateItems()" :operate-item="row" :max-length="2" @route-event="handleOperateEvent" />
+      </template>
+    </DataTable>
 
     <!-- 数据源新增/编辑抽屉 -->
     <DatasourceDrawer
@@ -118,24 +102,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import {
-  Plus,
-  RefreshRight,
-  Search,
-  Refresh
-} from "@element-plus/icons-vue"
+import { Plus, RefreshRight, Search, Refresh } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { debounce } from "lodash-es"
-import {
-  listDatasourceApi,
-  deleteDatasourceApi
-} from "@/api/alert/datasource"
-import type {
-  Datasource,
-  DatasourceType
-} from "@/api/alert/datasource/types/datasource"
+import { listDatasourceApi, deleteDatasourceApi } from "@/api/alert/datasource"
+import type { Datasource, DatasourceType } from "@/api/alert/datasource/types/datasource"
 import { DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -181,11 +154,11 @@ const tableColumns = [
   { prop: "type", label: "类型", width: 200, slot: "type" },
   { prop: "http.url", label: "连接地址", minWidth: 200 },
   { prop: "enabled", label: "状态", width: 100, slot: "enabled" },
-  { prop: "description", label: "描述", minWidth: 200 },
+  { prop: "description", label: "描述", minWidth: 200 }
 ]
 
 // 操作按钮配置
-const getOperateItems = (row: Datasource) => [
+const getOperateItems = () => [
   {
     name: "编辑",
     code: "edit",
@@ -217,8 +190,6 @@ const getTypeTagType = (type: DatasourceTypeEnum) => {
   }
   return typeMap[type] || "info"
 }
-
-
 
 // 查询数据源列表
 const listDatasources = () => {
@@ -277,16 +248,12 @@ const handleEdit = (row: Datasource) => {
 // 删除数据源
 const handleDelete = async (row: Datasource) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除数据源 "${row.name}" 吗？`,
-      "确认删除",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
-    )
-    
+    await ElMessageBox.confirm(`确定要删除数据源 "${row.name}" 吗？`, "确认删除", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+
     await deleteDatasourceApi(row.id)
     ElMessage.success("删除成功")
     listDatasources()
