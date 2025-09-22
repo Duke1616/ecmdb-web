@@ -128,7 +128,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
-import UserPicker from "@@/components/UserPicker/index.vue"
+import UserPicker from "@/common/components/UserPicker/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
 import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
 import { ElMessage, FormInstance, FormRules } from "element-plus"

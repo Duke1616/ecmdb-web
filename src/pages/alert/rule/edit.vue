@@ -23,7 +23,7 @@
       <div class="scrollable-content">
         <!-- 表单内容 -->
         <div class="rule-form-container">
-          <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px" size="large">
+          <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top"  size="large">
             <!-- 基本信息 -->
             <div class="form-section">
               <h3 class="section-title">基本信息</h3>
@@ -379,7 +379,7 @@ onMounted(() => {
   background: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  // margin-bottom: 2rem;
 }
 
 .form-section {

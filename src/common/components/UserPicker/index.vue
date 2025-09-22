@@ -1,5 +1,5 @@
 <template>
-  <div class="user-picker-container" ref="containerRef">
+  <div class="user-picker-container" ref="containerRef" :class="`variant-${variant}`">
     <div class="user-picker-input" @click="toggleUserPicker" :class="{ 'is-focus': showUserPicker }">
       <!-- 多选模式 -->
       <div v-if="multiple && selectedUsers.length > 0" class="selected-users">
@@ -119,6 +119,11 @@ const props = defineProps({
   multiple: {
     type: Boolean,
     default: false
+  },
+  variant: {
+    type: String,
+    default: "fancy",
+    validator: (value: string) => ["fancy", "simple"].includes(value)
   }
 })
 
@@ -347,6 +352,7 @@ onUnmounted(() => {
   width: 100%;
 }
 
+/* 默认 fancy 样式 */
 .user-picker-input {
   position: relative;
   display: flex;
@@ -372,6 +378,32 @@ onUnmounted(() => {
   border-color: #667eea;
   background: white;
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+/* simple 变体样式 - 类似 el-select */
+.user-picker-container.variant-simple .user-picker-input {
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 11px;
+  box-shadow: none;
+  gap: 6px;
+  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.user-picker-container.variant-simple .user-picker-input:hover {
+  border-color: #c0c4cc;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.user-picker-container.variant-simple .user-picker-input.is-focus {
+  border-color: #409eff;
+  background: #ffffff;
+  box-shadow: none;
+  outline: none;
 }
 
 .selected-user {
@@ -429,6 +461,41 @@ onUnmounted(() => {
 .picker-arrow svg {
   width: 18px;
   height: 18px;
+}
+
+/* simple 变体的用户头像和文字样式 */
+.user-picker-container.variant-simple .user-avatar {
+  width: 16px;
+  height: 16px;
+  font-size: 10px;
+  border-radius: 50%;
+  background: #f5f7fa;
+  color: #606266;
+  box-shadow: none;
+  font-weight: normal;
+}
+
+.user-picker-container.variant-simple .user-name {
+  font-size: 14px;
+  color: #606266;
+  font-weight: normal;
+}
+
+.user-picker-container.variant-simple .placeholder-text {
+  font-size: 14px;
+  color: #c0c4cc;
+  text-align: left;
+}
+
+.user-picker-container.variant-simple .picker-arrow {
+  width: 16px;
+  height: 16px;
+  color: #c0c4cc;
+}
+
+.user-picker-container.variant-simple .picker-arrow svg {
+  width: 12px;
+  height: 12px;
 }
 
 .user-picker-dropdown {
@@ -644,5 +711,66 @@ onUnmounted(() => {
 .remove-btn svg {
   width: 12px;
   height: 12px;
+}
+
+/* simple 变体的多选模式样式 */
+.user-picker-container.variant-simple .selected-users {
+  gap: 4px;
+  min-height: 20px;
+}
+
+.user-picker-container.variant-simple .user-tag {
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  height: 24px;
+  line-height: 22px;
+  background: #f0f2f5;
+  border: 1px solid #e4e7ed;
+  color: #606266;
+  display: inline-flex;
+  align-items: center;
+  margin: 2px 0;
+}
+
+.user-picker-container.variant-simple .user-tag .user-avatar {
+  width: 14px;
+  height: 14px;
+  font-size: 8px;
+  margin-right: 4px;
+  background: #f5f7fa;
+  color: #606266;
+}
+
+.user-picker-container.variant-simple .user-tag .user-name {
+  font-size: 12px;
+  margin: 0;
+  color: #606266;
+}
+
+.user-picker-container.variant-simple .remove-btn {
+  width: 14px;
+  height: 14px;
+  margin-left: 4px;
+  color: #c0c4cc;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.user-picker-container.variant-simple .remove-btn:hover {
+  background: #c0c4cc;
+  color: #ffffff;
+  border: none;
+  box-shadow: none;
+}
+
+.user-picker-container.variant-simple .remove-btn svg {
+  width: 8px;
+  height: 8px;
 }
 </style>

@@ -117,7 +117,7 @@
 <script lang="ts" setup>
 import { watch, ref } from "vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
-import UserPicker from "@@/components/UserPicker/index.vue"
+import UserPicker from "@/common/components/UserPicker/index.vue"
 import FormActions from "@/common/components/FormActions/index.vue"
 import type { FormInstance, FormRules } from "element-plus"
 

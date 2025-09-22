@@ -5,7 +5,7 @@
         <el-input v-model="formData.name" placeholder="请输入值班名称" />
       </el-form-item>
       <el-form-item prop="owner" label="管理人员">
-        <UserPicker v-model="formData.owner" placeholder="选择管理人员" :default-to-current-user="false" />
+        <UserPicker v-model="formData.owner" placeholder="选择管理人员"  variant="simple" :default-to-current-user="false" />
       </el-form-item>
       <el-form-item prop="desc" label="值班描述">
         <el-input v-model="formData.desc" placeholder="请输入值班描述" />
@@ -23,7 +23,7 @@ import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { createOrUpdateRotaReq, rota } from "@/api/rota/types/rota"
 import { createRotaApi, updateRotaApi } from "@/api/rota"
-import UserPicker from "@@/components/UserPicker/index.vue"
+import UserPicker from "@/common/components/UserPicker/index.vue"
 
 // 接收父组建传递
 const emits = defineEmits(["closed", "callback"])

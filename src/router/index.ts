@@ -126,38 +126,58 @@ export const constantRoutes: RouteRecordRaw[] = [
           platforms: ["alert"]
         }
       },
-          {
-            path: "/alert/rule",
-            component: () => import("@/pages/alert/rule/index.vue"),
-            name: "AlertRule",
-            meta: {
-              title: "告警规则",
-              svgIcon: "component",
-              platforms: ["alert"]
-            }
-          },
-          {
-            path: "/alert/rule/create",
-            component: () => import("@/pages/alert/rule/create.vue"),
-            name: "AlertRuleCreate",
-            meta: {
-              title: "新增告警规则",
-              svgIcon: "component",
-              platforms: ["alert"],
-              hidden: true
-            }
-          },
-          {
-            path: "/alert/rule/edit/:id",
-            component: () => import("@/pages/alert/rule/edit.vue"),
-            name: "AlertRuleEdit",
-            meta: {
-              title: "编辑告警规则",
-              svgIcon: "component",
-              platforms: ["alert"],
-              hidden: true
-            }
-          }
+      {
+        path: "/alert/rule",
+        component: () => import("@/pages/alert/rule/index.vue"),
+        name: "AlertRule",
+        meta: {
+          title: "告警规则",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
+      },
+      {
+        path: "/alert/rule/create",
+        component: () => import("@/pages/alert/rule/create.vue"),
+        name: "AlertRuleCreate",
+        meta: {
+          title: "新增告警规则",
+          svgIcon: "component",
+          platforms: ["alert"],
+          hidden: true
+        }
+      },
+      {
+        path: "/alert/rule/edit/:id",
+        component: () => import("@/pages/alert/rule/edit.vue"),
+        name: "AlertRuleEdit",
+        meta: {
+          title: "编辑告警规则",
+          svgIcon: "component",
+          platforms: ["alert"],
+          hidden: true
+        }
+      },
+      {
+        path: "/alert/team",
+        component: () => import("@/pages/alert/team/index.vue"),
+        name: "AlertTeam",
+        meta: {
+          title: "团队管理",
+          svgIcon: "user",
+          platforms: ["alert"]
+        }
+      },
+      {
+        path: "/alert/workspace",
+        component: () => import("@/pages/alert/workspace/index.vue"),
+        name: "AlertWorkspace",
+        meta: {
+          title: "工作空间",
+          svgIcon: "user",
+          platforms: ["alert"]
+        }
+      }
     ]
   }
 ]

@@ -356,7 +356,7 @@ onMounted(() => {
   background: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  // margin-bottom: 1rem;
 }
 
 .form-section {
