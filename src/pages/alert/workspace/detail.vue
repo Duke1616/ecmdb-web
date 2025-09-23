@@ -162,40 +162,7 @@
 
         <!-- 告警管理页面 -->
         <div v-else-if="activeMenu === 'alerts'" class="alerts-page">
-          <div class="alerts-header">
-            <h3>告警管理</h3>
-            <div class="alerts-actions">
-              <el-select v-model="alertFilter" placeholder="筛选状态" style="width: 120px; margin-right: 12px">
-                <el-option label="全部" value="all" />
-                <el-option label="活跃" value="active" />
-                <el-option label="已解决" value="resolved" />
-                <el-option label="已忽略" value="ignored" />
-              </el-select>
-              <el-button type="primary" :icon="Plus" @click="handleCreateAlert"> 新建告警 </el-button>
-            </div>
-          </div>
-          <div class="alerts-list">
-            <div v-for="alert in alerts" :key="alert.id" class="alert-card" :class="alert.severity">
-              <div class="alert-header">
-                <div class="alert-icon">
-                  <el-icon><WarningFilled /></el-icon>
-                </div>
-                <div class="alert-info">
-                  <h4 class="alert-title">{{ alert.title }}</h4>
-                  <p class="alert-description">{{ alert.description }}</p>
-                </div>
-                <div class="alert-meta">
-                  <span class="alert-severity" :class="alert.severity">{{ alert.severityText }}</span>
-                  <span class="alert-time">{{ alert.time }}</span>
-                </div>
-              </div>
-              <div class="alert-actions">
-                <el-button type="text" @click="handleViewAlert(alert)">查看</el-button>
-                <el-button type="text" @click="handleResolveAlert(alert)">解决</el-button>
-                <el-button type="text" @click="handleIgnoreAlert(alert)">忽略</el-button>
-              </div>
-            </div>
-          </div>
+          <AlertManager :workspace-id="workspace?.id || 0" />
         </div>
 
         <!-- 告警规则页面 -->
@@ -329,6 +296,7 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { Workspace } from "@/api/workspace/types"
 import NoiseConfig from "./components/NoiseConfig/index.vue"
 import AlertRules from "./components/AlertRules/index.vue"
+import AlertManager from "./components/AlertManager/index.vue"
 
 // 路由
 const route = useRoute()
@@ -360,7 +328,6 @@ const formatLastUpdate = () => {
     return mockTime.toLocaleDateString()
   }
 }
-const alertFilter = ref("all")
 
 // 统计数据
 const alertStats = ref({
@@ -399,37 +366,6 @@ const recentActivities = ref([
     icon: "User",
     text: "李四加入了告警工作空间",
     time: "1天前"
-  }
-])
-
-// 告警列表
-const alerts = ref([
-  {
-    id: 1,
-    title: "CPU使用率过高",
-    description: "服务器CPU使用率持续超过80%",
-    severity: "critical",
-    severityText: "严重",
-    time: "5分钟前",
-    status: "active"
-  },
-  {
-    id: 2,
-    title: "内存不足",
-    description: "可用内存低于10%",
-    severity: "warning",
-    severityText: "警告",
-    time: "15分钟前",
-    status: "active"
-  },
-  {
-    id: 3,
-    title: "磁盘空间不足",
-    description: "磁盘使用率超过90%",
-    severity: "info",
-    severityText: "信息",
-    time: "1小时前",
-    status: "resolved"
   }
 ])
 
@@ -546,18 +482,6 @@ const handleNoise = () => {
 
 const handleCreateAlert = () => {
   ElMessage.info("创建告警功能待实现")
-}
-
-const handleViewAlert = (alert: any) => {
-  ElMessage.info(`查看告警: ${alert.title}`)
-}
-
-const handleResolveAlert = (alert: any) => {
-  ElMessage.success(`告警已解决: ${alert.title}`)
-}
-
-const handleIgnoreAlert = (alert: any) => {
-  ElMessage.warning(`告警已忽略: ${alert.title}`)
 }
 
 const handleCreateProject = () => {
@@ -813,6 +737,8 @@ onMounted(() => {
     border-radius: 8px;
     border: 1px solid #e5e7eb;
     padding: 24px;
+    min-width: 0; // 确保 flex 子元素可以收缩
+    overflow: hidden; // 防止内容溢出
   }
 
   // 告警规则页面特殊处理
@@ -820,6 +746,21 @@ onMounted(() => {
     height: 100%;
     display: flex;
     flex-direction: column;
+  }
+
+  // 告警管理页面特殊处理
+  .alerts-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+
+    // 覆盖 PageContainer 背景色
+    :deep(.page-container) {
+      background: transparent !important;
+      width: 100%;
+    }
   }
 }
 
@@ -935,132 +876,6 @@ onMounted(() => {
             color: #6b7280;
           }
         }
-      }
-    }
-  }
-}
-
-// 告警管理页面样式
-.alerts-page {
-  .alerts-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .alerts-actions {
-      display: flex;
-      align-items: center;
-    }
-  }
-
-  .alerts-list {
-    .alert-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-      }
-
-      &.critical {
-        border-left: 4px solid #ef4444;
-      }
-
-      &.warning {
-        border-left: 4px solid #f59e0b;
-      }
-
-      &.info {
-        border-left: 4px solid #3b82f6;
-      }
-
-      .alert-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-
-        .alert-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          font-size: 16px;
-          color: #ffffff;
-          background: #ef4444;
-        }
-
-        .alert-info {
-          flex: 1;
-
-          .alert-title {
-            margin: 0 0 4px 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-          }
-
-          .alert-description {
-            margin: 0;
-            font-size: 14px;
-            color: #6b7280;
-          }
-        }
-
-        .alert-meta {
-          display: flex;
-          flex-direction: column;
-          align-items: flex-end;
-          gap: 4px;
-
-          .alert-severity {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-
-            &.critical {
-              background: #fee2e2;
-              color: #dc2626;
-            }
-
-            &.warning {
-              background: #fef3c7;
-              color: #d97706;
-            }
-
-            &.info {
-              background: #dbeafe;
-              color: #2563eb;
-            }
-          }
-
-          .alert-time {
-            font-size: 12px;
-            color: #6b7280;
-          }
-        }
-      }
-
-      .alert-actions {
-        display: flex;
-        gap: 8px;
-        padding-top: 12px;
-        border-top: 1px solid #f3f4f6;
       }
     }
   }

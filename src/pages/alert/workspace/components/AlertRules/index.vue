@@ -1,9 +1,5 @@
 <template>
   <div class="alert-rules-page">
-    <div class="rules-header">
-      <h3>告警规则</h3>
-    </div>
-
     <div class="rules-content" v-loading="loading">
       <!-- 空状态 -->
       <div v-if="!loading && rules.length === 0" class="empty-state">
@@ -72,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Setting } from "@element-plus/icons-vue"
 import { listRulesByWorkspaceApi } from "@/api/alert/rule"
@@ -160,12 +156,6 @@ watch(
   },
   { immediate: true }
 )
-
-onMounted(() => {
-  if (props.workspaceId) {
-    loadRules()
-  }
-})
 </script>
 
 <style lang="scss" scoped>
