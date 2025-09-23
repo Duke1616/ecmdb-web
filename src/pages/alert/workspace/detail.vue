@@ -242,7 +242,7 @@
 
         <!-- 设置页面 -->
         <div v-else-if="activeMenu === 'settings'" class="settings-page">
-          <WorkspaceSettings :workspace-id="workspace?.id || 0" @refresh="handleSettingsRefresh" />
+          <Settings :workspace-id="workspace?.id || 0" @refresh="handleSettingsRefresh" />
         </div>
       </div>
     </div>
@@ -275,7 +275,7 @@ import { getWorkspaceDetailApi } from "@/api/workspace"
 import NoiseConfig from "./components/NoiseConfig/index.vue"
 import AlertRules from "./components/AlertRules/index.vue"
 import AlertManager from "./components/AlertManager/index.vue"
-import WorkspaceSettings from "./components/WorkspaceSettings/index.vue"
+import Settings from "./components/Settings/index.vue"
 
 // 路由
 const route = useRoute()
@@ -291,7 +291,7 @@ const formatLastUpdate = () => {
   if (!workspace.value?.utime) {
     return "未知时间"
   }
-  
+
   const updateTime = new Date(workspace.value.utime)
   const now = new Date()
   const diff = now.getTime() - updateTime.getTime()
@@ -494,7 +494,6 @@ const handleEditMember = (member: any) => {
 const handleRemoveMember = (member: any) => {
   ElMessage.info(`移除成员: ${member.name}`)
 }
-
 
 // 加载工作空间数据
 const loadWorkspaceData = async () => {

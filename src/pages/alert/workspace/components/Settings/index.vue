@@ -46,10 +46,10 @@
                   <div class="team-avatar">
                     <el-icon><User /></el-icon>
                   </div>
-                    <div class="team-details">
-                      <div class="team-name">{{ teamName }}</div>
-                      <div class="team-desc">当前工作空间所属团队</div>
-                    </div>
+                  <div class="team-details">
+                    <div class="team-name">{{ teamName }}</div>
+                    <div class="team-desc">当前工作空间所属团队</div>
+                  </div>
                   <div class="team-status">
                     <el-tag type="success" effect="plain">已绑定</el-tag>
                   </div>
@@ -67,10 +67,10 @@
                   <div class="template-avatar">
                     <el-icon><Message /></el-icon>
                   </div>
-                    <div class="template-details">
-                      <div class="template-name">{{ templateName }}</div>
-                      <div class="template-desc">消息通知模版配置</div>
-                    </div>
+                  <div class="template-details">
+                    <div class="template-name">{{ templateName }}</div>
+                    <div class="template-desc">消息通知模版配置</div>
+                  </div>
                   <div class="template-status">
                     <el-tag type="info" effect="plain">已配置</el-tag>
                   </div>
@@ -269,9 +269,9 @@ const handleSaveSettings = async () => {
 
     // 重新加载数据
     await loadWorkspace()
-    
+
     // 通知父组件刷新
-    emit('refresh')
+    emit("refresh")
   } catch (error) {
     console.error("保存设置失败:", error)
     ElMessage.error("保存设置失败")
@@ -316,7 +316,9 @@ watch(
 .settings-content {
   height: 100%;
   overflow-y: auto;
-  padding-right: 8px;
+  overflow-x: hidden;
+  padding: 0 8px 0 0; // 右侧增加 8px 内边距，避免内容贴近滚动条
+  box-sizing: border-box;
 
   // 自定义滚动条样式
   &::-webkit-scrollbar {
@@ -326,6 +328,7 @@ watch(
   &::-webkit-scrollbar-track {
     background: #f1f5f9;
     border-radius: 3px;
+    margin: 4px; // 滚动槽上下预留间距
   }
 
   &::-webkit-scrollbar-thumb {
@@ -345,7 +348,10 @@ watch(
 
 .settings-form {
   width: 100%;
+  max-width: 100%;
   margin: 0;
+  box-sizing: border-box;
+  overflow-x: hidden;
 
   .form-section {
     margin-bottom: 24px;
@@ -392,10 +398,11 @@ watch(
 
     .el-form-item {
       margin-bottom: 20px;
-      padding: 20px;
+      padding-bottom: 20px;
       background: #ffffff;
       border: none;
       border-radius: 8px;
+      box-sizing: border-box;
 
       &:last-child {
         margin-bottom: 0;
@@ -449,6 +456,7 @@ watch(
         height: 100%;
         width: 100%;
         position: relative;
+        box-sizing: border-box;
 
         &.clickable {
           cursor: pointer;
@@ -577,6 +585,7 @@ watch(
         height: 100%;
         width: 100%;
         position: relative;
+        box-sizing: border-box;
 
         &.clickable {
           cursor: pointer;
