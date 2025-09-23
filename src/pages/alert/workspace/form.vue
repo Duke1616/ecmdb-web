@@ -16,33 +16,21 @@
         </div>
 
         <el-form-item prop="team_id" label="所属团队" class="form-item required">
-          <el-select 
-            v-model="formData.team_id" 
-            placeholder="请选择所属团队" 
-            class="form-input"
-            filterable
-            clearable
-          >
-            <el-option 
-              v-for="team in teams" 
-              :key="team.id" 
-              :label="team.name" 
-              :value="team.id"
-            />
+          <el-select v-model="formData.team_id" placeholder="请选择所属团队" class="form-input" filterable clearable>
+            <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
           </el-select>
         </el-form-item>
 
         <el-form-item prop="name" label="工作空间名称" class="form-item required">
-          <el-input 
-            v-model="formData.name" 
-            placeholder="请输入工作空间名称" 
-            clearable 
+          <el-input
+            v-model="formData.name"
+            placeholder="请输入工作空间名称"
+            clearable
             class="form-input"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
-
       </div>
 
       <!-- 空间配置 -->
@@ -65,14 +53,10 @@
               </div>
             </div>
             <div class="config-options">
-              <div 
-                class="option-item" 
-                :class="{ active: formData.is_public }"
-                @click="formData.is_public = true"
-              >
+              <div class="option-item" :class="{ active: formData.is_public }" @click="formData.is_public = true">
                 <div class="option-radio">
                   <el-radio :model-value="formData.is_public" :label="true">
-                    <span style="display: none;"></span>
+                    <span style="display: none" />
                   </el-radio>
                 </div>
                 <div class="option-content">
@@ -81,14 +65,10 @@
                 </div>
                 <div class="option-badge public-badge">公开</div>
               </div>
-              <div 
-                class="option-item" 
-                :class="{ active: !formData.is_public }"
-                @click="formData.is_public = false"
-              >
+              <div class="option-item" :class="{ active: !formData.is_public }" @click="formData.is_public = false">
                 <div class="option-radio">
                   <el-radio :model-value="formData.is_public" :label="false">
-                    <span style="display: none;"></span>
+                    <span style="display: none" />
                   </el-radio>
                 </div>
                 <div class="option-content">
@@ -112,14 +92,10 @@
               </div>
             </div>
             <div class="config-options">
-              <div 
-                class="option-item" 
-                :class="{ active: formData.allow_invite }"
-                @click="formData.allow_invite = true"
-              >
+              <div class="option-item" :class="{ active: formData.allow_invite }" @click="formData.allow_invite = true">
                 <div class="option-radio">
                   <el-radio :model-value="formData.allow_invite" :label="true">
-                    <span style="display: none;"></span>
+                    <span style="display: none" />
                   </el-radio>
                 </div>
                 <div class="option-content">
@@ -128,14 +104,14 @@
                 </div>
                 <div class="option-badge open-badge">开放</div>
               </div>
-              <div 
-                class="option-item" 
+              <div
+                class="option-item"
                 :class="{ active: !formData.allow_invite }"
                 @click="formData.allow_invite = false"
               >
                 <div class="option-radio">
                   <el-radio :model-value="formData.allow_invite" :label="false">
-                    <span style="display: none;"></span>
+                    <span style="display: none" />
                   </el-radio>
                 </div>
                 <div class="option-content">
@@ -156,12 +132,7 @@
 import { ref, onMounted } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { 
-  InfoFilled, 
-  Setting,
-  Monitor,
-  User
-} from "@element-plus/icons-vue"
+import { InfoFilled, Setting, Monitor, User } from "@element-plus/icons-vue"
 import { saveWorkspaceApi } from "@/api/workspace"
 import { SaveWorkspaceReq } from "@/api/workspace/types"
 import { listTeamsApi } from "@/api/team"
@@ -198,8 +169,18 @@ const formRules: FormRules = {
 // 生成团队头像颜色
 const generateTeamColor = (name: string) => {
   const colors = [
-    "#667eea", "#764ba2", "#f093fb", "#f5576c", "#4facfe", "#00f2fe",
-    "#43e97b", "#38f9d7", "#fa709a", "#fee140", "#a8edea", "#fed6e3"
+    "#667eea",
+    "#764ba2",
+    "#f093fb",
+    "#f5576c",
+    "#4facfe",
+    "#00f2fe",
+    "#43e97b",
+    "#38f9d7",
+    "#fa709a",
+    "#fee140",
+    "#a8edea",
+    "#fed6e3"
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -338,8 +319,6 @@ defineExpose({
   .form-input {
     width: 100%;
   }
-
-
 
   // 配置卡片样式
   .config-cards {
