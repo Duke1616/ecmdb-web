@@ -11,169 +11,171 @@
     </ManagerHeader>
 
     <!-- 设置表单 -->
-    <div class="settings-content" v-loading="loading">
-      <el-form :model="formData" :rules="formRules" ref="formRef" label-position="top" class="settings-form">
-        <div class="form-section">
-          <h4 class="section-title">基本信息</h4>
-          <el-row :gutter="20">
-            <!-- 工作空间名称 -->
-            <el-col :span="12">
-              <el-form-item label="工作空间名称" prop="name">
-                <el-input v-model="formData.name" placeholder="请输入工作空间名称" size="large" />
-              </el-form-item>
-            </el-col>
+    <div class="content-card" v-loading="loading">
+      <div class="card-body">
+        <el-form :model="formData" :rules="formRules" ref="formRef" label-position="top" class="settings-form">
+          <div class="form-section">
+            <h4 class="section-title">基本信息</h4>
+            <el-row :gutter="20">
+              <!-- 工作空间名称 -->
+              <el-col :span="12">
+                <el-form-item label="工作空间名称" prop="name">
+                  <el-input v-model="formData.name" placeholder="请输入工作空间名称" size="large" />
+                </el-form-item>
+              </el-col>
 
-            <!-- 工作空间状态 -->
-            <el-col :span="12">
-              <el-form-item label="工作空间状态">
-                <el-switch
-                  v-model="formData.enabled"
-                  size="large"
-                  active-text="启用"
-                  inactive-text="禁用"
-                  active-color="#10b981"
-                  inactive-color="#ef4444"
-                />
-              </el-form-item>
-            </el-col>
-          </el-row>
+              <!-- 工作空间状态 -->
+              <el-col :span="12">
+                <el-form-item label="工作空间状态">
+                  <el-switch
+                    v-model="formData.enabled"
+                    size="large"
+                    active-text="启用"
+                    inactive-text="禁用"
+                    active-color="#10b981"
+                    inactive-color="#ef4444"
+                  />
+                </el-form-item>
+              </el-col>
+            </el-row>
 
-          <el-row :gutter="20">
-            <!-- 绑定团队 -->
-            <el-col :span="12">
-              <el-form-item label="绑定团队">
-                <div class="team-info clickable" @click="handleEditTeam">
-                  <div class="team-avatar">
+            <el-row :gutter="20">
+              <!-- 绑定团队 -->
+              <el-col :span="12">
+                <el-form-item label="绑定团队">
+                  <div class="team-info clickable" @click="handleEditTeam">
+                    <div class="team-avatar">
+                      <el-icon><User /></el-icon>
+                    </div>
+                    <div class="team-details">
+                      <div class="team-name">{{ teamName }}</div>
+                      <div class="team-desc">当前工作空间所属团队</div>
+                    </div>
+                    <div class="team-status">
+                      <el-tag type="success" effect="plain">已绑定</el-tag>
+                    </div>
+                    <div class="edit-icon">
+                      <el-icon><Edit /></el-icon>
+                    </div>
+                  </div>
+                </el-form-item>
+              </el-col>
+
+              <!-- 绑定消息通知模版 -->
+              <el-col :span="12">
+                <el-form-item label="消息通知模版">
+                  <div class="template-info clickable" @click="handleEditTemplate">
+                    <div class="template-avatar">
+                      <el-icon><Message /></el-icon>
+                    </div>
+                    <div class="template-details">
+                      <div class="template-name">{{ templateName }}</div>
+                      <div class="template-desc">消息通知模版配置</div>
+                    </div>
+                    <div class="template-status">
+                      <el-tag type="info" effect="plain">已配置</el-tag>
+                    </div>
+                    <div class="edit-icon">
+                      <el-icon><Edit /></el-icon>
+                    </div>
+                  </div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div class="form-section">
+            <h4 class="section-title">权限设置</h4>
+            <div class="config-cards">
+              <!-- 公开设置卡片 -->
+              <div class="config-card">
+                <div class="config-header">
+                  <div class="config-icon public-icon">
+                    <el-icon><Monitor /></el-icon>
+                  </div>
+                  <div class="config-title">
+                    <h4>公开设置</h4>
+                    <p>设置工作空间的可见性</p>
+                  </div>
+                </div>
+                <div class="config-options">
+                  <div class="option-item" :class="{ active: formData.is_public }" @click="formData.is_public = true">
+                    <div class="option-radio">
+                      <el-radio :model-value="formData.is_public" :label="true">
+                        <span style="display: none" />
+                      </el-radio>
+                    </div>
+                    <div class="option-content">
+                      <div class="option-title">公开工作空间</div>
+                      <div class="option-desc">所有团队成员都可以查看和加入</div>
+                    </div>
+                    <div class="option-badge public-badge">公开</div>
+                  </div>
+                  <div class="option-item" :class="{ active: !formData.is_public }" @click="formData.is_public = false">
+                    <div class="option-radio">
+                      <el-radio :model-value="formData.is_public" :label="false">
+                        <span style="display: none" />
+                      </el-radio>
+                    </div>
+                    <div class="option-content">
+                      <div class="option-title">私有工作空间</div>
+                      <div class="option-desc">仅邀请的成员可以访问</div>
+                    </div>
+                    <div class="option-badge private-badge">私有</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 邀请设置卡片 -->
+              <div class="config-card">
+                <div class="config-header">
+                  <div class="config-icon invite-icon">
                     <el-icon><User /></el-icon>
                   </div>
-                  <div class="team-details">
-                    <div class="team-name">{{ teamName }}</div>
-                    <div class="team-desc">当前工作空间所属团队</div>
-                  </div>
-                  <div class="team-status">
-                    <el-tag type="success" effect="plain">已绑定</el-tag>
-                  </div>
-                  <div class="edit-icon">
-                    <el-icon><Edit /></el-icon>
+                  <div class="config-title">
+                    <h4>邀请设置</h4>
+                    <p>控制谁可以邀请新成员</p>
                   </div>
                 </div>
-              </el-form-item>
-            </el-col>
-
-            <!-- 绑定消息通知模版 -->
-            <el-col :span="12">
-              <el-form-item label="消息通知模版">
-                <div class="template-info clickable" @click="handleEditTemplate">
-                  <div class="template-avatar">
-                    <el-icon><Message /></el-icon>
+                <div class="config-options">
+                  <div
+                    class="option-item"
+                    :class="{ active: formData.allow_invite }"
+                    @click="formData.allow_invite = true"
+                  >
+                    <div class="option-radio">
+                      <el-radio :model-value="formData.allow_invite" :label="true">
+                        <span style="display: none" />
+                      </el-radio>
+                    </div>
+                    <div class="option-content">
+                      <div class="option-title">允许成员邀请</div>
+                      <div class="option-desc">团队成员可以邀请其他人加入</div>
+                    </div>
+                    <div class="option-badge open-badge">开放</div>
                   </div>
-                  <div class="template-details">
-                    <div class="template-name">{{ templateName }}</div>
-                    <div class="template-desc">消息通知模版配置</div>
+                  <div
+                    class="option-item"
+                    :class="{ active: !formData.allow_invite }"
+                    @click="formData.allow_invite = false"
+                  >
+                    <div class="option-radio">
+                      <el-radio :model-value="formData.allow_invite" :label="false">
+                        <span style="display: none" />
+                      </el-radio>
+                    </div>
+                    <div class="option-content">
+                      <div class="option-title">仅管理员邀请</div>
+                      <div class="option-desc">只有管理员可以邀请成员</div>
+                    </div>
+                    <div class="option-badge restricted-badge">受限</div>
                   </div>
-                  <div class="template-status">
-                    <el-tag type="info" effect="plain">已配置</el-tag>
-                  </div>
-                  <div class="edit-icon">
-                    <el-icon><Edit /></el-icon>
-                  </div>
-                </div>
-              </el-form-item>
-            </el-col>
-          </el-row>
-        </div>
-
-        <div class="form-section">
-          <h4 class="section-title">权限设置</h4>
-          <div class="config-cards">
-            <!-- 公开设置卡片 -->
-            <div class="config-card">
-              <div class="config-header">
-                <div class="config-icon public-icon">
-                  <el-icon><Monitor /></el-icon>
-                </div>
-                <div class="config-title">
-                  <h4>公开设置</h4>
-                  <p>设置工作空间的可见性</p>
-                </div>
-              </div>
-              <div class="config-options">
-                <div class="option-item" :class="{ active: formData.is_public }" @click="formData.is_public = true">
-                  <div class="option-radio">
-                    <el-radio :model-value="formData.is_public" :label="true">
-                      <span style="display: none" />
-                    </el-radio>
-                  </div>
-                  <div class="option-content">
-                    <div class="option-title">公开工作空间</div>
-                    <div class="option-desc">所有团队成员都可以查看和加入</div>
-                  </div>
-                  <div class="option-badge public-badge">公开</div>
-                </div>
-                <div class="option-item" :class="{ active: !formData.is_public }" @click="formData.is_public = false">
-                  <div class="option-radio">
-                    <el-radio :model-value="formData.is_public" :label="false">
-                      <span style="display: none" />
-                    </el-radio>
-                  </div>
-                  <div class="option-content">
-                    <div class="option-title">私有工作空间</div>
-                    <div class="option-desc">仅邀请的成员可以访问</div>
-                  </div>
-                  <div class="option-badge private-badge">私有</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 邀请设置卡片 -->
-            <div class="config-card">
-              <div class="config-header">
-                <div class="config-icon invite-icon">
-                  <el-icon><User /></el-icon>
-                </div>
-                <div class="config-title">
-                  <h4>邀请设置</h4>
-                  <p>控制谁可以邀请新成员</p>
-                </div>
-              </div>
-              <div class="config-options">
-                <div
-                  class="option-item"
-                  :class="{ active: formData.allow_invite }"
-                  @click="formData.allow_invite = true"
-                >
-                  <div class="option-radio">
-                    <el-radio :model-value="formData.allow_invite" :label="true">
-                      <span style="display: none" />
-                    </el-radio>
-                  </div>
-                  <div class="option-content">
-                    <div class="option-title">允许成员邀请</div>
-                    <div class="option-desc">团队成员可以邀请其他人加入</div>
-                  </div>
-                  <div class="option-badge open-badge">开放</div>
-                </div>
-                <div
-                  class="option-item"
-                  :class="{ active: !formData.allow_invite }"
-                  @click="formData.allow_invite = false"
-                >
-                  <div class="option-radio">
-                    <el-radio :model-value="formData.allow_invite" :label="false">
-                      <span style="display: none" />
-                    </el-radio>
-                  </div>
-                  <div class="option-content">
-                    <div class="option-title">仅管理员邀请</div>
-                    <div class="option-desc">只有管理员可以邀请成员</div>
-                  </div>
-                  <div class="option-badge restricted-badge">受限</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </el-form>
+        </el-form>
+      </div>
     </div>
   </PageContainer>
 </template>
@@ -313,11 +315,23 @@ watch(
   height: 100%;
 }
 
-.settings-content {
+/* 内容卡片 - 参考 DataTable 设计 */
+.content-card {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: auto; // 滚动条在边框内侧，贴边显示
   overflow-x: hidden;
-  padding: 0 8px 0 0; // 右侧增加 8px 内边距，避免内容贴近滚动条
+  padding: 0; // 去掉内边距，滚动条贴边框
   box-sizing: border-box;
 
   // 自定义滚动条样式
@@ -346,12 +360,18 @@ watch(
   }
 }
 
+.card-body {
+  padding: 20px; // 将内容内边距下放到内部，保证滚动条贴边框
+  box-sizing: border-box;
+}
+
 .settings-form {
   width: 100%;
   max-width: 100%;
   margin: 0;
   box-sizing: border-box;
   overflow-x: hidden;
+  min-height: 100%;
 
   .form-section {
     margin-bottom: 24px;
