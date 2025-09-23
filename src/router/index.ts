@@ -177,6 +177,16 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "user",
           platforms: ["alert"]
         }
+      },
+      {
+        path: "/alert/workspace/:id",
+        component: () => import("@/pages/alert/workspace/detail.vue"),
+        name: "AlertWorkspaceDetail",
+        meta: {
+          title: "工作空间详情",
+          svgIcon: "user",
+          platforms: ["alert"]
+        }
       }
     ]
   }

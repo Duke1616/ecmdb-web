@@ -109,22 +109,22 @@
                 <div class="space-icon" :style="{ background: generateWorkspaceColor(workspace.name) }">
                   {{ workspace.name.charAt(0) }}
                 </div>
-                <div class="space-badge">{{ workspace.type }}</div>
-              </div>
-              
-              <div class="space-body">
-                <h4 class="space-name">{{ workspace.name }}</h4>
-                <p class="space-description">{{ workspace.description }}</p>
-                <div class="space-stats">
-                  <span class="stat-item">
-                    <el-icon><User /></el-icon>
-                    {{ workspace.memberCount }} 人
-                  </span>
-                  <span class="stat-item">
-                    <el-icon><Document /></el-icon>
-                    {{ workspace.projectCount }} 项目
-                  </span>
-                </div>
+                     <div class="space-badge">{{ workspace.is_public ? '公开' : '私有' }}</div>
+                   </div>
+                   
+                   <div class="space-body">
+                     <h4 class="space-name">{{ workspace.name }}</h4>
+                     <p class="space-description">{{ workspace.enabled ? '已启用' : '已禁用' }}</p>
+                     <div class="space-stats">
+                       <span class="stat-item">
+                         <el-icon><User /></el-icon>
+                         {{ workspace.allow_invite ? '允许邀请' : '仅管理员' }}
+                       </span>
+                       <span class="stat-item">
+                         <el-icon><Document /></el-icon>
+                         工作空间
+                       </span>
+                     </div>
               </div>
               
               <div class="space-footer">
@@ -163,6 +163,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue"
+import { useRouter } from "vue-router"
 import { Plus, RefreshRight, ArrowRight, FolderAdd, User, Document } from "@element-plus/icons-vue"
 import { listTeamsApi } from "@/api/team"
 import { Team as TeamType } from "@/api/team/types"
@@ -173,6 +174,9 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 // @ts-ignore
 import SpaceForm from "./form.vue"
+
+// 路由
+const router = useRouter()
 
 // 响应式数据
 const teams = ref<TeamType[]>([])
@@ -274,7 +278,8 @@ const loadWorkspacesData = async () => {
 // 处理工作空间点击
 const handleWorkspaceClick = (workspace: Workspace) => {
   console.log("进入工作空间:", workspace)
-  // TODO: 实现进入工作空间的逻辑
+  // 跳转到工作空间详情页面
+  router.push(`/alert/workspace/${workspace.id}`)
 }
 
 // 创建工作空间
