@@ -1,11 +1,6 @@
 import instance from "@/common/utils/service"
 import { API_SERVICE } from "@@/utils/service"
-import type { 
-  RetrieveNoiseConfig, 
-  GetNoiseConfigReq,
-  SaveInhibitRuleReq,
-  SaveInhibitRuleResponse
-} from "./types"
+import type { RetrieveNoiseConfig, GetNoiseConfigReq, SaveInhibitRuleReq, SaveInhibitRuleResponse } from "./types"
 
 export const getNoiseConfigApi = (data: GetNoiseConfigReq) => {
   return instance.get<RetrieveNoiseConfig>({

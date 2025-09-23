@@ -6,18 +6,17 @@ import type {
   Rule,
   CreateRuleReq,
   UpdateRuleReq,
-  RuleQueryParams,
-  RuleListResp,
   CreateRuleResp,
   RuleGroup,
   CreateRuleGroupReq,
   UpdateRuleGroupReq,
   RuleGroupQueryParams,
-  RuleGroupListResp,
   CreateRuleGroupResp,
   ListRulesReq,
-  RetrieveRules,
-  RetrieveRuleGroups
+  RetrieveRuleGroups,
+  // 工作空间规则相关类型
+  ListRulesByWorkspaceReq,
+  RetrieveRules
 } from "./types/rule"
 
 // 告警规则相关 API
@@ -121,5 +120,15 @@ export function updateRuleGroupApi(data: UpdateRuleGroupReq) {
 export function deleteRuleGroupApi(id: number) {
   return instance.delete({
     url: `${API_SERVICE.ALERT}/rule/group/${id}`
+  })
+}
+
+// ==================== 工作空间规则相关 API ====================
+
+/** 获取工作空间规则列表 */
+export function listRulesByWorkspaceApi(data: ListRulesByWorkspaceReq) {
+  return instance.post<RetrieveRules>({
+    url: `${API_SERVICE.ALERT}/rule/list/by_workspace`,
+    data
   })
 }

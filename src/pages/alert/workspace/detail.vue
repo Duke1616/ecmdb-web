@@ -3,7 +3,11 @@
     <!-- 头部区域 -->
     <ManagerHeader
       :title="workspace?.name || '工作空间'"
-      :subtitle="workspace ? `${teamName} · ${workspace.enabled ? '已启用' : '已禁用'} · ${workspace.is_public ? '公开' : '私有'}` : '加载中...'"
+      :subtitle="
+        workspace
+          ? `${teamName} · ${workspace.enabled ? '已启用' : '已禁用'} · ${workspace.is_public ? '公开' : '私有'}`
+          : '加载中...'
+      "
       :show-back-button="true"
       :show-add-button="false"
       :show-refresh-button="true"
@@ -18,22 +22,22 @@
               <CircleCheckFilled v-if="workspace?.enabled" />
               <CircleCloseFilled v-else />
             </el-icon>
-            <span class="status-text">{{ workspace?.enabled ? '运行中' : '已停用' }}</span>
+            <span class="status-text">{{ workspace?.enabled ? "运行中" : "已停用" }}</span>
           </div>
-          
+
           <div class="status-item">
             <el-icon class="status-icon" :class="{ public: workspace?.is_public }">
               <Unlock v-if="workspace?.is_public" />
               <Lock v-else />
             </el-icon>
-            <span class="status-text">{{ workspace?.is_public ? '公开空间' : '私有空间' }}</span>
+            <span class="status-text">{{ workspace?.is_public ? "公开空间" : "私有空间" }}</span>
           </div>
 
           <div class="status-item">
             <el-icon class="status-icon">
               <User />
             </el-icon>
-            <span class="status-text">{{ teamName || '未知团队' }}</span>
+            <span class="status-text">{{ teamName || "未知团队" }}</span>
           </div>
 
           <div class="status-item">
@@ -69,11 +73,7 @@
     <div class="workspace-content">
       <!-- 侧边栏 -->
       <div class="workspace-sidebar">
-        <el-menu
-          :default-active="activeMenu"
-          class="workspace-menu"
-          @select="handleMenuSelect"
-        >
+        <el-menu :default-active="activeMenu" class="workspace-menu" @select="handleMenuSelect">
           <el-menu-item index="overview">
             <el-icon><DataBoard /></el-icon>
             <span>工作台</span>
@@ -165,15 +165,13 @@
           <div class="alerts-header">
             <h3>告警管理</h3>
             <div class="alerts-actions">
-              <el-select v-model="alertFilter" placeholder="筛选状态" style="width: 120px; margin-right: 12px;">
+              <el-select v-model="alertFilter" placeholder="筛选状态" style="width: 120px; margin-right: 12px">
                 <el-option label="全部" value="all" />
                 <el-option label="活跃" value="active" />
                 <el-option label="已解决" value="resolved" />
                 <el-option label="已忽略" value="ignored" />
               </el-select>
-              <el-button type="primary" :icon="Plus" @click="handleCreateAlert">
-                新建告警
-              </el-button>
+              <el-button type="primary" :icon="Plus" @click="handleCreateAlert"> 新建告警 </el-button>
             </div>
           </div>
           <div class="alerts-list">
@@ -202,33 +200,7 @@
 
         <!-- 告警规则页面 -->
         <div v-else-if="activeMenu === 'rules'" class="rules-page">
-          <div class="rules-header">
-            <h3>告警规则</h3>
-            <el-button type="primary" :icon="Plus" @click="handleCreateRule">
-              新建规则
-            </el-button>
-          </div>
-          <div class="rules-list">
-            <div v-for="rule in rules" :key="rule.id" class="rule-card">
-              <div class="rule-header">
-                <div class="rule-icon">
-                  <el-icon><Setting /></el-icon>
-                </div>
-                <div class="rule-info">
-                  <h4 class="rule-name">{{ rule.name }}</h4>
-                  <p class="rule-description">{{ rule.description }}</p>
-                </div>
-                <div class="rule-status" :class="rule.enabled ? 'enabled' : 'disabled'">
-                  {{ rule.enabled ? '已启用' : '已禁用' }}
-                </div>
-              </div>
-              <div class="rule-actions">
-                <el-button type="text" @click="handleEditRule(rule)">编辑</el-button>
-                <el-button type="text" @click="handleToggleRule(rule)">{{ rule.enabled ? '禁用' : '启用' }}</el-button>
-                <el-button type="text" @click="handleDeleteRule(rule)">删除</el-button>
-              </div>
-            </div>
-          </div>
+          <AlertRules :workspace-id="workspace?.id || 0" />
         </div>
 
         <!-- 降噪配置页面 -->
@@ -240,9 +212,7 @@
         <div v-else-if="activeMenu === 'projects'" class="projects-page">
           <div class="projects-header">
             <h3>项目列表</h3>
-            <el-button type="primary" :icon="Plus" @click="handleCreateProject">
-              新建项目
-            </el-button>
+            <el-button type="primary" :icon="Plus" @click="handleCreateProject"> 新建项目 </el-button>
           </div>
           <div class="projects-grid">
             <div v-for="project in projects" :key="project.id" class="project-card">
@@ -280,9 +250,7 @@
         <div v-else-if="activeMenu === 'members'" class="members-page">
           <div class="members-header">
             <h3>成员管理</h3>
-            <el-button type="primary" :icon="Plus" @click="handleInviteMember">
-              邀请成员
-            </el-button>
+            <el-button type="primary" :icon="Plus" @click="handleInviteMember"> 邀请成员 </el-button>
           </div>
           <div class="members-list">
             <div v-for="member in members" :key="member.id" class="member-card">
@@ -338,18 +306,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import {
-  ArrowLeft,
   Setting,
   User,
   Plus,
   DataBoard,
-  Folder,
-  Monitor,
-  Check,
   MoreFilled,
   Warning,
   WarningFilled,
@@ -364,6 +328,7 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { Workspace } from "@/api/workspace/types"
 import NoiseConfig from "./components/NoiseConfig/index.vue"
+import AlertRules from "./components/AlertRules/index.vue"
 
 // 路由
 const route = useRoute()
@@ -380,11 +345,11 @@ const formatLastUpdate = () => {
   const mockTime = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000) // 随机7天内的时间
   const now = new Date()
   const diff = now.getTime() - mockTime.getTime()
-  
+
   const minutes = Math.floor(diff / (1000 * 60))
   const hours = Math.floor(diff / (1000 * 60 * 60))
   const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-  
+
   if (minutes < 60) {
     return `${minutes}分钟前`
   } else if (hours < 24) {
@@ -403,10 +368,6 @@ const alertStats = ref({
   critical: 8,
   rules: 24,
   noiseRules: 12
-})
-
-const memberStats = ref({
-  total: 15
 })
 
 // 最近活动
@@ -472,29 +433,6 @@ const alerts = ref([
   }
 ])
 
-// 告警规则列表
-const rules = ref([
-  {
-    id: 1,
-    name: "CPU使用率告警",
-    description: "当CPU使用率超过80%时触发告警",
-    enabled: true
-  },
-  {
-    id: 2,
-    name: "内存使用率告警",
-    description: "当内存使用率超过90%时触发告警",
-    enabled: true
-  },
-  {
-    id: 3,
-    name: "磁盘空间告警",
-    description: "当磁盘使用率超过85%时触发告警",
-    enabled: false
-  }
-])
-
-
 // 项目列表
 const projects = ref([
   {
@@ -548,12 +486,21 @@ const members = ref([
   }
 ])
 
-
 // 生成项目头像颜色
 const generateProjectColor = (name: string) => {
   const colors = [
-    "#667eea", "#764ba2", "#f093fb", "#f5576c", "#4facfe", "#00f2fe",
-    "#43e97b", "#38f9d7", "#fa709a", "#fee140", "#a8edea", "#fed6e3"
+    "#667eea",
+    "#764ba2",
+    "#f093fb",
+    "#f5576c",
+    "#4facfe",
+    "#00f2fe",
+    "#43e97b",
+    "#38f9d7",
+    "#fa709a",
+    "#fee140",
+    "#a8edea",
+    "#fed6e3"
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -581,11 +528,6 @@ const handleMenuSelect = (key: string) => {
   activeMenu.value = key
 }
 
-// 处理各种操作
-const handleSettings = () => {
-  activeMenu.value = "settings"
-}
-
 const handleMembers = () => {
   activeMenu.value = "members"
 }
@@ -606,11 +548,6 @@ const handleCreateAlert = () => {
   ElMessage.info("创建告警功能待实现")
 }
 
-const handleCreateRule = () => {
-  ElMessage.info("创建告警规则功能待实现")
-}
-
-
 const handleViewAlert = (alert: any) => {
   ElMessage.info(`查看告警: ${alert.title}`)
 }
@@ -622,20 +559,6 @@ const handleResolveAlert = (alert: any) => {
 const handleIgnoreAlert = (alert: any) => {
   ElMessage.warning(`告警已忽略: ${alert.title}`)
 }
-
-const handleEditRule = (rule: any) => {
-  ElMessage.info(`编辑规则: ${rule.name}`)
-}
-
-const handleToggleRule = (rule: any) => {
-  rule.enabled = !rule.enabled
-  ElMessage.success(`规则已${rule.enabled ? '启用' : '禁用'}: ${rule.name}`)
-}
-
-const handleDeleteRule = (rule: any) => {
-  ElMessage.info(`删除规则: ${rule.name}`)
-}
-
 
 const handleCreateProject = () => {
   ElMessage.info("创建项目功能待实现")
@@ -678,7 +601,7 @@ const loadWorkspaceData = async () => {
     // TODO: 调用API获取工作空间详情
     // const { data } = await getWorkspaceDetailApi({ id: Number(workspaceId) })
     // workspace.value = data
-    
+
     // 模拟数据
     workspace.value = {
       id: Number(workspaceId),
@@ -688,7 +611,7 @@ const loadWorkspaceData = async () => {
       is_public: true,
       allow_invite: true
     }
-    
+
     teamName.value = "示例团队"
   } catch (error) {
     console.error("加载工作空间数据失败:", error)
@@ -703,7 +626,6 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-
 // 工作空间状态样式
 .workspace-status {
   display: flex;
@@ -783,73 +705,73 @@ onMounted(() => {
 .workspace-content {
   display: flex;
 
-    .back-btn {
-      color: #6b7280;
-      font-size: 14px;
-    }
+  .back-btn {
+    color: #6b7280;
+    font-size: 14px;
+  }
 
-    .workspace-info {
+  .workspace-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .workspace-avatar {
       display: flex;
       align-items: center;
-      gap: 16px;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
 
-      .workspace-avatar {
+    .workspace-details {
+      .workspace-name {
+        margin: 0 0 8px 0;
+        font-size: 24px;
+        font-weight: 600;
+        color: #1f2937;
+      }
+
+      .workspace-meta {
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        color: #ffffff;
-        font-weight: 600;
-        font-size: 24px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
+        gap: 8px;
+        font-size: 14px;
+        color: #6b7280;
 
-      .workspace-details {
-        .workspace-name {
-          margin: 0 0 8px 0;
-          font-size: 24px;
-          font-weight: 600;
-          color: #1f2937;
+        .workspace-status {
+          &.active {
+            color: #10b981;
+          }
+          &.inactive {
+            color: #ef4444;
+          }
         }
 
-        .workspace-meta {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 14px;
-          color: #6b7280;
-
-          .workspace-status {
-            &.active {
-              color: #10b981;
-            }
-            &.inactive {
-              color: #ef4444;
-            }
+        .workspace-visibility {
+          &.public {
+            color: #3b82f6;
           }
-
-          .workspace-visibility {
-            &.public {
-              color: #3b82f6;
-            }
-            &.private {
-              color: #f59e0b;
-            }
+          &.private {
+            color: #f59e0b;
           }
         }
       }
     }
   }
+}
 
-  .header-right {
-    .el-button-group {
-      .el-button {
-        border-radius: 6px;
-      }
+.header-right {
+  .el-button-group {
+    .el-button {
+      border-radius: 6px;
     }
   }
+}
 
 .workspace-content {
   display: flex;
@@ -892,6 +814,13 @@ onMounted(() => {
     border: 1px solid #e5e7eb;
     padding: 24px;
   }
+
+  // 告警规则页面特殊处理
+  .rules-page {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
 }
 
 // 概览页面样式
@@ -921,10 +850,18 @@ onMounted(() => {
         font-size: 20px;
         color: #ffffff;
 
-        &.alerts { background: #ef4444; }
-        &.critical { background: #dc2626; }
-        &.rules { background: #3b82f6; }
-        &.noise-rules { background: #8b5cf6; }
+        &.alerts {
+          background: #ef4444;
+        }
+        &.critical {
+          background: #dc2626;
+        }
+        &.rules {
+          background: #3b82f6;
+        }
+        &.noise-rules {
+          background: #8b5cf6;
+        }
       }
 
       .stat-content {
@@ -973,9 +910,15 @@ onMounted(() => {
           font-size: 14px;
           color: #ffffff;
 
-          &.project { background: #3b82f6; }
-          &.member { background: #10b981; }
-          &.update { background: #f59e0b; }
+          &.project {
+            background: #3b82f6;
+          }
+          &.member {
+            background: #10b981;
+          }
+          &.update {
+            background: #f59e0b;
+          }
         }
 
         .activity-content {
@@ -1123,94 +1066,92 @@ onMounted(() => {
   }
 }
 
-// 告警规则页面样式
-.rules-page {
-  .rules-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
+// 降噪配置页面容器样式
+.noise-page-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
 
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
   }
+}
 
-  .rules-list {
-    .rule-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 16px;
+.rules-list {
+  .rule-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #3b82f6;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    }
+
+    .rule-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       margin-bottom: 12px;
-      transition: all 0.2s ease;
 
-      &:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-      }
-
-      .rule-header {
+      .rule-icon {
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        font-size: 16px;
+        color: #ffffff;
+        background: #3b82f6;
+      }
 
-        .rule-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
+      .rule-info {
+        flex: 1;
+
+        .rule-name {
+          margin: 0 0 4px 0;
           font-size: 16px;
-          color: #ffffff;
-          background: #3b82f6;
+          font-weight: 600;
+          color: #1f2937;
         }
 
-        .rule-info {
-          flex: 1;
-
-          .rule-name {
-            margin: 0 0 4px 0;
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-          }
-
-          .rule-description {
-            margin: 0;
-            font-size: 14px;
-            color: #6b7280;
-          }
-        }
-
-        .rule-status {
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          font-weight: 500;
-
-          &.enabled {
-            background: #d1fae5;
-            color: #065f46;
-          }
-
-          &.disabled {
-            background: #fee2e2;
-            color: #dc2626;
-          }
+        .rule-description {
+          margin: 0;
+          font-size: 14px;
+          color: #6b7280;
         }
       }
 
-      .rule-actions {
-        display: flex;
-        gap: 8px;
-        padding-top: 12px;
-        border-top: 1px solid #f3f4f6;
+      .rule-status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+
+        &.enabled {
+          background: #d1fae5;
+          color: #065f46;
+        }
+
+        &.disabled {
+          background: #fee2e2;
+          color: #dc2626;
+        }
       }
+    }
+
+    .rule-actions {
+      display: flex;
+      gap: 8px;
+      padding-top: 12px;
+      border-top: 1px solid #f3f4f6;
     }
   }
 }

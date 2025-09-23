@@ -126,28 +126,47 @@ export interface CreateRuleGroupResp {
 // 告警级别枚举
 export enum AlertLevel {
   EMERGENCY = 1, // 紧急 - 系统不可用（如服务器宕机）
-  CRITICAL = 2,  // 严重 - 核心功能故障
-  ERROR = 3,     // 错误 - 数据库连接失败等
-  WARNING = 4,   // 警告 - 磁盘空间不足等
-  INFO = 5       // 提示 - 常规信息（如用户登录）
+  CRITICAL = 2, // 严重 - 核心功能故障
+  ERROR = 3, // 错误 - 数据库连接失败等
+  WARNING = 4, // 警告 - 磁盘空间不足等
+  INFO = 5 // 提示 - 常规信息（如用户登录）
 }
 
 // 告警级别选项
 export const ALERT_LEVEL_OPTIONS = [
-  { value: AlertLevel.EMERGENCY, label: 'P0 紧急', color: '#F56C6C', description: '系统不可用（如服务器宕机）', priority: 'P0' },
-  { value: AlertLevel.CRITICAL, label: 'P1 严重', color: '#F56C6C', description: '核心功能故障', priority: 'P1' },
-  { value: AlertLevel.ERROR, label: 'P2 错误', color: '#F56C6C', description: '数据库连接失败等', priority: 'P2' },
-  { value: AlertLevel.WARNING, label: 'P3 警告', color: '#E6A23C', description: '磁盘空间不足等', priority: 'P3' },
-  { value: AlertLevel.INFO, label: 'P4 提示', color: '#409EFF', description: '常规信息（如用户登录）', priority: 'P4' }
+  {
+    value: AlertLevel.EMERGENCY,
+    label: "P0 紧急",
+    color: "#F56C6C",
+    description: "系统不可用（如服务器宕机）",
+    priority: "P0"
+  },
+  { value: AlertLevel.CRITICAL, label: "P1 严重", color: "#F56C6C", description: "核心功能故障", priority: "P1" },
+  { value: AlertLevel.ERROR, label: "P2 错误", color: "#F56C6C", description: "数据库连接失败等", priority: "P2" },
+  { value: AlertLevel.WARNING, label: "P3 警告", color: "#E6A23C", description: "磁盘空间不足等", priority: "P3" },
+  { value: AlertLevel.INFO, label: "P4 提示", color: "#409EFF", description: "常规信息（如用户登录）", priority: "P4" }
 ]
 
 // 检测频率选项（秒）
 export const EVAL_INTERVAL_OPTIONS = [
-  { value: 15, label: '15秒' },
-  { value: 30, label: '30秒' },
-  { value: 60, label: '1分钟' },
-  { value: 300, label: '5分钟' },
-  { value: 600, label: '10分钟' },
-  { value: 1800, label: '30分钟' },
-  { value: 3600, label: '1小时' }
+  { value: 15, label: "15秒" },
+  { value: 30, label: "30秒" },
+  { value: 60, label: "1分钟" },
+  { value: 300, label: "5分钟" },
+  { value: 600, label: "10分钟" },
+  { value: 1800, label: "30分钟" },
+  { value: 3600, label: "1小时" }
 ]
+
+// ==================== 工作空间规则相关类型 ====================
+
+// 分页参数
+export interface Page {
+  offset?: number
+  limit?: number
+}
+
+// 获取工作空间规则请求
+export interface ListRulesByWorkspaceReq extends Page {
+  workspace_id: number
+}

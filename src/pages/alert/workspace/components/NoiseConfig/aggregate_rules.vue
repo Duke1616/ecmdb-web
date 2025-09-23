@@ -1,5 +1,5 @@
 <template>
-  <CollapsibleSection title="分组聚合规则" tip="每个工作空间只能有一个聚合规则">
+  <CollapsibleSection title="聚合规则" tip="每个工作空间只能有一个聚合规则" :default-collapsed="true">
     <template #actions>
       <el-button type="primary" :icon="Setting" @click="handleAddRule" :disabled="rules.length > 0">
         {{ rules.length > 0 ? "已有规则" : "添加规则" }}
@@ -817,10 +817,6 @@ onMounted(() => {
           &::-webkit-inner-spin-button {
             -webkit-appearance: none;
             margin: 0;
-          }
-
-          &[type="number"] {
-            -moz-appearance: textfield;
           }
         }
 

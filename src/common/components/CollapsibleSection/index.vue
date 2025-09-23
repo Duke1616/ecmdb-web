@@ -20,24 +20,46 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, watch } from "vue"
 import { ArrowDown, ArrowUp } from "@element-plus/icons-vue"
 
 interface Props {
   title: string
   tip?: string
   defaultCollapsed?: boolean
+  collapsed?: boolean // 外部控制状态
 }
 
 const props = withDefaults(defineProps<Props>(), {
   tip: "",
-  defaultCollapsed: false
+  defaultCollapsed: false,
+  collapsed: undefined
 })
 
-const isCollapsed = ref(props.defaultCollapsed)
+const emit = defineEmits<{
+  (e: "update:collapsed", value: boolean): void
+}>()
+
+// 内部状态
+const isCollapsed = ref(props.collapsed !== undefined ? props.collapsed : props.defaultCollapsed)
+
+// 监听外部 collapsed 属性变化
+watch(
+  () => props.collapsed,
+  (newValue) => {
+    if (newValue !== undefined) {
+      isCollapsed.value = newValue
+    }
+  },
+  { immediate: true }
+)
 
 const toggleCollapse = () => {
   isCollapsed.value = !isCollapsed.value
+  // 如果外部传入了 collapsed 属性，则发出事件通知父组件
+  if (props.collapsed !== undefined) {
+    emit("update:collapsed", isCollapsed.value)
+  }
 }
 </script>
 

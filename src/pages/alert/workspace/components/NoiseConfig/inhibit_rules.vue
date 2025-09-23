@@ -1,5 +1,5 @@
 <template>
-  <CollapsibleSection title="抑制规则" tip="全局抑制规则，对所有工作空间生效">
+  <CollapsibleSection title="抑制规则" tip="全局抑制规则，对所有工作空间生效" :default-collapsed="true">
     <template #actions>
       <el-button type="primary" :icon="Plus" @click="handleAddRule"> 添加规则 </el-button>
     </template>

@@ -1,21 +1,6 @@
 <template>
   <div class="noise-page">
-    <div class="noise-header">
-      <h3>降噪配置</h3>
-      <p class="noise-description">配置告警降噪策略，减少重复告警和噪音</p>
-    </div>
-
     <div class="noise-content" v-loading="loading">
-      <!-- 分组聚合规则 -->
-      <AggregateRules
-        :workspace-id="workspaceId"
-        :aggregate-rule="noiseConfig?.aggregate_rule"
-        @refresh="loadNoiseConfig"
-      />
-
-      <!-- 抑制规则（全局） -->
-      <InhibitRules :inhibit-rules="noiseConfig?.inhibit_rules" />
-
       <!-- 降噪统计 -->
       <div class="noise-section">
         <div class="section-header">
@@ -42,6 +27,18 @@
           </div>
         </div>
       </div>
+      <!-- 分组聚合规则 -->
+      <AggregateRules
+        :workspace-id="workspaceId"
+        :aggregate-rule="noiseConfig?.aggregate_rule"
+        @refresh="loadNoiseConfig"
+      />
+
+      <!-- 抑制规则（全局） -->
+      <InhibitRules :inhibit-rules="noiseConfig?.inhibit_rules" />
+
+      <!-- 静默规则 -->
+      <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
     </div>
   </div>
 </template>
@@ -51,6 +48,7 @@ import { ref, onMounted } from "vue"
 import { ElMessage } from "element-plus"
 import AggregateRules from "./aggregate_rules.vue"
 import InhibitRules from "./inhibit_rules.vue"
+import SilenceRules from "./silence_rules.vue"
 import { getNoiseConfigApi } from "@/api/noise"
 import type { RetrieveNoiseConfig } from "@/api/noise/types"
 
@@ -62,6 +60,9 @@ const props = defineProps<{
 // 降噪配置数据
 const noiseConfig = ref<RetrieveNoiseConfig | null>(null)
 const loading = ref(false)
+
+// 静默规则数据
+const silenceRules = ref<any[]>([])
 
 // 降噪统计
 const noiseStats = ref({
@@ -86,9 +87,38 @@ const loadNoiseConfig = async () => {
   }
 }
 
+// 加载静默规则
+const loadSilenceRules = async () => {
+  try {
+    // 这里应该调用静默规则的API
+    // 暂时使用模拟数据
+    silenceRules.value = [
+      {
+        id: 1,
+        name: "维护窗口静默",
+        matchers: [
+          { Type: 1, Name: "severity", Value: "critical" },
+          { Type: 1, Name: "service", Value: "database" }
+        ],
+        start_time: Date.now(),
+        end_time: Date.now() + 2 * 60 * 60 * 1000,
+        enabled: true,
+        is_active: true,
+        created_by: "admin",
+        created_at: Date.now() - 30 * 60 * 1000,
+        comment: "数据库维护期间静默关键告警"
+      }
+    ]
+  } catch (error) {
+    console.error("加载静默规则失败:", error)
+    ElMessage.error("加载静默规则失败")
+  }
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadNoiseConfig()
+  loadSilenceRules()
 })
 </script>
 
