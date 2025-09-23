@@ -1,116 +1,111 @@
 <template>
-  <div class="aggregate-rules-section">
-    <div class="section-header">
-      <div class="header-info">
-        <h4>分组聚合规则</h4>
-        <span class="header-tip">每个工作空间只能有一个聚合规则</span>
-      </div>
+  <CollapsibleSection title="分组聚合规则" tip="每个工作空间只能有一个聚合规则">
+    <template #actions>
       <el-button type="primary" :icon="Setting" @click="handleAddRule" :disabled="rules.length > 0">
         {{ rules.length > 0 ? "已有规则" : "添加规则" }}
       </el-button>
-    </div>
-    <div class="section-content">
-      <div class="aggregate-rules-list" v-loading="loading">
-        <!-- 空状态 -->
-        <div v-if="!loading && rules.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <el-icon><Setting /></el-icon>
+    </template>
+
+    <div class="aggregate-rules-list" v-loading="loading">
+      <!-- 空状态 -->
+      <div v-if="!loading && rules.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <el-icon><Setting /></el-icon>
+        </div>
+        <h4 class="empty-title">暂无聚合规则</h4>
+        <p class="empty-description">为当前工作空间配置告警聚合规则，减少重复告警</p>
+        <el-button type="primary" :icon="Setting" @click="handleAddRule"> 添加聚合规则 </el-button>
+      </div>
+
+      <!-- 规则列表 -->
+      <div v-for="rule in rules" :key="rule.id" class="aggregate-rule-card">
+        <!-- 卡片头部 -->
+        <div class="card-header">
+          <div class="header-left">
+            <div class="rule-meta">
+              <el-tag :type="rule.type === 0 ? 'primary' : 'warning'" size="small" class="type-tag">
+                {{ rule.type === 0 ? "按标签聚合" : "按时间聚合" }}
+              </el-tag>
+              <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
+                {{ rule.enabled ? "运行中" : "已停用" }}
+              </el-tag>
+            </div>
           </div>
-          <h4 class="empty-title">暂无聚合规则</h4>
-          <p class="empty-description">为当前工作空间配置告警聚合规则，减少重复告警</p>
-          <el-button type="primary" :icon="Setting" @click="handleAddRule"> 添加聚合规则 </el-button>
+          <div class="header-right">
+            <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="large" />
+            <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)"> 编辑 </el-button>
+            <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule)"> 删除 </el-button>
+          </div>
         </div>
 
-        <!-- 规则列表 -->
-        <div v-for="rule in rules" :key="rule.id" class="aggregate-rule-card">
-          <!-- 卡片头部 -->
-          <div class="card-header">
-            <div class="header-left">
-              <div class="rule-meta">
-                <el-tag :type="rule.type === 0 ? 'primary' : 'warning'" size="small" class="type-tag">
-                  {{ rule.type === 0 ? "按标签聚合" : "按时间聚合" }}
-                </el-tag>
-                <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
-                  {{ rule.enabled ? "运行中" : "已停用" }}
+        <!-- 卡片内容 -->
+        <div class="card-content">
+          <!-- 标签区域 -->
+          <div class="info-section">
+            <div class="section-title">
+              <el-icon><PriceTag /></el-icon>
+              <span>聚合标签</span>
+            </div>
+            <div class="section-content">
+              <div v-if="rule.labels && rule.labels.length > 0" class="tags-container">
+                <el-tag v-for="label in rule.labels" :key="label" type="info" size="small" class="label-tag">
+                  {{ label }}
                 </el-tag>
               </div>
-            </div>
-            <div class="header-right">
-              <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="large" />
-              <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)"> 编辑 </el-button>
-              <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule)"> 删除 </el-button>
+              <div v-else class="empty-state">
+                <el-icon><Warning /></el-icon>
+                <span>未配置聚合标签</span>
+              </div>
             </div>
           </div>
 
-          <!-- 卡片内容 -->
-          <div class="card-content">
-            <!-- 标签区域 -->
-            <div class="info-section">
-              <div class="section-title">
-                <el-icon><PriceTag /></el-icon>
-                <span>聚合标签</span>
+          <!-- 时间配置区域 -->
+          <div class="info-section">
+            <div class="section-title">
+              <el-icon><Clock /></el-icon>
+              <span>时间配置</span>
+            </div>
+            <div class="section-content">
+              <div class="timing-cards">
+                <div class="timing-card">
+                  <div class="timing-value">{{ rule.group_wait }}</div>
+                  <div class="timing-label">等待时间(秒)</div>
+                </div>
+                <div class="timing-card">
+                  <div class="timing-value">{{ rule.group_interval }}</div>
+                  <div class="timing-label">组间隔(秒)</div>
+                </div>
+                <div class="timing-card">
+                  <div class="timing-value">{{ rule.repeat_interval }}</div>
+                  <div class="timing-label">重复间隔(秒)</div>
+                </div>
               </div>
-              <div class="section-content">
-                <div v-if="rule.labels && rule.labels.length > 0" class="tags-container">
-                  <el-tag v-for="label in rule.labels" :key="label" type="info" size="small" class="label-tag">
-                    {{ label }}
+            </div>
+          </div>
+
+          <!-- 其他配置区域 -->
+          <div class="info-section">
+            <div class="section-title">
+              <el-icon><Operation /></el-icon>
+              <span>其他配置</span>
+            </div>
+            <div class="section-content">
+              <div class="config-grid">
+                <div class="config-item">
+                  <div class="config-label">
+                    <el-icon><DataAnalysis /></el-icon>
+                    <span>区分数据源</span>
+                  </div>
+                  <el-tag :type="rule.is_diff_data_source ? 'success' : 'info'" size="small">
+                    {{ rule.is_diff_data_source ? "是" : "否" }}
                   </el-tag>
                 </div>
-                <div v-else class="empty-state">
-                  <el-icon><Warning /></el-icon>
-                  <span>未配置聚合标签</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 时间配置区域 -->
-            <div class="info-section">
-              <div class="section-title">
-                <el-icon><Clock /></el-icon>
-                <span>时间配置</span>
-              </div>
-              <div class="section-content">
-                <div class="timing-cards">
-                  <div class="timing-card">
-                    <div class="timing-value">{{ rule.group_wait }}</div>
-                    <div class="timing-label">等待时间(秒)</div>
+                <div class="config-item">
+                  <div class="config-label">
+                    <el-icon><Document /></el-icon>
+                    <span>通知模板</span>
                   </div>
-                  <div class="timing-card">
-                    <div class="timing-value">{{ rule.group_interval }}</div>
-                    <div class="timing-label">组间隔(秒)</div>
-                  </div>
-                  <div class="timing-card">
-                    <div class="timing-value">{{ rule.repeat_interval }}</div>
-                    <div class="timing-label">重复间隔(秒)</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 其他配置区域 -->
-            <div class="info-section">
-              <div class="section-title">
-                <el-icon><Operation /></el-icon>
-                <span>其他配置</span>
-              </div>
-              <div class="section-content">
-                <div class="config-grid">
-                  <div class="config-item">
-                    <div class="config-label">
-                      <el-icon><DataAnalysis /></el-icon>
-                      <span>区分数据源</span>
-                    </div>
-                    <el-tag :type="rule.is_diff_data_source ? 'success' : 'info'" size="small">
-                      {{ rule.is_diff_data_source ? "是" : "否" }}
-                    </el-tag>
-                  </div>
-                  <div class="config-item">
-                    <div class="config-label">
-                      <el-icon><Document /></el-icon>
-                      <span>通知模板</span>
-                    </div>
-                    <span class="config-value">#{{ rule.template_id }}</span>
-                  </div>
+                  <span class="config-value">#{{ rule.template_id }}</span>
                 </div>
               </div>
             </div>
@@ -254,7 +249,7 @@
         </el-form>
       </div>
     </Drawer>
-  </div>
+  </CollapsibleSection>
 </template>
 
 <script setup lang="ts">
@@ -274,6 +269,7 @@ import {
 } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import LabelSelector from "@@/components/LabelSelector/index.vue"
+import CollapsibleSection from "@@/components/CollapsibleSection/index.vue"
 import { saveAggregateRuleApi, deleteAggregateRuleApi } from "@/api/aggregate"
 import type { CreateAggregateGroupRuleReq, AggregateGroupRule } from "@/api/aggregate/types"
 
@@ -488,258 +484,217 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.aggregate-rules-section {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 20px;
+.aggregate-rules-list {
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #f8fafc;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
 
-  &:last-child {
-    margin-bottom: 0;
-  }
+    .empty-icon {
+      margin-bottom: 16px;
 
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-bottom: 1px solid #e2e8f0;
-    border-radius: 8px 8px 0 0;
-
-    .header-info {
-      h4 {
-        margin: 0 0 4px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1f2937;
+      .el-icon {
+        font-size: 48px;
+        color: #9ca3af;
       }
+    }
 
-      .header-tip {
-        font-size: 12px;
-        color: #6b7280;
-      }
+    .empty-title {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .empty-description {
+      margin: 0 0 24px 0;
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
     }
   }
 
-  .section-content {
-    padding: 20px;
+  .aggregate-rule-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 16px;
 
-    .aggregate-rules-list {
-      .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        background: #f8fafc;
-        border: 2px dashed #d1d5db;
-        border-radius: 8px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid #e2e8f0;
 
-        .empty-icon {
-          margin-bottom: 16px;
+      .header-left {
+        .rule-meta {
+          display: flex;
+          gap: 8px;
+          align-items: center;
 
-          .el-icon {
-            font-size: 48px;
-            color: #9ca3af;
+          .type-tag {
+            font-weight: 600;
+            border-radius: 6px;
           }
-        }
 
-        .empty-title {
-          margin: 0 0 8px 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: #374151;
-        }
-
-        .empty-description {
-          margin: 0 0 24px 0;
-          font-size: 14px;
-          color: #6b7280;
-          line-height: 1.5;
+          .status-tag {
+            font-weight: 600;
+            border-radius: 6px;
+          }
         }
       }
-      .aggregate-rule-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        // 移除过渡动画
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    }
+
+    .card-content {
+      padding: 16px 20px;
+
+      .info-section {
         margin-bottom: 16px;
 
-        // 移除悬停效果
+        &:last-child {
+          margin-bottom: 0;
+        }
 
-        .card-header {
+        .section-title {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 16px 20px;
-          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-          border-bottom: 1px solid #e2e8f0;
+          margin-bottom: 12px;
+          padding-bottom: 6px;
+          border-bottom: 1px solid #f3f4f6;
 
-          .header-left {
-            .rule-meta {
-              display: flex;
-              gap: 8px;
-              align-items: center;
-
-              .type-tag {
-                font-weight: 600;
-                border-radius: 6px;
-              }
-
-              .status-tag {
-                font-weight: 600;
-                border-radius: 6px;
-              }
-            }
+          .el-icon {
+            margin-right: 8px;
+            font-size: 16px;
+            color: #3b82f6;
           }
 
-          .header-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+          span {
+            font-size: 14px;
+            font-weight: 700;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
           }
         }
 
-        .card-content {
-          padding: 16px 20px;
+        .section-content {
+          .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
 
-          .info-section {
-            margin-bottom: 16px;
-
-            &:last-child {
-              margin-bottom: 0;
+            .label-tag {
+              font-weight: 500;
+              border-radius: 6px;
+              padding: 4px 12px;
             }
+          }
 
-            .section-title {
-              display: flex;
-              align-items: center;
-              margin-bottom: 12px;
-              padding-bottom: 6px;
-              border-bottom: 1px solid #f3f4f6;
+          .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            color: #92400e;
+            font-size: 14px;
+            font-weight: 500;
 
-              .el-icon {
-                margin-right: 8px;
-                font-size: 16px;
-                color: #3b82f6;
+            .el-icon {
+              margin-right: 8px;
+              font-size: 16px;
+            }
+          }
+
+          .timing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+
+            .timing-card {
+              background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+              padding: 16px;
+              text-align: center;
+              // 移除过渡动画
+
+              // 移除悬停效果
+
+              .timing-value {
+                font-size: 28px;
+                font-weight: 800;
+                color: #1f2937;
+                margin-bottom: 4px;
+                line-height: 1;
               }
 
-              span {
-                font-size: 14px;
-                font-weight: 700;
-                color: #374151;
+              .timing-label {
+                font-size: 12px;
+                color: #6b7280;
+                font-weight: 600;
                 text-transform: uppercase;
                 letter-spacing: 0.05em;
               }
             }
+          }
 
-            .section-content {
-              .tags-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
+          .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
 
-                .label-tag {
-                  font-weight: 500;
-                  border-radius: 6px;
-                  padding: 4px 12px;
-                }
-              }
+            .config-item {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 12px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 6px;
+              // 移除过渡动画
 
-              .empty-state {
+              // 移除悬停效果
+
+              .config-label {
                 display: flex;
                 align-items: center;
-                justify-content: center;
-                padding: 20px;
-                background: #fef3c7;
-                border: 1px solid #fbbf24;
-                border-radius: 8px;
-                color: #92400e;
-                font-size: 14px;
-                font-weight: 500;
+                gap: 8px;
 
                 .el-icon {
-                  margin-right: 8px;
                   font-size: 16px;
+                  color: #6b7280;
+                }
+
+                span {
+                  font-size: 14px;
+                  font-weight: 600;
+                  color: #374151;
                 }
               }
 
-              .timing-cards {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-                gap: 12px;
-
-                .timing-card {
-                  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-                  border: 1px solid #e2e8f0;
-                  border-radius: 8px;
-                  padding: 16px;
-                  text-align: center;
-                  // 移除过渡动画
-
-                  // 移除悬停效果
-
-                  .timing-value {
-                    font-size: 28px;
-                    font-weight: 800;
-                    color: #1f2937;
-                    margin-bottom: 4px;
-                    line-height: 1;
-                  }
-
-                  .timing-label {
-                    font-size: 12px;
-                    color: #6b7280;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.05em;
-                  }
-                }
-              }
-
-              .config-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-                gap: 12px;
-
-                .config-item {
-                  display: flex;
-                  align-items: center;
-                  justify-content: space-between;
-                  padding: 12px;
-                  background: #f8fafc;
-                  border: 1px solid #e2e8f0;
-                  border-radius: 6px;
-                  // 移除过渡动画
-
-                  // 移除悬停效果
-
-                  .config-label {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-
-                    .el-icon {
-                      font-size: 16px;
-                      color: #6b7280;
-                    }
-
-                    span {
-                      font-size: 14px;
-                      font-weight: 600;
-                      color: #374151;
-                    }
-                  }
-
-                  .config-value {
-                    font-size: 14px;
-                    font-weight: 700;
-                    color: #1f2937;
-                    font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
-                    background: #e5e7eb;
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                  }
-                }
+              .config-value {
+                font-size: 14px;
+                font-weight: 700;
+                color: #1f2937;
+                font-family: "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace;
+                background: #e5e7eb;
+                padding: 4px 8px;
+                border-radius: 4px;
               }
             }
           }
@@ -747,208 +702,208 @@ onMounted(() => {
       }
     }
   }
+}
 
-  .rule-form-container {
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 0;
-    box-shadow: none;
-    height: 100%;
-    overflow-y: auto;
+.rule-form-container {
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: none;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.rule-form {
+  .form-section {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
   }
 
-  .rule-form {
-    .form-section {
-      margin-bottom: 24px;
+  .section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+    .section-icon {
+      margin-right: 6px;
+      font-size: 16px;
+      color: #3b82f6;
     }
 
-    .section-title {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-      border-left: 4px solid #3b82f6;
-
-      .section-icon {
-        margin-right: 6px;
-        font-size: 16px;
-        color: #3b82f6;
-      }
-
-      span {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-      }
+    span {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
     }
+  }
 
-    .form-row {
-      margin-bottom: 16px;
+  .form-row {
+    margin-bottom: 16px;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      &.timing-row {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 0;
-
-        .timing-item {
-          flex: 1;
-        }
-      }
-    }
-
-    .form-item {
+    &:last-child {
       margin-bottom: 0;
-
-      :deep(.el-form-item__label) {
-        font-weight: 500;
-        color: #374151;
-        margin-bottom: 6px;
-        font-size: 13px;
-      }
     }
 
-    .timing-config-row {
+    &.timing-row {
       display: flex;
       gap: 16px;
       margin-bottom: 0;
 
-      .timing-config-item {
+      .timing-item {
         flex: 1;
-        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px 16px;
-        text-align: center;
-        position: relative;
+      }
+    }
+  }
 
-        .timing-label {
-          font-size: 14px;
-          color: #374151;
+  .form-item {
+    margin-bottom: 0;
+
+    :deep(.el-form-item__label) {
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+  }
+
+  .timing-config-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 0;
+
+    .timing-config-item {
+      flex: 1;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+
+      .timing-label {
+        font-size: 14px;
+        color: #374151;
+        font-weight: 600;
+        margin-bottom: 16px;
+      }
+
+      .timing-input-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+
+        .timing-input {
+          width: 100px;
+          height: 40px;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+          text-align: center;
+          font-size: 16px;
           font-weight: 600;
-          margin-bottom: 16px;
+          color: #1f2937;
+          background: #ffffff;
+          outline: none;
+
+          &::-webkit-outer-spin-button,
+          &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+          }
+
+          &[type="number"] {
+            -moz-appearance: textfield;
+          }
         }
 
-        .timing-input-wrapper {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 8px;
-
-          .timing-input {
-            width: 100px;
-            height: 40px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-            background: #ffffff;
-            outline: none;
-
-            &::-webkit-outer-spin-button,
-            &::-webkit-inner-spin-button {
-              -webkit-appearance: none;
-              margin: 0;
-            }
-
-            &[type="number"] {
-              -moz-appearance: textfield;
-            }
-          }
-
-          .timing-unit {
-            font-size: 14px;
-            color: #6b7280;
-            font-weight: 500;
-          }
+        .timing-unit {
+          font-size: 14px;
+          color: #6b7280;
+          font-weight: 500;
         }
       }
     }
+  }
 
-    :deep(.el-input__wrapper) {
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
+  :deep(.el-input__wrapper) {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 
-      &:hover {
-        border-color: #9ca3af;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      &.is-focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-      }
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 
-    :deep(.el-select__wrapper) {
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
-
-      &:hover {
-        border-color: #9ca3af;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      &.is-focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-      }
-    }
-
-    :deep(.el-input-number__wrapper) {
-      border-radius: 6px;
-      border: 1px solid #d1d5db;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
-
-      &:hover {
-        border-color: #9ca3af;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      &.is-focus {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-      }
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
     }
   }
 
-  .switch-container {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  :deep(.el-select__wrapper) {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
   }
 
-  .input-with-unit {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+  :deep(.el-input-number__wrapper) {
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 
-  .form-tip {
-    font-size: 12px;
-    color: #6b7280;
-  }
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
 
-  .form-unit {
-    font-size: 14px;
-    color: #6b7280;
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
   }
+}
+
+.switch-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.form-unit {
+  font-size: 14px;
+  color: #6b7280;
 }
 </style>

@@ -1,118 +1,113 @@
 <template>
-  <div class="inhibit-rules-section">
-    <div class="section-header">
-      <div class="header-info">
-        <h4>抑制规则</h4>
-        <span class="header-tip">全局抑制规则，对所有工作空间生效</span>
-      </div>
+  <CollapsibleSection title="抑制规则" tip="全局抑制规则，对所有工作空间生效">
+    <template #actions>
       <el-button type="primary" :icon="Plus" @click="handleAddRule"> 添加规则 </el-button>
-    </div>
-    <div class="section-content">
-      <div class="inhibit-rules-list" v-loading="loading">
-        <!-- 空状态 -->
-        <div v-if="!loading && rules.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <el-icon><Filter /></el-icon>
-          </div>
-          <h4 class="empty-title">暂无抑制规则</h4>
-          <p class="empty-description">配置全局抑制规则，减少不必要的告警通知</p>
-          <el-button type="primary" :icon="Plus" @click="handleAddRule"> 添加抑制规则 </el-button>
+    </template>
+
+    <div class="inhibit-rules-list" v-loading="loading">
+      <!-- 空状态 -->
+      <div v-if="!loading && rules.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <el-icon><Filter /></el-icon>
         </div>
+        <h4 class="empty-title">暂无抑制规则</h4>
+        <p class="empty-description">配置全局抑制规则，减少不必要的告警通知</p>
+        <el-button type="primary" :icon="Plus" @click="handleAddRule"> 添加抑制规则 </el-button>
+      </div>
 
-        <!-- 规则列表 -->
-        <div v-for="rule in rules" :key="rule.id" class="inhibit-rule-card">
-          <div class="card-header">
-            <div class="header-left">
-              <div class="rule-title">
-                <h5 class="rule-name">{{ rule.name }}</h5>
-                <div class="rule-meta">
-                  <el-tag type="primary" size="small" class="type-tag"> 抑制规则 </el-tag>
-                  <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
-                    {{ rule.enabled ? "运行中" : "已停用" }}
-                  </el-tag>
-                </div>
-              </div>
-            </div>
-            <div class="header-right">
-              <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="large" />
-              <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)"> 编辑 </el-button>
-              <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule.id)"> 删除 </el-button>
-            </div>
-          </div>
-
-          <div class="card-content">
-            <!-- 匹配器信息 -->
-            <div class="matchers-grid">
-              <!-- 源匹配器 -->
-              <div class="matcher-group">
-                <div class="matcher-header">
-                  <el-icon class="matcher-icon"><ArrowRight /></el-icon>
-                  <span class="matcher-title">源匹配器</span>
-                </div>
-                <div class="matcher-content">
-                  <div v-if="rule.source_match.length === 0" class="empty-matcher">
-                    <span class="empty-text">无匹配条件</span>
-                  </div>
-                  <div v-else class="matcher-list">
-                    <div v-for="(matcher, index) in rule.source_match" :key="index" class="matcher-item">
-                      <el-tag :type="matcher.Type === 1 ? 'primary' : 'warning'" size="small" class="matcher-type-tag">
-                        {{ matcher.Type === 1 ? "等于" : "正则" }}
-                      </el-tag>
-                      <span class="matcher-name">{{ matcher.Name }}</span>
-                      <span class="matcher-value">{{ matcher.Value }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 目标匹配器 -->
-              <div class="matcher-group">
-                <div class="matcher-header">
-                  <el-icon class="matcher-icon"><ArrowLeft /></el-icon>
-                  <span class="matcher-title">目标匹配器</span>
-                </div>
-                <div class="matcher-content">
-                  <div v-if="rule.target_match.length === 0" class="empty-matcher">
-                    <span class="empty-text">无匹配条件</span>
-                  </div>
-                  <div v-else class="matcher-list">
-                    <div v-for="(matcher, index) in rule.target_match" :key="index" class="matcher-item">
-                      <el-tag :type="matcher.Type === 1 ? 'primary' : 'warning'" size="small" class="matcher-type-tag">
-                        {{ matcher.Type === 1 ? "等于" : "正则" }}
-                      </el-tag>
-                      <span class="matcher-name">{{ matcher.Name }}</span>
-                      <span class="matcher-value">{{ matcher.Value }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 匹配标签 -->
-            <div v-if="rule.equal_labels && rule.equal_labels.length > 0" class="labels-section">
-              <div class="labels-header">
-                <el-icon class="labels-icon"><PriceTag /></el-icon>
-                <span class="labels-title">匹配标签</span>
-              </div>
-              <div class="labels-content">
-                <el-tag v-for="label in rule.equal_labels" :key="label" type="info" size="small" class="label-tag">
-                  {{ label }}
+      <!-- 规则列表 -->
+      <div v-for="rule in rules" :key="rule.id" class="inhibit-rule-card">
+        <div class="card-header">
+          <div class="header-left">
+            <div class="rule-title">
+              <h5 class="rule-name">{{ rule.name }}</h5>
+              <div class="rule-meta">
+                <el-tag type="primary" size="small" class="type-tag"> 抑制规则 </el-tag>
+                <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
+                  {{ rule.enabled ? "运行中" : "已停用" }}
                 </el-tag>
               </div>
             </div>
+          </div>
+          <div class="header-right">
+            <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="large" />
+            <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)"> 编辑 </el-button>
+            <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule.id)"> 删除 </el-button>
+          </div>
+        </div>
 
-            <!-- 时间窗口 -->
-            <div
-              v-if="rule.time_window && (rule.time_window.start !== 0 || rule.time_window.end !== 0)"
-              class="time-window-section"
-            >
-              <div class="time-window-header">
-                <el-icon class="time-window-icon"><Clock /></el-icon>
-                <span class="time-window-title">时间窗口</span>
+        <div class="card-content">
+          <!-- 匹配器信息 -->
+          <div class="matchers-grid">
+            <!-- 源匹配器 -->
+            <div class="matcher-group">
+              <div class="matcher-header">
+                <el-icon class="matcher-icon"><ArrowRight /></el-icon>
+                <span class="matcher-title">源匹配器</span>
               </div>
-              <div class="time-window-content">
-                <span class="time-window-text">{{ formatTimeWindow(rule.time_window) }}</span>
+              <div class="matcher-content">
+                <div v-if="rule.source_match.length === 0" class="empty-matcher">
+                  <span class="empty-text">无匹配条件</span>
+                </div>
+                <div v-else class="matcher-list">
+                  <div v-for="(matcher, index) in rule.source_match" :key="index" class="matcher-item">
+                    <el-tag :type="matcher.Type === 1 ? 'primary' : 'warning'" size="small" class="matcher-type-tag">
+                      {{ matcher.Type === 1 ? "等于" : "正则" }}
+                    </el-tag>
+                    <span class="matcher-name">{{ matcher.Name }}</span>
+                    <span class="matcher-value">{{ matcher.Value }}</span>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <!-- 目标匹配器 -->
+            <div class="matcher-group">
+              <div class="matcher-header">
+                <el-icon class="matcher-icon"><ArrowLeft /></el-icon>
+                <span class="matcher-title">目标匹配器</span>
+              </div>
+              <div class="matcher-content">
+                <div v-if="rule.target_match.length === 0" class="empty-matcher">
+                  <span class="empty-text">无匹配条件</span>
+                </div>
+                <div v-else class="matcher-list">
+                  <div v-for="(matcher, index) in rule.target_match" :key="index" class="matcher-item">
+                    <el-tag :type="matcher.Type === 1 ? 'primary' : 'warning'" size="small" class="matcher-type-tag">
+                      {{ matcher.Type === 1 ? "等于" : "正则" }}
+                    </el-tag>
+                    <span class="matcher-name">{{ matcher.Name }}</span>
+                    <span class="matcher-value">{{ matcher.Value }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 匹配标签 -->
+          <div v-if="rule.equal_labels && rule.equal_labels.length > 0" class="labels-section">
+            <div class="labels-header">
+              <el-icon class="labels-icon"><PriceTag /></el-icon>
+              <span class="labels-title">匹配标签</span>
+            </div>
+            <div class="labels-content">
+              <el-tag v-for="label in rule.equal_labels" :key="label" type="info" size="small" class="label-tag">
+                {{ label }}
+              </el-tag>
+            </div>
+          </div>
+
+          <!-- 时间窗口 -->
+          <div
+            v-if="rule.time_window && (rule.time_window.start !== 0 || rule.time_window.end !== 0)"
+            class="time-window-section"
+          >
+            <div class="time-window-header">
+              <el-icon class="time-window-icon"><Clock /></el-icon>
+              <span class="time-window-title">时间窗口</span>
+            </div>
+            <div class="time-window-content">
+              <span class="time-window-text">{{ formatTimeWindow(rule.time_window) }}</span>
             </div>
           </div>
         </div>
@@ -254,7 +249,7 @@
         </el-form>
       </div>
     </Drawer>
-  </div>
+  </CollapsibleSection>
 </template>
 
 <script setup lang="ts">
@@ -263,6 +258,7 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { Plus, Filter, Setting, Clock, ArrowRight, Edit, Delete, ArrowLeft, PriceTag } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import LabelSelector from "@@/components/LabelSelector/index.vue"
+import CollapsibleSection from "@@/components/CollapsibleSection/index.vue"
 import { saveInhibitRuleApi } from "@/api/noise"
 import type { SaveInhibitRuleReq as ApiSaveInhibitRuleReq } from "@/api/noise/types"
 
@@ -521,453 +517,414 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.inhibit-rules-section {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  margin-bottom: 20px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
+.inhibit-rules-list {
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
     background: #f8fafc;
-    border-bottom: 1px solid #e5e7eb;
-    border-radius: 8px 8px 0 0;
+    border: 2px dashed #d1d5db;
+    border-radius: 8px;
 
-    .header-info {
-      h4 {
-        margin: 0 0 4px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1f2937;
-      }
+    .empty-icon {
+      margin-bottom: 16px;
 
-      .header-tip {
-        font-size: 12px;
-        color: #6b7280;
+      .el-icon {
+        font-size: 48px;
+        color: #9ca3af;
       }
     }
+
+    .empty-title {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .empty-description {
+      margin: 0 0 24px 0;
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1.5;
+    }
   }
+  .inhibit-rule-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
 
-  .section-content {
-    padding: 20px;
+    &:last-child {
+      margin-bottom: 0;
+    }
 
-    .inhibit-rules-list {
-      .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        background: #f8fafc;
-        border: 2px dashed #d1d5db;
-        border-radius: 8px;
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e5e7eb;
 
-        .empty-icon {
-          margin-bottom: 16px;
-
-          .el-icon {
-            font-size: 48px;
-            color: #9ca3af;
-          }
-        }
-
-        .empty-title {
-          margin: 0 0 8px 0;
-          font-size: 18px;
-          font-weight: 600;
-          color: #374151;
-        }
-
-        .empty-description {
-          margin: 0 0 24px 0;
-          font-size: 14px;
-          color: #6b7280;
-          line-height: 1.5;
-        }
-      }
-      .inhibit-rule-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        margin-bottom: 12px;
-        overflow: hidden;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        .card-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          background: #f8fafc;
-          border-bottom: 1px solid #e5e7eb;
-
-          .header-left {
-            .rule-title {
-              .rule-name {
-                margin: 0 0 8px 0;
-                font-size: 18px;
-                font-weight: 600;
-                color: #1f2937;
-                line-height: 1.4;
-              }
-
-              .rule-meta {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-
-                .type-tag {
-                  font-weight: 500;
-                }
-
-                .status-tag {
-                  font-weight: 500;
-                }
-              }
-            }
+      .header-left {
+        .rule-title {
+          .rule-name {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            line-height: 1.4;
           }
 
-          .header-right {
+          .rule-meta {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
+
+            .type-tag {
+              font-weight: 500;
+            }
+
+            .status-tag {
+              font-weight: 500;
+            }
           }
         }
+      }
 
-        .card-content {
-          padding: 20px;
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+    }
 
-          // 匹配器网格
-          .matchers-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+    .card-content {
+      padding: 20px;
 
-            .matcher-group {
-              background: #f8fafc;
-              border: 1px solid #e2e8f0;
-              border-radius: 8px;
-              overflow: hidden;
+      // 匹配器网格
+      .matchers-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
 
-              .matcher-header {
+        .matcher-group {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          overflow: hidden;
+
+          .matcher-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border-bottom: 1px solid #d1d5db;
+
+            .matcher-icon {
+              font-size: 16px;
+              color: #3b82f6;
+            }
+
+            .matcher-title {
+              font-size: 14px;
+              font-weight: 600;
+              color: #374151;
+            }
+          }
+
+          .matcher-content {
+            padding: 16px;
+
+            .empty-matcher {
+              text-align: center;
+              padding: 20px 0;
+              color: #9ca3af;
+              font-size: 14px;
+            }
+
+            .matcher-list {
+              .matcher-item {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 12px 16px;
-                background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-                border-bottom: 1px solid #d1d5db;
+                padding: 8px 12px;
+                background: #ffffff;
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                margin-bottom: 8px;
 
-                .matcher-icon {
-                  font-size: 16px;
-                  color: #3b82f6;
+                &:last-child {
+                  margin-bottom: 0;
                 }
 
-                .matcher-title {
-                  font-size: 14px;
+                .matcher-type-tag {
+                  font-size: 11px;
+                  font-weight: 600;
+                  border-radius: 4px;
+                  flex-shrink: 0;
+                }
+
+                .matcher-name {
+                  font-size: 13px;
                   font-weight: 600;
                   color: #374151;
-                }
-              }
-
-              .matcher-content {
-                padding: 16px;
-
-                .empty-matcher {
-                  text-align: center;
-                  padding: 20px 0;
-                  color: #9ca3af;
-                  font-size: 14px;
+                  min-width: 60px;
+                  flex-shrink: 0;
                 }
 
-                .matcher-list {
-                  .matcher-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    padding: 8px 12px;
-                    background: #ffffff;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 6px;
-                    margin-bottom: 8px;
-
-                    &:last-child {
-                      margin-bottom: 0;
-                    }
-
-                    .matcher-type-tag {
-                      font-size: 11px;
-                      font-weight: 600;
-                      border-radius: 4px;
-                      flex-shrink: 0;
-                    }
-
-                    .matcher-name {
-                      font-size: 13px;
-                      font-weight: 600;
-                      color: #374151;
-                      min-width: 60px;
-                      flex-shrink: 0;
-                    }
-
-                    .matcher-value {
-                      font-size: 13px;
-                      color: #6b7280;
-                      flex: 1;
-                      word-break: break-all;
-                    }
-                  }
+                .matcher-value {
+                  font-size: 13px;
+                  color: #6b7280;
+                  flex: 1;
+                  word-break: break-all;
                 }
               }
             }
           }
-
-          // 匹配标签
-          .labels-section {
-            margin-bottom: 20px;
-            padding: 16px;
-            background: #fef3c7;
-            border: 1px solid #fbbf24;
-            border-radius: 8px;
-
-            .labels-header {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 12px;
-
-              .labels-icon {
-                font-size: 16px;
-                color: #f59e0b;
-              }
-
-              .labels-title {
-                font-size: 14px;
-                font-weight: 600;
-                color: #92400e;
-              }
-            }
-
-            .labels-content {
-              display: flex;
-              flex-wrap: wrap;
-              gap: 6px;
-
-              .label-tag {
-                font-size: 12px;
-                border-radius: 4px;
-                background: #ffffff;
-                border-color: #fbbf24;
-                color: #92400e;
-              }
-            }
-          }
-
-          // 时间窗口
-          .time-window-section {
-            padding: 16px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-
-            .time-window-header {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 8px;
-
-              .time-window-icon {
-                font-size: 16px;
-                color: #3b82f6;
-              }
-
-              .time-window-title {
-                font-size: 14px;
-                font-weight: 600;
-                color: #1e40af;
-              }
-            }
-
-            .time-window-content {
-              .time-window-text {
-                font-size: 14px;
-                color: #1e40af;
-                font-weight: 500;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .rule-form-container {
-    padding: 20px;
-    background: #ffffff;
-    border-radius: 0;
-    box-shadow: none;
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .rule-form {
-    .form-section {
-      margin-bottom: 24px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    .section-title {
-      display: flex;
-      align-items: center;
-      margin-bottom: 16px;
-      padding: 10px 14px;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 6px;
-      border: 1px solid #e2e8f0;
-      border-left: 4px solid #3b82f6;
-
-      .section-icon {
-        margin-right: 6px;
-        font-size: 16px;
-        color: #3b82f6;
-      }
-
-      span {
-        font-size: 14px;
-        font-weight: 600;
-        color: #374151;
-      }
-    }
-
-    .form-row {
-      margin-bottom: 16px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-    }
-
-    .form-item {
-      margin-bottom: 0;
-
-      :deep(.el-form-item__label) {
-        font-weight: 500;
-        color: #374151;
-        margin-bottom: 6px;
-        font-size: 13px;
-      }
-
-      :deep(.el-input__wrapper) {
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
-
-        &:hover {
-          border-color: #9ca3af;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        &.is-focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
       }
 
-      :deep(.el-select__wrapper) {
-        border-radius: 6px;
-        border: 1px solid #d1d5db;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        transition: all 0.2s ease;
-
-        &:hover {
-          border-color: #9ca3af;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        &.is-focus {
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        }
-      }
-    }
-
-    .matchers-container {
-      width: 100%;
-
-      .matcher-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
+      // 匹配标签
+      .labels-section {
+        margin-bottom: 20px;
         padding: 16px;
-        background: #f8fafc;
-        border: 1px solid #e2e8f0;
+        background: #fef3c7;
+        border: 1px solid #fbbf24;
         border-radius: 8px;
 
-        .matcher-type {
-          flex: 0 0 100px;
-          min-width: 100px;
+        .labels-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+
+          .labels-icon {
+            font-size: 16px;
+            color: #f59e0b;
+          }
+
+          .labels-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #92400e;
+          }
         }
 
-        .matcher-name {
-          flex: 0 0 150px;
-          min-width: 150px;
-        }
+        .labels-content {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
 
-        .matcher-value {
-          flex: 1;
-          min-width: 200px;
-        }
-
-        .matcher-remove {
-          flex: 0 0 auto;
-          margin-left: auto;
+          .label-tag {
+            font-size: 12px;
+            border-radius: 4px;
+            background: #ffffff;
+            border-color: #fbbf24;
+            color: #92400e;
+          }
         }
       }
 
-      .add-matcher-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        color: #3b82f6;
-        font-weight: 500;
-        margin-top: 8px;
+      // 时间窗口
+      .time-window-section {
+        padding: 16px;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 8px;
 
-        &:hover {
-          color: #1d4ed8;
+        .time-window-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+
+          .time-window-icon {
+            font-size: 16px;
+            color: #3b82f6;
+          }
+
+          .time-window-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e40af;
+          }
+        }
+
+        .time-window-content {
+          .time-window-text {
+            font-size: 14px;
+            color: #1e40af;
+            font-weight: 500;
+          }
         }
       }
     }
+  }
+}
 
-    .time-window-container {
-      .switch-container {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
+.rule-form-container {
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 0;
+  box-shadow: none;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.rule-form {
+  .form-section {
+    margin-bottom: 24px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+
+    .section-icon {
+      margin-right: 6px;
+      font-size: 16px;
+      color: #3b82f6;
+    }
+
+    span {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+  }
+
+  .form-row {
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .form-item {
+    margin-bottom: 0;
+
+    :deep(.el-form-item__label) {
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    :deep(.el-input__wrapper) {
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #9ca3af;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
-      .time-window-config {
-        margin-top: 10px;
-        width: 100%;
+      &.is-focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
     }
 
-    .form-tip {
-      font-size: 12px;
-      color: #6b7280;
+    :deep(.el-select__wrapper) {
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: #9ca3af;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      &.is-focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
     }
+  }
+
+  .matchers-container {
+    width: 100%;
+
+    .matcher-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding: 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+
+      .matcher-type {
+        flex: 0 0 100px;
+        min-width: 100px;
+      }
+
+      .matcher-name {
+        flex: 0 0 150px;
+        min-width: 150px;
+      }
+
+      .matcher-value {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .matcher-remove {
+        flex: 0 0 auto;
+        margin-left: auto;
+      }
+    }
+
+    .add-matcher-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #3b82f6;
+      font-weight: 500;
+      margin-top: 8px;
+
+      &:hover {
+        color: #1d4ed8;
+      }
+    }
+  }
+
+  .time-window-container {
+    .switch-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .time-window-config {
+      margin-top: 10px;
+      width: 100%;
+    }
+  }
+
+  .form-tip {
+    font-size: 12px;
+    color: #6b7280;
   }
 }
 </style>
