@@ -42,10 +42,9 @@ export const deleteWorkspaceApi = (data: { id: number }) => {
   })
 }
 
-export const getWorkspaceDetailApi = (data: { id: number }) => {
-  return instance.post<Workspace>({
-    url: `${API_SERVICE.ALERT}/workspace/detail`,
-    data
+export const getWorkspaceDetailApi = (id: number) => {
+  return instance.get<Workspace>({
+    url: `${API_SERVICE.ALERT}/workspace/detail/${id}`
   })
 }
 

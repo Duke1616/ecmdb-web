@@ -166,32 +166,6 @@ const formRules: FormRules = {
   ]
 }
 
-// 生成团队头像颜色
-const generateTeamColor = (name: string) => {
-  const colors = [
-    "#667eea",
-    "#764ba2",
-    "#f093fb",
-    "#f5576c",
-    "#4facfe",
-    "#00f2fe",
-    "#43e97b",
-    "#38f9d7",
-    "#fa709a",
-    "#fee140",
-    "#a8edea",
-    "#fed6e3"
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    const char = name.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash
-  }
-  const index = Math.abs(hash) % colors.length
-  return colors[index]
-}
-
 // 加载团队数据
 const loadTeamsData = async () => {
   try {

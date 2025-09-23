@@ -242,30 +242,7 @@
 
         <!-- 设置页面 -->
         <div v-else-if="activeMenu === 'settings'" class="settings-page">
-          <h3>工作空间设置</h3>
-          <el-form :model="workspace" label-width="120px" class="settings-form" v-if="workspace">
-            <el-form-item label="工作空间名称">
-              <el-input v-model="workspace.name" />
-            </el-form-item>
-            <el-form-item label="公开设置">
-              <el-radio-group v-model="workspace.is_public">
-                <el-radio :label="true">公开</el-radio>
-                <el-radio :label="false">私有</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="邀请设置">
-              <el-radio-group v-model="workspace.allow_invite">
-                <el-radio :label="true">允许成员邀请</el-radio>
-                <el-radio :label="false">仅管理员邀请</el-radio>
-              </el-radio-group>
-            </el-form-item>
-            <el-form-item label="启用状态">
-              <el-switch v-model="workspace.enabled" />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="handleSaveSettings">保存设置</el-button>
-            </el-form-item>
-          </el-form>
+          <WorkspaceSettings :workspace-id="workspace?.id || 0" @refresh="handleSettingsRefresh" />
         </div>
       </div>
     </div>
@@ -294,9 +271,11 @@ import {
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { Workspace } from "@/api/workspace/types"
+import { getWorkspaceDetailApi } from "@/api/workspace"
 import NoiseConfig from "./components/NoiseConfig/index.vue"
 import AlertRules from "./components/AlertRules/index.vue"
 import AlertManager from "./components/AlertManager/index.vue"
+import WorkspaceSettings from "./components/WorkspaceSettings/index.vue"
 
 // 路由
 const route = useRoute()
@@ -309,10 +288,13 @@ const teamName = ref("")
 
 // 格式化最后更新时间
 const formatLastUpdate = () => {
-  // 模拟最后更新时间（实际项目中应该从后端获取）
-  const mockTime = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000) // 随机7天内的时间
+  if (!workspace.value?.utime) {
+    return "未知时间"
+  }
+  
+  const updateTime = new Date(workspace.value.utime)
   const now = new Date()
-  const diff = now.getTime() - mockTime.getTime()
+  const diff = now.getTime() - updateTime.getTime()
 
   const minutes = Math.floor(diff / (1000 * 60))
   const hours = Math.floor(diff / (1000 * 60 * 60))
@@ -325,7 +307,7 @@ const formatLastUpdate = () => {
   } else if (days < 7) {
     return `${days}天前`
   } else {
-    return mockTime.toLocaleDateString()
+    return updateTime.toLocaleDateString()
   }
 }
 
@@ -459,6 +441,11 @@ const handleRefresh = () => {
   ElMessage.success("数据已刷新")
 }
 
+// 处理设置页面刷新
+const handleSettingsRefresh = () => {
+  loadWorkspaceData()
+}
+
 // 菜单选择
 const handleMenuSelect = (key: string) => {
   activeMenu.value = key
@@ -508,9 +495,6 @@ const handleRemoveMember = (member: any) => {
   ElMessage.info(`移除成员: ${member.name}`)
 }
 
-const handleSaveSettings = () => {
-  ElMessage.success("设置已保存")
-}
 
 // 加载工作空间数据
 const loadWorkspaceData = async () => {
@@ -522,21 +506,12 @@ const loadWorkspaceData = async () => {
   }
 
   try {
-    // TODO: 调用API获取工作空间详情
-    // const { data } = await getWorkspaceDetailApi({ id: Number(workspaceId) })
-    // workspace.value = data
+    // 调用API获取工作空间详情
+    const response = await getWorkspaceDetailApi(Number(workspaceId))
+    workspace.value = response.data
 
-    // 模拟数据
-    workspace.value = {
-      id: Number(workspaceId),
-      name: "示例工作空间",
-      enabled: true,
-      team_id: 1,
-      is_public: true,
-      allow_invite: true
-    }
-
-    teamName.value = "示例团队"
+    // 更新团队名称
+    teamName.value = workspace.value?.team?.name || "未知团队"
   } catch (error) {
     console.error("加载工作空间数据失败:", error)
     ElMessage.error("加载工作空间数据失败")
@@ -1069,19 +1044,16 @@ onMounted(() => {
 
 // 设置页面样式
 .settings-page {
-  h3 {
-    margin: 0 0 24px 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-  }
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
 
-  .settings-form {
-    max-width: 600px;
-
-    .el-form-item {
-      margin-bottom: 24px;
-    }
+  // 覆盖 PageContainer 背景色
+  :deep(.page-container) {
+    background: transparent !important;
+    width: 100%;
   }
 }
 </style>
