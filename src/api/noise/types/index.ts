@@ -47,3 +47,23 @@ export interface GetNoiseConfigReq {
 export interface GetNoiseConfigResponse {
   data: RetrieveNoiseConfig
 }
+
+// 抑制规则保存请求
+export interface SaveInhibitRuleReq {
+  id?: number
+  name: string
+  source_matchers: Matcher[]
+  target_matchers: Matcher[]
+  equal_labels: string[]
+  time_window: TimeRange | null
+  enabled: boolean
+}
+
+// 抑制规则保存响应
+export interface SaveInhibitRuleResponse {
+  code: number
+  msg: string
+  data: {
+    id: number
+  }
+}

@@ -170,73 +170,11 @@
 
             <div class="form-row">
               <el-form-item prop="labels" label="聚合标签" class="form-item">
-                <div class="labels-container">
-                  <!-- 标签输入区域 -->
-                  <div class="labels-input-wrapper">
-                    <el-input
-                      v-model="labelInput"
-                      placeholder="输入标签名称，按回车添加"
-                      size="large"
-                      class="label-input"
-                      @keyup.enter="addLabel"
-                      @blur="addLabel"
-                    >
-                      <template #suffix>
-                        <el-button
-                          type="primary"
-                          size="small"
-                          :icon="Plus"
-                          @click="addLabel"
-                          :disabled="!labelInput.trim()"
-                        >
-                          添加
-                        </el-button>
-                      </template>
-                    </el-input>
-                  </div>
-
-                  <!-- 标签显示区域 -->
-                  <div class="labels-display" v-if="formData.labels && formData.labels.length > 0">
-                    <div class="labels-header">
-                      <span class="labels-count">已选择 {{ formData.labels.length }} 个标签</span>
-                      <el-button type="danger" size="small" :icon="Delete" @click="clearAllLabels" text>
-                        清空
-                      </el-button>
-                    </div>
-                    <div class="labels-list">
-                      <el-tag
-                        v-for="(label, index) in formData.labels"
-                        :key="index"
-                        closable
-                        @close="removeLabel(index)"
-                        class="label-item"
-                        type="info"
-                        effect="light"
-                      >
-                        {{ label }}
-                      </el-tag>
-                    </div>
-                  </div>
-
-                  <!-- 推荐标签区域 -->
-                  <div class="suggested-labels" v-if="commonLabels.length > 0">
-                    <div class="suggested-header">
-                      <el-icon><Star /></el-icon>
-                      <span>推荐标签</span>
-                    </div>
-                    <div class="suggested-list">
-                      <el-tag
-                        v-for="label in commonLabels"
-                        :key="label"
-                        @click="addRecommendedLabel(label)"
-                        class="suggested-tag"
-                        effect="plain"
-                      >
-                        {{ label }}
-                      </el-tag>
-                    </div>
-                  </div>
-                </div>
+                <LabelSelector
+                  v-model="formData.labels"
+                  placeholder="输入标签名称，按回车添加"
+                  :suggested-labels="commonLabels"
+                />
               </el-form-item>
             </div>
           </div>
@@ -332,11 +270,10 @@ import {
   Warning,
   Operation,
   DataAnalysis,
-  Document,
-  Plus,
-  Star
+  Document
 } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
+import LabelSelector from "@@/components/LabelSelector/index.vue"
 import { saveAggregateRuleApi, deleteAggregateRuleApi } from "@/api/aggregate"
 import type { CreateAggregateGroupRuleReq, AggregateGroupRule } from "@/api/aggregate/types"
 
@@ -374,37 +311,6 @@ const formData = ref<CreateAggregateGroupRuleReq>({
   repeat_interval: 3600,
   template_id: 1
 })
-
-// 标签输入
-const labelInput = ref("")
-
-// 添加标签
-const addLabel = () => {
-  const label = labelInput.value.trim()
-  if (label && !formData.value.labels.includes(label)) {
-    formData.value.labels.push(label)
-    labelInput.value = ""
-  }
-}
-
-// 添加推荐标签
-const addRecommendedLabel = (label: string) => {
-  if (!formData.value.labels.includes(label)) {
-    formData.value.labels.push(label)
-  }
-}
-
-// 移除标签
-const removeLabel = (index: number) => {
-  if (formData.value.labels) {
-    formData.value.labels.splice(index, 1)
-  }
-}
-
-// 清空所有标签
-const clearAllLabels = () => {
-  formData.value.labels = []
-}
 
 // 表单验证规则
 const formRules: FormRules = {
@@ -583,6 +489,9 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .aggregate-rules-section {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   margin-bottom: 20px;
 
   &:last-child {
@@ -593,7 +502,10 @@ onMounted(() => {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 8px 8px 0 0;
 
     .header-info {
       h4 {
@@ -611,6 +523,8 @@ onMounted(() => {
   }
 
   .section-content {
+    padding: 20px;
+
     .aggregate-rules-list {
       .empty-state {
         text-align: center;
@@ -958,141 +872,6 @@ onMounted(() => {
             font-size: 14px;
             color: #6b7280;
             font-weight: 500;
-          }
-        }
-      }
-    }
-
-    .labels-container {
-      width: 100%;
-
-      .labels-input-wrapper {
-        margin-bottom: 16px;
-
-        .label-input {
-          :deep(.el-input__wrapper) {
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-
-            &:hover {
-              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-            }
-
-            &.is-focus {
-              box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            }
-          }
-        }
-      }
-
-      .labels-display {
-        padding: 16px;
-        background: #f8fafc;
-        border-radius: 8px;
-        border: 1px solid #e5e7eb;
-        margin-bottom: 16px;
-
-        .labels-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px;
-
-          .labels-count {
-            font-size: 14px;
-            color: #6b7280;
-            font-weight: 500;
-          }
-        }
-
-        .labels-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          width: 100%;
-          max-width: 100%;
-          overflow: hidden;
-
-          .label-item {
-            border-radius: 6px;
-            background: #eff6ff;
-            border-color: #bfdbfe;
-            color: #1e40af;
-            font-size: 13px;
-            padding: 4px 8px;
-            max-width: 100%;
-            word-break: break-word;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-
-            .el-tag__close {
-              color: #6b7280;
-              margin-left: 4px;
-
-              &:hover {
-                background: #dbeafe;
-                color: #1e40af;
-              }
-            }
-          }
-        }
-      }
-
-      .suggested-labels {
-        padding: 16px;
-        background: #fef3c7;
-        border-radius: 8px;
-        border: 1px solid #fbbf24;
-
-        .suggested-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 12px;
-
-          .el-icon {
-            margin-right: 6px;
-            color: #f59e0b;
-            font-size: 16px;
-          }
-
-          span {
-            font-size: 14px;
-            color: #92400e;
-            font-weight: 500;
-          }
-        }
-
-        .suggested-list {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          width: 100%;
-          max-width: 100%;
-          overflow: hidden;
-
-          .suggested-tag {
-            border-radius: 6px;
-            background: #ffffff;
-            border-color: #fbbf24;
-            color: #92400e;
-            font-size: 13px;
-            padding: 4px 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            max-width: 100%;
-            word-break: break-word;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-
-            &:hover {
-              background: #fef3c7;
-              border-color: #f59e0b;
-              transform: translateY(-1px);
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            }
           }
         }
       }
