@@ -28,13 +28,6 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 告警标题插槽 -->
-      <template #title="{ row }">
-        <div class="alert-title-cell">
-          <h4 class="title-text">{{ getAlertTitle(row) }}</h4>
-        </div>
-      </template>
-
       <!-- 告警等级插槽 -->
       <template #level="{ row }">
         <div class="level-cell">
@@ -64,19 +57,25 @@
       <template #labels="{ row }">
         <div class="labels-cell">
           <template v-if="row.labels && Object.keys(row.labels).length > 0">
-            <el-tag
+            <el-tooltip
               v-for="key in Object.keys(row.labels).slice(0, 3)"
               :key="key"
-              size="small"
-              type="info"
-              effect="plain"
-              class="label-tag"
+              :content="`${key}: ${row.labels[key]}`"
+              placement="top"
+              effect="dark"
             >
-              {{ key }}: {{ row.labels[key] }}
-            </el-tag>
-            <el-tag v-if="Object.keys(row.labels).length > 3" size="small" type="info" effect="plain">
-              +{{ Object.keys(row.labels).length - 3 }}
-            </el-tag>
+              <el-tag size="small" type="info" effect="plain" class="label-tag">
+                {{ key }}: {{ row.labels[key] }}
+              </el-tag>
+            </el-tooltip>
+            <el-tooltip
+              v-if="Object.keys(row.labels).length > 3"
+              :content="getRemainingLabelsTooltip(row.labels)"
+              placement="top"
+              effect="dark"
+            >
+              <el-tag size="small" type="info" effect="plain"> +{{ Object.keys(row.labels).length - 3 }} </el-tag>
+            </el-tooltip>
           </template>
           <span v-else class="no-labels">无标签</span>
         </div>
@@ -118,12 +117,6 @@ const alertFilter = ref("all")
 
 // 表格列配置
 const tableColumns = [
-  {
-    prop: "id",
-    label: "告警信息",
-    minWidth: 200,
-    slot: "title"
-  },
   {
     prop: "level",
     label: "等级",
@@ -233,6 +226,13 @@ const formatDuration = (seconds: number) => {
     const hours = Math.floor((seconds % 86400) / 3600)
     return `${days}天${hours}小时`
   }
+}
+
+// 获取剩余标签的 tooltip 内容
+const getRemainingLabelsTooltip = (labels: Record<string, string>) => {
+  const allKeys = Object.keys(labels)
+  const remainingKeys = allKeys.slice(3)
+  return remainingKeys.map((key) => `${key}: ${labels[key]}`).join("\n")
 }
 
 // 监听分页变化

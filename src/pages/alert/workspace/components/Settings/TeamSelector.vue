@@ -172,7 +172,7 @@ const handleConfirm = () => {
   .team-list {
     flex: 1;
     overflow-y: auto;
-    padding: 16px 0;
+    padding: 0px 12px;
     height: calc(100vh - 200px);
   }
 
