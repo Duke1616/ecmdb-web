@@ -79,7 +79,6 @@ interface Props {
 
 interface Emits {
   (e: "update:formData", value: CreateTemplateReq): void
-  (e: "channel-change", newChannel: string): void
 }
 
 const props = defineProps<Props>()
@@ -91,10 +90,8 @@ defineExpose({ formRef })
 
 // 处理渠道切换
 const handleChannelChange = (newChannel: string) => {
-  // 先更新表单数据
+  // 只更新表单数据，内容切换由父组件处理
   emit("update:formData", { ...props.formData, channel: newChannel })
-  // 然后发出渠道变化事件
-  emit("channel-change", newChannel)
 }
 </script>
 

@@ -3,7 +3,6 @@
  */
 import { ref, computed } from "vue"
 import { ElMessage } from "element-plus"
-import type { CreateTemplateReq } from "@/api/alert/template/types"
 import { formatJsonContent } from "../utils"
 import {
   getEditorLanguage as getChannelEditorLanguage,
@@ -127,19 +126,18 @@ export function useTemplateEditor() {
     })
   }
 
-  // 处理渠道切换
-  const handleChannelChange = (formData: CreateTemplateReq, newChannel: string) => {
+  // 处理渠道切换 - 简化版本，只处理内容切换
+  const handleChannelChange = (newChannel: string) => {
     // 更新当前渠道
     currentChannel.value = newChannel
-    formData.channel = newChannel
 
     // 确保多渠道数据已初始化
     if (Object.keys(multiChannelData.value).length === 0) {
       initializeMultiChannelData()
     }
 
-    // 更新表单数据为当前渠道的内容
-    formData.version.content = multiChannelData.value[newChannel] || getChannelDefaultTemplate(newChannel)
+    // 返回新渠道的内容
+    return multiChannelData.value[newChannel] || getChannelDefaultTemplate(newChannel)
   }
 
   // 更新当前渠道的内容
@@ -154,14 +152,9 @@ export function useTemplateEditor() {
     return multiChannelData.value[currentChannel.value] || ""
   }
 
-  // 获取指定渠道的内容
-  const getChannelContent = (channel: string) => {
-    return multiChannelData.value[channel] || getChannelDefaultTemplate(channel)
-  }
-
-  // 设置指定渠道的内容
-  const setChannelContent = (channel: string, content: string) => {
-    multiChannelData.value[channel] = content
+  // 设置当前渠道
+  const setCurrentChannel = (channel: string) => {
+    currentChannel.value = channel
   }
 
   // 清除所有渠道数据
@@ -192,8 +185,7 @@ export function useTemplateEditor() {
     handleChannelChange,
     updateCurrentChannelContent,
     getCurrentChannelContent,
-    getChannelContent,
-    setChannelContent,
+    setCurrentChannel,
     clearAllChannelData
   }
 }
