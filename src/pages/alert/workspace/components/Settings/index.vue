@@ -177,6 +177,9 @@
         </el-form>
       </div>
     </div>
+
+    <!-- 团队选择抽屉 -->
+    <TeamSelector v-model="teamDialogVisible" :current-team-id="formData.team_id" @confirm="handleTeamConfirm" />
   </PageContainer>
 </template>
 
@@ -186,6 +189,7 @@ import { ElMessage } from "element-plus"
 import { Check, Monitor, User } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import TeamSelector from "./TeamSelector.vue"
 import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/workspace"
 import type { Workspace, SaveWorkspaceReq } from "@/api/workspace/types"
 
@@ -206,6 +210,9 @@ const formRef = ref()
 // 团队和模版信息
 const teamName = ref<string>("")
 const templateName = ref<string>("")
+
+// 团队选择相关
+const teamDialogVisible = ref(false)
 
 // 表单数据
 const formData = reactive<SaveWorkspaceReq>({
@@ -284,14 +291,33 @@ const handleSaveSettings = async () => {
 
 // 编辑团队
 const handleEditTeam = () => {
-  ElMessage.info("编辑团队功能待实现")
-  // TODO: 实现团队选择功能
+  teamDialogVisible.value = true
 }
 
 // 编辑模版
 const handleEditTemplate = () => {
   ElMessage.info("编辑模版功能待实现")
   // TODO: 实现模版选择功能
+}
+
+// 处理团队选择确认
+const handleTeamConfirm = async (teamId: number, selectedTeamName: string) => {
+  try {
+    // 更新表单数据
+    formData.team_id = teamId
+    teamName.value = selectedTeamName
+
+    // 保存设置
+    await saveWorkspaceApi(formData)
+
+    ElMessage.success("团队修改成功")
+
+    // 通知父组件刷新
+    emit("refresh")
+  } catch (error) {
+    console.error("修改团队失败:", error)
+    ElMessage.error("修改团队失败")
+  }
 }
 
 // 监听工作空间ID变化

@@ -105,59 +105,7 @@
       <div class="workspace-main">
         <!-- 概览页面 -->
         <div v-if="activeMenu === 'overview'" class="overview-page">
-          <div class="stats-grid">
-            <div class="stat-card">
-              <div class="stat-icon alerts">
-                <el-icon><Warning /></el-icon>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ alertStats.total }}</div>
-                <div class="stat-label">总告警数</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon critical">
-                <el-icon><WarningFilled /></el-icon>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ alertStats.critical }}</div>
-                <div class="stat-label">严重告警</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon rules">
-                <el-icon><Setting /></el-icon>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ alertStats.rules }}</div>
-                <div class="stat-label">告警规则</div>
-              </div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-icon noise-rules">
-                <el-icon><Filter /></el-icon>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ alertStats.noiseRules }}</div>
-                <div class="stat-label">降噪规则</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="recent-activity">
-            <h3>最近活动</h3>
-            <div class="activity-list">
-              <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
-                <div class="activity-icon" :class="activity.type">
-                  <el-icon><component :is="activity.icon" /></el-icon>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-text">{{ activity.text }}</div>
-                  <div class="activity-time">{{ activity.time }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Overview :workspace-id="workspace?.id || 0" ref="workspaceOverviewRef" />
         </div>
 
         <!-- 告警管理页面 -->
@@ -171,73 +119,13 @@
         </div>
 
         <!-- 降噪配置页面 -->
-        <div v-else-if="activeMenu === 'noise'" class="noise-page-container">
+        <div v-else-if="activeMenu === 'noise'" class="noise-page">
           <NoiseConfig :workspace-id="workspace?.id || 0" />
-        </div>
-
-        <!-- 项目页面 -->
-        <div v-else-if="activeMenu === 'projects'" class="projects-page">
-          <div class="projects-header">
-            <h3>项目列表</h3>
-            <el-button type="primary" :icon="Plus" @click="handleCreateProject"> 新建项目 </el-button>
-          </div>
-          <div class="projects-grid">
-            <div v-for="project in projects" :key="project.id" class="project-card">
-              <div class="project-header">
-                <div class="project-icon" :style="{ background: generateProjectColor(project.name) }">
-                  {{ project.name.charAt(0) }}
-                </div>
-                <div class="project-actions">
-                  <el-dropdown>
-                    <el-button type="text" :icon="MoreFilled" />
-                    <template #dropdown>
-                      <el-dropdown-menu>
-                        <el-dropdown-item @click="handleEditProject(project)">编辑</el-dropdown-item>
-                        <el-dropdown-item @click="handleDeleteProject(project)">删除</el-dropdown-item>
-                      </el-dropdown-menu>
-                    </template>
-                  </el-dropdown>
-                </div>
-              </div>
-              <div class="project-body">
-                <h4 class="project-name">{{ project.name }}</h4>
-                <p class="project-description">{{ project.description }}</p>
-                <div class="project-meta">
-                  <span class="project-status" :class="project.status">
-                    {{ project.statusText }}
-                  </span>
-                  <span class="project-members">{{ project.memberCount }} 人</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- 成员页面 -->
         <div v-else-if="activeMenu === 'members'" class="members-page">
-          <div class="members-header">
-            <h3>成员管理</h3>
-            <el-button type="primary" :icon="Plus" @click="handleInviteMember"> 邀请成员 </el-button>
-          </div>
-          <div class="members-list">
-            <div v-for="member in members" :key="member.id" class="member-card">
-              <div class="member-avatar">
-                <img v-if="member.avatar" :src="member.avatar" :alt="member.name" />
-                <div v-else class="member-avatar-placeholder">
-                  {{ member.name.charAt(0) }}
-                </div>
-              </div>
-              <div class="member-info">
-                <div class="member-name">{{ member.name }}</div>
-                <div class="member-role">{{ member.role }}</div>
-                <div class="member-email">{{ member.email }}</div>
-              </div>
-              <div class="member-actions">
-                <el-button type="text" @click="handleEditMember(member)">编辑</el-button>
-                <el-button type="text" @click="handleRemoveMember(member)">移除</el-button>
-              </div>
-            </div>
-          </div>
+          <TeamMembers :team-id="workspace?.team?.id || 0" ref="teamMembersRef" />
         </div>
 
         <!-- 设置页面 -->
@@ -258,9 +146,7 @@ import {
   User,
   Plus,
   DataBoard,
-  MoreFilled,
   Warning,
-  WarningFilled,
   Filter,
   CircleCheckFilled,
   CircleCloseFilled,
@@ -276,6 +162,8 @@ import NoiseConfig from "./components/NoiseConfig/index.vue"
 import AlertRules from "./components/AlertRules/index.vue"
 import AlertManager from "./components/AlertManager/index.vue"
 import Settings from "./components/Settings/index.vue"
+import TeamMembers from "./components/TeamMembers/index.vue"
+import Overview from "./components/Overview/index.vue"
 
 // 路由
 const route = useRoute()
@@ -285,6 +173,10 @@ const router = useRouter()
 const workspace = ref<Workspace | null>(null)
 const activeMenu = ref("overview")
 const teamName = ref("")
+
+// 组件引用
+const teamMembersRef = ref()
+const workspaceOverviewRef = ref()
 
 // 格式化最后更新时间
 const formatLastUpdate = () => {
@@ -309,125 +201,6 @@ const formatLastUpdate = () => {
   } else {
     return updateTime.toLocaleDateString()
   }
-}
-
-// 统计数据
-const alertStats = ref({
-  total: 156,
-  critical: 8,
-  rules: 24,
-  noiseRules: 12
-})
-
-// 最近活动
-const recentActivities = ref([
-  {
-    id: 1,
-    type: "alert",
-    icon: "Warning",
-    text: "CPU使用率超过80%的告警触发",
-    time: "5分钟前"
-  },
-  {
-    id: 2,
-    type: "rule",
-    icon: "Setting",
-    text: "新增了内存使用率告警规则",
-    time: "1小时前"
-  },
-  {
-    id: 3,
-    type: "noise",
-    icon: "Filter",
-    text: "配置了新的降噪规则",
-    time: "3小时前"
-  },
-  {
-    id: 4,
-    type: "member",
-    icon: "User",
-    text: "李四加入了告警工作空间",
-    time: "1天前"
-  }
-])
-
-// 项目列表
-const projects = ref([
-  {
-    id: 1,
-    name: "用户管理系统",
-    description: "企业级用户权限管理系统",
-    status: "active",
-    statusText: "进行中",
-    memberCount: 5
-  },
-  {
-    id: 2,
-    name: "数据分析平台",
-    description: "实时数据分析和可视化平台",
-    status: "active",
-    statusText: "进行中",
-    memberCount: 8
-  },
-  {
-    id: 3,
-    name: "移动端应用",
-    description: "跨平台移动应用开发",
-    status: "completed",
-    statusText: "已完成",
-    memberCount: 3
-  }
-])
-
-// 成员列表
-const members = ref([
-  {
-    id: 1,
-    name: "张三",
-    role: "管理员",
-    email: "zhangsan@example.com",
-    avatar: ""
-  },
-  {
-    id: 2,
-    name: "李四",
-    role: "开发者",
-    email: "lisi@example.com",
-    avatar: ""
-  },
-  {
-    id: 3,
-    name: "王五",
-    role: "设计师",
-    email: "wangwu@example.com",
-    avatar: ""
-  }
-])
-
-// 生成项目头像颜色
-const generateProjectColor = (name: string) => {
-  const colors = [
-    "#667eea",
-    "#764ba2",
-    "#f093fb",
-    "#f5576c",
-    "#4facfe",
-    "#00f2fe",
-    "#43e97b",
-    "#38f9d7",
-    "#fa709a",
-    "#fee140",
-    "#a8edea",
-    "#fed6e3"
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i++) {
-    const char = name.charCodeAt(i)
-    hash = (hash << 5) - hash + char
-    hash = hash & hash
-  }
-  const index = Math.abs(hash) % colors.length
-  return colors[index]
 }
 
 // 返回上一页
@@ -469,30 +242,6 @@ const handleNoise = () => {
 
 const handleCreateAlert = () => {
   ElMessage.info("创建告警功能待实现")
-}
-
-const handleCreateProject = () => {
-  ElMessage.info("创建项目功能待实现")
-}
-
-const handleEditProject = (project: any) => {
-  ElMessage.info(`编辑项目: ${project.name}`)
-}
-
-const handleDeleteProject = (project: any) => {
-  ElMessage.info(`删除项目: ${project.name}`)
-}
-
-const handleInviteMember = () => {
-  ElMessage.info("邀请成员功能待实现")
-}
-
-const handleEditMember = (member: any) => {
-  ElMessage.info(`编辑成员: ${member.name}`)
-}
-
-const handleRemoveMember = (member: any) => {
-  ElMessage.info(`移除成员: ${member.name}`)
 }
 
 // 加载工作空间数据
@@ -600,69 +349,6 @@ onMounted(() => {
   }
 }
 
-.workspace-content {
-  display: flex;
-
-  .back-btn {
-    color: #6b7280;
-    font-size: 14px;
-  }
-
-  .workspace-info {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .workspace-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 24px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .workspace-details {
-      .workspace-name {
-        margin: 0 0 8px 0;
-        font-size: 24px;
-        font-weight: 600;
-        color: #1f2937;
-      }
-
-      .workspace-meta {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        color: #6b7280;
-
-        .workspace-status {
-          &.active {
-            color: #10b981;
-          }
-          &.inactive {
-            color: #ef4444;
-          }
-        }
-
-        .workspace-visibility {
-          &.public {
-            color: #3b82f6;
-          }
-          &.private {
-            color: #f59e0b;
-          }
-        }
-      }
-    }
-  }
-}
-
 .header-right {
   .el-button-group {
     .el-button {
@@ -714,345 +400,17 @@ onMounted(() => {
     min-width: 0; // 确保 flex 子元素可以收缩
     overflow: hidden; // 防止内容溢出
   }
-
-  // 告警规则页面特殊处理
-  .rules-page {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  // 告警管理页面特殊处理
-  .alerts-page {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    min-width: 0;
-
-    // 覆盖 PageContainer 背景色
-    :deep(.page-container) {
-      background: transparent !important;
-      width: 100%;
-    }
-  }
 }
 
-// 概览页面样式
-.overview-page {
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 32px;
-
-    .stat-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid #e5e7eb;
-
-      .stat-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        font-size: 20px;
-        color: #ffffff;
-
-        &.alerts {
-          background: #ef4444;
-        }
-        &.critical {
-          background: #dc2626;
-        }
-        &.rules {
-          background: #3b82f6;
-        }
-        &.noise-rules {
-          background: #8b5cf6;
-        }
-      }
-
-      .stat-content {
-        .stat-number {
-          font-size: 24px;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 4px;
-        }
-
-        .stat-label {
-          font-size: 14px;
-          color: #6b7280;
-        }
-      }
-    }
-  }
-
-  .recent-activity {
-    h3 {
-      margin: 0 0 16px 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .activity-list {
-      .activity-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 0;
-        border-bottom: 1px solid #f3f4f6;
-
-        &:last-child {
-          border-bottom: none;
-        }
-
-        .activity-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          font-size: 14px;
-          color: #ffffff;
-
-          &.project {
-            background: #3b82f6;
-          }
-          &.member {
-            background: #10b981;
-          }
-          &.update {
-            background: #f59e0b;
-          }
-        }
-
-        .activity-content {
-          flex: 1;
-
-          .activity-text {
-            font-size: 14px;
-            color: #1f2937;
-            margin-bottom: 2px;
-          }
-
-          .activity-time {
-            font-size: 12px;
-            color: #6b7280;
-          }
-        }
-      }
-    }
-  }
-}
-
-// 降噪配置页面容器样式
-.noise-page-container {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-// 项目页面样式
-.projects-page {
-  .projects-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-  }
-
-  .projects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-
-    .project-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      padding: 20px;
-      transition: all 0.2s ease;
-
-      &:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-      }
-
-      .project-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-
-        .project-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          border-radius: 8px;
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 16px;
-        }
-      }
-
-      .project-body {
-        .project-name {
-          margin: 0 0 8px 0;
-          font-size: 16px;
-          font-weight: 600;
-          color: #1f2937;
-        }
-
-        .project-description {
-          margin: 0 0 12px 0;
-          font-size: 14px;
-          color: #6b7280;
-          line-height: 1.5;
-        }
-
-        .project-meta {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-
-          .project-status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-
-            &.active {
-              background: #dbeafe;
-              color: #1e40af;
-            }
-
-            &.completed {
-              background: #d1fae5;
-              color: #065f46;
-            }
-          }
-
-          .project-members {
-            font-size: 12px;
-            color: #6b7280;
-          }
-        }
-      }
-    }
-  }
-}
-
-// 成员页面样式
-.members-page {
-  .members-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: #1f2937;
-    }
-  }
-
-  .members-list {
-    .member-card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      margin-bottom: 12px;
-
-      .member-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .member-avatar-placeholder {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 100%;
-          height: 100%;
-          background: #3b82f6;
-          color: #ffffff;
-          font-weight: 600;
-          font-size: 18px;
-        }
-      }
-
-      .member-info {
-        flex: 1;
-
-        .member-name {
-          font-size: 16px;
-          font-weight: 500;
-          color: #1f2937;
-          margin-bottom: 4px;
-        }
-
-        .member-role {
-          font-size: 14px;
-          color: #3b82f6;
-          margin-bottom: 2px;
-        }
-
-        .member-email {
-          font-size: 12px;
-          color: #6b7280;
-        }
-      }
-
-      .member-actions {
-        display: flex;
-        gap: 8px;
-      }
-    }
-  }
-}
-
-// 设置页面样式
+// 通用页面样式
+.overview-page,
+.rules-page,
+.alerts-page,
+.noise-page,
+.members-page,
 .settings-page {
   height: 100%;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  min-width: 0;
-
-  // 覆盖 PageContainer 背景色
-  :deep(.page-container) {
-    background: transparent !important;
-    width: 100%;
-  }
 }
 </style>

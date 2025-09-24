@@ -28,10 +28,9 @@ export const listTeamsApi = (data: ListTeamsReq) => {
 /**
  * 获取团队详情
  */
-export const getTeamDetailApi = (data: GetTeamDetailReq) => {
-  return instance.post<GetTeamDetailResponse>({
-    url: `${API_SERVICE.ALERT}/team/detail`,
-    data
+export const getTeamDetailApi = (id: number) => {
+  return instance.get<GetTeamDetailResponse>({
+    url: `${API_SERVICE.ALERT}/team/detail/${id}`
   })
 }
 
