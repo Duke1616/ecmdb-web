@@ -52,8 +52,8 @@ import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { User, ArrowRight } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
-import { listTeamsApi } from "@/api/team"
-import type { Team } from "@/api/team/types"
+import { listTeamsApi } from "@/api/alert/team"
+import type { Team } from "@/api/alert/team/types"
 
 interface Props {
   modelValue: boolean

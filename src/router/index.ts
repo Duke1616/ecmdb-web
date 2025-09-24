@@ -187,6 +187,56 @@ export const constantRoutes: RouteRecordRaw[] = [
           svgIcon: "user",
           platforms: ["alert"]
         }
+      },
+      {
+        path: "/alert/history",
+        component: () => import("@/pages/alert/history/index.vue"),
+        name: "AlertHistory",
+        meta: {
+          title: "历史告警",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
+      },
+      {
+        path: "/alert/current",
+        component: () => import("@/pages/alert/current/index.vue"),
+        name: "AlertCurrent",
+        meta: {
+          title: "当前告警",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
+      },
+      {
+        path: "/alert/template",
+        component: () => import("@/pages/alert/template/index.vue"),
+        name: "AlertTemplate",
+        meta: {
+          title: "消息模板",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
+      },
+      {
+        path: "/alert/template/create",
+        component: () => import("@/pages/alert/template/detail.vue"),
+        name: "AlertTemplateCreate",
+        meta: {
+          title: "创建模板",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
+      },
+      {
+        path: "/alert/template/edit/:id",
+        component: () => import("@/pages/alert/template/detail.vue"),
+        name: "AlertTemplateEdit",
+        meta: {
+          title: "编辑模板",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
       }
     ]
   }

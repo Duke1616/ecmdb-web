@@ -190,8 +190,8 @@ import { Check, Monitor, User } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import TeamSelector from "./TeamSelector.vue"
-import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/workspace"
-import type { Workspace, SaveWorkspaceReq } from "@/api/workspace/types"
+import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/alert/workspace"
+import type { Workspace, SaveWorkspaceReq } from "@/api/alert/workspace/types"
 
 const props = defineProps<{
   workspaceId: number

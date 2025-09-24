@@ -80,8 +80,8 @@
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { UserFilled, Edit, Delete, RefreshRight, CirclePlus } from "@element-plus/icons-vue"
-import { listTeamsApi, deleteTeamApi } from "@/api/team"
-import { Team } from "@/api/team/types"
+import { listTeamsApi, deleteTeamApi } from "@/api/alert/team"
+import { Team } from "@/api/alert/team/types"
 // @ts-ignore
 import TeamForm from "./form.vue"
 import { ElMessage, ElMessageBox } from "element-plus"

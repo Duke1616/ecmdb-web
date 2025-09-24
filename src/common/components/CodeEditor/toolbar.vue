@@ -1,13 +1,6 @@
 <template>
   <div class="editor-toolbar">
-    <div class="toolbar-left">
-      <div class="file-info">
-        <span class="language-badge">{{ language || "text" }}</span>
-        <span class="file-name">{{ fileName || "untitled" }}</span>
-      </div>
-    </div>
-
-    <div class="toolbar-right">
+    <div class="toolbar-actions">
       <!-- 主题选择 -->
       <div class="theme-selector">
         <label class="theme-label">主题</label>
@@ -33,6 +26,11 @@
         <span class="btn-icon">🗑️</span>
         <span class="btn-text">清空</span>
       </button>
+
+      <button @click="handlePreview" class="btn btn-preview" :disabled="disabled">
+        <span class="btn-icon">{{ props.showPreview ? '📝' : '👁️' }}</span>
+        <span class="btn-text">{{ props.showPreview ? '编辑' : '预览' }}</span>
+      </button>
     </div>
   </div>
 </template>
@@ -46,6 +44,7 @@ interface Props {
   language?: string
   fileName?: string
   disabled?: boolean
+  showPreview?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -58,6 +57,7 @@ const emit = defineEmits<{
   "theme-change": [theme: string]
   format: []
   clear: []
+  preview: []
 }>()
 
 // 主题相关
@@ -123,6 +123,12 @@ const handleClear = () => {
   }
 }
 
+const handlePreview = () => {
+  if (!props.disabled) {
+    emit("preview")
+  }
+}
+
 // 组件挂载时加载主题选项
 onMounted(() => {
   loadThemeOptions()
@@ -132,41 +138,12 @@ onMounted(() => {
 <style lang="scss" scoped>
 .editor-toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  padding: 12px 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 0;
   flex-shrink: 0;
 
-  .toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .file-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-
-      .language-badge {
-        padding: 4px 8px;
-        background: #dbeafe;
-        color: #1d4ed8;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 500;
-      }
-
-      .file-name {
-        font-weight: 600;
-        color: #374151;
-        font-size: 14px;
-      }
-    }
-  }
-
-  .toolbar-right {
+  .toolbar-actions {
     display: flex;
     gap: 8px;
     align-items: center;
@@ -257,6 +234,17 @@ onMounted(() => {
     background: #fef2f2;
     border-color: #f87171;
     color: #dc2626;
+  }
+}
+
+.btn-preview {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+
+  &:hover:not(:disabled) {
+    background: #2563eb;
+    border-color: #2563eb;
   }
 }
 </style>

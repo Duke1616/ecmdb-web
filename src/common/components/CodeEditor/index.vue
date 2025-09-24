@@ -1,14 +1,22 @@
 <template>
-  <div class="code-mirror">
-    <editor
-      ref="editorRef"
-      :config="config"
-      :theme="currentTheme"
-      :language="getLanguageFunction()"
-      :code="props.code || getDefaultCode()"
-      :tabSize="props.language === 'shell' ? 2 : 4"
-      @update:code="handleCodeUpdate"
-    />
+  <div class="code-mirror" :class="{ 'split-mode': showPreview }">
+    <div class="editor-panel">
+      <editor
+        ref="editorRef"
+        :config="config"
+        :theme="currentTheme"
+        :language="getLanguageFunction()"
+        :code="props.code || getDefaultCode()"
+        :tabSize="props.language === 'shell' ? 2 : 4"
+        @update:code="handleCodeUpdate"
+      />
+    </div>
+    <div v-if="showPreview" class="preview-panel">
+      <div class="preview-header">
+        <span class="preview-title">预览</span>
+      </div>
+      <div class="preview-content" v-html="props.previewContent || ''"></div>
+    </div>
   </div>
 </template>
 
@@ -25,6 +33,8 @@ interface Props {
   language: string
   isCreate?: boolean
   projectFiles?: any[] // 项目文件信息，用于智能提示
+  showPreview?: boolean // 是否显示预览
+  previewContent?: string // 预览内容
 }
 
 const props = defineProps<Props>()
@@ -33,6 +43,9 @@ const emit = defineEmits<{
   "update:code": [code: string]
   "update:language": [language: string]
 }>()
+
+// 预览状态 - 使用外部传入的状态
+const showPreview = computed(() => props.showPreview || false)
 
 const config = reactive({
   disabled: false,
@@ -128,5 +141,109 @@ defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalTh
   display: flex;
   flex-direction: column;
   min-height: 0;
+  
+  &.split-mode {
+    flex-direction: row;
+    
+    .editor-panel {
+      flex: 1;
+      min-width: 0;
+      border-right: 1px solid #e2e8f0;
+    }
+    
+    .preview-panel {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: #fafafa;
+      
+      .preview-header {
+        padding: 8px 16px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 12px;
+        font-weight: 500;
+        color: #6b7280;
+      }
+      
+      .preview-content {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+        line-height: 1.6;
+        color: #374151;
+        
+        h1, h2, h3, h4, h5, h6 {
+          margin: 16px 0 8px 0;
+          font-weight: 600;
+          color: #1f2937;
+        }
+        
+        h1 { font-size: 24px; }
+        h2 { font-size: 20px; }
+        h3 { font-size: 18px; }
+        
+        p {
+          margin: 8px 0;
+        }
+        
+        code {
+          background: #f3f4f6;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+          font-size: 14px;
+        }
+        
+        pre {
+          background: #1f2937;
+          color: #f9fafb;
+          padding: 16px;
+          border-radius: 8px;
+          overflow-x: auto;
+          margin: 16px 0;
+          
+          code {
+            background: transparent;
+            padding: 0;
+            color: inherit;
+          }
+        }
+        
+        strong {
+          font-weight: 600;
+        }
+        
+        em {
+          font-style: italic;
+        }
+        
+        a {
+          color: #3b82f6;
+          text-decoration: none;
+          
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+        
+        ul, ol {
+          margin: 8px 0;
+          padding-left: 24px;
+        }
+        
+        li {
+          margin: 4px 0;
+        }
+      }
+    }
+  }
+  
+  .editor-panel {
+    flex: 1;
+    min-height: 0;
+  }
 }
 </style>

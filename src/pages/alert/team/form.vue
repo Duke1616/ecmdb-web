@@ -49,8 +49,8 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { InfoFilled, Setting } from "@element-plus/icons-vue"
 import UserPicker from "@/common/components/UserPicker/index.vue"
 import MemberSelector from "./components/MemberSelector/index.vue"
-import { SaveTeamReq, Team } from "@/api/team/types"
-import { saveTeamApi } from "@/api/team"
+import { SaveTeamReq, Team } from "@/api/alert/team/types"
+import { saveTeamApi } from "@/api/alert/team"
 
 // 接收父组件传递
 const emits = defineEmits(["closed", "callback"])

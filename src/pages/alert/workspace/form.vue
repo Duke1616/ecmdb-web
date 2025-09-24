@@ -133,10 +133,10 @@ import { ref, onMounted } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { InfoFilled, Setting, Monitor, User } from "@element-plus/icons-vue"
-import { saveWorkspaceApi } from "@/api/workspace"
-import { SaveWorkspaceReq } from "@/api/workspace/types"
-import { listTeamsApi } from "@/api/team"
-import { Team as TeamType } from "@/api/team/types"
+import { saveWorkspaceApi } from "@/api/alert/workspace"
+import { SaveWorkspaceReq } from "@/api/alert/workspace/types"
+import { listTeamsApi } from "@/api/alert/team"
+import { Team as TeamType } from "@/api/alert/team/types"
 
 // 接收父组件传递
 const emits = defineEmits(["closed", "callback"])
