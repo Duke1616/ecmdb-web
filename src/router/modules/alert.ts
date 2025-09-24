@@ -58,91 +58,90 @@ export const alertRoutes: RouteRecordRaw[] = [
           platforms: ["alert"]
         }
       },
-       {
-         path: "/alert/template",
-         redirect: "/alert/template/list",
-         meta: {
-           title: "通知模板",
-           svgIcon: "component",
-           platforms: ["alert"]
-         },
-         children: [
-           {
-             path: "/alert/template/list",
-             component: () => import("@/pages/alert/template/index.vue"),
-             name: "AlertTemplate",
-             meta: {
-               title: "通知模板",
-               svgIcon: "component",
-               platforms: ["alert"]
-             }
-           },
-           {
-             path: "/alert/template/create",
-             component: () => import("@/pages/alert/template/detail.vue"),
-             name: "AlertTemplateCreate",
-             meta: {
-               hidden: true,
-               title: "创建模板",
-               svgIcon: "component",
-               platforms: ["alert"]
-             }
-           },
-           {
-             path: "/alert/template/edit/:id",
-             component: () => import("@/pages/alert/template/detail.vue"),
-             name: "AlertTemplateEdit",
-             meta: {
-               hidden: true,
-               title: "编辑模板",
-               svgIcon: "component",
-               platforms: ["alert"]
-             }
-           }
-         ]
-       },
+      {
+        path: "/alert/template",
+        redirect: "/alert/template/list",
+        meta: {
+          title: "通知模板",
+          svgIcon: "component",
+          platforms: ["alert"]
+        },
+        children: [
+          {
+            path: "/alert/template/list",
+            component: () => import("@/pages/alert/template/index.vue"),
+            name: "AlertTemplate",
+            meta: {
+              title: "通知模板",
+              svgIcon: "component",
+              platforms: ["alert"]
+            }
+          },
+          {
+            path: "/alert/template/create",
+            component: () => import("@/pages/alert/template/detail.vue"),
+            name: "AlertTemplateCreate",
+            meta: {
+              hidden: true,
+              title: "创建模板",
+              svgIcon: "component",
+              platforms: ["alert"]
+            }
+          },
+          {
+            path: "/alert/template/edit/:id",
+            component: () => import("@/pages/alert/template/detail.vue"),
+            name: "AlertTemplateEdit",
+            meta: {
+              hidden: true,
+              title: "编辑模板",
+              svgIcon: "component",
+              platforms: ["alert"]
+            }
+          }
+        ]
+      },
       {
         path: "/alert/manager",
-        component: () => import("@/pages/alert/template/index.vue"),
-        name: "AlertManager",
+        redirect: "/alert/rule",
         meta: {
           title: "告警管理",
           svgIcon: "component",
           platforms: ["alert"]
         },
         children: [
-            {
-                path: "/alert/rule",
-                component: () => import("@/pages/alert/rule/index.vue"),
-                name: "AlertRule",
-                meta: {
-                  title: "告警规则",
-                  svgIcon: "component",
-                  platforms: ["alert"]
-                }
-              },
-              {
-                path: "/alert/rule/create",
-                component: () => import("@/pages/alert/rule/create.vue"),
-                name: "AlertRuleCreate",
-                meta: {
-                  title: "新增告警规则",
-                  svgIcon: "component",
-                  platforms: ["alert"],
-                  hidden: true
-                }
-              },
-              {
-                path: "/alert/rule/edit/:id",
-                component: () => import("@/pages/alert/rule/edit.vue"),
-                name: "AlertRuleEdit",
-                meta: {
-                  title: "编辑告警规则",
-                  svgIcon: "component",
-                  platforms: ["alert"],
-                  hidden: true
-                }
-              },
+          {
+            path: "/alert/rule",
+            component: () => import("@/pages/alert/rule/index.vue"),
+            name: "AlertRule",
+            meta: {
+              title: "告警规则",
+              svgIcon: "component",
+              platforms: ["alert"]
+            }
+          },
+          {
+            path: "/alert/rule/create",
+            component: () => import("@/pages/alert/rule/create.vue"),
+            name: "AlertRuleCreate",
+            meta: {
+              title: "新增告警规则",
+              svgIcon: "component",
+              platforms: ["alert"],
+              hidden: true
+            }
+          },
+          {
+            path: "/alert/rule/edit/:id",
+            component: () => import("@/pages/alert/rule/edit.vue"),
+            name: "AlertRuleEdit",
+            meta: {
+              title: "编辑告警规则",
+              svgIcon: "component",
+              platforms: ["alert"],
+              hidden: true
+            }
+          },
           {
             path: "/alert/history",
             component: () => import("@/pages/alert/history/index.vue"),
@@ -162,8 +161,7 @@ export const alertRoutes: RouteRecordRaw[] = [
               svgIcon: "component",
               platforms: ["alert"]
             }
-          },
-
+          }
         ]
       },
       {
@@ -175,8 +173,7 @@ export const alertRoutes: RouteRecordRaw[] = [
           svgIcon: "user",
           platforms: ["alert"]
         }
-      },
-
+      }
     ]
   }
 ]
