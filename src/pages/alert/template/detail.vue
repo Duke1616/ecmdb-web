@@ -22,7 +22,7 @@
       <!-- 基本信息表单（仅编辑时在头部展示） -->
       <template #content v-if="isEdit">
         <div class="header-form">
-          <el-form ref="formRef" :model="formData" :rules="formRules" label-width="80px" size="small">
+          <el-form ref="formRef" :model="formData" :rules="templateFormRules" label-width="80px" size="small">
             <el-row :gutter="20">
               <el-col :span="8">
                 <el-form-item label="模板名称" prop="name">
@@ -72,7 +72,7 @@
               </div>
             </template>
 
-            <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
+            <el-form ref="formRef" :model="formData" :rules="templateFormRules" label-position="top">
               <el-form-item label="模板名称" prop="name">
                 <el-input v-model="formData.name" placeholder="请输入模板名称" />
               </el-form-item>
@@ -110,18 +110,18 @@
                 <h3>版本管理</h3>
                 <div class="header-actions">
                   <span class="version-count">{{ templateVersions.length }} 个版本</span>
-                  <el-button size="small" type="primary" @click="handleCreateVersion"> 新增版本 </el-button>
+                  <el-button size="small" type="primary" @click="handleCreateVersion(formData)"> 新增版本 </el-button>
                 </div>
               </div>
             </template>
 
-            <div class="version-list" v-if="templateVersions.length > 0">
+            <div class="version-list" v-if="hasVersions">
               <div
                 v-for="version in templateVersions"
                 :key="version.id"
                 class="version-item"
                 :class="{ active: version.id === template?.activeVersionId }"
-                @click="switchToVersion(version)"
+                @click="switchToVersion(version, formData)"
               >
                 <div class="version-main">
                   <div class="version-title">
@@ -168,15 +168,15 @@
               <div class="card-header">
                 <h3>
                   模板内容
-                  <span class="language-badge">{{ isJsonTemplate ? "JSON" : "TEXT" }}</span>
+                  <span class="language-badge">{{ getEditorLanguage(formData).toUpperCase() }}</span>
                 </h3>
                 <CodeEditorToolbar
-                  :language="isJsonTemplate ? 'json' : 'text'"
+                  :language="getEditorLanguage(formData)"
                   :file-name="formData.name || 'template'"
                   :show-preview="showPreview"
                   @preview="togglePreview"
-                  @format="formatJson"
-                  @clear="handleClearContent"
+                  @format="() => formatJson(formData)"
+                  @clear="() => handleClearContent(formData)"
                 />
               </div>
             </template>
@@ -185,11 +185,11 @@
                 <div class="editor-panel">
                   <CodeEditor
                     v-model:code="formData.version.content"
-                    :language="isJsonTemplate ? 'json' : 'text'"
+                    :language="getEditorLanguage(formData)"
                     :is-create="false"
                     class="template-editor"
                     :show-preview="showPreview"
-                    :preview-content="renderedContent"
+                    :preview-content="renderedContent(formData.version.content)"
                   />
                 </div>
               </div>
@@ -211,6 +211,10 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import { createTemplateApi, updateTemplateApi, getTemplateDetailApi } from "@/api/alert/template"
 import type { CreateTemplateReq, ChannelTemplate, TemplateVersion } from "@/api/alert/template/types"
+import { formatTimestamp, getChannelLabel, formatJsonContent } from "./utils"
+import { templateFormRules } from "./config/formRules"
+import { useVersionManagement } from "./composables/useVersionManagement"
+import { useTemplateEditor } from "./composables/useTemplateEditor"
 
 const route = useRoute()
 const router = useRouter()
@@ -222,12 +226,33 @@ const templateId = computed(() => parseInt(route.params.id as string))
 
 // 数据状态
 const template = ref<ChannelTemplate | null>(null)
-const templateVersions = ref<TemplateVersion[]>([])
-const currentVersionId = ref<number | null>(null)
 const saving = ref(false)
 
-// 预览状态
-const showPreview = ref(false)
+// 版本管理
+const {
+  templateVersions,
+  currentVersionId,
+  hasVersions,
+  getCurrentVersionName,
+  getCurrentVersionContent,
+  getCurrentVersionRemark,
+  switchToVersion,
+  setActiveVersion,
+  handleCreateVersion,
+  initVersions
+} = useVersionManagement()
+
+// 模板编辑器
+const {
+  showPreview,
+  isJsonTemplate,
+  renderedContent,
+  togglePreview,
+  handleClearContent,
+  formatJson,
+  getEditorLanguage,
+  setDefaultContent
+} = useTemplateEditor()
 
 // 表单数据
 const formData = ref<CreateTemplateReq>({
@@ -245,28 +270,7 @@ const formData = ref<CreateTemplateReq>({
 // 表单引用
 const formRef = ref()
 
-// 表单验证规则
-const formRules = {
-  name: [
-    { required: true, message: "请输入模板名称", trigger: "blur" },
-    { min: 2, max: 50, message: "长度在 2 到 50 个字符", trigger: "blur" }
-  ],
-  description: [{ max: 200, message: "长度不能超过 200 个字符", trigger: "blur" }],
-  channel: [{ required: true, message: "请选择渠道类型", trigger: "change" }],
-  "version.name": [
-    { required: true, message: "请输入版本名称", trigger: "blur" },
-    { min: 1, max: 20, message: "长度在 1 到 20 个字符", trigger: "blur" }
-  ],
-  "version.content": [{ required: true, message: "请输入模板内容", trigger: "blur" }]
-}
 
-// 计算属性
-const isJsonTemplate = computed(() => {
-  return (
-    formData.value.channel === "FEISHU_CARD" ||
-    (formData.value.version.content && formData.value.version.content.trim().startsWith("{"))
-  )
-})
 
 // 加载模板详情
 const loadTemplateDetail = async () => {
@@ -274,11 +278,8 @@ const loadTemplateDetail = async () => {
     const response = await getTemplateDetailApi(templateId.value)
     template.value = response.data
 
-    // 设置版本列表
-    templateVersions.value = response.data.versions || []
-
-    // 设置当前版本
-    currentVersionId.value = response.data.activeVersionId
+    // 初始化版本数据
+    initVersions(response.data)
 
     // 填充表单数据
     formData.value = {
@@ -287,9 +288,9 @@ const loadTemplateDetail = async () => {
       description: response.data.description,
       channel: response.data.channel,
       version: {
-        name: getCurrentVersionName(),
-        content: getCurrentVersionContent(),
-        remark: getCurrentVersionRemark()
+        name: getCurrentVersionName(response.data),
+        content: getCurrentVersionContent(response.data),
+        remark: getCurrentVersionRemark(response.data)
       }
     }
   } catch (error: any) {
@@ -297,152 +298,6 @@ const loadTemplateDetail = async () => {
     ElMessage.error("加载模板详情失败")
   }
 }
-
-// 获取当前版本名称
-const getCurrentVersionName = () => {
-  if (!template.value) return ""
-  const currentVersion = template.value.versions?.find((v) => v.id === template.value?.activeVersionId)
-  return currentVersion?.name || ""
-}
-
-// 获取当前版本内容
-const getCurrentVersionContent = () => {
-  if (!template.value) return ""
-  const currentVersion = template.value.versions?.find((v) => v.id === template.value?.activeVersionId)
-  return currentVersion?.content || ""
-}
-
-// 获取当前版本备注
-const getCurrentVersionRemark = () => {
-  if (!template.value) return ""
-  const currentVersion = template.value.versions?.find((v) => v.id === template.value?.activeVersionId)
-  return currentVersion?.remark || ""
-}
-
-// 切换到版本
-const switchToVersion = (version: TemplateVersion) => {
-  currentVersionId.value = version.id
-  formData.value.version = {
-    name: version.name,
-    content: version.content,
-    remark: version.remark
-  }
-}
-
-// 设置为当前版本
-const setActiveVersion = async (versionId: number) => {
-  try {
-    // 这里应该调用设置当前版本的 API
-    ElMessage.success("已设置为当前版本")
-    // 重新加载数据
-    await loadTemplateDetail()
-  } catch (error: any) {
-    console.error("设置当前版本失败:", error)
-    ElMessage.error("设置当前版本失败")
-  }
-}
-
-// 新增版本
-const handleCreateVersion = () => {
-  // 重置版本表单数据
-  formData.value.version = {
-    name: "",
-    content: "",
-    remark: ""
-  }
-
-  // 清空表单验证
-  if (formRef.value) {
-    formRef.value.clearValidate()
-  }
-
-  ElMessage.info("请填写新版本信息并保存")
-}
-
-// 格式化 JSON
-const formatJson = () => {
-  try {
-    const jsonObj = JSON.parse(formData.value.version.content)
-    formData.value.version.content = JSON.stringify(jsonObj, null, 2)
-    ElMessage.success("JSON 格式化成功")
-  } catch (error) {
-    ElMessage.error("JSON 格式错误，无法格式化")
-  }
-}
-
-// 格式化时间戳
-const formatTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000)
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  })
-}
-
-// 获取渠道标签
-const getChannelLabel = (channel: string) => {
-  const channelMap: Record<string, string> = {
-    EMAIL: "邮件",
-    SMS: "短信",
-    DINGTALK: "钉钉",
-    WECHAT: "企业微信",
-    SLACK: "Slack",
-    FEISHU_CARD: "飞书卡片"
-  }
-  return channelMap[channel] || channel
-}
-
-// 切换预览模式
-const togglePreview = () => {
-  showPreview.value = !showPreview.value
-}
-
-// 清空内容
-const handleClearContent = () => {
-  formData.value.version.content = ""
-}
-
-// 渲染预览内容
-const renderedContent = computed(() => {
-  const content = formData.value.version.content || ""
-
-  // 如果是 JSON 格式，直接返回格式化后的 JSON
-  if (isJsonTemplate.value) {
-    try {
-      const parsed = JSON.parse(content)
-      return `<pre><code>${JSON.stringify(parsed, null, 2)}</code></pre>`
-    } catch {
-      return `<pre><code>${content}</code></pre>`
-    }
-  }
-
-  // 检查是否包含 HTML 标签
-  if (/<[^>]+>/.test(content)) {
-    return content
-  }
-
-  // 检查是否包含 Markdown 语法
-  if (/#{1,6}\s|^\*\s|^\-\s|^\d+\.\s|\[.*\]\(.*\)|!\[.*\]\(.*\)/.test(content)) {
-    // 简单的 Markdown 渲染
-    return content
-      .replace(/^### (.*$)/gim, "<h3>$1</h3>")
-      .replace(/^## (.*$)/gim, "<h2>$1</h2>")
-      .replace(/^# (.*$)/gim, "<h1>$1</h1>")
-      .replace(/\*\*(.*)\*\*/gim, "<strong>$1</strong>")
-      .replace(/\*(.*)\*/gim, "<em>$1</em>")
-      .replace(/`(.*)`/gim, "<code>$1</code>")
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/gim, '<a href="$2">$1</a>')
-      .replace(/\n/gim, "<br>")
-  }
-
-  // 普通文本，保持换行
-  return content.replace(/\n/gim, "<br>")
-})
-
 // 保存模板
 const handleSave = async () => {
   if (!formRef.value) return
@@ -504,96 +359,12 @@ onMounted(() => {
     // 复制模式，加载原模板数据
     loadTemplateDetail()
   } else {
-    // 创建模式，设置默认内容用于测试滚轮
-    formData.value.version.content = `{
-  "schema": "2.0",
-  "config": {
-    "update_multi": true,
-    "style": {
-      "text_size": {
-        "normal_v2": {
-          "default": "normal",
-          "pc": "normal",
-          "mobile": "heading"
-        }
-      }
-    }
-  },
-  "body": {
-    "direction": "vertical",
-    "horizontal_spacing": "8px",
-    "vertical_spacing": "8px",
-    "horizontal_align": "left",
-    "vertical_align": "top",
-    "padding": "0px 12px 12px 12px",
-    "elements": [
-      {
-        "tag": "form",
-        "elements": [
-          "{{- range $index, $alert := .Alerts}}",
-          {
-            "tag": "column_set",
-            "background_style": "grey-100",
-            "horizontal_spacing": "8px",
-            "horizontal_align": "center",
-            "columns": [
-              {
-                "tag": "column",
-                "width": "weighted",
-                "elements": [
-                  {
-                    "tag": "markdown",
-                    "content": "**{{$alert.Title}}**",
-                    "text_align": "center",
-                    "text_size": "heading",
-                    "margin": "0px 12px 0px 12px"
-                  }
-                ],
-                "padding": "0px 0px 0px 0px",
-                "direction": "vertical",
-                "horizontal_spacing": "8px",
-                "vertical_spacing": "8px",
-                "horizontal_align": "left",
-                "vertical_align": "top",
-                "margin": "0px 0px 0px 0px",
-                "weight": 1
-              }
-            ],
-            "margin": "12px 0px 0px 0px"
-          },
-          "{{- end}}"
-        ],
-        "direction": "vertical",
-        "horizontal_spacing": "8px",
-        "vertical_spacing": "8px",
-        "horizontal_align": "left",
-        "vertical_align": "top",
-        "padding": "0px 0px 4px 0px",
-        "margin": "0px 0px 0px 0px",
-        "name": "Form_mcbd0wqe"
-      }
-    ]
-  },
-  "header": {
-    "title": {
-      "tag": "plain_text",
-      "content": "告警触发通知"
-    },
-    "subtitle": {
-      "tag": "plain_text",
-      "content": ""
-    },
-    "template": "red",
-    "icon": {
-      "tag": "standard_icon",
-      "token": "admin-setting_outlined"
-    },
-    "padding": "12px 12px 12px 12px"
-  }
-}`
+    // 创建模式，设置默认内容
+    setDefaultContent(formData.value)
   }
 })
 </script>
+
 
 <style lang="scss" scoped>
 .page-content {
