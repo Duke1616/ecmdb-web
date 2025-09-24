@@ -4,7 +4,6 @@
 import { ref, computed } from "vue"
 import { ElMessage } from "element-plus"
 import type { ChannelTemplate, TemplateVersion, CreateTemplateReq } from "@/api/alert/template/types"
-import { formatTimestamp } from "../utils"
 
 export function useVersionManagement() {
   // 版本相关状态
@@ -49,6 +48,7 @@ export function useVersionManagement() {
   const setActiveVersion = async (versionId: number): Promise<void> => {
     try {
       // 这里应该调用设置当前版本的 API
+      console.log(versionId)
       // await setActiveVersionApi(versionId)
       ElMessage.success("版本设置成功")
     } catch (error) {
@@ -65,7 +65,7 @@ export function useVersionManagement() {
       content: "",
       remark: ""
     }
-    
+
     ElMessage.info("请填写新版本信息并保存")
   }
 
@@ -84,10 +84,10 @@ export function useVersionManagement() {
     // 状态
     templateVersions,
     currentVersionId,
-    
+
     // 计算属性
     hasVersions,
-    
+
     // 方法
     getCurrentVersionName,
     getCurrentVersionContent,

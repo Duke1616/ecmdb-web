@@ -61,7 +61,7 @@ export function useTemplateEditor() {
       }
 
       // 检查是否包含 Markdown 语法
-      if (/#{1,6}\s|^\*\s|^\-\s|^\d+\.\s|\[.*\]\(.*\)|!\[.*\]\(.*\)/.test(content)) {
+      if (/#{1,6}\s|^\*\s|^-\s|^\d+\.\s|\[.*\]\(.*\)|!\[.*\]\(.*\)/.test(content)) {
         // 简单的 Markdown 渲染
         return content
           .replace(/^### (.*$)/gim, "<h3>$1</h3>")
@@ -129,11 +129,11 @@ export function useTemplateEditor() {
   return {
     // 状态
     showPreview,
-    
+
     // 计算属性
     isJsonTemplate,
     renderedContent,
-    
+
     // 方法
     togglePreview,
     handleClearContent,

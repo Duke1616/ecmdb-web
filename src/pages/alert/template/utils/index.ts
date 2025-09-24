@@ -25,12 +25,12 @@ export const formatTimestamp = (timestamp: number): string => {
  */
 export const getChannelLabel = (channel: string): string => {
   const channelMap: Record<string, string> = {
-    'EMAIL': '邮件',
-    'SMS': '短信',
-    'DINGTALK': '钉钉',
-    'WECHAT': '企业微信',
-    'SLACK': 'Slack',
-    'FEISHU_CARD': '飞书卡片'
+    EMAIL: "邮件",
+    SMS: "短信",
+    DINGTALK: "钉钉",
+    WECHAT: "企业微信",
+    SLACK: "Slack",
+    FEISHU_CARD: "飞书卡片"
   }
   return channelMap[channel] || channel
 }
