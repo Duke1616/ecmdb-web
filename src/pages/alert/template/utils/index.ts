@@ -22,6 +22,7 @@ export const formatTimestamp = (timestamp: number): string => {
  * 获取渠道标签
  * @param channel 渠道代码
  * @returns 渠道显示名称
+ * @deprecated 请使用 channels.ts 中的 getChannelLabel
  */
 export const getChannelLabel = (channel: string): string => {
   const channelMap: Record<string, string> = {

@@ -17,13 +17,21 @@
       <el-form-item label="渠道类型" prop="channel">
         <el-select
           :model-value="formData.channel"
-          @update:model-value="(value) => emit('update:formData', { ...formData, channel: value })"
+          @update:model-value="handleChannelChange"
           placeholder="请选择渠道类型"
           style="width: 100%"
         >
-          <el-option label="邮件" value="EMAIL" />
-          <el-option label="企业微信" value="WECHAT" />
-          <el-option label="飞书卡片" value="FEISHU_CARD" />
+          <el-option
+            v-for="option in getChannelOptions()"
+            :key="option.value"
+            :label="option.label"
+            :value="option.value"
+          >
+            <div>
+              <div>{{ option.label }}</div>
+              <div style="font-size: 12px; color: #999">{{ option.description }}</div>
+            </div>
+          </el-option>
         </el-select>
       </el-form-item>
       <el-form-item label="描述" prop="description">
@@ -62,6 +70,7 @@
 import { ref } from "vue"
 import type { CreateTemplateReq } from "@/api/alert/template/types"
 import type { FormRules } from "element-plus"
+import { getChannelOptions } from "../config/channels"
 
 interface Props {
   formData: CreateTemplateReq
@@ -70,14 +79,23 @@ interface Props {
 
 interface Emits {
   (e: "update:formData", value: CreateTemplateReq): void
+  (e: "channel-change", newChannel: string): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // 暴露表单引用
 const formRef = ref()
 defineExpose({ formRef })
+
+// 处理渠道切换
+const handleChannelChange = (newChannel: string) => {
+  // 先更新表单数据
+  emit("update:formData", { ...props.formData, channel: newChannel })
+  // 然后发出渠道变化事件
+  emit("channel-change", newChannel)
+}
 </script>
 
 <style lang="scss" scoped>

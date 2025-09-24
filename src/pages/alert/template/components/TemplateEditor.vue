@@ -13,6 +13,7 @@
           @preview="handlePreview"
           @format="handleFormat"
           @clear="handleClear"
+          @theme-change="handleThemeChange"
         />
       </div>
     </template>
@@ -21,6 +22,7 @@
       <div v-if="!showPreview || previewMode === 'split'" class="editor-split">
         <div class="editor-panel">
           <CodeEditor
+            ref="codeEditorRef"
             :code="modelValue"
             @update:code="handleUpdateModelValue"
             :language="language"
@@ -45,6 +47,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import CodeEditorToolbar from "@/common/components/CodeEditor/toolbar.vue"
 
@@ -67,6 +70,8 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+const codeEditorRef = ref()
+
 const handlePreview = () => {
   emit("preview")
 }
@@ -81,6 +86,12 @@ const handleClear = () => {
 
 const handleUpdateModelValue = (value: string) => {
   emit("update:modelValue", value)
+}
+
+const handleThemeChange = (theme: string) => {
+  if (codeEditorRef.value) {
+    codeEditorRef.value.handleThemeChange?.(theme)
+  }
 }
 </script>
 

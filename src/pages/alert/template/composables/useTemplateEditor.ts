@@ -5,45 +5,48 @@ import { ref, computed } from "vue"
 import { ElMessage } from "element-plus"
 import type { CreateTemplateReq } from "@/api/alert/template/types"
 import { formatJsonContent } from "../utils"
+import {
+  getEditorLanguage as getChannelEditorLanguage,
+  getPreviewMode as getChannelPreviewMode,
+  getDefaultTemplate as getChannelDefaultTemplate,
+  isChannelType
+} from "../config/channels"
 
 export function useTemplateEditor() {
   // 预览状态
   const showPreview = ref(false)
 
+  // 多渠道数据映射，每个渠道都有独立的内容
+  const multiChannelData = ref<Record<string, string>>({})
+
+  // 当前选中的渠道
+  const currentChannel = ref<string>("")
+
   // 计算属性：是否为 JSON 模板
   const isJsonTemplate = computed(() => {
-    return (formData: CreateTemplateReq) => {
-      return (
-        formData.channel === "FEISHU_CARD" ||
-        (formData.version.content && formData.version.content.trim().startsWith("{"))
-      )
+    return (channel: string) => {
+      return isChannelType(channel, "json")
     }
   })
 
   // 计算属性：是否为 HTML 模板
   const isHtmlTemplate = computed(() => {
-    return (formData: CreateTemplateReq) => {
-      return formData.channel === "EMAIL"
+    return (channel: string) => {
+      return isChannelType(channel, "html")
     }
   })
 
   // 计算属性：是否为 Markdown 模板
   const isMarkdownTemplate = computed(() => {
-    return (formData: CreateTemplateReq) => {
-      return formData.channel === "WECHAT"
+    return (channel: string) => {
+      return isChannelType(channel, "markdown")
     }
   })
 
   // 计算属性：预览模式
   const previewMode = computed(() => {
-    return (formData: CreateTemplateReq) => {
-      if (isHtmlTemplate.value(formData)) {
-        return "fullscreen" // HTML 全屏预览
-      } else if (isMarkdownTemplate.value(formData)) {
-        return "split" // Markdown 分屏预览
-      } else {
-        return "split" // JSON 等其他格式分屏预览
-      }
+    return (channel: string) => {
+      return getChannelPreviewMode(channel)
     }
   })
 
@@ -53,14 +56,14 @@ export function useTemplateEditor() {
   }
 
   // 清空内容
-  const handleClearContent = (formData: CreateTemplateReq) => {
-    formData.version.content = ""
+  const handleClearContent = (channel: string) => {
+    multiChannelData.value[channel] = ""
   }
 
   // 格式化 JSON
-  const formatJson = (formData: CreateTemplateReq) => {
+  const formatJson = (channel: string) => {
     try {
-      formData.version.content = formatJsonContent(formData.version.content)
+      multiChannelData.value[channel] = formatJsonContent(multiChannelData.value[channel] || "")
       ElMessage.success("JSON 格式化成功")
     } catch (error) {
       ElMessage.error("JSON 格式错误，无法格式化")
@@ -110,76 +113,68 @@ export function useTemplateEditor() {
   })
 
   // 获取编辑器语言
-  const getEditorLanguage = (formData: CreateTemplateReq) => {
-    // 根据渠道类型确定编辑器语言
-    const channelLanguageMap: Record<string, string> = {
-      EMAIL: "html",
-      WECHAT: "markdown",
-      FEISHU_CARD: "json"
-    }
-
-    return channelLanguageMap[formData.channel] || "text"
+  const getEditorLanguage = (channel: string) => {
+    return getChannelEditorLanguage(channel)
   }
 
-  // 设置默认内容（用于创建模式）
-  const setDefaultContent = (formData: CreateTemplateReq) => {
-    if (formData.channel === "FEISHU_CARD") {
-      formData.version.content = `{
-  "schema": "2.0",
-  "config": {
-    "wide_screen_mode": true
-  },
-  "header": {
-    "template": "red",
-    "title": {
-      "tag": "plain_text",
-      "content": "告警通知"
-    }
-  },
-  "elements": [
-    {
-      "tag": "div",
-      "text": {
-        "tag": "lark_md",
-        "content": "**告警名称**: {{$alert.Title}}\\n**告警级别**: {{$alert.Severity}}\\n**告警时间**: {{$alert.Time}}"
+  // 初始化多渠道数据（用于创建模式）
+  const initializeMultiChannelData = () => {
+    const channels = ["EMAIL", "WECHAT", "FEISHU_CARD"]
+    channels.forEach((channel) => {
+      if (!multiChannelData.value[channel]) {
+        multiChannelData.value[channel] = getChannelDefaultTemplate(channel)
       }
-    }
-  ]
-}`
-    } else if (formData.channel === "EMAIL") {
-      formData.version.content = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>告警通知</title>
-</head>
-<body>
-    <h2>告警通知</h2>
-    <p><strong>告警名称</strong>: {{$alert.Title}}</p>
-    <p><strong>告警级别</strong>: {{$alert.Severity}}</p>
-    <p><strong>告警时间</strong>: {{$alert.Time}}</p>
-    <p><strong>告警描述</strong>: {{$alert.Description}}</p>
-    <p>请及时处理此告警。</p>
-</body>
-</html>`
-    } else if (formData.channel === "WECHAT") {
-      formData.version.content = `# 告警通知
+    })
+  }
 
-**告警名称**: {{$alert.Title}}
-**告警级别**: {{$alert.Severity}}
-**告警时间**: {{$alert.Time}}
-**告警描述**: {{$alert.Description}}
+  // 处理渠道切换
+  const handleChannelChange = (formData: CreateTemplateReq, newChannel: string) => {
+    // 更新当前渠道
+    currentChannel.value = newChannel
+    formData.channel = newChannel
 
-请及时处理此告警。`
-    } else {
-      formData.version.content = `告警通知: {{$alert.Title}}`
+    // 确保多渠道数据已初始化
+    if (Object.keys(multiChannelData.value).length === 0) {
+      initializeMultiChannelData()
     }
+
+    // 更新表单数据为当前渠道的内容
+    formData.version.content = multiChannelData.value[newChannel] || getChannelDefaultTemplate(newChannel)
+  }
+
+  // 更新当前渠道的内容
+  const updateCurrentChannelContent = (content: string) => {
+    if (currentChannel.value) {
+      multiChannelData.value[currentChannel.value] = content
+    }
+  }
+
+  // 获取当前渠道的内容
+  const getCurrentChannelContent = () => {
+    return multiChannelData.value[currentChannel.value] || ""
+  }
+
+  // 获取指定渠道的内容
+  const getChannelContent = (channel: string) => {
+    return multiChannelData.value[channel] || getChannelDefaultTemplate(channel)
+  }
+
+  // 设置指定渠道的内容
+  const setChannelContent = (channel: string, content: string) => {
+    multiChannelData.value[channel] = content
+  }
+
+  // 清除所有渠道数据
+  const clearAllChannelData = () => {
+    multiChannelData.value = {}
+    currentChannel.value = ""
   }
 
   return {
     // 状态
     showPreview,
+    currentChannel,
+    multiChannelData,
 
     // 计算属性
     isJsonTemplate,
@@ -193,6 +188,12 @@ export function useTemplateEditor() {
     handleClearContent,
     formatJson,
     getEditorLanguage,
-    setDefaultContent
+    initializeMultiChannelData,
+    handleChannelChange,
+    updateCurrentChannelContent,
+    getCurrentChannelContent,
+    getChannelContent,
+    setChannelContent,
+    clearAllChannelData
   }
 }

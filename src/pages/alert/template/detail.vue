@@ -5,7 +5,7 @@
       :title="isEdit && template ? template.name : isEdit ? '编辑模板' : '创建模板'"
       :subtitle="
         isEdit && template
-          ? `${template.description || '暂无描述'} • ${getChannelLabel(template.channel)} • ${formatTimestamp(template.ctime)}`
+          ? `${template.description || '暂无描述'} • ${getChannelLabelFromConfig(template.channel)} • ${formatTimestamp(template.ctime)}`
           : isEdit
             ? '修改消息通知模板配置'
             : '创建新的消息通知模板'
@@ -32,10 +32,23 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="渠道类型" prop="channel">
-                  <el-select v-model="formData.channel" placeholder="请选择渠道类型" style="width: 100%">
-                    <el-option label="邮件" value="EMAIL" />
-                    <el-option label="企业微信" value="WECHAT" />
-                    <el-option label="飞书卡片" value="FEISHU_CARD" />
+                  <el-select
+                    v-model="formData.channel"
+                    placeholder="请选择渠道类型"
+                    style="width: 100%"
+                    @change="handleChannelChangeEvent"
+                  >
+                    <el-option
+                      v-for="option in getChannelOptions()"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    >
+                      <div>
+                        <div>{{ option.label }}</div>
+                        <div style="font-size: 12px; color: #999">{{ option.description }}</div>
+                      </div>
+                    </el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -68,6 +81,7 @@
             ref="basicInfoRef"
             v-model:form-data="formData"
             :form-rules="templateFormRules"
+            @channel-change="handleChannelChangeEvent"
           />
 
           <!-- 版本管理 -->
@@ -87,14 +101,15 @@
         <div class="right-panel">
           <TemplateEditor
             v-model="formData.version.content"
-            :language="getEditorLanguage(formData)"
+            :language="getEditorLanguage(formData.channel)"
             :file-name="formData.name || 'template'"
             :show-preview="showPreview"
             :preview-content="renderedContent(formData.version.content)"
-            :preview-mode="previewMode(formData)"
+            :preview-mode="previewMode(formData.channel)"
             @preview="togglePreview"
-            @format="() => formatJson(formData)"
-            @clear="() => handleClearContent(formData)"
+            @format="() => formatJson(formData.channel)"
+            @clear="() => handleClearContent(formData.channel)"
+            @update:model-value="handleContentChange"
           />
         </div>
       </div>
@@ -103,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
+import { ref, computed, onMounted, onUnmounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -113,7 +128,8 @@ import TemplateVersionManagement from "./components/TemplateVersionManagement.vu
 import TemplateEditor from "./components/TemplateEditor.vue"
 import { createTemplateApi, updateTemplateApi, getTemplateDetailApi } from "@/api/alert/template"
 import type { CreateTemplateReq, ChannelTemplate } from "@/api/alert/template/types"
-import { formatTimestamp, getChannelLabel } from "./utils"
+import { formatTimestamp } from "./utils"
+import { getChannelOptions, getChannelLabel as getChannelLabelFromConfig } from "./config/channels"
 import { templateFormRules } from "./config/formRules"
 import { useVersionManagement } from "./composables/useVersionManagement"
 import { useTemplateEditor } from "./composables/useTemplateEditor"
@@ -147,13 +163,18 @@ const {
 // 模板编辑器
 const {
   showPreview,
+  currentChannel,
   previewMode,
   renderedContent,
   togglePreview,
   handleClearContent,
   formatJson,
   getEditorLanguage,
-  setDefaultContent
+  initializeMultiChannelData,
+  handleChannelChange,
+  updateCurrentChannelContent,
+  getCurrentChannelContent,
+  clearAllChannelData
 } = useTemplateEditor()
 
 // 表单数据
@@ -232,6 +253,17 @@ const handleBack = () => {
   router.push("/alert/template")
 }
 
+// 处理渠道切换
+const handleChannelChangeEvent = (newChannel: string) => {
+  handleChannelChange(formData.value, newChannel)
+}
+
+// 处理内容变化
+const handleContentChange = (content: string) => {
+  updateCurrentChannelContent(content)
+  formData.value.version.content = content
+}
+
 // 刷新操作
 const handleRefresh = () => {
   if (isEdit.value) {
@@ -249,6 +281,10 @@ const handleRefresh = () => {
         remark: ""
       }
     }
+    // 重新初始化多渠道数据
+    initializeMultiChannelData()
+    currentChannel.value = formData.value.channel
+    formData.value.version.content = getCurrentChannelContent()
     // 清理表单验证
     const currentFormRef = basicInfoRef.value?.formRef
     if (currentFormRef) {
@@ -265,9 +301,18 @@ onMounted(() => {
     // 复制模式，加载原模板数据
     loadTemplateDetail()
   } else {
-    // 创建模式，设置默认内容
-    setDefaultContent(formData.value)
+    // 创建模式，初始化多渠道数据
+    initializeMultiChannelData()
+    // 设置当前渠道为第一个渠道
+    currentChannel.value = formData.value.channel
+    // 设置默认内容
+    formData.value.version.content = getCurrentChannelContent()
   }
+})
+
+// 页面卸载时清理
+onUnmounted(() => {
+  clearAllChannelData()
 })
 </script>
 
