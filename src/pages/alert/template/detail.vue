@@ -85,9 +85,9 @@
             :template-versions="templateVersions"
             :current-version-id="currentVersionId"
             :has-versions="hasVersions"
-            @create-version="(data) => handleCreateVersion(data, getActiveVersionContent(template))"
+            @create-version="(data) => handleCreateVersion(data, loadTemplateDetail)"
             @switch-version="(version) => switchToVersion(version, formData)"
-            @set-active-version="setActiveVersion"
+            @publish-version="(versionId: number) => handlePublishVersion(templateId, versionId, loadTemplateDetail)"
           />
         </div>
 
@@ -150,10 +150,10 @@ const {
   getCurrentVersionContent,
   getCurrentVersionRemark,
   getViewingVersionName,
-  getActiveVersionContent,
   switchToVersion,
-  setActiveVersion,
   handleCreateVersion,
+  handlePublishVersion,
+  handleUpdateVersion,
   initVersions
 } = useVersionManagement()
 
@@ -206,24 +206,41 @@ const loadTemplateDetail = async () => {
 }
 // 保存模板
 const handleSave = async () => {
-  // 根据模式选择不同的表单引用
-  const currentFormRef = isEdit.value ? formRef.value : basicInfoRef.value?.formRef
-
-  if (!currentFormRef) return
-
   try {
-    await currentFormRef.validate()
     saving.value = true
 
     if (isEdit.value) {
-      await updateTemplateApi({ ...formData.value, id: templateId.value })
-      ElMessage.success("模板更新成功")
+      // 编辑模式：先验证基本信息表单
+      if (formRef.value) {
+        await formRef.value.validate()
+      }
+
+      // 更新当前选中的版本
+      if (currentVersionId.value) {
+        await handleUpdateVersion(
+          currentVersionId.value,
+          getCurrentVersionName(template.value as any) || formData.value.version.name,
+          formData.value.version.content,
+          loadTemplateDetail
+        )
+        // 版本更新成功后不跳转，停留在当前页面
+      } else {
+        // 如果没有选中版本，更新模板基本信息
+        await updateTemplateApi({ ...formData.value, id: templateId.value })
+        ElMessage.success("模板更新成功")
+        // 基本信息更新后也不跳转，停留在当前页面
+      }
     } else {
+      // 创建模式：验证基本信息表单
+      const currentFormRef = basicInfoRef.value?.formRef
+      if (!currentFormRef) return
+
+      await currentFormRef.validate()
       await createTemplateApi(formData.value)
       ElMessage.success("模板创建成功")
+      // 创建成功后跳转到列表页
+      router.push("/alert/template")
     }
-
-    router.push("/alert/template")
   } catch (error: any) {
     console.error("保存失败:", error)
     ElMessage.error("保存失败")

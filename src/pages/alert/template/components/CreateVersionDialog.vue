@@ -16,15 +16,10 @@
         <el-input v-model="formData.name" placeholder="请输入版本名称" maxlength="50" show-word-limit />
       </el-form-item>
 
-      <el-form-item label="版本备注" prop="remark">
-        <el-input
-          v-model="formData.remark"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入版本备注（可选）"
-          maxlength="200"
-          show-word-limit
-        />
+      <el-form-item label="基于版本" prop="versionId">
+        <el-select v-model="formData.versionId" placeholder="请选择要 fork 的版本" style="width: 100%">
+          <el-option v-for="version in templateVersions" :key="version.id" :label="version.name" :value="version.id" />
+        </el-select>
       </el-form-item>
     </el-form>
   </FormDialog>
@@ -34,14 +29,17 @@
 import { ref, reactive, watch, computed, nextTick } from "vue"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
+import type { TemplateVersion } from "@/api/alert/template/types"
 
 interface Props {
   modelValue: boolean
+  templateVersions: TemplateVersion[]
+  currentActiveVersionId: number
 }
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void
-  (e: "confirm", data: { name: string; remark: string }): void
+  (e: "confirm", data: { name: string; versionId: number }): void
 }
 
 const props = defineProps<Props>()
@@ -53,12 +51,10 @@ const formRef = ref<FormInstance>()
 // 加载状态
 const loading = ref(false)
 
-// 移除不需要的变量
-
 // 表单数据
 const formData = reactive({
   name: "",
-  remark: ""
+  versionId: 0
 })
 
 // 表单验证规则
@@ -67,7 +63,7 @@ const formRules: FormRules = {
     { required: true, message: "请输入版本名称", trigger: "blur" },
     { min: 1, max: 50, message: "版本名称长度在 1 到 50 个字符", trigger: "blur" }
   ],
-  remark: [{ max: 200, message: "版本备注长度不能超过 200 个字符", trigger: "blur" }]
+  versionId: [{ required: true, message: "请选择要 fork 的版本", trigger: "change" }]
 }
 
 // 对话框显示状态
@@ -81,7 +77,8 @@ watch(visible, (newVisible) => {
   if (newVisible) {
     // 重置表单
     formData.name = ""
-    formData.remark = ""
+    // 设置默认选中的版本为当前使用版本
+    formData.versionId = props.currentActiveVersionId
 
     // 清除验证
     nextTick(() => {
@@ -99,7 +96,7 @@ const handleClose = () => {
 const handleClosed = () => {
   // 重置表单
   formData.name = ""
-  formData.remark = ""
+  formData.versionId = 0
   loading.value = false
 }
 
@@ -114,7 +111,7 @@ const handleConfirm = async () => {
     // 发出确认事件
     emit("confirm", {
       name: formData.name,
-      remark: formData.remark
+      versionId: formData.versionId
     })
 
     ElMessage.success("版本创建成功")

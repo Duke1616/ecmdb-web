@@ -73,3 +73,38 @@ export interface ListTemplatesResp {
 export interface DeleteTemplateResp {
   message: string
 }
+
+// Fork 版本请求
+export interface ForkVersionReq {
+  version_name: string
+  version_id: number
+}
+
+// Fork 版本响应
+export interface ForkVersionResp {
+  template_version: TemplateVersion
+}
+
+// 发布模板请求
+export interface PublishTemplateReq {
+  template_id: number
+  version_id: number
+}
+
+// 发布模板响应
+export interface PublishTemplateResp {
+  message: string
+}
+
+// 更新版本请求
+export interface UpdateVersionReq {
+  version_id: number
+  name: string
+  signature: string
+  content: string
+}
+
+// 更新版本响应
+export interface UpdateVersionResp {
+  message: string
+}

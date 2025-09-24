@@ -8,7 +8,13 @@ import type {
   ListTemplatesReq,
   ListTemplatesResp,
   DeleteTemplateResp,
-  GetTemplateDetailResp
+  GetTemplateDetailResp,
+  ForkVersionReq,
+  ForkVersionResp,
+  PublishTemplateReq,
+  PublishTemplateResp,
+  UpdateVersionReq,
+  UpdateVersionResp
 } from "./types"
 
 // 创建模板
@@ -46,5 +52,29 @@ export const getTemplateDetailApi = (id: number) => {
 export const deleteTemplateApi = (id: number) => {
   return instance.delete<DeleteTemplateResp>({
     url: `${API_SERVICE.ALERT}/template/delete/${id}`
+  })
+}
+
+// Fork 版本
+export const forkVersionApi = (data: ForkVersionReq) => {
+  return instance.post<ForkVersionResp>({
+    url: `${API_SERVICE.ALERT}/template/version/fork`,
+    data
+  })
+}
+
+// 发布模板
+export const publishTemplateApi = (data: PublishTemplateReq) => {
+  return instance.post<PublishTemplateResp>({
+    url: `${API_SERVICE.ALERT}/template/publish`,
+    data
+  })
+}
+
+// 更新版本
+export const updateVersionApi = (data: UpdateVersionReq) => {
+  return instance.post<UpdateVersionResp>({
+    url: `${API_SERVICE.ALERT}/template/version/update`,
+    data
   })
 }

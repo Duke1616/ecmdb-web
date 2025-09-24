@@ -1,6 +1,11 @@
 <template>
   <!-- 新增版本对话框 -->
-  <CreateVersionDialog v-model="showCreateDialog" @confirm="handleCreateVersionConfirm" />
+  <CreateVersionDialog
+    v-model="showCreateDialog"
+    :template-versions="templateVersions"
+    :current-active-version-id="template?.activeVersionId || 0"
+    @confirm="handleCreateVersionConfirm"
+  />
 
   <el-card class="version-management-card">
     <template #header>
@@ -18,7 +23,10 @@
         v-for="version in templateVersions"
         :key="version.id"
         class="version-item"
-        :class="{ active: version.id === template?.activeVersionId }"
+        :class="{
+          active: version.id === template?.activeVersionId,
+          viewing: version.id === currentVersionId
+        }"
         @click="handleSwitchVersion(version)"
       >
         <div class="version-main">
@@ -42,10 +50,10 @@
           <el-button
             v-if="version.id !== template?.activeVersionId"
             size="small"
-            type="primary"
-            @click.stop="handleSetActiveVersion(version.id)"
+            type="success"
+            @click.stop="handlePublishVersion(version.id)"
           >
-            设为当前
+            发布
           </el-button>
         </div>
       </div>
@@ -71,9 +79,9 @@ interface Props {
 }
 
 interface Emits {
-  (e: "create-version", data: { name: string; remark: string }): void
+  (e: "create-version", data: { name: string; versionId: number }): void
   (e: "switch-version", version: TemplateVersion): void
-  (e: "set-active-version", versionId: number): void
+  (e: "publish-version", versionId: number): void
 }
 
 defineProps<Props>()
@@ -86,7 +94,7 @@ const handleCreateVersion = () => {
   showCreateDialog.value = true
 }
 
-const handleCreateVersionConfirm = (data: { name: string; remark: string }) => {
+const handleCreateVersionConfirm = (data: { name: string; versionId: number }) => {
   emit("create-version", data)
 }
 
@@ -94,8 +102,8 @@ const handleSwitchVersion = (version: TemplateVersion) => {
   emit("switch-version", version)
 }
 
-const handleSetActiveVersion = (versionId: number) => {
-  emit("set-active-version", versionId)
+const handlePublishVersion = (versionId: number) => {
+  emit("publish-version", versionId)
 }
 </script>
 
@@ -164,6 +172,10 @@ const handleSetActiveVersion = (versionId: number) => {
 
   &.active {
     border-color: #10b981;
+  }
+
+  &.viewing {
+    border-color: #3b82f6;
   }
 }
 
