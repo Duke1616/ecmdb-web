@@ -27,7 +27,6 @@
       <template #name="{ row }">
         <div class="template-name-cell">
           <h4 class="name-text">{{ row.name }}</h4>
-          <div class="description-text">{{ row.description || "暂无描述" }}</div>
         </div>
       </template>
 
@@ -43,15 +42,23 @@
       <!-- 版本信息插槽 -->
       <template #version="{ row }">
         <div class="version-cell">
-          <div class="version-name">{{ getActiveVersion(row)?.name || "暂无版本" }}</div>
-          <div class="version-remark">{{ getActiveVersion(row)?.remark || "" }}</div>
+          <div class="version-name">{{ getCurrentVersion(row)?.name || "暂无版本" }}</div>
         </div>
       </template>
 
-      <!-- 创建时间插槽 -->
-      <template #createdAt="{ row }">
-        <div class="time-cell">
-          {{ formatTimestamp(row.ctime) }}
+      <!-- 模板详情插槽 -->
+      <template #details="{ row }">
+        <div class="details-cell">
+          <div class="description-text">
+            {{ row.description || "暂无描述" }}
+          </div>
+        </div>
+      </template>
+
+      <!-- 版本数量插槽 -->
+      <template #versionCount="{ row }">
+        <div class="version-count-cell">
+          <el-tag type="info" size="small"> {{ row.versions?.length || 0 }} 个版本 </el-tag>
         </div>
       </template>
 
@@ -75,6 +82,7 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
+import { getChannelLabel, getChannelType } from "./config/channels"
 
 // 路由
 const router = useRouter()
@@ -91,26 +99,27 @@ const tableColumns = [
   {
     prop: "name",
     label: "模板信息",
-    minWidth: 200,
     slot: "name"
   },
   {
     prop: "channel",
     label: "渠道类型",
-    width: 120,
     slot: "channel"
   },
   {
     prop: "version",
-    label: "版本信息",
-    minWidth: 150,
+    label: "当前版本",
     slot: "version"
   },
   {
-    prop: "createdAt",
-    label: "创建时间",
-    width: 180,
-    slot: "createdAt"
+    prop: "versionCount",
+    label: "版本数量",
+    slot: "versionCount"
+  },
+  {
+    prop: "details",
+    label: "模板详情",
+    slot: "details"
   }
 ]
 
@@ -140,47 +149,10 @@ const loadTemplates = async () => {
   }
 }
 
-// 获取渠道类型标签类型
-const getChannelType = (channel: string): "primary" | "success" | "warning" | "info" | "danger" => {
-  const types: Record<string, "primary" | "success" | "warning" | "info" | "danger"> = {
-    email: "primary",
-    sms: "success",
-    dingtalk: "warning",
-    wechat: "info",
-    slack: "danger"
-  }
-  return types[channel] || "info"
-}
-
-// 获取渠道类型标签文本
-const getChannelLabel = (channel: string) => {
-  const labels: Record<string, string> = {
-    email: "邮件",
-    sms: "短信",
-    dingtalk: "钉钉",
-    wechat: "企业微信",
-    slack: "Slack"
-  }
-  return labels[channel] || channel
-}
-
-// 获取活跃版本
-const getActiveVersion = (template: ChannelTemplate) => {
+// 获取当前版本（当前使用版本）
+const getCurrentVersion = (template: ChannelTemplate) => {
   if (!template.versions || template.versions.length === 0) return null
   return template.versions.find((v) => v.id === template.activeVersionId) || template.versions[0]
-}
-
-// 格式化时间戳
-const formatTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000)
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  })
 }
 
 // 获取操作按钮配置
@@ -285,6 +257,7 @@ loadTemplates()
 .channel-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 // 版本样式
@@ -300,6 +273,23 @@ loadTemplates()
     font-size: 12px;
     color: #6b7280;
   }
+}
+
+// 模板详情样式
+.details-cell {
+  .description-text {
+    font-size: 13px;
+    color: #374151;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+}
+
+// 版本数量样式
+.version-count-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // 时间样式

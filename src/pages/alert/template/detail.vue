@@ -204,42 +204,92 @@ const loadTemplateDetail = async () => {
     ElMessage.error("加载模板详情失败")
   }
 }
+// 验证基本信息表单
+const validateBasicInfo = async (): Promise<void> => {
+  if (isEdit.value) {
+    // 编辑模式：验证头部表单
+    if (!formRef.value) {
+      console.warn("编辑模式下的表单引用不存在，跳过表单验证")
+      return
+    }
+    await formRef.value.validate()
+  } else {
+    // 创建模式：验证基本信息表单
+    if (!basicInfoRef.value?.formRef) {
+      throw new Error("创建模式下的表单引用不存在")
+    }
+    await basicInfoRef.value.formRef.validate()
+  }
+}
+
+// 保存版本内容
+const saveVersionContent = async (): Promise<void> => {
+  if (!currentVersionId.value) {
+    throw new Error("没有选中的版本")
+  }
+
+  await handleUpdateVersion(
+    currentVersionId.value,
+    getCurrentVersionName(template.value as any) || formData.value.version.name,
+    formData.value.version.content,
+    loadTemplateDetail
+  )
+}
+
+// 保存模板基本信息
+const saveTemplateBasicInfo = async (): Promise<void> => {
+  await updateTemplateApi({ ...formData.value, id: templateId.value })
+  ElMessage.success("模板更新成功")
+}
+
+// 创建模板并自动发布
+const createTemplateAndPublish = async (): Promise<void> => {
+  const response = await createTemplateApi(formData.value)
+  ElMessage.success("模板创建成功")
+
+  // 自动发布当前版本
+  if (response.data.template.id && response.data.template.activeVersionId) {
+    try {
+      await handlePublishVersion(response.data.template.id, response.data.template.activeVersionId)
+      ElMessage.success("版本已自动发布")
+    } catch (error) {
+      console.error("自动发布失败:", error)
+      ElMessage.warning("模板创建成功，但自动发布失败")
+    }
+  }
+
+  // 跳转到列表页
+  router.push("/alert/template")
+}
+
 // 保存模板
-const handleSave = async () => {
+const handleSave = async (): Promise<void> => {
   try {
     saving.value = true
 
-    if (isEdit.value) {
-      // 编辑模式：先验证基本信息表单
-      if (formRef.value) {
-        await formRef.value.validate()
+    // 验证基本信息表单
+    try {
+      await validateBasicInfo()
+    } catch (error: any) {
+      // 如果是创建模式且表单验证失败，则阻止保存
+      if (!isEdit.value) {
+        throw error
       }
+      // 编辑模式下表单验证失败只显示警告，不阻止保存
+      console.warn("表单验证失败:", error)
+      ElMessage.warning("表单验证失败，但继续保存")
+    }
 
-      // 更新当前选中的版本
+    if (isEdit.value) {
+      // 编辑模式：保存版本内容或基本信息
       if (currentVersionId.value) {
-        await handleUpdateVersion(
-          currentVersionId.value,
-          getCurrentVersionName(template.value as any) || formData.value.version.name,
-          formData.value.version.content,
-          loadTemplateDetail
-        )
-        // 版本更新成功后不跳转，停留在当前页面
+        await saveVersionContent()
       } else {
-        // 如果没有选中版本，更新模板基本信息
-        await updateTemplateApi({ ...formData.value, id: templateId.value })
-        ElMessage.success("模板更新成功")
-        // 基本信息更新后也不跳转，停留在当前页面
+        await saveTemplateBasicInfo()
       }
     } else {
-      // 创建模式：验证基本信息表单
-      const currentFormRef = basicInfoRef.value?.formRef
-      if (!currentFormRef) return
-
-      await currentFormRef.validate()
-      await createTemplateApi(formData.value)
-      ElMessage.success("模板创建成功")
-      // 创建成功后跳转到列表页
-      router.push("/alert/template")
+      // 创建模式：创建模板并自动发布
+      await createTemplateAndPublish()
     }
   } catch (error: any) {
     console.error("保存失败:", error)

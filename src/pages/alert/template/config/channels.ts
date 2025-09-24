@@ -153,6 +153,18 @@ export const getDefaultTemplate = (channelCode: string): string => {
 }
 
 /**
+ * 获取渠道类型标签类型
+ */
+export const getChannelType = (channelCode: string): "primary" | "success" | "warning" | "info" | "danger" => {
+  const types: Record<string, "primary" | "success" | "warning" | "info" | "danger"> = {
+    EMAIL: "primary",
+    WECHAT: "success",
+    FEISHU_CARD: "warning"
+  }
+  return types[channelCode] || "info"
+}
+
+/**
  * 检查是否为特定类型的模板
  */
 export const isChannelType = (channelCode: string, type: "html" | "markdown" | "json"): boolean => {

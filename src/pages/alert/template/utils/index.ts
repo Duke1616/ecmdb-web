@@ -19,21 +19,6 @@ export const formatTimestamp = (timestamp: number): string => {
 }
 
 /**
- * 获取渠道标签
- * @param channel 渠道代码
- * @returns 渠道显示名称
- * @deprecated 请使用 channels.ts 中的 getChannelLabel
- */
-export const getChannelLabel = (channel: string): string => {
-  const channelMap: Record<string, string> = {
-    EMAIL: "邮件",
-    WECHAT: "企业微信",
-    FEISHU_CARD: "飞书卡片"
-  }
-  return channelMap[channel] || channel
-}
-
-/**
  * 格式化 JSON 内容
  * @param content JSON 字符串
  * @returns 格式化后的 JSON 字符串
