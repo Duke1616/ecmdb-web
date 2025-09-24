@@ -22,13 +22,20 @@
           style="width: 100%"
         >
           <el-option label="邮件" value="EMAIL" />
-          <el-option label="短信" value="SMS" />
-          <el-option label="钉钉" value="DINGTALK" />
           <el-option label="企业微信" value="WECHAT" />
-          <el-option label="Slack" value="SLACK" />
           <el-option label="飞书卡片" value="FEISHU_CARD" />
         </el-select>
       </el-form-item>
+      <el-form-item label="描述" prop="description">
+        <el-input
+          :model-value="formData.description"
+          @update:model-value="(value) => emit('update:formData', { ...formData, description: value })"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入模板描述"
+        />
+      </el-form-item>
+
       <el-form-item label="版本名称" prop="version.name">
         <el-input
           :model-value="formData.version.name"
@@ -47,20 +54,12 @@
           placeholder="版本备注（可选）"
         />
       </el-form-item>
-      <el-form-item label="描述">
-        <el-input
-          :model-value="formData.description"
-          @update:model-value="(value) => emit('update:formData', { ...formData, description: value })"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入模板描述（可选）"
-        />
-      </el-form-item>
     </el-form>
   </el-card>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import type { CreateTemplateReq } from "@/api/alert/template/types"
 import type { FormRules } from "element-plus"
 
@@ -75,6 +74,10 @@ interface Emits {
 
 defineProps<Props>()
 const emit = defineEmits<Emits>()
+
+// 暴露表单引用
+const formRef = ref()
+defineExpose({ formRef })
 </script>
 
 <style lang="scss" scoped>

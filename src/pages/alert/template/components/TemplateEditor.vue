@@ -17,7 +17,8 @@
       </div>
     </template>
     <div class="editor-container">
-      <div class="editor-split">
+      <!-- 分屏预览模式 -->
+      <div v-if="!showPreview || previewMode === 'split'" class="editor-split">
         <div class="editor-panel">
           <CodeEditor
             :code="modelValue"
@@ -25,10 +26,19 @@
             :language="language"
             :is-create="false"
             class="template-editor"
-            :show-preview="showPreview"
+            :show-preview="showPreview && previewMode === 'split'"
             :preview-content="previewContent"
           />
         </div>
+      </div>
+
+      <!-- 全屏预览模式 -->
+      <div v-else-if="showPreview && previewMode === 'fullscreen'" class="fullscreen-preview">
+        <div class="preview-header">
+          <span class="preview-title">预览</span>
+          <el-button type="primary" size="small" @click="handlePreview"> 返回编辑 </el-button>
+        </div>
+        <div class="preview-content" v-html="previewContent" />
       </div>
     </div>
   </el-card>
@@ -44,6 +54,7 @@ interface Props {
   fileName: string
   showPreview: boolean
   previewContent: string
+  previewMode?: "split" | "fullscreen"
 }
 
 interface Emits {
@@ -157,6 +168,103 @@ const handleUpdateModelValue = (value: string) => {
   :deep(.cm-editor) {
     height: 100% !important;
     font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  }
+}
+
+// 全屏预览模式
+.fullscreen-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+
+    .preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+  }
+
+  .preview-content {
+    flex: 1;
+    padding: 20px;
+    overflow: auto;
+    min-height: 0;
+
+    // HTML 预览样式
+    :deep(h1),
+    :deep(h2),
+    :deep(h3),
+    :deep(h4),
+    :deep(h5),
+    :deep(h6) {
+      margin: 16px 0 8px 0;
+      color: #1f2937;
+    }
+
+    :deep(p) {
+      margin: 8px 0;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    :deep(strong) {
+      font-weight: 600;
+      color: #1f2937;
+    }
+
+    :deep(ul),
+    :deep(ol) {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    :deep(li) {
+      margin: 4px 0;
+      line-height: 1.6;
+    }
+
+    :deep(a) {
+      color: #3b82f6;
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    :deep(code) {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+      font-size: 13px;
+    }
+
+    :deep(pre) {
+      background: #f3f4f6;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 16px 0;
+
+      code {
+        background: none;
+        padding: 0;
+      }
+    }
   }
 }
 </style>

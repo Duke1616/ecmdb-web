@@ -57,14 +57,14 @@
 
       <!-- 操作插槽 -->
       <template #actions="{ row }">
-        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="3" @route-event="operateEvent" />
+        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue"
+import { ref, watch } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
@@ -111,12 +111,6 @@ const tableColumns = [
     label: "创建时间",
     width: 180,
     slot: "createdAt"
-  },
-  {
-    prop: "actions",
-    label: "操作",
-    width: 150,
-    slot: "actions"
   }
 ]
 
@@ -190,7 +184,7 @@ const formatTimestamp = (timestamp: number) => {
 }
 
 // 获取操作按钮配置
-const getOperateItems = (template: ChannelTemplate) => {
+const getOperateItems = (_template: ChannelTemplate) => {
   return [
     { name: "编辑", code: "edit", type: "primary" },
     { name: "复制", code: "copy", type: "info" },

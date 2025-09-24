@@ -10,10 +10,11 @@
             ? '修改消息通知模板配置'
             : '创建新的消息通知模板'
       "
+      :show-back-button="true"
       @refresh="handleRefresh"
+      @back="handleBack"
     >
       <template #actions>
-        <el-button @click="handleCancel">取消</el-button>
         <el-button type="primary" @click="handleSave" :loading="saving">
           {{ isEdit ? "保存修改" : "创建模板" }}
         </el-button>
@@ -33,10 +34,7 @@
                 <el-form-item label="渠道类型" prop="channel">
                   <el-select v-model="formData.channel" placeholder="请选择渠道类型" style="width: 100%">
                     <el-option label="邮件" value="EMAIL" />
-                    <el-option label="短信" value="SMS" />
-                    <el-option label="钉钉" value="DINGTALK" />
                     <el-option label="企业微信" value="WECHAT" />
-                    <el-option label="Slack" value="SLACK" />
                     <el-option label="飞书卡片" value="FEISHU_CARD" />
                   </el-select>
                 </el-form-item>
@@ -65,7 +63,12 @@
         <!-- 左侧：基本信息 / 版本管理 -->
         <div class="left-panel">
           <!-- 创建模式：基本信息 -->
-          <TemplateBasicInfo v-if="!isEdit" v-model:form-data="formData" :form-rules="templateFormRules" />
+          <TemplateBasicInfo
+            v-if="!isEdit"
+            ref="basicInfoRef"
+            v-model:form-data="formData"
+            :form-rules="templateFormRules"
+          />
 
           <!-- 版本管理 -->
           <TemplateVersionManagement
@@ -88,6 +91,7 @@
             :file-name="formData.name || 'template'"
             :show-preview="showPreview"
             :preview-content="renderedContent(formData.version.content)"
+            :preview-mode="previewMode(formData)"
             @preview="togglePreview"
             @format="() => formatJson(formData)"
             @clear="() => handleClearContent(formData)"
@@ -143,6 +147,7 @@ const {
 // 模板编辑器
 const {
   showPreview,
+  previewMode,
   renderedContent,
   togglePreview,
   handleClearContent,
@@ -166,6 +171,7 @@ const formData = ref<CreateTemplateReq>({
 
 // 表单引用
 const formRef = ref()
+const basicInfoRef = ref()
 
 // 加载模板详情
 const loadTemplateDetail = async () => {
@@ -195,10 +201,13 @@ const loadTemplateDetail = async () => {
 }
 // 保存模板
 const handleSave = async () => {
-  if (!formRef.value) return
+  // 根据模式选择不同的表单引用
+  const currentFormRef = isEdit.value ? formRef.value : basicInfoRef.value?.formRef
+
+  if (!currentFormRef) return
 
   try {
-    await formRef.value.validate()
+    await currentFormRef.validate()
     saving.value = true
 
     if (isEdit.value) {
@@ -218,8 +227,8 @@ const handleSave = async () => {
   }
 }
 
-// 取消操作
-const handleCancel = () => {
+// 返回操作
+const handleBack = () => {
   router.push("/alert/template")
 }
 
@@ -240,8 +249,10 @@ const handleRefresh = () => {
         remark: ""
       }
     }
-    if (formRef.value) {
-      formRef.value.clearValidate()
+    // 清理表单验证
+    const currentFormRef = basicInfoRef.value?.formRef
+    if (currentFormRef) {
+      currentFormRef.clearValidate()
     }
   }
 }

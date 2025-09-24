@@ -20,6 +20,33 @@ export function useTemplateEditor() {
     }
   })
 
+  // 计算属性：是否为 HTML 模板
+  const isHtmlTemplate = computed(() => {
+    return (formData: CreateTemplateReq) => {
+      return formData.channel === "EMAIL"
+    }
+  })
+
+  // 计算属性：是否为 Markdown 模板
+  const isMarkdownTemplate = computed(() => {
+    return (formData: CreateTemplateReq) => {
+      return formData.channel === "WECHAT"
+    }
+  })
+
+  // 计算属性：预览模式
+  const previewMode = computed(() => {
+    return (formData: CreateTemplateReq) => {
+      if (isHtmlTemplate.value(formData)) {
+        return "fullscreen" // HTML 全屏预览
+      } else if (isMarkdownTemplate.value(formData)) {
+        return "split" // Markdown 分屏预览
+      } else {
+        return "split" // JSON 等其他格式分屏预览
+      }
+    }
+  })
+
   // 切换预览模式
   const togglePreview = () => {
     showPreview.value = !showPreview.value
@@ -84,7 +111,14 @@ export function useTemplateEditor() {
 
   // 获取编辑器语言
   const getEditorLanguage = (formData: CreateTemplateReq) => {
-    return isJsonTemplate.value(formData) ? "json" : "text"
+    // 根据渠道类型确定编辑器语言
+    const channelLanguageMap: Record<string, string> = {
+      EMAIL: "html",
+      WECHAT: "markdown",
+      FEISHU_CARD: "json"
+    }
+
+    return channelLanguageMap[formData.channel] || "text"
   }
 
   // 设置默认内容（用于创建模式）
@@ -113,12 +147,29 @@ export function useTemplateEditor() {
   ]
 }`
     } else if (formData.channel === "EMAIL") {
-      formData.version.content = `告警通知
+      formData.version.content = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>告警通知</title>
+</head>
+<body>
+    <h2>告警通知</h2>
+    <p><strong>告警名称</strong>: {{$alert.Title}}</p>
+    <p><strong>告警级别</strong>: {{$alert.Severity}}</p>
+    <p><strong>告警时间</strong>: {{$alert.Time}}</p>
+    <p><strong>告警描述</strong>: {{$alert.Description}}</p>
+    <p>请及时处理此告警。</p>
+</body>
+</html>`
+    } else if (formData.channel === "WECHAT") {
+      formData.version.content = `# 告警通知
 
-告警名称: {{$alert.Title}}
-告警级别: {{$alert.Severity}}
-告警时间: {{$alert.Time}}
-告警描述: {{$alert.Description}}
+**告警名称**: {{$alert.Title}}
+**告警级别**: {{$alert.Severity}}
+**告警时间**: {{$alert.Time}}
+**告警描述**: {{$alert.Description}}
 
 请及时处理此告警。`
     } else {
@@ -132,6 +183,9 @@ export function useTemplateEditor() {
 
     // 计算属性
     isJsonTemplate,
+    isHtmlTemplate,
+    isMarkdownTemplate,
+    previewMode,
     renderedContent,
 
     // 方法
