@@ -3,7 +3,7 @@
     <template #header>
       <div class="card-header">
         <h3>
-          模板内容
+          {{ channelLabel || "模板内容" }}
           <span class="language-badge">{{ language.toUpperCase() }}</span>
         </h3>
         <CodeEditorToolbar
@@ -58,6 +58,7 @@ interface Props {
   showPreview: boolean
   previewContent: string
   previewMode?: "split" | "fullscreen"
+  channelLabel?: string
 }
 
 interface Emits {

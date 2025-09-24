@@ -34,6 +34,20 @@ export function useVersionManagement() {
     return currentVersion?.remark || ""
   }
 
+  // 获取查看中的版本名称
+  const getViewingVersionName = (template: ChannelTemplate | null): string => {
+    if (!template || !currentVersionId.value) return ""
+    const viewingVersion = template.versions?.find((v) => v.id === currentVersionId.value)
+    return viewingVersion?.name || ""
+  }
+
+  // 获取当前使用版本的内容
+  const getActiveVersionContent = (template: ChannelTemplate | null): string => {
+    if (!template) return ""
+    const activeVersion = template.versions?.find((v) => v.id === template.activeVersionId)
+    return activeVersion?.content || ""
+  }
+
   // 切换到版本
   const switchToVersion = (version: TemplateVersion, formData: CreateTemplateReq) => {
     currentVersionId.value = version.id
@@ -58,15 +72,26 @@ export function useVersionManagement() {
   }
 
   // 新增版本
-  const handleCreateVersion = (formData: CreateTemplateReq) => {
-    // 重置版本表单数据
-    formData.version = {
-      name: "",
-      content: "",
-      remark: ""
+  const handleCreateVersion = (data: { name: string; remark: string }, activeVersionContent: string) => {
+    // 创建新版本对象
+    const newVersion: TemplateVersion = {
+      id: Date.now(), // 临时 ID，实际应该由后端生成
+      channelTemplateId: 0, // 临时值，实际应该由后端设置
+      name: data.name,
+      signature: "", // 临时值，实际应该由后端生成
+      content: activeVersionContent, // 使用当前使用版本的内容
+      remark: data.remark,
+      ctime: Date.now(),
+      utime: Date.now()
     }
 
-    ElMessage.info("请填写新版本信息并保存")
+    // 添加到版本列表
+    templateVersions.value.push(newVersion)
+
+    // 切换到新创建的版本
+    currentVersionId.value = newVersion.id
+
+    ElMessage.success("版本创建成功")
   }
 
   // 初始化版本数据
@@ -92,6 +117,8 @@ export function useVersionManagement() {
     getCurrentVersionName,
     getCurrentVersionContent,
     getCurrentVersionRemark,
+    getViewingVersionName,
+    getActiveVersionContent,
     switchToVersion,
     setActiveVersion,
     handleCreateVersion,

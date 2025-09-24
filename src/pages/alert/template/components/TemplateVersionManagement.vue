@@ -1,4 +1,7 @@
 <template>
+  <!-- 新增版本对话框 -->
+  <CreateVersionDialog v-model="showCreateDialog" @confirm="handleCreateVersionConfirm" />
+
   <el-card class="version-management-card">
     <template #header>
       <div class="card-header">
@@ -55,8 +58,10 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import type { ChannelTemplate, TemplateVersion } from "@/api/alert/template/types"
 import { formatTimestamp } from "../utils"
+import CreateVersionDialog from "./CreateVersionDialog.vue"
 
 interface Props {
   template: ChannelTemplate | null
@@ -66,7 +71,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: "create-version"): void
+  (e: "create-version", data: { name: string; remark: string }): void
   (e: "switch-version", version: TemplateVersion): void
   (e: "set-active-version", versionId: number): void
 }
@@ -74,8 +79,15 @@ interface Emits {
 defineProps<Props>()
 const emit = defineEmits<Emits>()
 
+// 对话框显示状态
+const showCreateDialog = ref(false)
+
 const handleCreateVersion = () => {
-  emit("create-version")
+  showCreateDialog.value = true
+}
+
+const handleCreateVersionConfirm = (data: { name: string; remark: string }) => {
+  emit("create-version", data)
 }
 
 const handleSwitchVersion = (version: TemplateVersion) => {

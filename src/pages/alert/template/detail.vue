@@ -15,7 +15,7 @@
       @back="handleBack"
     >
       <template #actions>
-        <el-button type="primary" @click="handleSave" :loading="saving">
+        <el-button type="primary" @click="handleSave" class="action-btn" :loading="saving">
           {{ isEdit ? "保存修改" : "创建模板" }}
         </el-button>
       </template>
@@ -32,11 +32,7 @@
               </el-col>
               <el-col :span="8">
                 <el-form-item label="渠道类型" prop="channel">
-                  <el-select
-                    v-model="formData.channel"
-                    placeholder="请选择渠道类型"
-                    style="width: 100%"
-                  >
+                  <el-select v-model="formData.channel" placeholder="请选择渠道类型" style="width: 100%">
                     <el-option
                       v-for="option in getChannelOptions()"
                       :key="option.value"
@@ -89,7 +85,7 @@
             :template-versions="templateVersions"
             :current-version-id="currentVersionId"
             :has-versions="hasVersions"
-            @create-version="() => handleCreateVersion(formData)"
+            @create-version="(data) => handleCreateVersion(data, getActiveVersionContent(template))"
             @switch-version="(version) => switchToVersion(version, formData)"
             @set-active-version="setActiveVersion"
           />
@@ -104,6 +100,7 @@
             :show-preview="showPreview"
             :preview-content="renderedContent"
             :preview-mode="previewMode"
+            :channel-label="editorHeaderLabel"
             @preview="togglePreview"
             @format="formatJson"
             @clear="handleClearContent"
@@ -152,6 +149,8 @@ const {
   getCurrentVersionName,
   getCurrentVersionContent,
   getCurrentVersionRemark,
+  getViewingVersionName,
+  getActiveVersionContent,
   switchToVersion,
   setActiveVersion,
   handleCreateVersion,
@@ -282,6 +281,16 @@ onMounted(() => {
 // 页面卸载时清理
 onUnmounted(() => {
   // 清理工作由 useTemplateForm 内部处理
+})
+
+// 编辑器标题：渠道标签 · 查看中的版本名（创建模式用当前表单里的版本名）
+const editorHeaderLabel = computed(() => {
+  const channelLabel = getChannelLabelFromConfig(formData.value.channel)
+  // 显式依赖 currentVersionId，确保左侧版本切换可触发重算
+  const _currentId = currentVersionId.value
+  // 编辑模式读取查看中的版本名；创建模式读取表单中的版本名
+  const versionName = isEdit.value ? getViewingVersionName(template.value as any) : formData.value.version.name
+  return versionName ? `${channelLabel} · ${versionName}` : channelLabel
 })
 </script>
 

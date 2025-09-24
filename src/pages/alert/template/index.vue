@@ -3,7 +3,7 @@
     <!-- 头部区域 -->
     <ManagerHeader title="消息通知模板" subtitle="管理告警通知模板" @refresh="loadTemplates">
       <template #actions>
-        <el-button type="primary" :icon="Plus" @click="handleCreate"> 创建模板 </el-button>
+        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建模板 </el-button>
       </template>
     </ManagerHeader>
 
