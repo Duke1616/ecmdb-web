@@ -172,11 +172,25 @@
       <!-- 接口设置区域 -->
       <div class="form-section">
         <div class="section-title">
-          <el-icon><Connection /></el-icon>
-          <span>接口设置</span>
-          <el-button type="primary" size="small" @click="openAddApiDialog" :icon="Plus" class="add-api-btn">
-            添加接口
-          </el-button>
+          <div class="section-left">
+            <el-icon><Connection /></el-icon>
+            <span>接口设置</span>
+          </div>
+          <div class="section-actions">
+            <el-button type="primary" size="small" @click="openAddApiDialog" :icon="Plus" class="add-api-btn">
+              添加接口
+            </el-button>
+            <el-button
+              v-if="selectedEndpoints.length > 0"
+              type="danger"
+              size="small"
+              @click="handleBatchDelete"
+              :icon="Delete"
+              class="batch-delete-btn"
+            >
+              批量删除 ({{ selectedEndpoints.length }})
+            </el-button>
+          </div>
         </div>
 
         <div class="api-table-container">
@@ -185,8 +199,9 @@
             :columns="apiTableColumns"
             :actions="apiTableActions"
             :show-pagination="false"
-            :table-props="{}"
+            :show-selection="true"
             @action="(action, row, index) => removeEndpoint(index)"
+            @selection-change="handleSelectionChange"
           >
             <!-- 接口方法插槽 -->
             <template #method="{ row }">
@@ -220,11 +235,12 @@
 <script lang="ts" setup>
 import { createOrUpdateMenuReq, endpoint as menuEndpoint, menu } from "@/api/menu/types/menu"
 import { endpoint as apiEndpoint } from "@/api/endpoint/types/endpoint"
-import { ElMessage, FormInstance, FormRules } from "element-plus"
+import { ElMessage, ElMessageBox, FormInstance, FormRules } from "element-plus"
 import { ref, computed } from "vue"
 import { cloneDeep } from "lodash-es"
 import { createMenuApi, updateMenuApi } from "@/api/menu"
-import { InfoFilled, Setting, Connection, Plus } from "@element-plus/icons-vue"
+import { changeMenuEndpoints } from "@/api/menu/utils"
+import { InfoFilled, Setting, Connection, Plus, Delete } from "@element-plus/icons-vue"
 import Api from "./api.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
@@ -332,6 +348,7 @@ const handleCheckedCitiesChange = (value: any) => {
 const apiTableColumns = [
   { prop: "path", label: "接口路径", minWidth: 200 },
   { prop: "method", label: "接口方法", width: 120, slot: "method" },
+  { prop: "resource", label: "资源标识", minWidth: 150 },
   { prop: "desc", label: "接口介绍", minWidth: 150 }
 ]
 
@@ -348,16 +365,23 @@ const apiTableActions = [
 
 // 接口管理
 const apiEndpoints = ref<menuEndpoint[]>([])
+const selectedEndpoints = ref<menuEndpoint[]>([])
 
 // 初始化接口数据
 const initEndpoints = (endpoints: menuEndpoint[] = []) => {
   apiEndpoints.value = [...endpoints]
+  selectedEndpoints.value = []
 }
 
 // 添加接口
-const addEndpoints = (newEndpoints: apiEndpoint[]) => {
+const addEndpoints = async (newEndpoints: apiEndpoint[]) => {
   if (!newEndpoints || newEndpoints.length === 0) {
     ElMessage.warning("请选择要添加的接口")
+    return
+  }
+
+  if (!formData.value.id) {
+    ElMessage.error("请先保存菜单基本信息")
     return
   }
 
@@ -373,20 +397,124 @@ const addEndpoints = (newEndpoints: apiEndpoint[]) => {
     return
   }
 
-  apiEndpoints.value.push(...uniqueEndpoints)
+  try {
+    // 直接调用 change_endpoints 接口新增端点
+    await changeMenuEndpoints.add(formData.value.id, uniqueEndpoints)
+
+    // 更新本地数据
+    apiEndpoints.value.push(...uniqueEndpoints)
+    ElMessage.success("端点添加成功")
+
+    // 触发回调，通知父组件刷新数据
+    emits("listMenusTreeData")
+  } catch (error) {
+    console.error("添加端点失败:", error)
+    ElMessage.error("添加端点失败")
+  }
 }
 
 // 删除接口
-const removeEndpoint = (index: number) => {
-  apiEndpoints.value.splice(index, 1)
+const removeEndpoint = async (index: number) => {
+  if (!formData.value.id) {
+    ElMessage.error("请先保存菜单基本信息")
+    return
+  }
+
+  const endpointToRemove = apiEndpoints.value[index]
+  if (!endpointToRemove) return
+
+  try {
+    // 确保被删除的端点包含完整的字段
+    const endpointToDelete = {
+      name: endpointToRemove.name || "",
+      path: endpointToRemove.path || "",
+      method: endpointToRemove.method || "",
+      resource: endpointToRemove.resource || "",
+      desc: endpointToRemove.desc || ""
+    }
+
+    // 调用 change_endpoints 接口，传递被删除的端点
+    await changeMenuEndpoints.replace(formData.value.id, [endpointToDelete])
+
+    // 从本地数据中移除
+    apiEndpoints.value.splice(index, 1)
+    ElMessage.success("端点删除成功")
+
+    // 触发回调，通知父组件刷新数据
+    emits("listMenusTreeData")
+  } catch (error) {
+    console.error("删除端点失败:", error)
+    ElMessage.error("删除端点失败")
+  }
+}
+
+// 处理选择变化
+const handleSelectionChange = (selection: menuEndpoint[]) => {
+  selectedEndpoints.value = selection
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  if (!formData.value.id) {
+    ElMessage.error("请先保存菜单基本信息")
+    return
+  }
+
+  if (selectedEndpoints.value.length === 0) {
+    ElMessage.warning("请选择要删除的端点")
+    return
+  }
+
+  try {
+    // 确认删除
+    await ElMessageBox.confirm(`确定要删除选中的 ${selectedEndpoints.value.length} 个端点吗？`, "批量删除确认", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+
+    // 构建要删除的端点列表
+    const endpointsToDelete = selectedEndpoints.value.map((endpoint) => ({
+      name: endpoint.name || "",
+      path: endpoint.path || "",
+      method: endpoint.method || "",
+      resource: endpoint.resource || "",
+      desc: endpoint.desc || ""
+    }))
+
+    // 调用 change_endpoints 接口，传递要删除的端点
+    await changeMenuEndpoints.replace(formData.value.id, endpointsToDelete)
+
+    // 从本地数据中移除选中的端点
+    selectedEndpoints.value.forEach((selected) => {
+      const index = apiEndpoints.value.findIndex((ep) => ep.path === selected.path && ep.resource === selected.resource)
+      if (index !== -1) {
+        apiEndpoints.value.splice(index, 1)
+      }
+    })
+
+    // 清空选择
+    selectedEndpoints.value = []
+    ElMessage.success(`成功删除 ${endpointsToDelete.length} 个端点`)
+
+    // 触发回调，通知父组件刷新数据
+    emits("listMenusTreeData")
+  } catch (error) {
+    if (error !== "cancel") {
+      console.error("批量删除端点失败:", error)
+      ElMessage.error("批量删除端点失败")
+    }
+  }
 }
 
 // 转换 API 接口格式
 const convertApiEndpointToMenuEndpoint = (apiEndpoint: apiEndpoint): menuEndpoint => {
+  console.log("api", apiEndpoint)
   return {
     name: apiEndpoint.resource || apiEndpoint.path,
     path: apiEndpoint.path,
     method: apiEndpoint.method,
+    resource: apiEndpoint.resource,
     desc: apiEndpoint.desc
   }
 }
@@ -397,9 +525,9 @@ const openAddApiDialog = () => {
 }
 
 // 处理对话框确认
-const handleDialogConfirm = () => {
+const handleDialogConfirm = async () => {
   const selectedEndpoints = apiRef.value?.getSelectionTableData() || []
-  addEndpoints(selectedEndpoints)
+  await addEndpoints(selectedEndpoints)
   apiRef.value?.clearSelection()
   dialogVisible.value = false
 }
@@ -429,8 +557,8 @@ const currentStatus = computed({
   }
 })
 
-const submitUpdateForm = () => {
-  formRef.value?.validate((valid: boolean, fields: any) => {
+const submitUpdateForm = async () => {
+  formRef.value?.validate(async (valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
 
     // 确保 platforms 字段被正确设置
@@ -438,24 +566,22 @@ const submitUpdateForm = () => {
       formData.value.meta.platforms = formData.value.meta.platforms || ["cmdb"]
     }
 
-    // 同步接口数据到表单数据
-    formData.value.endpoints = [...apiEndpoints.value]
+    try {
+      // 只更新菜单基本信息，不处理端点
+      await updateMenuApi(formData.value)
 
-    updateMenuApi(formData.value)
-      .then(() => {
-        ElMessage.success("保存成功")
-        resetForm()
-        emits("listMenusTreeData")
-      })
-      .catch((error) => {
-        console.log("catch", error)
-      })
-      .finally(() => {})
+      ElMessage.success("保存成功")
+      resetForm()
+      emits("listMenusTreeData")
+    } catch (error) {
+      console.error("保存失败:", error)
+      ElMessage.error("保存失败")
+    }
   })
 }
 
-const submitCreateForm = () => {
-  formRef.value?.validate((valid: boolean, fields: any) => {
+const submitCreateForm = async () => {
+  formRef.value?.validate(async (valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
 
     // 确保 platforms 字段被正确设置
@@ -463,21 +589,24 @@ const submitCreateForm = () => {
       formData.value.meta.platforms = formData.value.meta.platforms || ["cmdb"]
     }
 
-    // 同步接口数据到表单数据
-    formData.value.endpoints = [...apiEndpoints.value]
+    try {
+      // 1. 创建菜单基本信息
+      const response = await createMenuApi(formData.value)
+      const menuId = response.data
 
-    createMenuApi(formData.value)
-      .then((data) => {
-        ElMessage.success("保存成功")
-        resetForm()
+      // 2. 如果有端点，调用 change_endpoints 接口创建端点
+      if (apiEndpoints.value.length > 0 && menuId) {
+        await changeMenuEndpoints.create(menuId, apiEndpoints.value)
+      }
 
-        emits("closed", data.data)
-        emits("listMenusTreeData")
-      })
-      .catch((error) => {
-        console.log("catch", error)
-      })
-      .finally(() => {})
+      ElMessage.success("保存成功")
+      resetForm()
+      emits("closed", menuId)
+      emits("listMenusTreeData")
+    } catch (error) {
+      console.error("保存失败:", error)
+      ElMessage.error("保存失败")
+    }
   })
 }
 
@@ -563,34 +692,57 @@ defineExpose({
 
     .section-title {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 6px;
       margin-bottom: 16px;
       padding: 10px 14px;
       background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       border-radius: 6px;
       border-left: 3px solid #3b82f6;
 
-      .el-icon {
-        font-size: 14px;
-        color: #3b82f6;
+      .section-left {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .el-icon {
+          font-size: 14px;
+          color: #3b82f6;
+        }
+
+        span {
+          font-size: 13px;
+          font-weight: 600;
+          color: #374151;
+        }
       }
 
-      span {
-        font-size: 13px;
-        font-weight: 600;
-        color: #374151;
-      }
+      .section-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
 
-      .add-api-btn {
-        margin-left: auto;
-        height: 28px;
-        font-size: 12px;
-        padding: 6px 8px;
-        border-radius: 6px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        .add-api-btn,
+        .batch-delete-btn {
+          height: 28px;
+          font-size: 12px;
+          padding: 6px 8px;
+          border-radius: 6px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .batch-delete-btn {
+          background: #ef4444;
+          border-color: #ef4444;
+          color: white;
+
+          &:hover {
+            background: #dc2626;
+            border-color: #dc2626;
+          }
+        }
       }
     }
 
@@ -813,25 +965,6 @@ defineExpose({
   .menu-form {
     .form-section {
       margin-bottom: 24px;
-
-      .section-title {
-        padding: 10px 12px;
-        margin-bottom: 16px;
-
-        span {
-          font-size: 13px;
-        }
-
-        .add-api-btn {
-          height: 26px;
-          font-size: 11px;
-          padding: 4px 6px;
-          border-radius: 4px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-      }
     }
   }
 }

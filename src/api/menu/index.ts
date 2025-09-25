@@ -40,3 +40,11 @@ export function listMenusByPlatformApi(platform: string) {
     data: { platform: platform }
   })
 }
+
+/** 变更菜单端点 */
+export function changeEndpointsApi(data: menu.ChangeEndpointsReq) {
+  return instance.post<menu.ChangeEndpointsResp>({
+    url: `${API_SERVICE.CMDB}/menu/change_endpoints`,
+    data: data
+  })
+}
