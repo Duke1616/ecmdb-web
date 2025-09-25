@@ -45,7 +45,7 @@
     <FormDialog
       v-model="dialogVisible"
       title="添加接口"
-      width="80%"
+      width="50%"
       :confirm-loading="dialogLoading"
       @confirm="handleDialogConfirm"
       @cancel="dialogVisible = false"

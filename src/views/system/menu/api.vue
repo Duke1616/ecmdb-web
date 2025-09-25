@@ -37,26 +37,6 @@
             {{ row.method || "N/A" }}
           </el-tag>
         </template>
-
-        <!-- 是否登录插槽 -->
-        <template #isAuth="{ row }">
-          <el-tag :type="row.is_auth ? 'success' : 'info'" effect="light" class="status-tag">
-            <el-icon class="status-icon">
-              <Check v-if="row.is_auth" />
-              <Close v-else />
-            </el-icon>
-          </el-tag>
-        </template>
-
-        <!-- 是否鉴权插槽 -->
-        <template #isPermission="{ row }">
-          <el-tag :type="row.is_permission ? 'success' : 'info'" effect="light" class="status-tag">
-            <el-icon class="status-icon">
-              <Check v-if="row.is_permission" />
-              <Close v-else />
-            </el-icon>
-          </el-tag>
-        </template>
       </DataTable>
     </div>
   </div>
@@ -67,7 +47,7 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listEndpointApi } from "@/api/endpoint"
 import { endpoint } from "@/api/endpoint/types/endpoint"
-import { Search, RefreshRight, Check, Close } from "@element-plus/icons-vue"
+import { Search, RefreshRight } from "@element-plus/icons-vue"
 import { debounce } from "lodash-es"
 import DataTable from "@/common/components/DataTable/index.vue"
 
@@ -89,8 +69,7 @@ const emits = defineEmits<{
 const tableColumns = [
   { prop: "path", label: "接口路径", minWidth: 260 },
   { prop: "method", label: "方法", width: 100, slot: "method" },
-  { prop: "is_auth", label: "是否登录", width: 100, slot: "isAuth" },
-  { prop: "is_permission", label: "是否鉴权", width: 100, slot: "isPermission" },
+  { prop: "resource", label: "资源标识", minWidth: 150 },
   { prop: "desc", label: "接口介绍", minWidth: 260 }
 ]
 
@@ -220,20 +199,6 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], listEnd
   overflow: hidden;
   display: flex;
   flex-direction: column;
-
-  .status-tag {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 32px;
-    height: 24px;
-    padding: 0;
-    border-radius: 4px;
-
-    .status-icon {
-      font-size: 12px;
-    }
-  }
 }
 
 .footer-content {
