@@ -259,7 +259,6 @@ const handleRoleConfirm = async (selectedRoles: Array<{ id: number; name: string
     listUsersData() // 刷新用户列表
   } catch (error) {
     console.error("角色更新失败:", error)
-    ElMessage.error("角色更新失败")
   }
 }
 

@@ -187,8 +187,7 @@ const loadAlerts = async () => {
     alerts.value = response.data.alerts || []
     paginationData.total = response.data.total || 0
   } catch (error) {
-    console.error("加载历史告警失败:", error)
-    ElMessage.error("加载历史告警失败")
+
     alerts.value = []
     paginationData.total = 0
   } finally {

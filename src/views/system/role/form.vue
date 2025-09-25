@@ -123,7 +123,6 @@ const submitForm = async () => {
     }
   } catch (error) {
     console.error("保存角色失败:", error)
-    ElMessage.error(isEdit.value ? "角色更新失败" : "角色创建失败")
   }
 }
 

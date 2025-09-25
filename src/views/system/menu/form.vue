@@ -431,7 +431,6 @@ const submitUpdateForm = async () => {
       emits("listMenusTreeData")
     } catch (error) {
       console.error("保存失败:", error)
-      ElMessage.error("保存失败")
     }
   })
 }
@@ -462,7 +461,6 @@ const submitCreateForm = async () => {
       emits("listMenusTreeData")
     } catch (error) {
       console.error("保存失败:", error)
-      ElMessage.error("保存失败")
     }
   })
 }

@@ -245,7 +245,6 @@ const loadRuleGroups = async () => {
     ruleGroups.value = response.data.rule_groups
   } catch (error) {
     console.error("加载规则组列表失败:", error)
-    ElMessage.error("加载规则组列表失败")
   }
 }
 
@@ -256,7 +255,6 @@ const loadDatasources = async (type: DatasourceTypeEnum) => {
     datasources.value = response.data
   } catch (error) {
     console.error("加载数据源列表失败:", error)
-    ElMessage.error("加载数据源列表失败")
   }
 }
 

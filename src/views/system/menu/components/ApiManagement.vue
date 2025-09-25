@@ -187,7 +187,6 @@ const addEndpoints = async (newEndpoints: apiEndpoint[]) => {
       emit("refresh")
     } catch (error) {
       console.error("添加端点失败:", error)
-      ElMessage.error("添加端点失败")
     }
   }
 }
@@ -223,7 +222,6 @@ const removeEndpoint = async (index: number) => {
       emit("refresh")
     } catch (error) {
       console.error("删除端点失败:", error)
-      ElMessage.error("删除端点失败")
     }
   }
 }
@@ -282,13 +280,11 @@ const handleBatchDelete = async () => {
         emit("refresh")
       } catch (error) {
         console.error("批量删除端点失败:", error)
-        ElMessage.error("批量删除端点失败")
       }
     }
   } catch (error) {
     if (error !== "cancel") {
       console.error("批量删除端点失败:", error)
-      ElMessage.error("批量删除端点失败")
     }
   }
 }

@@ -117,7 +117,6 @@ const handleConfirm = async () => {
     // 关闭对话框
     emit("update:visible", false)
   } catch (error) {
-    ElMessage.error("迁移失败，请重试")
   } finally {
     loading.value = false
   }

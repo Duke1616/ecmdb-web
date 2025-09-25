@@ -333,7 +333,6 @@ const loadRules = async () => {
     rules.value = response.data.rules
   } catch (error) {
     console.error("加载规则列表失败:", error)
-    ElMessage.error("加载规则列表失败")
   } finally {
     loading.value = false
   }

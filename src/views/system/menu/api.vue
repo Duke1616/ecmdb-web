@@ -68,7 +68,7 @@ const emits = defineEmits<{
 // 表格配置
 const tableColumns = [
   { prop: "path", label: "接口路径", minWidth: 260 },
-  { prop: "method", label: "方法", width: 100, slot: "method" },
+  { prop: "method", label: "方法", width: 150, slot: "method" },
   { prop: "resource", label: "资源标识", minWidth: 150 },
   { prop: "desc", label: "接口介绍", minWidth: 260 }
 ]

@@ -254,7 +254,6 @@ const createTemplateAndPublish = async (): Promise<void> => {
       ElMessage.success("版本已自动发布")
     } catch (error) {
       console.error("自动发布失败:", error)
-      ElMessage.warning("模板创建成功，但自动发布失败")
     }
   }
 

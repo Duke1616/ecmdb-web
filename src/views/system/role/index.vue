@@ -205,7 +205,6 @@ const handleMenuPermissionConfirm = async (selectedMenus: any[]) => {
     }
   } catch (error) {
     console.error("保存菜单权限失败:", error)
-    ElMessage.error("菜单权限分配失败")
   }
 }
 
@@ -231,7 +230,6 @@ const handleDeleteSingle = async (row: role) => {
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error)
-      ElMessage.error("删除失败")
     }
   }
 }

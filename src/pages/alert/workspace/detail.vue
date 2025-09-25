@@ -262,7 +262,6 @@ const loadWorkspaceData = async () => {
     teamName.value = workspace.value?.team?.name || "未知团队"
   } catch (error) {
     console.error("加载工作空间数据失败:", error)
-    ElMessage.error("加载工作空间数据失败")
   }
 }
 
