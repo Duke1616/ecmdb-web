@@ -65,6 +65,7 @@ export function useTemplateEditor() {
       multiChannelData.value[channel] = formatJsonContent(multiChannelData.value[channel] || "")
       ElMessage.success("JSON 格式化成功")
     } catch (error) {
+      console.log(error)
     }
   }
 

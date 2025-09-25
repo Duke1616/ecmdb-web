@@ -117,6 +117,7 @@ const handleConfirm = async () => {
     // 关闭对话框
     emit("update:visible", false)
   } catch (error) {
+    console.log(error)
   } finally {
     loading.value = false
   }

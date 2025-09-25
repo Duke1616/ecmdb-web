@@ -68,7 +68,6 @@ export function useVersionManagement() {
       ElMessage.success("版本设置成功")
     } catch (error) {
       console.error("设置当前版本失败:", error)
-
     }
   }
 
@@ -95,7 +94,6 @@ export function useVersionManagement() {
       }
     } catch (error) {
       console.error("创建版本失败:", error)
-
     }
   }
 
@@ -116,7 +114,6 @@ export function useVersionManagement() {
       }
     } catch (error) {
       console.error("发布版本失败:", error)
-
     }
   }
 
