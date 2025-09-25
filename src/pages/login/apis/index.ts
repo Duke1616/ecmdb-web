@@ -18,3 +18,10 @@ export function ldapLoginApi(data: Login.LoginRequestData) {
     data
   })
 }
+
+export function logoutApi() {
+  return instance.request({
+    url: `${API_SERVICE.CMDB}/user/logout`,
+    method: "post"
+  })
+}

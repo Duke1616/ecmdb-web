@@ -7,6 +7,7 @@ import { resetRouter } from "@/router"
 import { getUserInfoApi } from "@/api/user"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, getToken, setToken as _setToken } from "@@/utils/cache/cookies"
+import { logoutApi } from "@/pages/login/apis"
 
 export const useUserStore = defineStore("user", () => {
   const token = ref<string>("")
@@ -52,16 +53,35 @@ export const useUserStore = defineStore("user", () => {
   }
 
   /** 登出 */
-  const logout = () => {
-    removeToken()
-    permissionStore.dynamicRoutes = []
-    resetRouter()
-    _resetTagsView()
+  const logout = async () => {
+    try {
+      // 调用登出接口
+      await logoutApi()
+    } catch (error) {
+      console.error("登出接口调用失败:", error)
+      // 即使接口调用失败，也要执行本地清理
+    } finally {
+      // 清空token
+      resetToken()
+
+      // 清空动态路由
+      permissionStore.dynamicRoutes = []
+
+      // 重制路由
+      resetRouter()
+
+      // 重置访问视图和缓存视图
+      _resetTagsView()
+
+      // 跳转到登录页面
+      window.location.href = "/login"
+    }
   }
 
   /** 重置 Token */
   const resetToken = () => {
     removeToken()
+    token.value = ""
     roles.value = []
   }
 
