@@ -54,7 +54,6 @@ export class MenuEndpointsManager {
       return response.data
     } catch (error: any) {
       console.error("变更端点失败:", error)
-      ElMessage.error(error.message || "变更端点失败")
       throw error
     }
   }

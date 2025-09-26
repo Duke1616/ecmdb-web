@@ -221,7 +221,6 @@ const addEndpoints = async (newEndpoints: apiEndpoint[]) => {
       emit("refresh")
     } catch (error) {
       console.error("添加端点失败:", error)
-      ElMessage.error("添加端点失败")
     }
   } else {
     // 新增模式，直接更新本地数据
@@ -262,7 +261,6 @@ const removeEndpoint = async (index: number) => {
       // 注意：不在这里更新本地数据，等待父组件刷新后通过 props 更新
     } catch (error) {
       console.error("删除端点失败:", error)
-      ElMessage.error("删除端点失败")
     }
   } else {
     // 新增模式，直接更新本地数据
@@ -321,7 +319,6 @@ const handleBatchDelete = async () => {
         // 注意：不在这里更新本地数据，等待父组件刷新后通过 props 更新
       } catch (error) {
         console.error("批量删除端点失败:", error)
-        ElMessage.error("批量删除端点失败")
       }
     } else {
       // 新增模式，直接更新本地数据
