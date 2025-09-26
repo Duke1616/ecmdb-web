@@ -267,6 +267,11 @@ const props = defineProps<{
   inhibitRules?: any[] // 从父组件传入的抑制规则数据
 }>()
 
+// 定义事件
+const emit = defineEmits<{
+  refresh: []
+}>()
+
 // 抑制规则相关类型
 interface Matcher {
   Type: number
@@ -333,7 +338,11 @@ const loadRules = async () => {
       return
     }
 
-    // 否则使用模拟数据
+    // 这里应该调用真实的API获取最新数据
+    // const response = await getInhibitRulesApi()
+    // rules.value = response.data || []
+
+    // 暂时使用模拟数据，但每次都会重新生成以确保数据更新
     rules.value = [
       {
         id: 1,
@@ -432,6 +441,11 @@ const handleToggleRule = async (rule: InhibitRule) => {
     // await saveInhibitRuleApi({ ...rule, enabled: rule.enabled })
     ElMessage.success(`抑制规则已${rule.enabled ? "启用" : "禁用"}`)
     await loadRules()
+
+    // 如果父组件传入了数据，通知父组件刷新
+    if (props.inhibitRules) {
+      emit("refresh")
+    }
   } catch (error) {
     console.error("切换抑制规则状态失败:", error)
     ElMessage.error("操作失败")
@@ -446,6 +460,11 @@ const handleDeleteRule = async (id: number) => {
     // await deleteInhibitRuleApi({ id: id })
     ElMessage.success("删除抑制规则成功")
     await loadRules()
+
+    // 如果父组件传入了数据，通知父组件刷新
+    if (props.inhibitRules) {
+      emit("refresh")
+    }
   } catch (error) {
     console.error("删除抑制规则失败:", error)
     ElMessage.error("删除失败")
@@ -474,7 +493,14 @@ const handleSubmit = async () => {
     await saveInhibitRuleApi(formData.value)
     ElMessage.success(isEdit.value ? "更新抑制规则成功" : "创建抑制规则成功")
     dialogVisible.value = false
+
+    // 重新加载数据以同步更新
     await loadRules()
+
+    // 如果父组件传入了数据，通知父组件刷新
+    if (props.inhibitRules) {
+      emit("refresh")
+    }
   } catch (error) {
     console.error("保存抑制规则失败:", error)
     ElMessage.error("保存失败")
@@ -518,12 +544,17 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .inhibit-rules-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+
   .empty-state {
     text-align: center;
     padding: 60px 20px;
     background: #f8fafc;
     border: 2px dashed #d1d5db;
     border-radius: 8px;
+    width: 100%;
 
     .empty-icon {
       margin-bottom: 16px;
@@ -536,7 +567,7 @@ onMounted(() => {
 
     .empty-title {
       margin: 0 0 8px 0;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
       color: #374151;
     }
@@ -552,12 +583,10 @@ onMounted(() => {
     background: #ffffff;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
-    margin-bottom: 12px;
     overflow: hidden;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+    flex: 1;
+    min-width: calc(50% - 8px);
+    max-width: calc(50% - 8px);
 
     .card-header {
       display: flex;
@@ -571,7 +600,7 @@ onMounted(() => {
         .rule-title {
           .rule-name {
             margin: 0 0 8px 0;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
             color: #1f2937;
             line-height: 1.4;
@@ -605,82 +634,88 @@ onMounted(() => {
 
       // 匹配器网格
       .matchers-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        margin-bottom: 20px;
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
 
         .matcher-group {
+          flex: 1;
           background: #f8fafc;
           border: 1px solid #e2e8f0;
-          border-radius: 8px;
+          border-radius: 6px;
           overflow: hidden;
 
           .matcher-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border-bottom: 1px solid #d1d5db;
+            gap: 6px;
+            padding: 6px 10px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
 
             .matcher-icon {
-              font-size: 16px;
+              font-size: 12px;
               color: #3b82f6;
             }
 
             .matcher-title {
-              font-size: 14px;
+              font-size: 11px;
               font-weight: 600;
               color: #374151;
             }
           }
 
           .matcher-content {
-            padding: 16px;
+            padding: 6px 10px;
 
             .empty-matcher {
               text-align: center;
-              padding: 20px 0;
+              padding: 8px 0;
               color: #9ca3af;
-              font-size: 14px;
+              font-size: 11px;
             }
 
             .matcher-list {
               .matcher-item {
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                padding: 8px 12px;
+                gap: 4px;
+                padding: 3px 6px;
                 background: #ffffff;
                 border: 1px solid #e5e7eb;
-                border-radius: 6px;
-                margin-bottom: 8px;
+                border-radius: 4px;
+                margin-bottom: 3px;
 
                 &:last-child {
                   margin-bottom: 0;
                 }
 
                 .matcher-type-tag {
-                  font-size: 11px;
+                  font-size: 9px;
                   font-weight: 600;
-                  border-radius: 4px;
+                  border-radius: 3px;
                   flex-shrink: 0;
+                  padding: 1px 4px;
                 }
 
                 .matcher-name {
-                  font-size: 13px;
+                  font-size: 10px;
                   font-weight: 600;
                   color: #374151;
-                  min-width: 60px;
+                  min-width: 40px;
                   flex-shrink: 0;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
                 }
 
                 .matcher-value {
-                  font-size: 13px;
+                  font-size: 10px;
                   color: #6b7280;
                   flex: 1;
-                  word-break: break-all;
+                  white-space: nowrap;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
                 }
               }
             }
@@ -708,7 +743,7 @@ onMounted(() => {
           }
 
           .labels-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             color: #92400e;
           }
@@ -748,7 +783,7 @@ onMounted(() => {
           }
 
           .time-window-title {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             color: #1e40af;
           }
@@ -801,7 +836,7 @@ onMounted(() => {
     }
 
     span {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       color: #374151;
     }
@@ -867,11 +902,15 @@ onMounted(() => {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 12px;
-      padding: 16px;
+      padding: 12px;
       background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 8px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
 
       .matcher-type {
         flex: 0 0 100px;
@@ -895,15 +934,24 @@ onMounted(() => {
     }
 
     .add-matcher-btn {
+      width: 100%;
+      margin-top: 8px;
+      color: #3b82f6;
+      border: 1px dashed #3b82f6;
+      background: #eff6ff;
+      border-radius: 6px;
+      padding: 12px;
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      color: #3b82f6;
       font-weight: 500;
-      margin-top: 8px;
+      transition: all 0.2s ease;
 
       &:hover {
         color: #1d4ed8;
+        border-color: #1d4ed8;
+        background: #dbeafe;
       }
     }
   }

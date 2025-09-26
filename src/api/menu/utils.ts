@@ -1,7 +1,6 @@
 import { changeEndpointsApi } from "./index"
 import type { ChangeEndpointsReq, endpoint } from "./types/menu"
 import { Action } from "./types/menu"
-import { ElMessage } from "element-plus"
 
 /**
  * 变更菜单端点的工具函数

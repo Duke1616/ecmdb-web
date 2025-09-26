@@ -12,7 +12,7 @@ export const alertRoutes: RouteRecordRaw[] = [
     redirect: "/alert/dashboard",
     meta: {
       title: "告警平台",
-      svgIcon: "component",
+      svgIcon: "alarm",
       platforms: ["alert"],
       hidden: false
     },
@@ -33,7 +33,7 @@ export const alertRoutes: RouteRecordRaw[] = [
         name: "AlertWorkspace",
         meta: {
           title: "工作空间",
-          svgIcon: "user",
+          svgIcon: "workspace",
           platforms: ["alert"]
         }
       },
@@ -54,7 +54,7 @@ export const alertRoutes: RouteRecordRaw[] = [
         name: "AlertDatasource",
         meta: {
           title: "数据源管理",
-          svgIcon: "component",
+          svgIcon: "datasource",
           platforms: ["alert"]
         }
       },
@@ -63,7 +63,7 @@ export const alertRoutes: RouteRecordRaw[] = [
         redirect: "/alert/template/list",
         meta: {
           title: "通知模板",
-          svgIcon: "component",
+          svgIcon: "notify_template",
           platforms: ["alert"]
         },
         children: [
@@ -73,7 +73,7 @@ export const alertRoutes: RouteRecordRaw[] = [
             name: "AlertTemplate",
             meta: {
               title: "通知模板",
-              svgIcon: "component",
+              svgIcon: "notify_template",
               platforms: ["alert"]
             }
           },
@@ -106,7 +106,7 @@ export const alertRoutes: RouteRecordRaw[] = [
         redirect: "/alert/rule",
         meta: {
           title: "告警管理",
-          svgIcon: "component",
+          svgIcon: "alert_manager",
           platforms: ["alert"]
         },
         children: [
@@ -116,7 +116,7 @@ export const alertRoutes: RouteRecordRaw[] = [
             name: "AlertRule",
             meta: {
               title: "告警规则",
-              svgIcon: "component",
+              svgIcon: "alert_rule",
               platforms: ["alert"]
             }
           },
@@ -148,7 +148,7 @@ export const alertRoutes: RouteRecordRaw[] = [
             name: "AlertHistory",
             meta: {
               title: "历史告警",
-              svgIcon: "component",
+              svgIcon: "alert_his",
               platforms: ["alert"]
             }
           },
@@ -158,7 +158,7 @@ export const alertRoutes: RouteRecordRaw[] = [
             name: "AlertCurrent",
             meta: {
               title: "当前告警",
-              svgIcon: "component",
+              svgIcon: "alert_cur",
               platforms: ["alert"]
             }
           }
@@ -170,7 +170,7 @@ export const alertRoutes: RouteRecordRaw[] = [
         name: "AlertTeam",
         meta: {
           title: "团队管理",
-          svgIcon: "user",
+          svgIcon: "team",
           platforms: ["alert"]
         }
       }

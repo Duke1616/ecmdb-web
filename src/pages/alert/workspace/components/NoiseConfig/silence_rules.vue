@@ -550,7 +550,7 @@ onMounted(() => {
 
     .empty-title {
       margin: 0 0 8px 0;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
       color: #374151;
     }
@@ -586,7 +586,7 @@ onMounted(() => {
         .rule-title {
           .rule-name {
             margin: 0 0 8px 0;
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 600;
             color: #1f2937;
             line-height: 1.4;
@@ -637,12 +637,12 @@ onMounted(() => {
           align-items: center;
           gap: 8px;
           margin-bottom: 12px;
-          font-size: 14px;
+          font-size: 12px;
           font-weight: 600;
           color: #374151;
 
           .section-icon {
-            font-size: 16px;
+            font-size: 14px;
             color: #6b7280;
           }
         }
@@ -651,46 +651,52 @@ onMounted(() => {
           .matchers-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
 
             .matcher-item {
               display: flex;
               align-items: center;
-              gap: 8px;
-              padding: 8px 12px;
-              background: #f8fafc;
+              gap: 4px;
+              padding: 3px 6px;
+              background: #ffffff;
               border: 1px solid #e5e7eb;
-              border-radius: 6px;
+              border-radius: 4px;
 
               .matcher-type-tag {
-                font-size: 11px;
+                font-size: 9px;
                 font-weight: 600;
-                border-radius: 4px;
+                border-radius: 3px;
                 flex-shrink: 0;
+                padding: 1px 4px;
               }
 
               .matcher-name {
-                font-size: 13px;
+                font-size: 10px;
                 font-weight: 600;
                 color: #374151;
-                min-width: 60px;
+                min-width: 40px;
                 flex-shrink: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
               }
 
               .matcher-value {
-                font-size: 13px;
+                font-size: 10px;
                 color: #6b7280;
                 flex: 1;
-                word-break: break-all;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
               }
             }
           }
 
           .empty-matcher {
             text-align: center;
-            padding: 20px 0;
+            padding: 8px 0;
             color: #9ca3af;
-            font-size: 14px;
+            font-size: 11px;
           }
 
           .time-info {
@@ -773,12 +779,12 @@ onMounted(() => {
     align-items: center;
     gap: 8px;
     margin-bottom: 16px;
-    font-size: 16px;
+    font-size: 12px;
     font-weight: 600;
     color: #374151;
 
     .section-icon {
-      font-size: 18px;
+      font-size: 14px;
       color: #6b7280;
     }
   }

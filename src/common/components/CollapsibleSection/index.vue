@@ -6,7 +6,9 @@
         <span class="header-tip">{{ tip }}</span>
       </div>
       <div class="header-actions">
-        <slot name="actions" />
+        <div class="actions-container" @click.stop>
+          <slot name="actions" />
+        </div>
         <el-icon class="collapse-icon">
           <ArrowDown v-if="!isCollapsed" />
           <ArrowUp v-else />
@@ -107,6 +109,11 @@ const toggleCollapse = () => {
       display: flex;
       align-items: center;
       gap: 12px;
+
+      .actions-container {
+        display: flex;
+        align-items: center;
+      }
 
       .collapse-icon {
         font-size: 16px;

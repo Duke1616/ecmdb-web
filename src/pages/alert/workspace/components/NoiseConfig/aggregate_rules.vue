@@ -503,7 +503,7 @@ onMounted(() => {
 
     .empty-title {
       margin: 0 0 8px 0;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 600;
       color: #374151;
     }
@@ -576,12 +576,12 @@ onMounted(() => {
 
           .el-icon {
             margin-right: 8px;
-            font-size: 16px;
+            font-size: 14px;
             color: #3b82f6;
           }
 
           span {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
             color: #374151;
             text-transform: uppercase;
@@ -734,12 +734,12 @@ onMounted(() => {
 
     .section-icon {
       margin-right: 6px;
-      font-size: 16px;
+      font-size: 14px;
       color: #3b82f6;
     }
 
     span {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 600;
       color: #374151;
     }
