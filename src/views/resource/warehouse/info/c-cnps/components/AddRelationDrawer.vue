@@ -396,7 +396,6 @@ const handleCreateRelation = async (row: Resource) => {
     emit("relation-created")
   } catch (error) {
     console.error("创建关联失败:", error)
-    ElMessage.error("创建关联失败")
   }
 }
 
@@ -416,7 +415,6 @@ const handleDeleteRelation = async (row: Resource) => {
     emit("relation-created")
   } catch (error) {
     console.error("取消关联失败:", error)
-    ElMessage.error("取消关联失败")
   }
 }
 </script>

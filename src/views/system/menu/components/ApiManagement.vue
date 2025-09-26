@@ -48,7 +48,8 @@
       width="50%"
       :confirm-loading="dialogLoading"
       @confirm="handleDialogConfirm"
-      @cancel="dialogVisible = false"
+      @cancel="handleDialogClose"
+      @close="handleDialogClose"
     >
       <Api ref="apiRef" />
     </FormDialog>
@@ -143,12 +144,44 @@ const getMethodTagType = (method: string) => {
 // 打开添加接口对话框
 const openAddApiDialog = () => {
   dialogVisible.value = true
+
+  // 等待对话框打开后，设置已存在接口的勾选状态
+  nextTick(() => {
+    if (apiRef.value && apiEndpoints.value.length > 0) {
+      // 将已存在的接口转换为 API 接口格式
+      const existingEndpoints = apiEndpoints.value.map((endpoint) => ({
+        path: endpoint.path,
+        method: endpoint.method,
+        resource: endpoint.resource,
+        desc: endpoint.desc || endpoint.name
+      }))
+
+      // 设置选择状态
+      apiRef.value.setSelection(existingEndpoints)
+    }
+  })
 }
 
 // 处理对话框确认
 const handleDialogConfirm = async () => {
   const selectedEndpoints = apiRef.value?.getSelectionTableData() || []
-  await addEndpoints(selectedEndpoints)
+
+  // 设置 loading 状态
+  dialogLoading.value = true
+
+  try {
+    await addEndpoints(selectedEndpoints)
+    apiRef.value?.clearSelection()
+    dialogVisible.value = false
+  } finally {
+    // 无论成功还是失败，都要关闭 loading
+    dialogLoading.value = false
+  }
+}
+
+// 处理对话框关闭
+const handleDialogClose = () => {
+  // 对话框关闭时清空选择状态
   apiRef.value?.clearSelection()
   dialogVisible.value = false
 }
@@ -172,22 +205,31 @@ const addEndpoints = async (newEndpoints: apiEndpoint[]) => {
     return
   }
 
-  // 更新本地数据
-  apiEndpoints.value.push(...uniqueEndpoints)
-  ElMessage.success("端点添加成功")
-
-  // 同步到父组件
-  syncToParent()
-
-  // 如果是编辑模式且有菜单ID，立即调用API
+  // 如果是编辑模式且有菜单ID，先调用API
   if (props.isEditMode && props.menuId) {
     try {
       await changeMenuEndpoints.add(props.menuId, uniqueEndpoints)
+
+      // API调用成功后才更新本地数据
+      apiEndpoints.value.push(...uniqueEndpoints)
+      ElMessage.success("端点添加成功")
+
+      // 同步到父组件
+      syncToParent()
+
       // 触发回调，通知父组件刷新数据
       emit("refresh")
     } catch (error) {
       console.error("添加端点失败:", error)
+      ElMessage.error("添加端点失败")
     }
+  } else {
+    // 新增模式，直接更新本地数据
+    apiEndpoints.value.push(...uniqueEndpoints)
+    ElMessage.success("端点添加成功")
+
+    // 同步到父组件
+    syncToParent()
   }
 }
 
@@ -196,14 +238,7 @@ const removeEndpoint = async (index: number) => {
   const endpointToRemove = apiEndpoints.value[index]
   if (!endpointToRemove) return
 
-  // 从本地数据中移除
-  apiEndpoints.value.splice(index, 1)
-  ElMessage.success("端点删除成功")
-
-  // 同步到父组件
-  syncToParent()
-
-  // 如果是编辑模式且有菜单ID，立即调用API
+  // 如果是编辑模式且有菜单ID，先调用API
   if (props.isEditMode && props.menuId) {
     try {
       // 确保被删除的端点包含完整的字段
@@ -218,11 +253,24 @@ const removeEndpoint = async (index: number) => {
       // 调用 change_endpoints 接口，传递被删除的端点
       await changeMenuEndpoints.replace(props.menuId, [endpointToDelete])
 
+      // API调用成功后显示成功消息
+      ElMessage.success("端点删除成功")
+
       // 触发回调，通知父组件刷新数据
       emit("refresh")
+
+      // 注意：不在这里更新本地数据，等待父组件刷新后通过 props 更新
     } catch (error) {
       console.error("删除端点失败:", error)
+      ElMessage.error("删除端点失败")
     }
+  } else {
+    // 新增模式，直接更新本地数据
+    apiEndpoints.value.splice(index, 1)
+    ElMessage.success("端点删除成功")
+
+    // 同步到父组件
+    syncToParent()
   }
 }
 
@@ -255,32 +303,43 @@ const handleBatchDelete = async () => {
       desc: endpoint.desc || ""
     }))
 
-    // 从本地数据中移除选中的端点
-    selectedEndpoints.value.forEach((selected) => {
-      const index = apiEndpoints.value.findIndex((ep) => ep.path === selected.path && ep.resource === selected.resource)
-      if (index !== -1) {
-        apiEndpoints.value.splice(index, 1)
-      }
-    })
-
-    // 清空选择
-    selectedEndpoints.value = []
-    ElMessage.success(`成功删除 ${endpointsToDelete.length} 个端点`)
-
-    // 同步到父组件
-    syncToParent()
-
-    // 如果是编辑模式且有菜单ID，立即调用API
+    // 如果是编辑模式且有菜单ID，先调用API
     if (props.isEditMode && props.menuId) {
       try {
         // 调用 change_endpoints 接口，传递要删除的端点
         await changeMenuEndpoints.replace(props.menuId, endpointsToDelete)
 
+        // API调用成功后显示成功消息
+        ElMessage.success(`成功删除 ${endpointsToDelete.length} 个端点`)
+
+        // 清空选择
+        selectedEndpoints.value = []
+
         // 触发回调，通知父组件刷新数据
         emit("refresh")
+
+        // 注意：不在这里更新本地数据，等待父组件刷新后通过 props 更新
       } catch (error) {
         console.error("批量删除端点失败:", error)
+        ElMessage.error("批量删除端点失败")
       }
+    } else {
+      // 新增模式，直接更新本地数据
+      selectedEndpoints.value.forEach((selected) => {
+        const index = apiEndpoints.value.findIndex(
+          (ep) => ep.path === selected.path && ep.resource === selected.resource
+        )
+        if (index !== -1) {
+          apiEndpoints.value.splice(index, 1)
+        }
+      })
+
+      // 清空选择
+      selectedEndpoints.value = []
+      ElMessage.success(`成功删除 ${endpointsToDelete.length} 个端点`)
+
+      // 同步到父组件
+      syncToParent()
     }
   } catch (error) {
     if (error !== "cancel") {

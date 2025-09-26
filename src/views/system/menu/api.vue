@@ -17,6 +17,7 @@
     <!-- 表格区域 -->
     <div class="table-section">
       <DataTable
+        ref="dataTableRef"
         :data="endpointsData"
         :columns="tableColumns"
         :show-selection="true"
@@ -91,6 +92,7 @@ const getMethodTagType = (method: string | undefined): "success" | "primary" | "
 const filterInput = ref<string>("")
 const endpointsData = ref<endpoint[]>([])
 const selectedEndpoints = ref<endpoint[]>([])
+const dataTableRef = ref()
 
 const listEndpointsData = () => {
   listEndpointApi({
@@ -127,7 +129,31 @@ const handleSelectionChange = (selection: endpoint[]) => {
 // 清空选择
 const clearSelection = () => {
   selectedEndpoints.value = []
-  // 这里需要调用 DataTable 的清空选择方法
+  // 清空 DataTable 的选择状态
+  dataTableRef.value?.clearSelection()
+}
+
+// 设置选择状态
+const setSelection = (endpoints: endpoint[]) => {
+  selectedEndpoints.value = [...endpoints]
+
+  // 等待更长时间确保对话框和表格完全渲染
+  setTimeout(() => {
+    if (dataTableRef.value && dataTableRef.value.tableRef) {
+      // 清空当前选择
+      dataTableRef.value.tableRef.clearSelection()
+
+      // 设置新的选择
+      endpoints.forEach((endpoint) => {
+        const row = endpointsData.value.find(
+          (item) => item.path === endpoint.path && item.resource === endpoint.resource
+        )
+        if (row) {
+          dataTableRef.value.tableRef.toggleRowSelection(row, true)
+        }
+      })
+    }
+  }, 100)
 }
 
 // 确认选择
@@ -150,6 +176,7 @@ const resetFilterInput = () => {
 defineExpose({
   getSelectionTableData,
   clearSelection,
+  setSelection,
   confirmSelection,
   resetFilterInput
 })

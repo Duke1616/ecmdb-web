@@ -49,7 +49,7 @@ export class MenuEndpointsManager {
       }
 
       const response = await changeEndpointsApi(data)
-      
+
       // 不在这里显示消息，由调用方决定是否显示
       return response.data
     } catch (error: any) {
@@ -67,18 +67,15 @@ export const changeMenuEndpoints = {
   /**
    * 创建端点
    */
-  create: (menuId: number, endpoints: endpoint[]) => 
-    MenuEndpointsManager.createEndpoints(menuId, endpoints),
+  create: (menuId: number, endpoints: endpoint[]) => MenuEndpointsManager.createEndpoints(menuId, endpoints),
 
   /**
    * 新增端点
    */
-  add: (menuId: number, endpoints: endpoint[]) => 
-    MenuEndpointsManager.addEndpoints(menuId, endpoints),
+  add: (menuId: number, endpoints: endpoint[]) => MenuEndpointsManager.addEndpoints(menuId, endpoints),
 
   /**
    * 替换端点
    */
-  replace: (menuId: number, endpoints: endpoint[]) => 
-    MenuEndpointsManager.replaceEndpoints(menuId, endpoints)
+  replace: (menuId: number, endpoints: endpoint[]) => MenuEndpointsManager.replaceEndpoints(menuId, endpoints)
 }

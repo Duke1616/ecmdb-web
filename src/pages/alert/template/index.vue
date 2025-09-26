@@ -141,7 +141,6 @@ const loadTemplates = async () => {
     paginationData.total = response.data.total || 0
   } catch (error) {
     console.error("加载模板失败:", error)
-    ElMessage.error("加载模板失败")
     templates.value = []
     paginationData.total = 0
   } finally {

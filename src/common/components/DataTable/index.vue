@@ -4,6 +4,7 @@
       <div class="data-table-container">
         <div class="table-wrapper">
           <el-table
+            ref="tableRef"
             :data="data"
             class="data-table"
             stripe
@@ -155,6 +156,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const slots = useSlots()
 
+// 表格引用
+const tableRef = ref()
+
 // 窗口宽度响应式变量
 const windowWidth = ref(window.innerWidth)
 
@@ -182,11 +186,11 @@ const emit = defineEmits<{
 const getColumnValue = (row: any, column: Column) => {
   // 支持嵌套属性访问，如 "http.url"
   const getNestedValue = (obj: any, path: string) => {
-    return path.split('.').reduce((current, key) => {
-      return current && current[key] !== undefined ? current[key] : ''
+    return path.split(".").reduce((current, key) => {
+      return current && current[key] !== undefined ? current[key] : ""
     }, obj)
   }
-  
+
   const value = getNestedValue(row, column.prop)
   return column.formatter ? column.formatter(row, column, value) : value
 }
@@ -287,6 +291,19 @@ const handleSizeChange = (size: number) => {
 const handleCurrentChange = (page: number) => {
   emit("currentChange", page)
 }
+
+// 清空选择
+const clearSelection = () => {
+  if (tableRef.value) {
+    tableRef.value.clearSelection()
+  }
+}
+
+// 暴露方法给父组件
+defineExpose({
+  clearSelection,
+  tableRef
+})
 </script>
 
 <style lang="scss" scoped>

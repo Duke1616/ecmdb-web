@@ -187,7 +187,6 @@ const loadAlerts = async () => {
     alerts.value = response.data.alerts || []
     paginationData.total = response.data.total || 0
   } catch (error) {
-
     alerts.value = []
     paginationData.total = 0
   } finally {

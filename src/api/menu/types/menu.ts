@@ -50,8 +50,8 @@ export interface createOrUpdateMenuReq {
 // 动作类型枚举
 export enum Action {
   CREATE = 1, // 创建动作，比如 ADMIN 超级管理员自动权限录入
-  WRITE = 2,  // 写入动作
-  DELETE = 3  // 全部删除、重新录入数据
+  WRITE = 2, // 写入动作
+  DELETE = 3 // 全部删除、重新录入数据
 }
 
 // 变更端点请求

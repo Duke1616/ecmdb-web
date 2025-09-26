@@ -399,6 +399,7 @@ const handleEndpointsUpdate = (endpoints: menuEndpoint[]) => {
 
 // 处理接口刷新
 const handleApiRefresh = () => {
+  // 刷新菜单树数据，这会触发父组件重新加载数据
   emits("listMenusTreeData")
 }
 
