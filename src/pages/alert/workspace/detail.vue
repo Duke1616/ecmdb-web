@@ -431,22 +431,6 @@ onMounted(async () => {
       border: 1px solid #e5e7eb;
       background: #ffffff;
       height: 100%;
-
-      .el-menu-item {
-        height: 48px;
-        line-height: 48px;
-        margin: 4px 8px;
-        border-radius: 6px;
-
-        &.is-active {
-          background: #eff6ff;
-          color: #3b82f6;
-        }
-
-        .el-icon {
-          margin-right: 8px;
-        }
-      }
     }
   }
 

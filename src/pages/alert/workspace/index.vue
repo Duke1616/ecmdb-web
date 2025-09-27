@@ -26,10 +26,10 @@
           <h4 class="panel-title">团队列表</h4>
           <span class="team-count">{{ teams.length }} 个团队</span>
         </div>
-        
+
         <div class="team-list" v-loading="teamsLoading">
           <!-- 我的团队选项 -->
-          <div 
+          <div
             class="team-card my-team-card"
             :class="{ active: selectedTeam?.name === '我的团队' }"
             @click="selectMyTeam"
@@ -45,10 +45,10 @@
             </div>
             <el-icon class="team-arrow"><ArrowRight /></el-icon>
           </div>
-          
-          <div 
-            v-for="team in teams" 
-            :key="team.id" 
+
+          <div
+            v-for="team in teams"
+            :key="team.id"
             class="team-card"
             :class="{ active: selectedTeam?.id === team.id }"
             @click="selectTeam(team)"
@@ -66,7 +66,7 @@
               <el-icon><ArrowRight /></el-icon>
             </div>
           </div>
-          
+
           <div v-if="teams.length === 0 && !teamsLoading" class="empty-state">
             <el-empty description="暂无团队数据" :image-size="80" />
           </div>
@@ -74,13 +74,13 @@
       </div>
 
       <!-- 分隔符 -->
-      <div class="divider"></div>
+      <div class="divider" />
 
       <!-- 右侧：协作空间列表 -->
       <div class="right-panel">
         <div class="panel-header">
           <h4 class="panel-title">
-            {{ selectedTeam ? `${selectedTeam.name} 的工作空间` : '请选择团队' }}
+            {{ selectedTeam ? `${selectedTeam.name} 的工作空间` : "请选择团队" }}
           </h4>
           <span class="space-count">{{ workspaces.length }} 个工作空间</span>
         </div>
@@ -91,17 +91,17 @@
             <p class="empty-text">请先选择一个团队</p>
             <p class="empty-hint">选择左侧团队查看其工作空间</p>
           </div>
-          
+
           <div v-else-if="workspaces.length === 0" class="empty-state">
             <el-icon class="empty-icon"><FolderAdd /></el-icon>
             <p class="empty-text">该团队暂无工作空间</p>
             <p class="empty-hint">点击上方按钮创建新的工作空间</p>
           </div>
-          
+
           <div v-else class="spaces-grid">
-            <div 
-              v-for="workspace in workspaces" 
-              :key="workspace.id" 
+            <div
+              v-for="workspace in workspaces"
+              :key="workspace.id"
               class="space-card"
               @click="handleWorkspaceClick(workspace)"
             >
@@ -109,24 +109,24 @@
                 <div class="space-icon" :style="{ background: generateWorkspaceColor(workspace.name) }">
                   {{ workspace.name.charAt(0) }}
                 </div>
-                     <div class="space-badge">{{ workspace.is_public ? '公开' : '私有' }}</div>
-                   </div>
-                   
-                   <div class="space-body">
-                     <h4 class="space-name">{{ workspace.name }}</h4>
-                     <p class="space-description">{{ workspace.enabled ? '已启用' : '已禁用' }}</p>
-                     <div class="space-stats">
-                       <span class="stat-item">
-                         <el-icon><User /></el-icon>
-                         {{ workspace.allow_invite ? '允许邀请' : '仅管理员' }}
-                       </span>
-                       <span class="stat-item">
-                         <el-icon><Document /></el-icon>
-                         工作空间
-                       </span>
-                     </div>
+                <div class="space-badge">{{ workspace.is_public ? "公开" : "私有" }}</div>
               </div>
-              
+
+              <div class="space-body">
+                <h4 class="space-name">{{ workspace.name }}</h4>
+                <p class="space-description">{{ workspace.enabled ? "已启用" : "已禁用" }}</p>
+                <div class="space-stats">
+                  <span class="stat-item">
+                    <el-icon><User /></el-icon>
+                    {{ workspace.allow_invite ? "允许邀请" : "仅管理员" }}
+                  </span>
+                  <span class="stat-item">
+                    <el-icon><Document /></el-icon>
+                    工作空间
+                  </span>
+                </div>
+              </div>
+
               <div class="space-footer">
                 <span class="action-text">进入工作空间</span>
                 <div class="space-arrow">
@@ -140,29 +140,29 @@
     </div>
 
     <!-- 创建工作空间抽屉 -->
-        <Drawer
-          v-model="dialogVisible"
-          title="创建工作空间"
-          subtitle="为团队创建新的工作空间"
-          :header-icon="FolderAdd"
-          size="700px"
-          direction="rtl"
-          :before-close="handleDrawerClose"
-          @closed="onClosedCreateWorkspace"
-          @confirm="handlerSubmitWorkspace"
-        >
-          <SpaceForm 
-            ref="spaceFormRef" 
-            :selected-team-id="selectedTeam?.name === '我的团队' ? undefined : selectedTeam?.id"
-            @closed="onClosedCreateWorkspace" 
-            @callback="loadWorkspacesData" 
-          />
-        </Drawer>
+    <Drawer
+      v-model="dialogVisible"
+      title="创建工作空间"
+      subtitle="为团队创建新的工作空间"
+      :header-icon="FolderAdd"
+      size="700px"
+      direction="rtl"
+      :before-close="handleDrawerClose"
+      @closed="onClosedCreateWorkspace"
+      @confirm="handlerSubmitWorkspace"
+    >
+      <SpaceForm
+        ref="spaceFormRef"
+        :selected-team-id="selectedTeam?.name === '我的团队' ? undefined : selectedTeam?.id"
+        @closed="onClosedCreateWorkspace"
+        @callback="loadWorkspacesData"
+      />
+    </Drawer>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { Plus, RefreshRight, ArrowRight, FolderAdd, User, Document } from "@element-plus/icons-vue"
 import { listTeamsApi } from "@/api/alert/team"
@@ -191,8 +191,18 @@ const spaceFormRef = ref<InstanceType<typeof SpaceForm>>()
 // 生成团队头像颜色
 const generateTeamColor = (name: string) => {
   const colors = [
-    "#667eea", "#764ba2", "#f093fb", "#f5576c", "#4facfe", "#00f2fe",
-    "#43e97b", "#38f9d7", "#fa709a", "#fee140", "#a8edea", "#fed6e3"
+    "#667eea",
+    "#764ba2",
+    "#f093fb",
+    "#f5576c",
+    "#4facfe",
+    "#00f2fe",
+    "#43e97b",
+    "#38f9d7",
+    "#fa709a",
+    "#fee140",
+    "#a8edea",
+    "#fed6e3"
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -207,8 +217,18 @@ const generateTeamColor = (name: string) => {
 // 生成工作空间头像颜色
 const generateWorkspaceColor = (name: string) => {
   const colors = [
-    "#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444",
-    "#6366f1", "#ec4899", "#14b8a6", "#84cc16", "#f97316", "#ef4444"
+    "#3b82f6",
+    "#8b5cf6",
+    "#06b6d4",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#6366f1",
+    "#ec4899",
+    "#14b8a6",
+    "#84cc16",
+    "#f97316",
+    "#ef4444"
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -222,7 +242,7 @@ const generateWorkspaceColor = (name: string) => {
 
 // 选择我的团队
 const selectMyTeam = () => {
-  selectedTeam.value = { id: 'my-team', name: '我的团队' } as any
+  selectedTeam.value = { id: "my-team", name: "我的团队" } as any
   loadWorkspacesData()
 }
 
@@ -259,7 +279,7 @@ const loadWorkspacesData = async () => {
   workspacesLoading.value = true
   try {
     let response
-    if (selectedTeam.value.name === '我的团队') {
+    if (selectedTeam.value.name === "我的团队") {
       // 如果是"我的团队"，调用我的团队接口
       response = await listMyTeamsApi()
     } else {
@@ -373,14 +393,16 @@ onMounted(() => {
     color: #374151;
   }
 
-  .team-count, .space-count {
+  .team-count,
+  .space-count {
     font-size: 12px;
     color: #6b7280;
     font-weight: 500;
   }
 }
 
-.team-list, .spaces-container {
+.team-list,
+.spaces-container {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
@@ -522,11 +544,11 @@ onMounted(() => {
       color: #6b7280;
       margin: 0 0 12px 0;
       line-height: 1.5;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
     .space-stats {

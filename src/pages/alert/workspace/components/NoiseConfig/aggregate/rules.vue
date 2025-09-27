@@ -181,9 +181,13 @@ const formData = defineModel<CreateAggregateGroupRuleReq>("formData", {
     })
 })
 
-// 创建默认表单数据的函数
-const createDefaultFormData = () =>
-  reactive({
+// 响应式数据
+const loading = ref(false)
+const rule = ref<RetrieveAggregateGroup | null>(null)
+
+// 重置表单
+const resetForm = () => {
+  formData.value = reactive({
     workspace_id: props.workspaceId,
     type: 0,
     is_diff_data_source: false,
@@ -196,14 +200,6 @@ const createDefaultFormData = () =>
     repeat_interval: 0,
     template_id: 0
   })
-
-// 响应式数据
-const loading = ref(false)
-const rule = ref<RetrieveAggregateGroup | null>(null)
-
-// 重置表单
-const resetForm = () => {
-  formData.value = createDefaultFormData()
 }
 
 // 加载规则数据
@@ -234,9 +230,6 @@ onMounted(() => {
 const handleAddRule = () => {
   isEdit.value = false
   resetForm()
-  if (formData.value) {
-    formData.value.workspace_id = props.workspaceId
-  }
   dialogVisible.value = true
 }
 
