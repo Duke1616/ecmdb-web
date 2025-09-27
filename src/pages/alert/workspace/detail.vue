@@ -86,10 +86,24 @@
             <el-icon><Setting /></el-icon>
             <span>告警规则</span>
           </el-menu-item>
-          <el-menu-item index="noise">
-            <el-icon><Filter /></el-icon>
-            <span>降噪配置</span>
-          </el-menu-item>
+          <el-sub-menu index="noise">
+            <template #title>
+              <el-icon><Filter /></el-icon>
+              <span>降噪配置</span>
+            </template>
+            <el-menu-item index="noise-aggregate">
+              <el-icon><DataAnalysis /></el-icon>
+              <span>聚合规则</span>
+            </el-menu-item>
+            <el-menu-item index="noise-inhibit">
+              <el-icon><CircleClose /></el-icon>
+              <span>抑制规则</span>
+            </el-menu-item>
+            <el-menu-item index="noise-silence">
+              <el-icon><Mute /></el-icon>
+              <span>静默规则</span>
+            </el-menu-item>
+          </el-sub-menu>
           <el-menu-item index="members">
             <el-icon><User /></el-icon>
             <span>团队成员</span>
@@ -123,6 +137,21 @@
           <NoiseConfig :workspace-id="workspace?.id || 0" />
         </div>
 
+        <!-- 聚合规则页面 -->
+        <div v-else-if="activeMenu === 'noise-aggregate'" class="rules-page">
+          <AggregateRules :workspace-id="workspace?.id || 0" />
+        </div>
+
+        <!-- 抑制规则页面 -->
+        <div v-else-if="activeMenu === 'noise-inhibit'" class="rules-page">
+          <InhibitRules />
+        </div>
+
+        <!-- 静默规则页面 -->
+        <div v-else-if="activeMenu === 'noise-silence'" class="rules-page">
+          <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
+        </div>
+
         <!-- 成员页面 -->
         <div v-else-if="activeMenu === 'members'" class="members-page">
           <TeamMembers :team-id="workspace?.team?.id || 0" ref="teamMembersRef" />
@@ -152,7 +181,10 @@ import {
   CircleCloseFilled,
   Unlock,
   Lock,
-  Clock
+  Clock,
+  DataAnalysis,
+  CircleClose,
+  Mute
 } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -164,6 +196,9 @@ import AlertManager from "./components/AlertManager/index.vue"
 import Settings from "./components/Settings/index.vue"
 import TeamMembers from "./components/TeamMembers/index.vue"
 import Overview from "./components/Overview/index.vue"
+import AggregateRules from "./components/NoiseConfig/aggregate/rules.vue"
+import InhibitRules from "./components/NoiseConfig/inhibit/rules.vue"
+import SilenceRules from "./components/NoiseConfig/silence_rules.vue"
 
 // 路由
 const route = useRoute()
@@ -173,6 +208,7 @@ const router = useRouter()
 const workspace = ref<Workspace | null>(null)
 const activeMenu = ref("overview")
 const teamName = ref("")
+const silenceRules = ref<any[]>([])
 
 // 组件引用
 const teamMembersRef = ref()
@@ -237,7 +273,7 @@ const handleRules = () => {
 }
 
 const handleNoise = () => {
-  activeMenu.value = "noise"
+  activeMenu.value = "noise-aggregate"
 }
 
 const handleCreateAlert = () => {
@@ -265,9 +301,33 @@ const loadWorkspaceData = async () => {
   }
 }
 
+// 加载静默规则数据
+const loadSilenceRules = async () => {
+  // 这里应该调用静默规则的API
+  // 暂时使用模拟数据
+  silenceRules.value = [
+    {
+      id: 1,
+      name: "维护窗口静默",
+      matchers: [
+        { Type: 1, Name: "severity", Value: "critical" },
+        { Type: 1, Name: "service", Value: "database" }
+      ],
+      start_time: Date.now(),
+      end_time: Date.now() + 2 * 60 * 60 * 1000,
+      enabled: true,
+      is_active: true,
+      created_by: "admin",
+      created_at: Date.now() - 30 * 60 * 1000,
+      comment: "数据库维护期间静默关键告警"
+    }
+  ]
+}
+
 // 组件挂载时加载数据
-onMounted(() => {
-  loadWorkspaceData()
+onMounted(async () => {
+  await loadWorkspaceData()
+  await loadSilenceRules()
 })
 </script>
 

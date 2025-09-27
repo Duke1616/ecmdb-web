@@ -5,9 +5,9 @@ import type {
   AggregateGroupRule,
   ListAggregateRulesReq,
   ListAggregateRulesResponse,
-  DeleteAggregateRuleReq,
   DeleteAggregateRuleResponse
 } from "./types"
+import type { GetAggregateGroupByWorkspaceResp } from "./types/retrieve"
 
 // 保存聚合组规则
 export const saveAggregateRuleApi = (data: CreateAggregateGroupRuleReq) => {
@@ -26,10 +26,9 @@ export const listAggregateRulesApi = (data: ListAggregateRulesReq) => {
 }
 
 // 删除聚合组规则
-export const deleteAggregateRuleApi = (data: DeleteAggregateRuleReq) => {
-  return instance.post<DeleteAggregateRuleResponse>({
-    url: `${API_SERVICE.ALERT}/aggregate/delete`,
-    data
+export const deleteAggregateRuleApi = (id: number) => {
+  return instance.delete<DeleteAggregateRuleResponse>({
+    url: `${API_SERVICE.ALERT}/aggregate/delete/${id}`
   })
 }
 
@@ -38,5 +37,12 @@ export const getAggregateRuleDetailApi = (data: { id: number }) => {
   return instance.post<AggregateGroupRule>({
     url: `${API_SERVICE.ALERT}/aggregate/detail`,
     data
+  })
+}
+
+// 根据工作空间ID获取聚合分组
+export const getAggregateGroupByWorkspaceApi = (workspaceId: number) => {
+  return instance.get<GetAggregateGroupByWorkspaceResp>({
+    url: `${API_SERVICE.ALERT}/aggregate/detail/${workspaceId}`
   })
 }

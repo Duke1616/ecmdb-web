@@ -35,7 +35,7 @@
       />
 
       <!-- 抑制规则（全局） -->
-      <InhibitRules :inhibit-rules="noiseConfig?.inhibit_rules" />
+      <InhibitRules />
 
       <!-- 静默规则 -->
       <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
@@ -46,8 +46,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { ElMessage } from "element-plus"
-import AggregateRules from "./aggregate_rules.vue"
-import InhibitRules from "./inhibit_rules.vue"
+import AggregateRules from "./aggregate/rules.vue"
+import InhibitRules from "./inhibit/rules.vue"
 import SilenceRules from "./silence_rules.vue"
 import { getNoiseConfigApi } from "@/api/noise"
 import type { RetrieveNoiseConfig } from "@/api/noise/types"

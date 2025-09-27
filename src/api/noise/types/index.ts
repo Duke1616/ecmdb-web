@@ -25,19 +25,8 @@ export interface AggregateRule {
   enabled?: boolean // 添加 enabled 字段，因为模板中使用了
 }
 
-export interface InhibitRule {
-  id: number
-  name: string
-  source_match: Matchers
-  target_match: Matchers
-  equal_labels: string[]
-  time_window: TimeRange | null
-  enabled: boolean
-}
-
 export interface RetrieveNoiseConfig {
   aggregate_rule: AggregateRule
-  inhibit_rules: InhibitRule[]
 }
 
 export interface GetNoiseConfigReq {
@@ -46,24 +35,4 @@ export interface GetNoiseConfigReq {
 
 export interface GetNoiseConfigResponse {
   data: RetrieveNoiseConfig
-}
-
-// 抑制规则保存请求
-export interface SaveInhibitRuleReq {
-  id?: number
-  name: string
-  source_matchers: Matcher[]
-  target_matchers: Matcher[]
-  equal_labels: string[]
-  time_window: TimeRange | null
-  enabled: boolean
-}
-
-// 抑制规则保存响应
-export interface SaveInhibitRuleResponse {
-  code: number
-  msg: string
-  data: {
-    id: number
-  }
 }

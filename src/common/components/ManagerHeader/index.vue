@@ -23,7 +23,14 @@
     </div>
     <div class="header-right">
       <slot name="actions">
-        <el-button v-if="showAddButton" type="primary" :icon="CirclePlus" class="action-btn" @click="$emit('add')">
+        <el-button
+          v-if="showAddButton"
+          type="primary"
+          :icon="CirclePlus"
+          :disabled="addButtonDisabled"
+          class="action-btn"
+          @click="$emit('add')"
+        >
           {{ addButtonText }}
         </el-button>
         <el-tooltip content="刷新数据">
@@ -51,6 +58,7 @@ interface Props {
   showAddButton?: boolean
   showRefreshButton?: boolean
   showBackButton?: boolean
+  addButtonDisabled?: boolean
   sticky?: boolean
 }
 
@@ -59,6 +67,7 @@ withDefaults(defineProps<Props>(), {
   showAddButton: true,
   showRefreshButton: true,
   showBackButton: false,
+  addButtonDisabled: false,
   sticky: false
 })
 
