@@ -17,9 +17,9 @@
       <div class="team-list" v-loading="loading">
         <!-- 团队网格布局 -->
         <div class="team-grid">
-          <div 
-            v-for="team in teams" 
-            :key="team.id" 
+          <div
+            v-for="team in teams"
+            :key="team.id"
             class="team-card"
             :class="{ active: selectedTeamId === team.id }"
             @click="selectTeam(team)"
@@ -38,7 +38,7 @@
             </el-icon>
           </div>
         </div>
-        
+
         <div v-if="teams.length === 0 && !loading" class="empty-state">
           <el-empty description="暂无团队数据" :image-size="80" />
         </div>
@@ -119,8 +119,18 @@ const selectTeam = (team: Team) => {
 // 生成团队头像颜色
 const generateTeamColor = (name: string) => {
   const colors = [
-    "#667eea", "#764ba2", "#f093fb", "#f5576c", "#4facfe", "#00f2fe",
-    "#43e97b", "#38f9d7", "#fa709a", "#fee140", "#a8edea", "#fed6e3"
+    "#667eea",
+    "#764ba2",
+    "#f093fb",
+    "#f5576c",
+    "#4facfe",
+    "#00f2fe",
+    "#43e97b",
+    "#38f9d7",
+    "#fa709a",
+    "#fee140",
+    "#a8edea",
+    "#fed6e3"
   ]
   let hash = 0
   for (let i = 0; i < name.length; i++) {
@@ -150,13 +160,13 @@ const handleConfirm = () => {
     ElMessage.warning("请选择一个团队")
     return
   }
-  
-  const selectedTeam = teams.value.find(team => team.id === selectedTeamId.value)
+
+  const selectedTeam = teams.value.find((team) => team.id === selectedTeamId.value)
   if (!selectedTeam) {
     ElMessage.warning("请选择一个有效的团队")
     return
   }
-  
+
   emit("confirm", selectedTeam.id, selectedTeam.name)
   visible.value = false
 }
@@ -168,7 +178,7 @@ const handleConfirm = () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  
+
   .team-list {
     flex: 1;
     overflow-y: auto;
@@ -208,7 +218,6 @@ const handleConfirm = () => {
       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
     }
 
-
     .team-info {
       display: flex;
       align-items: center;
@@ -227,7 +236,6 @@ const handleConfirm = () => {
         font-size: 16px;
         font-weight: 600;
         flex-shrink: 0;
-
       }
 
       .team-details {

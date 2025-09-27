@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref } from "vue"
 import { Setting, Clock, Bell } from "@element-plus/icons-vue"
 import LabelSelector from "@@/components/LabelSelector/index.vue"
 import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"

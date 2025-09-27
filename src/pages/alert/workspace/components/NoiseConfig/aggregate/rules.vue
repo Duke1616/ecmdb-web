@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, reactive } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Setting, Edit, Delete, PriceTag, Warning, Operation, Document, DataBoard } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
@@ -149,7 +149,6 @@ import AggregateDrawer from "./drawer.vue"
 import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/aggregate"
 import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
 import type { RetrieveAggregateGroup } from "@/api/aggregate/types/retrieve"
-import { useAggregateForm } from "./composables/useAggregateForm"
 
 // 接收工作空间ID
 const props = defineProps<{
@@ -165,14 +164,47 @@ const emit = defineEmits<{
 const dialogVisible = defineModel<boolean>("dialogVisible", { default: false })
 const isEdit = defineModel<boolean>("isEdit", { default: false })
 const submitting = defineModel<boolean>("submitting", { default: false })
-const formData = defineModel<CreateAggregateGroupRuleReq>("formData")
+const formData = defineModel<CreateAggregateGroupRuleReq>("formData", {
+  default: () =>
+    reactive({
+      workspace_id: 0, // 将在 onMounted 中设置
+      type: 0,
+      is_diff_data_source: false,
+      labels: [],
+      time_window: null,
+      notification_template: "",
+      matchers: [],
+      group_wait: 0,
+      group_interval: 0,
+      repeat_interval: 0,
+      template_id: 0
+    })
+})
+
+// 创建默认表单数据的函数
+const createDefaultFormData = () =>
+  reactive({
+    workspace_id: props.workspaceId,
+    type: 0,
+    is_diff_data_source: false,
+    labels: [],
+    time_window: null,
+    notification_template: "",
+    matchers: [],
+    group_wait: 0,
+    group_interval: 0,
+    repeat_interval: 0,
+    template_id: 0
+  })
 
 // 响应式数据
 const loading = ref(false)
 const rule = ref<RetrieveAggregateGroup | null>(null)
 
-// 使用共享的表单逻辑
-const { resetForm } = useAggregateForm(props.workspaceId)
+// 重置表单
+const resetForm = () => {
+  formData.value = createDefaultFormData()
+}
 
 // 加载规则数据
 const loadRules = async () => {
@@ -191,19 +223,9 @@ const loadRules = async () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
-  // 初始化 formData 的默认值
-  if (!formData.value) {
-    formData.value = {
-      workspace_id: props.workspaceId,
-      type: 0,
-      labels: [],
-      matchers: [],
-      group_wait: 0,
-      group_interval: 0,
-      repeat_interval: 0,
-      is_diff_data_source: false,
-      template_id: 1
-    }
+  // 初始化 formData 的 workspace_id
+  if (formData.value) {
+    formData.value.workspace_id = props.workspaceId
   }
   loadRules()
 })
@@ -224,10 +246,10 @@ const handleEditRule = () => {
 
   isEdit.value = true
   // 直接使用对象展开语法，只处理必要的字段转换
-  formData.value = {
+  formData.value = reactive({
     ...rule.value,
     matchers: rule.value.matchers || []
-  }
+  })
   dialogVisible.value = true
 }
 

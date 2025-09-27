@@ -151,14 +151,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, reactive } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Filter, Edit, Delete, PriceTag, Clock, Warning } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import InhibitDrawer from "./drawer.vue"
 import { listInhibitRulesApi, deleteInhibitRuleApi, saveInhibitRuleApi } from "@/api/alert/inhibit"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
-import { useInhibitForm } from "./composables/useInhibitForm"
 
 // 定义事件
 const emit = defineEmits<{
@@ -169,14 +168,33 @@ const emit = defineEmits<{
 const dialogVisible = defineModel<boolean>("dialogVisible", { default: false })
 const isEdit = defineModel<boolean>("isEdit", { default: false })
 const submitting = defineModel<boolean>("submitting", { default: false })
-const formData = defineModel<SaveInhibitRuleReq>("formData")
+const formData = defineModel<SaveInhibitRuleReq>("formData", {
+  default: () =>
+    reactive({
+      name: "",
+      source_matchers: [],
+      target_matchers: [],
+      equal_labels: [],
+      time_window: null,
+      enabled: true
+    })
+})
 
 // 响应式数据
 const loading = ref(false)
 const rules = ref<InhibitRule[]>([])
 
-// 使用共享的表单逻辑
-const { resetForm } = useInhibitForm()
+// 重置表单
+const resetForm = () => {
+  formData.value = reactive({
+    name: "",
+    source_matchers: [],
+    target_matchers: [],
+    equal_labels: [],
+    time_window: null,
+    enabled: true
+  })
+}
 
 // 加载规则数据
 const loadRules = async () => {
@@ -226,15 +244,30 @@ const handleAddRule = () => {
 // 编辑规则
 const handleEditRule = (rule: InhibitRule) => {
   isEdit.value = true
-  formData.value = {
+
+  // 确保匹配器数据结构正确
+  const sourceMatchers = (rule.source_match || []).map((matcher) => ({
+    type: matcher.type,
+    name: matcher.name,
+    value: matcher.value
+  }))
+
+  const targetMatchers = (rule.target_match || []).map((matcher) => ({
+    type: matcher.type,
+    name: matcher.name,
+    value: matcher.value
+  }))
+
+  formData.value = reactive({
     id: rule.id,
     name: rule.name,
-    source_matchers: rule.source_match || [],
-    target_matchers: rule.target_match || [],
+    source_matchers: sourceMatchers,
+    target_matchers: targetMatchers,
     equal_labels: rule.equal_labels || [],
     time_window: rule.time_window,
     enabled: rule.enabled
-  }
+  })
+
   dialogVisible.value = true
 }
 
@@ -330,6 +363,12 @@ const formatTime = (minutes: number): string => {
 
 .inhibit-rules-content {
   flex: 1;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  height: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
 
   // 自定义滚动条样式

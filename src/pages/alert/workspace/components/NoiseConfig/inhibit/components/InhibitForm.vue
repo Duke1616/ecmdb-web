@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from "vue"
+import { ref, nextTick, watch } from "vue"
 import { Setting, Filter, Clock, Plus } from "@element-plus/icons-vue"
 import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
 import type { FormInstance } from "element-plus"
@@ -218,6 +218,13 @@ const timeToMinutes = (time: string): number => {
   return hours * 60 + minutes
 }
 
+// 分钟转换为时间
+const minutesToTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60)
+  const mins = minutes % 60
+  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`
+}
+
 // 添加源匹配器
 const addSourceMatcher = () => {
   formData.value.source_matchers.push({
@@ -263,6 +270,27 @@ const formatTime = (date: Date): string => {
   const minutes = String(date.getMinutes()).padStart(2, "0")
   return `${hours}:${minutes}`
 }
+
+// 监听 formData 变化，初始化时间窗口
+watch(
+  () => formData.value,
+  (newData) => {
+    if (newData) {
+      // 初始化时间窗口状态
+      hasTimeWindow.value = newData.time_window !== null
+
+      // 如果有时间窗口，初始化时间值
+      if (newData.time_window) {
+        startTime.value = minutesToTime(newData.time_window.start)
+        endTime.value = minutesToTime(newData.time_window.end)
+      } else {
+        startTime.value = ""
+        endTime.value = ""
+      }
+    }
+  },
+  { immediate: true, deep: true }
+)
 
 // 显示标签输入框
 const showInput = () => {
