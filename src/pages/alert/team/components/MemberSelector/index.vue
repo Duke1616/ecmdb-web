@@ -6,7 +6,7 @@
         <h4 class="panel-title">选择成员</h4>
         <span class="selection-count">已选择 {{ props.modelValue.length }} 人</span>
       </div>
-      
+
       <!-- 部门选择 -->
       <div class="department-section">
         <el-tree-select
@@ -44,7 +44,7 @@
             <el-empty description="暂无用户数据" :image-size="80" />
           </div>
         </div>
-        
+
         <!-- 分页 -->
         <div v-if="paginationData.total > 0" class="pagination-wrapper">
           <el-pagination
@@ -57,12 +57,12 @@
           />
         </div>
       </div>
-        </div>
+    </div>
 
-        <!-- 分隔符 -->
-        <div class="divider"></div>
+    <!-- 分隔符 -->
+    <div class="divider" />
 
-        <!-- 右侧：已选择的用户 -->
+    <!-- 右侧：已选择的用户 -->
     <div class="right-panel">
       <div class="panel-header">
         <h4 class="panel-title">已选择成员</h4>
@@ -143,8 +143,18 @@ const filteredUsers = computed(() => {
 // 生成用户头像颜色
 const generateUserColor = (username: string) => {
   const colors = [
-    "#667eea", "#764ba2", "#f093fb", "#f5576c", "#4facfe", "#00f2fe",
-    "#43e97b", "#38f9d7", "#fa709a", "#fee140", "#a8edea", "#fed6e3"
+    "#667eea",
+    "#764ba2",
+    "#f093fb",
+    "#f5576c",
+    "#4facfe",
+    "#00f2fe",
+    "#43e97b",
+    "#38f9d7",
+    "#fa709a",
+    "#fee140",
+    "#a8edea",
+    "#fed6e3"
   ]
   let hash = 0
   for (let i = 0; i < username.length; i++) {
@@ -158,28 +168,28 @@ const generateUserColor = (username: string) => {
 
 // 判断用户是否被选中
 const isUserSelected = (user: user) => {
-  return selectedUsers.value.some(u => u.id === user.id)
+  return selectedUsers.value.some((u) => u.id === user.id)
 }
 
 // 切换用户选择
 const toggleUser = (user: user) => {
-  const index = selectedUsers.value.findIndex(u => u.id === user.id)
+  const index = selectedUsers.value.findIndex((u) => u.id === user.id)
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
   } else {
     selectedUsers.value.push(user)
   }
   // 同步到 modelValue
-  const usernames = selectedUsers.value.map(u => u.username)
+  const usernames = selectedUsers.value.map((u) => u.username)
   emits("update:modelValue", usernames)
 }
 
 // 移除用户
 const removeUser = (user: user) => {
-  const index = selectedUsers.value.findIndex(u => u.id === user.id)
+  const index = selectedUsers.value.findIndex((u) => u.id === user.id)
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
-    const usernames = selectedUsers.value.map(u => u.username)
+    const usernames = selectedUsers.value.map((u) => u.username)
     emits("update:modelValue", usernames)
   }
 }
@@ -209,15 +219,15 @@ const loadDepartments = async () => {
     const { data } = await listDepartmentTreeApi()
     // 在部门列表前面添加"全部"选项
     departments.value = [
-      { 
-        id: 0, 
-        pid: 0, 
-        name: "全部部门", 
-        sort: 0, 
-        enabled: true, 
-        leaders: [], 
-        main_leader: "", 
-        children: [] 
+      {
+        id: 0,
+        pid: 0,
+        name: "全部部门",
+        sort: 0,
+        enabled: true,
+        leaders: [],
+        main_leader: "",
+        children: []
       },
       ...(data || [])
     ]
@@ -254,7 +264,7 @@ const loadUsersByDepartment = async () => {
 
 // 根据用户名找到对应的用户对象
 const findUsersByUsernames = (usernames: string[]) => {
-  return users.value.filter(user => usernames.includes(user.username))
+  return users.value.filter((user) => usernames.includes(user.username))
 }
 
 // 监听 modelValue 变化
@@ -291,7 +301,8 @@ onMounted(async () => {
   min-height: 500px;
 }
 
-.left-panel, .right-panel {
+.left-panel,
+.right-panel {
   flex: 1;
   min-width: 0;
   background: #ffffff;
@@ -339,7 +350,8 @@ onMounted(async () => {
   }
 }
 
-.user-list-wrapper, .selected-users-wrapper {
+.user-list-wrapper,
+.selected-users-wrapper {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -356,7 +368,8 @@ onMounted(async () => {
   justify-content: center;
 }
 
-.user-list, .selected-users-list {
+.user-list,
+.selected-users-list {
   flex: 1;
   display: flex;
   flex-direction: column;

@@ -17,7 +17,8 @@ export function useInhibitForm() {
   const formRules: FormRules = {
     name: [{ required: true, message: "请输入规则名称", trigger: "blur" }],
     source_matchers: [{ required: true, message: "请配置源匹配器", trigger: "change" }],
-    target_matchers: [{ required: true, message: "请配置目标匹配器", trigger: "change" }]
+    target_matchers: [{ required: true, message: "请配置目标匹配器", trigger: "change" }],
+    equal_labels: [{ required: true, message: "请配置相同标签", trigger: "change" }]
   }
 
   // 重置表单

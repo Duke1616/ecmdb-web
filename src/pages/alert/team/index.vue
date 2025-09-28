@@ -43,9 +43,7 @@
 
       <!-- 成员数量插槽 -->
       <template #memberCount="{ row }">
-        <el-tag type="success" effect="plain" class="member-tag">
-          {{ row.members.length }} 人
-        </el-tag>
+        <el-tag type="success" effect="plain" class="member-tag"> {{ row.members.length }} 人 </el-tag>
       </template>
 
       <!-- 创建时间插槽 -->
@@ -184,16 +182,12 @@ const handleUpdate = (row: Team) => {
 
 const handleDelete = async (row: Team) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除团队 "${row.name}" 吗？删除后不可恢复。`,
-      "删除确认",
-      {
-        confirmButtonText: "确定删除",
-        cancelButtonText: "取消",
-        type: "warning",
-        confirmButtonClass: "el-button--danger"
-      }
-    )
+    await ElMessageBox.confirm(`确定要删除团队 "${row.name}" 吗？删除后不可恢复。`, "删除确认", {
+      confirmButtonText: "确定删除",
+      cancelButtonText: "取消",
+      type: "warning",
+      confirmButtonClass: "el-button--danger"
+    })
 
     await deleteTeamApi({ id: row.id })
     ElMessage.success("团队删除成功")

@@ -14,14 +14,11 @@
           <span>基本信息</span>
         </div>
 
-        <div class="form-row">
-          <el-form-item prop="name" label="规则名称" class="form-item">
+        <div class="form-row form-row-inline">
+          <el-form-item prop="name" label="规则名称" class="form-item form-item-flex">
             <el-input v-model="formData.name" placeholder="请输入规则名称" />
           </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item prop="enabled" label="启用状态" class="form-item">
+          <el-form-item prop="enabled" label="启用状态" class="form-item form-item-flex">
             <div class="switch-container">
               <el-switch v-model="formData.enabled" size="large" />
               <span class="form-tip">是否启用此抑制规则</span>
@@ -40,13 +37,14 @@
           <el-form-item prop="source_matchers" label="源匹配器" class="form-item">
             <div class="matcher-config">
               <div v-for="(matcher, index) in formData.source_matchers" :key="index" class="matcher-item">
-                <el-input v-model="matcher.name" placeholder="标签名" size="large" />
-                <el-select v-model="matcher.type" placeholder="类型" size="large">
-                  <el-option label="等于" :value="0" />
-                  <el-option label="不等于" :value="1" />
-                  <el-option label="正则" :value="2" />
+                <el-input v-model="matcher.name" placeholder="标签名" size="default" />
+                <el-select v-model="matcher.type" placeholder="类型" size="default">
+                  <el-option label="等于" :value="MatchType.Equal" />
+                  <el-option label="不等于" :value="MatchType.NotEqual" />
+                  <el-option label="正则" :value="MatchType.Regexp" />
+                  <el-option label="非正则" :value="MatchType.NotRegexp" />
                 </el-select>
-                <el-input v-model="matcher.value" placeholder="标签值" size="large" />
+                <el-input v-model="matcher.value" placeholder="标签值" size="default" />
                 <el-button type="text" @click="removeSourceMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
               <el-button type="text" @click="addSourceMatcher" class="add-matcher-btn">
@@ -61,13 +59,14 @@
           <el-form-item prop="target_matchers" label="目标匹配器" class="form-item">
             <div class="matcher-config">
               <div v-for="(matcher, index) in formData.target_matchers" :key="index" class="matcher-item">
-                <el-input v-model="matcher.name" placeholder="标签名" size="large" />
-                <el-select v-model="matcher.type" placeholder="类型" size="large">
-                  <el-option label="等于" :value="0" />
-                  <el-option label="不等于" :value="1" />
-                  <el-option label="正则" :value="2" />
+                <el-input v-model="matcher.name" placeholder="标签名" size="default" />
+                <el-select v-model="matcher.type" placeholder="类型" size="default">
+                  <el-option label="等于" :value="MatchType.Equal" />
+                  <el-option label="不等于" :value="MatchType.NotEqual" />
+                  <el-option label="正则" :value="MatchType.Regexp" />
+                  <el-option label="非正则" :value="MatchType.NotRegexp" />
                 </el-select>
-                <el-input v-model="matcher.value" placeholder="标签值" size="large" />
+                <el-input v-model="matcher.value" placeholder="标签值" size="default" />
                 <el-button type="text" @click="removeTargetMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
               <el-button type="text" @click="addTargetMatcher" class="add-matcher-btn">
@@ -79,7 +78,7 @@
         </div>
 
         <div class="form-row">
-          <el-form-item label="相同标签" class="form-item">
+          <el-form-item prop="equal_labels" label="相同标签" class="form-item">
             <div class="equal-labels-config">
               <el-tag
                 v-for="(label, index) in formData.equal_labels"
@@ -109,26 +108,22 @@
         <div class="section-title">
           <el-icon class="section-icon"><Clock /></el-icon>
           <span>时间窗口</span>
-        </div>
-
-        <div class="form-row">
-          <el-form-item label="启用时间窗口" class="form-item">
-            <div class="time-window-config">
-              <el-switch v-model="hasTimeWindow" @change="toggleTimeWindow" size="large" />
-              <span class="form-tip">是否设置时间窗口</span>
-            </div>
-          </el-form-item>
+          <div class="time-window-switch">
+            <el-switch v-model="hasTimeWindow" @change="toggleTimeWindow" size="large" />
+            <span class="form-tip">启用时间窗口</span>
+          </div>
         </div>
 
         <div v-if="hasTimeWindow" class="form-row">
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item prop="time_window.start" label="开始时间" class="form-item">
-                <el-time-picker
+                <el-date-picker
                   v-model="startTime"
+                  type="datetime"
                   placeholder="选择开始时间"
-                  format="HH:mm"
-                  value-format="HH:mm"
+                  format="YYYY-MM-DD HH:mm"
+                  value-format="YYYY-MM-DD HH:mm"
                   size="large"
                   style="width: 100%"
                   @change="updateTimeWindow"
@@ -137,11 +132,12 @@
             </el-col>
             <el-col :span="12">
               <el-form-item prop="time_window.end" label="结束时间" class="form-item">
-                <el-time-picker
+                <el-date-picker
                   v-model="endTime"
+                  type="datetime"
                   placeholder="选择结束时间"
-                  format="HH:mm"
-                  value-format="HH:mm"
+                  format="YYYY-MM-DD HH:mm"
+                  value-format="YYYY-MM-DD HH:mm"
                   size="large"
                   style="width: 100%"
                   @change="updateTimeWindow"
@@ -170,6 +166,7 @@
 import { ref, nextTick, watch } from "vue"
 import { Setting, Filter, Clock, Plus } from "@element-plus/icons-vue"
 import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
+import { MatchType } from "@/api/alert/inhibit/types"
 import type { FormInstance } from "element-plus"
 
 interface Props {
@@ -197,7 +194,9 @@ const inputRef = ref<InstanceType<typeof import("element-plus").ElInput>>()
 const toggleTimeWindow = (val: string | number | boolean) => {
   const value = Boolean(val)
   if (value) {
-    formData.value.time_window = { start: 0, end: 0 }
+    // 使用当前时间作为默认值
+    const now = Date.now()
+    formData.value.time_window = { start: now, end: now + 60 * 60 * 1000 } // 默认1小时后结束
   } else {
     formData.value.time_window = null
   }
@@ -206,29 +205,20 @@ const toggleTimeWindow = (val: string | number | boolean) => {
 // 更新时间窗口
 const updateTimeWindow = () => {
   if (startTime.value && endTime.value) {
-    const start = timeToMinutes(startTime.value)
-    const end = timeToMinutes(endTime.value)
-    formData.value.time_window = { start, end }
+    // 将日期时间字符串转换为时间戳
+    const startTimestamp = new Date(startTime.value).getTime()
+    const endTimestamp = new Date(endTime.value).getTime()
+    formData.value.time_window = {
+      start: startTimestamp,
+      end: endTimestamp
+    }
   }
-}
-
-// 时间转换为分钟
-const timeToMinutes = (time: string): number => {
-  const [hours, minutes] = time.split(":").map(Number)
-  return hours * 60 + minutes
-}
-
-// 分钟转换为时间
-const minutesToTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${String(hours).padStart(2, "0")}:${String(mins).padStart(2, "0")}`
 }
 
 // 添加源匹配器
 const addSourceMatcher = () => {
   formData.value.source_matchers.push({
-    type: 0,
+    type: MatchType.Equal,
     name: "",
     value: ""
   })
@@ -242,7 +232,7 @@ const removeSourceMatcher = (index: number) => {
 // 添加目标匹配器
 const addTargetMatcher = () => {
   formData.value.target_matchers.push({
-    type: 0,
+    type: MatchType.Equal,
     name: "",
     value: ""
   })
@@ -259,16 +249,38 @@ const setQuickTime = (hours: number) => {
   const start = new Date(now)
   const end = new Date(now.getTime() + hours * 60 * 60 * 1000)
 
-  startTime.value = formatTime(start)
-  endTime.value = formatTime(end)
+  startTime.value = formatDateTime(start)
+  endTime.value = formatDateTime(end)
   updateTimeWindow()
 }
 
-// 格式化时间为 HH:mm
-const formatTime = (date: Date): string => {
+// 格式化时间为 YYYY-MM-DD HH:mm
+const formatDateTime = (date: Date): string => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
   const hours = String(date.getHours()).padStart(2, "0")
   const minutes = String(date.getMinutes()).padStart(2, "0")
-  return `${hours}:${minutes}`
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
+// 时间戳转换为日期时间字符串
+const timestampToDateTime = (timestamp: number): string => {
+  // 检查时间戳是否有效
+  if (!timestamp || timestamp <= 0) {
+    console.warn("Invalid timestamp:", timestamp)
+    return ""
+  }
+
+  const date = new Date(timestamp)
+
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    console.warn("Invalid date from timestamp:", timestamp)
+    return ""
+  }
+
+  return formatDateTime(date)
 }
 
 // 监听 formData 变化，初始化时间窗口
@@ -281,8 +293,22 @@ watch(
 
       // 如果有时间窗口，初始化时间值
       if (newData.time_window) {
-        startTime.value = minutesToTime(newData.time_window.start)
-        endTime.value = minutesToTime(newData.time_window.end)
+        console.log("Initializing time window:", newData.time_window)
+        startTime.value = timestampToDateTime(newData.time_window.start)
+        endTime.value = timestampToDateTime(newData.time_window.end)
+
+        // 如果时间戳无效，使用当前时间作为默认值
+        if (!startTime.value || !endTime.value) {
+          const now = new Date()
+          const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000)
+          startTime.value = formatDateTime(now)
+          endTime.value = formatDateTime(oneHourLater)
+          // 更新 formData 中的时间戳
+          formData.value.time_window = {
+            start: now.getTime(),
+            end: oneHourLater.getTime()
+          }
+        }
       } else {
         startTime.value = ""
         endTime.value = ""
@@ -337,6 +363,7 @@ defineExpose({
   .section-title {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     margin-bottom: 16px;
     padding: 10px 14px;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -355,6 +382,17 @@ defineExpose({
       font-weight: 600;
       color: #374151;
     }
+
+    .time-window-switch {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .form-tip {
+        font-size: 12px;
+        color: #6b7280;
+      }
+    }
   }
 
   .form-row {
@@ -362,6 +400,12 @@ defineExpose({
 
     &:last-child {
       margin-bottom: 0;
+    }
+
+    &.form-row-inline {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
     }
   }
 
@@ -373,6 +417,11 @@ defineExpose({
       color: #374151;
       margin-bottom: 6px;
       font-size: 13px;
+    }
+
+    &.form-item-flex {
+      flex: 1;
+      min-width: 0; // 防止 flex 子元素溢出
     }
 
     :deep(.el-input__wrapper) {
@@ -427,12 +476,12 @@ defineExpose({
     .matcher-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px;
+      gap: 8px;
+      padding: 8px;
       background: #f8fafc;
       border: 1px solid #e5e7eb;
       border-radius: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       width: 100%;
 
       &:last-child {
@@ -441,19 +490,19 @@ defineExpose({
 
       .el-input {
         &:first-child {
-          flex: 0 0 150px;
-          min-width: 150px;
+          flex: 0 0 120px;
+          min-width: 120px;
         }
 
         &:last-child {
           flex: 1;
-          min-width: 200px;
+          min-width: 150px;
         }
       }
 
       .el-select {
-        flex: 0 0 100px;
-        min-width: 100px;
+        flex: 0 0 80px;
+        min-width: 80px;
       }
 
       .matcher-remove {

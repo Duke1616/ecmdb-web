@@ -4,7 +4,7 @@
     :title="isEdit ? '编辑聚合规则' : '添加聚合规则'"
     :subtitle="isEdit ? '修改聚合规则配置' : '为工作空间配置告警聚合规则'"
     :header-icon="Setting"
-    size="600px"
+    size="35%"
     :confirm-loading="submitting"
     @confirm="handleConfirm"
     @cancel="handleCancel"

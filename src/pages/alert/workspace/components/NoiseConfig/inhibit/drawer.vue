@@ -4,7 +4,7 @@
     :title="isEdit ? '编辑抑制规则' : '添加抑制规则'"
     :subtitle="isEdit ? '修改抑制规则配置' : '配置全局抑制规则，减少不必要的告警通知'"
     :header-icon="Filter"
-    size="800px"
+    size="35%"
     :confirm-loading="submitting"
     @confirm="handleConfirm"
     @cancel="handleCancel"

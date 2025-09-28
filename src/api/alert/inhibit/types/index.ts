@@ -1,5 +1,13 @@
 // 抑制规则相关类型定义
 
+// 匹配类型枚举
+export enum MatchType {
+  Equal = 1, // 等于
+  NotEqual = 2, // 不等于
+  Regexp = 3, // 正则
+  NotRegexp = 4 // 非正则
+}
+
 export interface TimeRange {
   start: number
   end: number
