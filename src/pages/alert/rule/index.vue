@@ -1,11 +1,7 @@
 <template>
   <PageContainer>
     <!-- 页面头部 -->
-    <ManagerHeader
-      title="告警规则"
-      subtitle="管理告警规则和规则组"
-      @refresh="handleRefresh"
-    >
+    <ManagerHeader title="告警规则" subtitle="管理告警规则和规则组" @refresh="handleRefresh">
       <template #actions>
         <el-button type="info" @click="handleManageGroups">
           <el-icon><Setting /></el-icon>
@@ -27,14 +23,10 @@
         </div>
         <div class="group-list">
           <!-- 全部选项 -->
-          <div
-            class="group-item"
-            :class="{ active: selectedGroup?.id === 0 }"
-            @click="selectAllGroups"
-          >
+          <div class="group-item" :class="{ active: selectedGroup?.id === 0 }" @click="selectAllGroups">
             <div class="group-name" title="全部规则组">全部</div>
           </div>
-          
+
           <!-- 规则组列表 -->
           <div
             v-for="group in ruleGroups"
@@ -47,20 +39,8 @@
               <div class="group-name" :title="group.name">{{ group.name }}</div>
             </div>
             <div class="group-actions" @click.stop>
-              <el-button
-                type="primary"
-                :icon="Edit"
-                size="small"
-                circle
-                @click="handleEditGroup(group)"
-              />
-              <el-button
-                type="danger"
-                :icon="Delete"
-                size="small"
-                circle
-                @click="handleDeleteGroup(group)"
-              />
+              <el-button type="primary" :icon="Edit" size="small" circle @click="handleEditGroup(group)" />
+              <el-button type="danger" :icon="Delete" size="small" circle @click="handleDeleteGroup(group)" />
             </div>
           </div>
         </div>
@@ -69,14 +49,14 @@
       <!-- 右侧：告警规则列表 -->
       <div class="right-panel">
         <div class="panel-header">
-          <h3>{{ selectedGroup ? selectedGroup.name : '请选择规则组' }}</h3>
+          <h3>{{ selectedGroup ? selectedGroup.name : "请选择规则组" }}</h3>
           <div class="header-actions">
             <el-input
               v-model="searchKeyword"
               placeholder="搜索规则"
               size="small"
               clearable
-              style="width: 200px; margin-right: 10px;"
+              style="width: 200px; margin-right: 10px"
             >
               <template #prefix>
                 <el-icon><Search /></el-icon>
@@ -88,7 +68,7 @@
             </el-button>
           </div>
         </div>
-        
+
         <DataTable
           :data="filteredRules"
           :columns="columns"
@@ -105,7 +85,7 @@
         >
           <template #enabled="{ row }">
             <el-tag :type="row.enabled ? 'success' : 'info'">
-              {{ row.enabled ? '启用' : '禁用' }}
+              {{ row.enabled ? "启用" : "禁用" }}
             </el-tag>
           </template>
 
@@ -189,15 +169,15 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch, nextTick } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { Plus, Search, Edit, VideoPause, VideoPlay, Delete, Setting } from "@element-plus/icons-vue"
+import { Plus, Search, Edit, Delete, Setting } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 // import RuleDrawer from "./components/RuleDrawer.vue"
 // import RuleGroupDrawer from "./components/RuleGroupDrawer.vue"
-import { 
-  listRulesApi, 
+import {
+  listRulesApi,
   listRuleGroupsApi,
   createRuleGroupApi,
   updateRuleGroupApi,
@@ -225,7 +205,7 @@ const currentGroup = ref<RuleGroup | null>(null)
 const groupFormRef = ref<InstanceType<typeof RuleGroupForm>>()
 
 // 分页
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const { paginationData } = usePagination()
 
 // 分页事件处理
 const handlePageChange = (page: number) => {
@@ -246,7 +226,7 @@ const columns = [
   { prop: "enabled", label: "状态", flex: 0.8, slot: "enabled" },
   { prop: "level", label: "告警级别", flex: 1, slot: "level" },
   { prop: "datasource_type", label: "数据源类型", flex: 1.2, slot: "datasource_type" },
-  { prop: "description", label: "描述", flex: 3, showOverflowTooltip: true },
+  { prop: "description", label: "描述", flex: 3, showOverflowTooltip: true }
 ]
 
 // 规则数据（分页和搜索都在服务端处理）
@@ -254,27 +234,15 @@ const filteredRules = computed(() => {
   return rules.value
 })
 
-// 获取告警级别标签
-const getLevelLabel = (level: number) => {
-  const option = ALERT_LEVEL_OPTIONS.find(item => item.value === level)
-  return option?.label || "未知"
-}
-
-// 获取告警级别颜色
-const getLevelColor = (level: number) => {
-  const option = ALERT_LEVEL_OPTIONS.find(item => item.value === level)
-  return option?.color || "#909399"
-}
-
 // 获取告警级别描述
 const getLevelDescription = (level: number) => {
-  const option = ALERT_LEVEL_OPTIONS.find(item => item.value === level)
+  const option = ALERT_LEVEL_OPTIONS.find((item) => item.value === level)
   return option?.description || ""
 }
 
 // 获取告警级别优先级
 const getLevelPriority = (level: number) => {
-  const option = ALERT_LEVEL_OPTIONS.find(item => item.value === level)
+  const option = ALERT_LEVEL_OPTIONS.find((item) => item.value === level)
   return option?.priority || ""
 }
 
@@ -282,17 +250,17 @@ const getLevelPriority = (level: number) => {
 const getLevelTagType = (level: number) => {
   switch (level) {
     case 1: // P0 紧急
-      return 'danger'
+      return "danger"
     case 2: // P1 严重
-      return 'danger'
+      return "danger"
     case 3: // P2 错误
-      return 'warning'
+      return "warning"
     case 4: // P3 警告
-      return 'warning'
+      return "warning"
     case 5: // P4 提示
-      return 'info'
+      return "info"
     default:
-      return 'info'
+      return "info"
   }
 }
 
@@ -315,9 +283,9 @@ const loadRules = async () => {
       rules.value = []
       return
     }
-    
+
     // 构建请求参数
-    const params: any = { 
+    const params: any = {
       offset: (paginationData.currentPage - 1) * paginationData.pageSize,
       limit: paginationData.pageSize
     }
@@ -327,7 +295,7 @@ const loadRules = async () => {
     if (searchKeyword.value) {
       params.keyword = searchKeyword.value
     }
-    
+
     const response = await listRulesApi(params)
     paginationData.total = response.data.total
     rules.value = response.data.rules
@@ -360,7 +328,7 @@ const selectGroup = (group: RuleGroup) => {
 
 // 选择全部规则组
 const selectAllGroups = () => {
-  selectedGroup.value = { id: 0, name: '全部', description: '显示所有规则组' } as RuleGroup
+  selectedGroup.value = { id: 0, name: "全部", description: "显示所有规则组" } as RuleGroup
   loadRules()
 }
 
@@ -385,27 +353,23 @@ const handleEditGroup = (group: RuleGroup) => {
 // 删除规则组
 const handleDeleteGroup = async (group: RuleGroup) => {
   try {
-    await ElMessageBox.confirm(
-      `确定要删除规则组"${group.name}"吗？删除后该组下的所有规则也将被删除。`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
+    await ElMessageBox.confirm(`确定要删除规则组"${group.name}"吗？删除后该组下的所有规则也将被删除。`, "确认删除", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+
     await deleteRuleGroupApi(group.id)
-    ElMessage.success('删除成功')
+    ElMessage.success("删除成功")
     loadRuleGroups()
-    
+
     // 如果删除的是当前选中的规则组，切换到全部
     if (selectedGroup.value?.id === group.id) {
       selectAllGroups()
     }
   } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除失败')
+    if (error !== "cancel") {
+      ElMessage.error("删除失败")
     }
   }
 }
@@ -413,24 +377,24 @@ const handleDeleteGroup = async (group: RuleGroup) => {
 // 提交规则组表单
 const handleGroupSubmit = async () => {
   if (!groupFormRef.value) return
-  
+
   const isValid = await groupFormRef.value.submitForm()
   if (!isValid) return
-  
+
   try {
     const formData = groupFormRef.value.getFormData()
-    
+
     if (isEditGroup.value && currentGroup.value) {
       await updateRuleGroupApi({ id: currentGroup.value.id, ...formData })
-      ElMessage.success('更新成功')
+      ElMessage.success("更新成功")
     } else {
       await createRuleGroupApi(formData)
-      ElMessage.success('创建成功')
+      ElMessage.success("创建成功")
     }
-    
+
     handleGroupSuccess()
   } catch (error) {
-    ElMessage.error(isEditGroup.value ? '更新失败' : '创建失败')
+    ElMessage.error(isEditGroup.value ? "更新失败" : "创建失败")
   }
 }
 
@@ -463,11 +427,11 @@ const handleAddRule = () => {
     ElMessage.warning("请先选择规则组")
     return
   }
-  
+
   // 跳转到新增规则页面，携带规则组信息
   router.push({
-    path: "/alert/rule/create",
-    query: { 
+    path: "/alert/manager/rule/create",
+    query: {
       groupId: selectedGroup.value.id.toString(),
       groupName: selectedGroup.value.name
     }
@@ -481,7 +445,7 @@ const handleManageGroups = () => {
 
 // 编辑规则
 const handleEdit = (rule: Rule) => {
-  router.push(`/alert/rule/edit/${rule.id}`)
+  router.push(`/alert/manager/rule/edit/${rule.id}`)
 }
 
 // 切换规则状态 - 暂时注释
@@ -527,13 +491,13 @@ const handleSelectionChange = (selection: Rule[]) => {
 // 操作事件处理
 const handleOperateEvent = (row: Rule, action: string) => {
   switch (action) {
-    case 'edit':
+    case "edit":
       handleEdit(row)
       break
-    case 'toggle':
+    case "toggle":
       ElMessage.info(`切换规则 "${row.name}" 状态功能开发中...`)
       break
-    case 'delete':
+    case "delete":
       ElMessage.info(`删除规则 "${row.name}" 功能开发中...`)
       break
   }
@@ -623,7 +587,7 @@ onMounted(() => {
       &:hover {
         background: #f3f4f6;
         border-color: #d1d5db;
-        
+
         .group-actions {
           opacity: 1;
         }
@@ -701,5 +665,4 @@ onMounted(() => {
     }
   }
 }
-
 </style>

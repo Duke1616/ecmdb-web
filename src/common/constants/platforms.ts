@@ -50,7 +50,7 @@ export const PLATFORMS: PlatformConfig[] = [
     description: "监控告警管理和处理",
     icon: "Monitor",
     color: "#F59E0B",
-    route: "/alert",
+    route: "/alert/workspace",
     permission: "alert"
   },
   {

@@ -61,12 +61,6 @@ export interface GetTeamDetailResponse {
   team: Team
 }
 
-// 删除团队请求参数
-export interface DeleteTeamReq {
-  /** 团队ID */
-  id: number
-}
-
 // 删除团队响应
 export interface DeleteTeamResponse {
   /** 是否删除成功 */

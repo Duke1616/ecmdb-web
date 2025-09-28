@@ -5,7 +5,7 @@ import type { ListAlertsReq, ListAlertsByWorkspaceReq, RetrieveAlertsResp } from
 // 获取历史告警列表
 export const listHistoryAlertsApi = (data: ListAlertsReq) => {
   return instance.post<RetrieveAlertsResp>({
-    url: `${API_SERVICE.ALERT}/list-his`,
+    url: `${API_SERVICE.ALERT}/manager/list-his`,
     data
   })
 }
@@ -13,7 +13,7 @@ export const listHistoryAlertsApi = (data: ListAlertsReq) => {
 // 获取当前告警列表
 export const listCurrentAlertsApi = (data: ListAlertsReq) => {
   return instance.post<RetrieveAlertsResp>({
-    url: `${API_SERVICE.ALERT}/list-cur`,
+    url: `${API_SERVICE.ALERT}/manager/list-cur`,
     data
   })
 }
@@ -21,7 +21,7 @@ export const listCurrentAlertsApi = (data: ListAlertsReq) => {
 // 按工作空间获取当前告警列表
 export const listCurrentAlertsByWorkspaceApi = (data: ListAlertsByWorkspaceReq) => {
   return instance.post<RetrieveAlertsResp>({
-    url: `${API_SERVICE.ALERT}/list-cur/by_workspace`,
+    url: `${API_SERVICE.ALERT}/manager/list-cur/by_workspace`,
     data
   })
 }

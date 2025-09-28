@@ -23,7 +23,7 @@
       <div class="scrollable-content">
         <!-- 表单内容 -->
         <div class="rule-form-container">
-          <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top"  size="large">
+          <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top" size="large">
             <!-- 基本信息 -->
             <div class="form-section">
               <h3 class="section-title">基本信息</h3>
@@ -311,7 +311,7 @@ const handleSave = async () => {
     ElMessage.success("规则更新成功")
 
     // 返回规则列表页面
-    router.push("/alert/rule")
+    router.push("/alert/manager/rule")
   } catch (error) {
     ElMessage.error("规则更新失败")
   } finally {
@@ -327,7 +327,7 @@ const handleCancel = () => {
     type: "warning"
   })
     .then(() => {
-      router.push("/alert/rule")
+      router.push("/alert/manager/rule")
     })
     .catch(() => {
       // 用户取消
@@ -342,7 +342,7 @@ onMounted(() => {
     loadRuleDetail(Number(ruleId))
   } else {
     ElMessage.error("规则ID不存在")
-    router.push("/alert/rule")
+    router.push("/alert/manager/rule")
   }
 })
 </script>

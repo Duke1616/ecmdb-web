@@ -294,7 +294,7 @@ const handleSave = async () => {
     ElMessage.success("规则创建成功")
 
     // 返回规则列表页面
-    router.push("/alert/rule")
+    router.push("/alert/manager/rule")
   } catch (error) {
     ElMessage.error("规则创建失败")
   } finally {
@@ -310,7 +310,7 @@ const handleCancel = () => {
     type: "warning"
   })
     .then(() => {
-      router.push("/alert/rule")
+      router.push("/alert/manager/rule")
     })
     .catch(() => {
       // 用户取消

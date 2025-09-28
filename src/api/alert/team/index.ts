@@ -4,16 +4,7 @@
 
 import instance from "@/common/utils/service"
 import { API_SERVICE } from "@@/utils/service"
-import type {
-  ListTeamsReq,
-  RetrieveTeams,
-  SaveTeamReq,
-  Team,
-  GetTeamDetailReq,
-  GetTeamDetailResponse,
-  DeleteTeamReq,
-  DeleteTeamResponse
-} from "./types"
+import type { ListTeamsReq, RetrieveTeams, SaveTeamReq, Team, GetTeamDetailResponse, DeleteTeamResponse } from "./types"
 
 /**
  * 获取团队列表
@@ -47,9 +38,8 @@ export const saveTeamApi = (data: SaveTeamReq) => {
 /**
  * 删除团队
  */
-export const deleteTeamApi = (data: DeleteTeamReq) => {
-  return instance.post<DeleteTeamResponse>({
-    url: `${API_SERVICE.ALERT}/team/delete`,
-    data
+export const deleteTeamApi = (id: number) => {
+  return instance.delete<DeleteTeamResponse>({
+    url: `${API_SERVICE.ALERT}/team/delete/${id}`
   })
 }

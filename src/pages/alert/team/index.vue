@@ -189,7 +189,7 @@ const handleDelete = async (row: Team) => {
       confirmButtonClass: "el-button--danger"
     })
 
-    await deleteTeamApi({ id: row.id })
+    await deleteTeamApi(row.id)
     ElMessage.success("团队删除成功")
     listTeamsData()
   } catch (error) {

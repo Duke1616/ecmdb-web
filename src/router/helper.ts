@@ -4,7 +4,10 @@ import { menu, meta } from "@/api/menu/types/menu"
 import { routerConfig } from "@/router/config"
 
 const Layouts = import.meta.glob("../layouts/index.vue")
-const modules = import.meta.glob("../views/**/*.vue")
+const modules = {
+  ...import.meta.glob("../views/**/*.vue"),
+  ...import.meta.glob("../pages/**/*.vue")
+}
 
 // 公共的 meta 转换函数
 const transformMeta = (meta: meta) => ({
@@ -33,6 +36,7 @@ export const transformDynamicRoutes = (backendRoutes: menu[] = []): RouteRecordR
     }
 
     // 普通页面
+    console.log([`..${route.component}`])
     const component = modules[`..${route.component}`]
     if (!component) {
       console.warn(`未找到组件路径: ${route.component}`)
