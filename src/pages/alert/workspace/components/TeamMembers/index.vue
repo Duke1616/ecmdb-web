@@ -119,7 +119,7 @@ const loadMembersData = async () => {
     console.log("团队详情响应:", teamResponse.data)
 
     // 后端可能直接返回团队对象，而不是包装在 team 字段中
-    teamInfo.value = teamResponse.data.team || teamResponse.data
+    teamInfo.value = teamResponse.data
     console.log("团队信息:", teamInfo.value)
 
     // 检查团队信息是否存在
