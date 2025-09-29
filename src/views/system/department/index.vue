@@ -10,7 +10,7 @@
     </ManagerHeader>
 
     <div class="content">
-      <!-- 左侧面板 -->
+      <!-- 左侧面板 - 只在有数据时显示 -->
       <div class="department-panel">
         <el-card class="department-card">
           <!-- 操作按钮区域 -->
@@ -48,9 +48,7 @@
           <!-- 树形菜单区域 -->
           <div class="tree-container">
             <el-scrollbar class="tree-scrollbar">
-              <!-- 当有数据时显示树形结构 -->
               <el-tree
-                v-if="treeData.length > 0"
                 ref="treeRef"
                 :data="treeData"
                 show-checkbox
@@ -63,14 +61,6 @@
                 :filter-node-method="filterNode"
                 class="department-tree"
               />
-              <!-- 当没有数据时显示空状态 -->
-              <div v-else class="empty-tree-state">
-                <el-icon class="empty-icon" size="48">
-                  <FolderOpened />
-                </el-icon>
-                <p class="empty-text">暂无部门数据</p>
-                <p class="empty-hint">点击上方"添加部门"按钮创建第一个部门</p>
-              </div>
             </el-scrollbar>
           </div>
         </el-card>
@@ -78,35 +68,32 @@
 
       <!-- 右侧内容区域 -->
       <div class="department-details">
-        <el-card class="details-card">
-          <div v-if="empty">
-            <el-tabs v-model="activeName" type="card" class="demo-tabs" @tab-click="handleClick">
-              <el-tab-pane lazy label="详情信息" name="detail">
-                <DepartmentForm
-                  ref="departmentUpdateRef"
-                  :departmentData="treeData"
-                  @listDepartmentTreeData="refreshDepartmentData"
-                />
-              </el-tab-pane>
-              <el-tab-pane lazy label="用户列表" name="user">
-                <User ref="userRef" :departmentId="currentNodeKey || 0" />
-              </el-tab-pane>
-            </el-tabs>
-            <div class="department-actions-bottom">
-              <el-button type="primary" size="large" @click="handleUpdate" class="action-btn">
-                <el-icon><Edit /></el-icon>
-                修改
-              </el-button>
-              <el-button type="danger" size="large" @click="handleDelete" class="action-btn">
-                <el-icon><Delete /></el-icon>
-                删除
-              </el-button>
-            </div>
+        <div v-if="empty" class="department-content-wrapper">
+          <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange" class="department-tabs">
+            <template #default="{ activeTab }">
+              <DepartmentForm
+                v-if="activeTab === 'detail'"
+                ref="departmentUpdateRef"
+                :departmentData="treeData"
+                @listDepartmentTreeData="refreshDepartmentData"
+              />
+              <User v-if="activeTab === 'user'" ref="userRef" :departmentId="currentNodeKey || 0" />
+            </template>
+          </CustomTabs>
+          <div v-if="activeName === 'detail'" class="department-actions-footer">
+            <el-button type="primary" @click="handleUpdate">
+              <el-icon><Edit /></el-icon>
+              修改
+            </el-button>
+            <el-button type="danger" @click="handleDelete">
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
           </div>
-          <div>
-            <Tip :empty="empty" />
-          </div>
-        </el-card>
+        </div>
+        <div v-else class="department-empty">
+          <Tip :empty="empty" />
+        </div>
       </div>
     </div>
 
@@ -141,12 +128,13 @@ import { Search, Edit, Delete, RefreshRight, Plus, FolderAdd, FolderOpened, Fold
 import DepartmentForm from "./form.vue"
 import Tip from "./tip.vue"
 import User from "./user.vue"
-import { ElMessage, ElMessageBox, ElTree, TabsPaneContext, ElScrollbar } from "element-plus"
+import { ElMessage, ElMessageBox, ElTree, ElScrollbar } from "element-plus"
 import { deleteDepartmentApi, listDepartmentTreeApi } from "@/api/department"
 import { department } from "@/api/department/types/department"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import PageContainer from "@/common/components/PageContainer/index.vue"
+import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 
 const filterInput = ref("")
 
@@ -342,10 +330,16 @@ const addDepartment = () => {
 
 // 标签页管理
 const activeName = ref("detail")
-const handleClick = (tab: TabsPaneContext) => {
-  if (tab.paneName === "detail") {
-    // 详情标签页
-  } else if (tab.paneName === "user") {
+
+// 标签页配置
+const tabs = [
+  { name: "detail", label: "详情信息" },
+  { name: "user", label: "用户列表" }
+]
+
+const handleTabChange = (tabName: string) => {
+  activeName.value = tabName
+  if (tabName === "user") {
     userRef.value?.listUsersData()
   }
 }
@@ -545,36 +539,6 @@ onMounted(() => {
       }
     }
   }
-
-  .empty-tree-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    min-height: 200px;
-    padding: calc(1rem + 0.2vw);
-    text-align: center;
-
-    .empty-icon {
-      color: #d1d5db;
-      margin-bottom: calc(0.8rem + 0.2vw);
-    }
-
-    .empty-text {
-      margin: 0 0 calc(0.4rem + 0.1vw) 0;
-      font-size: calc(0.8rem + 0.1vw);
-      font-weight: 500;
-      color: #6b7280;
-    }
-
-    .empty-hint {
-      margin: 0;
-      font-size: calc(0.7rem + 0.1vw);
-      color: #9ca3af;
-      line-height: 1.4;
-    }
-  }
 }
 
 .department-details {
@@ -583,40 +547,92 @@ onMounted(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-
-  .details-card {
-    flex: 1;
-    min-height: 0;
-    border: 1px solid #e5e7eb;
-    border-radius: calc(0.4rem + 0.1vw);
-    background: white;
-    display: flex;
-    flex-direction: column;
-
-    :deep(.el-card__body) {
-      flex: 1;
-      min-height: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-    }
-  }
 }
 
-.department-actions-bottom {
+/* 部门内容包装器 - 参考 DataTable 布局 */
+.department-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  flex: 1;
+}
+
+/* 部门空状态 */
+.department-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* 部门操作底部 - 固定底部按钮 */
+.department-actions-footer {
+  flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  gap: calc(0.4rem + 0.1vw);
-  margin-top: calc(0.8rem + 0.2vw);
-  padding-top: calc(0.8rem + 0.2vw);
-  border-top: 1px solid #f3f4f6;
+  gap: calc(0.8rem + 0.2vw);
+  padding: calc(1rem + 0.3vw) calc(1.2rem + 0.3vw);
+  margin-top: auto;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  border-radius: 0 0 calc(0.6rem + 0.1vw) calc(0.6rem + 0.1vw);
 
   .el-button {
-    border-radius: calc(0.3rem + 0.1vw);
+    height: calc(2rem + 0.3vw);
+    padding: 0 calc(1.2rem + 0.3vw);
+    border-radius: calc(0.4rem + 0.1vw);
+    font-size: calc(0.7rem + 0.1vw);
     font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
+
+    &:hover {
+      transform: translateY(calc(-0.1rem + 0.05vw));
+      box-shadow: 0 calc(0.2rem + 0.1vw) calc(0.6rem + 0.2vw) rgba(0, 0, 0, 0.15);
+    }
+
+    &:active {
+      transform: translateY(0);
+      box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
+    }
 
     .el-icon {
-      margin-right: calc(0.2rem + 0.05vw);
+      margin-right: calc(0.3rem + 0.1vw);
+      font-size: calc(0.8rem + 0.1vw);
+    }
+
+    /* 修改按钮样式 */
+    &[type="primary"] {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border: none;
+      color: #ffffff;
+
+      &:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      }
+
+      &:active {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+      }
+    }
+
+    /* 删除按钮样式 */
+    &[type="danger"] {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      border: none;
+      color: #ffffff;
+
+      &:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+      }
+
+      &:active {
+        background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      }
     }
   }
 }
@@ -625,5 +641,18 @@ onMounted(() => {
   height: 60vh;
   overflow-y: auto;
   padding: calc(0.8rem + 0.2vw);
+}
+
+.custom-tabs {
+  border-radius: 0;
+}
+
+// 部门标签页样式 - 参考 order 页面
+.department-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 </style>
