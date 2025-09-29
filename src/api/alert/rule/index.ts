@@ -39,7 +39,7 @@ export function getRuleApi(id: number) {
 /** 创建告警规则 */
 export function createRuleApi(data: CreateRuleReq) {
   return instance.post<CreateRuleResp>({
-    url: `${API_SERVICE.ALERT}/rule/save`,
+    url: `${API_SERVICE.ALERT}/rule/create`,
     data
   })
 }
@@ -47,7 +47,7 @@ export function createRuleApi(data: CreateRuleReq) {
 /** 更新告警规则 */
 export function updateRuleApi(data: UpdateRuleReq) {
   return instance.post<Rule>({
-    url: `${API_SERVICE.ALERT}/rule/save`,
+    url: `${API_SERVICE.ALERT}/rule/update`,
     data
   })
 }
@@ -55,7 +55,7 @@ export function updateRuleApi(data: UpdateRuleReq) {
 /** 删除告警规则 */
 export function deleteRuleApi(id: number) {
   return instance.delete({
-    url: `${API_SERVICE.ALERT}/rule/${id}`
+    url: `${API_SERVICE.ALERT}/rule/delete/${id}`
   })
 }
 

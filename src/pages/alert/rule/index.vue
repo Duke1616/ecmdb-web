@@ -181,7 +181,8 @@ import {
   listRuleGroupsApi,
   createRuleGroupApi,
   updateRuleGroupApi,
-  deleteRuleGroupApi
+  deleteRuleGroupApi,
+  deleteRuleApi
 } from "@/api/alert/rule"
 import { ALERT_LEVEL_OPTIONS } from "@/api/alert/rule/types/rule"
 import { FormDialog } from "@@/components/Dialogs"
@@ -368,9 +369,7 @@ const handleDeleteGroup = async (group: RuleGroup) => {
       selectAllGroups()
     }
   } catch (error) {
-    if (error !== "cancel") {
-      ElMessage.error("删除失败")
-    }
+    console.error("删除规则组失败:", error)
   }
 }
 
@@ -460,28 +459,24 @@ const handleEdit = (rule: Rule) => {
 //   }
 // }
 
-// 删除规则 - 暂时注释
-// const handleDelete = async (rule: Rule) => {
-//   try {
-//     await ElMessageBox.confirm(
-//       `确定要删除规则 "${rule.name}" 吗？`,
-//       "确认删除",
-//       {
-//         confirmButtonText: "确定",
-//         cancelButtonText: "取消",
-//         type: "warning"
-//       }
-//     )
-//     await ruleApi.deleteRule(rule.id)
-//     ElMessage.success("删除成功")
-//     loadRules()
-//   } catch (error) {
-//     if (error !== "cancel") {
-//       console.error("删除规则失败:", error)
-//       ElMessage.error("删除失败")
-//     }
-//   }
-// }
+// 删除规则
+const handleDelete = async (rule: Rule) => {
+  try {
+    await ElMessageBox.confirm(`确定要删除规则 "${rule.name}" 吗？`, "确认删除", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+    await deleteRuleApi(rule.id)
+    ElMessage.success("删除成功")
+    loadRules()
+  } catch (error) {
+    if (error !== "cancel") {
+      console.error("删除规则失败:", error)
+      ElMessage.error("删除失败")
+    }
+  }
+}
 
 // 选择变化
 const handleSelectionChange = (selection: Rule[]) => {
@@ -498,7 +493,7 @@ const handleOperateEvent = (row: Rule, action: string) => {
       ElMessage.info(`切换规则 "${row.name}" 状态功能开发中...`)
       break
     case "delete":
-      ElMessage.info(`删除规则 "${row.name}" 功能开发中...`)
+      handleDelete(row)
       break
   }
 }
