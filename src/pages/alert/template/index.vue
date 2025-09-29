@@ -182,19 +182,19 @@ const operateEvent = (template: ChannelTemplate, action: string) => {
 
 // 创建模板
 const handleCreate = () => {
-  router.push("/alert/template/create")
+  router.push("/alert/notify/template/create")
 }
 
 // 编辑模板
 const handleEdit = (template: ChannelTemplate) => {
-  router.push(`/alert/template/edit/${template.id}`)
+  router.push(`/alert/notify/template/edit/${template.id}`)
 }
 
 // 复制模板
 const handleCopy = (template: ChannelTemplate) => {
   // 可以通过 query 参数传递复制数据，或者跳转到创建页面并预填充数据
   router.push({
-    path: "/alert/template/create",
+    path: "/alert/notify/template/create",
     query: {
       copy: template.id
     }

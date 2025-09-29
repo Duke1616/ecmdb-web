@@ -87,7 +87,13 @@
             :has-versions="hasVersions"
             @create-version="(data) => handleCreateVersion(data, loadTemplateDetail)"
             @switch-version="(version) => switchToVersion(version, formData)"
-            @publish-version="(versionId: number) => handlePublishVersion(templateId, versionId, loadTemplateDetail)"
+            @publish-version="
+              (versionId: number) => {
+                if (templateIdValue) {
+                  handlePublishVersion(templateIdValue, versionId, loadTemplateDetail)
+                }
+              }
+            "
           />
         </div>
 
@@ -133,9 +139,15 @@ const route = useRoute()
 const router = useRouter()
 
 // 页面状态
-const isEdit = computed(() => route.name === "AlertTemplateEdit")
+const templateId = computed(() => {
+  const id = route.params.id as string
+  return id && !isNaN(Number(id)) ? parseInt(id) : null
+})
+const isEdit = computed(() => !!templateId.value)
 const isCopy = computed(() => route.query.mode === "copy")
-const templateId = computed(() => parseInt(route.params.id as string))
+
+// 为了在模板中使用，创建一个响应式的 templateId
+const templateIdValue = computed(() => templateId.value)
 
 // 数据状态
 const template = ref<ChannelTemplate | null>(null)
@@ -180,6 +192,11 @@ const basicInfoRef = ref()
 
 // 加载模板详情
 const loadTemplateDetail = async () => {
+  if (!templateId.value) {
+    console.warn("模板ID不存在，无法加载详情")
+    return
+  }
+
   try {
     const response = await getTemplateDetailApi(templateId.value)
     template.value = response.data
@@ -238,6 +255,11 @@ const saveVersionContent = async (): Promise<void> => {
 
 // 保存模板基本信息
 const saveTemplateBasicInfo = async (): Promise<void> => {
+  if (!templateId.value) {
+    ElMessage.error("模板ID不存在，无法保存")
+    return
+  }
+
   await updateTemplateApi({ ...formData.value, id: templateId.value })
   ElMessage.success("模板更新成功")
 }
@@ -258,7 +280,7 @@ const createTemplateAndPublish = async (): Promise<void> => {
   }
 
   // 跳转到列表页
-  router.push("/alert/template")
+  router.push("/alert/notify/template")
 }
 
 // 保存模板
@@ -300,7 +322,7 @@ const handleSave = async (): Promise<void> => {
 
 // 返回操作
 const handleBack = () => {
-  router.push("/alert/template")
+  router.push("/alert/notify/template")
 }
 
 // 监听渠道变化，自动切换内容
