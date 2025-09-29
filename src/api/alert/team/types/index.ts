@@ -55,12 +55,6 @@ export interface GetTeamDetailReq {
   id: number
 }
 
-// 获取团队详情响应
-export interface GetTeamDetailResponse {
-  /** 团队信息 */
-  team: Team
-}
-
 // 删除团队响应
 export interface DeleteTeamResponse {
   /** 是否删除成功 */

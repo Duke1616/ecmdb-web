@@ -15,12 +15,6 @@
           <span>基本信息</span>
         </div>
 
-        <el-form-item prop="team_id" label="所属团队" class="form-item required">
-          <el-select v-model="formData.team_id" placeholder="请选择所属团队" class="form-input" filterable clearable>
-            <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
-          </el-select>
-        </el-form-item>
-
         <el-form-item prop="name" label="工作空间名称" class="form-item required">
           <el-input
             v-model="formData.name"
@@ -30,6 +24,24 @@
             maxlength="50"
             show-word-limit
           />
+        </el-form-item>
+
+        <el-form-item prop="team_id" label="所属团队" class="form-item required">
+          <el-select v-model="formData.team_id" placeholder="请选择所属团队" class="form-input" filterable clearable>
+            <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item prop="template_id" label="通知模版" class="form-item">
+          <el-select
+            v-model="formData.template_id"
+            placeholder="请选择通知模版"
+            class="form-input"
+            filterable
+            clearable
+          >
+            <el-option v-for="template in templates" :key="template.id" :label="template.name" :value="template.id" />
+          </el-select>
         </el-form-item>
       </div>
 
@@ -137,6 +149,8 @@ import { saveWorkspaceApi } from "@/api/alert/workspace"
 import { SaveWorkspaceReq } from "@/api/alert/workspace/types"
 import { listTeamsApi } from "@/api/alert/team"
 import { Team as TeamType } from "@/api/alert/team/types"
+import { listTemplatesApi } from "@/api/alert/template"
+import { ChannelTemplate } from "@/api/alert/template/types"
 
 // 接收父组件传递
 const emits = defineEmits(["closed", "callback"])
@@ -150,6 +164,7 @@ const DEFAULT_FORM_DATA: SaveWorkspaceReq = {
   name: "",
   enabled: true,
   team_id: undefined as any,
+  template_id: undefined as any,
   is_public: true,
   allow_invite: true
 }
@@ -157,9 +172,11 @@ const DEFAULT_FORM_DATA: SaveWorkspaceReq = {
 const formData = ref<SaveWorkspaceReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const teams = ref<TeamType[]>([])
+const templates = ref<ChannelTemplate[]>([])
 
 const formRules: FormRules = {
   team_id: [{ required: true, message: "请选择所属团队", trigger: "change" }],
+  template_id: [{ required: true, message: "请选择通知模版", trigger: "change" }],
   name: [
     { required: true, message: "请输入工作空间名称", trigger: "blur" },
     { min: 2, max: 50, message: "工作空间名称长度为 2-50 个字符", trigger: "blur" }
@@ -177,6 +194,20 @@ const loadTeamsData = async () => {
   } catch (error) {
     console.error("加载团队数据失败:", error)
     teams.value = []
+  }
+}
+
+// 加载模版数据
+const loadTemplatesData = async () => {
+  try {
+    const { data } = await listTemplatesApi({
+      offset: 0,
+      limit: 100
+    })
+    templates.value = data.templates || []
+  } catch (error) {
+    console.error("加载模版数据失败:", error)
+    templates.value = []
   }
 }
 
@@ -226,6 +257,7 @@ const onClosed = () => {
 // 组件挂载时加载数据
 onMounted(() => {
   loadTeamsData()
+  loadTemplatesData()
   // 如果有传入的团队ID，设置为默认值
   if (props.selectedTeamId) {
     formData.value.team_id = props.selectedTeamId

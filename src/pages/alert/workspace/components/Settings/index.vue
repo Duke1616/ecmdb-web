@@ -199,6 +199,8 @@ import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import TeamSelector from "./TeamSelector.vue"
 import TemplateSelector from "./TemplateSelector.vue"
 import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/alert/workspace"
+import { getTeamDetailApi } from "@/api/alert/team"
+import { getTemplateDetailApi } from "@/api/alert/template"
 import type { Workspace, SaveWorkspaceReq } from "@/api/alert/workspace/types"
 
 const props = defineProps<{
@@ -262,18 +264,52 @@ const loadWorkspace = async () => {
       is_public: workspace.value.is_public,
       allow_invite: workspace.value.allow_invite,
       enabled: workspace.value.enabled,
-      team_id: workspace.value.team.id,
-      template_id: workspace.value.template?.id || 0
+      team_id: workspace.value.team_id,
+      template_id: workspace.value.template_id || 0
     })
 
-    // 更新团队和模版信息
-    teamName.value = workspace.value.team?.name || "未知团队"
-    templateName.value = workspace.value.template?.name || "默认模版"
+    // 通过 ID 获取团队和模版详细信息
+    await loadTeamAndTemplateInfo(workspace.value.team_id, workspace.value.template_id)
   } catch (error) {
     console.error("加载工作空间信息失败:", error)
     ElMessage.error("加载工作空间信息失败")
   } finally {
     loading.value = false
+  }
+}
+
+// 加载团队和模版详细信息
+const loadTeamAndTemplateInfo = async (teamId: number, templateId: number) => {
+  try {
+    // 并行加载团队和模版信息
+    const [teamResponse, templateResponse] = await Promise.allSettled([
+      getTeamDetailApi(teamId),
+      templateId ? getTemplateDetailApi(templateId) : Promise.resolve({ data: null })
+    ])
+
+    // 更新团队信息
+    if (teamResponse.status === "fulfilled") {
+      console.log("团队详情数据:", teamResponse.value.data)
+      teamName.value = teamResponse.value.data.name || "未知团队"
+    } else {
+      teamName.value = "未知团队"
+      console.error("加载团队信息失败:", teamResponse.reason)
+    }
+
+    // 更新模版信息
+    if (templateResponse.status === "fulfilled" && templateResponse.value.data) {
+      console.log("模版详情数据:", templateResponse.value.data)
+      templateName.value = templateResponse.value.data.name || "默认模版"
+    } else {
+      templateName.value = "默认模版"
+      if (templateId && templateResponse.status === "rejected") {
+        console.error("加载模版信息失败:", templateResponse.reason)
+      }
+    }
+  } catch (error) {
+    console.error("加载团队和模版信息失败:", error)
+    teamName.value = "未知团队"
+    templateName.value = "默认模版"
   }
 }
 

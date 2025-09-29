@@ -4,22 +4,12 @@ export interface Workspace {
   id: number
   name: string
   enabled: boolean
-  team: Team
-  template: Template
+  team_id: number
+  template_id: number
   is_public: boolean
   allow_invite: boolean
   ctime: string
   utime: string
-}
-
-export interface Team {
-  id: number
-  name: string
-}
-
-export interface Template {
-  id: number
-  name: string
 }
 
 export interface SaveWorkspaceReq {

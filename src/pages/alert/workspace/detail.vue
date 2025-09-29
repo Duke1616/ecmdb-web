@@ -154,7 +154,7 @@
 
         <!-- 成员页面 -->
         <div v-else-if="activeMenu === 'members'" class="members-page">
-          <TeamMembers :team-id="workspace?.team?.id || 0" ref="teamMembersRef" />
+          <TeamMembers :team-id="workspace?.team_id || 0" ref="teamMembersRef" />
         </div>
 
         <!-- 设置页面 -->
@@ -293,9 +293,6 @@ const loadWorkspaceData = async () => {
     // 调用API获取工作空间详情
     const response = await getWorkspaceDetailApi(Number(workspaceId))
     workspace.value = response.data
-
-    // 更新团队名称
-    teamName.value = workspace.value?.team?.name || "未知团队"
   } catch (error) {
     console.error("加载工作空间数据失败:", error)
   }

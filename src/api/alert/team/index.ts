@@ -4,7 +4,7 @@
 
 import instance from "@/common/utils/service"
 import { API_SERVICE } from "@@/utils/service"
-import type { ListTeamsReq, RetrieveTeams, SaveTeamReq, Team, GetTeamDetailResponse, DeleteTeamResponse } from "./types"
+import type { ListTeamsReq, RetrieveTeams, SaveTeamReq, Team, DeleteTeamResponse } from "./types"
 
 /**
  * 获取团队列表
@@ -20,7 +20,7 @@ export const listTeamsApi = (data: ListTeamsReq) => {
  * 获取团队详情
  */
 export const getTeamDetailApi = (id: number) => {
-  return instance.get<GetTeamDetailResponse>({
+  return instance.get<Team>({
     url: `${API_SERVICE.ALERT}/team/detail/${id}`
   })
 }
