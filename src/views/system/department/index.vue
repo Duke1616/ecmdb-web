@@ -17,7 +17,7 @@
           <div class="card-header">
             <div class="header-top">
               <h3 class="card-title">部门列表</h3>
-              <span class="department-count">{{ treeData.length }} 个部门</span>
+              <span class="department-count">{{ departmentCount }} 个部门</span>
             </div>
 
             <div class="header-actions">
@@ -50,7 +50,7 @@
             <el-scrollbar class="tree-scrollbar">
               <!-- 当有数据时显示树形结构 -->
               <el-tree
-                v-if="treeData.length > 0"
+                v-if="departmentCount > 0"
                 ref="treeRef"
                 :data="treeData"
                 show-checkbox
@@ -133,7 +133,7 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted, ref, watch } from "vue"
+import { nextTick, onMounted, ref, watch, computed } from "vue"
 import { Search, Edit, Delete, RefreshRight, Plus, FolderAdd, FolderOpened, Folder } from "@element-plus/icons-vue"
 import DepartmentForm from "./form.vue"
 import Tip from "./tip.vue"
@@ -264,11 +264,17 @@ const filterNode = (value: string, data: Tree) => {
 // 部门树数据
 const treeData = ref<department[]>([])
 
+// 安全的部门数量计算
+const departmentCount = computed(() => {
+  return treeData.value?.length || 0
+})
+
 // 刷新部门数据
 const refreshDepartmentData = async () => {
   try {
     const { data } = await listDepartmentTreeApi()
-    treeData.value = data
+    // 确保 data 是数组，防止 null 或 undefined
+    treeData.value = Array.isArray(data) ? data : []
 
     await nextTick()
 
