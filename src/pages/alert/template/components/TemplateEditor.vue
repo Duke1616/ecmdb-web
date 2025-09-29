@@ -158,11 +158,15 @@ const handleThemeChange = (theme: string) => {
   flex: 1;
   display: flex;
   min-height: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .editor-panel {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 // 模板编辑器
@@ -171,15 +175,25 @@ const handleThemeChange = (theme: string) => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  width: 100%;
+  overflow: hidden;
 
   :deep(.editor) {
     flex: 1;
     min-height: 0;
+    width: 100%;
+    overflow: hidden;
   }
 
   :deep(.cm-editor) {
     height: 100% !important;
+    width: 100% !important;
     font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+    overflow: hidden;
+  }
+
+  :deep(.cm-scroller) {
+    overflow: auto !important;
   }
 }
 
