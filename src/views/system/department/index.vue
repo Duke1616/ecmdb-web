@@ -48,7 +48,9 @@
           <!-- 树形菜单区域 -->
           <div class="tree-container">
             <el-scrollbar class="tree-scrollbar">
+              <!-- 当有数据时显示树形结构 -->
               <el-tree
+                v-if="treeData.length > 0"
                 ref="treeRef"
                 :data="treeData"
                 show-checkbox
@@ -61,6 +63,14 @@
                 :filter-node-method="filterNode"
                 class="department-tree"
               />
+              <!-- 当没有数据时显示空状态 -->
+              <div v-else class="empty-tree-state">
+                <el-icon class="empty-icon" size="48">
+                  <FolderOpened />
+                </el-icon>
+                <p class="empty-text">暂无部门数据</p>
+                <p class="empty-hint">点击上方"添加部门"按钮创建第一个部门</p>
+              </div>
             </el-scrollbar>
           </div>
         </el-card>
@@ -533,6 +543,36 @@ onMounted(() => {
       .el-checkbox {
         margin-right: calc(0.4rem + 0.1vw);
       }
+    }
+  }
+
+  .empty-tree-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+    padding: calc(1rem + 0.2vw);
+    text-align: center;
+
+    .empty-icon {
+      color: #d1d5db;
+      margin-bottom: calc(0.8rem + 0.2vw);
+    }
+
+    .empty-text {
+      margin: 0 0 calc(0.4rem + 0.1vw) 0;
+      font-size: calc(0.8rem + 0.1vw);
+      font-weight: 500;
+      color: #6b7280;
+    }
+
+    .empty-hint {
+      margin: 0;
+      font-size: calc(0.7rem + 0.1vw);
+      color: #9ca3af;
+      line-height: 1.4;
     }
   }
 }
