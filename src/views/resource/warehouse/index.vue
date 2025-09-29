@@ -174,7 +174,7 @@ useModelData()
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  height: 100%;
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
