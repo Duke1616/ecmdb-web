@@ -20,7 +20,6 @@ export interface Team {
 export interface Template {
   id: number
   name: string
-  type: string
 }
 
 export interface SaveWorkspaceReq {
@@ -28,6 +27,7 @@ export interface SaveWorkspaceReq {
   name: string
   enabled: boolean
   team_id: number
+  template_id?: number
   is_public: boolean
   allow_invite: boolean
 }

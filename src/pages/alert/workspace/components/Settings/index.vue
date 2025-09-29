@@ -64,15 +64,15 @@
               <!-- 绑定消息通知模版 -->
               <el-col :span="12">
                 <el-form-item label="消息通知模版">
-                  <div class="template-info clickable" @click="handleEditTemplate">
-                    <div class="template-avatar">
+                  <div class="team-info clickable" @click="handleEditTemplate">
+                    <div class="team-avatar">
                       <el-icon><Message /></el-icon>
                     </div>
-                    <div class="template-details">
-                      <div class="template-name">{{ templateName }}</div>
-                      <div class="template-desc">消息通知模版配置</div>
+                    <div class="team-details">
+                      <div class="team-name">{{ templateName }}</div>
+                      <div class="team-desc">消息通知模版配置</div>
                     </div>
-                    <div class="template-status">
+                    <div class="team-status">
                       <el-tag type="info" effect="plain">已配置</el-tag>
                     </div>
                     <div class="edit-icon">
@@ -180,6 +180,13 @@
 
     <!-- 团队选择抽屉 -->
     <TeamSelector v-model="teamDialogVisible" :current-team-id="formData.team_id" @confirm="handleTeamConfirm" />
+
+    <!-- 模版选择抽屉 -->
+    <TemplateSelector
+      v-model="templateDialogVisible"
+      :current-template-id="formData.template_id"
+      @confirm="handleTemplateConfirm"
+    />
   </PageContainer>
 </template>
 
@@ -190,6 +197,7 @@ import { Check, Monitor, User } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import TeamSelector from "./TeamSelector.vue"
+import TemplateSelector from "./TemplateSelector.vue"
 import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/alert/workspace"
 import type { Workspace, SaveWorkspaceReq } from "@/api/alert/workspace/types"
 
@@ -214,6 +222,9 @@ const templateName = ref<string>("")
 // 团队选择相关
 const teamDialogVisible = ref(false)
 
+// 模版选择相关
+const templateDialogVisible = ref(false)
+
 // 表单数据
 const formData = reactive<SaveWorkspaceReq>({
   id: 0,
@@ -221,7 +232,8 @@ const formData = reactive<SaveWorkspaceReq>({
   is_public: false,
   allow_invite: false,
   enabled: true,
-  team_id: 0
+  team_id: 0,
+  template_id: 0
 })
 
 // 表单验证规则
@@ -250,7 +262,8 @@ const loadWorkspace = async () => {
       is_public: workspace.value.is_public,
       allow_invite: workspace.value.allow_invite,
       enabled: workspace.value.enabled,
-      team_id: workspace.value.team.id
+      team_id: workspace.value.team.id,
+      template_id: workspace.value.template?.id || 0
     })
 
     // 更新团队和模版信息
@@ -296,8 +309,7 @@ const handleEditTeam = () => {
 
 // 编辑模版
 const handleEditTemplate = () => {
-  ElMessage.info("编辑模版功能待实现")
-  // TODO: 实现模版选择功能
+  templateDialogVisible.value = true
 }
 
 // 处理团队选择确认
@@ -317,6 +329,26 @@ const handleTeamConfirm = async (teamId: number, selectedTeamName: string) => {
   } catch (error) {
     console.error("修改团队失败:", error)
     ElMessage.error("修改团队失败")
+  }
+}
+
+// 处理模版选择确认
+const handleTemplateConfirm = async (templateId: number, selectedTemplateName: string) => {
+  try {
+    // 更新表单数据
+    formData.template_id = templateId
+    templateName.value = selectedTemplateName
+
+    // 保存设置
+    await saveWorkspaceApi(formData)
+
+    ElMessage.success("模版修改成功")
+
+    // 通知父组件刷新
+    emit("refresh")
+  } catch (error) {
+    console.error("修改模版失败:", error)
+    ElMessage.error("修改模版失败")
   }
 }
 
@@ -616,80 +648,6 @@ watch(
 
         .el-switch {
           flex-shrink: 0;
-        }
-      }
-
-      // 消息通知模版样式
-      .template-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 20px;
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        height: 100%;
-        width: 100%;
-        position: relative;
-        box-sizing: border-box;
-
-        &.clickable {
-          cursor: pointer;
-          transition: all 0.2s ease;
-
-          &:hover {
-            border-color: #8b5cf6;
-            background: #faf5ff;
-            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
-          }
-        }
-
-        .template-avatar {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 48px;
-          height: 48px;
-          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-          border-radius: 10px;
-          color: #ffffff;
-          font-size: 20px;
-          flex-shrink: 0;
-        }
-
-        .template-details {
-          flex: 1;
-
-          .template-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 4px;
-          }
-
-          .template-desc {
-            font-size: 13px;
-            color: #6b7280;
-            line-height: 1.4;
-          }
-        }
-
-        .template-status {
-          flex-shrink: 0;
-        }
-
-        .edit-icon {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          color: #6b7280;
-          font-size: 16px;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        &.clickable:hover .edit-icon {
-          opacity: 1;
         }
       }
     }

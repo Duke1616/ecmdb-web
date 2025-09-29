@@ -69,6 +69,28 @@
                 </el-col>
               </el-row>
 
+              <el-row :gutter="20">
+                <el-col :span="12">
+                  <el-form-item label="工作空间" prop="workspace_ids">
+                    <el-select
+                      v-model="formData.workspace_ids"
+                      placeholder="请选择工作空间"
+                      style="width: 100%"
+                      multiple
+                      collapse-tags
+                      collapse-tags-tooltip
+                    >
+                      <el-option
+                        v-for="workspace in workspaces"
+                        :key="workspace.id"
+                        :label="workspace.name"
+                        :value="workspace.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+
               <el-form-item label="规则描述" prop="description">
                 <el-input
                   v-model="formData.description"
@@ -161,6 +183,7 @@ import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import { getRuleApi, updateRuleApi, listRuleGroupsApi } from "@/api/alert/rule"
 import { listDataSourceByTypeApi } from "@/api/alert/datasource"
+import { listWorkspacesApi } from "@/api/alert/workspace"
 import {
   ALERT_LEVEL_OPTIONS,
   EVAL_INTERVAL_OPTIONS,
@@ -168,6 +191,7 @@ import {
   type UpdateRuleReq
 } from "@/api/alert/rule/types/rule"
 import type { Datasource, DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
+import type { Workspace } from "@/api/alert/workspace/types"
 import type { FormInstance, FormRules } from "element-plus"
 
 const route = useRoute()
@@ -183,6 +207,9 @@ const ruleGroups = ref<RuleGroup[]>([])
 
 // 数据源列表
 const datasources = ref<Datasource[]>([])
+
+// 工作空间列表
+const workspaces = ref<Workspace[]>([])
 
 // 输入框数据
 const externalLabelsInput = ref("")
@@ -211,6 +238,7 @@ const formRules: FormRules = {
   ],
   group_id: [{ required: true, message: "请选择规则组", trigger: "change" }],
   level: [{ required: true, message: "请选择告警级别", trigger: "change" }],
+  workspace_ids: [{ required: true, message: "请选择工作空间", trigger: "change" }],
   datasource_type: [{ required: true, message: "请选择数据源类型", trigger: "change" }],
   datasource_ids: [{ required: true, message: "请选择数据源", trigger: "change" }],
   prom_ql: [{ required: true, message: "请输入PromQL查询语句", trigger: "blur" }],
@@ -250,6 +278,16 @@ const loadDatasources = async (type: DatasourceTypeEnum) => {
     datasources.value = response.data
   } catch (error) {
     console.error("加载数据源列表失败:", error)
+  }
+}
+
+// 加载工作空间列表
+const loadWorkspaces = async () => {
+  try {
+    const response = await listWorkspacesApi({ offset: 0, limit: 0 })
+    workspaces.value = response.data.workspaces
+  } catch (error) {
+    console.error("加载工作空间列表失败:", error)
   }
 }
 
@@ -339,6 +377,7 @@ onMounted(() => {
   const ruleId = route.params.id
   if (ruleId) {
     loadRuleGroups()
+    loadWorkspaces()
     loadRuleDetail(Number(ruleId))
   } else {
     ElMessage.error("规则ID不存在")
