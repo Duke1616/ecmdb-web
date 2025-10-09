@@ -322,7 +322,7 @@ const handleSave = async (): Promise<void> => {
 
 // 返回操作
 const handleBack = () => {
-  router.push("/alert/notify/template")
+  router.go(-1)
 }
 
 // 监听渠道变化，自动切换内容

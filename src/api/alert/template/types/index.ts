@@ -59,10 +59,11 @@ export interface UpdateTemplateResp {
 export interface ListTemplatesReq {
   offset: number
   limit: number
-  channel?: string
-  keyword?: string
 }
 
+export interface ListTemplatesByChannelReq extends ListTemplatesReq {
+  channel: string
+}
 // 模板列表响应
 export interface ListTemplatesResp {
   templates: ChannelTemplate[]

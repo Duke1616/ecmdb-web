@@ -14,7 +14,8 @@ import type {
   PublishTemplateReq,
   PublishTemplateResp,
   UpdateVersionReq,
-  UpdateVersionResp
+  UpdateVersionResp,
+  ListTemplatesByChannelReq
 } from "./types"
 
 // 创建模板
@@ -37,6 +38,14 @@ export const updateTemplateApi = (data: UpdateTemplateReq) => {
 export const listTemplatesApi = (data: ListTemplatesReq) => {
   return instance.post<ListTemplatesResp>({
     url: `${API_SERVICE.ALERT}/template/list`,
+    data
+  })
+}
+
+// 获取模板列表
+export const listTemplatesByChannelApi = (data: ListTemplatesByChannelReq) => {
+  return instance.post<ListTemplatesResp>({
+    url: `${API_SERVICE.ALERT}/template/list/by_channel`,
     data
   })
 }
