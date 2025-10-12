@@ -14,6 +14,7 @@ import {
   updateConfigStatusApi
 } from "@/api/alert/escalation"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
+import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
 
 export function useEscalationConfig() {
   const router = useRouter()
@@ -55,7 +56,7 @@ export function useEscalationConfig() {
       enabled: data.enabled ?? true,
       timeout: data.timeout || 300,
       triggers: data.triggers || [],
-      trigger_logic: data.trigger_logic || { operator: "AND", conditions: [] },
+      trigger_logic: data.trigger_logic || { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" },
       steps: data.steps || []
     })
     await loadConfigs()

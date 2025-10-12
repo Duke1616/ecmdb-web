@@ -145,10 +145,21 @@ export const alertRoutes: RouteRecordRaw[] = [
           {
             path: "/alert/escalation/config",
             component: () => import("@/pages/alert/escalation/index.vue"),
-            name: "AlertEscalationConfig",
+            name: "EscalationConfig",
             meta: {
               title: "升级配置",
               svgIcon: "alert_manager",
+              platforms: ["alert"]
+            }
+          },
+          {
+            path: "/alert/escalation/create",
+            component: () => import("@/pages/alert/escalation/create.vue"),
+            name: "EscalationConfigCreate",
+            meta: {
+              hidden: true,
+              title: "创建升级配置",
+              svgIcon: "component",
               platforms: ["alert"]
             }
           },

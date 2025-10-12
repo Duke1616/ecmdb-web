@@ -136,9 +136,9 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const submitLoading = ref(false)
 const formData = ref<CreateStepReq>({
-  config_id: 0,
   level: 1,
   template_set_id: 0,
+  step_template_id: 0,
   delay: 0,
   max_retries: 3,
   retry_interval: 60,

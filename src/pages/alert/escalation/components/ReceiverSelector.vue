@@ -120,7 +120,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue"
 import { Search, Close, User, UserFilled, OfficeBuilding, Clock, Loading } from "@element-plus/icons-vue"
-import type { ReceiverRef } from "@/api/alert/escalation/types"
+import type { ReceiverRef, ReceiverType } from "@/api/alert/escalation/types"
 import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
 import { listUsersApi } from "@/api/user"
 import { listTeamsApi } from "@/api/alert/team"
@@ -134,7 +134,7 @@ import { usePagination } from "@/common/composables/usePagination"
 
 interface Props {
   modelValue: ReceiverRef[]
-  defaultReceiverType?: string
+  defaultReceiverType?: ReceiverType
 }
 
 interface Emits {
@@ -334,7 +334,7 @@ const getReceiverTypeLabel = (type: string) => {
 }
 
 // 切换接收者类型
-const switchReceiverType = async (type: string) => {
+const switchReceiverType = async (type: ReceiverType) => {
   currentReceiverType.value = type
   filterInput.value = ""
 

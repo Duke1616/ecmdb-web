@@ -87,6 +87,7 @@ import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
+import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
 import {
   listConfigsApi,
   createConfigApi,
@@ -122,7 +123,7 @@ const formData = ref<CreateConfigReq>({
   enabled: true,
   timeout: 300,
   triggers: [],
-  trigger_logic: { operator: "AND", conditions: [] },
+  trigger_logic: { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" },
   steps: [],
   created_by: "admin"
 })
@@ -225,21 +226,7 @@ const loadConfigs = async () => {
 
 // 创建配置
 const handleCreate = () => {
-  isEdit.value = false
-  currentEditId.value = null
-  formData.value = {
-    biz_id: 1,
-    key: "",
-    name: "",
-    description: "",
-    enabled: true,
-    timeout: 300,
-    triggers: [],
-    trigger_logic: { operator: "AND", conditions: [] },
-    steps: [],
-    created_by: "admin"
-  }
-  dialogVisible.value = true
+  router.push({ name: "EscalationConfigCreate" })
 }
 
 // 编辑配置

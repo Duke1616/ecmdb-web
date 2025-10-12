@@ -25,6 +25,7 @@ import type {
   UpdateStepTemplateReq,
   GetStepTemplateResp,
   ListStepTemplatesReq,
+  ListStepTemplatesByIDsReq,
   ListStepTemplatesResp
 } from "./types"
 
@@ -140,6 +141,13 @@ export const getStepTemplateApi = (id: number) => {
 export const listStepTemplatesApi = (data: ListStepTemplatesReq) => {
   return instance.post<ListStepTemplatesResp>({
     url: `${API_SERVICE.ALERT}/escalation/step_template/list`,
+    data
+  })
+}
+
+export const listStepTemplatesByIDsApi = (data: ListStepTemplatesByIDsReq) => {
+  return instance.post<ListStepTemplatesResp>({
+    url: `${API_SERVICE.ALERT}/escalation/step_template/list/by_ids`,
     data
   })
 }
