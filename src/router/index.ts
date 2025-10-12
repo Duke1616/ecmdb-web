@@ -2,7 +2,7 @@ import { type RouteRecordRaw, createRouter } from "vue-router"
 import { flatMultiLevelRoutes } from "./helper"
 import { registerNavigationGuard } from "@/router/guard"
 import { routerConfig } from "@/router/config"
-// import { alertRoutes } from "./modules/alert"
+import { alertRoutes } from "./modules/alert"
 
 const Layouts = () => import("@/layouts/index.vue")
 const Terminal = () => import("@/views/terminal/index.vue")
@@ -95,8 +95,8 @@ export const constantRoutes: RouteRecordRaw[] = [
       platforms: ["change"],
       hidden: true
     }
-  }
-  // ...alertRoutes
+  },
+  ...alertRoutes
 ]
 
 export const defaultRoutes: RouteRecordRaw[] = [

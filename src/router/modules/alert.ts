@@ -132,6 +132,48 @@ export const alertRoutes: RouteRecordRaw[] = [
             }
           }
         ]
+      },
+      {
+        path: "/alert/escalation",
+        redirect: "/alert/escalation/config",
+        meta: {
+          title: "消息升级",
+          svgIcon: "alert_manager",
+          platforms: ["alert"]
+        },
+        children: [
+          {
+            path: "/alert/escalation/config",
+            component: () => import("@/pages/alert/escalation/index.vue"),
+            name: "AlertEscalationConfig",
+            meta: {
+              title: "升级配置",
+              svgIcon: "alert_manager",
+              platforms: ["alert"]
+            }
+          },
+          {
+            path: "/alert/escalation/steps/:id",
+            component: () => import("@/pages/alert/escalation/steps.vue"),
+            name: "AlertEscalationSteps",
+            meta: {
+              hidden: true,
+              title: "升级步骤",
+              svgIcon: "component",
+              platforms: ["alert"]
+            }
+          },
+          {
+            path: "/alert/escalation/templates",
+            component: () => import("@/pages/alert/escalation/templates.vue"),
+            name: "AlertEscalationTemplates",
+            meta: {
+              title: "步骤模板",
+              svgIcon: "template",
+              platforms: ["alert"]
+            }
+          }
+        ]
       }
       // {
       //   path: "/alert/manager",
