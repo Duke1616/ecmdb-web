@@ -391,6 +391,7 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 8px;
     align-items: flex-start;
+    justify-content: center;
   }
 
   .channel-item {
@@ -440,6 +441,7 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 8px;
     align-items: flex-start;
+    justify-content: center;
   }
 
   .receiver-item {
