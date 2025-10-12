@@ -168,6 +168,8 @@ import type { FormInstance, FormRules } from "element-plus"
 import type { CreateStepTemplateReq, ReceiverRef } from "@/api/alert/escalation/types"
 import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
 import { getChannelOptions } from "../../template/config/channels"
+import { FORM_RULES } from "../config/constants"
+import { getReceiverTypeLabel, getReceiverTypeTagType } from "../utils"
 import ReceiverSelector from "./ReceiverSelector.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
@@ -195,7 +197,7 @@ const receiverColumns = [
   {
     prop: "type",
     label: "类型",
-    width: 100,
+    width: 150,
     slot: "receiverType"
   },
   {
@@ -206,14 +208,7 @@ const receiverColumns = [
 ]
 
 // 表单验证规则
-const formRules: FormRules = {
-  name: [
-    { required: true, message: "请输入模板名称", trigger: "blur" },
-    { min: 1, max: 50, message: "模板名称长度在 1 到 50 个字符", trigger: "blur" }
-  ],
-  channels: [{ required: true, message: "请至少添加一个通知渠道", trigger: "change" }],
-  receivers: [{ required: true, message: "请至少添加一个接收者", trigger: "change" }]
-}
+const formRules: FormRules = FORM_RULES.template
 
 // 切换渠道选择
 const toggleChannel = (channelValue: string) => {
@@ -227,28 +222,6 @@ const toggleChannel = (channelValue: string) => {
     currentChannels.push(channelValue)
   }
   modelValue.value.channels = currentChannels
-}
-
-// 获取接收者类型标签
-const getReceiverTypeLabel = (type: string) => {
-  const typeMap = {
-    [RECEIVER_TYPES.USER]: "用户",
-    [RECEIVER_TYPES.TEAM]: "团队",
-    [RECEIVER_TYPES.DEPARTMENT]: "部门",
-    [RECEIVER_TYPES.ONCALL]: "排班"
-  }
-  return typeMap[type as keyof typeof typeMap] || "未知类型"
-}
-
-// 获取接收者类型标签颜色
-const getReceiverTypeTagType = (type: string): "primary" | "success" | "warning" | "info" | "danger" => {
-  const typeMap = {
-    [RECEIVER_TYPES.USER]: "primary" as const,
-    [RECEIVER_TYPES.TEAM]: "success" as const,
-    [RECEIVER_TYPES.DEPARTMENT]: "warning" as const,
-    [RECEIVER_TYPES.ONCALL]: "info" as const
-  }
-  return typeMap[type as keyof typeof typeMap] || "info"
 }
 
 // 处理表格选择变化

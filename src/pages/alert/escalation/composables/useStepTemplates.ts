@@ -16,6 +16,7 @@ import type { StepTemplateVO, CreateStepTemplateReq } from "@/api/alert/escalati
 export function useStepTemplates() {
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
+  // 响应式数据
   const templates = ref<StepTemplateVO[]>([])
   const loading = ref(false)
 
@@ -23,13 +24,12 @@ export function useStepTemplates() {
   const loadTemplates = async () => {
     loading.value = true
     try {
-      const response = await listStepTemplatesApi({
+      const { data } = await listStepTemplatesApi({
         offset: (paginationData.currentPage - 1) * paginationData.pageSize,
         limit: paginationData.pageSize
       })
-
-      templates.value = response.data.templates || []
-      paginationData.total = response.data.total || 0
+      templates.value = data.templates || []
+      paginationData.total = data.total || 0
     } finally {
       loading.value = false
     }
@@ -43,21 +43,15 @@ export function useStepTemplates() {
   }
 
   // 更新模板
-  const updateTemplate = async (id: number, data: Partial<CreateStepTemplateReq>) => {
-    await updateStepTemplateApi({
-      id,
-      name: data.name || "",
-      description: data.description || "",
-      channels: data.channels || [],
-      receivers: data.receivers || []
-    })
+  const updateTemplate = async (data: CreateStepTemplateReq & { id: number }) => {
+    await updateStepTemplateApi(data)
     await loadTemplates()
     return true
   }
 
   // 删除模板
   const deleteTemplate = async (template: StepTemplateVO) => {
-    await ElMessageBox.confirm(`确定要删除模板 "${template.name}" 吗？`, "确认删除", {
+    await ElMessageBox.confirm(`确定删除模板 "${template.name}" 吗？`, "提示", {
       confirmButtonText: "确定",
       cancelButtonText: "取消",
       type: "warning"
@@ -69,9 +63,12 @@ export function useStepTemplates() {
   }
 
   return {
+    // 数据
     templates,
     loading,
     paginationData,
+
+    // 方法
     loadTemplates,
     createTemplate,
     updateTemplate,

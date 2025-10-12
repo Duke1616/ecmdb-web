@@ -116,32 +116,33 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue"
-import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus, Bell, User } from "@element-plus/icons-vue"
 import type { StepTemplateVO, CreateStepTemplateReq } from "@/api/alert/escalation/types"
-import {
-  listStepTemplatesApi,
-  createStepTemplateApi,
-  updateStepTemplateApi,
-  deleteStepTemplateApi
-} from "@/api/alert/escalation"
-import { usePagination } from "@/common/composables/usePagination"
 import { getChannelLabel } from "../template/config/channels"
-import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
-import { formatTimestamp } from "./utils"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import EscalationStepTemplateForm from "./components/EscalationStepTemplateForm.vue"
+import { useStepTemplates } from "./composables/useStepTemplates"
+import { formatTimestamp, getReceiverTypeLabel, getReceiverTypeTagType, getReceiverTooltipContent } from "./utils"
+import { TABLE_COLUMNS, TABLE_PROPS, OPERATE_ITEMS } from "./config/constants"
 
-// 分页
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+// 使用组合式函数
+const {
+  templates,
+  loading,
+  paginationData,
+  loadTemplates,
+  createTemplate,
+  updateTemplate,
+  deleteTemplate,
+  handleCurrentChange,
+  handleSizeChange
+} = useStepTemplates()
 
-// 响应式数据
-const templates = ref<StepTemplateVO[]>([])
-const loading = ref(false)
+// 抽屉相关
 const drawerVisible = ref(false)
 const submitLoading = ref(false)
 const formData = ref<CreateStepTemplateReq>({
@@ -161,88 +162,12 @@ const currentEditId = ref<number | null>(null)
 // 计算属性
 const drawerTitle = computed(() => (isEdit.value ? "编辑模板" : "创建模板"))
 
-// 获取接收者类型标签
-const getReceiverTypeLabel = (type: string) => {
-  const typeMap = {
-    [RECEIVER_TYPES.USER]: "用户",
-    [RECEIVER_TYPES.TEAM]: "团队",
-    [RECEIVER_TYPES.DEPARTMENT]: "部门",
-    [RECEIVER_TYPES.ONCALL]: "排班"
-  }
-  return typeMap[type as keyof typeof typeMap] || "未知类型"
-}
-
-// 获取接收者类型标签颜色
-const getReceiverTypeTagType = (type: string): "primary" | "success" | "warning" | "info" | "danger" => {
-  const typeMap = {
-    [RECEIVER_TYPES.USER]: "primary" as const,
-    [RECEIVER_TYPES.TEAM]: "success" as const,
-    [RECEIVER_TYPES.DEPARTMENT]: "warning" as const,
-    [RECEIVER_TYPES.ONCALL]: "info" as const
-  }
-  return typeMap[type as keyof typeof typeMap] || "info"
-}
-
-// 获取接收者tooltip内容
-const getReceiverTooltipContent = (receiver: any) => {
-  const typeLabel = getReceiverTypeLabel(receiver.type)
-  const metadata = receiver.metadata || {}
-
-  let content = `接收者: ${receiver.display_name}\n类型: ${typeLabel}`
-
-  // 根据不同类型添加额外信息
-  if (receiver.type === RECEIVER_TYPES.USER && metadata.email) {
-    content += `\n邮箱: ${metadata.email}`
-  } else if (receiver.type === RECEIVER_TYPES.TEAM && metadata.description) {
-    content += `\n描述: ${metadata.description}`
-  } else if (receiver.type === RECEIVER_TYPES.DEPARTMENT && metadata.path) {
-    content += `\n路径: ${metadata.path}`
-  } else if (receiver.type === RECEIVER_TYPES.ONCALL && metadata.schedule) {
-    content += `\n排班: ${metadata.schedule}`
-  }
-
-  return content
-}
-
-// 表格列配置
-const tableColumns = [
-  {
-    prop: "templateInfo",
-    label: "模板信息",
-    slot: "templateInfo"
-  },
-  {
-    prop: "details",
-    label: "详情信息",
-    minWidth: 300,
-    slot: "details"
-  },
-  {
-    prop: "channels",
-    label: "通知渠道",
-    minWidth: 200,
-    slot: "channels"
-  },
-  {
-    prop: "receivers",
-    label: "接收者",
-    minWidth: 260,
-    slot: "receivers"
-  }
-]
-
-// 表格属性
-const tableProps = {
-  height: "calc(100vh - 200px)"
-}
+// 表格配置
+const tableColumns = TABLE_COLUMNS
+const tableProps = TABLE_PROPS
 
 // 获取操作按钮配置
-const getOperateItems = (_template: StepTemplateVO) => {
-  return [
-    { name: "编辑", code: "edit", type: "primary" },
-    { name: "删除", code: "delete", type: "danger" }
-  ]
-}
+const getOperateItems = (_template: StepTemplateVO) => OPERATE_ITEMS.template
 
 // 操作事件处理
 const operateEvent = (template: StepTemplateVO, action: string) => {
@@ -255,22 +180,6 @@ const operateEvent = (template: StepTemplateVO, action: string) => {
       break
     default:
       ElMessage.info(`未知操作: ${action}`)
-  }
-}
-
-// 加载模板数据
-const loadTemplates = async () => {
-  loading.value = true
-  try {
-    const response = await listStepTemplatesApi({
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
-    })
-
-    templates.value = response.data.templates || []
-    paginationData.total = response.data.total || 0
-  } finally {
-    loading.value = false
   }
 }
 
@@ -305,14 +214,7 @@ const handleEdit = (template: StepTemplateVO) => {
 
 // 删除模板
 const handleDelete = async (template: StepTemplateVO) => {
-  await ElMessageBox.confirm(`确定要删除模板 "${template.name}" 吗？`, "确认删除", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-
-  await deleteStepTemplateApi(template.id)
-  await loadTemplates()
+  await deleteTemplate(template)
 }
 
 // 提交表单
@@ -327,20 +229,15 @@ const handleSubmit = async () => {
   try {
     if (isEdit.value && currentEditId.value) {
       // 更新
-      await updateStepTemplateApi({
+      await updateTemplate({
         id: currentEditId.value,
-        name: formData.value.name,
-        description: formData.value.description,
-        channels: formData.value.channels,
-        receivers: formData.value.receivers
+        ...formData.value
       })
     } else {
       // 创建
-      await createStepTemplateApi(formData.value)
+      await createTemplate(formData.value)
     }
-
     drawerVisible.value = false
-    await loadTemplates()
   } finally {
     submitLoading.value = false
   }
