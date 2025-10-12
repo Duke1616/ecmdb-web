@@ -147,7 +147,8 @@ import { Plus, Delete, DocumentAdd } from "@element-plus/icons-vue"
 import { addItemApi, addItemsApi, deleteItemsApi, deleteAllItemsApi, getTemplateSetApi } from "@/api/alert/template_set"
 import { listTemplatesByChannelApi } from "@/api/alert/template"
 import type { TemplateSetItem, AddItemReq } from "@/api/alert/template_set/types"
-import type { ChannelTemplate } from "@/api/alert/template/types"
+import type { ChannelTemplate, ChannelType } from "@/api/alert/template/types"
+import { DEFAULT_CHANNEL_TYPE } from "@/api/alert/template/types"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
@@ -177,7 +178,7 @@ const batchAddSubmitLoading = ref(false)
 const addFormRef = ref()
 const addFormData = ref<AddItemReq>({
   set_id: 0,
-  channel: "",
+  channel: DEFAULT_CHANNEL_TYPE,
   template_id: undefined
 })
 
@@ -236,7 +237,7 @@ const loadTemplateSet = async () => {
 }
 
 // 加载可用模板 - 按渠道获取
-const loadTemplates = async (channel?: string) => {
+const loadTemplates = async (channel?: ChannelType) => {
   if (!channel) {
     availableTemplates.value = []
     return
@@ -280,7 +281,7 @@ const handleAddItem = () => {
   const setId = Number(route.params.id)
   addFormData.value = {
     set_id: setId,
-    channel: "",
+    channel: DEFAULT_CHANNEL_TYPE,
     template_id: undefined
   }
   availableTemplates.value = [] // 清空模板列表
@@ -295,7 +296,7 @@ const handleBatchAddItem = () => {
 }
 
 // 渠道变化处理
-const handleChannelChange = (channel: string) => {
+const handleChannelChange = (channel: ChannelType) => {
   addFormData.value.template_id = undefined // 重置模板选择
   loadTemplates(channel) // 按渠道加载模板
 }

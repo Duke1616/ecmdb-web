@@ -1,3 +1,15 @@
+// 通知渠道枚举
+export enum CHANNEL_TYPES {
+  EMAIL = "EMAIL",
+  WECHAT = "WECHAT",
+  FEISHU_CARD = "FEISHU_CARD"
+}
+
+export type ChannelType = CHANNEL_TYPES | ""
+
+// 默认渠道类型
+export const DEFAULT_CHANNEL_TYPE = "" as const
+
 // 模板版本
 export interface TemplateVersion {
   id: number
@@ -16,7 +28,7 @@ export interface ChannelTemplate {
   ownerId: number
   name: string
   description: string
-  channel: string
+  channel: ChannelType
   businessType: number
   activeVersionId: number
   ctime: number
@@ -29,7 +41,7 @@ export interface CreateTemplateReq {
   ownerId: number
   name: string
   description: string
-  channel: string
+  channel: ChannelType
   version: {
     name: string
     content: string
@@ -62,7 +74,7 @@ export interface ListTemplatesReq {
 }
 
 export interface ListTemplatesByChannelReq extends ListTemplatesReq {
-  channel: string
+  channel: ChannelType
 }
 // 模板列表响应
 export interface ListTemplatesResp {

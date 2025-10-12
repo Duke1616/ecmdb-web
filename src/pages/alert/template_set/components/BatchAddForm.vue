@@ -130,7 +130,8 @@ import { computed } from "vue"
 import { useRoute } from "vue-router"
 import { Plus, Delete, List, Check, DocumentAdd } from "@element-plus/icons-vue"
 import type { AddItemReq } from "@/api/alert/template_set/types"
-import type { ChannelTemplate } from "@/api/alert/template/types"
+import type { ChannelTemplate, ChannelType } from "@/api/alert/template/types"
+import { DEFAULT_CHANNEL_TYPE } from "@/api/alert/template/types"
 import { listTemplatesByChannelApi } from "@/api/alert/template"
 import { getChannelOptions } from "../../template/config/channels"
 
@@ -160,7 +161,7 @@ const addBatchItem = () => {
   const setId = Number(route.params.id)
   modelValue.value.push({
     set_id: setId,
-    channel: "",
+    channel: DEFAULT_CHANNEL_TYPE,
     template_id: undefined
   })
   batchTemplates.value[index] = []
@@ -189,7 +190,7 @@ const removeBatchItem = (index: number) => {
 }
 
 // 批量渠道变化处理
-const handleBatchChannelChange = async (index: number, channel: string) => {
+const handleBatchChannelChange = async (index: number, channel: ChannelType) => {
   modelValue.value[index].template_id = undefined
 
   try {

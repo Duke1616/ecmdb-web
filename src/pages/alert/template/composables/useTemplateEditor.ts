@@ -4,6 +4,8 @@
 import { ref, computed } from "vue"
 import { ElMessage } from "element-plus"
 import { formatJsonContent } from "../utils"
+import type { ChannelType } from "@/api/alert/template/types"
+import { CHANNEL_TYPES } from "@/api/alert/template/types"
 import {
   getEditorLanguage as getChannelEditorLanguage,
   getPreviewMode as getChannelPreviewMode,
@@ -23,28 +25,28 @@ export function useTemplateEditor() {
 
   // 计算属性：是否为 JSON 模板
   const isJsonTemplate = computed(() => {
-    return (channel: string) => {
+    return (channel: ChannelType) => {
       return isChannelType(channel, "json")
     }
   })
 
   // 计算属性：是否为 HTML 模板
   const isHtmlTemplate = computed(() => {
-    return (channel: string) => {
+    return (channel: ChannelType) => {
       return isChannelType(channel, "html")
     }
   })
 
   // 计算属性：是否为 Markdown 模板
   const isMarkdownTemplate = computed(() => {
-    return (channel: string) => {
+    return (channel: ChannelType) => {
       return isChannelType(channel, "markdown")
     }
   })
 
   // 计算属性：预览模式
   const previewMode = computed(() => {
-    return (channel: string) => {
+    return (channel: ChannelType) => {
       return getChannelPreviewMode(channel)
     }
   })
@@ -55,12 +57,12 @@ export function useTemplateEditor() {
   }
 
   // 清空内容
-  const handleClearContent = (channel: string) => {
+  const handleClearContent = (channel: ChannelType) => {
     multiChannelData.value[channel] = ""
   }
 
   // 格式化 JSON
-  const formatJson = (channel: string) => {
+  const formatJson = (channel: ChannelType) => {
     try {
       multiChannelData.value[channel] = formatJsonContent(multiChannelData.value[channel] || "")
       ElMessage.success("JSON 格式化成功")
@@ -112,13 +114,13 @@ export function useTemplateEditor() {
   })
 
   // 获取编辑器语言
-  const getEditorLanguage = (channel: string) => {
+  const getEditorLanguage = (channel: ChannelType) => {
     return getChannelEditorLanguage(channel)
   }
 
   // 初始化多渠道数据（用于创建模式）
   const initializeMultiChannelData = () => {
-    const channels = ["EMAIL", "WECHAT", "FEISHU_CARD"]
+    const channels = Object.values(CHANNEL_TYPES)
     channels.forEach((channel) => {
       if (!multiChannelData.value[channel]) {
         multiChannelData.value[channel] = getChannelDefaultTemplate(channel)
@@ -127,7 +129,7 @@ export function useTemplateEditor() {
   }
 
   // 处理渠道切换 - 简化版本，只处理内容切换
-  const handleChannelChange = (newChannel: string) => {
+  const handleChannelChange = (newChannel: ChannelType) => {
     // 更新当前渠道
     currentChannel.value = newChannel
 
@@ -153,7 +155,7 @@ export function useTemplateEditor() {
   }
 
   // 设置当前渠道
-  const setCurrentChannel = (channel: string) => {
+  const setCurrentChannel = (channel: ChannelType) => {
     currentChannel.value = channel
   }
 

@@ -54,7 +54,7 @@
 import { ref, computed } from "vue"
 import type { FormInstance, FormRules } from "element-plus"
 import type { AddItemReq } from "@/api/alert/template_set/types"
-import type { ChannelTemplate } from "@/api/alert/template/types"
+import type { ChannelTemplate, ChannelType } from "@/api/alert/template/types"
 import { getChannelOptions } from "../../template/config/channels"
 import { FORM_RULES } from "../config/constants"
 
@@ -65,7 +65,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: "channel-change", channel: string): void
+  (e: "channel-change", channel: ChannelType): void
 }
 
 const props = defineProps<Props>()
@@ -87,7 +87,7 @@ const channelOptions = computed(() => {
 const formRules: FormRules = FORM_RULES.item
 
 // 渠道变化处理
-const handleChannelChange = (channel: string) => {
+const handleChannelChange = (channel: ChannelType) => {
   modelValue.value.template_id = undefined // 重置模板选择
   emit("channel-change", channel)
 }

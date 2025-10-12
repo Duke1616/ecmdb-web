@@ -1,10 +1,12 @@
+import { type ChannelType, CHANNEL_TYPES } from "@/api/alert/template/types"
+
 /**
  * 通知渠道配置管理
  */
 
 export interface ChannelConfig {
   /** 渠道代码 */
-  code: string
+  code: ChannelType
   /** 渠道显示名称 */
   label: string
   /** 编辑器语言 */
@@ -24,7 +26,7 @@ export interface ChannelConfig {
  */
 export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
   EMAIL: {
-    code: "EMAIL",
+    code: CHANNEL_TYPES.EMAIL,
     label: "邮件",
     language: "html",
     extension: "html",
@@ -48,7 +50,7 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
 </html>`
   },
   WECHAT: {
-    code: "WECHAT",
+    code: CHANNEL_TYPES.WECHAT,
     label: "企业微信",
     language: "markdown",
     extension: "md",
@@ -64,7 +66,7 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
 请及时处理此告警。`
   },
   FEISHU_CARD: {
-    code: "FEISHU_CARD",
+    code: CHANNEL_TYPES.FEISHU_CARD,
     label: "飞书卡片",
     language: "json",
     extension: "json",
@@ -98,7 +100,7 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
 /**
  * 获取渠道配置
  */
-export const getChannelConfig = (channelCode: string): ChannelConfig | null => {
+export const getChannelConfig = (channelCode: ChannelType): ChannelConfig | null => {
   return CHANNEL_CONFIGS[channelCode] || null
 }
 
@@ -123,7 +125,7 @@ export const getChannelOptions = () => {
 /**
  * 获取渠道标签
  */
-export const getChannelLabel = (channelCode: string): string => {
+export const getChannelLabel = (channelCode: ChannelType): string => {
   const config = getChannelConfig(channelCode)
   return config?.label || channelCode
 }
@@ -131,7 +133,7 @@ export const getChannelLabel = (channelCode: string): string => {
 /**
  * 获取编辑器语言
  */
-export const getEditorLanguage = (channelCode: string): string => {
+export const getEditorLanguage = (channelCode: ChannelType): string => {
   const config = getChannelConfig(channelCode)
   return config?.language || "text"
 }
@@ -139,7 +141,7 @@ export const getEditorLanguage = (channelCode: string): string => {
 /**
  * 获取预览模式
  */
-export const getPreviewMode = (channelCode: string): "split" | "fullscreen" => {
+export const getPreviewMode = (channelCode: ChannelType): "split" | "fullscreen" => {
   const config = getChannelConfig(channelCode)
   return config?.previewMode || "split"
 }
@@ -147,7 +149,7 @@ export const getPreviewMode = (channelCode: string): "split" | "fullscreen" => {
 /**
  * 获取默认模板内容
  */
-export const getDefaultTemplate = (channelCode: string): string => {
+export const getDefaultTemplate = (channelCode: ChannelType): string => {
   const config = getChannelConfig(channelCode)
   return config?.defaultTemplate || ""
 }
@@ -155,7 +157,7 @@ export const getDefaultTemplate = (channelCode: string): string => {
 /**
  * 获取渠道类型标签类型
  */
-export const getChannelType = (channelCode: string): "primary" | "success" | "warning" | "info" | "danger" => {
+export const getChannelType = (channelCode: ChannelType): "primary" | "success" | "warning" | "info" | "danger" => {
   const types: Record<string, "primary" | "success" | "warning" | "info" | "danger"> = {
     EMAIL: "primary",
     WECHAT: "success",
@@ -167,7 +169,7 @@ export const getChannelType = (channelCode: string): "primary" | "success" | "wa
 /**
  * 检查是否为特定类型的模板
  */
-export const isChannelType = (channelCode: string, type: "html" | "markdown" | "json"): boolean => {
+export const isChannelType = (channelCode: ChannelType, type: "html" | "markdown" | "json"): boolean => {
   const config = getChannelConfig(channelCode)
   return config?.language === type
 }

@@ -68,7 +68,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import type { CreateTemplateReq } from "@/api/alert/template/types"
+import type { CreateTemplateReq, ChannelType } from "@/api/alert/template/types"
 import type { FormRules } from "element-plus"
 import { getChannelOptions } from "../config/channels"
 
@@ -89,7 +89,7 @@ const formRef = ref()
 defineExpose({ formRef })
 
 // 处理渠道切换
-const handleChannelChange = (newChannel: string) => {
+const handleChannelChange = (newChannel: ChannelType) => {
   // 只更新表单数据，内容切换由父组件处理
   emit("update:formData", { ...props.formData, channel: newChannel })
 }

@@ -1,3 +1,8 @@
+import { CHANNEL_TYPES, type ChannelType } from "../../template/types"
+
+// 重新导出渠道类型枚举，方便其他模块使用
+export { CHANNEL_TYPES }
+
 // 模板集合
 export interface TemplateSet {
   id: number
@@ -13,7 +18,7 @@ export interface TemplateSet {
 export interface TemplateSetItem {
   id: number
   set_id: number
-  channel: string
+  channel: ChannelType
   template_id: number
   template_name: string
   ctime: number
@@ -78,7 +83,7 @@ export interface CountItemsResp {
 // 新增条目请求
 export interface AddItemReq {
   set_id: number
-  channel: string
+  channel: ChannelType
   template_id: number | undefined
 }
 
@@ -117,7 +122,7 @@ export interface DeleteAllItemsReq {
 // 解析模板请求
 export interface ResolveTemplateReq {
   set_id: number
-  channel: string
+  channel: ChannelType
 }
 
 // 解析模板响应

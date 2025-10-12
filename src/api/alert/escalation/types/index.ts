@@ -2,6 +2,11 @@
  * 消息升级相关类型定义
  */
 
+import { CHANNEL_TYPES, type ChannelType } from "../../template/types"
+
+// 重新导出渠道类型枚举，方便其他模块使用
+export { CHANNEL_TYPES }
+
 // 升级配置相关类型
 export interface CreateConfigReq {
   biz_id: number
@@ -109,7 +114,7 @@ export interface ListStepsByConfigIDResp {
 export interface CreateStepTemplateReq {
   name: string
   description?: string
-  channels: string[]
+  channels: ChannelType[]
   receivers: ReceiverRef[]
 }
 
@@ -121,7 +126,7 @@ export interface UpdateStepTemplateReq {
   id: number
   name: string
   description?: string
-  channels: string[]
+  channels: ChannelType[]
   receivers: ReceiverRef[]
 }
 
@@ -176,7 +181,7 @@ export interface StepTemplateVO {
   id: number
   name: string
   description: string
-  channels: string[]
+  channels: ChannelType[]
   receivers: ReceiverRef[]
   ctime: number
   utime: number
@@ -214,12 +219,12 @@ export interface ReceiverRef {
   metadata: Record<string, any>
 }
 
-// 接收者类型常量
-export const RECEIVER_TYPES = {
-  USER: "user",
-  TEAM: "team",
-  DEPARTMENT: "department",
-  ONCALL: "oncall"
-} as const
+// 接收者类型枚举
+export enum RECEIVER_TYPES {
+  USER = "user",
+  TEAM = "team",
+  DEPARTMENT = "department",
+  ONCALL = "oncall"
+}
 
-export type ReceiverType = (typeof RECEIVER_TYPES)[keyof typeof RECEIVER_TYPES]
+export type ReceiverType = RECEIVER_TYPES

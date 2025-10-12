@@ -167,6 +167,7 @@ import { Plus, Delete, Document, Bell, User } from "@element-plus/icons-vue"
 import type { FormInstance, FormRules } from "element-plus"
 import type { CreateStepTemplateReq, ReceiverRef } from "@/api/alert/escalation/types"
 import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
+import type { ChannelType } from "@/api/alert/template/types"
 import { getChannelOptions } from "../../template/config/channels"
 import { FORM_RULES } from "../config/constants"
 import { getReceiverTypeLabel, getReceiverTypeTagType } from "../utils"
@@ -211,7 +212,7 @@ const receiverColumns = [
 const formRules: FormRules = FORM_RULES.template
 
 // 切换渠道选择
-const toggleChannel = (channelValue: string) => {
+const toggleChannel = (channelValue: ChannelType) => {
   const currentChannels = [...modelValue.value.channels]
   const index = currentChannels.indexOf(channelValue)
   if (index > -1) {

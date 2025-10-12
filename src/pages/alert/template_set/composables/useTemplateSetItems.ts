@@ -9,7 +9,8 @@ import { usePagination } from "@/common/composables/usePagination"
 import { listItemsApi, addItemApi, addItemsApi, deleteItemsApi, getTemplateSetApi } from "@/api/alert/template_set"
 import { listTemplatesByChannelApi } from "@/api/alert/template"
 import type { TemplateSetItem, AddItemReq } from "@/api/alert/template_set/types"
-import type { ChannelTemplate } from "@/api/alert/template/types"
+import type { ChannelTemplate, ChannelType } from "@/api/alert/template/types"
+import { DEFAULT_CHANNEL_TYPE } from "@/api/alert/template/types"
 import { getChannelOptions } from "../../template/config/channels"
 import { validateTemplateSetItems } from "../utils"
 
@@ -56,7 +57,7 @@ export function useTemplateSetItems() {
   }
 
   // 按渠道加载模板
-  const loadTemplatesByChannel = async (channel: string) => {
+  const loadTemplatesByChannel = async (channel: ChannelType) => {
     if (!channel) {
       availableTemplates.value = []
       return
@@ -119,7 +120,7 @@ export function useTemplateSetItems() {
     const index = batchItems.value.length
     batchItems.value.push({
       set_id: setId.value,
-      channel: "",
+      channel: DEFAULT_CHANNEL_TYPE,
       template_id: undefined
     })
     batchTemplates.value[index] = []
@@ -136,7 +137,7 @@ export function useTemplateSetItems() {
     batchTemplates.value = newBatchTemplates
   }
 
-  const handleBatchChannelChange = async (index: number, channel: string) => {
+  const handleBatchChannelChange = async (index: number, channel: ChannelType) => {
     batchItems.value[index].template_id = undefined
 
     try {

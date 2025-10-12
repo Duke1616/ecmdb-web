@@ -3,7 +3,8 @@
  * 统一管理表单数据、多渠道内容、编辑器状态等
  */
 import { ref, computed } from "vue"
-import type { CreateTemplateReq } from "@/api/alert/template/types"
+import type { CreateTemplateReq, ChannelType } from "@/api/alert/template/types"
+import { DEFAULT_CHANNEL_TYPE, CHANNEL_TYPES } from "@/api/alert/template/types"
 import {
   getEditorLanguage as getChannelEditorLanguage,
   getPreviewMode as getChannelPreviewMode,
@@ -17,7 +18,7 @@ export function useTemplateForm() {
     ownerId: 1,
     name: "",
     description: "",
-    channel: "",
+    channel: DEFAULT_CHANNEL_TYPE,
     version: {
       name: "",
       content: "",
@@ -102,7 +103,7 @@ export function useTemplateForm() {
 
   // 初始化多渠道数据
   const initializeMultiChannelData = () => {
-    const channels = ["EMAIL", "WECHAT", "FEISHU_CARD"]
+    const channels = Object.values(CHANNEL_TYPES)
     channels.forEach((channel) => {
       if (!multiChannelData.value[channel]) {
         multiChannelData.value[channel] = getChannelDefaultTemplate(channel)
@@ -111,7 +112,7 @@ export function useTemplateForm() {
   }
 
   // 处理渠道切换
-  const handleChannelChange = (newChannel: string) => {
+  const handleChannelChange = (newChannel: ChannelType) => {
     // 保存当前渠道的内容
     if (currentChannel.value && formData.value.version.content) {
       multiChannelData.value[currentChannel.value] = formData.value.version.content
@@ -171,7 +172,7 @@ export function useTemplateForm() {
       ownerId: 1,
       name: "",
       description: "",
-      channel: "",
+      channel: DEFAULT_CHANNEL_TYPE,
       version: {
         name: "",
         content: "",
