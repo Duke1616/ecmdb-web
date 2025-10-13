@@ -6,7 +6,8 @@ import type {
   SaveWorkspaceReq,
   Workspace,
   GetWorkspaceCategoriesReq,
-  GetWorkspaceCategoriesResponse
+  GetWorkspaceCategoriesResponse,
+  ListByKeywordReq
 } from "./types"
 
 export const listWorkspacesApi = (data: ListWorkspacesReq) => {
@@ -51,6 +52,14 @@ export const getWorkspaceDetailApi = (id: number) => {
 export const getWorkspaceCategoriesApi = (data: GetWorkspaceCategoriesReq) => {
   return instance.post<GetWorkspaceCategoriesResponse>({
     url: `${API_SERVICE.ALERT}/workspace/categories`,
+    data
+  })
+}
+
+// 根据关键字搜索协作空间
+export const listWorkspacesByKeywordApi = (data: ListByKeywordReq) => {
+  return instance.post<ListWorkspacesResponse>({
+    url: `${API_SERVICE.ALERT}/workspace/list/by_keyword`,
     data
   })
 }

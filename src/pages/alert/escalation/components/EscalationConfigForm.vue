@@ -4,32 +4,33 @@
     <div class="form-section">
       <h3 class="section-title">基本信息</h3>
       <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="配置名称" prop="name">
-            <el-input v-model="modelValue.name" placeholder="请输入配置名称" />
+        <el-col :span="8">
+          <el-form-item label="业务类型" prop="biz_id">
+            <el-select v-model="modelValue.biz_id" placeholder="请选择业务类型" style="width: 100%">
+              <el-option label="工作空间（告警）" :value="BUSINESS_TYPES.WORKSPACE" />
+              <el-option label="工作流（工单）" :value="BUSINESS_TYPES.WORKFLOW" />
+            </el-select>
           </el-form-item>
         </el-col>
-        <el-col :span="12">
-          <el-form-item label="配置标识" prop="key">
-            <el-input v-model="modelValue.key" placeholder="请输入配置标识" />
+        <el-col :span="8">
+          <el-form-item label="业务唯一值" prop="key">
+            <BusinessPicker
+              v-model="modelValue.key"
+              :business-type="getBusinessPickerType()"
+              placeholder="请选择业务唯一值"
+              variant="simple"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
+          <el-form-item label="配置名称" prop="name">
+            <el-input v-model="modelValue.name" placeholder="请输入配置名称" />
           </el-form-item>
         </el-col>
       </el-row>
       <el-form-item label="配置描述" prop="description">
         <el-input v-model="modelValue.description" type="textarea" :rows="3" placeholder="请输入配置描述" />
       </el-form-item>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <el-form-item label="超时时间（毫秒）" prop="timeout">
-            <el-input-number v-model="modelValue.timeout" :min="1000" :max="3600000" style="width: 100%" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="12">
-          <el-form-item label="是否启用" prop="enabled">
-            <el-switch v-model="modelValue.enabled" />
-          </el-form-item>
-        </el-col>
-      </el-row>
     </div>
 
     <!-- 触发条件和触发逻辑 -->
@@ -95,7 +96,11 @@
                 <el-option label="自定义逻辑" :value="ESCALATION_LOGIC_TYPES.CUSTOM" />
               </el-select>
             </el-form-item>
-            <el-form-item label="表达式" prop="trigger_logic.expression">
+            <el-form-item
+              v-if="modelValue.trigger_logic.type === ESCALATION_LOGIC_TYPES.CUSTOM"
+              label="表达式"
+              prop="trigger_logic.expression"
+            >
               <el-input v-model="modelValue.trigger_logic.expression" placeholder="逻辑表达式" />
             </el-form-item>
             <el-form-item label="逻辑描述" prop="trigger_logic.description">
@@ -265,7 +270,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { Plus, Delete, Setting } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { CreateConfigReq } from "@/api/alert/escalation/types"
@@ -275,6 +280,8 @@ import EscalationStepForm from "./EscalationStepForm.vue"
 import { VueDraggable } from "vue-draggable-plus"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
+import BusinessPicker from "@/common/components/BusinessPicker/index.vue"
+import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import { listTemplateSetsApi } from "@/api/alert/template_set"
 import { listStepTemplatesApi, listStepTemplatesByIDsApi } from "@/api/alert/escalation"
 import { escalationConfigFormRules, validateEscalationConfig } from "../config/validation"
@@ -335,6 +342,29 @@ const validateForm = async (): Promise<boolean> => {
     return false
   }
 }
+
+// 根据业务类型获取 BusinessPicker 类型
+const getBusinessPickerType = () => {
+  switch (modelValue.value.biz_id) {
+    case BUSINESS_TYPES.WORKSPACE:
+      return BUSINESS_TYPES.WORKSPACE
+    case BUSINESS_TYPES.WORKFLOW:
+      return BUSINESS_TYPES.WORKFLOW
+    default:
+      return BUSINESS_TYPES.WORKSPACE
+  }
+}
+
+// 监听业务类型变化，清空业务唯一值
+watch(
+  () => modelValue.value.biz_id,
+  (newBizId, oldBizId) => {
+    // 如果业务类型发生变化，清空业务唯一值
+    if (newBizId !== oldBizId && oldBizId !== undefined) {
+      modelValue.value.key = ""
+    }
+  }
+)
 
 // 暴露验证方法给父组件
 defineExpose({

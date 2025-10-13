@@ -42,3 +42,10 @@ export interface workflowGraph {
   edge_ids: string[]
   workflow: workflow
 }
+
+// 根据关键字搜索工作流程请求
+export interface ListByKeywordReq {
+  keyword: string // 搜索关键字
+  offset?: number // 偏移量
+  limit?: number // 限制数量
+}

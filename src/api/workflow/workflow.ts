@@ -49,3 +49,11 @@ export function getWorkflowGraphApi(data: workflow.workflowGraphReq) {
     data: data
   })
 }
+
+/** 根据关键字搜索工作流程 */
+export function listWorkflowsByKeywordApi(data: workflow.ListByKeywordReq) {
+  return instance.post<workflow.workflows>({
+    url: `${API_SERVICE.CMDB}/workflow/list/by_keyword`,
+    data: data
+  })
+}

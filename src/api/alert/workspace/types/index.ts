@@ -53,3 +53,10 @@ export interface GetWorkspaceCategoriesReq {
 export interface GetWorkspaceCategoriesResponse {
   categories: WorkspaceCategory[]
 }
+
+// 根据关键字搜索协作空间请求
+export interface ListByKeywordReq {
+  keyword: string // 搜索关键字
+  offset?: number // 偏移量
+  limit?: number // 限制数量
+}

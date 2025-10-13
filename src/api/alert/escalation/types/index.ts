@@ -154,8 +154,8 @@ export interface StepVO {
 // 升级配置视图对象
 export interface ConfigVO {
   id: number // 升级配置ID
-  biz_id: number // 业务唯一标识
-  key: string // 业务内唯一标识
+  biz_id: number // 业务类型ID（1=告警，2=工单）
+  key: string // 业务ID（告警规则ID或工单模板ID，字符串格式）
   name: string // 配置名称
   description: string // 配置描述
   enabled: boolean // 是否启用升级
@@ -170,8 +170,8 @@ export interface ConfigVO {
 
 // 创建升级配置请求
 export interface CreateConfigReq {
-  biz_id: number // 业务ID
-  key: string // 配置标识
+  biz_id: number // 业务类型ID（1=告警，2=工单）
+  key: string // 业务唯一值（告警规则ID或工单模板ID，字符串格式）
   name: string // 配置名称
   description: string // 配置描述
   enabled: boolean // 是否启用

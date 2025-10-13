@@ -37,6 +37,7 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { Check } from "@element-plus/icons-vue"
 import type { CreateConfigReq } from "@/api/alert/escalation/types"
 import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
+import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import EscalationConfigForm from "./components/EscalationConfigForm.vue"
 import { createConfigApi } from "@/api/alert/escalation"
 import PageContainer from "@@/components/PageContainer/index.vue"
@@ -49,7 +50,7 @@ const saving = ref(false)
 
 // 表单数据
 const formData = ref<CreateConfigReq>({
-  biz_id: 1, // 默认业务ID，实际应该从路由参数或用户信息获取
+  biz_id: BUSINESS_TYPES.WORKSPACE, // 默认选择协作空间业务类型
   key: "",
   name: "",
   description: "",
