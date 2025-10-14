@@ -96,7 +96,7 @@ import { Plus, Delete } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type {
   EscalationTriggerType,
-  AnyEscalationTriggerConfig,
+  EscalationTriggerConfig,
   TimeTriggerConfig,
   LevelTriggerConfig,
   NoResponseTriggerConfig,
@@ -110,7 +110,7 @@ interface Props {
   triggerType: EscalationTriggerType
 }
 
-const modelValue = defineModel<AnyEscalationTriggerConfig>({ required: true })
+const modelValue = defineModel<EscalationTriggerConfig>({ required: true })
 const props = defineProps<Props>()
 
 // 表单引用
@@ -120,26 +120,26 @@ const formRef = ref<FormInstance>()
 const formRules = computed(() => getTriggerConfigRules(props.triggerType))
 
 // 类型守卫函数
-const isTimeConfig = (config: AnyEscalationTriggerConfig): config is { time_config: TimeTriggerConfig } => {
-  return "time_config" in config
+const isTimeConfig = (config: EscalationTriggerConfig): config is { time_config: TimeTriggerConfig } => {
+  return "time_config" in config && config.time_config !== undefined
 }
 
-const isLevelConfig = (config: AnyEscalationTriggerConfig): config is { level_config: LevelTriggerConfig } => {
-  return "level_config" in config
+const isLevelConfig = (config: EscalationTriggerConfig): config is { level_config: LevelTriggerConfig } => {
+  return "level_config" in config && config.level_config !== undefined
 }
 
 const isNoResponseConfig = (
-  config: AnyEscalationTriggerConfig
+  config: EscalationTriggerConfig
 ): config is { no_response_config: NoResponseTriggerConfig } => {
-  return "no_response_config" in config
+  return "no_response_config" in config && config.no_response_config !== undefined
 }
 
-const isManualConfig = (config: AnyEscalationTriggerConfig): config is { manual_config: ManualTriggerConfig } => {
-  return "manual_config" in config
+const isManualConfig = (config: EscalationTriggerConfig): config is { manual_config: ManualTriggerConfig } => {
+  return "manual_config" in config && config.manual_config !== undefined
 }
 
-const isCustomConfig = (config: AnyEscalationTriggerConfig): config is { custom_config: CustomTriggerConfig } => {
-  return "custom_config" in config
+const isCustomConfig = (config: EscalationTriggerConfig): config is { custom_config: CustomTriggerConfig } => {
+  return "custom_config" in config && config.custom_config !== undefined
 }
 
 // 类型安全的配置访问 - 使用计算属性，提供默认值避免 null

@@ -29,8 +29,10 @@
       :show-selection="true"
       :show-pagination="false"
       :table-props="tableProps"
+      :enable-row-drag="true"
       v-loading="loading"
       @selection-change="handleSelectionChange"
+      @row-drag="handleRowDrag"
     >
       <!-- 步骤级别插槽 -->
       <template #level="{ row }">
@@ -196,13 +198,6 @@ const tableColumns = [
     label: "条件表达式",
     minWidth: 200,
     slot: "condition"
-  },
-  {
-    prop: "actions",
-    label: "操作",
-    width: 150,
-    slot: "actions",
-    fixed: "right" as const
   }
 ]
 
@@ -272,6 +267,51 @@ const loadSteps = async () => {
 // 选择变化处理
 const handleSelectionChange = (selection: StepVO[]) => {
   selectedSteps.value = selection
+}
+
+// 行拖拽处理
+const handleRowDrag = async (newSteps: StepVO[]) => {
+  try {
+    // 更新本地数据
+    steps.value = newSteps
+
+    // 重新计算级别
+    const updatedSteps = newSteps.map((step, index) => ({
+      ...step,
+      level: index + 1
+    }))
+
+    // 批量更新级别
+    const updatePromises = updatedSteps.map((step, index) => {
+      if (step.level !== index + 1) {
+        return updateStepApi({
+          id: step.id,
+          level: index + 1,
+          template_set_id: step.template_set_id,
+          step_template_id: step.step_template_id,
+          delay: step.delay,
+          max_retries: step.max_retries,
+          retry_interval: step.retry_interval,
+          skip_if_handled: step.skip_if_handled,
+          continue_on_fail: step.continue_on_fail,
+          condition_expr: step.condition_expr,
+          urgency_level: step.urgency_level
+        })
+      }
+      return Promise.resolve()
+    })
+
+    await Promise.all(updatePromises.filter(Boolean))
+
+    // 更新本地数据
+    steps.value = updatedSteps
+
+    ElMessage.success("步骤顺序已更新")
+  } catch (error) {
+    ElMessage.error("更新步骤顺序失败")
+    // 重新加载数据
+    await loadSteps()
+  }
 }
 
 // 创建步骤

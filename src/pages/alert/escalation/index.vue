@@ -63,21 +63,19 @@
       </template>
     </DataTable>
 
-    <!-- 创建/编辑对话框 -->
-    <FormDialog
-      v-model="dialogVisible"
-      :title="dialogTitle"
+    <!-- 创建/编辑抽屉 -->
+    <CustomDrawer
+      v-model="drawerVisible"
+      :title="drawerTitle"
       subtitle="请填写升级配置的基本信息"
-      width="800px"
-      :confirm-loading="submitLoading"
-      confirm-text="确定"
+      size="45%"
       header-icon="Setting"
+      :before-close="handleDrawerClose"
       @confirm="handleSubmit"
-      @cancel="handleDialogClose"
-      @closed="handleDialogClose"
+      @closed="handleDrawerClose"
     >
-      <EscalationConfigForm ref="formRef" v-model="formData" />
-    </FormDialog>
+      <EscalationConfigEditForm ref="formRef" v-model="formData" />
+    </CustomDrawer>
   </PageContainer>
 </template>
 
@@ -101,8 +99,8 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
-import { FormDialog } from "@/common/components/Dialogs"
-import EscalationConfigForm from "./components/EscalationConfigForm.vue"
+import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
+import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
 
 // 路由
 const router = useRouter()
@@ -113,7 +111,7 @@ const { paginationData, handleCurrentChange, handleSizeChange } = usePagination(
 // 响应式数据
 const configs = ref<ConfigVO[]>([])
 const loading = ref(false)
-const dialogVisible = ref(false)
+const drawerVisible = ref(false)
 const submitLoading = ref(false)
 const formData = ref<CreateConfigReq>({
   biz_id: 1,
@@ -136,7 +134,7 @@ const isEdit = ref(false)
 const currentEditId = ref<number | null>(null)
 
 // 计算属性
-const dialogTitle = computed(() => (isEdit.value ? "编辑配置" : "创建配置"))
+const drawerTitle = computed(() => (isEdit.value ? "编辑配置" : "创建配置"))
 
 // 表格列配置
 const tableColumns = [
@@ -162,13 +160,6 @@ const tableColumns = [
     label: "创建时间",
     width: 180,
     slot: "ctime"
-  },
-  {
-    prop: "actions",
-    label: "操作",
-    width: 200,
-    slot: "actions",
-    fixed: "right" as const
   }
 ]
 
@@ -245,7 +236,7 @@ const handleEdit = (config: ConfigVO) => {
     steps: config.steps,
     created_by: config.created_by
   }
-  dialogVisible.value = true
+  drawerVisible.value = true
 }
 
 // 管理步骤
@@ -314,16 +305,16 @@ const handleSubmit = async () => {
       await createConfigApi(formData.value)
     }
 
-    dialogVisible.value = false
+    drawerVisible.value = false
     await loadConfigs()
   } finally {
     submitLoading.value = false
   }
 }
 
-// 关闭对话框
-const handleDialogClose = () => {
-  dialogVisible.value = false
+// 关闭抽屉
+const handleDrawerClose = () => {
+  drawerVisible.value = false
   formRef.value?.resetFields()
 }
 

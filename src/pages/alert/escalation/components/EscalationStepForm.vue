@@ -48,76 +48,87 @@
         </div>
       </div>
 
-      <!-- 时间配置 -->
+      <!-- 步骤配置 -->
       <div class="form-section">
         <div class="section-title">
-          <el-icon class="section-icon"><Clock /></el-icon>
-          <span>时间配置</span>
+          <el-icon class="section-icon"><Setting /></el-icon>
+          <span>步骤配置</span>
         </div>
 
-        <div class="form-row">
-          <el-col :span="8">
-            <el-form-item prop="delay" label="延迟时间（毫秒）" class="form-item">
-              <el-input-number v-model="modelValue.delay" :min="0" size="large" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item prop="max_retries" label="最大重试次数" class="form-item">
-              <el-input-number v-model="modelValue.max_retries" :min="0" :max="10" size="large" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item prop="retry_interval" label="重试间隔（毫秒）" class="form-item">
-              <el-input-number v-model="modelValue.retry_interval" :min="1000" size="large" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-        </div>
-      </div>
-
-      <!-- 行为配置 -->
-      <div class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Operation /></el-icon>
-          <span>行为配置</span>
+        <!-- 时间配置卡片 -->
+        <div class="config-card">
+          <div class="card-header">
+            <el-icon class="card-icon"><Clock /></el-icon>
+            <span class="card-title">时间配置</span>
+          </div>
+          <div class="card-content">
+            <div class="input-grid">
+              <div class="input-item">
+                <label class="input-label">延迟时间（毫秒）</label>
+                <el-input-number v-model="modelValue.delay" :min="0" size="large" class="input-field" />
+              </div>
+              <div class="input-item">
+                <label class="input-label">最大重试次数</label>
+                <el-input-number v-model="modelValue.max_retries" :min="0" :max="10" size="large" class="input-field" />
+              </div>
+              <div class="input-item">
+                <label class="input-label">重试间隔（毫秒）</label>
+                <el-input-number v-model="modelValue.retry_interval" :min="1000" size="large" class="input-field" />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="form-row">
-          <el-col :span="8">
-            <el-form-item prop="urgency_level" label="紧急程度" class="form-item">
-              <el-input-number v-model="modelValue.urgency_level" :min="1" :max="5" size="large" style="width: 100%" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item prop="skip_if_handled" label="跳过已处理" class="form-item">
-              <el-switch v-model="modelValue.skip_if_handled" size="large" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item prop="continue_on_fail" label="失败继续" class="form-item">
-              <el-switch v-model="modelValue.continue_on_fail" size="large" />
-            </el-form-item>
-          </el-col>
+        <!-- 行为配置卡片 -->
+        <div class="config-card">
+          <div class="card-header">
+            <el-icon class="card-icon"><Operation /></el-icon>
+            <span class="card-title">行为配置</span>
+          </div>
+          <div class="card-content">
+            <div class="checkbox-group">
+              <div class="checkbox-item" @click="toggleSkipIfHandled">
+                <div class="checkbox-icon" :class="{ checked: modelValue.skip_if_handled }">
+                  <el-icon v-if="modelValue.skip_if_handled"><Check /></el-icon>
+                </div>
+                <div class="checkbox-content">
+                  <span class="checkbox-label">跳过已处理</span>
+                  <span class="checkbox-desc">如果该步骤已被处理，则跳过执行</span>
+                </div>
+              </div>
+              <div class="checkbox-item" @click="toggleContinueOnFail">
+                <div class="checkbox-icon" :class="{ checked: modelValue.continue_on_fail }">
+                  <el-icon v-if="modelValue.continue_on_fail"><Check /></el-icon>
+                </div>
+                <div class="checkbox-content">
+                  <span class="checkbox-label">失败继续</span>
+                  <span class="checkbox-desc">即使当前步骤失败，也继续执行后续步骤</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- 条件配置 -->
-      <div class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Filter /></el-icon>
-          <span>条件配置</span>
-        </div>
-
-        <div class="form-row">
-          <el-form-item prop="condition_expr" label="条件表达式" class="form-item">
-            <el-input
-              v-model="modelValue.condition_expr"
-              type="textarea"
-              :rows="3"
-              placeholder="如: alert.severity >= 3"
-              maxlength="500"
-              show-word-limit
-            />
-          </el-form-item>
+        <!-- 条件配置卡片 -->
+        <div class="config-card">
+          <div class="card-header">
+            <el-icon class="card-icon"><Filter /></el-icon>
+            <span class="card-title">条件配置</span>
+          </div>
+          <div class="card-content">
+            <div class="textarea-item">
+              <label class="input-label">条件表达式</label>
+              <el-input
+                v-model="modelValue.condition_expr"
+                type="textarea"
+                :rows="4"
+                placeholder="如: alert.severity >= 3"
+                maxlength="500"
+                show-word-limit
+                class="textarea-field"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </el-form>
@@ -126,7 +137,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
-import { Setting, Clock, Operation, Filter } from "@element-plus/icons-vue"
+import { Setting, Check, Clock, Operation, Filter } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { CreateStepReq } from "@/api/alert/escalation/types"
 import { listTemplateSetsApi } from "@/api/alert/template_set"
@@ -188,6 +199,15 @@ const loadStepTemplatesByIDs = async (ids: number[]) => {
   }
 }
 
+// 切换函数
+const toggleSkipIfHandled = () => {
+  modelValue.value.skip_if_handled = !modelValue.value.skip_if_handled
+}
+
+const toggleContinueOnFail = () => {
+  modelValue.value.continue_on_fail = !modelValue.value.continue_on_fail
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadTemplateSets()
@@ -245,11 +265,150 @@ defineExpose({
   }
 
   .form-row {
-    margin-bottom: 16px;
+    margin-bottom: 0.75rem;
 
     &:last-child {
       margin-bottom: 0;
     }
+  }
+
+  .config-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      border-color: #d1d5db;
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-bottom: 1px solid #e5e7eb;
+
+    .card-icon {
+      margin-right: 8px;
+      font-size: 16px;
+      color: #3b82f6;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+  }
+
+  .card-content {
+    padding: 20px;
+  }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .input-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .input-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+  }
+
+  .input-field {
+    width: 100%;
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: flex-start;
+    cursor: pointer;
+    user-select: none;
+    padding: 12px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+
+  .checkbox-icon {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-right: 12px;
+    margin-top: 2px;
+
+    &.checked {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    .el-icon {
+      font-size: 12px;
+      font-weight: bold;
+    }
+  }
+
+  .checkbox-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .checkbox-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 4px;
+  }
+
+  .checkbox-desc {
+    font-size: 12px;
+    color: #6b7280;
+    line-height: 1.4;
+  }
+
+  .textarea-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .textarea-field {
+    width: 100%;
   }
 
   .form-item {

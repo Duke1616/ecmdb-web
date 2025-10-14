@@ -5,7 +5,7 @@
         <div class="table-wrapper">
           <el-table
             ref="tableRef"
-            :data="data"
+            :data="enableRowDrag ? draggableData : data"
             class="data-table"
             stripe
             :height="finalTableHeight"
@@ -14,9 +14,19 @@
             :style="{
               '--fixed-column-bg': '#f8fafc'
             }"
+            row-key="id"
           >
             <!-- 选择列 -->
             <el-table-column v-if="showSelection" type="selection" width="50" align="center" />
+
+            <!-- 拖拽列 -->
+            <el-table-column v-if="enableRowDrag" label="拖拽" width="85" align="center">
+              <template #default="{}">
+                <el-icon class="drag-handle" style="cursor: move; color: #999">
+                  <Rank />
+                </el-icon>
+              </template>
+            </el-table-column>
 
             <!-- 动态列 -->
             <el-table-column
@@ -102,7 +112,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots, ref, onMounted, onUnmounted } from "vue"
+import { computed, useSlots, ref, onMounted, onUnmounted, watch, nextTick } from "vue"
+import { Rank } from "@element-plus/icons-vue"
+import Sortable from "sortablejs"
 
 interface Column {
   prop: string
@@ -143,12 +155,16 @@ interface Props {
   currentPage?: number
   pageSizes?: number[]
   paginationLayout?: string
+
+  // 行拖拽相关
+  enableRowDrag?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   showSelection: false,
   actionColumnLabel: "操作",
   actionColumnWidth: 200,
+  enableRowDrag: false,
   actionColumnFixed: "right",
   tableProps: () => ({}),
   showPagination: false
@@ -158,6 +174,9 @@ const slots = useSlots()
 
 // 表格引用
 const tableRef = ref()
+
+// 可拖拽的数据数组
+const draggableData = ref([...props.data])
 
 // 窗口宽度响应式变量
 const windowWidth = ref(window.innerWidth)
@@ -169,18 +188,86 @@ const handleResize = () => {
 
 onMounted(() => {
   window.addEventListener("resize", handleResize)
+  if (props.enableRowDrag) {
+    initSortable()
+  }
 })
 
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize)
+  destroySortable()
 })
+
+// 监听数据变化，同步到可拖拽数据
+watch(
+  () => props.data,
+  (newData) => {
+    draggableData.value = [...newData]
+  },
+  { deep: true, immediate: true }
+)
+
+// 监听拖拽功能开关
+watch(
+  () => props.enableRowDrag,
+  (newValue) => {
+    if (newValue) {
+      nextTick(() => {
+        initSortable()
+      })
+    } else {
+      destroySortable()
+    }
+  }
+)
 
 const emit = defineEmits<{
   action: [key: string, row: any, index: number]
   selectionChange: [selection: any[]]
   sizeChange: [size: number]
   currentChange: [page: number]
+  rowDrag: [data: any[]]
 }>()
+
+// Sortable 实例
+let sortableInstance: Sortable | null = null
+
+// 初始化拖拽
+const initSortable = () => {
+  if (!props.enableRowDrag || !tableRef.value) return
+
+  nextTick(() => {
+    const tbody = tableRef.value.$el.querySelector("tbody")
+    if (tbody && !sortableInstance) {
+      sortableInstance = new Sortable(tbody, {
+        handle: ".drag-handle",
+        animation: 200,
+        ghostClass: "ghost",
+        chosenClass: "chosen",
+        dragClass: "drag",
+        onEnd: (evt) => {
+          const { oldIndex, newIndex } = evt
+          if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
+            // 移动数组元素
+            const item = draggableData.value.splice(oldIndex, 1)[0]
+            draggableData.value.splice(newIndex, 0, item)
+
+            // 触发事件
+            emit("rowDrag", draggableData.value)
+          }
+        }
+      })
+    }
+  })
+}
+
+// 销毁拖拽
+const destroySortable = () => {
+  if (sortableInstance) {
+    sortableInstance.destroy()
+    sortableInstance = null
+  }
+}
 
 // 获取列值
 const getColumnValue = (row: any, column: Column) => {
@@ -482,5 +569,30 @@ defineExpose({
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
+}
+
+// 行拖拽相关样式
+.drag-handle {
+  cursor: move;
+  color: #999;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #409eff;
+  }
+}
+
+.ghost {
+  opacity: 0.5;
+  background: #f5f7fa;
+}
+
+.chosen {
+  background: #e6f7ff;
+}
+
+.drag {
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 </style>

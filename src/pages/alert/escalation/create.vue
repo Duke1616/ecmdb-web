@@ -23,7 +23,7 @@
       <div class="scrollable-content">
         <!-- 表单内容 -->
         <div class="escalation-form-container">
-          <EscalationConfigForm ref="formRef" v-model="formData" @submit="handleSubmit" @cancel="handleCancel" />
+          <EscalationConfigForm ref="formRef" v-model="formData" />
         </div>
       </div>
     </PageContainer>

@@ -49,7 +49,7 @@
             <div v-else>
               <div v-for="(trigger, index) in modelValue.triggers" :key="index" class="trigger-item">
                 <el-row :gutter="20" align="middle">
-                  <el-col :span="6">
+                  <el-col :span="5">
                     <el-form-item :label="`触发类型 ${index + 1}`" :prop="`triggers.${index}.type`">
                       <el-select
                         v-model="trigger.type"
@@ -65,17 +65,17 @@
                       </el-select>
                     </el-form-item>
                   </el-col>
-                  <el-col :span="6">
+                  <el-col :span="12">
                     <el-form-item :label="`描述 ${index + 1}`" :prop="`triggers.${index}.description`">
                       <el-input v-model="trigger.description" placeholder="触发条件描述" />
                     </el-form-item>
                   </el-col>
-                  <el-col :span="6">
+                  <el-col :span="4">
                     <el-form-item label="配置详情">
                       <el-button type="info" size="small" @click="editTriggerConfig(index)">配置详情</el-button>
                     </el-form-item>
                   </el-col>
-                  <el-col :span="6">
+                  <el-col :span="3" style="text-align: center">
                     <el-button type="danger" :icon="Delete" circle @click="removeTrigger(index)" />
                   </el-col>
                 </el-row>
@@ -117,121 +117,7 @@
     </div>
 
     <!-- 升级步骤 -->
-    <div class="form-section">
-      <div class="section-header">
-        <h3 class="section-title">升级步骤</h3>
-        <el-button type="primary" :icon="Plus" size="small" @click="addStep"> 添加步骤 </el-button>
-      </div>
-
-      <div v-if="modelValue.steps.length === 0" class="empty-steps">
-        <el-empty description="暂无升级步骤，点击上方按钮添加" />
-      </div>
-
-      <div v-else class="steps-container">
-        <VueDraggable
-          v-model="modelValue.steps"
-          :animation="200"
-          ghost-class="step-ghost"
-          chosen-class="step-chosen"
-          drag-class="step-drag"
-          @start="onDragStart"
-          @end="onDragEnd"
-          @change="onDragSort"
-          class="steps-grid"
-        >
-          <div
-            v-for="(step, index) in modelValue.steps"
-            :key="`step-${step.level || index}`"
-            class="step-card"
-            :class="{ 'step-dragging': draggingIndex === index }"
-          >
-            <!-- 步骤头部 -->
-            <div class="step-header">
-              <div class="step-title">
-                <span class="step-number">步骤 {{ index + 1 }}</span>
-                <el-tag :type="getUrgencyTagType(step.urgency_level)" size="small" class="urgency-tag">
-                  P{{ step.urgency_level }}
-                </el-tag>
-              </div>
-              <div class="step-actions">
-                <el-button type="primary" size="small" @click="editStep(index)">
-                  <el-icon><Setting /></el-icon>
-                  编辑
-                </el-button>
-                <el-button type="danger" size="small" @click="removeStep(index)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </div>
-            </div>
-
-            <!-- 步骤内容 -->
-            <div class="step-content">
-              <!-- 步骤信息 -->
-              <div class="step-info">
-                <div class="info-grid">
-                  <div class="info-item">
-                    <span class="info-label">模板集</span>
-                    <span class="info-value">
-                      {{ step.template_set_id ? getTemplateSetName(step.template_set_id) : "未设置" }}
-                    </span>
-                  </div>
-                  <div class="info-item" v-if="step.step_template_id">
-                    <span class="info-label">步骤模板</span>
-                    <span class="info-value">{{ getStepTemplateName(step.step_template_id) }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">延迟</span>
-                    <span class="info-value">{{ formatDelay(step.delay) }}</span>
-                  </div>
-                  <div class="info-item">
-                    <span class="info-label">重试</span>
-                    <span class="info-value">{{ step.max_retries }}次</span>
-                  </div>
-                </div>
-
-                <!-- 条件表达式 -->
-                <div v-if="step.condition_expr" class="step-condition">
-                  <span class="condition-label">执行条件:</span>
-                  <code class="condition-code">{{ step.condition_expr }}</code>
-                </div>
-
-                <!-- 模板详情 -->
-                <div v-if="getStepTemplateContent(step.step_template_id)" class="template-details">
-                  <div class="template-channels">
-                    <span class="template-label">通知渠道:</span>
-                    <div class="channels-list">
-                      <el-tag
-                        v-for="channel in getStepTemplateChannels(step.step_template_id)"
-                        :key="channel"
-                        size="small"
-                        class="channel-tag"
-                      >
-                        {{ getChannelLabel(channel) }}
-                      </el-tag>
-                    </div>
-                  </div>
-                  <div class="template-receivers">
-                    <span class="template-label">接收者:</span>
-                    <div class="receivers-list">
-                      <el-tag
-                        v-for="receiver in getStepTemplateReceivers(step.step_template_id)"
-                        :key="receiver.id"
-                        size="small"
-                        class="receiver-tag"
-                        :type="getReceiverTagType(receiver.type)"
-                      >
-                        <span class="receiver-type">{{ getReceiverTypeLabel(receiver.type) }}:</span>
-                        <span class="receiver-name">{{ receiver.display_name }}</span>
-                      </el-tag>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </VueDraggable>
-      </div>
-    </div>
+    <EscalationStepsTable v-model="modelValue.steps" />
   </el-form>
 
   <!-- 触发条件配置对话框 -->
@@ -248,7 +134,7 @@
   >
     <TriggerConfigForm
       v-if="currentTriggerIndex !== -1"
-      v-model="modelValue.triggers[currentTriggerIndex].config as any"
+      v-model="modelValue.triggers[currentTriggerIndex].config"
       :trigger-type="modelValue.triggers[currentTriggerIndex].type"
     />
   </FormDialog>
@@ -274,16 +160,20 @@ import { ref, onMounted, watch } from "vue"
 import { Plus, Delete, Setting } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { CreateConfigReq } from "@/api/alert/escalation/types"
-import { ESCALATION_LOGIC_TYPES, ESCALATION_TRIGGER_TYPES } from "@/api/alert/escalation/types"
+import {
+  ESCALATION_LOGIC_TYPES,
+  ESCALATION_TRIGGER_TYPES,
+  type EscalationTriggerType
+} from "@/api/alert/escalation/types"
 import TriggerConfigForm from "./TriggerConfigForm.vue"
 import EscalationStepForm from "./EscalationStepForm.vue"
-import { VueDraggable } from "vue-draggable-plus"
+import EscalationStepsTable from "./EscalationStepsTable.vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
 import BusinessPicker from "@/common/components/BusinessPicker/index.vue"
 import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import { listTemplateSetsApi } from "@/api/alert/template_set"
-import { listStepTemplatesApi, listStepTemplatesByIDsApi } from "@/api/alert/escalation"
+import { listStepTemplatesApi } from "@/api/alert/escalation"
 import { escalationConfigFormRules, validateEscalationConfig } from "../config/validation"
 import type { TemplateSet } from "@/api/alert/template_set/types"
 import type { StepTemplateVO } from "@/api/alert/escalation/types"
@@ -293,6 +183,7 @@ const modelValue = defineModel<CreateConfigReq>({ required: true })
 const formRef = ref<FormInstance>()
 const stepFormRef = ref<InstanceType<typeof EscalationStepForm>>()
 const triggerConfigDialogVisible = ref(false)
+
 const currentTriggerIndex = ref(-1)
 const triggerConfigSaving = ref(false)
 
@@ -311,9 +202,6 @@ const currentStep = ref({
   condition_expr: "",
   urgency_level: 1
 })
-
-// 拖拽相关状态
-const draggingIndex = ref(-1)
 
 // 模板集和步骤模板数据
 const templateSets = ref<TemplateSet[]>([])
@@ -391,8 +279,9 @@ const removeTrigger = (index: number) => {
 }
 
 // 处理触发类型变化
-const handleTriggerTypeChange = (index: number, newType: string) => {
+const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) => {
   const trigger = modelValue.value.triggers[index]
+  trigger.type = newType
 
   // 根据新类型重新创建配置
   switch (newType) {
@@ -465,90 +354,6 @@ const cancelTriggerConfig = () => {
   currentTriggerIndex.value = -1
 }
 
-// 添加升级步骤
-const addStep = () => {
-  const newStep = {
-    level: modelValue.value.steps.length + 1, // 保持 level 字段用于后端，但不在 UI 中显示
-    template_set_id: 0,
-    step_template_id: 0,
-    delay: 0,
-    max_retries: 3,
-    retry_interval: 60000, // 1分钟
-    skip_if_handled: false,
-    continue_on_fail: false,
-    condition_expr: "",
-    urgency_level: 1
-  }
-
-  // 直接添加到末尾，让网格自动排列
-  modelValue.value.steps.push(newStep)
-}
-
-// 移除升级步骤
-const removeStep = (index: number) => {
-  modelValue.value.steps.splice(index, 1)
-  // 重新调整级别
-  updateStepLevels()
-}
-
-// 更新步骤级别
-const updateStepLevels = () => {
-  modelValue.value.steps.forEach((step, idx) => {
-    step.level = idx + 1
-  })
-}
-
-// 拖拽开始
-const onDragStart = (event: any) => {
-  draggingIndex.value = event.oldIndex
-}
-
-// 拖拽结束
-const onDragEnd = () => {
-  draggingIndex.value = -1
-  updateStepLevels()
-}
-
-// 拖拽排序
-const onDragSort = () => {
-  updateStepLevels()
-}
-
-// 编辑步骤
-const editStep = async (index: number) => {
-  currentStepIndex.value = index
-  const step = modelValue.value.steps[index]
-  currentStep.value = {
-    level: step.level,
-    template_set_id: step.template_set_id,
-    step_template_id: step.step_template_id,
-    delay: step.delay,
-    max_retries: step.max_retries,
-    retry_interval: step.retry_interval,
-    skip_if_handled: step.skip_if_handled,
-    continue_on_fail: step.continue_on_fail,
-    condition_expr: step.condition_expr,
-    urgency_level: step.urgency_level
-  }
-
-  // 先打开抽屉
-  stepEditDialogVisible.value = true
-
-  // 如果当前步骤有步骤模板ID，则加载对应的模板数据
-  if (step.step_template_id) {
-    // 使用新的接口加载特定的模板数据
-    try {
-      const response = await listStepTemplatesByIDsApi({ ids: [step.step_template_id] })
-      const newTemplates = response.data.templates || []
-      const existingIds = stepTemplates.value.map((t) => t.id)
-      const uniqueNewTemplates = newTemplates.filter((t) => !existingIds.includes(t.id))
-      stepTemplates.value.push(...uniqueNewTemplates)
-    } catch (error) {
-      console.error("加载步骤模板详情失败:", error)
-    }
-  }
-}
-
 // 保存步骤编辑
 const saveStepEdit = async () => {
   if (!stepFormRef.value) return
@@ -568,23 +373,6 @@ const saveStepEdit = async () => {
 // 处理步骤编辑抽屉关闭
 const handleStepEditClosed = () => {
   currentStepIndex.value = -1
-}
-
-// 获取紧急程度标签类型
-const getUrgencyTagType = (level: number) => {
-  if (level >= 4) return "danger"
-  if (level >= 3) return "warning"
-  if (level >= 2) return "info"
-  return "success"
-}
-
-// 格式化延迟时间
-const formatDelay = (delay: number) => {
-  if (delay === 0) return "无延迟"
-  if (delay < 1000) return `${delay}ms`
-  if (delay < 60000) return `${Math.round(delay / 1000)}s`
-  if (delay < 3600000) return `${Math.round(delay / 60000)}min`
-  return `${Math.round(delay / 3600000)}h`
 }
 
 // 加载模板集数据
@@ -611,68 +399,6 @@ const loadStepTemplates = async () => {
   } catch (error) {
     console.error("加载步骤模板失败:", error)
   }
-}
-
-// 获取模板集名称
-const getTemplateSetName = (id: number) => {
-  const templateSet = templateSets.value.find((ts) => ts.id === id)
-  return templateSet ? templateSet.name : `模板集 ${id}`
-}
-
-// 获取步骤模板名称
-const getStepTemplateName = (id: number) => {
-  const template = stepTemplates.value.find((st) => st.id === id)
-  return template ? template.name : `步骤模板 ${id}`
-}
-
-// 获取步骤模板内容
-const getStepTemplateContent = (id?: number) => {
-  if (!id) return null
-  return stepTemplates.value.find((st) => st.id === id) || null
-}
-
-// 获取步骤模板的通知渠道
-const getStepTemplateChannels = (id?: number) => {
-  const template = getStepTemplateContent(id)
-  return template ? template.channels : []
-}
-
-// 获取步骤模板的接收者
-const getStepTemplateReceivers = (id?: number) => {
-  const template = getStepTemplateContent(id)
-  return template ? template.receivers : []
-}
-
-// 获取渠道标签
-const getChannelLabel = (channel: string) => {
-  const channelMap: Record<string, string> = {
-    EMAIL: "邮件",
-    WECHAT: "企业微信",
-    FEISHU_CARD: "飞书卡片"
-  }
-  return channelMap[channel] || channel
-}
-
-// 获取接收者类型标签
-const getReceiverTypeLabel = (type: string) => {
-  const typeMap: Record<string, string> = {
-    user: "用户",
-    team: "团队",
-    department: "部门",
-    oncall: "值班"
-  }
-  return typeMap[type] || type
-}
-
-// 获取接收者标签类型（用于Element Plus的tag组件）
-const getReceiverTagType = (type: string): "primary" | "success" | "warning" | "danger" | "info" => {
-  const typeMap: Record<string, "primary" | "success" | "warning" | "danger" | "info"> = {
-    user: "primary",
-    team: "success",
-    department: "warning",
-    oncall: "danger"
-  }
-  return typeMap[type] || "info"
 }
 
 // 组件挂载时加载数据
@@ -775,206 +501,5 @@ onMounted(() => {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   width: 100%;
-}
-
-.step-card {
-  display: flex;
-  flex-direction: column;
-  padding: 16px;
-  background: #ffffff;
-  border: 1px solid #e4e7ed;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  position: relative;
-  min-height: 200px;
-
-  &:hover {
-    border-color: #409eff;
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
-    transform: translateY(-2px);
-  }
-
-  &.step-dragging {
-    opacity: 0.6;
-    transform: rotate(2deg);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-  }
-
-  .step-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-
-    .step-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .step-number {
-        font-size: 14px;
-        font-weight: 600;
-        color: #303133;
-      }
-
-      .urgency-tag {
-        font-weight: 500;
-      }
-    }
-
-    .step-actions {
-      display: flex;
-      gap: 6px;
-    }
-  }
-
-  .step-content {
-    flex: 1;
-    min-width: 0;
-
-    .step-info {
-      .info-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-        margin-bottom: 12px;
-
-        .info-item {
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-
-          .info-label {
-            font-size: 11px;
-            color: #909399;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-
-          .info-value {
-            font-size: 13px;
-            color: #606266;
-            font-weight: 500;
-          }
-        }
-      }
-
-      .step-condition {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 8px;
-        background: #f0f9ff;
-        border: 1px solid #b3d8ff;
-        border-radius: 4px;
-        margin-bottom: 8px;
-
-        .condition-label {
-          font-size: 10px;
-          color: #409eff;
-          font-weight: 500;
-        }
-
-        .condition-code {
-          font-size: 10px;
-          color: #409eff;
-          font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-          background: none;
-          padding: 0;
-          flex: 1;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-      }
-
-      .template-details {
-        padding: 8px;
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-
-        .template-channels {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-bottom: 6px;
-
-          .template-label {
-            font-size: 10px;
-            color: #6c757d;
-            font-weight: 500;
-            min-width: 60px;
-          }
-
-          .channels-list {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-
-            .channel-tag {
-              font-size: 10px;
-              padding: 2px 6px;
-            }
-          }
-        }
-
-        .template-receivers {
-          display: flex;
-          align-items: flex-start;
-          gap: 6px;
-
-          .template-label {
-            font-size: 10px;
-            color: #6c757d;
-            font-weight: 500;
-            min-width: 60px;
-            margin-top: 2px;
-          }
-
-          .receivers-list {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-
-            .receiver-tag {
-              font-size: 10px;
-              padding: 2px 6px;
-              display: flex;
-              align-items: center;
-              gap: 4px;
-
-              .receiver-type {
-                font-weight: 500;
-                opacity: 0.8;
-              }
-
-              .receiver-name {
-                font-weight: 600;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-// 拖拽状态样式
-.step-ghost {
-  opacity: 0.5;
-  background: #f0f9ff;
-  border: 2px dashed #409eff;
-}
-
-.step-chosen {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
-}
-
-.step-drag {
-  transform: rotate(5deg);
-  opacity: 0.8;
 }
 </style>
