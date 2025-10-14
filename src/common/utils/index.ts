@@ -1,5 +1,6 @@
 import dayjs from "dayjs"
 import { cloneDeep } from "lodash-es"
+import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 
 /** 格式化时间 */
 export const formatDateTime = (time: string | number | Date) => {
@@ -19,4 +20,20 @@ export const clearZeroValues = <T extends Record<string, any>>(obj: T): T => {
     }
   })
   return cloned
+}
+
+/**
+ * 获取业务类型的中文标签
+ * @param bizId 业务类型ID
+ * @returns 业务类型的中文标签
+ */
+export const getBusinessTypeLabel = (bizId: number): string => {
+  switch (bizId) {
+    case BUSINESS_TYPES.WORKSPACE:
+      return "工作空间"
+    case BUSINESS_TYPES.WORKFLOW:
+      return "工作流"
+    default:
+      return `业务类型 ${bizId}`
+  }
 }

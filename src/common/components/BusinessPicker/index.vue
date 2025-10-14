@@ -144,8 +144,9 @@ const {
 const containerRef = ref<HTMLElement>()
 
 // 获取业务类型的中文标签
-const getBusinessTypeLabel = () => {
-  switch (props.businessType) {
+const getBusinessTypeLabel = (businessType?: BUSINESS_TYPES) => {
+  const type = businessType || props.businessType
+  switch (type) {
     case BUSINESS_TYPES.WORKSPACE:
       return "工作空间"
     case BUSINESS_TYPES.WORKFLOW:

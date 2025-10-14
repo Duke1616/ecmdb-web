@@ -5,6 +5,11 @@
       <h3 class="section-title">基本信息</h3>
       <el-row :gutter="20">
         <el-col :span="8">
+          <el-form-item label="配置名称" prop="name">
+            <el-input v-model="modelValue.name" placeholder="请输入配置名称" />
+          </el-form-item>
+        </el-col>
+        <el-col :span="8">
           <el-form-item label="业务类型" prop="biz_id">
             <el-select v-model="modelValue.biz_id" placeholder="请选择业务类型" style="width: 100%">
               <el-option label="工作空间（告警）" :value="BUSINESS_TYPES.WORKSPACE" />
@@ -20,11 +25,6 @@
               placeholder="请选择业务唯一值"
               variant="simple"
             />
-          </el-form-item>
-        </el-col>
-        <el-col :span="8">
-          <el-form-item label="配置名称" prop="name">
-            <el-input v-model="modelValue.name" placeholder="请输入配置名称" />
           </el-form-item>
         </el-col>
       </el-row>

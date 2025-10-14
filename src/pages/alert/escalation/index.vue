@@ -24,7 +24,6 @@
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      :table-props="tableProps"
       v-loading="loading"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -33,8 +32,6 @@
       <template #configInfo="{ row }">
         <div class="config-info-cell">
           <h4 class="config-name">{{ row.name }}</h4>
-          <div class="config-key">标识: {{ row.key }}</div>
-          <div class="config-desc">{{ row.description || "暂无描述" }}</div>
         </div>
       </template>
 
@@ -52,9 +49,20 @@
         </div>
       </template>
 
-      <!-- 创建时间插槽 -->
-      <template #ctime="{ row }">
-        <div class="time-cell">{{ formatTimestamp(row.ctime) }}</div>
+      <!-- 所属业务插槽 -->
+      <template #businessInfo="{ row }">
+        <div class="business-cell">
+          <el-tag type="primary" size="small">{{ getBusinessTypeLabel(row.biz_id) }}</el-tag>
+        </div>
+      </template>
+
+      <!-- 详情信息插槽 -->
+      <template #details="{ row }">
+        <div class="details-cell">
+          <el-tooltip :content="`描述: ${row.description || '暂无描述'}`" placement="top" effect="dark">
+            <div class="template-desc">{{ row.description || "暂无描述" }}</div>
+          </el-tooltip>
+        </div>
       </template>
 
       <!-- 操作插槽 -->
@@ -94,7 +102,7 @@ import {
   updateConfigStatusApi
 } from "@/api/alert/escalation"
 import { usePagination } from "@/common/composables/usePagination"
-import { formatTimestamp } from "@/common/utils/day"
+import { getBusinessTypeLabel } from "@@/utils"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
@@ -141,32 +149,33 @@ const tableColumns = [
   {
     prop: "configInfo",
     label: "配置信息",
+    width: 150,
     slot: "configInfo"
   },
   {
     prop: "status",
     label: "状态",
-    width: 100,
+    width: 200,
     slot: "status"
   },
   {
     prop: "stepCount",
     label: "步骤数量",
-    width: 120,
+    width: 200,
     slot: "stepCount"
   },
   {
-    prop: "ctime",
-    label: "创建时间",
-    width: 180,
-    slot: "ctime"
+    prop: "businessInfo",
+    label: "所属业务",
+    width: 200,
+    slot: "businessInfo"
+  },
+  {
+    prop: "details",
+    label: "详情信息",
+    slot: "details"
   }
 ]
-
-// 表格属性
-const tableProps = {
-  height: "calc(100vh - 200px)"
-}
 
 // 获取操作按钮配置
 const getOperateItems = (config: ConfigVO) => {
@@ -361,6 +370,21 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+// 所属业务样式
+.business-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  .business-key {
+    font-size: 12px;
+    color: #6b7280;
+    word-break: break-all;
+    text-align: center;
+  }
 }
 
 // 时间样式
