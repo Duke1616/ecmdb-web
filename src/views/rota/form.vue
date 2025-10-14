@@ -5,7 +5,12 @@
         <el-input v-model="formData.name" placeholder="请输入值班名称" />
       </el-form-item>
       <el-form-item prop="owner" label="管理人员">
-        <UserPicker v-model="formData.owner" placeholder="选择管理人员"  variant="simple" :default-to-current-user="false" />
+        <UserPicker
+          v-model="formData.owner"
+          placeholder="选择管理人员"
+          variant="simple"
+          :default-to-current-user="false"
+        />
       </el-form-item>
       <el-form-item prop="desc" label="值班描述">
         <el-input v-model="formData.desc" placeholder="请输入值班描述" />

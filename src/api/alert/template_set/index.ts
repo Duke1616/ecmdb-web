@@ -9,6 +9,7 @@ import type {
   DeleteTemplateSetReq,
   ListTemplateSetReq,
   RetrieveTemplateSets,
+  ListTemplateSetsByIDsReq,
   CountItemsReq,
   CountItemsResp,
   AddItemReq,
@@ -58,6 +59,14 @@ export const deleteTemplateSetApi = (data: DeleteTemplateSetReq) => {
 export const listTemplateSetsApi = (data: ListTemplateSetReq) => {
   return instance.post<RetrieveTemplateSets>({
     url: `${API_SERVICE.ALERT}/template/set/list`,
+    data
+  })
+}
+
+// 根据ID列表获取模板集合
+export const listTemplateSetsByIDsApi = (data: ListTemplateSetsByIDsReq) => {
+  return instance.post<RetrieveTemplateSets>({
+    url: `${API_SERVICE.ALERT}/template/set/list/by_ids`,
     data
   })
 }

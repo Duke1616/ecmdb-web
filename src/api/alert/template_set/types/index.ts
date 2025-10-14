@@ -70,6 +70,11 @@ export interface RetrieveTemplateSets {
   total: number
 }
 
+// 根据ID列表获取模板集合请求
+export interface ListTemplateSetsByIDsReq {
+  ids: number[] // 模板集合ID列表
+}
+
 // 统计条目请求
 export interface CountItemsReq {
   set_id: number

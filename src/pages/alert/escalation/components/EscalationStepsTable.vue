@@ -1,12 +1,7 @@
 <template>
   <div class="form-section">
-    <div class="section-header">
-      <h3 class="section-title">升级步骤</h3>
-      <el-button type="primary" :icon="Plus" size="small" @click="addStep"> 添加步骤 </el-button>
-    </div>
-
     <div v-if="modelValue.length === 0" class="empty-steps">
-      <el-empty description="暂无升级步骤，点击上方按钮添加" />
+      <el-empty description="暂无升级步骤" />
     </div>
 
     <div v-else class="steps-table-container">
@@ -107,42 +102,26 @@
             </el-button>
             <el-button type="danger" size="small" @click="removeStep(index)">
               <el-icon><Delete /></el-icon>
+              删除
             </el-button>
           </div>
         </template>
       </DataTable>
     </div>
   </div>
-
-  <!-- 升级步骤编辑抽屉 -->
-  <CustomDrawer
-    v-model="stepEditDialogVisible"
-    :title="currentStepIndex === -1 ? '新建升级步骤' : '编辑升级步骤'"
-    :subtitle="currentStepIndex === -1 ? '新建升级步骤' : `升级步骤 ${currentStepIndex + 1}`"
-    size="50%"
-    direction="rtl"
-    :show-footer="true"
-    :header-icon="Setting"
-    @closed="handleStepEditClosed"
-    @confirm="saveStepEdit"
-  >
-    <EscalationStepForm v-model="currentStep" ref="stepFormRef" />
-  </CustomDrawer>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue"
-import { Plus, Delete, Setting, Bell, User } from "@element-plus/icons-vue"
+import { ref, computed, onMounted, watch } from "vue"
+import { Delete, Setting, Bell, User } from "@element-plus/icons-vue"
 import type { CreateStepReq, StepTemplateVO } from "@/api/alert/escalation/types"
 import type { TemplateSet } from "@/api/alert/template_set/types"
-import { listStepTemplatesApi, listStepTemplatesByIDsApi } from "@/api/alert/escalation"
-import { listTemplateSetsApi } from "@/api/alert/template_set"
+import { listStepTemplatesByIDsApi } from "@/api/alert/escalation"
+import { listTemplateSetsByIDsApi } from "@/api/alert/template_set"
 import { getChannelLabel } from "../../template/config/channels"
 import { CHANNEL_CONFIGS } from "../../template/config/channels"
 import { getReceiverTypeLabel, getReceiverTypeTagType, getReceiverTooltipContent } from "../utils"
 import DataTable from "@/common/components/DataTable/index.vue"
-import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
-import EscalationStepForm from "./EscalationStepForm.vue"
 import { ChannelType } from "@/api/alert/template/types"
 
 // 定义 props 和 emits
@@ -152,6 +131,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   "update:modelValue": [value: CreateStepReq[]]
+  "add-step": []
+  "edit-step": [index: number, step: CreateStepReq]
+  "delete-step": [index: number, step: CreateStepReq]
+  "row-drag": [newSteps: CreateStepReq[]]
 }>()
 
 // 使用 v-model
@@ -194,162 +177,70 @@ const stepTableColumns = computed(() => [
   }
 ])
 
-// 步骤编辑相关状态
-const stepEditDialogVisible = ref(false)
-const currentStepIndex = ref(-1)
-const currentStep = ref<CreateStepReq>({
-  level: 1,
-  template_set_id: 0,
-  step_template_id: 0,
-  delay: 0,
-  max_retries: 3,
-  retry_interval: 300,
-  skip_if_handled: false,
-  continue_on_fail: false,
-  condition_expr: "",
-  urgency_level: 1,
-  config_id: 0
-})
-const stepFormRef = ref<InstanceType<typeof EscalationStepForm>>()
-
 // 模板集和步骤模板数据
 const templateSets = ref<TemplateSet[]>([])
 const stepTemplates = ref<StepTemplateVO[]>([])
 
 // 表格行拖拽处理
 const handleStepRowDrag = (newSteps: CreateStepReq[]) => {
-  // 更新步骤数据
-  modelValue.value = newSteps
-
-  // 重新计算级别
-  updateStepLevels()
-}
-
-// 更新步骤级别
-const updateStepLevels = () => {
-  modelValue.value.forEach((step, index) => {
-    step.level = index + 1
-  })
-}
-
-// 添加步骤
-const addStep = () => {
-  // 创建新步骤但不立即添加到列表中
-  const newStep: CreateStepReq = {
-    level: modelValue.value.length + 1,
-    template_set_id: 0,
-    step_template_id: 0,
-    delay: 0,
-    max_retries: 3,
-    retry_interval: 300,
-    skip_if_handled: false,
-    continue_on_fail: false,
-    condition_expr: "",
-    urgency_level: 1,
-    config_id: 0
-  }
-
-  // 设置当前步骤为新建的步骤
-  currentStep.value = newStep
-  currentStepIndex.value = -1 // 使用 -1 表示这是新建步骤
-
-  // 直接打开编辑抽屉
-  stepEditDialogVisible.value = true
+  emit("row-drag", newSteps)
 }
 
 // 编辑步骤
-const editStep = async (index: number) => {
-  currentStepIndex.value = index
+const editStep = (index: number) => {
   const step = modelValue.value[index]
-
-  // 复制步骤数据
-  currentStep.value = { ...step }
-
-  // 如果有步骤模板ID，加载模板详情
-  if (step.step_template_id) {
-    await loadStepTemplateDetails(step)
-  }
-
-  stepEditDialogVisible.value = true
-}
-
-// 加载步骤模板详情
-const loadStepTemplateDetails = async (step: CreateStepReq) => {
-  if (step.step_template_id) {
-    try {
-      const response = await listStepTemplatesByIDsApi({ ids: [step.step_template_id] })
-      const newTemplates = response.data.templates || []
-      const existingIds = stepTemplates.value.map((t) => t.id)
-      const uniqueNewTemplates = newTemplates.filter((t) => !existingIds.includes(t.id))
-      stepTemplates.value.push(...uniqueNewTemplates)
-    } catch (error) {
-      console.error("加载步骤模板详情失败:", error)
-    }
-  }
+  emit("edit-step", index, step)
 }
 
 // 删除步骤
 const removeStep = (index: number) => {
-  modelValue.value.splice(index, 1)
-  updateStepLevels()
-}
-
-// 保存步骤编辑
-const saveStepEdit = async () => {
-  try {
-    // 验证表单
-    if (stepFormRef.value) {
-      await stepFormRef.value.validate()
-    }
-
-    if (currentStepIndex.value === -1) {
-      // 新建步骤：添加到列表末尾
-      modelValue.value.push({ ...currentStep.value })
-    } else {
-      // 编辑现有步骤：更新数据
-      modelValue.value[currentStepIndex.value] = { ...currentStep.value }
-    }
-
-    // 重新计算级别
-    updateStepLevels()
-
-    // 关闭对话框
-    stepEditDialogVisible.value = false
-    currentStepIndex.value = -1
-  } catch (error) {
-    console.error("保存步骤失败:", error)
-  }
-}
-
-// 关闭步骤编辑
-const handleStepEditClosed = () => {
-  stepEditDialogVisible.value = false
-  currentStepIndex.value = -1
+  const step = modelValue.value[index]
+  emit("delete-step", index, step)
 }
 
 // 加载模板集数据
 const loadTemplateSets = async () => {
   try {
-    const response = await listTemplateSetsApi({
-      offset: 0,
-      limit: 1000
-    })
-    templateSets.value = response.data.template_sets || []
+    // 收集所有步骤中的 template_set_id
+    const templateSetIds = modelValue.value
+      .map((step) => step.template_set_id)
+      .filter((id) => id && id > 0)
+      .filter((id, index, arr) => arr.indexOf(id) === index) // 去重
+
+    if (templateSetIds.length > 0) {
+      const response = await listTemplateSetsByIDsApi({
+        ids: templateSetIds
+      })
+      templateSets.value = response.data.template_sets || []
+    } else {
+      templateSets.value = []
+    }
   } catch (error) {
     console.error("加载模板集失败:", error)
+    templateSets.value = []
   }
 }
 
 // 加载步骤模板数据
 const loadStepTemplates = async () => {
   try {
-    const response = await listStepTemplatesApi({
-      offset: 0,
-      limit: 1000
-    })
-    stepTemplates.value = response.data.templates || []
+    // 收集所有步骤中的 step_template_id
+    const stepTemplateIds = modelValue.value
+      .map((step) => step.step_template_id)
+      .filter((id): id is number => id !== undefined && id > 0)
+      .filter((id, index, arr) => arr.indexOf(id) === index) // 去重
+
+    if (stepTemplateIds.length > 0) {
+      const response = await listStepTemplatesByIDsApi({
+        ids: stepTemplateIds
+      })
+      stepTemplates.value = response.data.templates || []
+    } else {
+      stepTemplates.value = []
+    }
   } catch (error) {
     console.error("加载步骤模板失败:", error)
+    stepTemplates.value = []
   }
 }
 
@@ -407,31 +298,17 @@ const getChannelLabelSafe = (channel: string): string => {
   }
 }
 
-// 监听步骤数据变化，动态加载模板数据
+// 监听 modelValue 变化，重新加载模板数据
 watch(
   () => modelValue.value,
-  async (newSteps) => {
-    if (newSteps && newSteps.length > 0) {
-      // 收集所有需要加载的模板ID
-      const templateIds = newSteps
-        .map((step) => step.step_template_id)
-        .filter((id): id is number => id !== undefined && id !== 0 && !stepTemplates.value.find((t) => t.id === id))
-
-      if (templateIds.length > 0) {
-        try {
-          const response = await listStepTemplatesByIDsApi({ ids: templateIds })
-          const newTemplates = response.data.templates || []
-          stepTemplates.value.push(...newTemplates)
-        } catch (error) {
-          console.error("动态加载步骤模板失败:", error)
-        }
-      }
-    }
+  () => {
+    loadTemplateSets()
+    loadStepTemplates()
   },
-  { deep: true, immediate: true }
+  { deep: true }
 )
 
-// 组件挂载时加载数据
+// 组件挂载时加载模板数据
 onMounted(() => {
   loadTemplateSets()
   loadStepTemplates()

@@ -117,7 +117,19 @@
     </div>
 
     <!-- 升级步骤 -->
-    <EscalationStepsTable v-model="modelValue.steps" />
+    <div class="form-section">
+      <div class="section-header">
+        <h3 class="section-title">升级步骤</h3>
+        <el-button type="primary" :icon="Plus" size="small" @click="addStep"> 添加步骤 </el-button>
+      </div>
+      <EscalationStepsTable
+        v-model="modelValue.steps"
+        @add-step="handleAddStep"
+        @edit-step="handleEditStep"
+        @delete-step="handleDeleteStep"
+        @row-drag="handleStepRowDrag"
+      />
+    </div>
   </el-form>
 
   <!-- 触发条件配置对话框 -->
@@ -142,8 +154,8 @@
   <!-- 升级步骤编辑抽屉 -->
   <CustomDrawer
     v-model="stepEditDialogVisible"
-    title="编辑升级步骤"
-    :subtitle="`升级步骤 ${currentStepIndex + 1}`"
+    :title="currentStepIndex === -1 ? '添加升级步骤' : '编辑升级步骤'"
+    :subtitle="currentStepIndex === -1 ? '添加新的升级步骤' : `升级步骤 ${currentStepIndex + 1}`"
     size="50%"
     direction="rtl"
     :show-footer="true"
@@ -151,15 +163,17 @@
     @closed="handleStepEditClosed"
     @confirm="saveStepEdit"
   >
-    <EscalationStepForm v-if="currentStepIndex !== -1" v-model="currentStep" ref="stepFormRef" />
+    <EscalationStepForm v-if="stepEditDialogVisible" v-model="currentStep" ref="stepFormRef" />
   </CustomDrawer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { ref, watch } from "vue"
 import { Plus, Delete, Setting } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
-import type { CreateConfigReq } from "@/api/alert/escalation/types"
+import type { CreateConfigReq, CreateStepReq } from "@/api/alert/escalation/types"
+import { cloneDeep } from "lodash-es"
+import { clearZeroValues } from "@@/utils"
 import {
   ESCALATION_LOGIC_TYPES,
   ESCALATION_TRIGGER_TYPES,
@@ -172,11 +186,7 @@ import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
 import BusinessPicker from "@/common/components/BusinessPicker/index.vue"
 import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
-import { listTemplateSetsApi } from "@/api/alert/template_set"
-import { listStepTemplatesApi } from "@/api/alert/escalation"
 import { escalationConfigFormRules, validateEscalationConfig } from "../config/validation"
-import type { TemplateSet } from "@/api/alert/template_set/types"
-import type { StepTemplateVO } from "@/api/alert/escalation/types"
 
 const modelValue = defineModel<CreateConfigReq>({ required: true })
 
@@ -190,7 +200,7 @@ const triggerConfigSaving = ref(false)
 // 步骤编辑相关状态
 const stepEditDialogVisible = ref(false)
 const currentStepIndex = ref(-1)
-const currentStep = ref({
+const currentStep = ref<CreateStepReq>({
   level: 1,
   template_set_id: 0,
   step_template_id: 0,
@@ -200,12 +210,9 @@ const currentStep = ref({
   skip_if_handled: false,
   continue_on_fail: false,
   condition_expr: "",
-  urgency_level: 1
+  urgency_level: 1,
+  config_id: 0
 })
-
-// 模板集和步骤模板数据
-const templateSets = ref<TemplateSet[]>([])
-const stepTemplates = ref<StepTemplateVO[]>([])
 
 // 表单验证规则
 // 使用导入的验证规则
@@ -261,7 +268,7 @@ defineExpose({
 
 // 添加触发条件
 const addTrigger = () => {
-  modelValue.value.triggers.push({
+  const newTrigger = {
     type: ESCALATION_TRIGGER_TYPES.TIME,
     config: {
       time_config: {
@@ -270,7 +277,8 @@ const addTrigger = () => {
       }
     },
     description: ""
-  })
+  }
+  modelValue.value.triggers.push(cloneDeep(newTrigger))
 }
 
 // 移除触发条件
@@ -280,7 +288,7 @@ const removeTrigger = (index: number) => {
 
 // 处理触发类型变化
 const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) => {
-  const trigger = modelValue.value.triggers[index]
+  const trigger = cloneDeep(modelValue.value.triggers[index])
   trigger.type = newType
 
   // 根据新类型重新创建配置
@@ -327,6 +335,8 @@ const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) 
       }
       break
   }
+
+  modelValue.value.triggers[index] = trigger
 }
 
 // 编辑触发条件配置
@@ -360,9 +370,22 @@ const saveStepEdit = async () => {
 
   try {
     await stepFormRef.value.validate()
-    if (currentStepIndex.value !== -1) {
-      modelValue.value.steps[currentStepIndex.value] = { ...currentStep.value }
+
+    // 确保所有字段都有正确的类型
+    const stepData = {
+      ...currentStep.value,
+      template_set_id: currentStep.value.template_set_id || 0,
+      step_template_id: currentStep.value.step_template_id || 0
     }
+
+    if (currentStepIndex.value !== -1) {
+      // 编辑现有步骤
+      modelValue.value.steps[currentStepIndex.value] = stepData
+    } else {
+      // 添加新步骤
+      modelValue.value.steps.push(stepData)
+    }
+
     stepEditDialogVisible.value = false
     currentStepIndex.value = -1
   } catch (error) {
@@ -375,37 +398,66 @@ const handleStepEditClosed = () => {
   currentStepIndex.value = -1
 }
 
-// 加载模板集数据
-const loadTemplateSets = async () => {
-  try {
-    const response = await listTemplateSetsApi({
-      offset: 0,
-      limit: 1000 // 获取所有模板集
-    })
-    templateSets.value = response.data.template_sets || []
-  } catch (error) {
-    console.error("加载模板集失败:", error)
+// 添加步骤
+const addStep = () => {
+  // 创建新步骤但不立即添加到列表中
+  const newStepData: CreateStepReq = {
+    level: modelValue.value.steps.length + 1,
+    template_set_id: 0,
+    step_template_id: 0,
+    delay: 0,
+    max_retries: 3,
+    retry_interval: 300,
+    skip_if_handled: false,
+    continue_on_fail: false,
+    condition_expr: "",
+    urgency_level: 1,
+    config_id: 0
   }
+
+  // 清空零值并设置当前步骤为新建的步骤
+  currentStep.value = clearZeroValues(newStepData) as CreateStepReq
+  currentStepIndex.value = -1 // 使用 -1 表示这是新建步骤
+
+  // 直接打开编辑抽屉
+  stepEditDialogVisible.value = true
 }
 
-// 加载步骤模板数据
-const loadStepTemplates = async () => {
-  try {
-    const response = await listStepTemplatesApi({
-      offset: 0,
-      limit: 1000 // 获取所有步骤模板
-    })
-    stepTemplates.value = response.data.templates || []
-  } catch (error) {
-    console.error("加载步骤模板失败:", error)
-  }
+// 处理添加步骤回调
+const handleAddStep = () => {
+  addStep()
 }
 
-// 组件挂载时加载数据
-onMounted(() => {
-  loadTemplateSets()
-  loadStepTemplates()
-})
+// 处理编辑步骤回调
+const handleEditStep = (index: number, step: CreateStepReq) => {
+  currentStepIndex.value = index
+  currentStep.value = cloneDeep(step)
+  stepEditDialogVisible.value = true
+}
+
+// 处理删除步骤回调
+const handleDeleteStep = (index: number, _step: CreateStepReq) => {
+  modelValue.value.steps.splice(index, 1)
+  // 重新计算级别
+  modelValue.value.steps.forEach((s, i) => {
+    s.level = i + 1
+  })
+}
+
+// 处理步骤拖拽回调
+const handleStepRowDrag = (newSteps: CreateStepReq[]) => {
+  // 确保所有字段都有正确的类型
+  const stepsWithCorrectTypes = newSteps.map((step) => ({
+    ...step,
+    template_set_id: step.template_set_id || 0,
+    step_template_id: step.step_template_id || 0
+  }))
+  modelValue.value.steps = stepsWithCorrectTypes
+  // 重新计算级别
+  modelValue.value.steps.forEach((s, i) => {
+    s.level = i + 1
+  })
+}
 </script>
 
 <style scoped lang="scss">

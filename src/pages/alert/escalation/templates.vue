@@ -117,6 +117,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue"
 import { Plus, Bell, User } from "@element-plus/icons-vue"
+import { cloneDeep } from "lodash-es"
 import type { StepTemplateVO, CreateStepTemplateReq } from "@/api/alert/escalation/types"
 import { getChannelLabel } from "../template/config/channels"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -200,15 +201,12 @@ const handleCreate = () => {
 const handleEdit = (template: StepTemplateVO) => {
   isEdit.value = true
   currentEditId.value = template.id
-  formData.value = {
+  formData.value = cloneDeep({
     name: template.name,
     description: template.description,
-    channels: [...template.channels], // 深拷贝数组
-    receivers: template.receivers.map((receiver) => ({
-      ...receiver,
-      metadata: { ...receiver.metadata } // 深拷贝对象
-    }))
-  }
+    channels: template.channels,
+    receivers: template.receivers
+  })
   drawerVisible.value = true
 }
 
