@@ -166,13 +166,13 @@ const stepTableColumns = computed(() => [
   {
     prop: "channels",
     label: "通知渠道",
-    minWidth: 120,
+    minWidth: 200,
     slot: "channels"
   },
   {
     prop: "receivers",
     label: "接收者",
-    minWidth: 150,
+    minWidth: 240,
     slot: "receivers"
   }
 ])
@@ -317,7 +317,9 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .form-section {
-  margin-bottom: 32px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .section-header {
     display: flex;
@@ -341,7 +343,10 @@ onMounted(() => {
 
 // 步骤表格容器样式
 .steps-table-container {
-  margin-top: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 
   .action-buttons {
     display: flex;

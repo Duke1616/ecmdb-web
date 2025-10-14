@@ -28,7 +28,6 @@ export function useEscalationConfig() {
     loading.value = true
     try {
       const response = await listConfigsApi({
-        biz_id: 1,
         offset: (paginationData.currentPage - 1) * paginationData.pageSize,
         limit: paginationData.pageSize
       })
@@ -56,8 +55,7 @@ export function useEscalationConfig() {
       enabled: data.enabled ?? true,
       timeout: data.timeout || 300,
       triggers: data.triggers || [],
-      trigger_logic: data.trigger_logic || { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" },
-      steps: data.steps || []
+      trigger_logic: data.trigger_logic || { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" }
     })
     await loadConfigs()
     return true

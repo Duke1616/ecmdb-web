@@ -50,16 +50,25 @@ export function useEscalationSteps() {
 
   // 创建步骤
   const createStep = async (data: CreateStepReq) => {
-    await createStepApi(data)
+    const createData = {
+      ...data,
+      config_id: configId.value
+    }
+
+    console.log("创建步骤数据:", createData)
+    console.log("configId.value:", configId.value)
+
+    await createStepApi(createData)
     await loadSteps()
     return true
   }
 
   // 更新步骤
   const updateStep = async (id: number, data: Partial<CreateStepReq>) => {
-    await updateStepApi({
+    const updateData = {
       id,
       level: data.level || 1,
+      config_id: configId.value,
       template_set_id: data.template_set_id || 0,
       step_template_id: data.step_template_id,
       delay: data.delay || 0,
@@ -69,7 +78,12 @@ export function useEscalationSteps() {
       continue_on_fail: data.continue_on_fail ?? true,
       condition_expr: data.condition_expr || "",
       urgency_level: data.urgency_level || 1
-    })
+    }
+
+    console.log("更新步骤数据:", updateData)
+    console.log("configId.value:", configId.value)
+
+    await updateStepApi(updateData)
     await loadSteps()
     return true
   }

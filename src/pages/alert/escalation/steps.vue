@@ -53,8 +53,9 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { cloneDeep } from "lodash-es"
 import { clearZeroValues } from "@@/utils"
-import type { StepVO, CreateStepReq } from "@/api/alert/escalation/types"
-import { listStepsByConfigIDApi, createStepApi, updateStepApi, deleteStepApi } from "@/api/alert/escalation"
+import type { CreateStepReq } from "@/api/alert/escalation/types"
+import { updateStepApi, deleteStepApi } from "@/api/alert/escalation"
+import { useEscalationSteps } from "./composables/useEscalationSteps"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import EscalationStepsTable from "./components/EscalationStepsTable.vue"
@@ -65,9 +66,8 @@ import EscalationStepForm from "./components/EscalationStepForm.vue"
 const route = useRoute()
 const router = useRouter()
 
-// 响应式数据
-const steps = ref<StepVO[]>([])
-const loading = ref(false)
+// 使用组合式函数
+const { steps, loading, loadSteps, createStep, updateStep } = useEscalationSteps()
 
 // 编辑相关状态
 const drawerVisible = ref(false)
@@ -93,24 +93,6 @@ const formRef = ref()
 const configId = computed(() => Number(route.params.id))
 const drawerTitle = computed(() => (isEdit.value ? "编辑升级步骤" : "添加升级步骤"))
 const drawerSubtitle = computed(() => (isEdit.value ? `升级步骤 ${currentStepIndex.value + 1}` : "添加新的升级步骤"))
-
-// 加载步骤数据
-const loadSteps = async () => {
-  if (!configId.value) return
-
-  loading.value = true
-  try {
-    const response = await listStepsByConfigIDApi({
-      config_id: configId.value
-    })
-    steps.value = response.data.steps || []
-  } catch (error) {
-    console.error("加载步骤数据失败:", error)
-    ElMessage.error("加载步骤数据失败")
-  } finally {
-    loading.value = false
-  }
-}
 
 // 处理添加步骤回调
 const handleAddStep = () => {
@@ -242,28 +224,15 @@ const handleSubmit = async () => {
     if (isEdit.value && currentStepIndex.value !== -1) {
       // 更新现有步骤
       const stepToUpdate = steps.value[currentStepIndex.value]
-      await updateStepApi({
-        id: stepToUpdate.id,
-        level: submitData.level,
-        template_set_id: submitData.template_set_id || 0,
-        step_template_id: submitData.step_template_id || 0,
-        delay: submitData.delay,
-        max_retries: submitData.max_retries,
-        retry_interval: submitData.retry_interval,
-        skip_if_handled: submitData.skip_if_handled,
-        continue_on_fail: submitData.continue_on_fail,
-        condition_expr: submitData.condition_expr,
-        urgency_level: submitData.urgency_level
-      })
+      await updateStep(stepToUpdate.id, submitData)
       ElMessage.success("更新成功")
     } else {
       // 创建新步骤
-      await createStepApi(submitData)
+      await createStep(submitData)
       ElMessage.success("创建成功")
     }
 
     drawerVisible.value = false
-    await loadSteps()
   } catch (error) {
     console.error("保存步骤失败:", error)
     ElMessage.error("保存步骤失败")

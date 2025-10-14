@@ -1,6 +1,10 @@
 <template>
   <div class="business-picker-container" ref="containerRef" :class="`variant-${variant}`">
-    <div class="business-picker-input" @click="togglePicker" :class="{ 'is-focus': showPicker }">
+    <div
+      class="business-picker-input"
+      @click="!props.disabled && togglePicker()"
+      :class="{ 'is-focus': showPicker, 'is-disabled': props.disabled }"
+    >
       <!-- 多选模式 -->
       <div v-if="props.multiple && selectedItems.length > 0" class="selected-items">
         <div v-for="item in selectedItems" :key="item.id" class="item-tag">
@@ -16,11 +20,20 @@
         </div>
       </div>
       <!-- 单选模式 -->
-      <div v-else-if="!props.multiple && selectedItem" class="selected-item">
-        <div class="item-icon" :style="{ background: generateItemColor(selectedItem.name || '') }">
-          {{ selectedItem.name?.charAt(0) }}
+      <div v-else-if="!props.multiple && (selectedItem || (props.disabled && props.displayName))" class="selected-item">
+        <div
+          class="item-icon"
+          :style="{
+            background: generateItemColor(
+              props.disabled && props.displayName ? props.displayName : selectedItem?.name || ''
+            )
+          }"
+        >
+          {{ props.disabled && props.displayName ? props.displayName.charAt(0) : selectedItem?.name?.charAt(0) }}
         </div>
-        <span class="item-name">{{ selectedItem.name }}</span>
+        <span class="item-name">{{
+          props.disabled && props.displayName ? props.displayName : selectedItem?.name
+        }}</span>
       </div>
       <!-- 占位符 -->
       <div v-else class="placeholder-text">{{ props.placeholder }}</div>
@@ -33,7 +46,7 @@
 
     <!-- 使用 Teleport 将下拉菜单渲染到 body 中，避免被任何容器遮挡 -->
     <Teleport to="body">
-      <div v-if="showPicker" class="business-picker-dropdown" :style="dropdownStyle" @click.stop>
+      <div v-if="showPicker && !props.disabled" class="business-picker-dropdown" :style="dropdownStyle" @click.stop>
         <div class="search-section" @click.stop>
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -119,6 +132,14 @@ const props = defineProps({
     type: String,
     default: "fancy",
     validator: (value: string) => ["fancy", "simple"].includes(value)
+  },
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  displayName: {
+    type: String,
+    default: ""
   }
 })
 
@@ -316,6 +337,19 @@ onUnmounted(() => {
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
+.business-picker-input.is-disabled {
+  background: #f5f7fa;
+  border-color: #dcdfe6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.business-picker-input.is-disabled:hover {
+  border-color: #dcdfe6;
+  background: #f5f7fa;
+  box-shadow: none;
+}
+
 /* simple 变体样式 */
 .business-picker-container.variant-simple .business-picker-input {
   background: #ffffff;
@@ -340,6 +374,19 @@ onUnmounted(() => {
   background: #ffffff;
   box-shadow: none;
   outline: none;
+}
+
+.business-picker-container.variant-simple .business-picker-input.is-disabled {
+  background: #f5f7fa;
+  border-color: #dcdfe6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.business-picker-container.variant-simple .business-picker-input.is-disabled:hover {
+  border-color: #dcdfe6;
+  background: #f5f7fa;
+  box-shadow: none;
 }
 
 .selected-item {

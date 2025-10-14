@@ -196,7 +196,6 @@ export interface UpdateConfigReq {
   timeout: number // 超时时间（毫秒）
   triggers: EscalationTrigger[] // 触发条件
   trigger_logic: EscalationLogic // 触发逻辑
-  steps: EscalationStep[] // 升级步骤
 }
 
 // 获取升级配置响应
@@ -206,7 +205,6 @@ export interface GetConfigResp {
 
 // 获取升级配置列表请求
 export interface ListConfigsReq {
-  biz_id: number // 业务ID
   offset?: number // 偏移量
   limit?: number // 限制数量
 }
@@ -256,6 +254,7 @@ export interface CreateStepResp {
 // 更新升级步骤请求
 export interface UpdateStepReq {
   id: number // 步骤ID
+  config_id?: number // 配置ID
   level: number // 升级级别
   template_set_id: number // 模板集ID
   step_template_id?: number // 步骤模板ID
@@ -276,6 +275,11 @@ export interface GetStepResp {
 // 根据配置ID获取升级步骤列表请求
 export interface ListStepsByConfigIDReq {
   config_id: number // 配置ID
+}
+
+export interface ListConfigsByBizIDAndKeyReq {
+  biz_id: number // 业务类型ID（1=告警，2=工单）
+  key: string // 业务唯一值（告警规则ID或工单模板ID，字符串格式）
 }
 
 // 根据配置ID获取升级步骤列表响应

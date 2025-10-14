@@ -1,13 +1,7 @@
 <template>
   <PageContainer>
     <!-- 头部区域 -->
-    <ManagerHeader
-      title="升级配置"
-      subtitle="管理消息升级配置"
-      :show-back-button="true"
-      @refresh="loadConfigs"
-      @back="handleBack"
-    >
+    <ManagerHeader title="升级配置" subtitle="管理消息升级配置" @refresh="loadConfigs">
       <template #actions>
         <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建配置 </el-button>
       </template>
@@ -18,15 +12,10 @@
       :data="configs"
       :columns="tableColumns"
       :show-selection="false"
-      :show-pagination="true"
-      :total="paginationData.total"
-      :page-size="paginationData.pageSize"
-      :current-page="paginationData.currentPage"
-      :page-sizes="paginationData.pageSizes"
-      :pagination-layout="paginationData.layout"
+      :show-pagination="false"
+      :enable-row-drag="true"
       v-loading="loading"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
+      @row-drag="handleRowDrag"
     >
       <!-- 配置信息插槽 -->
       <template #configInfo="{ row }">
@@ -88,33 +77,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue"
+import { ref, computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
 import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
 import {
-  listConfigsApi,
   createConfigApi,
   updateConfigApi,
   deleteConfigApi,
-  updateConfigStatusApi
+  updateConfigStatusApi,
+  listConfigsByBizKeyApi
 } from "@/api/alert/escalation"
-import { usePagination } from "@/common/composables/usePagination"
 import { getBusinessTypeLabel } from "@@/utils"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
-import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
+import EscalationConfigEditForm from "@/pages/alert/escalation/components/EscalationConfigEditForm.vue"
 
 // 路由
 const router = useRouter()
 
-// 分页
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const props = defineProps<{
+  workspaceId: number
+  workspaceName?: string
+}>()
 
 // 响应式数据
 const configs = ref<ConfigVO[]>([])
@@ -208,17 +198,34 @@ const operateEvent = (config: ConfigVO, action: string) => {
   }
 }
 
+// 处理行拖拽事件
+const handleRowDrag = async (newData: ConfigVO[]) => {
+  try {
+    // 更新本地数据
+    configs.value = newData
+
+    // 这里可以调用API来保存新的排序
+    // 例如：await updateConfigOrderApi(newData.map((item, index) => ({ id: item.id, order: index })))
+
+    ElMessage.success("排序已更新")
+  } catch (error) {
+    console.error("更新排序失败:", error)
+    ElMessage.error("更新排序失败")
+    // 重新加载数据以恢复原始状态
+    await loadConfigs()
+  }
+}
+
 // 加载配置数据
 const loadConfigs = async () => {
   loading.value = true
   try {
-    const response = await listConfigsApi({
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
+    const response = await listConfigsByBizKeyApi({
+      biz_id: 1,
+      key: props.workspaceId.toString()
     })
 
     configs.value = response.data.configs || []
-    paginationData.total = response.data.total || 0
   } finally {
     loading.value = false
   }
@@ -226,7 +233,14 @@ const loadConfigs = async () => {
 
 // 创建配置
 const handleCreate = () => {
-  router.push({ name: "EscalationConfigCreate" })
+  router.push({
+    name: "EscalationConfigCreate",
+    query: {
+      biz_id: 1, // 工作空间业务类型
+      key: props.workspaceId.toString(), // 工作空间ID作为key
+      key_name: props.workspaceName || `工作空间 ${props.workspaceId}` // 工作空间名称用于展示
+    }
+  })
 }
 
 // 编辑配置
@@ -282,16 +296,11 @@ const handleDelete = async (config: ConfigVO) => {
   await loadConfigs()
 }
 
-// 返回操作
-const handleBack = () => {
-  router.go(-1)
-}
-
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
 
-  const isValid = await formRef.value.validateForm()
+  const isValid = await formRef.value.validate()
   if (!isValid) return
 
   submitLoading.value = true
@@ -306,20 +315,16 @@ const handleSubmit = async () => {
         enabled: formData.value.enabled,
         timeout: formData.value.timeout,
         triggers: formData.value.triggers,
-        trigger_logic: formData.value.trigger_logic
+        trigger_logic: formData.value.trigger_logic,
+        steps: formData.value.steps
       })
-      ElMessage.success("配置更新成功")
     } else {
       // 创建
       await createConfigApi(formData.value)
-      ElMessage.success("配置创建成功")
     }
 
     drawerVisible.value = false
     await loadConfigs()
-  } catch (error) {
-    console.error("提交配置失败:", error)
-    ElMessage.error(isEdit.value ? "配置更新失败" : "配置创建失败")
   } finally {
     submitLoading.value = false
   }
@@ -329,18 +334,12 @@ const handleSubmit = async () => {
 const handleDrawerClose = () => {
   drawerVisible.value = false
   formRef.value?.resetFields()
-  // 重置编辑状态
-  isEdit.value = false
-  currentEditId.value = null
 }
 
-// 监听分页变化
-watch(
-  () => [paginationData.currentPage, paginationData.pageSize],
-  () => {
-    loadConfigs()
-  }
-)
+// 暴露方法给父组件
+defineExpose({
+  loadConfigs
+})
 
 // 初始化加载数据
 onMounted(() => {
@@ -349,6 +348,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.page-container {
+  padding: 0px !important;
+  background: transparent !important;
+  width: 100%;
+  height: 100%;
+}
+
 // 配置信息样式
 .config-info-cell {
   .config-name {

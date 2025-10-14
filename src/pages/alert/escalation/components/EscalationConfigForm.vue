@@ -11,7 +11,12 @@
         </el-col>
         <el-col :span="8">
           <el-form-item label="业务类型" prop="biz_id">
-            <el-select v-model="modelValue.biz_id" placeholder="请选择业务类型" style="width: 100%">
+            <el-select
+              v-model="modelValue.biz_id"
+              placeholder="请选择业务类型"
+              style="width: 100%"
+              :disabled="isFieldReadonly('biz_id')"
+            >
               <el-option label="工作空间（告警）" :value="BUSINESS_TYPES.WORKSPACE" />
               <el-option label="工作流（工单）" :value="BUSINESS_TYPES.WORKFLOW" />
             </el-select>
@@ -24,6 +29,8 @@
               :business-type="getBusinessPickerType()"
               placeholder="请选择业务唯一值"
               variant="simple"
+              :disabled="isFieldReadonly('key')"
+              :display-name="props.keyDisplayName"
             />
           </el-form-item>
         </el-col>
@@ -188,7 +195,25 @@ import BusinessPicker from "@/common/components/BusinessPicker/index.vue"
 import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import { escalationConfigFormRules, validateEscalationConfig } from "../config/validation"
 
+// Props 定义
+interface Props {
+  keyDisplayName?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  keyDisplayName: ""
+})
+
 const modelValue = defineModel<CreateConfigReq>({ required: true })
+
+// 检查字段是否为只读
+const isFieldReadonly = (fieldName: string) => {
+  // 如果有 keyDisplayName，说明是从工作空间页面跳转过来的，这些字段应该只读
+  if (fieldName === "biz_id" || fieldName === "key") {
+    return !!props.keyDisplayName
+  }
+  return false
+}
 
 const formRef = ref<FormInstance>()
 const stepFormRef = ref<InstanceType<typeof EscalationStepForm>>()

@@ -26,7 +26,8 @@ import type {
   GetStepTemplateResp,
   ListStepTemplatesReq,
   ListStepTemplatesByIDsReq,
-  ListStepTemplatesResp
+  ListStepTemplatesResp,
+  ListConfigsByBizIDAndKeyReq
 } from "./types"
 
 // 升级配置管理API
@@ -53,6 +54,13 @@ export const getConfigApi = (id: number) => {
 export const listConfigsApi = (data: ListConfigsReq) => {
   return instance.post<ListConfigsResp>({
     url: `${API_SERVICE.ALERT}/escalation/config/list`,
+    data
+  })
+}
+
+export const listConfigsByBizKeyApi = (data: ListConfigsByBizIDAndKeyReq) => {
+  return instance.post<ListConfigsResp>({
+    url: `${API_SERVICE.ALERT}/escalation/config/list/by_biz_key`,
     data
   })
 }

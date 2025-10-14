@@ -86,6 +86,10 @@
             <el-icon><Setting /></el-icon>
             <span>告警规则</span>
           </el-menu-item>
+          <el-menu-item index="escalation">
+            <el-icon><Setting /></el-icon>
+            <span>消息升级</span>
+          </el-menu-item>
           <el-sub-menu index="noise">
             <template #title>
               <el-icon><Filter /></el-icon>
@@ -124,17 +128,22 @@
 
         <!-- 告警管理页面 -->
         <div v-else-if="activeMenu === 'alerts'" class="alerts-page">
-          <AlertManager :workspace-id="workspace?.id || 0" />
+          <AlertManager :workspace-id="workspace?.id || 0" ref="alertManagerRef" />
         </div>
 
         <!-- 告警规则页面 -->
         <div v-else-if="activeMenu === 'rules'" class="rules-page">
-          <AlertRules :workspace-id="workspace?.id || 0" />
+          <AlertRules :workspace-id="workspace?.id || 0" ref="alertRulesRef" />
+        </div>
+
+        <!-- 消息升级页面 -->
+        <div v-else-if="activeMenu === 'escalation'" class="noise-page">
+          <Escalation :workspace-id="workspace?.id || 0" :workspace-name="workspace?.name" ref="escalationRef" />
         </div>
 
         <!-- 降噪配置页面 -->
         <div v-else-if="activeMenu === 'noise'" class="noise-page">
-          <NoiseConfig :workspace-id="workspace?.id || 0" />
+          <NoiseConfig :workspace-id="workspace?.id || 0" ref="noiseConfigRef" />
         </div>
 
         <!-- 聚合规则页面 -->
@@ -159,7 +168,7 @@
 
         <!-- 设置页面 -->
         <div v-else-if="activeMenu === 'settings'" class="settings-page">
-          <Settings :workspace-id="workspace?.id || 0" @refresh="handleSettingsRefresh" />
+          <Settings :workspace-id="workspace?.id || 0" ref="settingsRef" @refresh="handleSettingsRefresh" />
         </div>
       </div>
     </div>
@@ -167,9 +176,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, computed, onMounted, onActivated, nextTick } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
+import { useWorkspaceMenuStore } from "@/pinia/stores/useWorkspaceMenu"
 import {
   Setting,
   User,
@@ -199,20 +209,31 @@ import Overview from "./components/Overview/index.vue"
 import AggregateRules from "./components/NoiseConfig/aggregate/rules.vue"
 import InhibitRules from "./components/NoiseConfig/inhibit/rules.vue"
 import SilenceRules from "./components/NoiseConfig/silence_rules.vue"
+import Escalation from "./components/Escalation/index.vue"
 
 // 路由
 const route = useRoute()
 const router = useRouter()
 
+// 菜单状态管理
+const menuStore = useWorkspaceMenuStore()
+
 // 响应式数据
 const workspace = ref<Workspace | null>(null)
-const activeMenu = ref("overview")
 const teamName = ref("")
 const silenceRules = ref<any[]>([])
+
+// 使用 store 中的菜单状态
+const activeMenu = computed(() => menuStore.activeMenu)
 
 // 组件引用
 const teamMembersRef = ref()
 const workspaceOverviewRef = ref()
+const escalationRef = ref()
+const alertManagerRef = ref()
+const alertRulesRef = ref()
+const noiseConfigRef = ref()
+const settingsRef = ref()
 
 // 格式化最后更新时间
 const formatLastUpdate = () => {
@@ -257,23 +278,39 @@ const handleSettingsRefresh = () => {
 
 // 菜单选择
 const handleMenuSelect = (key: string) => {
-  activeMenu.value = key
+  menuStore.setActiveMenu(key)
+  // 延迟执行数据加载，确保组件已经渲染
+  nextTick(() => {
+    loadCurrentMenuData()
+  })
 }
 
 const handleMembers = () => {
-  activeMenu.value = "members"
+  menuStore.setActiveMenu("members")
+  nextTick(() => {
+    loadCurrentMenuData()
+  })
 }
 
 const handleAlerts = () => {
-  activeMenu.value = "alerts"
+  menuStore.setActiveMenu("alerts")
+  nextTick(() => {
+    loadCurrentMenuData()
+  })
 }
 
 const handleRules = () => {
-  activeMenu.value = "rules"
+  menuStore.setActiveMenu("rules")
+  nextTick(() => {
+    loadCurrentMenuData()
+  })
 }
 
 const handleNoise = () => {
-  activeMenu.value = "noise-aggregate"
+  menuStore.setActiveMenu("noise-aggregate")
+  nextTick(() => {
+    loadCurrentMenuData()
+  })
 }
 
 const handleCreateAlert = () => {
@@ -321,10 +358,57 @@ const loadSilenceRules = async () => {
   ]
 }
 
-// 组件挂载时加载数据
+// 根据当前菜单状态加载数据
+const loadCurrentMenuData = () => {
+  const currentMenu = menuStore.activeMenu
+  switch (currentMenu) {
+    case "overview":
+      // 工作台数据加载
+      workspaceOverviewRef.value?.loadData?.()
+      break
+    case "alerts":
+      // 告警管理数据加载
+      alertManagerRef.value?.loadData?.()
+      break
+    case "rules":
+      // 告警规则数据加载
+      alertRulesRef.value?.loadData?.()
+      break
+    case "escalation":
+      // 消息升级数据加载
+      escalationRef.value?.loadConfigs?.()
+      break
+    case "noise":
+    case "noise-aggregate":
+    case "noise-inhibit":
+    case "noise-silence":
+      // 降噪配置数据加载
+      noiseConfigRef.value?.loadData?.()
+      break
+    case "members":
+      // 团队成员数据加载
+      teamMembersRef.value?.loadData?.()
+      break
+    case "settings":
+      // 空间设置数据加载
+      settingsRef.value?.loadData?.()
+      break
+  }
+}
+
+// 组件挂载时加载基础数据
 onMounted(async () => {
   await loadWorkspaceData()
   await loadSilenceRules()
+  // 加载当前菜单的数据
+  nextTick(() => {
+    loadCurrentMenuData()
+  })
+})
+
+// 页面激活时重新加载数据（用于从其他页面返回时）
+onActivated(() => {
+  loadCurrentMenuData()
 })
 </script>
 
