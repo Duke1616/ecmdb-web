@@ -315,8 +315,7 @@ const handleSubmit = async () => {
         enabled: formData.value.enabled,
         timeout: formData.value.timeout,
         triggers: formData.value.triggers,
-        trigger_logic: formData.value.trigger_logic,
-        steps: formData.value.steps
+        trigger_logic: formData.value.trigger_logic
       })
     } else {
       // 创建
