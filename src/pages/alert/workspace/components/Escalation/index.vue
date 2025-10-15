@@ -88,7 +88,8 @@ import {
   updateConfigApi,
   deleteConfigApi,
   updateConfigStatusApi,
-  listConfigsByBizKeyApi
+  listConfigsByBizKeyApi,
+  swapConfigPrioritiesApi
 } from "@/api/alert/escalation"
 import { getBusinessTypeLabel } from "@@/utils"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -201,16 +202,23 @@ const operateEvent = (config: ConfigVO, action: string) => {
 // 处理行拖拽事件
 const handleRowDrag = async (newData: ConfigVO[]) => {
   try {
-    // 更新本地数据
-    configs.value = newData
+    // 找到被移动的配置
+    for (let i = 0; i < newData.length; i++) {
+      const newConfig = newData[i]
+      const originalConfig = configs.value[i]
 
-    // 这里可以调用API来保存新的排序
-    // 例如：await updateConfigOrderApi(newData.map((item, index) => ({ id: item.id, order: index })))
-
-    ElMessage.success("排序已更新")
+      // 如果配置ID不匹配，说明这个配置被移动了
+      if (originalConfig && newConfig.id !== originalConfig.id) {
+        // 直接调用交换接口
+        await swapConfigPrioritiesApi({
+          src_id: originalConfig.id,
+          dst_id: newConfig.id
+        })
+        ElMessage.success("配置优先级已更新")
+        return
+      }
+    }
   } catch (error) {
-    console.error("更新排序失败:", error)
-    ElMessage.error("更新排序失败")
     // 重新加载数据以恢复原始状态
     await loadConfigs()
   }

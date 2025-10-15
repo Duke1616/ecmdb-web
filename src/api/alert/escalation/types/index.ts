@@ -331,3 +331,9 @@ export interface SwapStepLevelsReq {
   src_id: number // 源步骤ID
   dst_id: number // 目标步骤ID
 }
+
+// 交换配置优先级请求
+export interface SwapConfigPrioritiesReq {
+  src_id: number // 源配置ID
+  dst_id: number // 目标配置ID
+}
