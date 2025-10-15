@@ -234,7 +234,7 @@ const loadConfigs = async () => {
 // 创建配置
 const handleCreate = () => {
   router.push({
-    name: "EscalationConfigCreate",
+    path: `/alert/notify/escalation/config/create`,
     query: {
       biz_id: 1, // 工作空间业务类型
       key: props.workspaceId.toString(), // 工作空间ID作为key
@@ -264,7 +264,7 @@ const handleEdit = (config: ConfigVO) => {
 
 // 管理步骤
 const handleManageSteps = (config: ConfigVO) => {
-  router.push(`/alert/escalation/steps/${config.id}`)
+  router.push(`/alert/notify/escalation/steps/${config.id}`)
 }
 
 // 切换状态
@@ -276,10 +276,7 @@ const handleToggleStatus = async (config: ConfigVO) => {
     type: "warning"
   })
 
-  await updateConfigStatusApi({
-    id: config.id,
-    enabled: !config.enabled
-  })
+  await updateConfigStatusApi(config.id)
 
   await loadConfigs()
 }

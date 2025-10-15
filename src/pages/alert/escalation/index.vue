@@ -226,7 +226,7 @@ const loadConfigs = async () => {
 
 // 创建配置
 const handleCreate = () => {
-  router.push({ name: "EscalationConfigCreate" })
+  router.push(`/alert/notify/escalation/config/create`)
 }
 
 // 编辑配置
@@ -250,7 +250,7 @@ const handleEdit = (config: ConfigVO) => {
 
 // 管理步骤
 const handleManageSteps = (config: ConfigVO) => {
-  router.push(`/alert/escalation/steps/${config.id}`)
+  router.push(`/alert/notify/escalation/steps/${config.id}`)
 }
 
 // 切换状态
@@ -262,10 +262,7 @@ const handleToggleStatus = async (config: ConfigVO) => {
     type: "warning"
   })
 
-  await updateConfigStatusApi({
-    id: config.id,
-    enabled: !config.enabled
-  })
+  await updateConfigStatusApi(config.id)
 
   await loadConfigs()
 }
@@ -319,7 +316,6 @@ const handleSubmit = async () => {
     await loadConfigs()
   } catch (error) {
     console.error("提交配置失败:", error)
-    ElMessage.error(isEdit.value ? "配置更新失败" : "配置创建失败")
   } finally {
     submitLoading.value = false
   }

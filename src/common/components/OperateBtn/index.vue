@@ -52,7 +52,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 
 interface Item {
   name: string
@@ -72,12 +72,26 @@ const props = defineProps<Props>()
 const dropData = ref<any>([])
 const showBtn = ref<any>([])
 
-onMounted(() => {
+const updateButtonData = () => {
   if (props.items.length > props.maxLength) {
     showBtn.value = props.items.slice(0, props.maxLength)
     dropData.value = props.items.slice(props.maxLength)
   }
+}
+
+onMounted(() => {
+  updateButtonData()
 })
+
+// 监听 props.items 变化，实时更新按钮配置
+watch(
+  () => props.items,
+  () => {
+    updateButtonData()
+  },
+  { deep: true }
+)
+
 const emit = defineEmits(["routeEvent"])
 // 正常按钮点击事件
 const routeEvent = (data: any, name: string) => {

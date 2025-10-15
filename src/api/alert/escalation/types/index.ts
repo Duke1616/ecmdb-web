@@ -215,12 +215,6 @@ export interface ListConfigsResp {
   total: number
 }
 
-// 更新配置状态请求
-export interface UpdateConfigStatusReq {
-  id: number // 配置ID
-  enabled: boolean // 是否启用
-}
-
 // 获取启用的升级配置请求
 export interface ListEnabledConfigsReq {
   biz_id: number // 业务ID

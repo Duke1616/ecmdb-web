@@ -23,11 +23,11 @@ const transformMeta = (meta: meta) => ({
 /** 将后端路由数据转为前端格式 */
 export const transformDynamicRoutes = (backendRoutes: menu[] = []): RouteRecordRaw[] => {
   return backendRoutes.map((route): RouteRecordRaw => {
-    // layout 类型（目录）
+    // layout 类型（目录）- 只有第一层（pid 为空）才使用 Layout
     if (route.children && route.type === 1) {
       return {
         path: route.path,
-        component: Layouts["../layouts/index.vue"],
+        component: !route.pid ? Layouts["../layouts/index.vue"] : undefined,
         name: route.name,
         redirect: route.redirect,
         meta: transformMeta(route.meta),
@@ -93,8 +93,9 @@ const addToChildren = (routes: RouteRecordNormalized[], children: RouteRecordRaw
     if (route) {
       // 初始化 routeModule 的 children
       routeModule.children = routeModule.children || []
-      // 如果 routeModule 的 children 属性中不包含该路由，则将其添加进去
-      if (!routeModule.children.includes(route)) {
+      // 检查是否已经存在相同名称的路由，避免重复添加
+      const existingRoute = routeModule.children.find((item) => item.name === route.name)
+      if (!existingRoute) {
         routeModule.children.push(route)
       }
       // 如果该子路由还有自己的子路由，则递归调用此函数将它们也添加进去

@@ -3,7 +3,7 @@
  */
 
 import { ref } from "vue"
-import { ElMessageBox } from "element-plus"
+import { ElMessage, ElMessageBox } from "element-plus"
 import { useRouter } from "vue-router"
 import { usePagination } from "@/common/composables/usePagination"
 import {
@@ -83,12 +83,10 @@ export function useEscalationConfig() {
       type: "warning"
     })
 
-    await updateConfigStatusApi({
-      id: config.id,
-      enabled: !config.enabled
-    })
+    await updateConfigStatusApi(config.id)
 
     await loadConfigs()
+    ElMessage.success(`配置已${config.enabled ? "禁用" : "启用"}`)
     return true
   }
 

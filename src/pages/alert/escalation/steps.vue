@@ -162,7 +162,6 @@ const handleDeleteStep = async (index: number, step: CreateStepReq) => {
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除步骤失败:", error)
-      ElMessage.error("删除步骤失败")
     }
   }
 }
@@ -203,7 +202,6 @@ const handleStepRowDrag = async (newSteps: CreateStepReq[]) => {
     ElMessage.success("步骤顺序已更新")
   } catch (error) {
     console.error("更新步骤顺序失败:", error)
-    ElMessage.error("更新步骤顺序失败")
     // 重新加载数据
     await loadSteps()
   }
@@ -235,7 +233,6 @@ const handleSubmit = async () => {
     drawerVisible.value = false
   } catch (error) {
     console.error("保存步骤失败:", error)
-    ElMessage.error("保存步骤失败")
   } finally {
     submitLoading.value = false
   }

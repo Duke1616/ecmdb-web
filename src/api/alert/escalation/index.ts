@@ -11,7 +11,6 @@ import type {
   GetConfigResp,
   ListConfigsReq,
   ListConfigsResp,
-  UpdateConfigStatusReq,
   ListEnabledConfigsReq,
   ListEnabledConfigsResp,
   CreateStepReq,
@@ -67,14 +66,13 @@ export const listConfigsByBizKeyApi = (data: ListConfigsByBizIDAndKeyReq) => {
 
 export const deleteConfigApi = (id: number) => {
   return instance.delete({
-    url: `${API_SERVICE.ALERT}/escalation/config/${id}`
+    url: `${API_SERVICE.ALERT}/escalation/config/delete/${id}`
   })
 }
 
-export const updateConfigStatusApi = (data: UpdateConfigStatusReq) => {
-  return instance.post({
-    url: `${API_SERVICE.ALERT}/escalation/config/status`,
-    data
+export const updateConfigStatusApi = (id: number) => {
+  return instance.patch({
+    url: `${API_SERVICE.ALERT}/escalation/config/status/toggle/${id}`
   })
 }
 
@@ -115,7 +113,7 @@ export const listStepsByConfigIDApi = (data: ListStepsByConfigIDReq) => {
 
 export const deleteStepApi = (id: number) => {
   return instance.delete({
-    url: `${API_SERVICE.ALERT}/escalation/step/${id}`
+    url: `${API_SERVICE.ALERT}/escalation/step/delete/${id}`
   })
 }
 
@@ -162,6 +160,6 @@ export const listStepTemplatesByIDsApi = (data: ListStepTemplatesByIDsReq) => {
 
 export const deleteStepTemplateApi = (id: number) => {
   return instance.delete({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/${id}`
+    url: `${API_SERVICE.ALERT}/escalation/step_template/delete/${id}`
   })
 }
