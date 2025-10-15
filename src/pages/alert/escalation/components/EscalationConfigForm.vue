@@ -178,7 +178,7 @@
 import { ref, watch } from "vue"
 import { Plus, Delete, Setting } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
-import type { CreateConfigReq, CreateStepReq } from "@/api/alert/escalation/types"
+import type { CreateConfigReq, CreateStepReq, EscalationStep } from "@/api/alert/escalation/types"
 import { cloneDeep } from "lodash-es"
 import { clearZeroValues } from "@@/utils"
 import {
@@ -470,7 +470,7 @@ const handleDeleteStep = (index: number, _step: CreateStepReq) => {
 }
 
 // 处理步骤拖拽回调
-const handleStepRowDrag = (newSteps: CreateStepReq[]) => {
+const handleStepRowDrag = (newSteps: EscalationStep[]) => {
   // 确保所有字段都有正确的类型
   const stepsWithCorrectTypes = newSteps.map((step) => ({
     ...step,

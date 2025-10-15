@@ -53,7 +53,7 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { cloneDeep } from "lodash-es"
 import { clearZeroValues } from "@@/utils"
-import type { CreateStepReq, StepVO } from "@/api/alert/escalation/types"
+import type { CreateStepReq, StepVO, EscalationStep } from "@/api/alert/escalation/types"
 import { deleteStepApi } from "@/api/alert/escalation"
 import { useEscalationSteps } from "./composables/useEscalationSteps"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -167,11 +167,19 @@ const handleDeleteStep = async (index: number, step: CreateStepReq) => {
 }
 
 // 处理步骤拖拽回调
-const handleStepRowDrag = async (newSteps: StepVO[]) => {
+const handleStepRowDrag = async (newSteps: StepVO[] | EscalationStep[]) => {
   try {
+    // 检查是否是 StepVO[] 类型（有 id 字段）
+    const hasId = newSteps.length > 0 && "id" in newSteps[0]
+
+    if (!hasId) {
+      // 如果是 EscalationStep[] 类型，不需要处理拖拽交换
+      return
+    }
+
     // 找到被移动的步骤
     for (let i = 0; i < newSteps.length; i++) {
-      const newStep = newSteps[i]
+      const newStep = newSteps[i] as StepVO
       const originalStep = steps.value[i]
 
       // 如果步骤ID不匹配，说明这个步骤被移动了
