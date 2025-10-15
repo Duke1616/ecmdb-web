@@ -15,7 +15,7 @@ import compression from "vite-plugin-compression"
 import svgLoader from "vite-svg-loader"
 import prismjs from "vite-plugin-prismjs"
 import { VueMcp } from "vite-plugin-vue-mcp"
-// import { visualizer } from "rollup-plugin-visualizer"
+import { visualizer } from "rollup-plugin-visualizer"
 // import vueDevTools from "vite-plugin-vue-devtools"
 
 // https://vitejs.dev/config/
@@ -35,9 +35,9 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     plugins: [
       vue(),
-      // visualizer({
-      //   open: true // 构建完成后自动打开分析页面
-      // }),
+      visualizer({
+        open: true // 构建完成后自动打开分析页面
+      }),
       // vueDevTools(),
       vueJsx(),
       //  压缩
