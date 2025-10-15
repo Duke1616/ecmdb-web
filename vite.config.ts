@@ -15,7 +15,7 @@ import compression from "vite-plugin-compression"
 import svgLoader from "vite-svg-loader"
 import prismjs from "vite-plugin-prismjs"
 import { VueMcp } from "vite-plugin-vue-mcp"
-import { visualizer } from "rollup-plugin-visualizer"
+// import { visualizer } from "rollup-plugin-visualizer"
 // import vueDevTools from "vite-plugin-vue-devtools"
 
 // https://vitejs.dev/config/
@@ -35,12 +35,12 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     plugins: [
       vue(),
-      visualizer({
-        open: true, // 构建完成后自动打开分析页面
-        filename: "stats.html", //分析图生成的文件名
-        gzipSize: true, // 收集 gzip 大小并将其显示
-        brotliSize: true // 收集 brotli 大小并将其显示
-      }),
+      // visualizer({
+      //   open: true, // 构建完成后自动打开分析页面
+      //   filename: "stats.html", //分析图生成的文件名
+      //   gzipSize: true, // 收集 gzip 大小并将其显示
+      //   brotliSize: true // 收集 brotli 大小并将其显示
+      // }),
       // vueDevTools(),
       vueJsx(),
       //  压缩
