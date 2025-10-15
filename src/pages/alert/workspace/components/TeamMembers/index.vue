@@ -148,7 +148,6 @@ const loadMembersData = async () => {
     }
   } catch (error) {
     console.error("加载团队成员失败:", error)
-    ElMessage.error("加载团队成员失败")
     members.value = []
     total.value = 0
   } finally {

@@ -93,7 +93,6 @@ const submitForm = () => {
       })
       .catch((error: any) => {
         console.log("catch", error)
-        ElMessage.error("保存失败")
       })
   })
 }

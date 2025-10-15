@@ -241,7 +241,6 @@ function handleSaveSuccess() {
 // 处理保存失败
 function handleSaveError(error: any) {
   console.error("保存失败:", error)
-  ElMessage.error("保存失败，请重试")
 }
 
 const saveCodebook = async () => {

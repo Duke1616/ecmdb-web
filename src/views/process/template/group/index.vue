@@ -44,7 +44,6 @@ const handlerCreate = () => {
       })
       .catch((error) => {
         console.log("catch", error)
-        ElMessage.error("保存失败")
       })
       .finally(() => {})
   })

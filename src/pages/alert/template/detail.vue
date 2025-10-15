@@ -314,7 +314,6 @@ const handleSave = async (): Promise<void> => {
     }
   } catch (error: any) {
     console.error("保存失败:", error)
-    ElMessage.error("保存失败")
   } finally {
     saving.value = false
   }

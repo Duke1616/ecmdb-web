@@ -228,7 +228,6 @@ const submitForm = () => {
       })
       .catch((error: any) => {
         console.log("catch", error)
-        ElMessage.error("工作空间保存失败")
       })
   })
 }

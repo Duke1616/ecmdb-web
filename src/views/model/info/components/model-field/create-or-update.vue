@@ -322,7 +322,7 @@ const handlerCreateOrUpdateAttribute = async () => {
     return true
   } catch (error) {
     console.error("保存失败:", error)
-    ElMessage.error("保存失败，请重试")
+
     return false
   }
 }

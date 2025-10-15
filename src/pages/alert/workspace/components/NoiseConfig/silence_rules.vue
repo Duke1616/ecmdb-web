@@ -500,7 +500,6 @@ const handleSubmit = async () => {
     emit("refresh")
   } catch (error) {
     console.error("保存规则失败:", error)
-    ElMessage.error("保存失败")
   } finally {
     submitting.value = false
   }
