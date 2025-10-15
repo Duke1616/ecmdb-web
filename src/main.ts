@@ -11,8 +11,9 @@ import { loadDirectives } from "@/directives"
 // css
 import "uno.css"
 import "normalize.css"
-import "element-plus/dist/index.css"
-import "element-plus/theme-chalk/dark/css-vars.css"
+// Element Plus 样式将通过 unplugin-vue-components 自动按需导入
+// import "element-plus/dist/index.css"
+// import "element-plus/theme-chalk/dark/css-vars.css"
 import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@@/assets/styles/index.scss"

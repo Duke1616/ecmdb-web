@@ -14,7 +14,7 @@ import Components from "unplugin-vue-components/vite"
 import svgLoader from "vite-svg-loader"
 import prismjs from "vite-plugin-prismjs"
 import { VueMcp } from "vite-plugin-vue-mcp"
-// import { visualizer } from "rollup-plugin-visualizer"
+import { visualizer } from "rollup-plugin-visualizer"
 // import vueDevTools from "vite-plugin-vue-devtools"
 
 // https://vitejs.dev/config/
@@ -34,9 +34,9 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     plugins: [
       vue(),
-      // visualizer({
-      //   open: true // 构建完成后自动打开分析页面
-      // }),
+      visualizer({
+        open: true // 构建完成后自动打开分析页面
+      }),
       // vueDevTools(),
       vueJsx(),
       // 支持将 SVG 文件导入为 Vue 组件
@@ -79,7 +79,11 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       // 自动按需导入组件
       Components({
         dts: "types/auto/components.d.ts",
-        resolvers: [ElementPlusResolver()]
+        resolvers: [
+          ElementPlusResolver({
+            importStyle: "css" // 使用 css 样式
+          })
+        ]
       }),
       prismjs({
         languages: ["javascript", "css", "html", "json", "sass", "scss", "md", "bash", "shell", "ts"],
@@ -111,7 +115,8 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           },
     // 依赖预构建
     optimizeDeps: {
-      include: ["element-plus/es/components/*/style/css"]
+      include: ["element-plus/es/components/*/style/css", "vue", "vue-router", "pinia", "axios", "lodash-es", "dayjs"],
+      exclude: ["@logicflow/core", "relation-graph", "guacamole-common-js"]
     },
     // CSS 相关配置
     css: {
@@ -152,7 +157,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       },
       /** 预热常用文件，提高初始页面加载速度 */
       warmup: {
-        clientFiles: ["./src/layouts/**/*.vue"]
+        clientFiles: ["./src/layouts/**/*.vue", "./src/common/components/**/*.vue", "./src/App.vue"]
       }
     },
     build: {
@@ -162,6 +167,10 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       reportCompressedSize: false,
       /** 打包后静态资源目录 */
       assetsDir: "static",
+      /** 启用 CSS 代码分割 */
+      cssCodeSplit: true,
+      /** 压缩配置 */
+      minify: "esbuild",
       rollupOptions: {
         output: {
           /**
@@ -169,10 +178,43 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
            * 1. 注意这些包名必须存在，否则打包会报错
            * 2. 如果你不想自定义 chunk 分割策略，可以直接移除这段配置
            */
-          manualChunks: {
-            vue: ["vue", "vue-router", "pinia"],
-            element: ["element-plus", "@element-plus/icons-vue"],
-            vxe: ["vxe-table", "vxe-table-plugin-element", "xe-utils"]
+          manualChunks: (id) => {
+            // 核心框架
+            if (id.includes("vue") || id.includes("vue-router") || id.includes("pinia")) {
+              return "vue-core"
+            }
+            // Element Plus
+            if (id.includes("element-plus") || id.includes("@element-plus")) {
+              return "element-plus"
+            }
+            // VXE Table
+            if (id.includes("vxe-table") || id.includes("xe-utils")) {
+              return "vxe-table"
+            }
+            // 代码编辑器相关
+            if (id.includes("codemirror") || id.includes("@codemirror")) {
+              return "codemirror"
+            }
+            // 图表和可视化
+            if (id.includes("@logicflow") || id.includes("relation-graph")) {
+              return "charts"
+            }
+            // 表单相关
+            if (id.includes("@form-create")) {
+              return "form-create"
+            }
+            // 日历组件
+            if (id.includes("@fullcalendar")) {
+              return "fullcalendar"
+            }
+            // 工具库
+            if (id.includes("lodash") || id.includes("dayjs") || id.includes("axios")) {
+              return "utils"
+            }
+            // 其他第三方库
+            if (id.includes("node_modules")) {
+              return "vendor"
+            }
           }
         }
       }
