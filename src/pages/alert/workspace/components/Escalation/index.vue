@@ -77,7 +77,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
+import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
@@ -335,11 +335,6 @@ const handleDrawerClose = () => {
 // 暴露方法给父组件
 defineExpose({
   loadConfigs
-})
-
-// 初始化加载数据
-onMounted(() => {
-  loadConfigs()
 })
 </script>
 

@@ -53,8 +53,8 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { cloneDeep } from "lodash-es"
 import { clearZeroValues } from "@@/utils"
-import type { CreateStepReq } from "@/api/alert/escalation/types"
-import { updateStepApi, deleteStepApi } from "@/api/alert/escalation"
+import type { CreateStepReq, StepVO } from "@/api/alert/escalation/types"
+import { deleteStepApi } from "@/api/alert/escalation"
 import { useEscalationSteps } from "./composables/useEscalationSteps"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -67,7 +67,7 @@ const route = useRoute()
 const router = useRouter()
 
 // 使用组合式函数
-const { steps, loading, loadSteps, createStep, updateStep } = useEscalationSteps()
+const { steps, loading, loadSteps, createStep, updateStep, swapStepLevels } = useEscalationSteps()
 
 // 编辑相关状态
 const drawerVisible = ref(false)
@@ -167,41 +167,24 @@ const handleDeleteStep = async (index: number, step: CreateStepReq) => {
 }
 
 // 处理步骤拖拽回调
-const handleStepRowDrag = async (newSteps: CreateStepReq[]) => {
+const handleStepRowDrag = async (newSteps: StepVO[]) => {
   try {
-    // 重新计算级别并批量更新
-    const updatePromises = newSteps.map((step, index) => {
-      const originalStep = steps.value[index]
-      if (originalStep && step.level !== index + 1) {
-        const updateData = {
-          id: originalStep.id,
-          level: index + 1,
-          template_set_id: step.template_set_id || 0,
-          step_template_id: step.step_template_id || 0,
-          delay: step.delay,
-          max_retries: step.max_retries,
-          retry_interval: step.retry_interval,
-          skip_if_handled: step.skip_if_handled,
-          continue_on_fail: step.continue_on_fail,
-          condition_expr: step.condition_expr,
-          urgency_level: step.urgency_level
-        }
-        return updateStepApi(updateData)
+    // 找到被移动的步骤
+    for (let i = 0; i < newSteps.length; i++) {
+      const newStep = newSteps[i]
+      const originalStep = steps.value[i]
+
+      // 如果步骤ID不匹配，说明这个步骤被移动了
+      if (originalStep && newStep.id !== originalStep.id) {
+        // 直接调用交换接口
+        await swapStepLevels(originalStep.id, newStep.id)
+        ElMessage.success("步骤顺序已更新")
+        return
       }
-      return Promise.resolve()
-    })
-
-    await Promise.all(updatePromises.filter(Boolean))
-
-    // 更新本地数据
-    steps.value = newSteps.map((step, index) => ({
-      ...steps.value[index],
-      level: index + 1
-    }))
-
-    ElMessage.success("步骤顺序已更新")
+    }
   } catch (error) {
     console.error("更新步骤顺序失败:", error)
+    ElMessage.error("更新步骤顺序失败")
     // 重新加载数据
     await loadSteps()
   }

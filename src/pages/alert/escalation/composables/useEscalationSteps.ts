@@ -10,7 +10,8 @@ import {
   createStepApi,
   updateStepApi,
   deleteStepApi,
-  getConfigApi
+  getConfigApi,
+  swapStepLevelsApi
 } from "@/api/alert/escalation"
 import type { StepVO, CreateStepReq, ConfigVO } from "@/api/alert/escalation/types"
 
@@ -117,6 +118,21 @@ export function useEscalationSteps() {
     return true
   }
 
+  // 交换步骤等级
+  const swapStepLevels = async (srcId: number, dstId: number) => {
+    try {
+      await swapStepLevelsApi({
+        src_id: srcId,
+        dst_id: dstId
+      })
+      await loadSteps()
+      return true
+    } catch (error) {
+      console.error("交换步骤等级失败:", error)
+      throw error
+    }
+  }
+
   return {
     config,
     steps,
@@ -128,6 +144,7 @@ export function useEscalationSteps() {
     createStep,
     updateStep,
     deleteStep,
-    deleteSteps
+    deleteSteps,
+    swapStepLevels
   }
 }

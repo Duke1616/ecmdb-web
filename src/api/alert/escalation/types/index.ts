@@ -325,3 +325,9 @@ export interface ListStepTemplatesResp {
   templates: StepTemplateVO[]
   total: number
 }
+
+// 交换步骤等级请求
+export interface SwapStepLevelsReq {
+  src_id: number // 源步骤ID
+  dst_id: number // 目标步骤ID
+}

@@ -114,7 +114,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue"
 import { Delete, Setting, Bell, User } from "@element-plus/icons-vue"
-import type { CreateStepReq, StepTemplateVO } from "@/api/alert/escalation/types"
+import type { StepVO, StepTemplateVO } from "@/api/alert/escalation/types"
 import type { TemplateSet } from "@/api/alert/template_set/types"
 import { listStepTemplatesByIDsApi } from "@/api/alert/escalation"
 import { listTemplateSetsByIDsApi } from "@/api/alert/template_set"
@@ -126,15 +126,15 @@ import { ChannelType } from "@/api/alert/template/types"
 
 // 定义 props 和 emits
 const props = defineProps<{
-  modelValue: CreateStepReq[]
+  modelValue: StepVO[]
 }>()
 
 const emit = defineEmits<{
-  "update:modelValue": [value: CreateStepReq[]]
+  "update:modelValue": [value: StepVO[]]
   "add-step": []
-  "edit-step": [index: number, step: CreateStepReq]
-  "delete-step": [index: number, step: CreateStepReq]
-  "row-drag": [newSteps: CreateStepReq[]]
+  "edit-step": [index: number, step: StepVO]
+  "delete-step": [index: number, step: StepVO]
+  "row-drag": [newSteps: StepVO[]]
 }>()
 
 // 使用 v-model
@@ -182,7 +182,7 @@ const templateSets = ref<TemplateSet[]>([])
 const stepTemplates = ref<StepTemplateVO[]>([])
 
 // 表格行拖拽处理
-const handleStepRowDrag = (newSteps: CreateStepReq[]) => {
+const handleStepRowDrag = (newSteps: StepVO[]) => {
   emit("row-drag", newSteps)
 }
 
