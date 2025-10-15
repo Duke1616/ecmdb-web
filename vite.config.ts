@@ -11,6 +11,7 @@ import AutoImport from "unplugin-auto-import/vite"
 import SvgComponent from "unplugin-svg-component/vite"
 import { ElementPlusResolver } from "unplugin-vue-components/resolvers"
 import Components from "unplugin-vue-components/vite"
+import compression from "vite-plugin-compression"
 import svgLoader from "vite-svg-loader"
 import prismjs from "vite-plugin-prismjs"
 import { VueMcp } from "vite-plugin-vue-mcp"
@@ -39,6 +40,12 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
       // }),
       // vueDevTools(),
       vueJsx(),
+      //  压缩
+      compression({
+        algorithm: "brotliCompress",
+        ext: ".br",
+        deleteOriginFile: false
+      }),
       // 支持将 SVG 文件导入为 Vue 组件
       svgLoader({
         defaultImport: "url",
