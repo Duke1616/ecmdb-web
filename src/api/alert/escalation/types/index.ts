@@ -39,10 +39,16 @@ export enum RECEIVER_TYPES {
 
 export type ReceiverType = RECEIVER_TYPES
 
+// 时间单位枚举
+export enum TimeUnit {
+  MINUTES = "minutes", // 分钟
+  HOURS = "hours" // 小时
+}
+
 // 时间触发配置
 export interface TimeTriggerConfig {
-  duration: number // 延迟时间（毫秒）
-  unit: string // 时间单位（minutes, hours, days）
+  delay: number // 延迟数值（如 5）
+  unit: TimeUnit // 时间单位（minutes, hours）
 }
 
 // 级别触发配置

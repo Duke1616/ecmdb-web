@@ -3,14 +3,13 @@
     <el-form ref="formRef" :model="modelValue" :rules="formRules" label-position="top">
       <!-- 时间触发配置 -->
       <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.TIME" class="config-section">
-        <el-form-item label="延迟时间" label-position="top" prop="duration">
-          <el-input-number v-model="timeConfig.duration" :min="1" style="width: 100%" />
+        <el-form-item label="延迟时间" label-position="top" prop="delay">
+          <el-input-number v-model="timeConfig.delay" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="时间单位" label-position="top" prop="unit">
           <el-select v-model="timeConfig.unit" style="width: 100%">
-            <el-option label="分钟" value="minutes" />
-            <el-option label="小时" value="hours" />
-            <el-option label="天" value="days" />
+            <el-option label="分钟" :value="TimeUnit.MINUTES" />
+            <el-option label="小时" :value="TimeUnit.HOURS" />
           </el-select>
         </el-form-item>
       </div>
@@ -103,7 +102,7 @@ import type {
   ManualTriggerConfig,
   CustomTriggerConfig
 } from "@/api/alert/escalation/types"
-import { ESCALATION_TRIGGER_TYPES } from "@/api/alert/escalation/types"
+import { ESCALATION_TRIGGER_TYPES, TimeUnit } from "@/api/alert/escalation/types"
 import { getTriggerConfigRules } from "../config/validation"
 
 interface Props {
@@ -144,7 +143,7 @@ const isCustomConfig = (config: EscalationTriggerConfig): config is { custom_con
 
 // 类型安全的配置访问 - 使用计算属性，提供默认值避免 null
 const timeConfig = computed({
-  get: () => (isTimeConfig(modelValue.value) ? modelValue.value.time_config : { duration: 5, unit: "minutes" }),
+  get: () => (isTimeConfig(modelValue.value) ? modelValue.value.time_config : { delay: 5, unit: TimeUnit.MINUTES }),
   set: (value: TimeTriggerConfig) => {
     if (isTimeConfig(modelValue.value)) {
       modelValue.value.time_config = value

@@ -39,7 +39,7 @@ export const triggerFormRules: FormRules = {
 
 // 时间触发配置验证规则
 export const timeTriggerConfigRules: FormRules = {
-  duration: [
+  delay: [
     { required: true, message: "请输入延迟时间", trigger: "blur" },
     { type: "number", min: 1, max: 1440, message: "延迟时间必须在 1 到 1440 之间", trigger: "blur" }
   ],
@@ -148,7 +148,7 @@ export const validateTrigger = (trigger: EscalationTrigger): string[] => {
   // 根据类型验证配置
   switch (trigger.type) {
     case ESCALATION_TRIGGER_TYPES.TIME:
-      if (!trigger.config?.time_config?.duration || trigger.config.time_config.duration <= 0) {
+      if (!trigger.config?.time_config?.delay || trigger.config.time_config.delay <= 0) {
         errors.push("时间触发配置的延迟时间必须大于0")
       }
       if (!trigger.config?.time_config?.unit) {
