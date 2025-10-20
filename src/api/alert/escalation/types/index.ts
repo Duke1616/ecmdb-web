@@ -6,9 +6,7 @@
 export enum ESCALATION_TRIGGER_TYPES {
   TIME = "time", // 时间触发
   LEVEL = "level", // 级别触发
-  NO_RESPONSE = "no_response", // 无响应触发
-  MANUAL = "manual", // 手动触发
-  CUSTOM = "custom" // 自定义触发
+  NO_RESPONSE = "no_response" // 无响应触发
 }
 
 export type EscalationTriggerType = ESCALATION_TRIGGER_TYPES | ""
@@ -45,6 +43,22 @@ export enum TimeUnit {
   HOURS = "hours" // 小时
 }
 
+// 告警级别枚举
+export enum Level {
+  EMERGENCY = 1, // 紧急 - 系统不可用（如服务器宕机）
+  CRITICAL = 2, // 严重 - （如核心功能故障）
+  ERROR = 3, // 错误 - （如数据库连接失败）
+  WARNING = 4, // 警告 - （如磁盘空间不足）
+  INFO = 5 // 提示 - 常规信息（如用户登录）
+}
+
+// 级别匹配模式枚举
+export enum LevelMatchMode {
+  EXACT = "exact", // 精确匹配：告警级别必须在 TargetAlertLevels 中
+  RANGE = "range", // 范围匹配：告警级别 >= MinAlertLevel
+  BOTH = "both" // 双重匹配：既要在 TargetAlertLevels 中，又要 >= MinAlertLevel
+}
+
 // 时间触发配置
 export interface TimeTriggerConfig {
   delay: number // 延迟数值（如 5）
@@ -53,8 +67,9 @@ export interface TimeTriggerConfig {
 
 // 级别触发配置
 export interface LevelTriggerConfig {
-  target_alert_levels: string[] // 目标告警等级（触发升级的告警等级）
-  min_alert_level: string // 最低告警等级
+  target_alert_levels: Level[] // 目标告警级别（触发升级的告警级别）
+  min_alert_level: Level // 最低告警级别
+  match_mode: LevelMatchMode // 匹配模式
 }
 
 // 无响应触发配置
@@ -64,25 +79,11 @@ export interface NoResponseTriggerConfig {
   required_acks: number // 需要的确认数
 }
 
-// 手动触发配置
-export interface ManualTriggerConfig {
-  allowed_users: string[] // 允许触发的用户
-  require_auth: boolean // 是否需要认证
-}
-
-// 自定义触发配置
-export interface CustomTriggerConfig {
-  expression: string // 自定义表达式
-  variables: Record<string, string> // 变量定义
-}
-
 // 升级触发配置 - 使用泛型接口
 export interface EscalationTriggerConfig<T extends EscalationTriggerType = EscalationTriggerType> {
   time_config?: T extends "time" ? TimeTriggerConfig : never
   level_config?: T extends "level" ? LevelTriggerConfig : never
   no_response_config?: T extends "no_response" ? NoResponseTriggerConfig : never
-  manual_config?: T extends "manual" ? ManualTriggerConfig : never
-  custom_config?: T extends "custom" ? CustomTriggerConfig : never
 }
 
 // 为了向后兼容，提供一个默认的联合类型
@@ -90,8 +91,6 @@ export type AnyEscalationTriggerConfig =
   | { time_config: TimeTriggerConfig }
   | { level_config: LevelTriggerConfig }
   | { no_response_config: NoResponseTriggerConfig }
-  | { manual_config: ManualTriggerConfig }
-  | { custom_config: CustomTriggerConfig }
 
 // 升级触发条件
 export interface EscalationTrigger {

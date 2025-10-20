@@ -67,8 +67,6 @@
                         <el-option label="时间触发" :value="ESCALATION_TRIGGER_TYPES.TIME" />
                         <el-option label="级别触发" :value="ESCALATION_TRIGGER_TYPES.LEVEL" />
                         <el-option label="无响应触发" :value="ESCALATION_TRIGGER_TYPES.NO_RESPONSE" />
-                        <el-option label="手动触发" :value="ESCALATION_TRIGGER_TYPES.MANUAL" />
-                        <el-option label="自定义触发" :value="ESCALATION_TRIGGER_TYPES.CUSTOM" />
                       </el-select>
                     </el-form-item>
                   </el-col>
@@ -184,7 +182,10 @@ import { clearZeroValues } from "@@/utils"
 import {
   ESCALATION_LOGIC_TYPES,
   ESCALATION_TRIGGER_TYPES,
-  type EscalationTriggerType
+  type EscalationTriggerType,
+  TimeUnit,
+  Level,
+  LevelMatchMode
 } from "@/api/alert/escalation/types"
 import TriggerConfigForm from "./TriggerConfigForm.vue"
 import EscalationStepForm from "./EscalationStepForm.vue"
@@ -297,8 +298,8 @@ const addTrigger = () => {
     type: ESCALATION_TRIGGER_TYPES.TIME,
     config: {
       time_config: {
-        duration: 5,
-        unit: "minutes"
+        delay: 5,
+        unit: TimeUnit.MINUTES
       }
     },
     description: ""
@@ -321,8 +322,8 @@ const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) 
     case ESCALATION_TRIGGER_TYPES.TIME:
       trigger.config = {
         time_config: {
-          duration: 5,
-          unit: "minutes"
+          delay: 5,
+          unit: TimeUnit.MINUTES
         }
       }
       break
@@ -330,7 +331,8 @@ const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) 
       trigger.config = {
         level_config: {
           target_alert_levels: [],
-          min_alert_level: "P3"
+          min_alert_level: Level.ERROR,
+          match_mode: LevelMatchMode.EXACT
         }
       }
       break
@@ -340,22 +342,6 @@ const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) 
           check_interval: 30000,
           max_attempts: 3,
           required_acks: 1
-        }
-      }
-      break
-    case ESCALATION_TRIGGER_TYPES.MANUAL:
-      trigger.config = {
-        manual_config: {
-          allowed_users: [],
-          require_auth: true
-        }
-      }
-      break
-    case ESCALATION_TRIGGER_TYPES.CUSTOM:
-      trigger.config = {
-        custom_config: {
-          expression: "",
-          variables: {}
         }
       }
       break

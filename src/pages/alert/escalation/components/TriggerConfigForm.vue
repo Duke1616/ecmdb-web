@@ -16,20 +16,29 @@
 
       <!-- 级别触发配置 -->
       <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.LEVEL" class="config-section">
-        <el-form-item label="目标告警等级" label-position="top" prop="target_alert_levels">
-          <el-select v-model="levelConfig.target_alert_levels" multiple style="width: 100%">
-            <el-option label="P1 - 紧急" value="P1" />
-            <el-option label="P2 - 高" value="P2" />
-            <el-option label="P3 - 中" value="P3" />
-            <el-option label="P4 - 低" value="P4" />
+        <el-form-item label="匹配模式" label-position="top" prop="match_mode">
+          <el-select v-model="levelConfig.match_mode" style="width: 100%">
+            <el-option label="精确匹配" :value="LevelMatchMode.EXACT" />
+            <el-option label="范围匹配" :value="LevelMatchMode.RANGE" />
+            <el-option label="双重匹配" :value="LevelMatchMode.BOTH" />
           </el-select>
         </el-form-item>
-        <el-form-item label="最低告警等级" label-position="top" prop="min_alert_level">
+        <el-form-item label="目标告警级别" label-position="top" prop="target_alert_levels">
+          <el-select v-model="levelConfig.target_alert_levels" multiple style="width: 100%">
+            <el-option label="紧急" :value="Level.EMERGENCY" />
+            <el-option label="严重" :value="Level.CRITICAL" />
+            <el-option label="错误" :value="Level.ERROR" />
+            <el-option label="警告" :value="Level.WARNING" />
+            <el-option label="提示" :value="Level.INFO" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="最低告警级别" label-position="top" prop="min_alert_level">
           <el-select v-model="levelConfig.min_alert_level" style="width: 100%">
-            <el-option label="P1 - 紧急" value="P1" />
-            <el-option label="P2 - 高" value="P2" />
-            <el-option label="P3 - 中" value="P3" />
-            <el-option label="P4 - 低" value="P4" />
+            <el-option label="紧急" :value="Level.EMERGENCY" />
+            <el-option label="严重" :value="Level.CRITICAL" />
+            <el-option label="错误" :value="Level.ERROR" />
+            <el-option label="警告" :value="Level.WARNING" />
+            <el-option label="提示" :value="Level.INFO" />
           </el-select>
         </el-form-item>
       </div>
@@ -46,63 +55,21 @@
           <el-input-number v-model="noResponseConfig.required_acks" :min="1" :max="10" style="width: 100%" />
         </el-form-item>
       </div>
-
-      <!-- 手动触发配置 -->
-      <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.MANUAL" class="config-section">
-        <el-form-item label="允许触发的用户" label-position="top">
-          <el-select v-model="manualConfig.allowed_users" multiple filterable allow-create style="width: 100%">
-            <el-option label="admin" value="admin" />
-            <el-option label="operator" value="operator" />
-            <el-option label="manager" value="manager" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="是否需要认证" label-position="top">
-          <el-switch v-model="manualConfig.require_auth" />
-        </el-form-item>
-      </div>
-
-      <!-- 自定义触发配置 -->
-      <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.CUSTOM" class="config-section">
-        <el-form-item label="自定义表达式" label-position="top">
-          <el-input v-model="customConfig.expression" type="textarea" :rows="4" placeholder="输入自定义表达式" />
-        </el-form-item>
-        <el-form-item label="变量定义" label-position="top">
-          <div class="variables-section">
-            <div v-for="(value, key, index) in customConfig.variables" :key="index" class="variable-item">
-              <el-row :gutter="10" align="middle">
-                <el-col :span="10">
-                  <el-input v-model="variableKeys[index]" placeholder="变量名" />
-                </el-col>
-                <el-col :span="10">
-                  <el-input v-model="variableValues[index]" placeholder="变量值" />
-                </el-col>
-                <el-col :span="4">
-                  <el-button type="danger" :icon="Delete" circle @click="removeVariable(index)" />
-                </el-col>
-              </el-row>
-            </div>
-            <el-button type="primary" :icon="Plus" @click="addVariable">添加变量</el-button>
-          </div>
-        </el-form-item>
-      </div>
     </el-form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue"
-import { Plus, Delete } from "@element-plus/icons-vue"
+import { ref, computed } from "vue"
 import type { FormInstance } from "element-plus"
 import type {
   EscalationTriggerType,
   EscalationTriggerConfig,
   TimeTriggerConfig,
   LevelTriggerConfig,
-  NoResponseTriggerConfig,
-  ManualTriggerConfig,
-  CustomTriggerConfig
+  NoResponseTriggerConfig
 } from "@/api/alert/escalation/types"
-import { ESCALATION_TRIGGER_TYPES, TimeUnit } from "@/api/alert/escalation/types"
+import { ESCALATION_TRIGGER_TYPES, TimeUnit, Level, LevelMatchMode } from "@/api/alert/escalation/types"
 import { getTriggerConfigRules } from "../config/validation"
 
 interface Props {
@@ -133,14 +100,6 @@ const isNoResponseConfig = (
   return "no_response_config" in config && config.no_response_config !== undefined
 }
 
-const isManualConfig = (config: EscalationTriggerConfig): config is { manual_config: ManualTriggerConfig } => {
-  return "manual_config" in config && config.manual_config !== undefined
-}
-
-const isCustomConfig = (config: EscalationTriggerConfig): config is { custom_config: CustomTriggerConfig } => {
-  return "custom_config" in config && config.custom_config !== undefined
-}
-
 // 类型安全的配置访问 - 使用计算属性，提供默认值避免 null
 const timeConfig = computed({
   get: () => (isTimeConfig(modelValue.value) ? modelValue.value.time_config : { delay: 5, unit: TimeUnit.MINUTES }),
@@ -155,7 +114,7 @@ const levelConfig = computed({
   get: () =>
     isLevelConfig(modelValue.value)
       ? modelValue.value.level_config
-      : { target_alert_levels: [], min_alert_level: "P3" },
+      : { target_alert_levels: [], min_alert_level: Level.ERROR, match_mode: LevelMatchMode.EXACT },
   set: (value: LevelTriggerConfig) => {
     if (isLevelConfig(modelValue.value)) {
       modelValue.value.level_config = value
@@ -174,80 +133,6 @@ const noResponseConfig = computed({
     }
   }
 })
-
-const manualConfig = computed({
-  get: () =>
-    isManualConfig(modelValue.value) ? modelValue.value.manual_config : { allowed_users: [], require_auth: true },
-  set: (value: ManualTriggerConfig) => {
-    if (isManualConfig(modelValue.value)) {
-      modelValue.value.manual_config = value
-    }
-  }
-})
-
-const customConfig = computed({
-  get: () => (isCustomConfig(modelValue.value) ? modelValue.value.custom_config : { expression: "", variables: {} }),
-  set: (value: CustomTriggerConfig) => {
-    if (isCustomConfig(modelValue.value)) {
-      modelValue.value.custom_config = value
-    }
-  }
-})
-
-// 变量管理
-const variableKeys = ref<string[]>([])
-const variableValues = ref<string[]>([])
-
-// 初始化变量
-const initVariables = () => {
-  const variables = customConfig.value?.variables || {}
-  variableKeys.value = Object.keys(variables)
-  variableValues.value = Object.values(variables)
-}
-
-// 监听触发类型变化，处理自定义配置的变量初始化
-watch(
-  () => props.triggerType,
-  () => {
-    if (props.triggerType === ESCALATION_TRIGGER_TYPES.CUSTOM) {
-      initVariables()
-    }
-  },
-  { immediate: true }
-)
-
-// 监听变量变化，更新 modelValue
-watch(
-  [variableKeys, variableValues],
-  () => {
-    const variables: Record<string, string> = {}
-    variableKeys.value.forEach((key, index) => {
-      if (key && variableValues.value[index]) {
-        variables[key] = variableValues.value[index]
-      }
-    })
-
-    if (customConfig.value) {
-      customConfig.value.variables = variables
-    }
-  },
-  { deep: true }
-)
-
-// 添加变量
-const addVariable = () => {
-  variableKeys.value.push("")
-  variableValues.value.push("")
-}
-
-// 移除变量
-const removeVariable = (index: number) => {
-  variableKeys.value.splice(index, 1)
-  variableValues.value.splice(index, 1)
-}
-
-// 初始化
-initVariables()
 </script>
 
 <style scoped lang="scss">

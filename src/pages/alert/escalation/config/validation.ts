@@ -48,6 +48,7 @@ export const timeTriggerConfigRules: FormRules = {
 
 // 级别触发配置验证规则
 export const levelTriggerConfigRules: FormRules = {
+  match_mode: [{ required: true, message: "请选择匹配模式", trigger: "change" }],
   target_alert_levels: [
     { required: true, message: "请选择目标告警级别", trigger: "change" },
     { type: "array", min: 1, message: "至少选择一个告警级别", trigger: "change" }
@@ -68,23 +69,6 @@ export const noResponseTriggerConfigRules: FormRules = {
   required_acks: [
     { required: true, message: "请输入需要确认数", trigger: "blur" },
     { type: "number", min: 1, max: 100, message: "需要确认数必须在 1 到 100 之间", trigger: "blur" }
-  ]
-}
-
-// 手动触发配置验证规则
-export const manualTriggerConfigRules: FormRules = {
-  allowed_users: [
-    { required: true, message: "请选择允许的用户", trigger: "change" },
-    { type: "array", min: 1, message: "至少选择一个用户", trigger: "change" }
-  ],
-  require_auth: [{ required: true, message: "请选择是否需要认证", trigger: "change" }]
-}
-
-// 自定义触发配置验证规则
-export const customTriggerConfigRules: FormRules = {
-  expression: [
-    { required: true, message: "请输入自定义表达式", trigger: "blur" },
-    { min: 1, max: 1000, message: "自定义表达式长度在 1 到 1000 个字符", trigger: "blur" }
   ]
 }
 
@@ -124,10 +108,6 @@ export const getTriggerConfigRules = (triggerType: string): FormRules => {
       return levelTriggerConfigRules
     case ESCALATION_TRIGGER_TYPES.NO_RESPONSE:
       return noResponseTriggerConfigRules
-    case ESCALATION_TRIGGER_TYPES.MANUAL:
-      return manualTriggerConfigRules
-    case ESCALATION_TRIGGER_TYPES.CUSTOM:
-      return customTriggerConfigRules
     default:
       return {}
   }
@@ -156,6 +136,9 @@ export const validateTrigger = (trigger: EscalationTrigger): string[] => {
       }
       break
     case ESCALATION_TRIGGER_TYPES.LEVEL:
+      if (!trigger.config?.level_config?.match_mode) {
+        errors.push("级别触发配置的匹配模式不能为空")
+      }
       if (!trigger.config?.level_config?.target_alert_levels?.length) {
         errors.push("级别触发配置的目标告警级别不能为空")
       }
@@ -172,16 +155,6 @@ export const validateTrigger = (trigger: EscalationTrigger): string[] => {
       }
       if (!trigger.config?.no_response_config?.max_attempts || trigger.config.no_response_config.max_attempts <= 0) {
         errors.push("无响应触发配置的最大尝试次数必须大于0")
-      }
-      break
-    case ESCALATION_TRIGGER_TYPES.MANUAL:
-      if (!trigger.config?.manual_config?.allowed_users?.length) {
-        errors.push("手动触发配置的允许用户不能为空")
-      }
-      break
-    case ESCALATION_TRIGGER_TYPES.CUSTOM:
-      if (!trigger.config?.custom_config?.expression || trigger.config.custom_config.expression.trim() === "") {
-        errors.push("自定义触发配置的表达式不能为空")
       }
       break
   }
