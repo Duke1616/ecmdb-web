@@ -9,7 +9,6 @@ export interface RetrieveAggregateGroup {
   group_wait: number
   group_interval: number
   repeat_interval: number
-  template_id: number
 }
 
 // 获取聚合分组请求参数

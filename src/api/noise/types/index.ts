@@ -21,7 +21,6 @@ export interface AggregateRule {
   group_wait: number
   group_interval: number
   repeat_interval: number
-  template_id: number
   enabled?: boolean // 添加 enabled 字段，因为模板中使用了
 }
 

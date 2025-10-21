@@ -91,31 +91,13 @@
           </div>
         </div>
       </div>
-
-      <div class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Bell /></el-icon>
-          <span>通知配置</span>
-        </div>
-
-        <div class="form-row">
-          <el-form-item prop="template_id" label="通知模板" class="form-item">
-            <el-input-number
-              v-model="formData.template_id"
-              :min="1"
-              placeholder="请输入通知模板ID"
-              style="width: 200px"
-            />
-          </el-form-item>
-        </div>
-      </div>
     </el-form>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Setting, Clock, Bell } from "@element-plus/icons-vue"
+import { Setting, Clock } from "@element-plus/icons-vue"
 import LabelSelector from "@@/components/LabelSelector/index.vue"
 import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
 import type { FormInstance } from "element-plus"

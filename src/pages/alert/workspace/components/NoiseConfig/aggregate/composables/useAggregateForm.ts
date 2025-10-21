@@ -12,15 +12,13 @@ export function useAggregateForm(workspaceId: number) {
     group_wait: 0,
     group_interval: 0,
     repeat_interval: 0,
-    is_diff_data_source: false,
-    template_id: 1
+    is_diff_data_source: false
   })
 
   // 表单验证规则
   const formRules: FormRules = {
     type: [{ required: true, message: "请选择聚合类型", trigger: "change" }],
-    labels: [{ required: true, message: "请选择聚合标签", trigger: "change" }],
-    template_id: [{ required: true, message: "请输入通知模板ID", trigger: "blur" }]
+    labels: [{ required: true, message: "请选择聚合标签", trigger: "change" }]
   }
 
   // 重置表单
@@ -33,8 +31,7 @@ export function useAggregateForm(workspaceId: number) {
       group_wait: 0,
       group_interval: 0,
       repeat_interval: 0,
-      is_diff_data_source: false,
-      template_id: 1
+      is_diff_data_source: false
     }
   }
 
@@ -48,8 +45,7 @@ export function useAggregateForm(workspaceId: number) {
       group_wait: rule.group_wait,
       group_interval: rule.group_interval,
       repeat_interval: rule.repeat_interval,
-      is_diff_data_source: rule.is_diff_data_source,
-      template_id: rule.template_id
+      is_diff_data_source: rule.is_diff_data_source
     }
   }
 

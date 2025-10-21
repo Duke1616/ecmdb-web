@@ -18,7 +18,6 @@ export interface CreateAggregateGroupRuleReq {
   group_wait: number
   group_interval: number
   repeat_interval: number
-  template_id: number
 }
 
 export interface AggregateGroupRule {
@@ -31,7 +30,6 @@ export interface AggregateGroupRule {
   group_wait: number
   group_interval: number
   repeat_interval: number
-  template_id: number
   enabled: boolean
   created_at: string
   updated_at: string

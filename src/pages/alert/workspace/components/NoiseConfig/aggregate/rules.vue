@@ -109,18 +109,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div class="config-card">
-                  <div class="config-icon">
-                    <el-icon><Document /></el-icon>
-                  </div>
-                  <div class="config-content">
-                    <div class="config-label">通知模板</div>
-                    <div class="config-value">
-                      <span class="template-id">ID: {{ rule.template_id }}</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -143,7 +131,7 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { Setting, Edit, Delete, PriceTag, Warning, Operation, Document, DataBoard } from "@element-plus/icons-vue"
+import { Setting, Edit, Delete, PriceTag, Warning, Operation, DataBoard } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import AggregateDrawer from "./drawer.vue"
 import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/aggregate"
@@ -176,8 +164,7 @@ const formData = defineModel<CreateAggregateGroupRuleReq>("formData", {
       matchers: [],
       group_wait: 0,
       group_interval: 0,
-      repeat_interval: 0,
-      template_id: 0
+      repeat_interval: 0
     })
 })
 
@@ -197,8 +184,7 @@ const resetForm = () => {
     matchers: [],
     group_wait: 0,
     group_interval: 0,
-    repeat_interval: 0,
-    template_id: 0
+    repeat_interval: 0
   })
 }
 
