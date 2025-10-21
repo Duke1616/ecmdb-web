@@ -64,16 +64,22 @@
           <div class="card-content">
             <div class="input-grid">
               <div class="input-item">
-                <label class="input-label">延迟时间（毫秒）</label>
-                <el-input-number v-model="modelValue.delay" :min="0" size="large" class="input-field" />
+                <label class="input-label">延迟时间（分钟）</label>
+                <el-input-number v-model="modelValue.delay" :min="0" :max="1440" size="large" class="input-field" />
               </div>
               <div class="input-item">
                 <label class="input-label">最大重试次数</label>
                 <el-input-number v-model="modelValue.max_retries" :min="0" :max="10" size="large" class="input-field" />
               </div>
               <div class="input-item">
-                <label class="input-label">重试间隔（毫秒）</label>
-                <el-input-number v-model="modelValue.retry_interval" :min="1000" size="large" class="input-field" />
+                <label class="input-label">重试间隔（秒）</label>
+                <el-input-number
+                  v-model="modelValue.retry_interval"
+                  :min="1"
+                  :max="3600"
+                  size="large"
+                  class="input-field"
+                />
               </div>
             </div>
           </div>

@@ -111,9 +111,9 @@ export interface EscalationStep {
   level: number // 升级级别（1-N，表示第几次升级）
   template_set_id: number // 模板集ID
   step_template_id: number // 步骤模板ID
-  delay: number // 延迟时间（毫秒）
+  delay: number // 延迟时间（分钟）
   max_retries: number // 重试次数
-  retry_interval: number // 重试间隔（毫秒）
+  retry_interval: number // 重试间隔（秒）
   skip_if_handled: boolean // 如果对象已被处理则跳过
   continue_on_fail: boolean // 前一步失败是否继续
   condition_expr: string // 条件表达式（如 "alert.severity >= 3"）
@@ -146,9 +146,9 @@ export interface StepVO {
   template_set_id: number // 模板集ID
   config_id?: number // 业务配置
   step_template_id: number // 模板 Step ID
-  delay: number // 延迟时间（毫秒）
+  delay: number // 延迟时间（分钟）
   max_retries: number // 重试次数
-  retry_interval: number // 重试间隔（毫秒）
+  retry_interval: number // 重试间隔（秒）
   skip_if_handled: boolean // 如果对象已被处理则跳过
   continue_on_fail: boolean // 前一步失败是否继续
   condition_expr: string // 条件表达式（如 "alert.severity >= 3"）
@@ -236,9 +236,9 @@ export interface CreateStepReq {
   level: number // 升级级别
   template_set_id: number // 模板集ID
   step_template_id?: number // 步骤模板ID
-  delay: number // 延迟时间（毫秒）
+  delay: number // 延迟时间（分钟）
   max_retries: number // 最大重试次数
-  retry_interval: number // 重试间隔（毫秒）
+  retry_interval: number // 重试间隔（秒）
   skip_if_handled: boolean // 如果已处理则跳过
   continue_on_fail: boolean // 前一步失败是否继续
   condition_expr: string // 条件表达式
@@ -257,9 +257,9 @@ export interface UpdateStepReq {
   level: number // 升级级别
   template_set_id: number // 模板集ID
   step_template_id?: number // 步骤模板ID
-  delay: number // 延迟时间（毫秒）
+  delay: number // 延迟时间（分钟）
   max_retries: number // 最大重试次数
-  retry_interval: number // 重试间隔（毫秒）
+  retry_interval: number // 重试间隔（秒）
   skip_if_handled: boolean // 如果已处理则跳过
   continue_on_fail: boolean // 前一步失败是否继续
   condition_expr: string // 条件表达式

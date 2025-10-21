@@ -279,11 +279,11 @@ const getStepTemplateReceivers = (id?: number) => {
 // 格式化延迟时间
 const formatDelay = (delay: number) => {
   if (delay < 60) {
-    return `${delay}秒`
-  } else if (delay < 3600) {
-    return `${Math.floor(delay / 60)}分钟`
+    return `${delay}分钟`
+  } else if (delay < 1440) {
+    return `${Math.floor(delay / 60)}小时${delay % 60 > 0 ? `${delay % 60}分钟` : ""}`
   } else {
-    return `${Math.floor(delay / 3600)}小时`
+    return `${Math.floor(delay / 1440)}天${Math.floor((delay % 1440) / 60)}小时${delay % 60 > 0 ? `${delay % 60}分钟` : ""}`
   }
 }
 

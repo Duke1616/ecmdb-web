@@ -82,7 +82,7 @@ export const escalationStepFormRules: FormRules = {
   step_template_id: [{ required: true, message: "请选择步骤模板", trigger: "change" }],
   delay: [
     { required: true, message: "请输入延迟时间", trigger: "blur" },
-    { type: "number", min: 0, max: 3600000, message: "延迟时间必须在 0 到 3600000 毫秒之间", trigger: "blur" }
+    { type: "number", min: 0, max: 1440, message: "延迟时间必须在 0 到 1440 分钟之间", trigger: "blur" }
   ],
   max_retries: [
     { required: true, message: "请输入最大重试次数", trigger: "blur" },
@@ -90,7 +90,7 @@ export const escalationStepFormRules: FormRules = {
   ],
   retry_interval: [
     { required: true, message: "请输入重试间隔", trigger: "blur" },
-    { type: "number", min: 1000, max: 3600000, message: "重试间隔必须在 1000 到 3600000 毫秒之间", trigger: "blur" }
+    { type: "number", min: 1, max: 3600, message: "重试间隔必须在 1 到 3600 秒之间", trigger: "blur" }
   ],
   urgency_level: [
     { required: true, message: "请输入紧急程度", trigger: "blur" },

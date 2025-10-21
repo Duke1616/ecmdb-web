@@ -72,7 +72,7 @@ export function useEscalationSteps() {
       config_id: configId.value,
       template_set_id: data.template_set_id || 0,
       step_template_id: data.step_template_id,
-      delay: data.delay || 0,
+      delay: data.delay || 30,
       max_retries: data.max_retries || 3,
       retry_interval: data.retry_interval || 60,
       skip_if_handled: data.skip_if_handled ?? false,
