@@ -181,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed, onMounted, watch } from "vue"
+import { ref, nextTick, computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { Setting, Filter, Clock, Plus } from "@element-plus/icons-vue"
 import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
@@ -391,24 +391,15 @@ const removeEqualLabel = (index: number) => {
   formData.value.equal_labels.splice(index, 1)
 }
 
-// 监听表单数据变化，自动清理零值
-watch(
-  formData,
-  (newData) => {
-    if (newData) {
-      // 清理零值并更新表单数据
-      const cleanedData = clearZeroValues(newData)
-      if (JSON.stringify(cleanedData) !== JSON.stringify(newData)) {
-        formData.value = cleanedData
-      }
-    }
-  },
-  { deep: true }
-)
+// 获取清理后的表单数据（用于保存时清理零值）
+const getCleanedFormData = () => {
+  return clearZeroValues(formData.value)
+}
 
-// 暴露 formRef 给父组件
+// 暴露 formRef 和清理函数给父组件
 defineExpose({
-  formRef
+  formRef,
+  getCleanedFormData
 })
 </script>
 

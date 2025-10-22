@@ -267,31 +267,20 @@ const handleEditRule = (rule: InhibitRule) => {
 
   // 使用 lodash 优化匹配器数据处理
   const sourceMatchers = map(rule.source_match || [], (matcher) => pick(matcher, ["type", "name", "value"]))
-
   const targetMatchers = map(rule.target_match || [], (matcher) => pick(matcher, ["type", "name", "value"]))
 
-  formData.value = reactive(
-    defaults(
-      {
-        id: rule.id,
-        name: rule.name,
-        source_matchers: sourceMatchers,
-        target_matchers: targetMatchers,
-        equal_labels: rule.equal_labels || [],
-        time_window: rule.time_window,
-        enabled: rule.enabled,
-        scope: rule.scope,
-        workspace_id: rule.workspace_id
-      },
-      {
-        source_matchers: [],
-        target_matchers: [],
-        equal_labels: [],
-        enabled: true,
-        scope: InhibitScope.Global
-      }
-    )
-  )
+  // 使用 reactive 确保响应式，与 resetForm 保持一致
+  formData.value = reactive({
+    id: rule.id,
+    name: rule.name,
+    source_matchers: sourceMatchers,
+    target_matchers: targetMatchers,
+    equal_labels: rule.equal_labels || [],
+    time_window: rule.time_window,
+    enabled: rule.enabled,
+    scope: rule.scope,
+    workspace_id: rule.workspace_id
+  })
 
   dialogVisible.value = true
 }
