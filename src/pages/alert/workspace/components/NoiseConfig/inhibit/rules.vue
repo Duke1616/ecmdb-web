@@ -27,21 +27,31 @@
         <div v-for="rule in rules" :key="rule.id" class="inhibit-rule-card">
           <!-- 卡片头部 -->
           <div class="card-header">
-            <div class="header-left">
-              <div class="rule-title">
-                <h5 class="rule-name">{{ rule.name }}</h5>
-                <div class="rule-meta">
-                  <el-tag type="primary" size="small" class="type-tag">抑制规则</el-tag>
-                  <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
-                    {{ rule.enabled ? "运行中" : "已停用" }}
-                  </el-tag>
-                </div>
+            <div class="header-top">
+              <h5 class="rule-name">{{ rule.name }}</h5>
+              <div class="header-actions">
+                <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="default" />
+                <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)">编辑</el-button>
+                <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule.id)">删除</el-button>
               </div>
             </div>
-            <div class="header-right">
-              <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="large" />
-              <el-button type="primary" :icon="Edit" size="default" @click="handleEditRule(rule)">编辑</el-button>
-              <el-button type="danger" :icon="Delete" size="default" @click="handleDeleteRule(rule.id)">删除</el-button>
+            <div class="header-bottom">
+              <div class="rule-meta">
+                <el-tag
+                  :type="rule.scope === InhibitScope.Global ? 'primary' : 'warning'"
+                  size="small"
+                  class="type-tag"
+                >
+                  {{ rule.scope === InhibitScope.Global ? "全局生效" : "工作空间生效" }}
+                </el-tag>
+                <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
+                  {{ rule.enabled ? "运行中" : "已停用" }}
+                </el-tag>
+                <span v-if="rule.time_window" class="time-range">
+                  <el-icon><Clock /></el-icon>
+                  {{ formatTime(rule.time_window.start) }} - {{ formatTime(rule.time_window.end) }}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -74,7 +84,9 @@
                         size="small"
                         class="matcher-tag"
                       >
-                        {{ matcher.name }}{{ getOperatorText(matcher.type) }}{{ matcher.value }}
+                        <span class="matcher-name">{{ matcher.name }}</span>
+                        <span class="matcher-operator">{{ getOperatorText(matcher.type) }}</span>
+                        <span class="matcher-value">{{ matcher.value }}</span>
                       </el-tag>
                     </div>
                   </div>
@@ -100,7 +112,9 @@
                         size="small"
                         class="matcher-tag"
                       >
-                        {{ matcher.name }}{{ getOperatorText(matcher.type) }}{{ matcher.value }}
+                        <span class="matcher-name">{{ matcher.name }}</span>
+                        <span class="matcher-operator">{{ getOperatorText(matcher.type) }}</span>
+                        <span class="matcher-value">{{ matcher.value }}</span>
                       </el-tag>
                     </div>
                   </div>
@@ -118,19 +132,6 @@
                 <el-tag v-for="label in rule.equal_labels" :key="label" type="info" size="small" class="label-tag">
                   {{ label }}
                 </el-tag>
-              </div>
-            </div>
-
-            <!-- 时间窗口 -->
-            <div v-if="rule.time_window" class="time-window-section">
-              <div class="section-title">
-                <el-icon><Clock /></el-icon>
-                <span>时间窗口</span>
-              </div>
-              <div class="time-window-info">
-                <span class="time-text">
-                  {{ formatTime(rule.time_window.start) }} - {{ formatTime(rule.time_window.end) }}
-                </span>
               </div>
             </div>
           </div>
@@ -154,10 +155,12 @@
 import { ref, onMounted, reactive } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Filter, Edit, Delete, PriceTag, Clock, Warning } from "@element-plus/icons-vue"
+import { map, pick, defaults } from "lodash-es"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import InhibitDrawer from "./drawer.vue"
 import { listInhibitRulesApi, deleteInhibitRuleApi, saveInhibitRuleApi } from "@/api/alert/inhibit"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
+import { MatchType, InhibitScope } from "@/api/alert/inhibit/types"
 
 // 定义事件
 const emit = defineEmits<{
@@ -176,7 +179,9 @@ const formData = defineModel<SaveInhibitRuleReq>("formData", {
       target_matchers: [],
       equal_labels: [],
       time_window: null,
-      enabled: true
+      enabled: true,
+      scope: InhibitScope.Global,
+      workspace_id: undefined
     })
 })
 
@@ -192,7 +197,9 @@ const resetForm = () => {
     target_matchers: [],
     equal_labels: [],
     time_window: null,
-    enabled: true
+    enabled: true,
+    scope: InhibitScope.Global,
+    workspace_id: undefined
   })
 }
 
@@ -202,13 +209,24 @@ const loadRules = async () => {
   try {
     const { data } = await listInhibitRulesApi()
 
-    // 确保每个规则都有必要的属性，并统一字段名
-    rules.value = (data.inhibit_rules || []).map((rule) => ({
-      ...rule,
-      source_match: rule.source_matchers || [],
-      target_match: rule.target_matchers || [],
-      equal_labels: rule.equal_labels || []
-    }))
+    // 使用 lodash 优化数据映射和默认值设置
+    rules.value = map(data.inhibit_rules || [], (rule) =>
+      defaults(
+        {
+          ...rule,
+          source_match: rule.source_matchers || [],
+          target_match: rule.target_matchers || [],
+          equal_labels: rule.equal_labels || []
+        },
+        {
+          source_match: [],
+          target_match: [],
+          equal_labels: [],
+          enabled: true,
+          scope: InhibitScope.Global
+        }
+      )
+    )
   } catch (error) {
     console.error("加载抑制规则失败:", error)
     ElMessage.error("加载抑制规则失败")
@@ -228,7 +246,9 @@ onMounted(() => {
       target_matchers: [],
       equal_labels: [],
       time_window: null,
-      enabled: true
+      enabled: true,
+      scope: InhibitScope.Global,
+      workspace_id: undefined
     }
   }
   loadRules()
@@ -245,28 +265,33 @@ const handleAddRule = () => {
 const handleEditRule = (rule: InhibitRule) => {
   isEdit.value = true
 
-  // 确保匹配器数据结构正确
-  const sourceMatchers = (rule.source_match || []).map((matcher) => ({
-    type: matcher.type,
-    name: matcher.name,
-    value: matcher.value
-  }))
+  // 使用 lodash 优化匹配器数据处理
+  const sourceMatchers = map(rule.source_match || [], (matcher) => pick(matcher, ["type", "name", "value"]))
 
-  const targetMatchers = (rule.target_match || []).map((matcher) => ({
-    type: matcher.type,
-    name: matcher.name,
-    value: matcher.value
-  }))
+  const targetMatchers = map(rule.target_match || [], (matcher) => pick(matcher, ["type", "name", "value"]))
 
-  formData.value = reactive({
-    id: rule.id,
-    name: rule.name,
-    source_matchers: sourceMatchers,
-    target_matchers: targetMatchers,
-    equal_labels: rule.equal_labels || [],
-    time_window: rule.time_window,
-    enabled: rule.enabled
-  })
+  formData.value = reactive(
+    defaults(
+      {
+        id: rule.id,
+        name: rule.name,
+        source_matchers: sourceMatchers,
+        target_matchers: targetMatchers,
+        equal_labels: rule.equal_labels || [],
+        time_window: rule.time_window,
+        enabled: rule.enabled,
+        scope: rule.scope,
+        workspace_id: rule.workspace_id
+      },
+      {
+        source_matchers: [],
+        target_matchers: [],
+        equal_labels: [],
+        enabled: true,
+        scope: InhibitScope.Global
+      }
+    )
+  )
 
   dialogVisible.value = true
 }
@@ -293,15 +318,29 @@ const handleDeleteRule = async (id: number) => {
 // 切换规则状态
 const handleToggleRule = async (rule: InhibitRule) => {
   try {
-    await saveInhibitRuleApi({
-      id: rule.id,
-      name: rule.name,
-      source_matchers: rule.source_match || [],
-      target_matchers: rule.target_match || [],
-      equal_labels: rule.equal_labels || [],
-      time_window: rule.time_window,
-      enabled: rule.enabled
-    })
+    // 使用 lodash 优化数据构建
+    const ruleData = defaults(
+      {
+        id: rule.id,
+        name: rule.name,
+        source_matchers: rule.source_match || [],
+        target_matchers: rule.target_match || [],
+        equal_labels: rule.equal_labels || [],
+        time_window: rule.time_window,
+        enabled: rule.enabled,
+        scope: rule.scope,
+        workspace_id: rule.workspace_id
+      },
+      {
+        source_matchers: [],
+        target_matchers: [],
+        equal_labels: [],
+        enabled: true,
+        scope: InhibitScope.Global
+      }
+    )
+
+    await saveInhibitRuleApi(ruleData)
     ElMessage.success(rule.enabled ? "规则已启用" : "规则已停用")
     loadRules()
     emit("refresh")
@@ -339,16 +378,49 @@ const handleCancel = () => {
 }
 
 // 获取操作符文本
-const getOperatorText = (type: number): string => {
-  const operators = ["=", "!=", "~"]
-  return operators[type] || "="
+const getOperatorText = (type: MatchType): string => {
+  switch (type) {
+    case MatchType.Equal:
+      return "="
+    case MatchType.NotEqual:
+      return "!="
+    case MatchType.Regexp:
+      return "~"
+    case MatchType.NotRegexp:
+      return "!~"
+    default:
+      return "="
+  }
 }
 
-// 格式化时间
-const formatTime = (minutes: number): string => {
-  const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`
+// 格式化时间戳为可读时间
+const formatTime = (timestamp: number): string => {
+  // 检查时间戳是否有效
+  if (!timestamp || timestamp <= 0) {
+    return "无效时间"
+  }
+
+  // 如果时间戳看起来是秒级时间戳（10位数字），转换为毫秒
+  let actualTimestamp = timestamp
+  if (timestamp.toString().length === 10) {
+    actualTimestamp = timestamp * 1000
+  }
+
+  const date = new Date(actualTimestamp)
+
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    return "无效时间"
+  }
+
+  // 格式化为 YYYY-MM-DD HH:mm
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`
 }
 </script>
 
@@ -436,53 +508,73 @@ const formatTime = (minutes: number): string => {
   border-radius: 8px;
 
   .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     padding: 16px 20px;
     background: #f8f9fa;
     border-bottom: 1px solid #e9ecef;
 
-    .header-left {
-      .rule-title {
-        .rule-name {
-          font-size: 16px;
-          font-weight: 600;
-          color: #495057;
-          margin: 0 0 8px 0;
-        }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
 
-        .rule-meta {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+      .rule-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #495057;
+        margin: 0;
+      }
 
-          .type-tag {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-          }
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
 
-          .status-tag {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-          }
+        .el-button {
+          padding: 6px 12px;
+          font-weight: 500;
+          font-size: 12px;
+          border-radius: 4px;
+          min-width: 60px;
         }
       }
     }
 
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+    .header-bottom {
+      .rule-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
 
-      .el-button {
-        padding: 8px 16px;
-        font-weight: 500;
-        font-size: 14px;
-        border-radius: 6px;
-        min-width: 70px;
+        .type-tag {
+          font-size: 12px;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+
+        .status-tag {
+          font-size: 12px;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+
+        .time-range {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          font-size: 12px;
+          color: #495057;
+          background: #e3f2fd;
+          padding: 4px 8px;
+          border-radius: 4px;
+          border: 1px solid #bbdefb;
+          font-weight: 500;
+
+          .el-icon {
+            font-size: 12px;
+            color: #1976d2;
+          }
+        }
       }
     }
   }
@@ -557,12 +649,47 @@ const formatTime = (minutes: number): string => {
             gap: 6px;
 
             .matcher-tag {
-              font-size: 11px;
-              padding: 2px 8px;
-              border-radius: 4px;
-              background: #e9ecef;
-              color: #495057;
-              border: 1px solid #dee2e6;
+              font-size: 12px;
+              padding: 6px 10px;
+              border-radius: 6px;
+              background: #f8fafc;
+              color: #334155;
+              border: 1px solid #e2e8f0;
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+              transition: all 0.2s ease;
+
+              &:hover {
+                background: #f1f5f9;
+                border-color: #cbd5e1;
+              }
+
+              .matcher-name {
+                font-weight: 600;
+                color: #1e40af;
+                background: #dbeafe;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 11px;
+              }
+
+              .matcher-operator {
+                font-weight: 700;
+                color: #dc2626;
+                padding: 0 3px;
+                font-size: 13px;
+              }
+
+              .matcher-value {
+                font-weight: 500;
+                color: #059669;
+                background: #d1fae5;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-size: 11px;
+              }
             }
           }
         }
@@ -576,8 +703,19 @@ const formatTime = (minutes: number): string => {
 
       .label-tag {
         font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 4px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #e0f2fe;
+          border-color: #7dd3fc;
+        }
       }
     }
 

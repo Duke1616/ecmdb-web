@@ -25,6 +25,22 @@
             </div>
           </el-form-item>
         </div>
+
+        <div class="form-row form-row-inline">
+          <el-form-item prop="scope" label="生效范围" class="form-item form-item-flex">
+            <el-select v-model="formData.scope" placeholder="请选择生效范围" @change="handleScopeChange">
+              <el-option label="全局生效" :value="InhibitScope.Global" />
+              <el-option label="工作空间生效" :value="InhibitScope.Workspace" />
+            </el-select>
+          </el-form-item>
+          <el-form-item
+            v-if="formData.scope === InhibitScope.Workspace"
+            label="工作空间"
+            class="form-item form-item-flex"
+          >
+            <el-input :value="`当前工作空间 (ID: ${currentWorkspaceId})`" disabled placeholder="自动使用当前工作空间" />
+          </el-form-item>
+        </div>
       </div>
 
       <div class="form-section">
@@ -105,9 +121,11 @@
       </div>
 
       <div class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Clock /></el-icon>
-          <span>时间窗口</span>
+        <div class="section-title has-right-content">
+          <div class="title-left">
+            <el-icon class="section-icon"><Clock /></el-icon>
+            <span>时间窗口</span>
+          </div>
           <div class="time-window-switch">
             <el-switch v-model="hasTimeWindow" @change="toggleTimeWindow" size="large" />
             <span class="form-tip">启用时间窗口</span>
@@ -163,11 +181,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, watch } from "vue"
+import { ref, nextTick, computed, onMounted, watch } from "vue"
+import { useRoute } from "vue-router"
 import { Setting, Filter, Clock, Plus } from "@element-plus/icons-vue"
 import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
-import { MatchType } from "@/api/alert/inhibit/types"
+import { MatchType, InhibitScope } from "@/api/alert/inhibit/types"
 import type { FormInstance } from "element-plus"
+import { clearZeroValues } from "@@/utils"
 
 interface Props {
   formRules: any
@@ -180,6 +200,13 @@ const formData = defineModel<SaveInhibitRuleReq>("formData", { required: true })
 // 表单引用
 const formRef = ref<FormInstance>()
 
+// 获取当前工作空间ID
+const route = useRoute()
+const currentWorkspaceId = computed(() => {
+  const workspaceId = route.params.id
+  return workspaceId ? Number(workspaceId) : undefined
+})
+
 // 时间窗口相关
 const hasTimeWindow = ref(false)
 const startTime = ref("")
@@ -189,6 +216,16 @@ const endTime = ref("")
 const inputVisible = ref(false)
 const inputValue = ref("")
 const inputRef = ref<InstanceType<typeof import("element-plus").ElInput>>()
+
+// 处理生效范围变化
+const handleScopeChange = (scope: InhibitScope) => {
+  if (scope === InhibitScope.Global) {
+    formData.value.workspace_id = undefined
+  } else if (scope === InhibitScope.Workspace) {
+    // 自动设置当前工作空间ID
+    formData.value.workspace_id = currentWorkspaceId.value
+  }
+}
 
 // 切换时间窗口
 const toggleTimeWindow = (val: string | number | boolean) => {
@@ -200,6 +237,8 @@ const toggleTimeWindow = (val: string | number | boolean) => {
   } else {
     formData.value.time_window = null
   }
+  // 同步到显示值
+  syncTimeWindowToDisplay()
 }
 
 // 更新时间窗口
@@ -272,51 +311,63 @@ const timestampToDateTime = (timestamp: number): string => {
     return ""
   }
 
-  const date = new Date(timestamp)
+  // 如果时间戳看起来是秒级时间戳（10位数字），转换为毫秒
+  let actualTimestamp = timestamp
+  if (timestamp.toString().length === 10) {
+    actualTimestamp = timestamp * 1000
+  }
+
+  const date = new Date(actualTimestamp)
 
   // 检查日期是否有效
   if (isNaN(date.getTime())) {
-    console.warn("Invalid date from timestamp:", timestamp)
+    console.warn("Invalid date from timestamp:", timestamp, "converted to:", actualTimestamp)
     return ""
   }
 
   return formatDateTime(date)
 }
 
-// 监听 formData 变化，初始化时间窗口
-watch(
-  () => formData.value,
-  (newData) => {
-    if (newData) {
-      // 初始化时间窗口状态
-      hasTimeWindow.value = newData.time_window !== null
+// 初始化时间窗口显示
+const initializeTimeWindow = () => {
+  if (formData.value?.time_window) {
+    const startTimeStr = timestampToDateTime(formData.value.time_window.start)
+    const endTimeStr = timestampToDateTime(formData.value.time_window.end)
 
-      // 如果有时间窗口，初始化时间值
-      if (newData.time_window) {
-        console.log("Initializing time window:", newData.time_window)
-        startTime.value = timestampToDateTime(newData.time_window.start)
-        endTime.value = timestampToDateTime(newData.time_window.end)
-
-        // 如果时间戳无效，使用当前时间作为默认值
-        if (!startTime.value || !endTime.value) {
-          const now = new Date()
-          const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000)
-          startTime.value = formatDateTime(now)
-          endTime.value = formatDateTime(oneHourLater)
-          // 更新 formData 中的时间戳
-          formData.value.time_window = {
-            start: now.getTime(),
-            end: oneHourLater.getTime()
-          }
-        }
-      } else {
-        startTime.value = ""
-        endTime.value = ""
-      }
+    // 只有当转换成功时才更新显示值
+    if (startTimeStr && endTimeStr) {
+      startTime.value = startTimeStr
+      endTime.value = endTimeStr
+      hasTimeWindow.value = true
+    } else {
+      // 如果时间戳无效，清空显示值
+      startTime.value = ""
+      endTime.value = ""
+      hasTimeWindow.value = false
     }
-  },
-  { immediate: true, deep: true }
-)
+  } else {
+    startTime.value = ""
+    endTime.value = ""
+    hasTimeWindow.value = false
+  }
+}
+
+// 同步时间窗口状态到显示值
+const syncTimeWindowToDisplay = () => {
+  if (formData.value?.time_window) {
+    hasTimeWindow.value = true
+    initializeTimeWindow()
+  } else {
+    hasTimeWindow.value = false
+    startTime.value = ""
+    endTime.value = ""
+  }
+}
+
+// 组件挂载时初始化
+onMounted(() => {
+  syncTimeWindowToDisplay()
+})
 
 // 显示标签输入框
 const showInput = () => {
@@ -339,6 +390,21 @@ const handleInputConfirm = () => {
 const removeEqualLabel = (index: number) => {
   formData.value.equal_labels.splice(index, 1)
 }
+
+// 监听表单数据变化，自动清理零值
+watch(
+  formData,
+  (newData) => {
+    if (newData) {
+      // 清理零值并更新表单数据
+      const cleanedData = clearZeroValues(newData)
+      if (JSON.stringify(cleanedData) !== JSON.stringify(newData)) {
+        formData.value = cleanedData
+      }
+    }
+  },
+  { deep: true }
+)
 
 // 暴露 formRef 给父组件
 defineExpose({
@@ -363,7 +429,7 @@ defineExpose({
   .section-title {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     margin-bottom: 16px;
     padding: 10px 14px;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -387,10 +453,32 @@ defineExpose({
       display: flex;
       align-items: center;
       gap: 8px;
+      margin-left: auto;
 
       .form-tip {
         font-size: 12px;
         color: #6b7280;
+      }
+    }
+  }
+
+  .section-title.has-right-content {
+    justify-content: space-between;
+
+    .title-left {
+      display: flex;
+      align-items: center;
+
+      .section-icon {
+        margin-right: 6px;
+        font-size: 16px;
+        color: #3b82f6;
+      }
+
+      span {
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
       }
     }
   }
@@ -490,8 +578,8 @@ defineExpose({
 
       .el-input {
         &:first-child {
-          flex: 0 0 120px;
-          min-width: 120px;
+          flex: 0 0 140px;
+          min-width: 140px;
         }
 
         &:last-child {
@@ -501,8 +589,8 @@ defineExpose({
       }
 
       .el-select {
-        flex: 0 0 80px;
-        min-width: 80px;
+        flex: 0 0 100px;
+        min-width: 100px;
       }
 
       .matcher-remove {

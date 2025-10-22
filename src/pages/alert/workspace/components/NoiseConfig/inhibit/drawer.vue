@@ -43,6 +43,7 @@ const handleConfirm = async () => {
   const formRef = inhibitFormRef.value?.formRef
   const isValid = await validateForm(formRef)
   if (isValid) {
+    // 直接使用当前的表单数据，不需要重新获取
     emit("confirm")
   }
 }
