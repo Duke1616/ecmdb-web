@@ -2,7 +2,7 @@
   <div class="inhibit-rules-page">
     <ManagerHeader
       title="抑制规则"
-      subtitle="全局抑制规则，对所有工作空间生效"
+      subtitle="配置抑制规则，减少不必要的告警通知"
       :show-back-button="false"
       :show-add-button="true"
       :show-refresh-button="true"
@@ -18,7 +18,7 @@
           <el-icon><Filter /></el-icon>
         </div>
         <h4 class="empty-title">暂无抑制规则</h4>
-        <p class="empty-description">配置全局抑制规则，减少不必要的告警通知</p>
+        <p class="empty-description">配置抑制规则，减少不必要的告警通知</p>
         <el-button type="primary" :icon="Filter" @click="handleAddRule"> 添加抑制规则 </el-button>
       </div>
 
