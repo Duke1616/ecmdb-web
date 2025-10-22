@@ -28,11 +28,27 @@
           <!-- 卡片头部 -->
           <div class="card-header">
             <div class="header-top">
-              <h5 class="rule-name">{{ rule.name }}</h5>
+              <div class="rule-name-section">
+                <h5 class="rule-name">{{ rule.name }}</h5>
+                <!-- 过期状态显示在标题旁边 -->
+                <div v-if="rule.time_window && isTimeWindowExpired(rule.time_window)" class="expired-indicator">
+                  <el-icon class="expired-icon"><Warning /></el-icon>
+                  <span class="expired-text">已过期</span>
+                </div>
+              </div>
               <div class="header-actions">
                 <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="default" />
                 <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)">编辑</el-button>
                 <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule.id)">删除</el-button>
+                <!-- 续期按钮放在操作区域 -->
+                <el-button
+                  v-if="rule.time_window && isTimeWindowExpired(rule.time_window)"
+                  type="warning"
+                  size="small"
+                  @click="handleRenewTimeWindow(rule)"
+                >
+                  续期
+                </el-button>
               </div>
             </div>
             <div class="header-bottom">
@@ -42,15 +58,18 @@
                   size="small"
                   class="type-tag"
                 >
-                  {{ rule.scope === InhibitScope.Global ? "全局生效" : "工作空间生效" }}
+                  {{ rule.scope === InhibitScope.Global ? "全局生效" : "所属空间内生效" }}
                 </el-tag>
                 <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
                   {{ rule.enabled ? "运行中" : "已停用" }}
                 </el-tag>
-                <span v-if="rule.time_window" class="time-range">
-                  <el-icon><Clock /></el-icon>
+              </div>
+              <div v-if="rule.time_window" class="time-range">
+                <el-icon><Clock /></el-icon>
+                <span v-if="isValidTimeWindow(rule.time_window)">
                   {{ formatTime(rule.time_window.start) }} - {{ formatTime(rule.time_window.end) }}
                 </span>
+                <span v-else>无结束时间</span>
               </div>
             </div>
           </div>
@@ -148,24 +167,51 @@
       @confirm="handleConfirm"
       @cancel="handleCancel"
     />
+
+    <!-- 时间窗口续期对话框 -->
+    <FormDialog
+      v-model="renewDialogVisible"
+      title="续期时间窗口"
+      width="500px"
+      @confirm="handleRenewConfirm"
+      @cancel="handleRenewCancel"
+    >
+      <TimeWindowRenewDialog ref="renewDialogRef" :rule="currentRule" />
+    </FormDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue"
+import { ref, onMounted, reactive, computed } from "vue"
+import { useRoute } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Filter, Edit, Delete, PriceTag, Clock, Warning } from "@element-plus/icons-vue"
-import { map, pick, defaults } from "lodash-es"
+import { map, defaults } from "lodash-es"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import InhibitDrawer from "./drawer.vue"
-import { listInhibitRulesApi, deleteInhibitRuleApi, saveInhibitRuleApi } from "@/api/alert/inhibit"
+import TimeWindowRenewDialog from "./components/TimeWindowRenewDialog.vue"
+import { FormDialog } from "@@/components/Dialogs"
+import {
+  listInhibitRulesByWorkspaceApi,
+  deleteInhibitRuleApi,
+  saveInhibitRuleApi,
+  toggleInhibitRuleStatusApi
+} from "@/api/alert/inhibit"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
 import { MatchType, InhibitScope } from "@/api/alert/inhibit/types"
+import { useInhibitUtils } from "./composables/useInhibitUtils"
 
 // 定义事件
 const emit = defineEmits<{
   refresh: []
 }>()
+
+// 获取当前工作空间ID
+const route = useRoute()
+const currentWorkspaceId = computed(() => {
+  const workspaceId = route.params.workspaceId
+  return workspaceId ? Number(workspaceId) : undefined
+})
 
 // 使用 defineModel 管理状态
 const dialogVisible = defineModel<boolean>("dialogVisible", { default: false })
@@ -185,29 +231,31 @@ const formData = defineModel<SaveInhibitRuleReq>("formData", {
     })
 })
 
+// 续期对话框相关状态
+const renewDialogVisible = ref(false)
+const currentRule = ref<InhibitRule | null>(null)
+const renewDialogRef = ref()
+
+// 使用工具函数 composable
+const { createFormData, convertRuleToFormData, createEmptyFormData } = useInhibitUtils()
+
 // 响应式数据
 const loading = ref(false)
 const rules = ref<InhibitRule[]>([])
 
 // 重置表单
 const resetForm = () => {
-  formData.value = reactive({
-    name: "",
-    source_matchers: [],
-    target_matchers: [],
-    equal_labels: [],
-    time_window: null,
-    enabled: true,
-    scope: InhibitScope.Global,
-    workspace_id: undefined
-  })
+  formData.value = createEmptyFormData()
 }
 
 // 加载规则数据
 const loadRules = async () => {
   loading.value = true
   try {
-    const { data } = await listInhibitRulesApi()
+    // 使用工作空间接口获取规则列表
+    const { data } = await listInhibitRulesByWorkspaceApi({
+      workspace_id: currentWorkspaceId.value || 0
+    })
 
     // 使用 lodash 优化数据映射和默认值设置
     rules.value = map(data.inhibit_rules || [], (rule) =>
@@ -229,7 +277,6 @@ const loadRules = async () => {
     )
   } catch (error) {
     console.error("加载抑制规则失败:", error)
-    ElMessage.error("加载抑制规则失败")
     rules.value = []
   } finally {
     loading.value = false
@@ -264,25 +311,36 @@ const handleAddRule = () => {
 // 编辑规则
 const handleEditRule = (rule: InhibitRule) => {
   isEdit.value = true
-
-  // 使用 lodash 优化匹配器数据处理
-  const sourceMatchers = map(rule.source_match || [], (matcher) => pick(matcher, ["type", "name", "value"]))
-  const targetMatchers = map(rule.target_match || [], (matcher) => pick(matcher, ["type", "name", "value"]))
-
-  // 使用 reactive 确保响应式，与 resetForm 保持一致
-  formData.value = reactive({
-    id: rule.id,
-    name: rule.name,
-    source_matchers: sourceMatchers,
-    target_matchers: targetMatchers,
-    equal_labels: rule.equal_labels || [],
-    time_window: rule.time_window,
-    enabled: rule.enabled,
-    scope: rule.scope,
-    workspace_id: rule.workspace_id
-  })
-
+  formData.value = createFormData(convertRuleToFormData(rule))
   dialogVisible.value = true
+}
+
+// 处理时间窗口续期
+const handleRenewTimeWindow = (rule: InhibitRule) => {
+  currentRule.value = rule
+  renewDialogVisible.value = true
+}
+
+// 续期确认回调
+const handleRenewConfirm = async () => {
+  if (!renewDialogRef.value || !currentRule.value) return
+
+  try {
+    // 调用子组件的确认方法
+    await renewDialogRef.value.handleConfirm()
+    renewDialogVisible.value = false
+    loadRules() // 重新加载规则列表
+    emit("refresh")
+  } catch (error) {
+    // 如果子组件验证失败，不关闭对话框
+    console.error("续期验证失败:", error)
+  }
+}
+
+// 续期取消回调
+const handleRenewCancel = () => {
+  renewDialogVisible.value = false
+  currentRule.value = null
 }
 
 // 删除规则
@@ -299,7 +357,6 @@ const handleDeleteRule = async (id: number) => {
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除抑制规则失败:", error)
-      ElMessage.error("删除失败")
     }
   }
 }
@@ -307,35 +364,12 @@ const handleDeleteRule = async (id: number) => {
 // 切换规则状态
 const handleToggleRule = async (rule: InhibitRule) => {
   try {
-    // 使用 lodash 优化数据构建
-    const ruleData = defaults(
-      {
-        id: rule.id,
-        name: rule.name,
-        source_matchers: rule.source_match || [],
-        target_matchers: rule.target_match || [],
-        equal_labels: rule.equal_labels || [],
-        time_window: rule.time_window,
-        enabled: rule.enabled,
-        scope: rule.scope,
-        workspace_id: rule.workspace_id
-      },
-      {
-        source_matchers: [],
-        target_matchers: [],
-        equal_labels: [],
-        enabled: true,
-        scope: InhibitScope.Global
-      }
-    )
-
-    await saveInhibitRuleApi(ruleData)
+    await toggleInhibitRuleStatusApi(rule.id)
     ElMessage.success(rule.enabled ? "规则已启用" : "规则已停用")
     loadRules()
     emit("refresh")
   } catch (error) {
     console.error("切换规则状态失败:", error)
-    ElMessage.error("操作失败")
     // 恢复原状态
     rule.enabled = !rule.enabled
   }
@@ -380,6 +414,37 @@ const getOperatorText = (type: MatchType): string => {
     default:
       return "="
   }
+}
+
+// 检查时间窗口是否有效
+const isValidTimeWindow = (timeWindow: any): boolean => {
+  if (!timeWindow || !timeWindow.start || !timeWindow.end) {
+    return false
+  }
+
+  // 检查时间戳是否有效
+  if (timeWindow.start <= 0 || timeWindow.end <= 0) {
+    return false
+  }
+
+  return true
+}
+
+// 检查时间窗口是否过期
+const isTimeWindowExpired = (timeWindow: any): boolean => {
+  if (!isValidTimeWindow(timeWindow)) {
+    return false
+  }
+
+  const now = Date.now()
+  let endTime = timeWindow.end
+
+  // 如果时间戳是秒级，转换为毫秒
+  if (timeWindow.end.toString().length === 10) {
+    endTime = timeWindow.end * 1000
+  }
+
+  return now > endTime
 }
 
 // 格式化时间戳为可读时间
@@ -507,11 +572,38 @@ const formatTime = (timestamp: number): string => {
       align-items: center;
       margin-bottom: 12px;
 
-      .rule-name {
-        font-size: 16px;
-        font-weight: 600;
-        color: #495057;
-        margin: 0;
+      .rule-name-section {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .rule-name {
+          font-size: 16px;
+          font-weight: 600;
+          color: #495057;
+          margin: 0;
+        }
+
+        .expired-indicator {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 6px;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 4px;
+          font-size: 11px;
+
+          .expired-icon {
+            font-size: 12px;
+            color: #dc2626;
+          }
+
+          .expired-text {
+            color: #dc2626;
+            font-weight: 500;
+          }
+        }
       }
 
       .header-actions {
@@ -530,6 +622,11 @@ const formatTime = (timestamp: number): string => {
     }
 
     .header-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+
       .rule-meta {
         display: flex;
         align-items: center;
@@ -546,23 +643,24 @@ const formatTime = (timestamp: number): string => {
           padding: 4px 8px;
           border-radius: 4px;
         }
+      }
 
-        .time-range {
-          display: flex;
-          align-items: center;
-          gap: 4px;
+      .time-range {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: #495057;
+        background: #e3f2fd;
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid #bbdefb;
+        font-weight: 500;
+        flex-shrink: 0;
+
+        .el-icon {
           font-size: 12px;
-          color: #495057;
-          background: #e3f2fd;
-          padding: 4px 8px;
-          border-radius: 4px;
-          border: 1px solid #bbdefb;
-          font-weight: 500;
-
-          .el-icon {
-            font-size: 12px;
-            color: #1976d2;
-          }
+          color: #1976d2;
         }
       }
     }
@@ -639,15 +737,14 @@ const formatTime = (timestamp: number): string => {
 
             .matcher-tag {
               font-size: 12px;
-              padding: 6px 10px;
-              border-radius: 6px;
-              background: #f8fafc;
-              color: #334155;
+              padding: 4px 8px;
+              border-radius: 4px;
+              background: #fafbfc;
+              color: #64748b;
               border: 1px solid #e2e8f0;
               display: flex;
               align-items: center;
-              gap: 6px;
-              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+              gap: 4px;
               transition: all 0.2s ease;
 
               &:hover {
@@ -656,27 +753,27 @@ const formatTime = (timestamp: number): string => {
               }
 
               .matcher-name {
-                font-weight: 600;
-                color: #1e40af;
-                background: #dbeafe;
-                padding: 2px 6px;
-                border-radius: 3px;
+                font-weight: 500;
+                color: #475569;
+                background: #f1f5f9;
+                padding: 1px 4px;
+                border-radius: 2px;
                 font-size: 11px;
               }
 
               .matcher-operator {
-                font-weight: 700;
-                color: #dc2626;
-                padding: 0 3px;
-                font-size: 13px;
+                font-weight: 500;
+                color: #64748b;
+                padding: 0 2px;
+                font-size: 12px;
               }
 
               .matcher-value {
                 font-weight: 500;
-                color: #059669;
-                background: #d1fae5;
-                padding: 2px 6px;
-                border-radius: 3px;
+                color: #475569;
+                background: #f1f5f9;
+                padding: 1px 4px;
+                border-radius: 2px;
                 font-size: 11px;
               }
             }
@@ -692,18 +789,17 @@ const formatTime = (timestamp: number): string => {
 
       .label-tag {
         font-size: 12px;
-        padding: 6px 10px;
-        border-radius: 6px;
-        background: #f0f9ff;
-        color: #0369a1;
-        border: 1px solid #bae6fd;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: #fafbfc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
         font-weight: 500;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         transition: all 0.2s ease;
 
         &:hover {
-          background: #e0f2fe;
-          border-color: #7dd3fc;
+          background: #f1f5f9;
+          border-color: #cbd5e1;
         }
       }
     }

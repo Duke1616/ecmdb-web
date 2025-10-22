@@ -2,24 +2,15 @@ import { ref } from "vue"
 import { FormInstance, FormRules } from "element-plus"
 import { defaults } from "lodash-es"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
-import { InhibitScope } from "@/api/alert/inhibit/types"
 import { clearZeroValues } from "@@/utils"
+import { useInhibitUtils } from "./useInhibitUtils"
 
 export function useInhibitForm() {
-  // 表单默认值
-  const defaultFormData: SaveInhibitRuleReq = {
-    name: "",
-    source_matchers: [],
-    target_matchers: [],
-    equal_labels: [],
-    time_window: null,
-    enabled: true,
-    scope: InhibitScope.Global,
-    workspace_id: undefined
-  }
+  // 使用工具函数
+  const { createEmptyFormData, convertRuleToFormData } = useInhibitUtils()
 
   // 表单数据
-  const formData = ref<SaveInhibitRuleReq>({ ...defaultFormData })
+  const formData = ref<SaveInhibitRuleReq>(createEmptyFormData())
 
   // 表单验证规则
   const formRules: FormRules = {
@@ -32,26 +23,13 @@ export function useInhibitForm() {
 
   // 重置表单
   const resetForm = () => {
-    formData.value = { ...defaultFormData }
+    formData.value = createEmptyFormData()
   }
 
   // 编辑规则时填充表单
   const fillFormForEdit = (rule: InhibitRule) => {
-    // 使用 lodash 优化数据合并和字段映射
-    formData.value = defaults(
-      {
-        id: rule.id,
-        name: rule.name,
-        source_matchers: rule.source_match || [],
-        target_matchers: rule.target_match || [],
-        equal_labels: rule.equal_labels || [],
-        time_window: rule.time_window,
-        enabled: rule.enabled,
-        scope: rule.scope,
-        workspace_id: rule.workspace_id
-      },
-      defaultFormData
-    )
+    // 使用工具函数转换数据
+    formData.value = defaults(convertRuleToFormData(rule), createEmptyFormData())
   }
 
   // 获取清理后的表单数据（清除零值）

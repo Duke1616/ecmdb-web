@@ -68,3 +68,30 @@ export interface ListInhibitRulesResponse {
 export interface DeleteInhibitRuleResponse {
   success: boolean
 }
+
+// 续期时间窗口请求
+export interface RenewalTimeWindowReq {
+  id: number // 抑制规则ID
+  start_time: number // 开始时间
+  end_time: number // 结束时间
+}
+
+// 续期时间窗口响应
+export interface RenewalTimeWindowResponse {
+  success: boolean
+}
+
+// 根据工作空间获取抑制规则请求
+export interface ListInhibitRuleByWorkspaceReq {
+  workspace_id: number // 工作空间ID
+}
+
+// 根据工作空间获取抑制规则响应
+export interface ListInhibitRuleByWorkspaceResponse {
+  inhibit_rules: InhibitRule[]
+}
+
+// 切换抑制规则状态响应
+export interface ToggleInhibitRuleStatusResponse {
+  success: boolean
+}

@@ -30,7 +30,7 @@
           <el-form-item prop="scope" label="生效范围" class="form-item form-item-flex">
             <el-select v-model="formData.scope" placeholder="请选择生效范围" @change="handleScopeChange">
               <el-option label="全局生效" :value="InhibitScope.Global" />
-              <el-option label="工作空间生效" :value="InhibitScope.Workspace" />
+              <el-option label="所属空间内生效" :value="InhibitScope.Workspace" />
             </el-select>
           </el-form-item>
           <el-form-item
@@ -133,6 +133,20 @@
         </div>
 
         <div v-if="hasTimeWindow" class="form-row">
+          <el-form-item label="快速选择" class="form-item">
+            <div class="quick-time-buttons">
+              <el-button size="small" @click="setQuickTime(1)">1小时</el-button>
+              <el-button size="small" @click="setQuickTime(6)">6小时</el-button>
+              <el-button size="small" @click="setQuickTime(12)">12小时</el-button>
+              <el-button size="small" @click="setQuickTime(24)">1天</el-button>
+              <el-button size="small" @click="setQuickTime(72)">3天</el-button>
+              <el-button size="small" @click="setQuickTime(168)">7天</el-button>
+              <el-button size="small" @click="setQuickTime(720)">1月</el-button>
+            </div>
+          </el-form-item>
+        </div>
+
+        <div v-if="hasTimeWindow" class="form-row">
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item prop="time_window.start" label="开始时间" class="form-item">
@@ -163,17 +177,6 @@
               </el-form-item>
             </el-col>
           </el-row>
-        </div>
-
-        <div v-if="hasTimeWindow" class="form-row">
-          <el-form-item label="快速选择" class="form-item">
-            <div class="quick-time-buttons">
-              <el-button size="small" @click="setQuickTime(1)">1小时</el-button>
-              <el-button size="small" @click="setQuickTime(6)">6小时</el-button>
-              <el-button size="small" @click="setQuickTime(12)">12小时</el-button>
-              <el-button size="small" @click="setQuickTime(24)">1天</el-button>
-            </div>
-          </el-form-item>
         </div>
       </div>
     </el-form>
@@ -662,9 +665,32 @@ defineExpose({
   }
 
   .quick-time-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
     gap: 8px;
-    flex-wrap: wrap;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+
+    .el-button {
+      border-radius: 4px;
+      font-size: 12px;
+      padding: 4px 8px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      color: #374151;
+      width: 100%;
+      min-width: 0;
+      max-width: none;
+      margin: 0;
+      box-sizing: border-box;
+
+      &:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background: #eff6ff;
+      }
+    }
   }
 }
 </style>
