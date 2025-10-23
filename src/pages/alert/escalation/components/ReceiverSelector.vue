@@ -167,16 +167,16 @@ const receiverTypes = [
 
 // 接收者数据
 const receiversData = ref<{
-  [RECEIVER_TYPES.USER]: Array<{ id: string; name: string; display_name: string; description: string }>
-  [RECEIVER_TYPES.TEAM]: Array<{ id: string; name: string; display_name: string; description: string }>
+  [RECEIVER_TYPES.USER]: Array<{ id: number; name: string; display_name: string; description: string }>
+  [RECEIVER_TYPES.TEAM]: Array<{ id: number; name: string; display_name: string; description: string }>
   [RECEIVER_TYPES.DEPARTMENT]: Array<{
-    id: string
+    id: number
     name: string
     display_name: string
     description: string
     path: string
   }>
-  [RECEIVER_TYPES.ONCALL]: Array<{ id: string; name: string; display_name: string; description: string }>
+  [RECEIVER_TYPES.ONCALL]: Array<{ id: number; name: string; display_name: string; description: string }>
 }>({
   [RECEIVER_TYPES.USER]: [],
   [RECEIVER_TYPES.TEAM]: [],
@@ -229,7 +229,7 @@ const loadUsers = async () => {
 
     const { data } = await listUsersApi(params)
     receiversData.value[RECEIVER_TYPES.USER] = data.users.map((user: user) => ({
-      id: user.id.toString(),
+      id: user.id,
       name: user.username,
       display_name: user.display_name,
       description: user.title || user.email || "用户"
@@ -255,7 +255,7 @@ const loadTeams = async () => {
 
     const { data } = await listTeamsApi(params)
     receiversData.value[RECEIVER_TYPES.TEAM] = data.teams.map((team: Team) => ({
-      id: team.id.toString(),
+      id: team.id,
       name: team.name,
       display_name: team.name,
       description: `负责人: ${team.owner}`
@@ -277,7 +277,7 @@ const loadDepartments = async () => {
       depts.forEach((dept) => {
         const currentPath = parentPath ? `${parentPath} - ${dept.name}` : dept.name
         result.push({
-          id: dept.id.toString(),
+          id: dept.id,
           name: dept.name,
           display_name: dept.name,
           description: "部门",
@@ -311,7 +311,7 @@ const loadRotas = async () => {
 
     const { data } = await listRotasApi(params)
     receiversData.value[RECEIVER_TYPES.ONCALL] = data.rotas.map((rota: rota) => ({
-      id: rota.id.toString(),
+      id: rota.id,
       name: rota.name,
       display_name: rota.name,
       description: rota.desc || "排班"
@@ -381,7 +381,7 @@ const loadDataByType = async (type: string) => {
 // 检查接收者是否已选择
 const isReceiverSelected = (item: any) => {
   return selectedReceivers.value.some(
-    (receiver) => receiver.id === item.id.toString() && receiver.type === currentReceiverType.value
+    (receiver) => receiver.id === item.id && receiver.type === currentReceiverType.value
   )
 }
 
@@ -389,7 +389,7 @@ const isReceiverSelected = (item: any) => {
 const toggleReceiver = (item: any) => {
   const currentReceivers = [...selectedReceivers.value]
   const existingIndex = currentReceivers.findIndex(
-    (receiver) => receiver.id === item.id.toString() && receiver.type === currentReceiverType.value
+    (receiver) => receiver.id === item.id && receiver.type === currentReceiverType.value
   )
 
   if (existingIndex > -1) {
@@ -398,7 +398,7 @@ const toggleReceiver = (item: any) => {
   } else {
     // 未选择，添加
     currentReceivers.push({
-      id: item.id.toString(),
+      id: item.id,
       type: currentReceiverType.value,
       display_name: item.display_name || item.name,
       metadata: {}

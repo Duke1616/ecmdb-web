@@ -122,7 +122,7 @@ export interface EscalationStep {
 
 // 接收者引用
 export interface ReceiverRef {
-  id: string // 统一ID（userID, groupID等）
+  id: number // 统一ID（userID, groupID等）
   type: ReceiverType // 类型
   display_name: string // 名称展示
   metadata: Record<string, any> // 附加信息（如电话、邮箱等）
