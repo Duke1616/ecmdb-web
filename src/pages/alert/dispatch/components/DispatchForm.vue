@@ -35,38 +35,112 @@
           <span>分发配置</span>
         </div>
 
-        <div class="form-row form-row-inline">
-          <el-form-item prop="scope" label="作用域" class="form-item form-item-flex">
-            <el-select v-model="formData.scope" placeholder="请选择作用域">
-              <el-option label="全局" value="global" />
-              <el-option label="规则" value="rule" />
-            </el-select>
-            <div class="form-tip">全局对所有告警生效，规则仅对指定告警规则生效</div>
+        <div class="form-row">
+          <el-form-item prop="scope" label="作用域" class="form-item">
+            <div class="choice-cards">
+              <div
+                class="choice-card"
+                :class="{ active: formData.scope === DispatchScope.Global }"
+                @click="formData.scope = DispatchScope.Global"
+              >
+                <div class="card-icon">🌐</div>
+                <div class="card-content">
+                  <div class="card-title">全局生效</div>
+                  <div class="card-desc">对所有告警生效</div>
+                </div>
+                <div class="card-check">
+                  <svg
+                    v-if="formData.scope === DispatchScope.Global"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div
+                class="choice-card"
+                :class="{ active: formData.scope === DispatchScope.Rule }"
+                @click="formData.scope = DispatchScope.Rule"
+              >
+                <div class="card-icon">📋</div>
+                <div class="card-content">
+                  <div class="card-title">规则生效</div>
+                  <div class="card-desc">仅对指定规则生效</div>
+                </div>
+                <div class="card-check">
+                  <svg
+                    v-if="formData.scope === DispatchScope.Rule"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </el-form-item>
-          <el-form-item
-            v-if="formData.scope === 'rule'"
-            prop="rule_id"
-            label="关联告警规则"
-            class="form-item form-item-flex"
-          >
+        </div>
+
+        <div class="form-row" v-if="formData.scope === DispatchScope.Rule">
+          <el-form-item prop="rule_id" label="关联告警规则" class="form-item">
             <RuleSelector v-model="formData.rule_id" placeholder="请选择告警规则" variant="simple" />
           </el-form-item>
         </div>
 
-        <div class="form-row form-row-inline">
-          <el-form-item prop="match_type" label="分发类型" class="form-item form-item-flex">
-            <el-select v-model="formData.match_type" placeholder="请选择分发类型">
-              <el-option label="路由分发" value="routing" />
-              <el-option label="创建工单" value="ticket" />
-            </el-select>
-            <div class="form-tip">路由分发：将告警分发到指定工作空间。创建工单：将告警创建为工单</div>
+        <div class="form-row">
+          <el-form-item prop="match_type" label="分发类型" class="form-item">
+            <div class="choice-cards">
+              <div
+                class="choice-card"
+                :class="{ active: formData.match_type === DispatchMatchType.Routing }"
+                @click="formData.match_type = DispatchMatchType.Routing"
+              >
+                <div class="card-icon">🚀</div>
+                <div class="card-content">
+                  <div class="card-title">路由分发</div>
+                  <div class="card-desc">分发到指定工作空间</div>
+                </div>
+                <div class="card-check">
+                  <svg
+                    v-if="formData.match_type === DispatchMatchType.Routing"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div
+                class="choice-card"
+                :class="{ active: formData.match_type === DispatchMatchType.Ticket }"
+                @click="formData.match_type = DispatchMatchType.Ticket"
+              >
+                <div class="card-icon">🎫</div>
+                <div class="card-content">
+                  <div class="card-title">创建工单</div>
+                  <div class="card-desc">将告警创建为工单</div>
+                </div>
+                <div class="card-check">
+                  <svg
+                    v-if="formData.match_type === DispatchMatchType.Ticket"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </el-form-item>
-          <el-form-item
-            v-if="formData.match_type === 'routing'"
-            prop="workspace_id"
-            label="目标工作空间"
-            class="form-item form-item-flex"
-          >
+        </div>
+
+        <div class="form-row" v-if="formData.match_type === DispatchMatchType.Routing">
+          <el-form-item prop="workspace_id" label="目标工作空间" class="form-item">
             <el-select v-model="formData.workspace_id" placeholder="请选择目标工作空间" style="width: 100%">
               <el-option
                 v-for="workspace in workspaces"
@@ -143,6 +217,7 @@ import { ref, onMounted } from "vue"
 import { Setting, Share, Filter, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { SaveDispatchRuleReq } from "@/api/alert/dispatch/types"
+import { DispatchScope, DispatchMatchType } from "@/api/alert/dispatch/types"
 import type { Workspace } from "@/api/alert/workspace/types"
 import { listWorkspacesApi } from "@/api/alert/workspace"
 import { useDispatchForm } from "../composables/useDispatchForm"
@@ -326,6 +401,87 @@ defineExpose({
     font-size: 12px;
     color: #6b7280;
     margin-top: 6px;
+  }
+
+  // 选择卡片样式
+  .choice-cards {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .choice-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+
+    &:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    &.active {
+      border-color: #3b82f6;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+
+      .card-icon {
+        transform: scale(1.05);
+      }
+
+      .card-title {
+        color: #3b82f6;
+        font-weight: 600;
+      }
+    }
+
+    .card-icon {
+      font-size: 18px;
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .card-content {
+      flex: 1;
+      min-width: 0;
+
+      .card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 2px;
+        transition: color 0.2s ease;
+      }
+
+      .card-desc {
+        font-size: 11px;
+        color: #64748b;
+        line-height: 1.3;
+      }
+    }
+
+    .card-check {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3b82f6;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      svg {
+        width: 16px;
+        height: 16px;
+      }
+    }
   }
 
   .matcher-config {

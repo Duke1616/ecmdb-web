@@ -3,27 +3,21 @@
     <!-- 头部区域 -->
     <ManagerHeader title="分发规则" subtitle="管理告警分发规则" @refresh="loadRules">
       <template #actions>
-        <el-select
-          v-model="scopeFilter"
-          placeholder="筛选作用域"
-          style="width: 120px; margin-right: 12px"
-          @change="handleFilterChange"
-        >
-          <el-option label="全部" value="all" />
-          <el-option label="全局" value="global" />
-          <el-option label="规则" value="rule" />
-        </el-select>
-        <el-select
-          v-model="matchTypeFilter"
-          placeholder="筛选类型"
-          style="width: 120px; margin-right: 12px"
-          @change="handleFilterChange"
-        >
-          <el-option label="全部" value="all" />
-          <el-option label="路由分发" value="routing" />
-          <el-option label="创建工单" value="ticket" />
-        </el-select>
-        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 添加规则 </el-button>
+        <div class="filter-actions">
+          <el-select v-model="scopeFilter" placeholder="筛选作用域" class="filter-item" clearable>
+            <el-option label="全局" :value="DispatchScope.Global" />
+            <el-option label="规则" :value="DispatchScope.Rule" />
+          </el-select>
+          <el-select v-model="matchTypeFilter" placeholder="筛选类型" class="filter-item" clearable>
+            <el-option label="路由分发" :value="DispatchMatchType.Routing" />
+            <el-option label="创建工单" :value="DispatchMatchType.Ticket" />
+          </el-select>
+          <div class="filter-item rule-filter">
+            <RuleSelector v-model="ruleFilter" placeholder="筛选关联规则" variant="simple" />
+          </div>
+          <el-button type="primary" :icon="Search" class="action-btn" @click="handleSearch"> 搜索 </el-button>
+          <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 添加规则 </el-button>
+        </div>
       </template>
     </ManagerHeader>
 
@@ -99,8 +93,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { Plus } from "@element-plus/icons-vue"
+import { Plus, Search } from "@element-plus/icons-vue"
 import type { DispatchRule, SaveDispatchRuleReq } from "@/api/alert/dispatch/types"
+import { DispatchScope, DispatchMatchType } from "@/api/alert/dispatch/types"
 import type { Workspace } from "@/api/alert/workspace/types"
 import {
   listDispatchRulesByScopeApi,
@@ -117,6 +112,7 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import DispatchForm from "./components/DispatchForm.vue"
+import RuleSelector from "@@/components/RuleSelector/index.vue"
 
 // 使用工具函数
 const { createEmptyFormData, convertRuleToFormData } = useDispatchUtils()
@@ -132,9 +128,22 @@ const formData = ref<SaveDispatchRuleReq>(createEmptyFormData())
 const workspaces = ref<Workspace[]>([]) // 工作空间列表
 const dispatchFormRef = ref<InstanceType<typeof DispatchForm>>()
 
-// 筛选条件
-const scopeFilter = ref("all")
-const matchTypeFilter = ref("all")
+// 筛选条件（用户输入）
+const scopeFilter = ref("")
+const matchTypeFilter = ref("")
+const ruleFilter = ref<number | undefined>(undefined)
+
+// 实际应用的筛选条件
+const appliedScopeFilter = ref("")
+const appliedMatchTypeFilter = ref("")
+const appliedRuleFilter = ref<number | undefined>(undefined)
+
+// 点击搜索按钮应用筛选
+const handleSearch = () => {
+  appliedScopeFilter.value = scopeFilter.value
+  appliedMatchTypeFilter.value = matchTypeFilter.value
+  appliedRuleFilter.value = ruleFilter.value
+}
 
 // 加载工作空间列表
 const loadWorkspaces = async () => {
@@ -170,13 +179,18 @@ const rules = computed(() => {
   let filtered = [...allRules.value]
 
   // 按作用域筛选
-  if (scopeFilter.value !== "all") {
-    filtered = filtered.filter((rule) => rule.scope === scopeFilter.value)
+  if (appliedScopeFilter.value) {
+    filtered = filtered.filter((rule) => rule.scope === appliedScopeFilter.value)
   }
 
   // 按匹配类型筛选
-  if (matchTypeFilter.value !== "all") {
-    filtered = filtered.filter((rule) => rule.match_type === matchTypeFilter.value)
+  if (appliedMatchTypeFilter.value) {
+    filtered = filtered.filter((rule) => rule.match_type === appliedMatchTypeFilter.value)
+  }
+
+  // 按关联规则筛选
+  if (appliedRuleFilter.value) {
+    filtered = filtered.filter((rule) => rule.rule_id === appliedRuleFilter.value)
   }
 
   return filtered
@@ -205,11 +219,6 @@ const getOperateItems = (row: DispatchRule) => {
     }
   ]
   return items
-}
-
-// 筛选条件变化处理
-const handleFilterChange = () => {
-  // 筛选逻辑已通过 computed 自动处理
 }
 
 // 加载规则列表
@@ -244,17 +253,26 @@ const handleCreate = () => {
 // 提交表单
 const handleConfirm = async () => {
   const formRef = dispatchFormRef.value?.formRef
-  if (!formRef) return
+  if (!formRef) {
+    ElMessage.warning("表单未初始化")
+    return
+  }
 
   const isValid = await formRef.validate().catch(() => false)
-  if (!isValid) return
+  if (!isValid) {
+    ElMessage.warning("请完善必填信息")
+    return
+  }
 
   try {
     submitting.value = true
 
     // 使用清理后的表单数据
     const cleanedData = dispatchFormRef.value?.getCleanedFormData()
-    if (!cleanedData) return
+    if (!cleanedData) {
+      ElMessage.warning("表单数据异常")
+      return
+    }
 
     if (isEdit.value && currentRule.value?.id) {
       await updateDispatchRuleApi({ id: currentRule.value.id, ...cleanedData })
@@ -345,6 +363,34 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+// 响应式筛选操作栏
+.filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  flex: 0 0 120px;
+  width: 120px;
+  flex-shrink: 0;
+
+  &.rule-filter {
+    flex: 0 1 auto;
+    min-width: 350px;
+    max-width: 400px;
+  }
+
+  &:deep(.el-select) {
+    width: 100%;
+  }
+
+  &:deep(.el-select__wrapper) {
+    min-width: 0;
+  }
+}
+
 .name-cell {
   .rule-name {
     margin: 0;
