@@ -11,13 +11,7 @@
         @blur="addLabel"
       >
         <template #suffix>
-          <el-button
-            type="primary"
-            size="small"
-            :icon="Plus"
-            @click="addLabel"
-            :disabled="!labelInput.trim()"
-          >
+          <el-button type="primary" size="small" :icon="Plus" @click="addLabel" :disabled="!labelInput.trim()">
             添加
           </el-button>
         </template>
@@ -28,9 +22,7 @@
     <div class="labels-display" v-if="modelValue && modelValue.length > 0">
       <div class="labels-header">
         <span class="labels-count">已选择 {{ modelValue.length }} 个标签</span>
-        <el-button type="danger" size="small" :icon="Delete" @click="clearAllLabels" text>
-          清空
-        </el-button>
+        <el-button type="danger" size="small" :icon="Delete" @click="clearAllLabels" text> 清空 </el-button>
       </div>
       <div class="labels-list">
         <el-tag

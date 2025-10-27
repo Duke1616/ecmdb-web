@@ -17,6 +17,17 @@ export const alertRoutes: RouteRecordRaw[] = [
       hidden: false
     },
     children: [
+      // 分发规则
+      {
+        path: "/alert/dispatch",
+        component: () => import("@/pages/alert/dispatch/index.vue"),
+        name: "AlertDispatch",
+        meta: {
+          title: "分发规则",
+          svgIcon: "component",
+          platforms: ["alert"]
+        }
+      }
       // {
       //   path: "/alert/dashboard",
       //   component: () => import("@/pages/alert/index.vue"),

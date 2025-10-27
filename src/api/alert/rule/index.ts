@@ -16,6 +16,7 @@ import type {
   RetrieveRuleGroups,
   // 工作空间规则相关类型
   ListRulesByWorkspaceReq,
+  ListRulesByKeywordReq,
   RetrieveRules
 } from "./types/rule"
 
@@ -129,6 +130,14 @@ export function deleteRuleGroupApi(id: number) {
 export function listRulesByWorkspaceApi(data: ListRulesByWorkspaceReq) {
   return instance.post<RetrieveRules>({
     url: `${API_SERVICE.ALERT}/rule/list/by_workspace`,
+    data
+  })
+}
+
+/** 根据关键字搜索告警规则 */
+export function listRulesByKeywordApi(data: ListRulesByKeywordReq) {
+  return instance.post<RetrieveRules>({
+    url: `${API_SERVICE.ALERT}/rule/list/by_keyword`,
     data
   })
 }

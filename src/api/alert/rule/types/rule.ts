@@ -170,3 +170,10 @@ export interface Page {
 export interface ListRulesByWorkspaceReq extends Page {
   workspace_id: number
 }
+
+// 根据关键字搜索告警规则请求
+export interface ListRulesByKeywordReq {
+  keyword: string
+  offset?: number
+  limit?: number
+}

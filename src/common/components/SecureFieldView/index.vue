@@ -65,7 +65,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onUnmounted, watch } from "vue"
+import { ref, onUnmounted, watch } from "vue"
 import { View, CopyDocument } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 
