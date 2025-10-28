@@ -24,7 +24,7 @@ export const alertRoutes: RouteRecordRaw[] = [
         name: "AlertDispatch",
         meta: {
           title: "分发规则",
-          svgIcon: "component",
+          svgIcon: "dispatch_rule",
           platforms: ["alert"]
         }
       }

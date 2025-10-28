@@ -170,6 +170,7 @@ const performSearch = async () => {
     }
 
     const response = await findMatchingRulesApi(searchParams)
+    console.log("response", response)
     allRules.value = Array.isArray(response.data.dispatch_rules) ? response.data.dispatch_rules : []
   } catch (error) {
     console.error("搜索分发规则失败:", error)

@@ -197,7 +197,6 @@ const loadRules = async () => {
     rule.value = data
   } catch (error) {
     console.error("加载聚合规则失败:", error)
-    ElMessage.error("加载聚合规则失败")
   } finally {
     loading.value = false
   }
