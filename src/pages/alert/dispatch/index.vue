@@ -12,7 +12,7 @@
             <el-option label="路由分发" :value="DispatchMatchType.Routing" />
             <el-option label="创建工单" :value="DispatchMatchType.Ticket" />
           </el-select>
-          <div class="filter-item rule-filter">
+          <div v-if="scopeFilter === DispatchScope.Rule" class="filter-item rule-filter">
             <RuleSelector v-model="ruleFilter" placeholder="筛选关联规则" variant="simple" />
           </div>
           <el-button type="primary" :icon="Search" class="action-btn" @click="handleSearch"> 搜索 </el-button>
@@ -27,12 +27,20 @@
       :columns="tableColumns"
       :show-selection="false"
       :show-pagination="false"
+      :enable-row-drag="true"
       v-loading="loading"
+      @row-drag="handleRowDrag"
     >
       <!-- 规则名称插槽 -->
       <template #name="{ row }">
         <div class="name-cell">
           <h4 class="rule-name">{{ row.name }}</h4>
+        </div>
+      </template>
+
+      <!-- 描述插槽 -->
+      <template #description="{ row }">
+        <div class="description-cell">
           <p class="rule-description">{{ row.description || "暂无描述" }}</p>
         </div>
       </template>
@@ -70,7 +78,7 @@
 
       <!-- 操作插槽 -->
       <template #actions="{ row }">
-        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="3" @route-event="operateEvent" />
+        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
 
@@ -85,7 +93,12 @@
       @confirm="handleConfirm"
       @cancel="handleCancel"
     >
-      <DispatchForm v-if="Object.keys(formData).length > 0" ref="dispatchFormRef" v-model:form-data="formData" />
+      <DispatchForm
+        v-if="Object.keys(formData).length > 0"
+        ref="dispatchFormRef"
+        v-model:form-data="formData"
+        :is-edit="isEdit"
+      />
     </Drawer>
   </PageContainer>
 </template>
@@ -98,11 +111,12 @@ import type { DispatchRule, SaveDispatchRuleReq } from "@/api/alert/dispatch/typ
 import { DispatchScope, DispatchMatchType } from "@/api/alert/dispatch/types"
 import type { Workspace } from "@/api/alert/workspace/types"
 import {
-  listDispatchRulesByScopeApi,
   createDispatchRuleApi,
   updateDispatchRuleApi,
   deleteDispatchRuleApi,
-  toggleDispatchRuleStatusApi
+  toggleDispatchRuleStatusApi,
+  findMatchingRulesApi,
+  swapPrioritiesApi
 } from "@/api/alert/dispatch/index"
 import { listWorkspacesApi } from "@/api/alert/workspace"
 import { useDispatchUtils } from "./composables/useDispatchUtils"
@@ -129,20 +143,45 @@ const workspaces = ref<Workspace[]>([]) // 工作空间列表
 const dispatchFormRef = ref<InstanceType<typeof DispatchForm>>()
 
 // 筛选条件（用户输入）
-const scopeFilter = ref("")
-const matchTypeFilter = ref("")
-const ruleFilter = ref<number | undefined>(undefined)
+const scopeFilter = ref(DispatchScope.Global)
+const matchTypeFilter = ref(DispatchMatchType.Routing)
+const ruleFilter = ref<number>(0)
 
-// 实际应用的筛选条件
-const appliedScopeFilter = ref("")
-const appliedMatchTypeFilter = ref("")
-const appliedRuleFilter = ref<number | undefined>(undefined)
+// 执行搜索（公共函数）
+const performSearch = async () => {
+  try {
+    loading.value = true
 
-// 点击搜索按钮应用筛选
+    // 构建搜索条件
+    const scopes: string[] = []
+    if (scopeFilter.value === DispatchScope.Global) {
+      scopes.push("global")
+    } else if (scopeFilter.value === DispatchScope.Rule) {
+      scopes.push("rule")
+    } else {
+      // 没有选择时，搜索全部
+      scopes.push("global")
+    }
+
+    const searchParams = {
+      scopes,
+      match_type: matchTypeFilter.value || "routing",
+      rule_id: scopeFilter.value === DispatchScope.Rule && ruleFilter.value ? ruleFilter.value : 0
+    }
+
+    const response = await findMatchingRulesApi(searchParams)
+    allRules.value = Array.isArray(response.data.dispatch_rules) ? response.data.dispatch_rules : []
+  } catch (error) {
+    console.error("搜索分发规则失败:", error)
+    allRules.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// 点击搜索按钮
 const handleSearch = () => {
-  appliedScopeFilter.value = scopeFilter.value
-  appliedMatchTypeFilter.value = matchTypeFilter.value
-  appliedRuleFilter.value = ruleFilter.value
+  performSearch()
 }
 
 // 加载工作空间列表
@@ -167,34 +206,16 @@ const getWorkspaceName = (workspaceId: number) => {
 
 // 表格列配置
 const tableColumns = [
-  { prop: "name", label: "规则名称", flex: 2, slot: "name" },
-  { prop: "scope", label: "作用域", flex: 1, slot: "scope" },
-  { prop: "match_type", label: "类型", flex: 1, slot: "matchType" },
-  { prop: "enabled", label: "状态", flex: 0.8, slot: "enabled" },
-  { prop: "workspace_id", label: "目标工作空间", flex: 1, slot: "workspace" }
+  { prop: "name", label: "规则名称", minWidth: 120, slot: "name" },
+  { prop: "description", label: "描述", minWidth: 150, slot: "description" },
+  { prop: "scope", label: "作用域", minWidth: 100, slot: "scope" },
+  { prop: "match_type", label: "类型", minWidth: 100, slot: "matchType" },
+  { prop: "enabled", label: "状态", minWidth: 80, slot: "enabled" },
+  { prop: "workspace_id", label: "目标工作空间", minWidth: 120, slot: "workspace" }
 ]
 
-// 根据筛选条件过滤规则
-const rules = computed(() => {
-  let filtered = [...allRules.value]
-
-  // 按作用域筛选
-  if (appliedScopeFilter.value) {
-    filtered = filtered.filter((rule) => rule.scope === appliedScopeFilter.value)
-  }
-
-  // 按匹配类型筛选
-  if (appliedMatchTypeFilter.value) {
-    filtered = filtered.filter((rule) => rule.match_type === appliedMatchTypeFilter.value)
-  }
-
-  // 按关联规则筛选
-  if (appliedRuleFilter.value) {
-    filtered = filtered.filter((rule) => rule.rule_id === appliedRuleFilter.value)
-  }
-
-  return filtered
-})
+// 直接使用后端返回的规则列表
+const rules = computed(() => allRules.value)
 
 // 获取操作按钮配置
 const getOperateItems = (row: DispatchRule) => {
@@ -221,20 +242,9 @@ const getOperateItems = (row: DispatchRule) => {
   return items
 }
 
-// 加载规则列表
+// 加载规则列表（初始化时调用）
 const loadRules = async () => {
-  try {
-    loading.value = true
-    const response = await listDispatchRulesByScopeApi("global")
-    // 确保 dispatch_rules 是数组
-    allRules.value = Array.isArray(response.data.dispatch_rules) ? response.data.dispatch_rules : []
-  } catch (error) {
-    console.error("加载分发规则失败:", error)
-    ElMessage.error("加载失败")
-    allRules.value = []
-  } finally {
-    loading.value = false
-  }
+  await performSearch()
 }
 
 // 初始化页面数据
@@ -315,6 +325,30 @@ const operateEvent = (row: DispatchRule, action: string) => {
   }
 }
 
+// 处理拖拽排序
+const handleRowDrag = async (newData: DispatchRule[]) => {
+  try {
+    // 找到被移动的规则
+    for (let i = 0; i < newData.length; i++) {
+      const newRule = newData[i]
+      const originalRule = allRules.value[i]
+
+      // 如果规则ID不匹配，说明这个规则被移动了
+      if (originalRule && newRule.id !== originalRule.id) {
+        // 直接调用交换接口
+        await swapPrioritiesApi({
+          src_id: originalRule.id,
+          dst_id: newRule.id
+        })
+        ElMessage.success("优先级更新成功")
+        return
+      }
+    }
+  } finally {
+    loadRules()
+  }
+}
+
 // 编辑规则
 const handleEdit = (rule: DispatchRule) => {
   isEdit.value = true
@@ -326,34 +360,22 @@ const handleEdit = (rule: DispatchRule) => {
 
 // 切换规则状态
 const handleToggle = async (rule: DispatchRule) => {
-  try {
-    await toggleDispatchRuleStatusApi(rule.id)
-    ElMessage.success(`${rule.enabled ? "禁用" : "启用"}成功`)
-    loadRules()
-  } catch (error) {
-    console.error("切换状态失败:", error)
-    ElMessage.error("操作失败")
-  }
+  await toggleDispatchRuleStatusApi(rule.id)
+  ElMessage.success(`${rule.enabled ? "禁用" : "启用"}成功`)
+  loadRules()
 }
 
 // 删除规则
 const handleDelete = async (rule: DispatchRule) => {
-  try {
-    await ElMessageBox.confirm(`确定要删除分发规则"${rule.name}"吗？`, "确认删除", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
+  await ElMessageBox.confirm(`确定要删除分发规则"${rule.name}"吗？`, "确认删除", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  })
 
-    await deleteDispatchRuleApi(rule.id)
-    ElMessage.success("删除成功")
-    loadRules()
-  } catch (error) {
-    if (error !== "cancel") {
-      console.error("删除失败:", error)
-      ElMessage.error("删除失败")
-    }
-  }
+  await deleteDispatchRuleApi(rule.id)
+  ElMessage.success("删除成功")
+  loadRules()
 }
 
 // 初始化
@@ -399,9 +421,11 @@ onMounted(() => {
     color: #333;
     line-height: 1.5;
   }
+}
 
+.description-cell {
   .rule-description {
-    margin: 4px 0 0 0;
+    margin: 0;
     font-size: 12px;
     color: #999;
     line-height: 1.5;
@@ -411,6 +435,7 @@ onMounted(() => {
 .workspace-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .text-placeholder {

@@ -67,8 +67,8 @@ export const listDispatchRulesByRuleApi = (ruleId: number) => {
 
 // 切换分发规则状态
 export const toggleDispatchRuleStatusApi = (id: number) => {
-  return instance.put<ToggleDispatchRuleStatusResponse>({
-    url: `${API_SERVICE.ALERT}/dispatch_rule/toggle/status/${id}`
+  return instance.patch<ToggleDispatchRuleStatusResponse>({
+    url: `${API_SERVICE.ALERT}/dispatch_rule/status/toggle/${id}`
   })
 }
 

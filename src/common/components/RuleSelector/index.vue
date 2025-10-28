@@ -14,6 +14,12 @@
       </div>
       <!-- 占位符 -->
       <div v-else class="placeholder-text">{{ props.placeholder }}</div>
+      <!-- 清除按钮 -->
+      <div v-if="selectedRule && !props.disabled" class="clear-btn" @click.stop="handleClear">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </div>
       <div class="picker-arrow" :class="{ 'is-open': showPicker }">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -232,6 +238,12 @@ const handleRuleSelect = (rule: Rule) => {
   showPicker.value = false
 }
 
+// 处理清除选择
+const handleClear = (e: Event) => {
+  e.stopPropagation()
+  emit("update:modelValue", 0)
+}
+
 // 搜索
 const searchTimer: NodeJS.Timeout | null = null
 const handleSearch = () => {
@@ -410,6 +422,28 @@ onUnmounted(() => {
 .picker-arrow svg {
   width: 18px;
   height: 18px;
+}
+
+.clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #c0c4cc;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.clear-btn:hover {
+  color: #909399;
+  transform: scale(1.1);
+}
+
+.clear-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* simple 变体的图标样式 */

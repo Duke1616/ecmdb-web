@@ -40,8 +40,8 @@
             <div class="choice-cards">
               <div
                 class="choice-card"
-                :class="{ active: formData.scope === DispatchScope.Global }"
-                @click="formData.scope = DispatchScope.Global"
+                :class="{ active: formData.scope === DispatchScope.Global, disabled: isEdit }"
+                @click="!isEdit && (formData.scope = DispatchScope.Global)"
               >
                 <div class="card-icon">🌐</div>
                 <div class="card-content">
@@ -61,8 +61,8 @@
               </div>
               <div
                 class="choice-card"
-                :class="{ active: formData.scope === DispatchScope.Rule }"
-                @click="formData.scope = DispatchScope.Rule"
+                :class="{ active: formData.scope === DispatchScope.Rule, disabled: isEdit }"
+                @click="!isEdit && (formData.scope = DispatchScope.Rule)"
               >
                 <div class="card-icon">📋</div>
                 <div class="card-content">
@@ -95,8 +95,8 @@
             <div class="choice-cards">
               <div
                 class="choice-card"
-                :class="{ active: formData.match_type === DispatchMatchType.Routing }"
-                @click="formData.match_type = DispatchMatchType.Routing"
+                :class="{ active: formData.match_type === DispatchMatchType.Routing, disabled: isEdit }"
+                @click="!isEdit && (formData.match_type = DispatchMatchType.Routing)"
               >
                 <div class="card-icon">🚀</div>
                 <div class="card-content">
@@ -116,8 +116,8 @@
               </div>
               <div
                 class="choice-card"
-                :class="{ active: formData.match_type === DispatchMatchType.Ticket }"
-                @click="formData.match_type = DispatchMatchType.Ticket"
+                :class="{ active: formData.match_type === DispatchMatchType.Ticket, disabled: isEdit }"
+                @click="!isEdit && (formData.match_type = DispatchMatchType.Ticket)"
               >
                 <div class="card-icon">🎫</div>
                 <div class="card-content">
@@ -161,9 +161,9 @@
         </div>
 
         <div class="form-row">
-          <el-form-item prop="label_matchers" label="标签匹配器" class="form-item">
+          <el-form-item prop="matchers" label="标签匹配器" class="form-item">
             <div class="matcher-config">
-              <div v-for="(matcher, index) in formData.label_matchers" :key="index" class="matcher-item">
+              <div v-for="(matcher, index) in formData.matchers" :key="index" class="matcher-item">
                 <el-input v-model="matcher.name" placeholder="标签名" size="default" />
                 <el-select v-model="matcher.type" placeholder="类型" size="default">
                   <el-option label="等于" :value="1" />
@@ -213,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, withDefaults } from "vue"
 import { Setting, Share, Filter, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { SaveDispatchRuleReq } from "@/api/alert/dispatch/types"
@@ -225,9 +225,15 @@ import { clearZeroValues } from "@@/utils"
 import RuleSelector from "@@/components/RuleSelector/index.vue"
 
 // Props
-const props = defineProps<{
-  formRules?: any
-}>()
+const props = withDefaults(
+  defineProps<{
+    formRules?: any
+    isEdit?: boolean
+  }>(),
+  {
+    isEdit: false
+  }
+)
 
 // 使用 defineModel 简化双向绑定
 const formData = defineModel<SaveDispatchRuleReq>("formData", { required: true })
@@ -255,7 +261,7 @@ const loadWorkspaces = async () => {
 
 // 添加匹配器
 const addMatcher = () => {
-  formData.value.label_matchers.push({
+  formData.value.matchers.push({
     type: 1, // MatchType.Equal
     name: "",
     value: ""
@@ -264,7 +270,7 @@ const addMatcher = () => {
 
 // 删除匹配器
 const removeMatcher = (index: number) => {
-  formData.value.label_matchers.splice(index, 1)
+  formData.value.matchers.splice(index, 1)
 }
 
 // 组件挂载时的初始化
@@ -426,6 +432,17 @@ defineExpose({
     &:hover {
       border-color: #cbd5e1;
       background: #f1f5f9;
+    }
+
+    &.disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      background: #f3f4f6;
+
+      &:hover {
+        border-color: #e2e8f0;
+        background: #f3f4f6;
+      }
     }
 
     &.active {

@@ -40,7 +40,7 @@ export interface DispatchRule {
   description: string // 规则描述
   match_type: DispatchMatchType // 匹配类型：routing/ticket
   levels: number[] // 告警级别列表
-  label_matchers: Matchers // 标签匹配器
+  matchers: Matchers // 标签匹配器
   duration: number // 持续时间（秒）
   firing_count: number // 触发次数
   workspace_id: number // 目标工作空间ID
@@ -59,7 +59,7 @@ export interface CreateDispatchRuleReq {
   description: string
   match_type: DispatchMatchType
   levels: number[]
-  label_matchers: Matcher[]
+  matchers: Matcher[]
   duration: number
   firing_count: number
   workspace_id: number
@@ -77,7 +77,7 @@ export interface UpdateDispatchRuleReq {
   description?: string
   match_type?: DispatchMatchType
   levels?: number[]
-  label_matchers?: Matcher[]
+  matchers?: Matcher[]
   duration?: number
   firing_count?: number
   workspace_id?: number
@@ -95,7 +95,7 @@ export interface SaveDispatchRuleReq {
   description: string
   match_type: DispatchMatchType
   levels: number[]
-  label_matchers: Matcher[]
+  matchers: Matcher[]
   duration: number
   firing_count: number
   workspace_id: number

@@ -19,7 +19,7 @@ export function useDispatchUtils() {
       description: "",
       match_type: DispatchMatchType.Routing,
       levels: [],
-      label_matchers: [],
+      matchers: [],
       duration: 0,
       firing_count: 0,
       workspace_id: 0,
@@ -44,7 +44,7 @@ export function useDispatchUtils() {
       description: rule.description || "",
       match_type: rule.match_type,
       levels: rule.levels || [],
-      label_matchers: processMatchers(rule.label_matchers),
+      matchers: processMatchers(rule.matchers),
       duration: rule.duration || 0,
       firing_count: rule.firing_count || 0,
       workspace_id: rule.workspace_id || 0
