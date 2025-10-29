@@ -1,12 +1,12 @@
 <template>
-  <div class="dispatch-form-container">
+  <div class="routing-form-container">
     <el-form
       ref="formRef"
       :model="formData"
       :rules="formRules"
       label-position="top"
       label-width="auto"
-      class="dispatch-form"
+      class="routing-form"
     >
       <!-- 基本信息 -->
       <div class="form-section">
@@ -28,11 +28,11 @@
         </div>
       </div>
 
-      <!-- 分发配置 -->
+      <!-- 路由配置 -->
       <div class="form-section">
         <div class="section-title">
           <el-icon class="section-icon"><Share /></el-icon>
-          <span>分发配置</span>
+          <span>路由配置</span>
         </div>
 
         <div class="form-row">
@@ -40,8 +40,8 @@
             <div class="choice-cards">
               <div
                 class="choice-card"
-                :class="{ active: formData.scope === DispatchScope.Global, disabled: isEdit }"
-                @click="!isEdit && (formData.scope = DispatchScope.Global)"
+                :class="{ active: formData.scope === RoutingScope.Global, disabled: isEdit }"
+                @click="!isEdit && (formData.scope = RoutingScope.Global)"
               >
                 <div class="card-icon">🌐</div>
                 <div class="card-content">
@@ -50,7 +50,7 @@
                 </div>
                 <div class="card-check">
                   <svg
-                    v-if="formData.scope === DispatchScope.Global"
+                    v-if="formData.scope === RoutingScope.Global"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -61,8 +61,8 @@
               </div>
               <div
                 class="choice-card"
-                :class="{ active: formData.scope === DispatchScope.Rule, disabled: isEdit }"
-                @click="!isEdit && (formData.scope = DispatchScope.Rule)"
+                :class="{ active: formData.scope === RoutingScope.Rule, disabled: isEdit }"
+                @click="!isEdit && (formData.scope = RoutingScope.Rule)"
               >
                 <div class="card-icon">📋</div>
                 <div class="card-content">
@@ -71,7 +71,7 @@
                 </div>
                 <div class="card-check">
                   <svg
-                    v-if="formData.scope === DispatchScope.Rule"
+                    v-if="formData.scope === RoutingScope.Rule"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -84,62 +84,13 @@
           </el-form-item>
         </div>
 
-        <div class="form-row" v-if="formData.scope === DispatchScope.Rule">
+        <div class="form-row" v-if="formData.scope === RoutingScope.Rule">
           <el-form-item prop="rule_id" label="关联告警规则" class="form-item">
             <RuleSelector v-model="formData.rule_id" placeholder="请选择告警规则" variant="simple" />
           </el-form-item>
         </div>
 
         <div class="form-row">
-          <el-form-item prop="match_type" label="分发类型" class="form-item">
-            <div class="choice-cards">
-              <div
-                class="choice-card"
-                :class="{ active: formData.match_type === DispatchMatchType.Routing, disabled: isEdit }"
-                @click="!isEdit && (formData.match_type = DispatchMatchType.Routing)"
-              >
-                <div class="card-icon">🚀</div>
-                <div class="card-content">
-                  <div class="card-title">路由分发</div>
-                  <div class="card-desc">分发到指定工作空间</div>
-                </div>
-                <div class="card-check">
-                  <svg
-                    v-if="formData.match_type === DispatchMatchType.Routing"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-              <div
-                class="choice-card"
-                :class="{ active: formData.match_type === DispatchMatchType.Ticket, disabled: isEdit }"
-                @click="!isEdit && (formData.match_type = DispatchMatchType.Ticket)"
-              >
-                <div class="card-icon">🎫</div>
-                <div class="card-content">
-                  <div class="card-title">创建工单</div>
-                  <div class="card-desc">将告警创建为工单</div>
-                </div>
-                <div class="card-check">
-                  <svg
-                    v-if="formData.match_type === DispatchMatchType.Ticket"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </el-form-item>
-        </div>
-
-        <div class="form-row" v-if="formData.match_type === DispatchMatchType.Routing">
           <el-form-item prop="workspace_id" label="目标工作空间" class="form-item">
             <el-select v-model="formData.workspace_id" placeholder="请选择目标工作空间" style="width: 100%">
               <el-option
@@ -169,7 +120,6 @@
                   <el-option label="等于" :value="1" />
                   <el-option label="不等于" :value="2" />
                   <el-option label="正则" :value="3" />
-                  <el-option label="非正则" :value="4" />
                 </el-select>
                 <el-input v-model="matcher.value" placeholder="标签值" size="default" />
                 <el-button type="text" @click="removeMatcher(index)" class="matcher-remove"> 删除 </el-button>
@@ -193,20 +143,6 @@
             </el-select>
           </el-form-item>
         </div>
-
-        <div v-if="formData.match_type === 'routing'" class="form-row form-row-inline">
-          <el-form-item prop="duration" label="持续时间（秒）" class="form-item form-item-flex">
-            <el-input-number v-model="formData.duration" placeholder="请输入持续时间" style="width: 100%" :min="0" />
-          </el-form-item>
-          <el-form-item prop="firing_count" label="触发次数" class="form-item form-item-flex">
-            <el-input-number
-              v-model="formData.firing_count"
-              placeholder="请输入触发次数"
-              style="width: 100%"
-              :min="1"
-            />
-          </el-form-item>
-        </div>
       </div>
     </el-form>
   </div>
@@ -216,11 +152,11 @@
 import { ref, onMounted, withDefaults } from "vue"
 import { Setting, Share, Filter, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
-import type { SaveDispatchRuleReq } from "@/api/alert/dispatch/types"
-import { DispatchScope, DispatchMatchType } from "@/api/alert/dispatch/types"
+import type { SaveRoutingRuleReq } from "@/api/alert/routing/types"
+import { RoutingScope } from "@/api/alert/routing/types"
 import type { Workspace } from "@/api/alert/workspace/types"
 import { listWorkspacesApi } from "@/api/alert/workspace"
-import { useDispatchForm } from "../composables/useDispatchForm"
+import { useRoutingForm } from "../composables/useRoutingForm"
 import { clearZeroValues } from "@@/utils"
 import RuleSelector from "@@/components/RuleSelector/index.vue"
 
@@ -236,10 +172,10 @@ const props = withDefaults(
 )
 
 // 使用 defineModel 简化双向绑定
-const formData = defineModel<SaveDispatchRuleReq>("formData", { required: true })
+const formData = defineModel<SaveRoutingRuleReq>("formData", { required: true })
 
 // 使用 form composable 获取默认表单验证规则
-const { formRules: defaultFormRules } = useDispatchForm()
+const { formRules: defaultFormRules } = useRoutingForm()
 
 // 使用传入的 formRules 或默认的
 const formRules = props.formRules || defaultFormRules
@@ -291,11 +227,11 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-.dispatch-form-container {
+.routing-form-container {
   padding: 20px;
 }
 
-.dispatch-form {
+.routing-form {
   .form-section {
     margin-bottom: 24px;
 

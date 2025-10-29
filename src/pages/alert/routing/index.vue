@@ -1,18 +1,14 @@
 <template>
   <PageContainer>
     <!-- 头部区域 -->
-    <ManagerHeader title="分发规则" subtitle="管理告警分发规则" @refresh="loadRules">
+    <ManagerHeader title="路由规则" subtitle="管理告警路由规则" @refresh="loadRules">
       <template #actions>
         <div class="filter-actions">
           <el-select v-model="scopeFilter" placeholder="筛选作用域" class="filter-item" clearable>
-            <el-option label="全局" :value="DispatchScope.Global" />
-            <el-option label="规则" :value="DispatchScope.Rule" />
+            <el-option label="全局" :value="RoutingScope.Global" />
+            <el-option label="规则" :value="RoutingScope.Rule" />
           </el-select>
-          <el-select v-model="matchTypeFilter" placeholder="筛选类型" class="filter-item" clearable>
-            <el-option label="路由分发" :value="DispatchMatchType.Routing" />
-            <el-option label="创建工单" :value="DispatchMatchType.Ticket" />
-          </el-select>
-          <div v-if="scopeFilter === DispatchScope.Rule" class="filter-item rule-filter">
+          <div v-if="scopeFilter === RoutingScope.Rule" class="filter-item rule-filter">
             <RuleSelector v-model="ruleFilter" placeholder="筛选关联规则" variant="simple" />
           </div>
           <el-button type="primary" :icon="Search" class="action-btn" @click="handleSearch"> 搜索 </el-button>
@@ -52,13 +48,6 @@
         </el-tag>
       </template>
 
-      <!-- 匹配类型插槽 -->
-      <template #matchType="{ row }">
-        <el-tag :type="row.match_type === 'routing' ? 'success' : 'info'" size="small">
-          {{ row.match_type === "routing" ? "路由分发" : "创建工单" }}
-        </el-tag>
-      </template>
-
       <!-- 状态插槽 -->
       <template #enabled="{ row }">
         <el-tag :type="row.enabled ? 'success' : 'info'" size="small">
@@ -85,17 +74,17 @@
     <!-- 创建/编辑抽屉 -->
     <Drawer
       v-model="drawerVisible"
-      :title="isEdit ? '编辑分发规则' : '添加分发规则'"
-      :subtitle="isEdit ? '修改分发规则配置' : '配置告警分发规则'"
+      :title="isEdit ? '编辑路由规则' : '添加路由规则'"
+      :subtitle="isEdit ? '修改路由规则配置' : '配置告警路由规则'"
       header-icon="Setting"
       size="35%"
       :confirm-loading="submitting"
       @confirm="handleConfirm"
       @cancel="handleCancel"
     >
-      <DispatchForm
+      <RoutingForm
         v-if="Object.keys(formData).length > 0"
-        ref="dispatchFormRef"
+        ref="routingFormRef"
         v-model:form-data="formData"
         :is-edit="isEdit"
       />
@@ -107,44 +96,43 @@
 import { ref, computed, onMounted } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Plus, Search } from "@element-plus/icons-vue"
-import type { DispatchRule, SaveDispatchRuleReq } from "@/api/alert/dispatch/types"
-import { DispatchScope, DispatchMatchType } from "@/api/alert/dispatch/types"
+import type { RoutingRule, SaveRoutingRuleReq } from "@/api/alert/routing/types"
+import { RoutingScope } from "@/api/alert/routing/types"
 import type { Workspace } from "@/api/alert/workspace/types"
 import {
-  createDispatchRuleApi,
-  updateDispatchRuleApi,
-  deleteDispatchRuleApi,
-  toggleDispatchRuleStatusApi,
+  createRoutingRuleApi,
+  updateRoutingRuleApi,
+  deleteRoutingRuleApi,
+  toggleRoutingRuleStatusApi,
   findMatchingRulesApi,
   swapPrioritiesApi
-} from "@/api/alert/dispatch/index"
+} from "@/api/alert/routing/index"
 import { listWorkspacesApi } from "@/api/alert/workspace"
-import { useDispatchUtils } from "./composables/useDispatchUtils"
+import { useRoutingUtils } from "./composables/useRoutingUtils"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import { Drawer } from "@@/components/Dialogs"
-import DispatchForm from "./components/DispatchForm.vue"
+import RoutingForm from "./components/RoutingForm.vue"
 import RuleSelector from "@@/components/RuleSelector/index.vue"
 
 // 使用工具函数
-const { createEmptyFormData, convertRuleToFormData } = useDispatchUtils()
+const { createEmptyFormData, convertRuleToFormData } = useRoutingUtils()
 
 // 响应式数据
 const loading = ref(false)
-const allRules = ref<DispatchRule[]>([]) // 存储所有规则
-const currentRule = ref<DispatchRule | null>(null)
+const allRules = ref<RoutingRule[]>([]) // 存储所有规则
+const currentRule = ref<RoutingRule | null>(null)
 const drawerVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
-const formData = ref<SaveDispatchRuleReq>(createEmptyFormData())
+const formData = ref<SaveRoutingRuleReq>(createEmptyFormData())
 const workspaces = ref<Workspace[]>([]) // 工作空间列表
-const dispatchFormRef = ref<InstanceType<typeof DispatchForm>>()
+const routingFormRef = ref<InstanceType<typeof RoutingForm>>()
 
 // 筛选条件（用户输入）
-const scopeFilter = ref(DispatchScope.Global)
-const matchTypeFilter = ref(DispatchMatchType.Routing)
+const scopeFilter = ref(RoutingScope.Global)
 const ruleFilter = ref<number>(0)
 
 // 执行搜索（公共函数）
@@ -154,26 +142,25 @@ const performSearch = async () => {
 
     // 构建搜索条件
     const scopes: string[] = []
-    if (scopeFilter.value === DispatchScope.Global) {
+    if (scopeFilter.value === RoutingScope.Global) {
       scopes.push("global")
-    } else if (scopeFilter.value === DispatchScope.Rule) {
+    } else if (scopeFilter.value === RoutingScope.Rule) {
       scopes.push("rule")
     } else {
       // 没有选择时，搜索全部
-      scopes.push("global")
+      scopes.push("global", "rule")
     }
 
     const searchParams = {
       scopes,
-      match_type: matchTypeFilter.value || "routing",
-      rule_id: scopeFilter.value === DispatchScope.Rule && ruleFilter.value ? ruleFilter.value : 0
+      rule_id: scopeFilter.value === RoutingScope.Rule && ruleFilter.value ? ruleFilter.value : undefined
     }
 
     const response = await findMatchingRulesApi(searchParams)
     console.log("response", response)
-    allRules.value = Array.isArray(response.data.dispatch_rules) ? response.data.dispatch_rules : []
+    allRules.value = Array.isArray(response.data.routing_rules) ? response.data.routing_rules : []
   } catch (error) {
-    console.error("搜索分发规则失败:", error)
+    console.error("搜索路由规则失败:", error)
     allRules.value = []
   } finally {
     loading.value = false
@@ -210,7 +197,6 @@ const tableColumns = [
   { prop: "name", label: "规则名称", minWidth: 120, slot: "name" },
   { prop: "description", label: "描述", minWidth: 150, slot: "description" },
   { prop: "scope", label: "作用域", minWidth: 100, slot: "scope" },
-  { prop: "match_type", label: "类型", minWidth: 100, slot: "matchType" },
   { prop: "enabled", label: "状态", minWidth: 80, slot: "enabled" },
   { prop: "workspace_id", label: "目标工作空间", minWidth: 120, slot: "workspace" }
 ]
@@ -219,7 +205,7 @@ const tableColumns = [
 const rules = computed(() => allRules.value)
 
 // 获取操作按钮配置
-const getOperateItems = (row: DispatchRule) => {
+const getOperateItems = (row: RoutingRule) => {
   const items = [
     {
       name: "编辑",
@@ -263,7 +249,7 @@ const handleCreate = () => {
 
 // 提交表单
 const handleConfirm = async () => {
-  const formRef = dispatchFormRef.value?.formRef
+  const formRef = routingFormRef.value?.formRef
   if (!formRef) {
     ElMessage.warning("表单未初始化")
     return
@@ -279,17 +265,17 @@ const handleConfirm = async () => {
     submitting.value = true
 
     // 使用清理后的表单数据
-    const cleanedData = dispatchFormRef.value?.getCleanedFormData()
+    const cleanedData = routingFormRef.value?.getCleanedFormData()
     if (!cleanedData) {
       ElMessage.warning("表单数据异常")
       return
     }
 
     if (isEdit.value && currentRule.value?.id) {
-      await updateDispatchRuleApi({ id: currentRule.value.id, ...cleanedData })
+      await updateRoutingRuleApi({ id: currentRule.value.id, ...cleanedData })
       ElMessage.success("更新成功")
     } else {
-      await createDispatchRuleApi(cleanedData)
+      await createRoutingRuleApi(cleanedData)
       ElMessage.success("创建成功")
     }
 
@@ -312,7 +298,7 @@ const handleCancel = () => {
 }
 
 // 操作事件处理
-const operateEvent = (row: DispatchRule, action: string) => {
+const operateEvent = (row: RoutingRule, action: string) => {
   switch (action) {
     case "edit":
       handleEdit(row)
@@ -327,7 +313,7 @@ const operateEvent = (row: DispatchRule, action: string) => {
 }
 
 // 处理拖拽排序
-const handleRowDrag = async (newData: DispatchRule[]) => {
+const handleRowDrag = async (newData: RoutingRule[]) => {
   try {
     // 找到被移动的规则
     for (let i = 0; i < newData.length; i++) {
@@ -351,7 +337,7 @@ const handleRowDrag = async (newData: DispatchRule[]) => {
 }
 
 // 编辑规则
-const handleEdit = (rule: DispatchRule) => {
+const handleEdit = (rule: RoutingRule) => {
   isEdit.value = true
   currentRule.value = rule
   // 使用工具函数转换数据（已自动清空零值）
@@ -360,21 +346,21 @@ const handleEdit = (rule: DispatchRule) => {
 }
 
 // 切换规则状态
-const handleToggle = async (rule: DispatchRule) => {
-  await toggleDispatchRuleStatusApi(rule.id)
+const handleToggle = async (rule: RoutingRule) => {
+  await toggleRoutingRuleStatusApi(rule.id)
   ElMessage.success(`${rule.enabled ? "禁用" : "启用"}成功`)
   loadRules()
 }
 
 // 删除规则
-const handleDelete = async (rule: DispatchRule) => {
-  await ElMessageBox.confirm(`确定要删除分发规则"${rule.name}"吗？`, "确认删除", {
+const handleDelete = async (rule: RoutingRule) => {
+  await ElMessageBox.confirm(`确定要删除路由规则"${rule.name}"吗？`, "确认删除", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
   })
 
-  await deleteDispatchRuleApi(rule.id)
+  await deleteRoutingRuleApi(rule.id)
   ElMessage.success("删除成功")
   loadRules()
 }

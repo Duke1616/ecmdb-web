@@ -1,13 +1,13 @@
 import { ref } from "vue"
-import type { SaveDispatchRuleReq, DispatchRule } from "@/api/alert/dispatch/types"
-import { useDispatchUtils } from "./useDispatchUtils"
+import type { SaveRoutingRuleReq, RoutingRule } from "@/api/alert/routing/types"
+import { useRoutingUtils } from "./useRoutingUtils"
 
-export function useDispatchForm() {
+export function useRoutingForm() {
   // 使用工具函数
-  const { createEmptyFormData, convertRuleToFormData } = useDispatchUtils()
+  const { createEmptyFormData, convertRuleToFormData } = useRoutingUtils()
 
   // 表单数据
-  const formData = ref<SaveDispatchRuleReq>(createEmptyFormData())
+  const formData = ref<SaveRoutingRuleReq>(createEmptyFormData())
 
   // 表单验证规则
   const formRules = {
@@ -27,13 +27,12 @@ export function useDispatchForm() {
         trigger: "change"
       }
     ],
-    match_type: [{ required: true, message: "请选择匹配类型", trigger: "change" }],
     workspace_id: [
       {
         required: false,
-        validator: (rule: any, value: number | undefined, callback: Function, source: any) => {
-          // 只有在 match_type 为 routing 时才必填
-          if (source.match_type === "routing" && (!value || value === 0)) {
+        validator: (rule: any, value: number | undefined, callback: Function, _source: any) => {
+          // 只有在创建路由规则时才必填
+          if (!value || value === 0) {
             callback(new Error("请选择目标工作空间"))
           } else {
             callback()
@@ -50,8 +49,8 @@ export function useDispatchForm() {
   }
 
   // 编辑规则时填充表单
-  const fillFormForEdit = (rule: DispatchRule) => {
-    formData.value = convertRuleToFormData(rule) as SaveDispatchRuleReq
+  const fillFormForEdit = (rule: RoutingRule) => {
+    formData.value = convertRuleToFormData(rule) as SaveRoutingRuleReq
   }
 
   return {

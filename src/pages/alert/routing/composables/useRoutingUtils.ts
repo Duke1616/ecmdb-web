@@ -1,27 +1,24 @@
 import { reactive } from "vue"
 import { map, pick } from "lodash-es"
 import { clearZeroValues } from "@@/utils"
-import type { SaveDispatchRuleReq, DispatchRule } from "@/api/alert/dispatch/types"
-import { DispatchScope, DispatchMatchType } from "@/api/alert/dispatch/types"
+import type { SaveRoutingRuleReq, RoutingRule } from "@/api/alert/routing/types"
+import { RoutingScope } from "@/api/alert/routing/types"
 
 /**
- * 分发规则工具函数 Composable
+ * 路由规则工具函数 Composable
  */
-export function useDispatchUtils() {
+export function useRoutingUtils() {
   // 创建表单数据的工具函数
-  const createFormData = (data: Partial<SaveDispatchRuleReq> = {}): SaveDispatchRuleReq => {
+  const createFormData = (data: Partial<SaveRoutingRuleReq> = {}): SaveRoutingRuleReq => {
     return reactive({
       name: "",
-      scope: DispatchScope.Global,
+      scope: RoutingScope.Global,
       rule_id: undefined,
       priority: 0,
       enabled: true,
       description: "",
-      match_type: DispatchMatchType.Routing,
       levels: [],
       matchers: [],
-      duration: 0,
-      firing_count: 0,
       workspace_id: 0,
       metadata: {},
       ...data
@@ -33,8 +30,8 @@ export function useDispatchUtils() {
     return map(matchers, (matcher) => pick(matcher, ["type", "name", "value"]))
   }
 
-  // 将 DispatchRule 转换为 SaveDispatchRuleReq 的工具函数（自动清空零值）
-  const convertRuleToFormData = (rule: DispatchRule): SaveDispatchRuleReq => {
+  // 将 RoutingRule 转换为 SaveRoutingRuleReq 的工具函数（自动清空零值）
+  const convertRuleToFormData = (rule: RoutingRule): SaveRoutingRuleReq => {
     const data = {
       name: rule.name,
       scope: rule.scope,
@@ -42,18 +39,15 @@ export function useDispatchUtils() {
       priority: rule.priority || 0,
       enabled: rule.enabled,
       description: rule.description || "",
-      match_type: rule.match_type,
       levels: rule.levels || [],
       matchers: processMatchers(rule.matchers),
-      duration: rule.duration || 0,
-      firing_count: rule.firing_count || 0,
       workspace_id: rule.workspace_id || 0
     }
     return clearZeroValues(data)
   }
 
   // 重置表单数据（自动清空零值）
-  const createEmptyFormData = (): SaveDispatchRuleReq => {
+  const createEmptyFormData = (): SaveRoutingRuleReq => {
     const data = createFormData()
     return clearZeroValues(data)
   }
