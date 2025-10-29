@@ -19,7 +19,6 @@ export function useTicketConfigUtils() {
       duration: 0,
       eval_count: 1,
       template_id: 0,
-      workflow_id: 0,
       ...data
     })
   }
@@ -36,8 +35,7 @@ export function useTicketConfigUtils() {
       matchers: config.matchers || [],
       duration: config.duration || 0,
       eval_count: config.eval_count || 1,
-      template_id: config.template_id || 0,
-      workflow_id: config.workflow_id || 0
+      template_id: config.template_id || 0
     }
     return clearZeroValues(data)
   }

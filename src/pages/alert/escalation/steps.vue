@@ -28,7 +28,7 @@
       v-model="drawerVisible"
       :title="drawerTitle"
       :subtitle="drawerSubtitle"
-      size="50%"
+      size="35%"
       direction="rtl"
       :show-footer="true"
       @closed="handleDrawerClose"

@@ -43,54 +43,6 @@
         </el-tag>
       </template>
 
-      <!-- 匹配条件插槽 -->
-      <template #matchers="{ row }">
-        <div class="matchers-cell">
-          <el-tag v-if="row.matchers && row.matchers.length > 0" size="small" type="info">
-            {{ row.matchers.length }} 个匹配器
-          </el-tag>
-          <span v-else class="text-placeholder">-</span>
-        </div>
-      </template>
-
-      <!-- 告警级别插槽 -->
-      <template #levels="{ row }">
-        <div class="levels-cell">
-          <el-tag v-for="level in row.levels" :key="level" size="small" type="warning" style="margin-right: 4px">
-            P{{ level - 1 }}-{{ getLevelText(level) }}
-          </el-tag>
-          <span v-if="!row.levels || row.levels.length === 0" class="text-placeholder">-</span>
-        </div>
-      </template>
-
-      <!-- 触发条件插槽 -->
-      <template #trigger="{ row }">
-        <div class="trigger-cell">
-          <div class="trigger-item">
-            <span class="trigger-label">持续:</span>
-            <span class="trigger-value">{{ formatDuration(row.duration) }}</span>
-          </div>
-          <div class="trigger-item">
-            <span class="trigger-label">次数:</span>
-            <span class="trigger-value">{{ row.eval_count }}次</span>
-          </div>
-        </div>
-      </template>
-
-      <!-- 工单配置插槽 -->
-      <template #ticket="{ row }">
-        <div class="ticket-cell">
-          <div class="ticket-item">
-            <span class="ticket-label">模板:</span>
-            <span class="ticket-value">{{ row.template_id }}</span>
-          </div>
-          <div class="ticket-item">
-            <span class="ticket-label">工作流:</span>
-            <span class="ticket-value">{{ row.workflow_id }}</span>
-          </div>
-        </div>
-      </template>
-
       <!-- 操作插槽 -->
       <template #actions="{ row }">
         <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
@@ -103,7 +55,7 @@
       :title="isEdit ? '编辑工单配置' : '添加工单配置'"
       :subtitle="isEdit ? '修改工单配置' : '新建告警转工单规则'"
       header-icon="Document"
-      size="50%"
+      size="35%"
       :confirm-loading="submitting"
       @confirm="handleConfirm"
       @cancel="handleCancel"
@@ -170,39 +122,11 @@ const loadConfigs = async () => {
     loading.value = false
   }
 }
-
-// 获取级别文本
-const getLevelText = (level: number) => {
-  const levelMap: Record<number, string> = {
-    1: "紧急",
-    2: "严重",
-    3: "错误",
-    4: "警告",
-    5: "提示"
-  }
-  return levelMap[level] || "未知"
-}
-
-// 格式化持续时间
-const formatDuration = (seconds: number) => {
-  if (seconds < 60) {
-    return `${seconds}秒`
-  } else if (seconds < 3600) {
-    return `${Math.floor(seconds / 60)}分钟`
-  } else {
-    return `${Math.floor(seconds / 3600)}小时`
-  }
-}
-
 // 表格列配置
 const tableColumns = [
   { prop: "name", label: "配置名称", minWidth: 150, slot: "name" },
   { prop: "description", label: "描述", minWidth: 150, slot: "description" },
-  { prop: "enabled", label: "状态", minWidth: 100, slot: "enabled" },
-  { prop: "matchers", label: "匹配器", minWidth: 100, slot: "matchers" },
-  { prop: "levels", label: "告警级别", minWidth: 150, slot: "levels" },
-  { prop: "trigger", label: "触发条件", minWidth: 150, slot: "trigger" },
-  { prop: "ticket", label: "工单配置", minWidth: 150, slot: "ticket" }
+  { prop: "enabled", label: "状态", minWidth: 100, slot: "enabled" }
 ]
 
 // 获取操作按钮配置
@@ -361,6 +285,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.page-container {
+  padding: 0px !important;
+  background: transparent !important;
+  width: 100%;
+  height: 100%;
+}
+
 .name-cell {
   .config-name {
     margin: 0;
@@ -377,58 +308,6 @@ onMounted(() => {
     font-size: 12px;
     color: #999;
     line-height: 1.5;
-  }
-}
-
-.matchers-cell,
-.levels-cell,
-.ticket-cell {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.trigger-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  .trigger-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-
-    .trigger-label {
-      color: #999;
-    }
-
-    .trigger-value {
-      color: #333;
-      font-weight: 500;
-    }
-  }
-}
-
-.ticket-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
-  .ticket-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-
-    .ticket-label {
-      color: #999;
-    }
-
-    .ticket-value {
-      color: #333;
-      font-weight: 500;
-    }
   }
 }
 

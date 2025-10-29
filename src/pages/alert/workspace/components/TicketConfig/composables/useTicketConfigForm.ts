@@ -14,8 +14,7 @@ export function useTicketConfigForm() {
   // 表单验证规则
   const formRules: FormRules = {
     name: [{ required: true, message: "请输入配置名称", trigger: "blur" }],
-    template_id: [{ required: true, message: "请选择工单模板", trigger: "change" }],
-    workflow_id: [{ required: true, message: "请选择工作流", trigger: "change" }]
+    template_id: [{ required: true, message: "请选择工单模板", trigger: "change" }]
   }
 
   // 重置表单

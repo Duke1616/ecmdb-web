@@ -103,7 +103,7 @@
       v-model="drawerVisible"
       :title="drawerTitle"
       subtitle="请填写升级步骤模板的基本信息"
-      size="45%"
+      size="35%"
       header-icon="Document"
       :before-close="handleDrawerClose"
       @confirm="handleSubmit"

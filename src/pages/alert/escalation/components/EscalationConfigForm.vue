@@ -161,7 +161,7 @@
     v-model="stepEditDialogVisible"
     :title="currentStepIndex === -1 ? '添加升级步骤' : '编辑升级步骤'"
     :subtitle="currentStepIndex === -1 ? '添加新的升级步骤' : `升级步骤 ${currentStepIndex + 1}`"
-    size="50%"
+    size="35%"
     direction="rtl"
     :show-footer="true"
     :header-icon="Setting"

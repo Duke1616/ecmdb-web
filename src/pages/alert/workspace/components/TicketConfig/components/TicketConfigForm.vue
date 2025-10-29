@@ -26,15 +26,6 @@
             <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入配置描述（可选）" />
           </el-form-item>
         </div>
-
-        <div class="form-row">
-          <el-form-item prop="enabled" label="启用状态" class="form-item">
-            <div class="switch-container">
-              <el-switch v-model="formData.enabled" size="large" />
-              <span class="form-tip">是否启用此工单配置</span>
-            </div>
-          </el-form-item>
-        </div>
       </div>
 
       <!-- 匹配条件 -->
@@ -105,13 +96,6 @@
         <div class="form-row">
           <el-form-item prop="template_id" label="工单模板" class="form-item">
             <TemplateSelector v-model="formData.template_id" placeholder="请选择工单模板" variant="simple" />
-          </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item prop="workflow_id" label="工作流" class="form-item">
-            <!-- TODO: 待实现工作流选择器 -->
-            <el-input-number v-model="formData.workflow_id" placeholder="请输入工作流ID" style="width: 100%" :min="1" />
           </el-form-item>
         </div>
       </div>
@@ -277,23 +261,6 @@ defineExpose({
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
     }
-  }
-
-  .switch-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .form-tip {
-      font-size: 12px;
-      color: #6b7280;
-    }
-  }
-
-  .form-tip {
-    font-size: 12px;
-    color: #6b7280;
-    margin-top: 6px;
   }
 
   .matcher-config {

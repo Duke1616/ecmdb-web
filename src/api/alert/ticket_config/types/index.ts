@@ -29,7 +29,6 @@ export interface TicketConfig {
   duration: number // 持续时间（秒）
   eval_count: number // 评估次数
   template_id: number // 工单模板ID
-  workflow_id: number // 工作流ID
   ctime: number // 创建时间
   utime: number // 更新时间
 }
@@ -46,7 +45,6 @@ export interface CreateTicketConfigReq {
   duration: number
   eval_count: number
   template_id: number
-  workflow_id: number
 }
 
 // 更新工单配置请求
@@ -59,7 +57,6 @@ export interface UpdateTicketConfigReq {
   duration: number
   eval_count: number
   template_id: number
-  workflow_id: number
 }
 
 // 工单配置保存请求（统一创建和更新）
@@ -75,7 +72,6 @@ export interface SaveTicketConfigReq {
   duration: number
   eval_count: number
   template_id: number
-  workflow_id: number
 }
 
 // 工单配置保存响应

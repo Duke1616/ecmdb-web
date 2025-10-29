@@ -65,7 +65,7 @@
       v-model="drawerVisible"
       :title="drawerTitle"
       subtitle="请填写升级配置的基本信息"
-      size="45%"
+      size="35%"
       header-icon="Setting"
       :before-close="handleDrawerClose"
       @confirm="handleSubmit"
