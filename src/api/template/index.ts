@@ -96,3 +96,11 @@ export function getTemplateGroupsByIdsApi(ids: number[]) {
     data: { ids: ids }
   })
 }
+
+/** 根据关键字搜索模版 */
+export function searchTemplateByKeywordApi(data: template.ByKeywordReq) {
+  return instance.post<template.templates>({
+    url: `${API_SERVICE.CMDB}/template/list/by_keyword`,
+    data: data
+  })
+}

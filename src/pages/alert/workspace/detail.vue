@@ -108,6 +108,10 @@
               <span>静默规则</span>
             </el-menu-item>
           </el-sub-menu>
+          <el-menu-item index="ticket-config">
+            <el-icon><Document /></el-icon>
+            <span>工单配置</span>
+          </el-menu-item>
           <el-menu-item index="members">
             <el-icon><User /></el-icon>
             <span>团队成员</span>
@@ -161,6 +165,11 @@
           <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
         </div>
 
+        <!-- 工单配置页面 -->
+        <div v-else-if="activeMenu === 'ticket-config'" class="rules-page">
+          <TicketConfig :workspace-id="workspace?.id || 0" ref="ticketConfigRef" />
+        </div>
+
         <!-- 成员页面 -->
         <div v-else-if="activeMenu === 'members'" class="members-page">
           <TeamMembers :team-id="workspace?.team_id || 0" ref="teamMembersRef" />
@@ -194,7 +203,8 @@ import {
   Clock,
   DataAnalysis,
   CircleClose,
-  Mute
+  Mute,
+  Document
 } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -210,6 +220,7 @@ import AggregateRules from "./components/NoiseConfig/aggregate/rules.vue"
 import InhibitRules from "./components/NoiseConfig/inhibit/rules.vue"
 import SilenceRules from "./components/NoiseConfig/silence_rules.vue"
 import Escalation from "./components/Escalation/index.vue"
+import TicketConfig from "./components/TicketConfig/index.vue"
 
 // 路由
 const route = useRoute()
@@ -234,6 +245,7 @@ const alertManagerRef = ref()
 const alertRulesRef = ref()
 const noiseConfigRef = ref()
 const settingsRef = ref()
+const ticketConfigRef = ref()
 
 // 格式化最后更新时间
 const formatLastUpdate = () => {
@@ -384,6 +396,10 @@ const loadCurrentMenuData = () => {
     case "noise-silence":
       // 降噪配置数据加载
       noiseConfigRef.value?.loadData?.()
+      break
+    case "ticket-config":
+      // 工单配置数据加载
+      ticketConfigRef.value?.loadConfigs?.()
       break
     case "members":
       // 团队成员数据加载

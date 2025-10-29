@@ -30,7 +30,7 @@ export function useRoutingForm() {
     workspace_id: [
       {
         required: false,
-        validator: (rule: any, value: number | undefined, callback: Function, source: any) => {
+        validator: (rule: any, value: number | undefined, callback: Function) => {
           // 只有在创建路由规则时才必填
           if (!value || value === 0) {
             callback(new Error("请选择目标工作空间"))
