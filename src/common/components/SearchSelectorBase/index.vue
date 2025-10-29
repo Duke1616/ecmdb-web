@@ -1,7 +1,8 @@
 <template>
-  <div class="search-selector-container" ref="containerRef" :class="`variant-${variant}`">
+  <div class="search-selector-container" :class="`variant-${variant}`">
     <div
       class="search-selector-input"
+      ref="containerRef"
       @click="!props.disabled && togglePicker()"
       :class="{ 'is-focus': showPicker, 'is-disabled': props.disabled }"
     >
@@ -27,9 +28,9 @@
       </div>
     </div>
 
-    <!-- 使用 Teleport 将下拉菜单渲染到 body 中 -->
+    <!-- 使用 Teleport 将下拉菜单渲染到 body 中，避免被任何容器遮挡 -->
     <Teleport to="body">
-      <div v-if="showPicker && !props.disabled" class="search-selector-dropdown" :style="dropdownStyle" @click.stop>
+      <div v-if="showPicker && !props.disabled" ref="dropdownRef" class="search-selector-dropdown" @click.stop>
         <div class="search-section" @click.stop>
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -112,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue"
+import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
 import { usePagination } from "@/common/composables/usePagination"
 
 interface Props {
@@ -159,46 +161,8 @@ const itemsData = ref<any[]>([])
 const loading = ref(false)
 const containerRef = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
-
-// 下拉菜单固定高度
-const DROPDOWN_HEIGHT = 400
-
-// 计算下拉菜单位置
-const dropdownStyle = computed(() => {
-  if (!containerRef.value) return {}
-  const rect = containerRef.value.getBoundingClientRect()
-  const viewportHeight = window.innerHeight
-  const spaceBelow = viewportHeight - rect.bottom
-  const spaceAbove = rect.top
-
-  // 计算可用的最大高度
-  const maxAvailableHeight = Math.max(spaceBelow, spaceAbove) - 20
-
-  // 决定向上还是向下展开
-  const shouldExpandUpward = spaceBelow < DROPDOWN_HEIGHT && spaceAbove > spaceBelow
-
-  // 下拉菜单的总高度
-  const totalDropdownHeight = Math.min(maxAvailableHeight, DROPDOWN_HEIGHT)
-  const maxHeight = totalDropdownHeight
-
-  let top: string
-  if (shouldExpandUpward) {
-    // 向上展开
-    top = `${rect.top - Math.min(maxHeight, DROPDOWN_HEIGHT) - 8}px`
-  } else {
-    // 向下展开
-    top = `${rect.bottom + 8}px`
-  }
-
-  return {
-    position: "fixed" as const,
-    top,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    maxHeight: `${maxHeight}px`,
-    zIndex: 9999
-  }
-})
+const dropdownRef = ref<HTMLElement>()
+const popperInstance = ref<PopperInstance | null>(null)
 
 // 分页配置
 const initPagination = {
@@ -255,9 +219,47 @@ const togglePicker = async () => {
   showPicker.value = !showPicker.value
   if (showPicker.value) {
     await nextTick()
+    // 创建 Popper 实例
+    if (containerRef.value && dropdownRef.value) {
+      // 设置下拉菜单宽度与输入框相同
+      const width = containerRef.value.offsetWidth
+      if (dropdownRef.value) {
+        dropdownRef.value.style.width = `${width}px`
+      }
+
+      popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
+        placement: "bottom-start",
+        modifiers: [
+          {
+            name: "offset",
+            options: {
+              offset: [0, 8]
+            }
+          },
+          {
+            name: "preventOverflow",
+            options: {
+              padding: 8
+            }
+          },
+          {
+            name: "flip",
+            options: {
+              fallbackPlacements: ["top-start", "bottom-start", "top-end", "bottom-end"]
+            }
+          }
+        ]
+      })
+    }
     searchInputRef.value?.focus()
     paginationData.currentPage = 1
     loadItems()
+  } else {
+    // 销毁 Popper 实例
+    if (popperInstance.value) {
+      popperInstance.value.destroy()
+      popperInstance.value = null
+    }
   }
 }
 
@@ -299,12 +301,25 @@ const handleClickOutside = (e: Event) => {
   }
 }
 
+// 监听窗口大小变化和滚动
+const handleResize = () => {
+  if (popperInstance.value) {
+    popperInstance.value.update()
+  }
+}
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside)
+  window.addEventListener("resize", handleResize)
 })
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside)
+  window.removeEventListener("resize", handleResize)
+  if (popperInstance.value) {
+    popperInstance.value.destroy()
+    popperInstance.value = null
+  }
 })
 </script>
 
@@ -432,7 +447,6 @@ onUnmounted(() => {
 }
 
 .search-selector-dropdown {
-  position: fixed;
   background: #ffffff;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
@@ -440,6 +454,8 @@ onUnmounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  max-height: 400px;
+  z-index: 9999;
 }
 
 .search-section {
