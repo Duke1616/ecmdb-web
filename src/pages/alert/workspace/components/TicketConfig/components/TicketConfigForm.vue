@@ -126,7 +126,7 @@ import type { FormInstance } from "element-plus"
 import type { SaveTicketConfigReq } from "@/api/alert/ticket_config/types"
 import { useTicketConfigForm } from "../composables/useTicketConfigForm"
 import { clearZeroValues } from "@@/utils"
-import TemplateSelector from "@@/components/TemplateSelector/index.vue"
+import { TemplateSelector } from "@@/components/SearchSelector"
 
 // Props
 const props = withDefaults(

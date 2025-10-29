@@ -5,6 +5,7 @@
     :disabled="disabled"
     :variant="variant"
     :load-data="loadTemplates"
+    :get-item-by-id="getTemplateById"
     id-field="id"
     item-name-field="name"
     item-description-field="desc"
@@ -26,8 +27,8 @@
 
 <script setup lang="ts">
 import { withDefaults } from "vue"
-import SearchSelectorBase from "../SearchSelectorBase/index.vue"
-import { searchTemplateByKeywordApi } from "@/api/template"
+import SearchSelectorBase from "./Base.vue"
+import { searchTemplateByKeywordApi, detailTemplateApi } from "@/api/template"
 
 interface Props {
   modelValue?: number
@@ -55,5 +56,10 @@ const handleUpdate = (value: number) => {
 // 定义数据加载函数
 const loadTemplates = async (params: any) => {
   return await searchTemplateByKeywordApi(params)
+}
+
+// 定义获取单个模板详情函数
+const getTemplateById = async (id: number) => {
+  return await detailTemplateApi(id)
 }
 </script>

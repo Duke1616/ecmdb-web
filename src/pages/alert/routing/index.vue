@@ -115,7 +115,7 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import RoutingForm from "./components/RoutingForm.vue"
-import RuleSelector from "@@/components/RuleSelector/index.vue"
+import { RuleSelector } from "@@/components/SearchSelector"
 
 // 使用工具函数
 const { createEmptyFormData, convertRuleToFormData } = useRoutingUtils()

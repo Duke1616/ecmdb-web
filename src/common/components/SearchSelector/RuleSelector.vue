@@ -5,6 +5,7 @@
     :disabled="disabled"
     :variant="variant"
     :load-data="loadRules"
+    :get-item-by-id="getRuleById"
     id-field="id"
     item-name-field="name"
     item-description-field="description"
@@ -30,8 +31,8 @@
 
 <script setup lang="ts">
 import { withDefaults } from "vue"
-import SearchSelectorBase from "../SearchSelectorBase/index.vue"
-import { listRulesByKeywordApi } from "@/api/alert/rule"
+import SearchSelectorBase from "./Base.vue"
+import { listRulesByKeywordApi, getRuleApi } from "@/api/alert/rule"
 
 interface Props {
   modelValue?: number
@@ -59,6 +60,11 @@ const handleUpdate = (value: number) => {
 // 定义数据加载函数
 const loadRules = async (params: any) => {
   return await listRulesByKeywordApi(params)
+}
+
+// 定义获取单个规则详情函数
+const getRuleById = async (id: number) => {
+  return await getRuleApi(id)
 }
 
 // 获取告警级别优先级

@@ -123,6 +123,8 @@ interface Props {
   variant?: "fancy" | "simple"
   // 数据加载函数
   loadData: (params: any) => Promise<any>
+  // 获取单个项详情函数（可选，用于编辑模式时加载已选中的项）
+  getItemById?: (id: number) => Promise<any>
   // 字段配置
   idField?: string
   itemNameField?: string
@@ -293,6 +295,32 @@ watch([() => paginationData.currentPage], () => {
   }
 })
 
+// 监听 modelValue 变化，加载初始数据
+watch(
+  () => props.modelValue,
+  async (newValue) => {
+    // 如果有 modelValue 但 itemsData 中没有找到对应的项，需要加载
+    if (newValue && !itemsData.value.find((item) => item[props.idField] === newValue)) {
+      if (props.getItemById) {
+        // 如果有 getItemById 函数，直接获取单个项
+        try {
+          const result = await props.getItemById(newValue)
+          if (result && result.data) {
+            itemsData.value = [result.data]
+          }
+        } catch (error) {
+          console.error("获取项详情失败:", error)
+        }
+      } else {
+        // 否则加载第一页数据
+        paginationData.currentPage = 1
+        await loadItems()
+      }
+    }
+  },
+  { immediate: true }
+)
+
 // 点击外部关闭
 const handleClickOutside = (e: Event) => {
   const target = e.target as HTMLElement
@@ -342,7 +370,6 @@ onUnmounted(() => {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 11px;
   height: 32px;
   background: #ffffff;
@@ -375,7 +402,7 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   height: 100%;
-  line-height: 32px;
+  margin: 0;
 
   .item-icon {
     flex-shrink: 0;
@@ -399,6 +426,8 @@ onUnmounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.5;
+    display: block;
   }
 }
 
@@ -414,18 +443,18 @@ onUnmounted(() => {
   justify-content: center;
   width: 20px;
   height: 20px;
-  color: #6b7280;
+  color: #909399;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-right: 8px;
+  margin-left: auto;
 
   &:hover {
-    color: #ef4444;
+    color: #f56c6c;
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
   }
 }
 
@@ -434,14 +463,15 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   transition: transform 0.3s ease;
+  margin-left: 8px;
 
   &.is-open {
     transform: rotate(180deg);
   }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
     color: #c0c4cc;
   }
 }

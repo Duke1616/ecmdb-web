@@ -158,7 +158,7 @@ import type { Workspace } from "@/api/alert/workspace/types"
 import { listWorkspacesApi } from "@/api/alert/workspace"
 import { useRoutingForm } from "../composables/useRoutingForm"
 import { clearZeroValues } from "@@/utils"
-import RuleSelector from "@@/components/RuleSelector/index.vue"
+import { RuleSelector } from "@@/components/SearchSelector"
 
 // Props
 const props = withDefaults(
