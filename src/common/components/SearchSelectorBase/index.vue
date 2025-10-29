@@ -343,55 +343,59 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 0 11px;
+  height: 32px;
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 
   &:hover:not(.is-disabled) {
-    border-color: #cbd5e1;
+    border-color: #c0c4cc;
   }
 
   &.is-focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #409eff;
+    outline: none;
   }
 
   &.is-disabled {
     cursor: not-allowed;
     opacity: 0.6;
-    background: #f3f4f6;
+    background: #f5f7fa;
+    border-color: #e4e7ed;
   }
 }
 
 .selected-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
+  height: 100%;
+  line-height: 32px;
 
   .item-icon {
     flex-shrink: 0;
-    width: 36px;
-    height: 36px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 15px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 12px;
     color: #ffffff;
   }
 
   .item-name {
     flex: 1;
     min-width: 0;
-    font-size: 15px;
-    font-weight: 500;
-    color: #1f2937;
+    font-size: 14px;
+    font-weight: 400;
+    color: #303133;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -399,8 +403,9 @@ onUnmounted(() => {
 }
 
 .placeholder-text {
-  font-size: 15px;
-  color: #9ca3af;
+  font-size: 14px;
+  color: #c0c4cc;
+  line-height: 32px;
 }
 
 .clear-btn {
@@ -448,20 +453,20 @@ onUnmounted(() => {
 
 .search-selector-dropdown {
   background: #ffffff;
-  border: 2px solid #e5e7eb;
-  border-radius: 16px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 400px;
+  max-height: 274px;
   z-index: 9999;
 }
 
 .search-section {
-  padding: 20px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f8fafc;
+  padding: 12px;
+  border-bottom: 1px solid #e4e7ed;
+  background: #ffffff;
   flex-shrink: 0;
 }
 
@@ -473,32 +478,32 @@ onUnmounted(() => {
 
 .search-icon {
   position: absolute;
-  left: 16px;
-  width: 20px;
-  height: 20px;
-  color: #6b7280;
+  left: 12px;
+  width: 14px;
+  height: 14px;
+  color: #c0c4cc;
   z-index: 1;
 }
 
 .search-input {
   width: 100%;
-  padding: 14px 16px 14px 48px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 15px;
-  color: #1f2937;
+  padding: 8px 12px 8px 32px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #606266;
   background: #ffffff;
   transition: all 0.3s ease;
   outline: none;
 }
 
 .search-input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #409eff;
+  outline: none;
 }
 
 .search-input::placeholder {
-  color: #6b7280;
+  color: #c0c4cc;
 }
 
 .items-list {
@@ -512,38 +517,38 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
-  color: #6b7280;
-  gap: 16px;
+  padding: 32px 24px;
+  color: #909399;
+  gap: 12px;
 }
 
 .empty-state svg {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   opacity: 0.5;
 }
 
 .empty-state span {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .item {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 10px 12px;
   cursor: pointer;
   transition: all 0.3s ease;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .item:hover {
-  background: #f1f5f9;
+  background: #f5f7fa;
 }
 
 .item.is-selected {
-  background: rgba(102, 126, 234, 0.08);
-  border-color: rgba(102, 126, 234, 0.2);
+  background: #ecf5ff;
+  color: #409eff;
 }
 
 .item:last-child {
@@ -552,14 +557,14 @@ onUnmounted(() => {
 
 .item-icon {
   flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 18px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 14px;
   color: #ffffff;
 }
 
@@ -569,17 +574,17 @@ onUnmounted(() => {
 }
 
 .item-info .item-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #303133;
+  margin-bottom: 2px;
 }
 
 .item-description {
-  font-size: 13px;
-  color: #6b7280;
+  font-size: 12px;
+  color: #909399;
   font-weight: 400;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -605,9 +610,9 @@ onUnmounted(() => {
 
 .pagination-section {
   flex-shrink: 0;
-  padding: 16px 20px;
-  border-top: 1px solid #e5e7eb;
-  background: #f8fafc;
+  padding: 8px 12px;
+  border-top: 1px solid #e4e7ed;
+  background: #ffffff;
   display: flex;
   justify-content: center;
 }
