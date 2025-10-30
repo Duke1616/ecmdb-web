@@ -28,17 +28,13 @@
         </div>
       </div>
       <!-- 分组聚合规则 -->
-      <AggregateRules
-        :workspace-id="workspaceId"
-        :aggregate-rule="noiseConfig?.aggregate_rule"
-        @refresh="loadNoiseConfig"
-      />
+      <AggregateRules @refresh="loadNoiseConfig" />
 
       <!-- 抑制规则（全局） -->
       <InhibitRules />
 
       <!-- 静默规则 -->
-      <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
+      <SilenceRules @refresh="loadSilenceRules" />
     </div>
   </div>
 </template>

@@ -137,11 +137,10 @@ import AggregateDrawer from "./drawer.vue"
 import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/aggregate"
 import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
 import type { RetrieveAggregateGroup } from "@/api/aggregate/types/retrieve"
-
-// 接收工作空间ID
-const props = defineProps<{
-  workspaceId: number
-}>()
+import { useRoute } from "vue-router"
+import { computed } from "vue"
+const route = useRoute()
+const workspaceId = computed(() => Number(route.params.workspaceId))
 
 // 定义事件
 const emit = defineEmits<{
@@ -175,7 +174,7 @@ const rule = ref<RetrieveAggregateGroup | null>(null)
 // 重置表单
 const resetForm = () => {
   formData.value = reactive({
-    workspace_id: props.workspaceId,
+    workspace_id: workspaceId.value,
     type: 0,
     is_diff_data_source: false,
     labels: [],
@@ -192,7 +191,7 @@ const resetForm = () => {
 const loadRules = async () => {
   loading.value = true
   try {
-    const { data } = await getAggregateGroupByWorkspaceApi(props.workspaceId)
+    const { data } = await getAggregateGroupByWorkspaceApi(workspaceId.value)
     // 后端直接返回数据对象
     rule.value = data
   } catch (error) {
@@ -206,7 +205,7 @@ const loadRules = async () => {
 onMounted(() => {
   // 初始化 formData 的 workspace_id
   if (formData.value) {
-    formData.value.workspace_id = props.workspaceId
+    formData.value.workspace_id = workspaceId.value
   }
   loadRules()
 })
