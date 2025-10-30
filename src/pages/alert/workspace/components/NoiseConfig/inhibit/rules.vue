@@ -182,8 +182,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive, computed } from "vue"
-import { useRoute } from "vue-router"
+import { ref, onMounted, reactive, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Filter, Edit, Delete, PriceTag, Clock, Warning } from "@element-plus/icons-vue"
 import { map, defaults } from "lodash-es"
@@ -206,12 +205,7 @@ const emit = defineEmits<{
   refresh: []
 }>()
 
-// 获取当前工作空间ID
-const route = useRoute()
-const currentWorkspaceId = computed(() => {
-  const workspaceId = route.params.workspaceId
-  return workspaceId ? Number(workspaceId) : undefined
-})
+const props = defineProps<{ workspaceId: number }>()
 
 // 使用 defineModel 管理状态
 const dialogVisible = defineModel<boolean>("dialogVisible", { default: false })
@@ -254,7 +248,7 @@ const loadRules = async () => {
   try {
     // 使用工作空间接口获取规则列表
     const { data } = await listInhibitRulesByWorkspaceApi({
-      workspace_id: currentWorkspaceId.value || 0
+      workspace_id: props.workspaceId
     })
 
     // 使用 lodash 优化数据映射和默认值设置
@@ -300,6 +294,14 @@ onMounted(() => {
   }
   loadRules()
 })
+
+watch(
+  () => props.workspaceId,
+  () => {
+    loadRules()
+  },
+  { immediate: true }
+)
 
 // 添加规则
 const handleAddRule = () => {

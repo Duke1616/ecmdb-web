@@ -157,7 +157,7 @@
 
         <!-- 抑制规则页面 -->
         <div v-else-if="activeMenu === 'noise-inhibit'" class="rules-page">
-          <InhibitRules />
+          <InhibitRules :workspace-id="workspace?.id || 0" />
         </div>
 
         <!-- 静默规则页面 -->

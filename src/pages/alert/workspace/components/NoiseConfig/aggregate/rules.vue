@@ -129,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from "vue"
+import { ref, reactive, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Setting, Edit, Delete, PriceTag, Warning, Operation, DataBoard } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
@@ -137,10 +137,11 @@ import AggregateDrawer from "./drawer.vue"
 import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/aggregate"
 import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
 import type { RetrieveAggregateGroup } from "@/api/aggregate/types/retrieve"
-import { useRoute } from "vue-router"
 import { computed } from "vue"
-const route = useRoute()
-const workspaceId = computed(() => Number(route.params.workspaceId))
+const props = defineProps<{ workspaceId: number }>()
+const currentWorkspaceId = computed(() => {
+  return props.workspaceId
+})
 
 // 定义事件
 const emit = defineEmits<{
@@ -174,7 +175,7 @@ const rule = ref<RetrieveAggregateGroup | null>(null)
 // 重置表单
 const resetForm = () => {
   formData.value = reactive({
-    workspace_id: workspaceId.value,
+    workspace_id: currentWorkspaceId.value || 0,
     type: 0,
     is_diff_data_source: false,
     labels: [],
@@ -189,9 +190,10 @@ const resetForm = () => {
 
 // 加载规则数据
 const loadRules = async () => {
+  if (!props.workspaceId) return
   loading.value = true
   try {
-    const { data } = await getAggregateGroupByWorkspaceApi(workspaceId.value)
+    const { data } = await getAggregateGroupByWorkspaceApi(props.workspaceId)
     // 后端直接返回数据对象
     rule.value = data
   } catch (error) {
@@ -202,13 +204,13 @@ const loadRules = async () => {
 }
 
 // 组件挂载时加载数据
-onMounted(() => {
-  // 初始化 formData 的 workspace_id
-  if (formData.value) {
-    formData.value.workspace_id = workspaceId.value
-  }
-  loadRules()
-})
+watch(
+  () => props.workspaceId,
+  () => {
+    loadRules()
+  },
+  { immediate: true }
+)
 
 // 添加规则
 const handleAddRule = () => {
