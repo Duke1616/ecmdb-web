@@ -22,7 +22,7 @@ export function useTemplateForm() {
     version: {
       name: "",
       content: "",
-      remark: ""
+      desc: ""
     }
   })
 
@@ -176,7 +176,7 @@ export function useTemplateForm() {
       version: {
         name: "",
         content: "",
-        remark: ""
+        desc: ""
       }
     }
     multiChannelData.value = {}

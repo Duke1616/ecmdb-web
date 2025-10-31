@@ -55,9 +55,9 @@
       </el-form-item>
       <el-form-item label="版本备注">
         <el-input
-          :model-value="formData.version.remark"
+          :model-value="formData.version.desc"
           @update:model-value="
-            (value) => emit('update:formData', { ...formData, version: { ...formData.version, remark: value } })
+            (value) => emit('update:formData', { ...formData, version: { ...formData.version, desc: value } })
           "
           placeholder="版本备注（可选）"
         />

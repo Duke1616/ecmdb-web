@@ -17,7 +17,7 @@ export interface TemplateVersion {
   name: string
   signature: string
   content: string
-  remark: string
+  desc: string
   ctime: number
   utime: number
 }
@@ -45,7 +45,7 @@ export interface CreateTemplateReq {
   version: {
     name: string
     content: string
-    remark: string
+    desc: string
   }
 }
 

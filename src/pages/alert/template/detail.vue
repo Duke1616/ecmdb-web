@@ -213,7 +213,7 @@ const loadTemplateDetail = async () => {
       version: {
         name: getCurrentVersionName(response.data),
         content: getCurrentVersionContent(response.data),
-        remark: getCurrentVersionRemark(response.data)
+        desc: getCurrentVersionRemark(response.data)
       }
     })
   } catch (error: any) {

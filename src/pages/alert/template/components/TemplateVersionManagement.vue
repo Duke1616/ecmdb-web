@@ -42,7 +42,7 @@
             </div>
           </div>
           <div class="version-meta">
-            <div class="version-remark">{{ version.remark || "无备注" }}</div>
+            <div class="version-desc">{{ version.desc || "无详情" }}</div>
             <div class="version-time">{{ formatTimestamp(version.ctime) }}</div>
           </div>
         </div>
@@ -215,7 +215,7 @@ const handlePublishVersion = (versionId: number) => {
   color: #6b7280;
 }
 
-.version-remark {
+.version-desc {
   margin-bottom: 2px;
   white-space: nowrap;
   overflow: hidden;

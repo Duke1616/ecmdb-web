@@ -32,7 +32,7 @@ export function useVersionManagement() {
   const getCurrentVersionRemark = (template: ChannelTemplate | null): string => {
     if (!template || !currentVersionId.value) return ""
     const currentVersion = template.versions?.find((v) => v.id === currentVersionId.value)
-    return currentVersion?.remark || ""
+    return currentVersion?.desc || ""
   }
 
   // 获取查看中的版本名称
@@ -55,7 +55,7 @@ export function useVersionManagement() {
     formData.version = {
       name: version.name,
       content: version.content,
-      remark: version.remark || ""
+      desc: version.desc || ""
     }
   }
 
