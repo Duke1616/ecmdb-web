@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, computed, nextTick } from "vue"
-import { ElMessage, type FormInstance, type FormRules } from "element-plus"
+import { type FormInstance, type FormRules } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
 import type { TemplateVersion } from "@/api/alert/template/types"
 
