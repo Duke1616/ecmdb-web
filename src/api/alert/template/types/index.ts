@@ -91,6 +91,7 @@ export interface DeleteTemplateResp {
 export interface ForkVersionReq {
   version_name: string
   version_id: number
+  desc?: string
 }
 
 // Fork 版本响应

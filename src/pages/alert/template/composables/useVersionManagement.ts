@@ -72,12 +72,16 @@ export function useVersionManagement() {
   }
 
   // 新增版本（Fork 版本）
-  const handleCreateVersion = async (data: { name: string; versionId: number }, onSuccess?: () => void) => {
+  const handleCreateVersion = async (
+    data: { name: string; versionId: number; desc?: string },
+    onSuccess?: () => void
+  ) => {
     try {
       // 调用 fork 版本 API
       const response = await forkVersionApi({
         version_name: data.name,
-        version_id: data.versionId
+        version_id: data.versionId,
+        desc: data.desc
       })
 
       // 将新版本添加到版本列表

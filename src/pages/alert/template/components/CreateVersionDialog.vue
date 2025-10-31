@@ -21,6 +21,17 @@
           <el-option v-for="version in templateVersions" :key="version.id" :label="version.name" :value="version.id" />
         </el-select>
       </el-form-item>
+
+      <el-form-item label="版本备注">
+        <el-input
+          v-model="formData.desc"
+          type="textarea"
+          :rows="3"
+          placeholder="版本备注（可选）"
+          maxlength="200"
+          show-word-limit
+        />
+      </el-form-item>
     </el-form>
   </FormDialog>
 </template>
@@ -39,7 +50,7 @@ interface Props {
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void
-  (e: "confirm", data: { name: string; versionId: number }): void
+  (e: "confirm", data: { name: string; versionId: number; desc?: string }): void
 }
 
 const props = defineProps<Props>()
@@ -54,7 +65,8 @@ const loading = ref(false)
 // 表单数据
 const formData = reactive({
   name: "",
-  versionId: 0
+  versionId: 0,
+  desc: ""
 })
 
 // 表单验证规则
@@ -77,6 +89,7 @@ watch(visible, (newVisible) => {
   if (newVisible) {
     // 重置表单
     formData.name = ""
+    formData.desc = ""
     // 设置默认选中的版本为当前使用版本
     formData.versionId = props.currentActiveVersionId
 
@@ -96,6 +109,7 @@ const handleClose = () => {
 const handleClosed = () => {
   // 重置表单
   formData.name = ""
+  formData.desc = ""
   formData.versionId = 0
   loading.value = false
 }
@@ -111,10 +125,10 @@ const handleConfirm = async () => {
     // 发出确认事件
     emit("confirm", {
       name: formData.name,
-      versionId: formData.versionId
+      versionId: formData.versionId,
+      desc: formData.desc || undefined
     })
 
-    ElMessage.success("版本创建成功")
     handleClose()
   } catch (error) {
     console.error("表单验证失败:", error)

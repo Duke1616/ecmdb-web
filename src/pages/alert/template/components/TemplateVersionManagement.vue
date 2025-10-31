@@ -42,7 +42,15 @@
             </div>
           </div>
           <div class="version-meta">
-            <div class="version-desc">{{ version.desc || "无详情" }}</div>
+            <el-tooltip
+              :content="version.desc || '无详情'"
+              :disabled="!version.desc"
+              placement="top"
+              effect="dark"
+              :show-after="300"
+            >
+              <div class="version-desc">{{ version.desc || "无详情" }}</div>
+            </el-tooltip>
             <div class="version-time">{{ formatTimestamp(version.ctime) }}</div>
           </div>
         </div>
@@ -79,7 +87,7 @@ interface Props {
 }
 
 interface Emits {
-  (e: "create-version", data: { name: string; versionId: number }): void
+  (e: "create-version", data: { name: string; versionId: number; desc?: string }): void
   (e: "switch-version", version: TemplateVersion): void
   (e: "publish-version", versionId: number): void
 }
@@ -94,7 +102,7 @@ const handleCreateVersion = () => {
   showCreateDialog.value = true
 }
 
-const handleCreateVersionConfirm = (data: { name: string; versionId: number }) => {
+const handleCreateVersionConfirm = (data: { name: string; versionId: number; desc?: string }) => {
   emit("create-version", data)
 }
 
@@ -149,10 +157,10 @@ const handlePublishVersion = (versionId: number) => {
 
 // 版本管理样式
 .version-list {
-  max-height: 400px;
-  overflow-y: auto;
   flex: 1;
   min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .version-item {
