@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref, watch, nextTick } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { UserFilled, Edit, Delete, RefreshRight, CirclePlus } from "@element-plus/icons-vue"
 import { listTeamsApi, deleteTeamApi } from "@/api/alert/team"
@@ -95,6 +95,7 @@ const dialogVisible = ref<boolean>(false)
 const isEditMode = ref<boolean>(false)
 
 const teamFormRef = ref<InstanceType<typeof TeamForm>>()
+const pendingEditData = ref<Team | null>(null)
 
 // 表格列配置
 const tableColumns = [
@@ -176,8 +177,8 @@ const handlerCreateTeam = () => {
 
 const handleUpdate = (row: Team) => {
   isEditMode.value = true
+  pendingEditData.value = row
   dialogVisible.value = true
-  teamFormRef.value?.setForm(row)
 }
 
 const handleDelete = async (row: Team) => {
@@ -210,12 +211,29 @@ const handleDrawerClose = (done: () => void) => {
 
 const onClosedCreateOrUpdate = () => {
   teamFormRef.value?.resetForm()
+  pendingEditData.value = null
   dialogVisible.value = false
   isEditMode.value = false
 }
 
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listTeamsData, { immediate: true })
+
+// 监听 Drawer 打开，在完全打开后设置表单数据
+watch(dialogVisible, async (newVal) => {
+  if (newVal && isEditMode.value && pendingEditData.value) {
+    // 等待 Drawer 和表单组件完全渲染后再设置表单数据
+    await nextTick()
+    await nextTick()
+    // 等待一小段时间让 Drawer 动画完成
+    setTimeout(() => {
+      if (teamFormRef.value && pendingEditData.value) {
+        teamFormRef.value.setForm(pendingEditData.value)
+        pendingEditData.value = null
+      }
+    }, 150)
+  }
+})
 </script>
 
 <style lang="scss" scoped>

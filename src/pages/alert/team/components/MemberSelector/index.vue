@@ -99,7 +99,7 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { User, Close } from "@element-plus/icons-vue"
 import { listDepartmentTreeApi } from "@/api/department"
-import { listUsersByDepartmentApi } from "@/api/user"
+import { listUsersByDepartmentApi, findByUsernamesApi } from "@/api/user"
 import { usePagination } from "@@/composables/usePagination"
 import type { user } from "@/api/user/types/user"
 import type { department } from "@/api/department/types/department"
@@ -262,20 +262,36 @@ const loadUsersByDepartment = async () => {
   }
 }
 
-// 根据用户名找到对应的用户对象
+// 根据用户名找到对应的用户对象（仅从当前用户列表中查找）
 const findUsersByUsernames = (usernames: string[]) => {
   return users.value.filter((user) => usernames.includes(user.username))
+}
+
+// 加载已选择的用户详情（通过 API）
+const loadSelectedUsers = async (usernames: string[]) => {
+  if (!Array.isArray(usernames) || usernames.length === 0) {
+    selectedUsers.value = []
+    return
+  }
+
+  try {
+    // 直接通过 API 加载所有已选择的用户（不依赖当前用户列表）
+    const { data } = await findByUsernamesApi(usernames)
+    const apiUsers = data.users || []
+    selectedUsers.value = apiUsers
+  } catch (error) {
+    console.error("加载已选择用户失败:", error)
+    // 如果 API 失败，尝试从当前用户列表中查找
+    const foundUsers = findUsersByUsernames(usernames)
+    selectedUsers.value = foundUsers
+  }
 }
 
 // 监听 modelValue 变化
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (Array.isArray(newValue) && newValue.length > 0) {
-      selectedUsers.value = findUsersByUsernames(newValue)
-    } else {
-      selectedUsers.value = []
-    }
+    loadSelectedUsers(newValue)
   },
   { immediate: true }
 )
@@ -286,7 +302,13 @@ onMounted(async () => {
   // 默认选中"全部"
   selectedDepartment.value = 0
   // 加载所有用户
-  loadUsersByDepartment()
+  await loadUsersByDepartment()
+
+  // 组件挂载完成后，如果 modelValue 有值，确保加载已选择的用户
+  // 这样可以避免 watch 执行时机过早导致的问题
+  if (props.modelValue && props.modelValue.length > 0) {
+    await loadSelectedUsers(props.modelValue)
+  }
 })
 </script>
 
