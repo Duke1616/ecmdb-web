@@ -4,7 +4,9 @@
 export enum MatchType {
   Equal = 1, // 等于
   NotEqual = 2, // 不等于
-  Regexp = 3 // 正则
+  Regexp = 3, // 正则
+  Exists = 5, // 存在
+  NotExists = 6 // 不存在
 }
 
 // 路由规则作用域枚举

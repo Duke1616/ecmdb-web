@@ -120,8 +120,15 @@
                   <el-option label="等于" :value="1" />
                   <el-option label="不等于" :value="2" />
                   <el-option label="正则" :value="3" />
+                  <el-option label="存在" :value="5" />
+                  <el-option label="不存在" :value="6" />
                 </el-select>
-                <el-input v-model="matcher.value" placeholder="标签值" size="default" />
+                <el-input
+                  v-model="matcher.value"
+                  placeholder="标签值"
+                  size="default"
+                  :disabled="matcher.type === 5 || matcher.type === 6"
+                />
                 <el-button type="text" @click="removeMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
               <el-button type="text" @click="addMatcher" class="add-matcher-btn">

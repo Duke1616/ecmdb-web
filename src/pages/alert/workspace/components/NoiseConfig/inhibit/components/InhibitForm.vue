@@ -59,8 +59,15 @@
                   <el-option label="不等于" :value="MatchType.NotEqual" />
                   <el-option label="正则" :value="MatchType.Regexp" />
                   <el-option label="非正则" :value="MatchType.NotRegexp" />
+                  <el-option label="存在" :value="MatchType.Exists" />
+                  <el-option label="不存在" :value="MatchType.NotExists" />
                 </el-select>
-                <el-input v-model="matcher.value" placeholder="标签值" size="default" />
+                <el-input
+                  v-model="matcher.value"
+                  placeholder="标签值"
+                  size="default"
+                  :disabled="matcher.type === MatchType.Exists || matcher.type === MatchType.NotExists"
+                />
                 <el-button type="text" @click="removeSourceMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
               <el-button type="text" @click="addSourceMatcher" class="add-matcher-btn">
@@ -81,8 +88,15 @@
                   <el-option label="不等于" :value="MatchType.NotEqual" />
                   <el-option label="正则" :value="MatchType.Regexp" />
                   <el-option label="非正则" :value="MatchType.NotRegexp" />
+                  <el-option label="存在" :value="MatchType.Exists" />
+                  <el-option label="不存在" :value="MatchType.NotExists" />
                 </el-select>
-                <el-input v-model="matcher.value" placeholder="标签值" size="default" />
+                <el-input
+                  v-model="matcher.value"
+                  placeholder="标签值"
+                  size="default"
+                  :disabled="matcher.type === MatchType.Exists || matcher.type === MatchType.NotExists"
+                />
                 <el-button type="text" @click="removeTargetMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
               <el-button type="text" @click="addTargetMatcher" class="add-matcher-btn">

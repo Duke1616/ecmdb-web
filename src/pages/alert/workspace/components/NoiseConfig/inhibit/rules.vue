@@ -413,6 +413,10 @@ const getOperatorText = (type: MatchType): string => {
       return "~"
     case MatchType.NotRegexp:
       return "!~"
+    case MatchType.Exists:
+      return "存在"
+    case MatchType.NotExists:
+      return "不存在"
     default:
       return "="
   }
