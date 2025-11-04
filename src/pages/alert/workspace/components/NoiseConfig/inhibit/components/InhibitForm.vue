@@ -55,18 +55,18 @@
               <div v-for="(matcher, index) in formData.source_matchers" :key="index" class="matcher-item">
                 <el-input v-model="matcher.name" placeholder="标签名" size="default" />
                 <el-select v-model="matcher.type" placeholder="类型" size="default">
-                  <el-option label="等于" :value="MatchType.Equal" />
-                  <el-option label="不等于" :value="MatchType.NotEqual" />
-                  <el-option label="正则" :value="MatchType.Regexp" />
-                  <el-option label="非正则" :value="MatchType.NotRegexp" />
-                  <el-option label="存在" :value="MatchType.Exists" />
-                  <el-option label="不存在" :value="MatchType.NotExists" />
+                  <el-option
+                    v-for="option in matchTypeOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                  />
                 </el-select>
                 <el-input
                   v-model="matcher.value"
                   placeholder="标签值"
                   size="default"
-                  :disabled="matcher.type === MatchType.Exists || matcher.type === MatchType.NotExists"
+                  :disabled="!isValueRequired(matcher.type)"
                 />
                 <el-button type="text" @click="removeSourceMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
@@ -84,18 +84,18 @@
               <div v-for="(matcher, index) in formData.target_matchers" :key="index" class="matcher-item">
                 <el-input v-model="matcher.name" placeholder="标签名" size="default" />
                 <el-select v-model="matcher.type" placeholder="类型" size="default">
-                  <el-option label="等于" :value="MatchType.Equal" />
-                  <el-option label="不等于" :value="MatchType.NotEqual" />
-                  <el-option label="正则" :value="MatchType.Regexp" />
-                  <el-option label="非正则" :value="MatchType.NotRegexp" />
-                  <el-option label="存在" :value="MatchType.Exists" />
-                  <el-option label="不存在" :value="MatchType.NotExists" />
+                  <el-option
+                    v-for="option in matchTypeOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                  />
                 </el-select>
                 <el-input
                   v-model="matcher.value"
                   placeholder="标签值"
                   size="default"
-                  :disabled="matcher.type === MatchType.Exists || matcher.type === MatchType.NotExists"
+                  :disabled="!isValueRequired(matcher.type)"
                 />
                 <el-button type="text" @click="removeTargetMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
@@ -205,6 +205,7 @@ import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
 import { MatchType, InhibitScope } from "@/api/alert/inhibit/types"
 import type { FormInstance } from "element-plus"
 import { clearZeroValues } from "@@/utils"
+import { useMatcher } from "@@/composables/useMatcher"
 
 interface Props {
   formRules: any
@@ -233,6 +234,10 @@ const endTime = ref("")
 const inputVisible = ref(false)
 const inputValue = ref("")
 const inputRef = ref<InstanceType<typeof import("element-plus").ElInput>>()
+
+// 使用匹配器工具函数
+const { getMatchTypeOptions, isValueRequired } = useMatcher()
+const matchTypeOptions = computed(() => getMatchTypeOptions())
 
 // 处理生效范围变化
 const handleScopeChange = (scope: InhibitScope) => {

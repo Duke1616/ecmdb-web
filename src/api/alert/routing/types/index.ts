@@ -1,28 +1,17 @@
 // 路由规则相关类型定义
 
-// 匹配类型枚举
-export enum MatchType {
-  Equal = 1, // 等于
-  NotEqual = 2, // 不等于
-  Regexp = 3, // 正则
-  Exists = 5, // 存在
-  NotExists = 6 // 不存在
-}
+// 重新导出通用的 MatchType 和 Matcher 类型
+export { MatchType } from "@@/constants/match-type"
+export type { Matcher, Matchers } from "@@/types/matcher"
+
+// 导入类型用于本文件内使用
+import type { Matcher, Matchers } from "@@/types/matcher"
 
 // 路由规则作用域枚举
 export enum RoutingScope {
   Global = "global", // 全局生效
   Rule = "rule" // 关联特定告警规则
 }
-
-// 标签匹配器
-export interface Matcher {
-  type: MatchType
-  name: string
-  value: string
-}
-
-export type Matchers = Matcher[]
 
 // 路由规则接口
 export interface RoutingRule {

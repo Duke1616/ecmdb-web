@@ -1,14 +1,11 @@
 // 抑制规则相关类型定义
 
-// 匹配类型枚举
-export enum MatchType {
-  Equal = 1, // 等于
-  NotEqual = 2, // 不等于
-  Regexp = 3, // 正则
-  NotRegexp = 4, // 非正则
-  Exists = 5, // 存在
-  NotExists = 6 // 不存在
-}
+// 重新导出通用的 MatchType 和 Matcher 类型
+export { MatchType } from "@@/constants/match-type"
+export type { Matcher, Matchers } from "@@/types/matcher"
+
+// 导入类型用于本文件内使用
+import type { Matcher, Matchers } from "@@/types/matcher"
 
 // 抑制规则生效范围枚举
 export enum InhibitScope {
@@ -20,14 +17,6 @@ export interface TimeRange {
   start: number
   end: number
 }
-
-export interface Matcher {
-  type: number
-  name: string
-  value: string
-}
-
-export type Matchers = Matcher[]
 
 export interface InhibitRule {
   id: number

@@ -117,17 +117,18 @@
               <div v-for="(matcher, index) in formData.matchers" :key="index" class="matcher-item">
                 <el-input v-model="matcher.name" placeholder="标签名" size="default" />
                 <el-select v-model="matcher.type" placeholder="类型" size="default">
-                  <el-option label="等于" :value="1" />
-                  <el-option label="不等于" :value="2" />
-                  <el-option label="正则" :value="3" />
-                  <el-option label="存在" :value="5" />
-                  <el-option label="不存在" :value="6" />
+                  <el-option
+                    v-for="option in matchTypeOptions"
+                    :key="option.value"
+                    :label="option.label"
+                    :value="option.value"
+                  />
                 </el-select>
                 <el-input
                   v-model="matcher.value"
                   placeholder="标签值"
                   size="default"
-                  :disabled="matcher.type === 5 || matcher.type === 6"
+                  :disabled="!isValueRequired(matcher.type)"
                 />
                 <el-button type="text" @click="removeMatcher(index)" class="matcher-remove"> 删除 </el-button>
               </div>
@@ -156,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, withDefaults } from "vue"
+import { ref, onMounted, withDefaults, computed } from "vue"
 import { Setting, Share, Filter, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { SaveRoutingRuleReq } from "@/api/alert/routing/types"
@@ -166,6 +167,7 @@ import { listWorkspacesApi } from "@/api/alert/workspace"
 import { useRoutingForm } from "../composables/useRoutingForm"
 import { clearZeroValues } from "@@/utils"
 import { RuleSelector } from "@@/components/SearchSelector"
+import { useMatcher } from "@@/composables/useMatcher"
 
 // Props
 const props = withDefaults(
@@ -202,13 +204,13 @@ const loadWorkspaces = async () => {
   }
 }
 
+// 使用匹配器工具函数
+const { getMatchTypeOptions, isValueRequired, createEmptyMatcher } = useMatcher()
+const matchTypeOptions = computed(() => getMatchTypeOptions())
+
 // 添加匹配器
 const addMatcher = () => {
-  formData.value.matchers.push({
-    type: 1, // MatchType.Equal
-    name: "",
-    value: ""
-  })
+  formData.value.matchers.push(createEmptyMatcher())
 }
 
 // 删除匹配器

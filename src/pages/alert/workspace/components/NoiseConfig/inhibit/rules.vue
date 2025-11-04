@@ -197,8 +197,9 @@ import {
   toggleInhibitRuleStatusApi
 } from "@/api/alert/inhibit"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
-import { MatchType, InhibitScope } from "@/api/alert/inhibit/types"
+import { InhibitScope } from "@/api/alert/inhibit/types"
 import { useInhibitUtils } from "./composables/useInhibitUtils"
+import { useMatcher } from "@@/composables/useMatcher"
 
 // 定义事件
 const emit = defineEmits<{
@@ -402,25 +403,8 @@ const handleCancel = () => {
   isEdit.value = false
 }
 
-// 获取操作符文本
-const getOperatorText = (type: MatchType): string => {
-  switch (type) {
-    case MatchType.Equal:
-      return "="
-    case MatchType.NotEqual:
-      return "!="
-    case MatchType.Regexp:
-      return "~"
-    case MatchType.NotRegexp:
-      return "!~"
-    case MatchType.Exists:
-      return "存在"
-    case MatchType.NotExists:
-      return "不存在"
-    default:
-      return "="
-  }
-}
+// 使用匹配器工具函数
+const { getOperatorText } = useMatcher()
 
 // 检查时间窗口是否有效
 const isValidTimeWindow = (timeWindow: any): boolean => {
