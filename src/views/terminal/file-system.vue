@@ -5,7 +5,8 @@
       id="vuefinder"
       :driver="driver"
       :config="{
-        theme: 'dark',
+        persist: true,
+        theme: 'valorite',
         maxFileSize: '500mb',
         fullScreen: true
       }"
@@ -20,6 +21,7 @@ import { RemoteDriver } from "vuefinder"
 import { WebSocketUploader } from "./components/upload"
 import type { PrefixConfig } from "./utils/prefix-config"
 import { getPrefixConfig } from "./utils/prefix-config"
+import { ElMessage } from "element-plus"
 
 // Props 定义
 const props = withDefaults(
@@ -53,6 +55,7 @@ interface VueFinderContext {
 
 // 定义 VueFinder 组件实例类型
 interface VueFinderInstance extends ComponentPublicInstance {
+  getSelectedItems?: () => Array<{ path: string; [key: string]: unknown }>
   [key: string]: unknown
 }
 
@@ -60,8 +63,8 @@ const vuefinderRef = ref<VueFinderInstance | null>(null)
 
 // 配置常量
 const prefixConfig = computed(() => props.prefix || getPrefixConfig())
-const BASE_URL = computed(() => `${prefixConfig.value.prefix}/api/finder`)
-const FINDER_ID = 20
+const BASE_URL = computed(() => `${prefixConfig.value.prefix}/api/cmdb/finder`)
+const FINDER_ID = computed(() => Number(props.resource_id) || 20)
 
 // 扩展 RemoteDriver 以支持自定义下载
 class CustomRemoteDriver extends RemoteDriver {
@@ -78,7 +81,7 @@ class CustomRemoteDriver extends RemoteDriver {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          "X-Finder-ID": String(FINDER_ID)
+          "X-Finder-ID": String(FINDER_ID.value)
         }
       })
 
@@ -120,7 +123,7 @@ const driver = computed(() => {
   return new CustomRemoteDriver({
     baseURL: BASE_URL.value,
     headers: {
-      "X-Finder-ID": FINDER_ID
+      "X-Finder-ID": FINDER_ID.value
     },
     retry: 0,
     url: {
@@ -143,7 +146,7 @@ const driver = computed(() => {
 })
 
 // 创建 WebSocket 上传器实例
-const wsUploader = computed(() => new WebSocketUploader(prefixConfig.value.wsServer, BASE_URL.value, FINDER_ID))
+const wsUploader = computed(() => new WebSocketUploader(prefixConfig.value.wsServer, BASE_URL.value, FINDER_ID.value))
 
 // 使用 VueFinder 的 customUploader prop 配置 WebSocket 上传
 // 参考: https://github.com/n1crack/vuefinder/blob/master/docs/api-reference/props.md
@@ -213,16 +216,68 @@ const handleDownloadClick = async (event: MouseEvent) => {
   if (!target) return
 
   const href = target.getAttribute("href")
-  if (!href?.includes("/api/finder/download")) return
+  if (!href) return
+
+  // 检查是否是下载链接（支持新旧路径格式）
+  const isDownloadLink = href.includes("/api/cmdb/finder/download") || href.includes("/api/finder/download")
+  if (!isDownloadLink) return
 
   event.preventDefault()
   event.stopPropagation()
 
-  const url = new URL(href, window.location.origin)
-  const filePath = url.searchParams.get("path")
-  if (!filePath) return
+  try {
+    // 处理相对路径和绝对路径
+    let url: URL
+    if (href.startsWith("http://") || href.startsWith("https://")) {
+      url = new URL(href)
+    } else {
+      url = new URL(href, window.location.origin)
+    }
 
-  await handleDownload(filePath)
+    const filePath = url.searchParams.get("path")
+    if (!filePath) {
+      // 如果没有 path 参数，检查是否有选中的文件
+      const selectedItems = vuefinderRef.value?.getSelectedItems?.() || []
+      if (selectedItems.length === 0) {
+        ElMessage.warning("请先选择要下载的文件")
+        return
+      }
+      // 如果有选中的文件，下载第一个
+      const firstItem = selectedItems[0]
+      if (firstItem.path) {
+        await handleDownload(firstItem.path)
+      } else {
+        console.warn("选中的文件缺少 path 属性:", firstItem)
+        ElMessage.warning("无法获取文件路径")
+      }
+      return
+    }
+
+    await handleDownload(filePath)
+  } catch (error) {
+    console.error("解析下载 URL 失败:", error, href)
+    // 如果 URL 解析失败，尝试从 href 中直接提取 path 参数
+    const pathMatch = href.match(/[?&]path=([^&]+)/)
+    if (pathMatch) {
+      const filePath = decodeURIComponent(pathMatch[1])
+      await handleDownload(filePath)
+    } else {
+      // 如果仍然无法提取，检查是否有选中的文件
+      const selectedItems = vuefinderRef.value?.getSelectedItems?.() || []
+      if (selectedItems.length === 0) {
+        ElMessage.warning("请先选择要下载的文件")
+        console.error("无法从 URL 中提取 path 参数，且没有选中的文件:", href)
+        return
+      }
+      // 如果有选中的文件，下载第一个
+      const firstItem = selectedItems[0]
+      if (firstItem.path) {
+        await handleDownload(firstItem.path)
+      } else {
+        ElMessage.warning("无法获取文件路径")
+      }
+    }
+  }
 }
 
 onMounted(() => {

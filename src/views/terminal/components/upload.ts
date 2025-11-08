@@ -43,7 +43,7 @@ export class WebSocketUploader {
     }
 
     return new Promise((resolve, reject) => {
-      const wsURL = `${this.wsServer}/api/finder/upload/ws?id=${this.finderId}`
+      const wsURL = `${this.wsServer}/api/cmdb/finder/upload/ws?id=${this.finderId}`
       const ws = new WebSocket(wsURL)
       const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
