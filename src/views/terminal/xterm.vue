@@ -10,7 +10,7 @@ import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "@xterm/xte
 import { FitAddon } from "@xterm/addon-fit"
 import _ from "lodash"
 import { ElMessage } from "element-plus"
-import { PrefixConfig } from "./index.vue"
+import type { PrefixConfig } from "./utils/prefix-config"
 
 const props = withDefaults(
   defineProps<{
@@ -64,7 +64,7 @@ const initXterm = () => {
   socketOnError()
 
   // 发送数据
-  xterm.value?.onData(function (data: any) {
+  xterm.value?.onData(function (data: string) {
     const message = {
       operation: "stdin",
       data: data
@@ -104,15 +104,16 @@ const socketOnClose = () => {
 }
 
 const socketOnError = () => {
-  socket.value!.onerror = (e: any) => {
-    xterm.value?.writeln(`websocket error: \x1B[1;3;31m${e.data}\x1B[0m `)
-    ElMessage.error("错误：连接失败", e.data)
+  socket.value!.onerror = () => {
+    const errorMsg = "WebSocket 连接错误"
+    xterm.value?.writeln(`websocket error: \x1B[1;3;31m${errorMsg}\x1B[0m `)
+    ElMessage.error("错误：连接失败")
   }
 }
 
 const socketOnMessage = () => {
-  socket.value!.onmessage = (msg: any) => {
-    const content = JSON.parse(msg.data)
+  socket.value!.onmessage = (msg: MessageEvent) => {
+    const content = JSON.parse(msg.data as string) as { data: string }
     xterm.value?.write(content.data)
   }
 }

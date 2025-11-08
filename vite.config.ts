@@ -1,4 +1,5 @@
 import { type ConfigEnv, type UserConfigExport, loadEnv } from "vite"
+import { fileURLToPath, URL } from "node:url"
 import vue from "@vitejs/plugin-vue"
 import vueJsx from "@vitejs/plugin-vue-jsx"
 import UnoCSS from "unocss/vite"
@@ -18,6 +19,8 @@ import { VueMcp } from "vite-plugin-vue-mcp"
 // import { visualizer } from "rollup-plugin-visualizer"
 // import vueDevTools from "vite-plugin-vue-devtools"
 
+const __dirname = fileURLToPath(new URL(".", import.meta.url))
+
 // https://vitejs.dev/config/
 export default ({ mode }: ConfigEnv): UserConfigExport => {
   const viteEnv = loadEnv(mode, process.cwd()) as ImportMetaEnv
@@ -30,7 +33,9 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         // @ 符号指向 src 目录
         "@": resolve(__dirname, "src"),
         // @@ 符号指向 src/common 通用目录
-        "@@": resolve(__dirname, "src/common")
+        "@@": resolve(__dirname, "src/common"),
+        // vuefiner 本地化文件路径别名
+        "vuefinder/dist/locales": resolve(__dirname, "node_modules/vuefinder/dist/locales")
       }
     },
     plugins: [

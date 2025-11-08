@@ -1,11 +1,11 @@
 import { type App } from "vue"
 
+import VueFinder from "vuefinder"
 import "vuefinder/dist/style.css"
-// @ts-ignore
-import VueFinder from "vuefinder/dist/vuefinder"
 
 export function loadFinder(app: App) {
   app.use(VueFinder, {
+    locale: "zhCN",
     i18n: {
       // @ts-ignore
       en: async () => await import("vuefinder/dist/locales/en.js"),

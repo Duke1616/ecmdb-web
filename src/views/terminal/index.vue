@@ -87,10 +87,9 @@ import finder from "./file-system.vue"
 // import vnc from "./vnc.vue" // VNC 组件暂未实现
 
 // 类型定义
-export interface PrefixConfig {
-  wsServer: string
-  prefix: string
-}
+import type { PrefixConfig } from "./utils/prefix-config"
+import { getPrefixConfig } from "./utils/prefix-config"
+export type { PrefixConfig }
 
 interface ConnectionOption {
   value: string
@@ -181,11 +180,16 @@ const connect = async () => {
     dialogVisible.value = false
 
     ElMessage.success(`成功连接到 ${getCurrentOptionLabel()}`)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("连接失败:", error)
 
-    const errorMessage = error?.msg || error?.message || "连接失败"
-    ElMessage.error(`连接失败: ${errorMessage}`)
+    const errorMessage =
+      (error && typeof error === "object" && ("msg" in error || "message" in error)
+        ? "msg" in error
+          ? error.msg
+          : error.message
+        : null) || "连接失败"
+    ElMessage.error(`连接失败: ${String(errorMessage)}`)
   } finally {
     loading.value = false
   }
@@ -198,16 +202,6 @@ const disconnect = () => {
   dialogVisible.value = true
 
   ElMessage.info("已断开连接")
-}
-
-const getPrefixConfig = (): PrefixConfig => {
-  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-  const host = window.location.host
-
-  return {
-    wsServer: `${protocol}//${host}`,
-    prefix: `${window.location.protocol}//${window.location.host}`
-  }
 }
 
 // 生命周期

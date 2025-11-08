@@ -80,7 +80,13 @@ const init = async () => {
   }
 
   // 初始化鼠标事件
-  const mouse = new guacamole.Mouse(displayElement) as any
+  interface MouseHandler {
+    onmousedown?: (mouseState: Mouse.State) => void
+    onmouseup?: (mouseState: Mouse.State) => void
+    onmousemove?: (mouseState: Mouse.State) => void
+  }
+
+  const mouse = new guacamole.Mouse(displayElement) as MouseHandler
   mouse.onmousedown = mouse.onmouseup = function (mouseState: Mouse.State) {
     sinkFocus()
     client.sendMouseState(mouseState)
@@ -93,7 +99,7 @@ const init = async () => {
     client.sendMouseState(mouseState)
   }
 
-  const touch = new guacamole.Mouse.Touchpad(displayElement) as any
+  const touch = new guacamole.Mouse.Touchpad(displayElement) as MouseHandler
 
   touch.onmousedown =
     touch.onmousemove =
