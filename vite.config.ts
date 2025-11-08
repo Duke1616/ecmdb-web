@@ -126,7 +126,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           },
     // 依赖预构建
     optimizeDeps: {
-      include: ["element-plus/es/components/*/style/css"]
+      include: ["element-plus/es/components/*/style/css", "vuefinder"]
     },
     // CSS 相关配置
     css: {

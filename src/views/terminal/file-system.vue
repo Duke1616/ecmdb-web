@@ -5,10 +5,19 @@
       id="vuefinder"
       :driver="driver"
       :config="{
-        persist: true,
+        view: 'list',
         theme: 'valorite',
-        maxFileSize: '500mb',
-        fullScreen: true
+        fullScreen: true,
+        showTreeView: true,
+        showHiddenFiles: false,
+        compactListView: true,
+        metricUnits: true,
+        showThumbnails: true,
+        persist: true,
+        loadingIndicator: 'linear',
+        maxFileSize: '50mb',
+        pinnedFolders: [],
+        locale: 'zhCN'
       }"
       :custom-uploader="customUploader"
     />
