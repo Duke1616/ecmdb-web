@@ -74,7 +74,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onUnmounted } from "vue"
+import { ref, computed, onMounted, onUnmounted, watch } from "vue"
 import { connectApi } from "@/api/term"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
@@ -104,6 +104,7 @@ const route = useRoute()
 const router = useRouter()
 const resourceId = computed(() => route.query.resource_id as string)
 const title = computed(() => route.query.title as string)
+const connectionType = computed(() => route.query.connection_type as string)
 
 // 状态管理
 const dialogVisible = ref<boolean>(true)
@@ -179,6 +180,14 @@ const connect = async () => {
     isConnected.value = true
     dialogVisible.value = false
 
+    // 更新 URL，保存连接状态
+    router.replace({
+      query: {
+        ...route.query,
+        connection_type: selectedOption.value
+      }
+    })
+
     ElMessage.success(`成功连接到 ${getCurrentOptionLabel()}`)
   } catch (error: unknown) {
     console.error("连接失败:", error)
@@ -201,11 +210,69 @@ const disconnect = () => {
   prefix.value = undefined
   dialogVisible.value = true
 
+  // 从 URL 中移除连接类型参数
+  const newQuery = { ...route.query }
+  delete newQuery.connection_type
+  router.replace({
+    query: newQuery
+  })
+
   ElMessage.info("已断开连接")
 }
 
+// 恢复连接状态（不重新建立连接，只是恢复 UI 状态）
+const restoreConnection = () => {
+  if (connectionType.value && resourceId.value) {
+    // 验证连接类型是否有效
+    const option = connectionOptions.find((opt) => opt.value === connectionType.value && !opt.disabled)
+    if (option) {
+      selectedOption.value = connectionType.value
+      prefix.value = getPrefixConfig()
+      isConnected.value = true
+      dialogVisible.value = false
+      // 不显示成功消息，因为这是恢复状态，不是新连接
+      return true
+    } else {
+      // 无效的连接类型，从 URL 中移除
+      const newQuery = { ...route.query }
+      delete newQuery.connection_type
+      router.replace({ query: newQuery })
+      return false
+    }
+  }
+  return false
+}
+
+// 页面离开前确认
+const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+  // 只有在已连接状态下才提示
+  if (isConnected.value) {
+    // 现代浏览器需要设置 returnValue 才能显示确认对话框
+    // 注意：必须同时设置 preventDefault 和 returnValue
+    event.preventDefault()
+    // 设置一个非空字符串，虽然浏览器会忽略自定义消息，但必须设置
+    event.returnValue = "您确定要离开吗？连接可能会断开。"
+    return event.returnValue
+  }
+}
+
+// 动态管理 beforeunload 事件监听器
+watch(
+  () => isConnected.value,
+  (connected) => {
+    if (connected) {
+      // 连接时添加事件监听
+      window.addEventListener("beforeunload", handleBeforeUnload)
+    } else {
+      // 断开时移除事件监听
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+    }
+  },
+  { immediate: true }
+)
+
 // 生命周期
-onMounted(() => {
+onMounted(async () => {
   // 检查必要参数
   if (!resourceId.value) {
     ElMessage.error("缺少必要的资源ID参数")
@@ -213,14 +280,24 @@ onMounted(() => {
     return
   }
 
-  // 默认选择第一个可用选项
-  const firstAvailable = connectionOptions.find((opt) => !opt.disabled)
-  if (firstAvailable) {
-    selectedOption.value = firstAvailable.value
+  // 如果 URL 中有连接类型，恢复连接状态（不重新建立连接）
+  // 这样刷新页面时，只是恢复 UI 显示，不会重新调用 connectApi
+  // 后端的 WebSocket 连接会由子组件（xterm/guacd/finder）自己管理
+  if (connectionType.value) {
+    restoreConnection()
+  } else {
+    // 默认选择第一个可用选项
+    const firstAvailable = connectionOptions.find((opt) => !opt.disabled)
+    if (firstAvailable) {
+      selectedOption.value = firstAvailable.value
+    }
   }
 })
 
 onUnmounted(() => {
+  // 移除页面离开事件监听（确保清理）
+  window.removeEventListener("beforeunload", handleBeforeUnload)
+
   // 组件卸载时清理资源
   if (isConnected.value) {
     disconnect()

@@ -15,9 +15,7 @@
         showThumbnails: true,
         persist: true,
         loadingIndicator: 'linear',
-        maxFileSize: '50mb',
-        pinnedFolders: [],
-        locale: 'zhCN'
+        maxFileSize: '50mb'
       }"
       :custom-uploader="customUploader"
     />
