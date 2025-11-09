@@ -84,7 +84,7 @@
     "vue-router": "^4.5.1",
     "vue3-icon-picker": "^0.1.3",
     "vuedraggable": "^4.1.0",
-    "vuefinder": "^4.0.9",
+    "vuefinder": "^4.0.11",
     "vxe-table": "4.6.25",
     "vxe-table-plugin-element": "^4.0.1",
     "xe-utils": "^3.5.25"

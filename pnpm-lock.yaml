@@ -222,8 +222,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0(vue@3.5.21(typescript@5.8.3))
       vuefinder:
-        specifier: ^4.0.9
-        version: 4.0.9(@vue/devtools-api@7.7.7)(vite@7.1.3(@types/node@20.19.11)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.78.0)(yaml@2.8.1))(vue@3.5.21(typescript@5.8.3))
+        specifier: ^4.0.11
+        version: 4.0.11(@vue/devtools-api@7.7.7)(vite@7.1.3(@types/node@20.19.11)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.78.0)(yaml@2.8.1))(vue@3.5.21(typescript@5.8.3))
       vxe-table:
         specifier: 4.6.25
         version: 4.6.25(vue@3.5.21(typescript@5.8.3))
@@ -4963,8 +4963,8 @@ packages:
     peerDependencies:
       vue: ^3.0.1
 
-  vuefinder@4.0.9:
-    resolution: {integrity: sha512-KIvJF8JbANapjYkNBxlx7nPWeQ7zLM8YXLsbB9yaz+ZUevx2zaKjjOyhHzXDgiQ3h8ZxpiVXHSBjXoo94KGpVA==}
+  vuefinder@4.0.11:
+    resolution: {integrity: sha512-8f82fdbO6WgMZ3i94dc7iZlnTiCpYzevDKhc5KLXUHID8UhvlvI3k2hezdTvYYbno107JdzKZ4qLeTOuf+sBBA==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       vue: ^3.5.22
@@ -10107,7 +10107,7 @@ snapshots:
       sortablejs: 1.14.0
       vue: 3.5.21(typescript@5.8.3)
 
-  vuefinder@4.0.9(@vue/devtools-api@7.7.7)(vite@7.1.3(@types/node@20.19.11)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.78.0)(yaml@2.8.1))(vue@3.5.21(typescript@5.8.3)):
+  vuefinder@4.0.11(@vue/devtools-api@7.7.7)(vite@7.1.3(@types/node@20.19.11)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.78.0)(yaml@2.8.1))(vue@3.5.21(typescript@5.8.3)):
     dependencies:
       '@floating-ui/dom': 1.7.4
       '@nanostores/persistent': 1.2.0(nanostores@1.0.1)

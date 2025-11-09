@@ -15,7 +15,7 @@
         showThumbnails: true,
         persist: true,
         loadingIndicator: 'linear',
-        maxFileSize: '50mb'
+        maxFileSize: '2GB'
       }"
       :custom-uploader="customUploader"
     />
