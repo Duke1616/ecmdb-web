@@ -130,6 +130,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     },
     // CSS 相关配置
     css: {
+      devSourcemap: true,
       // 线程中运行 CSS 预处理器
       preprocessorMaxWorkers: true
     },

@@ -17,15 +17,16 @@ type ErrorCallback = (error: Error) => void
 
 export class WebSocketUploader {
   private wsServer: string
-  private baseURL: string
   private finderId: number
   private chunkSize: number
+  private _progressIntervalMs: number
 
-  constructor(wsServer: string, baseURL: string, finderId: number) {
+  constructor(wsServer: string, finderId: number) {
     this.wsServer = wsServer
-    this.baseURL = baseURL
     this.finderId = finderId
-    this.chunkSize = 64 * 1024 // 64KB
+    // 提升到 256KB，减少主线程事件与 JSON 开销（后端每 ~64KB 报告一次写入进度）
+    this.chunkSize = 256 * 1024 // 256KB
+    this._progressIntervalMs = 1000 // 进度节流间隔（1s 同步）
   }
 
   async uploadFile(
@@ -47,6 +48,20 @@ export class WebSocketUploader {
       const ws = new WebSocket(wsURL)
       const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
+      // 发送阶段的进度节流器
+      let _lastEmit = 0
+      const emitSendingProgress = (bytes: number) => {
+        const now = Date.now()
+        if (now - _lastEmit < this._progressIntervalMs) return
+        _lastEmit = now
+        if (onProgress) {
+          onProgress({
+            bytesUploaded: bytes,
+            bytesTotal: file.size
+          })
+        }
+      }
+
       ws.onopen = () => {
         // 发送开始消息
         ws.send(
@@ -61,12 +76,7 @@ export class WebSocketUploader {
 
         // 开始读取文件并发送
         this.readAndSendFile(ws, file, uploadId, (bytes) => {
-          if (onProgress) {
-            onProgress({
-              bytesUploaded: bytes,
-              bytesTotal: file.size
-            })
-          }
+          emitSendingProgress(bytes)
         })
       }
 
@@ -76,13 +86,17 @@ export class WebSocketUploader {
 
           if (msg.type === "progress") {
             // SFTP 写入进度
-            const sftpWritten = msg.sftpWritten || 0
-            const sftpPercent = sftpWritten > 0 ? ((sftpWritten / msg.size) * 100).toFixed(2) : "0.00"
+            const total = Number(msg.size) || Number(file.size) || 0
+            const sftpWritten = Number(msg.sftpWritten) || 0
+            const offset = Number(msg.offset) || 0 // 已接收
+            const sftpPercent = total > 0 ? ((sftpWritten / total) * 100).toFixed(2) : "0.00"
 
             if (onProgress) {
               onProgress({
-                bytesUploaded: msg.offset,
-                bytesTotal: msg.size,
+                // 已发送/已接收（客户端->服务端）
+                bytesUploaded: offset,
+                bytesTotal: total,
+                // 已写入远端（服务端->SFTP）
                 sftpWritten: sftpWritten,
                 sftpPercent: sftpPercent
               })
