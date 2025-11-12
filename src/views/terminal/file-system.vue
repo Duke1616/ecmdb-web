@@ -77,7 +77,7 @@ const FINDER_ID = computed(() => Number(props.resource_id) || 20)
 class CustomRemoteDriver extends RemoteDriver {
   async download(filePath: string): Promise<void> {
     try {
-      const url = `${BASE_URL.value}/download?path=${encodeURIComponent(filePath)}&id=${encodeURIComponent(String(FINDER_ID))}`
+      const url = `${BASE_URL.value}/download?path=${encodeURIComponent(filePath)}&id=${encodeURIComponent(String(FINDER_ID.value))}`
       const link = document.createElement("a")
       link.href = url
       link.rel = "noopener noreferrer"
