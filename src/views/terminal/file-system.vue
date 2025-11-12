@@ -73,53 +73,21 @@ const prefixConfig = computed(() => props.prefix || getPrefixConfig())
 const BASE_URL = computed(() => `${prefixConfig.value.prefix}/api/cmdb/finder`)
 const FINDER_ID = computed(() => Number(props.resource_id) || 20)
 
-// 扩展 RemoteDriver 以支持自定义下载
+// 扩展 RemoteDriver 以支持自定义下载（使用原生下载，支持 Range，避免内存聚合）
 class CustomRemoteDriver extends RemoteDriver {
-  private baseUrl: string
-
-  constructor(config: { baseURL: string; [key: string]: unknown }) {
-    super(config)
-    this.baseUrl = config.baseURL
-  }
-
-  async download(filePath: string, fileName?: string): Promise<void> {
+  async download(filePath: string): Promise<void> {
     try {
-      const url = `${this.baseUrl}/download?path=${encodeURIComponent(filePath)}`
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-Finder-ID": String(FINDER_ID.value)
-        }
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "下载失败")
-      }
-
-      // 获取文件名
-      const contentDisposition = response.headers.get("Content-Disposition")
-      const finalFileName = contentDisposition
-        ? contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)?.[1]?.replace(/['"]/g, "") ||
-          fileName ||
-          filePath.split("/").pop()
-        : fileName || filePath.split("/").pop()
-
-      // 下载文件
-      const blob = await response.blob()
-      const downloadUrl = URL.createObjectURL(blob)
+      const url = `${BASE_URL.value}/download?path=${encodeURIComponent(filePath)}&id=${encodeURIComponent(String(FINDER_ID))}`
       const link = document.createElement("a")
-      link.href = downloadUrl
-      link.download = finalFileName || "download"
+      link.href = url
+      link.rel = "noopener noreferrer"
       link.style.display = "none"
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error("下载失败:", error)
-      const errorMessage = error instanceof Error ? error.message : "未知错误"
-      alert(`下载失败: ${errorMessage}`)
+      ElMessage.error("下载失败，请重试")
       throw error
     }
   }
