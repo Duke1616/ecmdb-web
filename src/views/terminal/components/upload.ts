@@ -20,6 +20,7 @@ export class WebSocketUploader {
   private finderId: number
   private chunkSize: number
   private _progressIntervalMs: number
+  private _startedSending: boolean
 
   constructor(wsServer: string, finderId: number) {
     this.wsServer = wsServer
@@ -27,6 +28,7 @@ export class WebSocketUploader {
     // 提升到 256KB，减少主线程事件与 JSON 开销（后端每 ~64KB 报告一次写入进度）
     this.chunkSize = 256 * 1024 // 256KB
     this._progressIntervalMs = 1000 // 进度节流间隔（1s 同步）
+    this._startedSending = false
   }
 
   async uploadFile(
@@ -47,6 +49,8 @@ export class WebSocketUploader {
       const wsURL = `${this.wsServer}/api/cmdb/finder/upload/ws?id=${this.finderId}`
       const ws = new WebSocket(wsURL)
       const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      // 重置内部状态，确保多次上传时能够正确启动
+      this._startedSending = false
 
       // 发送阶段的进度节流器
       let _lastEmit = 0
@@ -63,7 +67,7 @@ export class WebSocketUploader {
       }
 
       ws.onopen = () => {
-        // 发送开始消息
+        // 发送开始消息，请求服务器返回可续传的偏移
         ws.send(
           JSON.stringify({
             type: "start",
@@ -73,11 +77,6 @@ export class WebSocketUploader {
             size: file.size
           })
         )
-
-        // 开始读取文件并发送
-        this.readAndSendFile(ws, file, uploadId, (bytes) => {
-          emitSendingProgress(bytes)
-        })
       }
 
       ws.onmessage = (event) => {
@@ -99,6 +98,14 @@ export class WebSocketUploader {
                 // 已写入远端（服务端->SFTP）
                 sftpWritten: sftpWritten,
                 sftpPercent: sftpPercent
+              })
+            }
+
+            // 如果还未开始读取，收到初始 offset 后启动从该偏移读取
+            if (!this._startedSending) {
+              this._startedSending = true
+              this.readAndSendFile(ws, file, uploadId, offset, (bytes) => {
+                emitSendingProgress(bytes)
               })
             }
           } else if (msg.type === "success") {
@@ -139,17 +146,33 @@ export class WebSocketUploader {
         if (event.code !== 1000 && event.code !== 1005) {
           console.warn(`[WebSocket上传] 连接异常关闭: code=${event.code}, reason=${event.reason || "无原因"}`)
         }
+        // 连接关闭后重置状态，避免影响下一次上传
+        this._startedSending = false
       }
     })
   }
 
-  private readAndSendFile(ws: WebSocket, file: File, uploadId: string, onProgress?: (bytes: number) => void): void {
+  private readAndSendFile(
+    ws: WebSocket,
+    file: File,
+    uploadId: string,
+    startOffset: number,
+    onProgress?: (bytes: number) => void
+  ): void {
     const reader = new FileReader()
-    let offset = 0
+    let offset = Number(startOffset) || 0
 
     const readNextChunk = () => {
       if (offset >= file.size) {
         // 文件读取完成，发送结束消息
+        try {
+          // 最后再发一次发送阶段进度，确保 UI 达到 100%
+          if (onProgress) {
+            onProgress(file.size)
+          }
+        } catch (_) {
+          /* empty */
+        }
         ws.send(
           JSON.stringify({
             type: "end",
@@ -176,11 +199,12 @@ export class WebSocketUploader {
         }
         const base64 = btoa(binary)
 
-        // 发送数据块
+        // 发送数据块，携带当前偏移供服务端随机写入
         ws.send(
           JSON.stringify({
             type: "chunk",
             id: uploadId,
+            offset: offset,
             data: base64
           })
         )
