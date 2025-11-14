@@ -5,6 +5,7 @@ interface UploadProgress {
   bytesTotal: number
   sftpWritten?: number
   sftpPercent?: string
+  resumeFrom?: number
 }
 
 interface UploadSuccessData {
@@ -38,7 +39,6 @@ export class WebSocketUploader {
     onSuccess?: SuccessCallback,
     onError?: ErrorCallback
   ): Promise<UploadSuccessData> {
-    // 确保 file 是 File 对象
     if (!(file instanceof File)) {
       const error = new Error("File must be a File object")
       if (onError) onError(error)
@@ -49,70 +49,67 @@ export class WebSocketUploader {
       const wsURL = `${this.wsServer}/api/cmdb/finder/upload/ws?id=${this.finderId}`
       const ws = new WebSocket(wsURL)
       const uploadId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-      // 重置内部状态，确保多次上传时能够正确启动
       this._startedSending = false
 
-      // 发送阶段的进度节流器
+      // 统一进度节流器
       let _lastEmit = 0
-      const emitSendingProgress = (bytes: number) => {
+      let _firstServerProgress = true
+      const progressState = {
+        total: Number(file.size) || 0,
+        uploaded: 0,
+        written: 0
+      }
+      const emitProgress = (forceExtras?: Partial<UploadProgress>) => {
         const now = Date.now()
-        if (now - _lastEmit < this._progressIntervalMs) return
+        if (!forceExtras && now - _lastEmit < this._progressIntervalMs) return
         _lastEmit = now
         if (onProgress) {
-          onProgress({
-            bytesUploaded: bytes,
-            bytesTotal: file.size
-          })
+          const total = progressState.total || 0
+          const uploaded = Math.min(progressState.uploaded || 0, total)
+          const written = Math.min(progressState.written || 0, total)
+          const payload: UploadProgress = {
+            bytesUploaded: uploaded,
+            bytesTotal: total,
+            sftpWritten: written,
+            sftpPercent: total > 0 ? ((written / total) * 100).toFixed(2) : "0.00"
+          }
+          onProgress(forceExtras ? { ...payload, ...forceExtras } : payload)
         }
       }
 
       ws.onopen = () => {
-        // 发送开始消息，请求服务器返回可续传的偏移
-        ws.send(
-          JSON.stringify({
-            type: "start",
-            id: uploadId,
-            fileName: file.name,
-            path: path,
-            size: file.size
-          })
-        )
+        this._sendJSON(ws, {
+          type: "start",
+          id: uploadId,
+          fileName: file.name,
+          path: path,
+          size: file.size
+        })
       }
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data)
-
           if (msg.type === "progress") {
-            // SFTP 写入进度
-            const total = Number(msg.size) || Number(file.size) || 0
+            progressState.total = Number(msg.size) || Number(file.size) || 0
             const sftpWritten = Number(msg.sftpWritten) || 0
-            const offset = Number(msg.offset) || 0 // 已接收
-            const sftpPercent = total > 0 ? ((sftpWritten / total) * 100).toFixed(2) : "0.00"
+            const offset = Number(msg.offset) || 0
+            progressState.written = Math.max(progressState.written, sftpWritten)
+            progressState.uploaded = Math.max(progressState.uploaded, offset)
+            const extras = _firstServerProgress ? { resumeFrom: sftpWritten } : undefined
+            emitProgress(extras)
+            _firstServerProgress = false
 
-            if (onProgress) {
-              onProgress({
-                // 已发送/已接收（客户端->服务端）
-                bytesUploaded: offset,
-                bytesTotal: total,
-                // 已写入远端（服务端->SFTP）
-                sftpWritten: sftpWritten,
-                sftpPercent: sftpPercent
-              })
-            }
-
-            // 如果还未开始读取，收到初始 offset 后启动从该偏移读取
             if (!this._startedSending) {
               this._startedSending = true
-              this.readAndSendFile(ws, file, uploadId, offset, (bytes) => {
-                emitSendingProgress(bytes)
+              this.readAndSendFile(ws, file, uploadId, offset, (sentBytes) => {
+                progressState.uploaded = Math.max(progressState.uploaded, sentBytes)
+                emitProgress()
               })
             }
           } else if (msg.type === "success") {
             ws.close()
-            if (onSuccess) {
-              onSuccess(msg.data)
-            }
+            if (onSuccess) onSuccess(msg.data)
             resolve(msg.data)
           } else if (msg.type === "error") {
             console.error(`[WebSocket上传] 上传失败: ${msg.error || "未知错误"}`)
@@ -120,6 +117,8 @@ export class WebSocketUploader {
             const error = new Error(msg.error || "上传失败")
             if (onError) onError(error)
             reject(error)
+          } else {
+            // 忽略未知类型
           }
         } catch (err) {
           console.error(`[WebSocket上传] 解析服务器消息失败:`, err)
@@ -140,13 +139,9 @@ export class WebSocketUploader {
       }
 
       ws.onclose = (event) => {
-        // 1000: 正常关闭
-        // 1005: 没有状态码（通常表示正常关闭，浏览器没有提供状态码，常见于上传完成后）
-        // 只记录异常关闭的情况
         if (event.code !== 1000 && event.code !== 1005) {
           console.warn(`[WebSocket上传] 连接异常关闭: code=${event.code}, reason=${event.reason || "无原因"}`)
         }
-        // 连接关闭后重置状态，避免影响下一次上传
         this._startedSending = false
       }
     })
@@ -157,85 +152,79 @@ export class WebSocketUploader {
     file: File,
     uploadId: string,
     startOffset: number,
-    onProgress?: (bytes: number) => void
+    onSendProgress?: (bytes: number) => void
   ): void {
     const reader = new FileReader()
     let offset = Number(startOffset) || 0
 
     const readNextChunk = () => {
+      if (!this._wsOpen(ws)) return
+      // 背压：缓冲过高时稍后重试
+      if (ws.bufferedAmount > this.chunkSize * 8) {
+        setTimeout(readNextChunk, 50)
+        return
+      }
       if (offset >= file.size) {
-        // 文件读取完成，发送结束消息
-        try {
-          // 最后再发一次发送阶段进度，确保 UI 达到 100%
-          if (onProgress) {
-            onProgress(file.size)
-          }
-        } catch (_) {
-          /* empty */
-        }
-        ws.send(
-          JSON.stringify({
-            type: "end",
-            id: uploadId
-          })
-        )
+        this._sendJSON(ws, { type: "end", id: uploadId })
         return
       }
 
       const chunk = file.slice(offset, offset + this.chunkSize)
 
       reader.onload = (e) => {
+        if (!this._wsOpen(ws)) return
         const result = e.target?.result
-        if (!result || !(result instanceof ArrayBuffer)) {
-          return
-        }
+        if (!result || !(result instanceof ArrayBuffer)) return
         const arrayBuffer = result
-        const bytes = new Uint8Array(arrayBuffer)
+        const base64 = this._b64Encode(new Uint8Array(arrayBuffer))
 
-        // 转换为 base64
-        let binary = ""
-        for (let i = 0; i < bytes.length; i++) {
-          binary += String.fromCharCode(bytes[i])
-        }
-        const base64 = btoa(binary)
-
-        // 发送数据块，携带当前偏移供服务端随机写入
-        ws.send(
-          JSON.stringify({
-            type: "chunk",
-            id: uploadId,
-            offset: offset,
-            data: base64
-          })
-        )
+        this._sendJSON(ws, {
+          type: "chunk",
+          id: uploadId,
+          offset: offset,
+          data: base64
+        })
 
         offset += arrayBuffer.byteLength
-
-        // 更新进度
-        if (onProgress) {
-          onProgress(offset)
-        }
-
-        // 继续读取下一块
+        if (onSendProgress) onSendProgress(offset)
         setTimeout(readNextChunk, 0)
       }
 
       reader.onerror = (error) => {
         console.error(`[WebSocket上传] 读取文件块失败:`, error)
         const errorMessage = error instanceof Error ? error.message : "未知错误"
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            id: uploadId,
-            error: "读取文件失败: " + errorMessage
-          })
-        )
+        if (this._wsOpen(ws)) {
+          this._sendJSON(ws, { type: "error", id: uploadId, error: "读取文件失败: " + errorMessage })
+        }
       }
 
       reader.readAsArrayBuffer(chunk)
     }
 
-    // 开始读取
     readNextChunk()
+  }
+
+  private _wsOpen(ws: WebSocket): boolean {
+    return ws && ws.readyState === WebSocket.OPEN
+  }
+
+  private _sendJSON(ws: WebSocket, obj: Record<string, unknown>): void {
+    if (!this._wsOpen(ws)) return
+    try {
+      ws.send(JSON.stringify(obj))
+    } catch (e) {
+      console.error("[WebSocket上传] 发送失败:", e)
+    }
+  }
+
+  private _b64Encode(bytes: Uint8Array): string {
+    const B64_BLOCK_SIZE = 8192
+    const parts: string[] = []
+    for (let i = 0; i < bytes.length; i += B64_BLOCK_SIZE) {
+      const sub = bytes.subarray(i, i + B64_BLOCK_SIZE)
+      // eslint-disable-next-line @typescript-eslint/no-implied-eval
+      parts.push(String.fromCharCode.apply(null, Array.from(sub) as unknown as number[]))
+    }
+    return btoa(parts.join(""))
   }
 }

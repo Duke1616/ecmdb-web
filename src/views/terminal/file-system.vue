@@ -131,6 +131,7 @@ interface UploadTask {
   _lastTime: number
   _uiLastTs: number
   _emaSpeed: number
+  _progressStarted: boolean
 }
 type UploadStatus = "uploading" | "success" | "error"
 
@@ -244,7 +245,8 @@ const customUploader = (uppy: UppyInstance, context: VueFinderContext) => {
           _lastLoaded: 0,
           _lastTime: Date.now(),
           _uiLastTs: 0,
-          _emaSpeed: 0
+          _emaSpeed: 0,
+          _progressStarted: false
         })
         uploadTasks.value.push(task)
 
@@ -252,25 +254,40 @@ const customUploader = (uppy: UppyInstance, context: VueFinderContext) => {
           file,
           targetPath,
           (progress) => {
-            // 统一单进度：取 offset 与 sftpWritten 的较大值作为可视化进度
             const now = Date.now()
-
-            const sent = Number(progress.bytesUploaded) || 0
             const total = Number(progress.bytesTotal) || task.total || task.size || 0
             const sftp = Number(progress.sftpWritten) || 0
 
             task.total = total
-            const vis = Math.max(sent, sftp)
-            task.loaded = Math.min(vis, total)
+            task.loaded = Math.min(sftp, total)
 
-            // 仅在 1s 节拍时更新 UI 上的速度/ETA/进度，避免闪烁
+            // 若后端给出断点续传起点，则作为新的基线，避免历史写入影响速率
+            if (
+              progress &&
+              typeof (progress as any).resumeFrom === "number" &&
+              isFinite((progress as any).resumeFrom)
+            ) {
+              task._progressStarted = true
+              task._lastLoaded = Number((progress as any).resumeFrom)
+              task._lastTime = now
+              task._uiLastTs = now
+            }
+
+            // 首次进度到来时初始化基线然后返回，下一拍再计算速率
+            if (!task._progressStarted) {
+              task._progressStarted = true
+              task._lastLoaded = task.loaded
+              task._lastTime = now
+              task._uiLastTs = now
+              return
+            }
+
+            // 仅在 1s 节拍或完成时刷新速度与 ETA（减少闪烁）
             if (now - task._uiLastTs >= UI_UPDATE_MS || task.loaded >= total) {
-              // 速度与 ETA（按当前阶段的基准进度计算）
-              const basisLoaded = task.loaded
+              const basisLoaded = sftp
               const dt = Math.max(0.2, (now - task._lastTime) / 1000)
               const dBytes = Math.max(0, basisLoaded - task._lastLoaded)
               const instSpeed = dBytes / dt
-              // EMA 平滑速度
               const alpha = 0.3
               const ema = isFinite(instSpeed)
                 ? alpha * instSpeed + (1 - alpha) * (task._emaSpeed || 0)
@@ -284,10 +301,10 @@ const customUploader = (uppy: UppyInstance, context: VueFinderContext) => {
               task._lastTime = now
               task._uiLastTs = now
 
-              // 维持 Uppy 的进度事件（可选）
+              // 维持 Uppy 的进度事件（以 SFTP 写入为准）
               uppy.emit("upload-progress", uppyFile, {
-                bytesUploaded: progress.bytesUploaded,
-                bytesTotal: progress.bytesTotal
+                bytesUploaded: sftp,
+                bytesTotal: total
               })
             }
           },
