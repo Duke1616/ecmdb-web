@@ -594,4 +594,8 @@ body {
 .sm\:block {
   display: block !important;
 }
+
+.md\:block {
+  display: block !important;
+}
 </style>
