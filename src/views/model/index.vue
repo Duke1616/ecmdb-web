@@ -386,7 +386,7 @@ const handleModelClick = (model: Model) => {
   console.log(model)
   router.push({
     path: "/cmdb/model/info",
-    query: { uid: model.uid, name: model.name }
+    query: { id: String(model.id) }
   })
 }
 

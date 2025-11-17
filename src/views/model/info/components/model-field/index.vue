@@ -53,12 +53,14 @@
                       @click.stop="handleDelete(item)"
                       size="small"
                       class="action-btn delete-btn"
-                      title="删除"
+                      :disabled="item.builtin"
+                      :title="item.builtin ? '内置字段不可删除' : '删除'"
                     />
                   </div>
                 </div>
                 <div class="field-details">
                   <el-tag size="small" type="primary">{{ item.field_type }}</el-tag>
+                  <el-tag v-if="item.builtin" size="small" type="warning" effect="light">内置</el-tag>
                   <code class="field-uid">{{ item.field_uid }}</code>
                 </div>
               </div>
@@ -284,6 +286,10 @@ watch(searchInput, () => {
 })
 
 const handleDelete = (row: Attribute) => {
+  if (row.builtin) {
+    ElMessage.warning("内置字段不可删除")
+    return
+  }
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -333,9 +339,20 @@ const handlerAddAttributeGroup = () => {
   })
 }
 
+// 当模型 uid 发生变化时重新获取字段列表（兼容详情页异步加载的场景）
+watch(
+  () => props.modelUid,
+  (newVal, oldVal) => {
+    if (!newVal || newVal === oldVal) return
+    getAttributesData()
+  },
+  { immediate: true }
+)
+
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], getAttributesData, {
-  immediate: true
+watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
+  if (!props.modelUid) return
+  getAttributesData()
 })
 
 //** 全部展开/收起功能 */
@@ -510,6 +527,15 @@ function toggleAllGroups() {
                   font-size: 12px;
                   transition: all 0.2s ease;
                   min-width: 22px;
+                  cursor: pointer;
+
+                  &:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                    transform: none !important;
+                    background: #fde4e4;
+                    color: #f87171;
+                  }
 
                   :deep(.el-icon) {
                     display: flex;
@@ -555,6 +581,12 @@ function toggleAllGroups() {
                 color: #1e40af;
                 border: 1px solid #bfdbfe;
                 font-weight: 500;
+              }
+
+              :deep(.el-tag.el-tag--warning) {
+                background: #fef3c7;
+                color: #a16207;
+                border-color: #fcd34d;
               }
 
               .field-uid {

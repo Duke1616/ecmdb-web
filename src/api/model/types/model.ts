@@ -12,6 +12,7 @@ export interface Model {
   uid: string
   total: number
   icon: string
+  builtin?: boolean
 }
 
 export interface CreateModelReq {

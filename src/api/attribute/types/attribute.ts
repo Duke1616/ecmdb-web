@@ -49,6 +49,7 @@ export interface Attribute {
   secure: boolean
   link: boolean
   option: any
+  builtin?: boolean
 }
 
 export type listAttributeFieldData = {

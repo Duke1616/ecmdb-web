@@ -26,6 +26,13 @@ export function ListModelsByGroupApi() {
   })
 }
 
+/** 获取模型详情 */
+export const getModelDetailApi = (id: number) => {
+  return instance.get<Model.Model>({
+    url: `${API_SERVICE.CMDB}/model/detail/${id}`
+  })
+}
+
 /** 获取模型拓扑图 */
 export function listModelGraphApi() {
   return instance.post<RGJsonData>({

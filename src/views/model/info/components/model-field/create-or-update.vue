@@ -236,7 +236,8 @@ const availableSettings = computed(() => {
   return getAvailableSettings(formData.value.field_type)
 })
 
-const DEFAULT_FORM_DATA: createOrUpdateAttributeReq = {
+// 使用函数生成默认表单，确保每次打开时都能拿到当前的 groupId / modelUid
+const getDefaultFormData = (): createOrUpdateAttributeReq => ({
   model_uid: props.modelUid,
   group_id: props.groupId ?? 0,
   field_uid: "",
@@ -246,9 +247,9 @@ const DEFAULT_FORM_DATA: createOrUpdateAttributeReq = {
   link: false,
   secure: false,
   option: ""
-}
+})
 
-const formData = ref<createOrUpdateAttributeReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createOrUpdateAttributeReq>(cloneDeep(getDefaultFormData()))
 const originalFormData = ref<createOrUpdateAttributeReq | null>(null)
 const formRef = ref<FormInstance | null>(null)
 const fieldRules: FormRules = {
@@ -329,7 +330,8 @@ const handlerCreateOrUpdateAttribute = async () => {
 
 const resetForm = () => {
   formRef.value?.clearValidate()
-  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  // 重新根据当前 props 生成默认表单，避免使用旧的 groupId
+  formData.value = cloneDeep(getDefaultFormData())
   originalFormData.value = null // 清空原始数据
 }
 

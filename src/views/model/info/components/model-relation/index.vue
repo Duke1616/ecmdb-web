@@ -188,7 +188,8 @@ const listModelRelationData = () => {
     .then(({ data }) => {
       reverseMap()
       paginationData.total = data.total
-      modelRelationData.value = data.model_relations
+      // 后端可能返回 null / undefined，需要兜底为数组，避免 DataTable 内部对 data 进行遍历时报错
+      modelRelationData.value = Array.isArray(data.model_relations) ? data.model_relations : []
 
       console.log("relation", modelRelationData.value)
     })
