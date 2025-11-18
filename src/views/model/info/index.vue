@@ -6,12 +6,10 @@
           <div class="identity-badge">
             <span class="badge-label">唯一标识</span>
             <code class="identity-code">{{ modelUid }}</code>
+            <el-tag v-if="isBuiltin" size="small" type="warning" class="builtin-tag">内置</el-tag>
           </div>
           <div class="model-name-section">
-            <div class="model-name-wrapper">
-              <h2 class="model-name">{{ modelName }}</h2>
-              <el-tag v-if="isBuiltin" size="small" type="warning" class="builtin-tag">内置</el-tag>
-            </div>
+            <h2 class="model-name">{{ modelName }}</h2>
           </div>
         </div>
       </template>
@@ -173,22 +171,6 @@ onMounted(() => {
       padding: 2px 6px;
       border-radius: 3px;
     }
-  }
-
-  .model-name-section {
-    .model-name-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .model-name {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--foreground, #111827);
-      margin: 0;
-      line-height: 1.3;
-    }
 
     .builtin-tag {
       border-radius: 8px;
@@ -196,6 +178,16 @@ onMounted(() => {
       color: #a16207;
       background: #fef3c7;
       border-color: #fcd34d;
+    }
+  }
+
+  .model-name-section {
+    .model-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--foreground, #111827);
+      margin: 0;
+      line-height: 1.3;
     }
   }
 }
