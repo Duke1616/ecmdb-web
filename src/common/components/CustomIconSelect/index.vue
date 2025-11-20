@@ -220,7 +220,7 @@ const iconNameMap: Record<string, string> = {
   "caise-database": "数据库",
   "caise-network": "网络",
   "caise-public_cloud": "云服务",
-  "monitor-host": "监控",
+  "monitor-host": "主机",
   "ops-setting-basic": "设置",
   "ops-setting-user": "用户",
   "ops-oneterm-gateway": "网关",
