@@ -56,7 +56,18 @@
             >
               <div class="model-card">
                 <div class="model-icon-wrapper">
-                  <img :src="model.icon" class="model-icon" alt="模型图标" />
+                  <!-- 判断是否为图片URL还是图标字体类名 -->
+                  <img
+                    v-if="isImageUrl(model.icon)"
+                    :src="model.icon"
+                    :alt="model.name"
+                    class="model-icon"
+                    @error="handleImageError"
+                  />
+                  <i v-else-if="model.icon" :class="getIconClass(model.icon)" class="model-icon-font" />
+                  <el-icon v-else class="model-icon-default">
+                    <Document />
+                  </el-icon>
                 </div>
                 <div class="model-info">
                   <h3 class="model-name">{{ model.name }}</h3>
@@ -87,6 +98,7 @@ import { useRouter } from "vue-router"
 import { type Model, type Models } from "@/api/model/types/model"
 import { ref, computed } from "vue"
 import { useModelStore } from "@/pinia/stores/model"
+import { Document } from "@element-plus/icons-vue"
 
 const router = useRouter()
 const empty = ref<boolean>(false)
@@ -124,6 +136,42 @@ const handleModelClick = (model: Model) => {
     path: "/cmdb/resource/list",
     query: { uid: model.uid, name: model.name }
   })
+}
+
+// 判断是否为图片URL
+const isImageUrl = (icon: string): boolean => {
+  if (!icon) return false
+  // 检查是否为HTTP/HTTPS URL
+  if (icon.startsWith("http://") || icon.startsWith("https://")) {
+    return true
+  }
+  // 检查是否为base64图片
+  if (icon.startsWith("data:image/")) {
+    return true
+  }
+  // 检查是否为相对路径的图片文件
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"]
+  return imageExtensions.some((ext) => icon.toLowerCase().endsWith(ext))
+}
+
+// 获取图标类名
+const getIconClass = (iconName: string): string[] => {
+  if (!iconName) return ["iconfont"]
+
+  // 如果已经包含 iconfont 类，直接返回
+  if (iconName.includes("iconfont")) {
+    return iconName.split(" ")
+  }
+
+  // 否则添加 iconfont 基础类
+  return ["iconfont", iconName]
+}
+
+// 图片加载错误处理
+const handleImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement
+  console.warn("图片加载失败:", target.src)
+  target.style.display = "none"
 }
 
 // Ensure hooks are called at the top level
@@ -431,6 +479,16 @@ useModelData()
   width: 22px;
   height: 22px;
   object-fit: contain;
+}
+
+.model-icon-font {
+  font-size: 22px;
+  color: #4a5568;
+}
+
+.model-icon-default {
+  font-size: 22px;
+  color: #cbd5e0;
 }
 
 .model-info {
