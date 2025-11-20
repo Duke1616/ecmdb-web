@@ -100,7 +100,7 @@
 
       <!-- 颜色选择器 -->
       <div v-if="!['0', '3', '4'].includes(currentIconType)" class="color-picker">
-        <el-divider />
+        <el-divider style="margin: 0 0 8px 0" />
         <div class="color-picker-content">
           <span>图标颜色：</span>
           <el-color-picker
@@ -111,6 +111,16 @@
           />
         </div>
       </div>
+
+      <!-- 图标信息栏 -->
+      <div v-if="currentIconValue && !isImageUrl(currentIconValue)" class="icon-info-bar">
+        <el-divider style="margin: 0 0 8px 0" />
+        <div class="icon-info-content">
+          <span class="info-label">图标类名：</span>
+          <code class="icon-class-name">{{ currentIconValue }}</code>
+          <el-button size="small" type="primary" link @click="copyIconName" style="margin-left: 8px"> 复制 </el-button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -118,6 +128,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue"
 import { Picture } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
 import { commonIconList, linearIconList, fillIconList, multicolorIconList } from "./constants"
 import tippy, { type Instance as TippyInstance } from "tippy.js"
 import "tippy.js/dist/tippy.css"
@@ -202,8 +213,31 @@ const handleIconTypeChange = (type: string | number | boolean | undefined) => {
   }
 }
 
+// 图标名称到中文的映射表
+const iconNameMap: Record<string, string> = {
+  // 常用图标
+  "caise-computer": "服务器/计算机",
+  "caise-database": "数据库",
+  "caise-network": "网络",
+  "caise-public_cloud": "云服务",
+  "monitor-host": "监控",
+  "ops-setting-basic": "设置",
+  "ops-setting-user": "用户",
+  "ops-oneterm-gateway": "网关",
+  "ops-oneterm-login": "登录网关",
+  "caise-folder": "文件夹",
+  file: "文件",
+  "caise-data_center": "数据中心"
+}
+
 const getIconDisplayName = (iconName: string) => {
   if (!iconName) return ""
+
+  // 优先从映射表中获取中文名称
+  if (iconNameMap[iconName]) {
+    return iconNameMap[iconName]
+  }
+
   // 从图标名称中提取显示名称
   const parts = iconName.split("-")
   if (parts.length > 1) {
@@ -291,10 +325,6 @@ const selectIcon = (iconName: string) => {
   }
   emit("update:modelValue", newValue)
   emit("change", newValue)
-  // 延迟关闭弹窗，避免闪退
-  setTimeout(() => {
-    tippyInstance?.hide()
-  }, 100)
 }
 
 const handleColorChange = (color: string | null) => {
@@ -308,6 +338,17 @@ const handleColorChange = (color: string | null) => {
       emit("update:modelValue", newValue)
       emit("change", newValue)
     }
+  }
+}
+
+// 复制图标类名
+const copyIconName = async () => {
+  try {
+    await navigator.clipboard.writeText(currentIconValue.value)
+    ElMessage.success("图标类名已复制到剪贴板")
+  } catch (err) {
+    console.error("复制失败:", err)
+    ElMessage.error("复制失败，请手动复制")
   }
 }
 
@@ -850,7 +891,7 @@ onBeforeUnmount(() => {
 /* 颜色选择器 */
 .color-picker {
   margin-top: 0;
-  padding: 16px;
+  padding: 8px 16px;
   background: white;
   border-radius: 0 0 8px 8px;
   flex-shrink: 0;
@@ -860,7 +901,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 8px 12px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 8px;
   border: 2px solid #e2e8f0;
@@ -870,5 +911,43 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 500;
   color: #475569;
+}
+
+/* 图标信息栏 */
+.icon-info-bar {
+  margin-top: 0;
+  padding: 8px 16px;
+  background: white;
+  border-radius: 0 0 8px 8px;
+  flex-shrink: 0;
+}
+
+.icon-info-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+
+.info-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.icon-class-name {
+  flex: 1;
+  font-size: 13px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", "Consolas", "source-code-pro", monospace;
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #bfdbfe;
+  word-break: break-all;
 }
 </style>

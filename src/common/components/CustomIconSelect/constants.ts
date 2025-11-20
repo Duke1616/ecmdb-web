@@ -7,6 +7,8 @@ export const commonIconList = [
   "monitor-host", // 监控
   "ops-setting-basic", // 设置
   "ops-setting-user", // 用户
+  "ops-oneterm-gateway", // 网关
+  "ops-oneterm-login", // 登录网关
   "caise-folder", // 文件夹
   "file", // 文件
   "caise-data_center" // 数据中心/首页
