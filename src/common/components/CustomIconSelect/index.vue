@@ -343,9 +343,29 @@ const handleColorChange = (color: string | null) => {
 
 // 复制图标类名
 const copyIconName = async () => {
+  const text = currentIconValue.value
   try {
-    await navigator.clipboard.writeText(currentIconValue.value)
-    ElMessage.success("图标类名已复制到剪贴板")
+    // 优先使用现代 Clipboard API
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text)
+      ElMessage.success("图标类名已复制到剪贴板")
+    } else {
+      // 降级方案：使用传统方法
+      const textarea = document.createElement("textarea")
+      textarea.value = text
+      textarea.style.position = "fixed"
+      textarea.style.opacity = "0"
+      document.body.appendChild(textarea)
+      textarea.select()
+      const successful = document.execCommand("copy")
+      document.body.removeChild(textarea)
+
+      if (successful) {
+        ElMessage.success("图标类名已复制到剪贴板")
+      } else {
+        throw new Error("execCommand failed")
+      }
+    }
   } catch (err) {
     console.error("复制失败:", err)
     ElMessage.error("复制失败，请手动复制")
