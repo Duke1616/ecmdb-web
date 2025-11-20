@@ -483,7 +483,8 @@ useModelData()
 
 .model-icon-font {
   font-size: 22px;
-  color: #4a5568;
+  color: #3182ce;
+  font-family: "iconfont" !important;
 }
 
 .model-icon-default {
