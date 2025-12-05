@@ -295,13 +295,22 @@ const handleTimingChange = () => {
 }
 
 // 监听代码模版变更
-const handlerChangeCodebook = () => {
-  // 清除之前的标签选择
-  propertyForm.tag = ""
+const handlerChangeCodebook = (clearTag = true) => {
+  // 只在用户主动切换代码模版时清除标签选择
+  if (clearTag) {
+    propertyForm.tag = ""
+  }
 
   runnerTagsData.value.forEach((item) => {
     if (item.codebook_uid == propertyForm.codebook_uid) {
-      tags_topic.value = new Map<string, string>(Object.entries(item.tags_topic))
+      // 处理 tags_topic 可能是对象或 Map 的情况
+      if (item.tags_topic instanceof Map) {
+        tags_topic.value = new Map(item.tags_topic)
+      } else if (item.tags_topic && typeof item.tags_topic === "object") {
+        tags_topic.value = new Map<string, string>(Object.entries(item.tags_topic))
+      } else {
+        tags_topic.value = new Map()
+      }
     }
   })
 }
@@ -414,11 +423,12 @@ const confirmFunc = () => {
 
 const runnerTagsData = ref<runnerTags[]>([])
 const tags_topic = ref<Map<string, string>>(new Map())
-const listRunnerTags = () => {
+const listRunnerTags = (isInitialLoad = false) => {
   listRunnerTagsApi()
     .then((res) => {
       runnerTagsData.value = res.data.runner_tags
-      handlerChangeCodebook()
+      // 初始加载时不清除 tag 值
+      handlerChangeCodebook(!isInitialLoad)
     })
     .catch((error) => {
       console.log(error)
@@ -444,7 +454,7 @@ const setProperties = () => {
 }
 
 onMounted(() => {
-  listRunnerTags()
+  // 先恢复表单数据
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
   propertyForm.is_notify = props.nodeData?.properties.is_notify
@@ -460,6 +470,9 @@ onMounted(() => {
   propertyForm.unit = props.nodeData?.properties.unit
   propertyForm.quantity = props.nodeData?.properties.quantity
   propertyForm.topic = props.nodeData?.properties.topic
+
+  // 然后加载标签数据(标记为初始加载,不清除已有的 tag)
+  listRunnerTags(true)
 
   // 如果执行方式是模板，加载模板数据
   if (propertyForm.exec_method === "template" && propertyForm.template_id) {
