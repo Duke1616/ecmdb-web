@@ -27,6 +27,7 @@ export interface Alert {
   cluster: string
   eval_interval: number
   level: number
+  rule_name: string
   trigger_time: number
   first_trigger_time: number
   last_eval_time: number

@@ -39,69 +39,52 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 告警标题插槽 -->
-      <template #title="{ row }">
-        <div class="alert-title-cell">
-          <h4 class="title-text">{{ getAlertTitle(row) }}</h4>
-        </div>
+      <!-- 告警等级条插槽 -->
+      <template #severityBar="{ row }">
+        <div class="severity-bar" :class="getSeverityClass(row.level)"></div>
       </template>
 
-      <!-- 告警等级插槽 -->
-      <template #level="{ row }">
-        <div class="level-cell">
-          <el-tag :type="getSeverityType(row.level)" size="small">
-            {{ getSeverityLabel(row.level) }}
-          </el-tag>
-        </div>
+      <!-- 监控类型插槽 -->
+      <template #monitorType="{ row }">
+        <div class="common-text">{{ row.data_source.type || "Metric" }}</div>
       </template>
 
       <!-- 数据源插槽 -->
       <template #dataSource="{ row }">
-        <div class="data-source-cell">
-          <div class="source-name">{{ row.data_source.name }}</div>
-          <div class="source-type">{{ row.data_source.type }}</div>
+        <div class="common-text">{{ row.data_source.name }}</div>
+      </template>
+
+      <!-- 规则标题 & 事件标签插槽 -->
+      <template #ruleInfo="{ row }">
+        <div class="rule-info-cell">
+          <div class="rule-title" @click="handleViewAlert(row)">
+            {{ row.rule_name }}
+          </div>
+          <div class="tags-container">
+            <template v-if="row.labels && Object.keys(row.labels).length > 0">
+              <span v-for="(value, key) in row.labels" :key="key" class="tag-item">
+                {{ key }}={{ value }}
+              </span>
+            </template>
+            <span v-else class="no-labels">无标签</span>
+          </div>
         </div>
       </template>
 
-      <!-- 触发时间插槽 -->
-      <template #triggerTime="{ row }">
+      <!-- 首次触发时间插槽 -->
+      <template #firstTriggerTime="{ row }">
         <div class="time-cell">
-          <div class="time-value">{{ formatTimestamp(row.trigger_time) }}</div>
-          <div class="duration">{{ formatDuration(row.duration) }}</div>
+          <div class="date-text">{{ formatTimestampDate(row.first_trigger_time) }}</div>
+          <div class="time-text">{{ formatTimestampTime(row.first_trigger_time) }}</div>
         </div>
       </template>
 
-      <!-- 标签插槽 -->
-      <template #labels="{ row }">
-        <div class="labels-cell">
-          <template v-if="row.labels && Object.keys(row.labels).length > 0">
-            <el-tooltip
-              v-for="key in Object.keys(row.labels).slice(0, 3)"
-              :key="key"
-              :content="`${key}: ${row.labels[key]}`"
-              placement="top"
-              effect="dark"
-            >
-              <el-tag size="small" type="info" effect="plain" class="label-tag">
-                {{ key }}: {{ row.labels[key] }}
-              </el-tag>
-            </el-tooltip>
-            <el-tooltip
-              v-if="Object.keys(row.labels).length > 3"
-              :content="getRemainingLabelsTooltip(row.labels)"
-              placement="top"
-              effect="dark"
-            >
-              <el-tag size="small" type="info" effect="plain"> +{{ Object.keys(row.labels).length - 3 }} </el-tag>
-            </el-tooltip>
-          </template>
-          <span v-else class="no-labels">无标签</span>
+      <!-- 检测时间插槽 -->
+      <template #checkTime="{ row }">
+        <div class="time-cell">
+          <div class="date-text">{{ formatTimestampDate(row.last_eval_time) }}</div>
+          <div class="time-text">{{ formatTimestampTime(row.last_eval_time) }}</div>
         </div>
-      </template>
-
-      <!-- 操作插槽 -->
-      <template #actions="{ row }">
-        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
   </PageContainer>
@@ -117,7 +100,6 @@ import { usePagination } from "@/common/composables/usePagination"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
-import OperateBtn from "@/common/components/OperateBtn/index.vue"
 
 // 分页
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
@@ -131,40 +113,49 @@ const dateRange = ref<[string, string] | null>(null)
 // 表格列配置
 const tableColumns = [
   {
-    prop: "title",
-    label: "告警信息",
-    minWidth: 200,
-    slot: "title"
+    prop: "severity",
+    label: "",
+    width: 10,
+    slot: "severityBar",
+    fixed: "left" as const,
+    align: "center" as const
   },
   {
-    prop: "level",
-    label: "等级",
-    width: 100,
-    slot: "level"
+    prop: "monitorType",
+    label: "监控类型",
+    width: 150,
+    slot: "monitorType"
   },
   {
     prop: "dataSource",
     label: "数据源",
-    minWidth: 150,
+    width: 150,
     slot: "dataSource"
   },
   {
-    prop: "triggerTime",
-    label: "触发时间",
-    minWidth: 180,
-    slot: "triggerTime"
+    prop: "ruleInfo",
+    label: "规则标题 & 事件标签",
+    minWidth: 400,
+    slot: "ruleInfo"
   },
   {
-    prop: "labels",
-    label: "标签",
-    minWidth: 200,
-    slot: "labels"
+    prop: "firstTriggerTime",
+    label: "首次触发时间",
+    width: 160,
+    slot: "firstTriggerTime"
+  },
+  {
+    prop: "lastEvalTime",
+    label: "检测时间",
+    width: 160,
+    slot: "checkTime"
   }
 ]
 
 // 表格属性
 const tableProps = {
-  height: "calc(100vh - 200px)"
+  height: "calc(100vh - 200px)",
+  rowClassName: "alert-row"
 }
 
 // 过滤后的告警数据
@@ -194,99 +185,49 @@ const loadAlerts = async () => {
   }
 }
 
-// 获取告警标题
-const getAlertTitle = (alert: Alert) => {
-  return `告警 #${alert.id}`
-}
 
-// 获取严重程度标签类型
-const getSeverityType = (level: number): "primary" | "success" | "warning" | "info" | "danger" => {
-  const types: Record<number, "primary" | "success" | "warning" | "info" | "danger"> = {
-    1: "danger", // P0
-    2: "warning", // P1
-    3: "warning", // P2
-    4: "info", // P3
-    5: "info" // P4
+// 获取严重程度样式类
+const getSeverityClass = (level: number) => {
+  const map: Record<number, string> = {
+    1: "severity-p0",
+    2: "severity-p1",
+    3: "severity-p2",
+    4: "severity-p3",
+    5: "severity-p4"
   }
-  return types[level] || "info"
+  return map[level] || "severity-p4"
 }
 
-// 获取严重程度标签文本
-const getSeverityLabel = (level: number) => {
-  const labels: Record<number, string> = {
-    1: "P0",
-    2: "P1",
-    3: "P2",
-    4: "P3",
-    5: "P4"
-  }
-  return labels[level] || "P4"
-}
-
-// 格式化时间戳
-const formatTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000)
+// 格式化日期部分
+const formatTimestampDate = (timestamp: number) => {
+  // Input is milliseconds, no need to multiply by 1000
+  const date = new Date(timestamp)
   return date.toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
-    day: "2-digit",
+    day: "2-digit"
+  }).replace(/\//g, "-") // Ensures YYYY-MM-DD format
+}
+
+// 格式化时间部分
+const formatTimestampTime = (timestamp: number) => {
+  // Input is milliseconds
+  const date = new Date(timestamp)
+  return date.toLocaleString("zh-CN", {
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit"
+    second: "2-digit",
+    hour12: false
   })
 }
 
-// 格式化持续时间
-const formatDuration = (seconds: number) => {
-  if (seconds < 60) {
-    return `${seconds}秒`
-  } else if (seconds < 3600) {
-    const minutes = Math.floor(seconds / 60)
-    return `${minutes}分钟`
-  } else if (seconds < 86400) {
-    const hours = Math.floor(seconds / 3600)
-    const minutes = Math.floor((seconds % 3600) / 60)
-    return `${hours}小时${minutes}分钟`
-  } else {
-    const days = Math.floor(seconds / 86400)
-    const hours = Math.floor((seconds % 86400) / 3600)
-    return `${days}天${hours}小时`
-  }
-}
-
-// 获取剩余标签的 tooltip 内容
-const getRemainingLabelsTooltip = (labels: Record<string, string>) => {
-  const allKeys = Object.keys(labels)
-  const remainingKeys = allKeys.slice(3)
-  return remainingKeys.map((key) => `${key}: ${labels[key]}`).join("\n")
-}
-
-// 获取操作按钮配置
-const getOperateItems = (alert: Alert) => {
-  console.log(alert)
-  return [
-    { name: "查看", code: "view", type: "primary" },
-    { name: "重新触发", code: "retrigger", type: "warning" }
-  ]
-}
-
-// 操作事件处理
-const operateEvent = (alert: Alert, action: string) => {
-  switch (action) {
-    case "view":
-      ElMessage.info(`查看告警: ${alert.id}`)
-      break
-    case "retrigger":
-      ElMessage.info(`重新触发告警: ${alert.id}`)
-      break
-    default:
-      ElMessage.info(`未知操作: ${action}`)
-  }
+// 查看告警详情
+const handleViewAlert = (alert: Alert) => {
+  ElMessage.info(`查看告警详情: ${alert.id}`)
 }
 
 // 处理日期范围变化
 const handleDateRangeChange = () => {
-  // 可以在这里添加日期范围变化的逻辑
   console.log("日期范围变化:", dateRange.value)
 }
 
@@ -303,76 +244,83 @@ watch(
   }
 )
 
-// 监听筛选条件变化
-watch(alertFilter, () => {
-  // 筛选条件变化时不需要重新加载数据，computed 会自动处理
-})
-
 // 初始化加载数据
 loadAlerts()
 </script>
 
 <style lang="scss" scoped>
-// 告警标题样式
-.alert-title-cell {
-  .title-text {
-    margin: 0;
+.severity-bar {
+  // Absolute positioning to fill the entire td height, extending over the border
+  position: absolute;
+  top: 0;
+  bottom: -1px; // Extends nicely over the bottom border to close the gap
+  left: 0;
+  right: 0; 
+  width: 100%;
+  z-index: 1; // Ensure it sits on top of the border
+  
+  &.severity-p0 { background-color: #f56c6c; }
+  &.severity-p1 { background-color: #fa8c16; }
+  &.severity-p2 { background-color: #e6a23c; }
+  &.severity-p3 { background-color: #409eff; }
+  &.severity-p4 { background-color: #909399; }
+}
+
+.common-text {
+  font-size: 14px;
+  color: #303133;
+}
+
+.rule-info-cell {
+  padding: 8px 0;
+
+  .rule-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #6c5ce7; /* Similar purple/blue from design */
+    cursor: pointer;
+    margin-bottom: 8px;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .tag-item {
+      background-color: #f5f7fa;
+      border: 1px solid #e4e7ed;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: #606266;
+      font-family: monospace; 
+      line-height: 1.4;
+    }
+
+    .no-labels {
+      font-size: 12px;
+      color: #909399;
+      font-style: italic;
+    }
+  }
+}
+
+.time-cell {
+  .date-text {
     font-size: 14px;
-    font-weight: 600;
-    color: #1f2937;
+    color: #303133;
     line-height: 1.4;
   }
-}
-
-// 等级样式
-.level-cell {
-  display: flex;
-  align-items: center;
-}
-
-// 数据源样式
-.data-source-cell {
-  .source-name {
+  
+  .time-text {
     font-size: 14px;
-    font-weight: 500;
-    color: #1f2937;
-    margin-bottom: 2px;
-  }
-
-  .source-type {
-    font-size: 12px;
-    color: #6b7280;
-  }
-}
-
-// 时间样式
-.time-cell {
-  .time-value {
-    font-size: 14px;
-    color: #1f2937;
-    margin-bottom: 2px;
-  }
-
-  .duration {
-    font-size: 12px;
-    color: #6b7280;
-  }
-}
-
-// 标签样式
-.labels-cell {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .label-tag {
-    margin: 0;
-  }
-
-  .no-labels {
-    font-size: 12px;
-    color: #9ca3af;
-    font-style: italic;
+    color: #303133;
+    line-height: 1.4;
   }
 }
 </style>
