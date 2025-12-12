@@ -64,7 +64,7 @@
           <div class="editor-wrapper cm-editor-custom">
             <codemirror
               v-model="query"
-              placeholder="输入 PromQL 查询语句. 按 Ctrl+Enter 执行查询"
+              placeholder="输入查询语句. 按 Ctrl+Enter 执行查询"
               :style="{ fontSize: '13px', fontFamily: 'Menlo, Monaco, Consolas, monospace' }"
               :autofocus="true"
               :indent-with-tab="true"
