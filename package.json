@@ -49,6 +49,7 @@
     "codemirror": "^6.0.1",
     "dayjs": "^1.11.11",
     "e-icon-picker": "^2.2.0",
+    "echarts": "^6.0.0",
     "element-plus": "^2.10.7",
     "font-awesome": "^4.7.0",
     "guacamole-common-js": "^1.5.0",

@@ -27,6 +27,17 @@ export const alertRoutes: RouteRecordRaw[] = [
           svgIcon: "dispatch_rule",
           platforms: ["alert"]
         }
+      },
+      // 即时查询
+      {
+        path: "/alert/proxy",
+        component: () => import("@/pages/alert/query/index.vue"),
+        name: "AlertQuery",
+        meta: {
+          title: "即时查询",
+          svgIcon: "search",
+          platforms: ["alert"]
+        }
       }
       // {
       //   path: "/alert/dashboard",

@@ -116,6 +116,9 @@ importers:
       e-icon-picker:
         specifier: ^2.2.0
         version: 2.2.3(vue@3.5.21(typescript@5.8.3))
+      echarts:
+        specifier: ^6.0.0
+        version: 6.0.0
       element-plus:
         specifier: ^2.10.7
         version: 2.10.7(vue@3.5.21(typescript@5.8.3))
@@ -2380,6 +2383,9 @@ packages:
   easy-bem@1.1.1:
     resolution: {integrity: sha512-GJRqdiy2h+EXy6a8E6R+ubmqUM08BK0FWNq41k24fup6045biQ8NXxoXimiwegMQvFFV3t1emADdGNL1TlS61A==}
 
+  echarts@6.0.0:
+    resolution: {integrity: sha512-Tte/grDQRiETQP4xz3iZWSvoHrkCQtwqd6hs+mifXcjrCuo2iKWbajFObuLJVBlDIJlOzgQPd1hsaKt/3+OMkQ==}
+
   editorconfig@1.0.4:
     resolution: {integrity: sha512-L9Qe08KWTlqYMVvMcTIvMAdl1cDUubzRNYL+WfA4bLDMHe4nemKkpmYzkznE1FwLKu0EEmy6obgQKzMJrg4x9Q==}
     engines: {node: '>=14'}
@@ -4564,6 +4570,9 @@ packages:
     peerDependencies:
       typescript: '>=4.2.0'
 
+  tslib@2.3.0:
+    resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
+
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -5087,6 +5096,9 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
+  zrender@6.0.0:
+    resolution: {integrity: sha512-41dFXEEXuJpNecuUQq6JlbybmnHaqqpGlbH1yxnA5V9MMP4SbohSVZsJIwz+zdjQXSSlR1Vc34EgH1zxyTDvhg==}
 
 snapshots:
 
@@ -7374,6 +7386,11 @@ snapshots:
 
   easy-bem@1.1.1: {}
 
+  echarts@6.0.0:
+    dependencies:
+      tslib: 2.3.0
+      zrender: 6.0.0
+
   editorconfig@1.0.4:
     dependencies:
       '@one-ini/wasm': 0.1.1
@@ -9614,6 +9631,8 @@ snapshots:
     dependencies:
       typescript: 5.8.3
 
+  tslib@2.3.0: {}
+
   tslib@2.8.1: {}
 
   type-check@0.4.0:
@@ -10287,3 +10306,7 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zrender@6.0.0:
+    dependencies:
+      tslib: 2.3.0
