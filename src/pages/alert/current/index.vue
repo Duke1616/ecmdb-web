@@ -36,28 +36,35 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 告警标题插槽 -->
-      <template #title="{ row }">
-        <div class="alert-title-cell">
-          <h4 class="title-text">{{ getAlertTitle(row) }}</h4>
-          <div class="cluster-info">{{ row.cluster }}</div>
-        </div>
+      <!-- 告警等级条插槽 -->
+      <template #severityBar="{ row }">
+        <div class="severity-bar" :class="getSeverityClass(row.level)"></div>
       </template>
 
-      <!-- 告警等级插槽 -->
-      <template #level="{ row }">
-        <div class="level-cell">
-          <el-tag :type="getSeverityType(row.level)" size="small">
-            {{ getSeverityLabel(row.level) }}
-          </el-tag>
-        </div>
+      <!-- 监控类型插槽 -->
+      <template #monitorType="{ row }">
+        <div class="common-text">{{ row.data_source.type || "Metric" }}</div>
       </template>
 
       <!-- 数据源插槽 -->
       <template #dataSource="{ row }">
-        <div class="data-source-cell">
-          <div class="source-name">{{ row.data_source.name }}</div>
-          <div class="source-type">{{ row.data_source.type }}</div>
+        <div class="common-text">{{ row.data_source.name }}</div>
+      </template>
+
+      <!-- 规则标题 & 事件标签插槽 -->
+      <template #ruleInfo="{ row }">
+        <div class="rule-info-cell">
+          <div class="rule-title" @click="handleViewAlert(row)">
+            {{ row.rule_name }}
+          </div>
+          <div class="tags-container">
+            <template v-if="row.labels && Object.keys(row.labels).length > 0">
+              <span v-for="(value, key) in row.labels" :key="key" class="tag-item">
+                {{ key }}={{ value }}
+              </span>
+            </template>
+            <span v-else class="no-labels">无标签</span>
+          </div>
         </div>
       </template>
 
@@ -65,35 +72,7 @@
       <template #triggerTime="{ row }">
         <div class="time-cell">
           <div class="time-value">{{ formatTimestamp(row.trigger_time) }}</div>
-          <div class="duration">{{ formatDuration(row.duration) }}</div>
-        </div>
-      </template>
-
-      <!-- 标签插槽 -->
-      <template #labels="{ row }">
-        <div class="labels-cell">
-          <template v-if="row.labels && Object.keys(row.labels).length > 0">
-            <el-tooltip
-              v-for="key in Object.keys(row.labels).slice(0, 3)"
-              :key="key"
-              :content="`${key}: ${row.labels[key]}`"
-              placement="top"
-              effect="dark"
-            >
-              <el-tag size="small" type="info" effect="plain" class="label-tag">
-                {{ key }}: {{ row.labels[key] }}
-              </el-tag>
-            </el-tooltip>
-            <el-tooltip
-              v-if="Object.keys(row.labels).length > 3"
-              :content="getRemainingLabelsTooltip(row.labels)"
-              placement="top"
-              effect="dark"
-            >
-              <el-tag size="small" type="info" effect="plain"> +{{ Object.keys(row.labels).length - 3 }} </el-tag>
-            </el-tooltip>
-          </template>
-          <span v-else class="no-labels">无标签</span>
+          <div class="duration">持续 {{ formatDuration(row.duration) }}</div>
         </div>
       </template>
 
@@ -129,40 +108,43 @@ const levelFilter = ref("all")
 // 表格列配置
 const tableColumns = [
   {
-    prop: "title",
-    label: "告警信息",
-    minWidth: 200,
-    slot: "title"
+    prop: "severity",
+    label: "",
+    width: 10, // Match the history page strict width
+    slot: "severityBar",
+    fixed: "left" as const,
+    align: "center" as const
   },
   {
-    prop: "level",
-    label: "等级",
-    width: 100,
-    slot: "level"
+    prop: "monitorType",
+    label: "监控类型",
+    width: 160,
+    slot: "monitorType"
   },
   {
     prop: "dataSource",
     label: "数据源",
-    minWidth: 150,
+    width: 150,
     slot: "dataSource"
+  },
+  {
+    prop: "ruleInfo",
+    label: "规则标题 & 事件标签",
+    minWidth: 400,
+    slot: "ruleInfo"
   },
   {
     prop: "triggerTime",
     label: "触发时间",
-    minWidth: 180,
+    width: 200,
     slot: "triggerTime"
-  },
-  {
-    prop: "labels",
-    label: "标签",
-    minWidth: 200,
-    slot: "labels"
   }
 ]
 
 // 表格属性
 const tableProps = {
-  height: "calc(100vh - 200px)"
+  height: "calc(100vh - 200px)",
+  rowClassName: "alert-row"
 }
 
 // 过滤后的告警数据
@@ -202,38 +184,22 @@ const loadAlerts = async () => {
   }
 }
 
-// 获取告警标题
-const getAlertTitle = (alert: Alert) => {
-  return `告警 #${alert.id}`
-}
-
-// 获取严重程度标签类型
-const getSeverityType = (level: number): "primary" | "success" | "warning" | "info" | "danger" => {
-  const types: Record<number, "primary" | "success" | "warning" | "info" | "danger"> = {
-    1: "danger", // P0
-    2: "warning", // P1
-    3: "warning", // P2
-    4: "info", // P3
-    5: "info" // P4
+// 获取严重程度样式类
+const getSeverityClass = (level: number) => {
+  const map: Record<number, string> = {
+    1: "severity-p0",
+    2: "severity-p1",
+    3: "severity-p2",
+    4: "severity-p3",
+    5: "severity-p4"
   }
-  return types[level] || "info"
-}
-
-// 获取严重程度标签文本
-const getSeverityLabel = (level: number) => {
-  const labels: Record<number, string> = {
-    1: "P0",
-    2: "P1",
-    3: "P2",
-    4: "P3",
-    5: "P4"
-  }
-  return labels[level] || "P4"
+  return map[level] || "severity-p4"
 }
 
 // 格式化时间戳
 const formatTimestamp = (timestamp: number) => {
-  const date = new Date(timestamp * 1000)
+  // Input is milliseconds, direct usage
+  const date = new Date(timestamp)
   return date.toLocaleString("zh-CN", {
     year: "numeric",
     month: "2-digit",
@@ -262,40 +228,34 @@ const formatDuration = (seconds: number) => {
   }
 }
 
-// 获取剩余标签的 tooltip 内容
-const getRemainingLabelsTooltip = (labels: Record<string, string>) => {
-  const allKeys = Object.keys(labels)
-  const remainingKeys = allKeys.slice(3)
-  return remainingKeys.map((key) => `${key}: ${labels[key]}`).join("\n")
-}
-
 // 获取操作按钮配置
 const getOperateItems = (alert: Alert) => {
-  const items = [{ name: "解决", code: "resolve", type: "success" }]
-
-  // 根据告警状态添加不同操作
-  if (alert.status === "firing") {
-    items.push({ name: "静默", code: "silence", type: "warning" })
-  }
-
-  return items
+  return [
+    { name: "解决", code: "resolve", type: "success" },
+    { name: "静默", code: "silence", type: "warning" }
+  ]
 }
 
 // 操作事件处理
 const operateEvent = (alert: Alert, action: string) => {
   switch (action) {
     case "view":
-      ElMessage.info(`查看告警: ${alert.id}`)
+      handleViewAlert(alert)
       break
     case "resolve":
-      ElMessage.info(`解决告警: ${alert.id}`)
+      ElMessage.success(`解决告警: ${alert.id}`)
       break
     case "silence":
-      ElMessage.info(`静默告警: ${alert.id}`)
+      ElMessage.warning(`静默告警: ${alert.id}`)
       break
     default:
       ElMessage.info(`未知操作: ${action}`)
   }
+}
+
+// 查看告警详情
+const handleViewAlert = (alert: Alert) => {
+  ElMessage.info(`查看告警详情: ${alert.id}`)
 }
 
 // 处理搜索
@@ -321,75 +281,91 @@ loadAlerts()
 </script>
 
 <style lang="scss" scoped>
-// 告警标题样式
-.alert-title-cell {
-  .title-text {
-    margin: 0 0 4px 0;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1f2937;
-    line-height: 1.4;
-  }
+.severity-bar {
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  left: 0;
+  right: 0; 
+  width: 100%;
+  z-index: 1; 
 
-  .cluster-info {
-    font-size: 12px;
-    color: #6b7280;
-    background: #f3f4f6;
-    padding: 2px 6px;
-    border-radius: 4px;
-    display: inline-block;
-  }
+  &.severity-p0 { background-color: #f56c6c; }
+  &.severity-p1 { background-color: #fa8c16; }
+  &.severity-p2 { background-color: #e6a23c; }
+  &.severity-p3 { background-color: #409eff; }
+  &.severity-p4 { background-color: #909399; }
 }
 
-// 等级样式
-.level-cell {
-  display: flex;
-  align-items: center;
+.common-text {
+  font-size: 14px;
+  color: #303133;
 }
 
-// 数据源样式
-.data-source-cell {
-  .source-name {
-    font-size: 14px;
+.rule-info-cell {
+  padding: 8px 0;
+
+  .rule-title {
+    font-size: 15px;
     font-weight: 500;
-    color: #1f2937;
-    margin-bottom: 2px;
+    color: #6c5ce7; 
+    cursor: pointer;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    
+    &:hover {
+      text-decoration: underline;
+    }
+
+    .cluster-tag {
+      margin-left: 8px;
+      font-size: 12px;
+      background: #f0f2f5;
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #606266;
+      font-weight: normal;
+      text-decoration: none;
+    }
   }
 
-  .source-type {
-    font-size: 12px;
-    color: #6b7280;
+  .tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    .tag-item {
+      background-color: #f5f7fa;
+      border: 1px solid #e4e7ed;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: #606266;
+      font-family: monospace; 
+      line-height: 1.4;
+    }
+
+    .no-labels {
+      font-size: 12px;
+      color: #909399;
+      font-style: italic;
+    }
   }
 }
 
-// 时间样式
 .time-cell {
   .time-value {
     font-size: 14px;
-    color: #1f2937;
-    margin-bottom: 2px;
+    color: #303133;
+    line-height: 1.4;
   }
-
+  
   .duration {
     font-size: 12px;
-    color: #6b7280;
+    color: #909399;
+    margin-top: 2px;
   }
 }
 
-// 标签样式
-.labels-cell {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-
-  .label-tag {
-    margin: 0;
-  }
-
-  .no-labels {
-    font-size: 12px;
-    color: #9ca3af;
-    font-style: italic;
-  }
-}
 </style>

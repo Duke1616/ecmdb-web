@@ -123,7 +123,7 @@ const tableColumns = [
   {
     prop: "monitorType",
     label: "监控类型",
-    width: 150,
+    width: 160,
     slot: "monitorType"
   },
   {
@@ -250,15 +250,14 @@ loadAlerts()
 
 <style lang="scss" scoped>
 .severity-bar {
-  // Absolute positioning to fill the entire td height, extending over the border
   position: absolute;
   top: 0;
-  bottom: -1px; // Extends nicely over the bottom border to close the gap
+  bottom: -1px;
   left: 0;
   right: 0; 
   width: 100%;
-  z-index: 1; // Ensure it sits on top of the border
-  
+  z-index: 1; 
+
   &.severity-p0 { background-color: #f56c6c; }
   &.severity-p1 { background-color: #fa8c16; }
   &.severity-p2 { background-color: #e6a23c; }
@@ -277,12 +276,25 @@ loadAlerts()
   .rule-title {
     font-size: 15px;
     font-weight: 500;
-    color: #6c5ce7; /* Similar purple/blue from design */
+    color: #6c5ce7; 
     cursor: pointer;
     margin-bottom: 8px;
+    display: flex;
+    align-items: center;
     
     &:hover {
       text-decoration: underline;
+    }
+
+    .cluster-tag {
+      margin-left: 8px;
+      font-size: 12px;
+      background: #f0f2f5;
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #606266;
+      font-weight: normal;
+      text-decoration: none;
     }
   }
 
