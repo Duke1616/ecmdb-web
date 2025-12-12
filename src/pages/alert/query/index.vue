@@ -357,7 +357,7 @@ const updateChart = (chartSeries: any[]) => {
       },
       axisLabel: {
         show: true,
-        color: "#6b7280",
+        color: "#374151",
         hideOverlap: true
       }
     },
@@ -365,7 +365,7 @@ const updateChart = (chartSeries: any[]) => {
       type: "value",
       scale: true,
       splitLine: { lineStyle: { type: "dashed", color: "#f3f4f6" } },
-      axisLabel: { color: "#6b7280" }
+      axisLabel: { color: "#374151" }
     },
     series: visibleSeries.map((s) => ({
       ...s,
@@ -455,7 +455,7 @@ onUnmounted(() => {
 .datasource-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #9ca3af; /* text-gray-400 */
+  color: #4b5563; /* text-gray-600 */
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-right: 0.5rem;
@@ -527,18 +527,18 @@ onUnmounted(() => {
 
 .metrics-text {
   font-size: 12px;
-  color: #4b5563; /* text-gray-600 */
+  color: #1f2937; /* text-gray-800 */
   font-weight: 400;
   margin-right: 0.25rem; /* mr-1 */
 }
 
 .metrics-icon {
   font-size: 12px;
-  color: #9ca3af; /* text-gray-400 */
+  color: #6b7280; /* text-gray-500 */
   transition: color 0.15s;
 
   .metrics-sidebar:hover & {
-    color: #4b5563; /* group-hover:text-gray-600 */
+    color: #374151; /* group-hover:text-gray-700 */
   }
 }
 
@@ -561,7 +561,7 @@ onUnmounted(() => {
 
 .footer-info {
   font-size: 10px; /* text-[10px] */
-  color: #9ca3af; /* text-gray-400 */
+  color: #6b7280; /* text-gray-500 */
 }
 
 /* Customize codemirror to look cleaner */
@@ -615,7 +615,7 @@ onUnmounted(() => {
   align-items: center;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #374151; /* text-gray-700 */
+  color: #111827; /* text-gray-900 */
   margin-right: 0.5rem;
 }
 .graph-controls {
@@ -695,7 +695,7 @@ onUnmounted(() => {
   padding: 0.5rem 0.75rem;
   text-align: left;
   font-weight: 600;
-  color: #4b5563; /* text-gray-600 */
+  color: #1f2937; /* text-gray-800 */
 
   &.right {
     text-align: right;
@@ -724,7 +724,7 @@ onUnmounted(() => {
 }
 .legend-metric-name {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  color: #4b5563;
+  color: #374151; /* text-gray-700 */
   word-break: break-all;
   line-height: 1.25;
   transition: color 0.15s;
@@ -737,7 +737,7 @@ onUnmounted(() => {
   padding: 0.375rem 0.75rem;
   text-align: right;
   font-family: monospace;
-  color: #374151;
+  color: #111827;
   font-weight: 500;
 }
 </style>
