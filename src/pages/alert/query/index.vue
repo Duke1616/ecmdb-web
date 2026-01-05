@@ -279,14 +279,19 @@ const processData = (metrics: any[]) => {
     return {
       name,
       type: "line", // Default type, overridden in updateChart
-      showSymbol: false,
+      showSymbol: true,
+      symbol: "circle",
+      symbolSize: 8,
       data,
       smooth: false,
       lineStyle: { width: 1 },
-      itemStyle: { color: color },
+      itemStyle: { color: color, opacity: 0 }, // Invisible by default
       lastValue: lastValue,
       color: color,
-      visible: true
+      visible: true,
+      emphasis: {
+        itemStyle: { opacity: 1, borderColor: "#fff", borderWidth: 2 } // Visible on hover
+      }
     }
   })
 
@@ -325,19 +330,38 @@ const updateChart = (chartSeries: any[]) => {
   const option = {
     animation: false,
     tooltip: {
-      trigger: "axis",
+      trigger: "item",
       axisPointer: { type: "cross" },
       appendToBody: true,
-      formatter: (params: any) => {
-        // Custom tooltip if needed, or default
-        let res = `<div>${params[0].axisValueLabel}</div>`
-        params.forEach((p: any) => {
-          res += `<div class="flex items-center text-xs">
-                 <span class="w-2 h-2 rounded-full mr-1" style="background:${p.color}"></span>
-                 <span class="truncate max-w-xs mr-2">${p.seriesName}</span>
-                 <span class="font-bold">${parseFloat(p.value[1]).toFixed(4)}</span>
+      position: (point: any, params: any, dom: any, rect: any, size: any) => {
+        const [x, y] = point
+        const viewWidth = size.viewSize[0]
+        const boxWidth = size.contentSize[0]
+        // Mouse on left -> show tooltip on right; Mouse on right -> show tooltip on left
+        // Add some offset so it doesn't overlap mouse
+        return x < viewWidth / 2 ? [x + 20, y] : [x - boxWidth - 20, y]
+      },
+      formatter: (p: any) => {
+        const date = new Date(p.value[0])
+        const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, "0")}-${date
+          .getDate()
+          .toString()
+          .padStart(2, "0")} ${date.getHours().toString().padStart(2, "0")}:${date
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}:${date.getSeconds().toString().padStart(2, "0")}`
+
+        const color = series.value[p.seriesIndex]?.color || p.color
+
+        let res = `<div class="mb-2 text-gray-500 font-medium border-b border-gray-100 pb-1">${dateStr}</div>`
+        res += `<div style="max-width: 350px; white-space: normal; word-break: break-all; line-height: 1.4;">
+                 <div class="flex items-start">
+                   <span class="inline-block w-2.5 h-2.5 rounded-full mr-2 mt-1 flex-shrink-0" style="background:${color}"></span>
+                   <div class="flex-1 text-xs text-gray-700 font-mono">
+                     ${p.seriesName}: <span class="font-bold text-gray-900">${parseFloat(p.value[1]).toFixed(4)}</span>
+                   </div>
+                 </div>
                </div>`
-        })
         return res
       }
     },
@@ -351,6 +375,11 @@ const updateChart = (chartSeries: any[]) => {
     xAxis: {
       type: "time",
       splitLine: { show: false },
+      axisPointer: {
+        show: true,
+        lineStyle: { type: "dashed" },
+        label: { show: false }
+      },
       axisLine: {
         show: true,
         lineStyle: { color: "#e5e7eb" }
@@ -368,10 +397,7 @@ const updateChart = (chartSeries: any[]) => {
       axisLabel: { color: "#374151" }
     },
     series: visibleSeries.map((s) => ({
-      ...s,
-      showSymbol: false,
-      symbol: "none",
-      emphasis: { focus: "series" }
+      ...s
     }))
   }
 

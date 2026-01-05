@@ -38,7 +38,7 @@
     >
       <!-- 告警等级条插槽 -->
       <template #severityBar="{ row }">
-        <div class="severity-bar" :class="getSeverityClass(row.level)"></div>
+        <div class="severity-bar" :class="getSeverityClass(row.level)" />
       </template>
 
       <!-- 监控类型插槽 -->
@@ -59,9 +59,7 @@
           </div>
           <div class="tags-container">
             <template v-if="row.labels && Object.keys(row.labels).length > 0">
-              <span v-for="(value, key) in row.labels" :key="key" class="tag-item">
-                {{ key }}={{ value }}
-              </span>
+              <span v-for="(value, key) in row.labels" :key="key" class="tag-item"> {{ key }}={{ value }} </span>
             </template>
             <span v-else class="no-labels">无标签</span>
           </div>
@@ -229,7 +227,7 @@ const formatDuration = (seconds: number) => {
 }
 
 // 获取操作按钮配置
-const getOperateItems = (alert: Alert) => {
+const getOperateItems = () => {
   return [
     { name: "解决", code: "resolve", type: "success" },
     { name: "静默", code: "silence", type: "warning" }
@@ -286,15 +284,25 @@ loadAlerts()
   top: 0;
   bottom: -1px;
   left: 0;
-  right: 0; 
+  right: 0;
   width: 100%;
-  z-index: 1; 
+  z-index: 1;
 
-  &.severity-p0 { background-color: #f56c6c; }
-  &.severity-p1 { background-color: #fa8c16; }
-  &.severity-p2 { background-color: #e6a23c; }
-  &.severity-p3 { background-color: #409eff; }
-  &.severity-p4 { background-color: #909399; }
+  &.severity-p0 {
+    background-color: #f56c6c;
+  }
+  &.severity-p1 {
+    background-color: #fa8c16;
+  }
+  &.severity-p2 {
+    background-color: #e6a23c;
+  }
+  &.severity-p3 {
+    background-color: #409eff;
+  }
+  &.severity-p4 {
+    background-color: #909399;
+  }
 }
 
 .common-text {
@@ -308,12 +316,12 @@ loadAlerts()
   .rule-title {
     font-size: 15px;
     font-weight: 500;
-    color: #6c5ce7; 
+    color: #6c5ce7;
     cursor: pointer;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -342,7 +350,7 @@ loadAlerts()
       padding: 2px 8px;
       font-size: 12px;
       color: #606266;
-      font-family: monospace; 
+      font-family: monospace;
       line-height: 1.4;
     }
 
@@ -360,12 +368,11 @@ loadAlerts()
     color: #303133;
     line-height: 1.4;
   }
-  
+
   .duration {
     font-size: 12px;
     color: #909399;
     margin-top: 2px;
   }
 }
-
 </style>

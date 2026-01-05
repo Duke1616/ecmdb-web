@@ -41,7 +41,7 @@
     >
       <!-- 告警等级条插槽 -->
       <template #severityBar="{ row }">
-        <div class="severity-bar" :class="getSeverityClass(row.level)"></div>
+        <div class="severity-bar" :class="getSeverityClass(row.level)" />
       </template>
 
       <!-- 监控类型插槽 -->
@@ -62,9 +62,7 @@
           </div>
           <div class="tags-container">
             <template v-if="row.labels && Object.keys(row.labels).length > 0">
-              <span v-for="(value, key) in row.labels" :key="key" class="tag-item">
-                {{ key }}={{ value }}
-              </span>
+              <span v-for="(value, key) in row.labels" :key="key" class="tag-item"> {{ key }}={{ value }} </span>
             </template>
             <span v-else class="no-labels">无标签</span>
           </div>
@@ -185,7 +183,6 @@ const loadAlerts = async () => {
   }
 }
 
-
 // 获取严重程度样式类
 const getSeverityClass = (level: number) => {
   const map: Record<number, string> = {
@@ -202,11 +199,13 @@ const getSeverityClass = (level: number) => {
 const formatTimestampDate = (timestamp: number) => {
   // Input is milliseconds, no need to multiply by 1000
   const date = new Date(timestamp)
-  return date.toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).replace(/\//g, "-") // Ensures YYYY-MM-DD format
+  return date
+    .toLocaleString("zh-CN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    })
+    .replace(/\//g, "-") // Ensures YYYY-MM-DD format
 }
 
 // 格式化时间部分
@@ -254,15 +253,25 @@ loadAlerts()
   top: 0;
   bottom: -1px;
   left: 0;
-  right: 0; 
+  right: 0;
   width: 100%;
-  z-index: 1; 
+  z-index: 1;
 
-  &.severity-p0 { background-color: #f56c6c; }
-  &.severity-p1 { background-color: #fa8c16; }
-  &.severity-p2 { background-color: #e6a23c; }
-  &.severity-p3 { background-color: #409eff; }
-  &.severity-p4 { background-color: #909399; }
+  &.severity-p0 {
+    background-color: #f56c6c;
+  }
+  &.severity-p1 {
+    background-color: #fa8c16;
+  }
+  &.severity-p2 {
+    background-color: #e6a23c;
+  }
+  &.severity-p3 {
+    background-color: #409eff;
+  }
+  &.severity-p4 {
+    background-color: #909399;
+  }
 }
 
 .common-text {
@@ -276,12 +285,12 @@ loadAlerts()
   .rule-title {
     font-size: 15px;
     font-weight: 500;
-    color: #6c5ce7; 
+    color: #6c5ce7;
     cursor: pointer;
     margin-bottom: 8px;
     display: flex;
     align-items: center;
-    
+
     &:hover {
       text-decoration: underline;
     }
@@ -310,7 +319,7 @@ loadAlerts()
       padding: 2px 8px;
       font-size: 12px;
       color: #606266;
-      font-family: monospace; 
+      font-family: monospace;
       line-height: 1.4;
     }
 
@@ -328,7 +337,7 @@ loadAlerts()
     color: #303133;
     line-height: 1.4;
   }
-  
+
   .time-text {
     font-size: 14px;
     color: #303133;
