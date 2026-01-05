@@ -32,7 +32,9 @@
               :prefix-icon="Calendar"
             />
             <el-tooltip content="Auto-refresh (Coming soon)" placement="top">
-              <el-button circle size="small"><i class="fa fa-refresh" /></el-button>
+              <el-button circle size="small">
+                <el-icon><Refresh /></el-icon>
+              </el-button>
             </el-tooltip>
           </div>
         </div>
@@ -53,13 +55,13 @@
 
       <!-- Query Input Area -->
       <div class="query-input-wrapper">
-        <div class="query-editor-container">
-          <!-- Built-in Metrics Sidebar -->
-          <div class="metrics-sidebar group">
-            <span class="metrics-text">内置指标</span>
-            <i class="fa fa-angle-right metrics-icon" />
-          </div>
+        <!-- Built-in Metrics Label -->
+        <div class="metrics-sidebar group">
+          <span class="metrics-text">内置指标</span>
+          <el-icon class="metrics-icon"><ArrowRight /></el-icon>
+        </div>
 
+        <div class="query-editor-container flex-1">
           <!-- Code Editor -->
           <div class="editor-wrapper cm-editor-custom">
             <codemirror
@@ -86,7 +88,9 @@
     <div class="data-card">
       <!-- Graph Controls Header -->
       <div class="graph-header">
-        <div class="graph-title"><i class="fa fa-line-chart mr-1" /> Graph</div>
+        <div class="graph-title">
+          <el-icon class="mr-1"><DataLine /></el-icon> Graph
+        </div>
 
         <div class="graph-controls">
           <el-checkbox v-model="showLegend" label="Show Legend" size="small" />
@@ -168,7 +172,7 @@ import { Codemirror } from "vue-codemirror"
 // import { javascript } from '@codemirror/lang-javascript' // Use JS logic for PromQL highlighting for now or generic
 import { markdown } from "@codemirror/lang-markdown" // Markdown might be cleaner than JS for PromQL syntax highlighting approximation
 
-import { Calendar, Search, Clock } from "@element-plus/icons-vue"
+import { Calendar, Search, Clock, Refresh, DataLine, ArrowRight } from "@element-plus/icons-vue"
 
 // State
 const datasourceId = ref<number | undefined>(undefined)
@@ -354,7 +358,7 @@ const updateChart = (chartSeries: any[]) => {
         const color = series.value[p.seriesIndex]?.color || p.color
 
         let res = `<div class="mb-2 text-gray-500 font-medium border-b border-gray-100 pb-1">${dateStr}</div>`
-        res += `<div style="max-width: 350px; white-space: normal; word-break: break-all; line-height: 1.4;">
+        res += `<div style="max-width: 600px; white-space: normal; word-break: break-all; line-height: 1.4;">
                  <div class="flex items-start">
                    <span class="inline-block w-2.5 h-2.5 rounded-full mr-2 mt-1 flex-shrink-0" style="background:${color}"></span>
                    <div class="flex-1 text-xs text-gray-700 font-mono">
@@ -463,11 +467,12 @@ onUnmounted(() => {
 
 /* Toolbar */
 .toolbar-container {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f3f4f6;
+  padding: 1rem 1.25rem; /* Increased padding */
+  /* border-bottom: 1px solid #f3f4f6; Removed for cleaner look */
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: auto; /* Let content define height, min-height handled by padding */
 }
 .toolbar-left {
   display: flex;
@@ -479,20 +484,19 @@ onUnmounted(() => {
   align-items: center;
 }
 .datasource-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #4b5563; /* text-gray-600 */
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-right: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 500; /* Regular weight */
+  color: #6b7280; /* Lighter gray */
+  margin-right: 0.75rem;
 }
 .datasource-select {
   width: 14rem; /* w-56 */
 }
 .toolbar-separator {
-  height: 1rem;
+  height: 1.25rem;
   width: 1px;
-  background-color: #e5e7eb; /* bg-gray-200 */
+  background-color: #f3f4f6; /* Lighter */
+  margin: 0 1.25rem; /* Explicit spacing */
 }
 .time-controls {
   display: flex;
@@ -510,62 +514,59 @@ onUnmounted(() => {
 
 /* Query Input */
 .query-input-wrapper {
-  margin-bottom: 1rem; /* mb-4 */
-  padding-top: 1rem; /* pt-4 */
-  border-top: 1px solid #f3f4f6; /* border-gray-100 */
+  padding: 0 1.25rem 1.25rem 1.25rem;
+  border-top: none;
+  display: flex; /* Flex layout */
+  align-items: center; /* Vertically align label and input */
+  gap: 0.5rem; /* Space between label and input */
 }
 
 .query-editor-container {
   display: flex;
   align-items: stretch;
-  border: 1px solid #e5e7eb; /* border-gray-200 */
-  border-radius: 0.375rem; /* rounded-md */
-  background-color: white;
-  /* overflow: hidden; Removed to allow scrolling interaction */
-  min-height: 36px;
-  transition: all 0.2s;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem; /* Slightly more rounded */
+  background-color: white; /* Clean white */
+  min-height: 40px; /* Taller touch target */
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Subtle shadow depth */
+
+  &:hover {
+    border-color: #d1d5db;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
 
   &:focus-within {
-    box-shadow: 0 0 0 1px #dbeafe; /* ring-1 ring-blue-100 */
-    border-color: #dbeafe;
+    border-color: #3b82f6; /* blue-500 */
+    box-shadow: none; /* Remove cyan glow */
   }
 }
 
 .metrics-sidebar {
-  padding-left: 0.75rem; /* px-3 */
-  padding-right: 0.75rem;
-  background-color: rgba(249, 250, 251, 0.5); /* bg-gray-50/50 */
-  border-right: 1px solid #e5e7eb; /* border-gray-200 */
+  font-size: 13px; /* Match datasource label */
+  font-weight: 500;
+  color: #6b7280;
   display: flex;
   align-items: center;
-  justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s;
   user-select: none;
-  white-space: nowrap;
-  border-top-left-radius: 0.375rem;
-  border-bottom-left-radius: 0.375rem;
+  transition: color 0.15s;
+  white-space: nowrap; /* Prevent wrap */
+  flex-shrink: 0;
 
   &:hover {
-    background-color: #f3f4f6; /* hover:bg-gray-100 */
+    color: #3b82f6; /* Highlight on hover */
   }
 }
 
 .metrics-text {
-  font-size: 12px;
-  color: #1f2937; /* text-gray-800 */
-  font-weight: 400;
-  margin-right: 0.25rem; /* mr-1 */
+  margin-right: 0.25rem;
 }
 
 .metrics-icon {
   font-size: 12px;
-  color: #6b7280; /* text-gray-500 */
-  transition: color 0.15s;
-
-  .metrics-sidebar:hover & {
-    color: #374151; /* group-hover:text-gray-700 */
-  }
 }
 
 .editor-wrapper {
@@ -599,9 +600,10 @@ onUnmounted(() => {
   background-color: transparent !important; /* Fix potential background color issue */
 }
 :deep(.cm-content) {
-  padding-top: 8px; /* Compact padding */
-  padding-bottom: 8px;
+  padding-top: 10px; /* Aligned with chip */
+  padding-bottom: 10px;
   font-family: Menlo, Monaco, Consolas, monospace;
+  line-height: 20px; /* Explicit line height */
 }
 :deep(.cm-line) {
   padding-left: 8px;
@@ -611,6 +613,10 @@ onUnmounted(() => {
 }
 :deep(.cm-gutters) {
   display: none !important;
+}
+
+:deep(.cm-activeLine) {
+  background-color: transparent !important;
 }
 
 /* Data View Card */
@@ -765,5 +771,23 @@ onUnmounted(() => {
   font-family: monospace;
   color: #111827;
   font-weight: 500;
+}
+
+/* Custom Scrollbar for Legend */
+.custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: #d1d5db;
+  }
 }
 </style>
