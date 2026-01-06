@@ -55,7 +55,7 @@ const extensions = [markdown()]
 }
 
 .query-input-wrapper {
-  padding: 1rem 1.5rem 1.25rem 1.5rem; // 增加顶部 padding (1rem) 与 Toolbar 隔开一点距离，左右 padding 保持与 Toolbar 一致 (1.5rem)
+  padding: 1rem 1rem 1.25rem 1rem; // 增加顶部 padding (1rem) 与 Toolbar 隔开一点距离，左右 padding 保持与 Toolbar 一致 (1.5rem)
 }
 
 // 容器：负责整体边框和 Flex 布局
@@ -69,16 +69,6 @@ const extensions = [markdown()]
   // 这里采用父级统一边框方案
   border: 1px solid #e5e7eb;
   transition: all 0.2s ease;
-
-  &:hover {
-    border-color: #d1d5db;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
-
-  &:focus-within {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-  }
 }
 
 // Part 1: 左侧 Addon

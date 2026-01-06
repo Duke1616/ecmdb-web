@@ -91,7 +91,7 @@ const shortcuts = [
 
 <style lang="scss" scoped>
 .toolbar-container {
-  padding: 1.25rem 1.5rem 0 1.5rem; // 底部 padding 设为 0
+  padding: 1.25rem 1rem 0 1rem; // 底部 padding 设为 0
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -115,21 +115,32 @@ const shortcuts = [
 // 控件组样式
 .control-group {
   display: flex;
-  align-items: stretch; // 确保高度拉伸填满
-  gap: 0; // 严格无间隙
-  padding: 0; // 移除所有内边距
-  padding-right: 0.5rem;
+  align-items: stretch;
+  gap: 0;
   height: 32px;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-  overflow: hidden;
+  border-radius: 6px; // ✅ 只留这里
+  overflow: hidden; // ✅ 非常关键
+}
+
+/* 🔥 核心：拍平所有中间控件的"根节点圆角" */
+.control-group :deep(.el-select__wrapper),
+.control-group :deep(.el-date-editor) {
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* 移除 focus 状态的所有视觉变化 */
+.control-group :deep(.el-select__wrapper.is-focus),
+.control-group :deep(.el-date-editor.is-active) {
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .datasource-group {
   flex-shrink: 0;
-  padding-right: 0;
 }
 
 .time-group {
@@ -147,12 +158,12 @@ const shortcuts = [
   color: #6b7280;
   white-space: nowrap;
   user-select: none;
-  height: auto;
-  min-height: 100%;
+  height: 100%;
   padding: 0 0.75rem;
   background-color: #f9fafb;
-  border-right: 1px solid #e5e7eb;
   flex-shrink: 0;
+  // 左侧圆角与外部保持一致
+  border-radius: 6px 0 0 6px;
 }
 
 .label-icon {
@@ -164,24 +175,7 @@ const shortcuts = [
 .datasource-select {
   width: 11rem;
   min-width: 9rem;
-  line-height: 30px;
-
-  :deep(.el-input__wrapper) {
-    box-shadow: none !important;
-    border: none;
-    background: transparent;
-    padding-right: 0.25rem;
-    padding-left: 0;
-    height: 100%;
-    min-height: 30px;
-  }
-
-  :deep(.el-input__inner) {
-    height: 30px !important;
-    line-height: 30px !important;
-    font-size: 13px;
-    color: #1f2937;
-  }
+  flex: 1;
 }
 
 // 时间控件
@@ -192,6 +186,7 @@ const shortcuts = [
   flex: 1;
   min-width: 0;
   height: 100%;
+  padding-right: 0.5rem; // 右侧留出间距给刷新按钮
 }
 
 .date-picker {
@@ -199,39 +194,6 @@ const shortcuts = [
   min-width: 16rem;
   max-width: 24rem;
   height: 100%;
-
-  :deep(.el-input__wrapper) {
-    box-shadow: none !important;
-    border: none;
-    background: transparent;
-    padding: 0;
-    height: 100%;
-  }
-
-  :deep(.el-range-editor.el-input__wrapper) {
-    height: 100%;
-    min-height: 30px;
-    padding: 0;
-  }
-
-  :deep(.el-range__icon),
-  :deep(.el-range-separator),
-  :deep(.el-range__close-icon) {
-    line-height: 30px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    color: #9ca3af;
-  }
-
-  :deep(.el-range-input) {
-    font-size: 13px;
-    color: #1f2937;
-  }
-
-  @media (max-width: 1200px) {
-    max-width: 20rem;
-  }
 }
 
 .refresh-btn {
