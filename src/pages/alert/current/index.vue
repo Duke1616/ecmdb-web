@@ -76,7 +76,7 @@
 
       <!-- 操作插槽 -->
       <template #actions="{ row }">
-        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="3" @route-event="operateEvent" />
+        <OperateBtn :items="getOperateItems()" :operate-item="row" :max-length="3" @route-event="operateEvent" />
       </template>
     </DataTable>
   </PageContainer>
