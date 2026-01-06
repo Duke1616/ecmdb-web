@@ -1,11 +1,16 @@
 <template>
   <div class="toolbar-container">
+    <!-- 左侧控制组 -->
     <div class="toolbar-left">
-      <div class="datasource-wrapper">
-        <span class="datasource-label">数据源</span>
+      <!-- 数据源选择 -->
+      <div class="control-group datasource-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><DataLine /></el-icon>
+          <span>数据源</span>
+        </label>
         <el-select
           :model-value="datasourceId"
-          placeholder="Select Datasource"
+          placeholder="选择数据源"
           class="datasource-select"
           size="default"
           filterable
@@ -14,45 +19,50 @@
           <el-option v-for="ds in datasources" :key="ds.id" :label="ds.name" :value="ds.id" />
         </el-select>
       </div>
-      <div class="toolbar-separator" />
-      <div class="time-controls">
-        <el-date-picker
-          :model-value="timeRange"
-          type="datetimerange"
-          range-separator="to"
-          start-placeholder="Start"
-          end-placeholder="End"
-          :shortcuts="shortcuts"
-          size="default"
-          class="date-picker"
-          :prefix-icon="Calendar"
-          @update:model-value="$emit('update:timeRange', $event)"
-        />
-        <el-tooltip content="Auto-refresh (Coming soon)" placement="top">
-          <el-button circle size="small">
-            <el-icon><Refresh /></el-icon>
-          </el-button>
-        </el-tooltip>
+
+      <!-- 时间范围选择 -->
+      <div class="control-group time-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><Calendar /></el-icon>
+          <span>时间范围</span>
+        </label>
+        <div class="time-controls">
+          <el-date-picker
+            :model-value="timeRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            :shortcuts="shortcuts"
+            size="default"
+            class="date-picker"
+            @update:model-value="$emit('update:timeRange', $event)"
+          />
+          <el-tooltip content="自动刷新 (即将推出)" placement="top">
+            <el-button circle size="small" class="refresh-btn">
+              <el-icon><Refresh /></el-icon>
+            </el-button>
+          </el-tooltip>
+        </div>
       </div>
     </div>
 
+    <!-- 右侧操作按钮 -->
     <div class="toolbar-right">
-      <el-tooltip content="History" placement="bottom">
-        <el-button size="default">
-          <el-icon class="mr-1"><Clock /></el-icon> 历史记录
-        </el-button>
-      </el-tooltip>
-      <el-tooltip content="Run Query (Cmd+Enter)" placement="bottom">
-        <el-button type="primary" size="default" @click="$emit('run-query')">
-          <el-icon class="mr-1"><Search /></el-icon> 查询
-        </el-button>
-      </el-tooltip>
+      <el-button size="default" class="action-btn">
+        <el-icon><Clock /></el-icon>
+        <span>历史记录</span>
+      </el-button>
+      <el-button type="primary" size="default" class="action-btn primary-btn" @click="$emit('run-query')">
+        <el-icon><Search /></el-icon>
+        <span>查询</span>
+      </el-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Calendar, Search, Clock, Refresh } from "@element-plus/icons-vue"
+import { Calendar, Search, Clock, Refresh, DataLine } from "@element-plus/icons-vue"
 import type { Datasource } from "@/api/alert/datasource/types/datasource"
 
 interface QueryToolbarProps {
@@ -81,80 +91,220 @@ const shortcuts = [
 
 <style lang="scss" scoped>
 .toolbar-container {
-  padding: 1rem 1.25rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap; // 允许换行
-  min-height: auto;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  background: linear-gradient(to bottom, #fafbfc, #ffffff);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .toolbar-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  flex-wrap: wrap; // 允许内部元素换行
+  gap: 1.25rem;
+  flex-wrap: wrap;
   flex: 1;
-  min-width: 0; // 允许压缩
+  min-width: 0;
 }
 
-.datasource-wrapper {
+// 控件组样式
+.control-group {
   display: flex;
   align-items: center;
-  flex-shrink: 0; // 防止标签被挤压
+  gap: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.5rem; // 恢复通用的右侧呼吸空间(主要是为了时间范围的刷新按钮)
+  height: 32px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
-.datasource-label {
-  font-size: 0.85rem;
+.datasource-group {
+  flex-shrink: 0;
+  padding-right: 0; // 单独移除数据源组的右侧内边距，让选择框靠边
+}
+
+.time-group {
+  flex: 1;
+  min-width: 0;
+}
+
+// 标签样式
+.control-label {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 13px; // 稍微调小字体
   font-weight: 500;
   color: #6b7280;
-  margin-right: 0.75rem;
-  white-space: nowrap; // 标签不换行
+  white-space: nowrap;
+  user-select: none;
+  height: 100%; // 确保垂直居中
 }
 
+.label-icon {
+  font-size: 14px;
+  color: #9ca3af; // 稍微变淡
+}
+
+// 数据源选择器
 .datasource-select {
-  width: 14rem;
-  min-width: 10rem; // 最小宽度
-}
+  width: 11rem; // 稍微减小宽度
+  min-width: 9rem;
+  line-height: 30px; // 垂直居中修正
 
-.toolbar-separator {
-  height: 1.25rem;
-  width: 1px;
-  background-color: #f3f4f6;
-  margin: 0 0.5rem;
+  :deep(.el-input__wrapper) {
+    box-shadow: none !important;
+    border: none;
+    background: transparent;
+    padding-right: 0.25rem; // 给箭头极小的呼吸空间
+    padding-left: 0;
+    height: 100%;
+    min-height: 30px;
+  }
 
-  // 在小屏幕上隐藏分隔符
-  @media (max-width: 1024px) {
-    display: none;
+  :deep(.el-input__inner) {
+    height: 30px !important;
+    line-height: 30px !important;
+    font-size: 13px;
+    color: #1f2937;
   }
 }
 
+// 时间控件
 .time-controls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-shrink: 1; // 允许压缩
+  flex: 1;
+  min-width: 0;
+  height: 100%;
 }
 
 .date-picker {
-  width: 20rem;
-  min-width: 16rem; // 最小宽度
+  flex: 1;
+  min-width: 16rem;
+  max-width: 24rem;
+  height: 100%;
 
-  // 小屏幕上缩小
-  @media (max-width: 1200px) {
-    width: 18rem;
+  :deep(.el-input__wrapper) {
+    box-shadow: none !important;
+    border: none;
+    background: transparent;
+    padding: 0;
+    height: 100%;
   }
 
-  @media (max-width: 1024px) {
-    width: 16rem;
+  :deep(.el-range-editor.el-input__wrapper) {
+    height: 100%;
+    min-height: 30px;
+    padding: 0;
+  }
+
+  :deep(.el-range__icon),
+  :deep(.el-range-separator),
+  :deep(.el-range__close-icon) {
+    line-height: 30px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    color: #9ca3af;
+  }
+
+  :deep(.el-range-input) {
+    font-size: 13px;
+    color: #1f2937;
+  }
+
+  @media (max-width: 1200px) {
+    max-width: 20rem;
   }
 }
 
+.refresh-btn {
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+
+  &:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #eff6ff;
+  }
+
+  :deep(i) {
+    font-size: 12px;
+  }
+}
+
+// 右侧按钮组
 .toolbar-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0; // 保持按钮不被压缩
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+
+  &:not(.primary-btn) {
+    border: 1px solid #e5e7eb;
+
+    &:hover {
+      border-color: #3b82f6;
+      color: #3b82f6;
+      background: #eff6ff;
+    }
+  }
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+
+  &:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// 响应式优化
+@media (max-width: 1024px) {
+  .toolbar-container {
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .toolbar-left {
+    gap: 1rem;
+  }
+
+  .control-group {
+    width: 100%;
+  }
+
+  .datasource-select {
+    flex: 1;
+  }
 }
 </style>
+```
