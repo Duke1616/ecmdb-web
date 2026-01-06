@@ -91,14 +91,16 @@ const shortcuts = [
 
 <style lang="scss" scoped>
 .toolbar-container {
-  padding: 1.25rem 1.5rem;
+  padding: 1.25rem 1.5rem 0 1.5rem; // 底部 padding 设为 0
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
+  background: white; // 移除渐变，统一为纯白背景，与 QueryGroup 的白色背景融合（或者保持渐变但要连接）
+  // 保持渐变可能更好看，但 border-bottom 必须去掉
   background: linear-gradient(to bottom, #fafbfc, #ffffff);
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: none; // 移除分割线
 }
 
 .toolbar-left {
@@ -113,20 +115,21 @@ const shortcuts = [
 // 控件组样式
 .control-group {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding-left: 0.75rem;
-  padding-right: 0.5rem; // 恢复通用的右侧呼吸空间(主要是为了时间范围的刷新按钮)
+  align-items: stretch; // 确保高度拉伸填满
+  gap: 0; // 严格无间隙
+  padding: 0; // 移除所有内边距
+  padding-right: 0.5rem;
   height: 32px;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .datasource-group {
   flex-shrink: 0;
-  padding-right: 0; // 单独移除数据源组的右侧内边距，让选择框靠边
+  padding-right: 0;
 }
 
 .time-group {
@@ -139,30 +142,35 @@ const shortcuts = [
   display: flex;
   align-items: center;
   gap: 0.375rem;
-  font-size: 13px; // 稍微调小字体
+  font-size: 13px;
   font-weight: 500;
   color: #6b7280;
   white-space: nowrap;
   user-select: none;
-  height: 100%; // 确保垂直居中
+  height: auto;
+  min-height: 100%;
+  padding: 0 0.75rem;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  flex-shrink: 0;
 }
 
 .label-icon {
   font-size: 14px;
-  color: #9ca3af; // 稍微变淡
+  color: #9ca3af;
 }
 
 // 数据源选择器
 .datasource-select {
-  width: 11rem; // 稍微减小宽度
+  width: 11rem;
   min-width: 9rem;
-  line-height: 30px; // 垂直居中修正
+  line-height: 30px;
 
   :deep(.el-input__wrapper) {
     box-shadow: none !important;
     border: none;
     background: transparent;
-    padding-right: 0.25rem; // 给箭头极小的呼吸空间
+    padding-right: 0.25rem;
     padding-left: 0;
     height: 100%;
     min-height: 30px;
@@ -286,25 +294,4 @@ const shortcuts = [
     transform: translateY(0);
   }
 }
-
-// 响应式优化
-@media (max-width: 1024px) {
-  .toolbar-container {
-    padding: 1rem 1.25rem;
-    gap: 1rem;
-  }
-
-  .toolbar-left {
-    gap: 1rem;
-  }
-
-  .control-group {
-    width: 100%;
-  }
-
-  .datasource-select {
-    flex: 1;
-  }
-}
 </style>
-```

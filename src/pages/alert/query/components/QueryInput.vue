@@ -55,7 +55,7 @@ const extensions = [markdown()]
 }
 
 .query-input-wrapper {
-  padding: 0 1.25rem 1.25rem 1.25rem;
+  padding: 1rem 1.5rem 1.25rem 1.5rem; // 增加顶部 padding (1rem) 与 Toolbar 隔开一点距离，左右 padding 保持与 Toolbar 一致 (1.5rem)
 }
 
 // 容器：负责整体边框和 Flex 布局
