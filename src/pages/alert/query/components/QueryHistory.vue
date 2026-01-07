@@ -21,17 +21,16 @@
             <!-- 查询语句 -->
             <div class="query-text">
               <el-icon class="query-icon"><TrendCharts /></el-icon>
-              <el-tooltip :content="item.query" placement="top-start">
-                <span class="query-code">{{ item.query }}</span>
+              <el-tooltip placement="top-start" :show-after="200">
+                <template #content>
+                  <div class="query-tooltip-content">{{ item.query }}</div>
+                </template>
+                <div class="query-code">{{ item.query }}</div>
               </el-tooltip>
             </div>
 
             <!-- 元信息 -->
             <div class="meta-info">
-              <span class="meta-item">
-                <el-icon><DataLine /></el-icon>
-                {{ item.datasourceName }}
-              </span>
               <span class="meta-item">
                 <el-icon><Clock /></el-icon>
                 {{ formatTime(item.timestamp) }}
@@ -60,7 +59,7 @@
 <script setup lang="ts">
 import { watch } from "vue"
 import { ElMessageBox } from "element-plus"
-import { TrendCharts, DataLine, Clock, Calendar } from "@element-plus/icons-vue"
+import { TrendCharts, Clock, Calendar } from "@element-plus/icons-vue"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
 import { useQueryHistory, type QueryHistoryItem } from "../composables/useQueryHistory"
 
@@ -234,8 +233,22 @@ const handleClearAll = async () => {
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  line-clamp: 1;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  word-break: break-all;
   flex: 1;
+  line-height: 1.5;
+}
+
+.query-tooltip-content {
+  max-width: 400px;
+  word-break: break-all;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .meta-info {

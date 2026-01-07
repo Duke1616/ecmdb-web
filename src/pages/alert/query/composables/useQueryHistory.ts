@@ -9,11 +9,9 @@ import {
 import type { QueryHistoryItem as ApiQueryHistoryItem, TimeRange } from "@/api/alert/query_history/types"
 
 /**
- * 扩展的查询历史记录项（包含数据源名称）
+ * 扩展的查询历史记录项
  */
-export interface QueryHistoryItem extends ApiQueryHistoryItem {
-  datasourceName: string // 数据源名称
-}
+export interface QueryHistoryItem extends ApiQueryHistoryItem {}
 
 /**
  * 查询历史记录管理
@@ -25,22 +23,6 @@ export const useQueryHistory = () => {
   // 加载状态
   const loading = ref(false)
 
-  // 数据源映射（用于显示名称）
-  const datasourceMap = ref<Record<number, string>>({})
-
-  /**
-   * 设置数据源映射
-   */
-  const setDatasourceMap = (datasources: Array<{ id: number; name: string }>) => {
-    datasourceMap.value = datasources.reduce(
-      (map, ds) => {
-        map[ds.id] = ds.name
-        return map
-      },
-      {} as Record<number, string>
-    )
-  }
-
   /**
    * 获取查询历史列表
    */
@@ -48,12 +30,7 @@ export const useQueryHistory = () => {
     loading.value = true
     try {
       const { data } = await listQueryHistoryApi({ limit })
-
-      // 转换数据，添加 datasourceName
-      historyList.value = (data.items || []).map((item) => ({
-        ...item,
-        datasourceName: datasourceMap.value[item.datasource_id] || `数据源 #${item.datasource_id}`
-      }))
+      historyList.value = data.items || []
     } catch (error) {
       historyList.value = []
     } finally {
@@ -120,7 +97,6 @@ export const useQueryHistory = () => {
     fetchHistory,
     addHistory,
     removeHistory,
-    clearHistory,
-    setDatasourceMap
+    clearHistory
   }
 }

@@ -43,7 +43,7 @@ const { query, timeRange, loading, hasRunQuery, series, runQuery } = useAlertQue
 const { chartRef, showLegend, initChart, processMetrics, updateChart, toggleSeries } = useAlertChart()
 
 // 使用查询历史
-const { addHistory, setDatasourceMap } = useQueryHistory()
+const { addHistory } = useQueryHistory()
 
 // ChartView 组件引用
 const chartViewRef = ref<InstanceType<typeof ChartView> | null>(null)
@@ -141,9 +141,6 @@ watch(datasourceId, () => {
 onMounted(async () => {
   // 获取数据源列表
   await fetchDatasources()
-
-  // 设置数据源映射，用于历史记录显示名称
-  setDatasourceMap(datasources.value)
 
   // NOTE: 图表初始化延迟到第一次查询有数据时
   // 因为容器在没有数据时是隐藏的(display: none),ECharts 无法获取尺寸
