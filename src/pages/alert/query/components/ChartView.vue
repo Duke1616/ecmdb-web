@@ -7,12 +7,7 @@
       </div>
 
       <div class="graph-controls">
-        <el-checkbox
-          :model-value="showLegend"
-          label="Show Legend"
-          size="small"
-          @update:model-value="(val) => $emit('update:showLegend', !!val)"
-        />
+        <el-checkbox v-model="showLegend" label="Show Legend" size="small" />
         <span class="divider">|</span>
         <span class="text-gray-400">{{ series.length }} Series</span>
       </div>
@@ -55,13 +50,14 @@ interface ChartViewProps {
   loading: boolean
   hasRunQuery: boolean
   series: any[]
-  showLegend: boolean
 }
 
 defineProps<ChartViewProps>()
 
+// NOTE: showLegend 是纯 UI 状态控制，使用 defineModel 进行父子组件状态同步
+const showLegend = defineModel<boolean>("showLegend", { required: true })
+
 defineEmits<{
-  "update:showLegend": [value: boolean]
   "toggle-series": [index: number]
 }>()
 

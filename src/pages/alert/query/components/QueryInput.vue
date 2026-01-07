@@ -11,7 +11,7 @@
       <!-- Part 2: Editor Container (Input) -->
       <div class="editor-container">
         <codemirror
-          :model-value="modelValue"
+          v-model="modelValue"
           placeholder="输入 PromQL 查询语句，按 Cmd/Ctrl + Enter 执行查询"
           :style="{ fontSize: '13px', fontFamily: 'Menlo, Monaco, Consolas, monospace' }"
           :autofocus="true"
@@ -19,7 +19,6 @@
           :tab-size="2"
           :extensions="extensions"
           class="h-full"
-          @update:model-value="$emit('update:modelValue', $event)"
           @keydown.ctrl.enter="$emit('execute')"
           @keydown.meta.enter="$emit('execute')"
         />
@@ -33,14 +32,10 @@ import { Codemirror } from "vue-codemirror"
 import { markdown } from "@codemirror/lang-markdown"
 import { TrendCharts, ArrowRight } from "@element-plus/icons-vue"
 
-interface QueryInputProps {
-  modelValue: string
-}
-
-defineProps<QueryInputProps>()
+// NOTE: QueryInput 是纯表单输入组件，使用 defineModel 进行双向绑定
+const modelValue = defineModel<string>({ required: true })
 
 defineEmits<{
-  "update:modelValue": [value: string]
   execute: []
 }>()
 

@@ -8,6 +8,7 @@
         v-model:time-range="timeRange"
         :datasources="datasources"
         @run-query="handleRunQuery"
+        @apply-history="handleApplyHistory"
       />
 
       <!-- Query Input Area -->
@@ -34,11 +35,15 @@ import ChartView from "./components/ChartView.vue"
 import { useAlertDatasource } from "./composables/useAlertDatasource"
 import { useAlertQuery } from "./composables/useAlertQuery"
 import { useAlertChart } from "./composables/useAlertChart"
+import { useQueryHistory, type QueryHistoryItem } from "./composables/useQueryHistory"
 
 // 使用 composables
 const { datasourceId, datasources, fetchDatasources } = useAlertDatasource()
 const { query, timeRange, loading, hasRunQuery, series, runQuery } = useAlertQuery()
 const { chartRef, showLegend, initChart, processMetrics, updateChart, toggleSeries } = useAlertChart()
+
+// 使用查询历史
+const { addHistory, setDatasourceMap } = useQueryHistory()
 
 // ChartView 组件引用
 const chartViewRef = ref<InstanceType<typeof ChartView> | null>(null)
@@ -59,7 +64,7 @@ const ensureChartInitialized = () => {
 
 /**
  * 执行查询
- * NOTE: 协调查询和图表更新
+ * NOTE: 协调查询和图表更新，查询成功后保存到历史记录
  */
 const handleRunQuery = async () => {
   if (!datasourceId.value || !query.value || !timeRange.value) return
@@ -77,9 +82,43 @@ const handleRunQuery = async () => {
     // 更新图表
     await nextTick()
     updateChart(series.value)
+
+    // 保存查询历史
+    saveQueryHistory()
   } else {
     series.value = []
   }
+}
+
+/**
+ * 保存查询历史
+ * NOTE: 查询成功后自动保存，包含完整的查询上下文
+ */
+const saveQueryHistory = () => {
+  if (!datasourceId.value || !query.value || !timeRange.value) return
+
+  addHistory({
+    query: query.value,
+    datasourceId: datasourceId.value,
+    timeRange: timeRange.value
+  })
+}
+
+/**
+ * 应用历史记录
+ * NOTE: 恢复历史查询的所有参数并自动执行查询
+ */
+const handleApplyHistory = (item: QueryHistoryItem) => {
+  query.value = item.query
+  datasourceId.value = item.datasource_id
+
+  // 转换时间戳为 Date 对象
+  timeRange.value = [new Date(item.time_range.start), new Date(item.time_range.end)]
+
+  // 自动执行查询
+  nextTick(() => {
+    handleRunQuery()
+  })
 }
 
 /**
@@ -88,15 +127,6 @@ const handleRunQuery = async () => {
 const handleToggleSeries = (index: number) => {
   toggleSeries(index, series.value)
 }
-
-/**
- * 时间范围变化时自动重新查询
- */
-watch(timeRange, () => {
-  if (query.value) {
-    handleRunQuery()
-  }
-})
 
 /**
  * 数据源变化时清空查询结果
@@ -111,6 +141,9 @@ watch(datasourceId, () => {
 onMounted(async () => {
   // 获取数据源列表
   await fetchDatasources()
+
+  // 设置数据源映射，用于历史记录显示名称
+  setDatasourceMap(datasources.value)
 
   // NOTE: 图表初始化延迟到第一次查询有数据时
   // 因为容器在没有数据时是隐藏的(display: none),ECharts 无法获取尺寸

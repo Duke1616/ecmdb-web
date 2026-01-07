@@ -8,14 +8,7 @@
           <el-icon class="label-icon"><DataLine /></el-icon>
           <span>数据源</span>
         </label>
-        <el-select
-          :model-value="datasourceId"
-          placeholder="选择数据源"
-          class="datasource-select"
-          size="default"
-          filterable
-          @update:model-value="$emit('update:datasourceId', $event)"
-        >
+        <el-select v-model="datasourceId" placeholder="选择数据源" class="datasource-select" size="default" filterable>
           <el-option v-for="ds in datasources" :key="ds.id" :label="ds.name" :value="ds.id" />
         </el-select>
       </div>
@@ -28,7 +21,7 @@
         </label>
         <div class="time-controls">
           <el-date-picker
-            :model-value="timeRange"
+            v-model="timeRange"
             type="datetimerange"
             range-separator="至"
             start-placeholder="开始时间"
@@ -36,7 +29,6 @@
             :shortcuts="shortcuts"
             size="default"
             class="date-picker"
-            @update:model-value="$emit('update:timeRange', $event)"
           />
           <el-tooltip content="自动刷新 (即将推出)" placement="top">
             <el-button circle size="small" class="refresh-btn">
@@ -49,7 +41,7 @@
 
     <!-- 右侧操作按钮 -->
     <div class="toolbar-right">
-      <el-button size="default" class="action-btn">
+      <el-button size="default" class="action-btn" @click="historyVisible = true">
         <el-icon><Clock /></el-icon>
         <span>历史记录</span>
       </el-button>
@@ -58,26 +50,45 @@
         <span>查询</span>
       </el-button>
     </div>
+
+    <!-- 历史记录弹窗 -->
+    <QueryHistory v-model="historyVisible" @apply="handleApplyHistory" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import { Calendar, Search, Clock, Refresh, DataLine } from "@element-plus/icons-vue"
 import type { Datasource } from "@/api/alert/datasource/types/datasource"
+import QueryHistory from "./QueryHistory.vue"
+import type { QueryHistoryItem } from "../composables/useQueryHistory"
 
 interface QueryToolbarProps {
-  datasourceId?: number
   datasources: Datasource[]
-  timeRange: [Date, Date] | null
 }
 
 defineProps<QueryToolbarProps>()
 
-defineEmits<{
-  "update:datasourceId": [id: number]
-  "update:timeRange": [range: [Date, Date]]
+// NOTE: datasourceId 是 Select 组件的单一值状态，使用 defineModel 进行双向绑定
+const datasourceId = defineModel<number | undefined>("datasourceId")
+
+// NOTE: timeRange 是 DatePicker 组件的时间范围状态，语义明确，使用 defineModel 进行双向绑定
+const timeRange = defineModel<[Date, Date] | null>("timeRange", { required: true })
+
+const emits = defineEmits<{
   "run-query": []
+  "apply-history": [item: QueryHistoryItem]
 }>()
+
+// 历史记录弹窗显示状态
+const historyVisible = ref(false)
+
+/**
+ * 处理应用历史记录
+ */
+const handleApplyHistory = (item: QueryHistoryItem) => {
+  emits("apply-history", item)
+}
 
 // 时间快捷选项
 const shortcuts = [

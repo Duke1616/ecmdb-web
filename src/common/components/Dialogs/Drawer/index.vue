@@ -40,7 +40,9 @@
       <div class="drawer-footer">
         <slot name="footer">
           <el-button @click="handleCancel">{{ cancelButtonText }}</el-button>
-          <el-button type="primary" @click="handleConfirm">{{ confirmButtonText }}</el-button>
+          <el-button v-if="showConfirmButton" :type="confirmButtonType" @click="handleConfirm">{{
+            confirmButtonText
+          }}</el-button>
         </slot>
       </div>
     </template>
@@ -60,11 +62,13 @@ interface Props {
   showClose?: boolean
   closeOnClickModal?: boolean
   showFooter?: boolean
+  showConfirmButton?: boolean
   headerIcon?: any
   beforeClose?: (done: () => void) => void
   class?: string
   cancelButtonText?: string
   confirmButtonText?: string
+  confirmButtonType?: "primary" | "success" | "warning" | "danger" | "info" | "text"
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -73,9 +77,11 @@ const props = withDefaults(defineProps<Props>(), {
   showClose: true,
   closeOnClickModal: true,
   showFooter: true,
+  showConfirmButton: true,
   class: "",
   cancelButtonText: "取消",
-  confirmButtonText: "确定"
+  confirmButtonText: "确定",
+  confirmButtonType: "primary"
 })
 
 const emits = defineEmits<{
@@ -141,7 +147,6 @@ const handleConfirm = () => {
     border-bottom: 1px solid #e4e7ed;
     margin-bottom: calc(-2.2rem + 0.2vw);
     text-align: left;
-
 
     .header-left {
       display: flex;
@@ -247,7 +252,7 @@ const handleConfirm = () => {
       justify-content: center;
       gap: calc(0.3rem + 0.1vw);
 
-      &:not(.el-button--primary) {
+      &:not(.el-button--primary):not(.el-button--danger) {
         border: 1px solid #d1d5db;
         background: #ffffff;
         color: #6b7280;
