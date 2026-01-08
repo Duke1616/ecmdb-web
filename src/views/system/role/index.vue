@@ -110,6 +110,7 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import PageContainer from "@/common/components/PageContainer/index.vue"
+import { useRouter } from "vue-router"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
@@ -150,7 +151,7 @@ const tableColumns = [
 // 操作按钮配置
 const operateBtnItems = [
   { name: "修改", code: "edit", type: "primary", icon: Edit },
-  { name: "菜单权限", code: "menu", type: "success", icon: Menu },
+  { name: "权限配置", code: "permission", type: "success", icon: Menu },
   { name: "删除", code: "delete", type: "danger", icon: Delete }
 ]
 
@@ -208,12 +209,42 @@ const handleMenuPermissionConfirm = async (selectedMenus: any[]) => {
   }
 }
 
+// NOTE: 权限配置 - 让用户选择菜单模式或矩阵模式
+const handlePermissionConfig = async (row: role) => {
+  try {
+    await ElMessageBox.confirm("请选择权限配置模式", "权限配置", {
+      distinguishCancelAndClose: true,
+      confirmButtonText: "矩阵模式",
+      cancelButtonText: "菜单模式",
+      type: "info",
+      center: true
+    })
+    // 用户选择了矩阵模式
+    handleMatrixPermission(row)
+  } catch (action) {
+    if (action === "cancel") {
+      // 用户选择了菜单模式
+      handleMenuPermission(row)
+    }
+    // action === 'close' 表示关闭对话框，不做任何操作
+  }
+}
+
 const handleMenuPermission = (row: role) => {
   dialogPermission.value = true
   roleCode.value = row.code
 
   nextTick(() => {
     menuRef.value?.getMenuPermissionData(roleCode.value)
+  })
+}
+
+// NOTE: 矩阵权限配置 - 导航到独立的全屏页面
+const router = useRouter()
+const handleMatrixPermission = (row: role) => {
+  router.push({
+    path: `/system/role/permission-matrix/${row.code}`,
+    query: { roleName: row.name }
   })
 }
 
@@ -239,8 +270,8 @@ const handleOperateEvent = (operateItem: role, actionName: string) => {
     case "edit":
       handleUpdate(operateItem)
       break
-    case "menu":
-      handleMenuPermission(operateItem)
+    case "permission":
+      handlePermissionConfig(operateItem)
       break
     case "delete":
       handleDeleteSingle(operateItem)
