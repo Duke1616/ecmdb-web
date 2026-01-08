@@ -242,7 +242,24 @@ const formRules: FormRules = {
   type: [{ required: true, message: "请选择数据源类型", trigger: "change" }],
   "http.url": [
     { required: true, message: "请输入连接地址", trigger: "blur" },
-    { type: "url", message: "请输入正确的URL格式", trigger: "blur" }
+    {
+      validator: (rule: any, value: string, callback: any) => {
+        if (!value) {
+          callback()
+          return
+        }
+        // 支持 http/https 协议，支持 DNS 域名、IP 地址、端口号和路径
+        // 示例: https://victoria-metrics:8428/
+        const urlPattern =
+          /^https?:\/\/[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*(:[0-9]{1,5})?(\/.*)?$/
+        if (!urlPattern.test(value)) {
+          callback(new Error("请输入有效的 URL 地址（支持 DNS 域名和端口号）"))
+        } else {
+          callback()
+        }
+      },
+      trigger: "blur"
+    }
   ],
   "http.timeout": [{ required: true, message: "请输入超时时间", trigger: "blur" }],
   "http.dial_timeout": [{ required: true, message: "请输入连接超时时间", trigger: "blur" }],
