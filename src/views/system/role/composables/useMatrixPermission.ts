@@ -59,6 +59,7 @@ const flattenMenuTree = (menus: menu[], level: number = 0, result: FlatMenuItem[
       })
 
       const childMenus = menuItem.children?.filter((child) => child.type !== MenuType.BUTTON) || []
+      // NOTE: 将子菜单和有子按钮的按钮一起递归处理
       const allChildren = [...childMenus, ...buttonsWithChildren]
 
       if (allChildren.length > 0) {
@@ -66,16 +67,25 @@ const flattenMenuTree = (menus: menu[], level: number = 0, result: FlatMenuItem[
       }
     }
 
-    // 处理带有子按钮的按钮
+    // 处理有子按钮的按钮：使用与目录/菜单相同的逻辑
+    // NOTE: 只有叶子按钮放到 actions，中间层级的按钮作为独立行递归处理
+    // 例如："聚合规则"下的"聚合详情"（叶子）放到 actions，如果有中间层级按钮则作为独立行
     if (menuItem.type === MenuType.BUTTON && menuItem.children && menuItem.children.length > 0) {
-      const subButtons = menuItem.children.filter((child) => child.type === MenuType.BUTTON)
+      const directButtons = menuItem.children.filter((child) => child.type === MenuType.BUTTON)
+      const { buttonsWithChildren, simpleButtons } = separateButtons(directButtons)
+
       const { children: _children, ...buttonWithoutChildren } = menuItem
 
       result.push({
         ...buttonWithoutChildren,
         level,
-        actions: subButtons.length > 0 ? subButtons : undefined
+        actions: simpleButtons.length > 0 ? simpleButtons : undefined
       })
+
+      // NOTE: 如果子按钮还有子按钮，继续递归处理
+      if (buttonsWithChildren.length > 0) {
+        flattenMenuTree(buttonsWithChildren, level + 1, result)
+      }
     }
   })
 
