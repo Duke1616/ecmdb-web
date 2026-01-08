@@ -1,7 +1,86 @@
 import { ref, computed } from "vue"
 import type { menu } from "@/api/menu/types/menu"
+import { MenuType } from "@/api/menu/types/menu"
 import { getRolePermissionApi, changeRoleMenuPermissionApi } from "@/api/permission"
 import { ElMessage } from "element-plus"
+
+/**
+ * NOTE: 扁平化后的菜单项类型
+ */
+type FlatMenuItem = Omit<menu, "children"> & {
+  level: number
+  actions?: menu[]
+}
+
+/**
+ * NOTE: 辅助函数 - 判断菜单是否匹配选中的平台
+ */
+const matchesPlatform = (menuItem: menu, selectedPlatforms: string[]): boolean => {
+  if (selectedPlatforms.length === 0) return true
+  const menuPlatforms = menuItem.meta?.platforms || []
+  return menuPlatforms.some((p) => selectedPlatforms.includes(p))
+}
+
+/**
+ * NOTE: 辅助函数 - 分离按钮：有子按钮 vs 普通按钮
+ */
+const separateButtons = (buttons: menu[]) => {
+  const buttonsWithChildren: menu[] = []
+  const simpleButtons: menu[] = []
+
+  buttons.forEach((btn) => {
+    if (btn.children && btn.children.length > 0) {
+      buttonsWithChildren.push(btn)
+    } else {
+      simpleButtons.push(btn)
+    }
+  })
+
+  return { buttonsWithChildren, simpleButtons }
+}
+
+/**
+ * NOTE: 辅助函数 - 扁平化菜单树
+ * 分离职责：只负责将树形结构转为扁平列表
+ */
+const flattenMenuTree = (menus: menu[], level: number = 0, result: FlatMenuItem[] = []): FlatMenuItem[] => {
+  menus.forEach((menuItem) => {
+    // 处理目录和菜单
+    if (menuItem.type === MenuType.DIRECTORY || menuItem.type === MenuType.MENU) {
+      const directButtons = menuItem.children?.filter((child) => child.type === MenuType.BUTTON) || []
+      const { buttonsWithChildren, simpleButtons } = separateButtons(directButtons)
+
+      const { children: _children, ...menuWithoutChildren } = menuItem
+
+      result.push({
+        ...menuWithoutChildren,
+        level,
+        actions: simpleButtons.length > 0 ? simpleButtons : undefined
+      })
+
+      const childMenus = menuItem.children?.filter((child) => child.type !== MenuType.BUTTON) || []
+      const allChildren = [...childMenus, ...buttonsWithChildren]
+
+      if (allChildren.length > 0) {
+        flattenMenuTree(allChildren, level + 1, result)
+      }
+    }
+
+    // 处理带有子按钮的按钮
+    if (menuItem.type === MenuType.BUTTON && menuItem.children && menuItem.children.length > 0) {
+      const subButtons = menuItem.children.filter((child) => child.type === MenuType.BUTTON)
+      const { children: _children, ...buttonWithoutChildren } = menuItem
+
+      result.push({
+        ...buttonWithoutChildren,
+        level,
+        actions: subButtons.length > 0 ? subButtons : undefined
+      })
+    }
+  })
+
+  return result
+}
 
 /**
  * 矩阵权限管理 Composable
@@ -16,97 +95,18 @@ export const useMatrixPermission = () => {
   const selectedPlatforms = ref<string[]>([])
 
   /**
-   * NOTE: 扁平化菜单树数据，为矩阵视图准备数据
-   * 将树形菜单数据转换为扁平列表，同时保留层级信息和树形符号
-   * 支持根据 selectedPlatforms 过滤菜单
+   * NOTE: 扁平化菜单列表（应用平台过滤）
+   * 职责：组合菜单数据和平台过滤逻辑
    */
   const flatMenuList = computed(() => {
-    const result: Array<menu & { level: number; treePrefix: string; actions?: menu[] }> = []
+    // 先过滤平台
+    const filteredMenus =
+      selectedPlatforms.value.length > 0
+        ? menuTreeData.value.filter((menu) => matchesPlatform(menu, selectedPlatforms.value))
+        : menuTreeData.value
 
-    const flatten = (menus: menu[], level: number = 0, parentPath: number[] = []) => {
-      menus.forEach((menuItem, index) => {
-        const isLastChild = index === menus.length - 1
-
-        // 生成树形前缀符号
-        let prefix = ""
-        parentPath.forEach((_, idx) => {
-          if (idx < parentPath.length - 1) {
-            prefix += "┃   "
-          }
-        })
-        if (level > 0) {
-          prefix += isLastChild ? "┗ " : "┣ "
-        }
-
-        // 显示目录和菜单（type 1, 2）
-        if (menuItem.type === 1 || menuItem.type === 2) {
-          // NOTE: 平台过滤逻辑
-          if (selectedPlatforms.value.length > 0) {
-            const menuPlatforms = menuItem.meta?.platforms || []
-            const hasMatchingPlatform = menuPlatforms.some((p) => selectedPlatforms.value.includes(p))
-            if (!hasMatchingPlatform) {
-              return
-            }
-          }
-
-          // 收集直接子级的按钮
-          const directButtons = menuItem.children?.filter((child) => child.type === 3) || []
-
-          // 分离：有子按钮的按钮 vs 没有子按钮的按钮
-          const buttonsWithChildren: menu[] = []
-          const simpleButtons: menu[] = []
-
-          directButtons.forEach((btn) => {
-            if (btn.children && btn.children.length > 0) {
-              // 有子按钮，将作为独立菜单项显示
-              buttonsWithChildren.push(btn)
-            } else {
-              // 普通按钮，显示在操作权限列
-              simpleButtons.push(btn)
-            }
-          })
-
-          // NOTE: 不包含 children 字段，避免 el-table 显示展开箭头
-          const { children: _children, ...menuWithoutChildren } = menuItem
-
-          // 添加当前菜单项
-          result.push({
-            ...menuWithoutChildren,
-            level,
-            treePrefix: prefix,
-            actions: simpleButtons.length > 0 ? simpleButtons : undefined
-          } as any)
-
-          // 递归处理子菜单（非按钮类型）
-          const childMenus = menuItem.children?.filter((child) => child.type !== 3) || []
-
-          // NOTE: 将有子按钮的按钮也作为子项处理，显示在下一层
-          const allChildren = [...childMenus, ...buttonsWithChildren]
-
-          if (allChildren.length > 0) {
-            flatten(allChildren, level + 1, [...parentPath, index])
-          }
-        }
-
-        // NOTE: 处理带有子按钮的按钮（作为菜单项显示）
-        if (menuItem.type === 3 && menuItem.children && menuItem.children.length > 0) {
-          // 收集这个按钮下的所有子按钮（CRUD操作）
-          const subButtons = menuItem.children.filter((child) => child.type === 3)
-
-          const { children: _children, ...buttonWithoutChildren } = menuItem
-
-          result.push({
-            ...buttonWithoutChildren,
-            level,
-            treePrefix: prefix,
-            actions: subButtons.length > 0 ? subButtons : undefined
-          } as any)
-        }
-      })
-    }
-
-    flatten(menuTreeData.value)
-    return result
+    // 再扁平化
+    return flattenMenuTree(filteredMenus)
   })
 
   /**
