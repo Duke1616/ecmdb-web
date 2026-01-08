@@ -53,7 +53,7 @@
           >
             <!-- 菜单名称列 -->
             <template #menuName="{ row }">
-              <div class="menu-cell" :style="row.level > 0 ? { paddingLeft: `${row.level * 40}px` } : {}">
+              <div class="menu-cell" :style="row.level > 0 ? { paddingLeft: `${row.level * 20}px` } : {}">
                 <el-checkbox
                   :model-value="checkedKeys.includes(row.id)"
                   @change="(val) => handleCheck(row, val as boolean)"

@@ -38,37 +38,69 @@ export const useMatrixPermission = () => {
           prefix += isLastChild ? "┗ " : "┣ "
         }
 
-        // 只显示目录和菜单（type 1, 2），按钮（type 3）作为操作权限
+        // 显示目录和菜单（type 1, 2）
         if (menuItem.type === 1 || menuItem.type === 2) {
           // NOTE: 平台过滤逻辑
-          // 如果选择了平台，只显示包含任一选中平台的菜单
           if (selectedPlatforms.value.length > 0) {
             const menuPlatforms = menuItem.meta?.platforms || []
             const hasMatchingPlatform = menuPlatforms.some((p) => selectedPlatforms.value.includes(p))
             if (!hasMatchingPlatform) {
-              // 不匹配，跳过该菜单及其子菜单
               return
             }
           }
 
-          // 收集该菜单下的所有按钮
-          const actions = menuItem.children?.filter((child) => child.type === 3) || []
+          // 收集直接子级的按钮
+          const directButtons = menuItem.children?.filter((child) => child.type === 3) || []
+
+          // 分离：有子按钮的按钮 vs 没有子按钮的按钮
+          const buttonsWithChildren: menu[] = []
+          const simpleButtons: menu[] = []
+
+          directButtons.forEach((btn) => {
+            if (btn.children && btn.children.length > 0) {
+              // 有子按钮，将作为独立菜单项显示
+              buttonsWithChildren.push(btn)
+            } else {
+              // 普通按钮，显示在操作权限列
+              simpleButtons.push(btn)
+            }
+          })
 
           // NOTE: 不包含 children 字段，避免 el-table 显示展开箭头
           const { children: _children, ...menuWithoutChildren } = menuItem
 
+          // 添加当前菜单项
           result.push({
             ...menuWithoutChildren,
             level,
             treePrefix: prefix,
-            actions: actions.length > 0 ? actions : undefined
+            actions: simpleButtons.length > 0 ? simpleButtons : undefined
           } as any)
 
-          // 递归处理子菜单（只处理非按钮类型）
+          // 递归处理子菜单（非按钮类型）
           const childMenus = menuItem.children?.filter((child) => child.type !== 3) || []
-          if (childMenus.length > 0) {
-            flatten(childMenus, level + 1, [...parentPath, index])
+
+          // NOTE: 将有子按钮的按钮也作为子项处理，显示在下一层
+          const allChildren = [...childMenus, ...buttonsWithChildren]
+
+          if (allChildren.length > 0) {
+            flatten(allChildren, level + 1, [...parentPath, index])
           }
+        }
+
+        // NOTE: 处理带有子按钮的按钮（作为菜单项显示）
+        if (menuItem.type === 3 && menuItem.children && menuItem.children.length > 0) {
+          // 收集这个按钮下的所有子按钮（CRUD操作）
+          const subButtons = menuItem.children.filter((child) => child.type === 3)
+
+          const { children: _children, ...buttonWithoutChildren } = menuItem
+
+          result.push({
+            ...buttonWithoutChildren,
+            level,
+            treePrefix: prefix,
+            actions: subButtons.length > 0 ? subButtons : undefined
+          } as any)
         }
       })
     }
