@@ -25,6 +25,7 @@ export const transformDynamicRoutes = (backendRoutes: menu[] = []): RouteRecordR
   return backendRoutes.map((route): RouteRecordRaw => {
     // layout 类型（目录）- 只有第一层（pid 为空）才使用 Layout
     if (route.children && route.type === 1) {
+      console.log("route", route)
       return {
         path: route.path,
         component: !route.pid ? Layouts["../layouts/index.vue"] : undefined,
@@ -36,7 +37,6 @@ export const transformDynamicRoutes = (backendRoutes: menu[] = []): RouteRecordR
     }
 
     // 普通页面
-    console.log([`..${route.component}`])
     const component = modules[`..${route.component}`]
     if (!component) {
       console.warn(`未找到组件路径: ${route.component}`)

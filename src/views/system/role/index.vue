@@ -96,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue"
+import { ref, watch, nextTick, markRaw } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listRolesApi } from "@/api/role"
 import { changeRoleMenuPermissionApi } from "@/api/permission"
@@ -149,10 +149,11 @@ const tableColumns = [
 ]
 
 // 操作按钮配置
+// NOTE: 使用 markRaw 避免图标组件变成响应式对象
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: Edit },
-  { name: "权限配置", code: "permission", type: "success", icon: Menu },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit) },
+  { name: "权限配置", code: "permission", type: "success", icon: markRaw(Menu) },
+  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) }
 ]
 
 const handleAddRole = () => {

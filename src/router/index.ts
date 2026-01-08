@@ -95,15 +95,6 @@ export const constantRoutes: RouteRecordRaw[] = [
       platforms: ["change"],
       hidden: true
     }
-  },
-  {
-    path: "/system/role/permission-matrix/:roleCode",
-    component: () => import("@/views/system/role/components/MatrixPermission.vue"),
-    name: "RolePermissionMatrix",
-    meta: {
-      title: "矩阵权限配置",
-      hidden: true
-    }
   }
   // ...alertRoutes
 ]

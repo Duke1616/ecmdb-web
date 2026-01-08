@@ -92,7 +92,7 @@ import { ElMessageBox } from "element-plus"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
-import { useMatrixPermission } from "../composables/useMatrixPermission"
+import { useMatrixPermission } from "./composables/useMatrixPermission"
 import { PLATFORMS } from "@/common/constants/platforms"
 
 const route = useRoute()
