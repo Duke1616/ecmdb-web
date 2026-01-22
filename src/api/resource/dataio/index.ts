@@ -57,9 +57,14 @@ export function importDataV2Api(data: DataIO.ImportV2Req) {
  * 导出数据
  * NOTE: 导出当前模型的所有资产数据为 Excel 文件
  */
-export function exportDataApi(modelUid: string) {
-  return instance.get<Blob>({
-    url: `${API_SERVICE.CMDB}/dataio/export/${modelUid}`,
+/**
+ * 导出数据
+ * NOTE: 导出当前模型的资产数据为 Excel 文件，支持筛选和范围选择
+ */
+export function exportDataApi(data: DataIO.ExportReq) {
+  return instance.post<Blob>({
+    url: `${API_SERVICE.CMDB}/dataio/export`,
+    data,
     responseType: "blob"
   })
 }

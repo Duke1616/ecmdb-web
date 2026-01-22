@@ -1,7 +1,7 @@
 import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { generateUploadURLApi, exportTemplateApi, importDataApi, exportDataApi } from "@/api/resource/dataio"
-import type { GenerateUploadURLReq, ImportReq } from "@/api/resource/dataio/types"
+import type { GenerateUploadURLReq, ImportReq, ExportReq } from "@/api/resource/dataio/types"
 
 /**
  * 数据导入导出 Composable
@@ -120,12 +120,12 @@ export function useDataIO() {
    * 导出数据
    * NOTE: 导出当前模型的所有资产数据为 Excel 文件
    */
-  const exportData = async (modelUid: string, modelName?: string) => {
+  const exportData = async (req: ExportReq, fileName?: string) => {
     try {
       exporting.value = true
       ElMessage.info("正在导出数据...")
 
-      const { data } = await exportDataApi(modelUid)
+      const { data } = await exportDataApi(req)
 
       // 创建下载链接
       const blob = new Blob([data], {
@@ -134,7 +134,8 @@ export function useDataIO() {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = url
-      link.download = `${modelName || modelUid}_export_${new Date().getTime()}.xlsx`
+      // 使用传入的文件名，或者基于 model_uid 生成默认文件名
+      link.download = fileName || `${req.model_uid}_export_${new Date().getTime()}.xlsx`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

@@ -3,7 +3,7 @@
     v-model="visible"
     title="导出数据"
     subtitle="选择导出条件和字段"
-    size="40%"
+    size="35%"
     direction="rtl"
     :header-icon="Download"
     :show-footer="true"
@@ -35,9 +35,9 @@
           </div>
           <div class="card-body">
             <el-radio-group v-model="exportOptions.scope" class="radio-group">
-              <el-radio value="all">全部数据</el-radio>
-              <el-radio value="current">当前页数据</el-radio>
-              <el-radio value="selected" :disabled="selectedCount === 0">
+              <el-radio :value="ExportScope.ALL">全部数据</el-radio>
+              <el-radio :value="ExportScope.CURRENT">当前页数据</el-radio>
+              <el-radio :value="ExportScope.SELECTED" :disabled="selectedCount === 0">
                 已选数据
                 <span v-if="selectedCount > 0" class="selected-count">(已选 {{ selectedCount }} 条)</span>
                 <span v-else class="selected-hint">(未选择)</span>
@@ -79,11 +79,12 @@
                     </el-select>
 
                     <el-select v-model="filter.operator" placeholder="操作符" size="small" class="filter-operator">
-                      <el-option label="等于" value="eq" />
-                      <el-option label="不等于" value="ne" />
-                      <el-option label="包含" value="contains" />
-                      <el-option label="大于" value="gt" />
-                      <el-option label="小于" value="lt" />
+                      <el-option
+                        v-for="op in getOperators(filter.field)"
+                        :key="op.value"
+                        :label="op.label"
+                        :value="op.value"
+                      />
                     </el-select>
 
                     <!-- 值输入: 根据字段类型动态渲染 -->
@@ -137,6 +138,24 @@
         </div>
       </div>
 
+      <!-- 导出字段选择 -->
+      <div class="option-card full-width">
+        <div class="card-header">
+          <el-icon class="header-icon"><List /></el-icon>
+          <h3 class="card-title">导出字段</h3>
+          <el-checkbox v-model="checkAll" :indeterminate="isIndeterminate" class="select-all-checkbox">
+            全选
+          </el-checkbox>
+        </div>
+        <div class="card-body">
+          <el-checkbox-group v-model="exportOptions.fields" class="field-checkbox-group">
+            <el-checkbox v-for="field in modelFields" :key="field.id" :value="field.id">
+              {{ field.name }}
+            </el-checkbox>
+          </el-checkbox-group>
+        </div>
+      </div>
+
       <!-- 导出预览 -->
       <div class="export-preview">
         <div class="preview-header">
@@ -164,10 +183,11 @@
 
 <script lang="ts" setup>
 import { ref, computed } from "vue"
-import { Download, InfoFilled, View, Plus, Delete, Filter } from "@element-plus/icons-vue"
+import { Download, InfoFilled, View, Plus, Delete, Filter, List } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
 import { useDataIO } from "../composables/useDataIO"
+import { type ExportReq, ExportScope } from "@/api/resource/dataio/types"
 
 // 字段接口
 interface ModelField {
@@ -220,8 +240,32 @@ interface FilterGroup {
 
 // 导出选项
 const exportOptions = ref({
-  scope: "all", // all | current | selected
-  filterGroups: [] as FilterGroup[]
+  scope: ExportScope.ALL,
+  filterGroups: [] as FilterGroup[],
+  fields: [] as string[]
+})
+
+// 全选状态
+const isIndeterminate = computed(() => {
+  const selectedCount = exportOptions.value.fields.length
+  const totalCount = props.modelFields.length
+  return selectedCount > 0 && selectedCount < totalCount
+})
+
+const checkAll = computed({
+  get: () => exportOptions.value.fields.length === props.modelFields.length && props.modelFields.length > 0,
+  set: (val) => {
+    exportOptions.value.fields = val ? props.modelFields.map((f) => f.id) : []
+  }
+})
+
+// 初始化字段选择 (默认全选)
+watch([() => props.modelValue, () => props.modelFields], ([val, fields]) => {
+  if (val && fields && fields.length > 0) {
+    // 仅在字段列表为空时才初始化全选，保留用户可能的修改（如果未关闭 Drawer）
+    // 或者每次打开都重置？通常重置更好
+    exportOptions.value.fields = fields.map((f) => f.id)
+  }
 })
 
 // 添加筛选条件组
@@ -260,6 +304,33 @@ const removeFilter = (groupIndex: number, filterIndex: number) => {
   if (group.filters.length === 0) {
     exportOptions.value.filterGroups.splice(groupIndex, 1)
   }
+}
+
+// 操作符选项
+const operatorOptions = {
+  common: [
+    { label: "等于", value: "eq" },
+    { label: "不等于", value: "ne" }
+  ],
+  string: [{ label: "包含", value: "contains" }],
+  number: [
+    { label: "大于", value: "gt" },
+    { label: "小于", value: "lt" }
+  ]
+}
+
+// 获取字段可用的操作符
+const getOperators = (fieldId: string) => {
+  const type = getFieldType(fieldId)
+  let ops = [...operatorOptions.common]
+
+  if (!type || type === "string" || type === "text") {
+    ops = [...ops, ...operatorOptions.string]
+  } else if (["integer", "float", "number", "datetime", "date"].includes(type)) {
+    ops = [...ops, ...operatorOptions.number]
+  }
+
+  return ops
 }
 
 // 获取字段类型
@@ -301,11 +372,11 @@ const filtersText = computed(() => {
 // 导出范围文本
 const exportScopeText = computed(() => {
   switch (exportOptions.value.scope) {
-    case "all":
+    case ExportScope.ALL:
       return "全部数据"
-    case "current":
+    case ExportScope.CURRENT:
       return "当前页数据"
-    case "selected":
+    case ExportScope.SELECTED:
       return `已选数据 (${selectedCount.value} 条)`
     default:
       return "全部数据"
@@ -325,9 +396,35 @@ const handleExport = async () => {
   }
 
   try {
-    // NOTE: 导出选项暂时不传递给 API,等待后端支持
-    // TODO: 后续需要将 exportOptions 传递给后端进行筛选
-    await exportData(props.modelUid, props.modelName)
+    const req: ExportReq = {
+      model_uid: props.modelUid,
+      scope: exportOptions.value.scope,
+      fields: exportOptions.value.fields,
+      filter_groups: []
+    }
+
+    // 设置导出范围相关参数
+    if (req.scope === ExportScope.SELECTED) {
+      req.resource_ids = props.selectedIds
+    } else if (req.scope === ExportScope.CURRENT) {
+      // TODO: 当前页导出功能需后端支持上下文或前端传递分页信息
+      console.warn("当前页导出功能需后端支持上下文或前端传递分页信息")
+    }
+
+    // 处理筛选条件 (适用于 ALL 和 CURRENT)
+    if (req.scope === ExportScope.ALL || req.scope === ExportScope.CURRENT) {
+      if (exportOptions.value.filterGroups.length > 0) {
+        req.filter_groups = exportOptions.value.filterGroups.map((group) => ({
+          filters: group.filters.map((f) => ({
+            field_uid: f.field,
+            operator: f.operator,
+            value: f.value
+          }))
+        }))
+      }
+    }
+
+    await exportData(req, previewFileName.value)
     emits("export-success")
     handleClose()
   } catch (error) {
@@ -445,6 +542,22 @@ const handleClose = () => {
         font-size: 12px;
         color: #9ca3af;
         margin-left: 4px;
+      }
+    }
+
+    // 导出字段选择
+    .field-checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+
+      :deep(.el-checkbox) {
+        margin-right: 0;
+
+        .el-checkbox__label {
+          font-size: 13px;
+          color: #4b5563;
+        }
       }
     }
 

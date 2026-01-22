@@ -3,7 +3,7 @@
     v-model="visible"
     title="批量导入数据"
     subtitle="按照模板格式批量导入资产数据"
-    size="45%"
+    size="35%"
     direction="rtl"
     :header-icon="Upload"
     :show-footer="true"
@@ -22,7 +22,6 @@
           <div class="step-number">1</div>
           <div class="step-info">
             <div class="step-title">下载模板</div>
-            <div class="step-desc">获取标准导入模板</div>
           </div>
         </div>
         <el-icon class="step-arrow"><Right /></el-icon>
@@ -30,7 +29,6 @@
           <div class="step-number">2</div>
           <div class="step-info">
             <div class="step-title">填写数据</div>
-            <div class="step-desc">按格式填写资产信息</div>
           </div>
         </div>
         <el-icon class="step-arrow"><Right /></el-icon>
@@ -38,7 +36,6 @@
           <div class="step-number">3</div>
           <div class="step-info">
             <div class="step-title">上传导入</div>
-            <div class="step-desc">上传文件完成导入</div>
           </div>
         </div>
       </div>

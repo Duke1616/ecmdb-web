@@ -41,3 +41,44 @@ export interface ImportV2Req {
   /** 上传的文件 */
   file: File
 }
+
+/** 导出筛选条件 */
+export interface ExportFilterCondition {
+  /** 字段 UID */
+  field_uid: string
+  /** 操作符: eq, ne, contains, gt, lt 等 */
+  operator: string
+  /** 筛选值 */
+  value: string | number | boolean
+}
+
+/** 导出筛选条件组 (组内 AND) */
+export interface ExportFilterGroup {
+  filters: ExportFilterCondition[]
+}
+
+/** 导出范围枚举 */
+export enum ExportScope {
+  /** 全部数据 */
+  ALL = "all",
+  /** 当前页数据 */
+  CURRENT = "current",
+  /** 已选数据 */
+  SELECTED = "selected"
+}
+
+/** 导出数据请求 */
+export interface ExportReq {
+  /** 模型 UID */
+  model_uid: string
+  /** 导出范围 */
+  scope: ExportScope
+  /** 资源 ID 列表 (scope='selected' 时必填) */
+  resource_ids?: (string | number)[]
+  /** 筛选条件组 (scope='all' 或 'current' 时可选) */
+  filter_groups?: ExportFilterGroup[]
+  /** 导出字段列表 (可选, 默认为全部字段) */
+  fields?: string[]
+  /** 文件名 (可选, 后端可默认生成) */
+  file_name?: string
+}
