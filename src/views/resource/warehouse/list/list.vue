@@ -5,6 +5,8 @@
       subtitle="管理仓库中的资源数据"
       add-button-text="新增资源"
       :show-back-button="true"
+      :show-add-button="false"
+      :show-refresh-button="false"
       @add="handlerCreate"
       @refresh="listAttributeFields"
       @back="goBack"
@@ -20,6 +22,24 @@
           </div>
         </div>
       </template>
+
+      <!-- 自定义操作按钮 -->
+      <template #actions>
+        <el-button :icon="Download" :loading="exporting" class="action-btn" @click="handleExportTemplate">
+          导出模板
+        </el-button>
+        <el-button type="success" :icon="Upload" class="action-btn" @click="handleShowImportDialog">
+          导入数据
+        </el-button>
+        <el-button type="warning" :icon="Download" class="action-btn" @click="handleShowExportDialog">
+          导出数据
+        </el-button>
+
+        <el-divider direction="vertical" />
+
+        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreate">新增资源</el-button>
+        <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="listAttributeFields" />
+      </template>
     </ManagerHeader>
 
     <DataTable
@@ -34,6 +54,7 @@
       :pagination-layout="paginationData.layout"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
+      @selection-change="handleSelectionChange"
     >
       <!-- 动态字段列插槽 -->
       <template v-for="item in displayFileds" :key="item.id" #[`data.${item.field_uid}`]="{ row }">
@@ -99,6 +120,24 @@
         @closed="onClosed"
       />
     </Drawer>
+
+    <!-- 导入数据抽屉 -->
+    <DataImportDrawer
+      v-model="importDialogVisible"
+      :model-uid="modelUid"
+      :model-name="modelName"
+      @import-success="handleImportSuccess"
+    />
+
+    <!-- 导出数据抽屉 -->
+    <DataExportDrawer
+      v-model="exportDialogVisible"
+      :model-uid="modelUid"
+      :model-name="modelName"
+      :model-fields="exportFields"
+      :selected-ids="selectedResourceIds"
+      @export-success="handleExportSuccess"
+    />
   </div>
 </template>
 
@@ -109,18 +148,21 @@ import { type Attribute } from "@/api/attribute/types/attribute"
 import { getModelAttributesWithGroupsApi } from "@/api/attribute"
 import { listResourceApi, deleteResourceApi, findSecureData } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
-import { CirclePlus, Edit, Delete, View, Setting } from "@element-plus/icons-vue"
+import { CirclePlus, Edit, Delete, View, Setting, Download, Upload, RefreshRight } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { Drawer } from "@@/components/Dialogs"
-import { ElMessage, UploadUserFile } from "element-plus"
+import { ElMessage, ElMessageBox, type UploadUserFile } from "element-plus"
 import router from "@/router"
 
 import Form from "./form.vue"
 import TableFileUpload from "./components/TableFileUpload/index.vue"
 import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
+import DataImportDrawer from "./components/DataImportDrawer.vue"
+import DataExportDrawer from "./components/DataExportDrawer.vue"
+import { useDataIO } from "./composables/useDataIO"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()
@@ -132,6 +174,58 @@ const displayFileds = ref<Attribute[]>([])
 const drawerVisible = ref<boolean>(false)
 
 const title = ref<string>("")
+
+// 导入导出功能
+const { exporting, exportTemplate } = useDataIO()
+const importDialogVisible = ref(false)
+const exportDialogVisible = ref(false)
+
+// 导出模板
+const handleExportTemplate = async () => {
+  await exportTemplate(modelUid, modelName)
+}
+
+// 显示导入对话框
+const handleShowImportDialog = () => {
+  importDialogVisible.value = true
+}
+
+// 显示导出对话框
+const handleShowExportDialog = () => {
+  exportDialogVisible.value = true
+}
+
+// 导入成功后刷新列表
+const handleImportSuccess = (count: number) => {
+  ElMessage.success(`成功导入 ${count} 条数据`)
+  listResourceByModelUid()
+}
+
+// 导出成功
+const handleExportSuccess = () => {
+  ElMessage.success("数据导出成功")
+}
+
+// 导出字段列表 (转换为 DataExportDrawer 需要的格式)
+const exportFields = computed(() => {
+  return attributeFiledsData.value
+    .filter((attr) => attr.field_type !== "file") // 过滤掉 file 类型
+    .map((attr) => ({
+      id: attr.field_uid,
+      name: attr.field_name,
+      type: attr.field_type,
+      options: attr.option // 传递 options 数据(用于 list 类型)
+    }))
+})
+
+// 已选数据
+const selectedResources = ref<Resource[]>([])
+const selectedResourceIds = computed(() => selectedResources.value.map((r) => String(r.id)))
+
+// 处理选择变化
+const handleSelectionChange = (selection: Resource[]) => {
+  selectedResources.value = selection
+}
 
 // 表格列配置
 const tableColumns = computed(() => {

@@ -28,3 +28,7 @@ coverage
 *.sln
 *.sw?
 
+# TypeScript compiled files (should not be committed)
+src/**/*.js
+src/**/*.js.map
+!src/**/*.config.js
