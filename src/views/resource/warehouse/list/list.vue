@@ -136,7 +136,7 @@
       :model-name="modelName"
       :model-fields="exportFields"
       :selected-ids="selectedResourceIds"
-      @export-success="handleExportSuccess"
+      :current-ids="currentResourceIds"
     />
   </div>
 </template>
@@ -201,11 +201,6 @@ const handleImportSuccess = (count: number) => {
   listResourceByModelUid()
 }
 
-// 导出成功
-const handleExportSuccess = () => {
-  ElMessage.success("数据导出成功")
-}
-
 // 导出字段列表 (转换为 DataExportDrawer 需要的格式)
 const exportFields = computed(() => {
   return attributeFiledsData.value
@@ -220,7 +215,9 @@ const exportFields = computed(() => {
 
 // 已选数据
 const selectedResources = ref<Resource[]>([])
-const selectedResourceIds = computed(() => selectedResources.value.map((r) => String(r.id)))
+const selectedResourceIds = computed(() => selectedResources.value.map((r) => r.id))
+// 当前页数据 ID 列表
+const currentResourceIds = computed(() => resourcesData.value.map((r) => r.id))
 
 // 处理选择变化
 const handleSelectionChange = (selection: Resource[]) => {

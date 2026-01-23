@@ -42,12 +42,26 @@ export interface ImportV2Req {
   file: File
 }
 
+/** 导出操作符枚举 */
+export enum ExportOperator {
+  /** 等于 */
+  EQ = "eq",
+  /** 不等于 */
+  NE = "ne",
+  /** 包含 */
+  CONTAINS = "contains",
+  /** 大于 */
+  GT = "gt",
+  /** 小于 */
+  LT = "lt"
+}
+
 /** 导出筛选条件 */
 export interface ExportFilterCondition {
   /** 字段 UID */
   field_uid: string
-  /** 操作符: eq, ne, contains, gt, lt 等 */
-  operator: string
+  /** 操作符 */
+  operator: ExportOperator
   /** 筛选值 */
   value: string | number | boolean
 }
@@ -74,7 +88,7 @@ export interface ExportReq {
   /** 导出范围 */
   scope: ExportScope
   /** 资源 ID 列表 (scope='selected' 时必填) */
-  resource_ids?: (string | number)[]
+  resource_ids?: number[]
   /** 筛选条件组 (scope='all' 或 'current' 时可选) */
   filter_groups?: ExportFilterGroup[]
   /** 导出字段列表 (可选, 默认为全部字段) */

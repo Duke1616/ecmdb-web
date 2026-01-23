@@ -2,6 +2,7 @@ import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { generateUploadURLApi, exportTemplateApi, importDataApi, exportDataApi } from "@/api/resource/dataio"
 import type { GenerateUploadURLReq, ImportReq, ExportReq } from "@/api/resource/dataio/types"
+import { downloadBlob } from "@/common/utils/file"
 
 /**
  * 数据导入导出 Composable
@@ -60,20 +61,14 @@ export function useDataIO() {
       exporting.value = true
       ElMessage.info("正在生成模板...")
 
-      const { data } = await exportTemplateApi(modelUid)
+      const data = await exportTemplateApi(modelUid)
 
-      // 创建下载链接
-      const blob = new Blob([data], {
+      // 使用工具函数下载文件
+      const blob = new Blob([data as any], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `${modelName || modelUid}_template.xlsx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const fileName = `${modelName || modelUid}_template.xlsx`
+      downloadBlob(blob, fileName)
 
       ElMessage.success("模板导出成功")
     } catch (error) {
@@ -125,21 +120,14 @@ export function useDataIO() {
       exporting.value = true
       ElMessage.info("正在导出数据...")
 
-      const { data } = await exportDataApi(req)
+      const data = await exportDataApi(req)
 
-      // 创建下载链接
-      const blob = new Blob([data], {
+      // 使用工具函数下载文件
+      const blob = new Blob([data as any], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       })
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      // 使用传入的文件名，或者基于 model_uid 生成默认文件名
-      link.download = fileName || `${req.model_uid}_export_${new Date().getTime()}.xlsx`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const downloadName = fileName || `${req.model_uid}_export_${new Date().getTime()}.xlsx`
+      downloadBlob(blob, downloadName)
 
       ElMessage.success("数据导出成功")
     } catch (error) {

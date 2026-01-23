@@ -287,7 +287,11 @@ class HyRequest {
           if (config.interceptorsToOnce?.responseInterceptor) {
             res = config.interceptorsToOnce.responseInterceptor(res)
           }
-          resolve(res.data)
+          if (config.responseType === "blob" || config.responseType === "arraybuffer") {
+            resolve(res as any)
+          } else {
+            resolve(res.data)
+          }
         })
         .catch((error) => {
           reject(error.response ? error.response.data : error)

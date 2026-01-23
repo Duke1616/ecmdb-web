@@ -182,12 +182,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed } from "vue"
+import { ref, computed, type PropType } from "vue"
 import { Download, InfoFilled, View, Plus, Delete, Filter, List } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
 import { useDataIO } from "../composables/useDataIO"
-import { type ExportReq, ExportScope } from "@/api/resource/dataio/types"
+import { type ExportReq, ExportScope, ExportOperator } from "@/api/resource/dataio/types"
 
 // 字段接口
 interface ModelField {
@@ -197,18 +197,31 @@ interface ModelField {
   options?: any // list 类型字段的选项
 }
 
-interface Props {
-  modelValue: boolean
-  modelUid: string
-  modelName?: string
-  selectedIds?: string[] // 已选数据的 ID 列表
-  modelFields?: ModelField[] // 模型字段列表
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  modelName: "",
-  selectedIds: () => [],
-  modelFields: () => []
+const props = defineProps({
+  modelValue: {
+    type: Boolean,
+    required: true
+  },
+  modelUid: {
+    type: String,
+    required: true
+  },
+  modelName: {
+    type: String,
+    default: ""
+  },
+  modelFields: {
+    type: Array as PropType<ModelField[]>,
+    default: () => []
+  },
+  selectedIds: {
+    type: Array as PropType<number[]>,
+    default: () => []
+  },
+  currentIds: {
+    type: Array as PropType<number[]>,
+    default: () => []
+  }
 })
 
 const emits = defineEmits<{
@@ -229,7 +242,7 @@ const { exporting, exportData } = useDataIO()
 // 筛选条件接口
 interface FilterCondition {
   field: string
-  operator: string
+  operator: ExportOperator
   value: string
 }
 
@@ -274,7 +287,7 @@ const addFilterGroup = () => {
     filters: [
       {
         field: "",
-        operator: "eq",
+        operator: ExportOperator.EQ,
         value: ""
       }
     ]
@@ -290,7 +303,7 @@ const removeFilterGroup = (groupIndex: number) => {
 const addFilterToGroup = (groupIndex: number) => {
   exportOptions.value.filterGroups[groupIndex].filters.push({
     field: "",
-    operator: "eq",
+    operator: ExportOperator.EQ,
     value: ""
   })
 }
@@ -309,13 +322,13 @@ const removeFilter = (groupIndex: number, filterIndex: number) => {
 // 操作符选项
 const operatorOptions = {
   common: [
-    { label: "等于", value: "eq" },
-    { label: "不等于", value: "ne" }
+    { label: "等于", value: ExportOperator.EQ },
+    { label: "不等于", value: ExportOperator.NE }
   ],
-  string: [{ label: "包含", value: "contains" }],
+  string: [{ label: "包含", value: ExportOperator.CONTAINS }],
   number: [
-    { label: "大于", value: "gt" },
-    { label: "小于", value: "lt" }
+    { label: "大于", value: ExportOperator.GT },
+    { label: "小于", value: ExportOperator.LT }
   ]
 }
 
@@ -407,8 +420,7 @@ const handleExport = async () => {
     if (req.scope === ExportScope.SELECTED) {
       req.resource_ids = props.selectedIds
     } else if (req.scope === ExportScope.CURRENT) {
-      // TODO: 当前页导出功能需后端支持上下文或前端传递分页信息
-      console.warn("当前页导出功能需后端支持上下文或前端传递分页信息")
+      req.resource_ids = props.currentIds
     }
 
     // 处理筛选条件 (适用于 ALL 和 CURRENT)
