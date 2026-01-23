@@ -75,7 +75,8 @@
         </template>
         <template v-else-if="item.field_type === 'file'">
           <TableFileUpload
-            v-model="row.data[item.field_uid]"
+            :model-value="Array.isArray(row.data[item.field_uid]) ? row.data[item.field_uid] : []"
+            @update:model-value="(val) => (row.data[item.field_uid] = val)"
             :field-uid="item.field_uid"
             :row="row"
             :limit="5"
@@ -142,7 +143,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, watch, h, nextTick, computed } from "vue"
+import { onMounted, onUnmounted, ref, watch, h, nextTick, computed, markRaw } from "vue"
 import { useRoute } from "vue-router"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { getModelAttributesWithGroupsApi } from "@/api/attribute"
@@ -196,8 +197,7 @@ const handleShowExportDialog = () => {
 }
 
 // 导入成功后刷新列表
-const handleImportSuccess = (count: number) => {
-  ElMessage.success(`成功导入 ${count} 条数据`)
+const handleImportSuccess = (_count: number) => {
   listResourceByModelUid()
 }
 
@@ -238,14 +238,14 @@ const tableColumns = computed(() => {
 // 操作按钮配置
 const operateBtnItems = computed(() => {
   const items = [
-    { name: "详情", code: "detail", type: "primary", icon: View },
-    { name: "修改", code: "edit", type: "warning", icon: Edit },
-    { name: "删除", code: "delete", type: "danger", icon: Delete }
+    { name: "详情", code: "detail", type: "primary", icon: markRaw(View) },
+    { name: "修改", code: "edit", type: "warning", icon: markRaw(Edit) },
+    { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) }
   ]
 
   // 如果是主机模型，添加终端按钮
   if (modelUid === "host") {
-    items.unshift({ name: "终端", code: "terminal", type: "info", icon: CirclePlus })
+    items.unshift({ name: "终端", code: "terminal", type: "info", icon: markRaw(CirclePlus) })
   }
 
   return items

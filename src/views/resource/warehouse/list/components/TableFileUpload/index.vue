@@ -84,7 +84,7 @@ const emits = defineEmits<{
   preview: [file: UploadUserFile]
 }>()
 
-const fileList = ref<UploadUserFile[]>(props.modelValue || [])
+const fileList = ref<UploadUserFile[]>(Array.isArray(props.modelValue) ? props.modelValue : [])
 
 // 使用文件上传 composables
 const { uploadFileToMinio, deleteFileFromMinio, updateCustomFieldData, createUploadedFile } = useFileUpload()
@@ -93,7 +93,11 @@ const { uploadFileToMinio, deleteFileFromMinio, updateCustomFieldData, createUpl
 watch(
   () => props.modelValue,
   (newValue) => {
-    fileList.value = newValue || []
+    if (Array.isArray(newValue)) {
+      fileList.value = newValue
+    } else {
+      fileList.value = []
+    }
   },
   { deep: true }
 )
@@ -180,8 +184,11 @@ const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
       return
     }
 
-    getMinioPresignedUrl(decodedUrlPath(uploadFile.url)).then((res: any) => {
-      window.location.href = getLocalMinioUrl(res.data)
+    getMinioPresignedUrl({
+      object_name: decodedUrlPath(uploadFile.url),
+      bucket: "ecmdb"
+    }).then((res: any) => {
+      window.location.href = getLocalMinioUrl(res.data.url)
     })
   })
 

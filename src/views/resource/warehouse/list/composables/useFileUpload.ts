@@ -16,8 +16,11 @@ export function useFileUpload() {
    */
   const uploadFileToMinio = (action: UploadRequestOptions, onProgress?: (percent: number) => void): Promise<string> => {
     const objectName = action.file.uid + "/" + action.file.name
-    return putMinioPresignedUrl(objectName).then((res: any) => {
-      const url = getLocalMinioUrl(res.data)
+    return putMinioPresignedUrl({
+      object_name: objectName,
+      bucket: "ecmdb"
+    }).then((res) => {
+      const url = getLocalMinioUrl(res.data.url)
 
       return axios
         .put(url, action.file, {
@@ -31,7 +34,7 @@ export function useFileUpload() {
             }
           }
         })
-        .then(() => res.data)
+        .then(() => res.data.url)
     })
   }
 
@@ -41,7 +44,10 @@ export function useFileUpload() {
    * @returns Promise<void>
    */
   const deleteFileFromMinio = async (fileUrl: string): Promise<void> => {
-    await removeMinioObject(decodedUrlPath(fileUrl))
+    await removeMinioObject({
+      object_name: decodedUrlPath(fileUrl),
+      bucket: "ecmdb"
+    })
   }
 
   /**

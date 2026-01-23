@@ -1,7 +1,10 @@
 import { ref } from "vue"
 import { ElMessage } from "element-plus"
-import { generateUploadURLApi, exportTemplateApi, importDataApi, exportDataApi } from "@/api/resource/dataio"
-import type { GenerateUploadURLReq, ImportReq, ExportReq } from "@/api/resource/dataio/types"
+import { exportTemplateApi, importDataApi, exportDataApi } from "@/api/resource/dataio"
+import type { ImportReq, ExportReq } from "@/api/resource/dataio/types"
+import { putMinioPresignedUrl } from "@/api/tools"
+import { getLocalMinioUrl } from "@/common/utils/url"
+import axios from "axios"
 import { downloadBlob } from "@/common/utils/file"
 
 /**
@@ -22,30 +25,26 @@ export function useDataIO() {
       uploading.value = true
 
       // 1. 获取预签名上传 URL
-      const req: GenerateUploadURLReq = {
-        file_name: file.name
-      }
+      const objectName = `${new Date().getTime()}_${file.name}`
+      const { data: presignedUrl } = await putMinioPresignedUrl({
+        object_name: objectName,
+        bucket: "ecmdb"
+      })
 
-      const { data: uploadData } = await generateUploadURLApi(req)
+      const url = getLocalMinioUrl(presignedUrl.url)
 
       // 2. 使用 PUT 方法直接上传到 S3
-      const uploadResponse = await fetch(uploadData.upload_url, {
-        method: "PUT",
-        body: file,
+      await axios.put(url, file, {
         headers: {
           "Content-Type": file.type || "application/octet-stream"
         }
       })
 
-      if (!uploadResponse.ok) {
-        throw new Error(`上传失败: ${uploadResponse.statusText}`)
-      }
-
       ElMessage.success("文件上传成功")
-      return uploadData.file_key
+      return presignedUrl.object_name
     } catch (error) {
       console.error("上传文件失败:", error)
-      ElMessage.error("文件上传失败")
+
       throw error
     } finally {
       uploading.value = false
@@ -59,7 +58,6 @@ export function useDataIO() {
   const exportTemplate = async (modelUid: string, modelName?: string) => {
     try {
       exporting.value = true
-      ElMessage.info("正在生成模板...")
 
       const data = await exportTemplateApi(modelUid)
 
@@ -73,7 +71,7 @@ export function useDataIO() {
       ElMessage.success("模板导出成功")
     } catch (error) {
       console.error("导出模板失败:", error)
-      ElMessage.error("导出模板失败")
+
       throw error
     } finally {
       exporting.value = false
@@ -104,7 +102,7 @@ export function useDataIO() {
       return data.imported_count
     } catch (error) {
       console.error("导入数据失败:", error)
-      ElMessage.error("导入数据失败")
+
       throw error
     } finally {
       importing.value = false
@@ -132,7 +130,7 @@ export function useDataIO() {
       ElMessage.success("数据导出成功")
     } catch (error) {
       console.error("导出数据失败:", error)
-      ElMessage.error("导出数据失败")
+
       throw error
     } finally {
       exporting.value = false
