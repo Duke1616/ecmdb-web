@@ -15,6 +15,13 @@
       </template>
 
       <template #actions>
+        <button class="action-btn export-btn" @click="handleExportTemplate" :disabled="exporting">
+          <el-icon class="btn-icon" :class="{ 'is-loading': exporting }">
+            <Loading v-if="exporting" />
+            <Download v-else />
+          </el-icon>
+          <span>{{ exporting ? "导出中..." : "导出模板" }}</span>
+        </button>
         <button class="action-btn disable-btn" @click="handleDisableModel">
           <el-icon class="btn-icon"><CircleClose /></el-icon>
           <span>禁用模型</span>
@@ -47,6 +54,8 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
+import { CircleClose, Delete, Download, Loading } from "@element-plus/icons-vue"
+import { useDataIO } from "@/common/composables/useDataIO"
 
 const route = useRoute()
 const id = route.query.id ? Number(route.query.id) : undefined
@@ -57,6 +66,13 @@ const modelInfo = ref<Model | null>(null)
 const modelUid = computed(() => modelInfo.value?.uid ?? "")
 const modelName = computed(() => modelInfo.value?.name ?? "")
 const isBuiltin = computed(() => Boolean(modelInfo.value?.builtin))
+
+const { exporting, exportTemplate } = useDataIO()
+
+const handleExportTemplate = async () => {
+  if (!modelUid.value) return
+  await exportTemplate(modelUid.value, modelName.value)
+}
 
 const fetchModelInfo = () => {
   if (!id) return
@@ -206,6 +222,23 @@ onMounted(() => {
 
   .btn-icon {
     font-size: 14px;
+  }
+
+  &.export-btn {
+    background: var(--primary, #3b82f6);
+    color: #ffffff;
+    border-color: var(--primary, #3b82f6);
+
+    &:hover {
+      background: var(--primary-dark, #2563eb);
+      border-color: var(--primary-dark, #2563eb);
+    }
+
+    &:disabled {
+      background: var(--primary-light, #93c5fd);
+      border-color: var(--primary-light, #93c5fd);
+      color: #ffffff;
+    }
   }
 
   &.disable-btn {

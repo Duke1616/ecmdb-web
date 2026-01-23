@@ -163,7 +163,7 @@ import TableFileUpload from "./components/TableFileUpload/index.vue"
 import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
 import DataImportDrawer from "./components/DataImportDrawer.vue"
 import DataExportDrawer from "./components/DataExportDrawer.vue"
-import { useDataIO } from "./composables/useDataIO"
+import { useDataIO } from "@/common/composables/useDataIO"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const route = useRoute()

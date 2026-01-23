@@ -186,7 +186,7 @@ import { ref, computed, type PropType } from "vue"
 import { Download, InfoFilled, View, Plus, Delete, Filter, List } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
-import { useDataIO } from "../composables/useDataIO"
+import { useDataIO } from "@/common/composables/useDataIO"
 import { type ExportReq, ExportScope, ExportOperator } from "@/api/resource/dataio/types"
 
 // 字段接口
