@@ -10,7 +10,7 @@
     cancel-button-text="取消"
     confirm-button-text="开始导入"
     :confirm-loading="importing"
-    :confirm-disabled="!selectedFile"
+    :confirm-disabled="!uploadedFileKey || uploading"
     @cancel="handleClose"
     @confirm="handleImport"
     @closed="handleClose"
@@ -68,35 +68,47 @@
               ref="uploadRef"
               class="upload-dragger"
               drag
-              :auto-upload="false"
+              :auto-upload="true"
               :limit="1"
-              :on-change="handleFileChange"
+              :http-request="handleUploadRequest"
               :on-exceed="handleExceed"
               accept=".xlsx,.xls"
+              :show-file-list="false"
             >
               <div class="upload-content">
                 <el-icon class="upload-icon"><Upload /></el-icon>
                 <p class="upload-title">点击或拖拽文件到此处</p>
-                <p class="upload-hint">支持 .xlsx 或 .xls 格式</p>
+                <p class="upload-hint">文件将自动上传并准备导入</p>
               </div>
             </el-upload>
 
             <!-- 已选择文件: 显示文件信息 -->
             <div v-else class="file-selected">
               <div class="file-info">
-                <el-icon class="file-icon"><Document /></el-icon>
+                <el-icon class="file-icon" :class="{ 'is-loading': uploading }">
+                  <Loading v-if="uploading" />
+                  <Document v-else />
+                </el-icon>
                 <div class="file-details">
                   <div class="file-name">{{ selectedFile.name }}</div>
                   <div class="file-meta">
                     <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
-                    <span class="file-status">
-                      <el-icon><CircleCheck /></el-icon>
-                      已选择
+                    <span class="file-status" :class="{ 'text-blue': uploading, 'text-green': !uploading }">
+                      <el-icon v-if="uploading"><Loading /></el-icon>
+                      <el-icon v-else><CircleCheck /></el-icon>
+                      {{ uploading ? "上传中..." : "已准备就绪" }}
                     </span>
                   </div>
                 </div>
               </div>
-              <el-button type="danger" :icon="Delete" circle size="small" @click="handleRemoveFile" />
+              <el-button
+                type="danger"
+                :icon="Delete"
+                circle
+                size="small"
+                @click="handleRemoveFile"
+                :disabled="uploading"
+              />
             </div>
           </div>
         </div>
@@ -110,7 +122,7 @@
         </div>
         <ul class="tips-list">
           <li>请确保 Excel 文件格式正确,字段名称与模板一致</li>
-          <li>导入过程中请勿关闭此窗口</li>
+          <li>文件拖拽后会自动上传到服务器,确认无误后点击下方按钮开始导入数据</li>
         </ul>
       </div>
     </div>
@@ -130,7 +142,7 @@ import {
   CircleCheck,
   Loading
 } from "@element-plus/icons-vue"
-import { ElMessage, type UploadFile, type UploadInstance } from "element-plus"
+import { ElMessage, type UploadInstance, type UploadRequestOptions } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
 import { useDataIO } from "../composables/useDataIO"
 
@@ -154,20 +166,29 @@ const visible = computed({
   set: (value) => emits("update:modelValue", value)
 })
 
-const { exporting, importing, exportTemplate, importData } = useDataIO()
+const { exporting, importing, uploading, exportTemplate, uploadFileToS3, executeImportData } = useDataIO()
 
 const uploadRef = ref<UploadInstance>()
 const selectedFile = ref<File | null>(null)
+const uploadedFileKey = ref<string>("")
 
 // 下载模板
 const handleDownloadTemplate = async () => {
   await exportTemplate(props.modelUid, props.modelName)
 }
 
-// 文件选择变化
-const handleFileChange = (uploadFile: UploadFile) => {
-  if (uploadFile.raw) {
-    selectedFile.value = uploadFile.raw
+// 处理文件上传请求
+const handleUploadRequest = async (options: UploadRequestOptions) => {
+  const file = options.file
+  selectedFile.value = file
+
+  try {
+    const key = await uploadFileToS3(file)
+    uploadedFileKey.value = key
+  } catch (error) {
+    selectedFile.value = null
+    uploadRef.value?.clearFiles()
+    ElMessage.error("文件上传失败，请重试")
   }
 }
 
@@ -179,6 +200,7 @@ const handleExceed = () => {
 // 移除文件
 const handleRemoveFile = () => {
   selectedFile.value = null
+  uploadedFileKey.value = ""
   uploadRef.value?.clearFiles()
 }
 
@@ -193,13 +215,13 @@ const formatFileSize = (bytes: number): string => {
 
 // 开始导入
 const handleImport = async () => {
-  if (!selectedFile.value) {
-    ElMessage.warning("请先选择要导入的文件")
+  if (!uploadedFileKey.value) {
+    ElMessage.warning("请等待文件上传完成")
     return
   }
 
   try {
-    const count = await importData(selectedFile.value, props.modelUid)
+    const count = await executeImportData(uploadedFileKey.value, props.modelUid)
     emits("import-success", count)
     handleClose()
   } catch (error) {
@@ -210,6 +232,7 @@ const handleImport = async () => {
 // 关闭抽屉
 const handleClose = () => {
   selectedFile.value = null
+  uploadedFileKey.value = ""
   uploadRef.value?.clearFiles()
   visible.value = false
 }
@@ -455,6 +478,11 @@ const handleClose = () => {
       font-size: 32px;
       color: #10b981;
       flex-shrink: 0;
+
+      &.is-loading {
+        color: #3b82f6;
+        animation: rotate 1s linear infinite;
+      }
     }
 
     .file-details {
@@ -487,6 +515,14 @@ const handleClose = () => {
           gap: 4px;
           color: #10b981;
           font-weight: 500;
+
+          &.text-blue {
+            color: #3b82f6;
+          }
+
+          &.text-green {
+            color: #10b981;
+          }
         }
       }
     }
@@ -521,7 +557,7 @@ const handleClose = () => {
   .tips-list {
     margin: 0;
     padding-left: 20px;
-    font-size: 12px;
+    font-size: 12px; // Fixed missing semicolon here in strict sense, but replacing whole block
     color: #78350f;
 
     li {

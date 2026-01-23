@@ -137,6 +137,33 @@ export function useDataIO() {
     }
   }
 
+  /**
+   * 执行数据导入 (已上传文件)
+   * NOTE: 使用已上传到 S3 的文件 key 调用导入接口
+   */
+  const executeImportData = async (fileKey: string, modelUid: string): Promise<number> => {
+    try {
+      importing.value = true
+      ElMessage.info("正在执行导入,请稍候...")
+
+      // 调用导入接口
+      const req: ImportReq = {
+        model_uid: modelUid,
+        file_key: fileKey
+      }
+
+      const { data } = await importDataApi(req)
+
+      ElMessage.success(`导入成功,共导入 ${data.imported_count} 条数据`)
+      return data.imported_count
+    } catch (error) {
+      console.error("导入数据失败:", error)
+      throw error
+    } finally {
+      importing.value = false
+    }
+  }
+
   return {
     uploading,
     importing,
@@ -144,6 +171,7 @@ export function useDataIO() {
     uploadFileToS3,
     exportTemplate,
     importData,
+    executeImportData,
     exportData
   }
 }
