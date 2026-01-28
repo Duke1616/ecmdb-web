@@ -159,13 +159,14 @@ import { useModelStore } from "@/pinia/stores/model"
 import { useRouter } from "vue-router"
 import { usePagination } from "@/common/composables/usePagination"
 import { ElMessage, ElMessageBox, UploadProps } from "element-plus"
-import { getMinioPresignedUrl } from "@/api/tools"
-import { decodedUrlPath, getLocalMinioUrl } from "@/common/utils/url"
+import { useFileDownload } from "@/common/composables/useFileDownload"
 
 const router = useRouter()
 const route = useRoute()
 const modelStore = useModelStore()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+const { downloadMinioFile } = useFileDownload()
 
 const inputSearch = ref<string>(route.query.text as string)
 let oldSearch = route.query.text as string
@@ -418,17 +419,7 @@ const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
       return
     }
 
-    getMinioPresignedUrl({
-      object_name: decodedUrlPath(uploadFile.url),
-      bucket: "ecmdb"
-    }).then((res: any) => {
-      const link = document.createElement("a")
-      link.href = getLocalMinioUrl(res.data.url)
-      link.setAttribute("download", uploadFile.name)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    })
+    downloadMinioFile(uploadFile.url, uploadFile.name)
   })
 }
 

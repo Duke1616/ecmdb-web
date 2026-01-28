@@ -59,9 +59,9 @@ import {
 } from "element-plus"
 import { Upload, Plus, View } from "@element-plus/icons-vue"
 import { h } from "vue"
-import { getMinioPresignedUrl } from "@/api/tools"
-import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
+
 import { useFileUpload } from "../../composables/useFileUpload"
+import { useFileDownload } from "@/common/composables/useFileDownload"
 import type { Resource } from "@/api/resource/types/resource"
 
 interface Props {
@@ -88,6 +88,7 @@ const fileList = ref<UploadUserFile[]>(Array.isArray(props.modelValue) ? props.m
 
 // 使用文件上传 composables
 const { uploadFileToMinio, deleteFileFromMinio, updateCustomFieldData, createUploadedFile } = useFileUpload()
+const { downloadMinioFile } = useFileDownload()
 
 // 监听外部值变化
 watch(
@@ -184,17 +185,7 @@ const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
       return
     }
 
-    getMinioPresignedUrl({
-      object_name: decodedUrlPath(uploadFile.url),
-      bucket: "ecmdb"
-    }).then((res: any) => {
-      const link = document.createElement("a")
-      link.href = getLocalMinioUrl(res.data.url)
-      link.setAttribute("download", uploadFile.name)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    })
+    downloadMinioFile(uploadFile.url, uploadFile.name)
   })
 
   emits("preview", uploadFile)

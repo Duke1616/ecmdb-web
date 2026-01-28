@@ -128,9 +128,9 @@ import { getModelAttributesWithGroupsApi } from "@/api/attribute"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { detailResourceApi, findSecureData } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
-import { getMinioPresignedUrl } from "@/api/tools"
-import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
+
 import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
+import { useFileDownload } from "@/common/composables/useFileDownload"
 
 interface Props {
   modelUid: string
@@ -142,6 +142,8 @@ const attributeFiledsData = ref<Attribute[]>([])
 const attributeGroupsData = ref<any[]>([])
 const resourceData = ref<Resource>()
 const loading = ref(false)
+
+const { downloadMinioFile } = useFileDownload()
 
 // 按分组过滤字段的方法
 const getNonFileFields = (fields: Attribute[]) => {
@@ -238,21 +240,7 @@ const handleDownload = (file: any) => {
     return
   }
 
-  getMinioPresignedUrl({
-    object_name: decodedUrlPath(file.url),
-    bucket: "ecmdb"
-  })
-    .then((res: any) => {
-      const link = document.createElement("a")
-      link.href = getLocalMinioUrl(res.data.url)
-      link.setAttribute("download", file.name)
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-    })
-    .catch(() => {
-      ElMessage.error("下载失败")
-    })
+  downloadMinioFile(file.url, file.name)
 }
 
 // 打开新页面
