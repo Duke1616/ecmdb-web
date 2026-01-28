@@ -63,7 +63,7 @@
       </template>
     </DataTable>
     <!-- 新增模版 -->
-    <el-card v-show="visibleWorkflow">
+    <el-card v-if="visibleWorkflow">
       <WizardContainer
         :steps="workflowSteps"
         :formData="workflowFormData"
@@ -84,6 +84,7 @@
 
 <script lang="ts" setup>
 import { h, ref, watch, nextTick, computed } from "vue"
+import { CopyDocument } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import {
   deleteWorkflowApi,
@@ -107,6 +108,7 @@ import { v4 as uuidv4 } from "uuid"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
+import { refreshGraphId } from "@/common/utils/logicflow"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const previewRef = ref<InstanceType<typeof Preview>>()
@@ -323,7 +325,33 @@ const operateEvent = (data: workflow, action: string) => {
     handleUpdate(data)
   } else if (action === "delete") {
     handleDelete(data)
+  } else if (action === "clone") {
+    handleClone(data)
   }
+}
+
+const handleClone = (row: workflow) => {
+  elCardVisibe.value = false
+  visibleWorkflow.value = true
+
+  nextTick(() => {
+    workflowWizardRef.value?.setStep(0)
+
+    // 深拷贝数据
+    const clonedData = JSON.parse(JSON.stringify(row))
+
+    // 重生成图数据 ID
+    if (clonedData.flow_data) {
+      clonedData.flow_data = refreshGraphId(clonedData.flow_data)
+    }
+
+    workflowFormData.value = {
+      ...workflowFormData.value,
+      ...clonedData,
+      id: undefined,
+      name: `${row.name}_copy`
+    }
+  })
 }
 
 const handleDelete = (row: workflow) => {
@@ -369,6 +397,12 @@ const operateBtnStatus = ref([
     name: "部署",
     code: "deploy",
     icon: "Open"
+  },
+  {
+    name: "克隆",
+    code: "clone",
+    icon: CopyDocument,
+    type: "success"
   },
   {
     name: "预览",

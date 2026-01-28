@@ -60,7 +60,7 @@
     </DataTable>
 
     <!-- 新增或删除模版 -->
-    <el-card v-show="templateDialogDrawer">
+    <el-card v-if="templateDialogDrawer">
       <WizardContainer
         :steps="templateSteps"
         :formData="templateFormData"
@@ -99,7 +99,7 @@
 <script lang="ts" setup>
 import { h, nextTick, ref, watch, computed } from "vue"
 import { useRouter } from "vue-router"
-import { CirclePlus, RefreshRight, EditPen, Connection, Search, Delete } from "@element-plus/icons-vue"
+import { CirclePlus, RefreshRight, EditPen, Connection, Search, Delete, CopyDocument } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { template, createOrUpdateTemplateReq } from "@/api/template/types/template"
 import {
@@ -164,7 +164,14 @@ const getOperateBtnItems = (row: template) => {
   }
 
   items.push({
-    name: "自动发现",
+    name: "克隆",
+    code: "clone",
+    type: "success",
+    icon: CopyDocument
+  })
+
+  items.push({
+    name: "路由",
     code: "discover",
     icon: Search
   })
@@ -189,6 +196,8 @@ const operateEvent = (data: template, action: string) => {
     handleDiscover(data)
   } else if (action === "delete") {
     handleDelete(data)
+  } else if (action === "clone") {
+    handleClone(data)
   }
 }
 
@@ -348,6 +357,25 @@ const handleUpdate = (row: template) => {
     templateFormData.value = { ...templateFormData.value, ...row }
   })
 }
+
+const handleClone = (row: template) => {
+  templateDialogDrawer.value = true
+
+  nextTick(() => {
+    templateWizardRef.value?.setStep(0)
+    // 深拷贝数据以避免引用问题，并移除 ID
+    const { id: _id, ...rest } = row
+    const clonedData = JSON.parse(JSON.stringify(rest))
+
+    templateFormData.value = {
+      ...templateFormData.value,
+      ...clonedData,
+      id: undefined,
+      name: `${row.name}_copy`
+    }
+  })
+}
+
 const handleCreateTemplate = () => {
   templateDialogDrawer.value = true
 }
