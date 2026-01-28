@@ -418,8 +418,16 @@ const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
       return
     }
 
-    getMinioPresignedUrl(decodedUrlPath(uploadFile.url)).then((res: any) => {
-      window.location.href = getLocalMinioUrl(res.data)
+    getMinioPresignedUrl({
+      object_name: decodedUrlPath(uploadFile.url),
+      bucket: "ecmdb"
+    }).then((res: any) => {
+      const link = document.createElement("a")
+      link.href = getLocalMinioUrl(res.data.url)
+      link.setAttribute("download", uploadFile.name)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     })
   })
 }

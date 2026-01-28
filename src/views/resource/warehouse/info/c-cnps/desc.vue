@@ -238,9 +238,17 @@ const handleDownload = (file: any) => {
     return
   }
 
-  getMinioPresignedUrl(decodedUrlPath(file.url))
+  getMinioPresignedUrl({
+    object_name: decodedUrlPath(file.url),
+    bucket: "ecmdb"
+  })
     .then((res: any) => {
-      window.open(getLocalMinioUrl(res.data), "_blank")
+      const link = document.createElement("a")
+      link.href = getLocalMinioUrl(res.data.url)
+      link.setAttribute("download", file.name)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     })
     .catch(() => {
       ElMessage.error("下载失败")
