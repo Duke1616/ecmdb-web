@@ -6,6 +6,7 @@
 
 <script setup lang="ts">
 import { onMounted, ref, nextTick } from "vue"
+import { v4 as uuidv4 } from "uuid"
 import LogicFlow from "@logicflow/core"
 import { Menu, MiniMap, Snapshot } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
@@ -45,11 +46,11 @@ const initLf = (data: any) => {
   // 加载数据
   lf.value.render(data)
 
-  lf.value.translateCenter()
-  lf.value.fitView(300, 300)
-
   // 等待渲染完成后进行居中和缩放
   nextTick(() => {
+    lf.value.translateCenter()
+    lf.value.fitView()
+
     const el = document.getElementById("LF-preview")
     if (el) {
       el.setAttribute("data-rendered", "true")
@@ -129,18 +130,60 @@ const registerNode = () => {
   registerAutomation(lf.value)
 }
 
+const demo = {
+  nodes: [
+    {
+      id: uuidv4(),
+      type: "start",
+      x: 350,
+      y: 160,
+      properties: {}
+    },
+    {
+      id: uuidv4(),
+      type: "end",
+      x: 610,
+      y: 160,
+      properties: {}
+    }
+  ],
+  edges: []
+}
+
 onMounted(() => {
+  // 最大等待时间 3000ms（3秒）
+  // 如果 3秒内后端还没注入数据，就认为是本地开发模式，渲染 Demo
+  const MAX_WAIT = 3000
+  const INTERVAL = 50
+  let waited = 0
+
   const checkData = () => {
     if (window.__DATA__) {
       try {
         initLf(window.__DATA__)
       } catch (e) {
         console.error("LogicFlow init error:", e)
-        const el = document.getElementById("LF-preview")
-        if (el) el.innerHTML = `<div style="color:red;padding:20px;">LogicFlow Error: ${e}</div>`
       }
     } else {
-      setTimeout(checkData, 50)
+      waited += INTERVAL
+      if (waited >= MAX_WAIT) {
+        console.warn("No data injected after timeout, rendering DEMO data.")
+
+        //如果是本地预览模式，将容器调整为视口大小，以便正确居中显示
+        const wrapper = document.querySelector(".logic-flow-preview") as HTMLElement
+        const container = document.getElementById("LF-preview")
+        if (wrapper && container) {
+          wrapper.style.width = "100vw"
+          wrapper.style.height = "100vh"
+          container.style.width = "100%"
+          container.style.height = "100%"
+        }
+
+        initLf(demo)
+      } else {
+        // 继续等待
+        setTimeout(checkData, INTERVAL)
+      }
     }
   }
 
