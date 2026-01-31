@@ -61,6 +61,7 @@ export interface ordersListRes {
 export interface passOrder {
   task_id: number
   comment: string
+  extra_data?: Record<string, any>
 }
 
 export interface rejectOrder {
@@ -82,6 +83,7 @@ export interface taskRecord {
   comment: string // 评论
   is_finished: number // 0:任务未完成 1:处理完成
   finished_time: string
+  extra_data?: Record<string, any>
 }
 
 export interface taskRecords {
@@ -92,31 +94,6 @@ export interface taskRecords {
 export interface orders {
   orders: order[]
   total: number
-}
-
-export interface TaskInfoReq {
-  task_id: number
-}
-
-export interface Task {
-  id: number
-  business_id: string
-  starter: string
-  proc_id: number
-  name: string
-  proc_inst_id: number
-  node_id: string
-  node_name: string
-  prev_node_id: string
-  is_cosigned: number
-  batch_code: string
-  user_id: string
-  status: number
-  is_finished: number
-  comment: string
-  proc_inst_create_time: string
-  create_time: string
-  finished_time: string
 }
 
 export interface TaskFormConfigReq {

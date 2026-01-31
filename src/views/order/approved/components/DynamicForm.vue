@@ -70,6 +70,7 @@
 <script setup lang="ts">
 import { PropType, ref, watch } from "vue"
 import type { FormInstance } from "element-plus"
+import { cloneDeep, isEqual } from "lodash-es"
 
 interface OptionItem {
   label: string
@@ -116,11 +117,8 @@ defineExpose({
 watch(
   () => props.modelValue,
   (val) => {
-    // Only update if different to avoid cycles, or use deep clone if needed
-    // For simple form usage, we can just assign properties or look at specific changes.
-    // Here we assume modelValue is the source of truth.
-    if (val) {
-      localModel.value = { ...val }
+    if (val && !isEqual(val, localModel.value)) {
+      localModel.value = cloneDeep(val)
     }
   },
   { immediate: true, deep: true }
@@ -129,7 +127,9 @@ watch(
 watch(
   localModel,
   (val) => {
-    emits("update:modelValue", val)
+    if (!isEqual(val, props.modelValue)) {
+      emits("update:modelValue", val)
+    }
   },
   { deep: true }
 )

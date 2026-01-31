@@ -44,7 +44,7 @@
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch } from "vue"
+import { h, ref, watch, markRaw } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { order } from "@/api/order/types/order"
 import { revokeOrderApi, startByOrderApi } from "@/api/order"
@@ -74,9 +74,9 @@ const tableColumns = [
 
 // 操作按钮配置
 const operateBtnItems = [
-  { name: "详情", code: "detail", type: "primary", icon: View },
-  { name: "催办", code: "urge", type: "warning", icon: Bell },
-  { name: "撤回", code: "revoke", type: "danger", icon: RefreshLeft }
+  { name: "详情", code: "detail", type: "primary", icon: markRaw(View) },
+  { name: "催办", code: "urge", type: "warning", icon: markRaw(Bell) },
+  { name: "撤回", code: "revoke", type: "danger", icon: markRaw(RefreshLeft) }
 ]
 
 /** 查询工单列表 */

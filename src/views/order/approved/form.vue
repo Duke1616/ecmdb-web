@@ -229,7 +229,10 @@ const handlePassOrder = () => {
   }
 
   // 同意审批
-  const submitData = { ...formData.value, ...taskFormData.value }
+  const submitData = {
+    ...formData.value,
+    extra_data: taskFormData.value
+  }
   passOrderApi(submitData)
     .then(() => {
       ElMessage.success("工单已同意")
@@ -320,7 +323,7 @@ defineExpose({})
 
 <style lang="scss" scoped>
 .form-container {
-  background: white;
+  background: transparent;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -331,12 +334,13 @@ defineExpose({})
 .form-scroll-area {
   height: 100%;
   overflow-y: auto;
-  padding: 20px;
-  padding-bottom: 80px; /* Space for fixed actions */
+  padding: 0 20px 20px 20px; /* Aligned padding */
+  padding-bottom: 80px;
 }
 
 .form-section {
-  margin-bottom: 24px;
+  padding: 0 0 10px 0;
+  margin-bottom: 0px;
 
   &:last-child {
     margin-bottom: 0;
@@ -346,17 +350,22 @@ defineExpose({})
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 16px;
+  gap: 10px;
+  font-size: 15px;
   font-weight: 600;
-  color: #303133;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #f0f2f5;
+  color: #111827;
+  margin-bottom: 24px;
+  padding-left: 12px;
+  border-left: 4px solid #409eff; /* Accent border */
+  height: 20px;
+  line-height: 20px;
 
   .el-icon {
-    font-size: 18px;
-    color: #409eff;
+    display: none; /* Hide icon for cleaner look, or enable if preferred */
+  }
+
+  span {
+    font-size: 16px;
   }
 }
 .form-actions {
