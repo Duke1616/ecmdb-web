@@ -26,8 +26,11 @@ const lf = ref()
 const containerRef = ref() as Ref<HTMLDivElement>
 
 const config = reactive<any>({
-  backgroundColor: "#EFF2F6"
+  background: {
+    backgroundColor: "#EFF2F6"
+  }
 })
+
 const initLf = (data: any) => {
   const lfInstance = new LogicFlow({
     ...config,
@@ -109,7 +112,7 @@ const setThemem = () => {
       fontSize: 14,
       fontWeight: 500,
       background: {
-        fill: "#ffffff",
+        fill: "#EFF2F6",
         stroke: "#d1d5db",
         strokeWidth: 2,
         radius: 8,
@@ -151,44 +154,39 @@ const demo = {
 }
 
 onMounted(() => {
-  // 最大等待时间 3000ms（3秒）
-  // 如果 3秒内后端还没注入数据，就认为是本地开发模式，渲染 Demo
   const MAX_WAIT = 3000
   const INTERVAL = 50
   let waited = 0
 
-  const checkData = () => {
+  const timer = setInterval(() => {
     if (window.__DATA__) {
+      clearInterval(timer)
       try {
         initLf(window.__DATA__)
       } catch (e) {
         console.error("LogicFlow init error:", e)
       }
-    } else {
-      waited += INTERVAL
-      if (waited >= MAX_WAIT) {
-        console.warn("No data injected after timeout, rendering DEMO data.")
-
-        //如果是本地预览模式，将容器调整为视口大小，以便正确居中显示
-        const wrapper = document.querySelector(".logic-flow-preview") as HTMLElement
-        const container = document.getElementById("LF-preview")
-        if (wrapper && container) {
-          wrapper.style.width = "100vw"
-          wrapper.style.height = "100vh"
-          container.style.width = "100%"
-          container.style.height = "100%"
-        }
-
-        initLf(demo)
-      } else {
-        // 继续等待
-        setTimeout(checkData, INTERVAL)
-      }
+      return
     }
-  }
 
-  // 启动检查
-  checkData()
+    waited += INTERVAL
+    if (waited >= MAX_WAIT) {
+      clearInterval(timer)
+      console.warn("No data injected after timeout, rendering DEMO data.")
+
+      // 如果是本地预览模式，将容器调整为视口大小，以便正确居中显示
+      const wrapper = document.querySelector(".logic-flow-preview") as HTMLElement
+      const container = document.getElementById("LF-preview")
+      if (wrapper && container) {
+        wrapper.style.width = "100vw"
+        wrapper.style.height = "100vh"
+        container.style.width = "100%"
+        container.style.height = "100%"
+      }
+
+      initLf(demo)
+    }
+  }, INTERVAL)
 })
 </script>
 
