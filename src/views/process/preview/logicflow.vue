@@ -132,29 +132,25 @@ const registerNode = () => {
 }
 
 onMounted(() => {
-  if (window.__DATA__) {
-    initLf(window.__DATA__)
-  } else {
-    // 解决竞态条件：如果组件挂载时数据未到达，建立 setter 监听等待数据注入
-    // 此时页面保持空白（且无 data-rendered 标记），Go 代码会一直等待直到我们拿到数据并渲染
-    let _data: any
-    Object.defineProperty(window, "__DATA__", {
-      configurable: true,
-      enumerable: true,
-      get: () => _data,
-      set: (val: any) => {
-        _data = val
-        initLf(val)
-        // 还原 window.__DATA__ 为普通属性
-        Object.defineProperty(window, "__DATA__", {
-          value: val,
-          writable: true,
-          configurable: true,
-          enumerable: true
-        })
+  const checkData = () => {
+    if (window.__DATA__) {
+      try {
+        initLf(window.__DATA__)
+      } catch (e) {
+        console.error("LogicFlow init error:", e)
+        const el = document.getElementById("LF-preview")
+        if (el) el.innerHTML = `<div style="color:red;padding:20px;">LogicFlow Error: ${e}</div>`
       }
-    })
+    } else {
+      // 轮询等待数据注入，间隔 50ms
+      // 只要我们不设置 data-rendered，Go 就会一直等待（直到 timeout）
+      // 这样强行对齐了前后端的时序
+      setTimeout(checkData, 50)
+    }
   }
+
+  // 启动检查
+  checkData()
 })
 </script>
 
