@@ -25,9 +25,7 @@ const lf = ref()
 const containerRef = ref() as Ref<HTMLDivElement>
 
 const config = reactive<any>({
-  background: {
-    backgroundColor: "#e0f2fe" // 调试用淡蓝色，如果截图是白的说明组件没渲染或被覆盖
-  }
+  backgroundColor: "#EFF2F6"
 })
 const initLf = (data: any) => {
   const lfInstance = new LogicFlow({
@@ -134,23 +132,6 @@ const registerNode = () => {
 onMounted(() => {
   const checkData = () => {
     if (window.__DATA__) {
-      // 调试：将数据打印在屏幕上
-      const debugEl = document.createElement("div")
-      debugEl.style.position = "fixed"
-      debugEl.style.top = "10px"
-      debugEl.style.left = "10px"
-      debugEl.style.zIndex = "9999"
-      debugEl.style.background = "rgba(0,0,0,0.8)"
-      debugEl.style.color = "#0f0"
-      debugEl.style.padding = "10px"
-      debugEl.style.maxWidth = "80vw"
-      debugEl.style.maxHeight = "50vh"
-      debugEl.style.overflow = "auto"
-      debugEl.style.fontFamily = "monospace"
-      debugEl.style.fontSize = "12px"
-      debugEl.innerText = "DATA RECEIVED:\n" + JSON.stringify(window.__DATA__, null, 2).slice(0, 1000)
-      document.body.appendChild(debugEl)
-
       try {
         initLf(window.__DATA__)
       } catch (e) {
@@ -170,10 +151,9 @@ onMounted(() => {
 
 <style scoped>
 .logic-flow-preview {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100vw;
+  display: block;
+  width: 1920px;
+  height: 1080px;
   position: fixed;
   top: 0;
   left: 0;
@@ -183,7 +163,8 @@ onMounted(() => {
 }
 
 #LF-preview {
-  flex: 1;
+  width: 1920px;
+  height: 1080px;
   outline: none;
   background: #ffffff;
   border-radius: 0;
