@@ -26,7 +26,7 @@ const containerRef = ref() as Ref<HTMLDivElement>
 
 const config = reactive<any>({
   background: {
-    backgroundColor: "#EFF2F6"
+    backgroundColor: "#e0f2fe" // 调试用淡蓝色，如果截图是白的说明组件没渲染或被覆盖
   }
 })
 const initLf = (data: any) => {
@@ -134,6 +134,23 @@ const registerNode = () => {
 onMounted(() => {
   const checkData = () => {
     if (window.__DATA__) {
+      // 调试：将数据打印在屏幕上
+      const debugEl = document.createElement("div")
+      debugEl.style.position = "fixed"
+      debugEl.style.top = "10px"
+      debugEl.style.left = "10px"
+      debugEl.style.zIndex = "9999"
+      debugEl.style.background = "rgba(0,0,0,0.8)"
+      debugEl.style.color = "#0f0"
+      debugEl.style.padding = "10px"
+      debugEl.style.maxWidth = "80vw"
+      debugEl.style.maxHeight = "50vh"
+      debugEl.style.overflow = "auto"
+      debugEl.style.fontFamily = "monospace"
+      debugEl.style.fontSize = "12px"
+      debugEl.innerText = "DATA RECEIVED:\n" + JSON.stringify(window.__DATA__, null, 2).slice(0, 1000)
+      document.body.appendChild(debugEl)
+
       try {
         initLf(window.__DATA__)
       } catch (e) {
@@ -142,9 +159,6 @@ onMounted(() => {
         if (el) el.innerHTML = `<div style="color:red;padding:20px;">LogicFlow Error: ${e}</div>`
       }
     } else {
-      // 轮询等待数据注入，间隔 50ms
-      // 只要我们不设置 data-rendered，Go 就会一直等待（直到 timeout）
-      // 这样强行对齐了前后端的时序
       setTimeout(checkData, 50)
     }
   }
