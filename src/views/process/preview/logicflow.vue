@@ -200,7 +200,7 @@ onMounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  background: #ffffff;
+  background: #eff2f6;
   z-index: 1000;
   overflow: hidden;
 }
@@ -209,7 +209,7 @@ onMounted(() => {
   width: 1920px;
   height: 1080px;
   outline: none;
-  background: #ffffff;
+  background: #eff2f6;
   border-radius: 0;
 }
 </style>
