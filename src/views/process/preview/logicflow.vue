@@ -21,27 +21,6 @@ import {
   registerPolyline
 } from "@@/components/workflow/RegisterNode/index"
 
-import { v4 as uuidv4 } from "uuid"
-const demo = {
-  nodes: [
-    {
-      id: uuidv4(),
-      type: "start",
-      x: 350,
-      y: 160,
-      properties: {}
-    },
-    {
-      id: uuidv4(),
-      type: "end",
-      x: 610,
-      y: 160,
-      properties: {}
-    }
-  ],
-  edges: []
-}
-
 const lf = ref()
 const containerRef = ref() as Ref<HTMLDivElement>
 
@@ -156,7 +135,25 @@ onMounted(() => {
   if (window.__DATA__) {
     initLf(window.__DATA__)
   } else {
-    initLf(demo)
+    // 解决竞态条件：如果组件挂载时数据未到达，建立 setter 监听等待数据注入
+    // 此时页面保持空白（且无 data-rendered 标记），Go 代码会一直等待直到我们拿到数据并渲染
+    let _data: any
+    Object.defineProperty(window, "__DATA__", {
+      configurable: true,
+      enumerable: true,
+      get: () => _data,
+      set: (val: any) => {
+        _data = val
+        initLf(val)
+        // 还原 window.__DATA__ 为普通属性
+        Object.defineProperty(window, "__DATA__", {
+          value: val,
+          writable: true,
+          configurable: true,
+          enumerable: true
+        })
+      }
+    })
   }
 })
 </script>
