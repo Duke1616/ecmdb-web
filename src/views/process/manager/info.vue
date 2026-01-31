@@ -36,7 +36,7 @@
               <div class="input-container">
                 <el-form-item prop="name" class="no-margin">
                   <el-input
-                    :disabled="localFormData.id"
+                    :disabled="!!localFormData.id"
                     v-model="localFormData.name"
                     @input="updateFormData"
                     placeholder="请输入流程名称，如：用户注册流程"

@@ -76,14 +76,14 @@
     </el-card>
 
     <!-- 预览 -->
-    <el-dialog v-model="graphPreviewVisible" width="60%" @closed="onPreviewClosed">
-      <Preview ref="previewRef" @close="onPreviewClosed" />
+    <el-dialog v-model="graphPreviewVisible" width="60%" @closed="onPreviewClosed" @opened="handlePreviewOpened">
+      <Preview ref="previewRef" />
     </el-dialog>
   </PageContainer>
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch, nextTick, computed } from "vue"
+import { h, ref, watch, nextTick, computed, markRaw } from "vue"
 import { CopyDocument } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import {
@@ -313,12 +313,17 @@ const formatOwner = (row: workflow) => {
   return userMaps.value.get(row.owner) || "未知用户"
 }
 
+const previewData = ref()
+const handlePreviewOpened = () => {
+  if (previewRef.value && previewData.value) {
+    previewRef.value.initLf(previewData.value)
+  }
+}
+
 const operateEvent = (data: workflow, action: string) => {
   if (action === "preview") {
+    previewData.value = data.flow_data
     graphPreviewVisible.value = true
-    nextTick(() => {
-      previewRef.value?.initLf(data.flow_data)
-    })
   } else if (action === "deploy") {
     deployWorkflow(data)
   } else if (action === "edit") {
@@ -401,7 +406,7 @@ const operateBtnStatus = ref([
   {
     name: "克隆",
     code: "clone",
-    icon: CopyDocument,
+    icon: markRaw(CopyDocument),
     type: "success"
   },
   {

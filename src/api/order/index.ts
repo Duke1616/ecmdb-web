@@ -81,3 +81,11 @@ export function orderTaskRecordsApi(data: order.taskRecordReq) {
     data: data
   })
 }
+
+/** 获取任务表单配置 */
+export function getTaskFormConfigApi(data: order.TaskFormConfigReq) {
+  return instance.post<any[]>({
+    url: `${API_SERVICE.CMDB}/order/task/form_config`,
+    data: data
+  })
+}

@@ -152,6 +152,10 @@
         </div>
       </div>
     </FormSection>
+
+    <FormSection title="表单配置" icon="📋">
+      <FormList v-model="propertyForm.fields" :disabled="flowDetail.status == '2'" />
+    </FormSection>
   </el-form>
 
   <!-- 用户选择器弹窗 -->
@@ -182,6 +186,7 @@ import { findByUsernamesApi } from "@/api/user"
 import { FormSection, FormHelp } from "../../PropertySetting"
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
 import UserSelector from "./UserSelector.vue"
+import FormList from "./FormList.vue"
 
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 // 使用模板 Hook
@@ -254,7 +259,8 @@ const propertyForm = reactive({
   template_id: 0,
   rule: "appoint",
   is_cosigned: false,
-  is_cc: false
+  is_cc: false,
+  fields: [] as any[]
 })
 
 interface ParticipantOption {
@@ -334,7 +340,8 @@ const setProperties = () => {
     template_field: propertyForm.template_field,
     rule: propertyForm.rule,
     is_cosigned: propertyForm.is_cosigned,
-    is_cc: propertyForm.is_cc
+    is_cc: propertyForm.is_cc,
+    fields: propertyForm.fields
   })
 }
 
@@ -357,6 +364,11 @@ onMounted(async () => {
   propertyForm.template_id = props.nodeData?.properties.template_id || ""
   propertyForm.rule = props.nodeData?.properties.rule || "appoint"
   propertyForm.is_cc = props.nodeData?.properties.is_cc ? props.nodeData.properties.is_cc : false
+  propertyForm.fields = props.nodeData?.properties.fields
+    ? props.nodeData.properties.fields
+    : props.nodeData?.properties.form
+      ? props.nodeData.properties.form
+      : []
   // 如果存在审批用户则获取
   if (
     props.nodeData?.properties.approved &&

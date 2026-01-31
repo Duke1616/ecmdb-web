@@ -93,3 +93,33 @@ export interface orders {
   orders: order[]
   total: number
 }
+
+export interface TaskInfoReq {
+  task_id: number
+}
+
+export interface Task {
+  id: number
+  business_id: string
+  starter: string
+  proc_id: number
+  name: string
+  proc_inst_id: number
+  node_id: string
+  node_name: string
+  prev_node_id: string
+  is_cosigned: number
+  batch_code: string
+  user_id: string
+  status: number
+  is_finished: number
+  comment: string
+  proc_inst_create_time: string
+  create_time: string
+  finished_time: string
+}
+
+export interface TaskFormConfigReq {
+  task_id: number
+  workflow_id: number
+}
