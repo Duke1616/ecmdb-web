@@ -74,6 +74,7 @@ import { FormInstance, Options, ElMessageBox, ElMessage } from "element-plus"
 import { Document, Setting, EditPen, RefreshLeft, Check, Close } from "@element-plus/icons-vue"
 import DynamicForm from "./components/DynamicForm.vue"
 import { getTaskFormConfigApi } from "@/api/order/index"
+import { removeFetchFromRules } from "@/common/utils/form-create"
 
 interface Props {
   templateId: number | undefined
@@ -108,7 +109,14 @@ const handleDetail = (id: number) => {
       // 工单模版
       options.value = formCreate.parseJson(res.data.options) as unknown as Options
       options.value.submitBtn = false
-      rule.value = formCreate.parseJson(res.data.rules)
+      const parsedRules = formCreate.parseJson(res.data.rules)
+
+      // 如果不是 "my" 或 "my-Start"，说明是查看模式，移除 fetch 配置，防止触发动态请求
+      if (props.action !== "my" && props.action !== "my-Start") {
+        removeFetchFromRules(parsedRules)
+      }
+
+      rule.value = parsedRules
     })
     .catch((error) => {
       console.log("catch", error)
