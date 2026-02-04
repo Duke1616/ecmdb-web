@@ -90,7 +90,7 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { useModelStore } from "@/pinia/stores/model"
-import { CreateModelRelationApi } from "@/api/relation"
+import { CreateModelRelationApi, UpdateModelRelationApi } from "@/api/relation"
 import {
   type CreateModelRelationReq,
   type ListRelationTypeData,
@@ -171,9 +171,17 @@ const handleCreate = () => {
       }
 
       loading.value = true
-      CreateModelRelationApi(formData.value)
+      const api = props.editData ? UpdateModelRelationApi : CreateModelRelationApi
+      const payload: any = { ...formData.value }
+
+      // 如果是更新，需要带上 ID
+      if (props.editData && props.editData.id) {
+        payload.id = props.editData.id
+      }
+
+      api(payload)
         .then(() => {
-          ElMessage.success("关联创建成功")
+          ElMessage.success(props.editData ? "关联更新成功" : "关联创建成功")
           resetForm()
           emit("success")
           resolve(true)

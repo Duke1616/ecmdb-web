@@ -33,30 +33,24 @@
     <!-- 新增/查看对话框 -->
     <FormDialog
       v-model="dialogVisible"
-      :title="isEdit ? '查看关联类型' : '新增关联类型'"
+      :title="isEdit ? '编辑关联类型' : '新增关联类型'"
       width="30%"
-      :confirm-text="isEdit ? '关闭' : '确认'"
+      :confirm-text="isEdit ? '保存' : '确认'"
       @confirm="handleCreateOrUpdate"
       @cancel="onClosed"
     >
-      <el-form
-        ref="formRef"
-        :model="formData"
-        :rules="isEdit ? {} : formRules"
-        label-width="100px"
-        label-position="top"
-      >
+      <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
         <el-form-item prop="uid" label="唯一标识">
           <el-input v-model="formData.uid" :disabled="isEdit" placeholder="请输入唯一标识" />
         </el-form-item>
         <el-form-item prop="name" label="名称">
-          <el-input v-model="formData.name" :disabled="isEdit" placeholder="请输入名称" />
+          <el-input v-model="formData.name" placeholder="请输入名称" />
         </el-form-item>
         <el-form-item prop="source_describe" label="源->目标描述">
-          <el-input v-model="formData.source_describe" :disabled="isEdit" placeholder="请输入源->目标描述" />
+          <el-input v-model="formData.source_describe" placeholder="请输入源->目标描述" />
         </el-form-item>
         <el-form-item prop="target_describe" label="目标->源描述">
-          <el-input v-model="formData.target_describe" :disabled="isEdit" placeholder="请输入目标->源描述" />
+          <el-input v-model="formData.target_describe" placeholder="请输入目标->源描述" />
         </el-form-item>
       </el-form>
     </FormDialog>
@@ -65,10 +59,19 @@
 
 <script lang="ts" setup>
 import { ref, watch } from "vue"
-import { CreateRelationTypeApi, ListRelationTypeApi } from "@/api/relation"
-import { type CreateRealtionTypeReq, type ListRelationTypeData } from "@/api/relation/types/relation"
-import { type FormInstance, type FormRules, ElMessage } from "element-plus"
-import { Edit } from "@element-plus/icons-vue"
+import {
+  CreateRelationTypeApi,
+  ListRelationTypeApi,
+  UpdateRelationTypeApi,
+  DeleteRelationTypeApi
+} from "@/api/relation"
+import {
+  type CreateRealtionTypeReq,
+  type ListRelationTypeData,
+  type UpdateRelationTypeReq
+} from "@/api/relation/types/relation"
+import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
+import { Edit, Delete } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { cloneDeep } from "lodash-es"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -79,6 +82,9 @@ import { FormDialog } from "@@/components/Dialogs"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
+// 当前编辑的ID
+const currentId = ref<number>()
+
 // 表格列配置
 const tableColumns = [
   { prop: "name", label: "名称", align: "center" as const },
@@ -88,7 +94,10 @@ const tableColumns = [
 ]
 
 // 操作按钮配置（暂时只支持查看，因为后端API不支持更新和删除）
-const operateBtnItems = [{ name: "查看", code: "view", type: "primary", icon: Edit }]
+const operateBtnItems = [
+  { name: "修改", code: "edit", type: "primary", icon: Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
+]
 
 // 选中的行
 const selectedRows = ref<ListRelationTypeData[]>([])
@@ -117,8 +126,10 @@ const formRules: FormRules<CreateRealtionTypeReq> = {
 }
 // 操作按钮事件
 const handleOperateEvent = (row: ListRelationTypeData, action: string) => {
-  if (action === "view") {
-    handleView(row)
+  if (action === "edit") {
+    handleEdit(row)
+  } else if (action === "delete") {
+    handleDelete(row)
   }
 }
 
@@ -134,11 +145,33 @@ const handlerCreate = () => {
   dialogVisible.value = true
 }
 
-// 查看操作
-const handleView = (row: ListRelationTypeData) => {
+// 修改操作
+const handleEdit = (row: ListRelationTypeData) => {
   isEdit.value = true
-  formData.value = cloneDeep(row)
+  currentId.value = row.id // 保存ID
+  formData.value = {
+    uid: row.uid,
+    name: row.name,
+    source_describe: row.source_describe,
+    target_describe: row.target_describe
+  }
   dialogVisible.value = true
+}
+
+// 删除操作
+const handleDelete = (row: ListRelationTypeData) => {
+  ElMessageBox.confirm(`确认删除关联类型 "${row.name}" 吗？`, "提示", {
+    type: "warning",
+    confirmButtonText: "确定",
+    cancelButtonText: "取消"
+  })
+    .then(() => {
+      DeleteRelationTypeApi({ id: row.id }).then(() => {
+        ElMessage.success("删除成功")
+        listRelationTypesData()
+      })
+    })
+    .catch(() => {})
 }
 
 // 关闭对话框
@@ -152,28 +185,35 @@ const resetForm = () => {
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
   isEdit.value = false
+  currentId.value = undefined
 }
 
-// 创建或查看
+// 创建或修改
 const handleCreateOrUpdate = () => {
-  if (isEdit.value) {
-    // 查看模式，直接关闭
-    onClosed()
-    return
-  }
-
   formRef.value?.validate((valid: boolean, fields) => {
     if (!valid) return console.error("表单校验不通过", fields)
 
-    CreateRelationTypeApi(formData.value)
-      .then(() => {
+    if (isEdit.value && currentId.value) {
+      // 更新
+      const updateData: UpdateRelationTypeReq = {
+        id: currentId.value,
+        name: formData.value.name,
+        source_describe: formData.value.source_describe,
+        target_describe: formData.value.target_describe
+      }
+      UpdateRelationTypeApi(updateData).then(() => {
+        ElMessage.success("更新成功")
+        onClosed()
+        listRelationTypesData()
+      })
+    } else {
+      // 创建
+      CreateRelationTypeApi(formData.value).then(() => {
         ElMessage.success("创建成功")
         onClosed()
         listRelationTypesData()
       })
-      .catch(() => {
-        ElMessage.error("创建失败")
-      })
+    }
   })
 }
 

@@ -24,6 +24,22 @@ export function ListRelationTypeApi(data: Relation.ListRelationTypeReq) {
     })
 }
 
+/** 更新关联类型 */
+export function UpdateRelationTypeApi(data: Relation.UpdateRelationTypeReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/relation/update`,
+    data: data
+  })
+}
+
+/** 删除关联类型 */
+export function DeleteRelationTypeApi(data: Relation.DeleteRelationTypeReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/relation/delete`,
+    data: data
+  })
+}
+
 /** 新增模型关联 */
 export function CreateModelRelationApi(data: Relation.CreateModelRelationReq) {
   return instance.post<number>({
@@ -36,6 +52,14 @@ export function CreateModelRelationApi(data: Relation.CreateModelRelationReq) {
 export function ListModelRelationApi(data: Relation.ListModelRealtionReq) {
   return instance.post<Relation.ListModelRelationResult>({
     url: `${API_SERVICE.CMDB}/model/relation/list`,
+    data: data
+  })
+}
+
+/** 更新模型关联 */
+export function UpdateModelRelationApi(data: Relation.UpdateModelRelationReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/model/relation/update`,
     data: data
   })
 }

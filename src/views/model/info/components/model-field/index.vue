@@ -124,7 +124,7 @@
     >
       <createOrUpdateField
         ref="apiFieldRef"
-        :model-uid="props.modelUid"
+        :model-uid="modelUid"
         :group-id="groupId"
         @close="onClosed"
         @getAttributesData="getAttributesData"
@@ -147,7 +147,7 @@
     >
       <sortField
         ref="sortFieldRef"
-        :model-uid="props.modelUid"
+        :model-uid="modelUid"
         :attributes-data="AttributesData"
         @close="sortClose"
         @getAttributesData="getAttributesData"
@@ -157,7 +157,7 @@
 </template>
 
 <script lang="ts" setup>
-import { h, nextTick, ref, watch } from "vue"
+import { nextTick, ref, watch, computed } from "vue"
 import {
   Search,
   CirclePlus,
@@ -173,28 +173,26 @@ import {
   getModelAttributesWithGroupsApi,
   DeleteAttributeApi,
   createAttributeGroupApi,
-  deleteAttributeGroupApi,
-  renameAttributeGroupApi
+  renameAttributeGroupApi,
+  deleteAttributeGroupApi
 } from "@/api/attribute"
 import { type AttributeGroup, type Attribute } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/common/composables/usePagination"
 import { useCrudAttributeGroup } from "./composables/useCrudAttributeGroup"
-import { type FormRules } from "element-plus"
+import { type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { FormDialog, Drawer } from "@@/components/Dialogs"
 import createOrUpdateField from "./create-or-update.vue"
 import sortField from "./sort.vue"
 
+defineOptions({ name: "ModelField" })
+
 const { paginationData } = usePagination()
 const searchInput = ref("")
 const cardDrawer = ref(false)
-
 const loading = ref<boolean>(false)
 
-// 接收父组建传递
-interface Props {
-  modelUid: string
-}
-const props = defineProps<Props>()
+// Props Destructuring
+const { modelUid } = defineProps<{ modelUid: string }>()
 
 const currentItem = ref<Attribute>()
 
@@ -213,12 +211,11 @@ const handleSortDrawer = () => {
 
 //** 获取字段信息 */
 const AttributesData = ref<AttributeGroup[]>([])
-function getAttributesData() {
+const getAttributesData = () => {
   loading.value = true
-  getModelAttributesWithGroupsApi(props.modelUid)
+  getModelAttributesWithGroupsApi(modelUid)
     .then(({ data }) => {
       AttributesData.value = data.attribute_groups
-      filterData.value = data.attribute_groups
     })
     .catch(() => {
       AttributesData.value = []
@@ -233,20 +230,17 @@ const groupId = ref<number>()
 const apiFieldRef = ref<InstanceType<typeof createOrUpdateField>>()
 const attrFieldVisible = ref<boolean>(false)
 
-function handleAddAttr(group_id: number) {
+const handleAddAttr = (group_id: number) => {
   attrFieldVisible.value = true
   groupId.value = group_id
-  // 重置表单数据
   nextTick(() => {
     apiFieldRef.value?.resetForm()
   })
 }
 
-function handleUpdateAttr(group_id: number, row: Attribute) {
+const handleUpdateAttr = (group_id: number, row: Attribute) => {
   attrFieldVisible.value = true
   row.group_id = group_id
-
-  console.log(row, "row")
   nextTick(() => {
     apiFieldRef.value?.setFrom(row)
   })
@@ -254,7 +248,6 @@ function handleUpdateAttr(group_id: number, row: Attribute) {
 
 const onClosed = (val: boolean) => {
   attrFieldVisible.value = val
-  // 关闭弹窗时重置表单数据
   if (!val) {
     nextTick(() => {
       apiFieldRef.value?.resetForm()
@@ -285,41 +278,35 @@ const handleFieldConfirm = async () => {
 }
 
 //** 组展开 */
-function toggleGroup(group: any) {
+const toggleGroup = (group: AttributeGroup) => {
   group.expanded = !group.expanded
 }
 
-//** 前端过滤展示 */
-const filterData = ref<AttributeGroup[]>([])
-watch(searchInput, () => {
-  filterData.value = AttributesData.value
-  // 如果搜索关键词为空，不执行过滤
+//** 前端过滤展示 (Computed) */
+const filterData = computed(() => {
   if (!searchInput.value.trim()) {
-    return
+    return AttributesData.value
   }
 
+  const query = searchInput.value.trim().toLowerCase()
   const foundAttrs: AttributeGroup[] = []
+
   AttributesData.value.forEach((group) => {
     if (Array.isArray(group.attributes)) {
       const matchingAttrs = group.attributes.filter(
-        (attr) =>
-          attr.field_uid.toLowerCase().includes(searchInput.value.trim().toLowerCase()) ||
-          attr.field_name.toLowerCase().includes(searchInput.value.trim().toLowerCase())
+        (attr) => attr.field_uid.toLowerCase().includes(query) || attr.field_name.toLowerCase().includes(query)
       )
       if (matchingAttrs.length > 0) {
         foundAttrs.push({
-          group_id: group.group_id,
-          group_name: group.group_name,
+          ...group,
           attributes: matchingAttrs,
-          expanded: true,
-          index: 0,
-          total: 0
+          expanded: true
         })
       }
     }
   })
 
-  filterData.value = foundAttrs
+  return foundAttrs
 })
 
 const handleDelete = (row: Attribute) => {
@@ -327,16 +314,12 @@ const handleDelete = (row: Attribute) => {
     ElMessage.warning("内置字段不可删除")
     return
   }
-  ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除字段: "),
-      h("i", { style: "color: red" }, `${row.field_name}`),
-      h("span", null, " 确认删除？")
-    ]),
+  ElMessageBox.confirm(`正在删除字段: ${row.field_name} 确认删除？`, "删除确认", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning"
+    type: "warning",
+    dangerouslyUseHTMLString: true,
+    message: `<p>正在删除字段: <span style="color: red">${row.field_name}</span> 确认删除？</p>`
   }).then(() => {
     DeleteAttributeApi(row.id).then(() => {
       ElMessage.success("删除成功")
@@ -345,6 +328,7 @@ const handleDelete = (row: Attribute) => {
   })
 }
 
+// Attribute Group CRUD
 const {
   dialogVisible: dialogAttrGroupVisible,
   isEditMode: isEditGroup,
@@ -355,7 +339,7 @@ const {
   handleDelete: handleDeleteGroup,
   handleSubmit: handlerAddAttributeGroup
 } = useCrudAttributeGroup<AttributeGroup>({
-  createApi: (data) => createAttributeGroupApi({ ...data, model_uid: props.modelUid }),
+  createApi: (data) => createAttributeGroupApi({ ...data, model_uid: modelUid }),
   updateApi: renameAttributeGroupApi,
   deleteApi: deleteAttributeGroupApi,
   refreshData: getAttributesData,
@@ -367,7 +351,6 @@ const attrGroupRules: FormRules = {
   group_name: [{ required: true, message: "必须输入分组名称", trigger: "blur" }]
 }
 
-// 移除冗余的 CRUD 代码
 const handleGroupCommand = (command: string, group: AttributeGroup) => {
   if (command === "rename") {
     handleRenameGroup(group)
@@ -376,26 +359,22 @@ const handleGroupCommand = (command: string, group: AttributeGroup) => {
   }
 }
 
-// 当模型 uid 发生变化时重新获取字段列表（兼容详情页异步加载的场景）
+// Watchers
 watch(
-  () => props.modelUid,
-  (newVal, oldVal) => {
-    if (!newVal || newVal === oldVal) return
-    getAttributesData()
+  () => modelUid,
+  (newVal) => {
+    if (newVal) getAttributesData()
   },
   { immediate: true }
 )
 
-/** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], () => {
-  if (!props.modelUid) return
-  getAttributesData()
+  if (modelUid) getAttributesData()
 })
 
 //** 全部展开/收起功能 */
 const allExpanded = ref(false)
-
-function toggleAllGroups() {
+const toggleAllGroups = () => {
   allExpanded.value = !allExpanded.value
   filterData.value.forEach((group) => {
     group.expanded = allExpanded.value

@@ -5,12 +5,31 @@ export interface CreateRealtionTypeReq {
   target_describe: string
 }
 
+export interface UpdateRelationTypeReq {
+  id: number
+  name: string
+  source_describe: string
+  target_describe: string
+}
+
+export interface DeleteRelationTypeReq {
+  id: number
+}
+
 export interface CreateModelRelationReq {
   source_model_uid: string
   target_model_uid: string
   relation_type_uid: string
   mapping: string
   description?: string
+}
+
+export interface UpdateModelRelationReq {
+  id: number
+  source_model_uid: string
+  target_model_uid: string
+  relation_type_uid: string
+  mapping: string
 }
 
 export interface ModelRelation {
