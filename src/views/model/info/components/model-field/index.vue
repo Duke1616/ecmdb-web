@@ -7,6 +7,14 @@
         <el-button type="primary" :icon="CirclePlus" @click="openCreateGroupDialog" size="default">
           新增分组
         </el-button>
+        <el-button
+          :type="isDragMode ? 'warning' : 'default'"
+          :icon="isDragMode ? CircleCheck : Rank"
+          plain
+          @click="isDragMode = !isDragMode"
+        >
+          {{ isDragMode ? "完成排序" : "开启排序" }}
+        </el-button>
         <el-button :icon="allExpanded ? Expand : ArrowUp" @click="toggleAllGroups" size="default">
           {{ allExpanded ? "全部收起" : "全部展开" }}
         </el-button>
@@ -14,81 +22,124 @@
       </div>
     </div>
 
-    <div class="groups-container">
-      <div v-for="group in filterData" :key="group.group_id" class="group-card">
-        <div class="group-header" @click="toggleGroup(group)">
-          <div class="group-info">
-            <el-icon class="toggle-icon" :class="{ expanded: group.expanded }">
-              <ArrowRight />
-            </el-icon>
-            <h3 class="group-title">{{ group.group_name }}</h3>
-            <el-tag size="small" type="info">{{ group.attributes?.length || 0 }}</el-tag>
-          </div>
-          <div class="group-actions">
-            <!-- 悬停/常驻 操作栏 -->
-            <el-tooltip content="添加字段" placement="top" :show-after="500">
-              <el-button
-                type="primary"
-                link
-                :icon="CirclePlus"
-                class="action-icon-btn"
-                @click.stop="handleAddAttr(group.group_id)"
-              />
-            </el-tooltip>
+    <div class="groups-container" :class="{ 'dragging-groups': isGroupDragging }">
+      <VueDraggable
+        v-model="AttributesData"
+        :disabled="!!searchInput || !isDragMode"
+        :animation="150"
+        handle=".group-drag-handle"
+        ghost-class="ghost"
+        drag-class="group-dragging"
+        :scroll="true"
+        :force-autoscroll="true"
+        :scroll-sensitivity="100"
+        :scroll-speed="10"
+        :bubble-scroll="true"
+        @start="handleSortGroupStart"
+        @end="handleSortGroup"
+      >
+        <div v-for="group in filterData" :key="group.group_id" class="group-card">
+          <div class="group-header" @click="toggleGroup(group)">
+            <div class="group-info">
+              <el-icon class="toggle-icon" :class="{ expanded: group.expanded }">
+                <ArrowRight />
+              </el-icon>
+              <h3 class="group-title">{{ group.group_name }}</h3>
+              <el-tag size="small" type="info">{{ group.attributes?.length || 0 }}</el-tag>
+            </div>
+            <div class="group-actions" v-if="!isDragMode">
+              <!-- 悬停/常驻 操作栏 -->
+              <el-tooltip content="添加字段" placement="top" :show-after="500">
+                <el-button
+                  type="primary"
+                  link
+                  :icon="CirclePlus"
+                  class="action-icon-btn"
+                  @click.stop="handleAddAttr(group.group_id)"
+                />
+              </el-tooltip>
 
-            <el-dropdown trigger="click" @command="(command) => handleGroupCommand(command, group)">
-              <el-button link class="action-icon-btn more-btn" @click.stop>
-                <el-icon><MoreFilled /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu class="group-action-dropdown">
-                  <el-dropdown-item command="rename" :icon="Edit">重命名</el-dropdown-item>
-                  <el-dropdown-item command="delete" :icon="Delete" class="danger-item"> 删除分组 </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-          </div>
-        </div>
-
-        <div v-if="group.expanded" class="fields-container">
-          <div class="fields-grid">
-            <div v-for="item in group.attributes" :key="item.id" class="field-item" @click="detailInfo(item)">
-              <div class="field-content">
-                <div class="field-header-info">
-                  <h4 class="field-name">{{ item.field_name }}</h4>
-                  <!-- 重新设计悬停操作按钮，确保正确显示 -->
-                  <div class="field-actions">
-                    <el-button
-                      type="primary"
-                      link
-                      :icon="Edit"
-                      @click.stop="handleUpdateAttr(group.group_id, item)"
-                      size="small"
-                      class="action-btn edit-btn"
-                      title="编辑"
-                    />
-                    <el-button
-                      type="danger"
-                      link
-                      :icon="Delete"
-                      @click.stop="handleDelete(item)"
-                      size="small"
-                      class="action-btn delete-btn"
-                      :disabled="item.builtin"
-                      :title="item.builtin ? '内置字段不可删除' : '删除'"
-                    />
-                  </div>
-                </div>
-                <div class="field-details">
-                  <el-tag size="small" type="primary">{{ item.field_type }}</el-tag>
-                  <el-tag v-if="item.builtin" size="small" type="warning" effect="light">内置</el-tag>
-                  <code class="field-uid">{{ item.field_uid }}</code>
-                </div>
-              </div>
+              <el-dropdown trigger="click" @command="(command) => handleGroupCommand(command, group)">
+                <el-button link class="action-icon-btn more-btn" @click.stop>
+                  <el-icon><MoreFilled /></el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu class="group-action-dropdown">
+                    <el-dropdown-item command="rename" :icon="Edit">重命名</el-dropdown-item>
+                    <el-dropdown-item command="delete" :icon="Delete" class="delete-item"> 删除分组 </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+            <div v-else class="drag-handle-icon group-drag-handle">
+              <el-icon><Rank /></el-icon>
             </div>
           </div>
+
+          <div v-if="group.expanded" class="fields-container">
+            <VueDraggable
+              v-model="group.attributes"
+              class="fields-grid"
+              :class="{ 'is-empty': !group.attributes?.length }"
+              :group="{ name: 'attributes', pull: true, put: true }"
+              ghost-class="ghost"
+              fallback-class="sortable-drag"
+              :animation="150"
+              :disabled="!!searchInput || !isDragMode"
+              :data-group-id="group.group_id"
+              :force-fallback="true"
+              :fallback-on-body="true"
+              :scroll="true"
+              :force-autoscroll="true"
+              :scroll-sensitivity="100"
+              :scroll-speed="10"
+              :bubble-scroll="true"
+              @end="handleSortAttribute"
+            >
+              <div
+                v-for="item in group.attributes"
+                :key="item.id"
+                class="field-item"
+                :data-id="item.id"
+                @click="detailInfo(item)"
+              >
+                <div class="field-content">
+                  <div class="field-header-info">
+                    <h4 class="field-name">{{ item.field_name }}</h4>
+                    <!-- 重新设计悬停操作按钮，确保正确显示 -->
+                    <div class="field-actions">
+                      <el-button
+                        type="primary"
+                        link
+                        :icon="Edit"
+                        @click.stop="handleUpdateAttr(group.group_id, item)"
+                        size="small"
+                        class="action-btn edit-btn"
+                        title="编辑"
+                      />
+                      <el-button
+                        type="danger"
+                        link
+                        :icon="Delete"
+                        @click.stop="handleDelete(item)"
+                        size="small"
+                        class="action-btn delete-btn"
+                        :disabled="item.builtin"
+                        :title="item.builtin ? '内置字段不可删除' : '删除'"
+                      />
+                    </div>
+                  </div>
+                  <div class="field-details">
+                    <el-tag size="small" type="primary">{{ item.field_type }}</el-tag>
+                    <el-tag v-if="item.builtin" size="small" type="warning" effect="light">内置</el-tag>
+                    <code class="field-uid">{{ item.field_uid }}</code>
+                  </div>
+                </div>
+              </div>
+            </VueDraggable>
+          </div>
         </div>
-      </div>
+      </VueDraggable>
     </div>
 
     <FormDialog
@@ -167,14 +218,18 @@ import {
   ArrowRight,
   Expand,
   ArrowUp,
-  MoreFilled
+  MoreFilled,
+  Rank,
+  CircleCheck
 } from "@element-plus/icons-vue"
 import {
   getModelAttributesWithGroupsApi,
   DeleteAttributeApi,
   createAttributeGroupApi,
   renameAttributeGroupApi,
-  deleteAttributeGroupApi
+  deleteAttributeGroupApi,
+  SortAttributeApi,
+  SortAttributeGroupApi
 } from "@/api/attribute"
 import { type AttributeGroup, type Attribute } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/common/composables/usePagination"
@@ -183,6 +238,7 @@ import { type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { FormDialog, Drawer } from "@@/components/Dialogs"
 import createOrUpdateField from "./create-or-update.vue"
 import sortField from "./sort.vue"
+import { VueDraggable } from "vue-draggable-plus"
 
 defineOptions({ name: "ModelField" })
 
@@ -190,6 +246,7 @@ const { paginationData } = usePagination()
 const searchInput = ref("")
 const cardDrawer = ref(false)
 const loading = ref<boolean>(false)
+const isDragMode = ref(false)
 
 // Props Destructuring
 const { modelUid } = defineProps<{ modelUid: string }>()
@@ -215,7 +272,10 @@ const getAttributesData = () => {
   loading.value = true
   getModelAttributesWithGroupsApi(modelUid)
     .then(({ data }) => {
-      AttributesData.value = data.attribute_groups
+      AttributesData.value = (data.attribute_groups || []).map((group) => ({
+        ...group,
+        attributes: group.attributes || []
+      }))
     })
     .catch(() => {
       AttributesData.value = []
@@ -326,6 +386,61 @@ const handleDelete = (row: Attribute) => {
       getAttributesData()
     })
   })
+}
+
+const handleSortAttribute = (evt: any) => {
+  const { newIndex, to, item } = evt
+  if (newIndex === undefined || !to || !item) return
+
+  const targetGroupId = Number(to.dataset.groupId)
+  const itemId = Number(item.dataset.id)
+
+  if (!targetGroupId || !itemId) return
+
+  SortAttributeApi({
+    id: itemId,
+    target_group_id: targetGroupId,
+    target_position: newIndex
+  })
+    .then(() => {
+      ElMessage.success("排序更新成功")
+      // 不需要全量刷新，因为 VueDraggable 更细粒度控制了视图
+      // getAttributesData()
+    })
+    .catch(() => {
+      ElMessage.error("排序更新失败")
+      getAttributesData() // 失败时刷新以恢复原状
+    })
+}
+
+//** 分组拖拽排序 */
+// NOTE: 拖拽分组时的标志，用于通过 CSS 控制显示
+const isGroupDragging = ref(false)
+
+const handleSortGroupStart = () => {
+  isGroupDragging.value = true
+}
+
+const handleSortGroup = (evt: any) => {
+  isGroupDragging.value = false
+
+  const { newIndex } = evt
+  if (newIndex === undefined) return
+
+  const group = AttributesData.value[newIndex]
+  if (!group) return
+
+  SortAttributeGroupApi({
+    id: group.group_id,
+    target_position: newIndex
+  })
+    .then(() => {
+      ElMessage.success("分组排序更新成功")
+    })
+    .catch(() => {
+      ElMessage.error("分组排序更新失败")
+      getAttributesData()
+    })
 }
 
 // Attribute Group CRUD
@@ -479,6 +594,13 @@ const toggleAllGroups = () => {
         }
       }
 
+      .drag-handle-icon {
+        color: #9ca3af;
+        font-size: 18px;
+        margin-left: auto;
+        cursor: move;
+      }
+
       .group-info {
         display: flex;
         align-items: center;
@@ -509,147 +631,232 @@ const toggleAllGroups = () => {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
         gap: 16px;
+        user-select: none;
+      }
+    }
+  }
+}
 
-        .field-item {
-          background: #ffffff;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          padding: 14px;
-          cursor: pointer;
+.field-item {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  min-height: 85px;
+  user-select: none;
+
+  &:hover {
+    border-color: #2563eb;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+    transform: translateY(-2px);
+
+    .field-actions {
+      opacity: 1 !important;
+      visibility: visible !important;
+    }
+  }
+
+  .field-content {
+    user-select: none;
+
+    .field-header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+      position: relative;
+
+      .field-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f2937;
+        margin: 0;
+        flex: 1;
+        line-height: 1.3;
+        padding-right: 50px;
+        user-select: none;
+      }
+
+      .field-actions {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+        position: absolute;
+        right: 8px;
+        top: 0;
+
+        .action-btn {
+          width: 22px;
+          height: 22px;
+          padding: 0;
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          font-size: 12px;
           transition: all 0.2s ease;
-          position: relative;
-          min-height: 85px;
+          min-width: 22px;
+          cursor: pointer;
 
-          &:hover {
-            border-color: #2563eb;
-            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
-            transform: translateY(-2px);
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            background: #fde4e4;
+            color: #f87171;
+          }
 
-            .field-actions {
-              opacity: 1 !important;
-              visibility: visible !important;
+          :deep(.el-icon) {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+          }
+
+          &.edit-btn {
+            background: #dbeafe;
+            color: #1d4ed8;
+
+            &:hover {
+              background: #1d4ed8;
+              color: white;
+              transform: scale(1.1);
             }
           }
 
-          .field-content {
-            .field-header-info {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 8px;
-              position: relative;
+          &.delete-btn {
+            background: #fee2e2;
+            color: #dc2626;
 
-              .field-name {
-                font-size: 14px;
-                font-weight: 600;
-                color: #1f2937;
-                margin: 0;
-                flex: 1;
-                line-height: 1.3;
-                padding-right: 50px;
-              }
-
-              .field-actions {
-                display: flex;
-                flex-direction: row;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                opacity: 0;
-                visibility: hidden;
-                transition: all 0.2s ease;
-                position: absolute;
-                right: 8px;
-                top: 0;
-
-                .action-btn {
-                  width: 22px;
-                  height: 22px;
-                  padding: 0;
-                  border-radius: 4px;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  border: none;
-                  font-size: 12px;
-                  transition: all 0.2s ease;
-                  min-width: 22px;
-                  cursor: pointer;
-
-                  &:disabled {
-                    opacity: 0.5;
-                    cursor: not-allowed;
-                    transform: none !important;
-                    background: #fde4e4;
-                    color: #f87171;
-                  }
-
-                  :deep(.el-icon) {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 100%;
-                    height: 100%;
-                    margin: 0;
-                  }
-
-                  &.edit-btn {
-                    background: #dbeafe;
-                    color: #1d4ed8;
-
-                    &:hover {
-                      background: #1d4ed8;
-                      color: white;
-                      transform: scale(1.1);
-                    }
-                  }
-
-                  &.delete-btn {
-                    background: #fee2e2;
-                    color: #dc2626;
-
-                    &:hover {
-                      background: #dc2626;
-                      color: white;
-                      transform: scale(1.1);
-                    }
-                  }
-                }
-              }
-            }
-
-            .field-details {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-
-              :deep(.el-tag) {
-                background: #eff6ff;
-                color: #1e40af;
-                border: 1px solid #bfdbfe;
-                font-weight: 500;
-              }
-
-              :deep(.el-tag.el-tag--warning) {
-                background: #fef3c7;
-                color: #a16207;
-                border-color: #fcd34d;
-              }
-
-              .field-uid {
-                font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-                font-size: 11px;
-                color: #4b5563;
-                background: #f9fafb;
-                padding: 3px 6px;
-                border-radius: 4px;
-                border: 1px solid #d1d5db;
-                font-weight: 500;
-              }
+            &:hover {
+              background: #dc2626;
+              color: white;
+              transform: scale(1.1);
             }
           }
         }
       }
+    }
+
+    .field-details {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+
+      :deep(.el-tag) {
+        background: #eff6ff;
+        color: #1e40af;
+        border: 1px solid #bfdbfe;
+        font-weight: 500;
+      }
+
+      :deep(.el-tag.el-tag--warning) {
+        background: #fef3c7;
+        color: #a16207;
+        border-color: #fcd34d;
+      }
+
+      .field-uid {
+        font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+        font-size: 11px;
+        color: #4b5563;
+        background: #f9fafb;
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid #d1d5db;
+        font-weight: 500;
+        user-select: none;
+      }
+    }
+  }
+}
+</style>
+
+<style>
+/* 拖拽 ghost 占位符：完全隐藏以避免“复制”效果 */
+.ghost {
+  opacity: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* 拖拽时的克隆元素样式 */
+.sortable-drag {
+  opacity: 1 !important;
+  background: #ffffff !important;
+  border: 1px solid #2563eb !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+  cursor: grabbing !important;
+  transition: none !important; /* Fix drag lag */
+
+  /* 关键：因为脱离了 grid 布局，需要指定宽度 */
+  width: 240px !important;
+  height: auto !important;
+  z-index: 10000 !important;
+  transform: scale(1.02);
+}
+
+/* 隐藏拖拽元素中的操作按钮 */
+.sortable-drag .field-actions {
+  display: none !important;
+}
+
+/* 修复 Tag 样式在 body 中可能失效的问题（如果 scoped 属性没生效） */
+.sortable-drag .el-tag {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1e40af !important;
+}
+
+.sortable-drag .el-tag--warning {
+  background-color: #fef3c7 !important;
+  border-color: #fcd34d !important;
+  color: #a16207 !important;
+}
+
+/* 分组拖拽时的样式 - 只显示标题条 */
+.group-dragging {
+  opacity: 0.8 !important;
+  background: #eef2ff !important;
+  border: 2px dashed #2563eb !important;
+
+  /* 强制限制高度，只保留标题栏 */
+  max-height: 60px !important;
+  overflow: hidden !important;
+
+  /* 强制隐藏分组详情内容 */
+  .fields-container {
+    display: none !important;
+  }
+
+  /* 箭头保持收起状态 */
+  .toggle-icon {
+    transform: rotate(0deg) !important;
+  }
+}
+
+/* 拖拽分组时，隐藏所有分组的内容 */
+.groups-container.dragging-groups {
+  .group-card:not(.group-dragging) {
+    .fields-container {
+      display: none !important;
+    }
+
+    .toggle-icon {
+      transform: rotate(0deg) !important;
     }
   }
 }

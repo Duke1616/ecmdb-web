@@ -66,3 +66,17 @@ export function renameAttributeGroupApi(data: attribute.RenameAttributeGroupReq)
     data: data
   })
 }
+
+export function SortAttributeApi(data: attribute.SortAttributeReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/attribute/sort`,
+    data: data
+  })
+}
+
+export function SortAttributeGroupApi(data: attribute.SortAttributeGroupReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/attribute/group/sort`,
+    data: data
+  })
+}

@@ -69,3 +69,14 @@ export interface RenameAttributeGroupReq {
   id: number
   name: string
 }
+
+export interface SortAttributeReq {
+  id: number
+  target_group_id: number
+  target_position: number
+}
+
+export interface SortAttributeGroupReq {
+  id: number
+  target_position: number
+}
