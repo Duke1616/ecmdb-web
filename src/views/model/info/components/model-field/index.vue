@@ -4,7 +4,7 @@
     <div class="search-section">
       <el-input v-model="searchInput" placeholder="搜索字段..." :suffix-icon="Search" style="width: 300px" clearable />
       <div class="search-actions">
-        <el-button type="primary" :icon="CirclePlus" @click="dialogAttrGroupVisible = true" size="default">
+        <el-button type="primary" :icon="CirclePlus" @click="openCreateGroupDialog" size="default">
           新增分组
         </el-button>
         <el-button :icon="allExpanded ? Expand : ArrowUp" @click="toggleAllGroups" size="default">
@@ -24,9 +24,30 @@
             <h3 class="group-title">{{ group.group_name }}</h3>
             <el-tag size="small" type="info">{{ group.attributes?.length || 0 }}</el-tag>
           </div>
-          <el-button type="primary" link :icon="CirclePlus" @click.stop="handleAddAttr(group.group_id)">
-            添加字段
-          </el-button>
+          <div class="group-actions">
+            <!-- 悬停/常驻 操作栏 -->
+            <el-tooltip content="添加字段" placement="top" :show-after="500">
+              <el-button
+                type="primary"
+                link
+                :icon="CirclePlus"
+                class="action-icon-btn"
+                @click.stop="handleAddAttr(group.group_id)"
+              />
+            </el-tooltip>
+
+            <el-dropdown trigger="click" @command="(command) => handleGroupCommand(command, group)">
+              <el-button link class="action-icon-btn more-btn" @click.stop>
+                <el-icon><MoreFilled /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu class="group-action-dropdown">
+                  <el-dropdown-item command="rename" :icon="Edit">重命名</el-dropdown-item>
+                  <el-dropdown-item command="delete" :icon="Delete" class="danger-item"> 删除分组 </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
         </div>
 
         <div v-if="group.expanded" class="fields-container">
@@ -72,11 +93,11 @@
 
     <FormDialog
       v-model="dialogAttrGroupVisible"
-      title="新增分组"
+      :title="isEditGroup ? '重命名分组' : '新增分组'"
       subtitle="创建新的属性分组"
       width="500px"
       header-icon="Folder"
-      @closed="resetAttrGroupFrom"
+      @closed="() => {}"
       @confirm="handlerAddAttributeGroup"
       @cancel="dialogAttrGroupVisible = false"
     >
@@ -137,12 +158,28 @@
 
 <script lang="ts" setup>
 import { h, nextTick, ref, watch } from "vue"
-import { Search, CirclePlus, Edit, Delete, Setting, ArrowRight, Expand, ArrowUp } from "@element-plus/icons-vue"
-import { getModelAttributesWithGroupsApi, DeleteAttributeApi, createAttributeGroupApi } from "@/api/attribute"
-import { type AttributeGroup, type Attribute, CreateAttributeGroupReq } from "@/api/attribute/types/attribute"
+import {
+  Search,
+  CirclePlus,
+  Edit,
+  Delete,
+  Setting,
+  ArrowRight,
+  Expand,
+  ArrowUp,
+  MoreFilled
+} from "@element-plus/icons-vue"
+import {
+  getModelAttributesWithGroupsApi,
+  DeleteAttributeApi,
+  createAttributeGroupApi,
+  deleteAttributeGroupApi,
+  renameAttributeGroupApi
+} from "@/api/attribute"
+import { type AttributeGroup, type Attribute } from "@/api/attribute/types/attribute"
 import { usePagination } from "@/common/composables/usePagination"
-import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
-import { cloneDeep } from "lodash-es"
+import { useCrudAttributeGroup } from "./composables/useCrudAttributeGroup"
+import { type FormRules } from "element-plus"
 import { FormDialog, Drawer } from "@@/components/Dialogs"
 import createOrUpdateField from "./create-or-update.vue"
 import sortField from "./sort.vue"
@@ -308,35 +345,35 @@ const handleDelete = (row: Attribute) => {
   })
 }
 
-const DEFAULT_ATTR_GROUP_DATA: CreateAttributeGroupReq = {
-  model_uid: props.modelUid,
-  group_name: ""
-}
-const dialogAttrGroupVisible = ref<boolean>(false)
-const AttrGroup = ref<CreateAttributeGroupReq>(cloneDeep(DEFAULT_ATTR_GROUP_DATA))
-const attrGroupRef = ref<FormInstance | null>(null)
+const {
+  dialogVisible: dialogAttrGroupVisible,
+  isEditMode: isEditGroup,
+  formRef: attrGroupRef,
+  formData: AttrGroup,
+  openCreateDialog: openCreateGroupDialog,
+  openEditDialog: handleRenameGroup,
+  handleDelete: handleDeleteGroup,
+  handleSubmit: handlerAddAttributeGroup
+} = useCrudAttributeGroup<AttributeGroup>({
+  createApi: (data) => createAttributeGroupApi({ ...data, model_uid: props.modelUid }),
+  updateApi: renameAttributeGroupApi,
+  deleteApi: deleteAttributeGroupApi,
+  refreshData: getAttributesData,
+  checkDeleteable: (item) => (item.attributes && item.attributes.length > 0 ? "分组下存在字段，无法删除" : true),
+  confirmDeleteText: (item) => `确认删除分组 "${item.group_name}" 吗？`
+})
+
 const attrGroupRules: FormRules = {
   group_name: [{ required: true, message: "必须输入分组名称", trigger: "blur" }]
 }
 
-const resetAttrGroupFrom = () => {
-  attrGroupRef.value?.clearValidate()
-  AttrGroup.value = cloneDeep(DEFAULT_ATTR_GROUP_DATA)
-}
-
-const handlerAddAttributeGroup = () => {
-  attrGroupRef.value?.validate((valid: boolean, fields) => {
-    if (!valid) return console.error("表单校验不通过", fields)
-    createAttributeGroupApi(AttrGroup.value)
-      .then(() => {
-        ElMessage.success("操作成功")
-        dialogAttrGroupVisible.value = false
-        getAttributesData()
-      })
-      .finally(() => {
-        loading.value = false
-      })
-  })
+// 移除冗余的 CRUD 代码
+const handleGroupCommand = (command: string, group: AttributeGroup) => {
+  if (command === "rename") {
+    handleRenameGroup(group)
+  } else if (command === "delete") {
+    handleDeleteGroup(group)
+  }
 }
 
 // 当模型 uid 发生变化时重新获取字段列表（兼容详情页异步加载的场景）
@@ -372,7 +409,7 @@ function toggleAllGroups() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 20px 0;
+  margin: 0px 0px 20px 0;
   padding: 16px 20px;
   background: #ffffff;
   border: 1px solid #e5e7eb;
@@ -428,8 +465,39 @@ function toggleAllGroups() {
       cursor: pointer;
       transition: background-color 0.2s;
 
+      .group-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        opacity: 1; /* Always visible */
+        transition: opacity 0.2s ease;
+
+        .action-icon-btn {
+          width: 28px;
+          height: 28px;
+          border-radius: 4px; /* Soft square or circle */
+          padding: 0;
+          font-size: 16px;
+          color: #6b7280;
+          transition: all 0.2s;
+
+          &:hover {
+            background-color: #e5e7eb;
+            color: #1f2937;
+          }
+
+          &.more-btn {
+            transform: rotate(90deg);
+          }
+        }
+      }
+
       &:hover {
         background: #f1f5f9;
+
+        .group-actions {
+          opacity: 1; /* Show on hover */
+        }
       }
 
       .group-info {

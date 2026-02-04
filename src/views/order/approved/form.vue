@@ -107,15 +107,21 @@ const handleDetail = (id: number) => {
   detailTemplateApi(id)
     .then((res) => {
       // 工单模版
-      options.value = formCreate.parseJson(res.data.options) as unknown as Options
-      options.value.submitBtn = false
+      // 工单模版
+      const parsedOptions = formCreate.parseJson(res.data.options) as unknown as Options
+      ;(parsedOptions as any).submitBtn = false
+
       const parsedRules = formCreate.parseJson(res.data.rules)
 
       // 如果不是 "my" 或 "my-Start"，说明是查看模式，移除 fetch 配置，防止触发动态请求
+      console.log("handleDetail form action:", props.action)
       if (props.action !== "my" && props.action !== "my-Start") {
+        console.log("Removing fetch configuration from rules for read-only mode")
         removeFetchFromRules(parsedRules)
+        removeFetchFromRules(parsedOptions)
       }
 
+      options.value = parsedOptions
       rule.value = parsedRules
     })
     .catch((error) => {

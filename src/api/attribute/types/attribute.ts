@@ -60,3 +60,12 @@ export type listAttributeFieldData = {
 export type listAttributesResponseData = {
   attribute_groups: AttributeGroup[]
 }
+
+export interface DeleteAttributeGroupReq {
+  id: number
+}
+
+export interface RenameAttributeGroupReq {
+  id: number
+  name: string
+}

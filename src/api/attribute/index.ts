@@ -52,3 +52,17 @@ export function createAttributeGroupApi(data: attribute.CreateAttributeGroupReq)
     data: data
   })
 }
+
+export function deleteAttributeGroupApi(data: attribute.DeleteAttributeGroupReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/attribute/group/delete`,
+    data: data
+  })
+}
+
+export function renameAttributeGroupApi(data: attribute.RenameAttributeGroupReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.CMDB}/attribute/group/rename`,
+    data: data
+  })
+}
