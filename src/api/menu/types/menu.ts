@@ -62,6 +62,13 @@ export enum Action {
   DELETE = 3 // 全部删除、重新录入数据
 }
 
+// 菜单排序请求
+export interface SortMenuReq {
+  id: number
+  target_pid: number
+  target_position: number
+}
+
 // 变更端点请求
 export interface ChangeEndpointsReq {
   id: number

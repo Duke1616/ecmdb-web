@@ -48,3 +48,11 @@ export function changeEndpointsApi(data: menu.ChangeEndpointsReq) {
     data: data
   })
 }
+
+/** 菜单排序 */
+export function sortMenuApi(data: menu.SortMenuReq) {
+  return instance.post<void>({
+    url: `${API_SERVICE.CMDB}/menu/sort`,
+    data: data
+  })
+}

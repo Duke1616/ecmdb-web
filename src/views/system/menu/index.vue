@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { nextTick, onMounted, ref, watch } from "vue"
-import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder } from "@element-plus/icons-vue"
+import { Search, Edit, Delete, Plus, FolderAdd, FolderOpened, Folder, Rank } from "@element-plus/icons-vue"
 import MenuForm from "./form.vue"
 import Tip from "./tip.vue"
 import MenuMigration from "./components/MenuMigration.vue"
 import MenuDragTree from "./components/MenuDragTree.vue"
+import MenuSort from "./components/MenuSort.vue"
 import { deleteMenuApi, listMenusByPlatformApi } from "@/api/menu"
 import { menu } from "@/api/menu/types/menu"
 import { ElMessage, ElMessageBox } from "element-plus"
@@ -46,10 +47,11 @@ const menuUpdateRef = ref<InstanceType<typeof MenuForm>>()
 
 // 迁移相关状态
 const migrationDialogVisible = ref<boolean>(false)
+const sortDialogVisible = ref<boolean>(false)
 
 // 拖拽相关状态
-const isDragMode = ref<boolean>(false)
-const dragLoading = ref<boolean>(false)
+// const isDragMode = ref<boolean>(false)
+// const dragLoading = ref<boolean>(false)
 // 菜单操作
 const handleUpdate = () => {
   menuUpdateRef.value?.submitUpdateForm()
@@ -109,39 +111,12 @@ const handleMigrationConfirm = () => {
   currentNodeKey.value = null
   empty.value = false
 
-  // 刷新当前平台的菜单数据
   refreshMenuData()
 }
 
-// 切换拖拽模式
-// const toggleDragMode = () => {
-//   isDragMode.value = !isDragMode.value
-//   if (isDragMode.value) {
-//     ElMessage.info("已进入拖拽模式，可以拖拽菜单项进行排序")
-//   } else {
-//     ElMessage.info("已退出拖拽模式")
-//   }
-// }
-
-// 处理拖拽结束
-const handleDragEnd = async (dragNode: any, dropNode: any) => {
-  if (!dragNode || !dropNode) return
-
-  try {
-    dragLoading.value = true
-
-    // 这里需要调用拖拽排序API，暂时用模拟
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    ElMessage.success("菜单排序已更新")
-
-    // 刷新菜单数据
-    refreshMenuData()
-  } catch (error) {
-    ElMessage.error("排序更新失败，请重试")
-  } finally {
-    dragLoading.value = false
-  }
+// 开启排序弹窗
+const showSortDialog = () => {
+  sortDialogVisible.value = true
 }
 
 // 当前选中的菜单节点
@@ -337,6 +312,7 @@ onMounted(() => {
           <div class="card-header">
             <div class="header-top">
               <h3 class="card-title">菜单列表</h3>
+              <el-button link type="primary" @click="showSortDialog" :icon="Rank"> 排序面板 </el-button>
               <span class="menu-count"> {{ menuTreeData?.length || 0 }} 个菜单 </span>
             </div>
 
@@ -350,6 +326,7 @@ onMounted(() => {
               />
               <div class="action-buttons">
                 <el-button size="small" type="primary" @click="addMenu" :icon="Plus"> 添加菜单 </el-button>
+
                 <el-button size="small" :disabled="!currentNodeKey" @click="addSubMenu" :icon="FolderAdd">
                   添加子菜单
                 </el-button>
@@ -361,16 +338,17 @@ onMounted(() => {
           </div>
 
           <!-- 拖拽树形菜单组件 -->
-          <MenuDragTree
-            ref="menuDragTreeRef"
-            :menu-tree-data="menuTreeData"
-            :current-node-key="currentNodeKey"
-            :is-drag-mode="isDragMode"
-            :filter-node="filterNode"
-            :default-props="defaultProps"
-            @node-click="handleNodeClick"
-            @drag-end="handleDragEnd"
-          />
+          <div class="tree-wrapper">
+            <MenuDragTree
+              ref="menuDragTreeRef"
+              :menu-tree-data="menuTreeData"
+              :current-node-key="currentNodeKey"
+              :is-drag-mode="false"
+              :filter-node="filterNode"
+              :default-props="defaultProps"
+              @node-click="handleNodeClick"
+            />
+          </div>
         </el-card>
       </div>
 
@@ -382,11 +360,7 @@ onMounted(() => {
               <MenuForm ref="menuUpdateRef" :menuData="menuTreeData || []" @listMenusTreeData="refreshMenuData" />
             </div>
             <div class="menu-actions-footer">
-              <!-- <el-button :type="isDragMode ? 'warning' : 'default'" @click="toggleDragMode" :loading="dragLoading">
-                <el-icon><Rank /></el-icon>
-                {{ isDragMode ? "退出拖拽" : "拖拽排序" }}
-              </el-button>
-              <el-button type="warning" @click="handleMigration">
+              <!-- <el-button type="warning" @click="handleMigration">
                 <el-icon><Switch /></el-icon>
                 迁移到其他平台
               </el-button> -->
@@ -437,6 +411,9 @@ onMounted(() => {
       :current-platform="currentPlatform"
       @confirm="handleMigrationConfirm"
     />
+
+    <!-- 菜单排序全屏弹窗 -->
+    <MenuSort v-model="sortDialogVisible" :menu-data="menuTreeData" @refresh="refreshMenuData" />
   </PageContainer>
 </template>
 
@@ -643,6 +620,13 @@ onMounted(() => {
       }
     }
   }
+}
+
+.tree-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .tree-container {

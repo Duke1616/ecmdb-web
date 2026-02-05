@@ -28,6 +28,7 @@
 <script lang="ts" setup>
 import { ref } from "vue"
 import type { menu } from "@/api/menu/types/menu"
+import { MenuType } from "@/api/menu/types/menu"
 
 interface Props {
   menuTreeData: menu[]
@@ -74,6 +75,39 @@ const allowDrop = (dragNode: any, dropNode: any, type: string) => {
   // 不允许将父节点拖拽到子节点下
   if (type === "inner" && isChildNode(dragNode, dropNode)) {
     return false
+  }
+
+  // 获取拖拽节点和目标父节点的类型
+  const dragType = dragNode.data.type
+  let parentType = 0 // 0 代表根节点
+
+  if (type === "inner") {
+    // 放入 dropNode 内部，父节点即为 dropNode
+    parentType = dropNode.data.type
+  } else {
+    // 放入 dropNode 前后，父节点为 dropNode 的父节点
+    if (dropNode.parent && dropNode.parent.level > 0) {
+      parentType = dropNode.parent.data.type
+    }
+  }
+
+  // 规则校验
+  // 1. Directory(1) 下可以是: Directory(1), Menu(2), Button(3)
+  // 2. Menu(2) 下可以是: Menu(2), Button(3)
+  // 3. Button(3) 下可以是: Button(3)
+  // 4. 根节点(0) 下一般不放 Button
+
+  if (parentType === 0) {
+    // 根节点禁止放按钮
+    if (dragType === MenuType.BUTTON) return false
+  } else if (parentType === MenuType.DIRECTORY) {
+    // 目录节点下允许所有 (逻辑上暂无限制，符合 user: 目录 -> 目录/菜单/按钮)
+  } else if (parentType === MenuType.MENU) {
+    // 菜单节点下禁止放目录
+    if (dragType === MenuType.DIRECTORY) return false
+  } else if (parentType === MenuType.BUTTON) {
+    // 按钮节点下禁止放目录和菜单
+    if (dragType !== MenuType.BUTTON) return false
   }
 
   return true
