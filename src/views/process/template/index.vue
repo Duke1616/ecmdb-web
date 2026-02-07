@@ -97,7 +97,7 @@
 </template>
 
 <script lang="ts" setup>
-import { h, nextTick, ref, watch, computed } from "vue"
+import { h, nextTick, ref, watch, computed, markRaw } from "vue"
 import { useRouter } from "vue-router"
 import { CirclePlus, RefreshRight, EditPen, Connection, Search, Delete, CopyDocument } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
@@ -152,35 +152,35 @@ const getOperateBtnItems = (row: template) => {
       name: "修改",
       code: "edit",
       type: "primary",
-      icon: EditPen
+      icon: markRaw(EditPen)
     })
   } else if (row.create_type === 2) {
     items.push({
       name: "流程",
       code: "sync",
       type: "warning",
-      icon: Connection
+      icon: markRaw(Connection)
     })
   }
+
+  items.push({
+    name: "路由",
+    code: "discover",
+    icon: markRaw(Search)
+  })
 
   items.push({
     name: "克隆",
     code: "clone",
     type: "success",
-    icon: CopyDocument
-  })
-
-  items.push({
-    name: "路由",
-    code: "discover",
-    icon: Search
+    icon: markRaw(CopyDocument)
   })
 
   items.push({
     name: "删除",
     code: "delete",
     type: "danger",
-    icon: Delete
+    icon: markRaw(Delete)
   })
 
   return items

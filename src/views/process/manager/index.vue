@@ -404,6 +404,11 @@ const operateBtnStatus = ref([
     icon: "Open"
   },
   {
+    name: "编辑",
+    code: "edit",
+    icon: "EditPen"
+  },
+  {
     name: "克隆",
     code: "clone",
     icon: markRaw(CopyDocument),
@@ -414,11 +419,7 @@ const operateBtnStatus = ref([
     code: "preview",
     icon: "View"
   },
-  {
-    name: "编辑",
-    code: "edit",
-    icon: "EditPen"
-  },
+
   {
     name: "删除",
     code: "delete",

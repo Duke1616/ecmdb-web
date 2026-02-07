@@ -164,7 +164,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
-import { Plus, RefreshRight, ArrowRight, FolderAdd, User, Document } from "@element-plus/icons-vue"
+import { Plus, RefreshRight, ArrowRight, FolderAdd, User, Document, UserFilled as Team } from "@element-plus/icons-vue"
 import { listTeamsApi } from "@/api/alert/team"
 import { Team as TeamType } from "@/api/alert/team/types"
 import { listWorkspacesByTeamApi, listMyTeamsApi } from "@/api/alert/workspace"
@@ -283,7 +283,7 @@ const loadWorkspacesData = async () => {
       // 如果是"我的团队"，调用我的团队接口
       response = await listMyTeamsApi()
     } else {
-      // 如果是具体团队，调用根据团队ID获取的接口
+      // 如果是具体团队,调用根据团队ID获取的接口
       response = await listWorkspacesByTeamApi(selectedTeam.value.id)
     }
     workspaces.value = response.data.workspaces || []
