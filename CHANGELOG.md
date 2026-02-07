@@ -6,6 +6,189 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.7.0](https://github.com/Duke1616/ecmdb-web/releases/tag/v1.7.0) - 2026-02-07
+
+- [`86f3b64`](https://github.com/Duke1616/ecmdb-web/commit/86f3b64e88b31ca6cac1e82cec80d2bd2467cefd) fix: 修复代码中的一些警告
+- [`b511ad3`](https://github.com/Duke1616/ecmdb-web/commit/b511ad35a1d72daf3f5d203623a27fcd6972032f) refactor: 优化流程其他表单
+- [`ccb5572`](https://github.com/Duke1616/ecmdb-web/commit/ccb55724dc12f1404cbba50b35685f891ba5748d) refactor: 优化流程用户表单样式
+- [`f102654`](https://github.com/Duke1616/ecmdb-web/commit/f102654205bb33a40f20b6f04a930d18557258bc) refactor: 重构工作流用户节点结构, 新增 merge、 validate 字段
+- [`572d5b2`](https://github.com/Duke1616/ecmdb-web/commit/572d5b2f01693a0fab23177571a144559e0e7cf7) feat: 菜单排序功能开发
+- [`2530ca6`](https://github.com/Duke1616/ecmdb-web/commit/2530ca655d2b82f47450b593f154fadc8a87f871) feat: 完善分组、属性拖拽能力
+- [`2d7e231`](https://github.com/Duke1616/ecmdb-web/commit/2d7e231b4679f007cfe719ae08816b3ccf5bb100) chore: 关联类型、修改删除接口完善
+- [`66c0cb3`](https://github.com/Duke1616/ecmdb-web/commit/66c0cb32ede2f376d69791b840a085e06771f4ea) feat:
+- [`45458af`](https://github.com/Duke1616/ecmdb-web/commit/45458af504702b8172c11e0b1833cd4924314f6a) chore: 在工单读取模式下，防止处罚 fetch 请求
+- [`505e1c1`](https://github.com/Duke1616/ecmdb-web/commit/505e1c1da7ec11e0bea7baec7925f4980e60a128) chore: 在工单读取模式下，防止处罚 fetch 请求
+- [`299b56c`](https://github.com/Duke1616/ecmdb-web/commit/299b56cbb3444802459d2c40f36e939da45c6105) chore: 调整背景色
+- [`4962bd8`](https://github.com/Duke1616/ecmdb-web/commit/4962bd8dcdb56bd67e6be7ec5ac057c7406f176c) chore: 配置灰色背景色
+- [`fcd9d02`](https://github.com/Duke1616/ecmdb-web/commit/fcd9d026b6605800c2f872190585f666a3f631a8) fix: 本地开发预览模式下自动适配窗口大小
+- [`623d293`](https://github.com/Duke1616/ecmdb-web/commit/623d293cb6f2d29a28d05a20f4f39ca03222c08f) fix: 修复无头浏览器环境下容器高度塌陷导致截图空白的问题
+- [`a22b64b`](https://github.com/Duke1616/ecmdb-web/commit/a22b64bd02651d9139ba70030f54a7e5fd9c6ced) chore: 增加 LogicFlow 调试信息和背景色，用于排查白屏问题
+- [`27711a5`](https://github.com/Duke1616/ecmdb-web/commit/27711a5169f78c1897eab248b3c9072056cb2bb5) chore: 使用轮询机制替代 setter 解决数据注入竞态问题
+- [`2c8d670`](https://github.com/Duke1616/ecmdb-web/commit/2c8d670a27037d43b63645a5cde3b4724ec1f57a) chore: 尝试解决竞态条件
+- [`f599f26`](https://github.com/Duke1616/ecmdb-web/commit/f599f263a3a271f89e92cf329357a95ea6853850) refactor: 优化审批记录为时间轴进行展示
+- [`2fd0c62`](https://github.com/Duke1616/ecmdb-web/commit/2fd0c628db87697aeefac93260d50f2875d15276) feat: 用户审批节点新增自定义表单
+- [`a98f4fd`](https://github.com/Duke1616/ecmdb-web/commit/a98f4fd9ac1e7347234fe8ad20c939b04658474e) chore: 新增克隆能力，优化创建速度
+- [`17820d4`](https://github.com/Duke1616/ecmdb-web/commit/17820d41b0d435adba8956f8df491d1a2d431ead) refactor: 对下载统一进行抽象
+- [`7090304`](https://github.com/Duke1616/ecmdb-web/commit/7090304c0c31ddcda05f095cba8450b1d59871d9) fix: 修复打包错误
+- [`335890c`](https://github.com/Duke1616/ecmdb-web/commit/335890c14bab5c6999a3dc7ac270678d4a75db3d) chore: 模型中新增导出模版功能
+- [`7201af4`](https://github.com/Duke1616/ecmdb-web/commit/7201af42e6873c1f756fa3901e02e50c03082641) chore: 调整上传顺序
+- [`d9dcef7`](https://github.com/Duke1616/ecmdb-web/commit/d9dcef75030c4d81ce1250cc472e03dd0e7d610f) chore: 完成导入逻辑
+- [`e629dc9`](https://github.com/Duke1616/ecmdb-web/commit/e629dc98bbbfe895c7d3fcd1d37a61ade2e25653) chore: 导出功能完善
+- [`fd4c375`](https://github.com/Duke1616/ecmdb-web/commit/fd4c375b5dfebea1011311ad8cce2debe85572bf) chore: 导出新增字段选择
+- [`d7a37f3`](https://github.com/Duke1616/ecmdb-web/commit/d7a37f325ce554aae415dd617efebcd6703b6406) feat: 资产导入导出 UI 设计
+- [`1f628c5`](https://github.com/Duke1616/ecmdb-web/commit/1f628c577066c81d23cca6cb03212237acc171e8) fix: 多层按钮递归处理错误
+- [`c635949`](https://github.com/Duke1616/ecmdb-web/commit/c63594961aba3d14653d1b1312037de17a897e95) chore: 优化代码，提供可读性
+- [`dca9a69`](https://github.com/Duke1616/ecmdb-web/commit/dca9a6905517f1fdc8450cd4cafdf3d364fd8c7a) fix: 矩阵权限，遗漏匹配
+- [`c4a5728`](https://github.com/Duke1616/ecmdb-web/commit/c4a57283f8b0559a97a09dce8fd0cc42d496a736) chore: 变更 URL 校验规则
+- [`b97f56f`](https://github.com/Duke1616/ecmdb-web/commit/b97f56f024b25cd6fafce75e153e7d64460e339f) chore: 完善矩阵权限配置
+- [`c1552a0`](https://github.com/Duke1616/ecmdb-web/commit/c1552a0e20ada0f68a7c1fd4568070447530c255) chore: 新增矩阵模式权限配置
+- [`09662fe`](https://github.com/Duke1616/ecmdb-web/commit/09662fe4e47e8eeb57a79303d928ecab4b2da640) chore: 优化 UI 展示逻辑
+- [`892d696`](https://github.com/Duke1616/ecmdb-web/commit/892d696a293efc1cd77e685701e9a83d75b543f0) chore: 新增查询历史功能
+- [`46dac7f`](https://github.com/Duke1616/ecmdb-web/commit/46dac7f73785baee9527259fff36b474fd2acb27) chore: query 查询页面 UI 样式优化
+- [`127f75a`](https://github.com/Duke1616/ecmdb-web/commit/127f75af672d5d5948711e4100ba350661e8cf35) chore: 优化样式
+- [`cf2da72`](https://github.com/Duke1616/ecmdb-web/commit/cf2da72044872f5bdb2d244b608c39dc74a3e001) chore: 优化 UI 样式
+- [`8ffd9a9`](https://github.com/Duke1616/ecmdb-web/commit/8ffd9a974671c9a328691eb032cdf6400513873b) chore: 代码拆分优化
+- [`5acd56e`](https://github.com/Duke1616/ecmdb-web/commit/5acd56e79514d1f6a3a5438539b9717eb7d7a9b3) chore: 优化样式
+- [`dcee8c6`](https://github.com/Duke1616/ecmdb-web/commit/dcee8c6818fa8608cdb3c3c5c2ae2594534a8470) refactor: 优化即时查询展示页面
+- [`ce24642`](https://github.com/Duke1616/ecmdb-web/commit/ce246427fd77df950acaf9cc2de8e19477db1eeb) chore: 替换中文提示
+- [`14147b4`](https://github.com/Duke1616/ecmdb-web/commit/14147b43b5ccbcee2635cefca90a268517cde5e3) chore: 替换中文提示
+- [`ad591c6`](https://github.com/Duke1616/ecmdb-web/commit/ad591c6c9d9675e18521aae77caeb49b3b7bffc7) chore: 加深文字颜色
+- [`c7d48f9`](https://github.com/Duke1616/ecmdb-web/commit/c7d48f908a780dd0221887ff8d4779b3e53f040a) chore: 添加时序 icon
+- [`a423fb5`](https://github.com/Duke1616/ecmdb-web/commit/a423fb5271e41568bbd7cd5f91c2d8bfa287e0f3) feat: 新增 prom 查询 graph 展示能力
+- [`d2e2131`](https://github.com/Duke1616/ecmdb-web/commit/d2e2131b1671077bdf190664b66b65e7da718a98) refactor: 当前、历史告警页面 UI 美观性优化
+- [`7864600`](https://github.com/Duke1616/ecmdb-web/commit/7864600f9e772a6bb4dca3ca887a62a9c66404e1) chore: 历史告警页面优化
+- [`51e0c27`](https://github.com/Duke1616/ecmdb-web/commit/51e0c275f5d7813bc603d4ff5778612b73786ecb) fix: 自动化节点，标签无法正常展示
+- [`a25b90d`](https://github.com/Duke1616/ecmdb-web/commit/a25b90d29e9c45efd7c0e07e4f44275de32c4ad3) chore: icon 颜色保持一致
+- [`bc6f97a`](https://github.com/Duke1616/ecmdb-web/commit/bc6f97a5340dbef84f84577389a3a6b65de279ff) fix: 修复资产仓库无法正常展示图标
+- [`5da4626`](https://github.com/Duke1616/ecmdb-web/commit/5da46267c8c04257116b92ff8a90a65fbeb68329) chore: 修改正确的图标名称
+- [`5501556`](https://github.com/Duke1616/ecmdb-web/commit/5501556358ce5363e0b6c25f7d48a0aa626a6fd8) fix: 复制图标失败
+- [`30b5518`](https://github.com/Duke1616/ecmdb-web/commit/30b551808f5a67c5c232edf674724757cb4dcf47) refactor: 优化图标选择后的交互体验
+- [`eed32bf`](https://github.com/Duke1616/ecmdb-web/commit/eed32bf62c03b84542707d60841109288594f8d7) fix: 新增模型，图标无法正常展示
+- [`30dbbc3`](https://github.com/Duke1616/ecmdb-web/commit/30dbbc36bc11facc2b9ccfabed1b516fef1d51b5) chore: 调整模型 内置 展示位置
+- [`def33ad`](https://github.com/Duke1616/ecmdb-web/commit/def33adfda724c21c0a591dad5ec7902b936f559) refactor: 重构模型通过路由传递 ID 获取，减少不必要的字段传递
+- [`c285c39`](https://github.com/Duke1616/ecmdb-web/commit/c285c3954541359ad53dc2ab1f714070f9f5cadd) fix: 上传无法正常展示文件名称
+- [`b70a829`](https://github.com/Duke1616/ecmdb-web/commit/b70a829e199387a17fd90e405ad861e5a6a78bd4) fix: 修复文件上传进度条抖动，断点续传速率计算错误
+- [`fac4fe2`](https://github.com/Duke1616/ecmdb-web/commit/fac4fe2c3835c4776efec9592075f79261047114) chore: 支持断点上传
+- [`70e368b`](https://github.com/Duke1616/ecmdb-web/commit/70e368bb9d00ce4f92f88867965d31d8cbb21f28) chore: 限制最大支持 5GB 文件上传
+- [`a5f7e49`](https://github.com/Duke1616/ecmdb-web/commit/a5f7e4939c92cd7277d96686c534b242cc281b84) chore: 优化文件上传,
+- [`8a2a001`](https://github.com/Duke1616/ecmdb-web/commit/8a2a0015cf3dcfe635d75e54f3373d33db29b7b6) fix: 修复文件下载情况下 url 传递 finder-id 错误
+- [`3345c27`](https://github.com/Duke1616/ecmdb-web/commit/3345c272065a527440c070c60ca0af9fb61a7dc0) chore: 流式下载文件
+- [`f62d40b`](https://github.com/Duke1616/ecmdb-web/commit/f62d40b7a832840b9fcdc329231498586b1ff3d1) chore: form create fetch 请求传递 token
+- [`2f8cc12`](https://github.com/Duke1616/ecmdb-web/commit/2f8cc12592b3651afbc165ea7fdf56b04bd60376) chore: 文件上传限制
+- [`e4dc45a`](https://github.com/Duke1616/ecmdb-web/commit/e4dc45aba51ae98dec1161056d804ecac45bacf1) chore: 连接状态保持
+- [`14edb22`](https://github.com/Duke1616/ecmdb-web/commit/14edb22bdc62273008a2e5d73f10671fe3cfefdc) chore: 部分代码优化
+- [`256e444`](https://github.com/Duke1616/ecmdb-web/commit/256e4441c1d93408b0a11041035a6b1fdf99746b) chore: 修改调用接口
+- [`5fd5600`](https://github.com/Duke1616/ecmdb-web/commit/5fd5600f39597d961baf1ffa70b92cc80b08a83e) chore: vuefinder 升级 v4 版本
+- [`0c6e343`](https://github.com/Duke1616/ecmdb-web/commit/0c6e343625db879dd99df496c25316e0c848ca04) chore: 抽取 match type 通用化实现
+- [`e519771`](https://github.com/Duke1616/ecmdb-web/commit/e5197717174cf77d4f233500e599fc60e22a5c77) chore: match type 新增类型
+- [`a597028`](https://github.com/Duke1616/ecmdb-web/commit/a5970285ec62a8cca4277fd7c94e551c9c50ddcf) chore: 模版新增版本，增加详情字段
+- [`bb07831`](https://github.com/Duke1616/ecmdb-web/commit/bb078311c52472834b32ec157c584e6e2f8197da) chore: 模版新增版本，增加详情字段
+- [`34fb96c`](https://github.com/Duke1616/ecmdb-web/commit/34fb96ccfccc9ee0d9cd2bce11e292e68010a071) chore: 修改模版传递字段信息
+- [`43a3c1c`](https://github.com/Duke1616/ecmdb-web/commit/43a3c1cdf4122bb8cf3cb2a8703196b1648f2732) fix: 修复团队在编辑情况下展示错误
+- [`25450a0`](https://github.com/Duke1616/ecmdb-web/commit/25450a0fce78d3cef6c46354c6e3a5e96611fa83) chore: 新增修改 detail 接口
+- [`c632d72`](https://github.com/Duke1616/ecmdb-web/commit/c632d723142d69a63b7ab0c4702f9cbec29830d9) fix: 修复切换工作空间，聚合组页面报错
+- [`a9d09e9`](https://github.com/Duke1616/ecmdb-web/commit/a9d09e971a5fb8462cd33921042d3a43edb23c72) chore: 调整 drawer 的宽度为 35%
+- [`c944c37`](https://github.com/Duke1616/ecmdb-web/commit/c944c3781531db4872461152cc25afd1b3b6c97d) chore: 新增修改 detail 接口
+- [`3dc347b`](https://github.com/Duke1616/ecmdb-web/commit/3dc347b903fda99090b9f94a9a1d5b7b63047816) chore: 样式优化
+- [`1c21be3`](https://github.com/Duke1616/ecmdb-web/commit/1c21be37c7510f83d376cd0abb25724599d37845) chore: 使用 popperjs 定位
+- [`23ab065`](https://github.com/Duke1616/ecmdb-web/commit/23ab065477066244cb3fe3a22dd039cdf946dd1d) chore: 封装通用的 SearchSelectorBase
+- [`abb4a3f`](https://github.com/Duke1616/ecmdb-web/commit/abb4a3f49bb8a3036e86c85474e9a22d2710975f) chore: ticket config 简单实现
+- [`2136eb9`](https://github.com/Duke1616/ecmdb-web/commit/2136eb9e7545e19ceb45545455bc8f19e1529ef3) chore: 后端重构，前端修正接口调用
+- [`cfcbc0a`](https://github.com/Duke1616/ecmdb-web/commit/cfcbc0a539eb3bd1b40ff4a3465dd1d7ea6103d4) chore: 新增图标
+- [`44316f8`](https://github.com/Duke1616/ecmdb-web/commit/44316f865e71271078f5c169a0299e328713d87d) chore: 完善 dispatch rule
+- [`c197ef9`](https://github.com/Duke1616/ecmdb-web/commit/c197ef9232e38cb82ac7a29a2005d02531cd0093) chore: 优化表单，新增搜索条件
+- [`784dffb`](https://github.com/Duke1616/ecmdb-web/commit/784dffb239413dc81a30574600dbeafe55b90546) chore: 设计 dispacher rule 模块
+- [`8e753b9`](https://github.com/Duke1616/ecmdb-web/commit/8e753b975a29bd9f4705f2fb2efac8574515ac8c) chore: receiver id 修改为 number 类型
+- [`49da111`](https://github.com/Duke1616/ecmdb-web/commit/49da111edc740e1954d658a74c0919192d254a4f) chore: 修改文字提示
+- [`29dffef`](https://github.com/Duke1616/ecmdb-web/commit/29dffefca16617c6fe4cb2e1d4c4823fa26a470d) chore: 完善抑制规则，时间窗口续期、状态变更接口替换
+- [`19d8c9e`](https://github.com/Duke1616/ecmdb-web/commit/19d8c9e3be5af1ec7cc0ee29d9cad31b4af52877) fix: 抑制规则无法进行修改
+- [`62923da`](https://github.com/Duke1616/ecmdb-web/commit/62923dab6363ab6587760a920090b0ab23b475fd) chore: 抑制规则页面优化
+- [`ef87810`](https://github.com/Duke1616/ecmdb-web/commit/ef8781051c001eb7d02066bfbde88133d3a0f20b) chore: 告警聚合去除模版ID字段
+- [`a2be96b`](https://github.com/Duke1616/ecmdb-web/commit/a2be96b15aaaffcf8efd3baa244e46bd185a0c53) chore: 修正数据传递格式
+- [`8bc44e9`](https://github.com/Duke1616/ecmdb-web/commit/8bc44e99eea8383e20fce9de03f6c3a746ca8d4a) fix: 修复 build 报错
+- [`d94be89`](https://github.com/Duke1616/ecmdb-web/commit/d94be894f87982c43c77ee84624c5ff7b9b4e4be) chore: 更新触发器传递字段信息
+- [`d695590`](https://github.com/Duke1616/ecmdb-web/commit/d6955907afed408d7a91f9b28a0829f0aded45e2) chore: 优化部分错误提醒
+- [`ccce503`](https://github.com/Duke1616/ecmdb-web/commit/ccce503b589b22a5049cf790ed8546b92b862037) fix: 修复 build 阶段没有把图标打包
+- [`57af544`](https://github.com/Duke1616/ecmdb-web/commit/57af544895ade87fb32991d17d356f24cd3708ad) chore: 图标颜色修改
+- [`6be518b`](https://github.com/Duke1616/ecmdb-web/commit/6be518b035ed739c9031a1cd83bada3181197af7) chore: 新增菜单 svg 图标
+- [`26167a3`](https://github.com/Duke1616/ecmdb-web/commit/26167a382582c8179dd1fe87ce99a05c04a8f78f) chore: nginx
+- [`27afeca`](https://github.com/Duke1616/ecmdb-web/commit/27afeca4b42c5b54e4ea32ad932330173b486e4d) chore: 优化 nginx 配置，进行压缩，提高访问速度
+- [`a114760`](https://github.com/Duke1616/ecmdb-web/commit/a11476033abedd3bcc79edc2a7b28b4206abdeba) chore: 开启 brotliCompress 压缩
+- [`2f7b5c1`](https://github.com/Duke1616/ecmdb-web/commit/2f7b5c17ea9bbdbdf6753b4b7a472ccb51a3a5d9) chore: 去除 manualChunks
+- [`de15b91`](https://github.com/Duke1616/ecmdb-web/commit/de15b9126dcee2e02b85aa0f9287d8b04d109dad) chore: 去除优化，变得更慢了
+- [`9c5ce41`](https://github.com/Duke1616/ecmdb-web/commit/9c5ce4109ccecb84deb42029ea884d01977c4ceb) chore: 优化 vite 构建打包
+- [`ce5f75d`](https://github.com/Duke1616/ecmdb-web/commit/ce5f75d58fd73b1bc899a52c312212e5a82d5968) chore: 添加消息升级配置，优先级替换 API
+- [`d6ecf05`](https://github.com/Duke1616/ecmdb-web/commit/d6ecf056af159af13314db87bb033a06caad8f36) chore: build 报错
+- [`9fe4840`](https://github.com/Duke1616/ecmdb-web/commit/9fe484061f8f8fa008ad1a72c1c86b9a86ef3bb4) chore: 实现拖拽步骤等级调换
+- [`99ac0d8`](https://github.com/Duke1616/ecmdb-web/commit/99ac0d81dbb5a524b573c2b20c751747f467c8c1) chore: 优化部分接口
+- [`3c977ee`](https://github.com/Duke1616/ecmdb-web/commit/3c977ee9b32bd4bcfedaaf984587f725875100cd) fix: build 报错
+- [`a48209c`](https://github.com/Duke1616/ecmdb-web/commit/a48209c27504d9281ce10066ad47972f8c61c3ac) chore: update 接口调试
+- [`03080ef`](https://github.com/Duke1616/ecmdb-web/commit/03080ef20b1b990009c6ee50c228f9a613fcbb55) chore: 优化部分逻辑
+- [`fcc14f1`](https://github.com/Duke1616/ecmdb-web/commit/fcc14f1bdf9ba5ffa6009b922542684e2106a750) chore: 优化代码，完善消息升级逻辑
+- [`e4ac279`](https://github.com/Duke1616/ecmdb-web/commit/e4ac279d31fd91ccabeff0e43b824fba253c2cb2) chore: 优化消息升级代码
+- [`d50a397`](https://github.com/Duke1616/ecmdb-web/commit/d50a3973fe41376a33641019f1375914c1407a96) chore: 完善消息升级功能
+- [`0efcecc`](https://github.com/Duke1616/ecmdb-web/commit/0efcecc84c4767e5e12ff9ce9a27d9abb769b79f) chore: 消息升级配置，完成30%
+- [`1ffac6b`](https://github.com/Duke1616/ecmdb-web/commit/1ffac6b0a05237f8e0afcf386f7cb3b8dbedf496) chore: channel 类型定义成枚举
+- [`04e9197`](https://github.com/Duke1616/ecmdb-web/commit/04e919789e6a7cb7257182cb95c88d918b1cb556) chore: 优化代码，提高可读性
+- [`8ba97b8`](https://github.com/Duke1616/ecmdb-web/commit/8ba97b86de077b124fcdebeeccb16b357b3034f6) chore: 标签居中展示
+- [`3f824e6`](https://github.com/Duke1616/ecmdb-web/commit/3f824e6b3807df42b685e7ae092658b8f71564b2) chore: 消息升级功能开发
+- [`e9e9a20`](https://github.com/Duke1616/ecmdb-web/commit/e9e9a20ab7f738c9f2a1f5fed972d49bf9e3a548) chore: 通知管理 svg 图标替换
+- [`ea57a4f`](https://github.com/Duke1616/ecmdb-web/commit/ea57a4fc01b2a22cd1bf4c63e7878e201a3e5e01) chore: 新增模版集合模块，把不同渠道模版的放到同一个集合中，便于后续告警升级等处理
+- [`4b9a246`](https://github.com/Duke1616/ecmdb-web/commit/4b9a246f8d4e150ece5fdb4bb9ef7510292a3cef) chore: 删除规则、修改规则
+- [`abb9d38`](https://github.com/Duke1616/ecmdb-web/commit/abb9d3848e49dfb1790e4c1202510e6fe9183647) fix: build 错误
+- [`44451df`](https://github.com/Duke1616/ecmdb-web/commit/44451df4a6b8b3db079597910f3e467aa824c05e) chore: 工作空间支持绑定通知模版
+- [`faded35`](https://github.com/Duke1616/ecmdb-web/commit/faded35d2f1708f8545347a60db54f233bd4c146) fix: 修复部分缺陷
+- [`a9eb7e7`](https://github.com/Duke1616/ecmdb-web/commit/a9eb7e73f32ba31514d28b6dd1f75cd4bdd17a3c) chore: 优化模版预览页面
+- [`0ec1a98`](https://github.com/Duke1616/ecmdb-web/commit/0ec1a985249d9d8aae9508c042b6868a74358840) chore: 通知模版修改判断错误
+- [`cf1ed33`](https://github.com/Duke1616/ecmdb-web/commit/cf1ed33df5f5a4c7b036ab3d15f20b6de4276b5b) fix: 修复左侧展示失败情况
+- [`09e12d5`](https://github.com/Duke1616/ecmdb-web/commit/09e12d51d06b05f68d05b361fafce664ea663529) chore: 左侧为空的时候状态展示
+- [`430ae8a`](https://github.com/Duke1616/ecmdb-web/commit/430ae8a133a4c714482cbe0f27aa19bb18ef91fb) chore: 优化部门管理页面
+- [`4e325f0`](https://github.com/Duke1616/ecmdb-web/commit/4e325f021d785ed07b07120b6734fbbe916340f7) fix: 部门管理为空展示不正常
+- [`cd981cc`](https://github.com/Duke1616/ecmdb-web/commit/cd981ccc265178d83e7f04c8c7710392f7ae1a87) ci: 密码修改，推送镜像失败
+- [`9fd5a45`](https://github.com/Duke1616/ecmdb-web/commit/9fd5a45d8d19a09d56531b7a1c9f57360f607e83) chore: 优化
+- [`b1ce209`](https://github.com/Duke1616/ecmdb-web/commit/b1ce2090c82b44116d04f9c28bba926b3ec55cb1) ci: 密码修改，推送镜像失败
+- [`0944103`](https://github.com/Duke1616/ecmdb-web/commit/094410385b3548ae5bfdadf2845512689f240126) chore: 优化资源仓库为空时高度展示
+- [`68f6f2c`](https://github.com/Duke1616/ecmdb-web/commit/68f6f2cbc616d78b91f55eed29182aa0124a976a) chore: 去除告警平台固定路由，通过后端提供
+- [`92a2c7f`](https://github.com/Duke1616/ecmdb-web/commit/92a2c7fcd4b95500729cb5279b6efa7289f911dc) chore: 优化
+- [`1c078d2`](https://github.com/Duke1616/ecmdb-web/commit/1c078d225738b541e5af6442f98c4353a16c8333) chore: 去除无用的样式z
+- [`b382614`](https://github.com/Duke1616/ecmdb-web/commit/b3826145f3b73db62af1d93372c3095ee85ea97b) fix: 修复数据无法编辑情况
+- [`d966052`](https://github.com/Duke1616/ecmdb-web/commit/d9660523a3ddba8da0657dfea01699cd77709c45) chore: 优化降噪配置的展示
+- [`5c9f2df`](https://github.com/Duke1616/ecmdb-web/commit/5c9f2df1240dda3117572dc9223baf2340fbcf44) chore: 添加菜单栏 svg icon
+- [`55e6a4e`](https://github.com/Duke1616/ecmdb-web/commit/55e6a4ed6746bb6a9a680384dc27c4919ffbb90e) chore: 优化菜单管理提示信息
+- [`e032fe4`](https://github.com/Duke1616/ecmdb-web/commit/e032fe422da13bee9d2355e5faa1f7613a4f7c0b) chore: 优化菜单管理提示信息
+- [`301c9e2`](https://github.com/Duke1616/ecmdb-web/commit/301c9e249858e5736b5584fe2b4efdcaf4a677b3) chore: 去除无用的错误提示
+- [`cebafe4`](https://github.com/Duke1616/ecmdb-web/commit/cebafe49f176d79c7a4eacc8290d2b810eb584b1) chore: 去除无用的错误提示
+- [`d333ec3`](https://github.com/Duke1616/ecmdb-web/commit/d333ec3a59237a22e56bd99889c4ed0abca3dc0f) chore: 优化 API 展示结构
+- [`6fdfb21`](https://github.com/Duke1616/ecmdb-web/commit/6fdfb21f64950b076184ffbeebda93839d3d963c) chore: 优化代码
+- [`f52c4ce`](https://github.com/Duke1616/ecmdb-web/commit/f52c4ce6cef6f0b381c815931f4fa6666cd11203) chore: 优化菜单 API 接口处理逻辑
+- [`ab573af`](https://github.com/Duke1616/ecmdb-web/commit/ab573af87573e60264dd0799ffc3ecf7f6b903d3) chore: logout 登出逻辑
+- [`4248907`](https://github.com/Duke1616/ecmdb-web/commit/424890787aa628ab59e9d241e1c90766497d2219) fix: 路由展示异常
+- [`afcdb2f`](https://github.com/Duke1616/ecmdb-web/commit/afcdb2f605fc98563d8da0fa472769995ec31c06) chore: 路由梳理
+- [`1c8ad1a`](https://github.com/Duke1616/ecmdb-web/commit/1c8ad1ab839a9cc9490456d9617dc9d334d1b76d) chore: 完善通知模块
+- [`d5e0362`](https://github.com/Duke1616/ecmdb-web/commit/d5e0362529a61a5449ab59ed2078afe96a8269c4) chore: 完善发布版本，新增、保存逻辑
+- [`53b2ede`](https://github.com/Duke1616/ecmdb-web/commit/53b2edeb1febb2bb00881d0c7b63c7fc56106440) chore: 处理版本情况
+- [`ca51f03`](https://github.com/Duke1616/ecmdb-web/commit/ca51f035578082b661c8e6a78459a968372e5a9b) chore: 优化代码逻辑
+- [`4fc6efa`](https://github.com/Duke1616/ecmdb-web/commit/4fc6efae46883356b0e1713b2e9be9ad2e0bc376) chore: 优化多消息通知渠道管理
+- [`23b0edd`](https://github.com/Duke1616/ecmdb-web/commit/23b0edddc23d09b447029a349f0b498967d3372a) chore: 优化预览功能
+- [`87df459`](https://github.com/Duke1616/ecmdb-web/commit/87df4594f183a052b3fd6c0cf909eb2838a07a29) chore: 抽取组件
+- [`0fe1800`](https://github.com/Duke1616/ecmdb-web/commit/0fe1800e5c0efc54c86dc58e3d756102979b6f5c) chore: 优化
+- [`b3cc7c6`](https://github.com/Duke1616/ecmdb-web/commit/b3cc7c681c1039b1a4e7e9eeba07c7d879e0523f) chore: 消息模版
+- [`6055621`](https://github.com/Duke1616/ecmdb-web/commit/605562159720527ba75e06727823aeb000f87bf6) chore: 优化部分 UI
+- [`c6a245b`](https://github.com/Duke1616/ecmdb-web/commit/c6a245b247a513ce8effa5cec91db3b779aa5f18) chore: 完善工作空间详情页面
+- [`e253830`](https://github.com/Duke1616/ecmdb-web/commit/e2538308afd74997a2e42c9058a5098b9dd17acf) chore: 优化样式
+- [`0c7fcea`](https://github.com/Duke1616/ecmdb-web/commit/0c7fcea1f52aaffb155f096bfc66df49d9c5baf0) chore: 优化样式
+- [`7692608`](https://github.com/Duke1616/ecmdb-web/commit/76926086f7e5312fe7b51af79c4d29418b2281e3) chore: 工作空间，空间设置页面完善
+- [`377237e`](https://github.com/Duke1616/ecmdb-web/commit/377237ea626a10a3352642ed170a08b9ad4c749b) chore: 工作空间，告警管理页面
+- [`251675e`](https://github.com/Duke1616/ecmdb-web/commit/251675e7a712ff97819db2370ec0b4ea293e5076) chore: 降噪配置页面，宽度异常
+- [`5f78bef`](https://github.com/Duke1616/ecmdb-web/commit/5f78bef40213ca5c49ec0edf5258ebf280358829) chore: 工作空间支持告警规则
+- [`b705742`](https://github.com/Duke1616/ecmdb-web/commit/b70574296e9333e233656b583be6206930b11060) chore: 优化可以进行折叠
+- [`2d280d3`](https://github.com/Duke1616/ecmdb-web/commit/2d280d3f7505092ee08301b7d6bd05e57ee1a873) chore: 降噪配置页面
+- [`1fdf227`](https://github.com/Duke1616/ecmdb-web/commit/1fdf2274429897b5892a056d01ce065d13e7333f) chore: 工作空间页面完善
+- [`68ddc18`](https://github.com/Duke1616/ecmdb-web/commit/68ddc1878d13d34d9a3483ec5a31e320bd1ba5bd) feat: 完成部分团队管理、工作空间的页面开发
+- [`613d686`](https://github.com/Duke1616/ecmdb-web/commit/613d686a8d737ce5fac81b12574372a346acd7cb) fix: 登陆 setToken 逻辑错误
+- [`4d688c0`](https://github.com/Duke1616/ecmdb-web/commit/4d688c05aefe261aa81b92530659733dee5c8851) feat: 告警平台 数据源管理、告警规则完成部分功能开发
+- [`2e9080a`](https://github.com/Duke1616/ecmdb-web/commit/2e9080adaeb264c313e510a1caf42cc7068fc4f6) chore: 兼容 cookie 失败，通过 token 替代的情况
+
 ## [v1.6.1](https://github.com/Duke1616/ecmdb-web/releases/tag/v1.6.1) - 2025-09-18
 
 - [`ee488c3`](https://github.com/Duke1616/ecmdb-web/commit/ee488c3190e424cfec8e95e525d285c99ae3829d) chore: 优化部分消息提示，用户页面添加密码选项
