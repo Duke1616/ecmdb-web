@@ -16,7 +16,6 @@
           class="modern-input"
           :disabled="flowDetail.status == '2'"
         />
-        <FormHelp text="条件节点名称用于标识分支判断点，建议使用描述性名称" />
       </el-form-item>
     </FormSection>
 
@@ -36,7 +35,7 @@
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import { FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection } from "../../PropertySetting"
 
 const props = defineProps({
   nodeData: Object,

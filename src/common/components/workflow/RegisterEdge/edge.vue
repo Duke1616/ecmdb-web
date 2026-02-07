@@ -10,23 +10,16 @@
     <FormSection title="基本信息" icon="🔗">
       <el-form-item label="关系名称" prop="name" class="form-item">
         <el-input v-model="propertyForm.name" placeholder="请输入连线关系名称" class="modern-input" />
-        <FormHelp text="连线名称用于标识节点间的关系，建议使用描述性名称" />
       </el-form-item>
     </FormSection>
 
     <FormSection title="条件配置" icon="⚙️">
       <el-form-item label="关系表达式" prop="expression" class="form-item">
-        <el-input
-          v-model="propertyForm.expression"
-          placeholder="请点击右侧按钮生成表达式"
-          class="modern-input"
-          readonly
-        >
+        <el-input v-model="propertyForm.expression" placeholder="请输入表达式或点击右侧按钮生成" class="modern-input">
           <template #append>
             <el-button @click="handleOpenExpression" class="expression-btn" :icon="Setting"> 生成表达式 </el-button>
           </template>
         </el-input>
-        <FormHelp text="通过表达式编辑器配置连线的执行条件" />
       </el-form-item>
     </FormSection>
 
@@ -93,7 +86,7 @@ import Expression from "./expression.vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { getTemplateByWorkflowIdApi } from "@/api/template"
 import { template } from "@/api/template/types/template"
-import { FormSection, FormHelp } from "../PropertySetting"
+import { FormSection } from "../PropertySetting"
 import { Setting } from "@element-plus/icons-vue"
 
 const props = defineProps({
@@ -246,6 +239,12 @@ defineExpose({
       border-color: #cbd5e1;
       background: #f1f5f9;
       transform: translateY(-1px);
+
+      // Sync button hover effect
+      + .el-input-group__append .expression-btn {
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+        transform: translateY(-1px);
+      }
     }
 
     &.is-focus {
@@ -253,6 +252,13 @@ defineExpose({
       background: #ffffff;
       box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15);
       transform: translateY(-2px);
+
+      // Sync button focus effect
+      + .el-input-group__append .expression-btn {
+        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+      }
     }
   }
 
@@ -266,6 +272,7 @@ defineExpose({
     background: transparent;
     border: none;
     padding: 0;
+    margin-left: -2px;
   }
 }
 

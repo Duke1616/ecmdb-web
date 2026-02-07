@@ -20,9 +20,6 @@
             <span class="toggle-label">{{ propertyForm.is_notify ? "开启" : "关闭" }}</span>
           </div>
         </div>
-        <FormHelp
-          :text="propertyForm.is_notify ? '开启后，工作流启动时会发送通知消息' : '关闭后，工作流启动时不会发送通知'"
-        />
       </el-form-item>
     </FormSection>
   </el-form>
@@ -31,7 +28,7 @@
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import { FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection } from "../../PropertySetting"
 
 const props = defineProps({
   nodeData: Object,

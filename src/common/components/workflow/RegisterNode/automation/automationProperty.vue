@@ -18,7 +18,6 @@
           class="modern-input"
           :disabled="flowDetail.status == '2'"
         />
-        <FormHelp text="名称必须以自动化-开头，最大50个字符" />
       </el-form-item>
     </FormSection>
 
@@ -242,7 +241,7 @@ import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
-import { FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection } from "../../PropertySetting"
 
 // 使用模板 Hook
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
