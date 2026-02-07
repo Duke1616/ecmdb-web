@@ -27,12 +27,14 @@
               <span class="value comment">{{ activity.comment }}</span>
             </div>
 
-            <div class="extra-data-section" v-if="activity.extra_data && Object.keys(activity.extra_data).length > 0">
+            <div class="extra-data-section" v-if="activity.form_values && activity.form_values.length > 0">
               <div class="data-title">表单数据:</div>
               <div class="data-content">
-                <div v-for="(value, key) in activity.extra_data" :key="key" class="data-item">
-                  <span class="data-key">{{ key }}:</span>
-                  <span class="data-value">{{ value }}</span>
+                <div v-for="(item, idx) in activity.form_values" :key="idx" class="data-item">
+                  <span class="data-key">{{ item.name }}:</span>
+                  <span class="data-value">
+                    {{ Array.isArray(item.value) ? item.value.join(", ") : item.value }}
+                  </span>
                 </div>
               </div>
             </div>

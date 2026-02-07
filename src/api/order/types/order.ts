@@ -83,7 +83,14 @@ export interface taskRecord {
   comment: string // 评论
   is_finished: number // 0:任务未完成 1:处理完成
   finished_time: string
-  extra_data?: Record<string, any>
+  form_values: FormValue[] // 提交的表单记录
+}
+
+export interface FormValue {
+  name: string // 字段名
+  key: string // 字段 key
+  type: string // 字段类型
+  value: any // 字段值
 }
 
 export interface taskRecords {

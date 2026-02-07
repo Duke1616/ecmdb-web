@@ -30,6 +30,7 @@
             <el-tag v-if="item.required" type="danger" size="small" effect="plain" class="ml-2 required-tag"
               >必填</el-tag
             >
+            <el-tag v-if="item.merge" type="warning" size="small" effect="plain" class="ml-2 merge-tag">合并</el-tag>
           </div>
         </div>
         <div class="field-actions" v-if="!disabled">
@@ -59,6 +60,30 @@
       @closed="resetDialog"
     >
       <el-form ref="formRef" :model="currentForm" :rules="rules" label-position="top" class="design-form">
+        <!-- Top Options Bar -->
+        <div class="options-bar">
+          <div class="option-item">
+            <span class="option-label">必填项</span>
+            <el-switch v-model="currentForm.required" size="small" style="--el-switch-on-color: #3b82f6" />
+          </div>
+          <div class="divider-vertical" />
+          <div class="option-item">
+            <span class="option-label">后续合并</span>
+            <el-tooltip content="启用后，该字段值将在后续审批节点中持续展示" placement="top">
+              <el-icon class="help-icon"><QuestionFilled /></el-icon>
+            </el-tooltip>
+            <el-switch v-model="currentForm.merge" size="small" style="--el-switch-on-color: #e6a23c" />
+          </div>
+          <div class="divider-vertical" />
+          <div class="option-item">
+            <span class="option-label">隐藏字段</span>
+            <el-tooltip content="启用后，该字段将不会在表单中展示，通常用于系统自动填充" placement="top">
+              <el-icon class="help-icon"><QuestionFilled /></el-icon>
+            </el-tooltip>
+            <el-switch v-model="currentForm.hidden" size="small" style="--el-switch-on-color: #909399" />
+          </div>
+        </div>
+
         <div class="form-grid">
           <el-form-item label="显示名称" prop="name">
             <el-input
@@ -98,32 +123,38 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="配置属性" class="switch-item">
-            <div class="switch-container">
-              <span class="switch-label">必填项</span>
-              <el-switch
-                v-model="currentForm.required"
-                inline-prompt
-                active-text="是"
-                inactive-text="否"
-                style="--el-switch-on-color: #3b82f6; --el-switch-off-color: #cbd5e1"
-              />
-            </div>
+          <el-form-item label="占位提示" prop="props.placeholder">
+            <el-input
+              v-model="currentForm.props.placeholder"
+              placeholder="用户输入时的提示文本"
+              class="modern-input"
+              size="large"
+            />
           </el-form-item>
         </div>
 
-        <el-form-item label="占位提示" prop="props.placeholder">
+        <el-form-item v-if="['input', 'textarea'].includes(currentForm.type)" label="正则校验" prop="validate">
           <el-input
-            v-model="currentForm.props.placeholder"
-            placeholder="用户输入时的提示文本 (Placeholder)"
+            v-model="currentForm.validate"
+            placeholder="请输入正则表达式，如：^\d{11}$"
             class="modern-input"
             size="large"
-          />
+          >
+            <template #prefix>
+              <span class="regex-prefix">/</span>
+            </template>
+            <template #suffix>
+              <span class="regex-suffix">/</span>
+            </template>
+          </el-input>
         </el-form-item>
 
         <!-- Options for Select -->
         <transition name="el-zoom-in-top">
-          <div v-if="['select', 'radio', 'checkbox'].includes(currentForm.type)" class="options-config-panel">
+          <div
+            v-if="['select', 'radio', 'checkbox', 'multi_select'].includes(currentForm.type)"
+            class="options-config-panel"
+          >
             <div class="panel-header">
               <span class="panel-title">选项配置</span>
               <el-button link type="primary" size="small" @click="addOption">
@@ -168,7 +199,10 @@ interface FormItemConfig {
   name: string
   key: string
   type: string
+  validate?: string
   required: boolean
+  hidden: boolean
+  merge: boolean
   options: OptionItem[]
   props: Record<string, string>
 }
@@ -199,17 +233,30 @@ const currentForm = reactive<FormItemConfig>({
   name: "",
   key: "",
   type: "input",
+  validate: "",
   required: false,
+  hidden: false,
+  merge: false,
   options: [],
   props: {}
 })
+
+watch(
+  () => currentForm.type,
+  (val) => {
+    if (!["input", "textarea"].includes(val)) {
+      currentForm.validate = ""
+    }
+  }
+)
 
 const fieldTypes = [
   { label: "单行文本", value: "input" },
   { label: "多行文本", value: "textarea" },
   { label: "数字输入", value: "number" },
-  { label: "日期选择", value: "date" },
-  { label: "下拉选择", value: "select" }
+  { label: "日期时间", value: "date" },
+  { label: "下拉选择", value: "select" },
+  { label: "多项选择", value: "multi_select" }
 ]
 
 const rules: FormRules = {
@@ -236,7 +283,10 @@ const handleEdit = (index: number) => {
   currentForm.name = item.name
   currentForm.key = item.key
   currentForm.type = item.type
+  currentForm.validate = item.validate || ""
   currentForm.required = item.required
+  currentForm.hidden = item.hidden || false
+  currentForm.merge = item.merge
   currentForm.options = item.options ? JSON.parse(JSON.stringify(item.options)) : []
   currentForm.props = item.props ? JSON.parse(JSON.stringify(item.props)) : {}
   if (!currentForm.props) currentForm.props = {}
@@ -253,7 +303,10 @@ const resetForm = () => {
   currentForm.name = ""
   currentForm.key = ""
   currentForm.type = "input"
+  currentForm.validate = ""
   currentForm.required = false
+  currentForm.hidden = false
+  currentForm.merge = false
   currentForm.options = []
   currentForm.props = {}
   if (formRef.value) formRef.value.resetFields()
@@ -419,6 +472,10 @@ const removeOption = (idx: number) => {
   padding-bottom: 6px;
 }
 
+:deep(.el-form-item) {
+  margin-bottom: 12px;
+}
+
 .modern-input,
 .modern-select {
   :deep(.el-input__wrapper),
@@ -580,5 +637,96 @@ const removeOption = (idx: number) => {
 }
 .ml-2 {
   margin-left: 8px;
+}
+.regex-prefix,
+.regex-suffix {
+  font-family: monospace;
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.config-card {
+  margin-top: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.config-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.config-divider {
+  height: 1px;
+  background: #e2e8f0;
+  width: 100%;
+}
+
+.config-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  span:first-child {
+    font-size: 14px;
+    font-weight: 500;
+    color: #334155;
+  }
+}
+
+.config-desc {
+  font-size: 12px;
+  color: #94a3b8;
+}
+.help-icon.tiny {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.options-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #f8fafc;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.option-label {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.divider-vertical {
+  width: 1px;
+  height: 14px;
+  background: #cbd5e1;
+}
+
+.help-icon {
+  font-size: 14px;
+  color: #94a3b8;
+  cursor: help;
+  transition: color 0.2s;
+
+  &:hover {
+    color: #64748b;
+  }
 }
 </style>

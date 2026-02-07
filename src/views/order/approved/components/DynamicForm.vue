@@ -2,11 +2,19 @@
   <div class="dynamic-form">
     <el-form ref="formRef" :model="localModel" label-position="top" :disabled="disabled">
       <el-row :gutter="24">
-        <el-col v-for="field in schema" :key="field.key" :span="field.type === 'textarea' ? 24 : 12">
+        <el-col
+          v-for="field in schema"
+          :key="field.key"
+          v-show="!field.hidden"
+          :span="field.type === 'textarea' ? 24 : 12"
+        >
           <el-form-item
             :label="field.name"
             :prop="field.key"
-            :rules="[{ required: field.required, message: `${field.name}不能为空`, trigger: 'blur' }]"
+            :rules="[
+              { required: field.required, message: `${field.name}不能为空`, trigger: 'blur' },
+              field.validate ? { pattern: new RegExp(field.validate), message: '格式不正确', trigger: 'blur' } : {}
+            ]"
           >
             <!-- Text Input -->
             <el-input
@@ -49,16 +57,31 @@
               <el-option v-for="opt in field.options" :key="opt.value" :label="opt.label" :value="opt.value" />
             </el-select>
 
+            <!-- Multi-Select -->
+            <el-select
+              v-else-if="field.type === 'multi_select'"
+              v-model="localModel[field.key]"
+              :placeholder="field.props?.placeholder || '请选择' + field.name"
+              class="modern-select"
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              size="large"
+              style="width: 100%"
+            >
+              <el-option v-for="opt in field.options" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+
             <!-- Date Picker -->
             <el-date-picker
               v-else-if="field.type === 'date'"
               v-model="localModel[field.key]"
-              type="date"
-              :placeholder="field.props?.placeholder || '请选择日期'"
+              type="datetime"
+              :placeholder="field.props?.placeholder || '请选择日期时间'"
               class="modern-date-picker"
               size="large"
               style="width: 100%"
-              value-format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD HH:mm:ss"
             />
           </el-form-item>
         </el-col>
@@ -82,6 +105,8 @@ interface FormItemConfig {
   key: string
   type: string
   required: boolean
+  validate?: string
+  hidden?: boolean
   options: OptionItem[]
   props: Record<string, string>
 }
