@@ -16,7 +16,6 @@
           class="modern-input"
           :disabled="flowDetail.status == '2'"
         />
-        <FormHelp text="节点名称用于标识审批步骤，建议使用描述性名称" />
       </el-form-item>
     </FormSection>
 
@@ -38,7 +37,6 @@
             class="modern-option"
           />
         </el-select>
-        <FormHelp text="选择审批人员的确定方式，影响后续的参与者配置" />
       </el-form-item>
 
       <!-- 模板字段配置 -->
@@ -110,45 +108,43 @@
           </el-select>
           <el-button class="select-button" :icon="UserFilled" @click="openUser" :disabled="flowDetail.status == '2'" />
         </div>
-        <FormHelp text="点击右侧按钮选择具体的审批人员" />
       </el-form-item>
     </FormSection>
 
     <FormSection title="流程设置" icon="🔔">
-      <div class="settings-grid">
-        <div class="setting-item">
-          <el-form-item label="是否会签" prop="is_cosigned">
-            <el-switch
-              v-model="propertyForm.is_cosigned"
-              size="default"
-              :disabled="flowDetail.status == '2'"
-              active-color="var(--primary)"
-              inactive-color="var(--border)"
-            />
-          </el-form-item>
+      <div class="switch-cards">
+        <div class="switch-card">
+          <div class="switch-card-label">
+            <span>是否会签</span>
+            <el-tooltip content="开启后需要所有参与者都同意才能通过" placement="top">
+              <el-icon class="help-icon"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+          <el-switch
+            v-model="propertyForm.is_cosigned"
+            inline-prompt
+            active-text="是"
+            inactive-text="否"
+            :disabled="flowDetail.status == '2'"
+            style="--el-switch-on-color: #3b82f6; --el-switch-off-color: #cbd5e1"
+          />
         </div>
 
-        <div class="setting-item">
-          <el-form-item label="仅抄送" prop="is_cc">
-            <el-switch
-              v-model="propertyForm.is_cc"
-              size="default"
-              :disabled="flowDetail.status == '2'"
-              active-color="var(--primary)"
-              inactive-color="var(--border)"
-            />
-          </el-form-item>
-        </div>
-      </div>
-
-      <div class="settings-help">
-        <div class="help-item">
-          <span class="help-icon">ℹ️</span>
-          <span class="help-text">会签：开启后需要所有参与者都同意才能通过</span>
-        </div>
-        <div class="help-item">
-          <span class="help-icon">ℹ️</span>
-          <span class="help-text">抄送：开启后该节点仅用于通知，无需审批</span>
+        <div class="switch-card">
+          <div class="switch-card-label">
+            <span>仅抄送</span>
+            <el-tooltip content="开启后该节点仅用于通知，无需审批" placement="top">
+              <el-icon class="help-icon"><QuestionFilled /></el-icon>
+            </el-tooltip>
+          </div>
+          <el-switch
+            v-model="propertyForm.is_cc"
+            inline-prompt
+            active-text="是"
+            inactive-text="否"
+            :disabled="flowDetail.status == '2'"
+            style="--el-switch-on-color: #10b981; --el-switch-off-color: #cbd5e1"
+          />
         </div>
       </div>
     </FormSection>
@@ -181,9 +177,9 @@
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import { UserFilled } from "@element-plus/icons-vue"
+import { UserFilled, QuestionFilled } from "@element-plus/icons-vue"
 import { findByUsernamesApi } from "@/api/user"
-import { FormSection, FormHelp } from "../../PropertySetting"
+import { FormSection } from "../../PropertySetting"
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
 import UserSelector from "./UserSelector.vue"
 import FormList from "./FormList.vue"
@@ -459,59 +455,46 @@ defineExpose({
   }
 }
 
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+.switch-cards {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
 
-  .setting-item {
-    background: #f9fafb;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid #e5e7eb;
+.switch-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  transition: all 0.2s;
 
-    .el-form-item {
-      margin-bottom: 0;
-
-      :deep(.el-form-item__content) {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-
-      :deep(.el-switch) {
-        --el-switch-on-color: #3b82f6;
-        --el-switch-off-color: #d1d5db;
-      }
-    }
+  &:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 }
 
-.settings-help {
+.switch-card-label {
   display: flex;
-  flex-direction: column;
+  align-items: center;
   gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
 
-  .help-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 12px;
-    background: #f8fafc;
-    border-radius: 6px;
-    border-left: 3px solid #3b82f6;
+.help-icon {
+  font-size: 14px;
+  color: #94a3b8;
+  cursor: help;
+  transition: color 0.2s;
 
-    .help-icon {
-      font-size: 14px;
-      color: #3b82f6;
-    }
-
-    .help-text {
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.4;
-    }
+  &:hover {
+    color: #64748b;
   }
 }
 
