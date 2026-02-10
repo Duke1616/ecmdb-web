@@ -103,10 +103,40 @@ const taskFormData = ref<any>({})
 const formRef = ref<FormInstance | null>(null)
 const dynamicFormRef = ref<any>(null)
 
+// 用于缓存每个工单的操作信息（草稿），key 为 processInstId
+const formDrafts = ref(new Map<number, { formData: passOrder; taskFormData: any }>())
+
+// 监听工单ID变化，处理草稿保存和恢复
+watch(
+  () => props.processInstId,
+  (newId, oldId) => {
+    // 切换工单时，保存上一个工单的草稿
+    if (oldId) {
+      formDrafts.value.set(oldId, {
+        formData: cloneDeep(formData.value),
+        taskFormData: cloneDeep(taskFormData.value)
+      })
+    }
+
+    // 恢复当前工单的草稿或重置
+    if (newId) {
+      const draft = formDrafts.value.get(newId)
+      if (draft) {
+        formData.value = cloneDeep(draft.formData)
+        taskFormData.value = cloneDeep(draft.taskFormData)
+      } else {
+        // 没有草稿，重置为初始状态
+        formData.value = cloneDeep(DEFAULT_FORM_DATA)
+        taskFormData.value = {}
+        formRef.value?.clearValidate()
+      }
+    }
+  }
+)
+
 const handleDetail = (id: number) => {
   detailTemplateApi(id)
     .then((res) => {
-      // 工单模版
       // 工单模版
       const parsedOptions = formCreate.parseJson(res.data.options) as unknown as Options
       ;(parsedOptions as any).submitBtn = false
@@ -309,6 +339,11 @@ const handleRevoke = () => {
 }
 
 const resetForm = () => {
+  // 提交成功后清除当前工单的草稿
+  if (props.processInstId) {
+    formDrafts.value.delete(props.processInstId)
+  }
+
   formRef.value?.clearValidate()
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
   taskFormData.value = {}
