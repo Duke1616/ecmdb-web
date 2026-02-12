@@ -6,9 +6,22 @@
           v-for="field in schema"
           :key="field.key"
           v-show="!field.hidden"
-          :span="field.type === 'textarea' ? 24 : 12"
+          :span="['textarea', 'tips'].includes(field.type) ? 24 : 12"
         >
+          <!-- Tips Type: Render directly without el-form-item wrapper -->
+          <div v-if="field.type === 'tips'" class="tips-container">
+            <el-alert
+              :title="field.name"
+              :description="field.value || field.props?.placeholder"
+              type="warning"
+              :closable="false"
+              show-icon
+            />
+          </div>
+
+          <!-- Other Form Fields -->
           <el-form-item
+            v-else
             :label="field.name"
             :prop="field.key"
             :rules="[
@@ -16,73 +29,85 @@
               field.validate ? { pattern: new RegExp(field.validate), message: '格式不正确', trigger: 'blur' } : {}
             ]"
           >
-            <!-- Text Input -->
-            <el-input
-              v-if="field.type === 'input'"
-              v-model="localModel[field.key]"
-              :placeholder="field.props?.placeholder || '请输入' + field.name"
-              class="modern-input"
-              size="large"
-            />
+            <!-- Readonly Mode: Display as Text Input with Value -->
+            <template v-if="field.readonly">
+              <el-input
+                :model-value="localModel[field.key] || field.value"
+                readonly
+                class="modern-input"
+                size="large"
+              />
+            </template>
 
-            <!-- Textarea -->
-            <el-input
-              v-else-if="field.type === 'textarea'"
-              v-model="localModel[field.key]"
-              type="textarea"
-              :rows="3"
-              :placeholder="field.props?.placeholder || '请输入' + field.name"
-              class="modern-textarea"
-            />
+            <template v-else>
+              <!-- Text Input -->
+              <el-input
+                v-if="field.type === 'input'"
+                v-model="localModel[field.key]"
+                :placeholder="field.props?.placeholder || '请输入' + field.name"
+                class="modern-input"
+                size="large"
+              />
 
-            <!-- Number Input -->
-            <el-input-number
-              v-else-if="field.type === 'number'"
-              v-model="localModel[field.key]"
-              :placeholder="field.props?.placeholder"
-              class="modern-input-number"
-              size="large"
-              controls-position="right"
-            />
+              <!-- Textarea -->
+              <el-input
+                v-else-if="field.type === 'textarea'"
+                v-model="localModel[field.key]"
+                type="textarea"
+                :rows="3"
+                :placeholder="field.props?.placeholder || '请输入' + field.name"
+                class="modern-textarea"
+              />
 
-            <!-- Select -->
-            <el-select
-              v-else-if="field.type === 'select'"
-              v-model="localModel[field.key]"
-              :placeholder="field.props?.placeholder || '请选择' + field.name"
-              class="modern-select"
-              size="large"
-              style="width: 100%"
-            >
-              <el-option v-for="opt in field.options" :key="opt.value" :label="opt.label" :value="opt.value" />
-            </el-select>
+              <!-- Number Input -->
+              <el-input-number
+                v-else-if="field.type === 'number'"
+                v-model="localModel[field.key]"
+                :placeholder="field.props?.placeholder"
+                class="modern-input-number"
+                size="large"
+                controls-position="right"
+              />
 
-            <!-- Multi-Select -->
-            <el-select
-              v-else-if="field.type === 'multi_select'"
-              v-model="localModel[field.key]"
-              :placeholder="field.props?.placeholder || '请选择' + field.name"
-              class="modern-select"
-              multiple
-              collapse-tags
-              collapse-tags-tooltip
-              size="large"
-              style="width: 100%"
-            >
-              <el-option v-for="opt in field.options" :key="opt.value" :label="opt.label" :value="opt.value" />
-            </el-select>
+              <!-- Select -->
+              <el-select
+                v-else-if="field.type === 'select'"
+                v-model="localModel[field.key]"
+                :placeholder="field.props?.placeholder || '请选择' + field.name"
+                class="modern-select"
+                size="large"
+                style="width: 100%"
+              >
+                <el-option v-for="opt in field.options" :key="opt.value" :label="opt.label" :value="opt.value" />
+              </el-select>
 
-            <!-- Date Picker -->
-            <el-date-picker
-              v-else-if="field.type === 'date'"
-              v-model="localModel[field.key]"
-              type="datetime"
-              :placeholder="field.props?.placeholder || '请选择日期时间'"
-              class="modern-date-picker"
-              size="large"
-              style="width: 100%"
-              value-format="YYYY-MM-DD HH:mm:ss"
-            />
+              <!-- Multi-Select -->
+              <el-select
+                v-else-if="field.type === 'multi_select'"
+                v-model="localModel[field.key]"
+                :placeholder="field.props?.placeholder || '请选择' + field.name"
+                class="modern-select"
+                multiple
+                collapse-tags
+                collapse-tags-tooltip
+                size="large"
+                style="width: 100%"
+              >
+                <el-option v-for="opt in field.options" :key="opt.value" :label="opt.label" :value="opt.value" />
+              </el-select>
+
+              <!-- Date Picker -->
+              <el-date-picker
+                v-else-if="field.type === 'date'"
+                v-model="localModel[field.key]"
+                type="datetime"
+                :placeholder="field.props?.placeholder || '请选择日期时间'"
+                class="modern-date-picker"
+                size="large"
+                style="width: 100%"
+                value-format="YYYY-MM-DD HH:mm:ss"
+              />
+            </template>
           </el-form-item>
         </el-col>
       </el-row>
@@ -107,6 +132,8 @@ interface FormItemConfig {
   required: boolean
   validate?: string
   hidden?: boolean
+  readonly?: boolean
+  value?: string
   options: OptionItem[]
   props: Record<string, string>
 }
@@ -142,8 +169,21 @@ defineExpose({
 watch(
   () => props.modelValue,
   (val) => {
-    if (val && !isEqual(val, localModel.value)) {
-      localModel.value = cloneDeep(val)
+    if (val) {
+      const newVal = cloneDeep(val)
+
+      // Merge with default values from schema
+      if (props.schema) {
+        props.schema.forEach((field) => {
+          if (field.value && (newVal[field.key] === undefined || newVal[field.key] === "")) {
+            newVal[field.key] = field.value
+          }
+        })
+      }
+
+      if (!isEqual(newVal, localModel.value)) {
+        localModel.value = newVal
+      }
     }
   },
   { immediate: true, deep: true }
@@ -214,5 +254,9 @@ watch(
         0 0 0 1px #3b82f6 inset;
     }
   }
+}
+
+.tips-container {
+  margin-bottom: 18px; /* Align with form item spacing */
 }
 </style>

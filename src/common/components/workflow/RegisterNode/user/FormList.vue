@@ -30,6 +30,7 @@
             <el-tag v-if="item.required" type="danger" size="small" effect="plain" class="ml-2 required-tag"
               >必填</el-tag
             >
+            <el-tag v-if="item.readonly" type="info" size="small" effect="plain" class="ml-2 readonly-tag">只读</el-tag>
             <el-tag v-if="item.merge" type="warning" size="small" effect="plain" class="ml-2 merge-tag">合并</el-tag>
           </div>
         </div>
@@ -53,7 +54,7 @@
       v-model="dialogVisible"
       :title="isEdit ? '编辑字段' : '添加字段'"
       :subtitle="isEdit ? '修改表单字段配置' : '添加新的表单字段'"
-      width="520px"
+      width="600px"
       :show-footer-info="false"
       @confirm="handleConfirm"
       @cancel="dialogVisible = false"
@@ -81,6 +82,14 @@
               <el-icon class="help-icon"><QuestionFilled /></el-icon>
             </el-tooltip>
             <el-switch v-model="currentForm.hidden" size="small" style="--el-switch-on-color: #909399" />
+          </div>
+          <div class="divider-vertical" />
+          <div class="option-item">
+            <span class="option-label">只读模式</span>
+            <el-tooltip content="启用后，该字段将变为只读状态，用户无法修改" placement="top">
+              <el-icon class="help-icon"><QuestionFilled /></el-icon>
+            </el-tooltip>
+            <el-switch v-model="currentForm.readonly" size="small" style="--el-switch-on-color: #606266" />
           </div>
         </div>
 
@@ -123,10 +132,23 @@
             </el-select>
           </el-form-item>
 
-          <el-form-item label="占位提示" prop="props.placeholder">
+          <el-form-item
+            v-if="!currentForm.readonly && currentForm.type !== 'tips'"
+            label="占位提示"
+            prop="props.placeholder"
+          >
             <el-input
               v-model="currentForm.props.placeholder"
               placeholder="用户输入时的提示文本"
+              class="modern-input"
+              size="large"
+            />
+          </el-form-item>
+
+          <el-form-item v-else :label="currentForm.type === 'tips' ? '提示内容' : '默认值'" prop="value">
+            <el-input
+              v-model="currentForm.value"
+              :placeholder="currentForm.type === 'tips' ? '请输入提示的具体内容' : '请输入该字段的默认显示值'"
               class="modern-input"
               size="large"
             />
@@ -199,8 +221,10 @@ interface FormItemConfig {
   name: string
   key: string
   type: string
+  value?: string
   validate?: string
   required: boolean
+  readonly: boolean
   hidden: boolean
   merge: boolean
   options: OptionItem[]
@@ -219,7 +243,9 @@ const localList = ref<FormItemConfig[]>([])
 watch(
   () => props.modelValue,
   (val) => {
+    console.log("FormList modelValue changed:", val)
     localList.value = val ? JSON.parse(JSON.stringify(val)) : []
+    console.log("FormList localList set to:", localList.value)
   },
   { immediate: true, deep: true }
 )
@@ -233,8 +259,10 @@ const currentForm = reactive<FormItemConfig>({
   name: "",
   key: "",
   type: "input",
+  value: "",
   validate: "",
   required: false,
+  readonly: false,
   hidden: false,
   merge: false,
   options: [],
@@ -256,7 +284,8 @@ const fieldTypes = [
   { label: "数字输入", value: "number" },
   { label: "日期时间", value: "date" },
   { label: "下拉选择", value: "select" },
-  { label: "多项选择", value: "multi_select" }
+  { label: "多项选择", value: "multi_select" },
+  { label: "提示信息", value: "tips" }
 ]
 
 const rules: FormRules = {
@@ -283,8 +312,10 @@ const handleEdit = (index: number) => {
   currentForm.name = item.name
   currentForm.key = item.key
   currentForm.type = item.type
+  currentForm.value = item.value || ""
   currentForm.validate = item.validate || ""
   currentForm.required = item.required
+  currentForm.readonly = item.readonly || false
   currentForm.hidden = item.hidden || false
   currentForm.merge = item.merge
   currentForm.options = item.options ? JSON.parse(JSON.stringify(item.options)) : []
@@ -303,8 +334,10 @@ const resetForm = () => {
   currentForm.name = ""
   currentForm.key = ""
   currentForm.type = "input"
+  currentForm.value = ""
   currentForm.validate = ""
   currentForm.required = false
+  currentForm.readonly = false
   currentForm.hidden = false
   currentForm.merge = false
   currentForm.options = []

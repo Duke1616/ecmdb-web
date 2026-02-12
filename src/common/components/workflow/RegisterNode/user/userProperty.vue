@@ -353,6 +353,8 @@ const confirmFunc = () => {
 }
 
 onMounted(async () => {
+  console.log("userProperty mounted, nodeData:", props.nodeData)
+  console.log("userProperty properties:", props.nodeData?.properties)
   propertyForm.name = props.nodeData?.properties.name || ""
   propertyForm.is_cosigned = props.nodeData?.properties.is_cosigned ? props.nodeData.properties.is_cosigned : false
   propertyForm.approved = Array.isArray(props.nodeData?.properties.approved) ? props.nodeData.properties.approved : []
