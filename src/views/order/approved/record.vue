@@ -79,6 +79,7 @@ const getTagType = (row: taskRecord) => {
   if (row.status === 2) return "danger"
   if (row.status === 3 && row.is_finished === 1) return "success"
   if (row.status === 4 && row.is_finished === 1) return "danger"
+  if (row.status === 5 && row.is_finished === 1) return "info"
   if (row.status === 0 && row.is_finished === 1) return "danger"
   return "warning"
 }
@@ -89,6 +90,7 @@ const getTagLabel = (row: taskRecord) => {
   if (row.status === 3 && row.is_finished === 1) return "系统通过"
   if (row.status === 4 && row.is_finished === 1) return "系统驳回"
   if (row.status === 2 && row.is_finished === 1) return "手动驳回"
+  if (row.status === 5 && row.is_finished === 1) return "系统跳过"
   if (row.status === 0 && row.is_finished === 1) return "节点或签联动处理"
   return "等待处理"
 }
