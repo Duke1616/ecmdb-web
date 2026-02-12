@@ -77,6 +77,7 @@ import {
   registerEnd,
   registerCondition,
   registerParallel,
+  registerSelective,
   regsiterInclusion,
   registerAutomation,
   registerUser,
@@ -293,6 +294,7 @@ const registerNode = () => {
   registerCondition(lf.value)
   registerPolyline(lf.value)
   registerParallel(lf.value)
+  registerSelective(lf.value)
   regsiterInclusion(lf.value)
   registerAutomation(lf.value)
 }

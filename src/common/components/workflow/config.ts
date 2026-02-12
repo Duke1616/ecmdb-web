@@ -14,21 +14,28 @@ export const nodeList = [
     text: "自动化",
     class: "node-automation"
   },
-  {
-    type: "condition",
-    text: "条件",
-    class: "node-condition"
-  },
+
   {
     text: "并行",
     type: "parallel",
     class: "node-parallel"
   },
   {
+    text: "则并",
+    type: "selective",
+    class: "node-selective"
+  },
+  {
     text: "包容",
     type: "inclusion",
     class: "node-inclusion"
   },
+  {
+    type: "condition",
+    text: "条件",
+    class: "node-condition"
+  },
+
   {
     type: "end",
     text: "结束",

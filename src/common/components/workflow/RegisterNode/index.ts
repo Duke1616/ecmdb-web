@@ -6,6 +6,7 @@ import registerParallel from "./parallel/parallel"
 import regsiterInclusion from "./inclusion/inclusion"
 import registerAutomation from "./automation/automation"
 import registerPolyline from "../RegisterEdge/edge"
+import registerSelective from "./selective/selective"
 
 export {
   registerStart,
@@ -14,6 +15,7 @@ export {
   registerUser,
   registerAutomation,
   registerParallel,
+  registerSelective,
   regsiterInclusion,
   registerPolyline
 }

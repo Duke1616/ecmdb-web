@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, computed } from "vue"
+import { computed } from "vue"
 
 interface Props {
   lf: any
@@ -71,7 +71,7 @@ const props = defineProps<Props>()
 
 const gatewayNodes = computed(() =>
   props.nodeList
-    .filter((item) => ["condition", "parallel", "inclusion"].includes(item.type))
+    .filter((item) => ["parallel", "selective", "condition", "inclusion"].includes(item.type))
     .map((item) => ({
       ...item,
       description: getNodeDescription(item.type)
@@ -104,6 +104,7 @@ const getNodeDescription = (type: string) => {
     condition: "条件判断",
     automation: "自动化任务",
     parallel: "并行网关",
+    selective: "条件并行网关",
     inclusion: "包含网关",
     time: "定时任务",
     push: "推送消息",
@@ -316,6 +317,12 @@ const $_dragNode = (item: any) => {
   background: url("../background/inclusion.png") no-repeat center;
   background-size: cover;
   background-color: rgba(16, 185, 129, 0.1);
+}
+
+.node-selective {
+  background: url("../background/selective.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(245, 158, 11, 0.1);
 }
 
 /* Responsive adjustments */
