@@ -8,7 +8,10 @@
     :disabled="flowDetail.status == '2'"
     class="property-form"
   >
-    <FormSection title="基本信息" icon="📝">
+    <FormSection title="基本信息" tooltip="设置节点的显示名称以区分流程环节" theme-color="slate">
+      <template #icon>
+        <el-icon><Document /></el-icon>
+      </template>
       <el-form-item label="节点名称" prop="name" class="form-item">
         <el-input
           v-model="propertyForm.name"
@@ -19,7 +22,10 @@
       </el-form-item>
     </FormSection>
 
-    <FormSection title="审批配置" icon="⚙️">
+    <FormSection title="审批配置" tooltip="定义谁参与并有权限处理该环节的流程申请" theme-color="blue">
+      <template #icon>
+        <el-icon><UserFilled /></el-icon>
+      </template>
       <el-form-item label="审批规则" prop="rule" class="form-item">
         <el-select
           v-model="propertyForm.rule"
@@ -111,7 +117,10 @@
       </el-form-item>
     </FormSection>
 
-    <FormSection title="流程设置" icon="🔔">
+    <FormSection title="流程设置" tooltip="配置审批通过的逻辑（如会签）及抄送规则" theme-color="orange">
+      <template #icon>
+        <el-icon><Timer /></el-icon>
+      </template>
       <div class="switch-cards">
         <div class="switch-card">
           <div class="switch-card-label">
@@ -149,7 +158,10 @@
       </div>
     </FormSection>
 
-    <FormSection title="表单配置" icon="📋">
+    <FormSection title="表单配置" tooltip="设置审批人在该环节需要处理或查看的业务字段" theme-color="green">
+      <template #icon>
+        <el-icon><Collection /></el-icon>
+      </template>
       <FormList v-model="propertyForm.fields" :disabled="flowDetail.status == '2'" />
     </FormSection>
   </el-form>
@@ -177,7 +189,7 @@
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
-import { UserFilled, QuestionFilled } from "@element-plus/icons-vue"
+import { UserFilled, QuestionFilled, Document, Timer, Collection } from "@element-plus/icons-vue"
 import { findByUsernamesApi } from "@/api/user"
 import { FormSection } from "../../PropertySetting"
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
@@ -392,75 +404,64 @@ defineExpose({
 })
 </script>
 <style scoped lang="scss">
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin-bottom: 20px;
+.property-form {
+  padding: 4px 12px;
+  background: transparent;
+  min-height: 100%;
+}
 
-  &:last-child {
-    margin-bottom: 0;
+// ── 通用控件（极致优化） ──────────────────────────────────────────────
+.modern-input,
+.modern-select {
+  width: 100%;
+  :deep(.el-input__wrapper) {
+    background: #ffffff !important;
+    border-radius: 6px;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 2px 10px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #94a3b8 !important;
+    }
+
+    &.is-focus {
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 0 1px #6366f1 !important;
+    }
   }
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .form-item {
-  margin-bottom: 16px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
+  margin-bottom: 0px;
   :deep(.el-form-item__label) {
-    font-weight: 600;
-    color: #374151;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
     margin-bottom: 6px;
   }
 }
 
 .conditional-section {
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-top: 16px;
-}
-
-.modern-input {
-  width: 100%;
-
-  :deep(.el-input__wrapper) {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 14px 18px;
-    height: 52px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: #cbd5e1;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-    }
-
-    &.is-focus {
-      border-color: #3b82f6;
-      background: #ffffff;
-      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-      transform: translateY(-2px);
-    }
-  }
-
-  :deep(.el-input__inner) {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 500;
-  }
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 12px;
 }
 
 .switch-cards {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
 }
 
 .switch-card {
@@ -470,22 +471,22 @@ defineExpose({
   flex: 1;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
+  border-radius: 8px;
+  padding: 12px 16px;
   transition: all 0.2s;
 
   &:hover {
     border-color: #cbd5e1;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   }
 }
 
 .switch-card-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
   color: #1e293b;
 }
 
@@ -500,50 +501,39 @@ defineExpose({
   }
 }
 
-.form-help {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.4;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #3b82f6;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
 .select-container {
   display: flex;
-  justify-content: center;
   align-items: center;
   width: 100%;
-  gap: 12px;
+  gap: 10px;
 
   .modern-select {
     flex: 1;
   }
 
   .select-button {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    border: none;
-    color: white;
-    border-radius: 10px;
-    padding: 12px;
-    height: 48px;
-    width: 48px;
-    transition: all 0.3s ease;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    border-radius: 6px;
+    padding: 8px;
+    height: 32px;
+    width: 32px;
+    transition: all 0.2s;
 
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      background: #e2e8f0;
+      color: #334155;
+      border-color: #94a3b8;
+    }
+
+    &:active {
+      background: #cbd5e1;
     }
 
     &:disabled {
-      background: #9ca3af;
+      opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
-      box-shadow: none;
     }
   }
 }

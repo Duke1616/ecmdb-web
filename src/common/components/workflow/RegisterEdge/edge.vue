@@ -7,37 +7,52 @@
     label-position="top"
     class="property-form"
   >
-    <FormSection title="基本信息" icon="🔗">
+    <!-- 基本信息 -->
+    <FormSection title="基本信息" tooltip="设置连线在流程图中的显示名称" theme-color="slate">
+      <template #icon>
+        <el-icon><Link /></el-icon>
+      </template>
       <el-form-item label="关系名称" prop="name" class="form-item">
         <el-input v-model="propertyForm.name" placeholder="请输入连线关系名称" class="modern-input" />
       </el-form-item>
     </FormSection>
 
-    <FormSection title="条件配置" icon="⚙️">
+    <!-- 条件配置 -->
+    <FormSection title="条件配置" tooltip="定义流程流向该分支所需满足的逻辑表达式" theme-color="blue">
+      <template #icon>
+        <el-icon><MagicStick /></el-icon>
+      </template>
       <el-form-item label="关系表达式" prop="expression" class="form-item">
-        <el-input v-model="propertyForm.expression" placeholder="请输入表达式或点击右侧按钮生成" class="modern-input">
-          <template #append>
-            <el-button @click="handleOpenExpression" class="expression-btn" :icon="Setting"> 生成表达式 </el-button>
-          </template>
-        </el-input>
+        <div class="expression-input-wrapper">
+          <el-input
+            v-model="propertyForm.expression"
+            placeholder="请输入表达式或点击右侧生成按钮"
+            class="modern-input with-action"
+            readonly
+          />
+          <el-button @click="handleOpenExpression" class="action-btn" :icon="Operation"> 生成表达式 </el-button>
+        </div>
       </el-form-item>
     </FormSection>
 
-    <FormSection title="使用说明" icon="💡">
+    <!-- 使用说明 -->
+    <FormSection title="使用说明" theme-color="purple">
+      <template #icon>
+        <el-icon><InfoFilled /></el-icon>
+      </template>
       <div class="edge-tips">
-        <div class="tip-item">
-          <div class="tip-icon">🔗</div>
-          <div class="tip-content">
-            <h4 class="tip-title">连线关系</h4>
-            <p class="tip-desc">定义节点间的连接关系，支持条件分支和并行执行</p>
+        <div class="tip-card">
+          <div class="tip-dot cyan" />
+          <div class="tip-text">
+            <strong>连线关系</strong>
+            <span>定义节点间的拓扑连接，支持条件分支执行</span>
           </div>
         </div>
-
-        <div class="tip-item">
-          <div class="tip-icon">⚡</div>
-          <div class="tip-content">
-            <h4 class="tip-title">条件判断</h4>
-            <p class="tip-desc">通过表达式设置连线的执行条件，实现动态流程控制</p>
+        <div class="tip-card">
+          <div class="tip-dot purple" />
+          <div class="tip-text">
+            <strong>条件判断</strong>
+            <span>通过 SQL 式表达式实现动态流程的分离控制</span>
           </div>
         </div>
       </div>
@@ -68,7 +83,7 @@
       </div>
 
       <div class="expression-body">
-        <Expression ref="expressionRef" :templates="templates" :expression="propertyForm.expression" />
+        <Expression ref="expressionRef" :templates="templates" v-model:expression="propertyForm.expression" />
       </div>
     </div>
 
@@ -87,7 +102,7 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { getTemplateByWorkflowIdApi } from "@/api/template"
 import { template } from "@/api/template/types/template"
 import { FormSection } from "../PropertySetting"
-import { Setting } from "@element-plus/icons-vue"
+import { MagicStick, Link, InfoFilled, Operation } from "@element-plus/icons-vue"
 
 const props = defineProps({
   nodeData: Object,
@@ -150,14 +165,7 @@ const handleOpenExpression = async () => {
 }
 
 const saveExpression = () => {
-  const expression = expressionRef.value?.getExpression()
-
   dialogVisible.value = false
-  if (expression === undefined) {
-    return
-  }
-
-  propertyForm.value.expression = expression.value
 }
 
 //确定
@@ -182,301 +190,224 @@ defineExpose({
 })
 </script>
 <style scoped lang="scss">
-.form-item {
-  margin-bottom: 16px;
+.property-form {
+  padding: 4px 12px;
+  background: transparent;
+  min-height: 100%;
+}
 
-  &:last-child {
-    margin-bottom: 0;
+// ── 通用控件 ────────────────────────────────────────────────────────────
+.modern-input {
+  width: 100%;
+  :deep(.el-input__wrapper) {
+    background: #ffffff !important;
+    border-radius: 8px;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 2px 10px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #94a3b8 !important;
+    }
+
+    &.is-focus {
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 0 1px #6366f1 !important;
+    }
   }
 
+  &.with-action {
+    :deep(.el-input__wrapper) {
+      border-right: none;
+      border-radius: 6px 0 0 6px;
+    }
+  }
+}
+
+.form-item {
+  margin-bottom: 0px;
   :deep(.el-form-item__label) {
-    font-weight: 600;
-    color: #374151;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
     margin-bottom: 6px;
   }
 }
 
-.expression-btn {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
-  border: none !important;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  color: white !important;
-  transition: all 0.3s ease;
-  height: 100%;
-  border-radius: 0 8px 8px 0;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 6px;
-
-  &:hover {
-    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-  }
-
-  // 确保图标颜色也是白色
-  :deep(.el-icon) {
-    color: white !important;
-  }
-}
-
-.modern-input {
+// ── 表达式输入增强 ──────────────────────────────────────────────────────
+.expression-input-wrapper {
+  display: flex;
   width: 100%;
+  align-items: stretch;
 
-  :deep(.el-input__wrapper) {
+  .modern-input {
+    flex: 1;
+    height: 40px; // 强制统一高度
+
+    &.with-action {
+      :deep(.el-input__wrapper) {
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        height: 100%;
+        box-sizing: border-box;
+      }
+    }
+  }
+
+  .action-btn {
+    height: 40px; // 与输入框对齐
+    border-radius: 0 8px 8px 0;
+    border: 1px solid #cbd5e1;
+    border-left: none;
     background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 14px 18px;
-    height: 52px;
-    transition: all 0.3s ease;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 16px;
+    margin: 0;
+    transition: all 0.2s;
+    box-sizing: border-box;
 
     &:hover {
-      border-color: #cbd5e1;
       background: #f1f5f9;
-      transform: translateY(-1px);
-
-      // Sync button hover effect
-      + .el-input-group__append .expression-btn {
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
-        transform: translateY(-1px);
-      }
+      color: #6366f1;
+      border-color: #cbd5e1;
     }
 
-    &.is-focus {
-      border-color: #06b6d4;
-      background: #ffffff;
-      box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15);
-      transform: translateY(-2px);
-
-      // Sync button focus effect
-      + .el-input-group__append .expression-btn {
-        background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%) !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-      }
+    &:focus {
+      border-color: #6366f1;
+      background: #eff6ff;
     }
-  }
 
-  :deep(.el-input__inner) {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 500;
-  }
-
-  :deep(.el-input-group__append) {
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-left: -2px;
+    :deep(.el-icon) {
+      margin-right: 4px;
+    }
   }
 }
 
-.form-help {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.4;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #06b6d4;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
+// ── 说明卡片 ────────────────────────────────────────────────────────────
 .edge-tips {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  margin-top: 4px;
 }
 
-.tip-item {
+.tip-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 16px;
-  background: #ecfeff;
-  border: 1px solid #22d3ee;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #cffafe;
-    border-color: #06b6d4;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.15);
-  }
-
-  .tip-icon {
-    font-size: 20px;
-    color: #0891b2;
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-
-  .tip-content {
-    flex: 1;
-
-    .tip-title {
-      margin: 0 0 6px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #0e7490;
-    }
-
-    .tip-desc {
-      margin: 0;
-      font-size: 12px;
-      color: #0891b2;
-      line-height: 1.4;
-    }
-  }
-}
-
-.dialog-footer {
-  padding: 16px 24px 20px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.footer-btn {
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.footer-btn-cancel {
+  padding: 12px 14px;
   background: #ffffff;
-  color: #64748b;
-  border-color: #e2e8f0;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  transition: all 0.2s;
 
   &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #475569;
+    border-color: #e2e8f0;
+    transform: translateX(4px);
+    background: #f8fafc;
+  }
+
+  .tip-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &.cyan {
+      background: #06b6d4;
+      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+    }
+    &.purple {
+      background: #a855f7;
+      box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    }
+  }
+
+  .tip-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    strong {
+      font-size: 13px;
+      color: #1e293b;
+      font-weight: 700;
+    }
+
+    span {
+      font-size: 11px;
+      color: #94a3b8;
+    }
   }
 }
 
-.footer-btn-confirm {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  color: white;
-  border-color: #06b6d4;
-
-  &:hover {
-    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-    border-color: #0891b2;
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-  }
-}
-
+// ── 弹窗样式补全 ────────────────────────────────────────────────────────
 :deep(.el-dialog) {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   border: none;
 
-  :deep(.el-dialog__header) {
+  .el-dialog__header {
     display: none;
   }
 
-  :deep(.el-dialog__body) {
+  .el-dialog__body {
     padding: 0;
     background: transparent;
-    min-height: 400px;
-    max-height: 85vh;
     overflow: hidden;
   }
 
-  :deep(.el-dialog__footer) {
-    padding: 0;
-    background: transparent;
+  .el-dialog__footer {
+    padding: 16px 24px;
+    border-top: 1px solid #f1f5f9;
+    background: #ffffff;
   }
 }
 
-:deep(.el-overlay) {
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(4px);
-}
-
-// 表达式编辑器内容样式
 .expression-content {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
-  border-radius: 16px;
+}
+
+.expression-header {
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+
+  .content-title {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .content-subtitle {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.expression-body {
+  flex: 1;
   overflow: hidden;
-
-  .expression-header {
-    padding: 1.5rem 1.5rem 1rem;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-bottom: 1px solid #e2e8f0;
-    flex-shrink: 0;
-
-    .header-info {
-      .content-title {
-        margin: 0 0 6px 0;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-        line-height: 1.5;
-      }
-
-      .content-subtitle {
-        margin: 0;
-        font-size: 0.875rem;
-        color: #6b7280;
-        line-height: 1.4;
-        font-weight: 500;
-      }
-    }
-  }
-
-  .expression-body {
-    flex: 1;
-    background: #ffffff;
-    overflow: hidden;
-    min-height: 0;
-    padding: 0;
-  }
+  padding: 0;
 }
 
 .expression-footer {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-}
 
-/* 表达式弹窗专用样式 */
-:deep(.expression-dialog) {
-  .el-dialog {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .el-dialog__body {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  .footer-btn {
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: 600;
   }
 }
 </style>

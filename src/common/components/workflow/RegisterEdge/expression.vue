@@ -1,1120 +1,767 @@
 <template>
-  <div class="expression-container">
-    <!-- 左侧：定义表达式 -->
-    <el-card class="condition-set-card">
-      <!-- 标题 -->
-      <template #header>
-        <div class="card-header">
-          <div class="header-content">
-            <div class="header-icon">
-              <el-icon><Edit /></el-icon>
-            </div>
-            <div class="header-text">
-              <h3 class="header-title">条件构建</h3>
-              <p class="header-subtitle">拖拽排序，组合条件逻辑</p>
-            </div>
-          </div>
+  <div class="expression-builder">
+    <!-- 左侧：工作台 -->
+    <div class="workbench">
+      <div class="workbench-header">
+        <div class="header-main">
+          <div class="status-indicator" />
+          <span class="title">逻辑工作台</span>
         </div>
-      </template>
+        <div class="header-meta">配置工作流条件并集</div>
+      </div>
 
-      <!-- 滚动内容区域 -->
-      <div class="scrollable-content">
-        <!-- 条件组 -->
-        <div class="condition-group" v-for="(group, groupIndex) in conditionGroups" :key="groupIndex">
-          <div class="condition-title">
-            条件组
-            <el-icon
-              v-if="conditionGroups.length > 1"
-              class="icon delete-icon"
-              @click="removeConditionGroup(groupIndex)"
-            >
-              <DeleteFilled />
-            </el-icon>
-          </div>
-          <el-divider />
-
-          <!-- 如果为空则展示 -->
-          <div v-if="group.conditions.length < 1">
-            <el-skeleton :rows="2" animated />
-          </div>
-
-          <div class="condition-item">
-            <VueDraggable
-              v-model="group.conditions"
-              :animation="200"
-              group="rotaGroup"
-              ghostClass="ghost"
-              chosenClass="chosen"
-              handle=".handle"
-              itemKey="id"
-              class="flex flex-col gap-4 p-0 rounded"
-            >
-              <div
-                v-for="(item, itemIndex) in group.conditions"
-                :key="item"
-                class="h-40px bg-gray-500/5 px-2 rounded flex items-center"
+      <div class="workbench-body">
+        <div class="logic-group" v-for="(group, groupIndex) in conditionGroups" :key="groupIndex">
+          <div class="group-inner">
+            <div class="group-banner">
+              <span class="banner-text">逻辑组 {{ String(groupIndex + 1).padStart(2, "0") }}</span>
+              <el-button
+                v-if="conditionGroups.length > 1"
+                type="danger"
+                link
+                :icon="DeleteFilled"
+                @click="removeConditionGroup(groupIndex)"
               >
-                <div class="flex-1 flex">
-                  <el-text truncated class="sort-text">
-                    <span v-if="showChinese" class="chinese-text">
-                      {{ translateExpressionToChinese(item) }}
-                    </span>
-                    <span v-else class="english-text">{{ item }}</span>
-                  </el-text>
-                </div>
+                移除
+              </el-button>
+            </div>
 
-                <div class="flex items-center space-x-2">
-                  <el-icon @click="removeAndToLeftList(itemIndex, group)" class="cursor-pointer">
-                    <Close />
-                  </el-icon>
-                  <el-icon name="sort" class="handle cursor-move">
-                    <Grid />
-                  </el-icon>
+            <div class="group-slots">
+              <!-- Inline Config Area -->
+              <div v-if="activeConfigGroup === groupIndex" class="inline-config-section">
+                <div class="section-header">
+                  <div class="title">
+                    <el-icon><EditPen /></el-icon>
+                    <span>配置判定逻辑</span>
+                  </div>
+                  <el-button link :icon="Close" @click="activeConfigGroup = -1" />
+                </div>
+                <div class="section-body">
+                  <Rule ref="ruleRef" :templates="props.templates" />
+                </div>
+                <div class="section-footer">
+                  <el-button size="small" @click="activeConfigGroup = -1">取消</el-button>
+                  <el-button size="small" type="primary" class="indigo-btn" @click="submitForm(groupIndex)">
+                    {{ editingConditionIndex === -1 ? "注入逻辑" : "保存修改" }}
+                  </el-button>
                 </div>
               </div>
-            </VueDraggable>
+
+              <div
+                v-if="group.conditions.length < 1 && activeConfigGroup !== groupIndex"
+                class="slot-placeholder"
+                @click="activeConfigGroup = groupIndex"
+              >
+                <el-icon><Plus /></el-icon>
+                <span>点击插入过滤原子...</span>
+              </div>
+
+              <VueDraggable
+                v-model="group.conditions"
+                :animation="250"
+                group="rotaGroup"
+                ghostClass="drag-ghost"
+                chosenClass="drag-chosen"
+                handle=".drag-handle"
+                itemKey="id"
+                class="atom-list"
+              >
+                <div v-for="(item, itemIndex) in group.conditions" :key="item" class="atom-item">
+                  <div class="drag-handle">
+                    <el-icon><Menu /></el-icon>
+                  </div>
+                  <div class="atom-content" @click="handleEditCondition(groupIndex, Number(itemIndex), item)">
+                    <span v-if="showChinese" class="text-cn">{{ translateExpressionToChinese(item) }}</span>
+                    <span v-else class="text-en">{{ item }}</span>
+                  </div>
+                  <div class="atom-delete" @click="removeAndToLeftList(Number(itemIndex), group)">
+                    <el-icon><Close /></el-icon>
+                  </div>
+                </div>
+              </VueDraggable>
+
+              <div
+                v-if="group.conditions.length > 0 && activeConfigGroup !== groupIndex"
+                class="mini-add-atom"
+                @click="activeConfigGroup = groupIndex"
+              >
+                <el-icon><Plus /></el-icon>
+                <span>追加原子</span>
+              </div>
+            </div>
           </div>
 
-          <!-- 添加条件按钮 -->
-          <div class="centered-button">
-            <div class="dashed-button medium-button" @click="addCondition(groupIndex)">添加条件</div>
+          <div class="union-divider" v-if="groupIndex < conditionGroups.length - 1">
+            <div class="line" />
+            <div class="label">OR BRANCH</div>
+            <div class="line" />
           </div>
+        </div>
 
-          <!-- 最后一个条件组显示添加条件组按钮 -->
-          <div class="button-group" v-if="groupIndex === conditionGroups.length - 1">
-            <!-- or的关系，如果是 and 可以直接在一个组中实现 -->
-            <div class="dashed-button large-button" @click="addConditionGroup">添加条件组</div>
-          </div>
+        <div class="add-group-action" @click="addConditionGroup">
+          <el-icon><Fold /></el-icon>
+          <span>扩展条件并集 (OR)</span>
         </div>
       </div>
-    </el-card>
-
-    <!-- 右侧：结果和表达式 -->
-    <el-card class="condition-result">
-      <!-- 标题 -->
-      <template #header>
-        <div class="card-header">
-          <div class="header-content">
-            <div class="header-icon">
-              <el-icon><View /></el-icon>
-            </div>
-            <div class="header-text">
-              <h3 class="header-title">表达式预览</h3>
-              <p class="header-subtitle">查看生成的SQL表达式</p>
-            </div>
-          </div>
-          <div class="language-toggle">
-            <el-button
-              :type="showChinese ? 'primary' : 'default'"
-              size="small"
-              @click="showChinese = !showChinese"
-              class="toggle-btn"
-            >
-              {{ showChinese ? "中文" : "英文" }}
-            </el-button>
-          </div>
-        </div>
-      </template>
-
-      <!-- 结果内容 -->
-      <div class="result-content">
-        <!-- 表达式显示 -->
-        <div class="expression-section">
-          <div class="section-title">表达式</div>
-          <div class="expression-display">
-            <span v-if="showChinese" class="chinese-expression">{{ getChineseExpression() }}</span>
-            <span v-else class="english-expression">{{ expresstion }}</span>
-          </div>
-        </div>
-
-        <!-- 分隔线 -->
-        <el-divider />
-
-        <!-- 结果预览 -->
-        <div class="result-section">
-          <div class="section-title">结果预览</div>
-          <div class="result-preview">
-            <div class="preview-item">
-              <span class="preview-label">条件组数量:</span>
-              <span class="preview-value">{{ conditionGroups.length }}</span>
-            </div>
-            <div class="preview-item">
-              <span class="preview-label">表达式长度:</span>
-              <span class="preview-value">{{ expresstion.length }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 操作按钮 -->
-        <div class="action-buttons">
-          <el-button type="primary" size="small" @click="copyExpression">
-            <el-icon><CopyDocument /></el-icon>
-            复制表达式
-          </el-button>
-          <el-button type="success" size="small" @click="exportExpression">
-            <el-icon><Download /></el-icon>
-            导出
-          </el-button>
-        </div>
-      </div>
-    </el-card>
-  </div>
-
-  <!-- 创建条件弹窗 -->
-  <el-dialog
-    v-model="dialogVisible"
-    width="700px"
-    class="condition-dialog"
-    :close-on-click-modal="false"
-    :close-on-press-escape="true"
-    :show-close="false"
-    align-center
-    destroy-on-close
-    :scrollbar-always-on="true"
-  >
-    <template #header>
-      <div class="dialog-header">
-        <div class="header-content">
-          <div class="header-icon">
-            <el-icon><Document /></el-icon>
-          </div>
-          <div class="header-text">
-            <h3 class="header-title">新建条件</h3>
-            <p class="header-subtitle">设置字段、运算符和值</p>
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <div class="dialog-body">
-      <Rule ref="ruleRef" :templates="props.templates" />
     </div>
 
-    <!-- 底部按钮 -->
-    <template #footer>
-      <div class="dialog-footer">
-        <div class="footer-buttons">
-          <el-button @click="handleClose" size="large" class="cancel-button"> 取消 </el-button>
-          <el-button type="primary" @click="submitForm" size="large" class="submit-button"> 确认添加 </el-button>
+    <!-- 右侧：输出终端 -->
+    <div class="terminal-panel">
+      <div class="terminal-header">
+        <div class="header-left">
+          <el-icon><MonitorIcon /></el-icon>
+          <span class="title">输出预览</span>
+        </div>
+        <div class="header-right">
+          <el-switch
+            v-model="showChinese"
+            inline-prompt
+            active-text="CN"
+            inactive-text="EN"
+            style="--el-switch-on-color: #3b82f6"
+          />
         </div>
       </div>
-    </template>
-  </el-dialog>
+
+      <div class="terminal-body">
+        <div class="preview-tile">
+          <div class="tile-bg">SQL</div>
+          <div class="tile-content" :class="{ 'is-empty': !expression }">
+            <div v-if="expression" class="sql-code">
+              <code v-if="showChinese" class="cn-text">{{ getChineseExpression() }}</code>
+              <code v-else class="en-text">{{ expression }}</code>
+            </div>
+            <div v-else class="empty-state">待生成逻辑...</div>
+          </div>
+          <div class="tile-footer">
+            <el-button-group>
+              <el-button type="primary" :icon="CopyDocument" link @click="copyExpression">复制</el-button>
+              <el-button type="info" :icon="Download" link @click="exportExpression">导出</el-button>
+            </el-button-group>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-card">
+            <span class="m-val">{{ conditionGroups.length }}</span>
+            <span class="m-lab">组合量</span>
+          </div>
+          <div class="metric-card">
+            <span class="m-val">{{ expression.length }}</span>
+            <span class="m-lab">总字符</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref, watch, computed, nextTick } from "vue"
 import { ElMessage } from "element-plus"
-import { CopyDocument, Download, Edit, View } from "@element-plus/icons-vue"
+import {
+  CopyDocument,
+  Download,
+  DeleteFilled,
+  Close,
+  Plus,
+  Fold,
+  Menu,
+  Monitor as MonitorIcon,
+  EditPen
+} from "@element-plus/icons-vue"
 import Rule from "./rule.vue"
 import { template } from "@/api/template/types/template"
 import { VueDraggable } from "vue-draggable-plus"
 
-// 定义模板规则的类型
-interface TemplateRule {
-  field?: string
-  title?: string
-  options?: Array<{
-    value: string
-    label: string
-  }>
-}
-
-const ruleRef = ref<InstanceType<typeof Rule>>()
-const expresstion = ref<string>("")
 interface Props {
-  templates: template[]
   expression: string
+  templates: template[]
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits(["update:expression"])
 
-const dialogVisible = ref<boolean>(false)
-const showChinese = ref<boolean>(false) // 控制显示中文还是英文
+const conditionGroups = ref<any[]>([])
+const showChinese = ref(false)
+const ruleRef = ref()
+const activeConfigGroup = ref<number>(-1) // 控制哪一组正在行内编辑
+const editingConditionIndex = ref<number>(-1) // 正在编辑的原子在组内的索引
 
-// 条件组数据结构
-interface ConditionGroup {
-  conditions: string[]
-}
-
-const handleClose = () => {
-  dialogVisible.value = false
-}
-
-const conditionGroups = ref<ConditionGroup[]>([{ conditions: [] }])
-
-const groupIndex = ref<number>()
-const addCondition = (index: number) => {
-  groupIndex.value = index
-  conditionGroups.value[index].conditions.push()
-  dialogVisible.value = true
-}
-
-const addConditionGroup = () => {
-  conditionGroups.value.push({ conditions: [] })
-  ElMessage.success("已添加条件组")
-}
-
-const removeConditionGroup = (groupIndex: number) => {
-  if (conditionGroups.value.length > 1) {
-    conditionGroups.value.splice(groupIndex, 1)
-    ElMessage.success("已删除条件组")
-  }
-}
-
-const removeAndToLeftList = (index: number, group: ConditionGroup) => {
-  group.conditions.splice(index, 1)
-}
-
-const submitForm = () => {
-  // 获取表单数据
-  const form = ruleRef.value?.getForm()
-
-  // 检查表单数据是否完整
-  if (!form || !form.leftValueData || !form.operator || !form.rightValueData) {
-    ElMessage.warning("请填写完整的表单数据")
-    return
-  }
-
-  // 检查 groupIndex 是否有效
-  if (groupIndex.value === undefined) {
-    ElMessage.warning("未找到有效的条件组")
-    return
-  }
-
-  // 关闭对话框
-  dialogVisible.value = false
-
-  // 构建 SQL 条件
-  const left = `$${form.leftValueData}`
-  let sqlCondition: string
-
-  if (form.operator === "in" || form.operator === "not in") {
-    // 处理数组值
-    const values = Array.isArray(form.rightValueData)
-      ? form.rightValueData
-          .map((value) => {
-            const numericValue = parseFloat(value)
-            return !isNaN(numericValue) ? numericValue.toString() : `'${value}'`
-          })
-          .join(", ")
-      : !isNaN(parseFloat(form.rightValueData))
-        ? parseFloat(form.rightValueData).toString()
-        : `'${form.rightValueData}'`
-
-    sqlCondition = ` ${form.operator} (${values})`
-  } else {
-    // 处理单个值
-    const numericValue = parseFloat(form.rightValueData as string)
-    const rightValue = !isNaN(numericValue) ? numericValue.toString() : `'${form.rightValueData}'`
-    sqlCondition = ` ${form.operator} ${rightValue}`
-  }
-
-  // 拼接完整的 SQL 条件
-  const sql = `${left}${sqlCondition}`
-
-  // 将 SQL 条件添加到对应的条件组
-  conditionGroups.value[groupIndex.value].conditions.push(sql)
-
-  // 重置表单
-  ruleRef.value?.resetForm()
-
-  // 提示用户
-  ElMessage.success("条件添加成功")
-}
-// 解析父组件传递的 expression，生成 conditionGroups
-const parseExpressionToConditionGroups = (expression: string) => {
-  if (!expression) {
-    conditionGroups.value = [{ conditions: [] }]
-    return
-  }
-
-  // 按 "or" 分割条件组，但需要处理括号
-  const groups: string[] = []
-  let currentGroup = ""
-  let parenthesesCount = 0
-
-  for (let i = 0; i < expression.length; i++) {
-    const char = expression[i]
-
-    if (char === "(") {
-      parenthesesCount++
-      currentGroup += char
-    } else if (char === ")") {
-      parenthesesCount--
-      currentGroup += char
-    } else if (char === "o" && expression.substring(i, i + 2).toLowerCase() === "or" && parenthesesCount === 0) {
-      // 只有在括号外部的 "or" 才是真正的分隔符
-      if (currentGroup.trim()) {
-        groups.push(currentGroup.trim())
-      }
-      currentGroup = ""
-      i++ // 跳过 'r'
-    } else {
-      currentGroup += char
-    }
-  }
-
-  // 添加最后一个条件组
-  if (currentGroup.trim()) {
-    groups.push(currentGroup.trim())
-  }
-
-  // 将每个条件组按 "and" 分割为条件，处理括号
-  conditionGroups.value = groups.map((group) => {
-    // 移除外层括号
-    let cleanGroup = group.trim()
-    if (cleanGroup.startsWith("(") && cleanGroup.endsWith(")")) {
-      cleanGroup = cleanGroup.slice(1, -1)
-    }
-
-    const conditions = cleanGroup.split(/\s+and\s+/i)
-    return {
-      conditions: conditions.filter((condition) => condition.trim() !== "") // 过滤空条件
-    }
-  })
-}
-
-// 动态字段映射存储
-const fieldMappings = ref<Map<string, string>>(new Map())
-const valueMappings = ref<Map<string, string>>(new Map())
-
-// 操作符映射（这些是固定的）
-const operatorMappings = new Map([
-  ["and", "且"],
-  ["or", "或"],
-  ["=", "等于"],
-  ["!=", "不等于"],
-  [">", "大于"],
-  ["<", "小于"],
-  [">=", "大于等于"],
-  ["<=", "小于等于"],
-  ["in", "包含于"],
-  ["not in", "不包含于"],
-  ["like", "包含"],
-  ["not like", "不包含"]
-])
-
-// 将英文表达式转换为中文显示
-const translateExpressionToChinese = (expression: string): string => {
-  if (!expression) return ""
-
-  let chineseExpression = expression
-  console.log("原始表达式:", expression)
-  console.log("字段映射:", fieldMappings.value)
-  console.log("值映射:", valueMappings.value)
-
-  // 替换操作符
-  operatorMappings.forEach((chinese, english) => {
-    // 使用正则表达式确保完整单词匹配
-    const regex = new RegExp(`\\b${english.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi")
-    chineseExpression = chineseExpression.replace(regex, chinese)
-  })
-
-  // 替换字段名
-  fieldMappings.value.forEach((chinese, english) => {
-    // 使用更灵活的匹配，支持字段名在等号前的各种格式
-    const regex = new RegExp(`\\b${english.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi")
-    chineseExpression = chineseExpression.replace(regex, chinese)
-
-    // 特殊处理：如果字段名以$开头，也尝试匹配不带$的版本
-    if (english.startsWith("$")) {
-      const fieldWithoutDollar = english.substring(1)
-      const regexWithoutDollar = new RegExp(`\\b${fieldWithoutDollar.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi")
-      chineseExpression = chineseExpression.replace(regexWithoutDollar, chinese)
-    }
-  })
-
-  // 清理：移除所有剩余的$符号，让中文显示更自然
-  chineseExpression = chineseExpression.replace(/\$/g, "")
-
-  // 替换值
-  valueMappings.value.forEach((chinese, english) => {
-    const regex = new RegExp(`\\b${english.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi")
-    chineseExpression = chineseExpression.replace(regex, chinese)
-  })
-
-  // 处理括号
-  chineseExpression = chineseExpression.replace(/\(/g, "（").replace(/\)/g, "）")
-
-  console.log("转换后表达式:", chineseExpression)
-  return chineseExpression
-}
-
-// 初始化时解析父组件的 expression
 onMounted(() => {
-  parseExpressionToConditionGroups(props.expression)
-
-  // 根据模板数据动态设置字段映射
-  if (props.templates && props.templates.length > 0) {
-    const fieldMap: Record<string, string> = {}
-    const valueMap: Record<string, string> = {}
-
-    props.templates.forEach((template) => {
-      if (template.rules) {
-        template.rules.forEach((rule: TemplateRule) => {
-          // 字段名映射：field -> title (中文显示时不包含$符号)
-          if (rule.field && rule.title) {
-            fieldMap[`$${rule.field}`] = rule.title
-            fieldMap[rule.field] = rule.title // 也添加不带$的映射
-          }
-
-          // 值映射：options中的value -> label
-          if (rule.options && Array.isArray(rule.options)) {
-            rule.options.forEach((option: { value: string; label: string }) => {
-              if (option.value && option.label) {
-                valueMap[option.value] = option.label
-              }
-            })
-          }
-        })
-      }
-    })
-
-    // 设置映射
-    setFieldMappings(fieldMap)
-    setValueMappings(valueMap)
-
-    console.log("动态设置的字段映射:", fieldMap)
-    console.log("动态设置的值映射:", valueMap)
-    console.log("示例：service_env ->", fieldMap["service_env"])
-    console.log("示例：$service_env ->", fieldMap["$service_env"])
-  }
-
-  console.log("组件挂载完成，映射已设置")
+  initData()
 })
+
+const initData = () => {
+  if (props.expression) {
+    const groups = props.expression.split(" || ")
+    conditionGroups.value = groups.map((group) => ({
+      conditions: group
+        .replace(/^\(|\)$/g, "")
+        .split(" && ")
+        .filter((item) => item !== "")
+    }))
+  } else {
+    conditionGroups.value = [{ conditions: [] }]
+  }
+}
 
 watch(
   conditionGroups,
-  (newValue) => {
-    // 生成 expression 表达式
-    const validGroups = newValue.filter((group) => group.conditions.length > 0)
-
-    // 只有当存在多个条件组（即存在OR关系）时，才需要用括号包裹AND条件
-    if (validGroups.length > 1) {
-      expresstion.value = validGroups
-        .map((group) => {
-          // 如果条件组中有多个条件，需要用括号包裹
-          if (group.conditions.length > 1) {
-            return `(${group.conditions.join(" and ")})`
-          }
-          // 如果只有一个条件，直接返回
-          return group.conditions[0] || ""
-        })
-        .filter((group) => group.trim() !== "") // 过滤空的条件组
-        .join(" or ")
-    } else if (validGroups.length === 1) {
-      // 只有一个条件组时，不需要括号，直接连接AND条件
-      const group = validGroups[0]
-      if (group.conditions.length > 1) {
-        expresstion.value = group.conditions.join(" and ")
-      } else {
-        expresstion.value = group.conditions[0] || ""
-      }
-    } else {
-      expresstion.value = ""
-    }
+  () => {
+    updateExpression()
   },
   { deep: true }
 )
 
-// 获取中文显示表达式
-const getChineseExpression = () => {
-  return translateExpressionToChinese(expresstion.value)
+const updateExpression = () => {
+  const groupExpressions = conditionGroups.value
+    .filter((group) => group.conditions.length > 0)
+    .map((group) => {
+      if (group.conditions.length === 1) {
+        return group.conditions[0]
+      }
+      return `(${group.conditions.join(" && ")})`
+    })
+
+  const newExpression = groupExpressions.join(" || ")
+  emit("update:expression", newExpression)
 }
 
-// 设置字段映射
-const setFieldMappings = (mappings: Record<string, string>) => {
-  fieldMappings.value.clear()
-  Object.entries(mappings).forEach(([key, value]) => {
-    fieldMappings.value.set(key, value)
-  })
+const addConditionGroup = () => {
+  conditionGroups.value.push({ conditions: [] })
+  activeConfigGroup.value = conditionGroups.value.length - 1
+  editingConditionIndex.value = -1
 }
 
-// 设置值映射
-const setValueMappings = (mappings: Record<string, string>) => {
-  valueMappings.value.clear()
-  Object.entries(mappings).forEach(([key, value]) => {
-    valueMappings.value.set(key, value)
-  })
-}
+const handleEditCondition = async (groupIndex: number, itemIndex: number, expression: string) => {
+  activeConfigGroup.value = groupIndex
+  editingConditionIndex.value = itemIndex
 
-// 获取当前映射
-const getFieldMappings = () => {
-  return Object.fromEntries(fieldMappings.value)
-}
-
-const getValueMappings = () => {
-  return Object.fromEntries(valueMappings.value)
-}
-
-const getExpression = () => {
-  return expresstion
-}
-
-// 复制表达式到剪贴板
-const copyExpression = async () => {
-  try {
-    const textToCopy = showChinese.value ? getChineseExpression() : expresstion.value
-    await navigator.clipboard.writeText(textToCopy)
-    ElMessage.success("表达式已复制到剪贴板")
-  } catch (error) {
-    ElMessage.error("复制失败，请手动复制")
+  await nextTick()
+  const ruleInstance = Array.isArray(ruleRef.value) ? ruleRef.value[0] : ruleRef.value
+  if (ruleInstance) {
+    ruleInstance.setExpression(expression)
   }
 }
 
-// 导出表达式
+const removeConditionGroup = (index: number) => {
+  conditionGroups.value.splice(index, 1)
+  if (activeConfigGroup.value === index) activeConfigGroup.value = -1
+}
+
+const submitForm = (groupIndex: number) => {
+  // NOTE: 在 v-for 中使用 ref 会被收集为数组
+  const ruleInstance = Array.isArray(ruleRef.value) ? ruleRef.value[0] : ruleRef.value
+
+  if (ruleInstance) {
+    const condition = ruleInstance.getExpressionPreview()
+    if (condition) {
+      if (editingConditionIndex.value === -1) {
+        conditionGroups.value[groupIndex].conditions.push(condition)
+      } else {
+        conditionGroups.value[groupIndex].conditions[editingConditionIndex.value] = condition
+      }
+      activeConfigGroup.value = -1
+      editingConditionIndex.value = -1
+    } else {
+      ElMessage.warning("请完善条件配置")
+    }
+  }
+}
+
+const removeAndToLeftList = (itemIndex: number, group: any) => {
+  group.conditions.splice(itemIndex, 1)
+}
+
+const copyExpression = () => {
+  navigator.clipboard.writeText(props.expression)
+  ElMessage.success("复制成功")
+}
+
 const exportExpression = () => {
-  const data = {
-    expression: expresstion.value,
-    chineseExpression: getChineseExpression(),
-    conditionGroups: conditionGroups.value,
-    exportTime: new Date().toISOString()
-  }
-
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+  const blob = new Blob([props.expression], { type: "text/plain" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = `expression_${new Date().getTime()}.json`
-  document.body.appendChild(a)
+  a.download = "expression.sql"
   a.click()
-  document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
 
-  ElMessage.success("表达式已导出")
+const translateExpressionToChinese = (exp: string) => {
+  const parts = exp.split(" ")
+  if (parts.length < 3) return exp
+
+  const left = parts[0]
+  const op = parts[1]
+  const right = parts.slice(2).join(" ")
+
+  const opMap: Record<string, string> = {
+    "=": "等于",
+    "!=": "不等于",
+    ">": "大于",
+    "<": "小于",
+    in: "包含于",
+    "not in": "不包含于"
+  }
+
+  let translatedLeft = left
+  for (const template of props.templates) {
+    if (template.rules) {
+      if (Array.isArray(template.rules)) {
+        const found = template.rules.find((r: any) => r.field === left)
+        if (found) {
+          translatedLeft = `${template.name}.${found.title || found.name}`
+          break
+        }
+      } else {
+        for (const [key, value] of Object.entries(template.rules)) {
+          if (value === left) {
+            translatedLeft = `${template.name}.${key}`
+            break
+          }
+        }
+      }
+    }
+  }
+
+  return `${translatedLeft} ${opMap[op] || op} ${right}`
+}
+
+const getChineseExpression = () => {
+  if (!props.expression) return ""
+  let chineseExp = props.expression
+
+  chineseExp = chineseExp.replace(/ && /g, " 并且 ")
+  chineseExp = chineseExp.replace(/ \|\| /g, " 或者 ")
+
+  const atomRegex = /([a-z0-9_.]+\s+[!=><|in|not in]+\s+[^&|()]+)/gi
+  const atoms = props.expression.match(atomRegex) || []
+
+  atoms.forEach((atom) => {
+    chineseExp = chineseExp.replace(atom, translateExpressionToChinese(atom))
+  })
+
+  return chineseExp
+}
+
+const getExpression = () => {
+  return computed(() => props.expression)
 }
 
 defineExpose({
-  getExpression,
-  getChineseExpression,
-  setFieldMappings,
-  setValueMappings,
-  getFieldMappings,
-  getValueMappings,
-  copyExpression,
-  exportExpression
+  getExpression
 })
 </script>
 
 <style lang="scss" scoped>
-/* 表达式容器 - 采用简单的高度管理 */
-.expression-container {
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap");
+
+.expression-builder {
+  font-family: "Fira Sans", sans-serif;
   display: flex;
-  flex-direction: row;
-  gap: 16px;
-  height: 100%;
-}
-
-/* 左侧条件设置卡片 */
-.condition-set-card {
-  flex: 2;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-  min-width: 0;
-}
-
-/* 滚动内容区域 - 固定高度，内部滚动 */
-.scrollable-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-  height: 400px; /* 固定高度，避免高度计算问题 */
-}
-
-/* 自定义滚动条样式 */
-.scrollable-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.scrollable-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.scrollable-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* 右侧结果面板 */
-.condition-result {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  max-width: 400px;
-  border: 1px solid #ebeef5;
-  border-radius: 8px;
-}
-
-/* 结果内容 - 固定高度，内部滚动 */
-.result-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-  padding: 16px;
-  height: 400px; /* 与左侧保持一致的高度 */
-}
-
-/* 右侧滚动条样式 */
-.result-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.result-content::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 3px;
-}
-
-.result-content::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
-}
-
-.result-content::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* 标题样式 */
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 20px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
-  min-height: 70px;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1;
-}
-
-.header-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%) !important;
-  border-radius: 8px;
-  color: white;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-}
-
-.header-text {
-  flex: 1;
-}
-
-.header-title {
-  margin: 0 0 3px 0;
-  font-size: 15px;
-  font-weight: 600;
-  color: #1e293b;
-  line-height: 1.3;
-  letter-spacing: 0.01em;
-}
-
-.header-subtitle {
-  margin: 0;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.2;
-  font-weight: 400;
-}
-
-.language-toggle .toggle-btn {
-  font-size: 12px;
-  padding: 6px 16px;
-  height: 32px;
-  border-radius: 8px;
-  font-weight: 500;
-  border: 1px solid #e2e8f0;
-  background: white;
-  color: #64748b;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: #06b6d4;
-    color: #06b6d4;
-    background: #f0f9ff;
-  }
-}
-
-/* 表达式显示区域 */
-.expression-section {
-  flex: 1;
-}
-
-.expression-display {
-  padding: 12px 0;
-}
-
-.chinese-expression {
-  color: #0891b2;
-  font-weight: 500;
-  line-height: 1.6;
-}
-
-.chinese-text {
-  color: #0891b2;
-  font-weight: 500;
-}
-
-.english-text {
-  color: #1e293b;
-  font-weight: 500;
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-}
-
-.english-expression {
-  color: #1e293b;
-  font-weight: 500;
-  line-height: 1.6;
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-}
-
-/* 图标样式 */
-.icon {
-  margin-left: 8px;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.delete-icon {
-  cursor: pointer;
-}
-
-/* 条件组样式 */
-.condition-group {
-  margin-bottom: 20px;
-}
-
-.condition-group:last-child {
-  margin-bottom: 0;
-}
-
-.condition-title {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #374151;
-  padding: 8px 12px;
+  height: 580px;
+  gap: 24px;
   background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.condition-item {
-  margin-bottom: 10px;
-}
-
-/* 按钮容器样式 */
-.centered-button {
-  display: flex;
-  justify-content: center;
-  margin: 24px 0;
-}
-
-/* 结果预览样式 */
-.result-section {
-  flex: 1;
-}
-
-.result-preview {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.preview-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
-}
-
-.preview-label {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.preview-value {
-  font-size: 13px;
-  color: #1e293b;
-  font-weight: 600;
-  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-}
-
-/* 操作按钮 */
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
-}
-
-/* 区域标题样式 */
-.section-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 12px;
-  padding: 8px 0;
-  border-bottom: 2px solid #e2e8f0;
-  position: relative;
-
-  &::after {
-    content: "";
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 30px;
-    height: 2px;
-    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    border-radius: 1px;
-  }
-}
-
-/* 按钮组样式 */
-.button-group {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 24px;
-}
-
-/* 现代化按钮样式 */
-.dashed-button {
-  position: relative;
-  border: 2px dashed #e2e8f0;
-  border-radius: 12px;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 600;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  padding: 12px;
+  border-radius: 20px;
   overflow: hidden;
-
-  /* 悬停效果 */
-  &:hover {
-    border-color: #06b6d4;
-    color: #0891b2;
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(6, 182, 212, 0.15);
-  }
-
-  /* 点击效果 */
-  &:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
-  }
-
-  /* 添加图标样式 */
-  &::before {
-    content: "+";
-    display: inline-block;
-    margin-right: 6px;
-    font-size: 16px;
-    font-weight: 700;
-    color: inherit;
-    transition: transform 0.3s ease;
-  }
-
-  &:hover::before {
-    transform: rotate(90deg);
-  }
 }
 
-/* 按钮尺寸控制 */
-.small-button {
-  width: 140px;
-  height: 40px;
-  line-height: 36px;
-  padding: 0 16px;
+// ── 工作台 ────────────────────────────────────────────────────────────
+.workbench {
+  flex: 5;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  min-width: 0;
 }
 
-.medium-button {
-  width: 65%;
-  height: 44px;
-  line-height: 40px;
-  padding: 0 20px;
-}
+.workbench-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
 
-.large-button {
-  width: 100%;
-  height: 48px;
-  line-height: 44px;
-  padding: 0 24px;
-}
+  .header-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 
-/* 响应式设计 - 简化版本 */
-@media (max-width: 1200px) {
-  .expression-container {
-    flex-direction: column;
-    gap: 12px;
-  }
+    .status-indicator {
+      width: 7px;
+      height: 7px;
+      background: #3b82f6;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+    }
 
-  .condition-set-card,
-  .condition-result {
-    flex: none;
-    max-width: none;
-  }
-
-  .scrollable-content,
-  .result-content {
-    height: 300px; /* 垂直布局时减小高度 */
-  }
-}
-
-@media (max-width: 768px) {
-  .expression-container {
-    gap: 8px;
-  }
-
-  .scrollable-content,
-  .result-content {
-    height: 250px; /* 小屏幕时进一步减小高度 */
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 6px;
-  }
-}
-
-/* 条件弹窗专用样式 */
-:deep(.condition-dialog) {
-  .el-dialog {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
-    border: 1px solid #e2e8f0;
-
-    @media (max-width: 768px) {
-      margin: 1rem;
-      width: calc(100% - 2rem) !important;
-      max-width: none !important;
+    .title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1e293b;
+      letter-spacing: 0.02em;
     }
   }
 
-  .el-dialog__header {
-    padding: 0;
-  }
-
-  .el-dialog__body {
-    padding: 0;
-    background: transparent;
-  }
-
-  .el-dialog__footer {
-    padding: 0;
-    background: transparent;
+  .header-meta {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 2px;
   }
 }
 
-/* 对话框滚动条样式 */
-.dialog-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-.dialog-body::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.dialog-body::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.dialog-body::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.dialog-body {
-  padding: 5px;
-  background: #ffffff;
-  min-height: 300px;
-  max-height: 80vh;
+.workbench-body {
+  flex: 1;
+  padding: 20px;
   overflow-y: auto;
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+  }
 }
 
-.dialog-header {
-  padding: 20px 24px;
-  border-bottom: 1px solid #e2e8f0;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+.logic-group {
+  margin-bottom: 16px;
 }
 
-.dialog-footer {
-  padding: 20px 24px;
-  border-top: 1px solid #e2e8f0;
+.group-inner {
+  background: #fcfdfe;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.group-banner {
+  padding: 8px 16px;
   background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  .banner-text {
+    font-family: "Fira Code", monospace;
+    font-size: 10px;
+    font-weight: 800;
+    color: #cbd5e1;
+    letter-spacing: 0.1em;
+  }
 }
 
-.footer-buttons {
+.group-slots {
+  padding: 12px;
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 8px;
+}
+
+// ── 行内配置区 ──────────────────────────────────────────────────────────
+.inline-config-section {
+  background: #ffffff;
+  border: 1px solid #e0e7ff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.05);
+  margin-bottom: 8px;
+
+  .section-header {
+    padding: 10px 16px;
+    background: #f5f7ff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #6366f1;
+    }
+  }
+
+  .section-body {
+    padding: 16px;
+  }
+
+  .section-footer {
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    .indigo-btn {
+      background: #6366f1;
+      border: none;
+      &:hover {
+        background: #4f46e5;
+      }
+    }
+  }
+}
+
+.slot-placeholder {
+  height: 54px;
+  border: 2px dashed #f1f5f9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s;
+  span {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  &:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: #eff6ff;
+  }
+}
+
+.atom-item {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+
+  &:hover {
+    transform: translateX(4px);
+    border-color: #3b82f6;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  }
+
+  .drag-handle {
+    cursor: grab;
+    color: #cbd5e1;
+    margin-right: 12px;
+  }
+
+  .atom-content {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 600;
+    .text-cn {
+      color: #334155;
+    }
+    .text-en {
+      color: #64748b;
+      font-family: "Fira Code", monospace;
+      font-size: 11px;
+    }
+  }
+
+  .atom-delete {
+    cursor: pointer;
+    color: #cbd5e1;
+    transition: color 0.2s;
+    &:hover {
+      color: #ef4444;
+    }
+  }
+}
+
+.mini-add-atom {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #3b82f6;
+  cursor: pointer;
+  opacity: 0.6;
+  &:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+}
+
+.union-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  .line {
+    flex: 1;
+    height: 1px;
+    background: #f1f5f9;
+  }
+  .label {
+    font-family: "Fira Code", monospace;
+    font-size: 9px;
+    font-weight: 800;
+    color: #f59e0b;
+  }
+}
+
+.add-group-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  background: #ffffff;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  &:hover {
+    border-style: solid;
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #3b82f6;
+  }
+}
+
+// ── 终端面板 ────────────────────────────────────────────────────────────
+.terminal-panel {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.terminal-header {
+  padding: 12px 20px;
+  background: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
+    .title {
+      font-family: "Fira Code", monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
+  }
+}
+
+.terminal-body {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.preview-tile {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+
+  .tile-bg {
+    position: absolute;
+    top: -5px;
+    right: 5px;
+    font-size: 32px;
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.02);
+  }
+
+  .tile-content {
+    flex: 1;
+    display: flex;
+    &.is-empty {
+      align-items: center;
+      justify-content: center;
+    }
+    .sql-code {
+      font-family: "Fira Code", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      word-break: break-all;
+      .cn-text {
+        color: #facc15;
+      }
+      .en-text {
+        color: #10b981;
+      }
+    }
+    .empty-state {
+      color: #475569;
+      font-style: italic;
+      font-size: 12px;
+    }
+  }
+
+  .tile-footer {
+    padding-top: 12px;
+    border-top: 1px solid #334155;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.cancel-button {
-  background: #ffffff;
-  color: #64748b;
-  border: 2px solid #e2e8f0;
+.metric-card {
+  background: #1e293b;
+  border: 1px solid #334155;
   border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #475569;
-    transform: translateY(-1px);
+  padding: 12px;
+  text-align: center;
+  .m-val {
+    font-family: "Fira Code", monospace;
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+  }
+  .m-val-sub {
+    font-size: 11px;
+    color: #64748b;
+  }
+  .m-lab {
+    font-size: 9px;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-top: 2px;
   }
 }
 
-.submit-button {
-  background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-  color: white;
-  border: 2px solid #06b6d4;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
-    border-color: #0891b2;
-    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
-    transform: translateY(-1px);
-  }
+.drag-ghost {
+  opacity: 0.5;
+  background: #eff6ff;
+}
+.drag-chosen {
+  border: 1px solid #3b82f6;
 }
 </style>

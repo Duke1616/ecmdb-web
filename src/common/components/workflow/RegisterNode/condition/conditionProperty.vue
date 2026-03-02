@@ -8,7 +8,11 @@
     :disabled="flowDetail.status == '2'"
     class="property-form"
   >
-    <FormSection title="基本信息" icon="📝">
+    <!-- 节点基础 -->
+    <FormSection title="基本信息" tooltip="设置条件节点的显示名称" theme-color="slate">
+      <template #icon>
+        <el-icon><Document /></el-icon>
+      </template>
       <el-form-item label="节点名称" prop="name" class="form-item">
         <el-input
           v-model="propertyForm.name"
@@ -19,13 +23,17 @@
       </el-form-item>
     </FormSection>
 
-    <FormSection title="条件配置" icon="⚙️">
+    <!-- 条件配置 -->
+    <FormSection title="分支配置" tooltip="通过连接线设置不同的逻辑分支条件" theme-color="orange">
+      <template #icon>
+        <el-icon><Operation /></el-icon>
+      </template>
       <div class="condition-tips">
         <div class="tip-item">
-          <div class="tip-icon">🔗</div>
+          <el-icon class="tip-icon"><Link /></el-icon>
           <div class="tip-content">
-            <h4 class="tip-title">连线设置</h4>
-            <p class="tip-desc">通过连线设置不同的分支条件，支持多个出口路径</p>
+            <h4 class="tip-title">连线设置说明</h4>
+            <p class="tip-desc">请点击流程图中的“连接线”来配置具体的跳转逻辑与过滤条件。</p>
           </div>
         </div>
       </div>
@@ -35,6 +43,7 @@
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
+import { Document, Operation, Link } from "@element-plus/icons-vue"
 import { FormSection } from "../../PropertySetting"
 
 const props = defineProps({
@@ -93,160 +102,79 @@ defineExpose({
 })
 </script>
 <style scoped lang="scss">
-.form-item {
-  margin-bottom: 16px;
+.property-form {
+  padding: 4px 12px;
+  background: transparent;
+  min-height: 100%;
+}
 
-  &:last-child {
-    margin-bottom: 0;
+// ── 通用控件 ────────────────────────────────────────────────────────────
+.modern-input {
+  width: 100%;
+  :deep(.el-input__wrapper) {
+    background: #ffffff !important;
+    border-radius: 6px;
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 2px 10px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #94a3b8 !important;
+    }
+
+    &.is-focus {
+      border-color: #6366f1 !important;
+      box-shadow: 0 0 0 1px #6366f1 !important;
+    }
   }
+}
 
+.form-item {
+  margin-bottom: 0px;
   :deep(.el-form-item__label) {
-    font-weight: 600;
-    color: #374151;
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
     margin-bottom: 6px;
   }
 }
 
-.modern-input {
-  width: 100%;
-
-  :deep(.el-input__wrapper) {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 14px 18px;
-    height: 52px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: #cbd5e1;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-    }
-
-    &.is-focus {
-      border-color: #f59e0b;
-      background: #ffffff;
-      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.15);
-      transform: translateY(-2px);
-    }
-  }
-
-  :deep(.el-input__inner) {
-    font-size: 14px;
-    color: #1e293b;
-    font-weight: 500;
-  }
-}
-
-.form-help {
-  margin-top: 12px;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.4;
-  padding: 12px 16px;
-  background: #ffffff;
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #f59e0b;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
+// ── 分支配置提示 ────────────────────────────────────────────────────────
 .condition-tips {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  margin-top: 4px;
 }
 
 .tip-item {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 16px;
-  background: #fef3c7;
-  border: 1px solid #fbbf24;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: #fde68a;
-    border-color: #f59e0b;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
-  }
+  padding: 14px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
+  transition: all 0.2s;
 
   .tip-icon {
-    font-size: 20px;
+    font-size: 16px;
     color: #d97706;
-    flex-shrink: 0;
     margin-top: 2px;
   }
 
   .tip-content {
-    flex: 1;
-
     .tip-title {
-      margin: 0 0 6px 0;
-      font-size: 14px;
-      font-weight: 600;
+      margin: 0 0 4px 0;
+      font-size: 13px;
+      font-weight: 700;
       color: #92400e;
     }
 
     .tip-desc {
       margin: 0;
       font-size: 12px;
-      color: #a16207;
-      line-height: 1.4;
+      color: #b45309;
+      line-height: 1.5;
     }
-  }
-}
-
-.dialog-footer {
-  padding: 16px 24px 20px;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  position: relative;
-  z-index: 1;
-}
-
-.footer-btn {
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-
-  &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.footer-btn-cancel {
-  background: #ffffff;
-  color: #64748b;
-  border-color: #e2e8f0;
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-    color: #475569;
-  }
-}
-
-.footer-btn-confirm {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  border-color: #f59e0b;
-
-  &:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
-    border-color: #d97706;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
   }
 }
 </style>
