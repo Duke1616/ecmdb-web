@@ -71,7 +71,7 @@
 <script setup lang="ts">
 import { reactive, ref, nextTick, onMounted, onUnmounted, watch } from "vue"
 import LogicFlow from "@logicflow/core"
-import { Menu, Snapshot, MiniMap, SelectionSelect } from "@logicflow/extension"
+import { Menu, Snapshot, MiniMap, SelectionSelect, ProximityConnect } from "@logicflow/extension"
 import { Dagre } from "@logicflow/layout"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
@@ -153,7 +153,7 @@ const config = reactive<any>({
 const initLf = () => {
   const lfInstance = new LogicFlow({
     ...config,
-    plugins: [Menu, MiniMap, Snapshot, SelectionSelect, Dagre],
+    plugins: [Menu, MiniMap, Snapshot, SelectionSelect, Dagre, ProximityConnect],
     container: container.value
   })
   lf.value = lfInstance
@@ -380,31 +380,16 @@ const handleToggleDebug = (val: boolean) => {
 const handleCalibrate = () => {
   if (!lf.value) return
 
-  // 1. Dagre 自动布局
   lf.value.extension.dagre.layout({
     rankdir: "LR",
+    align: undefined,
+    ranker: "network-simplex",
     nodesep: 60,
-    ranksep: 80
+    ranksep: 100,
+    isDefaultAnchor: true
   })
 
-  // 2. 清理边的旧轨迹，让 LogicFlow 重新计算路径
-  const graphData = lf.value.getGraphData()
-  graphData.edges = graphData.edges.map((edge: any) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { ...rest } = edge
-    if (rest.text && typeof rest.text === "object") {
-      delete (rest.text as any).x
-      delete (rest.text as any).y
-    }
-    return rest
-  })
-
-  lf.value.render(graphData)
-
-  // 3. 居中
-  nextTick(() => {
-    lf.value.fitView(20)
-  })
+  lf.value.fitView(100, 100)
 }
 
 const getData = async () => {
