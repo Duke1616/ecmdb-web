@@ -1,17 +1,17 @@
 export default function registerAutomation(lf: any) {
-  lf.register("automation", ({ PolygonNode, PolygonNodeModel, h }: any) => {
-    class Node extends PolygonNode {
+  lf.register("automation", ({ RectNode, RectNodeModel, h }: any) => {
+    class Node extends RectNode {
       getIconShape() {
         const { model } = this.props
         const { stroke } = model.getNodeStyle()
         return h(
           "svg",
           {
-            x: 20,
-            y: 18,
-            width: 30,
-            height: 30,
-            viewBox: "0 0 1126 1024"
+            x: 15,
+            y: 11,
+            width: 50,
+            height: 50,
+            viewBox: "0 0 1024 1024"
           },
           h("path", {
             fill: stroke,
@@ -21,35 +21,51 @@ export default function registerAutomation(lf: any) {
       }
       getShape() {
         const { model } = this.props
-        const { width, height, x, y, points } = model
+        const { width, height, x, y, properties } = model
         const { fill, fillOpacity, strokeWidth, stroke, strokeOpacity } = model.getNodeStyle()
         const transform = `matrix(1 0 0 1 ${x - width / 2} ${y - height / 2})`
-        const pointsPath = points.map((point: any[]) => point.join(",")).join(" ")
-        return h(
-          "g",
-          {
-            transform
-          },
-          [
-            h("polygon", {
-              points: pointsPath,
-              fill,
-              stroke,
-              strokeWidth,
-              strokeOpacity,
-              fillOpacity
-            }),
-            this.getIconShape()
-          ]
-        )
+        const children = [
+          h("rect", {
+            width,
+            height,
+            fill,
+            stroke,
+            strokeWidth,
+            strokeOpacity,
+            fillOpacity,
+            rx: 5,
+            ry: 5
+          }),
+          this.getIconShape()
+        ]
+
+        if (properties && properties.isDebug) {
+          children.push(
+            h(
+              "text",
+              {
+                x: width / 2,
+                y: -8,
+                textAnchor: "middle",
+                fill: "#94a3b8",
+                fontSize: 9,
+                fontWeight: "600",
+                style: "pointer-events: none; opacity: 0.6;"
+              },
+              model.id.substring(0, 8)
+            )
+          )
+        }
+
+        return h("g", { transform }, children)
       }
     }
-    class Model extends PolygonNodeModel {
+    class Model extends RectNodeModel {
       constructor(data: { text: { value: any; x?: any; y?: any }; x: any; y: number }, graphModel: any) {
         data.text = {
           value: (data.text && data.text.value) || "",
           x: data.x,
-          y: data.y + 50
+          y: data.y + 60
         }
         super(data, graphModel)
         // 右键菜单自由配置，也可以通过边的properties或者其他属性条件更换不同菜单
@@ -81,17 +97,10 @@ export default function registerAutomation(lf: any) {
 
       initNodeData(data: any) {
         super.initNodeData(data)
+        this.width = 80
+        this.height = 80
       }
 
-      setAttributes() {
-        const lenght = 34
-        this.points = [
-          [lenght, 0],
-          [lenght * 2, lenght],
-          [lenght, lenght * 2],
-          [0, lenght]
-        ]
-      }
       // 自定义锚点样式
       getAnchorStyle() {
         const style = super.getAnchorStyle()

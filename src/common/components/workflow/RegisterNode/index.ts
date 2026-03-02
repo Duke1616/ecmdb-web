@@ -3,7 +3,7 @@ import registerEnd from "./end/end"
 import registerUser from "./user/user"
 import registerCondition from "./condition/condition"
 import registerParallel from "./parallel/parallel"
-import regsiterInclusion from "./inclusion/inclusion"
+import registerInclusion from "./inclusion/inclusion"
 import registerAutomation from "./automation/automation"
 import registerPolyline from "../RegisterEdge/edge"
 import registerSelective from "./selective/selective"
@@ -16,6 +16,6 @@ export {
   registerAutomation,
   registerParallel,
   registerSelective,
-  regsiterInclusion,
+  registerInclusion,
   registerPolyline
 }

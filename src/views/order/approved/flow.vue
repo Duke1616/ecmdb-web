@@ -18,7 +18,7 @@ import {
   registerUser,
   registerParallel,
   registerSelective,
-  regsiterInclusion,
+  registerInclusion,
   registerAutomation,
   registerPolyline
 } from "@@/components/workflow/RegisterNode/index"
@@ -106,7 +106,7 @@ const registerNode = () => {
   registerPolyline(lf.value)
   registerParallel(lf.value)
   registerSelective(lf.value)
-  regsiterInclusion(lf.value)
+  registerInclusion(lf.value)
   registerAutomation(lf.value)
 }
 

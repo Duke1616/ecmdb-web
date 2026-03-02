@@ -8,9 +8,9 @@ export default function registerCondition(lf: any) {
           "svg",
           {
             x: 20,
-            y: 18,
-            width: 30,
-            height: 30,
+            y: 20,
+            width: 40,
+            height: 40,
             viewBox: "0 0 1126 1024"
           },
           h("path", {
@@ -21,27 +21,41 @@ export default function registerCondition(lf: any) {
       }
       getShape() {
         const { model } = this.props
-        const { width, height, x, y, points } = model
+        const { width, height, x, y, points, properties } = model
         const { fill, fillOpacity, strokeWidth, stroke, strokeOpacity } = model.getNodeStyle()
         const transform = `matrix(1 0 0 1 ${x - width / 2} ${y - height / 2})`
         const pointsPath = points.map((point: any[]) => point.join(",")).join(" ")
-        return h(
-          "g",
-          {
-            transform
-          },
-          [
-            h("polygon", {
-              points: pointsPath,
-              fill,
-              stroke,
-              strokeWidth,
-              strokeOpacity,
-              fillOpacity
-            }),
-            this.getIconShape()
-          ]
-        )
+        const children = [
+          h("polygon", {
+            points: pointsPath,
+            fill,
+            stroke,
+            strokeWidth,
+            strokeOpacity,
+            fillOpacity
+          }),
+          this.getIconShape()
+        ]
+
+        if (properties && properties.isDebug) {
+          children.push(
+            h(
+              "text",
+              {
+                x: width / 2,
+                y: -8,
+                textAnchor: "middle",
+                fill: "#94a3b8",
+                fontSize: 9,
+                fontWeight: "600",
+                style: "pointer-events: none; opacity: 0.6;"
+              },
+              model.id.substring(0, 8)
+            )
+          )
+        }
+
+        return h("g", { transform }, children)
       }
     }
     class Model extends PolygonNodeModel {
@@ -49,7 +63,7 @@ export default function registerCondition(lf: any) {
         data.text = {
           value: (data.text && data.text.value) || "",
           x: data.x,
-          y: data.y + 50
+          y: data.y + 60
         }
         super(data, graphModel)
         // 右键菜单自由配置，也可以通过边的properties或者其他属性条件更换不同菜单
@@ -84,7 +98,7 @@ export default function registerCondition(lf: any) {
       }
 
       setAttributes() {
-        const lenght = 35
+        const lenght = 40
         this.points = [
           [lenght, 0],
           [lenght * 2, lenght],

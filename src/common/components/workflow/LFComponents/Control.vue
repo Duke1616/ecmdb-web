@@ -38,6 +38,27 @@
           重做
         </button>
 
+        <button
+          type="button"
+          @click="toggleDebug"
+          class="control-btn control-btn-debug"
+          :class="{ active: isDebug }"
+          title="开启调试模式，显示节点和线条 ID"
+        >
+          <Cpu class="btn-icon" />
+          {{ isDebug ? "退出调试" : "调试模式" }}
+        </button>
+
+        <button
+          type="button"
+          @click="calibrate"
+          class="control-btn control-btn-magic"
+          title="自动布局连线，使其横平竖直"
+        >
+          <MagicStick class="btn-icon" />
+          自动布局
+        </button>
+
         <button type="button" @click="getData" class="control-btn control-btn-primary" title="查看当前流程数据">
           <View class="btn-icon" />
           查看数据
@@ -64,7 +85,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { View, Download, RefreshLeft, RefreshRight, Location } from "@element-plus/icons-vue"
+import { View, Download, RefreshLeft, RefreshRight, Location, Cpu, MagicStick } from "@element-plus/icons-vue"
 
 interface Props {
   lf?: any // LogicFlow instance
@@ -75,10 +96,11 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits(["getData", "download"])
+const emit = defineEmits(["getData", "download", "toggleDebug", "calibrate"])
 
 const undoDisable = ref(true)
 const redoDisable = ref(true)
+const isDebug = ref(false)
 
 const updateButtonStates = () => {
   if (props.lf && props.lf.history) {
@@ -121,6 +143,15 @@ const download = () => {
 
 const getData = () => {
   emit("getData")
+}
+
+const toggleDebug = () => {
+  isDebug.value = !isDebug.value
+  emit("toggleDebug", isDebug.value)
+}
+
+const calibrate = () => {
+  emit("calibrate")
 }
 
 const reposition = () => {
@@ -338,6 +369,43 @@ const reposition = () => {
   border-color: #047857;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.control-btn-debug {
+  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  color: white;
+  border-color: #334155;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.3);
+}
+
+.control-btn-debug.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  border-color: #10b981;
+}
+
+.control-btn-debug.active::after {
+  content: "ON";
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+.control-btn-magic {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  border-color: #6366f1;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+
+.control-btn-magic:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
 }
 
 .control-btn:active {

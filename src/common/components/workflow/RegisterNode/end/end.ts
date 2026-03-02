@@ -3,13 +3,13 @@ export default function registerEnd(lf: any) {
     class EndNode extends CircleNode {
       getIconShape() {
         const { model } = this.props
-        const { x, y, width, height } = model
+        const { x, y } = model
         const stroke = "#404040"
         return h(
           "svg",
           {
-            x: x - width / 2,
-            y: y - height / 2,
+            x: x - 20,
+            y: y - 20,
             width: 40,
             height: 40,
             viewBox: "0 0 1024 1024"
@@ -31,9 +31,9 @@ export default function registerEnd(lf: any) {
       }
       getShape() {
         const { model } = this.props
-        const { x, y, r } = model
+        const { x, y, r, properties } = model
         const { fill, stroke, strokeWidth } = model.getNodeStyle()
-        return h("g", {}, [
+        const children = [
           h("circle", {
             cx: x,
             cy: y,
@@ -43,7 +43,27 @@ export default function registerEnd(lf: any) {
             strokeWidth
           }),
           this.getIconShape()
-        ])
+        ]
+
+        if (properties && properties.isDebug) {
+          children.push(
+            h(
+              "text",
+              {
+                x,
+                y: y - r - 8,
+                textAnchor: "middle",
+                fill: "#94a3b8",
+                fontSize: 9,
+                fontWeight: "600",
+                style: "pointer-events: none; opacity: 0.6;"
+              },
+              model.id.substring(0, 8)
+            )
+          )
+        }
+
+        return h("g", {}, children)
       }
     }
     class EndModel extends CircleNodeModel {
@@ -51,13 +71,13 @@ export default function registerEnd(lf: any) {
         data.text = {
           value: (data.text && data.text.value) || "",
           x: data.x,
-          y: data.y + 35
+          y: data.y + 45
         }
         super.initNodeData(data)
       }
       // 设置自定义节点形状属性
       setAttributes() {
-        this.r = 20
+        this.r = 30
       }
       // 自定义锚点样式
       getAnchorStyle() {

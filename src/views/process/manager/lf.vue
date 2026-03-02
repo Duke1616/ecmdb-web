@@ -17,7 +17,14 @@
       </div>
       <div class="header-right">
         <!-- 辅助工具栏 -->
-        <Control v-if="lf" :lf="lf" @getData="getData" @download="download" />
+        <Control
+          v-if="lf"
+          :lf="lf"
+          @getData="getData"
+          @download="download"
+          @toggleDebug="handleToggleDebug"
+          @calibrate="handleCalibrate"
+        />
       </div>
     </div>
 
@@ -64,7 +71,8 @@
 <script setup lang="ts">
 import { reactive, ref, nextTick, onMounted, onUnmounted, watch } from "vue"
 import LogicFlow from "@logicflow/core"
-import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
+import { Menu, Snapshot, MiniMap, SelectionSelect } from "@logicflow/extension"
+import { Dagre } from "@logicflow/layout"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import NodePanel from "@@/components/workflow/LFComponents/NodePanel.vue"
@@ -78,7 +86,7 @@ import {
   registerCondition,
   registerParallel,
   registerSelective,
-  regsiterInclusion,
+  registerInclusion,
   registerAutomation,
   registerUser,
   registerPolyline
@@ -109,7 +117,8 @@ const config = reactive<any>({
     visible: true,
     type: "dot",
     color: "#e2e8f0",
-    thickness: 1
+    thickness: 1,
+    snapToGrid: true
   },
   keyboard: {
     enabled: true
@@ -144,7 +153,7 @@ const config = reactive<any>({
 const initLf = () => {
   const lfInstance = new LogicFlow({
     ...config,
-    plugins: [Menu, MiniMap, Snapshot],
+    plugins: [Menu, MiniMap, Snapshot, SelectionSelect, Dagre],
     container: container.value
   })
   lf.value = lfInstance
@@ -295,7 +304,7 @@ const registerNode = () => {
   registerPolyline(lf.value)
   registerParallel(lf.value)
   registerSelective(lf.value)
-  regsiterInclusion(lf.value)
+  registerInclusion(lf.value)
   registerAutomation(lf.value)
 }
 
@@ -308,9 +317,23 @@ const LfEvent = () => {
   })
 
   lf.value.on("edge:click", ({ data }: any) => {
-    console.log(data)
     nodeData.value = data
     showAttribute.value = true
+  })
+
+  // 监听节点和连线的变化，实时更新计数并同步调试状态
+  lf.value.on("node:add", (args: any) => {
+    if (isDebugMode.value) {
+      lf.value.setProperties(args.data.id, { isDebug: true })
+    }
+    syncFormData()
+  })
+
+  lf.value.on("edge:add", (args: any) => {
+    if (isDebugMode.value) {
+      lf.value.setProperties(args.data.id, { isDebug: true })
+    }
+    syncFormData()
   })
 
   const syncFormData = () => {
@@ -327,9 +350,7 @@ const LfEvent = () => {
   }
 
   // 监听节点和连线的变化，实时更新计数
-  lf.value.on("node:add", syncFormData)
   lf.value.on("node:delete", syncFormData)
-  lf.value.on("edge:add", syncFormData)
   lf.value.on("edge:delete", syncFormData)
   lf.value.on("history:change", syncFormData)
 }
@@ -338,6 +359,53 @@ const graph = ref<any>(null)
 const dataVisible = ref<boolean>(false)
 const nodeCount = ref(0)
 const edgeCount = ref(0)
+const isDebugMode = ref(false)
+
+const handleToggleDebug = (val: boolean) => {
+  isDebugMode.value = val
+  if (!lf.value) return
+
+  // NOTE: 使用 render 全量更新比循环 setProperties 更稳定，避免 VDOM 渲染冲突 (insertBefore error)
+  const graphData = lf.value.getGraphData()
+  graphData.nodes.forEach((node: any) => {
+    node.properties = { ...node.properties, isDebug: val }
+  })
+  graphData.edges.forEach((edge: any) => {
+    edge.properties = { ...edge.properties, isDebug: val }
+  })
+
+  lf.value.render(graphData)
+}
+
+const handleCalibrate = () => {
+  if (!lf.value) return
+
+  // 1. Dagre 自动布局
+  lf.value.extension.dagre.layout({
+    rankdir: "LR",
+    nodesep: 60,
+    ranksep: 80
+  })
+
+  // 2. 清理边的旧轨迹，让 LogicFlow 重新计算路径
+  const graphData = lf.value.getGraphData()
+  graphData.edges = graphData.edges.map((edge: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { ...rest } = edge
+    if (rest.text && typeof rest.text === "object") {
+      delete (rest.text as any).x
+      delete (rest.text as any).y
+    }
+    return rest
+  })
+
+  lf.value.render(graphData)
+
+  // 3. 居中
+  nextTick(() => {
+    lf.value.fitView(20)
+  })
+}
 
 const getData = async () => {
   graph.value = lf.value.getGraphData()
