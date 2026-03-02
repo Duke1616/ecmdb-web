@@ -4,9 +4,9 @@ import type { Executor } from "@/api/etask/executor/type"
 
 /**
  * 获取分布式执行器列表，并处理 handler 级联联动逻辑
- * @param getServiceName 获取当前选中 service_name 的函数（响应式对接）
+ * @param getTargetValue 获取当前选中 target 的函数（响应式对接）
  */
-export function useExecutors(getServiceName: () => string | undefined) {
+export function useExecutors(getTargetValue: () => string | undefined) {
   const executors = ref<Executor[]>([])
   const loading = ref(false)
 
@@ -24,11 +24,11 @@ export function useExecutors(getServiceName: () => string | undefined) {
       })
   }
 
-  /** 当前选中执行器对应的 handler 列表，随 service_name 动态更新 */
+  /** 当前选中执行器对应的 handler 列表，随 target 动态更新 */
   const availableHandlers = computed(() => {
-    const serviceName = getServiceName()
-    if (!serviceName) return []
-    const matched = executors.value.find((e) => e.name === serviceName)
+    const target = getTargetValue()
+    if (!target) return []
+    const matched = executors.value.find((e) => e.name === target)
     return matched?.handlers || []
   })
 

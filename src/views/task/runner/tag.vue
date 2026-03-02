@@ -152,7 +152,7 @@ const loadRecommendedTags = () => {
     .then(({ data }) => {
       const tags = new Set<string>()
       data.runner_tags.forEach((item) => {
-        Object.keys(item.tags_topic).forEach((tag) => tags.add(tag))
+        item.tags.forEach((t) => tags.add(t.tag))
       })
       // 限制展示数量，确保一行平分时不会太拥挤
       recommendedTags.value = Array.from(tags).slice(0, 7)

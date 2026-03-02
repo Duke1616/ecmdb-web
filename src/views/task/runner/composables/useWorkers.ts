@@ -26,13 +26,13 @@ export function useWorkers(getTargetValue?: () => string | undefined) {
   }
 
   /**
-   * 当前选中的节点所支持的处理器列表
+   * 当前选中的节点 (Topic) 所支持的处理器列表
    */
   const availableHandlers = computed(() => {
     if (!getTargetValue) return []
     const target = getTargetValue()
     if (!target) return []
-    const agent = agents.value.find((a) => a.name === target)
+    const agent = agents.value.find((a) => a.topic === target)
     return agent?.handlers || []
   })
 

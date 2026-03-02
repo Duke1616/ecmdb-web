@@ -34,7 +34,7 @@
                 </div>
                 <div class="mode-card__body">
                   <span class="mode-card__title">
-                    分布式调度模式
+                    分布式调度
                     <span class="recommend-tag">推荐</span>
                   </span>
                   <span class="mode-card__desc">调度平台节点分发</span>
@@ -51,7 +51,7 @@
                   <el-icon><Connection /></el-icon>
                 </div>
                 <div class="mode-card__body">
-                  <span class="mode-card__title">消息推送模式</span>
+                  <span class="mode-card__title">消息推送</span>
                   <span class="mode-card__desc">消息队列异步分发</span>
                 </div>
                 <el-icon class="mode-card__check"><CircleCheckFilled /></el-icon>
@@ -265,10 +265,7 @@ const setFrom = (row: any) => {
     data.kind = data.run_mode === "WORKER" ? Kind.KAFKA : Kind.GRPC
   }
   if (!data.target) {
-    data.target = data.worker?.worker_name || data.execute?.service_name || ""
-  }
-  if (!data.handler) {
-    data.handler = data.execute?.handler || ""
+    data.target = data.worker?.topic || ""
   }
   formData.value = data
 }
@@ -368,7 +365,7 @@ defineExpose({ submitForm, setFrom, resetForm })
       &__body {
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 4px;
         flex: 1;
         min-width: 0;
       }
@@ -382,6 +379,7 @@ defineExpose({ submitForm, setFrom, resetForm })
         display: flex;
         align-items: center;
         gap: 6px;
+        white-space: nowrap;
 
         .recommend-tag {
           font-size: 10px;

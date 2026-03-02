@@ -57,10 +57,17 @@ export interface listByCodebookIdReq extends listRunnerReq {
   kind?: Kind
 }
 
+export interface TagDetail {
+  tag: string
+  kind: Kind
+  target: string
+  handler: string
+}
+
 export interface runnerTags {
   codebook_name: string
   codebook_uid: string
-  tags_topic: Map<string, string>
+  tags: TagDetail[]
 }
 
 export interface runnerTagResp {

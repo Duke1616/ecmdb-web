@@ -56,12 +56,20 @@
               class="modern-select"
             >
               <el-option
-                v-for="[tag, topic] of Array.from(tags_topic)"
-                :key="`${topic}-${tag}`"
-                :label="tag"
-                :value="tag"
+                v-for="item in availableTags"
+                :key="item.tag"
+                :label="item.tag"
+                :value="item.tag"
                 class="modern-option"
-              />
+              >
+                <div class="tag-info-row">
+                  <span class="tag-label">{{ item.tag }}</span>
+                  <span class="tag-details">
+                    <el-tag size="small" type="info" effect="plain" class="inner-pill">{{ item.kind }}</el-tag>
+                    {{ item.target }} <small v-if="item.handler">/ {{ item.handler }}</small>
+                  </span>
+                </div>
+              </el-option>
               <template #footer>
                 <el-button
                   text
@@ -234,91 +242,21 @@
     </FormSection>
   </el-form>
 </template>
+
 <script setup lang="ts">
 import { listRunnerTagsApi } from "@/api/runner"
-import { runnerTags } from "@/api/runner/types/runner"
+import { runnerTags, TagDetail } from "@/api/runner/types/runner"
 import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { ref, onMounted, reactive } from "vue"
 import { cloneDeep } from "lodash-es"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { FormSection } from "../../PropertySetting"
 
-// 使用模板 Hook
-const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
-
-// 在需要获取模板的地方调用 fetchTemplates
-const handleChange = async () => {
-  // 根据新的执行方式清除相关数据
-  if (propertyForm.exec_method === "template") {
-    // 如果选择模板方式，清除手动设置相关数据
-    propertyForm.unit = null
-    propertyForm.quantity = null
-  } else if (propertyForm.exec_method === "hand") {
-    // 如果选择手动方式，清除模板相关数据
-    propertyForm.template_id = null
-    propertyForm.template_field = ""
-  } else {
-    // 如果没有选择执行方式，清除所有相关数据
-    propertyForm.template_id = null
-    propertyForm.template_field = ""
-    propertyForm.unit = null
-    propertyForm.quantity = null
-  }
-
-  // 只有在选择了模板方式且有流程ID时才获取模板
-  if (propertyForm.exec_method === "template" && props.id !== undefined) {
-    await fetchTemplates(props.id)
-  }
-}
-
-// 监听定时执行变更
-
-const handleTimingChange = () => {
-  if (!propertyForm.is_timing) {
-    // 如果关闭定时执行，清除所有定时相关数据
-    propertyForm.exec_method = ""
-    propertyForm.template_id = null
-    propertyForm.template_field = ""
-    propertyForm.unit = null
-    propertyForm.quantity = null
-  } else {
-    // 如果开启定时执行，确保执行方式为空，让用户重新选择
-    if (!propertyForm.exec_method) {
-      // 如果执行方式为空，清除所有相关数据
-      propertyForm.template_id = null
-      propertyForm.template_field = ""
-      propertyForm.unit = null
-      propertyForm.quantity = null
-    }
-  }
-}
-
-// 监听代码模版变更
-const handlerChangeCodebook = (clearTag = true) => {
-  // 只在用户主动切换代码模版时清除标签选择
-  if (clearTag) {
-    propertyForm.tag = ""
-  }
-
-  runnerTagsData.value.forEach((item) => {
-    if (item.codebook_uid == propertyForm.codebook_uid) {
-      // 处理 tags_topic 可能是对象或 Map 的情况
-      if (item.tags_topic instanceof Map) {
-        tags_topic.value = new Map(item.tags_topic)
-      } else if (item.tags_topic && typeof item.tags_topic === "object") {
-        tags_topic.value = new Map<string, string>(Object.entries(item.tags_topic))
-      } else {
-        tags_topic.value = new Map()
-      }
-    }
-  })
-}
-
+// ── 属性与事件定义 ──────────────────────────────────────────────────────────
 const props = defineProps({
   nodeData: Object,
   lf: Object || String,
   id: Number,
-  //详情
   flowDetail: {
     type: Object,
     default: () => {
@@ -329,10 +267,10 @@ const props = defineProps({
 
 const emits = defineEmits(["closed"])
 
-const DEFAULT_FORM_DATA = reactive({
+// ── 状态管理 ────────────────────────────────────────────────────────────
+const DEFAULT_FORM_DATA = {
   name: "自动化-",
   codebook_uid: "",
-  topic: "",
   is_notify: false,
   is_timing: false,
   exec_method: "",
@@ -342,60 +280,124 @@ const DEFAULT_FORM_DATA = reactive({
   unit: null as number | null,
   quantity: null as number | null,
   tag: ""
-})
+}
 
-const options = [
-  {
-    label: "手动设置",
-    value: "hand"
-  },
-  {
-    label: "模版字段提取",
-    value: "template"
-  }
-]
-
-const unit = [
-  {
-    value: 1,
-    label: "分钟"
-  },
-  {
-    value: 2,
-    label: "小时"
-  },
-  {
-    value: 3,
-    label: "天"
-  }
-]
-
-const notify_method = [
-  {
-    value: 1,
-    label: "工单结束后合并发送"
-  },
-  {
-    value: 2,
-    label: "当前节点完成立即发送"
-  }
-]
-
+const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
+const formRef = ref<FormInstance | null>(null)
 const tagSelect = ref<InstanceType<typeof ElSelect> | null>(null)
+const runnerTagsData = ref<runnerTags[]>([])
+const availableTags = ref<TagDetail[]>([])
+
+// ── 模板与执行逻辑 ──────────────────────────────────────────────────────────
+const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
+
+const handleChange = async () => {
+  if (propertyForm.exec_method === "template") {
+    propertyForm.unit = null
+    propertyForm.quantity = null
+  } else if (propertyForm.exec_method === "hand") {
+    propertyForm.template_id = null
+    propertyForm.template_field = ""
+  } else {
+    propertyForm.template_id = null
+    propertyForm.template_field = ""
+    propertyForm.unit = null
+    propertyForm.quantity = null
+  }
+
+  if (propertyForm.exec_method === "template" && props.id !== undefined) {
+    await fetchTemplates(props.id)
+  }
+}
+
+const handleTimingChange = () => {
+  if (!propertyForm.is_timing) {
+    propertyForm.exec_method = ""
+    propertyForm.template_id = null
+    propertyForm.template_field = ""
+    propertyForm.unit = null
+    propertyForm.quantity = null
+  } else if (!propertyForm.exec_method) {
+    propertyForm.template_id = null
+    propertyForm.template_field = ""
+    propertyForm.unit = null
+    propertyForm.quantity = null
+  }
+}
+
+// ── 标签与运行器逻辑 ────────────────────────────────────────────────────────
+const handlerChangeCodebook = (clearTag = true) => {
+  if (clearTag) {
+    propertyForm.tag = ""
+  }
+  const matched = runnerTagsData.value.find((item) => item.codebook_uid == propertyForm.codebook_uid)
+  availableTags.value = matched?.tags || []
+}
+
+const listRunnerTags = (isInitialLoad = false) => {
+  listRunnerTagsApi()
+    .then((res) => {
+      runnerTagsData.value = res.data.runner_tags || []
+      handlerChangeCodebook(!isInitialLoad)
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+}
+
 function setAutoTag() {
   propertyForm.tag = "auto"
   tagSelect.value?.blur?.()
 }
 
-const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
-const formRef = ref<FormInstance | null>(null)
+// ── 节点属性同步 ────────────────────────────────────────────────────────────
+const setProperties = () => {
+  props.lf?.setProperties(props.nodeData?.id, {
+    name: propertyForm.name,
+    codebook_uid: propertyForm.codebook_uid,
+    is_notify: propertyForm.is_notify,
+    template_field: propertyForm.template_field,
+    template_id: propertyForm.template_id,
+    is_timing: propertyForm.is_timing,
+    notify_method: propertyForm.notify_method,
+    tag: propertyForm.tag,
+    unit: propertyForm.unit,
+    exec_method: propertyForm.exec_method,
+    quantity: propertyForm.quantity
+  })
+}
+
+const confirmFunc = () => {
+  formRef.value?.validate((valid) => {
+    if (valid) {
+      setProperties()
+      props.lf?.updateText(props.nodeData?.id, propertyForm.name)
+      emits("closed")
+    }
+  })
+}
+
+// ── UI 配置项 ──────────────────────────────────────────────────────────────
+const options = [
+  { label: "手动设置", value: "hand" },
+  { label: "模版字段提取", value: "template" }
+]
+
+const unit = [
+  { value: 1, label: "分钟" },
+  { value: 2, label: "小时" },
+  { value: 3, label: "天" }
+]
+
+const notify_method = [
+  { value: 1, label: "工单结束后合并发送" },
+  { value: 2, label: "当前节点完成立即发送" }
+]
+
 const formRules: FormRules = {
   name: [
     { required: true, message: "名称不能为空" },
-    {
-      max: 50,
-      message: "最大50字符"
-    },
+    { max: 50, message: "最大50字符" },
     {
       validator: (rule, value, callback) => {
         if (!value.startsWith("自动化-")) {
@@ -409,58 +411,15 @@ const formRules: FormRules = {
   ]
 }
 
-//确定
-const confirmFunc = () => {
-  formRef.value?.validate((valid) => {
-    if (valid) {
-      setProperties()
-      props.lf?.updateText(props.nodeData?.id, propertyForm.name)
-      emits("closed")
-    }
-  })
-}
-
-const runnerTagsData = ref<runnerTags[]>([])
-const tags_topic = ref<Map<string, string>>(new Map())
-const listRunnerTags = (isInitialLoad = false) => {
-  listRunnerTagsApi()
-    .then((res) => {
-      runnerTagsData.value = res.data.runner_tags
-      // 初始加载时不清除 tag 值
-      handlerChangeCodebook(!isInitialLoad)
-    })
-    .catch((error) => {
-      console.log(error)
-    })
-}
-
-//更新节点属性
-const setProperties = () => {
-  props.lf?.setProperties(props.nodeData?.id, {
-    name: propertyForm.name,
-    codebook_uid: propertyForm.codebook_uid,
-    is_notify: propertyForm.is_notify,
-    template_field: propertyForm.template_field,
-    template_id: propertyForm.template_id,
-    is_timing: propertyForm.is_timing,
-    notify_method: propertyForm.notify_method,
-    tag: propertyForm.tag,
-    topic: tags_topic.value.get(propertyForm.tag) || "",
-    unit: propertyForm.unit,
-    exec_method: propertyForm.exec_method,
-    quantity: propertyForm.quantity
-  })
-}
-
+// ── 生命周期 ────────────────────────────────────────────────────────────
 onMounted(() => {
-  // 先恢复表单数据
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
   propertyForm.is_notify = props.nodeData?.properties.is_notify
   propertyForm.is_timing = props.nodeData?.properties.is_timing
   propertyForm.notify_method = Array.isArray(props.nodeData?.properties.notify_method)
     ? props.nodeData?.properties.notify_method
-    : [props.nodeData?.properties.notify_method].filter(Boolean) // 过滤掉 undefined 或 null
+    : [props.nodeData?.properties.notify_method].filter(Boolean)
 
   propertyForm.template_field = props.nodeData?.properties.template_field
   propertyForm.template_id = props.nodeData?.properties.template_id
@@ -468,12 +427,9 @@ onMounted(() => {
   propertyForm.exec_method = props.nodeData?.properties.exec_method
   propertyForm.unit = props.nodeData?.properties.unit
   propertyForm.quantity = props.nodeData?.properties.quantity
-  propertyForm.topic = props.nodeData?.properties.topic
 
-  // 然后加载标签数据(标记为初始加载,不清除已有的 tag)
   listRunnerTags(true)
 
-  // 如果执行方式是模板，加载模板数据
   if (propertyForm.exec_method === "template" && propertyForm.template_id) {
     if (props.id !== undefined) {
       fetchTemplates(props.id).then(() => {
@@ -487,6 +443,7 @@ defineExpose({
   confirmFunc
 })
 </script>
+
 <style scoped lang="scss">
 .settings-grid {
   display: grid;
@@ -661,12 +618,51 @@ defineExpose({
 
 .modern-option {
   :deep(.el-select-dropdown__item) {
-    padding: 12px 16px;
+    padding: 8px 16px;
+    height: auto;
     font-size: 14px;
+
+    .tag-info-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      line-height: 1.4;
+      padding: 4px 0;
+
+      .tag-label {
+        font-weight: 700;
+        color: #1e293b;
+      }
+
+      .tag-details {
+        font-size: 11px;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+
+        .inner-pill {
+          font-weight: 800;
+          font-size: 9px;
+          height: 18px;
+          padding: 0 4px;
+        }
+      }
+    }
 
     &.selected {
       background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
       color: white;
+
+      .tag-label,
+      .tag-details {
+        color: white;
+      }
+
+      .inner-pill {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.1);
+      }
     }
 
     &:hover {

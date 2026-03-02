@@ -11,7 +11,7 @@
           filterable
           @change="handleWorkerChange"
         >
-          <el-option v-for="item in workers" :key="item.name" :label="getWorkerLabel(item)" :value="item.name" />
+          <el-option v-for="item in workers" :key="item.name" :label="getWorkerLabel(item)" :value="item.topic" />
         </el-select>
       </el-form-item>
     </div>
