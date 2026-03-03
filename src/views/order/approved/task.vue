@@ -121,18 +121,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
-import {
-  Refresh,
-  Monitor,
-  Cpu,
-  Memo,
-  ChatDotRound,
-  Right,
-  Document,
-  DataLine,
-  Setting,
-  Box
-} from "@element-plus/icons-vue"
+import { Refresh, Monitor, ChatDotRound, Right, Document, DataLine, Setting, Box } from "@element-plus/icons-vue"
 import { task, Kind } from "@/api/task/types/task"
 import {
   listTasksByInstanceIdApi,
