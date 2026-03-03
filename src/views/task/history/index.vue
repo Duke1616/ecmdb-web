@@ -2,8 +2,8 @@
   <PageContainer>
     <!-- 头部区域，加入搜索功能 -->
     <ManagerHeader
-      title="任务历史"
-      subtitle="查看任务执行历史和状态"
+      title="任务状态"
+      subtitle="查看任务执行历史和状态 (蓝色线：消息推送，灰色线：分布式调度)"
       :show-add-button="false"
       v-model="searchQuery"
       show-search
@@ -16,25 +16,20 @@
       v-loading="loading"
       :data="tasksData"
       :columns="tableColumns"
-      :show-selection="true"
+      :show-selection="false"
       :show-pagination="true"
       :total="paginationData.total"
       :page-size="paginationData.pageSize"
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
       <!-- 执行目标插槽：区分 KAFKA 和 GRPC 模式 -->
-      <!-- 模式列插槽：独立展示 @EXECUTOR / @KAFKA -->
-      <template #kind="{ row }">
-        <div class="kind-cell">
-          <span v-if="row.kind === Kind.KAFKA" class="target-badge kafka">@KAFKA</span>
-          <span v-else-if="row.kind === Kind.GRPC" class="target-badge grpc">@EXECUTOR</span>
-          <span v-else class="target-empty">--</span>
-        </div>
+      <!-- 模式颜色条插槽：左侧垂直条 -->
+      <template #kindBar="{ row }">
+        <div class="kind-bar" :class="row.kind === Kind.KAFKA ? 'kind-kafka' : 'kind-grpc'" />
       </template>
 
       <!-- 执行目标插槽：展示目标与逻辑 -->
@@ -146,20 +141,14 @@ const { tasksData, loading, searchQuery, paginationData, fetchTasksData, handleC
 
 // 表格配置
 const tableColumns: Column[] = [
+  { prop: "kind", label: "", width: 10, slot: "kindBar", fixed: "left", align: "center" },
   { prop: "order_id", label: "工单号", width: 100, align: "center" },
   { prop: "codebook_name", label: "任务模板", minWidth: 150 },
-  { prop: "kind", label: "模式", slot: "kind", width: 110, align: "center" },
-  { prop: "execute_target", label: "执行目标", slot: "execute_target", minWidth: 180, align: "center" },
+  { prop: "execute_target", label: "执行目标", slot: "execute_target", minWidth: 200, align: "center" },
   { prop: "status", label: "状态", slot: "status", minWidth: 120, align: "center" },
   { prop: "is_timing", label: "类型", slot: "is_timing", minWidth: 100, align: "center" },
   { prop: "run_time", label: "时间线", slot: "run_time", minWidth: 180, align: "center" }
 ]
-
-// 交互逻辑
-const selectedRows = ref<task[]>([])
-const handleSelectionChange = (selection: task[]) => {
-  selectedRows.value = selection
-}
 
 const taskId = ref<number>(0)
 const result = ref<any>("")
@@ -287,18 +276,21 @@ const handleRetryConfirm = async () => {
 }
 
 // 状态标签样式优化
-.status-tag {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-weight: 500;
-}
+.kind-bar {
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1;
 
-// 时间显示样式优化
-.time-display {
-  font-family: "Monaco", "Consolas", monospace;
-  font-size: 12px;
-  color: #6b7280;
+  &.kind-kafka {
+    background-color: #3b82f6;
+  }
+  &.kind-grpc {
+    background-color: #64748b;
+  }
 }
 
 .kind-cell {
@@ -338,19 +330,17 @@ const handleRetryConfirm = async () => {
 
   .target-text-group {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 4px;
     font-size: 13px;
-    color: #1e293b;
-    white-space: nowrap;
-    overflow: hidden;
+    min-width: 0;
+    word-break: break-all;
 
     .target-main {
       font-weight: 500;
       color: #94a3b8;
-      max-width: 120px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .target-sep {
@@ -363,9 +353,6 @@ const handleRetryConfirm = async () => {
       font-weight: 700;
       color: #1e293b;
       font-family: "JetBrains Mono", "Fira Code", monospace;
-      max-width: 140px;
-      overflow: hidden;
-      text-overflow: ellipsis;
     }
   }
 

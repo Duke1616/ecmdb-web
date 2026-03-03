@@ -29,8 +29,8 @@
           <!-- 核心详情行 -->
           <div class="info-line-slim">
             <div class="target-group-slim">
-              <span v-if="row.kind === Kind.KAFKA" class="target-badge kafka">@KAFKA</span>
-              <span v-else-if="row.kind === Kind.GRPC" class="target-badge grpc">@EXECUTOR</span>
+              <span v-if="row.kind === Kind.KAFKA" class="target-badge kafka">消息推送</span>
+              <span v-else-if="row.kind === Kind.GRPC" class="target-badge grpc">分布式调度</span>
 
               <div class="target-text-minimal">
                 <span class="target-main">{{ row.target }}</span>
@@ -430,18 +430,15 @@ defineExpose({
 
     .target-text-minimal {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 4px;
       font-size: 13px;
       min-width: 0;
-      overflow: hidden;
+      word-break: break-all;
 
       .target-main {
         color: #94a3b8;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 140px;
       }
 
       .target-sep {
@@ -453,9 +450,6 @@ defineExpose({
         font-weight: 700;
         color: #1e293b;
         font-family: "JetBrains Mono", monospace;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
     }
 
