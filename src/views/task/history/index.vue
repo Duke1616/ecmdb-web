@@ -28,23 +28,27 @@
       @current-change="handleCurrentChange"
     >
       <!-- 执行目标插槽：区分 KAFKA 和 GRPC 模式 -->
+      <!-- 模式列插槽：独立展示 @EXECUTOR / @KAFKA -->
+      <template #kind="{ row }">
+        <div class="kind-cell">
+          <span v-if="row.kind === Kind.KAFKA" class="target-badge kafka">@KAFKA</span>
+          <span v-else-if="row.kind === Kind.GRPC" class="target-badge grpc">@EXECUTOR</span>
+          <span v-else class="target-empty">--</span>
+        </div>
+      </template>
+
+      <!-- 执行目标插槽：展示目标与逻辑 -->
       <template #execute_target="{ row }">
         <div class="execute-target-cell">
-          <template v-if="row.kind === Kind.KAFKA">
-            <el-icon class="target-icon worker"><Cpu /></el-icon>
-            <span class="target-text">
-              {{ row.target }}
-              <small class="target-meta">@KAFKA</small>
-            </span>
-          </template>
-          <template v-else-if="row.kind === Kind.GRPC">
-            <el-icon class="target-icon execute"><Memo /></el-icon>
-            <span class="target-text">
-              {{ row.target }}
-              <small class="target-meta">/{{ row.handler }}</small>
-            </span>
-          </template>
-          <span v-else class="target-empty">--</span>
+          <div class="target-text-group">
+            <el-tooltip :content="row.target" placement="top" :show-after="500">
+              <span class="target-main">{{ row.target }}</span>
+            </el-tooltip>
+            <span class="target-sep">/</span>
+            <el-tooltip :content="row.handler" placement="top" :show-after="500">
+              <span class="target-handler">{{ row.handler }}</span>
+            </el-tooltip>
+          </div>
         </div>
       </template>
 
@@ -103,7 +107,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Cpu, Memo } from "@element-plus/icons-vue"
 import { task, Kind } from "@/api/task/types/task"
 import { retryTaskApi, updateTaskArgsApi, updateTaskVariablesApi, getTaskLogsApi } from "@/api/task"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
@@ -144,11 +147,12 @@ const { tasksData, loading, searchQuery, paginationData, fetchTasksData, handleC
 // 表格配置
 const tableColumns: Column[] = [
   { prop: "order_id", label: "工单号", width: 100, align: "center" },
-  { prop: "codebook_name", label: "任务模板", minWidth: 100, align: "center" },
-  { prop: "execute_target", label: "执行目标", slot: "execute_target", align: "center" },
-  { prop: "status", label: "状态", slot: "status", align: "center" },
-  { prop: "is_timing", label: "类型", slot: "is_timing", align: "center" },
-  { prop: "run_time", label: "时间线", slot: "run_time", align: "center" }
+  { prop: "codebook_name", label: "任务模板", minWidth: 150 },
+  { prop: "kind", label: "模式", slot: "kind", width: 110, align: "center" },
+  { prop: "execute_target", label: "执行目标", slot: "execute_target", minWidth: 180, align: "center" },
+  { prop: "status", label: "状态", slot: "status", minWidth: 120, align: "center" },
+  { prop: "is_timing", label: "类型", slot: "is_timing", minWidth: 100, align: "center" },
+  { prop: "run_time", label: "时间线", slot: "run_time", minWidth: 180, align: "center" }
 ]
 
 // 交互逻辑
@@ -259,6 +263,11 @@ const handleRetryConfirm = async () => {
       &:hover {
         background: #f8fafc;
       }
+
+      td {
+        height: auto !important;
+        min-height: calc(2.6rem + 0.4vw);
+      }
     }
   }
 }
@@ -292,42 +301,71 @@ const handleRetryConfirm = async () => {
   color: #6b7280;
 }
 
+.kind-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.target-badge {
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+  &.kafka {
+    background: #3b82f6;
+    color: white;
+  }
+
+  &.grpc {
+    background: #64748b;
+    color: white;
+  }
+}
+
 .execute-target-cell {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
 
-  .target-icon {
-    font-size: 16px;
-    padding: 6px;
-    border-radius: 6px;
-
-    &.worker {
-      background: #eff6ff;
-      color: #3b82f6;
-    }
-
-    &.execute {
-      background: #fdf2f8;
-      color: #db2777;
-    }
-  }
-
-  .target-text {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1e293b;
+  .target-text-group {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    line-height: 1.2;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
 
-    .target-meta {
-      font-weight: normal;
+    .target-main {
+      font-weight: 500;
       color: #94a3b8;
-      margin-top: 2px;
-      font-family: "JetBrains Mono", monospace;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .target-sep {
+      color: #e2e8f0;
+      font-weight: bold;
+      margin: 0 2px;
+    }
+
+    .target-handler {
+      font-weight: 700;
+      color: #1e293b;
+      font-family: "JetBrains Mono", "Fira Code", monospace;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 

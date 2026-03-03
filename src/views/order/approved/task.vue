@@ -28,16 +28,17 @@
         <div class="card-body-slim">
           <!-- 核心详情行 -->
           <div class="info-line-slim">
-            <template v-if="row.kind === Kind.KAFKA">
-              <el-icon><Cpu /></el-icon>
-              <span class="info-content">{{ row.target }} <small>@ KAFKA</small></span>
-            </template>
-            <template v-else-if="row.kind === Kind.GRPC">
-              <el-icon><Memo /></el-icon>
-              <span class="info-content"
-                >{{ row.target }} <small>/ {{ row.handler }}</small></span
-              >
-            </template>
+            <div class="target-group-slim">
+              <span v-if="row.kind === Kind.KAFKA" class="target-badge kafka">@KAFKA</span>
+              <span v-else-if="row.kind === Kind.GRPC" class="target-badge grpc">@EXECUTOR</span>
+
+              <div class="target-text-minimal">
+                <span class="target-main">{{ row.target }}</span>
+                <span class="target-sep">/</span>
+                <span class="target-handler">{{ row.handler }}</span>
+              </div>
+            </div>
+
             <template v-if="row.trigger_position">
               <el-divider direction="vertical" />
               <el-icon><ChatDotRound /></el-icon>
@@ -411,16 +412,66 @@ defineExpose({
       font-size: 14px;
     }
 
-    .info-content {
-      font-weight: 500;
-      small {
+    .target-group-slim {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .target-badge {
+      font-size: 9px;
+      font-weight: bold;
+      padding: 1px 4px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+
+      &.kafka {
+        background: #3b82f6;
+        color: white;
+      }
+
+      &.grpc {
+        background: #64748b;
+        color: white;
+      }
+    }
+
+    .target-text-minimal {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      min-width: 0;
+      overflow: hidden;
+
+      .target-main {
         color: #94a3b8;
-        margin-left: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+      }
+
+      .target-sep {
+        color: #e2e8f0;
+        font-weight: bold;
+      }
+
+      .target-handler {
+        font-weight: 700;
+        color: #1e293b;
+        font-family: "JetBrains Mono", monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
     }
 
     .truncate-slim {
-      max-width: 450px;
+      max-width: 200px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

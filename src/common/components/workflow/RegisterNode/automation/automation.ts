@@ -8,7 +8,7 @@ export default function registerAutomation(lf: any) {
           "svg",
           {
             x: 15,
-            y: 11,
+            y: 15,
             width: 50,
             height: 50,
             viewBox: "0 0 1024 1024"

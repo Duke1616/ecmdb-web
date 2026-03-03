@@ -389,7 +389,7 @@ const handleCalibrate = () => {
     isDefaultAnchor: true
   })
 
-  lf.value.fitView(100, 100)
+  smartCenterAndZoom()
 }
 
 const getData = async () => {
