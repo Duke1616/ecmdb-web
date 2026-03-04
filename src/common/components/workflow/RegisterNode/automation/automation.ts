@@ -3,14 +3,19 @@ export default function registerAutomation(lf: any) {
     class Node extends RectNode {
       getIconShape() {
         const { model } = this.props
+        const { width, height } = model
         const { stroke } = model.getNodeStyle()
+        const iconSize = 36
+        // NOTE: 动态计算图标偏移，确保居中，不依赖固定节点尺寸
+        const x = (width - iconSize) / 2
+        const y = (height - iconSize) / 2
         return h(
           "svg",
           {
-            x: 15,
-            y: 15,
-            width: 50,
-            height: 50,
+            x,
+            y,
+            width: iconSize,
+            height: iconSize,
             viewBox: "0 0 1024 1024"
           },
           h("path", {
@@ -97,8 +102,8 @@ export default function registerAutomation(lf: any) {
 
       initNodeData(data: any) {
         super.initNodeData(data)
-        this.width = 80
-        this.height = 80
+        this.width = 70
+        this.height = 70
       }
 
       // 自定义锚点样式

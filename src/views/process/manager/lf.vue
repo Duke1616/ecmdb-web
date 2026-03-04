@@ -49,7 +49,7 @@
     </div>
 
     <!-- 底部按钮 -->
-    <FormActions @previous="previous" @next="next" @cancel="close" />
+    <FormActions @previous="previous" @next="handleNext" @cancel="close" />
 
     <!-- 属性面板 -->
     <el-dialog v-model="dataVisible">
@@ -70,6 +70,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, nextTick, onMounted, onUnmounted, watch } from "vue"
+import { ElNotification } from "element-plus"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap, SelectionSelect, ProximityConnect } from "@logicflow/extension"
 import { Dagre } from "@logicflow/layout"
@@ -178,6 +179,10 @@ const initLf = () => {
   } else {
     // 如果没有初始数据，设置默认计数
     updateCounts()
+  }
+  // 禁用节点拖拽时的渐进连线，只保留锚点（线条端点）拖拽时的渐进连线
+  if (lf.value.extension?.proximityConnect) {
+    lf.value.extension.proximityConnect.handleNodeDrag = () => {}
   }
 }
 
@@ -330,8 +335,24 @@ const LfEvent = () => {
   })
 
   lf.value.on("edge:add", (args: any) => {
+    const { data } = args
+    // 禁止自连线（起点和终点是同一节点），检测到后立即删除并提示
+    if (data.sourceNodeId === data.targetNodeId) {
+      // 虚拟边只是拖拽时的视觉提示，不是真实连线，跳过不处理
+      if (data.properties?.style) return
+
+      lf.value.deleteEdge(data.id)
+      ElNotification({
+        title: "不允许自连线",
+        message: "节点不能连接自身",
+        type: "warning",
+        duration: 2000,
+        position: "top-right"
+      })
+      return
+    }
     if (isDebugMode.value) {
-      lf.value.setProperties(args.data.id, { isDebug: true })
+      lf.value.setProperties(data.id, { isDebug: true })
     }
     syncFormData()
   })
@@ -341,8 +362,8 @@ const LfEvent = () => {
       // 获取最新数据
       const graphData = lf.value.getGraphData()
 
-      // 更新数据
-      emits("update:formData", { ...props.formData, flow_data: graphData })
+      // 更新数据（保存前剥离 isDebug，避免调试状态持久化）
+      emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
     }
 
     // 变更数量
@@ -360,6 +381,22 @@ const dataVisible = ref<boolean>(false)
 const nodeCount = ref(0)
 const edgeCount = ref(0)
 const isDebugMode = ref(false)
+
+/**
+ * 剥离图数据中的 isDebug 属性
+ * NOTE: isDebug 仅用于画布预览，不应持久化到 formData，
+ * 否则下次打开时会残留调试状态
+ */
+const stripDebugProps = (graphData: any) => {
+  const data = JSON.parse(JSON.stringify(graphData))
+  data.nodes?.forEach((node: any) => {
+    if (node.properties) delete node.properties.isDebug
+  })
+  data.edges?.forEach((edge: any) => {
+    if (edge.properties) delete edge.properties.isDebug
+  })
+  return data
+}
 
 const handleToggleDebug = (val: boolean) => {
   isDebugMode.value = val
@@ -390,6 +427,24 @@ const handleCalibrate = () => {
   })
 
   smartCenterAndZoom()
+
+  ElNotification({
+    title: "自动布局已完成",
+    message: "点击「下一步」保存布局，点击「上一步」可回滚",
+    type: "info",
+    duration: 3000,
+    position: "top-right",
+    showClose: true
+  })
+}
+
+// NOTE: 点击下一步前，先截断同步一次画布最新坐标数据到表单状态
+// 这样无论用户是否手动工作过，自动布局结果都不会丢失
+const handleNext = () => {
+  if (lf.value) {
+    emits("update:formData", { ...props.formData, flow_data: stripDebugProps(lf.value.getGraphData()) })
+  }
+  next()
 }
 
 const getData = async () => {

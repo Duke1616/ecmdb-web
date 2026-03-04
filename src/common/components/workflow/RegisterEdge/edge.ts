@@ -76,36 +76,24 @@ export default function registerPolyline(lf: any) {
         const { id, properties } = model
         const shape = super.getShape()
 
-        if (properties.isDebug && model.points) {
-          const { points } = model
-          let pointsList: number[][] = []
-          if (typeof points === "string") {
-            pointsList = points.split(" ").map((p: string) => p.split(",").map(Number))
-          } else if (Array.isArray(points)) {
-            pointsList = points.map((p: any) => [p.x, p.y])
-          }
-
-          if (pointsList.length > 0) {
-            const midIndex = Math.floor(pointsList.length / 2)
-            const midPoint = pointsList[midIndex]
-
-            return h("g", {}, [
-              shape,
-              h(
-                "text",
-                {
-                  x: midPoint[0],
-                  y: midPoint[1] - 8,
-                  textAnchor: "middle",
-                  fill: "#10b981",
-                  fontSize: 9,
-                  fontWeight: "600",
-                  style: "pointer-events: none; opacity: 0.6;"
-                },
-                id.substring(0, 8)
-              )
-            ])
-          }
+        if (properties.isDebug && model.textPosition) {
+          const { x, y } = model.textPosition
+          return h("g", {}, [
+            shape,
+            h(
+              "text",
+              {
+                x: x,
+                y: y - 12,
+                textAnchor: "middle",
+                fill: "#10b981",
+                fontSize: 9,
+                fontWeight: "600",
+                style: "pointer-events: none; opacity: 0.6;"
+              },
+              id.substring(0, 8)
+            )
+          ])
         }
         return shape
       }
