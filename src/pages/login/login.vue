@@ -30,7 +30,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref } from "vue"
+import { reactive, ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { User, Lock } from "@element-plus/icons-vue"
@@ -65,6 +65,15 @@ const loading = ref(false)
 const loginFormData: LoginRequestData = reactive({
   username: "",
   password: ""
+})
+
+// 演示环境自动填充
+onMounted(() => {
+  const isDemoEnv = window.location.hostname === "82.156.165.98"
+  if (isDemoEnv) {
+    loginFormData.username = "demo"
+    loginFormData.password = "123456"
+  }
 })
 
 /** 登录表单校验规则 */

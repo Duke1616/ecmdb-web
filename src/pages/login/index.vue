@@ -33,16 +33,20 @@
 
 <script lang="ts" setup>
 import { ref } from "vue"
+import { useRoute } from "vue-router"
 import ThemeSwitch from "@@/components/ThemeSwitch/index.vue"
 import { type TabsPaneContext } from "element-plus"
 import Owl from "./components/Owl.vue"
 import Login from "./login.vue"
 import { useFocus } from "./composables/useFocus"
 
+const route = useRoute()
+
 // 直接在父组件中使用useFocus
 const { isFocus, handleFocus, handleBlur } = useFocus()
 
-const activeName = ref("ldap")
+const isDemoEnv = window.location.hostname === "82.156.165.98"
+const activeName = ref((route.query.mode as string) || (isDemoEnv ? "pass" : "ldap"))
 
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(tab, event)
