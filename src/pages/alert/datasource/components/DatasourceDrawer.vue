@@ -178,6 +178,10 @@ import { DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
 import { saveDatasourceApi, testDatasourceApi } from "@/api/alert/datasource"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
 
+// 引入 Logo 资源，确保 Vite 在生产环境能正确打包
+import prometheusLogo from "../logo/prometheus.svg"
+import lokiLogo from "../logo/loki.png"
+
 interface Props {
   modelValue: boolean
   datasource?: Datasource | null
@@ -372,10 +376,10 @@ const handleTypeSelect = (type: DatasourceTypeEnum) => {
 // 获取数据源类型 Logo
 const getTypeLogo = (type: DatasourceTypeEnum) => {
   const logoMap = {
-    [DatasourceTypeEnum.PROMETHEUS]: "/src/pages/alert/datasource/logo/prometheus.svg",
-    [DatasourceTypeEnum.LOKI]: "/src/pages/alert/datasource/logo/loki.png"
+    [DatasourceTypeEnum.PROMETHEUS]: prometheusLogo,
+    [DatasourceTypeEnum.LOKI]: lokiLogo
   }
-  return logoMap[type] || "/src/pages/alert/datasource/logo/prometheus.svg"
+  return logoMap[type] || prometheusLogo
 }
 
 // 切换启用状态
