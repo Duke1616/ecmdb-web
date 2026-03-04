@@ -195,12 +195,17 @@ onMounted(() => {
 const initData = () => {
   if (props.expression) {
     const groups = props.expression.split(" || ")
-    conditionGroups.value = groups.map((group) => ({
-      conditions: group
-        .replace(/^\(|\)$/g, "")
-        .split(" && ")
-        .filter((item) => item !== "")
-    }))
+    conditionGroups.value = groups.map((group) => {
+      // 只有当组被成对的括号包裹时才剥离，例如 (A && B)
+      // 防止误删 $env in ('val') 这种末尾自带括号的表达式
+      let processedGroup = group.trim()
+      if (processedGroup.startsWith("(") && processedGroup.endsWith(")")) {
+        processedGroup = processedGroup.substring(1, processedGroup.length - 1)
+      }
+      return {
+        conditions: processedGroup.split(" && ").filter((item) => item !== "")
+      }
+    })
   } else {
     conditionGroups.value = [{ conditions: [] }]
   }
@@ -293,7 +298,10 @@ const translateExpressionToChinese = (exp: string) => {
   const parts = exp.split(" ")
   if (parts.length < 3) return exp
 
-  const left = parts[0]
+  let left = parts[0]
+  if (left.startsWith("$")) {
+    left = left.substring(1)
+  }
   const op = parts[1]
   const right = parts.slice(2).join(" ")
 
@@ -310,7 +318,7 @@ const translateExpressionToChinese = (exp: string) => {
   for (const template of props.templates) {
     if (template.rules) {
       if (Array.isArray(template.rules)) {
-        const found = template.rules.find((r: any) => r.field === left)
+        const found = template.rules.find((r: any) => String(r.field) === left)
         if (found) {
           translatedLeft = `${template.name}.${found.title || found.name}`
           break
@@ -336,7 +344,7 @@ const getChineseExpression = () => {
   chineseExp = chineseExp.replace(/ && /g, " 并且 ")
   chineseExp = chineseExp.replace(/ \|\| /g, " 或者 ")
 
-  const atomRegex = /([a-z0-9_.]+\s+[!=><|in|not in]+\s+[^&|()]+)/gi
+  const atomRegex = /([$a-z0-9_.]+\s+[!=><|in|not in]+\s+[^&|()]+)/gi
   const atoms = props.expression.match(atomRegex) || []
 
   atoms.forEach((atom) => {

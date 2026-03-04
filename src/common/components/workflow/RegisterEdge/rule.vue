@@ -237,7 +237,7 @@ const getExpressionPreview = () => {
   if (!formData.leftValueData && !formData.operator && !formData.rightValueData) {
     return ""
   }
-  const left = formData.leftValueData || "$left"
+  const left = formData.leftValueData ? `$${formData.leftValueData}` : "$left"
   const op = formData.operator
   let right = ""
   if (Array.isArray(formData.rightValueData)) {
@@ -267,14 +267,23 @@ const setExpression = (expression: string) => {
   if (!foundOp || parts.length < 2) return
 
   formData.operator = foundOp
-  formData.leftValueData = parts[0].trim()
+  let leftValue = parts[0].trim()
+  if (leftValue.startsWith("$")) {
+    leftValue = leftValue.substring(1)
+  }
+  formData.leftValueData = leftValue
 
   const rightRaw = parts[1].trim()
 
   // 2. 解析右值
   if (foundOp === "in" || foundOp === "not in") {
-    // 格式如 ('val1', 'val2')
-    const matches = rightRaw.match(/'([^']+)'/g)
+    // 格式如 ('val1', 'val2') 或 ('val1')
+    // 先去掉外层括号
+    let cleanRight = rightRaw.trim()
+    if (cleanRight.startsWith("(") && cleanRight.endsWith(")")) {
+      cleanRight = cleanRight.substring(1, cleanRight.length - 1)
+    }
+    const matches = cleanRight.match(/'([^']+)'/g)
     if (matches) {
       formData.rightValueData = matches.map((m) => m.replace(/'/g, ""))
     }
