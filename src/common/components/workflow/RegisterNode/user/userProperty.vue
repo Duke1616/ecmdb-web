@@ -89,30 +89,18 @@
         v-if="['leaders', 'main_leader', 'appoint'].includes(propertyForm.rule)"
         :label="getLabel(propertyForm.rule)"
         prop="approved"
-        size="large"
         class="form-item"
       >
-        <div class="select-container">
-          <el-select
-            v-model="propertyForm.approved"
-            multiple
-            placeholder="请选择参与者"
-            :show-arrow="false"
-            suffix-icon=""
-            tag-type="info"
-            size="large"
-            :disabled="approvalInputDisabled || flowDetail.status == '2'"
-            class="modern-select"
-          >
-            <el-option
-              v-for="item in approvedOptions"
-              :key="item.name"
-              :label="item.display_name"
-              :value="item.name"
-              class="modern-option"
-            />
-          </el-select>
-          <el-button class="select-button" :icon="UserFilled" @click="openUser" :disabled="flowDetail.status == '2'" />
+        <div class="user-input-wrapper">
+          <el-input
+            :value="userDisplayText"
+            placeholder="请点击右侧按钮选择审批人员"
+            class="modern-input with-action"
+            readonly
+          />
+          <el-button @click="openUser" class="action-btn" :icon="UserFilled" :disabled="flowDetail.status == '2'">
+            选择人员
+          </el-button>
         </div>
       </el-form-item>
     </FormSection>
@@ -188,7 +176,7 @@
 </template>
 <script setup lang="ts">
 import { FormInstance, FormRules } from "element-plus"
-import { ref, onMounted, reactive } from "vue"
+import { ref, onMounted, reactive, computed } from "vue"
 import { UserFilled, QuestionFilled, Document, Timer, Collection } from "@element-plus/icons-vue"
 import { findByUsernamesApi } from "@/api/user"
 import { FormSection } from "../../PropertySetting"
@@ -257,7 +245,6 @@ const props = defineProps({
   }
 })
 
-const approvalInputDisabled = ref(true)
 const approvalVisible = ref(false)
 const emits = defineEmits(["closed"])
 const propertyForm = reactive({
@@ -277,6 +264,9 @@ interface ParticipantOption {
 }
 const approvedOptions = ref<ParticipantOption[]>([])
 const checkedKeys = ref<number[]>([])
+
+// NOTE: 将已选用户的 display_name 拼接为展示文本，用于只读 input 显示
+const userDisplayText = computed(() => approvedOptions.value.map((u) => u.display_name).join(", "))
 const getUsernamesData = (uns: string[]) => {
   findByUsernamesApi(uns)
     .then(({ data }) => {
@@ -440,7 +430,7 @@ defineExpose({
 }
 
 .form-item {
-  margin-bottom: 0px;
+  margin-bottom: 12px;
   :deep(.el-form-item__label) {
     font-size: 13px;
     color: #475569;
@@ -501,39 +491,53 @@ defineExpose({
   }
 }
 
-.select-container {
+.user-input-wrapper {
   display: flex;
-  align-items: center;
   width: 100%;
-  gap: 10px;
+  align-items: stretch;
 
-  .modern-select {
+  .modern-input {
     flex: 1;
+    height: 40px;
+
+    &.with-action {
+      :deep(.el-input__wrapper) {
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        height: 100%;
+        box-sizing: border-box;
+      }
+    }
   }
 
-  .select-button {
-    background: #f1f5f9;
+  .action-btn {
+    height: 40px;
+    border-radius: 0 8px 8px 0;
     border: 1px solid #cbd5e1;
+    border-left: none;
+    background: #f8fafc;
     color: #64748b;
-    border-radius: 6px;
-    padding: 8px;
-    height: 32px;
-    width: 32px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0 16px;
+    margin: 0;
+    white-space: nowrap;
     transition: all 0.2s;
+    box-sizing: border-box;
 
-    &:hover {
-      background: #e2e8f0;
-      color: #334155;
-      border-color: #94a3b8;
-    }
-
-    &:active {
-      background: #cbd5e1;
+    &:hover:not(:disabled) {
+      background: #f1f5f9;
+      color: #6366f1;
+      border-color: #cbd5e1;
     }
 
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    :deep(.el-icon) {
+      margin-right: 4px;
     }
   }
 }
