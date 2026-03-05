@@ -65,8 +65,8 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
 
 请及时处理此告警。`
   },
-  FEISHU_CARD: {
-    code: CHANNEL_TYPES.FEISHU_CARD,
+  LARK_CARD: {
+    code: CHANNEL_TYPES.LARK_CARD,
     label: "飞书卡片",
     language: "json",
     extension: "json",
@@ -161,7 +161,7 @@ export const getChannelType = (channelCode: ChannelType): "primary" | "success" 
   const types: Record<string, "primary" | "success" | "warning" | "info" | "danger"> = {
     EMAIL: "primary",
     WECHAT: "success",
-    FEISHU_CARD: "warning"
+    LARK_CARD: "warning"
   }
   return types[channelCode] || "info"
 }

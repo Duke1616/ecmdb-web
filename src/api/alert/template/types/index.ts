@@ -2,7 +2,7 @@
 export enum CHANNEL_TYPES {
   EMAIL = "EMAIL",
   WECHAT = "WECHAT",
-  FEISHU_CARD = "FEISHU_CARD"
+  LARK_CARD = "LARK_CARD"
 }
 
 export type ChannelType = CHANNEL_TYPES | ""
