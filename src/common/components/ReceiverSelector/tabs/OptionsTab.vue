@@ -1,7 +1,20 @@
 <template>
   <div class="options-tab-container">
-    <div class="search-wrapper" v-if="showSearch">
-      <el-input v-model="searchQuery" placeholder="输入关键字进行搜索..." clearable :prefix-icon="Search" />
+    <div class="header-wrapper" v-if="showSearch || totalCount > pageSize">
+      <div class="search-wrapper" v-if="showSearch">
+        <el-input v-model="searchQuery" placeholder="输入关键字进行搜索..." clearable :prefix-icon="Search" />
+      </div>
+      <div class="pagination-wrapper" v-if="totalCount > pageSize">
+        <el-pagination
+          v-model:current-page="currentPage"
+          :page-size="pageSize"
+          :total="totalCount"
+          layout="total, prev, next"
+          @current-change="handlePageChange"
+          hide-on-single-page
+          small
+        />
+      </div>
     </div>
     <div class="team-flow" v-loading="loading">
       <div
@@ -15,18 +28,6 @@
         <span>{{ item[labelKey] }}</span>
         <el-icon v-if="isSelected(String(item[valueKey]))" class="chip-check"><Check /></el-icon>
       </div>
-    </div>
-
-    <div class="pagination-wrapper" v-if="totalCount > pageSize">
-      <el-pagination
-        v-model:current-page="currentPage"
-        :page-size="pageSize"
-        :total="totalCount"
-        layout="total, prev, pager, next"
-        @current-change="handlePageChange"
-        hide-on-single-page
-        background
-      />
     </div>
   </div>
 </template>
@@ -51,7 +52,7 @@ const props = withDefaults(defineProps<Props>(), {
   selectedIds: () => [],
   labelKey: "name",
   valueKey: "id",
-  pageSize: 30
+  pageSize: 10
 })
 
 const emits = defineEmits<{
@@ -151,8 +152,16 @@ const handlePageChange = (val: number) => {
   flex-direction: column;
   height: 100%;
 }
+
+.header-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
 .search-wrapper {
-  margin-bottom: 16px;
+  flex: 1;
   :deep(.el-input__wrapper) {
     background: #f8fafc;
     border-radius: 8px;
@@ -167,36 +176,73 @@ const handlePageChange = (val: number) => {
 }
 .team-flow {
   display: flex;
-  flex-wrap: wrap;
-  align-content: flex-start;
-  gap: 10px;
+  flex-direction: column;
+  gap: 8px;
   flex: 1;
+  overflow-y: auto;
 }
 .team-chip {
-  height: fit-content;
-  padding: 10px 18px;
-  border-radius: 10px;
-  border: 1.5px solid #f1f5f9;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   cursor: pointer;
   transition: all 0.2s;
+  color: #475569;
+
+  .el-icon {
+    font-size: 16px;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  span {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chip-check {
+    color: #3b82f6;
+    font-size: 18px;
+  }
+
+  &:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
 
   &.active {
-    background: #3b82f6;
-    color: #fff;
+    background: #eff6ff;
+    color: #1e40af;
     border-color: #3b82f6;
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+
+    .el-icon {
+      color: #3b82f6;
+    }
   }
 }
 .pagination-wrapper {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
-  display: flex;
-  justify-content: flex-end;
+  flex-shrink: 0;
+  :deep(.el-pagination) {
+    .btn-prev,
+    .btn-next,
+    .el-pagination__total {
+      font-size: 12px;
+    }
+    .btn-prev,
+    .btn-next {
+      min-width: 24px;
+      height: 24px;
+      line-height: 24px;
+    }
+  }
 }
 </style>

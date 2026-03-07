@@ -98,7 +98,7 @@
                   v-for="(rule, index) in propertyForm.assignees"
                   :key="index"
                   class="shelf-item"
-                  @click="masterSelectorVisible = true"
+                  @click="openSelectorWithTab(rule.rule)"
                 >
                   <div class="item-tag" :class="rule.rule">{{ getRuleLabel(rule.rule) }}</div>
                   <div class="item-val">{{ getRuleContentPreview(rule) }}</div>
@@ -133,9 +133,13 @@
   </el-form>
 
   <!-- 💎 抽离后的成员策略选择中心 -->
-  <ChatReceiverSelector
+  <ReceiverSelector
     v-model:visible="masterSelectorVisible"
+    title="配置/管理入群接收者策略"
+    result-panel-title="已选加群逻辑项"
+    empty-text="暂无入群接收者"
     :initial-assignees="propertyForm.assignees"
+    :initial-tab="selectedRuleTab"
     :template-rules="templateRules"
     :get-template-field-options="getTemplateFieldOptions"
     :username-to-display-name="entitiesDisplayNames"
@@ -162,10 +166,10 @@ import {
   Close
 } from "@element-plus/icons-vue"
 import { FormSection } from "../../PropertySetting"
-import ChatReceiverSelector from "./ChatReceiverSelector.vue"
+import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import { listTeamsApi } from "@/api/alert/team"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
-import { receiverSelectorRegistry } from "./strategies"
+import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/strategies"
 
 const props = defineProps({
   nodeData: Object,
@@ -187,9 +191,9 @@ const propertyForm = reactive({
 })
 
 const broadcastOptions = [
-  { label: "工单原始数据", value: "ticket_data" },
-  { label: "自动化链路信息", value: "auto_task" },
-  { label: "交互反馈结果", value: "user_input" }
+  { label: "用户工单提交数据", value: "ticket_data" },
+  { label: "自动化链路返回信息", value: "auto_task" },
+  { label: "用户节点表单提交结果", value: "user_input" }
 ]
 
 const formRef = ref<FormInstance | null>(null)
@@ -197,6 +201,7 @@ const formRef = ref<FormInstance | null>(null)
 const teams = ref<any[]>([])
 const entitiesDisplayNames = reactive<Record<string, string>>({})
 const masterSelectorVisible = ref(false)
+const selectedRuleTab = ref("")
 
 const ruleOptions = [
   { label: "人员白名单", value: "appoint" },
@@ -205,13 +210,34 @@ const ruleOptions = [
   { label: "部门负责人", value: "leaders" },
   { label: "岗位分管领导", value: "main_leader" },
   { label: "实时值班人员", value: "on_call" },
-  { label: "关联业务团队", value: "team" }
+  { label: "关联业务团队", value: "team" },
+  { label: "部门", value: "department" }
 ]
 
-const formRules: FormRules = {
-  name: [{ required: true, message: "请输入节点名称", trigger: "blur" }],
-  team_id: [{ required: true, message: "请选择管理团队", trigger: "change" }]
+// rule 到 tab 的映射
+const ruleToTabMap: Record<string, string> = {
+  appoint: "user",
+  founder: "system",
+  template: "template",
+  leaders: "system",
+  main_leader: "system",
+  on_call: "on_call",
+  team: "team",
+  department: "department"
 }
+
+const formRules = computed<FormRules>(() => {
+  const rules: FormRules = {
+    name: [{ required: true, message: "请输入节点名称", trigger: "blur" }]
+  }
+
+  // 只有在"规则自动建群"模式下才需要验证 team_id
+  if (propertyForm.mode === "create") {
+    rules.team_id = [{ required: true, message: "请选择管理团队", trigger: "change" }]
+  }
+
+  return rules
+})
 
 onMounted(async () => {
   if (props.nodeData?.properties) {
@@ -246,6 +272,12 @@ const selectMode = (m: "existing" | "create") => (propertyForm.mode = m)
 const addGroup = () => propertyForm.chat_groups.push({ channel: "feishu", chat_id: "" })
 const removeGroup = (i: number) => propertyForm.chat_groups.splice(i, 1)
 const removeAssignee = (i: number) => propertyForm.assignees.splice(i, 1)
+
+// 打开选择器并跳转到对应的 tab
+const openSelectorWithTab = (ruleType: string) => {
+  selectedRuleTab.value = ruleToTabMap[ruleType] || ""
+  masterSelectorVisible.value = true
+}
 
 const handleMasterSelectorConfirm = (finalAssignees: any[]) => {
   propertyForm.assignees = finalAssignees
@@ -297,37 +329,37 @@ defineExpose({ confirmFunc })
 
 <style lang="scss" scoped>
 .property-form-root {
-  padding: 16px;
-  background: #f8fafc;
+  padding: 4px 12px;
+  background: transparent;
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .mode-switch-wrapper {
   display: flex;
   background: #eaeff4;
-  padding: 4px;
-  border-radius: 12px;
-  margin-bottom: 8px;
+  padding: 3px;
+  border-radius: 8px;
+  margin-bottom: 4px;
   .mode-switch-item {
     flex: 1;
     text-align: center;
-    padding: 10px;
-    font-size: 13px;
-    font-weight: 800;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-weight: 700;
     color: #64748b;
     cursor: pointer;
-    border-radius: 10px;
-    transition: all 0.25s;
+    border-radius: 6px;
+    transition: all 0.2s;
     &:hover {
       color: #1e293b;
     }
     &.active {
       background: #fff;
       color: #3b82f6;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
   }
 }
@@ -343,12 +375,17 @@ defineExpose({ confirmFunc })
   :deep(.el-input__wrapper),
   :deep(.el-select__wrapper) {
     background: #fff;
-    border-radius: 10px;
-    height: 44px;
-    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    height: 36px;
+    border: 1px solid #cbd5e1;
     box-shadow: none !important;
+    padding: 2px 10px;
     &:hover {
-      border-color: #3b82f6;
+      border-color: #94a3b8;
+    }
+    &.is-focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 1px #6366f1 !important;
     }
   }
 }
@@ -356,26 +393,28 @@ defineExpose({ confirmFunc })
 .pill-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 .id-pill-widget {
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 10px;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
-  padding: 8px 12px;
-  gap: 10px;
+  padding: 6px 10px;
+  gap: 8px;
   .channel-sel {
-    width: 90px;
+    width: 80px;
     :deep(.el-select__wrapper) {
       background: transparent;
       border: none;
+      height: 28px;
+      padding: 0 6px;
     }
   }
   .divider-v {
     width: 1px;
-    height: 20px;
+    height: 16px;
     background: #f1f5f9;
   }
   .id-input-ghost {
@@ -383,26 +422,29 @@ defineExpose({ confirmFunc })
     :deep(.el-input__wrapper) {
       background: transparent;
       border: none;
+      height: 28px;
+      padding: 0 6px;
     }
   }
 }
 
 .strategy-workbench {
-  margin-top: 8px;
+  margin-top: 6px;
 }
 .config-trigger-btn {
   width: 100%;
-  height: 50px;
-  border-radius: 12px;
-  font-weight: 800;
-  border: 2.5px solid #3b82f6;
+  height: 40px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  border: 2px solid #3b82f6;
   background: #fff;
   color: #3b82f6;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 8px;
+  margin-bottom: 12px;
   &:hover {
     background: #eff6ff;
-    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 3px 10px rgba(59, 130, 246, 0.12);
   }
   .arr-icon {
     margin-left: auto;
@@ -413,92 +455,131 @@ defineExpose({ confirmFunc })
 .strategy-shelf {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .shelf-item {
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 10px;
-  padding: 12px 16px;
-  border: 1px solid #f1f5f9;
-  gap: 14px;
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.2s;
   &:hover {
-    transform: translateY(-2px) scale(1.01);
     border-color: #3b82f6;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.04);
+    background: #f8fafc;
   }
   .item-tag {
     font-size: 10px;
-    font-weight: 900;
-    padding: 2px 8px;
+    font-weight: 700;
+    padding: 3px 8px;
     border-radius: 4px;
-    background: #f8fafc;
-    color: #94a3b8;
-    text-transform: uppercase;
+    background: #f1f5f9;
+    color: #64748b;
+    white-space: nowrap;
     &.appoint {
-      background: #eff6ff;
-      color: #3b82f6;
+      background: #dbeafe;
+      color: #2563eb;
     }
     &.founder {
-      background: #f0fdf4;
-      color: #22c55e;
+      background: #dcfce7;
+      color: #16a34a;
+    }
+    &.template {
+      background: #fef3c7;
+      color: #d97706;
+    }
+    &.leaders,
+    &.main_leader {
+      background: #e0e7ff;
+      color: #6366f1;
+    }
+    &.on_call {
+      background: #fce7f3;
+      color: #db2777;
+    }
+    &.team {
+      background: #ddd6fe;
+      color: #7c3aed;
+    }
+    &.department {
+      background: #fed7aa;
+      color: #ea580c;
     }
   }
   .item-val {
     flex: 1;
     font-size: 13px;
-    font-weight: 700;
-    color: #1e293b;
+    font-weight: 500;
+    color: #334155;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .item-del {
+    padding: 0;
+    font-size: 16px;
+    color: #cbd5e1;
+    transition: color 0.2s;
+    &:hover {
+      color: #ef4444;
+    }
   }
 }
 .shelf-empty {
-  padding: 30px;
+  padding: 20px;
   text-align: center;
-  color: #cbd5e1;
+  color: #94a3b8;
+  background: #f8fafc;
   border: 1.5px dashed #e2e8f0;
-  border-radius: 12px;
+  border-radius: 6px;
   font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  .el-icon {
+    font-size: 24px;
+    color: #cbd5e1;
+  }
 }
 
 .broadcast-matrix {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 .matrix-card {
-  padding: 16px;
-  background: #f8fafc;
-  border: 1.5px solid #f1f5f9;
-  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   cursor: pointer;
   transition: all 0.2s;
   .matrix-check {
-    width: 22px;
-    height: 22px;
-    border: 2.5px solid #cbd5e1;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #cbd5e1;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 10px;
     color: transparent;
   }
   span {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     color: #475569;
   }
   &:hover {
     border-color: #3b82f6;
-    background: #fff;
+    background: #f8fafc;
   }
   &.active {
     border-color: #3b82f6;
@@ -516,14 +597,21 @@ defineExpose({ confirmFunc })
 
 .pane-slide-enter-active,
 .pane-slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .pane-slide-enter-from {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateX(15px);
 }
 .pane-slide-leave-to {
   opacity: 0;
-  transform: translateX(-20px);
+  transform: translateX(-15px);
+}
+
+.compact-form-item {
+  margin-bottom: 0;
+  :deep(.el-form-item__label) {
+    display: none;
+  }
 }
 </style>

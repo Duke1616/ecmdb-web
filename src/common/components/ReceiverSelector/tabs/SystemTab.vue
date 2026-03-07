@@ -48,43 +48,52 @@ const toggleRule = (r: string) => {
 
 <style lang="scss" scoped>
 .system-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .logic-card {
-  padding: 18px;
-  border-radius: 14px;
-  border: 1.5px solid #f1f5f9;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
   cursor: pointer;
   display: flex;
-  gap: 16px;
-  transition: all 0.25s;
+  gap: 12px;
+  transition: all 0.2s;
 
   .logic-check-orb {
-    width: 22px;
-    height: 22px;
-    border: 2.5px solid #e2e8f0;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #cbd5e1;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 12px;
     color: transparent;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .logic-info {
+    flex: 1;
+    min-width: 0;
   }
   .l-name {
     display: block;
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 600;
     color: #334155;
+    margin-bottom: 2px;
   }
   .l-desc {
     font-size: 11px;
     color: #94a3b8;
+    line-height: 1.4;
   }
   &:hover {
     border-color: #cbd5e1;
-    transform: translateY(-2px);
+    background: #f8fafc;
   }
   &.active {
     border-color: #3b82f6;
@@ -95,7 +104,10 @@ const toggleRule = (r: string) => {
       color: #fff;
     }
     .l-name {
-      color: #1e3a8a;
+      color: #1e40af;
+    }
+    .l-desc {
+      color: #60a5fa;
     }
   }
 }
