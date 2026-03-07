@@ -14,6 +14,11 @@ export const nodeList = [
     text: "自动化",
     class: "node-automation"
   },
+  {
+    type: "chat",
+    text: "群通知",
+    class: "node-chat"
+  },
 
   {
     text: "并行",

@@ -32,7 +32,7 @@
     <div class="logic-flow-view">
       <!-- 节点面板 - 左侧 -->
       <div class="node-sidebar">
-        <NodePanel v-if="lf" :lf="lf" :nodeList="nodeList" />
+        <NodePanel v-if="lf" :lf="lf" />
       </div>
 
       <!-- 画布区域 - 右侧 -->
@@ -80,18 +80,7 @@ import NodePanel from "@@/components/workflow/LFComponents/NodePanel.vue"
 import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
-import { nodeList } from "@@/components/workflow/config"
-import {
-  registerStart,
-  registerEnd,
-  registerCondition,
-  registerParallel,
-  registerSelective,
-  registerInclusion,
-  registerAutomation,
-  registerUser,
-  registerPolyline
-} from "@@/components/workflow/RegisterNode/index"
+import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
@@ -127,7 +116,7 @@ const config = reactive<any>({
   edgeTextDraggable: true,
   hoverOutline: true,
   moveData: {},
-  nodeList: nodeList,
+  nodeList: WORKFLOW_NODES,
   style: {
     rect: {
       radius: 8
@@ -302,21 +291,13 @@ const setThemem = () => {
 }
 
 const registerNode = () => {
-  registerStart(lf.value)
-  registerEnd(lf.value)
-  registerUser(lf.value)
-  registerCondition(lf.value)
-  registerPolyline(lf.value)
-  registerParallel(lf.value)
-  registerSelective(lf.value)
-  registerInclusion(lf.value)
-  registerAutomation(lf.value)
+  registerAllNodes(lf.value)
 }
 
 const LfEvent = () => {
   lf.value.on("node:click", ({ data }: any) => {
     nodeData.value = data
-    if (["start", "user", "condition", "automation"].includes(data.type)) {
+    if (["start", "user", "condition", "automation", "chat"].includes(data.type)) {
       showAttribute.value = true
     }
   })

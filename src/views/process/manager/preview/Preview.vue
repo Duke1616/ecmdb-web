@@ -10,18 +10,7 @@ import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
-import { nodeList } from "@@/components/workflow/config"
-import {
-  registerStart,
-  registerEnd,
-  registerCondition,
-  registerUser,
-  registerParallel,
-  registerSelective,
-  registerInclusion,
-  registerAutomation,
-  registerPolyline
-} from "@@/components/workflow/RegisterNode/index"
+import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 
 const lf = ref()
 const container = ref()
@@ -39,7 +28,7 @@ const config = reactive<any>({
   edgeTextDraggable: true,
   hoverOutline: false,
   moveData: {},
-  nodeList: nodeList
+  nodeList: WORKFLOW_NODES
 })
 
 const initLf = (data: any) => {
@@ -96,15 +85,7 @@ const setThemem = () => {
 }
 
 const registerNode = () => {
-  registerStart(lf.value)
-  registerEnd(lf.value)
-  registerCondition(lf.value)
-  registerUser(lf.value)
-  registerPolyline(lf.value)
-  registerParallel(lf.value)
-  registerSelective(lf.value)
-  registerInclusion(lf.value)
-  registerAutomation(lf.value)
+  registerAllNodes(lf.value)
 }
 
 defineExpose({

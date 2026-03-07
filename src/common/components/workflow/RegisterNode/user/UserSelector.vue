@@ -16,8 +16,8 @@
     <!-- 主要内容区域 -->
     <div class="content-wrapper">
       <!-- 左侧：组织架构 -->
-      <div class="org-panel">
-        <div class="panel-header">
+      <div class="org-panel" :class="{ 'full-width': hidePreview }">
+        <div class="panel-header" v-if="!hidePreview">
           <h4 class="panel-title">组织架构</h4>
           <span class="selection-count">已选择 {{ checkedKeys.length }} 人</span>
         </div>
@@ -34,13 +34,14 @@
             :props="defaultProps"
             :filter-node-method="filterNode"
             class="org-tree"
+            :class="{ 'two-columns-tree': hidePreview }"
             @check="handleCheck"
           />
         </div>
       </div>
 
       <!-- 右侧：已选择人员 -->
-      <div class="selection-panel">
+      <div class="selection-panel" v-if="!hidePreview">
         <div class="panel-header">
           <h4 class="panel-title">已选择人员</h4>
           <span class="selection-count">{{ selectedUsersCount }} 人</span>
@@ -77,11 +78,13 @@ import { pipelineUserByDepartmentApi } from "@/api/user"
 
 interface Props {
   defaultCheckedKeys?: number[]
+  hidePreview?: boolean
 }
 
 interface Emits {
   (e: "confirm", users: Array<{ name: string; display_name: string; id: number }>): void
   (e: "cancel"): void
+  (e: "change", users: Array<{ name: string; display_name: string; id: number }>): void
 }
 
 const addUniqueId = (nodes: any[]): any[] => {
@@ -268,6 +271,15 @@ const handleCheck = () => {
     // 只保留人员节点
     const userNodes = checkedNodes.filter((node) => node.type === "person")
     checkedKeys.value = userNodes.map((node) => node.uniqueId)
+
+    // 即时抛出选中数据，供隐藏右侧面板的容器实时读取
+    const selectedUsers = userNodes.map((node) => ({
+      id: node.id,
+      name: node.name,
+      display_name: node.display_name
+    }))
+    emits("change", selectedUsers)
+    emits("confirm", selectedUsers)
   }
 }
 
@@ -354,7 +366,7 @@ defineExpose({
 .search-section {
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 12px;
+  padding-bottom: 8px;
   flex-shrink: 0;
 
   .search-container {
@@ -369,7 +381,7 @@ defineExpose({
         border: 1px solid #d1d5db;
         border-radius: 6px;
         padding: 0 12px;
-        height: 40px;
+        height: 36px;
         transition: all 0.2s ease;
         box-shadow: none;
 
@@ -386,7 +398,7 @@ defineExpose({
       }
 
       :deep(.el-input__inner) {
-        font-size: 14px;
+        font-size: 13px;
         color: #111827;
         font-weight: 400;
 
@@ -398,7 +410,7 @@ defineExpose({
 
       :deep(.el-input__prefix) {
         color: #6b7280;
-        font-size: 16px;
+        font-size: 15px;
       }
     }
   }
@@ -673,6 +685,16 @@ defineExpose({
 
 /* 树形控件样式 */
 .org-tree {
+  &.two-columns-tree {
+    column-count: 2;
+    column-gap: 24px;
+    padding-right: 12px;
+  }
+  &.two-columns-tree :deep(.el-tree-node) {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   :deep(.el-tree-node) {
     .el-tree-node__content {
       padding: 8px 0;
@@ -692,6 +714,15 @@ defineExpose({
     .el-tree-node__expand-icon {
       color: #6b7280;
     }
+  }
+}
+
+.org-panel.full-width {
+  border: none;
+  border-radius: 0;
+
+  .tree-wrapper {
+    padding: 12px 24px;
   }
 }
 </style>

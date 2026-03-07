@@ -10,67 +10,34 @@
   >
     <template #header-icon>
       <div class="icon-circle">
-        <img :src="getIconPath()" :alt="props.nodeData?.type" class="icon-image" />
+        <svg
+          v-if="currentNodeConfig?.iconSVG"
+          viewBox="0 0 1024 1024"
+          style="width: 28px; height: 28px; color: #409eff"
+        >
+          <path :d="currentNodeConfig.iconSVG" fill="currentColor" />
+        </svg>
+        <img v-else :src="getIconPath()" :alt="props.nodeData?.type" class="icon-image" />
       </div>
     </template>
 
     <!-- 直接渲染属性组件内容 -->
     <div class="property-content">
-      <startProperty
-        v-if="props.nodeData?.type === 'start'"
+      <component
+        v-if="currentNodeConfig?.property"
+        :is="currentNodeConfig.property"
         ref="propertyComponentRef"
-        :nodeData="nodeData"
-        :lf="lf"
-        :flowDetail="flowDetail"
+        v-bind="componentProps"
         @closed="closed"
       />
-      <userProperty
-        v-if="props.nodeData?.type === 'user'"
-        ref="propertyComponentRef"
-        :nodeData="nodeData"
-        :id="props.id"
-        :lf="lf"
-        :flowDetail="flowDetail"
-        @closed="closed"
-      />
-      <conditionProperty
-        v-if="props.nodeData?.type === 'condition'"
-        ref="propertyComponentRef"
-        :nodeData="nodeData"
-        :lf="lf"
-        :flowDetail="flowDetail"
-        @closed="closed"
-      />
-      <automationProperty
-        v-if="props.nodeData?.type === 'automation'"
-        ref="propertyComponentRef"
-        :nodeData="nodeData"
-        :id="props.id"
-        :lf="lf"
-        :flowDetail="flowDetail"
-        @closed="closed"
-      />
-      <!-- 连线 -->
-      <edge
-        v-if="nodeData?.type === 'polyline'"
-        ref="propertyComponentRef"
-        :nodeData="nodeData"
-        :lf="lf"
-        :id="props.id"
-        :flowDetail="flowDetail"
-        @closed="closed"
-      />
+      <div v-else class="no-property-hint">该节点无需详细配置</div>
     </div>
   </CustomDrawer>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, computed } from "vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
-import startProperty from "../RegisterNode/start/startProperty.vue"
-import userProperty from "../RegisterNode/user/userProperty.vue"
-import conditionProperty from "../RegisterNode/condition/conditionProperty.vue"
-import automationProperty from "../RegisterNode/automation/automationProperty.vue"
-import edge from "../RegisterEdge/edge.vue"
+import { getNodeConfig } from "../RegisterNode/index"
 
 const props = defineProps({
   //标题
@@ -83,9 +50,7 @@ const props = defineProps({
   //详情
   flowDetail: {
     type: Object,
-    default: () => {
-      return {}
-    }
+    default: () => ({})
   },
   id: Number
 })
@@ -95,39 +60,38 @@ const emits = defineEmits(["closed"])
 const showNodeAttribute = ref(true)
 const propertyComponentRef = ref()
 
+// 当前节点的配置信息
+const currentNodeConfig = computed(() => getNodeConfig(props.nodeData?.type || ""))
+
+// 传递给子组件的 Props
+const componentProps = computed(() => ({
+  nodeData: props.nodeData,
+  lf: props.lf,
+  flowDetail: props.flowDetail,
+  id: props.id
+}))
+
 // 获取图标路径
 const getIconPath = () => {
-  const iconName = props.nodeData?.type || "start"
+  let iconName = props.nodeData?.type || "start"
+  if (iconName === "chat") {
+    iconName = "automation" // 暂时使用自动化图标作为回退
+  }
   return new URL(`../background/${iconName}.png`, import.meta.url).href
 }
 
 // 获取节点标题
 const getNodeTitle = () => {
-  const nodeTypeMap: Record<string, string> = {
-    start: "开始节点",
-    user: "用户节点",
-    condition: "条件节点",
-    automation: "自动化节点",
-    polyline: "连线属性"
-  }
-  return nodeTypeMap[props.nodeData?.type] || "节点属性"
+  return currentNodeConfig.value?.text ? `${currentNodeConfig.value.text}属性` : "节点属性"
 }
 
 // 获取节点副标题
 const getNodeSubtitle = () => {
-  const nodeTypeMap: Record<string, string> = {
-    start: "配置工作流的起始节点属性",
-    user: "配置审批流程的用户节点属性",
-    condition: "配置工作流分支条件节点的属性",
-    automation: "配置自动化任务的执行参数和通知设置",
-    polyline: "配置工作流节点间的连接关系和条件"
-  }
-  return nodeTypeMap[props.nodeData?.type] || "配置节点属性"
+  return currentNodeConfig.value?.description || "配置节点属性"
 }
 
 // 关闭前处理
 const handleBeforeClose = (done: () => void) => {
-  // 可以在这里添加确认逻辑
   done()
 }
 
@@ -138,8 +102,11 @@ const closed = () => {
 
 // 处理确认
 const handleConfirm = () => {
-  if (propertyComponentRef.value) {
+  if (propertyComponentRef.value?.confirmFunc) {
     propertyComponentRef.value.confirmFunc()
+  } else {
+    // 如果没有 confirmFunc，可能是不需要保存的节点，直接关闭
+    closed()
   }
 }
 
@@ -147,8 +114,6 @@ const handleConfirm = () => {
 const handleDrawerConfirm = () => {
   handleConfirm()
 }
-
-onMounted(() => {})
 </script>
 
 <style lang="scss" scoped>

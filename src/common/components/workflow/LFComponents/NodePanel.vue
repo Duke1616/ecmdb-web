@@ -16,7 +16,9 @@
         <div class="node-grid">
           <div v-for="item in gatewayNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
             <div class="node-icon" :class="item.class">
-              <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+              <svg v-if="item.iconSVG" viewBox="0 0 1024 1024" style="width: 20px; height: 20px">
+                <path :d="item.iconSVG" fill="currentColor" />
+              </svg>
             </div>
             <span class="node-label font-body">{{ item.text }}</span>
             <div class="node-description font-body">{{ item.description }}</div>
@@ -32,7 +34,9 @@
         <div class="node-grid">
           <div v-for="item in businessNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
             <div class="node-icon" :class="item.class">
-              <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+              <svg v-if="item.iconSVG" viewBox="0 0 1024 1024" style="width: 20px; height: 20px">
+                <path :d="item.iconSVG" fill="currentColor" />
+              </svg>
             </div>
             <span class="node-label font-body">{{ item.text }}</span>
             <div class="node-description font-body">{{ item.description }}</div>
@@ -48,7 +52,9 @@
         <div class="node-grid">
           <div v-for="item in controlNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
             <div class="node-icon" :class="item.class">
-              <div v-if="item.type === 'user' || item.type === 'time'" class="shape" />
+              <svg v-if="item.iconSVG" viewBox="0 0 1024 1024" style="width: 20px; height: 20px">
+                <path :d="item.iconSVG" fill="currentColor" />
+              </svg>
             </div>
             <span class="node-label font-body">{{ item.text }}</span>
             <div class="node-description font-body">{{ item.description }}</div>
@@ -61,58 +67,22 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
+import { WORKFLOW_NODES } from "../RegisterNode/index"
 
 interface Props {
   lf: any
-  nodeList: any[]
 }
 
 const props = defineProps<Props>()
 
-const gatewayNodes = computed(() =>
-  props.nodeList
-    .filter((item) => ["parallel", "selective", "condition", "inclusion"].includes(item.type))
-    .map((item) => ({
-      ...item,
-      description: getNodeDescription(item.type)
-    }))
-)
+// 过滤掉边连线配置，只显示节点
+const availableNodes = computed(() => WORKFLOW_NODES.filter((n) => n.type !== "polyline"))
 
-const businessNodes = computed(() =>
-  props.nodeList
-    .filter((item) => ["user", "automation", "time", "push", "download", "click"].includes(item.type))
-    .map((item) => ({
-      ...item,
-      description: getNodeDescription(item.type)
-    }))
-)
+const gatewayNodes = computed(() => availableNodes.value.filter((item) => item.category === "gateway"))
 
-const controlNodes = computed(() =>
-  props.nodeList
-    .filter((item) => ["start", "end"].includes(item.type))
-    .map((item) => ({
-      ...item,
-      description: getNodeDescription(item.type)
-    }))
-)
+const businessNodes = computed(() => availableNodes.value.filter((item) => item.category === "business"))
 
-const getNodeDescription = (type: string) => {
-  const descriptions: Record<string, string> = {
-    start: "流程开始",
-    end: "流程结束",
-    user: "用户任务",
-    condition: "条件判断",
-    automation: "自动化任务",
-    parallel: "并行网关",
-    selective: "条件并行网关",
-    inclusion: "包含网关",
-    time: "定时任务",
-    push: "推送消息",
-    download: "下载文件",
-    click: "点击事件"
-  }
-  return descriptions[type] || "节点"
-}
+const controlNodes = computed(() => availableNodes.value.filter((item) => item.category === "control"))
 
 const $_dragNode = (item: any) => {
   console.log("[v0] Starting drag for node:", item.type)
@@ -244,6 +214,9 @@ const $_dragNode = (item: any) => {
   background-size: cover;
   border-radius: 6px;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &::after {
     content: "";
@@ -323,6 +296,11 @@ const $_dragNode = (item: any) => {
   background: url("../background/selective.png") no-repeat center;
   background-size: cover;
   background-color: rgba(245, 158, 11, 0.1);
+}
+
+.node-chat {
+  background-color: rgba(168, 85, 247, 0.1);
+  color: #a855f7;
 }
 
 /* Responsive adjustments */

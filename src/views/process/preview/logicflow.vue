@@ -11,17 +11,7 @@ import LogicFlow from "@logicflow/core"
 import { Menu, MiniMap, Snapshot } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
-import {
-  registerStart,
-  registerEnd,
-  registerCondition,
-  registerUser,
-  registerParallel,
-  registerSelective,
-  registerInclusion,
-  registerAutomation,
-  registerPolyline
-} from "@@/components/workflow/RegisterNode/index"
+import { registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 
 const lf = ref()
 const containerRef = ref() as Ref<HTMLDivElement>
@@ -124,15 +114,7 @@ const setThemem = () => {
 }
 
 const registerNode = () => {
-  registerStart(lf.value)
-  registerEnd(lf.value)
-  registerCondition(lf.value)
-  registerUser(lf.value)
-  registerPolyline(lf.value)
-  registerParallel(lf.value)
-  registerSelective(lf.value)
-  registerInclusion(lf.value)
-  registerAutomation(lf.value)
+  registerAllNodes(lf.value)
 }
 
 const demo = {
