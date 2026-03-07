@@ -12,15 +12,23 @@
     <div class="mode-switch-wrapper">
       <div
         v-for="m in [
-          { id: 'existing', label: '现有群通知' },
-          { id: 'create', label: '规则自动建群' }
+          { id: 'existing', label: '现有群通知', desc: '使用已绑定的群聊', icon: 'ChatDotRound' },
+          { id: 'create', label: '规则自动建群', desc: '根据规则动态创建群', icon: 'CirclePlus' }
         ]"
         :key="m.id"
         class="mode-switch-item"
         :class="{ active: propertyForm.mode === m.id }"
         @click="selectMode(m.id as 'existing' | 'create')"
       >
-        {{ m.label }}
+        <div class="mode-card__icon">
+          <el-icon v-if="m.icon === 'ChatDotRound'"><ChatDotRound /></el-icon>
+          <el-icon v-else><CirclePlus /></el-icon>
+        </div>
+        <div class="mode-card__body">
+          <span class="mode-card__title">{{ m.label }}</span>
+          <span class="mode-card__desc">{{ m.desc }}</span>
+        </div>
+        <el-icon class="mode-card__check"><CircleCheckFilled /></el-icon>
       </div>
     </div>
 
@@ -34,29 +42,105 @@
     </FormSection>
 
     <!-- 现有群配置 -->
-    <FormSection v-if="propertyForm.mode === 'existing'" title="群组分发目标" theme-color="blue">
+    <FormSection v-if="propertyForm.mode === 'existing'" title="群组配置" theme-color="blue">
       <template #icon
         ><el-icon><Menu /></el-icon
       ></template>
-      <div class="pill-stack">
-        <div v-for="(group, index) in propertyForm.chat_groups" :key="index" class="id-pill-widget">
-          <el-select v-model="group.channel" class="channel-sel">
-            <el-option label="飞书" value="feishu" />
-            <el-option label="钉钉" value="dingtalk" />
-            <el-option label="企微" value="wecom" />
-          </el-select>
-          <div class="divider-v" />
-          <el-input v-model="group.chat_id" placeholder="填写 Chat ID" class="id-input-ghost" />
-          <el-button
-            v-if="propertyForm.chat_groups.length > 1"
-            type="danger"
-            link
-            :icon="Delete"
-            @click="removeGroup(index)"
-          />
+
+      <!-- 群组来源选择 - Tab 风格 -->
+      <div class="source-tabs-container">
+        <div
+          v-for="source in [
+            { id: 'team', label: '从团队获取' },
+            { id: 'manual', label: '手动填写' }
+          ]"
+          :key="source.id"
+          class="source-tab-item"
+          :class="{ active: groupSource === source.id }"
+          @click="groupSource = source.id as 'team' | 'manual'"
+        >
+          {{ source.label }}
         </div>
-        <el-button type="primary" link :icon="Plus" class="dash-add-btn" @click="addGroup">新增推送渠道</el-button>
       </div>
+
+      <!-- 从团队获取群组 -->
+      <template v-if="groupSource === 'team'">
+        <div class="team-group-selector">
+          <!-- 左侧：团队列表 -->
+          <div class="team-list-panel">
+            <div class="panel-header">团队列表</div>
+            <div class="team-list">
+              <div
+                v-for="team in teams"
+                :key="team.id"
+                class="team-item"
+                :class="{ active: selectedTeamId === team.id, 'has-selected': getSelectedCountInTeam(team.id) > 0 }"
+                @click="selectedTeamId = team.id"
+              >
+                <div class="team-info">
+                  <div class="team-name">{{ team.name }}</div>
+                  <div class="team-count">{{ team.chat_groups?.length || 0 }} 个群组</div>
+                </div>
+                <div v-if="getSelectedCountInTeam(team.id) > 0" class="selected-badge">
+                  {{ getSelectedCountInTeam(team.id) }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧：群组列表 -->
+          <div class="group-list-panel">
+            <div class="panel-header">
+              {{ selectedTeamId ? teams.find((t) => t.id === selectedTeamId)?.name : "请选择团队" }}
+            </div>
+            <div v-if="selectedTeamId" class="group-list">
+              <div
+                v-for="group in currentTeamGroups"
+                :key="group.id"
+                class="group-item"
+                :class="{ selected: selectedChatGroupIds.includes(group.id) }"
+                @click="toggleGroupSelection(group.id)"
+              >
+                <div class="group-checkbox">
+                  <el-icon v-if="selectedChatGroupIds.includes(group.id)"><Check /></el-icon>
+                </div>
+                <div class="group-info">
+                  <div class="group-name">{{ group.name }}</div>
+                  <div class="group-channel">{{ getChannelLabel(group.channel) }}</div>
+                </div>
+              </div>
+              <div v-if="currentTeamGroups.length === 0" class="empty-hint">该团队暂无关联群组</div>
+            </div>
+            <div v-else class="empty-hint">请从左侧选择团队</div>
+          </div>
+        </div>
+      </template>
+
+      <!-- 手动填写群组 -->
+      <template v-if="groupSource === 'manual'">
+        <div class="manual-groups-container">
+          <div v-for="(group, idx) in manualChatGroups" :key="idx" class="manual-group-item">
+            <el-select v-model="group.channel" placeholder="渠道" class="channel-sel">
+              <el-option label="飞书卡片" :value="CHANNEL_TYPES.LARK_CARD" />
+              <el-option label="企业微信" :value="CHANNEL_TYPES.WECHAT" />
+              <el-option label="邮件" :value="CHANNEL_TYPES.EMAIL" />
+            </el-select>
+            <el-input v-model="group.name" placeholder="群组名称" class="group-name-input" />
+            <el-input v-model="group.chat_id" placeholder="群聊 ID" class="group-id-input" />
+            <el-button
+              v-if="manualChatGroups.length > 1"
+              link
+              :icon="Close"
+              class="remove-btn"
+              @click="removeManualGroup(idx)"
+            />
+          </div>
+        </div>
+        <el-button type="primary" plain size="small" class="add-group-btn" @click="addManualGroup">
+          <el-icon><CirclePlus /></el-icon>
+          <span>添加群组</span>
+        </el-button>
+      </template>
     </FormSection>
 
     <!-- 自动建群 -->
@@ -141,12 +225,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue"
+import { ref, reactive, onMounted, computed, watch } from "vue"
 import { FormInstance, FormRules } from "element-plus"
 import {
   ChatLineRound,
-  Plus,
-  Delete,
   UserFilled,
   Menu,
   CirclePlus,
@@ -155,13 +237,16 @@ import {
   Setting,
   ArrowRight,
   User,
-  Close
+  Close,
+  CircleCheckFilled,
+  ChatDotRound
 } from "@element-plus/icons-vue"
 import { FormSection } from "../../PropertySetting"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import { listTeamsApi } from "@/api/alert/team"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/strategies"
+import { CHANNEL_TYPES } from "@/api/alert/template/types"
 
 const props = defineProps({
   nodeData: Object,
@@ -179,24 +264,61 @@ const propertyForm = reactive({
   team_id: undefined as number | undefined,
   chat_groups: [{ channel: "feishu", chat_id: "" }],
   assignees: [] as any[],
-  is_auto: ["ticket_data"]
+  is_auto: ["auto_task"]
 })
 
 const broadcastOptions = [
-  { label: "用户工单提交数据", value: "ticket_data" },
-  { label: "自动化链路返回信息", value: "auto_task" },
-  { label: "用户节点表单提交结果", value: "user_input" }
+  { label: "自动化任务返回信息", value: "auto_task" },
+  { label: "用户工单提交信息", value: "ticket_data" },
+  { label: "用户节点表单提交信息", value: "user_input" }
 ]
 
 const formRef = ref<FormInstance | null>(null)
-// teams 只针对创建群组时的下拉选择，不用作入群策略的展示映射
 const teams = ref<any[]>([])
 const entitiesDisplayNames = reactive<Record<string, string>>({})
 const masterSelectorVisible = ref(false)
 const selectedRuleTab = ref("")
+const selectedChatGroupIds = ref<number[]>([])
+const groupSource = ref<"team" | "manual">("team")
+const selectedTeamId = ref<number | undefined>(undefined)
+const manualChatGroups = ref<Array<{ channel: string; chat_id: string; name: string }>>([
+  { channel: CHANNEL_TYPES.LARK_CARD, chat_id: "", name: "" }
+])
+
+// 获取当前选中团队的群组
+const currentTeamGroups = computed(() => {
+  if (!selectedTeamId.value) return []
+  const team = teams.value.find((t) => t.id === selectedTeamId.value)
+  return team?.chat_groups || []
+})
+
+// 获取所有已选中的群组（用于更新 propertyForm）
+const allSelectedGroups = computed(() => {
+  const groups: any[] = []
+  teams.value.forEach((team) => {
+    if (team.chat_groups) {
+      team.chat_groups.forEach((group: any) => {
+        if (selectedChatGroupIds.value.includes(group.id)) {
+          groups.push(group)
+        }
+      })
+    }
+  })
+  return groups
+})
+
+// 获取渠道标签
+const getChannelLabel = (channel: string) => {
+  const channelMap: Record<string, string> = {
+    [CHANNEL_TYPES.LARK_CARD]: "飞书卡片",
+    [CHANNEL_TYPES.WECHAT]: "企业微信",
+    [CHANNEL_TYPES.EMAIL]: "邮件"
+  }
+  return channelMap[channel] || channel
+}
 
 const ruleOptions = [
-  { label: "人员白名单", value: "appoint" },
+  { label: "指定人员", value: "appoint" },
   { label: "工单创建人", value: "founder" },
   { label: "字段模板提取", value: "template" },
   { label: "部门负责人", value: "leaders" },
@@ -216,6 +338,13 @@ const ruleToTabMap: Record<string, string> = {
   on_call: "on_call",
   team: "team",
   department: "department"
+}
+
+// 获取某个团队中已选中的群组数量
+const getSelectedCountInTeam = (teamId: number) => {
+  const team = teams.value.find((t) => t.id === teamId)
+  if (!team?.chat_groups) return 0
+  return team.chat_groups.filter((g: any) => selectedChatGroupIds.value.includes(g.id)).length
 }
 
 const formRules = computed<FormRules>(() => {
@@ -241,7 +370,7 @@ onMounted(async () => {
       ? JSON.parse(JSON.stringify(p.chat_groups))
       : [{ channel: "feishu", chat_id: "" }]
     propertyForm.assignees = p.assignees?.length ? JSON.parse(JSON.stringify(p.assignees)) : []
-    propertyForm.is_auto = p.is_auto || ["ticket_data"]
+    propertyForm.is_auto = p.is_auto || ["auto_task"]
 
     // 初始化时通过统一的策略注册表解析显示名称
     if (propertyForm.assignees.length > 0) {
@@ -261,15 +390,76 @@ onMounted(async () => {
 })
 
 const selectMode = (m: "existing" | "create") => (propertyForm.mode = m)
-const addGroup = () => propertyForm.chat_groups.push({ channel: "feishu", chat_id: "" })
-const removeGroup = (i: number) => propertyForm.chat_groups.splice(i, 1)
 const removeAssignee = (i: number) => propertyForm.assignees.splice(i, 1)
+
+// 切换群组选择
+const toggleGroupSelection = (groupId: number) => {
+  const index = selectedChatGroupIds.value.indexOf(groupId)
+  if (index > -1) {
+    selectedChatGroupIds.value.splice(index, 1)
+  } else {
+    selectedChatGroupIds.value.push(groupId)
+  }
+}
+
+// 根据选中的群组ID更新 chat_groups
+const updateChatGroupsFromSelection = () => {
+  propertyForm.chat_groups = allSelectedGroups.value.map((g: any) => ({
+    channel: g.channel,
+    chat_id: g.chat_id,
+    id: g.id,
+    name: g.name
+  }))
+}
+
+// 添加手动群组
+const addManualGroup = () => {
+  manualChatGroups.value.push({ channel: CHANNEL_TYPES.LARK_CARD, chat_id: "", name: "" })
+}
+
+// 移除手动群组
+const removeManualGroup = (index: number) => {
+  manualChatGroups.value.splice(index, 1)
+}
 
 // 打开选择器并跳转到对应的 tab
 const openSelectorWithTab = (ruleType: string) => {
   selectedRuleTab.value = ruleToTabMap[ruleType] || ""
   masterSelectorVisible.value = true
 }
+
+// 监听选中的群组ID变化
+watch(selectedChatGroupIds, () => {
+  updateChatGroupsFromSelection()
+})
+
+// 监听手动群组变化
+watch(
+  manualChatGroups,
+  (newGroups) => {
+    if (groupSource.value === "manual") {
+      propertyForm.chat_groups = newGroups.map((g) => ({
+        channel: g.channel,
+        chat_id: g.chat_id,
+        name: g.name
+      }))
+    }
+  },
+  { deep: true }
+)
+
+// 监听群组来源变化
+watch(groupSource, (newSource) => {
+  if (newSource === "manual") {
+    propertyForm.chat_groups = manualChatGroups.value.map((g) => ({
+      channel: g.channel,
+      chat_id: g.chat_id,
+      name: g.name
+    }))
+  } else {
+    updateChatGroupsFromSelection()
+  }
+})
 
 const handleMasterSelectorConfirm = (finalAssignees: any[]) => {
   propertyForm.assignees = finalAssignees
@@ -327,30 +517,348 @@ defineExpose({ confirmFunc })
 }
 
 .mode-switch-wrapper {
-  display: flex;
-  background: #eaeff4;
-  padding: 3px;
-  border-radius: 8px;
-  margin-bottom: 4px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+
   .mode-switch-item {
-    flex: 1;
-    text-align: center;
-    padding: 6px 8px;
-    font-size: 12px;
-    font-weight: 700;
-    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
     cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    background: #fafafa;
+    position: relative;
+    user-select: none;
+
     &:hover {
-      color: #1e293b;
+      border-color: #93c5fd;
+      background: #f0f7ff;
     }
+
     &.active {
-      background: #fff;
-      color: #3b82f6;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+      border-color: #3b82f6;
+      background: #eff6ff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+
+      .mode-card__icon .el-icon {
+        color: #3b82f6;
+      }
+
+      .mode-card__title {
+        color: #1d4ed8;
+      }
+
+      .mode-card__check {
+        opacity: 1;
+        color: #3b82f6;
+      }
     }
   }
+
+  .mode-card__icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #e0e7ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    .el-icon {
+      font-size: 18px;
+      color: #6366f1;
+      transition: color 0.2s ease;
+    }
+  }
+
+  .mode-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .mode-card__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    line-height: 1.4;
+    transition: color 0.2s ease;
+  }
+
+  .mode-card__desc {
+    font-size: 11px;
+    color: #9ca3af;
+    line-height: 1.4;
+  }
+
+  .mode-card__check {
+    font-size: 18px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+  }
+}
+
+.source-tabs-container {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e5e7eb;
+  margin-bottom: 16px;
+  .source-tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    &:hover {
+      color: #3b82f6;
+      background: #f9fafb;
+    }
+    &.active {
+      color: #3b82f6;
+      font-weight: 600;
+      border-bottom-color: #3b82f6;
+    }
+  }
+}
+
+.team-group-selector {
+  display: flex;
+  gap: 12px;
+  height: 400px;
+  margin-top: 12px;
+}
+
+.team-list-panel,
+.group-list-panel {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.team-list-panel {
+  width: 200px;
+  flex-shrink: 0;
+}
+
+.group-list-panel {
+  flex: 1;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.team-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.team-item {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  &.active {
+    background: #eff6ff;
+    border: 1px solid #3b82f6;
+  }
+
+  &.has-selected {
+    background: #fef3c7;
+    border: 1px solid #fbbf24;
+
+    &.active {
+      background: #eff6ff;
+      border: 1px solid #3b82f6;
+    }
+
+    &:hover {
+      background: #fef3c7;
+    }
+  }
+
+  .team-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .team-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .team-count {
+    font-size: 11px;
+    color: #9ca3af;
+  }
+
+  .selected-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+}
+
+.group-list-container {
+  margin-top: 12px;
+}
+
+.group-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  gap: 12px;
+  &:hover {
+    border-color: #3b82f6;
+    background: #f9fafb;
+  }
+  &.selected {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    .group-checkbox {
+      background: #3b82f6;
+      border-color: #3b82f6;
+      color: #fff;
+    }
+  }
+}
+
+.group-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #d1d5db;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.group-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  .group-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1f2937;
+  }
+  .group-channel {
+    font-size: 12px;
+    color: #6b7280;
+  }
+}
+
+.manual-groups-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.manual-group-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  .channel-sel {
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .group-name-input {
+    flex: 1;
+    min-width: 0;
+  }
+  .group-id-input {
+    flex: 1.5;
+    min-width: 0;
+  }
+  .remove-btn {
+    padding: 4px;
+    font-size: 16px;
+    color: #9ca3af;
+    flex-shrink: 0;
+    &:hover {
+      color: #ef4444;
+    }
+  }
+}
+
+.add-group-btn {
+  width: 100%;
+  margin-top: 8px;
+  height: 36px;
+  border-radius: 6px;
+  font-weight: 500;
 }
 
 .hero-stage-input,
@@ -577,6 +1085,16 @@ defineExpose({ confirmFunc })
       color: #1e3a8a;
     }
   }
+}
+
+.empty-hint {
+  padding: 12px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px dashed #e2e8f0;
 }
 
 .compact-form-item {

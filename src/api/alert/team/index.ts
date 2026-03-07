@@ -4,7 +4,15 @@
 
 import instance from "@/common/utils/service"
 import { API_SERVICE } from "@@/utils/service"
-import type { ListTeamsReq, RetrieveTeams, SaveTeamReq, Team, DeleteTeamResponse } from "./types"
+import type {
+  ListTeamsReq,
+  RetrieveTeams,
+  SaveTeamReq,
+  Team,
+  DeleteTeamResponse,
+  BindChatGroupReq,
+  UpdateChatGroupReq
+} from "./types"
 
 /**
  * 获取团队列表
@@ -41,5 +49,34 @@ export const saveTeamApi = (data: SaveTeamReq) => {
 export const deleteTeamApi = (id: number) => {
   return instance.delete<DeleteTeamResponse>({
     url: `${API_SERVICE.ALERT}/team/delete/${id}`
+  })
+}
+
+/**
+ * 绑定群聊
+ */
+export const bindChatGroupApi = (data: BindChatGroupReq) => {
+  return instance.post<any>({
+    url: `${API_SERVICE.ALERT}/team/chat/bind`,
+    data
+  })
+}
+
+/**
+ * 更新群聊
+ */
+export const updateChatGroupApi = (data: UpdateChatGroupReq) => {
+  return instance.post<any>({
+    url: `${API_SERVICE.ALERT}/team/chat/update`,
+    data
+  })
+}
+
+/**
+ * 解绑群聊
+ */
+export const unbindChatGroupApi = (id: number) => {
+  return instance.delete<any>({
+    url: `${API_SERVICE.ALERT}/team/chat/unbind/${id}`
   })
 }

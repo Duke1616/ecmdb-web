@@ -81,14 +81,12 @@
             <div class="result-badge">{{ assigneesManager.tempAssignees.value.length }}</div>
           </div>
           <div class="result-body">
-            <transition name="fade">
-              <div v-if="assigneesManager.tempAssignees.value.length === 0" class="empty-placeholder">
-                <el-icon><Files /></el-icon>
-                <p>{{ emptyText }}</p>
-                <span>请从左栏点击添加策略项</span>
-              </div>
-            </transition>
-            <TransitionGroup name="list" tag="div" class="token-list">
+            <div v-if="assigneesManager.tempAssignees.value.length === 0" class="empty-placeholder">
+              <el-icon><Files /></el-icon>
+              <p>{{ emptyText }}</p>
+              <span>请从左栏点击添加策略项</span>
+            </div>
+            <div class="token-list">
               <div
                 v-for="(rule, idx) in assigneesManager.tempAssignees.value"
                 :key="`${rule.rule}-${idx}`"
@@ -102,7 +100,7 @@
                   <el-icon><Close /></el-icon>
                 </button>
               </div>
-            </TransitionGroup>
+            </div>
           </div>
         </div>
       </div>
@@ -142,13 +140,14 @@ const props = defineProps({
   ruleOptions: {
     type: Array as PropType<Array<{ label: string; value: string }>>,
     default: () => [
-      { label: "指定名单", value: "appoint" },
+      { label: "指定人员", value: "appoint" },
       { label: "工单创建人", value: "founder" },
       { label: "模板变量", value: "template" },
       { label: "部门领导", value: "leaders" },
       { label: "分管领导", value: "main_leader" },
       { label: "值班人员", value: "on_call" },
-      { label: "关联团队", value: "team" }
+      { label: "关联团队", value: "team" },
+      { label: "部门", value: "department" }
     ]
   }
 })
@@ -441,34 +440,5 @@ const getRuleContentPreview = (a: any) => {
   span {
     font-size: 12px;
   }
-}
-
-// 过渡动画
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-// 列表过渡动画
-.list-move,
-.list-enter-active,
-.list-leave-active {
-  transition: all 0.3s ease;
-}
-.list-enter-from {
-  opacity: 0;
-  transform: translateX(30px);
-}
-.list-leave-to {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-.list-leave-active {
-  position: absolute;
-  width: calc(100% - 32px);
 }
 </style>

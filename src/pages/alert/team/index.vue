@@ -71,17 +71,21 @@
     >
       <TeamForm ref="teamFormRef" @closed="onClosedCreateOrUpdate" @callback="listTeamsData" />
     </Drawer>
+
+    <!-- 群聊管理抽屉 -->
+    <ChatGroupDrawer v-model="chatDrawerVisible" :team="currentTeam" @refresh="handleChatGroupRefresh" />
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue"
+import { ref, watch, nextTick, markRaw } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { UserFilled, Edit, Delete, RefreshRight, CirclePlus } from "@element-plus/icons-vue"
-import { listTeamsApi, deleteTeamApi } from "@/api/alert/team"
+import { UserFilled, Edit, Delete, RefreshRight, CirclePlus, ChatDotRound } from "@element-plus/icons-vue"
+import { listTeamsApi, deleteTeamApi, getTeamDetailApi } from "@/api/alert/team"
 import { Team } from "@/api/alert/team/types"
 // @ts-ignore
 import TeamForm from "./form.vue"
+import ChatGroupDrawer from "./components/ChatGroupDrawer.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import DataTable from "@@/components/DataTable/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -93,6 +97,9 @@ import { formatTimestamp } from "@/common/utils/day"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const isEditMode = ref<boolean>(false)
+
+const chatDrawerVisible = ref<boolean>(false)
+const currentTeam = ref<Team | null>(null)
 
 const teamFormRef = ref<InstanceType<typeof TeamForm>>()
 const pendingEditData = ref<Team | null>(null)
@@ -129,8 +136,9 @@ const tableColumns: Column[] = [
 
 // 表格操作配置
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: Edit },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit) },
+  { name: "群聊", code: "chat", type: "success", icon: markRaw(ChatDotRound) },
+  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) }
 ]
 
 const handleRefresh = () => {
@@ -142,6 +150,9 @@ const handleOperateEvent = (operateItem: Team, actionName: string) => {
   switch (actionName) {
     case "edit":
       handleUpdate(operateItem)
+      break
+    case "chat":
+      handleChatGroup(operateItem)
       break
     case "delete":
       handleDelete(operateItem)
@@ -158,7 +169,7 @@ const handleSelectionChange = (selection: Team[]) => {
 const teamsData = ref<Team[]>([])
 
 const listTeamsData = () => {
-  listTeamsApi({
+  return listTeamsApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
@@ -169,7 +180,6 @@ const listTeamsData = () => {
     .catch(() => {
       teamsData.value = []
     })
-    .finally(() => {})
 }
 
 const handlerCreateTeam = () => {
@@ -181,6 +191,23 @@ const handleUpdate = (row: Team) => {
   isEditMode.value = true
   pendingEditData.value = row
   dialogVisible.value = true
+}
+
+const handleChatGroup = (row: Team) => {
+  currentTeam.value = row
+  chatDrawerVisible.value = true
+}
+
+const handleChatGroupRefresh = async () => {
+  // 使用 detail API 获取最新的团队信息
+  if (currentTeam.value) {
+    try {
+      const { data } = await getTeamDetailApi(currentTeam.value.id)
+      currentTeam.value = data
+    } catch (error) {
+      console.error("刷新团队详情失败", error)
+    }
+  }
 }
 
 const handleDelete = async (row: Team) => {

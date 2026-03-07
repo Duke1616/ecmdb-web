@@ -2,6 +2,30 @@
  * 团队管理相关类型定义
  */
 
+import type { ChannelType } from "@/api/alert/template/types"
+
+// 群组信息
+export interface ChatGroup {
+  /** 群组ID */
+  id?: number
+  /** 关联的团队ID */
+  team_id?: number
+  /** 群组名称 */
+  name: string
+  /** 渠道类型 */
+  channel: ChannelType
+  /** 群聊的对应ID (如飞书、企业微信的群ID) */
+  chat_id: string
+  /** 是否是临时群 */
+  is_temporary?: boolean
+  /** 计划解散/归档的时间戳 */
+  expire_time?: number
+  /** 创建时间 */
+  ctime?: number
+  /** 更新时间 */
+  utime?: number
+}
+
 // 团队信息
 export interface Team {
   /** 团队ID */
@@ -12,6 +36,8 @@ export interface Team {
   owner: string
   /** 绑定人员 */
   members: string[]
+  /** 关联群组 */
+  chat_groups?: ChatGroup[]
   /** 创建时间 */
   ctime: number
   /** 更新时间 */
@@ -28,6 +54,28 @@ export interface SaveTeamReq {
   owner: string
   /** 绑定人员 */
   members: string[]
+  /** 绑定的群聊列表 */
+  chat_groups?: ChatGroup[]
+}
+
+// 绑定群聊请求参数
+export interface BindChatGroupReq {
+  team_id: number
+  name: string
+  channel: ChannelType
+  chat_id: string
+  is_temporary?: boolean
+  expire_time?: number
+}
+
+// 更新群聊请求参数
+export interface UpdateChatGroupReq {
+  id: number
+  name: string
+  channel: ChannelType
+  chat_id: string
+  is_temporary?: boolean
+  expire_time?: number
 }
 
 // 分页参数
