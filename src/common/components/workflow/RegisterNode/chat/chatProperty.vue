@@ -24,112 +24,104 @@
       </div>
     </div>
 
-    <div class="main-form-content">
-      <FormSection title="基础配置" theme-color="slate">
+    <FormSection title="基础配置" theme-color="slate">
+      <template #icon
+        ><el-icon><ChatLineRound /></el-icon
+      ></template>
+      <el-form-item prop="name" class="compact-form-item">
+        <el-input v-model="propertyForm.name" placeholder="请输入节点名称" class="hero-stage-input" />
+      </el-form-item>
+    </FormSection>
+
+    <!-- 现有群配置 -->
+    <FormSection v-if="propertyForm.mode === 'existing'" title="群组分发目标" theme-color="blue">
+      <template #icon
+        ><el-icon><Menu /></el-icon
+      ></template>
+      <div class="pill-stack">
+        <div v-for="(group, index) in propertyForm.chat_groups" :key="index" class="id-pill-widget">
+          <el-select v-model="group.channel" class="channel-sel">
+            <el-option label="飞书" value="feishu" />
+            <el-option label="钉钉" value="dingtalk" />
+            <el-option label="企微" value="wecom" />
+          </el-select>
+          <div class="divider-v" />
+          <el-input v-model="group.chat_id" placeholder="填写 Chat ID" class="id-input-ghost" />
+          <el-button
+            v-if="propertyForm.chat_groups.length > 1"
+            type="danger"
+            link
+            :icon="Delete"
+            @click="removeGroup(index)"
+          />
+        </div>
+        <el-button type="primary" link :icon="Plus" class="dash-add-btn" @click="addGroup">新增推送渠道</el-button>
+      </div>
+    </FormSection>
+
+    <!-- 自动建群 -->
+    <template v-if="propertyForm.mode === 'create'">
+      <FormSection title="归属团队管理" theme-color="blue">
         <template #icon
-          ><el-icon><ChatLineRound /></el-icon
+          ><el-icon><CirclePlus /></el-icon
         ></template>
-        <el-form-item prop="name" class="compact-form-item">
-          <el-input v-model="propertyForm.name" placeholder="请输入节点名称" class="hero-stage-input" />
+        <el-form-item prop="team_id" class="compact-form-item">
+          <el-select v-model="propertyForm.team_id" placeholder="选择维护团队" class="hero-stage-select" filterable>
+            <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
+          </el-select>
         </el-form-item>
       </FormSection>
 
-      <transition name="pane-slide" mode="out-in">
-        <!-- 现有群配置 -->
-        <div v-if="propertyForm.mode === 'existing'" key="existing">
-          <FormSection title="群组分发目标" theme-color="blue">
-            <template #icon
-              ><el-icon><Menu /></el-icon
-            ></template>
-            <div class="pill-stack">
-              <div v-for="(group, index) in propertyForm.chat_groups" :key="index" class="id-pill-widget">
-                <el-select v-model="group.channel" class="channel-sel">
-                  <el-option label="飞书" value="feishu" />
-                  <el-option label="钉钉" value="dingtalk" />
-                  <el-option label="企微" value="wecom" />
-                </el-select>
-                <div class="divider-v" />
-                <el-input v-model="group.chat_id" placeholder="填写 Chat ID" class="id-input-ghost" />
-                <el-button
-                  v-if="propertyForm.chat_groups.length > 1"
-                  type="danger"
-                  link
-                  :icon="Delete"
-                  @click="removeGroup(index)"
-                />
-              </div>
-              <el-button type="primary" link :icon="Plus" class="dash-add-btn" @click="addGroup"
-                >新增推送渠道</el-button
-              >
-            </div>
-          </FormSection>
-        </div>
-
-        <!-- 自动建群 -->
-        <div v-else key="create">
-          <FormSection title="归属团队管理" theme-color="blue">
-            <template #icon
-              ><el-icon><CirclePlus /></el-icon
-            ></template>
-            <el-form-item prop="team_id" class="compact-form-item">
-              <el-select v-model="propertyForm.team_id" placeholder="选择维护团队" class="hero-stage-select" filterable>
-                <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
-              </el-select>
-            </el-form-item>
-          </FormSection>
-
-          <FormSection title="入群成员策略" theme-color="purple">
-            <template #icon
-              ><el-icon><UserFilled /></el-icon
-            ></template>
-            <div class="strategy-workbench">
-              <el-button type="primary" class="config-trigger-btn" @click="masterSelectorVisible = true">
-                <el-icon><Setting /></el-icon>
-                <span>配置入群成员逻辑</span>
-                <el-icon class="arr-icon"><ArrowRight /></el-icon>
-              </el-button>
-
-              <div class="strategy-shelf">
-                <div v-if="propertyForm.assignees.length === 0" class="shelf-empty">
-                  <el-icon><User /></el-icon>
-                  <span>未配置策略，仅包含创建人</span>
-                </div>
-                <div
-                  v-for="(rule, index) in propertyForm.assignees"
-                  :key="index"
-                  class="shelf-item"
-                  @click="openSelectorWithTab(rule.rule)"
-                >
-                  <div class="item-tag" :class="rule.rule">{{ getRuleLabel(rule.rule) }}</div>
-                  <div class="item-val">{{ getRuleContentPreview(rule) }}</div>
-                  <el-button link :icon="Close" class="item-del" @click.stop="removeAssignee(index)" />
-                </div>
-              </div>
-            </div>
-          </FormSection>
-        </div>
-      </transition>
-
-      <FormSection title="卡片广播内容" theme-color="green">
+      <FormSection title="入群成员策略" theme-color="purple">
         <template #icon
-          ><el-icon><Select /></el-icon
+          ><el-icon><UserFilled /></el-icon
         ></template>
-        <div class="broadcast-matrix">
-          <div
-            v-for="opt in broadcastOptions"
-            :key="opt.value"
-            class="matrix-card"
-            :class="{ active: propertyForm.is_auto.includes(opt.value) }"
-            @click="toggleBroadcast(opt.value)"
-          >
-            <div class="matrix-check">
-              <el-icon><Check /></el-icon>
+        <div class="strategy-workbench">
+          <el-button type="primary" class="config-trigger-btn" @click="masterSelectorVisible = true">
+            <el-icon><Setting /></el-icon>
+            <span>配置入群成员逻辑</span>
+            <el-icon class="arr-icon"><ArrowRight /></el-icon>
+          </el-button>
+
+          <div class="strategy-shelf">
+            <div v-if="propertyForm.assignees.length === 0" class="shelf-empty">
+              <el-icon><User /></el-icon>
+              <span>未配置策略，仅包含创建人</span>
             </div>
-            <span>{{ opt.label }}</span>
+            <div
+              v-for="(rule, index) in propertyForm.assignees"
+              :key="index"
+              class="shelf-item"
+              @click="openSelectorWithTab(rule.rule)"
+            >
+              <div class="item-tag" :class="rule.rule">{{ getRuleLabel(rule.rule) }}</div>
+              <div class="item-val">{{ getRuleContentPreview(rule) }}</div>
+              <el-button link :icon="Close" class="item-del" @click.stop="removeAssignee(index)" />
+            </div>
           </div>
         </div>
       </FormSection>
-    </div>
+    </template>
+
+    <FormSection title="卡片广播内容" theme-color="green">
+      <template #icon
+        ><el-icon><Select /></el-icon
+      ></template>
+      <div class="broadcast-matrix">
+        <div
+          v-for="opt in broadcastOptions"
+          :key="opt.value"
+          class="matrix-card"
+          :class="{ active: propertyForm.is_auto.includes(opt.value) }"
+          @click="toggleBroadcast(opt.value)"
+        >
+          <div class="matrix-check">
+            <el-icon><Check /></el-icon>
+          </div>
+          <span>{{ opt.label }}</span>
+        </div>
+      </div>
+    </FormSection>
   </el-form>
 
   <!-- 💎 抽离后的成员策略选择中心 -->
@@ -331,10 +323,7 @@ defineExpose({ confirmFunc })
 .property-form-root {
   padding: 4px 12px;
   background: transparent;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  min-height: 100%;
 }
 
 .mode-switch-wrapper {
@@ -362,11 +351,6 @@ defineExpose({ confirmFunc })
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
     }
   }
-}
-
-.main-form-content {
-  flex: 1;
-  overflow-y: auto;
 }
 
 .hero-stage-input,
@@ -593,19 +577,6 @@ defineExpose({ confirmFunc })
       color: #1e3a8a;
     }
   }
-}
-
-.pane-slide-enter-active,
-.pane-slide-leave-active {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.pane-slide-enter-from {
-  opacity: 0;
-  transform: translateX(15px);
-}
-.pane-slide-leave-to {
-  opacity: 0;
-  transform: translateX(-15px);
 }
 
 .compact-form-item {
