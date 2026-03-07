@@ -119,26 +119,51 @@
       <!-- 手动填写群组 -->
       <template v-if="groupSource === 'manual'">
         <div class="manual-groups-container">
-          <div v-for="(group, idx) in manualChatGroups" :key="idx" class="manual-group-item">
-            <el-select v-model="group.channel" placeholder="渠道" class="channel-sel">
-              <el-option label="飞书卡片" :value="CHANNEL_TYPES.LARK_CARD" />
-              <el-option label="企业微信" :value="CHANNEL_TYPES.WECHAT" />
-              <el-option label="邮件" :value="CHANNEL_TYPES.EMAIL" />
-            </el-select>
-            <el-input v-model="group.name" placeholder="群组名称" class="group-name-input" />
-            <el-input v-model="group.chat_id" placeholder="群聊 ID" class="group-id-input" />
-            <el-button
-              v-if="manualChatGroups.length > 1"
-              link
-              :icon="Close"
-              class="remove-btn"
-              @click="removeManualGroup(idx)"
-            />
+          <div v-for="(group, idx) in manualChatGroups" :key="idx" class="manual-group-card">
+            <div class="card-header">
+              <div class="card-index">群组 {{ idx + 1 }}</div>
+              <button v-if="manualChatGroups.length > 1" class="card-remove-btn" @click="removeManualGroup(idx)">
+                <el-icon><Close /></el-icon>
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="form-field">
+                <label class="field-label">渠道类型</label>
+                <el-select v-model="group.channel" placeholder="选择渠道" class="field-input">
+                  <el-option label="飞书卡片" :value="CHANNEL_TYPES.LARK_CARD">
+                    <div class="option-with-icon">
+                      <span class="option-icon">📱</span>
+                      <span>飞书卡片</span>
+                    </div>
+                  </el-option>
+                  <el-option label="企业微信" :value="CHANNEL_TYPES.WECHAT">
+                    <div class="option-with-icon">
+                      <span class="option-icon">💬</span>
+                      <span>企业微信</span>
+                    </div>
+                  </el-option>
+                  <el-option label="邮件" :value="CHANNEL_TYPES.EMAIL">
+                    <div class="option-with-icon">
+                      <span class="option-icon">📧</span>
+                      <span>邮件</span>
+                    </div>
+                  </el-option>
+                </el-select>
+              </div>
+              <div class="form-field">
+                <label class="field-label">群组名称</label>
+                <el-input v-model="group.name" placeholder="请输入群组名称，如：运维告警群" class="field-input" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">群聊 ID</label>
+                <el-input v-model="group.chat_id" placeholder="请输入群聊 ID，如：oc_xxx" class="field-input" />
+              </div>
+            </div>
           </div>
         </div>
-        <el-button type="primary" plain size="small" class="add-group-btn" @click="addManualGroup">
+        <el-button type="primary" plain class="add-group-btn" @click="addManualGroup">
           <el-icon><CirclePlus /></el-icon>
-          <span>添加群组</span>
+          <span>添加新群组</span>
         </el-button>
       </template>
     </FormSection>
@@ -818,47 +843,144 @@ defineExpose({ confirmFunc })
 .manual-groups-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   margin-top: 12px;
 }
 
-.manual-group-item {
+.manual-group-card {
+  background: #fff;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+
+    .card-index {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .card-remove-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+
+      &:hover {
+        background: #ef4444;
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  .card-body {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    .field-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      &::before {
+        content: "•";
+        color: #3b82f6;
+        font-size: 16px;
+      }
+    }
+
+    .field-input {
+      :deep(.el-input__wrapper),
+      :deep(.el-select__wrapper) {
+        background: #f8fafc;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        transition: all 0.2s;
+        box-shadow: none !important;
+
+        &:hover {
+          border-color: #94a3b8;
+          background: #fff;
+        }
+
+        &.is-focus {
+          border-color: #3b82f6;
+          background: #fff;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+      }
+
+      :deep(.el-input__inner) {
+        font-size: 13px;
+      }
+    }
+  }
+}
+
+.option-with-icon {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  .channel-sel {
-    width: 90px;
-    flex-shrink: 0;
-  }
-  .group-name-input {
-    flex: 1;
-    min-width: 0;
-  }
-  .group-id-input {
-    flex: 1.5;
-    min-width: 0;
-  }
-  .remove-btn {
-    padding: 4px;
+
+  .option-icon {
     font-size: 16px;
-    color: #9ca3af;
-    flex-shrink: 0;
-    &:hover {
-      color: #ef4444;
-    }
   }
 }
 
 .add-group-btn {
   width: 100%;
   margin-top: 8px;
-  height: 36px;
-  border-radius: 6px;
-  font-weight: 500;
+  height: 44px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+  border: 2px dashed #cbd5e1;
+  background: #f8fafc;
+  color: #64748b;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+    color: #3b82f6;
+    border-style: solid;
+  }
+
+  .el-icon {
+    font-size: 18px;
+  }
 }
 
 .hero-stage-input,
