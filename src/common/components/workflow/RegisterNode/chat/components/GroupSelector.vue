@@ -179,11 +179,11 @@ onMounted(() => {
   }
 }
 .scroll-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
   }
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 /* 导航区 */

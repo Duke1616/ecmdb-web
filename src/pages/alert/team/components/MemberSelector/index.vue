@@ -4,7 +4,7 @@
     <div class="left-panel">
       <div class="panel-header">
         <h4 class="panel-title">选择成员</h4>
-        <span class="selection-count">已选择 {{ props.modelValue.length }} 人</span>
+        <span class="selection-count">已选择 {{ model.length }} 人</span>
       </div>
 
       <!-- 部门选择 -->
@@ -66,10 +66,10 @@
     <div class="right-panel">
       <div class="panel-header">
         <h4 class="panel-title">已选择成员</h4>
-        <span class="selection-count">已选择 {{ props.modelValue.length }} 人</span>
+        <span class="selection-count">已选择 {{ model.length }} 人</span>
       </div>
       <div class="selected-users-wrapper">
-        <div v-if="props.modelValue.length === 0" class="empty-state">
+        <div v-if="model.length === 0" class="empty-state">
           <el-icon class="empty-icon"><User /></el-icon>
           <p class="empty-text">暂无选择的成员</p>
           <p class="empty-hint">请在左侧选择团队成员</p>
@@ -104,14 +104,7 @@ import { usePagination } from "@@/composables/usePagination"
 import type { user } from "@/api/user/types/user"
 import type { department } from "@/api/department/types/department"
 
-interface Props {
-  modelValue: string[]
-}
-
-const props = defineProps<Props>()
-const emits = defineEmits<{
-  "update:modelValue": [value: string[]]
-}>()
+const model = defineModel<string[]>({ default: () => [] })
 
 // 部门选择相关
 const selectedDepartment = ref<number | null>(null)
@@ -179,9 +172,8 @@ const toggleUser = (user: user) => {
   } else {
     selectedUsers.value.push(user)
   }
-  // 同步到 modelValue
-  const usernames = selectedUsers.value.map((u) => u.username)
-  emits("update:modelValue", usernames)
+  // 同步到 model
+  model.value = selectedUsers.value.map((u) => u.username)
 }
 
 // 移除用户
@@ -189,8 +181,7 @@ const removeUser = (user: user) => {
   const index = selectedUsers.value.findIndex((u) => u.id === user.id)
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
-    const usernames = selectedUsers.value.map((u) => u.username)
-    emits("update:modelValue", usernames)
+    model.value = selectedUsers.value.map((u) => u.username)
   }
 }
 
@@ -287,9 +278,9 @@ const loadSelectedUsers = async (usernames: string[]) => {
   }
 }
 
-// 监听 modelValue 变化
+// 监听 model 变化
 watch(
-  () => props.modelValue,
+  () => model.value,
   (newValue) => {
     loadSelectedUsers(newValue)
   },
@@ -304,10 +295,10 @@ onMounted(async () => {
   // 加载所有用户
   await loadUsersByDepartment()
 
-  // 组件挂载完成后，如果 modelValue 有值，确保加载已选择的用户
+  // 组件挂载完成后，如果 model 有值，确保加载已选择的用户
   // 这样可以避免 watch 执行时机过早导致的问题
-  if (props.modelValue && props.modelValue.length > 0) {
-    await loadSelectedUsers(props.modelValue)
+  if (model.value && model.value.length > 0) {
+    await loadSelectedUsers(model.value)
   }
 })
 </script>

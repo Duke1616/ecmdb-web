@@ -108,3 +108,8 @@ export interface DeleteTeamResponse {
   /** 是否删除成功 */
   success: boolean
 }
+
+// 根据 ID 列表获取群组请求参数
+export interface GetChatGroupsByIDsReq {
+  ids: number[]
+}

@@ -2,139 +2,139 @@
   <Drawer
     v-model="visible"
     :title="`群聊管理 - ${team?.name || '未知团队'}`"
-    subtitle="管理当前团队绑定的通知群聊"
-    :header-icon="ChatDotRound"
-    size="550px"
+    :subtitle="`管理团队绑定的群组`"
+    :header-icon="Connection"
+    size="560px"
     @closed="handleClosed"
   >
-    <div class="chat-drawer-container">
-      <!-- 操作栏 -->
-      <div class="action-bar">
-        <h4 class="section-title">已绑定群聊 ({{ team?.chat_groups?.length || 0 }})</h4>
-        <el-button type="primary" :icon="Plus" @click="showAddForm = true" v-if="!showAddForm"> 绑定群聊 </el-button>
+    <div class="chat-manager" v-loading="loading">
+      <!-- 列表头部：统计与新增切换 -->
+      <div class="list-header">
+        <div class="stats">
+          已绑定 <span class="count">{{ chatGroups.length }}</span> 个群聊
+        </div>
+        <el-button v-if="!showAddForm" type="primary" size="small" :icon="Plus" plain @click="showAddForm = true">
+          新增绑定
+        </el-button>
       </div>
 
-      <!-- 绑定新群聊表单 -->
+      <!-- 新增窗格 -->
       <el-collapse-transition>
-        <div v-if="showAddForm" class="add-form-card">
-          <div class="form-header">
-            <span>新增群聊绑定</span>
-            <el-button link type="info" :icon="Close" @click="cancelAdd" />
+        <div v-if="showAddForm" class="add-form-panel">
+          <div class="panel-title">
+            <span>新增群聊配置</span>
+            <el-button link :icon="Close" @click="cancelAdd" />
           </div>
-          <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="custom-form">
+          <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" size="default">
             <el-form-item label="群聊名称" prop="name">
-              <el-input v-model="form.name" placeholder="请输入群聊名称" />
+              <el-input v-model="form.name" placeholder="建议包含环境或功能描述" />
             </el-form-item>
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item label="通知渠道" prop="channel">
-                  <el-select v-model="form.channel" placeholder="请选择渠道" style="width: 100%">
-                    <el-option :label="`飞书卡片 (${CHANNEL_TYPES.LARK_CARD})`" :value="CHANNEL_TYPES.LARK_CARD">
-                      <div class="option-item">
-                        <el-icon class="feishu-text"><Connection /></el-icon>
-                        <span>飞书卡片</span>
-                      </div>
-                    </el-option>
-                    <el-option :label="`企业微信 (${CHANNEL_TYPES.WECHAT})`" :value="CHANNEL_TYPES.WECHAT">
-                      <div class="option-item">
-                        <el-icon class="wecom-text"><Connection /></el-icon>
-                        <span>企业微信</span>
-                      </div>
-                    </el-option>
-                    <el-option :label="`邮件 (${CHANNEL_TYPES.EMAIL})`" :value="CHANNEL_TYPES.EMAIL">
-                      <div class="option-item">
-                        <el-icon class="dingtalk-text"><Connection /></el-icon>
-                        <span>邮件</span>
-                      </div>
-                    </el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="群聊 ID / Webhook" prop="chat_id">
-                  <el-input v-model="form.chat_id" placeholder="群聊 ID 或 Webhook" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-            <div class="form-actions">
-              <el-button @click="cancelAdd">取消</el-button>
-              <el-button type="primary" :loading="submitting" @click="submitAdd">确认绑定</el-button>
-            </div>
+            <el-form-item label="通知渠道" prop="channel">
+              <el-select v-model="form.channel" placeholder="请选择渠道" style="width: 100%">
+                <el-option v-for="(cfg, key) in CHANNEL_CONFIG" :key="key" :label="cfg.label" :value="key">
+                  <div class="option-item">
+                    <el-icon :style="{ color: cfg.color }"><component :is="cfg.icon" /></el-icon>
+                    <span>{{ cfg.label }}</span>
+                  </div>
+                </el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="群聊 ID" prop="chat_id">
+              <el-input v-model="form.chat_id" placeholder="群聊 ID 或 Webhook 链接" />
+            </el-form-item>
+            <el-form-item label-width="0">
+              <div class="form-footer">
+                <el-button @click="cancelAdd">取消</el-button>
+                <el-button type="primary" :loading="committing" @click="submitAdd">确认绑定</el-button>
+              </div>
+            </el-form-item>
           </el-form>
         </div>
       </el-collapse-transition>
 
       <!-- 群聊列表 -->
-      <div class="chat-list" v-if="team?.chat_groups && team.chat_groups.length > 0">
-        <div v-for="group in team.chat_groups" :key="group.id" class="chat-item">
-          <div class="chat-item-main">
-            <div :class="['channel-icon', group.channel]">
-              <el-icon v-if="group.channel === CHANNEL_TYPES.LARK_CARD"><Connection /></el-icon>
-              <el-icon v-else-if="group.channel === CHANNEL_TYPES.EMAIL"><Connection /></el-icon>
-              <el-icon v-else><Connection /></el-icon>
+      <div class="chat-list" v-if="chatGroups.length > 0">
+        <div v-for="group in chatGroups" :key="group.id" class="chat-item">
+          <div class="item-main">
+            <div class="channel-icon" :style="{ color: getChannelRes(group.channel).color }">
+              <el-icon><component :is="getChannelRes(group.channel).icon" /></el-icon>
             </div>
-            <div class="chat-info">
-              <div class="chat-name">{{ group.name }}</div>
-              <div class="chat-id-row">
-                <el-tag size="small" :type="getChannelTagType(group.channel)" effect="plain" class="channel-tag">
-                  {{ group.channel.toUpperCase() }}
+            <div class="item-body">
+              <div class="row-top">
+                <span class="name">{{ group.name }}</span>
+                <el-tag size="small" :type="getChannelRes(group.channel).type" effect="light">
+                  {{ getChannelRes(group.channel).label }}
                 </el-tag>
-                <span class="chat-id-text">{{ group.chat_id }}</span>
+              </div>
+              <div class="row-bottom">
+                <el-icon><Link /></el-icon>
+                <span class="id-text" :title="group.chat_id">{{ group.chat_id }}</span>
               </div>
             </div>
           </div>
-          <div class="chat-item-actions">
-            <el-tooltip content="取消绑定" placement="top">
-              <el-button type="danger" link :icon="Delete" @click="handleUnbind(group)" />
-            </el-tooltip>
+          <div class="item-ops">
+            <el-popconfirm title="确定解除此群聊绑定吗？" @confirm="handleUnbind(group)">
+              <template #reference>
+                <el-button type="danger" link :icon="Delete">删除</el-button>
+              </template>
+            </el-popconfirm>
           </div>
         </div>
       </div>
 
       <!-- 空状态 -->
-      <el-empty v-else description="暂未绑定任何群聊" :image-size="100">
-        <template #extra v-if="!showAddForm">
-          <el-button type="primary" plain @click="showAddForm = true">立即绑定一个</el-button>
-        </template>
-      </el-empty>
+      <el-empty v-else-if="!loading" description="暂未绑定任何群聊" :image-size="100" />
     </div>
 
-    <!-- 底部按钮覆盖默认 footer -->
     <template #footer>
-      <el-button @click="visible = false">关闭窗口</el-button>
+      <el-button @click="visible = false">关闭</el-button>
     </template>
   </Drawer>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from "vue"
-import { ChatDotRound, Plus, Delete, Close, Connection } from "@element-plus/icons-vue"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ref, reactive, watch } from "vue"
+import { Plus, Delete, Close, Cellphone, Message, ChatRound, Link, Connection } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
 import type { FormInstance, FormRules } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
 import { Team, ChatGroup, BindChatGroupReq } from "@/api/alert/team/types"
-import { bindChatGroupApi, unbindChatGroupApi } from "@/api/alert/team"
+import { bindChatGroupApi, unbindChatGroupApi, getChatGroupsByTeamIdApi } from "@/api/alert/team"
 import { CHANNEL_TYPES } from "@/api/alert/template/types"
 
-interface Props {
-  modelValue: boolean
-  team: Team | null
+const props = defineProps<{ team: Team | null }>()
+const emits = defineEmits<{ refresh: [] }>()
+const visible = defineModel<boolean>({ default: false })
+
+// NOTE: 该组件为对话框/抽屉类 UI 组件，需要双向同步可见性状态
+const CHANNEL_CONFIG: Record<
+  string,
+  { label: string; icon: any; type: "primary" | "success" | "info" | "warning" | "danger" | undefined; color: string }
+> = {
+  [CHANNEL_TYPES.LARK_CARD]: {
+    label: "飞书卡片",
+    icon: Cellphone,
+    type: "primary",
+    color: "#409eff"
+  },
+  [CHANNEL_TYPES.WECHAT]: {
+    label: "企业微信",
+    icon: ChatRound,
+    type: "success",
+    color: "#67c23a"
+  },
+  [CHANNEL_TYPES.EMAIL]: {
+    label: "邮件通知",
+    icon: Message,
+    type: "info",
+    color: "#909399"
+  }
 }
 
-const props = defineProps<Props>()
-const emits = defineEmits<{
-  "update:modelValue": [value: boolean]
-  refresh: []
-}>()
-
-// NOTE: 该组件为纯 UI 控制组件，状态需由父组件统一管理
-const visible = computed({
-  get: () => props.modelValue,
-  set: (val) => emits("update:modelValue", val)
-})
-
+const chatGroups = ref<ChatGroup[]>([])
+const loading = ref(false)
 const showAddForm = ref(false)
-const submitting = ref(false)
+const committing = ref(false)
 const formRef = ref<FormInstance>()
 
 const form = reactive<BindChatGroupReq>({
@@ -147,126 +147,152 @@ const form = reactive<BindChatGroupReq>({
 
 const rules = reactive<FormRules>({
   name: [{ required: true, message: "请输入群聊名称", trigger: "blur" }],
-  channel: [{ required: true, message: "请选择通知渠道", trigger: "change" }],
-  chat_id: [{ required: true, message: "请输入群聊 ID 或 Webhook", trigger: "blur" }]
+  channel: [{ required: true, message: "请选择渠道", trigger: "change" }],
+  chat_id: [{ required: true, message: "请输入群聊 ID", trigger: "blur" }]
 })
 
-const getChannelTagType = (channel: string): "primary" | "success" | "warning" | "info" | "danger" => {
-  switch (channel) {
-    case CHANNEL_TYPES.LARK_CARD:
-      return "primary"
-    case CHANNEL_TYPES.EMAIL:
-      return "info"
-    case CHANNEL_TYPES.WECHAT:
-      return "success"
-    default:
-      return "info"
+/**
+ * 获取渠道相关配置
+ * @param channel 渠道类型
+ */
+const getChannelRes = (channel: string) => {
+  return CHANNEL_CONFIG[channel] || { label: channel, icon: Connection, type: undefined, color: "#909399" }
+}
+
+/**
+ * 获取群聊列表
+ */
+const fetchChatGroups = async () => {
+  if (!props.team?.id) return
+  loading.value = true
+  try {
+    const { data } = await getChatGroupsByTeamIdApi(props.team.id)
+    chatGroups.value = data || []
+  } catch (e) {
+    console.error("[ChatGroupDrawer] fetch error:", e)
+  } finally {
+    loading.value = false
   }
 }
 
+/**
+ * 监听可见性和团队 ID 变化
+ */
+watch(
+  [visible, () => props.team?.id],
+  ([v, id]) => {
+    if (v && id) fetchChatGroups()
+  },
+  { immediate: true }
+)
+
+/**
+ * 取消新增
+ */
 const cancelAdd = () => {
   showAddForm.value = false
-  resetForm()
+  formRef.value?.resetFields()
 }
 
-const resetForm = () => {
-  if (formRef.value) formRef.value.resetFields()
-  form.name = ""
-  form.chat_id = ""
-  form.channel = CHANNEL_TYPES.LARK_CARD
-}
-
+/**
+ * 提交新增绑定
+ */
 const submitAdd = async () => {
   if (!formRef.value || !props.team) return
-
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      submitting.value = true
-      try {
-        await bindChatGroupApi({
-          ...form,
-          team_id: props.team!.id
-        })
-        ElMessage.success("群聊绑定成功")
-        showAddForm.value = false
-        resetForm()
-        emits("refresh")
-      } finally {
-        submitting.value = false
-      }
-    }
-  })
+  const valid = await formRef.value.validate()
+  if (!valid) return
+  committing.value = true
+  try {
+    await bindChatGroupApi({ ...form, team_id: props.team.id })
+    ElMessage.success("绑定成功")
+    showAddForm.value = false
+    await fetchChatGroups()
+    emits("refresh")
+  } catch (e) {
+    // 错误已由拦截器处理
+  } finally {
+    committing.value = false
+  }
 }
 
-const handleUnbind = (group: ChatGroup) => {
-  ElMessageBox.confirm(`确定要取消绑定群聊 "${group.name}" 吗？`, "风险提示", {
-    confirmButtonText: "确定取消",
-    cancelButtonText: "手滑了",
-    type: "warning",
-    confirmButtonClass: "el-button--danger"
-  })
-    .then(async () => {
-      try {
-        if (group.id) {
-          await unbindChatGroupApi(group.id)
-          ElMessage.success("解绑成功")
-          emits("refresh")
-        }
-      } catch (error) {
-        ElMessage.error("解绑操作失败")
-      }
-    })
-    .catch(() => {})
+/**
+ * 解绑群聊
+ * @param group 群聊信息
+ */
+const handleUnbind = async (group: ChatGroup) => {
+  if (!group.id) return
+  try {
+    await unbindChatGroupApi(group.id)
+    ElMessage.success("解绑成功")
+    await fetchChatGroups()
+    emits("refresh")
+  } catch (e) {
+    ElMessage.error("操作失败")
+  }
 }
 
+/**
+ * 关闭后的回调
+ */
 const handleClosed = () => {
   showAddForm.value = false
-  resetForm()
+  formRef.value?.resetFields()
 }
 </script>
 
 <style lang="scss" scoped>
-.chat-drawer-container {
-  padding: 24px;
-  height: 100%;
+.chat-manager {
+  padding: 16px;
 }
 
-.section-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.action-bar {
+.list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  .stats {
+    font-size: 13px;
+    color: #909399;
+    .count {
+      font-weight: 600;
+      color: #303133;
+      margin: 0 2px;
+    }
+  }
 }
 
-.add-form-card {
-  background: #fdf2f2; // 设计系统背景色
-  border: 1px solid #fecaca;
-  border-radius: 12px;
+.add-form-panel {
+  background: #fcfcfc;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
   padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
 
-  .form-header {
+  .panel-title {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
     font-weight: 600;
-    color: #7f1d1d; // 设计系统文字颜色
+    color: #303133;
   }
 
-  .form-actions {
+  .form-footer {
     display: flex;
     justify-content: flex-end;
     gap: 12px;
-    margin-top: 12px;
+    width: 100%;
+    margin-top: 8px;
+  }
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  .el-icon {
+    font-size: 16px;
   }
 }
 
@@ -280,119 +306,73 @@ const handleClosed = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  padding: 12px 16px;
   background: #fff;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  cursor: default;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  transition: all 0.2s;
 
   &:hover {
-    border-color: #dc2626; // 设计系统主色
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.1);
-    transform: translateY(-2px);
+    border-color: #409eff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   }
 
-  .chat-item-main {
+  .item-main {
     display: flex;
     align-items: center;
-    gap: 16px;
-  }
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
 
-  .channel-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-
-    &.LARK_CARD {
-      background: rgba(59, 130, 246, 0.1);
-      color: #2563eb;
-    }
-    &.EMAIL {
-      background: rgba(107, 114, 128, 0.1);
-      color: #4b5563;
-    }
-    &.WECHAT {
-      background: rgba(16, 185, 129, 0.1);
-      color: #059669;
-    }
-  }
-
-  .chat-info {
-    .chat-name {
-      font-weight: 600;
-      color: #111827;
-      font-size: 14px;
-      margin-bottom: 4px;
-    }
-
-    .chat-id-row {
+    .channel-icon {
+      font-size: 20px;
+      width: 40px;
+      height: 40px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      background: #f5f7fa;
+      border-radius: 6px;
+      flex-shrink: 0;
     }
 
-    .channel-tag {
-      font-weight: 700;
-      font-family: "Fira Code", monospace;
-      font-size: 10px;
-    }
-
-    .chat-id-text {
-      font-size: 12px;
-      color: #6b7280;
-      font-family: "Fira Code", monospace;
-      max-width: 180px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .item-body {
+      flex: 1;
+      min-width: 0;
+      .row-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+        .name {
+          font-size: 14px;
+          font-weight: 600;
+          color: #303133;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+      .row-bottom {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #909399;
+        .id-text {
+          font-family:
+            ui-monospace, "Cascadia Code", "Source Code Pro", Menlo, Monaco, Consolas, "Courier New", monospace;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
     }
   }
 
-  .chat-item-actions {
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  &:hover .chat-item-actions {
-    opacity: 1;
-  }
-}
-
-.option-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.feishu-text {
-  color: #2563eb;
-}
-.dingtalk-text {
-  color: #4b5563;
-}
-.wecom-text {
-  color: #059669;
-}
-
-:deep(.custom-form) {
-  .el-form-item__label {
-    padding-bottom: 4px;
-    font-weight: 500;
-    color: #4b5563;
-  }
-
-  .el-input__wrapper {
-    box-shadow: 0 0 0 1px #e5e7eb inset;
-    &:hover,
-    &.is-focus {
-      box-shadow: 0 0 0 1px #dc2626 inset;
-    }
+  .item-ops {
+    margin-left: 16px;
+    flex-shrink: 0;
   }
 }
 </style>

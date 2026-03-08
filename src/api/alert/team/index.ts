@@ -11,7 +11,9 @@ import type {
   Team,
   DeleteTeamResponse,
   BindChatGroupReq,
-  UpdateChatGroupReq
+  UpdateChatGroupReq,
+  GetChatGroupsByIDsReq,
+  ChatGroup
 } from "./types"
 
 /**
@@ -78,5 +80,24 @@ export const updateChatGroupApi = (data: UpdateChatGroupReq) => {
 export const unbindChatGroupApi = (id: number) => {
   return instance.delete<any>({
     url: `${API_SERVICE.ALERT}/team/chat/unbind/${id}`
+  })
+}
+
+/**
+ * 根据团队 ID 获取群组列表
+ */
+export const getChatGroupsByTeamIdApi = (teamId: number) => {
+  return instance.get<ChatGroup[]>({
+    url: `${API_SERVICE.ALERT}/team/chat/list/${teamId}`
+  })
+}
+
+/**
+ * 批量根据 ID 获取群组列表
+ */
+export const getChatGroupsByIdsApi = (data: GetChatGroupsByIDsReq) => {
+  return instance.post<ChatGroup[]>({
+    url: `${API_SERVICE.ALERT}/team/chat/list/ids`,
+    data
   })
 }

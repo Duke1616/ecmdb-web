@@ -103,11 +103,9 @@ import { useUsers } from "@@/composables/useUsers"
 import { useUserStore } from "@/pinia/stores/user"
 import type { user } from "@/api/user/types/user"
 
+const model = defineModel<string | string[]>({ default: "" })
+
 const props = defineProps({
-  modelValue: {
-    type: [String, Array],
-    default: ""
-  },
   placeholder: {
     type: String,
     default: "选择用户"
@@ -126,8 +124,6 @@ const props = defineProps({
     validator: (value: string) => ["fancy", "simple"].includes(value)
   }
 })
-
-const emits = defineEmits(["update:modelValue"])
 
 // 获取用户 store
 const userStore = useUserStore()
@@ -215,7 +211,7 @@ const isUserSelected = (user: user) => {
   if (props.multiple) {
     return selectedUsers.value.some((u) => u.id === user.id)
   } else {
-    return props.modelValue === user.username
+    return model.value === user.username
   }
 }
 
@@ -224,8 +220,7 @@ const removeUser = (user: user) => {
   const index = selectedUsers.value.findIndex((u) => u.id === user.id)
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
-    const usernames = selectedUsers.value.map((u) => u.username)
-    emits("update:modelValue", usernames)
+    model.value = selectedUsers.value.map((u) => u.username)
   }
 }
 
@@ -240,12 +235,11 @@ const handleUserSelect = (user: user) => {
       // 如果未选中，则添加到选中列表
       selectedUsers.value.push(user)
     }
-    const usernames = selectedUsers.value.map((u) => u.username)
-    emits("update:modelValue", usernames)
+    model.value = selectedUsers.value.map((u) => u.username)
   } else {
     // 单选模式
     selectUser(user, (selectedUser) => {
-      emits("update:modelValue", selectedUser.username)
+      model.value = selectedUser.username
     })
   }
 }
@@ -262,12 +256,12 @@ const setDefaultToCurrentUser = async () => {
     }
   }
 
-  if (props.defaultToCurrentUser && (!props.modelValue || props.modelValue === "") && userStore.username) {
+  if (props.defaultToCurrentUser && (!model.value || model.value === "") && userStore.username) {
     try {
       const currentUser = await getUserByUsername(userStore.username)
       if (currentUser) {
         selectedUser.value = currentUser
-        emits("update:modelValue", currentUser.username)
+        model.value = currentUser.username
       }
     } catch (error) {
       console.warn("Failed to set default user:", error)
@@ -276,7 +270,7 @@ const setDefaultToCurrentUser = async () => {
 }
 
 watch(
-  () => props.modelValue,
+  () => model.value,
   async (newValue) => {
     if (props.multiple) {
       // 多选模式
@@ -332,7 +326,7 @@ onMounted(async () => {
   }
 
   // 设置默认用户
-  if (props.defaultToCurrentUser && (!props.modelValue || props.modelValue === "")) {
+  if (props.defaultToCurrentUser && (!model.value || model.value === "")) {
     await setDefaultToCurrentUser()
   }
 
