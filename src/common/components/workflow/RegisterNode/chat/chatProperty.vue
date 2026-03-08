@@ -66,11 +66,17 @@
         ><el-icon><CirclePlus /></el-icon
       ></template>
       <div class="settings-stack">
-        <el-form-item label="群组名称规则" class="form-item">
-          <el-input
+        <el-form-item class="form-item" prop="create.name">
+          <VariableInput
             v-model="propertyForm.create.name"
-            placeholder="支持变量 e.g. {{ticket_id}}-故障群"
-            class="modern-input"
+            label="群组名称规则"
+            placeholder="默认：【ECMDB】- {{template}}"
+            :variables="[
+              { key: 'ticket_id', label: '工单ID' },
+              { key: 'template', label: '模板名' },
+              { key: 'creator', label: '发起人' },
+              { key: 'field.xxx', label: '字段' }
+            ]"
           />
         </el-form-item>
         <el-form-item label="通知渠道" class="form-item">
@@ -175,6 +181,7 @@ import {
 import { FormSection } from "../../PropertySetting"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import GroupSelector from "./components/GroupSelector.vue"
+import VariableInput from "./components/VariableInput.vue"
 import { listTeamsApi } from "@/api/alert/team"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/strategies"
@@ -226,7 +233,8 @@ const ruleToTabMap: Record<string, string> = {
 }
 
 const formRules = computed<FormRules>(() => ({
-  name: [{ required: true, message: "请输入节点名称", trigger: "blur" }]
+  name: [{ required: true, message: "请输入节点名称", trigger: "blur" }],
+  "create.name": [{ validator: validateRuleName, trigger: "change" }]
 }))
 
 onMounted(async () => {
@@ -257,6 +265,32 @@ onMounted(async () => {
 })
 
 const selectMode = (m: "existing" | "create") => (propertyForm.mode = m)
+
+// ── 校验逻辑 ────────────────────────────────────────────────────────────
+const validateRuleName = (rule: any, value: string, callback: any) => {
+  if (!value) return callback()
+
+  // 1. 检查大括号闭合
+  const openBraces = (value.match(/\{\{/g) || []).length
+  const closeBraces = (value.match(/\}\}/g) || []).length
+  if (openBraces !== closeBraces) {
+    return callback(new Error("变量语法错误：大括号未成对闭合"))
+  }
+
+  // 2. 检查非法变量（排除 field.xxx 这种动态的情况）
+  const allVars = value.match(/\{\{(.+?)\}\}/g) || []
+  const allowedBaseVars = ["ticket_id", "template", "creator"]
+
+  for (const v of allVars) {
+    const inner = v.slice(2, -2).trim()
+    if (!allowedBaseVars.includes(inner) && !inner.startsWith("field.")) {
+      return callback(new Error(`不支持的变量: {{${inner}}}`))
+    }
+  }
+
+  callback()
+}
+
 const removeAssignee = (i: number) => propertyForm.assignees.splice(i, 1)
 
 const openSelectorWithTab = (ruleType: string) => {
