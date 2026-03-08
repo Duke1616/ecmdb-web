@@ -78,20 +78,7 @@
 import { ref, computed, onMounted } from "vue"
 import { Check, Menu as MenuIcon } from "@element-plus/icons-vue"
 import { CHANNEL_TYPES } from "@/api/alert/template/types"
-
-interface ChatGroup {
-  id?: number
-  team_id?: number
-  channel: string
-  chat_id: string
-  name: string
-}
-
-interface Team {
-  id: number
-  name: string
-  chat_groups: ChatGroup[]
-}
+import type { Team } from "@/api/alert/team/types"
 
 const props = defineProps<{ teams: Team[] }>()
 const modelValue = defineModel<number[]>({ default: () => [] })

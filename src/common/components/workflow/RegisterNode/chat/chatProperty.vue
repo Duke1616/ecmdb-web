@@ -112,7 +112,7 @@
         <div class="strategy-shelf scroll-slim" v-if="propertyForm.assignees.length > 0">
           <div
             v-for="(rule, index) in propertyForm.assignees"
-            :key="index"
+            :key="`${rule.rule}-${rule.values?.join(',')}`"
             class="shelf-item"
             @click="openSelectorWithTab(rule.rule)"
           >
@@ -131,7 +131,7 @@
       ></template>
       <div class="switch-stack">
         <div
-          v-for="opt in broadcastOptions"
+          v-for="opt in BROADCAST_OPTIONS"
           :key="opt.value"
           class="compact-switch-card"
           :class="{ active: propertyForm.is_auto.includes(opt.value) }"
@@ -183,8 +183,10 @@ import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import GroupSelector from "./components/GroupSelector.vue"
 import VariableInput from "./components/VariableInput.vue"
 import { listTeamsApi } from "@/api/alert/team"
+import type { Team } from "@/api/alert/team/types"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/strategies"
+import { RULE_TO_TAB_MAP, RULE_SHORT_LABEL_MAP, BROADCAST_OPTIONS, validateChatGroupNameRule } from "./chat-utils"
 import { CHANNEL_TYPES } from "@/api/alert/template/types"
 import type { Assignee } from "@/common/components/ReceiverSelector/composables/useAssignees"
 
@@ -197,6 +199,7 @@ const props = defineProps({
 
 const emits = defineEmits(["closed"])
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
+
 interface ChatPropertyForm {
   name: string
   mode: "existing" | "create"
@@ -221,32 +224,24 @@ const propertyForm = reactive<ChatPropertyForm>({
   is_auto: ["auto_task"]
 })
 
-const broadcastOptions = [
-  { label: "自动化任务返回信息", value: "auto_task" },
-  { label: "工单提交基本信息", value: "ticket_data" },
-  { label: "节点表单提交信息", value: "user_input" }
-]
-
 const formRef = ref<FormInstance | null>(null)
-const teams = ref<any[]>([])
+const teams = ref<Team[]>([])
 const entitiesDisplayNames = reactive<Record<string, string>>({})
 const masterSelectorVisible = ref(false)
 const selectedRuleTab = ref("")
 
-const ruleToTabMap: Record<string, string> = {
-  appoint: "user",
-  founder: "system",
-  template: "template",
-  leaders: "system",
-  main_leader: "system",
-  on_call: "on_call",
-  team: "team",
-  department: "department"
-}
-
 const formRules = computed<FormRules>(() => ({
   name: [{ required: true, message: "请输入节点名称", trigger: "blur" }],
-  "create.name": [{ validator: validateRuleName, trigger: "change" }]
+  "create.name": [
+    {
+      validator: (rule: any, value: string, callback: any) => {
+        const error = validateChatGroupNameRule(value)
+        if (error) return callback(new Error(error))
+        callback()
+      },
+      trigger: "change"
+    }
+  ]
 }))
 
 onMounted(async () => {
@@ -278,35 +273,13 @@ onMounted(async () => {
 
 const selectMode = (m: "existing" | "create") => (propertyForm.mode = m)
 
-// ── 校验逻辑 ────────────────────────────────────────────────────────────
-const validateRuleName = (rule: any, value: string, callback: any) => {
-  if (!value) return callback()
-
-  // 1. 检查大括号闭合
-  const openBraces = (value.match(/\{\{/g) || []).length
-  const closeBraces = (value.match(/\}\}/g) || []).length
-  if (openBraces !== closeBraces) {
-    return callback(new Error("变量语法错误：大括号未成对闭合"))
-  }
-
-  // 2. 检查非法变量（排除 field.xxx 这种动态的情况）
-  const allVars = value.match(/\{\{(.+?)\}\}/g) || []
-  const allowedBaseVars = ["ticket_id", "template", "creator"]
-
-  for (const v of allVars) {
-    const inner = v.slice(2, -2).trim()
-    if (!allowedBaseVars.includes(inner) && !inner.startsWith("field.")) {
-      return callback(new Error(`不支持的变量: {{${inner}}}`))
-    }
-  }
-
-  callback()
-}
+// --- 接收内容显示优化 ---
+const getRuleShortLabel = (r: string) => RULE_SHORT_LABEL_MAP[r] || r.slice(0, 2)
 
 const removeAssignee = (i: number) => propertyForm.assignees.splice(i, 1)
 
 const openSelectorWithTab = (ruleType: string) => {
-  selectedRuleTab.value = ruleToTabMap[ruleType] || ""
+  selectedRuleTab.value = RULE_TO_TAB_MAP[ruleType] || ""
   masterSelectorVisible.value = true
 }
 
@@ -327,21 +300,6 @@ const resolveNamesForAssignees = async (assignees: any[]) => {
       Object.assign(entitiesDisplayNames, names)
     }
   }
-}
-
-// NOTE: 获取准确的短标签，对齐配置成员（ReceiverSelector）中的分类语义
-const getRuleShortLabel = (r: string) => {
-  const map: Record<string, string> = {
-    appoint: "人员",
-    founder: "创建人",
-    template: "模板",
-    leaders: "负责人",
-    main_leader: "分管",
-    on_call: "值班",
-    team: "团队",
-    department: "部门"
-  }
-  return map[r] || r.slice(0, 2)
 }
 
 const getRuleContentPreview = (a: any) => {
@@ -366,6 +324,7 @@ const confirmFunc = () => {
     }
   })
 }
+
 defineExpose({ confirmFunc })
 </script>
 

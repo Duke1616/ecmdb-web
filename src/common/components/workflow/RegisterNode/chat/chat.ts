@@ -1,6 +1,22 @@
+export interface IChatNodeProperties {
+  name?: string
+  mode?: "existing" | "create"
+  chat_group_ids?: number[]
+  create?: {
+    name: string
+    channel: string
+  }
+  assignees?: any[]
+  is_auto?: string[]
+  isDebug?: boolean
+}
+
 export default function registerChat(lf: any) {
   lf.register("chat", ({ PolygonNode, PolygonNodeModel, h }: any) => {
     class Node extends PolygonNode {
+      /**
+       * 渲染节点图标 (SVG Path)
+       */
       getIconShape() {
         const { model } = this.props
         const { width, height } = model
@@ -27,10 +43,17 @@ export default function registerChat(lf: any) {
 
       getShape() {
         const { model } = this.props
-        const { width, height, x, y, points, properties } = model
+        const { width, height, x, y, points, properties } = model as {
+          width: number
+          height: number
+          x: number
+          y: number
+          points: number[][]
+          properties: IChatNodeProperties
+        }
         const { fill, fillOpacity, strokeWidth, stroke, strokeOpacity } = model.getNodeStyle()
         const transform = `matrix(1 0 0 1 ${x - width / 2} ${y - height / 2})`
-        const pointsPath = points.map((point: any[]) => point.join(",")).join(" ")
+        const pointsPath = points.map((point: number[]) => point.join(",")).join(" ")
         const children = [
           h("polygon", {
             points: pointsPath,
@@ -103,6 +126,9 @@ export default function registerChat(lf: any) {
         super.initNodeData(data)
       }
 
+      /**
+       * 设置菱形外观
+       */
       setAttributes() {
         const length = 40
         this.points = [
