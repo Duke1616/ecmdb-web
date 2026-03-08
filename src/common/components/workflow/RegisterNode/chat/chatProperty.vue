@@ -186,6 +186,7 @@ import { listTeamsApi } from "@/api/alert/team"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/strategies"
 import { CHANNEL_TYPES } from "@/api/alert/template/types"
+import type { Assignee } from "@/common/components/ReceiverSelector/composables/useAssignees"
 
 const props = defineProps({
   nodeData: Object,
@@ -196,16 +197,27 @@ const props = defineProps({
 
 const emits = defineEmits(["closed"])
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
+interface ChatPropertyForm {
+  name: string
+  mode: "existing" | "create"
+  chat_group_ids: number[]
+  create: {
+    name: string
+    channel: string
+  }
+  assignees: Assignee[]
+  is_auto: string[]
+}
 
-const propertyForm = reactive({
+const propertyForm = reactive<ChatPropertyForm>({
   name: "",
-  mode: "existing" as "existing" | "create",
-  chat_group_ids: [] as number[],
+  mode: "existing",
+  chat_group_ids: [],
   create: {
     name: "",
     channel: CHANNEL_TYPES.LARK_CARD
   },
-  assignees: [] as any[],
+  assignees: [],
   is_auto: ["auto_task"]
 })
 

@@ -36,7 +36,8 @@ const emits = defineEmits<{
 
 const systemRules = [
   { label: "工单创建人", value: "founder", desc: "提交工单并启动流程的用户" },
-  { label: "部门负责人", value: "leaders", desc: "创建人所属部门的管理人员" }
+  { label: "部门负责人", value: "leaders", desc: "创建人所属部门的管理人员" },
+  { label: "分管领导", value: "main_leader", desc: "创建人所属部门的分管管理人员" }
 ]
 
 const isRuleActive = (r: string) => props.activeRules.includes(r)
