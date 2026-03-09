@@ -156,6 +156,7 @@
     :initial-tab="selectedRuleTab"
     :template-rules="templateRules"
     :get-template-field-options="getTemplateFieldOptions"
+    :username-to-display-name="entitiesDisplayNames"
     :workflow-id="props.id"
     @confirm="handleMasterSelectorConfirm"
     @update-user-names="handleUpdateUserNames"
