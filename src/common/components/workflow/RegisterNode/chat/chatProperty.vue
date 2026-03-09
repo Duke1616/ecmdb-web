@@ -156,7 +156,7 @@
     :initial-tab="selectedRuleTab"
     :template-rules="templateRules"
     :get-template-field-options="getTemplateFieldOptions"
-    :username-to-display-name="entitiesDisplayNames"
+    :workflow-id="props.id"
     @confirm="handleMasterSelectorConfirm"
     @update-user-names="handleUpdateUserNames"
   />
@@ -268,7 +268,11 @@ onMounted(async () => {
     console.error(e)
   }
 
-  if (props.id !== undefined) await fetchTemplates(props.id)
+  // NOTE: 只有当确实存在 'template' 类型的策略时才提前加载，否则等选择器打开时再加载
+  const hasTemplateRule = propertyForm.assignees.some((a) => a.rule === "template")
+  if (props.id !== undefined && hasTemplateRule) {
+    await fetchTemplates(props.id)
+  }
 })
 
 const selectMode = (m: "existing" | "create") => (propertyForm.mode = m)

@@ -6,7 +6,7 @@ export interface createOrUpdateWorkflowReq {
   owner: string
   is_notify: boolean
   notify_method: number
-  flow_data: any
+  flow_data: LogicFlow
 }
 
 export interface listWorkflowReq {
@@ -18,6 +18,11 @@ export interface listWorkflowReq {
 
 export interface createLFReq {}
 
+export interface LogicFlow {
+  edges?: any[]
+  nodes?: any[]
+}
+
 export interface workflow {
   id: number
   template_id: number
@@ -25,7 +30,9 @@ export interface workflow {
   desc: string
   owner: string
   icon: string
-  flow_data: any
+  is_notify: boolean
+  notify_method: number
+  flow_data?: LogicFlow
 }
 export interface workflows {
   workflows: workflow[]

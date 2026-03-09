@@ -246,26 +246,9 @@ const handleUserSelect = (user: user) => {
 
 // 设置默认用户为当前登录用户
 const setDefaultToCurrentUser = async () => {
-  // 如果用户信息还没有加载，先尝试获取
-  if (!userStore.username) {
-    try {
-      await userStore.getInfo()
-    } catch (error) {
-      console.warn("Failed to get user info:", error)
-      return
-    }
-  }
-
-  if (props.defaultToCurrentUser && (!model.value || model.value === "") && userStore.username) {
-    try {
-      const currentUser = await getUserByUsername(userStore.username)
-      if (currentUser) {
-        selectedUser.value = currentUser
-        model.value = currentUser.username
-      }
-    } catch (error) {
-      console.warn("Failed to set default user:", error)
-    }
+  await userStore.getInfo()
+  if (userStore.username) {
+    model.value = userStore.username
   }
 }
 
@@ -297,7 +280,6 @@ watch(
         await getUserByUsername(newValue)
       } else {
         selectedUser.value = null
-        // 如果没有值且启用了默认当前用户，则设置默认值
         if (props.defaultToCurrentUser) {
           await setDefaultToCurrentUser()
         }
@@ -316,20 +298,6 @@ const handleClickOutside = (event: Event) => {
 
 // 组件挂载时设置默认用户
 onMounted(async () => {
-  // 如果用户信息还没有加载，先尝试获取
-  if (!userStore.username) {
-    try {
-      await userStore.getInfo()
-    } catch (error) {
-      console.warn("Failed to get user info:", error)
-    }
-  }
-
-  // 设置默认用户
-  if (props.defaultToCurrentUser && (!model.value || model.value === "")) {
-    await setDefaultToCurrentUser()
-  }
-
   // 添加点击外部关闭事件监听
   document.addEventListener("click", handleClickOutside)
 })

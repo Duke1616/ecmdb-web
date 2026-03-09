@@ -102,6 +102,7 @@
     :template-rules="templateRules"
     :get-template-field-options="getTemplateFieldOptions"
     :username-to-display-name="displayNames"
+    :workflow-id="props.id"
     @confirm="handleConfirm"
     @update-user-names="updateDisplayNames"
   />
@@ -212,7 +213,12 @@ const init = async () => {
   if (propertyForm.assignees.length > 0) {
     await resolveDisplayNames(propertyForm.assignees)
   }
-  if (props.id !== undefined) await fetchTemplates(props.id)
+
+  // NOTE: 只有当确实存在 'template' 类型的策略时才提前加载，否则等选择器打开时再加载
+  const hasTemplateRule = propertyForm.assignees.some((a) => a.rule === "template")
+  if (props.id !== undefined && hasTemplateRule) {
+    await fetchTemplates(props.id)
+  }
 }
 
 onMounted(init)

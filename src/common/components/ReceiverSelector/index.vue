@@ -67,8 +67,8 @@
             <!-- 模板提取 -->
             <TemplateTab
               v-else-if="currentTab === 'template'"
-              :template-rules="templateRules"
-              :get-template-field-options="getTemplateFieldOptions"
+              :template-rules="consolidatedTemplateRules"
+              :get-template-field-options="consolidatedGetTemplateFieldOptions"
               @add="addTemplateRuleFromTab"
             />
           </div>
@@ -119,6 +119,13 @@ import TreeTab from "./tabs/TreeTab.vue"
 import UserTab from "./tabs/UserTab.vue"
 import { receiverSelectorRegistry } from "./strategies"
 import { useAssignees } from "./composables/useAssignees"
+import { useTemplateRules } from "@/common/composables/useTemplateRules"
+
+const {
+  fetchTemplates,
+  templateRules: internalTemplateRules,
+  getTemplateFieldOptions: internalGetTemplateFieldOptions
+} = useTemplateRules()
 
 const props = defineProps({
   visible: Boolean,
@@ -133,6 +140,7 @@ const props = defineProps({
     default: () => new Map()
   },
   usernameToDisplayName: { type: Object, default: () => ({}) },
+  workflowId: { type: Number, default: undefined },
   modes: {
     type: Array,
     default: () => ["system", "user", "team", "department", "on_call", "template"]
@@ -209,6 +217,23 @@ const setDepartmentKeys = (ids: string[]) => assigneesManager.setValues("departm
 const addTemplateRuleFromTab = (values: [string, string]) => assigneesManager.addRule("template", values)
 const removeRule = (i: number) => assigneesManager.removeRule(i)
 
+// 模板数据合并处理: 如果父组件没传，就用内部加载的
+const consolidatedTemplateRules = computed(() => {
+  return props.templateRules.length > 0 ? props.templateRules : internalTemplateRules.value
+})
+
+const consolidatedGetTemplateFieldOptions = (id: number) => {
+  const result = internalGetTemplateFieldOptions(id)
+  return result.size > 0 ? result : props.getTemplateFieldOptions(id)
+}
+
+// 切换到模板 Tab 时按需加载
+watch(currentTab, (newTab) => {
+  if (newTab === "template" && props.workflowId) {
+    fetchTemplates(props.workflowId)
+  }
+})
+
 // 用户选择处理
 const onUserSelected = (users: any[]) => {
   const usernames = users.map((u) => u.username)
@@ -243,7 +268,7 @@ const handleConfirm = () => {
 const getRuleLabel = (r: string) => props.ruleOptions.find((o) => o.value === r)?.label || r
 const getRuleContentPreview = (a: any) => {
   if (a.rule === "template")
-    return `${(props.templateRules as any[]).find((t) => t.id.toString() === a.values[0])?.name || "模板"} : ${a.values[1]}`
+    return `${(consolidatedTemplateRules.value as any[]).find((t: any) => t.id.toString() === a.values[0])?.name || "模板"} : ${a.values[1]}`
 
   if (["founder", "leaders", "main_leader"].includes(a.rule)) {
     return "动态计算逻辑"

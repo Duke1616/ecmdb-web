@@ -57,3 +57,10 @@ export function listWorkflowsByKeywordApi(data: workflow.ListByKeywordReq) {
     data: data
   })
 }
+
+/** 获取工作流详情 */
+export function getWorkflowDetailApi(id: number) {
+  return instance.get<workflow.workflow>({
+    url: `${API_SERVICE.CMDB}/workflow/detail/${id}`
+  })
+}

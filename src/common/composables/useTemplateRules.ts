@@ -1,76 +1,77 @@
-// hooks/useTemplate.ts
-import { ref, onMounted } from "vue"
+import { ref } from "vue"
 import { getTemplateRulesByWorkflowIdApi } from "@/api/template"
-import type { rule, templateRule } from "@/api/template/types/template"
+import type { templateRule } from "@/api/template/types/template"
 import type { Rule as FormRule } from "@form-create/element-ui"
 
-export function useTemplateRules(workflowId?: number) {
-  // 存储所有模板规则数据
-  const templateRulesList = ref<templateRule[]>([])
-  // 存储模板ID到规则的映射
-  const templateRulesMap = ref<Map<number, rule[]>>(new Map())
+// ── 共享状态 (跨组件实例) ──────────────────────────────────────────────────
+// 使用全局变量作为简单的缓存存储，避免同一个 workflowId 在不同节点实例中重复请求
+const templateRulesCache = new Map<number, templateRule[]>()
+const globalLoadingMap = new Map<number, Promise<void>>()
+
+/**
+ * 工作流模板规则 Composable
+ * 抽离通用逻辑，支持缓存与请求去重
+ */
+export function useTemplateRules() {
+  const localRules = ref<templateRule[]>([])
+  const isLoading = ref(false)
+
+  /**
+   * 获取指定工作流的模板规则
+   * @param workflowId 工作流 ID
+   */
+  const fetchTemplates = async (workflowId: number | undefined) => {
+    if (!workflowId) return
+
+    // 1. 命中缓存直接同步更新
+    if (templateRulesCache.has(workflowId)) {
+      localRules.value = templateRulesCache.get(workflowId) || []
+      return
+    }
+
+    // 2. 检查是否有正在进行的同一 workflowId 的请求
+    if (globalLoadingMap.has(workflowId)) {
+      isLoading.value = true
+      await globalLoadingMap.get(workflowId)
+      localRules.value = templateRulesCache.get(workflowId) || []
+      isLoading.value = false
+      return
+    }
+
+    // 3. 发起新请求 (Singleton Promise)
+    isLoading.value = true
+    const fetchPromise = (async () => {
+      try {
+        const { data } = await getTemplateRulesByWorkflowIdApi(workflowId)
+        const rules = data.template_rules || []
+        templateRulesCache.set(workflowId, rules)
+      } catch (error) {
+        console.error("[useTemplateRules] 加载模板失败:", error)
+        // 失败后记录空数组，防止短时间内重复触发错误请求
+        templateRulesCache.set(workflowId, [])
+      } finally {
+        globalLoadingMap.delete(workflowId)
+      }
+    })()
+
+    globalLoadingMap.set(workflowId, fetchPromise)
+    await fetchPromise
+    localRules.value = templateRulesCache.get(workflowId) || []
+    isLoading.value = false
+  }
 
   /**
    * 获取指定模板的字段选项
-   * @param templateId 模板ID
+   * @param templateId 模板 ID
    * @returns Map<字段标题, 字段名称>
    */
   const getTemplateFieldOptions = (templateId: number) => {
-    const template = templateRulesMap.value.get(templateId)
+    const template = localRules.value.find((t) => t.id === templateId)
     if (!template) return new Map<string, string>()
-    return extractTemplateFields(template)
-  }
 
-  /**
-   * 获取模板数据
-   * @param workflowId 工作流ID
-   * @returns 是否加载成功
-   */
-  const fetchTemplates = async (workflowId: number) => {
-    try {
-      const { data } = await getTemplateRulesByWorkflowIdApi(workflowId)
-      templateRulesList.value = data.template_rules
-      updateTemplateMaps(templateRulesList.value)
-      return true
-    } catch (error) {
-      console.error("加载模板失败:", error)
-      templateRulesList.value = []
-      resetMaps()
-      return false
-    }
-  }
-
-  /**
-   * 更新所有模板映射
-   * @param rules 模板规则数组
-   */
-  const updateTemplateMaps = (rules: templateRule[]) => {
-    const newTemplateMap = new Map<number, templateRule>()
-    const newRulesMap = new Map<number, rule[]>()
-
-    rules.forEach((template) => {
-      newTemplateMap.set(template.id, template)
-      newRulesMap.set(template.id, template.rules)
-    })
-
-    templateRulesMap.value = newRulesMap
-  }
-
-  /**
-   * 重置所有映射
-   */
-  const resetMaps = () => {
-    templateRulesMap.value = new Map()
-  }
-
-  /**
-   * 从模板中提取字段映射
-   * @param template 模板数据
-   * @returns Map<字段标题, 字段名称>
-   */
-  const extractTemplateFields = (template: rule[]) => {
     const fieldMap = new Map<string, string>()
-    template.forEach((rule: FormRule) => {
+    // 处理 rules 数组 (来自 API 的定义)
+    template.rules?.forEach((rule: FormRule) => {
       if (rule.title && rule.field) {
         fieldMap.set(rule.title.toString(), rule.field.toString())
       }
@@ -78,15 +79,10 @@ export function useTemplateRules(workflowId?: number) {
     return fieldMap
   }
 
-  // 如果初始化时有workflowId，自动加载模板
-  if (workflowId) {
-    onMounted(() => fetchTemplates(workflowId))
-  }
-
   return {
-    templateRules: templateRulesList, // 所有模板规则列表
-    templateRulesMap, // 模板ID到规则的映射
-    getTemplateFieldOptions, // 获取字段选项方法
-    fetchTemplates // 加载模板方法
+    templateRules: localRules,
+    isLoading,
+    fetchTemplates,
+    getTemplateFieldOptions
   }
 }

@@ -91,7 +91,8 @@ import {
   deployWorkflowApi,
   listWorkflowApi,
   createWorkflowApi,
-  updateWorkflowApi
+  updateWorkflowApi,
+  getWorkflowDetailApi
 } from "@/api/workflow/workflow"
 import { workflow, createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
@@ -252,15 +253,20 @@ const handleCreate = () => {
   })
 }
 
-const handleUpdate = (row: workflow) => {
-  // 展示新增页面，隐藏底层列表卡片
-  elCardVisibe.value = false
-  visibleWorkflow.value = true
+const handleUpdate = async (row: workflow) => {
+  try {
+    const { data } = await getWorkflowDetailApi(row.id)
+    // 展示新增页面，隐藏底层列表卡片
+    elCardVisibe.value = false
+    visibleWorkflow.value = true
 
-  nextTick(() => {
-    workflowWizardRef.value?.setStep(0)
-    workflowFormData.value = { ...workflowFormData.value, ...row }
-  })
+    nextTick(() => {
+      workflowWizardRef.value?.setStep(0)
+      workflowFormData.value = { ...workflowFormData.value, ...data }
+    })
+  } catch (error) {
+    ElMessage.error("获取流程详情失败")
+  }
 }
 
 // 关闭事件 - 父子通信
@@ -322,10 +328,15 @@ const handlePreviewOpened = () => {
   }
 }
 
-const operateEvent = (data: workflow, action: string) => {
+const operateEvent = async (data: workflow, action: string) => {
   if (action === "preview") {
-    previewData.value = data.flow_data
-    graphPreviewVisible.value = true
+    try {
+      const { data: detail } = await getWorkflowDetailApi(data.id)
+      previewData.value = detail.flow_data
+      graphPreviewVisible.value = true
+    } catch (error) {
+      ElMessage.error("获取流程预览失败")
+    }
   } else if (action === "deploy") {
     deployWorkflow(data)
   } else if (action === "edit") {
@@ -337,28 +348,30 @@ const operateEvent = (data: workflow, action: string) => {
   }
 }
 
-const handleClone = (row: workflow) => {
-  elCardVisibe.value = false
-  visibleWorkflow.value = true
+const handleClone = async (row: workflow) => {
+  try {
+    const { data: clonedData } = await getWorkflowDetailApi(row.id)
+    elCardVisibe.value = false
+    visibleWorkflow.value = true
 
-  nextTick(() => {
-    workflowWizardRef.value?.setStep(0)
+    nextTick(() => {
+      workflowWizardRef.value?.setStep(0)
 
-    // 深拷贝数据
-    const clonedData = JSON.parse(JSON.stringify(row))
+      // 重生成图数据 ID
+      if (clonedData.flow_data) {
+        clonedData.flow_data = refreshGraphId(clonedData.flow_data)
+      }
 
-    // 重生成图数据 ID
-    if (clonedData.flow_data) {
-      clonedData.flow_data = refreshGraphId(clonedData.flow_data)
-    }
-
-    workflowFormData.value = {
-      ...workflowFormData.value,
-      ...clonedData,
-      id: undefined,
-      name: `${row.name}_copy`
-    }
-  })
+      workflowFormData.value = {
+        ...workflowFormData.value,
+        ...clonedData,
+        id: undefined,
+        name: `${row.name}_copy`
+      }
+    })
+  } catch (error) {
+    ElMessage.error("获取流程详情失败")
+  }
 }
 
 const handleDelete = (row: workflow) => {

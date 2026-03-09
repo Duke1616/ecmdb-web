@@ -1,6 +1,7 @@
 import { ref, nextTick, onMounted, onUnmounted } from "vue"
-import { findByUsernameApi, listUsersByKeywordApi } from "@/api/user"
+import { listUsersByKeywordApi } from "@/api/user"
 import { usePagination } from "@@/composables/usePagination"
+import { useUserStore } from "@/pinia/stores/user"
 import type { user } from "@/api/user/types/user"
 
 export function useUsers() {
@@ -50,22 +51,18 @@ export function useUsers() {
       })
   }
 
-  const getUserByUsername = (username: string) => {
-    if (!username) return Promise.resolve(null)
+  const userStore = useUserStore()
 
+  const getUserByUsername = async (un: string) => {
+    if (!un) return null
     loading.value = true
-    return findByUsernameApi(username)
-      .then(({ data }) => {
-        selectedUser.value = data
-        return data
-      })
-      .catch(() => {
-        selectedUser.value = null
-        return null
-      })
-      .finally(() => {
-        loading.value = false
-      })
+    try {
+      const data = await userStore.resolveUser(un)
+      selectedUser.value = data
+      return data
+    } finally {
+      loading.value = false
+    }
   }
 
   const toggleUserPicker = () => {

@@ -345,7 +345,7 @@ const formRules: FormRules = {
 }
 
 // ── 生命周期 ────────────────────────────────────────────────────────────
-onMounted(() => {
+onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
   propertyForm.is_notify = props.nodeData?.properties.is_notify
@@ -363,12 +363,8 @@ onMounted(() => {
 
   listRunnerTags(true)
 
-  if (propertyForm.exec_method === "template" && propertyForm.template_id) {
-    if (props.id !== undefined) {
-      fetchTemplates(props.id).then(() => {
-        getTemplateFieldOptions(propertyForm.template_id || 0)
-      })
-    }
+  if (propertyForm.exec_method === "template" && props.id !== undefined) {
+    await fetchTemplates(props.id)
   }
 })
 

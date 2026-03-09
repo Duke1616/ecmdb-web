@@ -4,97 +4,111 @@ import { defineStore } from "pinia"
 import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
 import { resetRouter } from "@/router"
-import { getUserInfoApi } from "@/api/user"
+import { getUserInfoApi, findByUsernameApi } from "@/api/user"
+import type * as user from "@/api/user/types/user"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, getToken, setToken as _setToken } from "@@/utils/cache/cookies"
 import { logoutApi } from "@/pages/login/apis"
 
-export const useUserStore = defineStore("user", () => {
-  const token = ref<string>("")
-  const roles = ref<string[]>([])
-  const username = ref<string>("")
-  const userId = ref<number>(0)
+export const useUserStore = defineStore(
+  "user",
+  () => {
+    const token = ref<string>("")
+    const roles = ref<string[]>([])
+    const username = ref<string>("")
+    const userInfo = ref<user.user | null>(null)
 
-  const tagsViewStore = useTagsViewStore()
-  const settingsStore = useSettingsStore()
-  const permissionStore = usePermissionStoreHook()
+    const tagsViewStore = useTagsViewStore()
+    const settingsStore = useSettingsStore()
+    const permissionStore = usePermissionStoreHook()
 
-  /** 获取用户详情 */
-  const getInfo = async () => {
-    const { data } = await getUserInfoApi()
-    username.value = data.username
-    userId.value = data.id
-    // 验证返回的 roles 是否为一个非空数组，否则塞入一个没有任何作用的默认角色，防止路由守卫逻辑进入无限循环
-    // roles.value = data.role_codes?.length > 0 ? data.role_codes : routeSettings.defaultRoles
-  }
+    let _infoPromise: Promise<void> | null = null
 
-  // 设置 Token
-  const setToken = (value: string) => {
-    if (getToken() !== undefined) {
+    /** 获取登录用户信息 */
+    const getInfo = async () => {
+      if (userInfo.value) return
+      if (_infoPromise) return _infoPromise
+
+      _infoPromise = (async () => {
+        try {
+          const { data } = await getUserInfoApi()
+          userInfo.value = data
+          username.value = data.username
+        } finally {
+          _infoPromise = null
+        }
+      })()
+
+      return _infoPromise
+    }
+
+    /** 统一解析用户详情（安全模式：仅缓存自己，别人按需查询） */
+    const resolveUser = async (un: string): Promise<user.user | null> => {
+      if (!un) return null
+
+      // 1. 确保已获取“我”的信息
+      await getInfo()
+
+      // 2. 如果查的是“自己”，精准返回缓存
+      if (username.value === un && userInfo.value) {
+        return userInfo.value
+      }
+
+      // 3. 查的是别人，发起请求但不存入全局 Store 缓存
+      try {
+        const { data } = await findByUsernameApi(un)
+        return data
+      } catch {
+        return null
+      }
+    }
+
+    // 设置 Token
+    const setToken = (value: string) => {
+      if (getToken() !== undefined) {
+        token.value = value
+        return
+      }
+      if (token.value === value) return
+      _setToken(value)
       token.value = value
-      return
     }
 
-    // 如果 token 未改变，则不进行任何操作
-    if (token.value === value) {
-      return
+    /** 登出 */
+    const logout = async () => {
+      try {
+        await logoutApi()
+      } finally {
+        resetToken()
+        permissionStore.dynamicRoutes = []
+        resetRouter()
+        _resetTagsView()
+        window.location.href = "/login"
+      }
     }
 
-    // 设置token
-    _setToken(value)
-    token.value = value
-  }
-
-  /** 模拟角色变化 */
-  const changeRoles = async (role: string) => {
-    console.log(role)
-    // 用刷新页面代替重新登录
-    window.location.reload()
-  }
-
-  /** 登出 */
-  const logout = async () => {
-    try {
-      // 调用登出接口
-      await logoutApi()
-    } catch (error) {
-      console.error("登出接口调用失败:", error)
-      // 即使接口调用失败，也要执行本地清理
-    } finally {
-      // 清空token
-      resetToken()
-
-      // 清空动态路由
-      permissionStore.dynamicRoutes = []
-
-      // 重制路由
-      resetRouter()
-
-      // 重置访问视图和缓存视图
-      _resetTagsView()
-
-      // 跳转到登录页面
-      window.location.href = "/login"
+    /** 重置 Token */
+    const resetToken = () => {
+      removeToken()
+      token.value = ""
+      roles.value = []
+      userInfo.value = null
     }
-  }
 
-  /** 重置 Token */
-  const resetToken = () => {
-    removeToken()
-    token.value = ""
-    roles.value = []
-  }
-
-  /** 重置 Visited Views 和 Cached Views */
-  const _resetTagsView = () => {
-    if (!settingsStore.cacheTagsView) {
-      tagsViewStore.delAllVisitedViews()
-      tagsViewStore.delAllCachedViews()
+    /** 重置 Visited Views 和 Cached Views */
+    const _resetTagsView = () => {
+      if (!settingsStore.cacheTagsView) {
+        tagsViewStore.delAllVisitedViews()
+        tagsViewStore.delAllCachedViews()
+      }
     }
-  }
 
-  return { roles, username, userId, setToken, getInfo, changeRoles, logout, resetToken }
-})
+    return { roles, username, userInfo, setToken, getInfo, resolveUser, logout, resetToken }
+  },
+  {
+    persist: true
+  }
+)
 
 /** 在 setup 外使用 */
 export function useUserStoreHook() {
