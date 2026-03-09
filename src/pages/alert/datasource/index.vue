@@ -261,7 +261,7 @@ const handleDelete = async (row: Datasource) => {
     listDatasources()
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("删除失败")
+      console.error("删除数据源失败:", error)
     }
   }
 }

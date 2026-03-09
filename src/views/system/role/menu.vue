@@ -493,7 +493,6 @@ const submitAddPermission = async (roleCode: string) => {
       ElMessage.success("权限更新成功")
       return true
     }
-    ElMessage.error("权限更新失败")
     return false
   } catch (error) {
     console.error("权限更新失败:", error)

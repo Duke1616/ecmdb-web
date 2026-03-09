@@ -192,7 +192,6 @@ const handleStepRowDrag = async (newSteps: StepVO[] | EscalationStep[]) => {
     }
   } catch (error) {
     console.error("更新步骤顺序失败:", error)
-    ElMessage.error("更新步骤顺序失败")
     // 重新加载数据
     await loadSteps()
   }

@@ -308,7 +308,7 @@ const saveTemplate = async () => {
     onClosedTemplate()
     listTemplatesData()
   } catch (error) {
-    ElMessage.error("操作失败")
+    console.error("加载流程信息失败:", error)
   }
 }
 
@@ -404,12 +404,18 @@ const handleDelete = (row: template) => {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
-  }).then(() => {
-    deleteTemplateApi(row.id).then(() => {
-      ElMessage.success("删除成功")
-      listTemplatesData()
-    })
   })
+    .then(() => {
+      deleteTemplateApi(row.id).then(() => {
+        ElMessage.success("删除成功")
+        listTemplatesData()
+      })
+    })
+    .catch((error) => {
+      if (error !== "cancel") {
+        console.error("删除失败:", error)
+      }
+    })
 }
 
 /** 监听分页参数的变化 */

@@ -210,7 +210,7 @@ const saveWorkflow = async () => {
     onClosed()
     listFlowsData()
   } catch (error) {
-    ElMessage.error("操作失败")
+    console.error("操作失败:", error)
   }
 }
 
@@ -335,7 +335,7 @@ const operateEvent = async (data: workflow, action: string) => {
       previewData.value = detail.flow_data
       graphPreviewVisible.value = true
     } catch (error) {
-      ElMessage.error("获取流程预览失败")
+      console.error("获取流程预览失败:", error)
     }
   } else if (action === "deploy") {
     deployWorkflow(data)

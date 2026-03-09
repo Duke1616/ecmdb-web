@@ -224,7 +224,7 @@ const handleDelete = async (row: Team) => {
     listTeamsData()
   } catch (error) {
     if (error !== "cancel") {
-      ElMessage.error("团队删除失败")
+      console.error("团队删除失败:", error)
     }
   }
 }

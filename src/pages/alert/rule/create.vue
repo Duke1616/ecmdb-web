@@ -334,7 +334,7 @@ const handleSave = async () => {
     // 返回规则列表页面
     router.push("/alert/manager/rule")
   } catch (error) {
-    ElMessage.error("规则创建失败")
+    console.error("规则创建失败:", error)
   } finally {
     saving.value = false
   }

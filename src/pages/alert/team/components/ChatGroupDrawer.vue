@@ -227,7 +227,7 @@ const handleUnbind = async (group: ChatGroup) => {
     await fetchChatGroups()
     emits("refresh")
   } catch (e) {
-    ElMessage.error("操作失败")
+    // 错误由拦截器处理
   }
 }
 

@@ -285,7 +285,6 @@ const handleConfirm = async () => {
     loadRules()
   } catch (error) {
     console.error("保存失败:", error)
-    ElMessage.error(isEdit.value ? "更新失败" : "创建失败")
   } finally {
     submitting.value = false
   }

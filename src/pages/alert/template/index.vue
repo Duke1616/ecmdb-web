@@ -217,7 +217,6 @@ const handleDelete = async (template: ChannelTemplate) => {
   } catch (error) {
     if (error !== "cancel") {
       console.error("删除失败:", error)
-      ElMessage.error("删除失败")
     }
   }
 }

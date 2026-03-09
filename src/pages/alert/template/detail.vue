@@ -218,7 +218,6 @@ const loadTemplateDetail = async () => {
     })
   } catch (error: any) {
     console.error("加载模板详情失败:", error)
-    ElMessage.error("加载模板详情失败")
   }
 }
 // 验证基本信息表单
