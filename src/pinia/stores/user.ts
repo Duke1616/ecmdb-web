@@ -7,7 +7,7 @@ import { resetRouter } from "@/router"
 import { getUserInfoApi, findByUsernameApi } from "@/api/user"
 import type * as user from "@/api/user/types/user"
 import { usePermissionStoreHook } from "./permission"
-import { removeToken, getToken, setToken as _setToken } from "@@/utils/cache/cookies"
+import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
 import { logoutApi } from "@/pages/login/apis"
 
 export const useUserStore = defineStore(
@@ -26,7 +26,7 @@ export const useUserStore = defineStore(
 
     /** 获取登录用户信息 */
     const getInfo = async () => {
-      if (userInfo.value) return
+      if (userInfo.value && roles.value.length > 0) return
       if (_infoPromise) return _infoPromise
 
       _infoPromise = (async () => {
@@ -34,12 +34,20 @@ export const useUserStore = defineStore(
           const { data } = await getUserInfoApi()
           userInfo.value = data
           username.value = data.username
+          roles.value = data.role_codes
         } finally {
           _infoPromise = null
         }
       })()
 
       return _infoPromise
+    }
+
+    /** 切换角色 */
+    const changeRoles = async (role: string) => {
+      const newToken = "token-" + role
+      setToken(newToken)
+      window.location.reload()
     }
 
     /** 统一解析用户详情（安全模式：仅缓存自己，别人按需查询） */
@@ -65,13 +73,8 @@ export const useUserStore = defineStore(
 
     // 设置 Token
     const setToken = (value: string) => {
-      if (getToken() !== undefined) {
-        token.value = value
-        return
-      }
-      if (token.value === value) return
-      _setToken(value)
       token.value = value
+      _setToken(value)
     }
 
     /** 登出 */
@@ -103,7 +106,7 @@ export const useUserStore = defineStore(
       }
     }
 
-    return { roles, username, userInfo, setToken, getInfo, resolveUser, logout, resetToken }
+    return { roles, username, userInfo, setToken, getInfo, resolveUser, logout, resetToken, changeRoles }
   },
   {
     persist: true
