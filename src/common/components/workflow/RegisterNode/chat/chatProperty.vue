@@ -231,7 +231,7 @@ interface ChatPropertyForm {
 
 const propertyForm = reactive<ChatPropertyForm>({
   name: "",
-  title: "{{creator}}的{{template}}执行结果",
+  title: "",
   mode: "existing",
   chat_group_ids: [],
   create: {
@@ -276,7 +276,7 @@ onMounted(async () => {
   if (props.nodeData?.properties) {
     const p = props.nodeData.properties
     propertyForm.name = p.name || "群通知"
-    propertyForm.title = p.title || "{{creator}}的{{template}}执行结果"
+    propertyForm.title = p.title || ""
     propertyForm.mode = p.mode || "existing"
     propertyForm.chat_group_ids = p.chat_group_ids || []
     if (p.create) {
