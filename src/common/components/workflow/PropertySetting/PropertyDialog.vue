@@ -10,11 +10,7 @@
   >
     <template #header-icon>
       <div class="icon-circle">
-        <svg
-          v-if="currentNodeConfig?.iconSVG"
-          viewBox="0 0 1024 1024"
-          style="width: 28px; height: 28px; color: #409eff"
-        >
+        <svg v-if="currentNodeConfig?.iconSVG" viewBox="0 0 1024 1024" style="width: 28px; height: 28px; color: #fff">
           <path :d="currentNodeConfig.iconSVG" fill="currentColor" />
         </svg>
         <img v-else :src="getIconPath()" :alt="props.nodeData?.type" class="icon-image" />

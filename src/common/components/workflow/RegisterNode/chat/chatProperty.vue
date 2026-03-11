@@ -38,13 +38,28 @@
     </FormSection>
 
     <!-- 2. 基础配置 -->
-    <FormSection title="基础配置" tooltip="设置节点的显示名称以区分流程环节" theme-color="slate">
+    <FormSection title="基础配置" tooltip="设置节点的显示名称及通知卡片的标题" theme-color="slate">
       <template #icon
         ><el-icon><Document /></el-icon
       ></template>
-      <el-form-item label="节点名称" prop="name" class="form-item">
-        <el-input v-model="propertyForm.name" placeholder="请输入节点名称" class="modern-input" />
-      </el-form-item>
+      <div class="settings-stack">
+        <el-form-item label="节点名称" prop="name" class="form-item">
+          <el-input v-model="propertyForm.name" placeholder="请输入节点名称" class="modern-input" />
+        </el-form-item>
+        <el-form-item prop="title" class="form-item">
+          <VariableInput
+            v-model="propertyForm.title"
+            label="卡片标题规则"
+            placeholder="默认：{{creator}}发起的{{template}}执行结果"
+            :variables="[
+              { key: 'ticket_id', label: '工单ID' },
+              { key: 'template', label: '模板名' },
+              { key: 'creator', label: '发起人' },
+              { key: 'field.xxx', label: '字段' }
+            ]"
+          />
+        </el-form-item>
+      </div>
     </FormSection>
 
     <!-- 3. 模式特定配置 -->
@@ -203,6 +218,7 @@ const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRu
 
 interface ChatPropertyForm {
   name: string
+  title: string
   mode: "existing" | "create"
   chat_group_ids: number[]
   create: {
@@ -215,6 +231,7 @@ interface ChatPropertyForm {
 
 const propertyForm = reactive<ChatPropertyForm>({
   name: "",
+  title: "{{creator}}的{{template}}执行结果",
   mode: "existing",
   chat_group_ids: [],
   create: {
@@ -233,6 +250,16 @@ const selectedRuleTab = ref("")
 
 const formRules = computed<FormRules>(() => ({
   name: [{ required: true, message: "请输入节点名称", trigger: "blur" }],
+  title: [
+    {
+      validator: (rule: any, value: string, callback: any) => {
+        const error = validateChatGroupNameRule(value)
+        if (error) return callback(new Error(error))
+        callback()
+      },
+      trigger: "change"
+    }
+  ],
   "create.name": [
     {
       validator: (rule: any, value: string, callback: any) => {
@@ -249,6 +276,7 @@ onMounted(async () => {
   if (props.nodeData?.properties) {
     const p = props.nodeData.properties
     propertyForm.name = p.name || "群通知"
+    propertyForm.title = p.title || "{{creator}}的{{template}}执行结果"
     propertyForm.mode = p.mode || "existing"
     propertyForm.chat_group_ids = p.chat_group_ids || []
     if (p.create) {

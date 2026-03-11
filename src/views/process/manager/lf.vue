@@ -402,8 +402,8 @@ const handleCalibrate = () => {
     rankdir: "LR",
     align: undefined,
     ranker: "network-simplex",
-    nodesep: 60,
-    ranksep: 100,
+    nodesep: 120, // 增加同级节点间的上下间距
+    ranksep: 120, // 同步增加层级间左右间距，保持美观
     isDefaultAnchor: true
   })
 
