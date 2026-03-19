@@ -12,7 +12,7 @@
       <div class="selector-layout">
         <!-- 1. 左栏: 动态选择区 -->
         <div class="pane-pick">
-          <div class="pick-header">
+          <div v-if="!(hideSingleTab && tabs.length === 1)" class="pick-header">
             <div class="type-segmented">
               <div
                 v-for="tab in tabs"
@@ -87,19 +87,31 @@
               <span>请从左栏点击添加策略项</span>
             </div>
             <div class="token-list">
-              <div
-                v-for="(rule, idx) in assigneesManager.tempAssignees.value"
-                :key="`${rule.rule}-${idx}`"
-                class="strategy-token"
-              >
-                <div class="token-main">
-                  <span class="token-cat">{{ getRuleLabel(rule.rule) }}</span>
-                  <span class="token-val">{{ getRuleContentPreview(rule) }}</span>
+              <template v-for="(rule, idx) in assigneesManager.tempAssignees.value" :key="`${rule.rule}-${idx}`">
+                <!-- 展开模式：列表类策略（用户、团队、部门、值班）展开显示 -->
+                <template v-if="expandAssignees && rule.values && rule.values.length > 0 && rule.rule !== 'template'">
+                  <div v-for="val in rule.values" :key="val" class="strategy-token">
+                    <div class="token-main">
+                      <span class="token-cat">{{ getRuleLabel(rule.rule) }}</span>
+                      <span class="token-val">{{ usernameToDisplayName[val] || val }}</span>
+                    </div>
+                    <button class="token-close" @click="assigneesManager.removeValueByRule(rule.rule, val)">
+                      <el-icon><Close /></el-icon>
+                    </button>
+                  </div>
+                </template>
+
+                <!-- 默认模式 或 非列表类策略（系统规则、模板规则）维持紧凑展示 -->
+                <div v-else class="strategy-token">
+                  <div class="token-main">
+                    <span class="token-cat">{{ getRuleLabel(rule.rule) }}</span>
+                    <span class="token-val">{{ getRuleContentPreview(rule) }}</span>
+                  </div>
+                  <button class="token-close" @click="removeRule(idx)">
+                    <el-icon><Close /></el-icon>
+                  </button>
                 </div>
-                <button class="token-close" @click="removeRule(idx)">
-                  <el-icon><Close /></el-icon>
-                </button>
-              </div>
+              </template>
             </div>
           </div>
         </div>
@@ -157,6 +169,14 @@ const props = defineProps({
       { label: "关联团队", value: "team" },
       { label: "部门", value: "department" }
     ]
+  },
+  hideSingleTab: {
+    type: Boolean,
+    default: false
+  },
+  expandAssignees: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -305,7 +325,10 @@ const getRuleContentPreview = (a: any) => {
   min-height: 0;
 }
 .pick-header {
-  padding: 12px 16px;
+  padding: 0 16px;
+  height: 56px;
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
   border-bottom: 1px solid #f1f5f9;
 }
@@ -361,7 +384,8 @@ const getRuleContentPreview = (a: any) => {
   min-height: 0;
 }
 .result-header {
-  padding: 16px 20px;
+  padding: 0 20px;
+  height: 56px;
   flex-shrink: 0;
   border-bottom: 1px solid #f1f5f9;
   display: flex;

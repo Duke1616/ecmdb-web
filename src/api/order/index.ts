@@ -89,3 +89,11 @@ export function getTaskFormConfigApi(data: order.TaskFormConfigReq) {
     data: data
   })
 }
+
+/** 转签工单 */
+export function transferOrderApi(data: order.transferOrderReq) {
+  return instance.post<boolean>({
+    url: `${API_SERVICE.CMDB}/order/transfer`,
+    data: data
+  })
+}

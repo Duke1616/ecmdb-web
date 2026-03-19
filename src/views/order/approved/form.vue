@@ -57,24 +57,41 @@
         <div class="form-actions">
           <el-button type="primary" :icon="Check" @click="handlePassConfirm">同意</el-button>
           <el-button type="danger" :icon="Close" @click="handleRejectConfirm">驳回</el-button>
+          <el-button :icon="Switch" @click="transferVisible = true">转签</el-button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- 转签组件 (ReceiverSelector) -->
+  <ReceiverSelector
+    v-if="transferVisible"
+    v-model:visible="transferVisible"
+    title="工单转签"
+    result-panel-title="已选接收人"
+    empty-text="请从左侧选择转签目标"
+    :modes="['user']"
+    hide-single-tab
+    expand-assignees
+    :username-to-display-name="usernameToDisplayName"
+    @update-user-names="handleUpdateUserNames"
+    @confirm="handleTransferConfirm"
+  />
 </template>
 
 <script setup lang="ts">
 import { detailTemplateApi } from "@/api/template"
 import formCreate, { FormRule, Api } from "@form-create/element-ui"
 import { ref, watch } from "vue"
-import { getOrderByProcessInstIdApi, passOrderApi, rejectOrderApi, revokeOrderApi } from "@/api/order"
+import { getOrderByProcessInstIdApi, passOrderApi, rejectOrderApi, revokeOrderApi, transferOrderApi } from "@/api/order"
 import { passOrder } from "@/api/order/types/order"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, Options, ElMessageBox, ElMessage } from "element-plus"
-import { Document, Setting, EditPen, RefreshLeft, Check, Close } from "@element-plus/icons-vue"
+import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch } from "@element-plus/icons-vue"
 import DynamicForm from "./components/DynamicForm.vue"
 import { getTaskFormConfigApi } from "@/api/order/index"
 import { removeFetchFromRules } from "@/common/utils/form-create"
+import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 
 interface Props {
   templateId: number | undefined
@@ -102,6 +119,34 @@ const taskFormSchema = ref<any[]>([])
 const taskFormData = ref<any>({})
 const formRef = ref<FormInstance | null>(null)
 const dynamicFormRef = ref<any>(null)
+
+// 转签
+const transferVisible = ref(false)
+const transferLoading = ref(false)
+const usernameToDisplayName = ref<Record<string, string>>({})
+
+const handleUpdateUserNames = (map: Record<string, string>) => {
+  usernameToDisplayName.value = { ...usernameToDisplayName.value, ...map }
+}
+
+const handleTransferConfirm = async (assignees: any[]) => {
+  // 从策略数组中提取所有规则为 'appoint' (指定人员) 的用户名
+  const usernames = assignees.filter((a) => a.rule === "appoint").flatMap((a) => a.values)
+
+  if (usernames.length === 0) {
+    ElMessage.warning("请选择转签用户")
+    return
+  }
+
+  transferLoading.value = true
+  try {
+    await transferOrderApi({ task_id: props.taskId!, usernames })
+    ElMessage.success("转签成功")
+    resetForm()
+  } finally {
+    transferLoading.value = false
+  }
+}
 
 // 用于缓存每个工单的操作信息（草稿），key 为 processInstId
 const formDrafts = ref(new Map<number, { formData: passOrder; taskFormData: any }>())

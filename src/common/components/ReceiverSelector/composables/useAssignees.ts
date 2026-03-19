@@ -89,6 +89,20 @@ export function useAssignees(initialAssignees: Ref<any[]>) {
     return tempAssignees.value.map((a) => a.rule)
   }
 
+  // 移除指定规则下的某个值
+  const removeValueByRule = (rule: string, value: string) => {
+    const assignee = findAssignee(rule)
+    if (assignee) {
+      const idx = assignee.values.indexOf(value)
+      if (idx > -1) {
+        assignee.values.splice(idx, 1)
+      }
+      if (assignee.values.length === 0) {
+        tempAssignees.value = tempAssignees.value.filter((a) => a.rule !== rule)
+      }
+    }
+  }
+
   return {
     tempAssignees,
     init,
@@ -98,6 +112,7 @@ export function useAssignees(initialAssignees: Ref<any[]>) {
     setValues,
     addRule,
     removeRule,
+    removeValueByRule,
     toggleSystemRule,
     getSystemRuleKeys
   }

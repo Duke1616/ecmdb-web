@@ -4,6 +4,11 @@ export interface createOrderReq {
   data: object
 }
 
+export interface transferOrderReq {
+  task_id: number
+  usernames: string[]
+}
+
 export interface todoOrderReq {
   user_id?: string
   process_name?: string

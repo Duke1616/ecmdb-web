@@ -60,7 +60,10 @@
           <template #item="{ element }">
             <div
               class="menu-card"
-              :class="[getCardClass(element), { 'is-cut': cutItem?.id === element.id }]"
+              :class="[
+                getCardClass(element),
+                { 'is-cut': cutItem?.id === element.id, 'is-navigable': hasChildren(element) }
+              ]"
               @click="handleCardClick(element)"
               @contextmenu.prevent.stop="handleCardContextMenu($event, element)"
             >
@@ -225,7 +228,8 @@ const handleBack = () => {
 }
 
 const handleCardClick = (item: menu) => {
-  if (item.type === 1 || item.type === 2) {
+  // 目录(1)和菜单(2)允许进入下级。如果按钮(3)类型下配置了子项，也允许进入以便进行子项排序。
+  if (item.type === 1 || item.type === 2 || hasChildren(item)) {
     currentPid.value = item.id
   }
 }
@@ -516,30 +520,46 @@ const onDragEnd = async (evt: any) => {
   align-items: center;
   gap: 16px;
   border: 1.5px solid #e5e7eb;
-  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   user-select: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow:
-      0 12px 24px -6px rgba(0, 0, 0, 0.12),
-      0 4px 8px -2px rgba(0, 0, 0, 0.08);
-    border-color: #cbd5e1;
+  &.type-directory,
+  &.type-menu,
+  &.is-navigable {
+    cursor: pointer;
 
-    .drag-handle {
-      opacity: 1;
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 12px 24px -6px rgba(0, 0, 0, 0.12),
+        0 4px 8px -2px rgba(0, 0, 0, 0.08);
+      border-color: #cbd5e1;
+
+      .drag-handle {
+        opacity: 1;
+      }
+
+      .card-icon {
+        transform: scale(1.05);
+      }
     }
 
-    .card-icon {
-      transform: scale(1.05);
+    &:active {
+      transform: translateY(-2px);
     }
   }
 
-  &:active {
-    transform: translateY(-2px);
+  &.type-button:not(.is-navigable) {
+    cursor: default;
+    background: #fcfcfc;
+
+    &:hover {
+      .drag-handle {
+        opacity: 1;
+      }
+    }
   }
 
   &.type-directory {
