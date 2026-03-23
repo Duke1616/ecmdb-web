@@ -157,7 +157,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, withDefaults, computed } from "vue"
+import { ref, onMounted, computed } from "vue"
 import { Setting, Share, Filter, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { SaveRoutingRuleReq } from "@/api/alert/routing/types"

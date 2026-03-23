@@ -30,7 +30,6 @@
 </template>
 
 <script setup lang="ts">
-import { withDefaults } from "vue"
 import SearchSelectorBase from "./Base.vue"
 import { listRulesByKeywordApi, getRuleApi } from "@/api/alert/rule"
 

@@ -6,7 +6,7 @@
         :config="config"
         :theme="currentTheme"
         :language="getLanguageFunction()"
-        :code="props.code || getDefaultCode()"
+        :code="props.code ?? getDefaultCode()"
         :tabSize="props.language === 'shell' ? 2 : 4"
         @update:code="handleCodeUpdate"
       />

@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, withDefaults, computed } from "vue"
+import { ref, computed } from "vue"
 import { Setting, Filter, Clock, Document, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { SaveTicketConfigReq } from "@/api/alert/ticket_config/types"

@@ -205,7 +205,13 @@ const loadItems = async () => {
     // 处理响应数据
     if (response.data) {
       itemsData.value =
-        response.data.items || response.data.templates || response.data.rules || response.data.list || []
+        response.data.items ||
+        response.data.templates ||
+        response.data.rules ||
+        response.data.codebooks ||
+        response.data.runners ||
+        response.data.list ||
+        []
       paginationData.total = response.data.total || 0
     }
   } catch (error) {
@@ -435,6 +441,7 @@ onUnmounted(() => {
   font-size: 14px;
   color: #c0c4cc;
   line-height: 32px;
+  flex: 1;
 }
 
 .clear-btn {
@@ -463,7 +470,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   transition: transform 0.3s ease;
-  margin-left: 8px;
+  margin-left: auto;
 
   &.is-open {
     transform: rotate(180deg);
