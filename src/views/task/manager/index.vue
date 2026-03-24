@@ -174,11 +174,11 @@ const getStatusLabel = (status: TaskStatus) => {
 }
 
 const formVisible = ref(false)
-const currentEditId = ref<string | null>(null)
+const currentEditId = ref<number | null>(null)
 const currentEditData = ref<TaskItem | null>(null)
 
 const logVisible = ref(false)
-const logTaskId = ref("")
+const logTaskId = ref<number>(0)
 
 const getOperateItems = (row: TaskItem) => {
   const items = [

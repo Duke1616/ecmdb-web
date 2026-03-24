@@ -22,7 +22,7 @@ import { ElMessage } from "element-plus"
 
 const props = defineProps<{
   modelValue: boolean
-  taskId: string
+  taskId: number
 }>()
 
 const emit = defineEmits(["update:modelValue"])
@@ -36,11 +36,12 @@ const loading = ref(false)
 const logs = ref("")
 
 const fetchLogs = async () => {
-  if (!props.taskId) return
+  const taskId = props.taskId
+  if (!taskId) return
 
   loading.value = true
   try {
-    const res = await getTaskLogsApi({ task_id: props.taskId, offset: 0, limit: 1000 })
+    const res = await getTaskLogsApi({ task_id: taskId, offset: 0, limit: 1000 })
     logs.value = res.data
   } catch (error) {
     ElMessage.error("获取日志失败")

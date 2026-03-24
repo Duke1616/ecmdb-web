@@ -82,7 +82,7 @@ export function useTaskManager() {
     }
   }
 
-  const fetchTaskDetail = async (id: string) => {
+  const fetchTaskDetail = async (id: number) => {
     loading.value = true
     try {
       const res = await getTaskDetailApi(id)
@@ -95,7 +95,7 @@ export function useTaskManager() {
     }
   }
 
-  const handleDeleteTask = async (id: string) => {
+  const handleDeleteTask = async (id: number) => {
     try {
       await ElMessageBox.confirm("确定要删除该任务吗？", "警告", {
         type: "warning",
@@ -110,7 +110,7 @@ export function useTaskManager() {
     }
   }
 
-  const handleRunTask = async (id: string) => {
+  const handleRunTask = async (id: number) => {
     try {
       await runTaskApi(id)
       ElMessage.success("指令已下发: 立即执行一次")
@@ -120,7 +120,7 @@ export function useTaskManager() {
     }
   }
 
-  const handleStopTask = async (id: string) => {
+  const handleStopTask = async (id: number) => {
     try {
       await stopTaskApi(id)
       ElMessage.success("指令已下发: 强制停止/禁用成功")

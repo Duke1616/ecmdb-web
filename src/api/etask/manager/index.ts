@@ -1,5 +1,5 @@
 import type * as task from "./type"
-import instance from "@/common/utils/service"
+import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
 /** 创建任务 */
@@ -27,7 +27,7 @@ export function listTasksApi(data: task.PageQuery) {
 }
 
 /** 获取单条任务详情 */
-export function getTaskDetailApi(taskId: string) {
+export function getTaskDetailApi(taskId: number) {
   return instance.get<task.TaskItem>({
     url: `${API_SERVICE.TASK}/manager/detail/${taskId}`
   })
@@ -42,21 +42,21 @@ export function getTaskLogsApi(data: task.GetLogsReq) {
 }
 
 /** 删除任务 */
-export function deleteTaskApi(taskId: string) {
+export function deleteTaskApi(taskId: number) {
   return instance.delete<void>({
     url: `${API_SERVICE.TASK}/manager/delete/${taskId}`
   })
 }
 
 /** 立即运行一次任务 */
-export function runTaskApi(taskId: string) {
+export function runTaskApi(taskId: number) {
   return instance.post<void>({
     url: `${API_SERVICE.TASK}/manager/run/${taskId}`
   })
 }
 
 /** 停止任务执行/禁用调度 */
-export function stopTaskApi(taskId: string) {
+export function stopTaskApi(taskId: number) {
   return instance.post<void>({
     url: `${API_SERVICE.TASK}/manager/stop/${taskId}`
   })

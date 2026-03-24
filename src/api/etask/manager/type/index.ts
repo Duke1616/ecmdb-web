@@ -4,14 +4,13 @@ export interface CreateTaskReq {
   cron_expr?: string
   grpc_config?: GrpcConfig
   http_config?: HTTPConfig
-  runner_config?: RunnerConfig
   retry_config?: RetryConfig
   max_execution_seconds?: number
   schedule_params?: Record<string, string>
 }
 
 export interface UpdateTaskReq extends CreateTaskReq {
-  id: string
+  id: number
 }
 
 export enum TaskType {
@@ -38,12 +37,6 @@ export interface HTTPConfig {
   params?: Record<string, string>
 }
 
-export interface RunnerConfig {
-  unit_id: number
-  hosts?: string[]
-  params?: Record<string, string>
-}
-
 export interface RetryConfig {
   max_retries: number
   initial_interval: number // 毫秒
@@ -51,13 +44,13 @@ export interface RetryConfig {
 }
 
 export interface GetLogsReq {
-  task_id: string
+  task_id: number
   offset?: number
   limit?: number
 }
 
 export interface TaskItem extends CreateTaskReq {
-  id: string
+  id: number
   status: TaskStatus
   next_time: number
   ctime: number
