@@ -18,7 +18,6 @@
 import { ref, computed } from "vue"
 import { getTaskLogsApi } from "@/api/etask/manager"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
-import { ElMessage } from "element-plus"
 
 const props = defineProps<{
   modelValue: boolean
@@ -44,7 +43,7 @@ const fetchLogs = async () => {
     const res = await getTaskLogsApi({ task_id: taskId, offset: 0, limit: 1000 })
     logs.value = res.data
   } catch (error) {
-    ElMessage.error("获取日志失败")
+    // 错误由请求层统一处理
   } finally {
     loading.value = false
   }

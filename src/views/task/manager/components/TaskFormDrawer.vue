@@ -54,7 +54,7 @@
                   ><el-icon><Calendar /></el-icon
                 ></template>
                 <template #suffix>
-                  <CronHelper :type="form.type" @select="form.cron_expr = $event" />
+                  <CronHelper :type="form.type" @select="handleCronSelect" />
                 </template>
               </el-input>
             </el-form-item>
@@ -94,8 +94,8 @@
               <div :key="activeProtocol" class="protocol-pane">
                 <!-- gRPC 模式 -->
                 <div v-if="activeProtocol === 'grpc'" class="grpc-config-pane">
-                  <div class="service-selector-row flex-row gap-4" :class="{ 'mb-4': !!currentHandler }">
-                    <el-form-item label="执行器服务" required class="flex-1">
+                  <div class="service-selector-row flex-row gap-4">
+                    <el-form-item label="执行器服务" prop="grpc_config.service_name" class="flex-1">
                       <el-autocomplete
                         v-model="form.grpc_config!.service_name"
                         :fetch-suggestions="queryServiceSuggestions"
@@ -108,7 +108,7 @@
                         </template>
                       </el-autocomplete>
                     </el-form-item>
-                    <el-form-item label="处理方法" required class="flex-1">
+                    <el-form-item label="处理方法" prop="grpc_config.handler_name" class="flex-1">
                       <el-autocomplete
                         v-model="form.grpc_config!.handler_name"
                         :fetch-suggestions="queryHandlers"
@@ -155,7 +155,7 @@
 
                 <!-- HTTP 模式 -->
                 <div v-else-if="activeProtocol === 'http'" class="http-config-pane">
-                  <el-form-item label="接口回源 Endpoint" required>
+                  <el-form-item label="接口回源 Endpoint" prop="http_config.endpoint">
                     <el-input
                       v-model="form.http_config!.endpoint"
                       placeholder="https://..."
@@ -331,9 +331,25 @@ const handleHandlerSelect = (item: Record<string, any>) => {
 const queryHandlers = (qs: string, cb: (res: (HandlerDetail & { value: string })[]) => void) =>
   queryHandlerSuggestions(form.grpc_config!.service_name, qs, cb)
 
-const rules = reactive<FormRules>({
-  name: [{ required: true, message: "请输入任务标识", trigger: "blur" }],
-  cron_expr: [{ required: true, message: "请输入有效的 Cron 表达式", trigger: "blur" }]
+const rules = computed<FormRules>(() => {
+  const r: FormRules = {
+    name: [{ required: true, message: "请输入任务标识", trigger: "blur" }]
+  }
+
+  // 周期性任务必须有 Cron
+  if (form.type === TaskType.RECURRING) {
+    r.cron_expr = [{ required: true, message: "请输入有效的 Cron 表达式", trigger: ["blur", "change"] }]
+  }
+
+  // 根据协议校验必填项
+  if (activeProtocol.value === "grpc") {
+    r["grpc_config.service_name"] = [{ required: true, message: "请选择执行器服务", trigger: "change" }]
+    r["grpc_config.handler_name"] = [{ required: true, message: "请选择处理方法", trigger: "change" }]
+  } else {
+    r["http_config.endpoint"] = [{ required: true, message: "请输入接口地址", trigger: "blur" }]
+  }
+
+  return r
 })
 
 // --- 监听器集 ---
@@ -387,31 +403,38 @@ watch(
 )
 
 // --- 核心操作 ---
+const handleCronSelect = (val: string) => {
+  form.cron_expr = val
+  // 主动触发校验，清除可能存在的验证错误
+  formRef.value?.validateField("cron_expr").catch(() => {})
+}
+
 const handleSave = async () => {
   if (!formRef.value) return
-  await formRef.value.validate(async (valid) => {
-    if (valid) {
-      saving.value = true
-      try {
-        const payload = cloneDeep(form)
-        if (activeProtocol.value === "grpc") {
-          delete payload.http_config
-        } else {
-          delete payload.grpc_config
-        }
+  try {
+    const valid = await formRef.value.validate()
+    if (!valid) return
 
-        // 处理重试配置与超时逻辑：未启用或数据为空时彻底剥离
-        if (!retryEnabled.value || !payload.retry_config) {
-          delete payload.retry_config
-          delete payload.max_execution_seconds
-        }
-
-        emit("save", payload)
-      } finally {
-        saving.value = false
-      }
+    saving.value = true
+    const payload = cloneDeep(form)
+    if (activeProtocol.value === "grpc") {
+      delete payload.http_config
+    } else {
+      delete payload.grpc_config
     }
-  })
+
+    // 处理重试配置与超时逻辑：未启用或数据为空时彻底剥离
+    if (!retryEnabled.value || !payload.retry_config) {
+      delete payload.retry_config
+      delete (payload as any).max_execution_seconds
+    }
+
+    emit("save", payload)
+  } catch (err) {
+    // 校验未通过
+  } finally {
+    saving.value = false
+  }
 }
 
 const handleClosed = () => formRef.value?.resetFields()
@@ -425,7 +448,7 @@ defineExpose({ handleClosed })
 }
 
 .form-section {
-  margin-bottom: 16px;
+  margin-bottom: 24px;
 }
 
 .section-title {
@@ -607,9 +630,7 @@ defineExpose({ handleClosed })
 }
 
 .service-selector-row {
-  &:not(.mb-4) {
-    margin-bottom: 4px;
-  }
+  margin-bottom: 28px; // 留出足够空间放置校验错误提示
   :deep(.el-form-item) {
     margin-bottom: 0 !important;
   }
@@ -633,7 +654,7 @@ defineExpose({ handleClosed })
   flex: 1;
 }
 .gap-4 {
-  gap: 16px;
+  gap: 24px;
 }
 .gap-6 {
   gap: 24px;

@@ -52,7 +52,6 @@ export function useTaskManager() {
       updateStats()
     } catch (error) {
       console.error("Fetch tasks failed:", error)
-      ElMessage.error("获取任务列表失败")
     } finally {
       loading.value = false
     }
@@ -65,7 +64,6 @@ export function useTaskManager() {
       fetchTasksData()
       return true
     } catch (error) {
-      ElMessage.error("创建任务失败")
       return false
     }
   }
@@ -77,7 +75,6 @@ export function useTaskManager() {
       fetchTasksData()
       return true
     } catch (error) {
-      ElMessage.error("更新任务失败")
       return false
     }
   }
@@ -88,7 +85,6 @@ export function useTaskManager() {
       const res = await getTaskDetailApi(id)
       return res.data
     } catch (error) {
-      ElMessage.error("获取任务详情失败")
       return null
     } finally {
       loading.value = false
@@ -116,7 +112,7 @@ export function useTaskManager() {
       ElMessage.success("指令已下发: 立即执行一次")
       fetchTasksData()
     } catch (error) {
-      ElMessage.error("下发执行指令失败")
+      // 错误已由请求层统一处理
     }
   }
 
@@ -126,7 +122,7 @@ export function useTaskManager() {
       ElMessage.success("指令已下发: 强制停止/禁用成功")
       fetchTasksData()
     } catch (error) {
-      ElMessage.error("停止任务失败")
+      // 错误已由请求层统一处理
     }
   }
 

@@ -40,9 +40,13 @@
       <div class="drawer-footer">
         <slot name="footer">
           <el-button @click="handleCancel">{{ cancelButtonText }}</el-button>
-          <el-button v-if="showConfirmButton" :type="confirmButtonType" @click="handleConfirm">{{
-            confirmButtonText
-          }}</el-button>
+          <el-button
+            v-if="showConfirmButton"
+            :type="confirmButtonType"
+            :loading="confirmLoading"
+            @click="handleConfirm"
+            >{{ confirmButtonText }}</el-button
+          >
         </slot>
       </div>
     </template>
@@ -71,6 +75,8 @@ interface Props {
   confirmButtonType?: "primary" | "success" | "warning" | "danger" | "info" | "text"
   /** 点击取消时是否自动关闭，默认 true；设为 false 时只触发 cancel 事件，由父组件控制关闭逻辑 */
   closeOnCancel?: boolean
+  /** 确定按钮加载状态 */
+  confirmLoading?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -84,7 +90,8 @@ const props = withDefaults(defineProps<Props>(), {
   cancelButtonText: "取消",
   confirmButtonText: "确定",
   confirmButtonType: "primary",
-  closeOnCancel: true
+  closeOnCancel: true,
+  confirmLoading: false
 })
 
 const emits = defineEmits<{
