@@ -91,8 +91,9 @@
       @save="handleFormSave"
     />
 
-    <!-- 运行日志弹窗 -->
-    <TaskLogDialog v-model="logVisible" :task-id="logTaskId" ref="logDialogRef" />
+    <!-- 运行历史与日志弹窗 -->
+    <!-- 运行历史与日志弹窗 -->
+    <TaskExecutionDialog v-model="logVisible" :task-id="logTaskId" :task-name="logTaskName" ref="logDialogRef" />
   </PageContainer>
 </template>
 
@@ -104,7 +105,7 @@ import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import TaskFormDrawer from "./components/TaskFormDrawer.vue"
-import TaskLogDialog from "./components/TaskLogDialog.vue"
+import TaskExecutionDialog from "./components/TaskExecutionDialog.vue"
 import { TaskType, TaskStatus, type TaskItem, type CreateTaskReq, type UpdateTaskReq } from "@/api/etask/manager/type"
 import { useTaskManager } from "./composables/useTaskManager"
 import type { Column } from "@@/components/DataTable/types"
@@ -179,6 +180,7 @@ const currentEditData = ref<TaskItem | null>(null)
 
 const logVisible = ref(false)
 const logTaskId = ref<number>(0)
+const logTaskName = ref<string>("")
 
 const getOperateItems = (row: TaskItem) => {
   const items = [
@@ -217,6 +219,7 @@ const handleAction = async (row: TaskItem, code: string) => {
     handleStopTask(row.id)
   } else if (code === "logs") {
     logTaskId.value = row.id
+    logTaskName.value = row.name
     logVisible.value = true
   } else if (code === "delete") {
     handleDeleteTask(row.id)

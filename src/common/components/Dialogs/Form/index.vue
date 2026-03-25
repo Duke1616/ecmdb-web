@@ -7,7 +7,9 @@
     :close-on-click-modal="closeOnClickModal"
     :before-close="handleBeforeClose"
     :type="dialogType"
+    :top="top"
     @closed="handleClosed"
+    @opened="handleOpened"
   >
     <!-- 头部插槽 -->
     <template #header>
@@ -83,11 +85,13 @@ interface Props {
   footerInfoText?: string
   dialogType?: "form"
   beforeClose?: (done: () => void) => void
+  top?: string
 }
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void
   (e: "closed"): void
+  (e: "opened"): void
   (e: "confirm"): void
   (e: "cancel"): void
 }
@@ -124,6 +128,10 @@ const handleBeforeClose = (done: () => void) => {
 
 const handleClosed = () => {
   emits("closed")
+}
+
+const handleOpened = () => {
+  emits("opened")
 }
 
 const handleConfirm = () => {

@@ -7,7 +7,9 @@
     :show-close="showClose"
     :close-on-click-modal="closeOnClickModal"
     :before-close="handleBeforeClose"
+    :top="top"
     @closed="handleClosed"
+    @opened="handleOpened"
   >
     <!-- 头部插槽 -->
     <template v-if="$slots.header" #header>
@@ -37,11 +39,13 @@ interface Props {
   closeOnClickModal?: boolean
   type?: "standard" | "form" | "permission" | "custom"
   beforeClose?: (done: () => void) => void
+  top?: string
 }
 
 interface Emits {
   (e: "update:modelValue", value: boolean): void
   (e: "closed"): void
+  (e: "opened"): void
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -49,7 +53,8 @@ const props = withDefaults(defineProps<Props>(), {
   width: "50%",
   showClose: false,
   closeOnClickModal: false,
-  type: "standard"
+  type: "standard",
+  top: "15vh"
 })
 
 const emits = defineEmits<Emits>()
@@ -75,5 +80,9 @@ const handleBeforeClose = (done: () => void) => {
 
 const handleClosed = () => {
   emits("closed")
+}
+
+const handleOpened = () => {
+  emits("opened")
 }
 </script>

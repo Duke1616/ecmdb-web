@@ -24,6 +24,7 @@ function formatTimestamp(timestamp: number | undefined) {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hour12: false
   })
 
@@ -34,8 +35,9 @@ function formatTimestamp(timestamp: number | undefined) {
   const day = parts.find((part) => part.type === "day")?.value || "00"
   const hour = parts.find((part) => part.type === "hour")?.value || "00"
   const minute = parts.find((part) => part.type === "minute")?.value || "00"
+  const second = parts.find((part) => part.type === "second")?.value || "00"
 
-  return `${year}年${month}月${day}日 ${hour}:${minute}`
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`
 }
 
 // 统一导出

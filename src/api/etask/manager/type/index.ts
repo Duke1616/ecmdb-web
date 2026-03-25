@@ -44,9 +44,46 @@ export interface RetryConfig {
 }
 
 export interface GetLogsReq {
+  execution_id: number
+  min_id: number
+  limit: number
+}
+
+export interface ListExecutionsReq {
   task_id: number
-  offset?: number
-  limit?: number
+  offset: number
+  limit: number
+}
+
+export interface TaskLogVO {
+  id: number
+  task_id: number
+  execution_id: number
+  content: string
+  ctime: number
+}
+
+export interface ListLogResp {
+  total: number
+  logs: TaskLogVO[]
+}
+
+export interface TaskExecutionVO {
+  id: number
+  task_id: number
+  task_name: string
+  start_time: number
+  end_time: number
+  status: string
+  running_progress: number
+  executor_node_id: string
+  task_result: string
+  ctime: number
+}
+
+export interface ListExecutionResp {
+  total: number
+  executions: TaskExecutionVO[]
 }
 
 export interface TaskItem extends CreateTaskReq {

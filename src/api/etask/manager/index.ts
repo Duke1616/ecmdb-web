@@ -35,8 +35,16 @@ export function getTaskDetailApi(taskId: number) {
 
 /** 获取任务日志 */
 export function getTaskLogsApi(data: task.GetLogsReq) {
-  return instance.post<string>({
+  return instance.post<task.ListLogResp>({
     url: `${API_SERVICE.TASK}/manager/logs`,
+    data
+  })
+}
+
+/** 获取任务执行历史列表 */
+export function listExecutionsApi(data: task.ListExecutionsReq) {
+  return instance.post<task.ListExecutionResp>({
+    url: `${API_SERVICE.TASK}/manager/executions`,
     data
   })
 }
