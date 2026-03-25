@@ -29,9 +29,7 @@ interface Props {
 const props = defineProps<Props>()
 
 // 使用 defineModel 实现双向绑定
-// NOTE: 业务场景为表单编辑，需与父组件同步参数状态
 const modelValue = defineModel<Record<string, string>>({ required: true })
-// NOTE: 业务规则要求，参数选择的模式（如绑定脚本还是手动输入）需记录在 schedule_params 中
 const scheduleParams = defineModel<Record<string, string>>("scheduleParams", { default: () => ({}) })
 
 // UI 状态管理
@@ -40,41 +38,34 @@ const fullScreenStates = reactive<Record<string, boolean>>({})
 
 /**
  * 初始化各参数的默认模式与默认值
+ * NOTE: 仅在元数据改变或初次加载时执行，避免与用户操作冲突
  */
 const initModes = () => {
   if (!props.metadata) return
+
   const currentParams = { ...modelValue.value }
-  let changed = false
+  let paramsChanged = false
 
   props.metadata.forEach((p) => {
     // 1. 初始化切换模式 (取 Bindings 的第一个 Key)
     const keys = Object.keys(p.bindings || {})
-    if (!paramModes[p.key] && keys.length > 0) {
-      // 优先从已有的 scheduleParams 中恢复模式，否则取第一个
-      paramModes[p.key] = scheduleParams.value[p.key] || keys[0]
+    if (keys.length > 0) {
+      // 优先从已有的 scheduleParams (业务数据) 中恢复模式到 UI 状态
+      // 如果 scheduleParams 中还没这个 Key，则取配置的第一个模式
+      const targetMode = scheduleParams.value[p.key] || keys[0]
+      if (paramModes[p.key] !== targetMode) {
+        paramModes[p.key] = targetMode
+      }
     }
-    // 2. 补全缺失的默认值
+
+    // 2. 补全缺失的参数默认值 (modelValue)
     if (currentParams[p.key] === undefined) {
       currentParams[p.key] = p.default || ""
-      changed = true
+      paramsChanged = true
     }
   })
 
-  // 同步初始化后的模式到 scheduleParams
-  const modes: Record<string, string> = { ...scheduleParams.value }
-  let modeChanged = false
-  Object.keys(paramModes).forEach((k) => {
-    if (modes[k] !== paramModes[k]) {
-      modes[k] = paramModes[k]
-      modeChanged = true
-    }
-  })
-
-  if (modeChanged) {
-    scheduleParams.value = modes
-  }
-
-  if (changed) {
+  if (paramsChanged) {
     modelValue.value = currentParams
   }
 }
@@ -87,44 +78,64 @@ const onParamUpdate = (key: string, val: string) => {
 }
 
 /**
- * 监听 UI 层的模式变化，并同步到 business 层的 scheduleParams
+ * 核心监听：将 UI 层的模式选择 (paramModes) 同步回业务层的 scheduleParams
+ * 使用深拷贝对象比较，防止属性修改导致的不必要的响应式风暴或循环触发
  */
 watch(
-  paramModes,
+  () => ({ ...paramModes }),
   (newModes) => {
-    scheduleParams.value = { ...newModes }
+    const current = JSON.stringify(scheduleParams.value)
+    const next = JSON.stringify(newModes)
+    if (current !== next) {
+      // 只有在真正发生变化时才更新业务模型，确保单向驱动或受控更新
+      scheduleParams.value = newModes
+    }
   },
   { deep: true }
 )
 
 /**
- * 全屏切换逻辑
+ * 全页元数据驱动点：当 Handler 方法切换导致 Metadata 变化时，触发初始化
+ * NOTE: 不再直接监听整个 scheduleParams 响应式对象，防止循环触发
+ */
+watch(() => props.metadata, initModes, { immediate: true, deep: true })
+
+/**
+ * 编辑场景适配：当外部传入的 scheduleParams (初次打开抽屉) 发生根本性变化时，强制同步一次
+ * 仅在 ID 或 关键业务场景切换时通过父组件重置
+ */
+watch(
+  () => scheduleParams.value,
+  (val, oldVal) => {
+    // 仅在从空变成有，或者明显是重置行为时进行初始化 (例如切换了任务)
+    if (Object.keys(val).length > 0 && Object.keys(oldVal || {}).length === 0) {
+      initModes()
+    }
+  },
+  { deep: true }
+)
+
+/**
+ * 全屏切换逻辑与键盘管理
  */
 const toggleFullScreen = (key: string) => {
   fullScreenStates[key] = !fullScreenStates[key]
-  // 切换全屏时锁定/解锁 Body 滚动
   document.body.style.overflow = fullScreenStates[key] ? "hidden" : ""
 }
 
-/**
- * 全局键盘监听 (处理 ESC 退出全屏)
- */
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === "Escape") {
     const activeKey = Object.keys(fullScreenStates).find((k) => fullScreenStates[k])
     if (activeKey) {
       toggleFullScreen(activeKey)
       e.preventDefault()
-      e.stopPropagation() // 拦截冒泡，防止触发 Drawer 的关闭
+      e.stopPropagation()
     }
   }
 }
 
 onMounted(() => window.addEventListener("keydown", handleKeyDown, true))
 onUnmounted(() => window.removeEventListener("keydown", handleKeyDown, true))
-
-// 监听元数据变化以重新初始化
-watch(() => props.metadata, initModes, { immediate: true, deep: true })
 </script>
 
 <style lang="scss" scoped>
