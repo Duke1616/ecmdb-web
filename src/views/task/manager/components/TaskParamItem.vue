@@ -4,7 +4,7 @@ import { FullScreen, Close } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
 import { CodebookSelector, RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/etask/executor/type"
-import MapEditor from "./MapEditor.vue"
+import KVEditor from "./KVEditor.vue"
 
 /**
  * NOTE: 该组件为 TaskParamsEditor 的子单元，负责单个参数的视察与编辑
@@ -24,8 +24,11 @@ const emit = defineEmits<{
   (e: "toggleFullScreen"): void
 }>()
 
-// 获取当前激活的绑定配置
-const currentBinding = computed(() => props.parameter.bindings[props.activeMode])
+// 获取当前激活的绑定配置 (带容错兜底，防止元数据不完整导致崩溃)
+const currentBinding = computed(() => {
+  if (!props.parameter?.bindings || !props.activeMode) return null
+  return props.parameter.bindings[props.activeMode] || null
+})
 
 // 处理值更新，确保类型统一为 string
 const handleValueChange = (val: string | number) => {
@@ -114,7 +117,7 @@ const mapValue = computed({
                 <!-- C: 键值对编辑器 (kv-input) -->
                 <template v-else-if="currentBinding.component === 'kv-input'">
                   <div class="map-editor-wrapper">
-                    <MapEditor v-model="mapValue" value-type="array" />
+                    <KVEditor v-model="mapValue" value-type="array" show-secret />
                   </div>
                 </template>
 

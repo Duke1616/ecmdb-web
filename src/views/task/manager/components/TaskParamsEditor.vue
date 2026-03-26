@@ -52,8 +52,10 @@ const initModes = () => {
     const keys = Object.keys(p.bindings || {})
     if (keys.length > 0) {
       // 优先从已有的 taskMetadata (业务数据) 中恢复模式到 UI 状态
-      // 如果 taskMetadata 中还没这个 Key，则取配置的第一个模式
-      const targetMode = taskMetadata.value[p.key] || keys[0]
+      // 校验保存的模式是否还在当前的 bindings 中，若不在则取第一个 Key (数据安全性标准)
+      const savedMode = taskMetadata.value[p.key]
+      const targetMode = savedMode && p.bindings[savedMode] ? savedMode : keys[0]
+
       if (paramModes[p.key] !== targetMode) {
         paramModes[p.key] = targetMode
       }

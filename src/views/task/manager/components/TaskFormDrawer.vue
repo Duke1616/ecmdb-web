@@ -155,7 +155,7 @@
                       <div v-else class="empty-params">
                         <el-empty :image-size="60" description="未识别到元数据，支持自由 Payload 配置" />
                         <div class="manual-map-box">
-                          <MapEditor v-model="form.grpc_config!.params" />
+                          <KVEditor v-model="form.grpc_config!.params" show-secret />
                         </div>
                       </div>
                     </div>
@@ -239,7 +239,6 @@ import {
 import { TaskType, type CreateTaskReq, type TaskItem } from "@/api/etask/manager/type"
 import type { HandlerDetail } from "@/api/etask/executor/type"
 import { useTaskResources } from "../composables/useTaskResources"
-import MapEditor from "./MapEditor.vue"
 import KVEditor from "./KVEditor.vue"
 import CronHelper from "./CronHelper.vue"
 import TaskParamsEditor from "./TaskParamsEditor.vue"

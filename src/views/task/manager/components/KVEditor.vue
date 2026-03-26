@@ -1,67 +1,114 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue"
-import { Delete, Plus } from "@element-plus/icons-vue"
+import { Delete, Plus, Lock, Unlock } from "@element-plus/icons-vue"
 
+/**
+ * NOTE: 通用键值对/字典编辑器 (Dictionary Editor)
+ * 整合了之前的 KVEditor 和 MapEditor，支持加密模式切换、多种数据结构解析与同步。
+ * 遵循 Vue 3 Composition API 规范。
+ */
 interface KVItem {
   key: string
   value: string
+  secret?: boolean
 }
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: Record<string, string>
+    modelValue?: any // Record<string, string> 或 KVItem[]
+    valueType?: "map" | "array" // 绑定数据的底层结构: map -> 字典, array -> 列表对象
     titleKey?: string
     titleValue?: string
     addText?: string
     emptyText?: string
+    showSecret?: boolean // 是否展示加密/解密切换
   }>(),
   {
     modelValue: () => ({}),
-    titleKey: "字段名 (KEY)",
-    titleValue: "字段值 (VALUE)",
-    addText: "添加字典项...",
-    emptyText: "暂未配置任何字典项"
+    valueType: "map",
+    titleKey: "变量名 (KEY)",
+    titleValue: "输入值 (VALUE)",
+    addText: "添加配置项...",
+    emptyText: "暂未配置任何配置项",
+    showSecret: false
   }
 )
 
 const emit = defineEmits<{
-  "update:modelValue": [val: Record<string, string>]
+  (e: "update:modelValue", val: any): void
 }>()
 
 const list = ref<KVItem[]>([])
 
-const parseModelToList = (val: Record<string, string>): KVItem[] => {
-  const resultList: KVItem[] = []
-  if (val && typeof val === "object" && !Array.isArray(val)) {
-    Object.entries(val).forEach(([k, v]) => {
-      resultList.push({ key: k, value: String(v) })
-    })
-  }
-  return resultList
-}
-
-const syncToParent = () => {
-  const result: Record<string, string> = {}
-  list.value.forEach((item) => {
-    if (item.key.trim() !== "") {
-      result[item.key.trim()] = String(item.value)
+// 解析数据源到内部列表
+const parseModelToList = (val: any): KVItem[] => {
+  if (props.valueType === "array") {
+    if (Array.isArray(val)) {
+      return val.map((item: any) => ({
+        key: String(item.key || ""),
+        value: typeof item.value === "string" ? item.value : String(item.value || ""),
+        secret: !!item.secret
+      }))
     }
-  })
-  emit("update:modelValue", result)
+    return []
+  } else {
+    // map 模式
+    const resultList: KVItem[] = []
+    if (val && typeof val === "object" && !Array.isArray(val)) {
+      Object.entries(val).forEach(([k, v]) => {
+        resultList.push({ key: k, value: String(v), secret: false })
+      })
+    }
+    return resultList
+  }
 }
 
+// 同步回父组件
+const syncToParent = () => {
+  if (props.valueType === "array") {
+    const result = list.value
+      .filter((i) => i.key?.trim())
+      .map((i) => ({
+        key: i.key.trim(),
+        value: i.value,
+        secret: !!i.secret
+      }))
+    emit("update:modelValue", result)
+  } else {
+    // map 模式
+    const result: Record<string, string> = {}
+    list.value.forEach((item) => {
+      const k = item.key?.trim()
+      if (k) {
+        result[k] = item.value || ""
+      }
+    })
+    emit("update:modelValue", result)
+  }
+}
+
+// 监听外部数据变更 (仅在非内部操作引起的数据量变化时同步，防止输入冲突)
 watch(
   () => props.modelValue,
-  (newVal) => {
-    if (Object.keys(newVal || {}).length !== list.value.filter((i) => i.key).length) {
-      list.value = parseModelToList(newVal || {})
+  (val) => {
+    const currentLen = list.value.filter((i) => i.key.trim()).length
+    if (props.valueType === "array") {
+      const incomingLen = Array.isArray(val) ? val.length : 0
+      if (incomingLen !== currentLen) {
+        list.value = parseModelToList(val)
+      }
+    } else {
+      const incomingLen = Object.keys(val || {}).length
+      if (incomingLen !== currentLen) {
+        list.value = parseModelToList(val)
+      }
     }
   },
   { deep: true }
 )
 
 const addItem = () => {
-  list.value.push({ key: "", value: "" })
+  list.value.push({ key: "", value: "", secret: false })
 }
 
 const removeItem = (index: number) => {
@@ -77,35 +124,54 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="kv-editor">
+  <div class="kv-editor-unified">
+    <!-- Header 标注 -->
     <div v-if="list.length > 0" class="map-header">
       <div class="label-key">{{ titleKey }}</div>
       <div class="label-value">{{ titleValue }}</div>
     </div>
 
+    <!-- 列表展现 -->
     <div class="map-list" v-if="list.length > 0">
       <div v-for="(item, index) in list" :key="index" class="map-item-row">
         <div class="item-main">
-          <el-input v-model="item.key" placeholder="Key..." class="minimal-input key-field" @blur="syncToParent" />
+          <!-- Key 键名 -->
+          <el-input v-model="item.key" placeholder="Key" class="minimal-input key-field" @blur="syncToParent" />
+
           <div class="item-divider">:</div>
+
+          <!-- Value 键值 -->
           <el-input
             v-model="item.value"
-            placeholder="Value..."
+            :type="item.secret ? 'password' : 'text'"
+            placeholder="Value"
             class="minimal-input value-field"
             @blur="syncToParent"
-          />
+          >
+            <!-- 给加密模式提供切换入口 -->
+            <template #suffix v-if="showSecret">
+              <el-icon class="secret-toggle" :class="{ 'is-active': item.secret }" @click="item.secret = !item.secret">
+                <component :is="item.secret ? Lock : Unlock" />
+              </el-icon>
+            </template>
+          </el-input>
         </div>
+
+        <!-- 动作按钮 -->
         <div class="item-actions">
           <el-button type="danger" link :icon="Delete" @click="removeItem(index)" class="delete-btn" />
         </div>
       </div>
     </div>
 
+    <!-- 交互区域 -->
     <div class="map-footer">
       <div class="add-trigger" @click="addItem">
         <el-icon><Plus /></el-icon>
         <span>{{ addText }}</span>
       </div>
+
+      <!-- 空状态 -->
       <transition name="fade">
         <div v-if="list.length === 0" class="empty-status">{{ emptyText }}</div>
       </transition>
@@ -114,7 +180,7 @@ onMounted(() => {
 </template>
 
 <style scoped lang="scss">
-.kv-editor {
+.kv-editor-unified {
   display: flex;
   flex-direction: column;
 }
@@ -142,6 +208,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .map-item-row {
@@ -205,6 +272,19 @@ onMounted(() => {
 
   &.value-field {
     flex: 1;
+  }
+}
+
+.secret-toggle {
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 14px;
+  transition: color 0.2s;
+  &:hover {
+    color: #64748b;
+  }
+  &.is-active {
+    color: #f59e0b;
   }
 }
 

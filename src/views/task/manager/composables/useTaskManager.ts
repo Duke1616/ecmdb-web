@@ -8,7 +8,7 @@ import {
   runTaskApi,
   stopTaskApi
 } from "@/api/etask/manager"
-import { TaskStatus, type TaskItem, type CreateTaskReq, type UpdateTaskReq } from "@/api/etask/manager/type"
+import { type TaskItem, type CreateTaskReq, type UpdateTaskReq } from "@/api/etask/manager/type"
 import { ElMessage, ElMessageBox } from "element-plus"
 
 export function useTaskManager() {
@@ -23,22 +23,6 @@ export function useTaskManager() {
     layout: "total, sizes, prev, pager, next, jumper"
   })
 
-  // 统计信息
-  const stats = reactive({
-    total: 0,
-    recurring: 0,
-    oneTime: 0,
-    enabled: 0
-  })
-
-  const updateStats = () => {
-    stats.total = paginationData.total
-    const list = tasksData.value || []
-    stats.recurring = list.filter((t) => t.type === "RECURRING").length
-    stats.oneTime = list.filter((t) => t.type === "ONE_TIME").length
-    stats.enabled = list.filter((t) => t.status === TaskStatus.ACTIVE).length
-  }
-
   const fetchTasksData = async () => {
     loading.value = true
     try {
@@ -49,7 +33,6 @@ export function useTaskManager() {
       })
       tasksData.value = res.data.tasks
       paginationData.total = res.data.total
-      updateStats()
     } catch (error) {
       console.error("Fetch tasks failed:", error)
     } finally {
@@ -141,7 +124,6 @@ export function useTaskManager() {
     tasksData,
     searchQuery,
     paginationData,
-    stats,
     fetchTasksData,
     handleCreateTask,
     handleUpdateTask,
