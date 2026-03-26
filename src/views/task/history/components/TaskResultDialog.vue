@@ -3,7 +3,8 @@
     v-model="visible"
     :title="dialogTitle"
     :subtitle="dialogSubtitle"
-    width="60%"
+    width="80%"
+    :full-height="true"
     :close-on-click-modal="closeOnClickModal"
     :header-icon="headerIcon"
     :show-footer="isEditable"
@@ -310,9 +311,10 @@ const customValueFormatter = (value: any) => {
 
 <style scoped lang="scss">
 .task-result-container {
-  height: 60vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   overflow: hidden;
 }
 

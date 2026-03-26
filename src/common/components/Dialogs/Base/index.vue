@@ -90,27 +90,39 @@ const handleOpened = () => {
 </script>
 <style lang="scss">
 /* --- 链路增强：支持全高弹窗模式 --- */
-.base-dialog.is-full-height {
-  display: flex !important;
-  flex-direction: column !important;
-  max-height: 92vh !important;
-  margin-bottom: 0 !important;
+body {
+  .el-overlay-dialog {
+    /* 只有当里面装载了开启全高模式的弹窗时，才禁止外部滚动并开启 Flex 居中 */
+    &:has(.base-dialog.is-full-height) {
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
 
-  .el-dialog__body {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    min-height: 0 !important;
+  .base-dialog.is-full-height {
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    max-height: 90vh;
+    margin: 0;
 
-    .dialog-content {
-      flex: 1 !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-      min-height: 0 !important;
-      height: 0 !important; // 核心：强制进入 Flex 压缩模式
+    .el-dialog__body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      padding: 0;
+      min-height: 0;
+
+      .dialog-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+      }
     }
   }
 }

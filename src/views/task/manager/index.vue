@@ -183,19 +183,24 @@ const logTaskId = ref<number>(0)
 const logTaskName = ref<string>("")
 
 const getOperateItems = (row: TaskItem) => {
-  const items = [
-    { name: "编辑", code: "edit", type: "primary", icon: "Edit" },
-    { name: "日志", code: "logs", type: "info", icon: "Monitor" }
-  ]
+  const items = []
 
-  // 根据状态判定显示 执行 还是 停止
+  // 1. 根据状态判定显示 执行 还是 停止 (最前)
   if (row.status === TaskStatus.ACTIVE) {
     items.push({ name: "停止", code: "stop", type: "warning", icon: "VideoPause" })
   } else {
     items.push({ name: "执行", code: "run", type: "success", icon: "VideoPlay" })
   }
 
+  // 2. 记录
+  items.push({ name: "记录", code: "logs", type: "info", icon: "Monitor" })
+
+  // 3. 编辑
+  items.push({ name: "编辑", code: "edit", type: "primary", icon: "Edit" })
+
+  // 4. 删除
   items.push({ name: "删除", code: "delete", type: "danger", icon: "Delete" })
+
   return items
 }
 

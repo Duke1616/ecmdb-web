@@ -16,7 +16,7 @@
       <!-- 左侧栏: 执行实例列表 (审计卡片风格) -->
       <div class="execution-sidebar" v-loading="execLoading">
         <div class="sidebar-header">
-          <span class="count">共 {{ executions.length }} 条记录</span>
+          <span class="count">共 {{ totalCount }} 条记录</span>
           <el-button :icon="Refresh" link @click="fetchExecutionList" class="resync-btn" />
         </div>
 
@@ -66,6 +66,19 @@
           </div>
           <el-empty v-else :image-size="40" description="暂无实例数据数据" />
         </el-scrollbar>
+
+        <!-- 分页器：固定在侧边栏底部 -->
+        <div class="sidebar-pagination" v-if="totalCount > 0">
+          <el-pagination
+            v-model:current-page="pagination.page"
+            :page-size="pagination.size"
+            :total="totalCount"
+            layout="prev, pager, next"
+            small
+            background
+            @current-change="handlePageChange"
+          />
+        </div>
       </div>
 
       <!-- 右侧栏: 日志看板 -->
@@ -149,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onUnmounted } from "vue"
+import { ref, computed, reactive, watch, onUnmounted } from "vue"
 import { Refresh, Pointer, Coordinate, Monitor, Calendar, Clock, Timer, Loading } from "@element-plus/icons-vue"
 import { getTaskLogsApi, listExecutionsApi } from "@/api/etask/manager"
 import type { TaskExecutionVO } from "@/api/etask/manager/type"
@@ -181,6 +194,12 @@ const viewResultVisible = ref(false)
 const autoRefresh = ref(false)
 const lastRefreshTime = ref("")
 
+const totalCount = ref(0)
+const pagination = reactive({
+  page: 1,
+  size: 10
+})
+
 const STATUS_MAP: Record<string, TagInfo> = {
   RUNNING: { type: "primary", text: "进行中" },
   SUCCESS: { type: "success", text: "成功" },
@@ -204,6 +223,8 @@ watch(autoRefresh, (val) => {
 
 const initData = async () => {
   if (!props.taskId) return
+  pagination.page = 1
+  currentExecution.value = null
   await fetchExecutionList()
 }
 
@@ -213,10 +234,11 @@ const fetchExecutionList = async () => {
   try {
     const res = await listExecutionsApi({
       task_id: props.taskId,
-      offset: 0,
-      limit: 100
+      offset: (pagination.page - 1) * pagination.size,
+      limit: pagination.size
     })
     executions.value = res.data.executions
+    totalCount.value = res.data.total
 
     if (executions.value.length > 0 && !currentExecution.value) {
       handleSelectExecution(executions.value[0])
@@ -224,6 +246,11 @@ const fetchExecutionList = async () => {
   } finally {
     execLoading.value = false
   }
+}
+
+const handlePageChange = async (page: number) => {
+  pagination.page = page
+  await fetchExecutionList()
 }
 
 const handleSelectExecution = async (item: TaskExecutionVO) => {
@@ -260,6 +287,7 @@ const handleDialogClosed = () => {
   executions.value = []
   currentExecution.value = null
   logs.value = ""
+  totalCount.value = 0
 }
 
 onUnmounted(() => clearInterval(timer))
@@ -425,6 +453,15 @@ defineExpose({ initData })
           }
         }
       }
+    }
+
+    .sidebar-pagination {
+      padding: 10px;
+      background: #ffffff;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: center;
+      flex-shrink: 0;
     }
   }
 
