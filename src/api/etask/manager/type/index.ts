@@ -7,6 +7,7 @@ export interface CreateTaskReq {
   retry_config?: RetryConfig
   max_execution_seconds?: number
   schedule_params?: Record<string, string>
+  metadata?: Record<string, string>
 }
 
 export interface UpdateTaskReq extends CreateTaskReq {

@@ -30,7 +30,8 @@ const props = defineProps<Props>()
 
 // 使用 defineModel 实现双向绑定
 const modelValue = defineModel<Record<string, string>>({ required: true })
-const scheduleParams = defineModel<Record<string, string>>("scheduleParams", { default: () => ({}) })
+// NOTE: 该组件为辅助编辑组件，通过 taskMetadata 双向同步参数的绑定状态与 UI 模式
+const taskMetadata = defineModel<Record<string, string>>("taskMetadata", { default: () => ({}) })
 
 // UI 状态管理
 const paramModes = reactive<Record<string, string>>({})
@@ -50,9 +51,9 @@ const initModes = () => {
     // 1. 初始化切换模式 (取 Bindings 的第一个 Key)
     const keys = Object.keys(p.bindings || {})
     if (keys.length > 0) {
-      // 优先从已有的 scheduleParams (业务数据) 中恢复模式到 UI 状态
-      // 如果 scheduleParams 中还没这个 Key，则取配置的第一个模式
-      const targetMode = scheduleParams.value[p.key] || keys[0]
+      // 优先从已有的 taskMetadata (业务数据) 中恢复模式到 UI 状态
+      // 如果 taskMetadata 中还没这个 Key，则取配置的第一个模式
+      const targetMode = taskMetadata.value[p.key] || keys[0]
       if (paramModes[p.key] !== targetMode) {
         paramModes[p.key] = targetMode
       }
@@ -84,11 +85,11 @@ const onParamUpdate = (key: string, val: string) => {
 watch(
   () => ({ ...paramModes }),
   (newModes) => {
-    const current = JSON.stringify(scheduleParams.value)
+    const current = JSON.stringify(taskMetadata.value)
     const next = JSON.stringify(newModes)
     if (current !== next) {
       // 只有在真正发生变化时才更新业务模型，确保单向驱动或受控更新
-      scheduleParams.value = newModes
+      taskMetadata.value = newModes
     }
   },
   { deep: true }
@@ -105,7 +106,7 @@ watch(() => props.metadata, initModes, { immediate: true, deep: true })
  * 仅在 ID 或 关键业务场景切换时通过父组件重置
  */
 watch(
-  () => scheduleParams.value,
+  () => taskMetadata.value,
   (val, oldVal) => {
     // 仅在从空变成有，或者明显是重置行为时进行初始化 (例如切换了任务)
     if (Object.keys(val).length > 0 && Object.keys(oldVal || {}).length === 0) {

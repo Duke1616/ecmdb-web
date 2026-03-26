@@ -470,6 +470,8 @@ defineExpose({ initData })
     display: flex;
     flex-direction: column;
     background: #ffffff;
+    min-height: 0;
+    min-width: 0;
     .main-header {
       padding: 10px 24px;
       border-bottom: 1px solid #f1f5f9;
@@ -521,6 +523,7 @@ defineExpose({ initData })
       padding: 0 24px 24px 24px;
       display: flex;
       flex-direction: column;
+      min-height: 0;
       .console-title-bar {
         display: flex;
         align-items: center;
@@ -549,8 +552,13 @@ defineExpose({ initData })
         overflow: hidden;
         border: 1px solid #1e293b;
         box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.4);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
         .terminal-editor {
+          flex: 1;
           height: 100%;
+          min-height: 0;
           :deep(.cm-editor) {
             height: 100%;
             font-family: "Fira Code", monospace;

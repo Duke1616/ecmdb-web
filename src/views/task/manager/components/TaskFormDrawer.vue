@@ -140,7 +140,7 @@
                       <TaskParamsEditor
                         v-if="currentHandler?.metadata?.length"
                         v-model="form.grpc_config!.params!"
-                        v-model:scheduleParams="form.schedule_params!"
+                        v-model:task-metadata="form.metadata!"
                         :metadata="currentHandler.metadata"
                       />
                       <div v-else class="empty-params">
@@ -300,7 +300,8 @@ const defaultForm = (): CreateTaskReq => ({
   },
   http_config: { endpoint: "", params: {} },
   retry_config: { max_retries: 3, initial_interval: 1000, max_interval: 5000 },
-  schedule_params: {}
+  schedule_params: {},
+  metadata: {}
 })
 
 const form = reactive<CreateTaskReq>(defaultForm())
@@ -381,7 +382,8 @@ watch(
       "grpc_config",
       "http_config",
       "retry_config",
-      "schedule_params"
+      "schedule_params",
+      "metadata"
     ]
     const cleanData = cloneDeep(pick(val, businessFields))
 
@@ -392,7 +394,8 @@ watch(
       grpc_config: cleanData.grpc_config || base.grpc_config,
       http_config: cleanData.http_config || base.http_config,
       retry_config: cleanData.retry_config || base.retry_config,
-      schedule_params: cleanData.schedule_params || base.schedule_params
+      schedule_params: cleanData.schedule_params || base.schedule_params,
+      metadata: cleanData.metadata || base.metadata
     })
 
     // 4. 同步 UI 辅助状态
