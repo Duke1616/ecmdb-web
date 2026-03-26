@@ -8,9 +8,18 @@
     :confirm-loading="loading"
     @confirm="handleSave"
     @cancel="visible = false"
+    @closed="handleClosed"
   >
     <div class="task-form-container">
-      <el-form :model="form" :rules="rules" ref="formRef" label-position="top" class="task-form">
+      <el-form
+        :model="form"
+        :rules="rules"
+        ref="formRef"
+        label-position="top"
+        class="task-form"
+        :validate-on-rule-change="false"
+        :key="formKey"
+      >
         <!-- 1. 基础核心配置 -->
         <div class="form-section">
           <div class="section-title">
@@ -283,6 +292,11 @@ const handleRetryToggle = (val: boolean | string | number) => {
   }
 }
 
+// 计算表单唯一索引，用于强制重置组件生命周期与内部校验状态 (优雅替代双重 nextTick 同步难题)
+const formKey = computed(() => {
+  return props.isEdit ? `edit-${props.initialData?.id || 0}` : "create"
+})
+
 const protocols = [
   { label: "gRPC", value: "grpc", icon: Connection, desc: "分布式标准通信协议" },
   { label: "HTTP", value: "http", icon: Link, desc: "标准 RESTful 后端回调" }
@@ -404,6 +418,11 @@ watch(
   },
   { immediate: true }
 )
+
+// 当协议切换时，清理校验信息防止残留
+watch(activeProtocol, () => {
+  formRef.value?.clearValidate()
+})
 
 // --- 核心操作 ---
 const handleCronSelect = (val: string) => {
