@@ -370,7 +370,7 @@ const rules = computed<FormRules>(() => {
 
 // 显隐同步
 // 显隐同步：打开时刷新资源
-watch(visible, (val) => val && fetchResources())
+watch(visible, (val) => val && fetchResources(), { immediate: true })
 
 // 数据回填
 watch(

@@ -81,27 +81,18 @@ const onParamUpdate = (key: string, val: string) => {
 }
 
 /**
- * 核心监听：将 UI 层的模式选择 (paramModes) 同步回业务层的 scheduleParams
- * 使用深拷贝对象比较，防止属性修改导致的不必要的响应式风暴或循环触发
+ * 核心监听：将 UI 层的模式选择 (paramModes) 同步回业务层数据
+ * 当 UI 模式发生变化时，更新 taskMetadata (即 form.metadata)
  */
-watch(
-  () => ({ ...paramModes }),
-  (newModes) => {
-    const current = JSON.stringify(taskMetadata.value)
-    const next = JSON.stringify(newModes)
-    if (current !== next) {
-      // 只有在真正发生变化时才更新业务模型，确保单向驱动或受控更新
-      taskMetadata.value = newModes
-    }
-  },
-  { deep: true }
-)
+watch(paramModes, (newModes) => {
+  taskMetadata.value = { ...newModes }
+})
 
 /**
  * 全页元数据驱动点：当 Handler 方法切换导致 Metadata 变化时，触发初始化
  * NOTE: 不再直接监听整个 scheduleParams 响应式对象，防止循环触发
  */
-watch(() => props.metadata, initModes, { immediate: true, deep: true })
+watch(() => props.metadata, initModes, { immediate: true })
 
 /**
  * 编辑场景适配：当外部传入的 scheduleParams (初次打开抽屉) 发生根本性变化时，强制同步一次

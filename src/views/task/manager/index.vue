@@ -85,6 +85,7 @@
 
     <!-- 核心表单抽屉 -->
     <TaskFormDrawer
+      v-if="formVisible"
       v-model="formVisible"
       :is-edit="!!currentEditId"
       :initial-data="currentEditData"
@@ -92,8 +93,7 @@
     />
 
     <!-- 运行历史与日志弹窗 -->
-    <!-- 运行历史与日志弹窗 -->
-    <TaskExecutionDialog v-model="logVisible" :task-id="logTaskId" :task-name="logTaskName" ref="logDialogRef" />
+    <TaskExecutionDialog v-if="logVisible" v-model="logVisible" :task-id="logTaskId" :task-name="logTaskName" />
   </PageContainer>
 </template>
 
@@ -152,27 +152,16 @@ const formatTaskName = (name: string) => {
   return { title: name, sub: "" }
 }
 
-// 状态语义化映射
-const getStatusType = (status: TaskStatus) => {
-  const map: Record<TaskStatus, string> = {
-    [TaskStatus.COMPLETED]: "success",
-    [TaskStatus.ACTIVE]: "primary",
-    [TaskStatus.INACTIVE]: "info",
-    [TaskStatus.PREEMPTED]: "warning"
-  }
-  return map[status] || "info"
+// --- 状态与语义化配置 ---
+const STATUS_META: Record<TaskStatus, { label: string; type: string }> = {
+  [TaskStatus.COMPLETED]: { label: "已完成", type: "success" },
+  [TaskStatus.ACTIVE]: { label: "可调度", type: "primary" },
+  [TaskStatus.INACTIVE]: { label: "已停止", type: "info" },
+  [TaskStatus.PREEMPTED]: { label: "已抢占", type: "warning" }
 }
 
-// 状态中文映射
-const getStatusLabel = (status: TaskStatus) => {
-  const map: Record<TaskStatus, string> = {
-    [TaskStatus.COMPLETED]: "已完成",
-    [TaskStatus.ACTIVE]: "可调度",
-    [TaskStatus.INACTIVE]: "已停止",
-    [TaskStatus.PREEMPTED]: "已抢占"
-  }
-  return map[status] || status
-}
+const getStatusType = (status: TaskStatus) => STATUS_META[status]?.type || "info"
+const getStatusLabel = (status: TaskStatus) => STATUS_META[status]?.label || status
 
 const formVisible = ref(false)
 const currentEditId = ref<number | null>(null)
