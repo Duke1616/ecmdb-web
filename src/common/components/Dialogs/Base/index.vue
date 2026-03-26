@@ -40,6 +40,7 @@ interface Props {
   type?: "standard" | "form" | "permission" | "custom"
   beforeClose?: (done: () => void) => void
   top?: string
+  fullHeight?: boolean
 }
 
 interface Emits {
@@ -67,7 +68,8 @@ const visible = computed({
 const dialogClass = computed(() => {
   const baseClass = "base-dialog"
   const typeClass = `base-dialog--${props.type}`
-  return [baseClass, typeClass]
+  const heightClass = props.fullHeight ? "is-full-height" : ""
+  return [baseClass, typeClass, heightClass]
 })
 
 const handleBeforeClose = (done: () => void) => {
@@ -86,3 +88,30 @@ const handleOpened = () => {
   emits("opened")
 }
 </script>
+<style lang="scss">
+/* --- 链路增强：支持全高弹窗模式 --- */
+.base-dialog.is-full-height {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: 92vh !important;
+  margin-bottom: 0 !important;
+
+  .el-dialog__body {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+
+    .dialog-content {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
+      min-height: 0 !important;
+      height: 0 !important; // 核心：强制进入 Flex 压缩模式
+    }
+  }
+}
+</style>

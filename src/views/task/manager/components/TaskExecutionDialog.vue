@@ -7,6 +7,7 @@
     top="4vh"
     header-icon="Monitor"
     :show-footer="false"
+    :full-height="true"
     class="task-execution-console"
     @opened="initData"
     @closed="handleDialogClosed"
@@ -267,44 +268,12 @@ defineExpose({ initData })
 </script>
 
 <style scoped lang="scss">
-// 业界最稳方案：Flex 弹性闭环锁定
-// 我们不再手动计算高度，而是让 el-dialog 整体变成一个 Flex 盒子
-:deep(.task-execution-console) {
-  .base-dialog {
-    // 强制关闭弹窗本身的滚动行为
-    overflow: hidden !important;
-
-    // 使 el-dialog 容器变成弹性盒子
-    .el-dialog {
-      display: flex !important;
-      flex-direction: column;
-
-      // 核心：锁死弹窗的最大高度，不允许它穿透屏幕底边缘
-      max-height: 92vh;
-      margin-bottom: 0 !important;
-
-      // 页眉固定
-      .el-dialog__header {
-        flex: 0 0 auto;
-      }
-
-      // 主体自适应剩余空间
-      .el-dialog__body {
-        flex: 1;
-        overflow: hidden;
-        padding: 0 !important;
-      }
-    }
-  }
-}
-
 .execution-manager-layout {
   display: flex;
-  // 核心：不再写死的 vh，而是 100% 撑满被锁定的父容器（el-dialog__body）
   height: 100%;
-  min-height: 580px; // 提供最低限度的保障
+  min-height: 580px;
   background: #ffffff;
-  border-radius: 0 0 12px 12px; // 下边框圆角
+  border-radius: 0 0 12px 12px;
   overflow: hidden;
 
   .execution-sidebar {

@@ -8,6 +8,7 @@
     :before-close="handleBeforeClose"
     :type="dialogType"
     :top="top"
+    :full-height="fullHeight"
     @closed="handleClosed"
     @opened="handleOpened"
   >
@@ -25,7 +26,7 @@
     </template>
 
     <!-- 弹窗内容 -->
-    <div class="dialog-content">
+    <div class="dialog-content" :class="{ 'is-full-height': fullHeight }">
       <slot />
     </div>
 
@@ -86,6 +87,7 @@ interface Props {
   dialogType?: "form"
   beforeClose?: (done: () => void) => void
   top?: string
+  fullHeight?: boolean
 }
 
 interface Emits {
@@ -264,6 +266,15 @@ const handleCancel = () => {
         transform: translateY(0);
       }
     }
+  }
+
+  &.is-full-height {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 0; // 核心：强制收缩
+    min-height: 0;
+    overflow: hidden;
   }
 }
 </style>
