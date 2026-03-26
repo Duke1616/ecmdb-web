@@ -35,6 +35,7 @@ interface Props {
   projectFiles?: any[] // 项目文件信息，用于智能提示
   showPreview?: boolean // 是否显示预览
   previewContent?: string // 预览内容
+  readOnly?: boolean // 是否只读
 }
 
 const props = defineProps<Props>()
@@ -48,10 +49,10 @@ const emit = defineEmits<{
 const showPreview = computed(() => props.showPreview || false)
 
 const config = reactive({
-  disabled: false,
+  disabled: props.readOnly || false,
   indentWithTab: true,
   tabSize: 2,
-  autofocus: true,
+  autofocus: !props.readOnly,
   theme: useTheme().theme.value === Theme.Dark ? "oneDark" : "default"
 })
 

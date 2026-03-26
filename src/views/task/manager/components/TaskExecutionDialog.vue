@@ -17,7 +17,7 @@
       <div class="execution-sidebar" v-loading="execLoading">
         <div class="sidebar-header">
           <span class="count">共 {{ totalCount }} 条记录</span>
-          <el-button :icon="Refresh" link @click="fetchExecutionList" class="resync-btn" />
+          <el-button :icon="Refresh" link @click="() => fetchExecutionList()" class="resync-btn" />
         </div>
 
         <el-scrollbar class="list-scrollbar">
@@ -106,7 +106,7 @@
                     circle
                     size="default"
                     :class="{ 'is-loading': loading }"
-                    @click="fetchLogs"
+                    @click="() => fetchLogs()"
                   />
                 </el-tooltip>
                 <el-tooltip v-if="currentExecution.task_result" content="运行结果" placement="top">
@@ -211,11 +211,16 @@ let timer: any = null
 
 watch(autoRefresh, (val) => {
   if (val) {
-    timer = setInterval(() => {
-      if (currentExecution.value?.status === "RUNNING") {
-        fetchLogs()
+    timer = setInterval(async () => {
+      // 1. 静默刷新执行列表 (探测新实例或状态变更)
+      await fetchExecutionList(true)
+
+      // 2. 如果当前选中的实例还在运行状态，静默刷新日志
+      const runningStatuses = ["RUNNING", "PREEMPTED"]
+      if (currentExecution.value && runningStatuses.includes(currentExecution.value.status)) {
+        await fetchLogs(true)
       }
-    }, 5000)
+    }, 4000)
   } else {
     clearInterval(timer)
   }
@@ -228,9 +233,9 @@ const initData = async () => {
   await fetchExecutionList()
 }
 
-const fetchExecutionList = async () => {
+const fetchExecutionList = async (silent = false) => {
   if (!props.taskId) return
-  execLoading.value = true
+  if (!silent) execLoading.value = true
   try {
     const res = await listExecutionsApi({
       task_id: props.taskId,
@@ -240,11 +245,17 @@ const fetchExecutionList = async () => {
     executions.value = res.data.executions
     totalCount.value = res.data.total
 
-    if (executions.value.length > 0 && !currentExecution.value) {
+    // 如果当前选中的实例在刷新后的列表中，同步最新的状态
+    if (currentExecution.value) {
+      const updated = executions.value.find((e) => e.id === currentExecution.value?.id)
+      if (updated) {
+        currentExecution.value = updated
+      }
+    } else if (executions.value.length > 0) {
       handleSelectExecution(executions.value[0])
     }
   } finally {
-    execLoading.value = false
+    if (!silent) execLoading.value = false
   }
 }
 
@@ -258,9 +269,9 @@ const handleSelectExecution = async (item: TaskExecutionVO) => {
   await fetchLogs()
 }
 
-const fetchLogs = async () => {
+const fetchLogs = async (silent = false) => {
   if (!currentExecution.value) return
-  loading.value = true
+  if (!silent) loading.value = true
   try {
     const res = await getTaskLogsApi({
       execution_id: currentExecution.value.id,
@@ -270,7 +281,7 @@ const fetchLogs = async () => {
     logs.value = res.data.logs.map((l) => l.content).join("\n")
     lastRefreshTime.value = new Date().toLocaleTimeString()
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
   }
 }
 
@@ -555,6 +566,12 @@ defineExpose({ initData })
         display: flex;
         flex-direction: column;
         min-height: 0;
+        :deep(.el-empty) {
+          margin: auto;
+          .el-empty__description p {
+            color: #64748b;
+          }
+        }
         .terminal-editor {
           flex: 1;
           height: 100%;
