@@ -132,7 +132,11 @@ const handleExternalThemeChange = (theme: string) => {
   handleThemeChange(theme)
 }
 
-defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalThemeChange })
+const scrollToBottom = () => {
+  editorRef.value?.scrollToBottom()
+}
+
+defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalThemeChange, scrollToBottom })
 </script>
 
 <style lang="scss" scoped>

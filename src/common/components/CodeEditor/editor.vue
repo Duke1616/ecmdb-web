@@ -134,7 +134,14 @@ const formatCode = () => {
   console.log("Format code functionality")
 }
 
-defineExpose({ getCode, setCode, formatCode })
+const scrollToBottom = () => {
+  if (cmView.value) {
+    const scrollDOM = cmView.value.scrollDOM
+    scrollDOM.scrollTop = scrollDOM.scrollHeight
+  }
+}
+
+defineExpose({ getCode, setCode, formatCode, scrollToBottom })
 
 // 监听代码变化 - 只在外部代码变化时更新编辑器
 watch(

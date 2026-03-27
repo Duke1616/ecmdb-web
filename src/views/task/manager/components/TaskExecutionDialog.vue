@@ -81,96 +81,20 @@
         </div>
       </div>
 
-      <!-- 右侧栏: 日志看板 -->
-      <div class="execution-main" v-loading="loading">
-        <template v-if="currentExecution">
-          <div class="main-header">
-            <div class="status-summary">
-              <EnumTag :value="currentExecution.status" :map="STATUS_MAP" />
-              <div class="node-badge">
-                <el-icon><Coordinate /></el-icon>
-                <span>{{ currentExecution.executor_node_id }}</span>
-              </div>
-            </div>
-            <div class="flex-spacer" />
-            <div class="header-actions">
-              <div class="control-unit">
-                <span class="label">自动刷新</span>
-                <el-switch v-model="autoRefresh" size="small" />
-              </div>
-              <div class="action-divider" />
-              <div class="btn-cluster">
-                <el-tooltip content="刷新日志" placement="top">
-                  <el-button
-                    :icon="Refresh"
-                    circle
-                    size="default"
-                    :class="{ 'is-loading': loading }"
-                    @click="() => fetchLogs()"
-                  />
-                </el-tooltip>
-                <el-tooltip v-if="currentExecution.task_result" content="运行结果" placement="top">
-                  <el-button
-                    :icon="Monitor"
-                    type="info"
-                    circle
-                    plain
-                    size="default"
-                    @click="viewResultVisible = true"
-                  />
-                </el-tooltip>
-              </div>
-            </div>
-          </div>
-
-          <div class="console-body">
-            <div class="console-title-bar">
-              <span class="prefix">控制台输出 (CONSOLE)</span>
-              <div class="spacer" />
-              <span class="sync-time" v-if="lastRefreshTime">
-                <el-icon><Clock /></el-icon>
-                同步于 {{ lastRefreshTime }}
-              </span>
-            </div>
-            <div class="terminal-view">
-              <CodeEditor v-if="logs" :code="logs" language="text" :read-only="true" class="terminal-editor" />
-              <el-empty v-else description="该实例暂无控制台日志流" />
-            </div>
-          </div>
-        </template>
-        <div v-else class="empty-view">
-          <el-icon class="icon"><Pointer /></el-icon>
-          <h3>请选择监控实例</h3>
-        </div>
-      </div>
+      <!-- 右侧栏: 日志看板 (抽离为独立组件，支持增量刷新) -->
+      <LogConsole :execution="currentExecution" />
     </div>
-
-    <!-- 结果弹窗 (结果查看) -->
-    <el-dialog
-      v-model="viewResultVisible"
-      title="运行结果 (Return Data)"
-      width="1000px"
-      append-to-body
-      center
-      top="8vh"
-    >
-      <div class="result-viewer">
-        <CodeEditor :code="currentExecution?.task_result || ''" language="json" :read-only="true" height="580px" />
-      </div>
-    </el-dialog>
   </FormDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, watch, onUnmounted } from "vue"
-import { Refresh, Pointer, Coordinate, Monitor, Calendar, Clock, Timer, Loading } from "@element-plus/icons-vue"
-import { getTaskLogsApi, listExecutionsApi } from "@/api/etask/manager"
+import { ref, computed, reactive, onUnmounted } from "vue"
+import { Refresh, Coordinate, Calendar, Timer, Loading } from "@element-plus/icons-vue"
+import { listExecutionsApi } from "@/api/etask/manager"
 import type { TaskExecutionVO } from "@/api/etask/manager/type"
 import { FormDialog } from "@/common/components/Dialogs"
-import CodeEditor from "@/common/components/CodeEditor/index.vue"
-import EnumTag from "@/common/components/EnumTag/index.vue"
 import { formatTimestamp } from "@@/utils/day"
-import type { TagInfo } from "@/common/components/EnumTag/index.vue"
+import LogConsole from "./LogConsole.vue"
 
 const props = defineProps<{
   modelValue: boolean
@@ -182,17 +106,12 @@ const emit = defineEmits(["update:modelValue"])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (val) => emit("update:modelValue", val)
+  set: (value) => emit("update:modelValue", value)
 })
 
-const loading = ref(false)
 const execLoading = ref(false)
 const executions = ref<TaskExecutionVO[]>([])
 const currentExecution = ref<TaskExecutionVO | null>(null)
-const logs = ref("")
-const viewResultVisible = ref(false)
-const autoRefresh = ref(false)
-const lastRefreshTime = ref("")
 
 const totalCount = ref(0)
 const pagination = reactive({
@@ -200,36 +119,20 @@ const pagination = reactive({
   size: 10
 })
 
-const STATUS_MAP: Record<string, TagInfo> = {
-  RUNNING: { type: "primary", text: "进行中" },
-  SUCCESS: { type: "success", text: "成功" },
-  FAILED: { type: "danger", text: "失败" },
-  TERMINATED: { type: "info", text: "停止" }
-}
-
+// 列表级静默刷新 (探测新实例)
 let timer: any = null
-
-watch(autoRefresh, (val) => {
-  if (val) {
-    timer = setInterval(async () => {
-      // 1. 静默刷新执行列表 (探测新实例或状态变更)
-      await fetchExecutionList(true)
-
-      // 2. 如果当前选中的实例还在运行状态，静默刷新日志
-      const runningStatuses = ["RUNNING", "PREEMPTED"]
-      if (currentExecution.value && runningStatuses.includes(currentExecution.value.status)) {
-        await fetchLogs(true)
-      }
-    }, 4000)
-  } else {
-    clearInterval(timer)
-  }
-})
+const startTimer = () => {
+  if (timer) clearInterval(timer)
+  timer = setInterval(() => {
+    if (props.taskId) fetchExecutionList(true)
+  }, 10000)
+}
 
 const initData = async () => {
   if (!props.taskId) return
   pagination.page = 1
   currentExecution.value = null
+  startTimer()
   await fetchExecutionList()
 }
 
@@ -264,25 +167,8 @@ const handlePageChange = async (page: number) => {
   await fetchExecutionList()
 }
 
-const handleSelectExecution = async (item: TaskExecutionVO) => {
+const handleSelectExecution = (item: TaskExecutionVO) => {
   currentExecution.value = item
-  await fetchLogs()
-}
-
-const fetchLogs = async (silent = false) => {
-  if (!currentExecution.value) return
-  if (!silent) loading.value = true
-  try {
-    const res = await getTaskLogsApi({
-      execution_id: currentExecution.value.id,
-      min_id: 0,
-      limit: 1000
-    })
-    logs.value = res.data.logs.map((l) => l.content).join("\n")
-    lastRefreshTime.value = new Date().toLocaleTimeString()
-  } finally {
-    if (!silent) loading.value = false
-  }
 }
 
 const calculateDuration = (start: number, end: number) => {
@@ -293,11 +179,8 @@ const calculateDuration = (start: number, end: number) => {
 }
 
 const handleDialogClosed = () => {
-  autoRefresh.value = false
-  clearInterval(timer)
   executions.value = []
   currentExecution.value = null
-  logs.value = ""
   totalCount.value = 0
 }
 
