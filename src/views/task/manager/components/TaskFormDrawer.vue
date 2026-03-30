@@ -163,51 +163,63 @@
                 </div>
 
                 <!-- HTTP 模式 -->
-                <div v-else-if="activeProtocol === 'http'" class="http-config-pane">
-                  <el-form-item label="接口回源" prop="http_config.endpoint" required>
-                    <el-input
-                      v-model="form.http_config!.endpoint"
-                      placeholder="请输入完整的 HTTP 目标地址 (https://...)"
-                      class="code-font premium-input endpoint-input"
-                    >
-                      <template #prefix>
-                        <span class="http-prefix-tag">POST</span>
-                      </template>
-                    </el-input>
-                  </el-form-item>
-                  <div class="http-advanced-settings">
-                    <div class="settings-nav">
-                      <div class="nav-left">
-                        <el-icon class="nav-icon"><Operation /></el-icon>
-                        <span>高级扩展参数</span>
+                <div v-else-if="activeProtocol === 'http'" class="http-config-pane animate-in">
+                  <div class="metadata-container has-metadata">
+                    <div class="metadata-header">
+                      <div class="metadata-title">
+                        <span class="dot" />
+                        <span>HTTP 回源与报文配置</span>
                       </div>
-                      <el-radio-group v-model="httpConfigTab" size="small" class="settings-tabs">
-                        <el-radio-button label="headers">请求头部</el-radio-button>
-                        <el-radio-button label="params">请求主体</el-radio-button>
-                      </el-radio-group>
                     </div>
 
-                    <div class="settings-content">
-                      <transition name="fade" mode="out-in">
-                        <div :key="httpConfigTab" class="params-editor-box">
-                          <KVEditor
-                            v-if="httpConfigTab === 'headers'"
-                            v-model="form.http_config!.headers"
-                            title-key="头部字段 (Header)"
-                            title-value="内容值 (Value)"
-                            add-text="新增请求头..."
-                            empty-text="无需配置自定义请求头部"
-                          />
-                          <KVEditor
-                            v-else
-                            v-model="form.http_config!.params"
-                            title-key="参数名 (Key)"
-                            title-value="参数值 (Value)"
-                            add-text="新增 Body 字段..."
-                            empty-text="无需配置请求主体 (Body)"
-                          />
+                    <div class="http-form-content">
+                      <el-form-item prop="http_config.endpoint" required class="mb-6">
+                        <el-input
+                          v-model="form.http_config!.endpoint"
+                          placeholder="请输入全路径地址 (https://...)"
+                          class="code-font premium-input endpoint-input"
+                        >
+                          <template #prefix>
+                            <span class="http-prefix-tag">POST</span>
+                          </template>
+                        </el-input>
+                      </el-form-item>
+
+                      <div class="http-advanced-settings">
+                        <div class="settings-nav">
+                          <div class="nav-left">
+                            <el-icon class="nav-icon"><Operation /></el-icon>
+                            <span>协议扩展参数</span>
+                          </div>
+                          <el-radio-group v-model="httpConfigTab" size="small" class="settings-tabs">
+                            <el-radio-button label="headers">请求头部</el-radio-button>
+                            <el-radio-button label="params">请求主体</el-radio-button>
+                          </el-radio-group>
                         </div>
-                      </transition>
+
+                        <div class="settings-content">
+                          <transition name="fade" mode="out-in">
+                            <div :key="httpConfigTab" class="params-editor-box">
+                              <KVEditor
+                                v-if="httpConfigTab === 'headers'"
+                                v-model="form.http_config!.headers"
+                                title-key="头部字段"
+                                title-value="内容值"
+                                add-text="新增请求头..."
+                                empty-text="无需配置自定义请求头部"
+                              />
+                              <KVEditor
+                                v-else
+                                v-model="form.http_config!.params"
+                                title-key="参数名"
+                                title-value="参数值"
+                                add-text="新增 Body 字段..."
+                                empty-text="无需配置请求主体 (Body)"
+                              />
+                            </div>
+                          </transition>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -626,38 +638,37 @@ defineExpose({ handleClosed })
 }
 
 .http-advanced-settings {
-  margin-top: 16px;
   background: white;
   border-radius: 10px;
-  border: 1.5px solid #f1f5f9;
+  border: 1px solid #f1f5f9;
   overflow: hidden;
-  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.03);
 
   .settings-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 14px;
+    padding: 8px 12px;
     background: #f8fafc;
-    border-bottom: 1.5px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
 
     .nav-left {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 12px;
       font-weight: 700;
-      color: #475569;
+      color: #64748b;
 
       .nav-icon {
         color: #3b82f6;
-        font-size: 15px;
+        font-size: 14px;
       }
     }
   }
 
   .settings-content {
-    padding: 12px 14px;
+    padding: 12px;
     background: white;
   }
 }
