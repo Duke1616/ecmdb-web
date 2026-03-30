@@ -38,9 +38,18 @@
               <div class="item-content">
                 <div class="header-row">
                   <span class="id-tag">批次 #{{ item.id }}</span>
-                  <div class="runtime-badge" v-if="item.end_time > 0">
+                  <div
+                    class="runtime-badge"
+                    v-if="item.status === 'SUCCESS' || item.status === 'FAILED' || item.end_time > 0"
+                  >
                     <el-icon><Timer /></el-icon>
-                    <span>{{ calculateDuration(item.start_time, item.end_time) }}</span>
+                    <span>{{
+                      item.end_time > 0
+                        ? calculateDuration(item.start_time, item.end_time)
+                        : item.status === "FAILED"
+                          ? "已失败"
+                          : "已归档"
+                    }}</span>
                   </div>
                   <div class="runtime-badge running" v-else>
                     <el-icon class="loading-spin"><Loading /></el-icon>
@@ -59,7 +68,8 @@
                   <span class="t-val">{{ formatTimestamp(item.start_time).split(" ")[1] }}</span>
                   <div class="t-sep"><div class="line" /></div>
                   <span class="t-val" v-if="item.end_time > 0">{{ formatTimestamp(item.end_time).split(" ")[1] }}</span>
-                  <span class="t-val waiting" v-else>...</span>
+                  <span class="t-val waiting" v-else-if="item.status === 'RUNNING'">...</span>
+                  <span class="t-val finish-tag" v-else>DONE</span>
                 </div>
               </div>
             </div>
