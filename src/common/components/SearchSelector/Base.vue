@@ -301,6 +301,20 @@ watch([() => paginationData.currentPage], () => {
   }
 })
 
+// 核心修复 - 当数据加载完成后，手动触发 Popper 更新以重新计算位置与翻转
+// 解决首次打开时由于容器高度塌陷导致定位错误的问题
+watch(
+  () => itemsData.value,
+  () => {
+    if (popperInstance.value) {
+      nextTick(() => {
+        popperInstance.value?.update()
+      })
+    }
+  },
+  { deep: true }
+)
+
 // 监听 modelValue 变化，加载初始数据
 watch(
   () => props.modelValue,
@@ -327,12 +341,23 @@ watch(
   { immediate: true }
 )
 
-// 点击外部关闭
+// 点击外部关闭: 优化为基于实例引用的精准判断
 const handleClickOutside = (e: Event) => {
+  if (!showPicker.value) return
   const target = e.target as HTMLElement
-  if (!target.closest(".search-selector-container")) {
-    showPicker.value = false
+
+  // 1. 如果点击的是触发器容器本身（Input 框），交由 togglePicker 处理，此处跳过
+  if (containerRef.value && containerRef.value.contains(target)) {
+    return
   }
+
+  // 2. 如果点击的是下拉菜单内部，不关闭（理论上已被 @click.stop 拦截，此处作为冗余保护）
+  if (dropdownRef.value && dropdownRef.value.contains(target)) {
+    return
+  }
+
+  // 3. 点击了当前组件实例之外的任何区域，收回并关闭
+  showPicker.value = false
 }
 
 // 监听窗口大小变化和滚动
@@ -343,12 +368,12 @@ const handleResize = () => {
 }
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside)
+  document.addEventListener("mousedown", handleClickOutside, true)
   window.addEventListener("resize", handleResize)
 })
 
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside)
+  document.removeEventListener("mousedown", handleClickOutside, true)
   window.removeEventListener("resize", handleResize)
   if (popperInstance.value) {
     popperInstance.value.destroy()
