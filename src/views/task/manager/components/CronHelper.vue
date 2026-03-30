@@ -1,5 +1,12 @@
 <template>
-  <el-popover ref="popoverRef" placement="bottom-end" :width="300" trigger="click" popper-class="cron-popover">
+  <el-popover
+    ref="popoverRef"
+    placement="bottom-end"
+    :width="300"
+    trigger="click"
+    popper-class="cron-popover"
+    @show="refreshNow"
+  >
     <template #reference>
       <el-button link type="primary" class="cron-helper-trigger">
         <el-icon><MagicStick /></el-icon>
@@ -37,6 +44,11 @@ const props = defineProps<Props>()
 const emit = defineEmits(["select"])
 
 const popoverRef = ref()
+const nowRef = ref(new Date())
+
+const refreshNow = () => {
+  nowRef.value = new Date()
+}
 
 const selectPreset = (val: string) => {
   emit("select", val)
@@ -57,9 +69,9 @@ const currentPresets = computed(() => {
     ]
   } else {
     // 单次触发: 计算相对于“现在”的未来时间点
-    const now = new Date()
+    const now = nowRef.value
 
-    const fmt = (d: Date) => `0 ${d.getMinutes()} ${d.getHours()} ${d.getDate()} ${d.getMonth() + 1} *`
+    const fmt = (d: Date) => `${d.getSeconds()} ${d.getMinutes()} ${d.getHours()} ${d.getDate()} ${d.getMonth() + 1} *`
 
     const oneHour = new Date(now.getTime() + 60 * 60 * 1000)
     const threeHours = new Date(now.getTime() + 180 * 60 * 1000)
@@ -70,7 +82,7 @@ const currentPresets = computed(() => {
     tomorrow00.setHours(0, 0, 0, 0)
 
     return [
-      { label: "立即执行", value: fmt(now) },
+      { label: "立即执行", value: "* * * * * *" },
       { label: "5 分钟后执行", value: fmt(new Date(now.getTime() + 5 * 60 * 1000)) },
       { label: "1 小时后执行", value: fmt(oneHour) },
       { label: "3 小时后执行", value: fmt(threeHours) },
