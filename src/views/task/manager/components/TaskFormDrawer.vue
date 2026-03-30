@@ -4,7 +4,7 @@
     :title="isEdit ? '编辑调度任务' : '创建调度任务'"
     :subtitle="isEdit ? '调整当前分布式任务的执行逻辑与资源引用' : '配置基于 gRPC 或 HTTP 协议的自动化调度流程'"
     :header-icon="Calendar"
-    size="640px"
+    size="35%"
     :confirm-loading="loading"
     @confirm="handleSave"
     @cancel="visible = false"

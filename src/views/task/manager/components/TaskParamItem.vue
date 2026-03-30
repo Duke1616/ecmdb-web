@@ -96,12 +96,21 @@ const mapValue = computed({
                 <template v-else-if="currentBinding.component === 'code-editor'">
                   <div class="embedded-editor-container" :class="{ 'is-fullscreen': isFullScreen }">
                     <div class="editor-toolbar">
-                      <span class="toolbar-title">{{ parameter.desc }} ({{ currentBinding.label }})</span>
-                      <el-button type="primary" link class="fullscreen-btn" @click="emit('toggleFullScreen')">
-                        <el-icon>
+                      <div class="toolbar-left">
+                        <span class="toolbar-title">{{ parameter.desc }} ({{ currentBinding.label }})</span>
+                        <code class="toolbar-id">{{ parameter.key }}</code>
+                      </div>
+                      <el-button
+                        type="primary"
+                        class="fullscreen-btn"
+                        :class="{ 'is-active-fs': isFullScreen }"
+                        link
+                        @click="emit('toggleFullScreen')"
+                      >
+                        <el-icon class="btn-icon">
                           <component :is="isFullScreen ? Close : FullScreen" />
                         </el-icon>
-                        {{ isFullScreen ? "退出全屏" : "全屏编辑" }}
+                        {{ isFullScreen ? "结束并返回" : "全屏编辑" }}
                       </el-button>
                     </div>
                     <div class="editor-content">
@@ -167,8 +176,8 @@ const mapValue = computed({
 }
 
 .field-info {
-  width: 140px;
-  padding: 12px 14px;
+  width: 110px;
+  padding: 12px 10px;
   background: #fbfbfc;
   border-right: 1px solid #f1f5f9;
   display: flex;
@@ -203,7 +212,7 @@ const mapValue = computed({
 .field-control {
   flex: 1;
   min-width: 0;
-  padding: 10px 14px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
 }
@@ -265,18 +274,90 @@ const mapValue = computed({
     height: 100vh;
     z-index: 9999;
     border-radius: 0;
-    padding: 20px;
-    background: #ffffff;
-
-    .editor-content {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
+    padding: 0;
+    background: #fdfdfe;
+    display: flex;
+    flex-direction: column;
 
     .editor-toolbar {
-      padding: 10px 0;
+      padding: 0 16px;
+      background: #ffffff;
+      border-bottom: 2px solid #f1f5f9;
+      height: 52px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        &::before {
+          content: "";
+          width: 4px;
+          height: 20px;
+          background: #3b82f6;
+          border-radius: 2px;
+        }
+      }
+
       .toolbar-title {
         display: block;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+      }
+
+      .toolbar-id {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 13px;
+        color: #94a3b8;
+        background: #f8fafc;
+        padding: 2px 8px;
+        border-radius: 4px;
+        border: 1px solid #f1f5f9;
+      }
+
+      .fullscreen-btn {
+        height: 36px;
+        padding: 0 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 8px;
+        color: #475569;
+        background: #f1f5f9;
+        transition: all 0.2s;
+
+        &:hover {
+          background: #fee2e2;
+          color: #ef4444;
+          transform: translateY(-1px);
+        }
+
+        .btn-icon {
+          font-size: 14px;
+        }
+      }
+    }
+
+    .editor-content {
+      flex: 1;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      overflow: hidden;
+
+      :deep(.code-mirror) {
+        height: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow:
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        background: #ffffff;
       }
     }
   }
@@ -289,15 +370,35 @@ const mapValue = computed({
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
 
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .toolbar-title {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       color: #64748b;
       display: none;
     }
 
+    .toolbar-id {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+
     .fullscreen-btn {
-      font-size: 11px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #3b82f6;
+      .btn-icon {
+        font-size: 13px;
+      }
     }
   }
 
