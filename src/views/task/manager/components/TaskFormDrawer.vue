@@ -164,24 +164,52 @@
 
                 <!-- HTTP 模式 -->
                 <div v-else-if="activeProtocol === 'http'" class="http-config-pane">
-                  <el-form-item label="接口回源 Endpoint" prop="http_config.endpoint">
+                  <el-form-item label="接口回源" prop="http_config.endpoint" required>
                     <el-input
                       v-model="form.http_config!.endpoint"
-                      placeholder="https://..."
-                      class="code-font premium-input"
-                    />
+                      placeholder="请输入完整的 HTTP 目标地址 (https://...)"
+                      class="code-font premium-input endpoint-input"
+                    >
+                      <template #prefix>
+                        <span class="http-prefix-tag">POST</span>
+                      </template>
+                    </el-input>
                   </el-form-item>
-                  <el-form-item label="HTTP 请求头 / 参数字典 (Headers & Params)">
-                    <div class="manual-map-box standalone">
-                      <KVEditor
-                        v-model="form.http_config!.params"
-                        title-key="请求参数名 (KEY)"
-                        title-value="参数值 (VALUE)"
-                        add-text="添加请求头或参数..."
-                        empty-text="暂无自定义 HTTP 附加参数"
-                      />
+                  <div class="http-advanced-settings">
+                    <div class="settings-nav">
+                      <div class="nav-left">
+                        <el-icon class="nav-icon"><Operation /></el-icon>
+                        <span>高级扩展参数</span>
+                      </div>
+                      <el-radio-group v-model="httpConfigTab" size="small" class="settings-tabs">
+                        <el-radio-button label="headers">请求头部</el-radio-button>
+                        <el-radio-button label="params">请求主体</el-radio-button>
+                      </el-radio-group>
                     </div>
-                  </el-form-item>
+
+                    <div class="settings-content">
+                      <transition name="fade" mode="out-in">
+                        <div :key="httpConfigTab" class="params-editor-box">
+                          <KVEditor
+                            v-if="httpConfigTab === 'headers'"
+                            v-model="form.http_config!.headers"
+                            title-key="头部字段 (Header)"
+                            title-value="内容值 (Value)"
+                            add-text="新增请求头..."
+                            empty-text="无需配置自定义请求头部"
+                          />
+                          <KVEditor
+                            v-else
+                            v-model="form.http_config!.params"
+                            title-key="参数名 (Key)"
+                            title-value="参数值 (Value)"
+                            add-text="新增 Body 字段..."
+                            empty-text="无需配置请求主体 (Body)"
+                          />
+                        </div>
+                      </transition>
+                    </div>
+                  </div>
                 </div>
               </div>
             </transition>
@@ -234,7 +262,8 @@ import {
   Calendar,
   Monitor,
   Timer,
-  Pointer
+  Pointer,
+  Operation
 } from "@element-plus/icons-vue"
 import { TaskType, type CreateTaskReq, type TaskItem } from "@/api/etask/manager/type"
 import type { HandlerDetail } from "@/api/etask/executor/type"
@@ -277,6 +306,9 @@ const activeProtocol = ref("grpc")
 // 复合 Loading
 const loading = computed(() => resourceLoading.value || saving.value)
 
+// HTTP 配置切换 Tab
+const httpConfigTab = ref("headers")
+
 // 重试配置开启状态
 const retryEnabled = ref(false)
 
@@ -311,7 +343,7 @@ const defaultForm = (): CreateTaskReq => ({
     handler_name: "",
     params: {}
   },
-  http_config: { endpoint: "", params: {} },
+  http_config: { endpoint: "", headers: {}, params: {} },
   retry_config: { max_retries: 3, initial_interval: 1000, max_interval: 5000 },
   schedule_params: {},
   metadata: {}
@@ -404,8 +436,8 @@ watch(
     Object.assign(form, {
       ...base,
       ...cleanData,
-      grpc_config: cleanData.grpc_config || base.grpc_config,
-      http_config: cleanData.http_config || base.http_config,
+      grpc_config: { ...base.grpc_config, ...(cleanData.grpc_config || {}) },
+      http_config: { ...base.http_config, ...(cleanData.http_config || {}) },
       retry_config: cleanData.retry_config || base.retry_config,
       schedule_params: cleanData.schedule_params || base.schedule_params,
       metadata: cleanData.metadata || base.metadata
@@ -593,6 +625,78 @@ defineExpose({ handleClosed })
   }
 }
 
+.http-advanced-settings {
+  margin-top: 16px;
+  background: white;
+  border-radius: 10px;
+  border: 1.5px solid #f1f5f9;
+  overflow: hidden;
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+
+  .settings-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-bottom: 1.5px solid #f1f5f9;
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+
+      .nav-icon {
+        color: #3b82f6;
+        font-size: 15px;
+      }
+    }
+  }
+
+  .settings-content {
+    padding: 12px 14px;
+    background: white;
+  }
+}
+
+.http-prefix-tag {
+  color: #10b981;
+  font-weight: 800;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 0 10px;
+  border-right: 1.5px solid #e2e8f0;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  margin-right: 6px;
+}
+
+.settings-tabs :deep(.el-radio-button__inner) {
+  border: none !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px;
+  padding: 6px 12px !important;
+  box-shadow: none !important;
+  transition: all 0.2s;
+}
+
+.settings-tabs :deep(.el-radio-button.is-active .el-radio-button__inner) {
+  color: #3b82f6 !important;
+  background: #eff6ff !important;
+  border-radius: 6px !important;
+}
+
+.endpoint-input :deep(.el-input__inner) {
+  padding-left: 4px !important; // 因为 prefix 已经占用了空间，这里只需要微调文本起始位置
+}
+
 .metadata-container {
   padding: 16px;
   background: #f8fafc;
@@ -633,6 +737,81 @@ defineExpose({ handleClosed })
       }
     }
   }
+}
+
+.http-config-integrated {
+  background: #ffffff;
+  border: 1px solid #edf2f7;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-top: 10px;
+
+  .header-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .indicator-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .label-icon {
+      font-size: 14px;
+      color: #3b82f6;
+    }
+  }
+
+  .method-badge {
+    margin-left: 8px;
+    background: #ecfdf5;
+    color: #059669;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 0px 4px;
+    border-radius: 4px;
+    border: 1px solid #10b981;
+    line-height: 1.4;
+  }
+
+  .config-content-box {
+    margin-top: 12px;
+    background: #fdfdfe;
+    border: 1px dashed #e2e8f0;
+    border-radius: 8px;
+    padding: 12px;
+  }
+}
+
+.tab-switcher :deep(.el-radio-button__inner) {
+  border-radius: 6px !important;
+  border: 1px solid #e2e8f0 !important;
+  margin: 0 4px;
+  background: #f8fafc;
+  color: #64748b;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f1f5f9;
+  }
+}
+
+.tab-switcher :deep(.el-radio-button.is-active .el-radio-button__inner) {
+  background: #3b82f6 !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
+}
+
+.tab-switcher :deep(.el-radio-button:first-child .el-radio-button__inner),
+.tab-switcher :deep(.el-radio-button:last-child .el-radio-button__inner) {
+  border-left: 1px solid #e2e8f0 !important;
 }
 
 .premium-input :deep(.el-input__wrapper) {
