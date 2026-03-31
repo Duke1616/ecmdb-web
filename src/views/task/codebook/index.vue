@@ -47,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref, watch, computed, nextTick } from "vue"
+import { h, ref, watch, computed, nextTick, markRaw } from "vue"
 import { Document, Edit, Delete, Setting } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import WizardContainer from "@@/components/WizardContainer/index.vue"
@@ -79,9 +79,9 @@ const tableColumns: Column[] = [
 
 // 操作按钮配置
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: Edit },
-  { name: "执行单元", code: "runner", type: "success", icon: Setting },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit) },
+  { name: "执行单元", code: "runner", type: "success", icon: markRaw(Setting) },
+  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) }
 ]
 
 // 选中的行
@@ -108,14 +108,14 @@ const codebookSteps = computed(() => [
   {
     title: "基本信息",
     description: "填写脚本基本信息",
-    icon: Document,
-    component: InfoPage
+    icon: markRaw(Document),
+    component: markRaw(InfoPage)
   },
   {
     title: "代码编写",
     description: codeEditorMode.value === "simple" ? "编写脚本代码" : "管理多文件项目",
-    icon: Edit,
-    component: Code
+    icon: markRaw(Edit),
+    component: markRaw(Code)
   }
 ])
 

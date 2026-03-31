@@ -30,7 +30,7 @@
           </div>
 
           <el-form-item prop="name" label="任务名称">
-            <el-input v-model="form.name" placeholder="请输入任务唯一业务标识" class="premium-input" />
+            <el-input v-model="form.name" placeholder="请输入任务唯一业务标识" size="large" class="premium-input" />
           </el-form-item>
 
           <!-- 触发模式: 统一卡片样式 -->
@@ -58,7 +58,12 @@
 
           <transition name="el-zoom-in-top">
             <el-form-item prop="cron_expr" label="执行计划 (Cron Expression)" class="mt-4">
-              <el-input v-model="form.cron_expr" placeholder="*/5 * * * * *" class="code-font premium-input">
+              <el-input
+                v-model="form.cron_expr"
+                placeholder="*/5 * * * * *"
+                size="large"
+                class="code-font premium-input"
+              >
                 <template #prefix
                   ><el-icon><Calendar /></el-icon
                 ></template>
@@ -109,6 +114,7 @@
                         v-model="form.grpc_config!.service_name"
                         :fetch-suggestions="queryServiceSuggestions"
                         placeholder="选择注册节点"
+                        size="large"
                         class="premium-input"
                         @select="handleServiceSelect"
                       >
@@ -122,6 +128,7 @@
                         v-model="form.grpc_config!.handler_name"
                         :fetch-suggestions="queryHandlers"
                         placeholder="绑定接口能力"
+                        size="large"
                         class="premium-input"
                         @select="handleHandlerSelect"
                       >
@@ -177,6 +184,7 @@
                         <el-input
                           v-model="form.http_config!.endpoint"
                           placeholder="请输入全路径地址 (https://...)"
+                          size="large"
                           class="code-font premium-input endpoint-input"
                         >
                           <template #prefix>
@@ -825,18 +833,22 @@ defineExpose({ handleClosed })
   border-left: 1px solid #e2e8f0 !important;
 }
 
-.premium-input :deep(.el-input__wrapper) {
-  box-shadow: none !important;
-  border: 1.5px solid #e2e8f0;
-  transition: all 0.2s;
+.premium-input :deep(.el-input__wrapper),
+.premium-input :deep(.el-select__wrapper) {
+  border-radius: 8px !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   background: #fff;
+  padding: 0 16px;
 
   &:hover {
-    border-color: #cbd5e1;
+    border-color: #9ca3af !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
   }
   &.is-focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
   }
 }
 

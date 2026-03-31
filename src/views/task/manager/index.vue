@@ -1,6 +1,6 @@
 <template>
   <PageContainer>
-    <!-- 头部区域: 遵循 alert/routing 的标准 Search-in-Actions 模式 -->
+    <!-- 头部区域: 遵循标准 Search-in-Actions 模式 -->
     <ManagerHeader
       title="调度任务管理"
       subtitle="集中化配置与监控分布式的定时/单次触发业务任务"
@@ -11,7 +11,7 @@
           <el-input
             v-model="searchQuery"
             placeholder="搜索任务名称..."
-            class="search-input"
+            class="search-input premium-input"
             clearable
             @clear="fetchTasksData"
             @keyup.enter="fetchTasksData"
@@ -21,7 +21,7 @@
             </template>
           </el-input>
 
-          <el-select v-model="typeFilter" placeholder="执行类型" clearable class="type-filter">
+          <el-select v-model="typeFilter" placeholder="执行类型" clearable class="type-filter premium-input">
             <el-option label="定期执行" :value="TaskType.RECURRING" />
             <el-option label="单次触发" :value="TaskType.ONE_TIME" />
           </el-select>
@@ -98,8 +98,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
-import { Search, Plus, RefreshRight } from "@element-plus/icons-vue"
+import { ref, computed, onMounted, markRaw } from "vue"
+import { Search, Plus, RefreshRight, VideoPause, VideoPlay, Monitor, Edit, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -155,8 +155,8 @@ const formatTaskName = (name: string) => {
 // --- 状态与语义化配置 ---
 const STATUS_META: Record<TaskStatus, { label: string; type: string }> = {
   [TaskStatus.COMPLETED]: { label: "已完成", type: "success" },
-  [TaskStatus.ACTIVE]: { label: "可调度", type: "primary" },
-  [TaskStatus.INACTIVE]: { label: "已停止", type: "info" },
+  [TaskStatus.ACTIVE]: { label: "等待调度", type: "primary" },
+  [TaskStatus.INACTIVE]: { label: "停止执行", type: "info" },
   [TaskStatus.PREEMPTED]: { label: "已抢占", type: "warning" }
 }
 
@@ -173,23 +173,14 @@ const logTaskName = ref<string>("")
 
 const getOperateItems = (row: TaskItem) => {
   const items = []
-
-  // 1. 根据状态判定显示 执行 还是 停止 (最前)
   if (row.status === TaskStatus.ACTIVE) {
-    items.push({ name: "停止", code: "stop", type: "warning", icon: "VideoPause" })
+    items.push({ name: "停止", code: "stop", type: "warning", icon: markRaw(VideoPause) })
   } else {
-    items.push({ name: "执行", code: "run", type: "success", icon: "VideoPlay" })
+    items.push({ name: "执行", code: "run", type: "success", icon: markRaw(VideoPlay) })
   }
-
-  // 2. 记录
-  items.push({ name: "记录", code: "logs", type: "info", icon: "Monitor" })
-
-  // 3. 编辑
-  items.push({ name: "编辑", code: "edit", type: "primary", icon: "Edit" })
-
-  // 4. 删除
-  items.push({ name: "删除", code: "delete", type: "danger", icon: "Delete" })
-
+  items.push({ name: "记录", code: "logs", type: "info", icon: markRaw(Monitor) })
+  items.push({ name: "编辑", code: "edit", type: "primary", icon: markRaw(Edit) })
+  items.push({ name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) })
   return items
 }
 
@@ -227,15 +218,10 @@ const handleFormSave = async (data: CreateTaskReq) => {
   } else {
     success = await handleCreateTask(data)
   }
-
-  if (success) {
-    formVisible.value = false
-  }
+  if (success) formVisible.value = false
 }
 
-onMounted(() => {
-  fetchTasksData()
-})
+onMounted(() => fetchTasksData())
 </script>
 
 <style scoped lang="scss">
@@ -243,7 +229,6 @@ onMounted(() => {
   display: flex;
   gap: 12px;
   align-items: center;
-
   .search-input {
     width: 220px;
   }
@@ -251,7 +236,6 @@ onMounted(() => {
     width: 120px;
   }
 }
-
 .minimal-name-info {
   display: flex;
   align-items: center;
@@ -262,13 +246,11 @@ onMounted(() => {
     color: #0f172a;
   }
 }
-
 .next-time-text {
   font-size: 12px;
   color: #7c3aed;
   font-weight: 600;
 }
-
 .minimal-status {
   display: flex;
   align-items: center;
@@ -284,7 +266,6 @@ onMounted(() => {
     font-weight: 700;
     text-transform: uppercase;
   }
-
   &.success {
     .dot {
       background: #10b981;
@@ -326,37 +307,25 @@ onMounted(() => {
     }
   }
 }
-
-.minimal-sub-id {
-  font-size: 11px;
-  color: #94a3b8;
-  opacity: 0.6;
-}
-
-.ms-2 {
-  margin-left: 8px;
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .code-font {
   font-family: var(--el-font-family-mono);
 }
-
-:deep(.refresh-btn) {
-  &:hover {
-    transform: rotate(180deg);
-  }
+:deep(.el-table__row):hover {
+  background: #f8fafc !important;
 }
-
-:deep(.el-table__row) {
-  transition: all 0.2s ease;
+.premium-input :deep(.el-input__wrapper),
+.premium-input :deep(.el-select__wrapper) {
+  border-radius: 8px !important;
+  border: 1px solid #d1d5db !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  background: #fff;
   &:hover {
-    background: #f8fafc !important;
+    border-color: #9ca3af !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  }
+  &.is-focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
   }
 }
 </style>
