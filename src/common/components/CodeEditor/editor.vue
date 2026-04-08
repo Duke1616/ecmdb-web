@@ -62,7 +62,9 @@ const extensions = computed(() => {
         if (langExt) {
           result.push(langExt)
         }
-      } else if (props.language.language && typeof props.language.language === "object") {
+      } else if (Array.isArray(props.language.language)) {
+        result.push(...props.language.language)
+      } else if (typeof props.language.language === "object") {
         result.push(props.language.language)
       }
     } catch (error) {

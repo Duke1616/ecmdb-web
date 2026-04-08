@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import { FullScreen, Close } from "@element-plus/icons-vue"
+import { FullScreen, Close, Link } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
 import { CodebookSelector, RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/etask/executor/type"
@@ -148,7 +148,11 @@ const mapValue = computed({
                     @update:model-value="handleValueChange"
                     class="inspector-input"
                     :placeholder="currentBinding.placeholder || '请输入参数...'"
-                  />
+                  >
+                    <template #prefix v-if="parameter.key.toLowerCase().includes('url')">
+                      <el-icon class="mr-1"><Link /></el-icon>
+                    </template>
+                  </el-input>
                 </template>
               </template>
             </div>
