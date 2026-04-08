@@ -1,0 +1,9 @@
+# Prometheus 常用查询示例
+# 1. 监控所有实例的请求速率
+rate(http_requests_total[5m])
+
+# 2. 计算 5 分钟内 CPU 的平均负载率
+1 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))
+
+# 3. 计算可用内存占比
+node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100

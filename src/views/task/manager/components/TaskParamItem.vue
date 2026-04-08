@@ -192,10 +192,9 @@ const mapValue = computed({
   .field-label {
     font-size: 12px;
     font-weight: 600;
+    line-height: 1.4;
     color: #475569;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: break-word;
 
     &.required::after {
       content: "*";
@@ -210,6 +209,8 @@ const mapValue = computed({
     color: #94a3b8;
     background: transparent;
     padding: 0;
+    overflow-wrap: break-word;
+    line-height: 1.3;
   }
 }
 
