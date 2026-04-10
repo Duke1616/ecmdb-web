@@ -25,10 +25,9 @@ export function saveDatasourceApi(data: datasource.SaveDatasourceReq) {
   })
 }
 
-/** 删除数据源 */
 export function deleteDatasourceApi(id: number) {
   return instance.delete({
-    url: `${API_SERVICE.ALERT}/datasource/${id}`
+    url: `${API_SERVICE.ALERT}/datasource/delete/${id}`
   })
 }
 

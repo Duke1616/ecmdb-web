@@ -158,12 +158,10 @@
       </el-form>
     </div>
 
-    <!-- 自定义底部按钮 -->
     <template #footer>
       <el-button @click="handleClose">取消</el-button>
-      <el-button type="info" @click="handleTest" :loading="testLoading"> 测试连接 </el-button>
-      <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
-        {{ isEdit ? "更新" : "保存" }}
+      <el-button type="primary" @click="handleTestAndSave" :loading="submitLoading">
+        {{ isEdit ? "测试并更新" : "测试并保存" }}
       </el-button>
     </template>
   </CustomDrawer>
@@ -175,7 +173,7 @@ import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { Setting, Monitor, Check } from "@element-plus/icons-vue"
 import type { Datasource, DatasourceType } from "@/api/alert/datasource/types/datasource"
 import { DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
-import { saveDatasourceApi, testDatasourceApi } from "@/api/alert/datasource"
+import { saveDatasourceApi } from "@/api/alert/datasource"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
 
 // 引入 Logo 资源，确保 Vite 在生产环境能正确打包
@@ -204,7 +202,6 @@ const formRef = ref<FormInstance>()
 
 // 加载状态
 const submitLoading = ref(false)
-const testLoading = ref(false)
 
 // 是否编辑模式
 const isEdit = computed(() => !!props.datasource)
@@ -401,39 +398,8 @@ const toggleBasicAuth = () => {
   }
 }
 
-// 测试连接
-const handleTest = async () => {
-  if (!formRef.value) return
-
-  try {
-    await formRef.value.validateField(["type", "http.url"])
-
-    testLoading.value = true
-
-    const testData = {
-      type: formData.type as DatasourceTypeEnum,
-      http: formData.http,
-      auth: formData.auth
-    }
-
-    const { data } = await testDatasourceApi(testData)
-
-    if (data.success) {
-      ElMessage.success(`连接成功！${data.message}`)
-    } else {
-      ElMessage.error(`连接失败：${data.message}`)
-    }
-  } catch (error: any) {
-    if (error.message) {
-      ElMessage.error(error.message)
-    }
-  } finally {
-    testLoading.value = false
-  }
-}
-
-// 提交表单
-const handleSubmit = async () => {
+// 测试并保存
+const handleTestAndSave = async () => {
   if (!formRef.value) return
 
   try {
@@ -453,7 +419,7 @@ const handleSubmit = async () => {
 
     await saveDatasourceApi(submitData)
 
-    ElMessage.success(isEdit.value ? "更新成功" : "保存成功")
+    ElMessage.success(isEdit.value ? "测试连接成功并更新完成" : "测试连接成功并保存完成")
     emit("success")
     handleClose()
   } catch (error: any) {
@@ -467,7 +433,7 @@ const handleSubmit = async () => {
 
 // 关闭前处理
 const handleBeforeClose = (done: () => void) => {
-  if (submitLoading.value || testLoading.value) {
+  if (submitLoading.value) {
     ElMessage.warning("请等待操作完成")
     return
   }
