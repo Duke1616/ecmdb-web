@@ -1,16 +1,17 @@
-import { type Router, type RouteRecordNormalized, type RouteRecordRaw, type RouteMeta, createRouter } from "vue-router"
-import { cloneDeep, omit } from "lodash-es"
+import { type RouteRecordRaw, type RouteMeta } from "vue-router"
+import { cloneDeep } from "lodash-es"
 import { type Menu, type Meta } from "@/api/iam/permission/type"
-import { routerConfig } from "@/router/config"
 import type { SvgName } from "~virtual/svg-component"
 
+/** 所有组件映射表 */
 const Layouts = import.meta.glob("../layouts/index.vue")
-const modules = {
-  ...import.meta.glob("../views/**/*.vue"),
-  ...import.meta.glob("../pages/**/*.vue")
-}
+const Views = import.meta.glob(["../views/**/*.vue", "../pages/**/*.vue"])
 
-// 公共的 meta 转换函数
+/**
+ * 转换后端 Meta 为前端路由 Meta
+ * @param meta 后端 Meta 数据
+ * @returns 经过转换的 RouteMeta
+ */
 const transformMeta = (meta: Meta): RouteMeta => ({
   title: meta.title,
   svgIcon: meta.icon as SvgName,
@@ -20,89 +21,90 @@ const transformMeta = (meta: Meta): RouteMeta => ({
   platforms: meta.platforms
 })
 
-/** 将后端路由数据转为前端格式 */
+/**
+ * 将后端多级菜单树转换为前端动态路由配置
+ * @param backendRoutes 接口返回的原始菜单树
+ * @returns 递归转换后的路由配置数组
+ */
 export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordRaw[] => {
   return backendRoutes.map((route): RouteRecordRaw => {
+    // 判定是否为顶级根路由
     const isRoot = !route.parent_id || route.parent_id === 0
 
-    // layout 类型（目录或具有子节点的项）
+    // 处理目录/带有子节点的节点
     if (route.children && route.children.length > 0) {
       return {
         path: route.path,
-        component: isRoot ? Layouts["../layouts/index.vue"] : undefined,
         name: route.name,
         redirect: route.redirect,
+        // 只有根层级目录才强制使用 Layout 外层组件
+        component: isRoot ? Layouts["../layouts/index.vue"] : undefined,
         meta: transformMeta(route.meta),
         children: transformDynamicRoutes(route.children)
       }
     }
 
-    // 普通页面
-    const component = modules[`..${route.component}`]
+    // 处理叶子节点（具体页面）
+    const componentPath = `..${route.component}`
+    const component = Views[componentPath]
+
     if (!component) {
-      console.warn(`未找到组件路径: ${route.component}`)
+      console.warn(`[RouteGuard] 未找到组件: ${componentPath} (节点: ${route.name})`)
     }
 
     return {
       path: route.path,
-      component: component,
       name: route.name,
+      component: component,
       meta: transformMeta(route.meta)
     }
   })
 }
 
-/** 路由降级（把三级及其以上的路由转化为二级路由） */
-export const flatMultiLevelRoutes = (routes: RouteRecordRaw[]) => {
-  const routesMirror = cloneDeep(routes)
-  routesMirror.forEach((route) => {
-    // 如果路由是三级及其以上路由，对其进行降级处理
-    isMultipleRoute(route) && promoteRouteLevel(route)
-  })
-  return routesMirror
-}
+/**
+ * 路由降级：将多级嵌套路由平铺为二级结构
+ * 目的：解决 KeepAlive 在多级嵌套（>2层）下失效的问题，并保持侧边栏导航一致性
+ * @param routes 待处理的多级路由数组
+ * @returns 优化后的二级结构路由数组
+ */
+export const flatMultiLevelRoutes = (routes: RouteRecordRaw[]): RouteRecordRaw[] => {
+  const flattened: RouteRecordRaw[] = cloneDeep(routes)
 
-/** 判断路由层级是否大于 2 */
-const isMultipleRoute = (route: RouteRecordRaw) => {
-  const children = route.children
-  if (children?.length) {
-    // 只要有一个子路由的 children 长度大于 0，就说明是三级及其以上路由
-    return children.some((child) => child.children?.length)
-  }
-  return false
-}
-
-/** 生成二级路由 */
-const promoteRouteLevel = (route: RouteRecordRaw) => {
-  // 创建 router 实例是为了获取到当前传入的 route 的所有路由信息
-  let router: Router | null = createRouter({
-    history: routerConfig.history,
-    routes: [route]
-  })
-  const routes = router.getRoutes()
-  // 在 addToChildren 函数中使用上面获取到的路由信息来更新 route 的 children
-  addToChildren(routes, route.children || [], route)
-  router = null
-  // 转为二级路由后，去除所有子路由中的 children
-  route.children = route.children?.map((item) => omit(item, "children") as RouteRecordRaw)
-}
-
-/** 将给定的子路由添加到指定的路由模块中 */
-const addToChildren = (routes: RouteRecordNormalized[], children: RouteRecordRaw[], routeModule: RouteRecordRaw) => {
-  children.forEach((child) => {
-    const route = routes.find((item) => item.name === child.name)
-    if (route) {
-      // 初始化 routeModule 的 children
-      routeModule.children = routeModule.children || []
-      // 检查是否已经存在相同名称的路由，避免重复添加
-      const existingRoute = routeModule.children.find((item) => item.name === route.name)
-      if (!existingRoute) {
-        routeModule.children.push(route)
-      }
-      // 如果该子路由还有自己的子路由，则递归调用此函数将它们也添加进去
-      if (child.children?.length) {
-        addToChildren(routes, child.children, routeModule)
-      }
+  flattened.forEach((route) => {
+    if (hasNestedChildren(route)) {
+      route.children = flattenChildren(route.children!)
     }
   })
+
+  return flattened
+}
+
+/**
+ * 递归判断路由是否具有多级嵌套
+ */
+const hasNestedChildren = (route: RouteRecordRaw): boolean => {
+  return !!route.children?.some((child) => child.children && child.children.length > 0)
+}
+
+/**
+ * 核心递归平铺算法：提取所有深层后代到同一级
+ */
+const flattenChildren = (children: RouteRecordRaw[]): RouteRecordRaw[] => {
+  const result: RouteRecordRaw[] = []
+
+  children.forEach((child) => {
+    if (child.children && child.children.length > 0) {
+      // 提取当前层级的信息（保留，但移除 children，因为后代会被平铺到外面）
+      const { children: descendants, ...nodeInfo } = child
+      result.push(nodeInfo as RouteRecordRaw)
+
+      // 递归处理后代并加入平铺队列
+      result.push(...flattenChildren(descendants))
+    } else {
+      result.push(child)
+    }
+  })
+
+  // 确保同级下的 Path 的一致性（可选：根据业务需求是否需要处理前缀补全）
+  return result
 }

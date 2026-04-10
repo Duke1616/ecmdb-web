@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { useRouter } from "vue-router"
+import { useRouter, type RouteRecordRaw } from "vue-router"
 import { ArrowRight } from "@element-plus/icons-vue"
 import type * as ElementPlusIconsVue from "@element-plus/icons-vue"
 import { getNavigationCards } from "@/common/constants/platforms"
@@ -34,26 +34,23 @@ const filteredCards = computed(() => {
 
 // 检查用户是否有指定平台的路由权限
 const hasPlatformRoutes = (platformId: string): boolean => {
-  if (!permissionStore.routes || permissionStore.routes.length === 0) {
-    return false
+  const allRoutes = permissionStore.routes
+  if (!allRoutes || allRoutes.length === 0) return false
+
+  /** 递归检查广度优先/深度优先搜索：是否存在匹配平台的 meta.platforms */
+  const checkHasPlatform = (routes: RouteRecordRaw[]): boolean => {
+    return routes.some((route) => {
+      // 1. 检查当前节点
+      if (route.meta?.platforms?.includes(platformId)) return true
+      // 2. 递归检查子节点
+      if (route.children && route.children.length > 0) {
+        return checkHasPlatform(route.children)
+      }
+      return false
+    })
   }
 
-  // 递归检查路由中是否有该平台的路由
-  const checkRoutes = (routes: any[]): boolean => {
-    for (const route of routes) {
-      // 检查当前路由是否属于该平台
-      if (route.meta?.platforms?.includes(platformId)) {
-        return true
-      }
-      // 递归检查子路由
-      if (route.children && checkRoutes(route.children)) {
-        return true
-      }
-    }
-    return false
-  }
-
-  return checkRoutes(permissionStore.routes)
+  return checkHasPlatform(allRoutes)
 }
 
 const handleCardClick = (card: NavigationCard) => {
