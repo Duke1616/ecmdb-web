@@ -1,0 +1,87 @@
+/** 用户基本信息 */
+export interface User {
+  id: number
+  username: string
+  email: string
+  nickname: string
+  avatar: string
+  job_title: string
+  identities: Identity[]
+}
+
+/** 身份认证信息 */
+export interface Identity {
+  provider: string
+  ldap_info?: LdapInfo
+  wechat_info?: WechatInfo
+  feishu_info?: FeishuInfo
+}
+
+/** LDAP 详细信息 */
+export interface LdapInfo {
+  dn: string
+}
+
+/** 微信 详细信息 */
+export interface WechatInfo {
+  user_id: string
+}
+
+/** 飞书 详细信息 */
+export interface FeishuInfo {
+  open_id: string
+  user_id: string
+}
+
+/** 租户/空间信息 */
+export interface Tenant {
+  id: number
+  name: string
+  code: string
+  domain: string
+}
+
+/** 注册请求 */
+export interface SignupRequest {
+  username: string
+  password: string
+  confirm_password: string
+  email: string
+  nickname: string
+  avatar: string
+  job_title: string
+}
+
+/** LDAP 登录请求 */
+export interface LoginLdapRequest {
+  username: string
+  password: string
+}
+
+/** 系统登录请求 */
+export interface LoginSystemRequest {
+  username: string
+  password: string
+}
+
+/** 用户列表数据 */
+export interface UserListData {
+  total: number
+  users: User[]
+}
+
+/** 用户详情数据 */
+export interface UserData {
+  user: User
+  tenants: Tenant[]
+}
+
+/** 更新用户请求 */
+export interface UpdateUserReq {
+  id: number
+  username: string
+  email: string
+  nickname: string
+  avatar: string
+  job_title: string
+}

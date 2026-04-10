@@ -4,19 +4,18 @@ import { defineStore } from "pinia"
 import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
 import { resetRouter } from "@/router"
-import { getUserInfoApi, findByUsernameApi } from "@/api/user"
-import type * as user from "@/api/user/types/user"
+import { getProfileApi } from "@/api/iam/user"
+import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
-import { logoutApi } from "@/pages/login/apis"
+import { logoutApi } from "@/api/iam/user"
 
 export const useUserStore = defineStore(
   "user",
   () => {
     const token = ref<string>("")
-    const roles = ref<string[]>([])
     const username = ref<string>("")
-    const userInfo = ref<user.user | null>(null)
+    const userInfo = ref<user.User | null>(null)
 
     const tagsViewStore = useTagsViewStore()
     const settingsStore = useSettingsStore()
@@ -26,15 +25,14 @@ export const useUserStore = defineStore(
 
     /** 获取登录用户信息 */
     const getInfo = async () => {
-      if (userInfo.value && roles.value.length > 0) return
+      if (userInfo.value) return
       if (_infoPromise) return _infoPromise
 
       _infoPromise = (async () => {
         try {
-          const { data } = await getUserInfoApi()
-          userInfo.value = data
-          username.value = data.username
-          roles.value = data.role_codes
+          const { data } = await getProfileApi()
+          userInfo.value = data.user
+          username.value = data.user.username
         } finally {
           _infoPromise = null
         }
@@ -43,15 +41,8 @@ export const useUserStore = defineStore(
       return _infoPromise
     }
 
-    /** 切换角色 */
-    const changeRoles = async (role: string) => {
-      const newToken = "token-" + role
-      setToken(newToken)
-      window.location.reload()
-    }
-
     /** 统一解析用户详情（安全模式：仅缓存自己，别人按需查询） */
-    const resolveUser = async (un: string): Promise<user.user | null> => {
+    const resolveUser = async (un: string): Promise<user.User | null> => {
       if (!un) return null
 
       // 1. 确保已获取“我”的信息
@@ -63,12 +54,8 @@ export const useUserStore = defineStore(
       }
 
       // 3. 查的是别人，发起请求但不存入全局 Store 缓存
-      try {
-        const { data } = await findByUsernameApi(un)
-        return data
-      } catch {
-        return null
-      }
+      // TODO: 等待 IAM 实现相关查询接口
+      return null
     }
 
     // 设置 Token
@@ -94,7 +81,6 @@ export const useUserStore = defineStore(
     const resetToken = () => {
       removeToken()
       token.value = ""
-      roles.value = []
       userInfo.value = null
     }
 
@@ -106,7 +92,7 @@ export const useUserStore = defineStore(
       }
     }
 
-    return { roles, username, userInfo, setToken, getInfo, resolveUser, logout, resetToken, changeRoles }
+    return { username, userInfo, setToken, getInfo, resolveUser, logout, resetToken }
   },
   {
     persist: true

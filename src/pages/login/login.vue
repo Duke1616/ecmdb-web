@@ -34,8 +34,8 @@ import { reactive, ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { User, Lock } from "@element-plus/icons-vue"
-import { type LoginRequestData } from "./apis/types"
-import { ldapLoginApi, systemLoginApi } from "./apis"
+import { loginLdapApi, loginSystemApi } from "@/api/iam/user"
+import type { LoginLdapRequest } from "@/api/iam/user/type"
 
 const router = useRouter()
 
@@ -62,7 +62,7 @@ const loginFormRef = ref<FormInstance | null>(null)
 const loading = ref(false)
 
 /** 登录表单数据 */
-const loginFormData: LoginRequestData = reactive({
+const loginFormData: LoginLdapRequest = reactive({
   username: "",
   password: ""
 })
@@ -82,8 +82,7 @@ const loginFormRules: FormRules = {
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },
     { min: 6, max: 20, message: "长度在 6 到 20 个字符", trigger: "blur" }
-  ],
-  code: [{ required: true, message: "请输入验证码", trigger: "blur" }]
+  ]
 }
 
 /** 登录 */
@@ -94,7 +93,7 @@ function handleLogin() {
       return
     }
     loading.value = true
-    const loginApi = props.active === "ldap" ? ldapLoginApi : systemLoginApi
+    const loginApi = props.active === "ldap" ? loginLdapApi : loginSystemApi
     loginApi(loginFormData)
       .then(() => {
         router.push({ path: "/" })

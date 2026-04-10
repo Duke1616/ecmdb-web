@@ -1,7 +1,8 @@
-import { type Router, type RouteRecordNormalized, type RouteRecordRaw, createRouter } from "vue-router"
+import { type Router, type RouteRecordNormalized, type RouteRecordRaw, type RouteMeta, createRouter } from "vue-router"
 import { cloneDeep, omit } from "lodash-es"
-import { menu, meta } from "@/api/menu/types/menu"
+import { type Menu, type Meta } from "@/api/iam/permission/type"
 import { routerConfig } from "@/router/config"
+import type { SvgName } from "~virtual/svg-component"
 
 const Layouts = import.meta.glob("../layouts/index.vue")
 const modules = {
@@ -10,25 +11,25 @@ const modules = {
 }
 
 // 公共的 meta 转换函数
-const transformMeta = (meta: meta) => ({
+const transformMeta = (meta: Meta): RouteMeta => ({
   title: meta.title,
-  svgIcon: meta.icon,
+  svgIcon: meta.icon as SvgName,
   affix: meta.is_affix,
   hidden: meta.is_hidden,
   keepAlive: meta.is_keepalive,
-  buttons: meta.buttons,
   platforms: meta.platforms
 })
 
 /** 将后端路由数据转为前端格式 */
-export const transformDynamicRoutes = (backendRoutes: menu[] = []): RouteRecordRaw[] => {
+export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordRaw[] => {
   return backendRoutes.map((route): RouteRecordRaw => {
-    // layout 类型（目录）- 只有第一层（pid 为空）才使用 Layout
-    if (route.children && route.type === 1) {
-      console.log("route", route)
+    const isRoot = !route.parent_id || route.parent_id === 0
+
+    // layout 类型（目录或具有子节点的项）
+    if (route.children && route.children.length > 0) {
       return {
         path: route.path,
-        component: !route.pid ? Layouts["../layouts/index.vue"] : undefined,
+        component: isRoot ? Layouts["../layouts/index.vue"] : undefined,
         name: route.name,
         redirect: route.redirect,
         meta: transformMeta(route.meta),

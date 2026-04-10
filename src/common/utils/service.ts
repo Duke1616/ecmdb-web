@@ -5,6 +5,7 @@ export type ApiService = keyof typeof API_SERVICE
 export const API_SERVICE = {
   CMDB: import.meta.env.VITE_ECMDB_API_PREFIX,
   TASK: import.meta.env.VITE_TASK_API_PREFIX,
+  IAM: import.meta.env.VITE_IAM_API_PREFIX,
   ALERT: import.meta.env.VITE_ALERT_API_PREFIX
 }
 

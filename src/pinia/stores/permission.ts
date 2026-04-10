@@ -5,30 +5,28 @@ import { type RouteRecordRaw } from "vue-router"
 import { constantRoutes, defaultRoutes } from "@/router"
 import { flatMultiLevelRoutes } from "@/router/helper"
 import { routerConfig } from "@/router/config"
-import { listUserRolePermissionApi } from "@/api/permission"
+import { getAuthorizedMenusApi } from "@/api/iam/permission"
 import { transformDynamicRoutes } from "@/router/helper"
 
 export const usePermissionStore = defineStore("permission", () => {
   const routes = ref<RouteRecordRaw[]>([])
   const dynamicRoutes = ref<RouteRecordRaw[]>([])
-  const roles = ref<string[]>([])
 
   /** 获取路由详情 */
   const getRoleMenu = async (): Promise<void> => {
     try {
-      const response = await listUserRolePermissionApi()
+      const response = await getAuthorizedMenusApi()
 
       if (!response || !response.data) {
         throw new Error("无效的菜单数据")
       }
 
-      const { data } = response
+      const { data: menus } = response
 
-      if (!data.menus || data.menus.length === 0) {
+      if (!menus || menus.length === 0) {
         dynamicRoutes.value = defaultRoutes
       } else {
-        roles.value = data.role_codes
-        dynamicRoutes.value = transformDynamicRoutes(data.menus)
+        dynamicRoutes.value = transformDynamicRoutes(menus)
       }
     } catch (error) {
       console.error("获取菜单失败", error)
@@ -49,7 +47,7 @@ export const usePermissionStore = defineStore("permission", () => {
     dynamicRoutes.value = routerConfig.thirdLevelRouteCache ? flatMultiLevelRoutes(accessedRoutes) : accessedRoutes
   }
 
-  return { routes, dynamicRoutes, roles, setRoutes }
+  return { routes, dynamicRoutes, setRoutes }
 })
 
 /** 在 setup 外使用 */
