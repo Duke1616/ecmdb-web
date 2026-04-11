@@ -106,6 +106,7 @@ import { Plus, RefreshRight, Edit, Delete, View, Document, Lock } from "@element
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import type { Column } from "@@/components/DataTable/types"
 import PolicyForm from "./form.vue"
 import { usePolicyList } from "./composables/usePolicyList"
 
@@ -132,12 +133,12 @@ const {
 const formRef = ref<InstanceType<typeof PolicyForm>>()
 
 // 表格配置
-const tableColumns = [
-  { label: "策略名称", slot: "policyName", minWidth: 180 },
-  { label: "标识码", slot: "policyCode", width: 180 },
-  { label: "类型", slot: "policyType", width: 120 },
+const tableColumns: Column[] = [
+  { label: "策略名称", prop: "", slot: "policyName", minWidth: 180 },
+  { label: "标识码", prop: "code", slot: "policyCode", width: 180 },
+  { label: "类型", prop: "type", slot: "policyType", width: 120 },
   { label: "描述", prop: "desc", minWidth: 200, showOverflowTooltip: true },
-  { label: "操作", slot: "actions", width: 150, fixed: "right", align: "center" }
+  { label: "操作", prop: "", slot: "actions", width: 150, fixed: "right" as const, align: "center" as const }
 ]
 </script>
 

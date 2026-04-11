@@ -270,7 +270,7 @@ watch(
             console.warn(`Failed to get user ${username}:`, error)
           }
         }
-        selectedUsers.value = users
+        selectedUsers.value = users as unknown as user[]
       } else {
         selectedUsers.value = []
       }

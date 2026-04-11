@@ -16,6 +16,7 @@ export const useUserStore = defineStore(
     const token = ref<string>("")
     const username = ref<string>("")
     const userInfo = ref<user.User | null>(null)
+    const roles = ref<string[]>(["admin"]) // TODO: 从 IAM 获取真实的 roles
 
     const tagsViewStore = useTagsViewStore()
     const settingsStore = useSettingsStore()
@@ -92,7 +93,21 @@ export const useUserStore = defineStore(
       }
     }
 
-    return { username, userInfo, setToken, getInfo, resolveUser, logout, resetToken }
+    const changeRoles = (val: string) => {
+      roles.value = [val]
+    }
+
+    return {
+      username,
+      userInfo,
+      roles,
+      setToken,
+      getInfo,
+      resolveUser,
+      logout,
+      resetToken,
+      changeRoles
+    }
   },
   {
     persist: true

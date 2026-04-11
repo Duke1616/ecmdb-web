@@ -58,8 +58,8 @@ export function useUsers() {
     loading.value = true
     try {
       const data = await userStore.resolveUser(un)
-      selectedUser.value = data
-      return data
+      selectedUser.value = data as unknown as user
+      return data as unknown as user
     } finally {
       loading.value = false
     }
