@@ -48,7 +48,6 @@
                 <el-checkbox v-for="s in permissionTree" :key="s.code" :label="s.code" class="svc-item">
                   <div class="svc-node">
                     <div class="svc-name">{{ s.name }}</div>
-                    <div class="svc-code">{{ s.code }}</div>
                   </div>
                 </el-checkbox>
               </div>
@@ -221,6 +220,19 @@ const emit = defineEmits(["duplicate", "remove", "update:stmt"])
 const expanded = reactive({ service: true, action: false, resource: false, condition: false })
 const actionMode = ref<"all" | "specific">(props.stmt.action.some((a) => a.endsWith(":*")) ? "all" : "specific")
 
+// 记忆用户勾选的服务，防止在模式切换中因为 action 被临时清空而丢失 UI 状态
+const internalServices = ref<string[]>([])
+
+// 初始化 internalServices：从 props.stmt.action 中提取服务前缀
+const syncInternalServices = () => {
+  const codesInAction = props.stmt.action.map((a) => a.split(":")[0])
+  const uniqueCodes = [...new Set(codesInAction)].filter((c) => props.permissionTree.some((s) => s.code === c))
+  if (uniqueCodes.length > 0) {
+    internalServices.value = uniqueCodes
+  }
+}
+syncInternalServices()
+
 // --- 核心更新逻辑 (单向数据流) ---
 const patchStmt = (patch: Partial<Statement>) => {
   emit("update:stmt", { ...props.stmt, ...patch })
@@ -234,15 +246,13 @@ const updateCondition = (idx: number, patch: any) => {
 
 // --- 计算属性 (语义化数据) ---
 const selectedServiceCodes = computed<string[]>({
-  get: () => {
-    const codesInAction = props.stmt.action.map((a) => a.split(":")[0])
-    return [...new Set(codesInAction)].filter((c) => props.permissionTree.some((s) => s.code === c))
-  },
+  get: () => internalServices.value,
   set: (newVal) => {
-    const oldVal = selectedServiceCodes.value
+    const oldVal = internalServices.value
+    internalServices.value = newVal
     let nextActions = [...props.stmt.action]
 
-    // 处理移除逻辑：去掉该服务下的所有 action
+    // 处理移除：当服务被显式取消勾选时，才物理删除 action
     if (newVal.length < oldVal.length) {
       const removed = oldVal.filter((v) => !newVal.includes(v))
       removed.forEach((code) => {
@@ -255,7 +265,7 @@ const selectedServiceCodes = computed<string[]>({
       })
     }
 
-    // 处理新增逻辑：保证该服务至少有一个占位 action，否则 UI 无法回显选中态
+    // 处理新增：确保至少有一个占位符或特定 action 以保持后端语义
     if (newVal.length > oldVal.length) {
       const added = newVal.filter((v) => !oldVal.includes(v))
       added.forEach((code) => {
@@ -265,6 +275,7 @@ const selectedServiceCodes = computed<string[]>({
       })
     }
 
+    // “全部模式”下的行为同步
     if (actionMode.value === "all") {
       nextActions = newVal.map((c) => `${c}:*`)
     }
@@ -348,8 +359,13 @@ const addCondition = () => {
 }
 
 watch(actionMode, (val) => {
-  if (val === "all") patchStmt({ action: selectedServiceCodes.value.map((c) => `${c}:*`) })
-  else patchStmt({ action: props.stmt.action.filter((a) => !a.endsWith(":*")) })
+  if (val === "all") {
+    // 切换到“全部”：将选中的服务统一转为通配符
+    patchStmt({ action: internalServices.value.map((c) => `${c}:*`) })
+  } else {
+    // 切换到“指定”：移除通配符，但不清空 internalServices，从而保留服务列表可见性
+    patchStmt({ action: props.stmt.action.filter((a) => !a.endsWith(":*")) })
+  }
 })
 </script>
 
