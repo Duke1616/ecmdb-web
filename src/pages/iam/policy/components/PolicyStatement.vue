@@ -1,596 +1,424 @@
 <template>
-  <div class="policy-stmt-card">
-    <!-- 头部操作栏 -->
-    <div class="stmt-info-bar">
-      <div class="identity">
-        <span class="index">#{{ index + 1 }}</span>
-        <span class="title">{{ stmtTitle }}</span>
-      </div>
-      <div class="actions">
-        <el-button link type="primary" @click="$emit('duplicate', index)">复制</el-button>
-        <el-divider direction="vertical" />
-        <el-button link type="danger" @click="$emit('remove', index)">删除</el-button>
-      </div>
-    </div>
+  <div class="ali-policy-card" :class="stmt.effect.toLowerCase()">
+    <div class="side-indicator" />
 
-    <div class="stmt-body">
-      <!-- 1. 效果行 (固定展示) -->
-      <div class="stmt-row static-row">
-        <div class="row-main-content">
-          <div class="icon-fixed" />
-          <div class="label-fixed required">效果</div>
-          <div class="value-box">
-            <el-radio-group :model-value="stmt.effect" @update:model-value="(val: any) => patchStmt({ effect: val })">
-              <el-radio label="Allow">允许</el-radio>
-              <el-radio label="Deny">拒绝</el-radio>
+    <div class="card-main">
+      <header class="card-header">
+        <div class="header-info">
+          <span class="idx-tag">#{{ index + 1 }}</span>
+          <span class="summary">{{ summaryText }}</span>
+        </div>
+        <div class="header-actions">
+          <el-button link @click="$emit('duplicate', index)"
+            ><el-icon><CopyDocument /></el-icon> 复制</el-button
+          >
+          <el-button link @click="$emit('remove', index)"
+            ><el-icon><Delete /></el-icon> 移除</el-button
+          >
+        </div>
+      </header>
+
+      <main class="card-body">
+        <!-- 效果 (Effect) -->
+        <section class="config-row">
+          <label class="row-label">授权效能</label>
+          <div class="row-content">
+            <el-radio-group :model-value="stmt.effect" @change="onEffectChange">
+              <el-radio label="Allow">允许 (Allow)</el-radio>
+              <el-radio label="Deny">拒绝 (Deny)</el-radio>
             </el-radio-group>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <!-- 2. 服务行 (可折叠) -->
-      <div class="stmt-row collapse-row" :class="{ active: expanded.service }">
-        <div class="row-header" @click="expanded.service = !expanded.service">
-          <div class="icon-fixed">
-            <el-icon :class="{ rotated: expanded.service }"><CaretRight /></el-icon>
+        <!-- 操作 (Action) -->
+        <section class="config-row collapsible" :class="{ is_open: expanded.orchestrator }">
+          <div class="row-label clickable" @click="toggleExpanded('orchestrator')">
+            <el-icon class="arrow-icon" :class="{ rot: expanded.orchestrator }"><CaretRight /></el-icon>
+            授权操作
           </div>
-          <div class="label-fixed required">服务</div>
-          <div class="summary-box" v-show="!expanded.service">{{ serviceSummary }}</div>
-        </div>
-        <el-collapse-transition>
-          <div v-show="expanded.service" class="detail-box">
-            <el-checkbox-group
-              :model-value="selectedServiceCodes"
-              class="svc-matrix"
-              @update:model-value="(val: any) => (selectedServiceCodes = val)"
-            >
-              <div class="svc-grid">
-                <el-checkbox v-for="s in permissionTree" :key="s.code" :label="s.code" class="svc-item">
-                  <div class="svc-node">
-                    <div class="svc-name">{{ s.name }}</div>
-                  </div>
-                </el-checkbox>
-              </div>
-            </el-checkbox-group>
-          </div>
-        </el-collapse-transition>
-      </div>
+          <div class="row-content">
+            <div class="preview-link" @click="toggleExpanded('orchestrator')">
+              <template v-if="selectedServiceCodes.length > 0">
+                {{ selectedServiceCodes.length }} 个模块 /
+                {{ actionMode === "all" ? "全部 API" : stmt.action.length + " 个特定操作" }}
+              </template>
+              <span v-else class="placeholder-text">点击配置模块权限...</span>
+            </div>
 
-      <!-- 3. 操作行 (可折叠) -->
-      <div class="stmt-row collapse-row" :class="{ active: expanded.action }">
-        <div class="row-header" @click="expanded.action = !expanded.action">
-          <div class="icon-fixed">
-            <el-icon :class="{ rotated: expanded.action }"><CaretRight /></el-icon>
-          </div>
-          <div class="label-fixed required">操作</div>
-          <div class="summary-box" v-show="!expanded.action">{{ actionSummary }}</div>
-        </div>
-        <el-collapse-transition>
-          <div v-show="expanded.action" class="detail-box">
-            <el-radio-group
-              :model-value="actionMode"
-              @update:model-value="(val: any) => (actionMode = val)"
-              class="action-type-switch"
-            >
-              <el-radio label="all">全部操作</el-radio>
-              <el-radio label="specific" :disabled="selectedServiceCodes.length === 0">指定操作</el-radio>
-            </el-radio-group>
-
-            <div v-if="actionMode === 'specific' && activeServices.length > 0" class="matrix-container">
-              <div v-for="svc in activeServices" :key="svc.code" class="svc-block">
-                <div class="svc-head">
-                  <span class="svc-name">{{ svc.name }}</span>
-                  <el-checkbox
-                    :model-value="getSvcState(svc).all"
-                    :indeterminate="getSvcState(svc).some"
-                    size="small"
-                    @change="toggleSvc(svc)"
-                    >全选</el-checkbox
-                  >
-                </div>
-                <div class="grp-list">
-                  <div v-for="grp in svc.entries" :key="grp.name" class="grp-row">
-                    <div class="grp-label">
-                      <el-checkbox
-                        :model-value="getGrpState(grp).all"
-                        :indeterminate="getGrpState(grp).some"
-                        size="small"
-                        @change="toggleGrp(grp)"
-                        >{{ grp.name }}</el-checkbox
-                      >
-                    </div>
-                    <div class="grp-actions">
-                      <el-checkbox
-                        v-for="act in grp.actions"
-                        :key="act.code"
-                        :model-value="stmt.action.includes(act.code)"
-                        :label="act.code"
-                        class="act-item"
-                        @change="(checked: any) => toggleAction(act.code, checked)"
-                      >
-                        <div class="act-node">
-                          <div class="act-name">{{ act.name }}</div>
-                          <div class="act-code">{{ act.code }}</div>
+            <el-collapse-transition>
+              <div v-show="expanded.orchestrator" class="embedded-panel orchestrator-panel">
+                <div class="dual-pane-layout">
+                  <aside class="pane-nav">
+                    <div class="pane-title">业务模块</div>
+                    <div class="pane-list scroll-area">
+                      <el-checkbox-group :model-value="selectedServiceCodes" @update:model-value="onServiceChange">
+                        <div
+                          v-for="s in permissionManifest"
+                          :key="s.code"
+                          class="svc-item-check"
+                          :class="{ is_active: selectedServiceCodes.includes(s.code) }"
+                        >
+                          <el-checkbox :label="s.code">
+                            <span class="name">{{ s.name }}</span>
+                            <span class="code">{{ s.code }}</span>
+                          </el-checkbox>
                         </div>
-                      </el-checkbox>
+                      </el-checkbox-group>
                     </div>
-                  </div>
+                  </aside>
+                  <main class="pane-content">
+                    <div class="pane-header">
+                      <span class="title">操作项配置</span>
+                      <el-radio-group :model-value="actionMode" size="small" @update:model-value="onActionModeChange">
+                        <el-radio-button label="all">全部</el-radio-button>
+                        <el-radio-button label="specific">精细化</el-radio-button>
+                      </el-radio-group>
+                    </div>
+                    <div class="pane-body scroll-area">
+                      <PermissionMatrix
+                        v-if="actionMode === 'specific' && activeServices.length > 0"
+                        :active-services="activeServices"
+                        :selected-actions="stmt.action"
+                        @toggle-action="onActionToggle"
+                        @update-actions="onActionsUpdate"
+                      />
+                      <div v-else class="empty-placeholder">
+                        <el-icon><Pointer /></el-icon>
+                        <p>
+                          {{
+                            selectedServiceCodes.length === 0 ? "从左侧选择业务模块" : "当前已选择整模块全量权限接入"
+                          }}
+                        </p>
+                      </div>
+                    </div>
+                  </main>
                 </div>
               </div>
-            </div>
-            <div v-if="actionMode === 'all' && selectedServiceCodes.length > 0" class="wildcards-box">
-              <span class="hint">已授予授权范围:</span>
-              <el-tag v-for="code in selectedServiceCodes" :key="code" type="info" size="small">{{ code }}:*</el-tag>
-            </div>
+            </el-collapse-transition>
           </div>
-        </el-collapse-transition>
-      </div>
+        </section>
 
-      <!-- 4. 资源行 (可折叠) -->
-      <div class="stmt-row collapse-row" :class="{ active: expanded.resource }">
-        <div class="row-header" @click="expanded.resource = !expanded.resource">
-          <div class="icon-fixed">
-            <el-icon :class="{ rotated: expanded.resource }"><CaretRight /></el-icon>
+        <!-- 资源 (Resource) -->
+        <section class="config-row collapsible" :class="{ is_open: expanded.resource }">
+          <div class="row-label clickable" @click="toggleExpanded('resource')">
+            <el-icon class="arrow-icon" :class="{ rot: expanded.resource }"><CaretRight /></el-icon>
+            目标资源
           </div>
-          <div class="label-fixed required">资源</div>
-          <div class="summary-box" v-show="!expanded.resource">{{ resourceSummary }}</div>
-        </div>
-        <el-collapse-transition>
-          <div v-show="expanded.resource" class="detail-box">
-            <el-radio-group v-model="resourceMode">
-              <el-radio label="all">全部资源 (*)</el-radio>
-              <el-radio label="specific">特定资源</el-radio>
-            </el-radio-group>
-            <div v-if="resourceMode === 'specific'" class="resource-input">
-              <el-input
-                v-model="resourceText"
-                type="textarea"
-                :rows="3"
-                placeholder="格式：urn:ecmdb:iam:user/xxx，每行一个"
-              />
+          <div class="row-content">
+            <div class="preview-link" @click="toggleExpanded('resource')">
+              {{
+                resourceMode === "all"
+                  ? "全部资源 (*)"
+                  : stmt.resource.length > 0
+                    ? stmt.resource.length + " 个特定的资源实例"
+                    : "未指定生效对象"
+              }}
             </div>
-          </div>
-        </el-collapse-transition>
-      </div>
-
-      <!-- 5. 条件行 (可折叠) -->
-      <div class="stmt-row collapse-row" :class="{ active: expanded.condition }">
-        <div class="row-header" @click="expanded.condition = !expanded.condition">
-          <div class="icon-fixed">
-            <el-icon :class="{ rotated: expanded.condition }"><CaretRight /></el-icon>
-          </div>
-          <div class="label-fixed">条件</div>
-          <div class="summary-box" v-show="!expanded.condition">{{ conditionSummary }}</div>
-        </div>
-        <el-collapse-transition>
-          <div v-show="expanded.condition" class="detail-box">
-            <div class="condition-layout">
-              <div v-for="(c, i) in stmt.condition" :key="i" class="condition-line">
-                <el-input
-                  :model-value="c.key"
-                  placeholder="Key"
-                  size="small"
-                  @update:model-value="(v) => updateCondition(i, { key: v })"
-                />
-                <el-select
-                  :model-value="c.operator"
-                  size="small"
-                  style="width: 140px"
-                  @update:model-value="(v) => updateCondition(i, { operator: v })"
-                >
-                  <el-option label="StringEquals" value="StringEquals" />
-                  <el-option label="NumericEquals" value="NumericEquals" />
-                </el-select>
-                <el-input
-                  :model-value="c.value"
-                  placeholder="Value"
-                  size="small"
-                  @update:model-value="(v) => updateCondition(i, { value: v })"
-                />
-                <el-button
-                  link
-                  type="danger"
-                  :icon="Delete"
-                  @click="patchStmt({ condition: stmt.condition?.filter((_, idx) => idx !== i) })"
-                />
+            <el-collapse-transition>
+              <div v-show="expanded.resource" class="embedded-panel resource-panel">
+                <div class="panel-mode-bar">
+                  <el-radio-group :model-value="resourceMode" size="small" @change="onResourceModeChange">
+                    <el-radio label="all">全部资源</el-radio>
+                    <el-radio label="specific">指定资源</el-radio>
+                  </el-radio-group>
+                </div>
+                <div v-if="resourceMode === 'specific'" class="panel-input-area">
+                  <el-input
+                    :model-value="resourceText"
+                    type="textarea"
+                    :rows="4"
+                    placeholder="每行输入一个资源标识符"
+                    class="flat-textarea"
+                    @update:model-value="onResourceTextUpdate"
+                  />
+                </div>
+                <div v-else class="panel-desc-area">已选择对所有符合条件的资源对象生效。</div>
               </div>
-              <el-button link type="primary" :icon="Plus" @click="addCondition" size="small">添加限制条件</el-button>
-            </div>
+            </el-collapse-transition>
           </div>
-        </el-collapse-transition>
-      </div>
+        </section>
+
+        <!-- 条件 (Condition) -->
+        <section class="config-row collapsible no-border" :class="{ is_open: expanded.condition }">
+          <div class="row-label clickable" @click="toggleExpanded('condition')">
+            <el-icon class="arrow-icon" :class="{ rot: expanded.condition }"><CaretRight /></el-icon>
+            限制条件
+          </div>
+          <div class="row-content">
+            <div class="preview-link" @click="toggleExpanded('condition')">
+              {{
+                stmt.condition && Object.keys(stmt.condition).length > 0
+                  ? Object.keys(stmt.condition).length + " 条环境限制规则"
+                  : "无特定约束条件"
+              }}
+            </div>
+            <el-collapse-transition>
+              <div v-show="expanded.condition" class="embedded-panel condition-panel">
+                <ConditionEditor :stmt="stmt" @update:stmt="patchStmt" />
+              </div>
+            </el-collapse-transition>
+          </div>
+        </section>
+      </main>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue"
-import { Plus, Delete, CaretRight } from "@element-plus/icons-vue"
+import { CopyDocument, Delete, CaretRight, Pointer } from "@element-plus/icons-vue"
+import PermissionMatrix from "./PolicyStatement/PermissionMatrix.vue"
+import ConditionEditor from "./PolicyStatement/ConditionEditor.vue"
+import { useStatementLogic } from "./PolicyStatement/useStatementLogic"
 import type { Statement } from "@/api/iam/policy/type"
+import type { ManifestService } from "../types"
 
 const props = defineProps<{
   stmt: Statement
   index: number
-  permissionTree: any[]
+  permissionManifest: ManifestService[]
 }>()
 
 const emit = defineEmits(["duplicate", "remove", "update:stmt"])
 
-// --- 状态控制 ---
-const expanded = reactive({ service: true, action: false, resource: false, condition: false })
-const actionMode = ref<"all" | "specific">(props.stmt.action.some((a) => a.endsWith(":*")) ? "all" : "specific")
-
-// 记忆用户勾选的服务，防止在模式切换中因为 action 被临时清空而丢失 UI 状态
-const internalServices = ref<string[]>([])
-
-// 初始化 internalServices：从 props.stmt.action 中提取服务前缀
-const syncInternalServices = () => {
-  const codesInAction = props.stmt.action.map((a) => a.split(":")[0])
-  const uniqueCodes = [...new Set(codesInAction)].filter((c) => props.permissionTree.some((s) => s.code === c))
-  if (uniqueCodes.length > 0) {
-    internalServices.value = uniqueCodes
-  }
-}
-syncInternalServices()
-
-// --- 核心更新逻辑 (单向数据流) ---
-const patchStmt = (patch: Partial<Statement>) => {
-  emit("update:stmt", { ...props.stmt, ...patch })
-}
-
-const updateCondition = (idx: number, patch: any) => {
-  const nextCond = [...(props.stmt.condition || [])]
-  nextCond[idx] = { ...nextCond[idx], ...patch }
-  patchStmt({ condition: nextCond })
-}
-
-// --- 计算属性 (语义化数据) ---
-const selectedServiceCodes = computed<string[]>({
-  get: () => internalServices.value,
-  set: (newVal) => {
-    const oldVal = internalServices.value
-    internalServices.value = newVal
-    let nextActions = [...props.stmt.action]
-
-    // 处理移除：当服务被显式取消勾选时，才物理删除 action
-    if (newVal.length < oldVal.length) {
-      const removed = oldVal.filter((v) => !newVal.includes(v))
-      removed.forEach((code) => {
-        const svc = props.permissionTree.find((s) => s.code === code)
-        const toRemove = new Set([
-          `${code}:*`,
-          ...(svc?.entries?.flatMap((g: any) => g.actions.map((a: any) => a.code)) || [])
-        ])
-        nextActions = nextActions.filter((a) => !toRemove.has(a))
-      })
-    }
-
-    // 处理新增：确保至少有一个占位符或特定 action 以保持后端语义
-    if (newVal.length > oldVal.length) {
-      const added = newVal.filter((v) => !oldVal.includes(v))
-      added.forEach((code) => {
-        if (!nextActions.some((a) => a.startsWith(`${code}:`))) {
-          nextActions.push(`${code}:*`)
-        }
-      })
-    }
-
-    // “全部模式”下的行为同步
-    if (actionMode.value === "all") {
-      nextActions = newVal.map((c) => `${c}:*`)
-    }
-    patchStmt({ action: nextActions })
-  }
-})
-
-const activeServices = computed(() => props.permissionTree.filter((s) => selectedServiceCodes.value.includes(s.code)))
-
-// --- 摘要逻辑 ---
-const serviceSummary = computed(() => activeServices.value.map((s) => s.name).join(" / ") || "未选择服务")
-const actionSummary = computed(() => {
-  if (actionMode.value === "all") return "全部操作"
-  const count = props.stmt.action.filter((a) => !a.endsWith(":*")).length
-  return count ? `${count} 个操作` : "未选择操作"
-})
-const resourceSummary = computed(() =>
-  props.stmt.resource[0] === "*" ? "全部资源 (*)" : `特定资源 (${props.stmt.resource.length})`
-)
-const conditionSummary = computed(() =>
-  props.stmt.condition?.length ? `${props.stmt.condition.length} 个条件` : "未配置"
-)
-const stmtTitle = computed(() => {
-  const svcPrefix = activeServices.value.length ? activeServices.value.map((s) => s.name).join("/") : "新语句"
-  return `${svcPrefix} / ${actionSummary.value}`
-})
-
-// --- 矩阵逻辑辅助 ---
-const getGrpActions = (grp: any): string[] => grp.actions.map((a: any) => a.code)
-const getGrpState = (grp: any) => {
-  const codes = getGrpActions(grp)
-  const sel = codes.filter((c: string) => props.stmt.action.includes(c)).length
-  return { all: sel === codes.length, some: sel > 0 && sel < codes.length }
-}
-const toggleGrp = (grp: any) => {
-  const codes = getGrpActions(grp)
-  const { all } = getGrpState(grp)
-  const nextActions = all
-    ? props.stmt.action.filter((a) => !codes.includes(a))
-    : [...new Set([...props.stmt.action, ...codes])]
-  patchStmt({ action: nextActions })
-}
-const getSvcState = (svc: any) => {
-  const codes = svc.entries.flatMap(getGrpActions)
-  const sel = codes.filter((c: string) => props.stmt.action.includes(c)).length
-  return { all: sel === codes.length, some: sel > 0 && sel < codes.length }
-}
-const toggleSvc = (svc: any) => {
-  const codes = svc.entries.flatMap(getGrpActions)
-  const { all } = getSvcState(svc)
-  const nextActions = all
-    ? props.stmt.action.filter((a) => !codes.includes(a))
-    : [...new Set([...props.stmt.action, ...codes])]
-  patchStmt({ action: nextActions })
-}
-
-const toggleAction = (code: string, checked: boolean) => {
-  const nextActions = checked ? [...new Set([...props.stmt.action, code])] : props.stmt.action.filter((a) => a !== code)
-  patchStmt({ action: nextActions })
-}
-
-// --- 资源配置 ---
-const resourceMode = computed({
-  get: () => (props.stmt.resource[0] === "*" ? "all" : "specific"),
-  set: (v) => patchStmt({ resource: v === "all" ? ["*"] : [] })
-})
-const resourceText = computed({
-  get: () => props.stmt.resource.filter((r) => r !== "*").join("\n"),
-  set: (v) =>
-    patchStmt({
-      resource: v
-        .split("\n")
-        .map((r) => r.trim())
-        .filter(Boolean)
-    })
-})
-
-const addCondition = () => {
-  const nextCond = [...(props.stmt.condition || []), { key: "", operator: "StringEquals", value: "" }]
-  patchStmt({ condition: nextCond })
-}
-
-watch(actionMode, (val) => {
-  if (val === "all") {
-    // 切换到“全部”：将选中的服务统一转为通配符
-    patchStmt({ action: internalServices.value.map((c) => `${c}:*`) })
-  } else {
-    // 切换到“指定”：移除通配符，但不清空 internalServices，从而保留服务列表可见性
-    patchStmt({ action: props.stmt.action.filter((a) => !a.endsWith(":*")) })
-  }
-})
+const {
+  expanded,
+  toggleExpanded,
+  selectedServiceCodes,
+  actionMode,
+  resourceMode,
+  resourceText,
+  activeServices,
+  summaryText,
+  onEffectChange,
+  onServiceChange,
+  onActionModeChange,
+  onResourceModeChange,
+  onResourceTextUpdate,
+  onActionsUpdate,
+  onActionToggle,
+  patchStmt
+} = useStatementLogic(props, emit)
 </script>
 
 <style lang="scss" scoped>
-.policy-stmt-card {
-  border: 1px solid #ebeef5;
-  border-radius: 4px;
-  margin-bottom: 24px;
+.ali-policy-card {
+  display: flex;
   background: #fff;
-
-  .stmt-info-bar {
+  border: 1px solid #dcdfe6;
+  border-radius: 2px;
+  margin-bottom: 24px;
+  position: relative;
+  .side-indicator {
+    width: 4px;
+    flex-shrink: 0;
+  }
+  &.allow .side-indicator {
+    background: #52c41a;
+  }
+  &.deny .side-indicator {
+    background: #ff4d4f;
+  }
+  .card-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px 16px;
-    background: #fcfcfc;
-    border-bottom: 1px solid #f0f0f0;
-    .index {
-      color: #333;
+    background: #fbfbfb;
+    border-bottom: 1px solid #ebeef5;
+    .idx-tag {
       font-weight: bold;
-      margin-right: 12px;
-      font-size: 15px;
-    }
-    .title {
-      font-size: 14px;
-      font-weight: 600;
       color: #333;
-    }
-  }
-}
-
-.stmt-body {
-  display: block;
-  width: 100%;
-}
-
-.stmt-row {
-  display: block;
-  width: 100%;
-  border-bottom: 1px solid #f0f0f0;
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &.active {
-    background: #fafafa;
-  }
-}
-
-/* 统一行首结构：图标(40px) + 标签(100px) */
-.row-main-content,
-.row-header {
-  display: flex;
-  align-items: center;
-  min-height: 52px; /* 稍微增加行高 */
-  padding: 0 16px;
-}
-
-.row-header {
-  cursor: pointer;
-  user-select: none;
-  &:hover {
-    background: #f5f7fa;
-  }
-}
-
-.icon-fixed {
-  width: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  color: #909399;
-  font-size: 14px;
-  .el-icon {
-    transition: transform 0.3s;
-    &.rotated {
-      transform: rotate(90deg);
-    }
-  }
-}
-
-.label-fixed {
-  width: 100px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #909399; /* 浅灰色标签 */
-  flex-shrink: 0;
-  &.required::after {
-    content: " *";
-    color: #f56c6c;
-  }
-}
-
-.value-box,
-.summary-box {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  color: #337ecc; /* 匹配截图中的深蓝色文字 */
-}
-
-.summary-box {
-  font-size: 13px;
-  color: #0070cc;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.detail-box {
-  padding: 8px 20px 24px 160px;
-  background: #fcfcfc;
-  border-top: 1px solid #f5f5f5;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-/* 内部矩阵样式 */
-.svc-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 12px;
-}
-.svc-item {
-  margin-right: 0;
-  height: auto;
-  .svc-node {
-    .svc-name {
       font-size: 13px;
-      line-height: 1.4;
-      color: #333;
+      font-family: ui-monospace, mono;
     }
-    .svc-code {
-      font-size: 11px;
-      color: #999;
-      font-family: monospace;
-    }
-  }
-}
-
-.action-type-switch {
-  margin-bottom: 16px;
-  display: block;
-}
-.wildcards-box {
-  padding: 12px;
-  background: #f8fafb;
-  border-radius: 4px;
-  .hint {
-    font-size: 12px;
-    color: #999;
-    margin-right: 8px;
-  }
-  .el-tag {
-    margin-right: 6px;
-  }
-}
-
-.matrix-container {
-  border: 1px solid #f0f0f0;
-  border-radius: 6px;
-  .svc-head {
-    padding: 10px 16px;
-    background: #f8fafb;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    justify-content: space-between;
-    .svc-name {
-      font-weight: 600;
+    .summary {
       font-size: 13px;
-      color: #0070cc;
+      color: #8c8c8c;
+      font-weight: 500;
+      margin-left: 10px;
     }
-  }
-}
-
-.grp-row {
-  display: flex;
-  border-bottom: 1px solid #f5f5f5;
-  &:last-child {
-    border-bottom: none;
-  }
-  .grp-label {
-    width: 140px;
-    padding: 12px 16px;
-    background: #fafafa;
-    border-right: 1px solid #f5f5f5;
-    flex-shrink: 0;
-  }
-  .grp-actions {
-    flex: 1;
-    padding: 12px 16px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-  }
-}
-
-.act-item {
-  margin-right: 0;
-  height: auto;
-  .act-node {
-    .act-name {
+    .header-actions .el-button {
       font-size: 12px;
-      line-height: 1.4;
-      color: #333;
+      color: #8c8c8c;
+      &:hover {
+        color: #0070cc;
+      }
     }
-    .act-code {
-      font-size: 11px;
-      color: #999;
-      font-family: monospace;
+  }
+  .card-body {
+    padding: 4px 0;
+  }
+  .config-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    &.no-border {
+      border-bottom: none;
+    }
+    .row-label {
+      width: 100px;
+      flex-shrink: 0;
+      font-size: 13px;
+      color: #333;
+      padding-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      .arrow-icon {
+        color: #bfbfbf;
+        transition: transform 0.2s;
+        &.rot {
+          transform: rotate(90deg);
+          color: #0070cc;
+        }
+      }
+      &.clickable {
+        cursor: pointer;
+        &:hover {
+          color: #0070cc;
+        }
+      }
+    }
+    .row-content {
+      flex: 1;
+      min-width: 0;
+      padding-left: 8px;
+    }
+  }
+  .preview-link {
+    display: inline-block;
+    font-size: 13px;
+    color: #0070cc;
+    cursor: pointer;
+    padding: 4px 0;
+    &:hover {
+      color: #00559e;
+    }
+    .placeholder-text {
+      color: #ccc;
+      font-style: italic;
+    }
+  }
+  .embedded-panel {
+    margin-top: 12px;
+    border: 1px solid #ebeef5;
+    border-radius: 2px;
+    overflow: hidden;
+    &.condition-panel {
+      margin-top: 16px;
+      border: none;
+    }
+  }
+  .orchestrator-panel {
+    .dual-pane-layout {
+      display: flex;
+      height: 480px;
+      .pane-nav {
+        width: 220px;
+        border-right: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+      }
+      .pane-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .pane-title,
+      .pane-header {
+        padding: 8px 12px;
+        background: #fafafa;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 12px;
+        font-weight: bold;
+        color: #999;
+      }
+      .pane-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .scroll-area {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .svc-item-check {
+        padding: 6px 12px;
+        cursor: pointer;
+        &:hover {
+          background: #f5f5f5;
+        }
+        &.is_active {
+          background: #e6f7ff;
+          .name {
+            color: #1890ff;
+          }
+        }
+        :deep(.el-checkbox) {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          .el-checkbox__label {
+            flex: 1;
+            padding-left: 10px;
+          }
+        }
+        .name {
+          font-size: 12px;
+          font-weight: 600;
+          display: block;
+          color: #262626;
+        }
+        .code {
+          font-size: 10px;
+          color: #bfbfbf;
+          font-family: mono;
+        }
+      }
+      .empty-placeholder {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #ccc;
+        i {
+          font-size: 40px;
+        }
+      }
+    }
+  }
+  .resource-panel {
+    .panel-mode-bar {
+      padding: 8px 16px;
+      background: #fafafa;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .panel-input-area {
+      padding: 16px;
+    }
+    .panel-desc-area {
+      padding: 16px;
+      font-size: 12px;
+      color: #888;
     }
   }
 }
-
-.resource-input {
-  margin-top: 12px;
-  max-width: 600px;
-}
-.condition-layout {
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 6px;
-  .condition-line {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 8px;
+:deep(.flat-textarea) {
+  .el-textarea__inner {
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px #dcdfe6 inset !important;
+    padding: 10px;
+    font-family: ui-monospace, mono;
+    font-size: 12px;
+    &:focus {
+      box-shadow: 0 0 0 1px #0070cc inset !important;
+    }
   }
 }
 </style>

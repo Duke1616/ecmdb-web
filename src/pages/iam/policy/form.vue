@@ -7,8 +7,8 @@
         :key="index"
         :stmt="stmt"
         :index="index"
-        :permission-tree="permissionTree"
-        @update:stmt="(val) => (formData.statement[index] = val)"
+        :permission-manifest="permissionManifest"
+        @update:stmt="(val: any) => (formData.statement[index] = val)"
         @duplicate="duplicateStatement"
         @remove="removeStatement"
       />
@@ -35,8 +35,8 @@ const {
   formRef,
   formData,
   formRules,
-  permissionTree,
-  loadPermissionTree,
+  permissionManifest,
+  loadManifest,
   addStatement,
   removeStatement,
   duplicateStatement,
@@ -44,7 +44,7 @@ const {
   submit
 } = usePolicyForm(props, emit)
 
-onMounted(loadPermissionTree)
+onMounted(loadManifest)
 
 defineExpose({ setForm, submit })
 </script>
