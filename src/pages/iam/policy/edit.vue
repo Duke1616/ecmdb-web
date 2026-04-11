@@ -1,10 +1,9 @@
 <template>
-  <div class="policy-create-page">
+  <div class="policy-edit-page">
     <PageContainer>
-      <!-- 页面头部 -->
       <ManagerHeader
-        title="创建策略"
-        subtitle="定义访问控制策略与权限语句"
+        :title="`编辑策略: ${policyName}`"
+        subtitle="修改权限语句定义，系统将自动同步变更"
         :show-back-button="true"
         :show-add-button="false"
         :show-refresh-button="false"
@@ -15,44 +14,38 @@
           <el-button @click="handleCancel" class="action-btn">取消</el-button>
           <el-button type="primary" :loading="submitting" @click="prepareSubmit" class="action-btn">
             <el-icon><Check /></el-icon>
-            立即创建
+            保存修改
           </el-button>
         </template>
       </ManagerHeader>
 
-      <!-- 主编辑区 -->
       <div class="scrollable-content">
         <div class="policy-form-container">
-          <PolicyForm ref="formRef" :is-edit="false" hide-basic @success="handleSuccess" @cancel="handleCancel" />
+          <PolicyForm ref="formRef" is-edit :id="policyId" hide-basic @success="handleSuccess" />
         </div>
       </div>
 
-      <!-- 使用通用 FormDialog 封装确认流程 -->
+      <!-- 确认修改弹窗 -->
       <FormDialog
         v-model="dialogVisible"
-        title="完善策略信息"
-        subtitle="为您的权限策略设置名称与识别码"
-        header-icon="DocumentChecked"
+        title="确认策略信息"
+        subtitle="您可以修改策略名称或描述，识别码 (Code) 通常不建议变更"
+        header-icon="EditPen"
         width="500px"
-        confirm-text="确认并提交"
+        confirm-text="确认并保存"
         @confirm="handleFinalSubmit"
         @cancel="dialogVisible = false"
       >
         <div class="confirm-form-wrapper">
           <el-form ref="dialogFormRef" :model="formRef?.formData" :rules="formRef?.formRules" label-position="top">
             <el-form-item label="策略名称" prop="name">
-              <el-input v-model="formRef!.formData.name" placeholder="建议简单明了，如：财务读写权限" />
+              <el-input v-model="formRef!.formData.name" />
             </el-form-item>
             <el-form-item label="策略识别码 (Code)" prop="code">
-              <el-input v-model="formRef!.formData.code" placeholder="建议大驼峰或下划线，如：FinanceAdmin" />
+              <el-input v-model="formRef!.formData.code" disabled />
             </el-form-item>
             <el-form-item label="策略描述" prop="desc">
-              <el-input
-                v-model="formRef!.formData.desc"
-                type="textarea"
-                :rows="3"
-                placeholder="简述该策略的应用场景..."
-              />
+              <el-input v-model="formRef!.formData.desc" type="textarea" :rows="3" />
             </el-form-item>
           </el-form>
         </div>
@@ -62,31 +55,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import { useRouter } from "vue-router"
+import { ref, computed, onMounted } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import { Check } from "@element-plus/icons-vue"
 import { ElMessage, type FormInstance } from "element-plus"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import PolicyForm from "./form.vue"
+import { getPolicyDetailApi } from "@/api/iam/policy"
 
+const route = useRoute()
 const router = useRouter()
 const formRef = ref<InstanceType<typeof PolicyForm>>()
 const dialogFormRef = ref<FormInstance>()
 
 const submitting = ref(false)
 const dialogVisible = ref(false)
+const policyId = route.query.id as string
+
+const policyName = computed(() => formRef.value?.formData?.name || "...")
 
 const prepareSubmit = () => {
   if (!formRef.value) return
   const formData = formRef.value.formData
   if (!formData.statement || formData.statement.length === 0) {
-    return ElMessage.warning("请至少添加一条权限语句")
-  }
-  const emptyIdx = formData.statement.findIndex((s) => s.action.length === 0)
-  if (emptyIdx !== -1) {
-    return ElMessage.warning(`第 ${emptyIdx + 1} 条语句尚未配置任何权限操作`)
+    return ElMessage.warning("请至少保留一条权限语句")
   }
   dialogVisible.value = true
 }
@@ -112,10 +106,21 @@ const handleSuccess = () => {
 const handleCancel = () => {
   router.push("/iam/policy")
 }
+
+onMounted(async () => {
+  if (policyId && formRef.value) {
+    try {
+      const { data } = await getPolicyDetailApi(policyId)
+      formRef.value.setForm(data)
+    } catch (e) {
+      ElMessage.error("获取策略详情失败")
+    }
+  }
+})
 </script>
 
 <style lang="scss" scoped>
-.policy-create-page {
+.policy-edit-page {
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -132,7 +137,6 @@ const handleCancel = () => {
     overflow: hidden;
   }
 
-  /* 顶部标题栏 */
   :deep(.manager-header) {
     flex-shrink: 0;
   }
@@ -141,7 +145,7 @@ const handleCancel = () => {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* 关键：由内部表单处理滚动 */
+    overflow: hidden;
     padding: 12px 16px;
   }
 }

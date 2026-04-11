@@ -9,7 +9,7 @@
     </div>
     <div class="row-content">
       <div class="preview-container">
-        <div class="preview-link" @click="toggle">
+        <div class="preview-link" :class="{ clickable: !noArrow }" @click="!noArrow && toggle()">
           <slot name="preview" />
         </div>
       </div>
@@ -47,13 +47,13 @@ const toggle = () => {
   border-bottom: 1px solid #f2f2f2;
 
   .row-label {
-    width: 100px;
+    width: 115px;
     flex-shrink: 0;
     display: flex;
     align-items: center; /* 垂直居中 */
     justify-content: flex-start;
     height: 32px; /* 强制对齐到 Element 行为高度 */
-    font-size: 13px;
+    font-size: 15px;
     color: #333;
     white-space: nowrap;
 
@@ -65,13 +65,13 @@ const toggle = () => {
     }
 
     .label-text {
-      font-weight: 500;
-      color: #444; /* 比 333 浅，比 606266 深，中性沉稳 */
+      font-weight: 600;
+      color: #1e293b; /* 采用 1e293b 背景更沉稳，对比度更高 */
     }
 
     .required-star {
       color: #f56c6c;
-      font-size: 14px;
+      font-size: 15px;
       margin-left: 3px;
       font-family: SimSun, serif;
     }
@@ -83,10 +83,6 @@ const toggle = () => {
         transform: rotate(90deg);
         color: #409eff;
       }
-    }
-
-    &.clickable:hover {
-      color: #409eff;
     }
   }
 
@@ -103,15 +99,20 @@ const toggle = () => {
   }
 }
 
+.clickable {
+  cursor: pointer;
+  &:hover {
+    color: #409eff;
+    opacity: 0.8;
+  }
+}
+
 .preview-link {
   display: flex;
   align-items: center;
-  font-size: 13px;
+  font-size: 14px;
   color: #409eff;
-  cursor: pointer;
-  &:hover {
-    opacity: 0.8;
-  }
+  font-weight: 500;
 }
 
 .embedded-panel {

@@ -1,7 +1,7 @@
 <template>
   <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top" class="policy-logic-form">
-    <!-- 1. 基础信息配置卡片 -->
-    <div class="base-config-section">
+    <!-- 1. 基础信息配置卡片 (可由父组件控制隐藏) -->
+    <div v-if="!hideBasic" class="base-config-section">
       <div class="section-title">基础配置</div>
       <el-row :gutter="20">
         <el-col :span="8">
@@ -24,42 +24,83 @@
 
     <!-- 2. 权限语句编排区 -->
     <div class="statement-orchestrator-section">
-      <div class="section-header">
-        <span class="title">权限语句 (Statements)</span>
-        <span class="subtitle">策略由一条或多条语句组成，每条语句定义了对特定资源的访问许可。</span>
+      <!-- 新增：编辑器模式切换与功能 Bar -->
+      <div class="editor-tabs-bar">
+        <div class="left-tabs">
+          <el-radio-group v-model="editorMode" size="default" class="premium-radio-group">
+            <el-radio-button label="visual">
+              <el-icon><Monitor /></el-icon> 可视化编辑
+            </el-radio-button>
+            <el-radio-button label="json">
+              <el-icon><Document /></el-icon> 脚本编辑
+            </el-radio-button>
+          </el-radio-group>
+        </div>
+        <div class="right-actions">
+          <el-button link class="import-btn" @click="handleImport">
+            <el-icon><Download /></el-icon> 导入策略
+          </el-button>
+        </div>
       </div>
+      <!-- 模式切换渲染 -->
+      <div class="editor-body">
+        <!-- 可视化模式 -->
+        <div v-if="editorMode === 'visual'" class="visual-editor-container">
+          <TransitionGroup name="stmt-list">
+            <PolicyStatement
+              v-for="(stmt, index) in formData.statement"
+              :key="index"
+              :stmt="stmt"
+              :index="index"
+              :permission-manifest="permissionManifest"
+              @update:stmt="(val) => (formData.statement[index] = val)"
+              @duplicate="duplicateStatement"
+              @remove="removeStatement"
+            />
+          </TransitionGroup>
 
-      <TransitionGroup name="stmt-list">
-        <PolicyStatement
-          v-for="(stmt, index) in formData.statement"
-          :key="index"
-          :stmt="stmt"
-          :index="index"
-          :permission-manifest="permissionManifest"
-          @update:stmt="(val) => (formData.statement[index] = val)"
-          @duplicate="duplicateStatement"
-          @remove="removeStatement"
-        />
-      </TransitionGroup>
+          <!-- 快捷添加栏 -->
+          <div class="action-footer">
+            <el-button class="add-btn-v4" @click="addStatement">
+              <el-icon><Plus /></el-icon>
+              添加新的权限语句
+            </el-button>
+          </div>
+        </div>
 
-      <!-- 快捷添加栏 -->
-      <div class="action-footer">
-        <el-button class="add-btn-v4" @click="addStatement">
-          <el-icon><Plus /></el-icon>
-          添加新的权限语句
-        </el-button>
+        <!-- 脚本模式 (CodeMirror) -->
+        <div v-else class="json-editor-container">
+          <codemirror
+            v-model="jsonCode"
+            placeholder="请输入 JSON 格式的权限策略脚本..."
+            :style="{ height: '100%' }"
+            :autofit="true"
+            :indent-with-tab="true"
+            :tab-size="2"
+            :extensions="codemirrorExtensions"
+          />
+        </div>
       </div>
     </div>
   </el-form>
 </template>
 
 <script setup lang="ts">
-import { Plus } from "@element-plus/icons-vue"
+import { Plus, Monitor, Document, Download } from "@element-plus/icons-vue"
+import { ref, watch } from "vue"
+import { ElMessage } from "element-plus"
+import { Codemirror } from "vue-codemirror"
+import { json } from "@codemirror/lang-json"
 import { usePolicyForm } from "./composables/usePolicyForm"
 import PolicyStatement from "./components/PolicyStatement.vue"
 
-const props = defineProps<{ isEdit: boolean; id?: string }>()
+const props = defineProps<{ isEdit: boolean; id?: string; hideBasic?: boolean }>()
 const emit = defineEmits(["success"])
+
+// 编辑模式：visual | json
+const editorMode = ref<"visual" | "json">("visual")
+const jsonCode = ref("")
+const codemirrorExtensions = [json()]
 
 const {
   formRef,
@@ -73,64 +114,176 @@ const {
   setForm
 } = usePolicyForm(props, emit)
 
+// 深度监听：编辑器模式切换时的同步逻辑
+watch(editorMode, (newMode, oldMode) => {
+  if (newMode === "json") {
+    // 进入脚本模式：对象 -> 字符串
+    jsonCode.value = JSON.stringify(formData.statement, null, 2)
+  } else if (newMode === "visual" && oldMode === "json") {
+    // 退出脚本模式：字符串 -> 对象 (带校验)
+    try {
+      const parsed = JSON.parse(jsonCode.value)
+      if (!Array.isArray(parsed)) {
+        throw new Error("权限语句必须是一个数组格式")
+      }
+      formData.statement = parsed
+    } catch (e: any) {
+      ElMessage.error(`脚本解析失败: ${e.message}`)
+      // 强制切回 JSON 模式，防止数据丢失或错误同步
+      setTimeout(() => (editorMode.value = "json"), 0)
+    }
+  }
+})
+
+const handleImport = () => {
+  ElMessage.info("策略导入功能开发中...")
+}
+
+const handleInternalSubmit = async () => {
+  if (editorMode.value === "json") {
+    try {
+      const parsed = JSON.parse(jsonCode.value)
+      if (!Array.isArray(parsed)) throw new Error("权限语句必须是一个数组")
+      formData.statement = parsed
+    } catch (e: any) {
+      ElMessage.error(`保存失败：脚本格式有误 (${e.message})`)
+      return false
+    }
+  }
+  return submitForm()
+}
+
 // 暴露给父组件调用
 defineExpose({
-  submit: submitForm,
+  submit: handleInternalSubmit,
   setForm,
-  formData // 暴露数据以供父级可能的预览需求
+  formData,
+  formRules
 })
 </script>
 
 <style lang="scss" scoped>
 .policy-logic-form {
   padding: 0 4px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 
   .base-config-section {
+    flex-shrink: 0;
     background: #fff;
     border: 1px solid #ebeef5;
     border-radius: 4px;
-    padding: 20px;
-    margin-bottom: 24px;
+    padding: 16px;
+    margin-bottom: 12px;
     .section-title {
-      font-size: 14px;
-      font-weight: bold;
-      color: #333;
+      font-size: 15px;
+      font-weight: 700;
+      color: #1e293b;
       margin-bottom: 16px;
-      border-left: 3px solid #0070cc;
-      padding-left: 10px;
+      border-left: 4px solid #409eff;
+      padding-left: 12px;
     }
   }
 
   .statement-orchestrator-section {
-    .section-header {
-      margin-bottom: 16px;
-      .title {
-        font-size: 14px;
-        font-weight: bold;
-        color: #333;
-        display: block;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    /* 编辑器切换条样式 */
+    .editor-tabs-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fff;
+      padding: 10px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+      .premium-radio-group {
+        :deep(.el-radio-button__inner) {
+          border-radius: 4px !important;
+          border: none !important;
+          background: transparent;
+          color: #64748b;
+          font-weight: 500;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          margin: 0 4px;
+          padding: 8px 16px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          &:hover {
+            color: #409eff;
+          }
+        }
+        :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
+          background: #f1f5f9 !important;
+          color: #409eff !important;
+          box-shadow: none !important;
+        }
       }
-      .subtitle {
-        font-size: 12px;
-        color: #8c8c8c;
-        margin-top: 4px;
-        display: block;
+
+      .import-btn {
+        color: #64748b;
+        font-size: 14px;
+        padding: 0 12px;
+        &:hover {
+          color: #409eff;
+        }
+      }
+    }
+
+    /* 核心编辑器区域 */
+    .editor-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    /* 可视化模式容器 */
+    .visual-editor-container {
+      flex: 1;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    /* 脚本模式容器 */
+    .json-editor-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #e2e8f0;
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+      background: #f8fafc;
+      :deep(.cm-editor) {
+        flex: 1;
+        font-family:
+          ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 14px;
       }
     }
   }
 
   .action-footer {
-    padding: 20px 0;
+    flex-shrink: 0;
+    padding: 8px 0;
     .add-btn-v4 {
       width: 100%;
       height: 48px;
-      border: 1px dashed #dcdfe6;
+      border: 1px dashed #cbd5e1;
       background: #fff;
-      color: #666;
-      font-size: 14px;
+      color: #475569;
+      font-size: 15px;
+      font-weight: 500;
       &:hover {
-        border-color: #0070cc;
-        color: #0070cc;
+        border-color: #409eff;
+        color: #409eff;
         background: #f0f7ff;
       }
     }

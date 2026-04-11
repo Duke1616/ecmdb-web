@@ -85,7 +85,7 @@ const summaryText = computed(() => getActionSummary(props.stmt.action, props.per
   background: #fff;
   border: 1px solid #dcdfe6;
   border-radius: 2px;
-  margin-bottom: 24px;
+  margin-bottom: 10px;
   position: relative;
 
   .side-indicator {
@@ -108,29 +108,29 @@ const summaryText = computed(() => getActionSummary(props.stmt.action, props.per
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 16px;
-    background: #fbfbfb;
-    border-bottom: 1px solid #ebeef5;
+    padding: 8px 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
 
     .idx-tag {
-      font-weight: bold;
-      color: #333;
-      font-size: 13px;
-      font-family: ui-monospace, mono;
+      font-weight: 700;
+      color: #1e293b;
+      font-size: 15px;
+      font-family: ui-monospace, SFMono-Regular, mono;
     }
 
     .summary {
-      font-size: 13px;
-      color: #8c8c8c;
-      font-weight: 500;
+      font-size: 14px;
+      color: #64748b;
+      font-weight: 600;
       margin-left: 10px;
     }
 
     .header-actions .el-button {
-      font-size: 12px;
-      color: #8c8c8c;
+      font-size: 13px;
+      color: #64748b;
       &:hover {
-        color: #0070cc;
+        color: #409eff;
       }
     }
   }

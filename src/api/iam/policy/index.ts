@@ -10,6 +10,14 @@ export function createPolicyApi(data: policy.CreatePolicyRequest) {
   })
 }
 
+/** 获取策略详情 */
+export function getPolicyDetailApi(id: string) {
+  return instance.get<policy.Policy>({
+    url: `${API_SERVICE.IAM}/policy/detail`,
+    params: { id }
+  })
+}
+
 /** 修改策略 */
 export function updatePolicyApi(data: policy.UpdatePolicyRequest) {
   return instance.post<policy.Policy>({

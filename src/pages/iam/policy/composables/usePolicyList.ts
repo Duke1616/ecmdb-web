@@ -40,12 +40,11 @@ export function usePolicyList() {
     router.push("/iam/policy/create")
   }
 
-  const handleEdit = (row: Policy, callback?: (row: Policy) => void) => {
-    isEdit.value = true
-    drawerVisible.value = true
-    if (callback) {
-      setTimeout(() => callback(row), 50)
-    }
+  const handleEdit = (row: Policy) => {
+    router.push({
+      path: "/iam/policy/edit",
+      query: { id: row.id }
+    })
   }
 
   const handleDelete = async (row: Policy) => {

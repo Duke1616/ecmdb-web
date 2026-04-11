@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { useTheme } from "@/common/composables/useTheme"
 import zhCn from "element-plus/es/locale/lang/zh-cn"
 import { useGreyAndColorWeakness } from "@@/composables/useGreyAndColorWeakness"
+import { useTheme } from "@/common/composables/useTheme"
+
 const { initGreyAndColorWeakness } = useGreyAndColorWeakness()
 const { initTheme } = useTheme()
 
