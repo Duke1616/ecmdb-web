@@ -93,6 +93,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import { ElMessage } from "element-plus"
 import { VueDraggable } from "vue-draggable-plus"
 import { User, Close, Grid, Plus, Delete } from "@element-plus/icons-vue"
 import type { rotaGroup } from "@/api/rota/types/rota"

@@ -116,6 +116,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue"
+import { ElMessage } from "element-plus"
 import { Plus, Bell, User } from "@element-plus/icons-vue"
 import { cloneDeep } from "lodash-es"
 import type { StepTemplateVO, CreateStepTemplateReq } from "@/api/alert/escalation/types"

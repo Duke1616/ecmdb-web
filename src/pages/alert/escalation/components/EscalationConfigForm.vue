@@ -174,6 +174,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
+import { ElMessage } from "element-plus"
 import { Plus, Delete, Setting } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { CreateConfigReq, CreateStepReq, EscalationStep } from "@/api/alert/escalation/types"

@@ -116,6 +116,7 @@
 
 <script lang="ts" setup>
 import { watch, ref } from "vue"
+import { ElMessage } from "element-plus"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import UserPicker from "@/common/components/UserPicker/index.vue"
 import FormActions from "@/common/components/FormActions/index.vue"

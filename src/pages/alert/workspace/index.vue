@@ -163,6 +163,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
+import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
 import { Plus, RefreshRight, ArrowRight, FolderAdd, User, Document, UserFilled as Team } from "@element-plus/icons-vue"
 import { listTeamsApi } from "@/api/alert/team"
