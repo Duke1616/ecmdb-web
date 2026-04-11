@@ -8,3 +8,10 @@ export function getAuthorizedMenusApi() {
     url: `${API_SERVICE.IAM}/permission/menus`
   })
 }
+
+/** 获取全量权限资产清单 (Manifest) */
+export function getPermissionManifestApi() {
+  return instance.get<permission.PermissionManifest>({
+    url: `${API_SERVICE.IAM}/permission/manifest`
+  })
+}

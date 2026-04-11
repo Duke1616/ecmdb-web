@@ -19,3 +19,31 @@ export interface Menu {
   meta: Meta
   children?: Menu[]
 }
+
+/** 功能能力项 (Action) 详情 */
+export interface ActionDetail {
+  id: number
+  service: string
+  group: string
+  code: string
+  name: string
+}
+
+/** 功能分组 */
+export interface PermissionGroup {
+  name: string
+  actions: string[]
+}
+
+/** 服务权限条目 */
+export interface ServicePermissionEntry {
+  code: string
+  name: string
+  entries: PermissionGroup[]
+}
+
+/** 权限清单 (归一化后的新结构) */
+export interface PermissionManifest {
+  actions: ActionDetail[]
+  services: ServicePermissionEntry[]
+}
