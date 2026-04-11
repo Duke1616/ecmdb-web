@@ -1,12 +1,17 @@
 <template>
   <section class="config-row collapsible" :class="{ is_open: isExpanded }">
-    <div class="row-label clickable" @click="toggle">
-      <el-icon class="arrow-icon" :class="{ rot: isExpanded }"><CaretRight /></el-icon>
-      {{ title }}
+    <div class="row-label" :class="{ clickable: !noArrow }" @click="!noArrow && toggle()">
+      <div class="arrow-container">
+        <el-icon v-if="!noArrow" class="arrow-icon" :class="{ rot: isExpanded }"><CaretRight /></el-icon>
+      </div>
+      <span class="label-text">{{ label }}</span>
+      <span v-if="required" class="required-star">*</span>
     </div>
     <div class="row-content">
-      <div class="preview-link" @click="toggle">
-        <slot name="preview" />
+      <div class="preview-container">
+        <div class="preview-link" @click="toggle">
+          <slot name="preview" />
+        </div>
       </div>
       <el-collapse-transition>
         <div v-show="isExpanded" class="embedded-panel" :class="panelClass">
@@ -20,12 +25,13 @@
 <script setup lang="ts">
 import { CaretRight } from "@element-plus/icons-vue"
 
-// 该组件为纯 UI 状态控制组件，使用 defineModel 允许父组件同步或控制其展开状态
 const isExpanded = defineModel<boolean>("expanded", { default: false })
 
 defineProps<{
-  title: string
+  label: string
   panelClass?: string
+  required?: boolean
+  noArrow?: boolean
 }>()
 
 const toggle = () => {
@@ -37,76 +43,86 @@ const toggle = () => {
 .config-row {
   display: flex;
   align-items: flex-start;
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
-
-  &.no-border {
-    border-bottom: none;
-  }
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2f2f2;
 
   .row-label {
     width: 100px;
     flex-shrink: 0;
+    display: flex;
+    align-items: center; /* 垂直居中 */
+    justify-content: flex-start;
+    height: 32px; /* 强制对齐到 Element 行为高度 */
     font-size: 13px;
     color: #333;
-    padding-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    white-space: nowrap;
+
+    .arrow-container {
+      width: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    .label-text {
+      font-weight: 500;
+      color: #444; /* 比 333 浅，比 606266 深，中性沉稳 */
+    }
+
+    .required-star {
+      color: #f56c6c;
+      font-size: 14px;
+      margin-left: 3px;
+      font-family: SimSun, serif;
+    }
 
     .arrow-icon {
       color: #bfbfbf;
       transition: transform 0.2s;
       &.rot {
         transform: rotate(90deg);
-        color: #0070cc;
+        color: #409eff;
       }
     }
 
-    &.clickable {
-      cursor: pointer;
-      &:hover {
-        color: #0070cc;
-      }
+    &.clickable:hover {
+      color: #409eff;
     }
   }
 
   .row-content {
     flex: 1;
     min-width: 0;
-    padding-left: 8px;
+    padding-left: 4px;
+
+    .preview-container {
+      height: 32px; /* 强制与左侧 label 容器高度一致 */
+      display: flex;
+      align-items: center; /* 实现内容垂直对齐的核心 */
+    }
   }
 }
 
 .preview-link {
-  display: inline-block;
+  display: flex;
+  align-items: center;
   font-size: 13px;
-  color: #0070cc;
+  color: #409eff;
   cursor: pointer;
-  padding: 4px 0;
   &:hover {
-    color: #00559e;
-  }
-  .placeholder-text {
-    color: #ccc;
-    font-style: italic;
+    opacity: 0.8;
   }
 }
 
 .embedded-panel {
-  margin-top: 12px;
+  margin-top: 8px;
   border: 1px solid #ebeef5;
   border-radius: 4px;
   overflow: hidden;
   background: #fff;
   padding: 16px;
-
   &.full-bleed {
     padding: 0;
-  }
-
-  &.no-border-panel {
-    border: none;
   }
 }
 </style>

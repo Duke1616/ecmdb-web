@@ -134,3 +134,17 @@ export const mapResponseToVO = (raw: Policy): PolicyFormVO => ({
     return { effect: s.effect || "Allow", action: s.action || [], resource: s.resource || ["*"], condition }
   })
 })
+
+/** 根据选中的 actions 获取摘要描述（用于 UI 标题展示） */
+export const getActionSummary = (selectedActions: string[], manifest: ManifestService[]): string => {
+  if (!selectedActions || selectedActions.length === 0) return "权限条目配置"
+
+  // 提取唯一服务代码
+  const svcCodes = [...new Set(selectedActions.map((a) => a.split(":")[0]))]
+  // 匹配 manifest 获取服务名称
+  const activeSvcNames = svcCodes.map((code) => manifest.find((m) => m.code === code)?.name).filter(Boolean) as string[]
+
+  if (activeSvcNames.length === 0) return "未选择有效模块"
+  if (activeSvcNames.length <= 2) return `已配置: ${activeSvcNames.join(", ")}`
+  return `已配置 ${activeSvcNames[0]} 等 ${activeSvcNames.length} 个模块`
+}

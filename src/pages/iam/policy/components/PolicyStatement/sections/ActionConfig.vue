@@ -1,5 +1,5 @@
 <template>
-  <SectionPanel v-model:expanded="isExpanded" title="授权操作" panel-class="full-bleed">
+  <SectionPanel v-model:expanded="isExpanded" :label="label" panel-class="full-bleed" :required="required">
     <template #preview>
       <template v-if="selectedServiceCodes.length > 0">
         {{ selectedServiceCodes.length }} 个模块 /
@@ -17,10 +17,21 @@
             <el-link type="info" :underline="false" @click="toggleAllServices(false)">清空</el-link>
           </div>
         </div>
+        <!-- 搜索过滤栏 -->
+        <div class="search-bar">
+          <el-input
+            v-model="searchQuery"
+            placeholder="搜索模块..."
+            prefix-icon="Search"
+            clearable
+            size="small"
+            class="v4-search-input"
+          />
+        </div>
         <div class="pane-list scroll-area">
           <el-checkbox-group :model-value="selectedServiceCodes" @update:model-value="onServiceChange">
             <div
-              v-for="s in permissionManifest"
+              v-for="s in filteredManifest"
               :key="s.code"
               class="svc-item-check"
               :class="{ is_active: selectedServiceCodes.includes(s.code) }"
@@ -66,17 +77,29 @@ import { ref, computed } from "vue"
 import { Pointer } from "@element-plus/icons-vue"
 import SectionPanel from "./SectionPanel.vue"
 import PermissionMatrix from "../PermissionMatrix.vue"
-import type { StatementVO, ManifestService } from "../../../types"
+import type { StatementVO, ManifestService } from "../../../composables/usePolicyData"
 
 const props = defineProps<{
+  label: string
   stmt: StatementVO
   permissionManifest: ManifestService[]
+  required?: boolean
 }>()
 
 const emit = defineEmits(["update:stmt"])
 
 // 授权操作默认为展开状态，使用 v-model:expanded 与子组件同步
 const isExpanded = ref(true)
+const searchQuery = ref("")
+
+/** 过滤后的展示列表 */
+const filteredManifest = computed(() => {
+  const query = searchQuery.value.toLowerCase().trim()
+  if (!query) return props.permissionManifest
+  return props.permissionManifest.filter(
+    (s) => s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query)
+  )
+})
 
 const patchStmt = (patch: Partial<StatementVO>) => {
   emit("update:stmt", { ...props.stmt, ...patch })
@@ -186,6 +209,16 @@ const toggleAllServices = (checked: boolean) => {
       .el-link {
         font-size: 11px;
       }
+    }
+  }
+
+  .search-bar {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    :deep(.el-input__wrapper) {
+      background: #f5f5f5;
+      box-shadow: none !important;
+      border-radius: 4px;
     }
   }
 

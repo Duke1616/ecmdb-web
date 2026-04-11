@@ -1,5 +1,5 @@
 <template>
-  <SectionPanel title="限制条件">
+  <SectionPanel :label="label" :required="required">
     <template #preview>
       {{
         stmt.condition && Object.keys(stmt.condition).length > 0
@@ -18,68 +18,20 @@
 
       <div class="orch-body">
         <el-scrollbar max-height="500px">
-          <transition-group name="list-slide">
-            <div v-for="[key, values] in conditionEntries" :key="key" class="rule-row">
-              <!-- 1. 逻辑键配对 -->
-              <div class="rule-logic-group">
-                <div class="logic-item key-box">
-                  <el-input
-                    :model-value="key.startsWith('condition_') ? '' : key"
-                    placeholder="条件键 (如: IpAddress)"
-                    class="v4-ghost-input"
-                    @update:model-value="(n: string | number | null) => updateKey(key, String(n))"
-                  />
-                </div>
-                <div class="logic-op">
-                  <el-select model-value="StringEquals" class="v4-ghost-select">
-                    <el-option label="等于" value="StringEquals" />
-                    <el-option label="不等于" value="StringNotEquals" />
-                    <el-option label="包含" value="StringLike" />
-                  </el-select>
-                </div>
-              </div>
+          <ConditionRuleRow
+            v-for="(values, key) in stmt.condition"
+            :key="key"
+            :rule-key="String(key)"
+            :values="values"
+            @update-key="(newKey) => updateKey(String(key), newKey)"
+            @remove="removeKey(String(key))"
+            @add-value="(val) => addValue(String(key), val)"
+            @remove-value="(idx) => removeValue(String(key), idx)"
+          />
 
-              <!-- 2. 值集合 -->
-              <div class="rule-values-area">
-                <div class="v-tags">
-                  <el-tag
-                    v-for="(v, vIdx) in values"
-                    :key="vIdx"
-                    closable
-                    class="v4-data-tag"
-                    @close="removeValue(key, vIdx as number)"
-                  >
-                    {{ v }}
-                  </el-tag>
-                  <div class="v-adder">
-                    <el-input
-                      v-model="tempInputs[key]"
-                      placeholder="添加值..."
-                      size="small"
-                      class="v4-adder-input"
-                      @keyup.enter="addValue(key)"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3. 行操作 -->
-              <div class="rule-actions">
-                <el-button link class="del-btn-v4" @click="removeKey(key)">
-                  <el-icon><Delete /></el-icon>
-                </el-button>
-              </div>
-            </div>
-          </transition-group>
-
-          <!-- 4. 添加锚点 -->
-          <div v-if="conditionEntries.length < 10" class="append-trigger" @click="addConditionBlock">
+          <div class="append-trigger" @click="addNewCondition">
             <el-icon><Plus /></el-icon>
-            <span>新增条件判断</span>
-          </div>
-
-          <div v-if="conditionEntries.length === 0" class="empty-guide">
-            <el-empty :image-size="40" description="暂无条件约束，该语句将对所有环境生效" />
+            <span>添加新的限定条件判断线...</span>
           </div>
         </el-scrollbar>
       </div>
@@ -88,57 +40,54 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed } from "vue"
-import { Plus, Delete, Filter } from "@element-plus/icons-vue"
+import { Plus, Filter } from "@element-plus/icons-vue"
 import SectionPanel from "./SectionPanel.vue"
-import type { StatementVO } from "../../../types"
+import ConditionRuleRow from "./ConditionRuleRow.vue"
+import type { StatementVO } from "../../../composables/usePolicyData"
 
-const props = defineProps<{ stmt: StatementVO }>()
+const props = defineProps<{ label: string; stmt: StatementVO; required?: boolean }>()
 const emit = defineEmits(["update:stmt"])
 
-const tempInputs = reactive<Record<string, string>>({})
-
-const conditionEntries = computed(() => Object.entries(props.stmt.condition || {}) as [string, string[]][])
-
-const patchCondition = (next: Record<string, string[]>) => {
-  emit("update:stmt", { ...props.stmt, condition: next })
+const patchCondition = (condition: Record<string, string[]>) => {
+  emit("update:stmt", { ...props.stmt, condition })
 }
 
-const addConditionBlock = () => {
-  patchCondition({ ...(props.stmt.condition || {}), [`condition_${Date.now()}`]: [] })
-}
-
+/** 更新某个 Key 名 */
 const updateKey = (oldKey: string, newKey: string) => {
   if (oldKey === newKey) return
   const next = { ...props.stmt.condition }
-  next[newKey || `condition_${Date.now()}`] = next[oldKey]
+  next[newKey] = next[oldKey]
   delete next[oldKey]
   patchCondition(next)
 }
 
+/** 移除一整行判断 */
 const removeKey = (key: string) => {
   const next = { ...props.stmt.condition }
   delete next[key]
   patchCondition(next)
 }
 
-const addValue = (key: string) => {
-  const val = tempInputs[key]?.trim()
-  if (!val) return
-  const current = props.stmt.condition[key] || []
-  if (!current.includes(val)) {
-    patchCondition({ ...props.stmt.condition, [key]: [...current, val] })
-  }
-  tempInputs[key] = ""
+/** 为某行添加 Value */
+const addValue = (key: string, val: string) => {
+  const next = { ...props.stmt.condition }
+  next[key] = [...(next[key] || []), val]
+  patchCondition(next)
 }
 
-const removeValue = (key: string, index: number) => {
-  const current = props.stmt.condition[key]
-  if (!current) return
-  patchCondition({
-    ...props.stmt.condition,
-    [key]: current.filter((_, i) => i !== index)
-  })
+/** 为某行移除 Value */
+const removeValue = (key: string, idx: number) => {
+  const next = { ...props.stmt.condition }
+  next[key] = next[key].filter((_, i) => i !== idx)
+  patchCondition(next)
+}
+
+/** 添加新行（生成一个唯一的占位 Key） */
+const addNewCondition = () => {
+  const next = { ...props.stmt.condition }
+  const newKey = `condition_${Date.now()}`
+  next[newKey] = []
+  patchCondition(next)
 }
 </script>
 
@@ -160,74 +109,7 @@ const removeValue = (key: string, index: number) => {
   }
 
   .orch-body {
-    padding: 8px;
-  }
-
-  .rule-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 12px;
-    border-bottom: 1px solid #f0f0f0;
-    &:hover {
-      background: #f9f9f9;
-      .rule-actions {
-        opacity: 1;
-      }
-    }
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-
-  .rule-logic-group {
-    display: flex;
-    width: 340px;
-    flex-shrink: 0;
-    border: 1px solid #dcdfe6;
-    border-radius: 2px;
-    overflow: hidden;
-    .key-box {
-      flex: 1;
-      :deep(.el-input__wrapper) {
-        box-shadow: none !important;
-      }
-    }
-    .logic-op {
-      width: 100px;
-      border-left: 1px solid #dcdfe6;
-      :deep(.el-input__wrapper) {
-        box-shadow: none !important;
-        background: #fafafa;
-      }
-    }
-  }
-
-  .rule-values-area {
-    flex: 1;
-    .v-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-    .v-adder {
-      width: 120px;
-      :deep(.el-input__wrapper) {
-        box-shadow: none !important;
-        border: 1px dashed #d9d9d9 !important;
-      }
-    }
-  }
-
-  .rule-actions {
-    opacity: 0;
-    transition: opacity 0.2s;
-    .del-btn-v4 {
-      color: #999;
-      &:hover {
-        color: #ff4d4f;
-      }
-    }
+    padding: 0;
   }
 
   .append-trigger {
@@ -238,6 +120,11 @@ const removeValue = (key: string, index: number) => {
     color: #0070cc;
     cursor: pointer;
     font-size: 13px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     &:hover {
       background: #f0f7ff;
       border-color: #0070cc;

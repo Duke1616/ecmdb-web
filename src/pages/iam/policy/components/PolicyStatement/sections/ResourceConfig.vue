@@ -1,5 +1,5 @@
 <template>
-  <SectionPanel title="目标资源">
+  <SectionPanel :label="label" :required="required">
     <template #preview>
       {{
         resourceMode === "all"
@@ -35,9 +35,9 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import SectionPanel from "./SectionPanel.vue"
-import type { StatementVO } from "../../../types"
+import type { StatementVO } from "../../../composables/usePolicyData"
 
-const props = defineProps<{ stmt: StatementVO }>()
+const props = defineProps<{ label: string; stmt: StatementVO; required?: boolean }>()
 const emit = defineEmits(["update:stmt"])
 
 const patchStmt = (patch: Partial<StatementVO>) => {

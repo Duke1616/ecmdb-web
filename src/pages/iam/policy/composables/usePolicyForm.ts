@@ -11,7 +11,7 @@ import {
   mapResponseToVO,
   type PolicyFormVO,
   type ManifestService
-} from "../types"
+} from "./usePolicyData"
 
 /**
  * 策略表单总控 Composable

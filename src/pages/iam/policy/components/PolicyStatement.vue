@@ -19,26 +19,33 @@
       </header>
 
       <main class="card-body">
-        <!-- 效果 (Effect) -->
-        <section class="config-row config-effect">
-          <label class="row-label">授权效能</label>
-          <div class="row-content">
+        <!-- 授权效能 (单行直接展示) -->
+        <SectionPanel label="授权效能" required no-arrow>
+          <template #preview>
             <el-radio-group
               :model-value="stmt.effect"
               @change="(val) => patchStmt({ effect: val as 'Allow' | 'Deny' })"
             >
-              <el-radio label="Allow">允许 (Allow)</el-radio>
-              <el-radio label="Deny">拒绝 (Deny)</el-radio>
+              <el-radio label="Allow">允许</el-radio>
+              <el-radio label="Deny">拒绝</el-radio>
             </el-radio-group>
-          </div>
-        </section>
+          </template>
+        </SectionPanel>
 
-        <!-- 抽取解耦出的三大组件核心 -->
-        <ActionConfig :stmt="stmt" :permission-manifest="permissionManifest" @update:stmt="patchStmt" />
+        <!-- 授权操作 -->
+        <ActionConfig
+          :stmt="stmt"
+          :permission-manifest="permissionManifest"
+          label="授权操作"
+          required
+          @update:stmt="patchStmt"
+        />
 
-        <ResourceConfig :stmt="stmt" @update:stmt="patchStmt" />
+        <!-- 目标资源 -->
+        <ResourceConfig :stmt="stmt" label="目标资源" required @update:stmt="patchStmt" />
 
-        <ConditionConfig :stmt="stmt" @update:stmt="patchStmt" />
+        <!-- 限制条件 -->
+        <ConditionConfig :stmt="stmt" label="限制条件" @update:stmt="patchStmt" />
       </main>
     </div>
   </div>
@@ -48,12 +55,13 @@
 import { computed } from "vue"
 import { CopyDocument, Delete } from "@element-plus/icons-vue"
 
-// 引入拆分后的业务拼图组件
+// 引入拆分后的业务拼图组件与通用面板
+import SectionPanel from "./PolicyStatement/sections/SectionPanel.vue"
 import ActionConfig from "./PolicyStatement/sections/ActionConfig.vue"
 import ResourceConfig from "./PolicyStatement/sections/ResourceConfig.vue"
 import ConditionConfig from "./PolicyStatement/sections/ConditionConfig.vue"
 
-import type { StatementVO, ManifestService } from "../types"
+import { type StatementVO, type ManifestService, getActionSummary } from "../composables/usePolicyData"
 
 const props = defineProps<{
   stmt: StatementVO
@@ -67,19 +75,8 @@ const patchStmt = (patch: Partial<StatementVO>) => {
   emit("update:stmt", { ...props.stmt, ...patch })
 }
 
-// 获取操作模块名字供标题栏简单展示，避免页面失去响应式，通过 ActionConfig 的抽取，这是剩下的唯一复杂视图需求
-const summaryText = computed(() => {
-  const codes = props.stmt.action.map((a) => a.split(":")[0])
-  const uniqueCodes = [...new Set(codes)].filter((c) => props.permissionManifest.some((s) => s.code === c))
-
-  if (uniqueCodes.length === 0) return "权限条目配置"
-
-  const first = props.permissionManifest.find((s) => s.code === uniqueCodes[0])
-  const actionMode = props.stmt.action.some((a) => a.endsWith(":*")) ? "all" : "specific"
-  const desc = actionMode === "all" ? "全部授权" : `${props.stmt.action.length} 个操作`
-
-  return `${first?.name || "未知模块"} / ${desc}`
-})
+// 获取标题栏摘要描述
+const summaryText = computed(() => getActionSummary(props.stmt.action, props.permissionManifest))
 </script>
 
 <style lang="scss" scoped>
@@ -139,25 +136,7 @@ const summaryText = computed(() => {
   }
 
   .card-body {
-    padding: 4px 0;
-  }
-
-  .config-effect {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid #f0f0f0;
-
-    .row-label {
-      width: 100px;
-      flex-shrink: 0;
-      font-size: 13px;
-      color: #333;
-    }
-
-    .row-content {
-      flex: 1;
-    }
+    padding: 0;
   }
 }
 </style>

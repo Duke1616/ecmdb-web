@@ -46,7 +46,7 @@
 
 <script setup lang="ts">
 import { Monitor } from "@element-plus/icons-vue"
-import type { ManifestService, ManifestGroup } from "../../types"
+import type { ManifestService, ManifestGroup } from "../../composables/usePolicyData"
 
 const props = defineProps<{
   activeServices: ManifestService[]
