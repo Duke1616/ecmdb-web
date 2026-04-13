@@ -3,7 +3,7 @@ import { fileURLToPath, URL } from "node:url"
 import vue from "@vitejs/plugin-vue"
 import vueJsx from "@vitejs/plugin-vue-jsx"
 import UnoCSS from "unocss/vite"
-import postcsspxtoviewport from "postcss-px-to-viewport-8-plugin"
+// import postcsspxtoviewport from "postcss-px-to-viewport-8-plugin"
 
 // import path from "path"
 // import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
@@ -133,25 +133,7 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
     css: {
       devSourcemap: true,
       // 线程中运行 CSS 预处理器
-      preprocessorMaxWorkers: true,
-      postcss: {
-        plugins: [
-          postcsspxtoviewport({
-            unitToConvert: "px",
-            viewportWidth: 1920,
-            unitPrecision: 5,
-            propList: ["*", "!font-size", "!line-height", "!letter-spacing", "!border*"],
-            viewportUnit: "vw",
-            fontViewportUnit: "vw",
-            selectorBlackList: ["el-", "ignore-"],
-            minPixelValue: 2,
-            mediaQuery: false,
-            replace: true,
-            exclude: [/node_modules/],
-            landscape: false
-          })
-        ]
-      }
+      preprocessorMaxWorkers: true
     },
     server: {
       /** 设置 host: true 才可以使用 Network 的形式，以 IP 访问项目 */

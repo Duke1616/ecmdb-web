@@ -1,5 +1,5 @@
 <template>
-  <SectionPanel :label="label" :required="required">
+  <SectionPanel :label="label" :required="required" :disabled="disabled">
     <template #preview>
       {{
         resourceMode === "all"
@@ -37,7 +37,7 @@ import { computed } from "vue"
 import SectionPanel from "./SectionPanel.vue"
 import type { StatementVO } from "../../../composables/usePolicyData"
 
-const props = defineProps<{ label: string; stmt: StatementVO; required?: boolean }>()
+const props = defineProps<{ label: string; stmt: StatementVO; required?: boolean; disabled?: boolean }>()
 const emit = defineEmits(["update:stmt"])
 
 const patchStmt = (patch: Partial<StatementVO>) => {

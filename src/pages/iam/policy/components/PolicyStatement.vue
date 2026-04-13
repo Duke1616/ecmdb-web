@@ -42,10 +42,10 @@
         />
 
         <!-- 目标资源 -->
-        <ResourceConfig :stmt="stmt" label="目标资源" required @update:stmt="patchStmt" />
+        <ResourceConfig :stmt="stmt" label="目标资源" required :disabled="isActionEmpty" @update:stmt="patchStmt" />
 
         <!-- 限制条件 -->
-        <ConditionConfig :stmt="stmt" label="限制条件" @update:stmt="patchStmt" />
+        <ConditionConfig :stmt="stmt" label="限制条件" :disabled="isActionEmpty" @update:stmt="patchStmt" />
       </main>
     </div>
   </div>
@@ -74,6 +74,9 @@ const emit = defineEmits(["duplicate", "remove", "update:stmt"])
 const patchStmt = (patch: Partial<StatementVO>) => {
   emit("update:stmt", { ...props.stmt, ...patch })
 }
+
+// 只有当授权操作不为空时，才允许配置资源和条件
+const isActionEmpty = computed(() => !props.stmt.action || props.stmt.action.length === 0)
 
 // 获取标题栏摘要描述
 const summaryText = computed(() => getActionSummary(props.stmt.action, props.permissionManifest))
@@ -108,7 +111,7 @@ const summaryText = computed(() => getActionSummary(props.stmt.action, props.per
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 16px;
+    padding: 10px 20px;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
 

@@ -1,5 +1,5 @@
 <template>
-  <SectionPanel :label="label" :required="required">
+  <SectionPanel :label="label" :required="required" :disabled="disabled">
     <template #preview>
       {{
         stmt.condition && Object.keys(stmt.condition).length > 0
@@ -45,7 +45,7 @@ import SectionPanel from "./SectionPanel.vue"
 import ConditionRuleRow from "./ConditionRuleRow.vue"
 import type { StatementVO } from "../../../composables/usePolicyData"
 
-const props = defineProps<{ label: string; stmt: StatementVO; required?: boolean }>()
+const props = defineProps<{ label: string; stmt: StatementVO; required?: boolean; disabled?: boolean }>()
 const emit = defineEmits(["update:stmt"])
 
 const patchCondition = (condition: Record<string, string[]>) => {

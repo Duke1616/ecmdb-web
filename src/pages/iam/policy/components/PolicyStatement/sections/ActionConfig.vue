@@ -176,7 +176,7 @@ const toggleAllServices = (checked: boolean) => {
   height: 480px;
 
   .pane-nav {
-    width: 220px;
+    width: 180px;
     border-right: 1px solid #f0f0f0;
     display: flex;
     flex-direction: column;

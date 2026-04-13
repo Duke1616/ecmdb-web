@@ -66,6 +66,7 @@
     "path-to-regexp": "^6.2.2",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^3.2.1",
+    "postcss-pxtorem": "^6.1.0",
     "prismjs": "^1.29.0",
     "relation-graph": "^2.2.0",
     "relation-graph-vue3": "^2.2.0",

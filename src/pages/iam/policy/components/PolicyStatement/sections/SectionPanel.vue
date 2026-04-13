@@ -1,6 +1,6 @@
 <template>
-  <section class="config-row collapsible" :class="{ is_open: isExpanded }">
-    <div class="row-label" :class="{ clickable: !noArrow }" @click="!noArrow && toggle()">
+  <section class="config-row collapsible" :class="{ is_open: isExpanded, is_disabled: disabled }">
+    <div class="row-label" :class="{ clickable: !noArrow && !disabled }" @click="!noArrow && !disabled && toggle()">
       <div class="arrow-container">
         <el-icon v-if="!noArrow" class="arrow-icon" :class="{ rot: isExpanded }"><CaretRight /></el-icon>
       </div>
@@ -9,7 +9,11 @@
     </div>
     <div class="row-content">
       <div class="preview-container">
-        <div class="preview-link" :class="{ clickable: !noArrow }" @click="!noArrow && toggle()">
+        <div
+          class="preview-link"
+          :class="{ clickable: !noArrow && !disabled }"
+          @click="!noArrow && !disabled && toggle()"
+        >
           <slot name="preview" />
         </div>
       </div>
@@ -32,6 +36,7 @@ defineProps<{
   panelClass?: string
   required?: boolean
   noArrow?: boolean
+  disabled?: boolean
 }>()
 
 const toggle = () => {
@@ -43,18 +48,26 @@ const toggle = () => {
 .config-row {
   display: flex;
   align-items: flex-start;
-  padding: 12px 14px;
+  padding: 14px 20px;
   border-bottom: 1px solid #f2f2f2;
+  transition: all 0.2s;
+
+  &.is_disabled {
+    opacity: 0.5;
+    filter: grayscale(1);
+    pointer-events: none;
+    cursor: not-allowed;
+  }
 
   .row-label {
     width: 115px;
     flex-shrink: 0;
     display: flex;
-    align-items: center; /* 垂直居中 */
+    align-items: center;
     justify-content: flex-start;
-    height: 32px; /* 强制对齐到 Element 行为高度 */
-    font-size: 15px;
-    color: #333;
+    height: 32px;
+    font-size: 14px; /* 降低到 14px 保持通用性 */
+    color: #475569;
     white-space: nowrap;
 
     .arrow-container {
@@ -65,8 +78,8 @@ const toggle = () => {
     }
 
     .label-text {
-      font-weight: 600;
-      color: #1e293b; /* 采用 1e293b 背景更沉稳，对比度更高 */
+      font-weight: 500; /* 降低字重，避免过黑 */
+      color: #475569; /* 更加柔和的次级文字颜色 */
     }
 
     .required-star {
