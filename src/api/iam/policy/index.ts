@@ -49,3 +49,11 @@ export function detachPolicyApi(data: policy.AttachPolicyRequest) {
     data
   })
 }
+
+/** 批量绑定策略到主体（支持用户和角色混合） */
+export function batchAttachPolicyApi(data: policy.BatchAttachPolicyRequest) {
+  return instance.post<policy.BatchAttachPolicyResponse>({
+    url: `${API_SERVICE.IAM}/policy/batch-attach`,
+    data
+  })
+}

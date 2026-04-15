@@ -15,3 +15,19 @@ export function getPermissionManifestApi() {
     url: `${API_SERVICE.IAM}/permission/manifest`
   })
 }
+
+/** 获取全量授权关系列表 (Admin) */
+export function listAuthorizationsApi(data: permission.AuthorizationQueryReq) {
+  return instance.post<permission.AuthorizationResp>({
+    url: `${API_SERVICE.IAM}/permission/authorizations`,
+    data
+  })
+}
+
+/** 搜索授权主体 (用户/角色) */
+export function searchSubjectsApi(data: permission.SearchSubjectsReq) {
+  return instance.post<permission.SearchSubjectsResp>({
+    url: `${API_SERVICE.IAM}/permission/subjects/search`,
+    data
+  })
+}

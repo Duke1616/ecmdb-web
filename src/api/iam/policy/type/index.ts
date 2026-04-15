@@ -57,3 +57,25 @@ export interface AttachPolicyRequest {
   role_code: string
   poly_code: string
 }
+
+/** 主体项：用于批量绑定 */
+export interface SubjectItem {
+  /** 主体类型: user 或 role */
+  type: string
+  /** 主体标识（用户名或角色代码） */
+  code: string
+}
+
+/** 批量绑定策略请求 */
+export interface BatchAttachPolicyRequest {
+  /** 主体列表，可同时包含 user 和 role */
+  subjects: SubjectItem[]
+  /** 策略代码列表 */
+  policy_codes: string[]
+}
+
+/** 批量绑定策略响应 */
+export interface BatchAttachPolicyResponse {
+  /** 总绑定数量 */
+  total: number
+}
