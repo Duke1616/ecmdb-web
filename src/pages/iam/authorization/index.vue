@@ -106,7 +106,7 @@
     </DataTable>
 
     <!-- 授权向导侧边栏 -->
-    <AuthorizeDrawer v-model="showAuthorizeDrawer" />
+    <AuthorizeDrawer v-model="showAuthorizeDrawer" @success="handleRefresh" />
   </PageContainer>
 </template>
 

@@ -44,6 +44,8 @@ export interface UpdatePolicyRequest {
 export interface ListPolicyRequest {
   offset: number
   limit: number
+  keyword?: string
+  type?: number
 }
 
 /** 列表查询响应 */

@@ -18,6 +18,17 @@
             <el-icon class="main-icon"><User /></el-icon>
             <span class="text">授权主体 (Subject)</span>
           </div>
+          <div class="header-actions">
+            <el-button
+              v-if="subjectSelector.selectedTotal.value > 0"
+              link
+              type="danger"
+              size="small"
+              @click="subjectSelector.clearSelection()"
+            >
+              清空已选
+            </el-button>
+          </div>
         </div>
 
         <div class="dual-panel-container">
@@ -25,19 +36,19 @@
           <div class="panel-source">
             <div class="panel-source-header">
               <el-input
-                v-model="subjectQuery.keyword"
+                v-model="subjectSelector.query.keyword"
                 placeholder="搜索主体名称..."
                 class="search-input"
                 style="width: 200px"
                 size="small"
                 clearable
-                @keyup.enter="handleSearchSubjects"
+                @input="subjectSelector.debouncedSearch"
               >
-                <template #prefix
-                  ><el-icon><Search /></el-icon
-                ></template>
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
               </el-input>
-              <el-radio-group v-model="subjectQuery.sub_type" size="small" @change="handleSearchSubjects">
+              <el-radio-group v-model="subjectSelector.query.sub_type" size="small" @change="subjectSelector.fetchList">
                 <el-radio-button label="">全部</el-radio-button>
                 <el-radio-button value="user">用户</el-radio-button>
                 <el-radio-button value="role">角色</el-radio-button>
@@ -45,14 +56,14 @@
             </div>
 
             <el-table
-              ref="subjectTableRef"
-              v-loading="loadingSubjects"
-              :data="subjects"
+              :ref="subjectSelector.tableRef"
+              v-loading="subjectSelector.loading.value"
+              :data="subjectSelector.list.value"
               height="300"
               row-key="id"
-              @selection-change="handleSubjectSelectionChange"
+              @selection-change="subjectSelector.handleSelectionChange"
             >
-              <el-table-column type="selection" width="40" />
+              <el-table-column type="selection" width="40" reserve-selection />
               <el-table-column label="身份标识" min-width="160">
                 <template #default="{ row }">
                   <div class="identity-info">
@@ -74,13 +85,13 @@
             </el-table>
             <div class="pagination-bar">
               <el-pagination
-                v-model:current-page="subjectQuery.offset"
-                v-model:page-size="subjectQuery.limit"
+                v-model:current-page="subjectSelector.query.page"
+                v-model:page-size="subjectSelector.query.limit"
                 small
                 background
                 layout="prev, pager, next"
-                :total="subjectTotal"
-                @current-change="handleSearchSubjects"
+                :total="subjectSelector.total.value"
+                @current-change="subjectSelector.fetchList"
               />
             </div>
           </div>
@@ -89,19 +100,19 @@
           <div class="panel-buffer">
             <div class="buffer-header">
               <span>已选主体</span>
-              <span class="count-tag">{{ selectedSubjects.size }}</span>
+              <span class="count-tag">{{ subjectSelector.selectedTotal.value }}</span>
             </div>
             <div class="buffer-list">
               <TransitionGroup name="list-fade">
-                <div v-for="item in Array.from(selectedSubjects.values())" :key="item.id" class="buffer-item">
+                <div v-for="item in subjectSelector.selectedList.value" :key="item.id" class="buffer-item">
                   <div class="info">
                     <span class="name">{{ item.name }}</span>
                     <span class="id mono">{{ item.id }}</span>
                   </div>
-                  <el-icon class="remove-btn" @click="removeSubject(item.id)"><Close /></el-icon>
+                  <el-icon class="remove-btn" @click="subjectSelector.removeSelection(item)"><Close /></el-icon>
                 </div>
               </TransitionGroup>
-              <el-empty v-if="selectedSubjects.size === 0" description="点击左侧勾选" :image-size="40" />
+              <el-empty v-if="subjectSelector.selectedTotal.value === 0" description="点击左侧勾选" :image-size="40" />
             </div>
           </div>
         </div>
@@ -119,25 +130,41 @@
             <el-icon class="main-icon"><Connection /></el-icon>
             <span class="text">权限策略 (Policy)</span>
           </div>
+          <div class="header-actions">
+            <el-button
+              v-if="policySelector.selectedTotal.value > 0"
+              link
+              type="danger"
+              size="small"
+              @click="policySelector.clearSelection()"
+            >
+              清空已选
+            </el-button>
+          </div>
         </div>
 
         <div class="dual-panel-container">
           <div class="panel-source">
             <div class="panel-source-header">
               <el-input
-                v-model="policyQuery.keyword"
+                v-model="policySelector.query.keyword"
                 placeholder="搜索策略..."
                 class="search-input"
                 style="width: 200px"
                 size="small"
                 clearable
-                @keyup.enter="handleSearchPolicies"
+                @input="policySelector.debouncedSearch"
               >
-                <template #prefix
-                  ><el-icon><Search /></el-icon
-                ></template>
+                <template #prefix>
+                  <el-icon><Search /></el-icon>
+                </template>
               </el-input>
-              <el-select v-model="policyQuery.type" size="small" style="width: 120px" @change="handleSearchPolicies">
+              <el-select
+                v-model="policySelector.query.type"
+                size="small"
+                style="width: 120px"
+                @change="policySelector.fetchList"
+              >
                 <el-option label="所有类型" value="" />
                 <el-option label="系统预设" :value="1" />
                 <el-option label="自定义" :value="2" />
@@ -145,14 +172,14 @@
             </div>
 
             <el-table
-              ref="policyTableRef"
-              v-loading="loadingPolicies"
-              :data="policies"
+              :ref="policySelector.tableRef"
+              v-loading="policySelector.loading.value"
+              :data="policySelector.list.value"
               height="300"
               row-key="code"
-              @selection-change="handlePolicySelectionChange"
+              @selection-change="policySelector.handleSelectionChange"
             >
-              <el-table-column type="selection" width="40" />
+              <el-table-column type="selection" width="40" reserve-selection />
               <el-table-column label="策略资产" min-width="160">
                 <template #default="{ row }">
                   <div class="policy-info">
@@ -181,13 +208,13 @@
             </el-table>
             <div class="pagination-bar">
               <el-pagination
-                v-model:current-page="policyQuery.offset"
-                v-model:page-size="policyQuery.limit"
+                v-model:current-page="policySelector.query.page"
+                v-model:page-size="policySelector.query.limit"
                 small
                 background
                 layout="prev, pager, next"
-                :total="policyTotal"
-                @current-change="handleSearchPolicies"
+                :total="policySelector.total.value"
+                @current-change="policySelector.fetchList"
               />
             </div>
           </div>
@@ -195,19 +222,19 @@
           <div class="panel-buffer">
             <div class="buffer-header">
               <span>已选策略</span>
-              <span class="count-tag">{{ selectedPolicies.size }}</span>
+              <span class="count-tag">{{ policySelector.selectedTotal.value }}</span>
             </div>
             <div class="buffer-list">
               <TransitionGroup name="list-fade">
-                <div v-for="item in Array.from(selectedPolicies.values())" :key="item.code" class="buffer-item">
+                <div v-for="item in policySelector.selectedList.value" :key="item.code" class="buffer-item">
                   <div class="info">
                     <span class="name">{{ item.name }}</span>
                     <span class="id mono">{{ item.code }}</span>
                   </div>
-                  <el-icon class="remove-btn" @click="removePolicy(item.code)"><Close /></el-icon>
+                  <el-icon class="remove-btn" @click="policySelector.removeSelection(item)"><Close /></el-icon>
                 </div>
               </TransitionGroup>
-              <el-empty v-if="selectedPolicies.size === 0" description="点击左侧勾选" :image-size="40" />
+              <el-empty v-if="policySelector.selectedTotal.value === 0" description="点击左侧勾选" :image-size="40" />
             </div>
           </div>
         </div>
@@ -217,7 +244,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from "vue"
+import { ref, computed, watch } from "vue"
 import { Search, User, Close, Connection, ArrowDown } from "@element-plus/icons-vue"
 import { searchSubjectsApi } from "@/api/iam/permission"
 import { listPoliciesApi, batchAttachPolicyApi } from "@/api/iam/policy"
@@ -225,6 +252,11 @@ import type { Subject } from "@/api/iam/permission/type"
 import type { Policy } from "@/api/iam/policy/type"
 import { ElMessage } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
+import { useResourceSelector } from "../composables/useResourceSelector"
+
+const emit = defineEmits<{
+  (e: "success"): void
+}>()
 
 // NOTE: 该组件为独立受控向导，状态由 v-model 控制开闭
 const visible = defineModel<boolean>({ default: false })
@@ -235,109 +267,42 @@ const isHighRisk = (name: string) => {
   return risks.some((r) => name.toLowerCase().includes(r.toLowerCase()))
 }
 
-// --- 授权主体治理 (Subject) ---
-const subjectTableRef = ref()
-const loadingSubjects = ref(false)
-const subjects = ref<Subject[]>([])
-const subjectTotal = ref(0)
-const subjectQuery = reactive({
-  keyword: "",
-  sub_type: "",
-  offset: 1,
-  limit: 10
+// --- 授权主体治理选择器 (Subject) ---
+const subjectSelector = useResourceSelector<Subject, { keyword: string; sub_type: string }>({
+  fetchApi: searchSubjectsApi,
+  listKey: "subjects",
+  rowKey: "id",
+  initialQuery: { keyword: "", sub_type: "" }
 })
-const selectedSubjects = ref(new Map<string, Subject>())
 
-const handleSearchSubjects = async () => {
-  loadingSubjects.value = true
-  try {
-    const { data } = await searchSubjectsApi({
-      ...subjectQuery,
-      offset: (subjectQuery.offset - 1) * subjectQuery.limit
-    })
-    subjects.value = data.subjects
-    subjectTotal.value = data.total
-  } finally {
-    loadingSubjects.value = false
-  }
-}
-
-const handleSubjectSelectionChange = (selection: Subject[]) => {
-  // NOTE: 这种方式处理分页选中状态，生产环境建议使用全局 set 管理
-  selection.forEach((s) => selectedSubjects.value.set(s.id, s))
-}
-
-const removeSubject = (id: string) => {
-  selectedSubjects.value.delete(id)
-  const row = subjects.value.find((s) => s.id === id)
-  if (row) {
-    subjectTableRef.value?.toggleRowSelection(row, false)
-  }
-}
-
-// --- 权限策略治理 (Policy) ---
-const policyTableRef = ref()
-const loadingPolicies = ref(false)
-const policies = ref<Policy[]>([])
-const policyTotal = ref(0)
-const policyQuery = reactive({
-  keyword: "",
-  type: "" as any,
-  offset: 1,
-  limit: 10
+// --- 权限策略治理选择器 (Policy) ---
+const policySelector = useResourceSelector<Policy, { keyword: string; type: string | number }>({
+  fetchApi: listPoliciesApi,
+  listKey: "policies",
+  rowKey: "code",
+  initialQuery: { keyword: "", type: "" }
 })
-const selectedPolicies = ref(new Map<string, Policy>())
-
-const handleSearchPolicies = async () => {
-  loadingPolicies.value = true
-  try {
-    const { data } = await listPoliciesApi({
-      ...policyQuery,
-      offset: (policyQuery.offset - 1) * policyQuery.limit
-    })
-    policies.value = data.policies
-    policyTotal.value = data.total
-  } finally {
-    loadingPolicies.value = false
-  }
-}
-
-const handlePolicySelectionChange = (selection: Policy[]) => {
-  selection.forEach((p) => selectedPolicies.value.set(p.code, p))
-}
-
-const removePolicy = (code: string) => {
-  selectedPolicies.value.delete(code)
-  const row = policies.value.find((p) => p.code === code)
-  if (row) {
-    policyTableRef.value?.toggleRowSelection(row, false)
-  }
-}
 
 // --- 确认提交 ---
 const submitting = ref(false)
-const canSubmit = computed(() => selectedSubjects.value.size > 0 && selectedPolicies.value.size > 0)
+const canSubmit = computed(() => subjectSelector.selectedTotal.value > 0 && policySelector.selectedTotal.value > 0)
 
 const handleSubmit = async () => {
   submitting.value = true
   try {
-    // 组装请求数据：将选中的主体和策略提交给后端
-    const subjects = Array.from(selectedSubjects.value.values()).map((s) => ({
+    const subjects = subjectSelector.selectedList.value.map((s) => ({
       type: s.type,
       code: s.id
     }))
-    const policyCodes = Array.from(selectedPolicies.value.values()).map((p) => p.code)
+    const policyCodes = policySelector.selectedList.value.map((p) => p.code)
 
     const { data } = await batchAttachPolicyApi({
       subjects,
       policy_codes: policyCodes
     })
 
-    ElMessage({
-      message: `授权成功：共建立 ${data.total} 条策略关联`,
-      type: "success",
-      duration: 3000
-    })
+    ElMessage.success(`授权成功：共建立 ${data.total} 条策略关联`)
+    emit("success")
     visible.value = false
   } catch (err) {
     ElMessage.error("批量授权失败，请重试")
@@ -346,13 +311,14 @@ const handleSubmit = async () => {
   }
 }
 
+// --- 开闭状态联动 ---
 watch(visible, (val) => {
   if (val) {
-    handleSearchSubjects()
-    handleSearchPolicies()
+    subjectSelector.fetchList()
+    policySelector.fetchList()
   } else {
-    selectedSubjects.value.clear()
-    selectedPolicies.value.clear()
+    subjectSelector.reset()
+    policySelector.reset()
   }
 })
 </script>
