@@ -1,6 +1,6 @@
 <template>
   <PageContainer>
-    <ManagerHeader title="授权治理" subtitle="全域授权关系审计" @refresh="handleRefresh">
+    <ManagerHeader title="授权治理" subtitle="身份主体与权限策略的原子级关联治理" @refresh="handleRefresh">
       <template #actions>
         <div class="eiam-governance-bar">
           <!-- 搜索治理区 -->
@@ -74,7 +74,7 @@
       <!-- 授权主体 -->
       <template #subject="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link">{{ row.subject_name }}</el-link>
+          <el-link type="primary" :underline="false" class="main-link mono">{{ row.subject }}</el-link>
           <div class="sub-detail">
             {{ row.sub_type === AuthorizationSubType.USER ? "IAM 用户" : "IAM 角色" }}
           </div>
@@ -84,7 +84,7 @@
       <!-- 授权对象 -->
       <template #target="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link">{{ row.target_name }}</el-link>
+          <el-link type="primary" :underline="false" class="main-link mono">{{ row.target }}</el-link>
           <div class="sub-detail">
             <template v-if="row.obj_type === AuthorizationObjType.ROLE">IAM 角色</template>
             <template v-else-if="row.obj_type === AuthorizationObjType.SYSTEM_POLICY">系统策略</template>
@@ -147,7 +147,7 @@ const handleCreate = () => {
 }
 
 const handleRevoke = (row: Authorization) => {
-  ElMessageBox.confirm(`确定要解除对 ${row.subject_name} 的授权吗？`, "权限回收警告", {
+  ElMessageBox.confirm(`确定要解除对主体 ${row.subject} 的授权吗？`, "权限回收警告", {
     type: "warning",
     confirmButtonText: "确定回收",
     confirmButtonClass: "el-button--danger eiam-confirm-btn",
@@ -170,16 +170,16 @@ const handleRevoke = (row: Authorization) => {
     align-items: center;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     border-radius: 8px;
-    padding: 2px 8px;
+    padding: 0 12px;
     flex: 1;
-    max-width: 700px;
-    transition: all 0.2s;
+    max-width: 680px;
+    height: 38px;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:focus-within {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+      border-color: #0ea5e9;
     }
 
     .command-input {
@@ -187,6 +187,7 @@ const handleRevoke = (row: Authorization) => {
       :deep(.el-input__wrapper) {
         box-shadow: none !important;
         background: transparent;
+        padding: 0;
       }
       .search-icon {
         color: #94a3b8;
@@ -196,16 +197,19 @@ const handleRevoke = (row: Authorization) => {
 
     .divider {
       width: 1px;
-      height: 18px;
+      height: 16px;
       background: #e2e8f0;
-      margin: 0 12px;
+      margin: 0 8px;
+      flex-shrink: 0;
     }
 
     .command-select {
-      width: 130px;
+      width: 120px;
       :deep(.el-select__wrapper) {
         box-shadow: none !important;
         background: transparent;
+        padding: 0 8px;
+
         .el-select__placeholder {
           color: #64748b;
           font-size: 13px;
@@ -213,37 +217,38 @@ const handleRevoke = (row: Authorization) => {
       }
     }
   }
+}
 
-  .action-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-    .eiam-main-btn {
-      background: #4f46e5;
-      border: none;
-      border-radius: 8px;
-      height: 36px;
-      padding: 0 18px;
-      font-weight: 500;
-      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
-      transition: all 0.2s;
-      &:hover {
-        background: #4338ca;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
-      }
+  .eiam-main-btn {
+    background: #0ea5e9;
+    border: none;
+    border-radius: 8px;
+    height: 36px;
+    padding: 0 18px;
+    font-weight: 600;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+    transition: all 0.2s;
+    &:hover {
+      background: #0284c7;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(14, 165, 233, 0.3);
     }
+  }
 
-    .eiam-icon-outline {
-      border: 1px solid #e2e8f0;
-      background: white;
-      color: #64748b;
-      &:hover {
-        color: #4f46e5;
-        border-color: #4f46e5;
-        background: #f5f3ff;
-      }
+  .eiam-icon-outline {
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    &:hover {
+      color: #0ea5e9;
+      border-color: #0ea5e9;
+      background: #f0f9ff;
     }
   }
 }

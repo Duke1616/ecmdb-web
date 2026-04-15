@@ -78,6 +78,10 @@ export interface BatchAttachPolicyRequest {
 
 /** 批量绑定策略响应 */
 export interface BatchAttachPolicyResponse {
-  /** 总绑定数量 */
+  /** 总处理数量 */
   total: number
+  /** 新增绑定数量 */
+  inserted: number
+  /** 已存在而被忽略的数量 */
+  ignored: number
 }

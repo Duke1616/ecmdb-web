@@ -9,8 +9,8 @@ export interface UseResourceSelectorOptions<T, Q> {
   fetchApi: (params: any) => Promise<{ data: { [key: string]: any; total: number } }>
   // API 返回结构中目标列表的字段名 (例如: 'subjects' 或 'policies')
   listKey: string
-  // 列表中对象的唯一标识字段名 (例如: 'id' 或 'code')
-  rowKey: keyof T
+  // 列表中对象的唯一标识字段名，或者生成唯一标识的方法 (防主键冲突)
+  rowKey: keyof T | ((row: T) => string)
   // 初始查询参数
   initialQuery: Q
 }
@@ -35,6 +35,11 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
   const selectedMap = ref(new Map<string, T>())
   const selectedList = computed(() => Array.from(selectedMap.value.values()))
   const selectedTotal = computed(() => selectedMap.value.size)
+
+  // 内部辅助函数：获取单行唯一 Key
+  const getRowKey = (item: T): string => {
+    return typeof options.rowKey === "function" ? options.rowKey(item) : String(item[options.rowKey])
+  }
 
   const fetchList = async () => {
     loading.value = true
@@ -69,7 +74,7 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
   // 跨页全量状态接管 (需配合表格 reserve-selection)
   const handleSelectionChange = (selection: T[]) => {
     const newMap = new Map<string, T>()
-    selection.forEach((item) => newMap.set(String(item[options.rowKey]), item))
+    selection.forEach((item) => newMap.set(getRowKey(item), item))
     // 强制触发响应式更新
     selectedMap.value = newMap
   }
@@ -77,7 +82,14 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
   // 从已选中移除 (同时处理左侧表格状态)
   const removeSelection = (item: T) => {
     tableRef.value?.toggleRowSelection(item, false)
-    selectedMap.value.delete(String(item[options.rowKey]))
+    selectedMap.value.delete(getRowKey(item))
+  }
+
+  // 每页条数切换
+  const handleSizeChange = (val: number) => {
+    query.limit = val
+    query.page = 1
+    fetchList()
   }
 
   // 清空所有选中
@@ -86,11 +98,15 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
     selectedMap.value.clear()
   }
 
-  // 重置状态
+  // 重置外部状态 (通常用于关闭抽屉时)
   const reset = () => {
-    clearSelection()
-    Object.assign(query, options.initialQuery)
     query.page = 1
+    ;(query as any).keyword = ""
+    // 注意: initialQuery 可能包含其他字段
+    Object.assign(query, options.initialQuery)
+    clearSelection()
+    list.value = []
+    total.value = 0
   }
 
   return {
@@ -105,6 +121,7 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
     fetchList,
     debouncedSearch,
     handleSelectionChange,
+    handleSizeChange,
     removeSelection,
     clearSelection,
     reset

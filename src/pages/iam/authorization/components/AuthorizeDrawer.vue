@@ -4,11 +4,11 @@
     title="批量授权治理"
     subtitle="建立身份主体与权限集合的原子级关联，构建租户全域安全治理边界"
     :header-icon="Connection"
-    size="1050px"
+    size="60%"
     class="eiam-auth-wizard"
     @confirm="handleSubmit"
     :confirm-loading="submitting"
-    :show-confirm-button="canSubmit"
+    :show-confirm-button="true"
   >
     <div class="wizard-workflow">
       <!-- 1. 授权主体治理卡片 -->
@@ -37,10 +37,8 @@
             <div class="panel-source-header">
               <el-input
                 v-model="subjectSelector.query.keyword"
-                placeholder="搜索主体名称..."
+                placeholder="搜索主体名称或标识 (支持模糊搜索)..."
                 class="search-input"
-                style="width: 200px"
-                size="small"
                 clearable
                 @input="subjectSelector.debouncedSearch"
               >
@@ -48,23 +46,26 @@
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
-              <el-radio-group v-model="subjectSelector.query.sub_type" size="small" @change="subjectSelector.fetchList">
-                <el-radio-button label="">全部</el-radio-button>
-                <el-radio-button value="user">用户</el-radio-button>
-                <el-radio-button value="role">角色</el-radio-button>
+              <el-radio-group
+                v-model="subjectSelector.query.sub_type"
+                class="eiam-radio-filter"
+                @change="subjectSelector.fetchList"
+              >
+                <el-radio-button label="">全部身份</el-radio-button>
+                <el-radio-button value="user">IAM 用户</el-radio-button>
+                <el-radio-button value="role">IAM 角色</el-radio-button>
               </el-radio-group>
             </div>
-
             <el-table
               :ref="subjectSelector.tableRef"
               v-loading="subjectSelector.loading.value"
               :data="subjectSelector.list.value"
               height="300"
-              row-key="id"
+              :row-key="(row) => row.type + '-' + row.id"
               @selection-change="subjectSelector.handleSelectionChange"
             >
               <el-table-column type="selection" width="40" reserve-selection />
-              <el-table-column label="身份标识" min-width="160">
+              <el-table-column label="身份标识" width="185">
                 <template #default="{ row }">
                   <div class="identity-info">
                     <span class="display-name">{{ row.name }}</span>
@@ -72,12 +73,12 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column label="类型" width="80">
+              <el-table-column label="类型" width="100" align="center">
                 <template #default="{ row }">
                   <span class="type-badge" :class="row.type">{{ row.type === "user" ? "用户" : "角色" }}</span>
                 </template>
               </el-table-column>
-              <el-table-column label="描述" min-width="140" show-overflow-tooltip>
+              <el-table-column label="描述" min-width="200" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span class="desc-text">{{ row.desc || "-" }}</span>
                 </template>
@@ -89,8 +90,10 @@
                 v-model:page-size="subjectSelector.query.limit"
                 small
                 background
-                layout="prev, pager, next"
+                layout="total, sizes, prev, pager, next"
+                :page-sizes="[10, 20, 50]"
                 :total="subjectSelector.total.value"
+                @size-change="subjectSelector.handleSizeChange"
                 @current-change="subjectSelector.fetchList"
               />
             </div>
@@ -104,12 +107,21 @@
             </div>
             <div class="buffer-list">
               <TransitionGroup name="list-fade">
-                <div v-for="item in subjectSelector.selectedList.value" :key="item.id" class="buffer-item">
+                <div
+                  v-for="item in subjectSelector.selectedList.value"
+                  :key="item.type + '-' + item.id"
+                  class="buffer-item"
+                >
                   <div class="info">
                     <span class="name">{{ item.name }}</span>
                     <span class="id mono">{{ item.id }}</span>
                   </div>
-                  <el-icon class="remove-btn" @click="subjectSelector.removeSelection(item)"><Close /></el-icon>
+                  <div class="actions">
+                    <span class="type-badge small" :class="item.type">{{
+                      item.type === "user" ? "用户" : "角色"
+                    }}</span>
+                    <el-icon class="remove-btn" @click="subjectSelector.removeSelection(item)"><Close /></el-icon>
+                  </div>
                 </div>
               </TransitionGroup>
               <el-empty v-if="subjectSelector.selectedTotal.value === 0" description="点击左侧勾选" :image-size="40" />
@@ -120,7 +132,7 @@
 
       <!-- 🚦 分隔指示器 -->
       <div class="wizard-connector">
-        <el-icon><ArrowDown /></el-icon>
+        <el-icon class="connector-icon"><ArrowDown /></el-icon>
       </div>
 
       <!-- 2. 权限策略治理卡片 -->
@@ -148,10 +160,8 @@
             <div class="panel-source-header">
               <el-input
                 v-model="policySelector.query.keyword"
-                placeholder="搜索策略..."
+                placeholder="搜索策略名称或标识 (支持模糊搜索)..."
                 class="search-input"
-                style="width: 200px"
-                size="small"
                 clearable
                 @input="policySelector.debouncedSearch"
               >
@@ -159,16 +169,15 @@
                   <el-icon><Search /></el-icon>
                 </template>
               </el-input>
-              <el-select
+              <el-radio-group
                 v-model="policySelector.query.type"
-                size="small"
-                style="width: 120px"
+                class="eiam-radio-filter"
                 @change="policySelector.fetchList"
               >
-                <el-option label="所有类型" value="" />
-                <el-option label="系统预设" :value="1" />
-                <el-option label="自定义" :value="2" />
-              </el-select>
+                <el-radio-button label="">全部类型</el-radio-button>
+                <el-radio-button :value="1">系统预设</el-radio-button>
+                <el-radio-button :value="2">自定义</el-radio-button>
+              </el-radio-group>
             </div>
 
             <el-table
@@ -176,11 +185,11 @@
               v-loading="policySelector.loading.value"
               :data="policySelector.list.value"
               height="300"
-              row-key="code"
+              :row-key="(row) => String(row.type) + '-' + row.code"
               @selection-change="policySelector.handleSelectionChange"
             >
               <el-table-column type="selection" width="40" reserve-selection />
-              <el-table-column label="策略资产" min-width="160">
+              <el-table-column label="策略资产" width="185">
                 <template #default="{ row }">
                   <div class="policy-info">
                     <div class="name-box">
@@ -193,14 +202,14 @@
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column label="类型" width="80">
+              <el-table-column label="类型" width="100" align="center">
                 <template #default="{ row }">
                   <span class="type-badge" :class="row.type === 1 ? 'system' : 'custom'">
                     {{ row.type === 1 ? "系统" : "自定义" }}
                   </span>
                 </template>
               </el-table-column>
-              <el-table-column label="描述" min-width="140" show-overflow-tooltip>
+              <el-table-column label="描述" min-width="200" show-overflow-tooltip>
                 <template #default="{ row }">
                   <span class="desc-text">{{ row.desc || "-" }}</span>
                 </template>
@@ -212,8 +221,10 @@
                 v-model:page-size="policySelector.query.limit"
                 small
                 background
-                layout="prev, pager, next"
+                layout="total, sizes, prev, pager, next"
+                :page-sizes="[10, 20, 50]"
                 :total="policySelector.total.value"
+                @size-change="policySelector.handleSizeChange"
                 @current-change="policySelector.fetchList"
               />
             </div>
@@ -226,12 +237,21 @@
             </div>
             <div class="buffer-list">
               <TransitionGroup name="list-fade">
-                <div v-for="item in policySelector.selectedList.value" :key="item.code" class="buffer-item">
+                <div
+                  v-for="item in policySelector.selectedList.value"
+                  :key="String(item.type) + '-' + item.code"
+                  class="buffer-item"
+                >
                   <div class="info">
                     <span class="name">{{ item.name }}</span>
                     <span class="id mono">{{ item.code }}</span>
                   </div>
-                  <el-icon class="remove-btn" @click="policySelector.removeSelection(item)"><Close /></el-icon>
+                  <div class="actions">
+                    <span class="type-badge small" :class="item.type === 1 ? 'system' : 'custom'">
+                      {{ item.type === 1 ? "系统" : "自定义" }}
+                    </span>
+                    <el-icon class="remove-btn" @click="policySelector.removeSelection(item)"><Close /></el-icon>
+                  </div>
                 </div>
               </TransitionGroup>
               <el-empty v-if="policySelector.selectedTotal.value === 0" description="点击左侧勾选" :image-size="40" />
@@ -271,7 +291,7 @@ const isHighRisk = (name: string) => {
 const subjectSelector = useResourceSelector<Subject, { keyword: string; sub_type: string }>({
   fetchApi: searchSubjectsApi,
   listKey: "subjects",
-  rowKey: "id",
+  rowKey: (row: Subject) => `${row.type}-${row.id}`,
   initialQuery: { keyword: "", sub_type: "" }
 })
 
@@ -279,7 +299,7 @@ const subjectSelector = useResourceSelector<Subject, { keyword: string; sub_type
 const policySelector = useResourceSelector<Policy, { keyword: string; type: string | number }>({
   fetchApi: listPoliciesApi,
   listKey: "policies",
-  rowKey: "code",
+  rowKey: (row: Policy) => `${row.type}-${row.code}`,
   initialQuery: { keyword: "", type: "" }
 })
 
@@ -288,6 +308,14 @@ const submitting = ref(false)
 const canSubmit = computed(() => subjectSelector.selectedTotal.value > 0 && policySelector.selectedTotal.value > 0)
 
 const handleSubmit = async () => {
+  if (!canSubmit.value) {
+    if (subjectSelector.selectedTotal.value === 0) {
+      ElMessage.warning("请在上方列表勾选至少一个授权主体")
+    } else {
+      ElMessage.warning("请在下方列表勾选至少一个权限策略")
+    }
+    return
+  }
   submitting.value = true
   try {
     const subjects = subjectSelector.selectedList.value.map((s) => ({
@@ -301,7 +329,17 @@ const handleSubmit = async () => {
       policy_codes: policyCodes
     })
 
-    ElMessage.success(`授权成功：共建立 ${data.total} 条策略关联`)
+    const { inserted, ignored } = data
+    if (inserted > 0 || ignored > 0) {
+      ElMessage({
+        type: inserted > 0 ? "success" : "warning",
+        message:
+          inserted > 0
+            ? `授权执行完毕：成功建立 ${inserted} 条新关联` + (ignored > 0 ? ` (已跳过 ${ignored} 条重复关联)` : "")
+            : `所选授权项均已存在，未重复建立关联`,
+        duration: 5000
+      })
+    }
     emit("success")
     visible.value = false
   } catch (err) {
@@ -325,23 +363,41 @@ watch(visible, (val) => {
 
 <style lang="scss" scoped>
 .wizard-workflow {
-  padding: 12px 24px 24px;
+  padding: 12px 24px 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   background: #f8fafc;
+  font-family:
+    "Plus Jakarta Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial,
+    sans-serif;
 }
 
 .governance-card {
-  background: #fff;
+  background: #ffffff;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.02),
+    0 2px 4px -2px rgba(0, 0, 0, 0.02);
   overflow: hidden;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.05),
+      0 4px 6px -4px rgba(0, 0, 0, 0.025);
+  }
 
   .card-header {
-    padding: 12px 16px;
-    background: #fff;
+    padding: 14px 20px;
+    background: #ffffff;
     border-bottom: 1px solid #f1f5f9;
     display: flex;
     justify-content: space-between;
@@ -350,15 +406,19 @@ watch(visible, (val) => {
     .title-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       .main-icon {
-        color: #6366f1;
+        color: #0ea5e9;
         font-size: 18px;
+        background: #f0f9ff;
+        padding: 6px;
+        border-radius: 8px;
       }
       .text {
-        font-size: 14px;
+        font-size: 15px;
         font-weight: 700;
-        color: #1e293b;
+        color: #0f172a;
+        letter-spacing: -0.01em;
       }
     }
   }
@@ -366,103 +426,185 @@ watch(visible, (val) => {
 
 .dual-panel-container {
   display: flex;
-  height: 340px;
+  height: 380px;
 }
 
 .panel-source {
   flex: 1;
-  padding: 12px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #f1f5f9;
+  background: #ffffff;
 
   .panel-source-header {
     display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    .search-input {
+      flex: 1; /* 让搜索框占据剩余空间 */
+      :deep(.el-input__wrapper) {
+        border-radius: 8px;
+        background-color: #f8fafc;
+        box-shadow: 0 0 0 1px #e2e8f0 inset;
+        height: 36px;
+        padding: 0 12px;
+        transition: all 0.2s;
+
+        &:hover {
+          box-shadow: 0 0 0 1px #cbd5e1 inset;
+        }
+
+        &.is-focus,
+        &:focus-within {
+          background-color: #ffffff;
+          box-shadow:
+            0 0 0 2px #bae6fd inset,
+            0 0 0 1px #0ea5e9 inset;
+        }
+
+        .el-input__inner {
+          font-size: 13px;
+          height: 36px;
+        }
+      }
+    }
+
+    .eiam-radio-filter {
+      flex-shrink: 0;
+      height: 36px;
+      display: flex;
+      :deep(.el-radio-button__inner) {
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        font-size: 13px;
+        font-weight: 500;
+      }
+    }
   }
 
   .pagination-bar {
-    margin-top: 12px;
+    margin-top: auto;
+    padding-top: 12px;
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+
+    :deep(.el-pagination) {
+      .el-pagination__total {
+        color: #64748b;
+        font-weight: 500;
+      }
+      .el-select .el-input {
+        width: 110px;
+      }
+    }
   }
 }
 
 .panel-buffer {
-  width: 280px;
-  background: #fcfcfd;
+  width: 300px;
+  background: #f8fafc;
   display: flex;
   flex-direction: column;
 
   .buffer-header {
-    padding: 10px 16px;
-    font-size: 12px;
+    padding: 12px 20px;
+    font-size: 13px;
     font-weight: 600;
-    color: #64748b;
+    color: #475569;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #f8fafc;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #e2e8f0;
 
     .count-tag {
-      background: #6366f1;
+      background: #0ea5e9;
       color: white;
-      padding: 0 8px;
-      height: 18px;
+      padding: 0 10px;
+      height: 20px;
       border-radius: 10px;
       display: inline-flex;
       align-items: center;
-      font-size: 11px;
+      font-size: 12px;
+      font-weight: 700;
     }
   }
 
   .buffer-list {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 }
 
 .buffer-item {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
 
   &:hover {
-    border-color: #6366f1;
-    transform: translateX(4px);
+    border-color: #cbd5e1;
+    background: #f1f5f9;
   }
 
   .info {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+    width: 60%;
+
     .name {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
-      color: #1e293b;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .id {
       font-size: 10px;
-      color: #94a3b8;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
     }
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .remove-btn {
     cursor: pointer;
     color: #94a3b8;
-    padding: 4px;
-    border-radius: 4px;
+    padding: 6px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
     &:hover {
       color: #ef4444;
       background: #fee2e2;
@@ -471,39 +613,63 @@ watch(visible, (val) => {
 }
 
 .wizard-connector {
+  position: relative;
   display: flex;
   justify-content: center;
-  color: #cbd5e1;
-  font-size: 20px;
-  height: 20px;
-  margin: -8px 0;
+  align-items: center;
+  color: #94a3b8;
+  height: 14px;
+  margin: -4px 0;
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    height: 100%;
+    width: 2px;
+    background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+  }
+
+  .connector-icon {
+    z-index: 1;
+    background: #f8fafc;
+    padding: 4px;
+    border-radius: 50%;
+    font-size: 20px;
+    color: #cbd5e1;
+  }
 }
 
 .identity-info {
   display: flex;
   flex-direction: column;
+  gap: 4px;
   .display-name {
     font-size: 13px;
     font-weight: 600;
     color: #0f172a;
-    margin-bottom: 2px;
   }
 }
 
 .id-tag {
   font-size: 10px;
   color: #64748b;
+  background: #f8fafc;
+  padding: 1px 5px;
+  border-radius: 4px;
   align-self: flex-start;
+  border: 1px solid #e2e8f0;
+  letter-spacing: 0.02em;
 }
 
 .policy-info {
   display: flex;
   flex-direction: column;
+  gap: 4px;
   .name-box {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 4px;
     .policy-name {
       font-size: 13px;
       font-weight: 600;
@@ -512,91 +678,94 @@ watch(visible, (val) => {
   }
   .policy-code {
     font-size: 10px;
-    color: #94a3b8;
-    margin-bottom: 2px;
-  }
-  .policy-desc {
-    font-size: 11px;
     color: #64748b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 300px;
+    background: #f8fafc;
+    padding: 1px 5px;
+    border-radius: 4px;
+    align-self: flex-start;
+    border: 1px solid #e2e8f0;
+    letter-spacing: 0.02em;
   }
 }
 
 .risk-badge {
-  padding: 0 4px;
-  height: 16px;
+  padding: 0 6px;
+  height: 18px;
   font-size: 10px;
   font-weight: 700;
-  border: none;
-  animation: pulse-red 2s infinite;
+  background: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #f87171;
+  animation: pulse-red 2.5s infinite;
 }
 
 @keyframes pulse-red {
   0% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5);
   }
   70% {
-    transform: scale(1.05);
     box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
   }
   100% {
-    transform: scale(1);
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
   }
 }
 
 .type-badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  &.small {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
   &.user {
-    background: #eef2ff;
-    color: #6366f1;
+    background: #e0f2fe;
+    color: #0284c7;
   }
   &.role {
-    background: #fff7ed;
-    color: #f59e0b;
+    background: #fef3c7;
+    color: #d97706;
   }
   &.system {
     background: #f1f5f9;
-    color: #64748b;
+    color: #475569;
   }
   &.custom {
-    background: #ecfdf5;
-    color: #10b981;
+    background: #dcfce7;
+    color: #15803d;
   }
 }
 
 .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
 }
 
 .desc-text {
-  font-size: 11px;
+  font-size: 12px;
   color: #64748b;
 }
 
-/* 列表过渡动效 */
+/* 列表过渡动效，移除位移带来的闪烁感，改为更柔和的缩放消隐 */
 .list-fade-enter-active,
 .list-fade-leave-active {
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.list-fade-enter-from {
-  opacity: 0;
-  transform: translateX(-20px);
-}
+.list-fade-enter-from,
 .list-fade-leave-to {
   opacity: 0;
-  transform: translateX(20px);
+  transform: scale(0.95);
 }
 
 :deep(.el-table) {
   --el-table-header-bg-color: #f8fafc;
-  font-size: 12px;
+  --el-table-header-text-color: #475569;
+  font-size: 13px;
+  .el-table__header th {
+    font-weight: 600;
+  }
 }
 </style>
