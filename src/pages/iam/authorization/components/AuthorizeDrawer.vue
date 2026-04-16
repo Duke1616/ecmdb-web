@@ -408,9 +408,9 @@ watch(visible, (val) => {
       align-items: center;
       gap: 12px;
       .main-icon {
-        color: #0ea5e9;
+        color: #3b82f6;
         font-size: 18px;
-        background: #f0f9ff;
+        background: #eff6ff;
         padding: 6px;
         border-radius: 8px;
       }
@@ -462,8 +462,8 @@ watch(visible, (val) => {
         &:focus-within {
           background-color: #ffffff;
           box-shadow:
-            0 0 0 2px #bae6fd inset,
-            0 0 0 1px #0ea5e9 inset;
+            0 0 0 2px #dbeafe inset,
+            0 0 0 1px #3b82f6 inset;
         }
 
         .el-input__inner {

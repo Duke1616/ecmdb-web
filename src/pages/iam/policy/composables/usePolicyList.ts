@@ -1,8 +1,8 @@
-import { ref, onMounted } from "vue"
+import { ref, onMounted, reactive } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { listPoliciesApi } from "@/api/iam/policy"
-import type { Policy } from "@/api/iam/policy/type"
+import type { Policy, ListPolicyRequest } from "@/api/iam/policy/type"
 
 export function usePolicyList() {
   const router = useRouter()
@@ -10,6 +10,14 @@ export function usePolicyList() {
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(10)
+
+  // 查询参数
+  const query = reactive<ListPolicyRequest>({
+    offset: 0,
+    limit: 10,
+    keyword: "",
+    type: undefined
+  })
 
   // 交互状态
   const drawerVisible = ref(false)
@@ -21,6 +29,7 @@ export function usePolicyList() {
   const loadData = async () => {
     try {
       const { data } = await listPoliciesApi({
+        ...query,
         offset: (currentPage.value - 1) * pageSize.value,
         limit: pageSize.value
       })
@@ -82,6 +91,7 @@ export function usePolicyList() {
     total,
     currentPage,
     pageSize,
+    query,
     drawerVisible,
     isEdit,
     submitting,

@@ -7,28 +7,45 @@
       @refresh="handleRefresh"
     >
       <template #actions>
-        <div class="header-actions-bar">
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索策略名称或标识码..."
-            class="search-input premium-input"
-            clearable
-            @clear="handleRefresh"
-            @keyup.enter="handleRefresh"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
+        <div class="eiam-governance-bar">
+          <!-- 搜索治理区 -->
+          <div class="search-command-inner">
+            <el-input
+              v-model="query.keyword"
+              placeholder="搜索策略名称或识别码..."
+              class="command-input"
+              clearable
+              @keyup.enter="handleRefresh"
+            >
+              <template #prefix>
+                <el-icon class="search-icon"><Search /></el-icon>
+              </template>
+            </el-input>
 
-          <el-select v-model="typeFilter" placeholder="策略类型" clearable class="type-filter premium-input">
-            <el-option label="系统预设" :value="1" />
-            <el-option label="自定义" :value="2" />
-          </el-select>
+            <div class="divider" />
 
-          <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建策略 </el-button>
+            <!-- 类型过滤 -->
+            <el-select
+              v-model="query.type"
+              placeholder="策略类型"
+              clearable
+              class="command-select"
+              @change="handleRefresh"
+            >
+              <el-option label="所有类型" :value="TYPE_ALL" />
+              <el-option label="系统预设" :value="1" />
+              <el-option label="自定义" :value="2" />
+            </el-select>
+          </div>
 
-          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
+          <!-- 主动作区 -->
+          <div class="action-group">
+            <el-button type="primary" class="eiam-main-btn" @click="handleCreate">
+              <el-icon><Plus /></el-icon>
+              <span>创建策略</span>
+            </el-button>
+            <el-button :icon="RefreshRight" class="eiam-icon-outline" circle @click="handleRefresh" />
+          </div>
         </div>
       </template>
     </ManagerHeader>
@@ -36,7 +53,7 @@
     <!-- 数据列表: 遵循排班管理的高级质感 -->
     <DataTable
       v-loading="loading"
-      :data="filteredPolicies"
+      :data="policies"
       :columns="tableColumns"
       :show-selection="false"
       :show-pagination="true"
@@ -47,16 +64,11 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 策略名称: 加粗并带语义图标 -->
+      <!-- 策略名称 -->
       <template #name="{ row }">
-        <div class="minimal-name-info">
-          <span class="main-title">{{ row.name }}</span>
-        </div>
-      </template>
-
-      <!-- 标识码: 精致 Mono Tag -->
-      <template #code="{ row }">
-        <span class="code-font">{{ row.code }}</span>
+        <el-link type="primary" :underline="false" class="policy-name" @click="handleEdit(row)">
+          {{ row.name }}
+        </el-link>
       </template>
 
       <!-- 类型: 语义化 Dot 状态 -->
@@ -65,6 +77,18 @@
           <span class="dot" />
           <span class="text">{{ row.type === 1 ? "系统预设" : "自定义" }}</span>
         </div>
+      </template>
+
+      <!-- 关联主体: 动态 Tag -->
+      <template #assignment="{ row }">
+        <div class="count-badge" :class="{ 'has-count': row.assignment_count > 0 }">
+          {{ row.assignment_count }}
+        </div>
+      </template>
+
+      <!-- 创建时间 -->
+      <template #ctime="{ row }">
+        <span class="ctime-text">{{ row.ctime ? formatDate(row.ctime) : "-" }}</span>
       </template>
 
       <!-- 描述: 柔和次级文本 -->
@@ -88,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref } from "vue"
 import { Search, Plus, RefreshRight, Edit, Delete, Connection } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -103,6 +127,7 @@ const {
   total,
   currentPage,
   pageSize,
+  query,
   jsonVisible,
   selectedPolicy,
   handleRefresh,
@@ -114,25 +139,15 @@ const {
   handleCurrentChange
 } = usePolicyList()
 
+const TYPE_ALL = undefined as any
 const loading = ref(false)
-const searchQuery = ref("")
-const typeFilter = ref<number | null>(null)
-
-// 前端关键词过滤 (增强交互响应)
-const filteredPolicies = computed(() => {
-  return policies.value.filter((p) => {
-    const matchName = p.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchCode = p.code.toLowerCase().includes(searchQuery.value.toLowerCase())
-    const matchType = typeFilter.value ? p.type === typeFilter.value : true
-    return (matchName || matchCode) && matchType
-  })
-})
 
 const tableColumns: Column[] = [
-  { label: "策略名称", prop: "name", slot: "name", width: 180, align: "center" },
-  { label: "识别码", prop: "code", slot: "code", width: 200 },
-  { label: "策略类型", prop: "type", slot: "type", width: 140, align: "center" },
-  { label: "描述说明", prop: "desc", slot: "desc", minWidth: 250 }
+  { label: "策略名称", prop: "name", slot: "name", minWidth: 150, align: "center" },
+  { label: "策略类型", prop: "type", slot: "type", width: 120, align: "center" },
+  { label: "描述说明", prop: "desc", slot: "desc", minWidth: 200, align: "center" },
+  { label: "关联主体", prop: "assignment_count", slot: "assignment", width: 120, align: "center" },
+  { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]
 
 const getOperateItems = (row: Policy) => {
@@ -159,77 +174,143 @@ const handleAction = (row: Policy, code: string) => {
       break
   }
 }
+const formatDate = (ts: number) => {
+  if (!ts) return "-"
+  const d = new Date(ts)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  const hh = String(d.getHours()).padStart(2, "0")
+  const mm = String(d.getMinutes()).padStart(2, "0")
+  return `${y}-${m}-${dd} ${hh}:${mm}`
+}
 </script>
 
 <style lang="scss" scoped>
-.header-actions-bar {
+.eiam-governance-bar {
   display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+
+  .search-command-inner {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    border-radius: 8px;
+    padding: 0 12px;
+    flex: 1;
+    max-width: 680px;
+    height: 38px;
+    transition: border-color 0.2s;
+
+    &:focus-within {
+      border-color: #3b82f6;
+    }
+
+    .command-input {
+      width: 240px;
+      :deep(.el-input__wrapper) {
+        box-shadow: none !important;
+        background: transparent;
+        padding: 0;
+      }
+      .search-icon {
+        color: #94a3b8;
+        font-size: 16px;
+      }
+    }
+
+    .divider {
+      width: 1px;
+      height: 16px;
+      background: #e2e8f0;
+      margin: 0 8px;
+      flex-shrink: 0;
+    }
+
+    .command-select {
+      width: 120px;
+      :deep(.el-select__wrapper) {
+        box-shadow: none !important;
+        background: transparent;
+        padding: 0 8px;
+
+        .el-select__placeholder {
+          color: #64748b;
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  align-items: center;
-  .search-input {
-    width: 260px;
-  }
-  .type-filter {
-    width: 130px;
-  }
-}
 
-.minimal-name-info {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  .status-icon {
-    font-size: 16px;
-    &.sys {
-      color: #3b82f6;
-    }
-    &.custom {
-      color: #10b981;
-    }
-  }
-  .main-title {
+  .eiam-main-btn {
+    background: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    height: 36px;
+    padding: 0 18px;
     font-weight: 600;
-    font-size: 14px;
-    color: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    transition: all 0.2s;
+    &:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    }
+  }
+
+  .eiam-icon-outline {
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    &:hover {
+      color: #3b82f6;
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
   }
 }
 
-.code-font {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.desc-text {
+.policy-name {
+  color: #1e293b;
   font-size: 13px;
-  color: #64748b;
+  font-weight: 600;
+  &:hover {
+    color: #3b82f6;
+  }
 }
 
 /* 核心语义化状态样式 */
 .minimal-status {
   display: flex;
   align-items: center;
-  gap: 8px;
   justify-content: center;
+  gap: 8px;
   .dot {
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
   }
   .text {
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 500;
   }
   &.primary {
     .dot {
       background: #3b82f6;
     }
     .text {
-      color: #2563eb;
+      color: #3b82f6;
     }
   }
   &.success {
@@ -237,8 +318,40 @@ const handleAction = (row: Policy, code: string) => {
       background: #10b981;
     }
     .text {
-      color: #059669;
+      color: #10b981;
     }
+  }
+}
+
+.desc-text {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.ctime-text {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+
+  &.has-count {
+    background: #eff6ff;
+    color: #3b82f6;
+    border-color: #dbeafe;
   }
 }
 
@@ -254,21 +367,6 @@ const handleAction = (row: Policy, code: string) => {
     font-family: ui-monospace, monospace;
     font-size: 13px;
     line-height: 1.6;
-  }
-}
-
-/* 复刻 Premium Input 样式 */
-.premium-input :deep(.el-input__wrapper),
-.premium-input :deep(.el-select__wrapper) {
-  border-radius: 6px !important;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
-  &:hover {
-    border-color: #cbd5e1 !important;
-  }
-  &.is-focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08) !important;
   }
 }
 

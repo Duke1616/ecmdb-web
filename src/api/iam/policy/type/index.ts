@@ -20,6 +20,8 @@ export interface Policy {
   code: string
   desc: string
   type: number // 策略类型: 1-系统预设, 2-自定义
+  ctime: number // 创建时间
+  assignment_count: number // 已关联的授权数量 (主体数)
   statement: Statement[]
 }
 

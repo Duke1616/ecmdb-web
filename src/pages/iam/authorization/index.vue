@@ -99,6 +99,11 @@
         <span class="column-text">{{ row.note || "-" }}</span>
       </template>
 
+      <!-- 创建时间 -->
+      <template #ctime="{ row }">
+        <span class="ctime-text">{{ row.ctime ? formatDate(row.ctime) : "-" }}</span>
+      </template>
+
       <!-- 操作 -->
       <template #actions="{ row }">
         <el-button type="primary" link @click="handleRevoke(row)">解除授权</el-button>
@@ -135,9 +140,10 @@ const {
 } = useAuthorizeList()
 
 const tableColumns: Column[] = [
-  { label: "授权主体", prop: "subject", slot: "subject", minWidth: 220, align: "left" },
-  { label: "授权对象", prop: "target", slot: "target", minWidth: 240, align: "left" },
-  { label: "备注", prop: "note", slot: "note", minWidth: 250, align: "left" }
+  { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "center" },
+  { label: "授权对象", prop: "target", slot: "target", minWidth: 150, align: "center" },
+  { label: "备注", prop: "note", slot: "note", minWidth: 200, align: "center" },
+  { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]
 
 const showAuthorizeDrawer = ref(false)
@@ -155,6 +161,17 @@ const handleRevoke = (row: Authorization) => {
   }).then(() => {
     ElMessage.success("授权已安全回收")
   })
+}
+
+const formatDate = (ts: number) => {
+  if (!ts) return "-"
+  const d = new Date(ts)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const dd = String(d.getDate()).padStart(2, "0")
+  const hh = String(d.getHours()).padStart(2, "0")
+  const mm = String(d.getMinutes()).padStart(2, "0")
+  return `${y}-${m}-${dd} ${hh}:${mm}`
 }
 </script>
 
@@ -225,19 +242,19 @@ const handleRevoke = (row: Authorization) => {
   gap: 12px;
 
   .eiam-main-btn {
-    background: #0ea5e9;
+    background: #3b82f6;
     border: none;
     border-radius: 8px;
     height: 36px;
     padding: 0 18px;
     font-weight: 600;
     color: #ffffff;
-    box-shadow: 0 2px 4px rgba(14, 165, 233, 0.2);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
     transition: all 0.2s;
     &:hover {
-      background: #0284c7;
+      background: #2563eb;
       transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(14, 165, 233, 0.3);
+      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
     }
   }
 
@@ -257,17 +274,25 @@ const handleRevoke = (row: Authorization) => {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
+  text-align: center;
   gap: 0px;
   line-height: 1.2;
   .main-link {
-    justify-content: flex-start;
     color: #1e293b;
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 2px;
     height: 18px;
+    :deep(.el-link__inner) {
+      justify-content: center;
+    }
+    &.mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+    }
     &:hover {
-      color: #4f46e5;
+      color: #3b82f6;
     }
   }
   .sub-detail {
@@ -289,5 +314,11 @@ const handleRevoke = (row: Authorization) => {
 .column-text {
   font-size: 12px;
   color: #475569;
+}
+
+.ctime-text {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, monospace;
 }
 </style>
