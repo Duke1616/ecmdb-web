@@ -6,30 +6,27 @@
         <div class="eiam-governance-bar">
           <!-- 组合搜索治理 -->
           <div class="search-command-inner">
+            <el-icon class="search-icon"><Search /></el-icon>
             <el-input
               v-model="query.keyword"
-              placeholder="全域搜索 ID、昵称或邮箱..."
+              placeholder="搜索用户 ID、昵称或邮箱..."
               class="command-input"
               clearable
               @keyup.enter="handleRefresh"
-            >
-              <template #prefix>
-                <el-icon class="search-icon"><Search /></el-icon>
-              </template>
-            </el-input>
+            />
           </div>
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button type="primary" plain class="eiam-icon-outline" @click="ldapSyncVisible = true">
+            <el-button class="eiam-secondary-btn" @click="ldapSyncVisible = true">
               <el-icon><Connection /></el-icon>
               <span>AD/LDAP 同步</span>
             </el-button>
-            <el-button type="primary" class="eiam-main-btn" @click="handleCreate">
+            <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>新增主体</span>
             </el-button>
-            <el-button :icon="RefreshRight" class="eiam-icon-outline" circle @click="handleRefresh" />
+            <el-button :icon="RefreshRight" class="eiam-refresh-btn" circle @click="handleRefresh" />
           </div>
         </div>
       </template>
@@ -173,7 +170,7 @@ const handleDrawerConfirm = async () => {
 .eiam-governance-bar {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
 
   .search-command-inner {
@@ -181,16 +178,26 @@ const handleDrawerConfirm = async () => {
     align-items: center;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     border-radius: 8px;
     padding: 0 12px;
     flex: 1;
-    max-width: 480px;
+    width: 380px;
     height: 38px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s;
+
+    &:hover {
+      border-color: #cbd5e1;
+    }
 
     &:focus-within {
-      border-color: #0ea5e9;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.05);
+    }
+
+    .search-icon {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-right: 8px;
     }
 
     .command-input {
@@ -199,10 +206,10 @@ const handleDrawerConfirm = async () => {
         box-shadow: none !important;
         background: transparent;
         padding: 0;
-      }
-      .search-icon {
-        color: #94a3b8;
-        font-size: 16px;
+        .el-input__inner {
+          font-size: 13px;
+          color: #1e293b;
+        }
       }
     }
   }
@@ -213,31 +220,52 @@ const handleDrawerConfirm = async () => {
   align-items: center;
   gap: 12px;
 
-  .eiam-main-btn {
+  .eiam-primary-btn {
     background: #3b82f6;
     border: none;
     border-radius: 8px;
-    height: 36px;
-    padding: 0 18px;
+    height: 38px;
+    padding: 0 20px;
     font-weight: 600;
     color: #ffffff;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
     transition: all 0.2s;
+
     &:hover {
       background: #2563eb;
       transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
     }
   }
 
-  .eiam-icon-outline {
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: #64748b;
+  .eiam-secondary-btn {
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    height: 38px;
+    padding: 0 16px;
+    font-weight: 600;
+    color: #2563eb;
+    transition: all 0.2s;
+
+    .el-icon {
+      margin-right: 6px;
+      font-weight: 700;
+    }
+
     &:hover {
-      color: #0ea5e9;
-      border-color: #0ea5e9;
-      background: #f0f9ff;
+      background: #dbeafe;
+      border-color: #bfdbfe;
+      color: #1e40af;
+      transform: translateY(-1px);
+    }
+  }
+
+  .eiam-refresh-btn {
+    &:hover {
+      color: #3b82f6;
+      border-color: #3b82f6;
+      transform: rotate(180deg);
+      background: #f0f7ff;
     }
   }
 }

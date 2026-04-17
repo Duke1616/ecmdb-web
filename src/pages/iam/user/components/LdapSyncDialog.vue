@@ -25,8 +25,10 @@
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
+            <template #append>
+              <el-button :loading="searching" @click="handleSearch(true)">检索域信息</el-button>
+            </template>
           </el-input>
-          <el-button color="#1e40af" :loading="searching" @click="handleSearch(true)">检索域信息</el-button>
         </div>
 
         <div class="tools-module">
@@ -61,7 +63,7 @@
           <el-table-column type="selection" width="50" align="center" reserve-selection />
 
           <!-- 账号溯源列 -->
-          <el-table-column label="平台标识 (Identity)" min-width="240" show-overflow-tooltip>
+          <el-table-column label="平台标识" min-width="240" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="identity-card">
                 <div class="avatar-block">{{ row.username.charAt(0).toUpperCase() }}</div>
@@ -79,14 +81,14 @@
           </el-table-column>
 
           <!-- 个人名片列 -->
-          <el-table-column prop="nickname" label="业务名片 (Profile)" min-width="160">
+          <el-table-column prop="nickname" label="业务名片" min-width="160">
             <template #default="{ row }">
               <span class="profile-name">{{ row.nickname }}</span>
             </template>
           </el-table-column>
 
           <!-- 邮箱列 -->
-          <el-table-column prop="email" label="联系邮箱 (Contact)" min-width="200" show-overflow-tooltip>
+          <el-table-column prop="email" label="联系邮箱" min-width="200" show-overflow-tooltip>
             <template #default="{ row }">
               <span class="profile-email">{{ row.email || "--" }}</span>
             </template>
@@ -249,27 +251,90 @@ const handleSync = async () => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     background: #f8fafc;
-    padding: 12px 16px;
+    padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid #e2e8f0;
 
     .search-module {
       display: flex;
-      gap: 12px;
       align-items: center;
-      width: 60%;
+      flex: 1;
 
       .datagrid-search {
+        width: 100%;
+        height: 38px;
+
+        :deep(.el-input-group) {
+          height: 100%;
+          display: flex;
+          align-items: stretch;
+        }
+
         :deep(.el-input__wrapper) {
           box-shadow: none !important;
           border: 1px solid #cbd5e1;
-          border-radius: 6px;
+          border-right: none;
+          border-top-right-radius: 0;
+          border-bottom-right-radius: 0;
+          border-top-left-radius: 8px;
+          border-bottom-left-radius: 8px;
+          background: #ffffff;
+          flex: 1;
+          height: 100%; /* 继承父级高度 */
+          box-sizing: border-box;
+
           &:focus-within {
             border-color: #3b82f6;
-            background: #ffffff;
+            z-index: 1;
           }
         }
+
+        :deep(.el-input-group__append) {
+          background-color: #1e40af;
+          border: 1px solid #1e40af;
+          border-top-right-radius: 8px;
+          border-bottom-right-radius: 8px;
+          padding: 0;
+          overflow: hidden;
+          width: auto;
+          display: flex;
+          align-items: stretch;
+          box-sizing: border-box;
+
+          .el-button {
+            border: none;
+            color: white;
+            background: #1e40af;
+            height: 100%; /* 占满插槽高度 */
+            padding: 0 24px;
+            margin: 0;
+            border-radius: 0;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+
+            &:hover {
+              background: #1d4ed8;
+              color: white;
+            }
+
+            &:active {
+              background: #1e3a8a;
+            }
+          }
+        }
+      }
+    }
+
+    .tools-module {
+      .el-button {
+        height: 36px;
+        border-radius: 8px;
+        font-weight: 500;
       }
     }
   }
