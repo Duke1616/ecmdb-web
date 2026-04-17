@@ -70,10 +70,9 @@
         </div>
       </template>
 
-      <!-- 操作权限 -->
+      <!-- 操作权限: 使用 OperateBtn 重构 -->
       <template #actions="{ row }">
-        <el-button type="primary" link @click="handleEdit(row)">资料维护</el-button>
-        <el-button type="danger" link @click="handleDelete(row)">租户注销</el-button>
+        <OperateBtn :items="tenantOperateItems" :operate-item="row" :max-length="3" @route-event="handleOperate" />
       </template>
     </DataTable>
 
@@ -99,6 +98,7 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import TenantForm from "./components/TenantForm.vue"
 import { useTenantList } from "./composables/useTenantList"
 import type { Column } from "@@/components/DataTable/types"
@@ -124,10 +124,26 @@ const {
 const tenantFormRef = ref<InstanceType<typeof TenantForm>>()
 const submitting = ref(false)
 
+/**
+ * 租户操作配置项
+ */
+const tenantOperateItems = [
+  { name: "资料维护", code: "edit", type: "primary" },
+  { name: "租户注销", code: "delete", type: "danger" }
+]
+
+/**
+ * 统一执行操作分发
+ */
+const handleOperate = (row: any, code: string) => {
+  if (code === "edit") handleEdit(row)
+  if (code === "delete") handleDelete(row)
+}
+
 const tableColumns: Column[] = [
-  { label: "租户实体", prop: "name", slot: "tenant_info", align: "center" },
-  { label: "身份域名标识", prop: "domain", slot: "domain", align: "center" },
-  { label: "运行状态", prop: "status", slot: "status", align: "center" }
+  { label: "租户实体", prop: "name", slot: "tenant_info", minWidth: 280, align: "center" },
+  { label: "身份域名标识", prop: "domain", slot: "domain", minWidth: 320, align: "center" },
+  { label: "运行状态", prop: "status", slot: "status", width: 140, align: "center" }
 ]
 
 const handleConfirm = async () => {

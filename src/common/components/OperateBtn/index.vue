@@ -1,5 +1,6 @@
 <template>
   <div v-if="props.items">
+    <!-- 当按钮总数超过限制时，进行折叠 -->
     <div v-if="props.items.length > props.maxLength" class="btn-box">
       <el-button
         v-for="(el, i) in showBtn"
@@ -16,7 +17,7 @@
 
       <el-dropdown trigger="hover" @command="handleCommand">
         <span class="el-dropdown-link">
-          <el-icon style="color: #409eff"><More /></el-icon>
+          <el-icon style="color: #409eff; margin-left: 4px; cursor: pointer"><More /></el-icon>
         </span>
         <template #dropdown>
           <el-dropdown-menu class="table-opetation-more-dropdown">
@@ -34,6 +35,8 @@
         </template>
       </el-dropdown>
     </div>
+
+    <!-- 未超过限制，直接展示 -->
     <div v-else class="btn-container">
       <div v-for="(item, index) in props.items" :key="index" class="btn-box">
         <el-button
@@ -52,7 +55,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { computed } from "vue"
+import { More } from "@element-plus/icons-vue"
 
 interface Item {
   name: string
@@ -69,33 +73,32 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const dropData = ref<any>([])
-const showBtn = ref<any>([])
+const emit = defineEmits(["routeEvent"])
 
-const updateButtonData = () => {
+// NOTE: 使用 computed 替代 watch + ref 以避免在 DataTable 大量渲染时触发局部刷新导致的死循环
+/**
+ * 需要在外部展示的按钮
+ */
+const showBtn = computed(() => {
   if (props.items.length > props.maxLength) {
-    showBtn.value = props.items.slice(0, props.maxLength)
-    dropData.value = props.items.slice(props.maxLength)
+    return props.items.slice(0, props.maxLength)
   }
-}
-
-onMounted(() => {
-  updateButtonData()
+  return []
 })
 
-// 监听 props.items 变化，实时更新按钮配置
-watch(
-  () => props.items,
-  () => {
-    updateButtonData()
-  },
-  { deep: true }
-)
+/**
+ * 需要收纳进下拉列表的按钮
+ */
+const dropData = computed(() => {
+  if (props.items.length > props.maxLength) {
+    return props.items.slice(props.maxLength)
+  }
+  return []
+})
 
-const emit = defineEmits(["routeEvent"])
 // 正常按钮点击事件
-const routeEvent = (data: any, name: string) => {
-  emit("routeEvent", data, name)
+const routeEvent = (data: any, code: string) => {
+  emit("routeEvent", data, code)
 }
 
 const beforeHandleCommand = (data: any, name: string, code: string) => {
@@ -111,6 +114,7 @@ const handleCommand = (command: any) => {
   routeEvent(command.data, command.code)
 }
 </script>
+
 <style lang="scss" scoped>
 .link-text .el-button {
   width: 100%;
@@ -121,6 +125,7 @@ const handleCommand = (command: any) => {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 8px;
 }
 
 .btn-box {
@@ -130,18 +135,16 @@ const handleCommand = (command: any) => {
 
   .el-button {
     min-width: 0px;
-    margin-right: calc(0.5rem + 0.2vw);
-    font-size: calc(0.6rem + 0.2vw);
-    padding: calc(0.25rem + 0.12vw) calc(0.5rem + 0.2vw);
-    min-height: calc(1.4rem + 0.35vw);
+    margin-right: 4px;
+    font-size: 13px;
+    padding: 4px 8px;
+    height: 32px;
   }
 }
 
 .el-dropdown-link {
-  vertical-align: text-top;
-}
-
-.el-dropdown {
-  vertical-align: middle;
+  display: flex;
+  align-items: center;
+  height: 32px;
 }
 </style>

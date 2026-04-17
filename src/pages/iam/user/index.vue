@@ -20,7 +20,7 @@
           <div class="action-group">
             <el-button class="eiam-secondary-btn" @click="ldapSyncVisible = true">
               <el-icon><Connection /></el-icon>
-              <span>AD/LDAP 同步</span>
+              <span>同步用户</span>
             </el-button>
             <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
@@ -55,7 +55,7 @@
         </div>
       </template>
 
-      <!-- 身份来源 -->
+      <!-- 身份来源: Identity Stack -->
       <template #identities="{ row }">
         <div class="identity-stack">
           <div
@@ -80,14 +80,13 @@
         <span class="column-text">{{ row.job_title || "-" }}</span>
       </template>
 
-      <!-- 操作权限 -->
+      <!-- 操作权限: 重新接入 OperateBtn -->
       <template #actions="{ row }">
-        <el-button type="primary" link @click="handleEdit(row)">资料维护</el-button>
-        <el-button type="danger" link @click="handleDelete(row)">权限注销</el-button>
+        <OperateBtn :items="userOperateItems" :operate-item="row" :max-length="3" @route-event="handleOperate" />
       </template>
     </DataTable>
 
-    <!-- 用户编辑/创建 弹窗 (FormDialog 风格) -->
+    <!-- 用户编辑/创建 弹窗 -->
     <FormDialog
       v-model="formVisible"
       :title="currentEditId ? '编辑主体资料' : '新增系统主体'"
@@ -98,15 +97,18 @@
       @confirm="handleDrawerConfirm"
       @cancel="formVisible = false"
     >
-      <div class="user-dialog-content">
-        <UserForm
-          ref="userFormRef"
-          :key="currentEditId || 'create'"
-          :is-edit="!!currentEditId"
-          :id="currentEditId!"
-          @success="handleFormSuccess"
-        />
-      </div>
+      <!-- 保留滚动管理 -->
+      <el-scrollbar max-height="65vh">
+        <div class="user-dialog-content">
+          <UserForm
+            ref="userFormRef"
+            :key="currentEditId || 'create'"
+            :is-edit="!!currentEditId"
+            :id="currentEditId!"
+            @success="handleFormSuccess"
+          />
+        </div>
+      </el-scrollbar>
     </FormDialog>
 
     <!-- LDAP 同步弹窗 -->
@@ -121,6 +123,7 @@ import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import UserForm from "./components/UserForm.vue"
 import LdapSyncDialog from "./components/LdapSyncDialog.vue"
 import type { Column } from "@@/components/DataTable/types"
@@ -147,6 +150,19 @@ const {
 const userFormRef = ref<InstanceType<typeof UserForm>>()
 const submitting = ref(false)
 const ldapSyncVisible = ref(false)
+
+/**
+ * 用户操作配置项
+ */
+const userOperateItems = [
+  { name: "资料维护", code: "edit", type: "primary" },
+  { name: "权限注销", code: "delete", type: "danger" }
+]
+
+const handleOperate = (row: any, code: string) => {
+  if (code === "edit") handleEdit(row)
+  if (code === "delete") handleDelete(row)
+}
 
 const tableColumns: Column[] = [
   { label: "主身份信息", prop: "username", slot: "user", minWidth: 200, align: "center" },
@@ -220,23 +236,6 @@ const handleDrawerConfirm = async () => {
   align-items: center;
   gap: 12px;
 
-  .eiam-primary-btn {
-    background: #3b82f6;
-    border: none;
-    border-radius: 8px;
-    height: 38px;
-    padding: 0 20px;
-    font-weight: 600;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-    transition: all 0.2s;
-
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  }
-
   .eiam-secondary-btn {
     background: #eff6ff;
     border: 1px solid #dbeafe;
@@ -256,6 +255,23 @@ const handleDrawerConfirm = async () => {
       background: #dbeafe;
       border-color: #bfdbfe;
       color: #1e40af;
+      transform: translateY(-1px);
+    }
+  }
+
+  .eiam-primary-btn {
+    background: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    height: 38px;
+    padding: 0 20px;
+    font-weight: 600;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+    transition: all 0.2s;
+
+    &:hover {
+      background: #2563eb;
       transform: translateY(-1px);
     }
   }
@@ -340,5 +356,6 @@ const handleDrawerConfirm = async () => {
 
 .user-dialog-content {
   width: 100%;
+  padding-right: 12px;
 }
 </style>

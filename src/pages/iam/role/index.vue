@@ -1,7 +1,11 @@
 <template>
   <PageContainer>
     <!-- 头部治理区 -->
-    <ManagerHeader title="角色治理" subtitle="定义身份角色及其权限边界，支持多维度的授权治理" @refresh="handleRefresh">
+    <ManagerHeader
+      title="角色治理"
+      subtitle="系统权限体系的核心载体，支持自定义与系统预设角色治理"
+      @refresh="handleRefresh"
+    >
       <template #actions>
         <div class="eiam-governance-bar">
           <!-- 搜索治理 -->
@@ -9,7 +13,7 @@
             <el-icon class="search-icon"><Search /></el-icon>
             <el-input
               v-model="query.keyword"
-              placeholder="搜索角色名称或标识..."
+              placeholder="搜索角色名称或标识码..."
               class="command-input"
               clearable
               @keyup.enter="handleRefresh"
@@ -20,7 +24,7 @@
           <div class="action-group">
             <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
-              <span>新增角色</span>
+              <span>初始化角色</span>
             </el-button>
             <el-button :icon="RefreshRight" class="eiam-refresh-btn" circle @click="handleRefresh" />
           </div>
@@ -41,7 +45,7 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 角色核心信息: Dual-Line 风格 -->
+      <!-- 角色核心资产: Dual-Line 风格 -->
       <template #role_info="{ row }">
         <div class="dual-line-info">
           <el-link type="primary" :underline="false" class="main-link" @click="handleEdit(row)">
@@ -51,53 +55,46 @@
         </div>
       </template>
 
-      <!-- 角色类型: 采用 Badge 风格提高识别度 -->
+      <!-- 角色来源/类型: 极简指示器 -->
       <template #type="{ row }">
-        <div class="type-indicator" :class="row.type === RoleType.SYSTEM ? 'is-system' : 'is-custom'">
+        <div class="type-indicator" :class="row.type === 1 ? 'is-system' : 'is-custom'">
           <span class="dot" />
-          {{ row.type === RoleType.SYSTEM ? "系统预设" : "自定义角色" }}
+          {{ row.type === 1 ? "系统预设" : "自定义角色" }}
         </div>
       </template>
 
-      <!-- 操作权限 -->
+      <!-- 操作权限: 使用优化后的 OperateBtn -->
       <template #actions="{ row }">
-        <el-button type="primary" link @click="handleEdit(row)">资料维护</el-button>
-        <el-button type="danger" link @click="handleDelete(row)">角色注销</el-button>
+        <OperateBtn :items="roleOperateItems" :operate-item="row" :max-length="3" @route-event="handleOperate" />
       </template>
     </DataTable>
 
-    <!-- 角色编辑/创建 弹窗 -->
+    <!-- 角色表单弹窗 -->
     <FormDialog
       v-model="formVisible"
-      :title="currentEditId ? '编辑角色资料' : '新增系统角色'"
-      :header-icon="UserIcon"
-      width="700px"
+      :title="currentEditCode ? '治理角色资产' : '初始化角色定义'"
+      :header-icon="Lock"
+      width="640px"
       :confirm-loading="submitting"
       @confirm="handleConfirm"
       @cancel="formVisible = false"
     >
-      <RoleForm
-        ref="roleFormRef"
-        :id="currentEditId!"
-        :code="currentEditCode!"
-        :is-edit="!!currentEditId"
-        @success="handleFormSuccess"
-      />
+      <RoleForm ref="roleFormRef" :code="currentEditCode!" :is-edit="!!currentEditCode" @success="handleFormSuccess" />
     </FormDialog>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Search, Plus, RefreshRight, User as UserIcon } from "@element-plus/icons-vue"
+import { Search, Plus, RefreshRight, Lock } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import RoleForm from "./components/RoleForm.vue"
-import type { Column } from "@@/components/DataTable/types"
 import { useRoleList } from "./composables/useRoleList"
-import { RoleType } from "@/api/iam/role/type"
+import type { Column } from "@@/components/DataTable/types"
 
 const {
   roles,
@@ -107,7 +104,6 @@ const {
   query,
   loading,
   formVisible,
-  currentEditId,
   currentEditCode,
   handleRefresh,
   handleCreate,
@@ -121,10 +117,23 @@ const {
 const roleFormRef = ref<InstanceType<typeof RoleForm>>()
 const submitting = ref(false)
 
+/**
+ * 角色操作配置项
+ */
+const roleOperateItems = [
+  { name: "资料维护", code: "edit", type: "primary" },
+  { name: "职责注销", code: "delete", type: "danger" }
+]
+
+const handleOperate = (row: any, code: string) => {
+  if (code === "edit") handleEdit(row)
+  if (code === "delete") handleDelete(row)
+}
+
 const tableColumns: Column[] = [
-  { label: "角色核心资产", prop: "name", slot: "role_info", align: "center" },
-  { label: "角色来源/类型", prop: "type", slot: "type", align: "center" },
-  { label: "职责描述说明", prop: "desc", align: "center" }
+  { label: "角色核心资产", prop: "name", slot: "role_info", minWidth: 200, align: "center" },
+  { label: "角色来源/类型", prop: "type", slot: "type", width: 160, align: "center" },
+  { label: "职责描述说明", prop: "desc", minWidth: 400, align: "center" }
 ]
 
 const handleConfirm = async () => {
@@ -254,7 +263,6 @@ const handleConfirm = async () => {
   }
 }
 
-/* 角色类型指示器 (极简朴素版) */
 .type-indicator {
   display: inline-flex;
   align-items: center;
@@ -280,7 +288,7 @@ const handleConfirm = async () => {
   }
 
   &.is-custom {
-    color: #64748b;
+    color: #475569;
     .dot {
       background: #cbd5e1;
     }
