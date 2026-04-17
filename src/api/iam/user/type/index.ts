@@ -85,3 +85,40 @@ export interface UpdateUserReq {
   avatar: string
   job_title: string
 }
+
+/** 修改密码请求 */
+export interface UpdatePasswordRequest {
+  old_password: string
+  new_password: string
+  confirm_password: string
+}
+
+/** 用户列表请求 */
+export interface ListUserRequest {
+  offset: number
+  limit: number
+  keyword?: string
+}
+
+/** 搜索 LDAP 用户请求 */
+export interface SearchLdapUserReq {
+  keywords: string
+  offset: number
+  limit: number
+}
+
+/** LDAP 列表用户信息 */
+export interface LdapSyncUser extends User {
+  is_synced: boolean
+}
+
+/** 同步 LDAP 用户请求 */
+export interface SyncLdapUserReq {
+  users: LdapSyncUser[]
+}
+
+/** LDAP 用户列表响应 */
+export interface LdapUserListData {
+  total: number
+  users: LdapSyncUser[]
+}

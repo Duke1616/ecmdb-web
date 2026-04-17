@@ -34,10 +34,10 @@ export function getProfileApi() {
 }
 
 /** 获取用户列表 */
-export function listUsersApi(params: { offset: number; limit: number }) {
+export function listUsersApi(data: user.ListUserRequest) {
   return instance.post<user.UserListData>({
     url: `${API_SERVICE.IAM}/user/list`,
-    data: params
+    data
   })
 }
 
@@ -48,10 +48,55 @@ export function logoutApi() {
   })
 }
 
-/** 更新用户信息 (根据 RetrieveUser/UpdateUserReq 推断) */
+/** 更新用户信息 */
 export function updateUserApi(data: user.UpdateUserReq) {
   return instance.post<user.User>({
     url: `${API_SERVICE.IAM}/user/update`,
     data
+  })
+}
+
+/** 修改密码 */
+export function updatePasswordApi(data: user.UpdatePasswordRequest) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/password/update`,
+    data
+  })
+}
+
+/** 获取用户详情 */
+export function userDetailApi(id: number) {
+  return instance.get<user.UserData>({
+    url: `${API_SERVICE.IAM}/user/detail/${id}`
+  })
+}
+
+/** 删除用户 */
+export function deleteUserApi(id: number) {
+  return instance.delete<string>({
+    url: `${API_SERVICE.IAM}/user/delete/${id}`
+  })
+}
+
+/** 搜索 LDAP 用户 */
+export function searchLdapUserApi(data: user.SearchLdapUserReq) {
+  return instance.post<user.LdapUserListData>({
+    url: `${API_SERVICE.IAM}/user/ldap/search`,
+    data
+  })
+}
+
+/** 同步 LDAP 用户 */
+export function syncLdapUserApi(data: user.SyncLdapUserReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/ldap/sync`,
+    data
+  })
+}
+
+/** 刷新 LDAP 缓存 */
+export function refreshLdapCacheApi() {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/ldap/refresh_cache`
   })
 }
