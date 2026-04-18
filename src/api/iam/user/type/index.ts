@@ -7,6 +7,7 @@ export interface User {
   avatar: string
   job_title: string
   phone: string
+  source: string
   ctime: number
   utime: number
   last_login_at: number

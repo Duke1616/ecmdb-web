@@ -61,19 +61,24 @@
         <el-tag v-else size="small" effect="plain" class="member-badge" type="info"> 未入驻 </el-tag>
       </template>
 
-      <!-- 身份来源: Identity Stack -->
-      <template #identities="{ row }">
-        <div class="identity-stack">
-          <div
-            v-for="idx in row.identities"
-            :key="idx.provider"
-            class="provider-pill"
-            :class="idx.provider.toLowerCase()"
-          >
-            {{ idx.provider.toUpperCase() }}
-          </div>
-          <span v-if="!row.identities?.length" class="empty-text">-</span>
+      <!-- 身份来源: 基于 Source 枚举 -->
+      <template #source="{ row }">
+        <div class="source-tag-group" v-if="row.source">
+          <el-tag v-if="row.source === 'local'" size="small" effect="plain" type="info" class="source-pill system">
+            本地登录
+          </el-tag>
+          <el-tag v-else-if="row.source === 'ldap'" size="small" effect="light" class="source-pill ldap">
+            LDAP 同步
+          </el-tag>
+          <el-tag v-else-if="row.source === 'feishu'" size="small" effect="light" class="source-pill feishu">
+            飞书同步
+          </el-tag>
+          <el-tag v-else-if="row.source === 'wechat'" size="small" effect="light" class="source-pill wechat">
+            企业微信
+          </el-tag>
+          <el-tag v-else size="small" effect="plain" type="info"> 其它 ({{ row.source }}) </el-tag>
         </div>
+        <span v-else class="empty-text">-</span>
       </template>
 
       <!-- 邮箱 -->
@@ -195,7 +200,7 @@ const tableColumns = computed<Column[]>(() => {
   }
 
   baseColumns.push(
-    { label: "身份来源", prop: "identities", slot: "identities", width: 140, align: "center" },
+    { label: "身份来源", prop: "source", slot: "source", width: 140, align: "center" },
     { label: "岗位职称", prop: "job_title", slot: "job_title", minWidth: 140, align: "center" }
   )
 
@@ -360,33 +365,37 @@ const handleDrawerConfirm = async () => {
   color: #475569;
 }
 
-.identity-stack {
+.source-tag-group {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
   gap: 4px;
 }
 
-.provider-pill {
-  font-size: 10px;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+.source-pill {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  line-height: 18px;
 
   &.system {
     color: #64748b;
+    border-color: #e2e8f0;
   }
   &.ldap {
-    background: #f0f9ff;
-    color: #0369a1;
+    color: #0ea5e9;
+    background-color: #f0f9ff;
     border-color: #bae6fd;
   }
+  &.feishu {
+    color: #2563eb;
+    background-color: #eff6ff;
+    border-color: #dbeafe;
+  }
   &.wechat {
-    background: #f0fdf4;
-    color: #15803d;
+    color: #16a34a;
+    background-color: #f0fdf4;
     border-color: #bbf7d0;
   }
 }

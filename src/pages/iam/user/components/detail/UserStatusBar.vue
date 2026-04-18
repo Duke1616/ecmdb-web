@@ -13,6 +13,23 @@ defineProps<{
       <span class="label">控制台登录:</span>
       <span class="value success">已激活</span>
     </div>
+    <div class="divider" />
+    <div class="status-item">
+      <span class="label">账号来源:</span>
+      <span class="value source-type" :class="user?.source">
+        {{
+          user?.source === "local"
+            ? "本地账户"
+            : user?.source === "ldap"
+              ? "LDAP 同步"
+              : user?.source === "feishu"
+                ? "飞书同步"
+                : user?.source === "wechat"
+                  ? "微信同步"
+                  : user?.source || "未知"
+        }}
+      </span>
+    </div>
     <template v-if="user?.is_member !== undefined">
       <div class="divider" />
       <div class="status-item">
@@ -84,6 +101,20 @@ defineProps<{
       }
       &.low {
         color: #6366f1;
+      }
+      &.source-type {
+        &.ldap {
+          color: #0ea5e9;
+        }
+        &.feishu {
+          color: #2563eb;
+        }
+        &.wechat {
+          color: #16a34a;
+        }
+        &.local {
+          color: #64748b;
+        }
       }
     }
   }
