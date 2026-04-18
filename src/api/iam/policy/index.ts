@@ -57,3 +57,11 @@ export function batchAttachPolicyApi(data: policy.BatchAttachPolicyRequest) {
     data
   })
 }
+
+/** 分页获取用户关联的策略列表 (管理侧) */
+export function listUserPoliciesApi(data: policy.ListUserPoliciesReq) {
+  return instance.post<policy.ListPolicyResponse>({
+    url: `${API_SERVICE.IAM}/policy/list/attached/user`,
+    data
+  })
+}

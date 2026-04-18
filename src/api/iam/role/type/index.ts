@@ -48,6 +48,12 @@ export interface ListRoleReq {
   offset: number
   limit: number
   keyword?: string
+  type?: number
+}
+
+/** 用户关联角色列表请求 */
+export interface ListUserRolesReq extends ListRoleReq {
+  user_id: number
 }
 
 /** 角色列表响应 */

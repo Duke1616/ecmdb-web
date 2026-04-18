@@ -6,6 +6,8 @@ export interface User {
   nickname: string
   avatar: string
   job_title: string
+  ctime: number
+  utime: number
   identities: Identity[]
 }
 

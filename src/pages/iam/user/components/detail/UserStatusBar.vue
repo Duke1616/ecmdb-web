@@ -1,0 +1,76 @@
+<template>
+  <div class="governance-status-bar">
+    <div class="status-item">
+      <div class="dot active" />
+      <span class="label">控制台登录:</span>
+      <span class="value success">已激活</span>
+    </div>
+    <div class="divider" />
+    <div class="status-item">
+      <div class="dot inactive" />
+      <span class="label">MFA 状态:</span>
+      <span class="value warning">未绑定</span>
+    </div>
+    <div class="divider" />
+    <div class="status-item">
+      <div class="dot success" />
+      <span class="label">风险等级:</span>
+      <span class="value low">0 (安全)</span>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.governance-status-bar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    gap: 8px;
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      &.active,
+      &.success {
+        background: #10b981;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+      }
+      &.inactive,
+      &.warning {
+        background: #f59e0b;
+      }
+    }
+    .label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    .value {
+      font-weight: 700;
+      &.success {
+        color: #10b981;
+      }
+      &.warning {
+        color: #f59e0b;
+      }
+      &.low {
+        color: #6366f1;
+      }
+    }
+  }
+
+  .divider {
+    width: 1px;
+    height: 16px;
+    background: #e2e8f0;
+  }
+}
+</style>

@@ -48,7 +48,7 @@
       <!-- 用户身份: 采用 Governance 风格的 Dual-Line -->
       <template #user="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link" @click="handleEdit(row)">
+          <el-link type="primary" :underline="false" class="main-link" @click="handleView(row)">
             {{ row.nickname || row.username }}
           </el-link>
           <div class="sub-detail mono">{{ row.username }}</div>
@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import { useRouter } from "vue-router"
 import { Search, Plus, RefreshRight, User as UserIcon, Connection } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -129,6 +130,7 @@ import LdapSyncDialog from "./components/LdapSyncDialog.vue"
 import type { Column } from "@@/components/DataTable/types"
 import { useUserList } from "./composables/useUserList"
 
+const router = useRouter()
 const {
   users,
   total,
@@ -146,6 +148,13 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = useUserList()
+
+/**
+ * 跳转至详情页
+ */
+const handleView = (row: any) => {
+  router.push(`/identity/user/detail/${row.id}`)
+}
 
 const userFormRef = ref<InstanceType<typeof UserForm>>()
 const submitting = ref(false)

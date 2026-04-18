@@ -39,3 +39,11 @@ export function deleteRoleApi(id: number) {
     url: `${API_SERVICE.IAM}/role/delete/${id}`
   })
 }
+
+/** 获取用户关联的角色列表 (管理侧) */
+export function listUserRolesApi(data: role.ListUserRolesReq) {
+  return instance.post<role.ListRoleRes>({
+    url: `${API_SERVICE.IAM}/role/list/attached/user`,
+    data
+  })
+}

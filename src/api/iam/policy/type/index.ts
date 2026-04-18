@@ -56,6 +56,11 @@ export interface ListPolicyResponse {
   policies: Policy[]
 }
 
+/** 用户关联策略列表请求 */
+export interface ListUserPoliciesReq extends ListPolicyRequest {
+  user_id: number
+}
+
 /** 绑定/解绑策略请求 */
 export interface AttachPolicyRequest {
   role_code: string
