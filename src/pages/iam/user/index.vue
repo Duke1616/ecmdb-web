@@ -55,6 +55,12 @@
         </div>
       </template>
 
+      <!-- 租户成员标记 -->
+      <template #is_member="{ row }">
+        <el-tag v-if="row.is_member" size="small" effect="light" class="member-badge" type="success"> 已入驻 </el-tag>
+        <el-tag v-else size="small" effect="plain" class="member-badge" type="info"> 未入驻 </el-tag>
+      </template>
+
       <!-- 身份来源: Identity Stack -->
       <template #identities="{ row }">
         <div class="identity-stack">
@@ -117,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
 import { Search, Plus, RefreshRight, User as UserIcon, Connection } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -173,12 +179,28 @@ const handleOperate = (row: any, code: string) => {
   if (code === "delete") handleDelete(row)
 }
 
-const tableColumns: Column[] = [
-  { label: "主身份信息", prop: "username", slot: "user", minWidth: 200, align: "center" },
-  { label: "电子邮箱", prop: "email", slot: "email", minWidth: 200, align: "center" },
-  { label: "身份来源", prop: "identities", slot: "identities", width: 140, align: "center" },
-  { label: "岗位职称", prop: "job_title", slot: "job_title", minWidth: 160, align: "center" }
-]
+/**
+ * 动态计算表头：只有当数据中包含 is_member 字段时，才展示该列
+ */
+const tableColumns = computed<Column[]>(() => {
+  const baseColumns: Column[] = [
+    { label: "主身份信息", prop: "username", slot: "user", minWidth: 200, align: "center" },
+    { label: "电子邮箱", prop: "email", slot: "email", minWidth: 180, align: "center" }
+  ]
+
+  // 判定数据中是否存在 membership 装饰
+  const hasMemberInfo = users.value.some((u) => u.is_member !== undefined)
+  if (hasMemberInfo) {
+    baseColumns.push({ label: "入驻状态", prop: "is_member", slot: "is_member", width: 120, align: "center" })
+  }
+
+  baseColumns.push(
+    { label: "身份来源", prop: "identities", slot: "identities", width: 140, align: "center" },
+    { label: "岗位职称", prop: "job_title", slot: "job_title", minWidth: 140, align: "center" }
+  )
+
+  return baseColumns
+})
 
 const handleDrawerConfirm = async () => {
   if (!userFormRef.value) return
@@ -321,6 +343,16 @@ const handleDrawerConfirm = async () => {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
   }
+}
+
+.member-badge {
+  height: 20px;
+  min-width: 52px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  line-height: 18px;
 }
 
 .column-text {

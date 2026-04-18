@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { useRouter } from "vue-router"
-import { Edit } from "@element-plus/icons-vue"
+import { Edit, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
@@ -18,13 +18,13 @@ import AuthGovernance from "./components/detail/AuthGovernance.vue"
 import IdentitySources from "./components/detail/IdentitySources.vue"
 import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
+import TenantTable from "./components/detail/TenantTable.vue"
 
 const router = useRouter()
 const userFormRef = ref<InstanceType<typeof UserForm>>()
 
 const {
   userInfo,
-  userTenants,
   loading: detailLoading,
   editVisible,
   handleDelete,
@@ -46,14 +46,21 @@ const {
   policyLoading,
   policyQuery,
   selectedPolicies,
+  tenants,
+  tenantTotal,
+  tenantLoading,
+  tenantQuery,
   handleRolePageChange,
   handlePolicyPageChange,
+  handleTenantPageChange,
   handleRoleSearch,
   handleRoleTypeChange,
   handlePolicySearch,
   handlePolicyTypeChange,
+  handleTenantSearch,
   handleAddRole,
   handleAddPolicy,
+  handleAddTenant,
   handleUnbindRole,
   handleUnbindPolicy,
   handleBatchUnbindRoles,
@@ -97,7 +104,7 @@ onMounted(() => {
       </ManagerHeader>
 
       <div class="governance-body">
-        <UserStatusBar />
+        <UserStatusBar :user="userInfo" />
         <UserInfoGrid :user="userInfo" :format-timestamp="formatTimestamp" @copy="copyText" />
 
         <div class="governance-tabs-card">
@@ -110,7 +117,7 @@ onMounted(() => {
               <IdentitySources :user="userInfo" />
             </el-tab-pane>
 
-            <el-tab-pane label="角色关联" name="roles">
+            <el-tab-pane v-if="userInfo?.is_member !== false" label="角色关联" name="roles">
               <RoleTable
                 v-model:selection="selectedRoles"
                 :loading="roleLoading"
@@ -127,7 +134,7 @@ onMounted(() => {
               />
             </el-tab-pane>
 
-            <el-tab-pane label="权限策略" name="permissions">
+            <el-tab-pane v-if="userInfo?.is_member !== false" label="权限策略" name="permissions">
               <PolicyTable
                 v-model:selection="selectedPolicies"
                 :loading="policyLoading"
@@ -146,12 +153,16 @@ onMounted(() => {
             </el-tab-pane>
 
             <el-tab-pane label="所属租户" name="tenants">
-              <div v-if="userTenants.length">
-                <!-- 预留租户列表 -->
-              </div>
-              <div v-else class="tab-pane-empty">
-                <el-empty :image-size="60" description="主体仅在当前根空间可见，未入驻其他租户空间" />
-              </div>
+              <TenantTable
+                :loading="tenantLoading"
+                :data="tenants"
+                :total="tenantTotal"
+                :current-page="tenantQuery.currentPage"
+                :page-size="tenantQuery.pageSize"
+                @page-change="handleTenantPageChange"
+                @search="handleTenantSearch"
+                @add="handleAddTenant"
+              />
             </el-tab-pane>
           </el-tabs>
         </div>

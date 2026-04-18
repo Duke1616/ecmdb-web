@@ -1,3 +1,11 @@
+<script setup lang="ts">
+import type { User } from "@/api/iam/user/type"
+
+defineProps<{
+  user?: User
+}>()
+</script>
+
 <template>
   <div class="governance-status-bar">
     <div class="status-item">
@@ -5,6 +13,16 @@
       <span class="label">控制台登录:</span>
       <span class="value success">已激活</span>
     </div>
+    <template v-if="user?.is_member !== undefined">
+      <div class="divider" />
+      <div class="status-item">
+        <div class="dot" :class="user?.is_member ? 'success' : 'inactive'" />
+        <span class="label">入驻状态:</span>
+        <span class="value" :class="user?.is_member ? 'success' : 'info'">
+          {{ user?.is_member ? "已入驻本空间" : "尚未入驻" }}
+        </span>
+      </div>
+    </template>
     <div class="divider" />
     <div class="status-item">
       <div class="dot inactive" />
@@ -60,6 +78,9 @@
       }
       &.warning {
         color: #f59e0b;
+      }
+      &.info {
+        color: #94a3b8;
       }
       &.low {
         color: #6366f1;

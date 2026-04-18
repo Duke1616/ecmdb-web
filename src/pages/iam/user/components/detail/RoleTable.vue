@@ -52,7 +52,13 @@ const emit = defineEmits<{
 
     <!-- 检索扩展 -->
     <template #extra-filters>
-      <el-select v-model="roleType" placeholder="全部类型" clearable class="role-type-filter" @change="emit('filterChange', $event)">
+      <el-select
+        v-model="roleType"
+        placeholder="全部类型"
+        clearable
+        class="role-type-filter"
+        @change="emit('filterChange', $event)"
+      >
         <el-option label="系统内置" :value="1" />
         <el-option label="自定义" :value="2" />
       </el-select>

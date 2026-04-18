@@ -6,9 +6,12 @@ export interface User {
   nickname: string
   avatar: string
   job_title: string
+  phone: string
   ctime: number
   utime: number
+  last_login_at: number
   identities: Identity[]
+  is_member?: boolean
 }
 
 /** 身份认证信息 */

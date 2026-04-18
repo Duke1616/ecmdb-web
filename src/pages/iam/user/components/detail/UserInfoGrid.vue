@@ -36,6 +36,13 @@ const emit = defineEmits<{
           <div class="k">岗位职称</div>
           <div class="v">{{ user.job_title || "-" }}</div>
         </div>
+        <div class="kv-item">
+          <div class="k">手机号码</div>
+          <div class="v copyable">
+            <span>{{ user.phone || "-" }}</span>
+            <el-icon v-if="user.phone" class="copy-icon" @click="emit('copy', user.phone)"><DocumentCopy /></el-icon>
+          </div>
+        </div>
       </div>
       <div class="grid-col">
         <div class="kv-item">
@@ -50,7 +57,11 @@ const emit = defineEmits<{
       <div class="grid-col">
         <div class="kv-item">
           <div class="k">最近登录</div>
-          <div class="v">{{ formatTimestamp(user.utime) || "-" }}</div>
+          <div class="v">{{ user.last_login_at ? formatTimestamp(user.last_login_at) : "从未登录" }}</div>
+        </div>
+        <div class="kv-item">
+          <div class="k">更新时间</div>
+          <div class="v">{{ formatTimestamp(user.utime) }}</div>
         </div>
       </div>
     </div>

@@ -562,7 +562,7 @@ onBeforeUnmount(() => {
   min-height: 140px;
 }
 
-  .content-labels {
+.content-labels {
   display: flex;
   align-items: center;
   min-height: 44px;

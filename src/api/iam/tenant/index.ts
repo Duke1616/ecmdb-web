@@ -54,3 +54,11 @@ export function getTenantDetailApi(id: number) {
     url: `${API_SERVICE.IAM}/tenant/detail/${id}`
   })
 }
+
+/** 查询特定用户的关联租户 (管理侧使用) */
+export function listUserTenantsApi(data: tenant.ListUserTenantsReq) {
+  return instance.post<tenant.ListTenantRes>({
+    url: `${API_SERVICE.IAM}/tenant/list/attached/user`,
+    data
+  })
+}

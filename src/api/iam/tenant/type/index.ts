@@ -38,3 +38,11 @@ export interface ListTenantRes {
   total: number
   tenants: Tenant[]
 }
+
+/** 查询用户所属租户请求 */
+export interface ListUserTenantsReq {
+  user_id: number
+  offset: number
+  limit: number
+  keyword: string
+}

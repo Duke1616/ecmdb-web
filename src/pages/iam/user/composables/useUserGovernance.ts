@@ -3,8 +3,10 @@ import { useRoute } from "vue-router"
 import { ElMessage } from "element-plus"
 import { listUserRolesApi } from "@/api/iam/role"
 import { listUserPoliciesApi } from "@/api/iam/policy"
+import { listUserTenantsApi } from "@/api/iam/tenant"
 import type { Role } from "@/api/iam/role/type"
 import type { Policy } from "@/api/iam/policy/type"
+import type { Tenant } from "@/api/iam/tenant/type"
 
 export function useUserGovernance() {
   const route = useRoute()
@@ -32,18 +34,24 @@ export function useUserGovernance() {
     type: undefined as number | undefined
   })
 
+  // 租户相关
+  const tenants = ref<Tenant[]>([])
+  const tenantTotal = ref(0)
+  const tenantLoading = ref(false)
+  const tenantQuery = reactive({
+    currentPage: 1,
+    pageSize: 10,
+    keyword: ""
+  })
+
   /**
    * 加载角色
    */
   const loadUserRoles = async () => {
-    // 兼容 id 或 userId 参数
     const rawId = route.params.id || route.params.userId
     const userId = Number(rawId)
 
-    if (!userId) {
-      console.warn("[UserGovernance] userId not found in route, skip role loading")
-      return
-    }
+    if (!userId) return
 
     roleLoading.value = true
     try {
@@ -70,10 +78,7 @@ export function useUserGovernance() {
     const rawId = route.params.id || route.params.userId
     const userId = Number(rawId)
 
-    if (!userId) {
-      console.warn("[UserGovernance] userId not found in route, skip policy loading")
-      return
-    }
+    if (!userId) return
 
     policyLoading.value = true
     try {
@@ -93,6 +98,32 @@ export function useUserGovernance() {
     }
   }
 
+  /**
+   * 加载租户
+   */
+  const loadUserTenants = async () => {
+    const rawId = route.params.id || route.params.userId
+    const userId = Number(rawId)
+
+    if (!userId) return
+
+    tenantLoading.value = true
+    try {
+      const { data } = await listUserTenantsApi({
+        user_id: userId,
+        offset: (tenantQuery.currentPage - 1) * tenantQuery.pageSize,
+        limit: tenantQuery.pageSize,
+        keyword: tenantQuery.keyword
+      })
+      tenants.value = data.tenants
+      tenantTotal.value = data.total
+    } catch (err) {
+      console.error("[UserGovernance] Load tenants failed:", err)
+    } finally {
+      tenantLoading.value = false
+    }
+  }
+
   const handleRolePageChange = (page: number) => {
     roleQuery.currentPage = page
     loadUserRoles()
@@ -101,6 +132,11 @@ export function useUserGovernance() {
   const handlePolicyPageChange = (page: number) => {
     policyQuery.currentPage = page
     loadUserPolicies()
+  }
+
+  const handleTenantPageChange = (page: number) => {
+    tenantQuery.currentPage = page
+    loadUserTenants()
   }
 
   const handleRoleSearch = (keyword: string) => {
@@ -127,14 +163,23 @@ export function useUserGovernance() {
     loadUserPolicies()
   }
 
+  const handleTenantSearch = (keyword: string) => {
+    tenantQuery.keyword = keyword
+    tenantQuery.currentPage = 1
+    loadUserTenants()
+  }
+
   const handleAddRole = () => ElMessage.info("角色分配功能即将集成...")
   const handleAddPolicy = () => ElMessage.info("策略授权功能即将集成...")
+  const handleAddTenant = () => ElMessage.info("租户入驻功能即将集成...")
   const handleUnbindRole = (row: Role) => ElMessage.info(`即将解绑角色: ${row.name}`)
   const handleUnbindPolicy = (row: Policy) => ElMessage.info(`即将解绑策略: ${row.name}`)
+  const handleUnbindTenant = (row: Tenant) => ElMessage.info(`即将移除租户关联: ${row.name}`)
 
   // 批量选择状态
   const selectedRoles = ref<Role[]>([])
   const selectedPolicies = ref<Policy[]>([])
+  const selectedTenants = ref<Tenant[]>([])
 
   const handleBatchUnbindRoles = () => {
     ElMessage.warning(`即将批量解绑 ${selectedRoles.value.length} 个角色`)
@@ -146,24 +191,30 @@ export function useUserGovernance() {
     selectedPolicies.value = []
   }
 
+  const handleBatchUnbindTenants = () => {
+    ElMessage.warning(`即将批量移除 ${selectedTenants.value.length} 个租户关联`)
+    selectedTenants.value = []
+  }
+
   // 核心监听逻辑：监听 Tab 切换
   watch(
     () => activeTab.value,
     (newTab) => {
-      console.log("[UserGovernance] Tab switched to:", newTab)
       if (newTab === "roles") loadUserRoles()
       if (newTab === "permissions") loadUserPolicies()
+      if (newTab === "tenants") loadUserTenants()
     },
     { immediate: true }
   )
 
-  // 附加监听逻辑：监听路由参数变化（解决刷新后 ID 未就绪的问题）
+  // 附加监听逻辑
   watch(
     () => route.params.id || route.params.userId,
     (newId) => {
       if (newId) {
         if (activeTab.value === "roles") loadUserRoles()
         if (activeTab.value === "permissions") loadUserPolicies()
+        if (activeTab.value === "tenants") loadUserTenants()
       }
     }
   )
@@ -180,19 +231,30 @@ export function useUserGovernance() {
     policyLoading,
     policyQuery,
     selectedPolicies,
+    tenants,
+    tenantTotal,
+    tenantLoading,
+    tenantQuery,
+    selectedTenants,
     loadUserRoles,
     loadUserPolicies,
+    loadUserTenants,
     handleRolePageChange,
     handlePolicyPageChange,
+    handleTenantPageChange,
     handleRoleSearch,
     handleRoleTypeChange,
     handlePolicySearch,
     handlePolicyTypeChange,
+    handleTenantSearch,
     handleAddRole,
     handleAddPolicy,
+    handleAddTenant,
     handleUnbindRole,
     handleUnbindPolicy,
+    handleUnbindTenant,
     handleBatchUnbindRoles,
-    handleBatchUnbindPolicies
+    handleBatchUnbindPolicies,
+    handleBatchUnbindTenants
   }
 }
