@@ -134,17 +134,29 @@ watch(visible, async (open) => {
 
 <style lang="scss" scoped>
 .wizard-workflow {
-  padding: 0;
+  padding: 16px 20px; /* 压缩外边距 */
   display: flex;
   flex-direction: column;
+  gap: 8px; /* 显著收紧卡片间距 */
   background: #ffffff;
 }
 
-/* 步骤连接符：极简横封 */
+/* 步骤连接符：精简高度 */
 .wizard-connector {
-  height: 8px;
-  background: #f8fafc;
-  border-top: 1px solid #f1f5f9;
-  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 16px; /* 从 32px 压缩到 16px */
+  margin: -4px 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    border-left: 2px dashed #f1f5f9;
+  }
 }
 </style>

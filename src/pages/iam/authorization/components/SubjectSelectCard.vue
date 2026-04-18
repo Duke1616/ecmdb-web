@@ -208,16 +208,14 @@ defineExpose({
   }
 
   &.is-flat {
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    border-radius: 0;
+    border: 1px solid #f1f5f9;
+    border-radius: 12px;
     box-shadow: none;
 
     .card-header {
       background: #ffffff;
-      padding: 20px 24px 10px;
-      border-bottom: none;
+      padding: 14px 20px;
+      border-bottom: 1px solid #f1f5f9;
       .main-icon {
         background: #f8fafc;
       }
@@ -230,8 +228,8 @@ defineExpose({
   height: 480px;
 
   .is-flat & {
-    height: 520px;
-    padding: 0 24px 24px;
+    height: 480px;
+    padding: 0;
   }
 }
 

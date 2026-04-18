@@ -227,18 +227,14 @@ defineExpose({
   }
 
   &.is-flat {
-    border: none;
-    border-radius: 0;
+    border: 1px solid #f1f5f9; /* 使用极致淡的灰线 */
+    border-radius: 12px;
     box-shadow: none;
 
-    &:hover {
-      box-shadow: none;
-    }
-
     .card-header {
-      background: #ffffff;
-      padding: 20px 24px 10px;
-      border-bottom: none;
+      background: #ffffff; /* 统一回纯白 */
+      padding: 14px 20px;
+      border-bottom: 1px solid #f1f5f9;
 
       .main-icon {
         background: #f8fafc;
@@ -252,8 +248,8 @@ defineExpose({
   height: 480px;
 
   .is-flat & {
-    height: 520px;
-    padding: 0 24px 24px;
+    height: 480px;
+    padding: 0;
   }
 }
 
