@@ -1,9 +1,24 @@
 <script setup lang="ts">
+import { computed } from "vue"
 import type { User } from "@/api/iam/user/type"
 
-defineProps<{
+const props = defineProps<{
   user?: User
 }>()
+
+// 账号来源映射表
+const sourceLabelMap: Record<string, string> = {
+  local: "本地账户",
+  ldap: "LDAP 同步",
+  feishu: "飞书同步",
+  wechat: "微信同步"
+}
+
+// 动态获取来源文案
+const sourceLabel = computed(() => {
+  if (!props.user?.source) return "未知"
+  return sourceLabelMap[props.user.source] || `其它 (${props.user.source})`
+})
 </script>
 
 <template>
@@ -17,17 +32,7 @@ defineProps<{
     <div class="status-item">
       <span class="label">账号来源:</span>
       <span class="value source-type" :class="user?.source">
-        {{
-          user?.source === "local"
-            ? "本地账户"
-            : user?.source === "ldap"
-              ? "LDAP 同步"
-              : user?.source === "feishu"
-                ? "飞书同步"
-                : user?.source === "wechat"
-                  ? "微信同步"
-                  : user?.source || "未知"
-        }}
+        {{ sourceLabel }}
       </span>
     </div>
     <template v-if="user?.is_member !== undefined">

@@ -11,6 +11,7 @@ import type { Tenant } from "@/api/iam/tenant/type"
 export function useUserGovernance() {
   const route = useRoute()
   const activeTab = ref("auth")
+  const attachPolicyVisible = ref(false)
 
   // 角色相关
   const roles = ref<Role[]>([])
@@ -170,7 +171,12 @@ export function useUserGovernance() {
   }
 
   const handleAddRole = () => ElMessage.info("角色分配功能即将集成...")
-  const handleAddPolicy = () => ElMessage.info("策略授权功能即将集成...")
+  const handleAddPolicy = () => {
+    attachPolicyVisible.value = true
+  }
+  const handleAttachPolicySuccess = () => {
+    loadUserPolicies()
+  }
   const handleAddTenant = () => ElMessage.info("租户入驻功能即将集成...")
   const handleUnbindRole = (row: Role) => ElMessage.info(`即将解绑角色: ${row.name}`)
   const handleUnbindPolicy = (row: Policy) => ElMessage.info(`即将解绑策略: ${row.name}`)
@@ -249,6 +255,8 @@ export function useUserGovernance() {
     handleTenantSearch,
     handleAddRole,
     handleAddPolicy,
+    attachPolicyVisible,
+    handleAttachPolicySuccess,
     handleAddTenant,
     handleUnbindRole,
     handleUnbindPolicy,

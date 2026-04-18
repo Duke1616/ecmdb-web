@@ -16,9 +16,10 @@ import UserStatusBar from "./components/detail/UserStatusBar.vue"
 import UserInfoGrid from "./components/detail/UserInfoGrid.vue"
 import AuthGovernance from "./components/detail/AuthGovernance.vue"
 import IdentitySources from "./components/detail/IdentitySources.vue"
-import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
 import TenantTable from "./components/detail/TenantTable.vue"
+import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
+import type { Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
 const userFormRef = ref<InstanceType<typeof UserForm>>()
@@ -60,6 +61,8 @@ const {
   handleTenantSearch,
   handleAddRole,
   handleAddPolicy,
+  attachPolicyVisible,
+  handleAttachPolicySuccess,
   handleAddTenant,
   handleUnbindRole,
   handleUnbindPolicy,
@@ -73,6 +76,19 @@ const {
 const handleEditConfirm = () => {
   userFormRef.value?.submit()
 }
+
+// 将当前用户信息包装为固定授权主体
+const userSubjects = computed<Subject[]>(() => {
+  if (!userInfo.value) return []
+  return [
+    {
+      type: "user",
+      id: userInfo.value.username,
+      name: userInfo.value.nickname || userInfo.value.username,
+      desc: userInfo.value.job_title
+    }
+  ]
+})
 
 // 增加首屏加载后的强制日志，定位问题
 onMounted(() => {
@@ -152,7 +168,7 @@ onMounted(() => {
               />
             </el-tab-pane>
 
-            <el-tab-pane label="所属租户" name="tenants">
+            <el-tab-pane v-if="userInfo?.is_member !== undefined" label="所属租户" name="tenants">
               <TenantTable
                 :loading="tenantLoading"
                 :data="tenants"
@@ -184,6 +200,13 @@ onMounted(() => {
         <UserForm ref="userFormRef" :id="userInfo?.id!" is-edit @success="handleEditSuccess" />
       </el-scrollbar>
     </FormDialog>
+
+    <!-- 策略授权向导 (复用全局授权组件) -->
+    <AuthorizeDrawer
+      v-model="attachPolicyVisible"
+      :fixed-subjects="userSubjects"
+      @success="handleAttachPolicySuccess"
+    />
   </PageContainer>
 </template>
 
