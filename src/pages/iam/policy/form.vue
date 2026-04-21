@@ -1,5 +1,12 @@
 <template>
-  <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top" class="policy-logic-form">
+  <el-form
+    ref="formRef"
+    v-loading="loading"
+    :model="formData"
+    :rules="formRules"
+    label-position="top"
+    class="policy-logic-form"
+  >
     <!-- 1. 基础信息配置卡片 (可由父组件控制隐藏) -->
     <div v-if="!hideBasic" class="base-config-section">
       <div class="section-title">基础配置</div>
@@ -92,9 +99,10 @@ import { ElMessage } from "element-plus"
 import { Codemirror } from "vue-codemirror"
 import { json } from "@codemirror/lang-json"
 import { usePolicyForm } from "./composables/usePolicyForm"
+import { parseStatementsJson } from "./composables/usePolicyData"
 import PolicyStatement from "./components/PolicyStatement.vue"
 
-const props = defineProps<{ isEdit: boolean; id?: string; hideBasic?: boolean }>()
+const props = defineProps<{ isEdit: boolean; code?: string; hideBasic?: boolean }>()
 const emit = defineEmits(["success"])
 
 // 编辑模式：visual | json
@@ -106,6 +114,7 @@ const {
   formRef,
   formData,
   formRules,
+  loading,
   permissionManifest,
   addStatement,
   removeStatement,
@@ -114,19 +123,19 @@ const {
   setForm
 } = usePolicyForm(props, emit)
 
+const syncJsonCodeFromStatements = () => {
+  jsonCode.value = JSON.stringify(formData.statement, null, 2)
+}
+
 // 深度监听：编辑器模式切换时的同步逻辑
 watch(editorMode, (newMode, oldMode) => {
   if (newMode === "json") {
     // 进入脚本模式：对象 -> 字符串
-    jsonCode.value = JSON.stringify(formData.statement, null, 2)
+    syncJsonCodeFromStatements()
   } else if (newMode === "visual" && oldMode === "json") {
     // 退出脚本模式：字符串 -> 对象 (带校验)
     try {
-      const parsed = JSON.parse(jsonCode.value)
-      if (!Array.isArray(parsed)) {
-        throw new Error("权限语句必须是一个数组格式")
-      }
-      formData.statement = parsed
+      formData.statement = parseStatementsJson(jsonCode.value)
     } catch (e: any) {
       ElMessage.error(`脚本解析失败: ${e.message}`)
       // 强制切回 JSON 模式，防止数据丢失或错误同步
@@ -135,6 +144,16 @@ watch(editorMode, (newMode, oldMode) => {
   }
 })
 
+watch(
+  () => formData.statement,
+  () => {
+    if (editorMode.value === "visual") {
+      syncJsonCodeFromStatements()
+    }
+  },
+  { deep: true, immediate: true }
+)
+
 const handleImport = () => {
   ElMessage.info("策略导入功能开发中...")
 }
@@ -142,9 +161,7 @@ const handleImport = () => {
 const handleInternalSubmit = async () => {
   if (editorMode.value === "json") {
     try {
-      const parsed = JSON.parse(jsonCode.value)
-      if (!Array.isArray(parsed)) throw new Error("权限语句必须是一个数组")
-      formData.statement = parsed
+      formData.statement = parseStatementsJson(jsonCode.value)
     } catch (e: any) {
       ElMessage.error(`保存失败：脚本格式有误 (${e.message})`)
       return false

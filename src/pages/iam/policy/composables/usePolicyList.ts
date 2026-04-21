@@ -10,6 +10,7 @@ export function usePolicyList() {
   const total = ref(0)
   const currentPage = ref(1)
   const pageSize = ref(10)
+  const loading = ref(false)
 
   // 查询参数
   const query = reactive<ListPolicyRequest>({
@@ -20,13 +21,11 @@ export function usePolicyList() {
   })
 
   // 交互状态
-  const drawerVisible = ref(false)
-  const isEdit = ref(false)
-  const submitting = ref(false)
   const jsonVisible = ref(false)
   const selectedPolicy = ref<Policy | null>(null)
 
   const loadData = async () => {
+    loading.value = true
     try {
       const { data } = await listPoliciesApi({
         ...query,
@@ -37,6 +36,8 @@ export function usePolicyList() {
       total.value = data.total
     } catch (error) {
       console.error("加载策略列表失败:", error)
+    } finally {
+      loading.value = false
     }
   }
 
@@ -52,7 +53,7 @@ export function usePolicyList() {
   const handleEdit = (row: Policy) => {
     router.push({
       path: "/iam/policy/edit",
-      query: { id: row.id }
+      query: { code: row.code }
     })
   }
 
@@ -79,11 +80,6 @@ export function usePolicyList() {
   const handleSizeChange = () => loadData()
   const handleCurrentChange = () => loadData()
 
-  const handleSuccess = () => {
-    drawerVisible.value = false
-    loadData()
-  }
-
   onMounted(loadData)
 
   return {
@@ -91,10 +87,8 @@ export function usePolicyList() {
     total,
     currentPage,
     pageSize,
+    loading,
     query,
-    drawerVisible,
-    isEdit,
-    submitting,
     jsonVisible,
     selectedPolicy,
     loadData,
@@ -104,7 +98,6 @@ export function usePolicyList() {
     handleDelete,
     handleViewJson,
     handleSizeChange,
-    handleCurrentChange,
-    handleSuccess
+    handleCurrentChange
   }
 }

@@ -73,7 +73,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { computed } from "vue"
 import { Pointer } from "@element-plus/icons-vue"
 import SectionPanel from "./SectionPanel.vue"
 import PermissionMatrix from "../PermissionMatrix.vue"
@@ -109,15 +109,11 @@ const patchStmt = (patch: Partial<StatementVO>) => {
 // 授权操作（Action）相关内部逻辑，完全自我闭环，向外只派发 update:stmt
 // --------------------------------------------------------------------------
 
-// 选中的服务 codes
-const selectedServiceCodes = ref<string[]>([])
-
-// 初始化时，根据数据推导已选服务
-const syncServicesFromActions = () => {
-  const codes = props.stmt.action.map((a) => a.split(":")[0])
-  selectedServiceCodes.value = [...new Set(codes)].filter((c) => props.permissionManifest.some((s) => s.code === c))
-}
-syncServicesFromActions()
+// 选中的服务 codes 始终从父层 stmt.action 推导，避免回填和模式切换后状态漂移
+const selectedServiceCodes = computed(() => {
+  const codes = props.stmt.action.map((action) => action.split(":")[0])
+  return [...new Set(codes)].filter((code) => props.permissionManifest.some((service) => service.code === code))
+})
 
 const actionMode = computed(() => (props.stmt.action.some((a) => a.endsWith(":*")) ? "all" : "specific"))
 
@@ -128,7 +124,6 @@ const activeServices = computed(() =>
 const onServiceChange = (val: (string | number)[]) => {
   const newCodes = val as string[]
   const removed = selectedServiceCodes.value.filter((c) => !newCodes.includes(c))
-  selectedServiceCodes.value = newCodes
 
   let nextActions = [...props.stmt.action]
   removed.forEach((code) => {
@@ -161,11 +156,9 @@ const onActionsUpdate = (actions: string[]) => patchStmt({ action: actions })
 const toggleAllServices = (checked: boolean) => {
   if (!checked) {
     patchStmt({ action: [] })
-    selectedServiceCodes.value = []
     return
   }
   const allCodes = props.permissionManifest.map((s) => s.code)
-  selectedServiceCodes.value = allCodes
   patchStmt({ action: allCodes.map((c) => `${c}:*`) })
 }
 </script>

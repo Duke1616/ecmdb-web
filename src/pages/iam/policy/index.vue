@@ -112,7 +112,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
 import { Search, Plus, RefreshRight, Edit, Delete, Connection } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -129,6 +128,7 @@ const {
   total,
   currentPage,
   pageSize,
+  loading,
   query,
   jsonVisible,
   selectedPolicy,
@@ -152,7 +152,6 @@ const handleViewDetail = (row: Policy) => {
 }
 
 const TYPE_ALL = undefined as any
-const loading = ref(false)
 
 const tableColumns: Column[] = [
   { label: "策略名称", prop: "name", slot: "name", minWidth: 150, align: "center" },

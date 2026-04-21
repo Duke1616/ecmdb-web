@@ -1,14 +1,15 @@
 import { ref, reactive, onMounted } from "vue"
 import { ElMessage, type FormInstance } from "element-plus"
-import { useRouter } from "vue-router"
 import { getPermissionManifestApi } from "@/api/iam/permission"
-import { createPolicyApi, updatePolicyApi } from "@/api/iam/policy"
+import { createPolicyApi, getPolicyDetailApi, updatePolicyApi } from "@/api/iam/policy"
 import type { UpdatePolicyRequest } from "@/api/iam/policy/type"
 import {
   createDefaultStatement,
   enrichManifest,
+  getStatementValidationMessage,
   mapVOToRequest,
   mapResponseToVO,
+  normalizeStatements,
   type PolicyFormVO,
   type ManifestService
 } from "./usePolicyData"
@@ -16,8 +17,7 @@ import {
 /**
  * 策略表单总控 Composable
  */
-export function usePolicyForm(props: { isEdit: boolean; id?: string }, emit: (e: "success") => void) {
-  const router = useRouter()
+export function usePolicyForm(props: { isEdit: boolean; code?: string }, emit: (e: "success") => void) {
   const formRef = ref<FormInstance>()
   const loading = ref(false)
 
@@ -50,6 +50,19 @@ export function usePolicyForm(props: { isEdit: boolean; id?: string }, emit: (e:
       permissionManifest.value = enrichManifest(data)
     } catch (e) {
       console.error("[LoadManifest]", e)
+      ElMessage.error("加载权限清单失败")
+    }
+  }
+
+  const loadPolicyDetail = async () => {
+    if (!props.isEdit || !props.code) return
+
+    try {
+      const { data } = await getPolicyDetailApi(props.code)
+      setForm(data.policy ?? data)
+    } catch (e) {
+      console.error("[LoadPolicyDetail]", e)
+      ElMessage.error("获取策略详情失败")
     }
   }
 
@@ -65,7 +78,7 @@ export function usePolicyForm(props: { isEdit: boolean; id?: string }, emit: (e:
   }
 
   const duplicateStatement = (index: number) => {
-    const copy = JSON.parse(JSON.stringify(formData.statement[index]))
+    const copy = normalizeStatements([JSON.parse(JSON.stringify(formData.statement[index]))])[0]
     formData.statement.splice(index + 1, 0, copy)
   }
 
@@ -74,9 +87,9 @@ export function usePolicyForm(props: { isEdit: boolean; id?: string }, emit: (e:
     try {
       await formRef.value.validate()
 
-      const emptyIdx = formData.statement.findIndex((s) => s.action.length === 0)
-      if (emptyIdx !== -1) {
-        return ElMessage.error(`第 ${emptyIdx + 1} 条语句尚未配置权限操作`)
+      const statementMessage = getStatementValidationMessage(formData.statement)
+      if (statementMessage) {
+        return ElMessage.error(statementMessage)
       }
 
       loading.value = true
@@ -90,7 +103,6 @@ export function usePolicyForm(props: { isEdit: boolean; id?: string }, emit: (e:
 
       ElMessage.success("策略保存成功")
       emit("success")
-      router.push("/iam/policy")
     } catch (e) {
       console.error("[SubmitError]", e)
     } finally {
@@ -102,7 +114,14 @@ export function usePolicyForm(props: { isEdit: boolean; id?: string }, emit: (e:
     Object.assign(formData, mapResponseToVO(val))
   }
 
-  onMounted(loadManifest)
+  onMounted(async () => {
+    loading.value = true
+    try {
+      await Promise.all([loadManifest(), loadPolicyDetail()])
+    } finally {
+      loading.value = false
+    }
+  })
 
   return {
     formRef,

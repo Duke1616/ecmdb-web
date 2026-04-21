@@ -52,6 +52,45 @@ export const createDefaultStatement = (): StatementVO => ({
   condition: {}
 })
 
+/** 规范化单条语句，避免局部数据缺失导致 UI 状态失真 */
+export const normalizeStatement = (stmt?: Partial<StatementVO>): StatementVO => ({
+  effect: stmt?.effect === "Deny" ? "Deny" : "Allow",
+  action: Array.isArray(stmt?.action) ? stmt.action : [],
+  resource: Array.isArray(stmt?.resource) && stmt.resource.length > 0 ? stmt.resource : ["*"],
+  condition: stmt?.condition && typeof stmt.condition === "object" ? stmt.condition : {}
+})
+
+/** 规范化语句列表，确保表单里始终至少有一条可编辑语句 */
+export const normalizeStatements = (statements?: Partial<StatementVO>[]): StatementVO[] => {
+  if (!Array.isArray(statements) || statements.length === 0) {
+    return [createDefaultStatement()]
+  }
+  return statements.map((stmt) => normalizeStatement(stmt))
+}
+
+/** JSON 编辑器文本转语句列表 */
+export const parseStatementsJson = (value: string): StatementVO[] => {
+  const parsed = JSON.parse(value)
+  if (!Array.isArray(parsed)) {
+    throw new Error("权限语句必须是一个数组格式")
+  }
+  return normalizeStatements(parsed)
+}
+
+/** 表单提交前的语句校验 */
+export const getStatementValidationMessage = (statements: StatementVO[], emptyText = "请至少添加一条权限语句") => {
+  if (!Array.isArray(statements) || statements.length === 0) {
+    return emptyText
+  }
+
+  const emptyIdx = statements.findIndex((stmt) => !Array.isArray(stmt.action) || stmt.action.length === 0)
+  if (emptyIdx !== -1) {
+    return `第 ${emptyIdx + 1} 条语句尚未配置任何权限操作`
+  }
+
+  return ""
+}
+
 // ---------------------------------------------------------
 // 数据转换层
 // ---------------------------------------------------------
@@ -102,7 +141,7 @@ export const mapVOToRequest = (vo: PolicyFormVO): CreatePolicyRequest => ({
   code: vo.code,
   desc: vo.desc,
   type: vo.type,
-  statement: vo.statement.map((s) => {
+  statement: normalizeStatements(vo.statement).map((s) => {
     const conditions: ApiCondition[] = Object.entries(s.condition)
       .filter(([, values]) => values.length > 0)
       .map(([key, values]) => ({ operator: "StringEquals", key, value: values }))
@@ -122,17 +161,19 @@ export const mapResponseToVO = (raw: Policy): PolicyFormVO => ({
   code: raw.code || "",
   desc: raw.desc || "",
   type: raw.type || 2,
-  statement: (raw.statement || []).map((s): StatementVO => {
-    const condition: Record<string, string[]> = {}
-    if (Array.isArray(s.condition)) {
-      s.condition.forEach((c) => {
-        if (c.key && c.value) {
-          condition[c.key] = Array.isArray(c.value) ? c.value : [c.value]
-        }
-      })
-    }
-    return { effect: s.effect || "Allow", action: s.action || [], resource: s.resource || ["*"], condition }
-  })
+  statement: normalizeStatements(
+    (raw.statement || []).map((s): StatementVO => {
+      const condition: Record<string, string[]> = {}
+      if (Array.isArray(s.condition)) {
+        s.condition.forEach((c) => {
+          if (c.key && c.value) {
+            condition[c.key] = Array.isArray(c.value) ? c.value : [c.value]
+          }
+        })
+      }
+      return { effect: s.effect || "Allow", action: s.action || [], resource: s.resource || ["*"], condition }
+    })
+  )
 })
 
 /** 根据选中的 actions 获取摘要描述（用于 UI 标题展示） */
