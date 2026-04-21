@@ -106,6 +106,11 @@ export interface ListUserRequest {
   keyword?: string
 }
 
+/** 角色关联用户列表请求 */
+export interface ListRoleUsersReq extends ListUserRequest {
+  role_id: number
+}
+
 /** 搜索 LDAP 用户请求 */
 export interface SearchLdapUserReq {
   keywords: string

@@ -14,6 +14,31 @@ export interface Condition {
 }
 
 /** 权限策略信息 */
+export interface RetriePolicySummaryRes {
+  policy: Policy
+  services: ServiceSummary[]
+}
+
+export interface ServiceSummary {
+  service_code: string
+  service_name: string
+  level: string
+  granted_count: number
+  total_count: number
+  resource_scope: string
+  condition: string
+  actions: ActionDetail[]
+}
+
+/** 权限操作明细 */
+export interface ActionDetail {
+  action: string // Go 字段 Code 对应的 json:"action"
+  name: string
+  group: string
+  resource: string
+  condition: string
+}
+
 export interface Policy {
   id: number
   name: string
@@ -59,6 +84,11 @@ export interface ListPolicyResponse {
 /** 用户关联策略列表请求 */
 export interface ListUserPoliciesReq extends ListPolicyRequest {
   user_id: number
+}
+
+/** 角色关联策略列表请求 */
+export interface ListRolePoliciesReq extends ListPolicyRequest {
+  role_id: number
 }
 
 /** 绑定/解绑策略请求 */

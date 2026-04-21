@@ -13,16 +13,20 @@
     :show-confirm-button="true"
   >
     <div class="wizard-workflow">
-      <!-- 1. 授权主体卡片 (非固定模式下显示) -->
-      <template v-if="!isFixedMode">
-        <SubjectSelectCard ref="subjectSelectorRef" v-model:selection="selectedSubjects" flat />
+      <!-- 1. 授权主体卡片 -->
+      <SubjectSelectCard v-if="!isFixedSubjects" ref="subjectSelectorRef" v-model:selection="selectedSubjects" flat />
 
-        <!-- 🚦 分隔指示器 -->
-        <div class="wizard-connector" />
-      </template>
+      <!-- 🚦 分隔指示器 (当两者都存在且其中一个被隐藏时可能需要调整，这里保持逻辑清晰) -->
+      <div v-if="!isFixedSubjects && !isFixedPolicies" class="wizard-connector" />
 
       <!-- 2. 权限策略卡片 -->
-      <PolicySelectCard ref="policySelectorRef" v-model:selection="selectedPolicies" show-risk flat />
+      <PolicySelectCard
+        v-if="!isFixedPolicies"
+        ref="policySelectorRef"
+        v-model:selection="selectedPolicies"
+        show-risk
+        flat
+      />
     </div>
   </Drawer>
 </template>
@@ -41,6 +45,7 @@ import PolicySelectCard from "./PolicySelectCard.vue"
 // --- 1. 定义 & 属性 ---
 interface Props {
   fixedSubjects?: Subject[] // 固定授权主体模式
+  fixedPolicies?: Policy[] // 固定权限策略模式
 }
 
 const props = defineProps<Props>()
@@ -58,11 +63,15 @@ const subjectSelectorRef = ref<InstanceType<typeof SubjectSelectCard>>()
 const policySelectorRef = ref<InstanceType<typeof PolicySelectCard>>()
 
 // --- 3. 核心计算属性 ---
-const isFixedMode = computed(() => !!props.fixedSubjects?.length)
-const effectiveSubjects = computed(() => (isFixedMode.value ? props.fixedSubjects! : selectedSubjects.value))
+const isFixedSubjects = computed(() => !!props.fixedSubjects?.length)
+const isFixedPolicies = computed(() => !!props.fixedPolicies?.length)
+const isFixedMode = computed(() => isFixedSubjects.value || isFixedPolicies.value)
+
+const effectiveSubjects = computed(() => (isFixedSubjects.value ? props.fixedSubjects! : selectedSubjects.value))
+const effectivePolicies = computed(() => (isFixedPolicies.value ? props.fixedPolicies! : selectedPolicies.value))
 
 // 提交按钮的激活状态
-const canSubmit = computed(() => effectiveSubjects.value.length > 0 && selectedPolicies.value.length > 0)
+const canSubmit = computed(() => effectiveSubjects.value.length > 0 && effectivePolicies.value.length > 0)
 
 // --- 4. 业务逻辑方法 ---
 
@@ -74,7 +83,7 @@ const preparePayload = () => ({
     type: s.type,
     code: s.id
   })),
-  policy_codes: selectedPolicies.value.map((p) => p.code)
+  policy_codes: effectivePolicies.value.map((p) => p.code)
 })
 
 /**
@@ -119,15 +128,15 @@ const handleSubmit = async () => {
 watch(visible, async (open) => {
   if (open) {
     await nextTick()
-    if (!isFixedMode.value) subjectSelectorRef.value?.fetchList()
-    policySelectorRef.value?.fetchList()
+    if (!isFixedSubjects.value) subjectSelectorRef.value?.fetchList()
+    if (!isFixedPolicies.value) policySelectorRef.value?.fetchList()
   } else {
     // 重置缓冲区
     selectedSubjects.value = []
     selectedPolicies.value = []
     // 重置子组件内部状态
-    if (!isFixedMode.value) subjectSelectorRef.value?.reset()
-    policySelectorRef.value?.reset()
+    if (!isFixedSubjects.value) subjectSelectorRef.value?.reset()
+    if (!isFixedPolicies.value) policySelectorRef.value?.reset()
   }
 })
 </script>

@@ -559,7 +559,7 @@ onBeforeUnmount(() => {
 /* 主体：数据行看板 */
 .shelf-content {
   flex: 1;
-  min-height: 140px;
+  min-height: 60px;
 }
 
 .content-labels {

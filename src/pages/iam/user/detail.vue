@@ -16,6 +16,7 @@ import UserStatusBar from "./components/detail/UserStatusBar.vue"
 import UserInfoGrid from "./components/detail/UserInfoGrid.vue"
 import AuthGovernance from "./components/detail/AuthGovernance.vue"
 import IdentitySources from "./components/detail/IdentitySources.vue"
+import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
 import TenantTable from "./components/detail/TenantTable.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
@@ -212,7 +213,7 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .user-detail-page {
-  overflow-y: auto;
+  overflow-y: scroll;
   overflow-x: hidden;
 }
 

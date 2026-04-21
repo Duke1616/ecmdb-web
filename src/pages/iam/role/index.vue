@@ -48,7 +48,7 @@
       <!-- 角色核心资产: Dual-Line 风格 -->
       <template #role_info="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link" @click="handleEdit(row)">
+          <el-link type="primary" :underline="false" class="main-link" @click="handleViewDetail(row)">
             {{ row.name }}
           </el-link>
           <div class="sub-detail mono">{{ row.code }}</div>
@@ -86,6 +86,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import { useRouter } from "vue-router"
 import { Search, Plus, RefreshRight, Lock } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -96,6 +97,7 @@ import RoleForm from "./components/RoleForm.vue"
 import { useRoleList } from "./composables/useRoleList"
 import type { Column } from "@@/components/DataTable/types"
 
+const router = useRouter()
 const {
   roles,
   total,
@@ -118,10 +120,17 @@ const roleFormRef = ref<InstanceType<typeof RoleForm>>()
 const submitting = ref(false)
 
 /**
+ * 角色跳转详情
+ */
+const handleViewDetail = (row: any) => {
+  router.push(`/identity/role/detail/${row.code}`)
+}
+
+/**
  * 角色操作配置项
  */
 const roleOperateItems = [
-  { name: "资料维护", code: "edit", type: "primary" },
+  { name: "资料维护", code: "edit", type: "info" },
   { name: "职责注销", code: "delete", type: "danger" }
 ]
 

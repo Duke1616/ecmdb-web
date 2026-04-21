@@ -100,3 +100,11 @@ export function refreshLdapCacheApi() {
     url: `${API_SERVICE.IAM}/user/ldap/refresh_cache`
   })
 }
+
+/** 获取关联了特定角色的用户列表 */
+export function listRoleUsersApi(data: user.ListRoleUsersReq) {
+  return instance.post<user.UserListData>({
+    url: `${API_SERVICE.IAM}/user/list/attached/role`,
+    data
+  })
+}

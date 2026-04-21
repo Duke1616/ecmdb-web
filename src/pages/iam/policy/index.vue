@@ -66,7 +66,7 @@
     >
       <!-- 策略名称 -->
       <template #name="{ row }">
-        <el-link type="primary" :underline="false" class="policy-name" @click="handleEdit(row)">
+        <el-link type="primary" :underline="false" class="policy-name" @click="handleViewDetail(row)">
           {{ row.name }}
         </el-link>
       </template>
@@ -122,6 +122,8 @@ import type { Column } from "@@/components/DataTable/types"
 import type { Policy } from "@/api/iam/policy/type"
 import { usePolicyList } from "./composables/usePolicyList"
 
+const router = useRouter()
+
 const {
   policies,
   total,
@@ -138,6 +140,16 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = usePolicyList()
+
+/**
+ * 跳转到策略治理详情页
+ */
+const handleViewDetail = (row: Policy) => {
+  router.push({
+    path: "/iam/policy/detail",
+    query: { code: row.code }
+  })
+}
 
 const TYPE_ALL = undefined as any
 const loading = ref(false)
