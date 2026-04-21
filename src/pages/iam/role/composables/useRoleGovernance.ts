@@ -1,5 +1,4 @@
-import { ref, watch, onMounted } from "vue"
-import { useRoute } from "vue-router"
+import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { listRoleUsersApi } from "@/api/iam/user"
 import { listRolePoliciesApi, detachPolicyApi } from "@/api/iam/policy"
@@ -24,14 +23,14 @@ export function useRoleGovernance(roleId: number | undefined) {
     if (!roleId) return
     memberLoading.value = true
     try {
-      const res = await listRoleUsersApi({
+      const { data } = await listRoleUsersApi({
         role_id: roleId,
         offset: (memberQuery.value.currentPage - 1) * memberQuery.value.pageSize,
         limit: memberQuery.value.pageSize,
         keyword: memberQuery.value.keyword
       })
-      members.value = res.users
-      memberTotal.value = res.total
+      members.value = data.users
+      memberTotal.value = data.total
     } finally {
       memberLoading.value = false
     }
@@ -52,14 +51,14 @@ export function useRoleGovernance(roleId: number | undefined) {
     if (!roleId) return
     policyLoading.value = true
     try {
-      const res = await listRolePoliciesApi({
+      const { data } = await listRolePoliciesApi({
         role_id: roleId,
         offset: (policyQuery.value.currentPage - 1) * policyQuery.value.pageSize,
         limit: policyQuery.value.pageSize,
         keyword: policyQuery.value.keyword
       })
-      policies.value = res.policies
-      policyTotal.value = res.total
+      policies.value = data.policies
+      policyTotal.value = data.total
     } finally {
       policyLoading.value = false
     }
@@ -105,12 +104,16 @@ export function useRoleGovernance(roleId: number | undefined) {
   }
 
   // 监听 ID 变化（首次加载）
-  watch(() => roleId, (newId) => {
-    if (newId) {
-      fetchMembers()
-      fetchPolicies()
-    }
-  }, { immediate: true })
+  watch(
+    () => roleId,
+    (newId) => {
+      if (newId) {
+        fetchMembers()
+        fetchPolicies()
+      }
+    },
+    { immediate: true }
+  )
 
   return {
     activeTab,
