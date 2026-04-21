@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import { Edit, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -36,6 +36,8 @@ const {
   copyText
 } = useUserDetail()
 
+const userId = computed(() => userInfo.value?.id)
+
 const {
   activeTab,
   roles,
@@ -63,13 +65,13 @@ const {
   handleAddRole,
   handleAddPolicy,
   attachPolicyVisible,
-  handleAttachPolicySuccess,
+  handleAttachSuccess,
   handleAddTenant,
   handleUnbindRole,
   handleUnbindPolicy,
   handleBatchUnbindRoles,
   handleBatchUnbindPolicies
-} = useUserGovernance()
+} = useUserGovernance(userId)
 
 /**
  * 提交编辑表单
@@ -203,11 +205,7 @@ onMounted(() => {
     </FormDialog>
 
     <!-- 策略授权向导 (复用全局授权组件) -->
-    <AuthorizeDrawer
-      v-model="attachPolicyVisible"
-      :fixed-subjects="userSubjects"
-      @success="handleAttachPolicySuccess"
-    />
+    <AuthorizeDrawer v-model="attachPolicyVisible" :fixed-subjects="userSubjects" @success="handleAttachSuccess" />
   </PageContainer>
 </template>
 

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
-import { Plus, Calendar } from "@element-plus/icons-vue"
+import { Plus, Delete } from "@element-plus/icons-vue"
 import dayjs from "dayjs"
+import { useRouter } from "vue-router"
 import { listAuthorizationsApi } from "@/api/iam/permission"
 import type { Authorization } from "@/api/iam/permission/type"
 import PremiumList from "@/common/components/PremiumList/index.vue"
@@ -17,6 +18,7 @@ const emit = defineEmits<{
   (e: "add"): void
 }>()
 
+const router = useRouter()
 const loading = ref(false)
 const list = ref<Authorization[]>([])
 const total = ref(0)
@@ -44,6 +46,17 @@ const fetchAssignments = async () => {
   } finally {
     loading.value = false
   }
+}
+
+/**
+ * 跳转到主体详情
+ */
+const handleSubjectClick = (row: Authorization) => {
+  const isUser = row.sub_type === "user"
+  router.push({
+    name: isUser ? "UserDetail" : "RoleDetail",
+    query: isUser ? { username: row.subject } : { code: row.subject }
+  })
 }
 
 const handlePageChange = (page: number) => {
@@ -115,7 +128,7 @@ defineExpose({
         <div class="assign-cols header-label-font">
           <span>授权主体</span>
           <span>资源范围</span>
-          <span>备注</span>
+          <span>备注说明</span>
           <span class="align-center">授权时间</span>
           <span class="align-center">操作</span>
         </div>
@@ -142,32 +155,38 @@ defineExpose({
         <div class="assign-grid-row">
           <div class="cell-subject">
             <div class="dual-line-info">
-              <span class="main-title">{{ row.target_name || row.subject_name || row.subject }}</span>
+              <el-link type="primary" :underline="false" class="main-title" @click="handleSubjectClick(row)">
+                {{ row.subject_name || row.subject }}
+              </el-link>
               <div class="sub-detail">
-                {{ row.sub_type === "user" ? "IAM 用户" : "IAM 角色" }}
+                <span class="type-text">{{ row.sub_type === "user" ? "IAM 用户" : "IAM 角色" }}</span>
               </div>
             </div>
           </div>
 
           <div class="cell-scope">
-            <div class="scope-text" :class="{ global: row.scope === '*' }">
-              <code>{{ row.scope === "*" ? "全局所有资源" : row.scope || "-" }}</code>
+            <div class="scope-tag" :class="{ global: row.scope === '*' }">
+              <code>{{ row.scope === "*" ? "Global" : row.scope || "-" }}</code>
             </div>
           </div>
 
           <div class="cell-note">
-            <span class="note-text">{{ row.note || "-" }}</span>
+            <span class="note-text" :title="row.note">
+              {{ row.note || "该授权项允许主体在指定资源范围内执行预定义的策略动作。" }}
+            </span>
           </div>
 
           <div class="cell-time">
             <div class="time-item">
-              <el-icon><Calendar /></el-icon>
-              <span>{{ dayjs(row.ctime).isValid() ? dayjs(row.ctime).format("YYYY-MM-DD HH:mm:ss") : "-" }}</span>
+              <span>{{ dayjs(row.ctime).isValid() ? dayjs(row.ctime).format("YYYY-MM-DD HH:mm") : "-" }}</span>
             </div>
           </div>
 
           <div class="cell-actions">
-            <el-button type="danger" link size="small" title="回收权限" @click="handleRemove(row)"> 移除 </el-button>
+            <el-button type="danger" link size="small" class="delete-btn" @click="handleRemove(row)">
+              <el-icon><Delete /></el-icon>
+              <span>移除</span>
+            </el-button>
           </div>
         </div>
       </template>
@@ -207,7 +226,7 @@ defineExpose({
 
 .assign-cols {
   display: grid;
-  grid-template-columns: 240px 140px 1fr 180px 60px;
+  grid-template-columns: 240px 140px 1fr 150px 90px;
   gap: 24px;
   width: 100%;
   align-items: center;
@@ -219,13 +238,11 @@ defineExpose({
 
 .assign-grid-row {
   display: grid;
-  grid-template-columns: 240px 140px 1fr 180px 60px;
+  grid-template-columns: 240px 140px 1fr 150px 90px;
   align-items: center;
   gap: 24px;
-  min-height: 72px;
-  margin: 0 -24px;
-  padding: 0 24px;
-  transition: all 0.2s;
+  min-height: 80px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     background: #f8fafc;
@@ -236,48 +253,66 @@ defineExpose({
   .dual-line-info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
     gap: 4px;
+    min-width: 0;
 
     .main-title {
       font-size: 14px;
       font-weight: 600;
       color: #1e293b;
-      font-family: ui-monospace, SFMono-Regular, monospace;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &:hover {
+        color: #3b82f6;
+      }
     }
     .sub-detail {
-      font-size: 13px;
-      color: #64748b;
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .type-text {
+        color: #94a3b8;
+        font-weight: 500;
+      }
     }
   }
 }
 
 .cell-scope {
-  .scope-text {
+  .scope-tag {
     code {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      font-size: 12px;
+      font-size: 11px;
       color: #475569;
       background: #f1f5f9;
-      padding: 2px 6px;
+      padding: 2px 8px;
       border-radius: 4px;
-      word-break: break-all;
+      font-family: ui-monospace, SFMono-Regular, monospace;
     }
     &.global code {
       background: #eef2ff;
       color: #6366f1;
-      font-weight: 700;
+      font-weight: 600;
     }
   }
 }
 
 .cell-note {
+  min-width: 0;
   .note-text {
     font-size: 13px;
-    color: #475569;
-    line-height: 1.5;
-    word-break: break-all;
-    display: inline-block;
-    max-width: 100%;
+    color: #64748b;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 
@@ -285,24 +320,23 @@ defineExpose({
   display: flex;
   justify-content: center;
   .time-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     font-size: 12px;
     color: #64748b;
-    .el-icon {
-      color: #94a3b8;
-    }
+    font-family: ui-monospace, SFMono-Regular, monospace;
   }
 }
 
 .cell-actions {
   display: flex;
   justify-content: center;
-  .el-button {
-    font-weight: 600;
+  .delete-btn {
+    color: #94a3b8;
+    transition: all 0.2s;
     &:hover {
       color: #ef4444;
+    }
+    .el-icon {
+      margin-right: 4px;
     }
   }
 }

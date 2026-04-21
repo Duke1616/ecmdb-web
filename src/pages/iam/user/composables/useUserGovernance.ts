@@ -1,4 +1,4 @@
-import { ref, reactive, watch } from "vue"
+import { ref, reactive, watch, type Ref } from "vue"
 import { useRoute } from "vue-router"
 import { ElMessage } from "element-plus"
 import { listUserRolesApi } from "@/api/iam/role"
@@ -8,9 +8,9 @@ import type { Role } from "@/api/iam/role/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { Tenant } from "@/api/iam/tenant/type"
 
-export function useUserGovernance() {
+export function useUserGovernance(userId: Ref<number | undefined>) {
   const route = useRoute()
-  const activeTab = ref("auth")
+  const activeTab = ref((route.query.tab as string) || "auth")
   const attachPolicyVisible = ref(false)
 
   // 角色相关
@@ -49,15 +49,12 @@ export function useUserGovernance() {
    * 加载角色
    */
   const loadUserRoles = async () => {
-    const rawId = route.params.id || route.params.userId
-    const userId = Number(rawId)
-
-    if (!userId) return
+    if (!userId.value) return
 
     roleLoading.value = true
     try {
       const { data } = await listUserRolesApi({
-        user_id: userId,
+        user_id: userId.value,
         offset: (roleQuery.currentPage - 1) * roleQuery.pageSize,
         limit: roleQuery.pageSize,
         keyword: roleQuery.keyword,
@@ -76,15 +73,12 @@ export function useUserGovernance() {
    * 加载策略
    */
   const loadUserPolicies = async () => {
-    const rawId = route.params.id || route.params.userId
-    const userId = Number(rawId)
-
-    if (!userId) return
+    if (!userId.value) return
 
     policyLoading.value = true
     try {
       const { data } = await listUserPoliciesApi({
-        user_id: userId,
+        user_id: userId.value,
         offset: (policyQuery.currentPage - 1) * policyQuery.pageSize,
         limit: policyQuery.pageSize,
         keyword: policyQuery.keyword,
@@ -103,15 +97,12 @@ export function useUserGovernance() {
    * 加载租户
    */
   const loadUserTenants = async () => {
-    const rawId = route.params.id || route.params.userId
-    const userId = Number(rawId)
-
-    if (!userId) return
+    if (!userId.value) return
 
     tenantLoading.value = true
     try {
       const { data } = await listUserTenantsApi({
-        user_id: userId,
+        user_id: userId.value,
         offset: (tenantQuery.currentPage - 1) * tenantQuery.pageSize,
         limit: tenantQuery.pageSize,
         keyword: tenantQuery.keyword
@@ -174,7 +165,7 @@ export function useUserGovernance() {
   const handleAddPolicy = () => {
     attachPolicyVisible.value = true
   }
-  const handleAttachPolicySuccess = () => {
+  const handleAttachSuccess = () => {
     loadUserPolicies()
   }
   const handleAddTenant = () => ElMessage.info("租户入驻功能即将集成...")
@@ -202,28 +193,26 @@ export function useUserGovernance() {
     selectedTenants.value = []
   }
 
-  // 核心监听逻辑：监听 Tab 切换
+  // 核心逻辑：数据驱动触发
+  const refresh = () => {
+    if (activeTab.value === "roles") loadUserRoles()
+    if (activeTab.value === "permissions") loadUserPolicies()
+    if (activeTab.value === "tenants") loadUserTenants()
+  }
+
+  // 1. 监听 userId 变化 (解决从跨模块跳转过来，id 异步获取的问题)
   watch(
-    () => activeTab.value,
-    (newTab) => {
-      if (newTab === "roles") loadUserRoles()
-      if (newTab === "permissions") loadUserPolicies()
-      if (newTab === "tenants") loadUserTenants()
+    userId,
+    (id) => {
+      if (id) refresh()
     },
     { immediate: true }
   )
 
-  // 附加监听逻辑
-  watch(
-    () => route.params.id || route.params.userId,
-    (newId) => {
-      if (newId) {
-        if (activeTab.value === "roles") loadUserRoles()
-        if (activeTab.value === "permissions") loadUserPolicies()
-        if (activeTab.value === "tenants") loadUserTenants()
-      }
-    }
-  )
+  // 2. 监听 Tab 切换
+  watch(activeTab, () => {
+    refresh()
+  })
 
   return {
     activeTab,
@@ -256,7 +245,7 @@ export function useUserGovernance() {
     handleAddRole,
     handleAddPolicy,
     attachPolicyVisible,
-    handleAttachPolicySuccess,
+    handleAttachSuccess,
     handleAddTenant,
     handleUnbindRole,
     handleUnbindPolicy,

@@ -65,9 +65,10 @@ export function updatePasswordApi(data: user.UpdatePasswordRequest) {
 }
 
 /** 获取用户详情 */
-export function userDetailApi(id: number) {
+export function userDetailApi(params: { id?: number | string; username?: string }) {
   return instance.get<user.UserData>({
-    url: `${API_SERVICE.IAM}/user/detail/${id}`
+    url: `${API_SERVICE.IAM}/user/detail`,
+    params
   })
 }
 

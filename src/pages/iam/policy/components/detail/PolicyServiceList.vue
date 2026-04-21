@@ -40,7 +40,7 @@ const formatLevel = (level: string) => {
         <div class="svc-cols header-label-font">
           <span>目标子系统</span>
           <span>访问级别</span>
-          <span>权限覆盖进度</span>
+          <span>权限覆盖</span>
           <span>目标资源</span>
           <span>生效条件</span>
         </div>

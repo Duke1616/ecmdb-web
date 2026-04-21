@@ -123,7 +123,10 @@ const submitting = ref(false)
  * 角色跳转详情
  */
 const handleViewDetail = (row: any) => {
-  router.push(`/identity/role/detail/${row.code}`)
+  router.push({
+    name: "RoleDetail",
+    query: { code: row.code }
+  })
 }
 
 /**

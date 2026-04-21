@@ -10,7 +10,7 @@ export function useRoleDetail() {
   const loading = ref(false)
 
   const fetchRoleDetail = async () => {
-    const code = route.params.id as string
+    const code = (route.query.id || route.query.code) as string
     if (!code) return
 
     loading.value = true

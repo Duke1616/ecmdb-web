@@ -147,7 +147,7 @@ const {
  */
 const handleViewDetail = (row: Policy) => {
   router.push({
-    path: "/iam/policy/detail",
+    name: "PolicyDetail",
     query: { code: row.code }
   })
 }

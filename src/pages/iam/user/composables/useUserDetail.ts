@@ -20,18 +20,20 @@ export function useUserDetail() {
   const userTenants = ref<Tenant[]>([])
 
   const loadDetail = async (targetId?: string | number) => {
-    const rawId = targetId || route.params.id || route.params.userId
+    const rawId = targetId || route.query.id || route.query.username || route.query.userId
 
     if (!rawId) {
       loading.value = false
       return
     }
 
-    const id = Number(rawId)
+    const isNumeric = !isNaN(Number(rawId))
+    const params = isNumeric ? { id: Number(rawId) } : { username: String(rawId) }
+
     loading.value = true
     try {
-      // 注意：这里强制转换为 any 获取，因为 API 定义里的 UserData 可能已经失效
-      const { data }: any = await userDetailApi(id)
+      // 这里的 params 会被透传到 instance.get 的 query 中
+      const { data }: any = await userDetailApi(params)
       console.log("[useUserDetail] Load success (Flattened):", data)
 
       // 兼容性处理：如果后端返回的是 { user: {...} } 则取 data.user，否则直接取 data
@@ -50,7 +52,7 @@ export function useUserDetail() {
   }
 
   watch(
-    () => route.params.id || route.params.userId,
+    () => route.query.id || route.query.username || route.query.userId,
     (newId) => {
       // 确保 newId 是字符串而非 string[]
       const id = Array.isArray(newId) ? newId[0] : newId

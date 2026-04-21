@@ -164,7 +164,10 @@ const {
  * 跳转至详情页
  */
 const handleView = (row: any) => {
-  router.push(`/identity/user/detail/${row.id}`)
+  router.push({
+    name: "UserDetail",
+    query: { id: row.id }
+  })
 }
 
 const userFormRef = ref<InstanceType<typeof UserForm>>()

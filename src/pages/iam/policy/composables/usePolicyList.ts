@@ -47,12 +47,12 @@ export function usePolicyList() {
   }
 
   const handleCreate = () => {
-    router.push("/iam/policy/create")
+    router.push({ name: "PolicyCreation" })
   }
 
   const handleEdit = (row: Policy) => {
     router.push({
-      path: "/iam/policy/edit",
+      name: "PolicyEdit",
       query: { code: row.code }
     })
   }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue"
-import { useRouter } from "vue-router"
+import { ref, watch, onMounted } from "vue"
+import { useRouter, useRoute } from "vue-router"
 import { Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -16,10 +16,11 @@ import PolicyAssignmentTable from "./components/detail/PolicyAssignmentTable.vue
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 
 const router = useRouter()
+const route = useRoute()
 const { policy, services, loading, copyText } = usePolicyDetail()
 
-// 治理项 Tabs 控制
-const activeTab = ref("insights")
+// 治理项 Tabs 控制：初始化优先从 URL 获取，实现状态持久化
+const activeTab = ref((route.query.tab as string) || "insights")
 
 // --- 授权管理向导逻辑 ---
 const attachSubjectVisible = ref(false)
@@ -32,6 +33,28 @@ const handleAddSubject = () => {
 const handleAttachSuccess = () => {
   assignmentTableRef.value?.fetchAssignments()
 }
+
+/**
+ * 核心逻辑：监听 Tab 切换，同步状态至 URL 并触发数据刷新
+ */
+watch(activeTab, (val) => {
+  // 1. 同步到 URL (使用 replace 模式，不增加历史记录负担)
+  router.replace({
+    query: { ...route.query, tab: val }
+  })
+
+  // 2. 触发业务刷新
+  if (val === "assignments") {
+    assignmentTableRef.value?.fetchAssignments()
+  }
+})
+
+// 初始进入时，如果是 assignments 且通过 URL 直接进入，确保刷新
+onMounted(() => {
+  if (activeTab.value === "assignments") {
+    assignmentTableRef.value?.fetchAssignments()
+  }
+})
 </script>
 
 <template>
@@ -61,12 +84,12 @@ const handleAttachSuccess = () => {
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
             <!-- 看板：策略内容 -->
-            <el-tab-pane label="策略内容" name="insights">
+            <el-tab-pane label="策略内容" name="insights" lazy>
               <PolicyServiceInsights :policy="policy" :services="services" @copy="copyText" />
             </el-tab-pane>
 
             <!-- 看板：授权管理 -->
-            <el-tab-pane label="授权管理" name="assignments">
+            <el-tab-pane label="授权管理" name="assignments" lazy>
               <PolicyAssignmentTable ref="assignmentTableRef" :policy-code="policy.code" @add="handleAddSubject" />
             </el-tab-pane>
           </el-tabs>
