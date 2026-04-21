@@ -278,7 +278,7 @@ const getIdentityValue = (id: Identity) => {
 
 const loadUserDetail = async () => {
   if (!props.id) return
-  const { data } = await userDetailApi(props.id)
+  const { data } = await userDetailApi({ id: props.id })
   Object.assign(formData, data.user)
   tenants.value = data.tenants || []
   identities.value = data.user.identities || []
