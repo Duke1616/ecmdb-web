@@ -182,8 +182,10 @@ onBeforeUnmount(() => {
         <!-- 标题组 -->
         <div class="title-group">
           <div class="indicator" :style="{ backgroundColor: indicatorColor }" />
-          <span class="text">{{ title }}</span>
-          <span class="badge">{{ total }}</span>
+          <slot name="title">
+            <span class="text">{{ title }}</span>
+          </slot>
+          <span v-if="total !== undefined" class="badge">{{ total }}</span>
         </div>
 
         <div v-if="shouldShowSearch" class="toolbar-search">

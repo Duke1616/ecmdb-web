@@ -34,7 +34,7 @@ const formatLevel = (level: string) => {
 
 <template>
   <div class="policy-service-list">
-    <PremiumList :data="services" hide-header hide-pagination>
+    <PremiumList :data="services" hide-header hide-pagination show-selection>
       <!-- 表头定义：统一字体样式 -->
       <template #column-header>
         <div class="svc-cols header-label-font">
@@ -46,7 +46,6 @@ const formatLevel = (level: string) => {
         </div>
       </template>
 
-      <!-- 列表项内容 -->
       <template #item="{ item: row }">
         <div class="svc-grid-row">
           <!-- 1. 目标子系统 -->
@@ -128,8 +127,6 @@ const formatLevel = (level: string) => {
   gap: 20px;
   min-height: 68px;
   border-radius: 8px;
-  margin: 0 -24px;
-  padding: 0 24px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
