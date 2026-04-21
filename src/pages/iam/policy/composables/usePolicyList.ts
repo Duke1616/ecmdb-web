@@ -77,8 +77,16 @@ export function usePolicyList() {
     jsonVisible.value = true
   }
 
-  const handleSizeChange = () => loadData()
-  const handleCurrentChange = () => loadData()
+  const handleSizeChange = (val: number) => {
+    pageSize.value = val
+    currentPage.value = 1
+    loadData()
+  }
+
+  const handleCurrentChange = (val: number) => {
+    currentPage.value = val
+    loadData()
+  }
 
   onMounted(loadData)
 

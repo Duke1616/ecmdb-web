@@ -90,6 +90,31 @@
       </div>
     </div>
   </el-form>
+
+  <FormDialog
+    v-model="dialogVisible"
+    :title="dialogTitle"
+    :subtitle="dialogSubtitle"
+    :header-icon="dialogHeaderIcon"
+    width="500px"
+    :confirm-text="dialogConfirmText"
+    @confirm="handleFinalSubmit"
+    @cancel="dialogVisible = false"
+  >
+    <div class="confirm-form-wrapper">
+      <el-form ref="dialogFormRef" :model="formData" :rules="formRules" label-position="top">
+        <el-form-item label="策略名称" prop="name">
+          <el-input v-model="formData.name" :placeholder="namePlaceholder" />
+        </el-form-item>
+        <el-form-item label="策略识别码 (Code)" prop="code">
+          <el-input v-model="formData.code" :disabled="isEdit" :placeholder="codePlaceholder" />
+        </el-form-item>
+        <el-form-item label="策略描述" prop="desc">
+          <el-input v-model="formData.desc" type="textarea" :rows="3" placeholder="简述该策略的应用场景..." />
+        </el-form-item>
+      </el-form>
+    </div>
+  </FormDialog>
 </template>
 
 <script setup lang="ts">
@@ -99,11 +124,13 @@ import { ElMessage } from "element-plus"
 import { Codemirror } from "vue-codemirror"
 import { json } from "@codemirror/lang-json"
 import { usePolicyForm } from "./composables/usePolicyForm"
-import { parseStatementsJson } from "./composables/usePolicyData"
+import { parseStatementsJson, getStatementValidationMessage } from "./composables/usePolicyData"
 import PolicyStatement from "./components/PolicyStatement.vue"
+import { FormDialog } from "@@/components/Dialogs"
+import type { FormInstance } from "element-plus"
 
 const props = defineProps<{ isEdit: boolean; code?: string; hideBasic?: boolean }>()
-const emit = defineEmits(["success"])
+const emit = defineEmits(["success", "update:submitting"])
 
 // 编辑模式：visual | json
 const editorMode = ref<"visual" | "json">("visual")
@@ -122,6 +149,31 @@ const {
   submitForm,
   setForm
 } = usePolicyForm(props, emit)
+
+const dialogVisible = ref(false)
+const dialogFormRef = ref<FormInstance>()
+const isEdit = computed(() => props.isEdit)
+
+const dialogTitle = computed(() => (isEdit.value ? "确认策略信息" : "完善策略信息"))
+const dialogSubtitle = computed(() =>
+  isEdit.value ? "您可以修改策略名称或描述，识别码 (Code) 通常不建议变更" : "为您的权限策略设置名称与识别码"
+)
+const dialogHeaderIcon = computed(() => (isEdit.value ? "EditPen" : "DocumentChecked"))
+const dialogConfirmText = computed(() => (isEdit.value ? "确认并保存" : "确认并提交"))
+const namePlaceholder = computed(() => (isEdit.value ? "" : "建议简单明了，如：财务读写权限"))
+const codePlaceholder = computed(() => (isEdit.value ? "" : "建议大驼峰或下划线，如：FinanceAdmin"))
+
+const validateAndOpenDialog = () => {
+  const message = getStatementValidationMessage(
+    formData.statement,
+    isEdit.value ? "请至少保留一条权限语句" : "请至少添加一条权限语句"
+  )
+  if (message) {
+    ElMessage.warning(message)
+    return
+  }
+  dialogVisible.value = true
+}
 
 const syncJsonCodeFromStatements = () => {
   jsonCode.value = JSON.stringify(formData.statement, null, 2)
@@ -158,24 +210,36 @@ const handleImport = () => {
   ElMessage.info("策略导入功能开发中...")
 }
 
-const handleInternalSubmit = async () => {
-  if (editorMode.value === "json") {
-    try {
-      formData.statement = parseStatementsJson(jsonCode.value)
-    } catch (e: any) {
-      ElMessage.error(`保存失败：脚本格式有误 (${e.message})`)
-      return false
+const handleFinalSubmit = async () => {
+  if (!dialogFormRef.value) return
+
+  try {
+    await dialogFormRef.value.validate()
+
+    if (editorMode.value === "json") {
+      try {
+        formData.statement = parseStatementsJson(jsonCode.value)
+      } catch (e: any) {
+        ElMessage.error(`保存失败：脚本格式有误 (${e.message})`)
+        return
+      }
     }
+
+    emit("update:submitting", true)
+    await submitForm()
+    dialogVisible.value = false
+  } catch (error) {
+    console.warn("[PolicyFormValidation]", error)
+  } finally {
+    emit("update:submitting", false)
   }
-  return submitForm()
 }
 
 // 暴露给父组件调用
 defineExpose({
-  submit: handleInternalSubmit,
+  validateAndOpenDialog,
   setForm,
-  formData,
-  formRules
+  formData
 })
 </script>
 
@@ -315,5 +379,9 @@ defineExpose({
 .stmt-list-leave-to {
   opacity: 0;
   transform: translateX(30px);
+}
+
+.confirm-form-wrapper {
+  padding: 8px 4px;
 }
 </style>

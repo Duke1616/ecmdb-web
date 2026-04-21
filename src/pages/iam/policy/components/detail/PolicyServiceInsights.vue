@@ -51,28 +51,29 @@ const paginatedActions = computed(() => {
 
 <template>
   <div class="policy-service-insights">
-    <!-- 1. 深度治理导航：带模式切换 -->
-    <div class="governance-nav-minimal">
-      <div class="breadcrumb">
-        <template v-if="displayMode === 'visual'">
-          <span class="crumb-item">摘要</span>
-          <span class="divider">/</span>
-          <span class="crumb-item" :class="{ link: currentLevel === 'service' }" @click="handleBackToSummary">
-            策略内容
-          </span>
-          <template v-if="currentLevel === 'service'">
-            <span class="divider">/</span>
-            <span class="crumb-item active">{{ selectedSvc?.service_name }}</span>
+    <!-- 1. 深度治理导航：带模式切换 (样式对齐 PremiumList Header) -->
+    <div class="insights-shelf-header">
+      <div class="header-left">
+        <div class="title-mark" />
+        <div class="breadcrumb">
+          <template v-if="displayMode === 'visual'">
+            <span class="crumb-item" :class="{ link: currentLevel === 'service' }" @click="handleBackToSummary">
+              策略服务明细
+            </span>
+            <template v-if="currentLevel === 'service'">
+              <span class="divider">/</span>
+              <span class="crumb-item active">{{ selectedSvc?.service_name }}</span>
+            </template>
           </template>
-        </template>
-        <template v-else>
-          <span class="crumb-item active">源代码</span>
-        </template>
+          <template v-else>
+            <span class="crumb-item active">策略源代码</span>
+          </template>
+        </div>
       </div>
 
-      <div class="mode-switcher-wrapper">
+      <div class="header-actions">
         <el-radio-group v-model="displayMode" size="small" class="eiam-mode-radio">
-          <el-radio-button value="visual">摘要</el-radio-button>
+          <el-radio-button value="visual">视图映射</el-radio-button>
           <el-radio-button value="source">源代码</el-radio-button>
         </el-radio-group>
       </div>
@@ -101,73 +102,108 @@ const paginatedActions = computed(() => {
 </template>
 
 <style lang="scss" scoped>
-.governance-nav-minimal {
+.policy-service-insights {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 消除子组件内部 PremiumList 的结构，防止双重边框与多余圆角 */
+:deep(.premium-shelf) {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.insights-shelf-header {
+  min-height: 72px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 0 12px;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 12px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
 
-  .breadcrumb {
+  .header-left {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #64748b;
-    .crumb-item {
-      transition: all 0.2s;
-      &.link {
-        cursor: pointer;
-        &:hover {
-          color: #3b82f6;
-          text-decoration: underline;
-          text-underline-offset: 4px;
+    gap: 12px;
+
+    .title-mark {
+      width: 5px;
+      height: 26px;
+      background: #3b82f6;
+      border-radius: 999px;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: 0.005em;
+
+      .crumb-item {
+        transition: all 0.2s;
+        &.link {
+          color: #64748b;
+          cursor: pointer;
+          &:hover {
+            color: #3b82f6;
+          }
         }
       }
-    }
-    .crumb-item.active {
-      font-weight: 600;
-      color: #0f172a;
-    }
-    .divider {
-      color: #cbd5e1;
+      .crumb-item.active {
+        color: #1e293b;
+      }
+      .divider {
+        color: #cbd5e1;
+        font-weight: 400;
+        margin: 0 4px;
+      }
     }
   }
 
-  .mode-switcher-wrapper {
+  .header-actions {
     display: flex;
     align-items: center;
   }
 
   .eiam-mode-radio {
     background: #f1f5f9;
-    padding: 3px;
-    border-radius: 6px;
+    padding: 4px;
+    border-radius: 8px;
     border: 1px solid #e2e8f0;
     display: inline-flex;
 
     :deep(.el-radio-button__inner) {
-      border-radius: 4px;
-      padding: 6px 16px;
-      font-size: 12px;
+      border-radius: 6px;
+      padding: 6px 22px;
+      font-size: 14px;
       font-weight: 500;
       background: transparent;
       border: none !important;
       color: #64748b;
       box-shadow: none !important;
-      transition: all 0.2s;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       &:hover {
-        color: #0f172a;
+        color: #3b82f6;
       }
     }
 
     :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
       background: #ffffff;
       color: #3b82f6;
-      font-weight: 600;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08) !important;
+      font-weight: 500;
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.1) !important;
     }
   }
 }

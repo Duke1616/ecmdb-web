@@ -119,6 +119,7 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import type { Column } from "@@/components/DataTable/types"
 import type { Policy } from "@/api/iam/policy/type"
+import { useRouter } from "vue-router"
 import { usePolicyList } from "./composables/usePolicyList"
 
 const router = useRouter()
