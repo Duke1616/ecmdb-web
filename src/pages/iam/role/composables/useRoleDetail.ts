@@ -1,6 +1,7 @@
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { useRoute } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
+import dayjs from "dayjs"
 import { roleDetailApi, deleteRoleApi } from "@/api/iam/role"
 import type { Role } from "@/api/iam/role/type"
 
@@ -49,9 +50,13 @@ export function useRoleDetail() {
 
   const formatTimestamp = (ts: string | number) => {
     if (!ts) return "-"
-    const date = new Date(typeof ts === "string" ? ts : ts * 1000)
-    return date.toLocaleString()
+    return dayjs(Number(ts)).format("YYYY-MM-DD HH:mm:ss")
   }
+
+  watch(
+    () => [route.query.id, route.query.code],
+    () => fetchRoleDetail()
+  )
 
   onMounted(() => {
     fetchRoleDetail()

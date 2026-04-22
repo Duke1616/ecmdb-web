@@ -22,6 +22,7 @@ export interface RetriePolicySummaryRes {
 export interface ServiceSummary {
   service_code: string
   service_name: string
+  effect: string
   level: string
   granted_count: number
   total_count: number
@@ -34,6 +35,7 @@ export interface ServiceSummary {
 export interface ActionDetail {
   action: string // Go 字段 Code 对应的 json:"action"
   name: string
+  effect: string
   group: string
   resource: string
   condition: string
@@ -88,7 +90,7 @@ export interface ListUserPoliciesReq extends ListPolicyRequest {
 
 /** 角色关联策略列表请求 */
 export interface ListRolePoliciesReq extends ListPolicyRequest {
-  role_id: number
+  role_code: string
 }
 
 /** 绑定/解绑策略请求 */

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue"
+import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
 import { Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
@@ -9,16 +10,23 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { useRoleDetail } from "./composables/useRoleDetail"
 import { useRoleGovernance } from "./composables/useRoleGovernance"
 
-// Components
 import MemberTable from "./components/detail/MemberTable.vue"
-import InlinePolicyCard from "./components/detail/InlinePolicyCard.vue"
 import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
+import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
+import InheritanceTable from "./components/detail/InheritanceTable.vue"
+import AddParentDrawer from "./components/detail/AddParentDrawer.vue"
+import AddMemberDrawer from "./components/detail/AddMemberDrawer.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import type { Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
 
 const { roleInfo, loading: detailLoading, handleDelete, formatTimestamp } = useRoleDetail()
+
+const handleCopy = (text: string) => {
+  navigator.clipboard.writeText(text)
+  ElMessage.success("已复制到剪贴板")
+}
 
 const {
   activeTab,
@@ -34,13 +42,27 @@ const {
   selectedPolicies,
   handleMemberPageChange,
   handleMemberSearch,
+  addMemberVisible,
+  handleAddMember,
+  handleAssignMembers,
   handlePolicyPageChange,
   handlePolicySearch,
+  handlePolicyTypeChange,
   attachPolicyVisible,
   handleAddPolicy,
   handleAttachPolicySuccess,
-  handleUnbindPolicy
-} = useRoleGovernance(computed(() => roleInfo.value?.id) as any)
+  handleUnbindPolicy,
+  analyzedInlinePolicies,
+  analyzedLoading,
+  parentRoles,
+  inheritanceLoading,
+  addParentVisible,
+  handleAddParents,
+  handleRemoveParent
+} = useRoleGovernance(
+  computed(() => roleInfo.value?.id),
+  computed(() => roleInfo.value?.code)
+)
 
 /**
  * 将当前角色包装为固定授权主体
@@ -93,14 +115,37 @@ const roleSubjects = computed<Subject[]>(() => {
                 :pageSize="memberQuery.pageSize"
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
-                @add="() => {}"
-                @unbind="() => {}"
+                @add="handleAddMember"
+                @unbind="(row) => handleAssignMembers([]) /* TODO: 移除成员接口未就绪 */"
                 @batch-unbind="() => {}"
               />
             </el-tab-pane>
 
+            <el-tab-pane label="继承关系" name="inheritance">
+              <InheritanceTable
+                :loading="inheritanceLoading"
+                :data="parentRoles"
+                @add="addParentVisible = true"
+                @remove="(row) => handleRemoveParent(row.code)"
+                @view="(row) => router.push({ query: { ...router.currentRoute.value.query, code: row.code } })"
+              />
+            </el-tab-pane>
+
             <el-tab-pane label="内联策略" name="inline">
-              <InlinePolicyCard :policies="roleInfo.inline_policies" />
+              <div v-loading="analyzedLoading" class="inline-gov-container">
+                <template v-if="analyzedInlinePolicies.length > 0">
+                  <PolicyServiceInsights
+                    v-for="p in analyzedInlinePolicies"
+                    :key="p.code"
+                    :policy="p as any"
+                    :services="p.services || []"
+                    @copy="handleCopy"
+                  />
+                </template>
+                <div v-else-if="!analyzedLoading" class="empty-analysis-hint">
+                  <el-empty description="未发现可分析的内联策略明细" :image-size="100" />
+                </div>
+              </div>
             </el-tab-pane>
 
             <el-tab-pane label="权限策略" name="permissions">
@@ -114,6 +159,7 @@ const roleSubjects = computed<Subject[]>(() => {
                 :format-timestamp="formatTimestamp"
                 @page-change="handlePolicyPageChange"
                 @search="handlePolicySearch"
+                @filter-change="handlePolicyTypeChange"
                 @add="handleAddPolicy"
                 @unbind="handleUnbindPolicy(roleInfo.code, $event)"
                 @batch-unbind="() => {}"
@@ -132,6 +178,12 @@ const roleSubjects = computed<Subject[]>(() => {
       :fixed-subjects="roleSubjects"
       @success="handleAttachPolicySuccess"
     />
+
+    <!-- 成员添加向导 -->
+    <AddMemberDrawer v-model="addMemberVisible" :loading="memberLoading" @confirm="handleAssignMembers" />
+
+    <!-- 角色继承抽屉 -->
+    <AddParentDrawer v-model="addParentVisible" :loading="inheritanceLoading" @confirm="handleAddParents" />
   </PageContainer>
 </template>
 

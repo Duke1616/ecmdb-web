@@ -30,15 +30,35 @@ const formatLevel = (level: string) => {
   if (l === "PARTIAL") return "部分"
   return l || "无"
 }
+
+/**
+ * 格式化资源范围显示
+ */
+const formatResource = (res: string) => {
+  if (res === "*") return "所有资源"
+  if ((res || "").toUpperCase() === "SPECIFIC") return "特定资源"
+  return res
+}
+
+/**
+ * 格式化效力显示
+ */
+const formatEffect = (effect: string) => {
+  const e = (effect || "").toUpperCase()
+  if (e === "ALLOW") return "允许"
+  if (e === "DENY") return "拒绝"
+  return e
+}
 </script>
 
 <template>
   <div class="policy-service-list">
-    <PremiumList :data="services" hide-header hide-pagination show-selection>
+    <PremiumList :data="services" hide-header hide-pagination show-selection disabled indicator-color="#3b82f6">
       <!-- 表头定义：统一字体样式 -->
       <template #column-header>
         <div class="svc-cols header-label-font">
           <span>目标子系统</span>
+          <span>策略属性</span>
           <span>访问级别</span>
           <span>权限覆盖</span>
           <span>目标资源</span>
@@ -56,6 +76,13 @@ const formatLevel = (level: string) => {
                 <div class="code-tag">{{ row.service_code }}</div>
               </div>
             </div>
+          </div>
+
+          <!-- 2. 策略属性 (Effect) -->
+          <div class="cell-effect">
+            <span class="effect-tag" :class="row.effect?.toLowerCase()">
+              {{ formatEffect(row.effect) }}
+            </span>
           </div>
 
           <!-- 2. 治理等级 -->
@@ -88,7 +115,7 @@ const formatLevel = (level: string) => {
           <!-- 4. 目标资源 -->
           <div class="cell-scope">
             <div class="scope-fragment" :class="{ global: row.resource_scope === '*' }">
-              <code>{{ row.resource_scope === "*" ? "所有资源" : row.resource_scope }}</code>
+              <code>{{ formatResource(row.resource_scope) }}</code>
             </div>
           </div>
 
@@ -114,7 +141,7 @@ const formatLevel = (level: string) => {
 
 .svc-cols {
   display: grid;
-  grid-template-columns: 200px 100px 1.6fr 0.8fr 1.2fr;
+  grid-template-columns: 200px 80px 100px 1.4fr 0.8fr 1.2fr;
   gap: 20px;
   width: 100%;
   align-items: center;
@@ -122,7 +149,7 @@ const formatLevel = (level: string) => {
 
 .svc-grid-row {
   display: grid;
-  grid-template-columns: 200px 100px 1.6fr 0.8fr 1.2fr;
+  grid-template-columns: 200px 80px 100px 1.4fr 0.8fr 1.2fr;
   align-items: center;
   gap: 20px;
   min-height: 68px;
@@ -149,13 +176,12 @@ const formatLevel = (level: string) => {
     .name {
       font-size: 13px;
       font-weight: 600;
-      color: #0f172a;
-      transition: color 0.2s;
+      color: #1e293b;
     }
     .code-tag {
-      font-family: ui-monospace, SFMono-Regular, monospace;
       font-size: 11px;
       color: #64748b;
+      font-family: ui-monospace, SFMono-Regular, monospace;
     }
   }
 }
@@ -200,6 +226,24 @@ const formatLevel = (level: string) => {
     .label {
       color: #b45309;
     }
+  }
+}
+
+.effect-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+
+  &.allow {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+  &.deny {
+    background: #fef2f2;
+    color: #dc2626;
   }
 }
 

@@ -115,7 +115,6 @@ const paginatedActions = computed(() => {
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
   overflow: hidden;
-  margin-top: 12px;
 }
 
 .insights-unified-header {

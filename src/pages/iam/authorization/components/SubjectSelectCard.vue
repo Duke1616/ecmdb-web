@@ -12,6 +12,10 @@ const props = defineProps<{
   title?: string
   // 是否关闭边框和阴影（扁平模式）
   flat?: boolean
+  // 默认过滤类型
+  initialType?: "user" | "role" | ""
+  // 是否隐藏类型转换器（用于固定主体的场景）
+  hideTypeSelector?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -23,7 +27,7 @@ const subjectSelector = useResourceSelector<Subject, { keyword: string; sub_type
   fetchApi: searchSubjectsApi,
   listKey: "subjects",
   rowKey: (row: Subject) => `${row.type}-${row.id}`,
-  initialQuery: { keyword: "", sub_type: "" }
+  initialQuery: { keyword: "", sub_type: props.initialType || "" }
 })
 
 // --- 外部同步逻辑 ---
@@ -87,6 +91,7 @@ defineExpose({
             </template>
           </el-input>
           <el-radio-group
+            v-if="!hideTypeSelector"
             v-model="subjectSelector.query.sub_type"
             class="eiam-radio-filter"
             @change="subjectSelector.fetchList"

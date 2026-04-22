@@ -23,6 +23,8 @@ interface Props {
   showSelection?: boolean
   selection?: T[]
   rowKey?: PropertyKey
+  disabled?: boolean
+  selectable?: (item: T) => boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -39,11 +41,13 @@ const props = withDefaults(defineProps<Props>(), {
   hidePagination: false,
   hideOnSinglePage: false,
   hideColumnHeader: false,
-  emptyText: "无符合条件的授权条目",
+  emptyText: "暂无符合条件的数据项",
   emptyImageSize: 100,
   showSelection: false,
   selection: () => [],
-  rowKey: "id"
+  rowKey: "id",
+  disabled: false,
+  selectable: () => true
 })
 
 const emit = defineEmits<{
@@ -240,7 +244,7 @@ onBeforeUnmount(() => {
       <!-- 字段头 -->
       <div v-if="data.length > 0 && !hideColumnHeader" class="content-labels">
         <div v-if="showSelection" class="label-check">
-          <el-checkbox v-model="isAllSelected" :indeterminate="isIndeterminate" />
+          <el-checkbox v-model="isAllSelected" :indeterminate="isIndeterminate" :disabled="disabled" />
         </div>
         <div class="label-main">
           <slot name="column-header">
@@ -253,7 +257,11 @@ onBeforeUnmount(() => {
       <div v-if="data.length > 0" class="items-list">
         <div v-for="row in renderedItems" :key="row.key" class="item-row" :class="{ 'is-active': row.selected }">
           <div v-if="showSelection" class="row-checkbox">
-            <el-checkbox :model-value="row.selected" @change="toggleItemSelection(row.item)" />
+            <el-checkbox
+              :model-value="row.selected"
+              :disabled="disabled || !selectable(row.item)"
+              @change="toggleItemSelection(row.item)"
+            />
           </div>
           <div class="row-body">
             <slot name="item" :item="row.item" :index="row.index" :selected="row.selected" />

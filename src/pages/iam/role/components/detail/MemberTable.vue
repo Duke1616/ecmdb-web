@@ -34,6 +34,7 @@ const emit = defineEmits<{
     :page-size="pageSize"
     indicator-color="#6366f1"
     show-selection
+    empty-text="暂无关联的用户成员"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"
   >
@@ -147,7 +148,7 @@ const emit = defineEmits<{
   gap: 12px;
   .meta-info {
     .name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #1e293b;
     }
@@ -159,7 +160,7 @@ const emit = defineEmits<{
   flex-direction: column;
   gap: 2px;
   .account-item {
-    font-size: 13px;
+    font-size: 11px;
     code {
       font-family: ui-monospace, SFMono-Regular, monospace;
       color: #1e293b;
@@ -168,7 +169,7 @@ const emit = defineEmits<{
       border-radius: 4px;
     }
     &.email {
-      font-size: 12px;
+      font-size: 11px;
       color: #94a3b8;
     }
   }

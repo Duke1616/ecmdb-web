@@ -13,16 +13,36 @@ const currentPage = defineModel<number>("page")
 const pageSize = defineModel<number>("pageSize")
 
 // NOTE: 该组件为纯 UI 展示组件，分页状态可通过 defineModel 与父组件同步
+
+/**
+ * 格式化资源显示 (本地化)
+ */
+const formatResource = (res: string) => {
+  if (res === "*" || (res || "").toUpperCase() === "ALL") return "所有资源"
+  if ((res || "").toUpperCase() === "SPECIFIC") return "特定资源"
+  return res
+}
+
+/**
+ * 格式化效力显示
+ */
+const formatEffect = (effect: string) => {
+  const e = (effect || "").toUpperCase()
+  if (e === "ALLOW") return "允许"
+  if (e === "DENY") return "拒绝"
+  return e
+}
 </script>
 
 <template>
   <div class="policy-action-detail">
-    <PremiumList :data="actions" hide-header hide-pagination>
+    <PremiumList :data="actions" hide-header hide-pagination show-selection disabled indicator-color="#3b82f6">
       <!-- 内部列头 -->
       <template #column-header>
         <div class="detail-cols header-label-font">
           <span>操作权限 (ACTION)</span>
           <span>所属分组</span>
+          <span>效力</span>
           <span>目标资源 (RESOURCE)</span>
           <span>生效条件 (CONDITION)</span>
         </div>
@@ -44,10 +64,17 @@ const pageSize = defineModel<number>("pageSize")
             <span class="group-label">{{ row.group || "通用分组" }}</span>
           </div>
 
+          <!-- 3. 效力 -->
+          <div class="cell-effect">
+            <span class="effect-tag" :class="row.effect?.toLowerCase()">
+              {{ formatEffect(row.effect) }}
+            </span>
+          </div>
+
           <!-- 3. 资源 -->
           <div class="cell-scope">
             <div class="scope-fragment" :class="{ global: row.resource === '*' }">
-              <code>{{ row.resource === "*" ? "所有资源" : row.resource }}</code>
+              <code>{{ formatResource(row.resource) }}</code>
             </div>
           </div>
 
@@ -88,7 +115,7 @@ const pageSize = defineModel<number>("pageSize")
 
 .detail-cols {
   display: grid;
-  grid-template-columns: 280px 140px 1.2fr 1.5fr;
+  grid-template-columns: 280px 140px 80px 1.2fr 1.5fr;
   gap: 24px;
   width: 100%;
   align-items: center;
@@ -96,7 +123,7 @@ const pageSize = defineModel<number>("pageSize")
 
 .detail-grid-row {
   display: grid;
-  grid-template-columns: 280px 140px 1.2fr 1.5fr;
+  grid-template-columns: 280px 140px 80px 1.2fr 1.5fr;
   align-items: center;
   gap: 24px;
   min-height: 64px;
@@ -122,7 +149,7 @@ const pageSize = defineModel<number>("pageSize")
   flex-direction: column;
   gap: 2px;
   .action-name {
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 600;
     color: #1e293b;
   }
@@ -140,6 +167,24 @@ const pageSize = defineModel<number>("pageSize")
   background: #f1f5f9;
   padding: 2px 8px;
   border-radius: 4px;
+}
+
+.effect-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+
+  &.allow {
+    background: #f0fdf4;
+    color: #16a34a;
+  }
+  &.deny {
+    background: #fef2f2;
+    color: #dc2626;
+  }
 }
 
 .scope-fragment {

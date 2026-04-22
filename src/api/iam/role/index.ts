@@ -47,3 +47,42 @@ export function listUserRolesApi(data: role.ListUserRolesReq) {
     data
   })
 }
+
+/** 批量分配角色给用户 */
+export function batchAssignRoleApi(data: role.BatchAssignRoleReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/role/batch_assign`,
+    data
+  })
+}
+
+/** 分析角色的内联策略 */
+export function analyzeRoleInlinePoliciesApi(data: role.RoleAnalysisReq) {
+  return instance.post<role.RoleAnalysisRes>({
+    url: `${API_SERVICE.IAM}/role/analysis/inline`,
+    data
+  })
+}
+/** 获取角色的继承父角色列表 */
+export function getParentRolesApi(data: role.GetParentRolesReq) {
+  return instance.post<role.RoleInheritanceInfo[]>({
+    url: `${API_SERVICE.IAM}/role/parents`,
+    data
+  })
+}
+
+/** 为当前角色添加父角色 */
+export function addParentRoleApi(data: role.RoleInheritanceReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/role/add_parent`,
+    data
+  })
+}
+
+/** 为当前角色移除父角色 */
+export function removeParentRoleApi(data: role.RoleInheritanceReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/role/remove_parent`,
+    data
+  })
+}

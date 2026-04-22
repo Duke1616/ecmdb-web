@@ -10,7 +10,6 @@ const consoleAccess = ref(true)
       <div class="section-marker" />
       <div class="section-copy">
         <h3>登录与安全</h3>
-        <p>管理该用户的后台登录能力和二次验证设置。</p>
       </div>
     </header>
 
@@ -48,25 +47,25 @@ const consoleAccess = ref(true)
 
 .section-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid #eef2f7;
+  padding: 14px 18px;
+  min-height: 72px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .section-marker {
-  width: 4px;
-  height: 22px;
+  width: 5px;
+  height: 26px;
   border-radius: 999px;
-  background: #6366f1;
+  background: #3b82f6;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .section-copy {
   h3 {
     margin: 0;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
     color: #1e293b;
   }

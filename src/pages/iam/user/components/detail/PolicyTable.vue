@@ -29,7 +29,7 @@ const emit = defineEmits<{
 <template>
   <PremiumList
     v-model:selection="selection"
-    title="授权策略"
+    title="策略服务明细"
     search-placeholder="搜索策略名称或标识符"
     :data="data"
     :total="total"
@@ -178,7 +178,7 @@ const emit = defineEmits<{
     min-width: 0;
     gap: 2px;
     .name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #1e293b;
       white-space: nowrap;
@@ -188,7 +188,7 @@ const emit = defineEmits<{
     .code-wrapper {
       display: flex;
       align-items: center;
-      font-size: 12px;
+      font-size: 11px;
       color: #94a3b8;
       code {
         font-family: ui-monospace, SFMono-Regular, monospace;

@@ -28,12 +28,15 @@ const emit = defineEmits<{
     :current-page="currentPage"
     :page-size="pageSize"
     indicator-color="#3b82f6"
+    show-selection
+    disabled
+    empty-text="暂无已入驻的租户信息"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"
   >
     <!-- 头部操作 -->
     <template #header-actions>
-      <el-button plain class="toolbar-action-btn" @click="emit('add')">
+      <el-button disabled plain class="toolbar-action-btn" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>关联更多空间</span>
       </el-button>
@@ -132,7 +135,7 @@ const emit = defineEmits<{
     min-width: 0;
     gap: 2px;
     .name {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #1e293b;
       white-space: nowrap;
@@ -150,7 +153,7 @@ const emit = defineEmits<{
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 11px;
     color: #475569;
     code {
       font-family: ui-monospace, SFMono-Regular, monospace;
@@ -168,7 +171,7 @@ const emit = defineEmits<{
   align-items: center;
   min-width: 0;
   .domain-text {
-    font-size: 13px;
+    font-size: 11px;
     color: #64748b;
     padding-left: 8px;
   }
