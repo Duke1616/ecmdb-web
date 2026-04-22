@@ -1,8 +1,8 @@
 <template>
   <SectionPanel v-model:expanded="isExpanded" :label="label" panel-class="full-bleed" :required="required">
     <template #preview>
-      <template v-if="selectedServiceCodes.length > 0">
-        {{ selectedServiceCodes.length }} 个模块 /
+      <template v-if="managedServiceCodes.length > 0">
+        {{ managedServiceCodes.length }} 个模块 /
         {{ actionMode === "all" ? "全部 API" : stmt.action.length + " 个特定操作" }}
       </template>
       <span v-else class="placeholder-text">点击配置模块权限...</span>
@@ -29,12 +29,12 @@
           />
         </div>
         <div class="pane-list scroll-area">
-          <el-checkbox-group :model-value="selectedServiceCodes" @update:model-value="onServiceChange">
+          <el-checkbox-group v-model="managedServiceCodes" @change="onServiceChange">
             <div
               v-for="s in filteredManifest"
               :key="s.code"
               class="svc-item-check"
-              :class="{ is_active: selectedServiceCodes.includes(s.code) }"
+              :class="{ is_active: managedServiceCodes.includes(s.code) }"
             >
               <el-checkbox :label="s.code">
                 <span class="name">{{ s.name }}</span>
@@ -63,7 +63,7 @@
           <div v-else class="empty-placeholder">
             <el-icon><Pointer /></el-icon>
             <p>
-              {{ selectedServiceCodes.length === 0 ? "从左侧选择业务模块" : "当前已选择整模块全量权限接入" }}
+              {{ managedServiceCodes.length === 0 ? "从左侧选择业务模块" : "当前已选择整模块全量权限接入" }}
             </p>
           </div>
         </div>
@@ -109,35 +109,49 @@ const patchStmt = (patch: Partial<StatementVO>) => {
 // 授权操作（Action）相关内部逻辑，完全自我闭环，向外只派发 update:stmt
 // --------------------------------------------------------------------------
 
-// 选中的服务 codes 始终从父层 stmt.action 推导，避免回填和模式切换后状态漂移
-const selectedServiceCodes = computed(() => {
-  const codes = props.stmt.action.map((action) => action.split(":")[0])
-  return [...new Set(codes)].filter((code) => props.permissionManifest.some((service) => service.code === code))
-})
+// 选中的服务 codes，使用 ref 显式管理，确保在“精细化”模式下即使未选具体 Action 也能保持侧边栏勾选状态
+const managedServiceCodes = ref<string[]>([])
+
+// 实时从 stmt.action 中提取 codes，但要与 managedServiceCodes 保持同步
+watch(
+  () => props.stmt.action,
+  (actions) => {
+    const codesFromActions = actions.map((a) => a.split(":")[0])
+    // 只有当 action 中出现了 managedServiceCodes 不包含的 code 时（比如全选操作），才强制同步
+    const missing = codesFromActions.filter((c) => !managedServiceCodes.value.includes(c))
+    if (missing.length > 0) {
+      managedServiceCodes.value = [...new Set([...managedServiceCodes.value, ...codesFromActions])]
+    }
+  },
+  { immediate: true }
+)
 
 const actionMode = computed(() => (props.stmt.action.some((a) => a.endsWith(":*")) ? "all" : "specific"))
 
 const activeServices = computed(() =>
-  props.permissionManifest.filter((s) => selectedServiceCodes.value.includes(s.code))
+  props.permissionManifest.filter((s) => managedServiceCodes.value.includes(s.code))
 )
 
-const onServiceChange = (val: (string | number)[]) => {
+const onServiceChange = (val: (string | number | boolean)[]) => {
   const newCodes = val as string[]
-  const removed = selectedServiceCodes.value.filter((c) => !newCodes.includes(c))
+  const removed = managedServiceCodes.value.filter((c) => !newCodes.includes(c))
 
   let nextActions = [...props.stmt.action]
   removed.forEach((code) => {
     nextActions = nextActions.filter((a) => !a.startsWith(`${code}:`))
   })
+
+  // 如果处于全选模式，新增的 service 也要补全 :*
   if (actionMode.value === "all") {
     nextActions = newCodes.map((c) => `${c}:*`)
   }
+
   patchStmt({ action: nextActions })
 }
 
 const onActionModeChange = (val: string | number | boolean | undefined) => {
   if (String(val) === "all") {
-    patchStmt({ action: selectedServiceCodes.value.map((c) => `${c}:*`) })
+    patchStmt({ action: managedServiceCodes.value.map((c) => `${c}:*`) })
   } else {
     patchStmt({ action: props.stmt.action.filter((a) => !a.endsWith(":*")) })
   }

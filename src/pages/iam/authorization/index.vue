@@ -74,7 +74,9 @@
       <!-- 授权主体 -->
       <template #subject="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link mono">{{ row.subject }}</el-link>
+          <el-link type="primary" :underline="false" class="main-link mono" @click="handleSubjectClick(row)">
+            {{ row.subject }}
+          </el-link>
           <div class="sub-detail">
             {{ row.sub_type === AuthorizationSubType.USER ? "IAM 用户" : "IAM 角色" }}
           </div>
@@ -84,7 +86,9 @@
       <!-- 授权对象 -->
       <template #target="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link mono">{{ row.target }}</el-link>
+          <el-link type="primary" :underline="false" class="main-link mono" @click="handleTargetClick(row)">
+            {{ row.target }}
+          </el-link>
           <div class="sub-detail">
             <template v-if="row.obj_type === AuthorizationObjType.ROLE">IAM 角色</template>
             <template v-else-if="row.obj_type === AuthorizationObjType.SYSTEM_POLICY">系统策略</template>
@@ -117,6 +121,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
+import { useRouter } from "vue-router"
 import { Search, RefreshRight, Plus } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -127,6 +132,7 @@ import { AuthorizationSubType, AuthorizationObjType, type Authorization } from "
 import { useAuthorizeList } from "./composables/useAuthorizeList"
 import { ElMessageBox, ElMessage } from "element-plus"
 
+const router = useRouter()
 const {
   loading,
   authorizations,
@@ -138,6 +144,28 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = useAuthorizeList()
+
+/**
+ * 处理主体点击跳转
+ */
+const handleSubjectClick = (row: Authorization) => {
+  const isUser = row.sub_type === AuthorizationSubType.USER
+  router.push({
+    name: isUser ? "UserDetail" : "RoleDetail",
+    query: isUser ? { username: row.subject } : { code: row.subject }
+  })
+}
+
+/**
+ * 处理对象内容点击跳转
+ */
+const handleTargetClick = (row: Authorization) => {
+  const isRole = row.obj_type === AuthorizationObjType.ROLE
+  router.push({
+    name: isRole ? "RoleDetail" : "PolicyDetail",
+    query: isRole ? { code: row.target } : { code: row.target }
+  })
+}
 
 const tableColumns: Column[] = [
   { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "center" },

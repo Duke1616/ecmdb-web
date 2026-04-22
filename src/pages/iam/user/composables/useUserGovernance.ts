@@ -1,5 +1,5 @@
 import { ref, reactive, watch, type Ref } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { listUserRolesApi } from "@/api/iam/role"
 import { listUserPoliciesApi } from "@/api/iam/policy"
@@ -10,8 +10,16 @@ import type { Tenant } from "@/api/iam/tenant/type"
 
 export function useUserGovernance(userId: Ref<number | undefined>) {
   const route = useRoute()
+  const router = useRouter()
   const activeTab = ref((route.query.tab as string) || "auth")
   const attachPolicyVisible = ref(false)
+
+  // 同步 Tab 状态到 URL，确保“返回”时能恢复现场
+  watch(activeTab, (newTab) => {
+    router.replace({
+      query: { ...route.query, tab: newTab }
+    })
+  })
 
   // 角色相关
   const roles = ref<Role[]>([])

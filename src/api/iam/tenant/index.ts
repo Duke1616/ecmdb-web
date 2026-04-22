@@ -62,3 +62,19 @@ export function listUserTenantsApi(data: tenant.ListUserTenantsReq) {
     data
   })
 }
+
+/** 租户成员列表 (治理侧) */
+export function listTenantMembersApi(data: tenant.ListMembersReq) {
+  return instance.post<tenant.ListMembersRes>({
+    url: `${API_SERVICE.IAM}/tenant/members`,
+    data
+  })
+}
+
+/** 分配用户到租户 */
+export function assignTenantUserApi(data: tenant.AssignUserReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/tenant/assign`,
+    data
+  })
+}

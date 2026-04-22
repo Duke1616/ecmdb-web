@@ -33,12 +33,12 @@ export function useRoleGovernance(
   const addMemberVisible = ref(false)
 
   const fetchMembers = async () => {
-    const id = toValue(roleId)
-    if (!id) return
+    const code = toValue(roleCode)
+    if (!code) return
     memberLoading.value = true
     try {
       const { data } = await listRoleUsersApi({
-        role_id: id,
+        role_code: code,
         offset: (memberQuery.value.currentPage - 1) * memberQuery.value.pageSize,
         limit: memberQuery.value.pageSize,
         keyword: memberQuery.value.keyword
@@ -246,11 +246,16 @@ export function useRoleGovernance(
     }
   }
 
+  const handleBatchUnbindPolicies = () => {
+    ElMessage.warning(`即将批量解绑 ${selectedPolicies.value.length} 个策略`)
+    selectedPolicies.value = []
+  }
+
   // --- 联动逻辑 (Lazy Loading) ---
   watch(
-    [() => activeTab.value, () => toValue(roleId)],
-    ([tab, id]) => {
-      if (!id) return
+    [() => activeTab.value, () => toValue(roleCode)],
+    ([tab, code]) => {
+      if (!code) return
       if (tab === "members") {
         fetchMembers()
       } else if (tab === "permissions") {
@@ -297,6 +302,7 @@ export function useRoleGovernance(
     handleAddParent,
     handleRemoveParent,
     addParentVisible,
-    handleAddParents
+    handleAddParents,
+    handleBatchUnbindPolicies
   }
 }

@@ -48,7 +48,7 @@
       <!-- 租户核心资产: 朴素版 Dual-Line -->
       <template #tenant_info="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link" @click="handleEdit(row)">
+          <el-link type="primary" :underline="false" class="main-link" @click="handleViewDetail(row)">
             {{ row.name }}
           </el-link>
           <div class="sub-detail mono">{{ row.code }}</div>
@@ -101,7 +101,10 @@ import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import TenantForm from "./components/TenantForm.vue"
 import { useTenantList } from "./composables/useTenantList"
+import { useRouter } from "vue-router"
 import type { Column } from "@@/components/DataTable/types"
+
+const router = useRouter()
 
 const {
   tenants,
@@ -128,14 +131,23 @@ const submitting = ref(false)
  * 租户操作配置项
  */
 const tenantOperateItems = [
-  { name: "资料维护", code: "edit", type: "primary" },
-  { name: "租户注销", code: "delete", type: "danger" }
+  { name: "管理看板", code: "view", type: "primary" },
+  { name: "资料维护", code: "edit", type: "info" },
+  { name: "租户销毁", code: "delete", type: "danger" }
 ]
+
+const handleViewDetail = (row: any) => {
+  router.push({
+    name: "TenantDetail",
+    query: { id: row.id }
+  })
+}
 
 /**
  * 统一执行操作分发
  */
 const handleOperate = (row: any, code: string) => {
+  if (code === "view") handleViewDetail(row)
   if (code === "edit") handleEdit(row)
   if (code === "delete") handleDelete(row)
 }

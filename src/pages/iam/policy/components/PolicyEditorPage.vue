@@ -74,11 +74,11 @@ const prepareSubmit = () => {
 }
 
 const handleSuccess = () => {
-  router.push("/iam/policy")
+  router.push("/iam/permission/policy")
 }
 
 const handleCancel = () => {
-  router.push("/iam/policy")
+  router.push("/iam/permission/policy")
 }
 </script>
 

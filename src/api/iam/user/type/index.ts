@@ -9,10 +9,13 @@ export interface User {
   phone: string
   source: string
   ctime: number
+  is_member?: boolean
+  is_system_space?: boolean
   utime: number
   last_login_at: number
+  console_login: boolean
+  mfa_bound: boolean
   identities: Identity[]
-  is_member?: boolean
 }
 
 /** 身份认证信息 */
@@ -108,7 +111,7 @@ export interface ListUserRequest {
 
 /** 角色关联用户列表请求 */
 export interface ListRoleUsersReq extends ListUserRequest {
-  role_id: number
+  role_code: string
 }
 
 /** 搜索 LDAP 用户请求 */

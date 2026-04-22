@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
-import type { User } from "@/api/iam/user/type"
+import type { TenantMember } from "@/api/iam/tenant/type"
 
-const selection = defineModel<User[]>("selection", { default: () => [] })
+const selection = ref<TenantMember[]>([])
 
 defineProps<{
   loading: boolean
-  data: User[]
+  data: TenantMember[]
   total: number
   currentPage: number
   pageSize: number
@@ -17,8 +17,7 @@ defineProps<{
 const emit = defineEmits<{
   pageChange: [page: number]
   add: []
-  unbind: [row: User]
-  batchUnbind: []
+  unbind: [row: TenantMember]
   search: [keyword: string]
 }>()
 </script>
@@ -26,7 +25,7 @@ const emit = defineEmits<{
 <template>
   <PremiumList
     v-model:selection="selection"
-    title="角色关联成员列表"
+    title="租户空间成员"
     search-placeholder="搜索成员姓名、用户名或邮箱"
     :data="data"
     :total="total"
@@ -35,7 +34,7 @@ const emit = defineEmits<{
     :page-size="pageSize"
     indicator-color="#7c3aed"
     show-selection
-    empty-text="该角色下暂无关联的成员"
+    empty-text="该租户下暂无关联的成员"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"
   >
@@ -59,43 +58,42 @@ const emit = defineEmits<{
       </el-button>
     </template>
 
-    <!-- 批量操作 -->
-    <template #batch-actions>
-      <el-button type="danger" size="small" @click="emit('batchUnbind')">批量移除成员</el-button>
-    </template>
-
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
       <div class="member-grid-row">
-        <!-- 核心身份识别 -->
+        <!-- 身份账号列 -->
         <div class="cell-identity">
           <div class="meta-info">
-            <span class="name">{{ row.nickname || row.username }}</span>
+            <span class="name">{{ row.nickname || "未设置昵称" }}</span>
             <div class="account-sub">
               <code>{{ row.username }}</code>
             </div>
           </div>
         </div>
 
-        <!-- 详细信息列 -->
+        <!-- 邮箱列 -->
         <div class="cell-email">
           <span class="email-text">{{ row.email || "—" }}</span>
         </div>
 
+        <!-- 职位列 -->
         <div class="cell-job">
           <span class="job-text">{{ row.job_title || "普通成员" }}</span>
         </div>
 
-        <!-- 状态列 (默认为活跃状态) -->
+        <!-- 状态列 -->
         <div class="cell-status">
-          <el-tag type="success" size="small" effect="plain" class="status-tag"> 活跃 </el-tag>
+          <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="plain" class="status-tag">
+            {{ row.status === 1 ? "活跃" : "注销" }}
+          </el-tag>
         </div>
 
+        <!-- 时间列 -->
         <div class="cell-time">
           <span class="time-text">{{ formatTimestamp(row.ctime) }}</span>
         </div>
 
-        <!-- 操作行为 -->
+        <!-- 操作列 -->
         <div class="cell-actions">
           <el-button type="danger" link size="small" class="delete-btn" @click.stop="emit('unbind', row)">
             <el-icon><Delete /></el-icon>
@@ -132,8 +130,10 @@ const emit = defineEmits<{
   letter-spacing: 0.05em;
 }
 
+// 同步角色页面的网格模式：取消写死的宽度，使用弹性轨道
 .member-cols {
   display: grid;
+  // 网格比例同步项目通用标准
   grid-template-columns: 200px 1.5fr 1fr 100px 1.2fr 100px;
   gap: 24px;
   width: 100%;
@@ -207,9 +207,6 @@ const emit = defineEmits<{
     font-weight: 600;
     &:hover {
       color: #ef4444;
-    }
-    :deep(.el-icon) {
-      margin-right: 4px;
     }
   }
 }

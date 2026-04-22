@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { useRouter } from "vue-router"
 import { Plus } from "@element-plus/icons-vue"
 import PremiumList from "@@/components/PremiumList/index.vue"
 import type { Tenant } from "@/api/iam/tenant/type"
 
+const router = useRouter()
 defineProps<{
   loading: boolean
   data: Tenant[]
@@ -16,6 +18,13 @@ const emit = defineEmits<{
   search: [keyword: string]
   add: []
 }>()
+
+const handleViewTenant = (row: Tenant) => {
+  router.push({
+    name: "TenantDetail",
+    query: { id: row.id }
+  })
+}
 </script>
 
 <template>
@@ -54,8 +63,13 @@ const emit = defineEmits<{
     <template #item="{ item: row }">
       <div class="tenant-grid-row">
         <div class="cell-identity">
-          <div class="meta-info">
-            <span class="name">{{ row.name }}</span>
+          <div class="dual-line-info">
+            <el-link type="primary" :underline="false" class="main-title" @click="handleViewTenant(row)">
+              {{ row.name }}
+            </el-link>
+            <div class="sub-detail">
+              <code>{{ row.code }}</code>
+            </div>
           </div>
         </div>
 
@@ -122,6 +136,14 @@ const emit = defineEmits<{
   align-items: center;
   gap: 24px;
   min-height: 76px;
+  padding: 0 16px;
+  margin: 0 -16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
 }
 
 .cell-identity {
@@ -129,18 +151,49 @@ const emit = defineEmits<{
   align-items: center;
   min-width: 0;
 
-  .meta-info {
+  .dual-line-info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 4px;
     min-width: 0;
-    gap: 2px;
-    .name {
+
+    .main-title {
       font-size: 13px;
       font-weight: 600;
       color: #1e293b;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: #3b82f6;
+      }
+    }
+
+    .sub-detail {
+      font-size: 12px;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .type-text {
+        color: #94a3b8;
+        font-weight: 500;
+      }
+
+      .divider {
+        color: #e2e8f0;
+        transform: scaleY(0.8);
+      }
+
+      code {
+        font-family: ui-monospace, SFMono-Regular, monospace;
+        letter-spacing: -0.01em;
+      }
     }
   }
 }

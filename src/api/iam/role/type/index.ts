@@ -57,6 +57,7 @@ export interface Role {
   name: string
   desc: string
   type: RoleType
+  ctime: number
   inline_policies: InlinePolicy[]
 }
 

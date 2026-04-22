@@ -2,7 +2,7 @@
 import { computed } from "vue"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
-import { Delete } from "@element-plus/icons-vue"
+import { Delete, OfficeBuilding, Edit } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 
@@ -10,6 +10,7 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { useRoleDetail } from "./composables/useRoleDetail"
 import { useRoleGovernance } from "./composables/useRoleGovernance"
 
+// Components
 import MemberTable from "./components/detail/MemberTable.vue"
 import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
 import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
@@ -44,7 +45,6 @@ const {
   handleMemberSearch,
   addMemberVisible,
   handleAddMember,
-  handleAssignMembers,
   handlePolicyPageChange,
   handlePolicySearch,
   handlePolicyTypeChange,
@@ -52,6 +52,7 @@ const {
   handleAddPolicy,
   handleAttachPolicySuccess,
   handleUnbindPolicy,
+  handleBatchUnbindPolicies,
   analyzedInlinePolicies,
   analyzedLoading,
   parentRoles,
@@ -63,6 +64,38 @@ const {
   computed(() => roleInfo.value?.id),
   computed(() => roleInfo.value?.code)
 )
+
+/**
+ * 核心聚合算法：将多条内联策略的服务描述进行打平展示
+ */
+const aggregatedServices = computed(() => {
+  const allServices: any[] = []
+
+  analyzedInlinePolicies.value.forEach((p) => {
+    ;(p.services || []).forEach((s) => {
+      // 携带来源策略信息，以便在下钻时区分
+      allServices.push({
+        ...JSON.parse(JSON.stringify(s)),
+        policy_code: p.code
+      })
+    })
+  })
+
+  // 按服务名称排序，让相同子系统的记录挨在一起
+  return allServices.sort((a, b) => a.service_name.localeCompare(b.service_name))
+})
+
+/**
+ * 聚合策略源码：将多条策略的 Statement 拼接
+ */
+const aggregatedPolicy = computed(() => {
+  if (analyzedInlinePolicies.value.length === 0) return null
+  return {
+    code: "aggregated",
+    name: "聚合内联分析视图",
+    statement: analyzedInlinePolicies.value.flatMap((p) => p.statement || [])
+  } as any
+})
 
 /**
  * 将当前角色包装为固定授权主体
@@ -78,6 +111,12 @@ const roleSubjects = computed<Subject[]>(() => {
     }
   ]
 })
+
+const formatDate = (ts: number | undefined) => {
+  if (!ts) return "-"
+  const d = new Date(ts)
+  return d.toLocaleString()
+}
 </script>
 
 <template>
@@ -86,6 +125,10 @@ const roleSubjects = computed<Subject[]>(() => {
       <ManagerHeader :title="roleInfo.name" :subtitle="roleInfo.code" :show-back-button="true" @back="router.back()">
         <template #actions>
           <div class="header-action-stack">
+            <el-button class="gov-action-btn primary" plain>
+              <el-icon><Edit /></el-icon>
+              <span>完善职责</span>
+            </el-button>
             <el-button class="gov-action-btn danger" @click="handleDelete">
               <el-icon><Delete /></el-icon>
               <span>注销主体</span>
@@ -95,17 +138,40 @@ const roleSubjects = computed<Subject[]>(() => {
       </ManagerHeader>
 
       <div class="governance-body">
-        <!-- 职责描述区：复刻 UserInfoGrid 的部分排版感 -->
-        <div class="role-brief-section">
-          <div class="section-label">职责描述说明</div>
-          <div class="section-content">
-            {{ roleInfo.desc || "暂无职责描述信息" }}
+        <!-- 身份与职责概览 -->
+
+        <!-- 2. 基础资料概览 -->
+        <div class="info-card consolidated-card">
+          <div class="info-header">
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>主体身份与职责定义</span>
+          </div>
+          <div class="info-content grid-4-cols">
+            <div class="info-item">
+              <div class="label">角色显示名称</div>
+              <div class="value">{{ roleInfo.name }}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">唯一识别码 (CODE)</div>
+              <div class="value mono copyable" @click="handleCopy(roleInfo.code)">
+                {{ roleInfo.code }}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="label">创建于</div>
+              <div class="value time">{{ formatDate(roleInfo.ctime) }}</div>
+            </div>
+            <div v-if="roleInfo.desc" class="info-item full">
+              <div class="label">职责边界说明</div>
+              <div class="value desc">{{ roleInfo.desc }}</div>
+            </div>
           </div>
         </div>
 
+        <!-- 3. 治理深度内容区 (Tabs) -->
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
-            <el-tab-pane label="关联用户" name="members">
+            <el-tab-pane label="关联用户管理" name="members">
               <MemberTable
                 v-model:selection="selectedMembers"
                 :loading="memberLoading"
@@ -113,15 +179,16 @@ const roleSubjects = computed<Subject[]>(() => {
                 :total="memberTotal"
                 :current-page="memberQuery.currentPage"
                 :pageSize="memberQuery.pageSize"
+                :format-timestamp="formatTimestamp"
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
                 @add="handleAddMember"
-                @unbind="(row) => handleAssignMembers([]) /* TODO: 移除成员接口未就绪 */"
+                @unbind="(row) => ElMessage.info(`即将解绑用户: ${row.username}`)"
                 @batch-unbind="() => {}"
               />
             </el-tab-pane>
 
-            <el-tab-pane label="继承关系" name="inheritance">
+            <el-tab-pane label="信任继承关系" name="inheritance">
               <InheritanceTable
                 :loading="inheritanceLoading"
                 :data="parentRoles"
@@ -131,16 +198,10 @@ const roleSubjects = computed<Subject[]>(() => {
               />
             </el-tab-pane>
 
-            <el-tab-pane label="内联策略" name="inline">
+            <el-tab-pane label="内联策略分析" name="inline">
               <div v-loading="analyzedLoading" class="inline-gov-container">
                 <template v-if="analyzedInlinePolicies.length > 0">
-                  <PolicyServiceInsights
-                    v-for="p in analyzedInlinePolicies"
-                    :key="p.code"
-                    :policy="p as any"
-                    :services="p.services || []"
-                    @copy="handleCopy"
-                  />
+                  <PolicyServiceInsights :policy="aggregatedPolicy" :services="aggregatedServices" @copy="handleCopy" />
                 </template>
                 <div v-else-if="!analyzedLoading" class="empty-analysis-hint">
                   <el-empty description="未发现可分析的内联策略明细" :image-size="100" />
@@ -148,59 +209,222 @@ const roleSubjects = computed<Subject[]>(() => {
               </div>
             </el-tab-pane>
 
-            <el-tab-pane label="权限策略" name="permissions">
+            <el-tab-pane label="托管策略治理" name="permissions">
               <PolicyTable
                 v-model:selection="selectedPolicies"
                 :loading="policyLoading"
                 :data="policies"
                 :total="policyTotal"
                 :current-page="policyQuery.currentPage"
-                :page-size="policyQuery.pageSize"
+                :pageSize="policyQuery.pageSize"
                 :format-timestamp="formatTimestamp"
                 @page-change="handlePolicyPageChange"
                 @search="handlePolicySearch"
-                @filter-change="handlePolicyTypeChange"
+                @type-change="handlePolicyTypeChange"
                 @add="handleAddPolicy"
-                @unbind="handleUnbindPolicy(roleInfo.code, $event)"
-                @batch-unbind="() => {}"
+                @unbind="(row) => handleUnbindPolicy(roleInfo?.code || '', row)"
+                @batch-unbind="handleBatchUnbindPolicies"
               />
             </el-tab-pane>
           </el-tabs>
         </div>
       </div>
+
+      <!-- 功能侧边栏 -->
+      <AddMemberDrawer v-model="addMemberVisible" :role-id="roleInfo.id" @success="handleMemberSearch('')" />
+      <AddParentDrawer
+        v-model="addParentVisible"
+        :role-id="roleInfo.id"
+        :exclude-codes="[roleInfo.code, ...parentRoles.map((r) => r.code)]"
+        @success="handleAddParents"
+      />
+      <AuthorizeDrawer
+        v-model="attachPolicyVisible"
+        :fixed-subjects="roleSubjects"
+        @success="handleAttachPolicySuccess"
+      />
     </template>
-
-    <el-empty v-else-if="!detailLoading" description="未能获取到角色详情，请检查标识是否正确" />
-
-    <!-- 策略授权向导 (复用全局授权组件) -->
-    <AuthorizeDrawer
-      v-model="attachPolicyVisible"
-      :fixed-subjects="roleSubjects"
-      @success="handleAttachPolicySuccess"
-    />
-
-    <!-- 成员添加向导 -->
-    <AddMemberDrawer v-model="addMemberVisible" :loading="memberLoading" @confirm="handleAssignMembers" />
-
-    <!-- 角色继承抽屉 -->
-    <AddParentDrawer v-model="addParentVisible" :loading="inheritanceLoading" @confirm="handleAddParents" />
   </PageContainer>
 </template>
 
 <style lang="scss" scoped>
 .role-detail-page {
+  --gov-brand: #7c3aed;
+  --gov-bg: #f8fafc;
+  --gov-border: #e2e8f0;
+
   overflow-y: auto;
   overflow-x: hidden;
+  background: var(--gov-bg);
+}
+
+.governance-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 4px;
+}
+
+/* 置顶状态条样式 */
+.governance-status-strip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      &.success {
+        background: #10b981;
+      }
+      &.info {
+        background: var(--gov-brand);
+      }
+      &.warning {
+        background: #f59e0b;
+      }
+    }
+
+    .label {
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    .value {
+      font-weight: 700;
+      &.success {
+        color: #10b981;
+      }
+      &.info {
+        color: var(--gov-brand);
+      }
+      &.tint {
+        color: #334155;
+      }
+    }
+  }
+
+  .divider {
+    width: 1px;
+    height: 14px;
+    background: #e2e8f0;
+  }
+}
+
+/* 核心资料卡片 */
+.info-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+  .info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 700;
+    .el-icon {
+      color: var(--gov-brand);
+    }
+    &::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #f1f5f9;
+      margin-left: 12px;
+    }
+  }
+
+  .info-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 24px;
+
+    &.grid-4-cols {
+      grid-template-columns: 1fr 1fr 1.5fr;
+    }
+
+    .info-item {
+      &.full {
+        grid-column: 1 / -1;
+      }
+      .label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+      }
+      .value {
+        font-size: 14px;
+        color: #334155;
+        font-weight: 500;
+        &.mono {
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        &.time {
+          color: #64748b;
+        }
+        &.copyable {
+          cursor: pointer;
+          &:hover {
+            color: var(--gov-brand);
+            text-decoration: underline;
+          }
+        }
+        &.desc {
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+}
+
+.governance-tabs-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 24px 24px;
 }
 
 .header-action-stack {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   .gov-action-btn {
-    height: 34px;
+    height: 38px;
     padding: 0 16px;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 13px;
+    font-weight: 600;
+
+    &.primary {
+      color: var(--gov-brand);
+      border-color: #ede9fe;
+      background: #f5f3ff;
+      &:hover {
+        background: #ede9fe;
+      }
+    }
+
     &.danger {
       color: #ef4444;
       border-color: #fee2e2;
@@ -209,60 +433,31 @@ const roleSubjects = computed<Subject[]>(() => {
         background: #fef2f2;
       }
     }
+
+    .el-icon {
+      margin-right: 6px;
+    }
   }
 }
 
-.governance-body {
+.governance-raw-tabs :deep(.el-tabs__item) {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  &.is-active {
+    color: var(--gov-brand);
+  }
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--gov-brand);
+  height: 3px;
+  border-radius: 2px;
+}
+
+.inline-gov-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 0 4px;
-}
-
-.role-brief-section {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 16px 20px;
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
-  }
-  .section-content {
-    font-size: 13.5px;
-    color: #334155;
-    line-height: 1.6;
-  }
-}
-
-.governance-tabs-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 4px 20px 20px;
-}
-
-.governance-raw-tabs {
-  :deep(.el-tabs__item) {
-    font-size: 13px;
-    font-weight: 600;
-    color: #64748b;
-    height: 48px;
-    &.is-active {
-      color: #6366f1;
-    }
-  }
-  :deep(.el-tabs__nav-wrap::after) {
-    background-color: #f1f5f9;
-  }
-  :deep(.el-tabs__active-bar) {
-    background-color: #6366f1;
-    height: 2px;
-  }
 }
 </style>

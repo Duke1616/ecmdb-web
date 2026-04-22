@@ -46,3 +46,36 @@ export interface ListUserTenantsReq {
   limit: number
   keyword: string
 }
+
+/** 租户成员列表请求 */
+export interface ListMembersReq {
+  tenant_id: number
+  offset: number
+  limit: number
+  keyword?: string
+}
+
+/** 租户成员列表响应 */
+export interface ListMembersRes {
+  total: number
+  members: TenantMember[]
+}
+
+/** 租户成员信息 (增强版用户资料) */
+export interface TenantMember {
+  id: number
+  username: string
+  nickname: string
+  avatar: string
+  email: string
+  status: number
+  job_title: string
+  last_login_at: number
+  ctime: number
+}
+
+/** 分配用户到租户请求 */
+export interface AssignUserReq {
+  tenant_id: number
+  user_id: number
+}

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref } from "vue"
+import { useRouter } from "vue-router"
 import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import type { Role } from "@/api/iam/role/type"
 
+const router = useRouter()
 const selection = defineModel<Role[]>("selection", { default: () => [] })
 const roleType = ref<number>()
 
@@ -23,6 +25,13 @@ const emit = defineEmits<{
   search: [keyword: string]
   filterChange: [type?: number]
 }>()
+
+const handleViewRole = (row: Role) => {
+  router.push({
+    name: "RoleDetail",
+    query: { code: row.code }
+  })
+}
 </script>
 
 <template>
@@ -81,9 +90,11 @@ const emit = defineEmits<{
     <template #item="{ item: row }">
       <div class="role-grid-row">
         <div class="cell-identity">
-          <div class="meta-info">
-            <span class="name">{{ row.name }}</span>
-            <div class="code-wrapper">
+          <div class="dual-line-info">
+            <el-link type="primary" :underline="false" class="main-title" @click="handleViewRole(row)">
+              {{ row.name }}
+            </el-link>
+            <div class="sub-detail">
               <code>{{ row.code }}</code>
             </div>
           </div>
@@ -165,33 +176,63 @@ const emit = defineEmits<{
   align-items: center;
   gap: 24px;
   min-height: 76px;
+  padding: 0 16px;
+  margin: 0 -16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
 }
 
 .cell-identity {
   display: flex;
   align-items: center;
   min-width: 0;
-  .meta-info {
+
+  .dual-line-info {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 4px;
     min-width: 0;
-    gap: 2px;
-    .name {
+
+    .main-title {
       font-size: 14px;
       font-weight: 600;
       color: #1e293b;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: #3b82f6;
+      }
     }
-    .code-wrapper {
-      display: flex;
-      align-items: center;
+
+    .sub-detail {
       font-size: 12px;
       color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+
+      .type-text {
+        color: #94a3b8;
+        font-weight: 500;
+      }
+
+      .divider {
+        color: #e2e8f0;
+        transform: scaleY(0.8);
+      }
+
       code {
         font-family: ui-monospace, SFMono-Regular, monospace;
-        letter-spacing: -0.02em;
+        letter-spacing: -0.01em;
       }
     }
   }

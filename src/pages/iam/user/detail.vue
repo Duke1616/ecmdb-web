@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { Edit, Delete } from "@element-plus/icons-vue"
+import { Edit, Delete, User, Coordinate } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
@@ -12,8 +12,6 @@ import { useUserDetail } from "./composables/useUserDetail"
 import { useUserGovernance } from "./composables/useUserGovernance"
 
 // Components
-import UserStatusBar from "./components/detail/UserStatusBar.vue"
-import UserInfoGrid from "./components/detail/UserInfoGrid.vue"
 import AuthGovernance from "./components/detail/AuthGovernance.vue"
 import IdentitySources from "./components/detail/IdentitySources.vue"
 import RoleTable from "./components/detail/RoleTable.vue"
@@ -92,11 +90,6 @@ const userSubjects = computed<Subject[]>(() => {
     }
   ]
 })
-
-// 增加首屏加载后的强制日志，定位问题
-onMounted(() => {
-  console.log("[IAM-Detail] Mounted, userInfo:", userInfo.value)
-})
 </script>
 
 <template>
@@ -110,11 +103,11 @@ onMounted(() => {
       >
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="gov-action-btn" @click="handleEdit">
+            <el-button class="gov-action-btn primary" @click="handleEdit">
               <el-icon><Edit /></el-icon>
-              <span>编辑资料</span>
+              <span>完善资料</span>
             </el-button>
-            <el-button class="gov-action-btn danger" @click="handleDelete">
+            <el-button v-if="userInfo.is_member" class="gov-action-btn danger" @click="handleDelete">
               <el-icon><Delete /></el-icon>
               <span>注销主体</span>
             </el-button>
@@ -123,61 +116,124 @@ onMounted(() => {
       </ManagerHeader>
 
       <div class="governance-body">
-        <UserStatusBar :user="userInfo" />
-        <UserInfoGrid :user="userInfo" :format-timestamp="formatTimestamp" @copy="copyText" />
+        <!-- 1. 身份安全状态条 -->
+        <div class="governance-status-strip">
+          <div class="status-item">
+            <span class="dot success" />
+            <span class="label">账号来源:</span>
+            <span class="value tint">{{ userInfo.source === "ldap" ? "LDAP 同步" : "本地账户" }}</span>
+          </div>
+          <div class="divider" />
+          <div class="status-item">
+            <span class="dot" :class="userInfo.console_login ? 'success' : 'info'" />
+            <span class="label">控制台登录:</span>
+            <span class="value" :class="userInfo.console_login ? 'success' : 'info'">
+              {{ userInfo.console_login ? "已开启" : "未授权" }}
+            </span>
+          </div>
+          <div class="divider" />
+          <div class="status-item">
+            <span class="dot" :class="userInfo.mfa_bound ? 'success' : 'warning'" />
+            <span class="label">MFA 状态:</span>
+            <span class="value" :class="userInfo.mfa_bound ? 'success' : 'warning'">
+              {{ userInfo.mfa_bound ? "已绑定" : "未绑定" }}
+            </span>
+          </div>
+          <div class="divider" />
+          <div class="status-item">
+            <span class="dot success" />
+            <span class="label">风险等级:</span>
+            <span class="value success">L0 (安全)</span>
+          </div>
+        </div>
 
+        <!-- 2. 身份实证资料卡 -->
+        <div class="info-card consolidated-card">
+          <div class="info-header">
+            <el-icon><User /></el-icon>
+            <span>主体身份实证资料</span>
+          </div>
+          <div class="info-content grid-4-cols">
+            <div class="info-item">
+              <div class="label">姓名/昵称</div>
+              <div class="value">{{ userInfo.nickname || userInfo.username }}</div>
+            </div>
+            <div class="info-item">
+              <div class="label">登录用户名 (Unique)</div>
+              <div class="value mono copyable" @click="copyText(userInfo.username)">
+                {{ userInfo.username }}
+              </div>
+            </div>
+            <div class="info-item">
+              <div class="label">当前职位/职能</div>
+              <div class="value">{{ userInfo.job_title || "未定义职责" }}</div>
+            </div>
+            <div class="info-item full">
+              <div class="label">核心职责描述</div>
+              <div class="value desc">
+                {{ userInfo.job_title ? `该主体主要负责 ${userInfo.job_title} 相关治理职能` : "暂无详细职责说明" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. 治理内容区 -->
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
+            <!-- 特有：认证与安全治理 -->
             <el-tab-pane label="认证治理" name="auth">
-              <AuthGovernance />
+              <AuthGovernance :user="userInfo" />
             </el-tab-pane>
 
-            <el-tab-pane label="关联身份源" name="identities">
+            <!-- 特有：多维度身份源 -->
+            <el-tab-pane label="身份源信息" name="identities">
               <IdentitySources :user="userInfo" />
             </el-tab-pane>
 
-            <el-tab-pane v-if="userInfo?.is_member !== false" label="角色关联" name="roles">
+            <el-tab-pane v-if="userInfo.is_member" label="角色治理" name="roles">
               <RoleTable
                 v-model:selection="selectedRoles"
                 :loading="roleLoading"
                 :data="roles"
                 :total="roleTotal"
                 :current-page="roleQuery.currentPage"
-                :page-size="roleQuery.pageSize"
+                :pageSize="roleQuery.pageSize"
+                :format-timestamp="formatTimestamp"
                 @page-change="handleRolePageChange"
                 @search="handleRoleSearch"
-                @filter-change="handleRoleTypeChange"
+                @type-change="handleRoleTypeChange"
                 @add="handleAddRole"
                 @unbind="handleUnbindRole"
                 @batch-unbind="handleBatchUnbindRoles"
               />
             </el-tab-pane>
 
-            <el-tab-pane v-if="userInfo?.is_member !== false" label="权限策略" name="permissions">
+            <el-tab-pane v-if="userInfo.is_member" label="策略治理" name="permissions">
               <PolicyTable
                 v-model:selection="selectedPolicies"
                 :loading="policyLoading"
                 :data="policies"
                 :total="policyTotal"
                 :current-page="policyQuery.currentPage"
-                :page-size="policyQuery.pageSize"
+                :pageSize="policyQuery.pageSize"
                 :format-timestamp="formatTimestamp"
                 @page-change="handlePolicyPageChange"
                 @search="handlePolicySearch"
-                @filter-change="handlePolicyTypeChange"
+                @type-change="handlePolicyTypeChange"
                 @add="handleAddPolicy"
                 @unbind="handleUnbindPolicy"
                 @batch-unbind="handleBatchUnbindPolicies"
               />
             </el-tab-pane>
 
-            <el-tab-pane v-if="userInfo?.is_member !== undefined" label="所属租户" name="tenants">
+            <el-tab-pane v-if="userInfo.is_system_space" label="租户映射" name="tenants">
               <TenantTable
                 :loading="tenantLoading"
                 :data="tenants"
                 :total="tenantTotal"
                 :current-page="tenantQuery.currentPage"
-                :page-size="tenantQuery.pageSize"
+                :pageSize="tenantQuery.pageSize"
+                :format-timestamp="formatTimestamp"
                 @page-change="handleTenantPageChange"
                 @search="handleTenantSearch"
                 @add="handleAddTenant"
@@ -186,43 +242,196 @@ onMounted(() => {
           </el-tabs>
         </div>
       </div>
+
+      <!-- 编辑弹窗 -->
+      <FormDialog
+        v-model="editVisible"
+        title="完善主体资料"
+        :header-icon="Coordinate"
+        width="640px"
+        @confirm="handleEditConfirm"
+        @cancel="editVisible = false"
+      >
+        <UserForm ref="userFormRef" :is-edit="true" :id="userInfo?.id" @success="handleEditSuccess" />
+      </FormDialog>
+
+      <!-- 授权向导 -->
+      <AuthorizeDrawer v-model="attachPolicyVisible" :fixed-subjects="userSubjects" @success="handleAttachSuccess" />
     </template>
-
-    <!-- 加载中或错误时的占位 -->
-    <el-empty v-else-if="!detailLoading" description="未能获取到用户信息，请检查 ID 是否正确" />
-
-    <!-- 编辑弹窗 -->
-    <FormDialog
-      v-model="editVisible"
-      title="治理主体资料"
-      :header-icon="Edit"
-      width="640px"
-      @confirm="handleEditConfirm"
-    >
-      <el-scrollbar max-height="60vh">
-        <UserForm ref="userFormRef" :id="userInfo?.id!" is-edit @success="handleEditSuccess" />
-      </el-scrollbar>
-    </FormDialog>
-
-    <!-- 策略授权向导 (复用全局授权组件) -->
-    <AuthorizeDrawer v-model="attachPolicyVisible" :fixed-subjects="userSubjects" @success="handleAttachSuccess" />
   </PageContainer>
 </template>
 
 <style lang="scss" scoped>
 .user-detail-page {
-  overflow-y: scroll;
+  --gov-brand: #7c3aed;
+  --gov-bg: #f8fafc;
+  --gov-border: #e2e8f0;
+
+  overflow-y: auto;
   overflow-x: hidden;
+  background: var(--gov-bg);
+}
+
+.governance-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 4px;
+}
+
+.governance-status-strip {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      &.success {
+        background: #10b981;
+      }
+      &.info {
+        background: var(--gov-brand);
+      }
+      &.warning {
+        background: #f59e0b;
+      }
+    }
+
+    .label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    .value {
+      font-weight: 700;
+      &.success {
+        color: #10b981;
+      }
+      &.info {
+        color: var(--gov-brand);
+      }
+      &.warning {
+        color: #f59e0b;
+      }
+      &.tint {
+        color: #334155;
+      }
+    }
+  }
+
+  .divider {
+    width: 1px;
+    height: 14px;
+    background: #e2e8f0;
+  }
+}
+
+.info-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+
+  .info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+    color: #1e293b;
+    font-size: 14px;
+    font-weight: 700;
+    .el-icon {
+      color: var(--gov-brand);
+    }
+    &::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: #f1f5f9;
+      margin-left: 12px;
+    }
+  }
+
+  .info-content {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 24px;
+    &.grid-4-cols {
+      grid-template-columns: 1fr 1fr 1.5fr;
+    }
+
+    .info-item {
+      &.full {
+        grid-column: 1 / -1;
+      }
+      .label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .value {
+        font-size: 14px;
+        color: #334155;
+        font-weight: 500;
+        &.mono {
+          font-family: ui-monospace, SFMono-Regular, monospace;
+        }
+        &.copyable {
+          cursor: pointer;
+          &:hover {
+            color: var(--gov-brand);
+            text-decoration: underline;
+          }
+        }
+        &.desc {
+          font-size: 13px;
+          color: #64748b;
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+}
+
+.governance-tabs-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 24px 24px;
 }
 
 .header-action-stack {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   .gov-action-btn {
-    height: 34px;
+    height: 38px;
     padding: 0 16px;
-    border-radius: 4px;
+    border-radius: 8px;
     font-size: 13px;
+    font-weight: 600;
+    &.primary {
+      color: var(--gov-brand);
+      border-color: #ede9fe;
+      background: #f5f3ff;
+      &:hover {
+        background: #ede9fe;
+      }
+    }
     &.danger {
       color: #ef4444;
       border-color: #fee2e2;
@@ -231,43 +440,23 @@ onMounted(() => {
         background: #fef2f2;
       }
     }
-  }
-}
-
-.governance-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 0 4px;
-}
-
-.governance-tabs-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 4px 20px 20px;
-}
-
-.governance-raw-tabs {
-  :deep(.el-tabs__item) {
-    font-size: 13px;
-    font-weight: 600;
-    color: #64748b;
-    height: 48px;
-    &.is-active {
-      color: #6366f1;
+    .el-icon {
+      margin-right: 6px;
     }
   }
-  :deep(.el-tabs__nav-wrap::after) {
-    background-color: #f1f5f9;
-  }
-  :deep(.el-tabs__active-bar) {
-    background-color: #6366f1;
-    height: 2px;
-  }
 }
 
-.tab-pane-empty {
-  padding: 40px 0;
+.governance-raw-tabs :deep(.el-tabs__item) {
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  &.is-active {
+    color: var(--gov-brand);
+  }
+}
+:deep(.el-tabs__active-bar) {
+  background-color: var(--gov-brand);
+  height: 3px;
+  border-radius: 2px;
 }
 </style>
