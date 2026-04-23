@@ -151,3 +151,11 @@ export interface UnbindIdentityRequest {
   user_id: number
   provider: string
 }
+
+/** 批量治理身份请求 */
+export interface ManageIdentitiesRequest {
+  user_id: number
+  ldap_info?: LdapInfo
+  wechat_info?: WechatInfo
+  feishu_info?: FeishuInfo
+}
