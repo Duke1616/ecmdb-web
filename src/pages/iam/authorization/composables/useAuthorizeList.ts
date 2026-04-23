@@ -1,69 +1,60 @@
-import { ref, onMounted, reactive } from "vue"
 import { listAuthorizationsApi } from "@/api/iam/permission"
 import { type Authorization, type AuthorizationQueryReq } from "@/api/iam/permission/type"
-import { ElMessage } from "element-plus"
+import { useListManager } from "@/common/composables/useListManager"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
+/**
+ * 授权治理列表管理
+ */
 export function useAuthorizeList() {
-  const loading = ref(false)
-  const authorizations = ref<Authorization[]>([])
-  const total = ref(0)
+  const { handleConfirmAction } = useGovernanceActions()
 
-  const query = reactive<AuthorizationQueryReq>({
-    offset: 0,
-    limit: 10,
-    keyword: "",
-    sub_type: undefined,
-    obj_type: undefined
-  })
-
-  const currentPage = ref(1)
-  const pageSize = ref(10)
-
-  const fetchList = async () => {
-    loading.value = true
-    try {
-      const { data } = await listAuthorizationsApi({
-        ...query,
-        offset: (currentPage.value - 1) * pageSize.value,
-        limit: pageSize.value
-      })
-      authorizations.value = data.authorizations
-      total.value = data.total
-    } catch (err) {
-      ElMessage.error("获取授权列表失败")
-    } finally {
-      loading.value = false
+  // 核心列表管理
+  const {
+    list: authorizations,
+    total,
+    loading,
+    pagination,
+    query,
+    fetchList: handleRefresh,
+    handlePageChange: handleCurrentChange,
+    handleSizeChange
+  } = useListManager<Authorization, AuthorizationQueryReq>({
+    fetchApi: listAuthorizationsApi,
+    listKey: "authorizations",
+    initialQuery: {
+      sub_type: undefined,
+      obj_type: undefined
     }
-  }
-
-  const handleRefresh = () => {
-    currentPage.value = 1
-    fetchList()
-  }
-
-  const handleSizeChange = (val: number) => {
-    pageSize.value = val
-    fetchList()
-  }
-
-  const handleCurrentChange = (val: number) => {
-    currentPage.value = val
-    fetchList()
-  }
-
-  onMounted(() => {
-    fetchList()
   })
+
+  /**
+   * 解除授权 (危险操作)
+   */
+  const handleRevoke = (row: Authorization) => {
+    handleConfirmAction({
+      title: "权限回收确认",
+      message: `确定要解除主体 [${row.subject}] 对目标 [${row.target}] 的授权吗？此操作将立即回收相关访问权限。`,
+      confirmType: "danger",
+      api: async () => {
+        // TODO: 等待后端解除授权 API 完善
+        // return await revokeAuthorizationApi(row.id)
+        return Promise.resolve()
+      },
+      onSuccess: () => handleRefresh()
+    })
+  }
 
   return {
     loading,
     authorizations,
     total,
     query,
-    currentPage,
-    pageSize,
+    currentPage: pagination.currentPage,
+    pageSize: pagination.pageSize,
     handleRefresh,
     handleSizeChange,
-    handleCurrentChange
+    handleCurrentChange,
+    handleRevoke
   }
 }

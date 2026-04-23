@@ -3,7 +3,7 @@ import { useRoute, useRouter } from "vue-router"
 import { userDetailApi, deleteUserApi } from "@/api/iam/user"
 import type { User, Tenant } from "@/api/iam/user/type"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
-import dayjs from "dayjs"
+import { formatTimestamp } from "@@/utils/day"
 
 export function useUserDetail() {
   const route = useRoute()
@@ -80,11 +80,6 @@ export function useUserDetail() {
   const handleEditSuccess = () => {
     editVisible.value = false
     loadDetail()
-  }
-
-  const formatTimestamp = (ts: number | string) => {
-    if (!ts) return "-"
-    return dayjs(Number(ts)).format("YYYY-MM-DD HH:mm:ss")
   }
 
   const copyText = (text: string) => {

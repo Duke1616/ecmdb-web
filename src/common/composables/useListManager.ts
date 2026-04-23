@@ -30,7 +30,7 @@ interface ListManagerOptions<T, Q> {
   /** 列表数据在 data 对象中的键名 (如 'users', 'roles', 'tenants') */
   listKey: string
   /** 初始业务查询参数 */
-  initialQuery?: Q
+  initialQuery?: Partial<Q>
   /** 是否在组件挂载时立即执行查询，默认为 true */
   immediate?: boolean
 }

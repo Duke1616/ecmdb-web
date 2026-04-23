@@ -11,12 +11,13 @@ function formatDate(date: Date | null) {
   return `${year}年${month}月${day}日 ${hours}:${minutes}`
 }
 
-function formatTimestamp(timestamp: number | undefined) {
+function formatTimestamp(timestamp: number | string | undefined) {
   if (!timestamp) {
     return ""
   }
 
-  const date = new Date(timestamp)
+  const numericTimestamp = typeof timestamp === "string" ? Number(timestamp) : timestamp
+  const date = new Date(numericTimestamp)
 
   const formatter = new Intl.DateTimeFormat("zh-CN", {
     year: "numeric",

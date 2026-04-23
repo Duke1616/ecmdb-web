@@ -106,7 +106,7 @@
 
       <!-- 创建时间 -->
       <template #ctime="{ row }">
-        <span class="ctime-text">{{ row.ctime ? formatDate(row.ctime) : "-" }}</span>
+        <span class="ctime-text">{{ formatTimestamp(row.ctime) || "-" }}</span>
       </template>
 
       <!-- 操作 -->
@@ -129,9 +129,9 @@ import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import AuthorizeDrawer from "./components/AuthorizeDrawer.vue"
 import type { Column } from "@@/components/DataTable/types"
-import { AuthorizationSubType, AuthorizationObjType, type Authorization } from "@/api/iam/permission/type"
+import { AuthorizationSubType, AuthorizationObjType } from "@/api/iam/permission/type"
 import { useAuthorizeList } from "./composables/useAuthorizeList"
-import { ElMessageBox, ElMessage } from "element-plus"
+import { formatTimestamp } from "@@/utils/day"
 
 const {
   loading,
@@ -142,7 +142,8 @@ const {
   pageSize,
   handleRefresh,
   handleSizeChange,
-  handleCurrentChange
+  handleCurrentChange,
+  handleRevoke
 } = useAuthorizeList()
 
 const tableColumns: Column[] = [
@@ -156,28 +157,6 @@ const showAuthorizeDrawer = ref(false)
 
 const handleCreate = () => {
   showAuthorizeDrawer.value = true
-}
-
-const handleRevoke = (row: Authorization) => {
-  ElMessageBox.confirm(`确定要解除对主体 ${row.subject} 的授权吗？`, "权限回收警告", {
-    type: "warning",
-    confirmButtonText: "确定回收",
-    confirmButtonClass: "el-button--danger eiam-confirm-btn",
-    cancelButtonText: "取消"
-  }).then(() => {
-    ElMessage.success("授权已安全回收")
-  })
-}
-
-const formatDate = (ts: number) => {
-  if (!ts) return "-"
-  const d = new Date(ts)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  const hh = String(d.getHours()).padStart(2, "0")
-  const mm = String(d.getMinutes()).padStart(2, "0")
-  return `${y}-${m}-${dd} ${hh}:${mm}`
 }
 </script>
 

@@ -136,3 +136,18 @@ export interface LdapUserListData {
   total: number
   users: LdapSyncUser[]
 }
+
+/** 绑定身份请求 */
+export interface BindIdentityRequest {
+  user_id: number
+  provider: string
+  ldap_info?: LdapInfo
+  wechat_info?: WechatInfo
+  feishu_info?: FeishuInfo
+}
+
+/** 解绑身份请求 */
+export interface UnbindIdentityRequest {
+  user_id: number
+  provider: string
+}

@@ -109,3 +109,27 @@ export function listRoleUsersApi(data: user.ListRoleUsersReq) {
     data
   })
 }
+
+/** 绑定外部身份 */
+export function bindIdentityApi(data: user.BindIdentityRequest) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/identity/bind`,
+    data
+  })
+}
+
+/** 解绑外部身份 */
+export function unbindIdentityApi(data: user.UnbindIdentityRequest) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/identity/unbind`,
+    data
+  })
+}
+
+/** 批量治理外部身份 */
+export function manageIdentitiesApi(data: user.ManageIdentitiesRequest) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/identity/manage`,
+    data
+  })
+}

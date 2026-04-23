@@ -15,6 +15,7 @@ import StatusStrip, { type StatusItem } from "@/common/components/Governance/Sta
 import PolicyServiceInsights from "./components/detail/PolicyServiceInsights.vue"
 import PolicyAssignmentTable from "./components/detail/PolicyAssignmentTable.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
+import { formatTimestamp } from "@@/utils/day"
 
 const router = useRouter()
 const { policy, services, loading, copyText, handleDelete } = usePolicyDetail()
@@ -76,7 +77,7 @@ const infoItems = computed(() => {
   return [
     { label: "策略显示名称", value: policy.value.name },
     { label: "唯一识别码 (CODE)", value: policy.value.code, mono: true, copyable: true },
-    { label: "创建于", value: formatDate(policy.value.ctime) },
+    { label: "创建于", value: formatTimestamp(policy.value.ctime) },
     {
       label: "职能边界描述",
       value: policy.value.desc || "暂无对此策略职能边界的详细描述",
@@ -96,12 +97,6 @@ const avgCoverage = computed(() => {
   if (total === 0) return 0
   return Math.round((totalGranted.value / total) * 100)
 })
-
-const formatDate = (ts: number | undefined) => {
-  if (!ts) return "-"
-  const d = new Date(ts)
-  return d.toLocaleString()
-}
 
 const handleEdit = () => {
   if (!policy.value) return
@@ -178,151 +173,6 @@ const handleEdit = () => {
   flex-direction: column;
   gap: 20px;
   padding: 0 4px;
-}
-
-.governance-status-strip {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-
-  .status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      &.success {
-        background: #10b981;
-      }
-      &.info {
-        background: #3b82f6;
-      }
-      &.warning {
-        background: #f59e0b;
-      }
-    }
-
-    .label {
-      color: #64748b;
-      font-weight: 500;
-      margin-right: 2px;
-    }
-
-    .value {
-      font-weight: 700;
-      &.success {
-        color: #10b981;
-      }
-      &.info {
-        color: #3b82f6;
-      }
-      &.warning {
-        color: #f59e0b;
-      }
-      &.tint {
-        color: #334155;
-      }
-    }
-  }
-
-  .divider {
-    width: 1px;
-    height: 14px;
-    background: #e2e8f0;
-  }
-}
-
-.info-grid-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.info-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-
-  .info-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    color: #1e293b;
-    font-size: 14px;
-    font-weight: 700;
-    .el-icon {
-      color: var(--gov-brand);
-    }
-    &::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #f1f5f9;
-      margin-left: 12px;
-    }
-  }
-
-  .info-content {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px 24px;
-
-    &.grid-4-cols {
-      grid-template-columns: 1fr 1fr 1.5fr;
-    }
-
-    .info-item {
-      &.full {
-        grid-column: 1 / -1;
-      }
-      .label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 6px;
-      }
-      .value {
-        font-size: 14px;
-        color: #334155;
-        font-weight: 500;
-        line-height: 1.4;
-
-        &.mono {
-          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          font-size: 13px;
-        }
-        &.time {
-          color: #64748b;
-          font-size: 13px;
-        }
-        &.copyable {
-          cursor: pointer;
-          &:hover {
-            color: var(--gov-brand);
-            text-decoration: underline;
-          }
-        }
-        &.desc {
-          font-size: 13px;
-          color: #64748b;
-        }
-      }
-    }
-  }
 }
 
 .governance-tabs-card {

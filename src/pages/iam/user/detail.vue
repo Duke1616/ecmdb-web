@@ -10,6 +10,7 @@ import UserForm from "./components/UserForm.vue"
 // Composables
 import { useUserDetail } from "./composables/useUserDetail"
 import { useUserGovernance } from "./composables/useUserGovernance"
+import { formatTimestamp } from "@@/utils/day"
 
 // Components
 import AuthGovernance from "./components/detail/AuthGovernance.vue"
@@ -29,10 +30,10 @@ const {
   userInfo,
   loading: detailLoading,
   editVisible,
+  loadDetail,
   handleDelete,
   handleEdit,
   handleEditSuccess,
-  formatTimestamp,
   copyText
 } = useUserDetail()
 
@@ -172,8 +173,8 @@ const infoItems = computed(() => {
             </el-tab-pane>
 
             <!-- 特有：多维度身份源 -->
-            <el-tab-pane label="身份源信息" name="identities">
-              <IdentitySources :user="userInfo" />
+            <el-tab-pane label="身份源关联" name="sources">
+              <IdentitySources :user="userInfo" @refresh="loadDetail" />
             </el-tab-pane>
 
             <el-tab-pane v-if="userInfo.is_member" label="角色治理" name="roles">
