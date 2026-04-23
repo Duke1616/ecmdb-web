@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue"
-import { useRouter } from "vue-router"
-import { Plus, Delete } from "@element-plus/icons-vue"
-import PremiumList from "@/common/components/PremiumList/index.vue"
+import { Delete, Plus } from "@element-plus/icons-vue"
+import PremiumList from "@@/components/PremiumList/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { Role } from "@/api/iam/role/type"
 
-const router = useRouter()
 const selection = defineModel<Role[]>("selection", { default: () => [] })
-const roleType = ref<number>()
 
 defineProps<{
   loading: boolean
@@ -15,6 +12,7 @@ defineProps<{
   total: number
   currentPage: number
   pageSize: number
+  formatTimestamp: (ts: string | number) => string
 }>()
 
 const emit = defineEmits<{
@@ -23,93 +21,70 @@ const emit = defineEmits<{
   unbind: [row: Role]
   batchUnbind: []
   search: [keyword: string]
-  filterChange: [type?: number]
 }>()
-
-const handleViewRole = (row: Role) => {
-  router.push({
-    name: "RoleDetail",
-    query: { code: row.code }
-  })
-}
 </script>
 
 <template>
   <PremiumList
     v-model:selection="selection"
-    title="分配角色"
-    search-placeholder="搜索角色名称或标识符"
+    title="关联角色列表"
+    search-placeholder="搜索角色名称或标识码..."
     :data="data"
     :total="total"
     :loading="loading"
     :current-page="currentPage"
     :page-size="pageSize"
+    :show-search="true"
     indicator-color="#3b82f6"
     show-selection
+    row-key="id"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"
   >
-    <!-- 表头定义：统一字体样式 -->
+    <!-- 表头定义 -->
     <template #column-header>
       <div class="role-cols header-label-font">
-        <span>角色实体</span>
-        <span>权限边界描述</span>
-        <span class="align-center">类型</span>
+        <span>角色名称 / 标识</span>
+        <span>角色描述</span>
+        <span>关联时间</span>
         <span class="align-center">操作</span>
       </div>
     </template>
 
-    <!-- 检索扩展 -->
-    <template #extra-filters>
-      <el-select
-        v-model="roleType"
-        placeholder="全部类型"
-        clearable
-        class="role-type-filter"
-        @change="emit('filterChange', $event)"
-      >
-        <el-option label="系统内置" :value="1" />
-        <el-option label="自定义" :value="2" />
-      </el-select>
-    </template>
-
-    <!-- 头部操作 -->
+    <!-- 顶部操作 -->
     <template #header-actions>
       <el-button plain class="toolbar-action-btn" @click="emit('add')">
         <el-icon><Plus /></el-icon>
-        <span>关联更多角色</span>
+        <span>分派角色</span>
       </el-button>
     </template>
 
     <!-- 批量操作 -->
     <template #batch-actions>
-      <el-button type="danger" size="small" @click="emit('batchUnbind')">批量解绑角色</el-button>
+      <el-button type="danger" plain size="small" @click="emit('batchUnbind')">
+        <el-icon><Delete /></el-icon>
+        <span>批量移除</span>
+      </el-button>
     </template>
 
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
       <div class="role-grid-row">
+        <!-- 角色标识 (使用共享组件) -->
         <div class="cell-identity">
-          <div class="dual-line-info">
-            <el-link type="primary" :underline="false" class="main-title" @click="handleViewRole(row)">
-              {{ row.name }}
-            </el-link>
-            <div class="sub-detail">
-              <code>{{ row.code }}</code>
-            </div>
-          </div>
+          <AssetIdentityCell
+            :title="row.name"
+            :sub-title="row.code"
+            :link-to="{ name: 'RoleDetail', query: { code: row.code } }"
+          />
         </div>
 
-        <div class="cell-description">
-          <span class="desc-text" :title="row.desc">
-            {{ row.desc || "此角色决定了主体的核心访问边界及资源操作权限。" }}
-          </span>
+        <div class="cell-desc">
+          <span class="desc-text">{{ row.desc || "—" }}</span>
         </div>
 
-        <div class="cell-type">
-          <el-tag :type="row.type === 1 ? 'info' : 'success'" size="small" effect="plain" class="type-tag">
-            {{ row.type === 1 ? "内置" : "自定义" }}
-          </el-tag>
+        <div class="cell-time">
+          <span class="time-text">{{ row.ctime ? formatTimestamp(row.ctime) : "—" }}</span>
         </div>
 
         <div class="cell-actions">
@@ -126,41 +101,31 @@ const handleViewRole = (row: Role) => {
 <style lang="scss" scoped>
 .toolbar-action-btn {
   height: 34px;
-  padding: 0 12px;
-  border-radius: 9px;
+  padding: 0 14px;
+  border-radius: 8px;
   border-color: #3b82f6;
   background: #3b82f6;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
 
-  :deep(.el-icon) {
-    margin-right: 6px;
-    font-size: 14px;
-  }
-
   &:hover {
-    border-color: #2563eb;
     background: #2563eb;
-    color: #ffffff;
+    border-color: #2563eb;
   }
 }
 
-.role-type-filter {
-  width: 124px;
-}
-
-/* 表头字体统一规范 */
 .header-label-font {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8a99ad;
-  letter-spacing: 0.01em;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .role-cols {
   display: grid;
-  grid-template-columns: minmax(260px, 1.3fr) minmax(240px, 1.5fr) 92px 92px;
+  grid-template-columns: 240px 1fr 180px 100px;
   gap: 24px;
   width: 100%;
   align-items: center;
@@ -172,14 +137,11 @@ const handleViewRole = (row: Role) => {
 
 .role-grid-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.3fr) minmax(240px, 1.5fr) 92px 92px;
+  grid-template-columns: 240px 1fr 180px 100px;
   align-items: center;
   gap: 24px;
-  min-height: 76px;
-  padding: 0 16px;
-  margin: 0 -16px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  min-height: 72px;
+  transition: background 0.2s;
 
   &:hover {
     background: #f8fafc;
@@ -187,96 +149,33 @@ const handleViewRole = (row: Role) => {
 }
 
 .cell-identity {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-
-  .dual-line-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 4px;
-    min-width: 0;
-
-    .main-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #1e293b;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: color 0.15s ease;
-
-      &:hover {
-        color: #3b82f6;
-      }
-    }
-
-    .sub-detail {
-      font-size: 12px;
-      color: #94a3b8;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      .type-text {
-        color: #94a3b8;
-        font-weight: 500;
-      }
-
-      .divider {
-        color: #e2e8f0;
-        transform: scaleY(0.8);
-      }
-
-      code {
-        font-family: ui-monospace, SFMono-Regular, monospace;
-        letter-spacing: -0.01em;
-      }
-    }
-  }
+  // 逻辑已托管
 }
 
-.cell-description {
-  min-width: 0;
-  .desc-text {
-    font-size: 13px;
-    color: #64748b;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+.cell-desc .desc-text {
+  font-size: 13px;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.cell-type {
-  display: flex;
-  justify-content: center;
-  .type-tag {
-    min-width: 52px;
-    border-radius: 999px;
-    font-weight: 500;
-  }
+.cell-time .time-text {
+  font-size: 13px;
+  color: #8a99ad;
+  font-family: ui-monospace, SFMono-Regular, monospace;
 }
 
 .cell-actions {
   display: flex;
   justify-content: center;
   .delete-btn {
-    color: #94a3b8;
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
     &:hover {
       color: #ef4444;
     }
-  }
-}
-
-@media (max-width: 1200px) {
-  .role-cols,
-  .role-grid-row {
-    grid-template-columns: minmax(220px, 1.2fr) minmax(200px, 1.4fr) 80px 80px;
-    gap: 16px;
   }
 }
 </style>

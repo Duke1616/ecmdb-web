@@ -1,10 +1,10 @@
-/** 租户主体信息 */
 export interface Tenant {
   id: number
   name: string
   code: string
   domain: string
   status: number
+  ctime?: number
 }
 
 /** 创建租户请求 */

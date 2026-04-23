@@ -183,7 +183,7 @@ const handleEdit = () => {
 
 <style lang="scss" scoped>
 .policy-detail-page {
-  --gov-brand: #7c3aed;
+  --gov-brand: #3b82f6;
   --gov-bg: #f8fafc;
   --gov-border: #e2e8f0;
 
@@ -223,7 +223,7 @@ const handleEdit = () => {
         background: #10b981;
       }
       &.info {
-        background: #7c3aed;
+        background: #3b82f6;
       }
       &.warning {
         background: #f59e0b;
@@ -242,7 +242,7 @@ const handleEdit = () => {
         color: #10b981;
       }
       &.info {
-        color: #7c3aed;
+        color: #3b82f6;
       }
       &.warning {
         color: #f59e0b;
@@ -362,7 +362,7 @@ const handleEdit = () => {
     font-weight: 600;
 
     &.primary {
-      color: #7c3aed;
+      color: #3b82f6;
       border-color: #ede9fe;
       background: #f5f3ff;
       &:hover {

@@ -1,86 +1,92 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router"
-import { Plus } from "@element-plus/icons-vue"
+import { Delete, Plus } from "@element-plus/icons-vue"
 import PremiumList from "@@/components/PremiumList/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { Tenant } from "@/api/iam/tenant/type"
 
-const router = useRouter()
+const selection = defineModel<Tenant[]>("selection", { default: () => [] })
+
 defineProps<{
   loading: boolean
   data: Tenant[]
   total: number
   currentPage: number
   pageSize: number
+  formatTimestamp: (ts: string | number) => string
 }>()
 
 const emit = defineEmits<{
   pageChange: [page: number]
-  search: [keyword: string]
   add: []
+  unbind: [row: Tenant]
+  batchUnbind: []
+  search: [keyword: string]
 }>()
-
-const handleViewTenant = (row: Tenant) => {
-  router.push({
-    name: "TenantDetail",
-    query: { id: row.id }
-  })
-}
 </script>
 
 <template>
   <PremiumList
-    title="已入驻租户"
-    search-placeholder="搜索租户名称或标识符"
+    v-model:selection="selection"
+    title="关联租户列表"
+    search-placeholder="搜索租户名称或空间编码..."
     :data="data"
     :total="total"
     :loading="loading"
     :current-page="currentPage"
     :page-size="pageSize"
+    :show-search="true"
     indicator-color="#3b82f6"
     show-selection
-    disabled
-    empty-text="暂无已入驻的租户信息"
+    row-key="id"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"
   >
-    <!-- 头部操作 -->
-    <template #header-actions>
-      <el-button disabled plain class="toolbar-action-btn" @click="emit('add')">
-        <el-icon><Plus /></el-icon>
-        <span>关联更多空间</span>
-      </el-button>
-    </template>
     <!-- 表头定义 -->
     <template #column-header>
       <div class="tenant-cols header-label-font">
-        <span>租户主体</span>
-        <span class="label-with-padding">空间标识</span>
-        <span class="label-with-padding">入驻域名</span>
+        <span>空间名称 / 编码</span>
+        <span>关联时间</span>
+        <span class="align-center">操作</span>
       </div>
+    </template>
+
+    <!-- 顶部操作 -->
+    <template #header-actions>
+      <el-button plain class="toolbar-action-btn" @click="emit('add')">
+        <el-icon><Plus /></el-icon>
+        <span>加入租户</span>
+      </el-button>
+    </template>
+
+    <!-- 批量操作 -->
+    <template #batch-actions>
+      <el-button type="danger" plain size="small" @click="emit('batchUnbind')">
+        <el-icon><Delete /></el-icon>
+        <span>批量移除</span>
+      </el-button>
     </template>
 
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
       <div class="tenant-grid-row">
+        <!-- 空间标识 (使用分享组件) -->
         <div class="cell-identity">
-          <div class="dual-line-info">
-            <el-link type="primary" :underline="false" class="main-title" @click="handleViewTenant(row)">
-              {{ row.name }}
-            </el-link>
-            <div class="sub-detail">
-              <code>{{ row.code }}</code>
-            </div>
-          </div>
+          <AssetIdentityCell
+            :title="row.name"
+            :sub-title="row.code"
+            :link-to="{ name: 'TenantDetail', query: { code: row.code } }"
+          />
         </div>
 
-        <div class="cell-code">
-          <div class="code-wrapper">
-            <code>{{ row.code }}</code>
-          </div>
+        <div class="cell-time">
+          <span class="time-text">{{ row.ctime ? formatTimestamp(row.ctime) : "—" }}</span>
         </div>
 
-        <div class="cell-domain">
-          <span class="domain-text">{{ row.domain || "-" }}</span>
+        <div class="cell-actions">
+          <el-button type="danger" link size="small" class="delete-btn" @click.stop="emit('unbind', row)">
+            <el-icon><Delete /></el-icon>
+            <span>移除</span>
+          </el-button>
         </div>
       </div>
     </template>
@@ -90,56 +96,47 @@ const handleViewTenant = (row: Tenant) => {
 <style lang="scss" scoped>
 .toolbar-action-btn {
   height: 34px;
-  padding: 0 12px;
-  border-radius: 9px;
+  padding: 0 14px;
+  border-radius: 8px;
   border-color: #3b82f6;
   background: #3b82f6;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
 
-  :deep(.el-icon) {
-    margin-right: 6px;
-    font-size: 14px;
-  }
-
   &:hover {
-    border-color: #2563eb;
     background: #2563eb;
-    color: #ffffff;
+    border-color: #2563eb;
   }
 }
 
-/* 表头字体统一规范 */
 .header-label-font {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8a99ad;
-  letter-spacing: 0.01em;
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .tenant-cols {
   display: grid;
-  grid-template-columns: minmax(260px, 1.3fr) minmax(240px, 1.5fr) 1fr;
+  grid-template-columns: 280px 1fr 100px;
   gap: 24px;
   width: 100%;
   align-items: center;
 
-  .label-with-padding {
-    padding-left: 8px;
+  .align-center {
+    text-align: center;
   }
 }
 
 .tenant-grid-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1.3fr) minmax(240px, 1.5fr) 1fr;
+  grid-template-columns: 280px 1fr 100px;
   align-items: center;
   gap: 24px;
-  min-height: 76px;
-  padding: 0 16px;
-  margin: 0 -16px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  min-height: 72px;
+  transition: background 0.2s;
 
   &:hover {
     background: #f8fafc;
@@ -147,94 +144,23 @@ const handleViewTenant = (row: Tenant) => {
 }
 
 .cell-identity {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-
-  .dual-line-info {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 4px;
-    min-width: 0;
-
-    .main-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #1e293b;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      transition: color 0.15s ease;
-
-      &:hover {
-        color: #3b82f6;
-      }
-    }
-
-    .sub-detail {
-      font-size: 12px;
-      color: #94a3b8;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-
-      .type-text {
-        color: #94a3b8;
-        font-weight: 500;
-      }
-
-      .divider {
-        color: #e2e8f0;
-        transform: scaleY(0.8);
-      }
-
-      code {
-        font-family: ui-monospace, SFMono-Regular, monospace;
-        letter-spacing: -0.01em;
-      }
-    }
-  }
+  // 逻辑已托管
 }
 
-.cell-code {
+.cell-time .time-text {
+  font-size: 13px;
+  color: #8a99ad;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.cell-actions {
   display: flex;
-  align-items: center;
-  min-width: 0;
-  .code-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: #475569;
-    code {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      background: #f8fafce6;
-      padding: 2px 8px;
-      border-radius: 4px;
-      color: #334155;
-      font-weight: 500;
+  justify-content: center;
+  .delete-btn {
+    color: #cbd5e1;
+    &:hover {
+      color: #ef4444;
     }
-  }
-}
-
-.cell-domain {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  .domain-text {
-    font-size: 11px;
-    color: #64748b;
-    padding-left: 8px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .tenant-cols,
-  .tenant-grid-row {
-    grid-template-columns: minmax(220px, 1fr) minmax(200px, 1fr) 1fr;
-    gap: 16px;
   }
 }
 </style>

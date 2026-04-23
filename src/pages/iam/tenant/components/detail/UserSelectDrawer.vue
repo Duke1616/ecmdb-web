@@ -206,10 +206,10 @@ const handleConfirm = () => {
     font-size: 12px;
     color: #64748b;
     padding: 6px 12px;
-    background: #f5f3ff;
+    background: #eff6ff;
     border-radius: 6px;
     span {
-      color: #7c3aed;
+      color: #3b82f6;
       font-weight: 700;
     }
   }
@@ -240,17 +240,17 @@ const handleConfirm = () => {
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #7c3aed;
+    border-color: #3b82f6;
     background: #f9f8ff;
   }
 
   &.is-active {
-    border-color: #7c3aed;
-    background: #f5f3ff;
+    border-color: #3b82f6;
+    background: #eff6ff;
     .selection-indicator {
-      background: #7c3aed;
+      background: #3b82f6;
       color: #ffffff;
-      border-color: #7c3aed;
+      border-color: #3b82f6;
     }
   }
 
@@ -320,8 +320,8 @@ const handleConfirm = () => {
   padding-top: 10px;
 
   .confirm-btn {
-    background: #7c3aed;
-    border-color: #7c3aed;
+    background: #3b82f6;
+    border-color: #3b82f6;
     &:disabled {
       opacity: 0.5;
     }

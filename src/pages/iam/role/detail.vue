@@ -45,6 +45,7 @@ const {
   handleMemberSearch,
   addMemberVisible,
   handleAddMember,
+  handleAssignMembers,
   handlePolicyPageChange,
   handlePolicySearch,
   handlePolicyTypeChange,
@@ -231,12 +232,12 @@ const formatDate = (ts: number | undefined) => {
       </div>
 
       <!-- 功能侧边栏 -->
-      <AddMemberDrawer v-model="addMemberVisible" :role-id="roleInfo.id" @success="handleMemberSearch('')" />
+      <AddMemberDrawer v-model="addMemberVisible" :loading="memberLoading" @confirm="handleAssignMembers" />
       <AddParentDrawer
         v-model="addParentVisible"
-        :role-id="roleInfo.id"
+        :loading="inheritanceLoading"
         :exclude-codes="[roleInfo.code, ...parentRoles.map((r) => r.code)]"
-        @success="handleAddParents"
+        @confirm="handleAddParents"
       />
       <AuthorizeDrawer
         v-model="attachPolicyVisible"
@@ -249,7 +250,7 @@ const formatDate = (ts: number | undefined) => {
 
 <style lang="scss" scoped>
 .role-detail-page {
-  --gov-brand: #7c3aed;
+  --gov-brand: #3b82f6;
   --gov-bg: #f8fafc;
   --gov-border: #e2e8f0;
 

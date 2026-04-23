@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, Delete } from "@element-plus/icons-vue"
-import PremiumList from "@/common/components/PremiumList/index.vue"
+import PremiumList from "@@/components/PremiumList/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { User } from "@/api/iam/user/type"
 
 const selection = defineModel<User[]>("selection", { default: () => [] })
@@ -33,7 +34,8 @@ const emit = defineEmits<{
     :loading="loading"
     :current-page="currentPage"
     :page-size="pageSize"
-    indicator-color="#7c3aed"
+    :show-search="true"
+    indicator-color="#3b82f6"
     show-selection
     empty-text="该角色下暂无关联的成员"
     @page-change="emit('pageChange', $event)"
@@ -67,14 +69,13 @@ const emit = defineEmits<{
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
       <div class="member-grid-row">
-        <!-- 核心身份识别 -->
+        <!-- 核心身份识别 (使用共享组件) -->
         <div class="cell-identity">
-          <div class="meta-info">
-            <span class="name">{{ row.nickname || row.username }}</span>
-            <div class="account-sub">
-              <code>{{ row.username }}</code>
-            </div>
-          </div>
+          <AssetIdentityCell
+            :title="row.nickname || row.username"
+            :sub-title="row.username"
+            :link-to="{ name: 'UserDetail', query: { username: row.username } }"
+          />
         </div>
 
         <!-- 详细信息列 -->
@@ -112,15 +113,15 @@ const emit = defineEmits<{
   height: 34px;
   padding: 0 14px;
   border-radius: 8px;
-  border-color: #7c3aed;
-  background: #7c3aed;
+  border-color: #3b82f6;
+  background: #3b82f6;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
 
   &:hover {
-    background: #6d28d9;
-    border-color: #6d28d9;
+    background: #2563eb;
+    border-color: #2563eb;
   }
 }
 
@@ -154,25 +155,7 @@ const emit = defineEmits<{
 }
 
 .cell-identity {
-  .meta-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    .name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-    .account-sub code {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      color: #7c3aed;
-      font-size: 10px;
-      background: #f5f3ff;
-      padding: 0px 4px;
-      border-radius: 4px;
-      font-weight: 600;
-    }
-  }
+  // 逻辑已由组件托管
 }
 
 .cell-email .email-text {

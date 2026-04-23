@@ -139,7 +139,7 @@ defineExpose({ submit })
     font-size: 14px;
     font-weight: 700;
     .el-icon {
-      color: #7c3aed;
+      color: #3b82f6;
       font-size: 16px;
     }
     &::after {
@@ -204,7 +204,7 @@ defineExpose({ submit })
     }
     &.is-focus {
       background: #ffffff;
-      border-color: #7c3aed;
+      border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1) !important;
     }
   }

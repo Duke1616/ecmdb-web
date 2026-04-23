@@ -73,29 +73,28 @@
     >
       <!-- 授权主体 -->
       <template #subject="{ row }">
-        <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link mono" @click="handleSubjectClick(row)">
-            {{ row.subject }}
-          </el-link>
-          <div class="sub-detail">
-            {{ row.sub_type === AuthorizationSubType.USER ? "IAM 用户" : "IAM 角色" }}
-          </div>
-        </div>
+        <AssetIdentityCell
+          :title="row.subject"
+          :sub-title="row.sub_type === AuthorizationSubType.USER ? 'IAM 用户' : 'IAM 角色'"
+          :link-to="
+            row.sub_type === AuthorizationSubType.USER
+              ? { name: 'UserDetail', query: { username: row.subject } }
+              : { name: 'RoleDetail', query: { code: row.subject } }
+          "
+        />
       </template>
 
       <!-- 授权对象 -->
       <template #target="{ row }">
-        <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link mono" @click="handleTargetClick(row)">
-            {{ row.target }}
-          </el-link>
-          <div class="sub-detail">
-            <template v-if="row.obj_type === AuthorizationObjType.ROLE">IAM 角色</template>
-            <template v-else-if="row.obj_type === AuthorizationObjType.SYSTEM_POLICY">系统策略</template>
-            <template v-else-if="row.obj_type === AuthorizationObjType.CUSTOM_POLICY">自定义策略</template>
-          </div>
-          <div v-if="row.scope" class="sub-detail scope-tag">{{ row.scope }}</div>
-        </div>
+        <AssetIdentityCell
+          :title="row.target"
+          :sub-title="row.obj_type === AuthorizationObjType.ROLE ? 'IAM 角色' : 'IAM 策略'"
+          :link-to="
+            row.obj_type === AuthorizationObjType.ROLE
+              ? { name: 'RoleDetail', query: { code: row.target } }
+              : { name: 'PolicyDetail', query: { code: row.target } }
+          "
+        />
       </template>
 
       <!-- 备注 -->
@@ -121,18 +120,17 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { useRouter } from "vue-router"
 import { Search, RefreshRight, Plus } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import PageContainer from "@@/components/PageContainer/index.vue"
+import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import AuthorizeDrawer from "./components/AuthorizeDrawer.vue"
 import type { Column } from "@@/components/DataTable/types"
 import { AuthorizationSubType, AuthorizationObjType, type Authorization } from "@/api/iam/permission/type"
 import { useAuthorizeList } from "./composables/useAuthorizeList"
 import { ElMessageBox, ElMessage } from "element-plus"
 
-const router = useRouter()
 const {
   loading,
   authorizations,
@@ -145,31 +143,9 @@ const {
   handleCurrentChange
 } = useAuthorizeList()
 
-/**
- * 处理主体点击跳转
- */
-const handleSubjectClick = (row: Authorization) => {
-  const isUser = row.sub_type === AuthorizationSubType.USER
-  router.push({
-    name: isUser ? "UserDetail" : "RoleDetail",
-    query: isUser ? { username: row.subject } : { code: row.subject }
-  })
-}
-
-/**
- * 处理对象内容点击跳转
- */
-const handleTargetClick = (row: Authorization) => {
-  const isRole = row.obj_type === AuthorizationObjType.ROLE
-  router.push({
-    name: isRole ? "RoleDetail" : "PolicyDetail",
-    query: isRole ? { code: row.target } : { code: row.target }
-  })
-}
-
 const tableColumns: Column[] = [
-  { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "center" },
-  { label: "授权对象", prop: "target", slot: "target", minWidth: 150, align: "center" },
+  { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "left" },
+  { label: "授权对象", prop: "target", slot: "target", minWidth: 150, align: "left" },
   { label: "备注", prop: "note", slot: "note", minWidth: 200, align: "center" },
   { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]
@@ -295,47 +271,6 @@ const formatDate = (ts: number) => {
       border-color: #0ea5e9;
       background: #f0f9ff;
     }
-  }
-}
-
-.dual-line-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  gap: 0px;
-  line-height: 1.2;
-  .main-link {
-    color: #1e293b;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 2px;
-    height: 18px;
-    :deep(.el-link__inner) {
-      justify-content: center;
-    }
-    &.mono {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
-    }
-    &:hover {
-      color: #3b82f6;
-    }
-  }
-  .sub-detail {
-    font-size: 11px;
-    color: #94a3b8;
-  }
-  .scope-tag {
-    font-size: 10px;
-    color: #6366f1;
-    background: #eef2ff;
-    padding: 0 6px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 2px;
-    width: fit-content;
   }
 }
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { TenantMember } from "@/api/iam/tenant/type"
 
 const selection = ref<TenantMember[]>([])
@@ -32,7 +33,7 @@ const emit = defineEmits<{
     :loading="loading"
     :current-page="currentPage"
     :page-size="pageSize"
-    indicator-color="#7c3aed"
+    indicator-color="#3b82f6"
     show-selection
     empty-text="该租户下暂无关联的成员"
     @page-change="emit('pageChange', $event)"
@@ -61,22 +62,20 @@ const emit = defineEmits<{
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
       <div class="member-grid-row">
-        <!-- 身份账号列 -->
+        <!-- 身份账号列 (使用共享组件) -->
         <div class="cell-identity">
-          <div class="meta-info">
-            <span class="name">{{ row.nickname || "未设置昵称" }}</span>
-            <div class="account-sub">
-              <code>{{ row.username }}</code>
-            </div>
-          </div>
+          <AssetIdentityCell
+            :title="row.nickname || row.username"
+            :sub-title="row.username"
+            :link-to="{ name: 'UserDetail', query: { username: row.username } }"
+          />
         </div>
 
-        <!-- 邮箱列 -->
+        <!-- 详细信息列 -->
         <div class="cell-email">
           <span class="email-text">{{ row.email || "—" }}</span>
         </div>
 
-        <!-- 职位列 -->
         <div class="cell-job">
           <span class="job-text">{{ row.job_title || "普通成员" }}</span>
         </div>
@@ -110,15 +109,15 @@ const emit = defineEmits<{
   height: 34px;
   padding: 0 14px;
   border-radius: 8px;
-  border-color: #7c3aed;
-  background: #7c3aed;
+  border-color: #3b82f6;
+  background: #3b82f6;
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
 
   &:hover {
-    background: #6d28d9;
-    border-color: #6d28d9;
+    background: #2563eb;
+    border-color: #2563eb;
   }
 }
 
@@ -130,10 +129,8 @@ const emit = defineEmits<{
   letter-spacing: 0.05em;
 }
 
-// 同步角色页面的网格模式：取消写死的宽度，使用弹性轨道
 .member-cols {
   display: grid;
-  // 网格比例同步项目通用标准
   grid-template-columns: 200px 1.5fr 1fr 100px 1.2fr 100px;
   gap: 24px;
   width: 100%;
@@ -154,25 +151,7 @@ const emit = defineEmits<{
 }
 
 .cell-identity {
-  .meta-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    .name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-    .account-sub code {
-      font-family: ui-monospace, SFMono-Regular, monospace;
-      color: #7c3aed;
-      font-size: 10px;
-      background: #f5f3ff;
-      padding: 0px 4px;
-      border-radius: 4px;
-      font-weight: 600;
-    }
-  }
+  // 逻辑已托管
 }
 
 .cell-email .email-text {

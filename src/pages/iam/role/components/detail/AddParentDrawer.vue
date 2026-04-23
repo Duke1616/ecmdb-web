@@ -36,7 +36,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: "confirm", parentCodes: string[]): void
+  confirm: [parentCodes: string[]]
 }>()
 
 const visible = defineModel<boolean>({ default: false })

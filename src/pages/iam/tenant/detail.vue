@@ -2,8 +2,8 @@
 import { ref } from "vue"
 import { useRouter } from "vue-router"
 import { Delete, Edit, OfficeBuilding, Lock } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import PageContainer from "@@/components/PageContainer/index.vue"
+import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import TenantForm from "./components/TenantForm.vue"
 
@@ -154,7 +154,7 @@ const onAssignConfirm = async (userIds: number[]) => {
 
 <style lang="scss" scoped>
 .tenant-detail-page {
-  --gov-brand: #7c3aed;
+  --gov-brand: #3b82f6;
   --gov-bg: #f8fafc;
   --gov-border: #e2e8f0;
 

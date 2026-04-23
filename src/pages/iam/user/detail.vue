@@ -263,7 +263,7 @@ const userSubjects = computed<Subject[]>(() => {
 
 <style lang="scss" scoped>
 .user-detail-page {
-  --gov-brand: #7c3aed;
+  --gov-brand: #3b82f6;
   --gov-bg: #f8fafc;
   --gov-border: #e2e8f0;
 

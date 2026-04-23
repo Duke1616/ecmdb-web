@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link, Refresh } from "@element-plus/icons-vue"
-import PremiumList from "@/common/components/PremiumList/index.vue"
+import { Connection, Warning } from "@element-plus/icons-vue"
+import PremiumList from "@@/components/PremiumList/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { User, Identity } from "@/api/iam/user/type"
 
 defineProps<{
@@ -23,34 +24,48 @@ const getIdentityId = (item: Identity) => {
     title="已绑定的身份源"
     :data="user.identities || []"
     :total="user.identities?.length || 0"
-    indicator-color="#10b981"
+    indicator-color="#3b82f6"
     hide-pagination
+    :show-search="false"
+    show-selection
+    :selectable="() => false"
     empty-text="主体暂未绑定任何外部身份源"
   >
-    <template #item="{ item }">
-      <div class="item-card">
-        <div class="item-content">
-          <div class="identity-info">
-            <div class="provider-info">
-              <span class="provider-badge" :class="item.provider.toLowerCase()">{{ item.provider }}</span>
-              <div class="id-row">
-                <el-icon class="link-icon"><Link /></el-icon>
-                <code class="provider-id">{{ getIdentityId(item) || user.username }}</code>
-              </div>
-            </div>
-            <p class="desc-text">通过 {{ item.provider }} 协议同步的主体身份，支持跨域认证委派。</p>
-          </div>
+    <!-- 表头定义 -->
+    <template #column-header>
+      <div class="source-cols header-label-font">
+        <span>身份源类型 / 协议</span>
+        <span>关联账号 / 外部标识</span>
+        <span class="align-center">操作</span>
+      </div>
+    </template>
 
-          <div class="item-actions">
-            <el-button type="primary" link size="small" class="action-link">
-              <el-icon><Refresh /></el-icon>
-              <span>重新同步</span>
-            </el-button>
-            <el-button type="danger" link size="small" class="action-link">
-              <el-icon><Unlink /></el-icon>
-              <span>解除绑定</span>
-            </el-button>
+    <!-- 列表项内容 (对齐全局网格模式) -->
+    <template #item="{ item: row }">
+      <div class="source-grid-row">
+        <!-- 身份源类型 -->
+        <div class="cell-provider">
+          <AssetIdentityCell
+            :title="row.provider"
+            :sub-title="row.provider === 'LDAP' ? 'RFC 4511' : 'OAuth 2.0'"
+            :tag-style="false"
+          />
+        </div>
+
+        <!-- 外部账号 -->
+        <div class="cell-account">
+          <div class="account-wrap">
+            <el-icon class="link-icon"><Connection /></el-icon>
+            <code class="account-code">{{ getIdentityId(row) || user.username }}</code>
           </div>
+        </div>
+
+        <!-- 操作区 -->
+        <div class="cell-actions">
+          <el-button type="danger" link size="small" class="unbind-btn">
+            <el-icon><Warning /></el-icon>
+            <span>解除绑定</span>
+          </el-button>
         </div>
       </div>
     </template>
@@ -58,94 +73,71 @@ const getIdentityId = (item: Identity) => {
 </template>
 
 <style lang="scss" scoped>
-.item-card {
-  background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 16px;
-  transition: all 0.25s ease;
+.header-label-font {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.source-cols {
+  display: grid;
+  grid-template-columns: 240px 1fr 120px;
+  gap: 24px;
+  width: 100%;
+  align-items: center;
+
+  .align-center {
+    text-align: center;
+  }
+}
+
+.source-grid-row {
+  display: grid;
+  grid-template-columns: 240px 1fr 120px;
+  align-items: center;
+  gap: 24px;
+  min-height: 72px;
+  transition: background 0.2s ease;
 
   &:hover {
-    border-color: #cbd5e1;
-    background: #f0fdf4;
-    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
-  }
-
-  .item-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    background: #f8fafc;
   }
 }
 
-.identity-info {
-  .provider-info {
+.cell-account {
+  .account-wrap {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 6px;
+    gap: 8px;
 
-    .provider-badge {
+    .link-icon {
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .account-code {
+      font-size: 12px;
+      color: #475569;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-weight: 600;
+      background: #f1f5f9;
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 11px;
-      font-weight: 700;
-      background: #e2e8f0;
-      color: #475569;
-      text-transform: uppercase;
-
-      &.ldap {
-        background: #dbeafe;
-        color: #1e40af;
-      }
-      &.wechat {
-        background: #dcfce7;
-        color: #166534;
-      }
-      &.feishu {
-        background: #e0e7ff;
-        color: #4338ca;
-      }
     }
-
-    .id-row {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      .link-icon {
-        font-size: 11px;
-        color: #94a3b8;
-      }
-      .provider-id {
-        font-size: 11px;
-        color: #64748b;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
-      }
-    }
-  }
-
-  .desc-text {
-    font-size: 12px;
-    color: #94a3b8;
-    margin: 0;
-    max-width: 500px;
   }
 }
 
-.item-actions {
+.cell-actions {
   display: flex;
-  gap: 12px;
+  justify-content: center;
 
-  .action-link {
-    font-size: 12px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-
+  .unbind-btn {
+    color: #cbd5e1;
+    font-weight: 600;
     &:hover {
-      opacity: 0.8;
+      color: #ef4444;
     }
   }
 }

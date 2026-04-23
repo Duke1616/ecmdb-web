@@ -94,8 +94,8 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { Search, Plus, RefreshRight, OfficeBuilding } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import PageContainer from "@@/components/PageContainer/index.vue"
+import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
