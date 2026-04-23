@@ -1,4 +1,4 @@
-import { ref, watch, toValue, type MaybeRefOrGetter } from "vue"
+import { ref, watch, toValue, computed, type MaybeRefOrGetter } from "vue"
 import { ElMessage } from "element-plus"
 import { listRoleUsersApi } from "@/api/iam/user"
 import { listRolePoliciesApi, detachPolicyApi } from "@/api/iam/policy"
@@ -13,6 +13,7 @@ import {
 import type { User } from "@/api/iam/user/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { InlinePolicy, InheritanceItem } from "@/api/iam/role/type"
+import { useListManager } from "@/common/composables/useListManager"
 
 export function useRoleGovernance(
   roleId: MaybeRefOrGetter<number | undefined>,
@@ -21,78 +22,23 @@ export function useRoleGovernance(
   const activeTab = ref("members")
 
   // --- 成员管理 (Users) ---
-  const members = ref<User[]>([])
-  const memberTotal = ref(0)
-  const memberLoading = ref(false)
+  const {
+    list: members,
+    total: memberTotal,
+    loading: memberLoading,
+    query: memberQuery,
+    pagination: memberPagination,
+    fetchList: fetchMembers,
+    handlePageChange: handleMemberPageChange,
+    handleSearch: handleMemberSearch
+  } = useListManager<User, any>({
+    fetchApi: (params) => listRoleUsersApi({ ...params, role_code: toValue(roleCode)! }),
+    listKey: "users",
+    immediate: false
+  })
+
   const selectedMembers = ref<User[]>([])
-  const memberQuery = ref({
-    currentPage: 1,
-    pageSize: 10,
-    keyword: ""
-  })
   const addMemberVisible = ref(false)
-
-  const fetchMembers = async () => {
-    const code = toValue(roleCode)
-    if (!code) return
-    memberLoading.value = true
-    try {
-      const { data } = await listRoleUsersApi({
-        role_code: code,
-        offset: (memberQuery.value.currentPage - 1) * memberQuery.value.pageSize,
-        limit: memberQuery.value.pageSize,
-        keyword: memberQuery.value.keyword
-      })
-      members.value = data.users
-      memberTotal.value = data.total
-    } finally {
-      memberLoading.value = false
-    }
-  }
-
-  // --- 策略管理 (Policies) ---
-  const policies = ref<Policy[]>([])
-  const policyTotal = ref(0)
-  const policyLoading = ref(false)
-  const selectedPolicies = ref<Policy[]>([])
-  const policyQuery = ref({
-    currentPage: 1,
-    pageSize: 10,
-    keyword: "",
-    type: undefined as number | undefined
-  })
-
-  const fetchPolicies = async () => {
-    const code = toValue(roleCode)
-    if (!code) return
-    policyLoading.value = true
-    try {
-      const { data } = await listRolePoliciesApi({
-        role_code: code,
-        offset: (policyQuery.value.currentPage - 1) * policyQuery.value.pageSize,
-        limit: policyQuery.value.pageSize,
-        keyword: policyQuery.value.keyword,
-        type: policyQuery.value.type as any // Match Go uint8
-      })
-      policies.value = data.policies
-      policyTotal.value = data.total
-    } finally {
-      policyLoading.value = false
-    }
-  }
-
-  // --- 交互逻辑 ---
-  const handleMemberPageChange = (page: number) => {
-    memberQuery.value.currentPage = page
-    fetchMembers()
-  }
-
-  const handleMemberSearch = (keyword: string) => {
-    memberQuery.value.keyword = keyword
-    memberQuery.value.currentPage = 1
-    fetchMembers()
-  }
-
   const handleAddMember = () => (addMemberVisible.value = true)
 
   const handleAssignMembers = async (usernames: string[]) => {
@@ -108,25 +54,27 @@ export function useRoleGovernance(
     }
   }
 
-  const handlePolicyPageChange = (page: number) => {
-    policyQuery.value.currentPage = page
-    fetchPolicies()
-  }
+  // --- 策略管理 (Policies) ---
+  const {
+    list: policies,
+    total: policyTotal,
+    loading: policyLoading,
+    query: policyQuery,
+    pagination: policyPagination,
+    fetchList: fetchPolicies,
+    handlePageChange: handlePolicyPageChange,
+    handleSearch: handlePolicySearch
+  } = useListManager<Policy, any>({
+    fetchApi: (params) => listRolePoliciesApi({ ...params, role_code: toValue(roleCode)! }),
+    listKey: "policies",
+    immediate: false
+  })
 
-  const handlePolicySearch = (keyword: string) => {
-    policyQuery.value.keyword = keyword
-    policyQuery.value.currentPage = 1
-    fetchPolicies()
-  }
-
+  const selectedPolicies = ref<Policy[]>([])
   const handlePolicyTypeChange = (type?: number) => {
-    policyQuery.value.type = type
-    policyQuery.value.currentPage = 1
-    fetchPolicies()
+    policyQuery.type = type
+    handlePolicySearch()
   }
-
-  // 角色继承 (Inheritance)
-  const addParentVisible = ref(false)
 
   // 授权向导
   const attachPolicyVisible = ref(false)
@@ -142,6 +90,11 @@ export function useRoleGovernance(
     } catch (err: any) {
       ElMessage.error(err.message || "操作失败")
     }
+  }
+
+  const handleBatchUnbindPolicies = () => {
+    ElMessage.warning(`即将批量解绑 ${selectedPolicies.value.length} 个策略`)
+    selectedPolicies.value = []
   }
 
   // --- 内联策略分析 (Inline Analysis) ---
@@ -164,29 +117,20 @@ export function useRoleGovernance(
   // --- 角色继承 (Inheritance) ---
   const parentRoles = ref<InheritanceItem[]>([])
   const inheritanceLoading = ref(false)
+  const addParentVisible = ref(false)
 
   const fetchParentRoles = async () => {
     const code = toValue(roleCode)
     if (!code) return
     inheritanceLoading.value = true
     try {
-      // 1. 获取带有层级信息的父角色编码列表
       const { data: infos } = await getParentRolesApi({ role_code: code })
       if (!infos || infos.length === 0) {
         parentRoles.value = []
         return
       }
-
       const codes = infos.map((i) => i.code)
-
-      // 2. 批量获取角色详情
-      const { data } = await listRolesApi({
-        offset: 0,
-        limit: 100,
-        keyword: ""
-      })
-
-      // 3. 组合信息：附加 is_direct 和 is_immutable 属性供 UI 判断
+      const { data } = await listRolesApi({ offset: 0, limit: 100, keyword: "" })
       parentRoles.value = data.roles
         .filter((r) => codes.includes(r.code))
         .map((r) => {
@@ -231,8 +175,6 @@ export function useRoleGovernance(
     if (!code || !parentCodes.length) return
     inheritanceLoading.value = true
     try {
-      // 批量添加父角色 (后端目前可能是单个添加，我们需要循环或者后端支持批量?)
-      // Backend: POST /api/role/add_parent handles one at a time.
       for (const pCode of parentCodes) {
         await addParentRoleApi({ role_code: code, parent_role_code: pCode })
       }
@@ -246,25 +188,15 @@ export function useRoleGovernance(
     }
   }
 
-  const handleBatchUnbindPolicies = () => {
-    ElMessage.warning(`即将批量解绑 ${selectedPolicies.value.length} 个策略`)
-    selectedPolicies.value = []
-  }
-
   // --- 联动逻辑 (Lazy Loading) ---
   watch(
     [() => activeTab.value, () => toValue(roleCode)],
     ([tab, code]) => {
       if (!code) return
-      if (tab === "members") {
-        fetchMembers()
-      } else if (tab === "permissions") {
-        fetchPolicies()
-      } else if (tab === "inline") {
-        fetchInlineAnalysis()
-      } else if (tab === "inheritance") {
-        fetchParentRoles()
-      }
+      if (tab === "members") fetchMembers()
+      else if (tab === "permissions") fetchPolicies()
+      else if (tab === "inline") fetchInlineAnalysis()
+      else if (tab === "inheritance") fetchParentRoles()
     },
     { immediate: true }
   )
@@ -275,12 +207,20 @@ export function useRoleGovernance(
     memberTotal,
     memberLoading,
     selectedMembers,
-    memberQuery,
+    memberQuery: computed(() => ({
+      ...memberQuery,
+      currentPage: memberPagination.currentPage,
+      pageSize: memberPagination.pageSize
+    })),
     policies,
     policyTotal,
     policyLoading,
     selectedPolicies,
-    policyQuery,
+    policyQuery: computed(() => ({
+      ...policyQuery,
+      currentPage: policyPagination.currentPage,
+      pageSize: policyPagination.pageSize
+    })),
     handleMemberPageChange,
     handleMemberSearch,
     addMemberVisible,

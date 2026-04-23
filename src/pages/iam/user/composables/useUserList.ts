@@ -1,47 +1,30 @@
-import { ref, onMounted, reactive } from "vue"
+import { ref, computed } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { listUsersApi, deleteUserApi } from "@/api/iam/user"
 import type { User, ListUserRequest } from "@/api/iam/user/type"
+import { useListManager } from "@/common/composables/useListManager"
 
 export function useUserList() {
-  const users = ref<User[]>([])
-  const total = ref(0)
-  const currentPage = ref(1)
-  const pageSize = ref(10)
-  const loading = ref(false)
+  // 使用通用列表管理器
+  const {
+    list: users,
+    total,
+    loading,
+    pagination,
+    query,
+    fetchList: loadData,
+    handlePageChange: handleCurrentChange,
+    handleSizeChange,
+    handleSearch: handleRefresh
+  } = useListManager<User, ListUserRequest>({
+    fetchApi: listUsersApi,
+    listKey: "users",
+    initialQuery: { keyword: "", offset: 0, limit: 10 }
+  })
 
   // 交互状态
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
-
-  // 查询参数
-  const query = reactive<ListUserRequest>({
-    offset: 0,
-    limit: 10,
-    keyword: ""
-  })
-
-  const loadData = async () => {
-    loading.value = true
-    try {
-      const { data } = await listUsersApi({
-        ...query,
-        offset: (currentPage.value - 1) * pageSize.value,
-        limit: pageSize.value
-      })
-      users.value = data.users
-      total.value = data.total
-    } catch (error) {
-      console.error("加载用户列表失败:", error)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const handleRefresh = () => {
-    currentPage.value = 1
-    loadData()
-  }
 
   const handleCreate = () => {
     currentEditId.value = null
@@ -75,23 +58,11 @@ export function useUserList() {
     loadData()
   }
 
-  const handleSizeChange = (val: number) => {
-    pageSize.value = val
-    loadData()
-  }
-
-  const handleCurrentChange = (val: number) => {
-    currentPage.value = val
-    loadData()
-  }
-
-  onMounted(loadData)
-
   return {
     users,
     total,
-    currentPage,
-    pageSize,
+    currentPage: computed(() => pagination.currentPage),
+    pageSize: computed(() => pagination.pageSize),
     query,
     loading,
     formVisible,

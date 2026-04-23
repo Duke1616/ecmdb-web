@@ -1,9 +1,10 @@
-import { ref, reactive, watch, type Ref } from "vue"
+import { ref, watch, type Ref, computed } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { listUserRolesApi } from "@/api/iam/role"
 import { listUserPoliciesApi } from "@/api/iam/policy"
 import { listUserTenantsApi } from "@/api/iam/tenant"
+import { useListManager } from "@/common/composables/useListManager"
 import type { Role } from "@/api/iam/role/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { Tenant } from "@/api/iam/tenant/type"
@@ -14,168 +15,78 @@ export function useUserGovernance(userId: Ref<number | undefined>) {
   const activeTab = ref((route.query.tab as string) || "auth")
   const attachPolicyVisible = ref(false)
 
-  // 同步 Tab 状态到 URL，确保“返回”时能恢复现场
+  // 同步 Tab 状态到 URL
   watch(activeTab, (newTab) => {
     router.replace({
       query: { ...route.query, tab: newTab }
     })
   })
 
-  // 角色相关
-  const roles = ref<Role[]>([])
-  const roleTotal = ref(0)
-  const roleLoading = ref(false)
-  const roleQuery = reactive({
-    currentPage: 1,
-    pageSize: 10,
-    keyword: "",
-    type: undefined as number | undefined
+  // --- 使用通用列表管理器 ---
+
+  // 角色列表管理
+  const {
+    list: roles,
+    total: roleTotal,
+    loading: roleLoading,
+    pagination: rolePagination,
+    query: roleQuery,
+    fetchList: loadRoles,
+    handlePageChange: handleRolePageChange,
+    handleSearch: handleRoleSearch
+  } = useListManager<Role, any>({
+    fetchApi: (params) => listUserRolesApi({ ...params, user_id: userId.value! }),
+    listKey: "roles",
+    immediate: false
   })
 
-  // 策略相关
-  const policies = ref<Policy[]>([])
-  const policyTotal = ref(0)
-  const policyLoading = ref(false)
-  const policyQuery = reactive({
-    currentPage: 1,
-    pageSize: 10,
-    keyword: "",
-    type: undefined as number | undefined
+  // 策略列表管理
+  const {
+    list: policies,
+    total: policyTotal,
+    loading: policyLoading,
+    pagination: policyPagination,
+    query: policyQuery,
+    fetchList: loadPolicies,
+    handlePageChange: handlePolicyPageChange,
+    handleSearch: handlePolicySearch
+  } = useListManager<Policy, any>({
+    fetchApi: (params) => listUserPoliciesApi({ ...params, user_id: userId.value! }),
+    listKey: "policies",
+    immediate: false
   })
 
-  // 租户相关
-  const tenants = ref<Tenant[]>([])
-  const tenantTotal = ref(0)
-  const tenantLoading = ref(false)
-  const tenantQuery = reactive({
-    currentPage: 1,
-    pageSize: 10,
-    keyword: ""
+  // 租户列表管理
+  const {
+    list: tenants,
+    total: tenantTotal,
+    loading: tenantLoading,
+    pagination: tenantPagination,
+    query: tenantQuery,
+    fetchList: loadTenants,
+    handlePageChange: handleTenantPageChange,
+    handleSearch: handleTenantSearch
+  } = useListManager<Tenant, any>({
+    fetchApi: (params) => listUserTenantsApi({ ...params, user_id: userId.value! }),
+    listKey: "tenants",
+    immediate: false
   })
 
-  /**
-   * 加载角色
-   */
-  const loadUserRoles = async () => {
-    if (!userId.value) return
-
-    roleLoading.value = true
-    try {
-      const { data } = await listUserRolesApi({
-        user_id: userId.value,
-        offset: (roleQuery.currentPage - 1) * roleQuery.pageSize,
-        limit: roleQuery.pageSize,
-        keyword: roleQuery.keyword,
-        type: roleQuery.type
-      })
-      roles.value = data.roles
-      roleTotal.value = data.total
-    } catch (err) {
-      console.error("[UserGovernance] Load roles failed:", err)
-    } finally {
-      roleLoading.value = false
-    }
-  }
-
-  /**
-   * 加载策略
-   */
-  const loadUserPolicies = async () => {
-    if (!userId.value) return
-
-    policyLoading.value = true
-    try {
-      const { data } = await listUserPoliciesApi({
-        user_id: userId.value,
-        offset: (policyQuery.currentPage - 1) * policyQuery.pageSize,
-        limit: policyQuery.pageSize,
-        keyword: policyQuery.keyword,
-        type: policyQuery.type
-      })
-      policies.value = data.policies
-      policyTotal.value = data.total
-    } catch (err) {
-      console.error("[UserGovernance] Load policies failed:", err)
-    } finally {
-      policyLoading.value = false
-    }
-  }
-
-  /**
-   * 加载租户
-   */
-  const loadUserTenants = async () => {
-    if (!userId.value) return
-
-    tenantLoading.value = true
-    try {
-      const { data } = await listUserTenantsApi({
-        user_id: userId.value,
-        offset: (tenantQuery.currentPage - 1) * tenantQuery.pageSize,
-        limit: tenantQuery.pageSize,
-        keyword: tenantQuery.keyword
-      })
-      tenants.value = data.tenants
-      tenantTotal.value = data.total
-    } catch (err) {
-      console.error("[UserGovernance] Load tenants failed:", err)
-    } finally {
-      tenantLoading.value = false
-    }
-  }
-
-  const handleRolePageChange = (page: number) => {
-    roleQuery.currentPage = page
-    loadUserRoles()
-  }
-
-  const handlePolicyPageChange = (page: number) => {
-    policyQuery.currentPage = page
-    loadUserPolicies()
-  }
-
-  const handleTenantPageChange = (page: number) => {
-    tenantQuery.currentPage = page
-    loadUserTenants()
-  }
-
-  const handleRoleSearch = (keyword: string) => {
-    roleQuery.keyword = keyword
-    roleQuery.currentPage = 1
-    loadUserRoles()
-  }
-
+  // 特殊类型切换逻辑
   const handleRoleTypeChange = (type?: number) => {
     roleQuery.type = type
-    roleQuery.currentPage = 1
-    loadUserRoles()
-  }
-
-  const handlePolicySearch = (keyword: string) => {
-    policyQuery.keyword = keyword
-    policyQuery.currentPage = 1
-    loadUserPolicies()
+    handleRoleSearch()
   }
 
   const handlePolicyTypeChange = (type?: number) => {
     policyQuery.type = type
-    policyQuery.currentPage = 1
-    loadUserPolicies()
+    handlePolicySearch()
   }
 
-  const handleTenantSearch = (keyword: string) => {
-    tenantQuery.keyword = keyword
-    tenantQuery.currentPage = 1
-    loadUserTenants()
-  }
-
+  // 交互逻辑 (占位)
   const handleAddRole = () => ElMessage.info("角色分配功能即将集成...")
-  const handleAddPolicy = () => {
-    attachPolicyVisible.value = true
-  }
-  const handleAttachSuccess = () => {
-    loadUserPolicies()
-  }
+  const handleAddPolicy = () => (attachPolicyVisible.value = true)
+  const handleAttachSuccess = () => loadPolicies()
   const handleAddTenant = () => ElMessage.info("租户入驻功能即将集成...")
   const handleUnbindRole = (row: Role) => ElMessage.info(`即将解绑角色: ${row.name}`)
   const handleUnbindPolicy = (row: Policy) => ElMessage.info(`即将解绑策略: ${row.name}`)
@@ -201,47 +112,48 @@ export function useUserGovernance(userId: Ref<number | undefined>) {
     selectedTenants.value = []
   }
 
-  // 核心逻辑：数据驱动触发
+  // 核心渲染驱动逻辑
   const refresh = () => {
-    if (activeTab.value === "roles") loadUserRoles()
-    if (activeTab.value === "permissions") loadUserPolicies()
-    if (activeTab.value === "tenants") loadUserTenants()
+    if (!userId.value) return
+    if (activeTab.value === "roles") loadRoles()
+    if (activeTab.value === "permissions") loadPolicies()
+    if (activeTab.value === "tenants") loadTenants()
   }
 
-  // 1. 监听 userId 变化 (解决从跨模块跳转过来，id 异步获取的问题)
-  watch(
-    userId,
-    (id) => {
-      if (id) refresh()
-    },
-    { immediate: true }
-  )
-
-  // 2. 监听 Tab 切换
-  watch(activeTab, () => {
-    refresh()
-  })
+  watch([userId, activeTab], () => refresh(), { immediate: true })
 
   return {
     activeTab,
     roles,
     roleTotal,
     roleLoading,
-    roleQuery,
+    roleQuery: computed(() => ({
+      ...roleQuery,
+      currentPage: rolePagination.currentPage,
+      pageSize: rolePagination.pageSize
+    })),
     selectedRoles,
     policies,
     policyTotal,
     policyLoading,
-    policyQuery,
+    policyQuery: computed(() => ({
+      ...policyQuery,
+      currentPage: policyPagination.currentPage,
+      pageSize: policyPagination.pageSize
+    })),
     selectedPolicies,
     tenants,
     tenantTotal,
     tenantLoading,
-    tenantQuery,
+    tenantQuery: computed(() => ({
+      ...tenantQuery,
+      currentPage: tenantPagination.currentPage,
+      pageSize: tenantPagination.pageSize
+    })),
     selectedTenants,
-    loadUserRoles,
-    loadUserPolicies,
-    loadUserTenants,
+    loadRoles,
+    loadPolicies,
+    loadTenants,
     handleRolePageChange,
     handlePolicyPageChange,
     handleTenantPageChange,

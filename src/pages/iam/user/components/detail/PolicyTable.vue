@@ -148,10 +148,6 @@ const emit = defineEmits<{
   }
 }
 
-.cell-identity {
-  // 逻辑已托管
-}
-
 .cell-desc .desc-text {
   font-size: 13px;
   color: #64748b;

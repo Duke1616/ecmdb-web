@@ -1,50 +1,33 @@
-import { ref, onMounted, reactive } from "vue"
+import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { listPoliciesApi } from "@/api/iam/policy"
 import type { Policy, ListPolicyRequest } from "@/api/iam/policy/type"
+import { useListManager } from "@/common/composables/useListManager"
 
 export function usePolicyList() {
   const router = useRouter()
-  const policies = ref<Policy[]>([])
-  const total = ref(0)
-  const currentPage = ref(1)
-  const pageSize = ref(10)
-  const loading = ref(false)
 
-  // 查询参数
-  const query = reactive<ListPolicyRequest>({
-    offset: 0,
-    limit: 10,
-    keyword: "",
-    type: undefined
+  // 使用通用列表管理器
+  const {
+    list: policies,
+    total,
+    loading,
+    pagination,
+    query,
+    fetchList: loadData,
+    handlePageChange: handleCurrentChange,
+    handleSizeChange,
+    handleSearch: handleRefresh
+  } = useListManager<Policy, ListPolicyRequest>({
+    fetchApi: listPoliciesApi,
+    listKey: "policies",
+    initialQuery: { keyword: "", type: undefined, offset: 0, limit: 10 }
   })
 
   // 交互状态
   const jsonVisible = ref(false)
   const selectedPolicy = ref<Policy | null>(null)
-
-  const loadData = async () => {
-    loading.value = true
-    try {
-      const { data } = await listPoliciesApi({
-        ...query,
-        offset: (currentPage.value - 1) * pageSize.value,
-        limit: pageSize.value
-      })
-      policies.value = data.policies
-      total.value = data.total
-    } catch (error) {
-      console.error("加载策略列表失败:", error)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const handleRefresh = () => {
-    currentPage.value = 1
-    loadData()
-  }
 
   const handleCreate = () => {
     router.push({ name: "PolicyCreation" })
@@ -68,7 +51,7 @@ export function usePolicyList() {
       ElMessage.success("删除成功")
       loadData()
     } catch {
-      console.log("删除失败")
+      // console.log("删除取消")
     }
   }
 
@@ -77,24 +60,11 @@ export function usePolicyList() {
     jsonVisible.value = true
   }
 
-  const handleSizeChange = (val: number) => {
-    pageSize.value = val
-    currentPage.value = 1
-    loadData()
-  }
-
-  const handleCurrentChange = (val: number) => {
-    currentPage.value = val
-    loadData()
-  }
-
-  onMounted(loadData)
-
   return {
     policies,
     total,
-    currentPage,
-    pageSize,
+    currentPage: computed(() => pagination.currentPage),
+    pageSize: computed(() => pagination.pageSize),
     loading,
     query,
     jsonVisible,

@@ -74,7 +74,7 @@ const emit = defineEmits<{
           <AssetIdentityCell
             :title="row.name"
             :sub-title="row.code"
-            :link-to="{ name: 'TenantDetail', query: { code: row.code } }"
+            :link-to="{ name: 'TenantDetail', query: { id: row.id } }"
           />
         </div>
 
@@ -141,10 +141,6 @@ const emit = defineEmits<{
   &:hover {
     background: #f8fafc;
   }
-}
-
-.cell-identity {
-  // 逻辑已托管
 }
 
 .cell-time .time-text {

@@ -17,6 +17,8 @@ import IdentitySources from "./components/detail/IdentitySources.vue"
 import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
 import TenantTable from "./components/detail/TenantTable.vue"
+import StatusStrip, { type StatusItem } from "@/common/components/Governance/StatusStrip.vue"
+import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import type { Subject } from "@/api/iam/permission/type"
 
@@ -78,7 +80,6 @@ const handleEditConfirm = () => {
   userFormRef.value?.submit()
 }
 
-// 将当前用户信息包装为固定授权主体
 const userSubjects = computed<Subject[]>(() => {
   if (!userInfo.value) return []
   return [
@@ -87,6 +88,46 @@ const userSubjects = computed<Subject[]>(() => {
       id: userInfo.value.username,
       name: userInfo.value.nickname || userInfo.value.username,
       desc: userInfo.value.job_title
+    }
+  ]
+})
+
+const statusItems = computed<StatusItem[]>(() => {
+  if (!userInfo.value) return []
+  return [
+    {
+      label: "账号来源",
+      value: userInfo.value.source === "ldap" ? "LDAP 同步" : "本地账户",
+      dot: true,
+      type: "success"
+    },
+    {
+      label: "控制台登录",
+      value: userInfo.value.console_login ? "已开启" : "未授权",
+      dot: true,
+      type: userInfo.value.console_login ? "success" : "info"
+    },
+    {
+      label: "MFA 状态",
+      value: userInfo.value.mfa_bound ? "已绑定" : "未绑定",
+      dot: true,
+      type: userInfo.value.mfa_bound ? "success" : "warning"
+    },
+    { label: "风险等级", value: "L0 (安全)", dot: true, type: "success" }
+  ]
+})
+
+const infoItems = computed(() => {
+  if (!userInfo.value) return []
+  return [
+    { label: "姓名/昵称", value: userInfo.value.nickname || userInfo.value.username },
+    { label: "登录用户名 (Unique)", value: userInfo.value.username, mono: true, copyable: true },
+    { label: "当前职位/职能", value: userInfo.value.job_title || "未定义职责" },
+    {
+      label: "核心职责描述",
+      value: userInfo.value.job_title ? `该主体主要负责 ${userInfo.value.job_title} 相关治理职能` : "暂无详细职责说明",
+      full: true,
+      desc: true
     }
   ]
 })
@@ -117,65 +158,10 @@ const userSubjects = computed<Subject[]>(() => {
 
       <div class="governance-body">
         <!-- 1. 身份安全状态条 -->
-        <div class="governance-status-strip">
-          <div class="status-item">
-            <span class="dot success" />
-            <span class="label">账号来源:</span>
-            <span class="value tint">{{ userInfo.source === "ldap" ? "LDAP 同步" : "本地账户" }}</span>
-          </div>
-          <div class="divider" />
-          <div class="status-item">
-            <span class="dot" :class="userInfo.console_login ? 'success' : 'info'" />
-            <span class="label">控制台登录:</span>
-            <span class="value" :class="userInfo.console_login ? 'success' : 'info'">
-              {{ userInfo.console_login ? "已开启" : "未授权" }}
-            </span>
-          </div>
-          <div class="divider" />
-          <div class="status-item">
-            <span class="dot" :class="userInfo.mfa_bound ? 'success' : 'warning'" />
-            <span class="label">MFA 状态:</span>
-            <span class="value" :class="userInfo.mfa_bound ? 'success' : 'warning'">
-              {{ userInfo.mfa_bound ? "已绑定" : "未绑定" }}
-            </span>
-          </div>
-          <div class="divider" />
-          <div class="status-item">
-            <span class="dot success" />
-            <span class="label">风险等级:</span>
-            <span class="value success">L0 (安全)</span>
-          </div>
-        </div>
+        <StatusStrip :items="statusItems" />
 
         <!-- 2. 身份实证资料卡 -->
-        <div class="info-card consolidated-card">
-          <div class="info-header">
-            <el-icon><User /></el-icon>
-            <span>主体身份实证资料</span>
-          </div>
-          <div class="info-content grid-4-cols">
-            <div class="info-item">
-              <div class="label">姓名/昵称</div>
-              <div class="value">{{ userInfo.nickname || userInfo.username }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">登录用户名 (Unique)</div>
-              <div class="value mono copyable" @click="copyText(userInfo.username)">
-                {{ userInfo.username }}
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="label">当前职位/职能</div>
-              <div class="value">{{ userInfo.job_title || "未定义职责" }}</div>
-            </div>
-            <div class="info-item full">
-              <div class="label">核心职责描述</div>
-              <div class="value desc">
-                {{ userInfo.job_title ? `该主体主要负责 ${userInfo.job_title} 相关治理职能` : "暂无详细职责说明" }}
-              </div>
-            </div>
-          </div>
-        </div>
+        <InfoCard title="主体身份实证资料" :icon="User" :items="infoItems" @copy="copyText" />
 
         <!-- 3. 治理内容区 -->
         <div class="governance-tabs-card">
@@ -277,135 +263,6 @@ const userSubjects = computed<Subject[]>(() => {
   flex-direction: column;
   gap: 20px;
   padding: 0 4px;
-}
-
-.governance-status-strip {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-
-  .status-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      &.success {
-        background: #10b981;
-      }
-      &.info {
-        background: var(--gov-brand);
-      }
-      &.warning {
-        background: #f59e0b;
-      }
-    }
-
-    .label {
-      color: #64748b;
-      font-weight: 500;
-    }
-    .value {
-      font-weight: 700;
-      &.success {
-        color: #10b981;
-      }
-      &.info {
-        color: var(--gov-brand);
-      }
-      &.warning {
-        color: #f59e0b;
-      }
-      &.tint {
-        color: #334155;
-      }
-    }
-  }
-
-  .divider {
-    width: 1px;
-    height: 14px;
-    background: #e2e8f0;
-  }
-}
-
-.info-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-
-  .info-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    color: #1e293b;
-    font-size: 14px;
-    font-weight: 700;
-    .el-icon {
-      color: var(--gov-brand);
-    }
-    &::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #f1f5f9;
-      margin-left: 12px;
-    }
-  }
-
-  .info-content {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px 24px;
-    &.grid-4-cols {
-      grid-template-columns: 1fr 1fr 1.5fr;
-    }
-
-    .info-item {
-      &.full {
-        grid-column: 1 / -1;
-      }
-      .label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #94a3b8;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-      }
-      .value {
-        font-size: 14px;
-        color: #334155;
-        font-weight: 500;
-        &.mono {
-          font-family: ui-monospace, SFMono-Regular, monospace;
-        }
-        &.copyable {
-          cursor: pointer;
-          &:hover {
-            color: var(--gov-brand);
-            text-decoration: underline;
-          }
-        }
-        &.desc {
-          font-size: 13px;
-          color: #64748b;
-          line-height: 1.6;
-        }
-      }
-    }
-  }
 }
 
 .governance-tabs-card {

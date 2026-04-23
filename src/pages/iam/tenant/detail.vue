@@ -14,9 +14,25 @@ import { useTenantGovernance } from "./composables/useTenantGovernance"
 // Components
 import TenantMemberTable from "./components/detail/TenantMemberTable.vue"
 import UserSelectDrawer from "./components/detail/UserSelectDrawer.vue"
+import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
 const router = useRouter()
 const { tenantInfo, loading: detailLoading, handleDelete, copyText, formatTimestamp } = useTenantDetail()
+
+const infoItems = computed(() => {
+  if (!tenantInfo.value) return []
+  return [
+    { label: "租户正式名称", value: tenantInfo.value.name },
+    { label: "空间编码", value: tenantInfo.value.code, mono: true, copyable: true },
+    { label: "登录域名", value: tenantInfo.value.domain || "iam.ecmdb.com", mono: true },
+    {
+      label: "空间职责定义",
+      value: `本项目租户空间用于隔离 ${tenantInfo.value.name} 的资源与权限子集，确保数据与策略的强制隔离。`,
+      full: true,
+      desc: true
+    }
+  ]
+})
 const {
   activeTab,
   members,
@@ -83,34 +99,7 @@ const onAssignConfirm = async (userIds: number[]) => {
 
       <div class="governance-body">
         <!-- 身份识别资料 -->
-        <div class="info-card consolidated-card">
-          <div class="info-header">
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>租户空间身份标识</span>
-          </div>
-          <div class="info-content grid-4-cols">
-            <div class="info-item">
-              <div class="label">租户正式名称</div>
-              <div class="value">{{ tenantInfo.name }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">空间编码</div>
-              <div class="value mono copyable" @click="copyText(tenantInfo.code)">
-                {{ tenantInfo.code }}
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="label">登录域名</div>
-              <div class="value mono">{{ tenantInfo.domain || "iam.ecmdb.com" }}</div>
-            </div>
-            <div class="info-item full">
-              <div class="label">空间职责定义</div>
-              <div class="value desc">
-                本项目租户空间用于隔离 {{ tenantInfo.name }} 的资源与权限子集，确保数据与策略的强制隔离。
-              </div>
-            </div>
-          </div>
-        </div>
+        <InfoCard title="租户空间身份标识" :icon="OfficeBuilding" :items="infoItems" @copy="copyText" />
 
         <!-- 治理内容 -->
         <div class="governance-tabs-card">
@@ -168,76 +157,6 @@ const onAssignConfirm = async (userIds: number[]) => {
   flex-direction: column;
   gap: 20px;
   padding: 0 4px;
-}
-
-.info-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-
-  .info-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    color: #1e293b;
-    font-size: 14px;
-    font-weight: 700;
-    .el-icon {
-      color: var(--gov-brand);
-    }
-    &::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #f1f5f9;
-      margin-left: 12px;
-    }
-  }
-
-  .info-content {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px 24px;
-    &.grid-4-cols {
-      grid-template-columns: 1fr 1fr 1.5fr;
-    }
-
-    .info-item {
-      &.full {
-        grid-column: 1 / -1;
-      }
-      .label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #94a3b8;
-        text-transform: uppercase;
-        margin-bottom: 6px;
-      }
-      .value {
-        font-size: 14px;
-        color: #334155;
-        font-weight: 500;
-        &.mono {
-          font-family: ui-monospace, SFMono-Regular, monospace;
-        }
-        &.copyable {
-          cursor: pointer;
-          &:hover {
-            color: var(--gov-brand);
-            text-decoration: underline;
-          }
-        }
-        &.desc {
-          font-size: 13px;
-          color: #64748b;
-          line-height: 1.6;
-        }
-      }
-    }
-  }
 }
 
 .governance-tabs-card {

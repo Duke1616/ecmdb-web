@@ -1,46 +1,30 @@
-import { ref, onMounted, reactive } from "vue"
+import { ref, computed } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { listTenantsApi, deleteTenantApi, switchTenantApi } from "@/api/iam/tenant"
 import type { Tenant } from "@/api/iam/tenant/type"
+import { useListManager } from "@/common/composables/useListManager"
 
 export function useTenantList() {
-  const tenants = ref<Tenant[]>([])
-  const total = ref(0)
-  const currentPage = ref(1)
-  const pageSize = ref(10)
-  const loading = ref(false)
+  // 使用通用列表管理器
+  const {
+    list: tenants,
+    total,
+    loading,
+    pagination,
+    query,
+    fetchList: loadData,
+    handlePageChange: handleCurrentChange,
+    handleSizeChange,
+    handleSearch: handleRefresh
+  } = useListManager<Tenant, any>({
+    fetchApi: listTenantsApi,
+    listKey: "tenants",
+    initialQuery: { keyword: "" }
+  })
 
   // 交互状态
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
-
-  // 查询参数
-  const query = reactive({
-    offset: 0,
-    limit: 10,
-    keyword: "" // 虽然 API 类型里暂时没写，但 UI 预留搜索位
-  })
-
-  const loadData = async () => {
-    loading.value = true
-    try {
-      const { data } = await listTenantsApi({
-        offset: (currentPage.value - 1) * pageSize.value,
-        limit: pageSize.value
-      })
-      tenants.value = data.tenants
-      total.value = data.total
-    } catch (error) {
-      console.error("加载租户列表失败:", error)
-    } finally {
-      loading.value = false
-    }
-  }
-
-  const handleRefresh = () => {
-    currentPage.value = 1
-    loadData()
-  }
 
   const handleCreate = () => {
     currentEditId.value = null
@@ -78,7 +62,6 @@ export function useTenantList() {
       })
       await switchTenantApi({ tenant_id: row.id })
       ElMessage.success(`已成功切换至: ${row.name}`)
-      // 通常切换租户后需要刷新整个页面或全局状态
       window.location.reload()
     } catch (e) {
       // ignore cancel
@@ -90,23 +73,11 @@ export function useTenantList() {
     loadData()
   }
 
-  const handleSizeChange = (val: number) => {
-    pageSize.value = val
-    loadData()
-  }
-
-  const handleCurrentChange = (val: number) => {
-    currentPage.value = val
-    loadData()
-  }
-
-  onMounted(loadData)
-
   return {
     tenants,
     total,
-    currentPage,
-    pageSize,
+    currentPage: computed(() => pagination.currentPage),
+    pageSize: computed(() => pagination.pageSize),
     query,
     loading,
     formVisible,

@@ -5,6 +5,7 @@ import { useRouter } from "vue-router"
 import { Delete, OfficeBuilding, Edit } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
 // Composables
 import { useRoleDetail } from "./composables/useRoleDetail"
@@ -112,12 +113,23 @@ const roleSubjects = computed<Subject[]>(() => {
     }
   ]
 })
-
-const formatDate = (ts: number | undefined) => {
-  if (!ts) return "-"
-  const d = new Date(ts)
-  return d.toLocaleString()
-}
+const infoItems = computed(() => {
+  if (!roleInfo.value) return []
+  return [
+    { label: "角色显示名称", value: roleInfo.value.name },
+    { label: "唯一识别码 (CODE)", value: roleInfo.value.code, mono: true, copyable: true },
+    {
+      label: "角色类型",
+      value: roleInfo.value.type === 1 ? "系统预设 (System)" : "自定义 (Custom)"
+    },
+    {
+      label: "职责描述说明",
+      value: roleInfo.value.desc || "暂无详细职责说明",
+      full: true,
+      desc: true
+    }
+  ]
+})
 </script>
 
 <template>
@@ -140,34 +152,7 @@ const formatDate = (ts: number | undefined) => {
 
       <div class="governance-body">
         <!-- 身份与职责概览 -->
-
-        <!-- 2. 基础资料概览 -->
-        <div class="info-card consolidated-card">
-          <div class="info-header">
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>主体身份与职责定义</span>
-          </div>
-          <div class="info-content grid-4-cols">
-            <div class="info-item">
-              <div class="label">角色显示名称</div>
-              <div class="value">{{ roleInfo.name }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">唯一识别码 (CODE)</div>
-              <div class="value mono copyable" @click="handleCopy(roleInfo.code)">
-                {{ roleInfo.code }}
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="label">创建于</div>
-              <div class="value time">{{ formatDate(roleInfo.ctime) }}</div>
-            </div>
-            <div v-if="roleInfo.desc" class="info-item full">
-              <div class="label">职责边界说明</div>
-              <div class="value desc">{{ roleInfo.desc }}</div>
-            </div>
-          </div>
-        </div>
+        <InfoCard title="主体身份与职责定义" :icon="OfficeBuilding" :items="infoItems" @copy="handleCopy" />
 
         <!-- 3. 治理深度内容区 (Tabs) -->
         <div class="governance-tabs-card">
@@ -325,81 +310,6 @@ const formatDate = (ts: number | undefined) => {
 }
 
 /* 核心资料卡片 */
-.info-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-
-  .info-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 20px;
-    color: #1e293b;
-    font-size: 14px;
-    font-weight: 700;
-    .el-icon {
-      color: var(--gov-brand);
-    }
-    &::after {
-      content: "";
-      flex: 1;
-      height: 1px;
-      background: #f1f5f9;
-      margin-left: 12px;
-    }
-  }
-
-  .info-content {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px 24px;
-
-    &.grid-4-cols {
-      grid-template-columns: 1fr 1fr 1.5fr;
-    }
-
-    .info-item {
-      &.full {
-        grid-column: 1 / -1;
-      }
-      .label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        margin-bottom: 6px;
-      }
-      .value {
-        font-size: 14px;
-        color: #334155;
-        font-weight: 500;
-        &.mono {
-          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        }
-        &.time {
-          color: #64748b;
-        }
-        &.copyable {
-          cursor: pointer;
-          &:hover {
-            color: var(--gov-brand);
-            text-decoration: underline;
-          }
-        }
-        &.desc {
-          font-size: 13px;
-          color: #64748b;
-          line-height: 1.6;
-        }
-      }
-    }
-  }
-}
-
 .governance-tabs-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
