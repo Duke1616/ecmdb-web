@@ -1,9 +1,9 @@
 import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
 import { listPoliciesApi } from "@/api/iam/policy"
 import type { Policy, ListPolicyRequest } from "@/api/iam/policy/type"
 import { useListManager } from "@/common/composables/useListManager"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
 export function usePolicyList() {
   const router = useRouter()
@@ -25,7 +25,8 @@ export function usePolicyList() {
     initialQuery: { keyword: "", type: undefined, offset: 0, limit: 10 }
   })
 
-  // 交互状态
+  // 交互与动作管理器
+  const { handleConfirmAction } = useGovernanceActions()
   const jsonVisible = ref(false)
   const selectedPolicy = ref<Policy | null>(null)
 
@@ -40,19 +41,13 @@ export function usePolicyList() {
     })
   }
 
-  const handleDelete = async (row: Policy) => {
-    try {
-      await ElMessageBox.confirm(`确定要删除策略 "${row.name}" 吗？`, "警告", {
-        type: "warning",
-        confirmButtonText: "确定",
-        cancelButtonText: "取消"
-      })
-      // TODO: 调用删除 API
-      ElMessage.success("删除成功")
-      loadData()
-    } catch {
-      // console.log("删除取消")
-    }
+  const handleDelete = (row: Policy) => {
+    handleConfirmAction({
+      message: `确定要永久删除策略 "${row.name}" 吗？此操作不可逆。`,
+      api: () => Promise.resolve(true), // TODO: 待接入真实删除 API
+      onSuccess: loadData,
+      successMsg: "策略已成功删除"
+    })
   }
 
   const handleViewJson = (row: Policy) => {

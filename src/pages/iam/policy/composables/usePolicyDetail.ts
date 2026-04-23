@@ -1,14 +1,15 @@
 import { ref, onMounted } from "vue"
 import { useRoute } from "vue-router"
-import { ElMessage } from "element-plus"
 import { getPolicyDetailApi } from "@/api/iam/policy"
 import type { Policy, ServiceSummary } from "@/api/iam/policy/type"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
 export function usePolicyDetail() {
   const route = useRoute()
   const policy = ref<Policy | null>(null)
   const services = ref<ServiceSummary[]>([])
   const loading = ref(false)
+  const { handleConfirmAction, handleCopy } = useGovernanceActions()
 
   const fetchDetail = async () => {
     const code = route.query.code as string
@@ -27,8 +28,17 @@ export function usePolicyDetail() {
   }
 
   const copyText = (text: string) => {
-    navigator.clipboard.writeText(text)
-    ElMessage.success("内容已复制到剪贴板")
+    handleCopy(text, "策略信息")
+  }
+
+  const handleDelete = () => {
+    if (!policy.value) return
+    handleConfirmAction({
+      message: `确定要永久删除策略 "${policy.value.name}" 吗？此操作不可逆。`,
+      api: () => Promise.resolve(true), // TODO: 接入真实删除 API
+      onSuccess: () => window.history.back(),
+      successMsg: "策略已成功移除"
+    })
   }
 
   onMounted(() => {
@@ -39,6 +49,7 @@ export function usePolicyDetail() {
     policy,
     services,
     loading,
-    copyText
+    copyText,
+    handleDelete
   }
 }

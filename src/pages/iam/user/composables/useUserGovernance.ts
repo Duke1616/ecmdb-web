@@ -1,5 +1,5 @@
 import { ref, watch, type Ref, computed } from "vue"
-import { useRoute, useRouter } from "vue-router"
+import { useTabRouter } from "@/common/composables/useTabRouter"
 import { ElMessage } from "element-plus"
 import { listUserRolesApi } from "@/api/iam/role"
 import { listUserPoliciesApi } from "@/api/iam/policy"
@@ -10,17 +10,8 @@ import type { Policy } from "@/api/iam/policy/type"
 import type { Tenant } from "@/api/iam/tenant/type"
 
 export function useUserGovernance(userId: Ref<number | undefined>) {
-  const route = useRoute()
-  const router = useRouter()
-  const activeTab = ref((route.query.tab as string) || "auth")
+  const { activeTab } = useTabRouter("auth")
   const attachPolicyVisible = ref(false)
-
-  // 同步 Tab 状态到 URL
-  watch(activeTab, (newTab) => {
-    router.replace({
-      query: { ...route.query, tab: newTab }
-    })
-  })
 
   // --- 使用通用列表管理器 ---
 

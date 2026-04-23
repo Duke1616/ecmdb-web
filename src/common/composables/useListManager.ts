@@ -1,11 +1,13 @@
-import { ref, reactive, computed, type Ref } from "vue"
+import { ref, reactive, computed, toRaw, type Ref } from "vue"
 
 /**
  * 通用列表数据结构
  */
-export interface ListResponse<T> {
+/**
+ * 通用列表数据结构
+ */
+export interface ListResponse {
   total: number
-  [key: string]: T[] | any
 }
 
 /**
@@ -13,7 +15,7 @@ export interface ListResponse<T> {
  */
 export interface ApiResponse<T> {
   code: number
-  data: ListResponse<T>
+  data: ListResponse & Record<string, T[] | any>
   msg: string
 }
 
@@ -22,7 +24,9 @@ interface ListManagerOptions<T, Q> {
    * API 请求函数
    * 参数自动合并业务查询参数 Q 与分页参数 (offset, limit)
    */
-  fetchApi: (params: Q & { offset: number; limit: number }) => Promise<{ data: ListResponse<T> }>
+  fetchApi: (
+    params: Q & { offset: number; limit: number }
+  ) => Promise<{ data: ListResponse & Record<string, T[] | any> }>
   /** 列表数据在 data 对象中的键名 (如 'users', 'roles', 'tenants') */
   listKey: string
   /** 初始业务查询参数 */
@@ -59,8 +63,9 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
     loading.value = true
     try {
       // 组合最终的 API 请求参数
+      // 使用 toRaw 确保从 reactive 对象中提取出当前的纯数据状态
       const params = {
-        ...query,
+        ...toRaw(query),
         offset: offset.value,
         limit: pagination.pageSize
       } as Q & { offset: number; limit: number; keyword: string }
@@ -69,11 +74,14 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
 
       const apiData = res.data
       if (apiData) {
-        list.value = (apiData[options.listKey] as T[]) || []
+        // NOTE: 使用 Record<string, any> 局部断言以支持动态键名访问
+        const data = apiData as Record<string, any>
+        list.value = (data[options.listKey] as T[]) || []
         total.value = apiData.total || 0
       }
-    } catch (err) {
-      console.error(`[ListManager] 加载数据失败:`, err)
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : String(err)
+      console.error(`[ListManager] 加载数据失败:`, errorMsg)
     } finally {
       loading.value = false
     }
@@ -91,8 +99,11 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
     fetchList()
   }
 
-  // 搜索处理
-  const handleSearch = () => {
+  // 搜索处理：支持直接传入关键字（用于嵌套组件 emit 场景）
+  const handleSearch = (keyword?: unknown) => {
+    if (typeof keyword === "string") {
+      query.keyword = keyword
+    }
     pagination.currentPage = 1
     fetchList()
   }

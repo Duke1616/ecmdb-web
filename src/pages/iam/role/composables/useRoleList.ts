@@ -1,8 +1,8 @@
 import { ref, computed } from "vue"
-import { ElMessage, ElMessageBox } from "element-plus"
 import { listRolesApi, deleteRoleApi } from "@/api/iam/role"
 import type { Role, ListRoleReq } from "@/api/iam/role/type"
 import { useListManager } from "@/common/composables/useListManager"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
 export function useRoleList() {
   // 使用通用列表管理器
@@ -22,7 +22,8 @@ export function useRoleList() {
     initialQuery: { keyword: "", offset: 0, limit: 10 }
   })
 
-  // 交互状态
+  // 交互与动作管理器
+  const { handleConfirmAction } = useGovernanceActions()
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
   const currentEditCode = ref<string | null>(null)
@@ -39,21 +40,13 @@ export function useRoleList() {
     formVisible.value = true
   }
 
-  const handleDelete = async (row: Role) => {
-    try {
-      await ElMessageBox.confirm(`确定要删除角色 "${row.name} (${row.code})" 吗？`, "警告", {
-        type: "warning",
-        confirmButtonText: "确定",
-        cancelButtonText: "取消"
-      })
-      await deleteRoleApi(row.id)
-      ElMessage.success("删除成功")
-      loadData()
-    } catch (e) {
-      if (e !== "cancel") {
-        console.error("删除失败:", e)
-      }
-    }
+  const handleDelete = (row: Role) => {
+    handleConfirmAction({
+      message: `确定要注销角色 "${row.name} (${row.code})" 吗？此操作不可逆。`,
+      api: () => deleteRoleApi(row.id),
+      onSuccess: loadData,
+      successMsg: "角色已成功注销"
+    })
   }
 
   const handleFormSuccess = () => {

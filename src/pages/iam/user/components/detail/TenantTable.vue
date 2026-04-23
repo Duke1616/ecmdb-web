@@ -45,6 +45,7 @@ const emit = defineEmits<{
     <template #column-header>
       <div class="tenant-cols header-label-font">
         <span>空间名称 / 编码</span>
+        <span>访问域名</span>
         <span>关联时间</span>
         <span class="align-center">操作</span>
       </div>
@@ -76,6 +77,10 @@ const emit = defineEmits<{
             :sub-title="row.code"
             :link-to="{ name: 'TenantDetail', query: { id: row.id } }"
           />
+        </div>
+
+        <div class="cell-domain">
+          <span class="domain-text">{{ row.domain || "—" }}</span>
         </div>
 
         <div class="cell-time">
@@ -120,7 +125,7 @@ const emit = defineEmits<{
 
 .tenant-cols {
   display: grid;
-  grid-template-columns: 280px 1fr 100px;
+  grid-template-columns: 240px 1fr 180px 100px;
   gap: 24px;
   width: 100%;
   align-items: center;
@@ -132,7 +137,7 @@ const emit = defineEmits<{
 
 .tenant-grid-row {
   display: grid;
-  grid-template-columns: 280px 1fr 100px;
+  grid-template-columns: 240px 1fr 180px 100px;
   align-items: center;
   gap: 24px;
   min-height: 72px;
@@ -143,9 +148,15 @@ const emit = defineEmits<{
   }
 }
 
+.cell-domain .domain-text {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 500;
+}
+
 .cell-time .time-text {
   font-size: 13px;
-  color: #8a99ad;
+  color: #94a3b8;
   font-family: ui-monospace, SFMono-Regular, monospace;
 }
 

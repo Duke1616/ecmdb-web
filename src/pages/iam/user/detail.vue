@@ -121,7 +121,7 @@ const infoItems = computed(() => {
   if (!userInfo.value) return []
   return [
     { label: "姓名/昵称", value: userInfo.value.nickname || userInfo.value.username },
-    { label: "登录用户名 (Unique)", value: userInfo.value.username, mono: true, copyable: true },
+    { label: "登录用户名", value: userInfo.value.username, mono: true, copyable: true },
     { label: "当前职位/职能", value: userInfo.value.job_title || "未定义职责" },
     {
       label: "核心职责描述",

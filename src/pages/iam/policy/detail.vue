@@ -1,24 +1,26 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
-import { useRouter, useRoute } from "vue-router"
+import { useRouter } from "vue-router"
 import { Delete, Edit, OfficeBuilding } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 
 // Composables
 import { usePolicyDetail } from "./composables/usePolicyDetail"
+import { useTabRouter } from "@/common/composables/useTabRouter"
 
 // Components
+import InfoCard from "@/common/components/Governance/InfoCard.vue"
+import StatusStrip, { type StatusItem } from "@/common/components/Governance/StatusStrip.vue"
 import PolicyServiceInsights from "./components/detail/PolicyServiceInsights.vue"
 import PolicyAssignmentTable from "./components/detail/PolicyAssignmentTable.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 
 const router = useRouter()
-const route = useRoute()
-const { policy, services, loading, copyText } = usePolicyDetail()
+const { policy, services, loading, copyText, handleDelete } = usePolicyDetail()
 
-// 治理项 Tabs 控制：初始化优先从 URL 获取，实现状态持久化
-const activeTab = ref((route.query.tab as string) || "insights")
+// 治理项 Tabs 控制
+const { activeTab } = useTabRouter("insights")
 
 // --- 授权管理向导逻辑 ---
 const attachSubjectVisible = ref(false)
@@ -33,25 +35,55 @@ const handleAttachSuccess = () => {
 }
 
 /**
- * 核心逻辑：监听 Tab 切换，同步状态至 URL 并触发数据刷新
+ * 核心逻辑：监听 Tab 切换触发数据刷新
  */
 watch(activeTab, (val) => {
-  // 1. 同步到 URL (使用 replace 模式，不增加历史记录负担)
-  router.replace({
-    query: { ...route.query, tab: val }
-  })
-
-  // 2. 触发业务刷新
   if (val === "assignments") {
     assignmentTableRef.value?.fetchAssignments()
   }
 })
 
-// 初始进入时，如果是 assignments 且通过 URL 直接进入，确保刷新
+// 初始进入时数据刷新
 onMounted(() => {
   if (activeTab.value === "assignments") {
     assignmentTableRef.value?.fetchAssignments()
   }
+})
+
+/** 治理指标适配 */
+const statusItems = computed<StatusItem[]>(() => {
+  if (!policy.value) return []
+  return [
+    {
+      label: "策略类型",
+      value: policy.value.type === 1 ? "系统内置" : "动态生效",
+      dot: true,
+      type: policy.value.type === 1 ? "info" : "success"
+    },
+    { label: "影响服务", value: `${services.value.length} 个`, dot: true, type: "success" },
+    { label: "权限负载", value: `${totalGranted.value} 项`, dot: true, type: "success" },
+    {
+      label: "治理覆盖率",
+      value: `${avgCoverage.value}%`,
+      dot: true,
+      type: avgCoverage.value > 80 ? "success" : "warning"
+    }
+  ]
+})
+
+const infoItems = computed(() => {
+  if (!policy.value) return []
+  return [
+    { label: "策略显示名称", value: policy.value.name },
+    { label: "唯一识别码 (CODE)", value: policy.value.code, mono: true, copyable: true },
+    { label: "创建于", value: formatDate(policy.value.ctime) },
+    {
+      label: "职能边界描述",
+      value: policy.value.desc || "暂无对此策略职能边界的详细描述",
+      full: true,
+      desc: true
+    }
+  ]
 })
 
 /** 基础治理指标计算 */
@@ -91,7 +123,7 @@ const handleEdit = () => {
               <el-icon><Edit /></el-icon>
               <span>完善策略</span>
             </el-button>
-            <el-button class="gov-action-btn danger" plain>
+            <el-button class="gov-action-btn danger" plain @click="handleDelete">
               <el-icon><Delete /></el-icon>
               <span>移除策略</span>
             </el-button>
@@ -100,62 +132,11 @@ const handleEdit = () => {
       </ManagerHeader>
 
       <div class="governance-body">
-        <!-- 1. 置顶横向状态条 (极简风格) -->
-        <div class="governance-status-strip">
-          <div class="status-item">
-            <span class="dot" :class="policy.type === 1 ? 'info' : 'success'" />
-            <span class="label">策略类型:</span>
-            <span class="value" :class="policy.type === 1 ? 'info' : 'success'">
-              {{ policy.type === 1 ? "系统内置" : "动态生效" }}
-            </span>
-          </div>
-          <div class="divider" />
-          <div class="status-item">
-            <span class="dot success" />
-            <span class="label">影响服务:</span>
-            <span class="value tint">{{ services.length }} 个</span>
-          </div>
-          <div class="divider" />
-          <div class="status-item">
-            <span class="dot success" />
-            <span class="label">权限负载:</span>
-            <span class="value tint">{{ totalGranted }} 项</span>
-          </div>
-          <div class="divider" />
-          <div class="status-item">
-            <span class="dot" :class="avgCoverage > 80 ? 'success' : 'warning'" />
-            <span class="label">治理覆盖率:</span>
-            <span class="value" :class="avgCoverage > 80 ? 'success' : 'warning'"> {{ avgCoverage }}% </span>
-          </div>
-        </div>
+        <!-- 1. 置顶横向状态条 -->
+        <StatusStrip :items="statusItems" />
 
-        <!-- 2. 基础识别与职能定义 (单卡片高密度布局) -->
-        <div class="info-card consolidated-card">
-          <div class="info-header">
-            <el-icon><OfficeBuilding /></el-icon>
-            <span>基础识别与职能定义</span>
-          </div>
-          <div class="info-content grid-4-cols">
-            <div class="info-item">
-              <div class="label">策略显示名称</div>
-              <div class="value">{{ policy.name }}</div>
-            </div>
-            <div class="info-item">
-              <div class="label">唯一识别码 (CODE)</div>
-              <div class="value mono copyable" @click="copyText(policy.code)">
-                {{ policy.code }}
-              </div>
-            </div>
-            <div class="info-item">
-              <div class="label">创建于</div>
-              <div class="value time">{{ formatDate(policy.ctime) }}</div>
-            </div>
-            <div class="info-item full">
-              <div class="label">职能边界描述</div>
-              <div class="value desc">{{ policy.desc || "暂无对此策略职能边界的详细描述" }}</div>
-            </div>
-          </div>
-        </div>
+        <!-- 2. 基础识别与职能定义 -->
+        <InfoCard title="策略身份与职能定义" :icon="OfficeBuilding" :items="infoItems" @copy="copyText" />
 
         <!-- 治理深度内容区 -->
         <div class="governance-tabs-card">

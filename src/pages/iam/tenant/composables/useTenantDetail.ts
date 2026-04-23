@@ -1,14 +1,15 @@
 import { ref, onMounted, watch } from "vue"
 import { useRoute } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
-import dayjs from "dayjs"
 import { getTenantDetailApi, deleteTenantApi } from "@/api/iam/tenant"
 import type { Tenant } from "@/api/iam/tenant/type"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import dayjs from "dayjs"
 
 export function useTenantDetail() {
   const route = useRoute()
   const tenantInfo = ref<Tenant>()
   const loading = ref(false)
+  const { handleConfirmAction, handleCopy } = useGovernanceActions()
 
   const fetchTenantDetail = async () => {
     const id = Number(route.query.id)
@@ -27,25 +28,16 @@ export function useTenantDetail() {
 
   const handleDelete = () => {
     if (!tenantInfo.value) return
-    ElMessageBox.confirm(`确定要删除租户 "${tenantInfo.value.name}" 吗？此操作不可逆。`, "危险操作", {
-      confirmButtonText: "确定删除",
-      cancelButtonText: "取消",
-      type: "warning",
-      confirmButtonClass: "el-button--danger"
-    }).then(async () => {
-      try {
-        await deleteTenantApi(tenantInfo.value!.id)
-        ElMessage.success("租户删除成功")
-        window.history.back()
-      } catch (err: any) {
-        ElMessage.error(err.message || "操作失败")
-      }
+    handleConfirmAction({
+      message: `确定要永久删除租户 "${tenantInfo.value.name}" 吗？此操作不可逆。`,
+      api: () => deleteTenantApi(tenantInfo.value!.id),
+      onSuccess: () => window.history.back(),
+      successMsg: "租户空间已成功销毁"
     })
   }
 
   const copyText = (text: string) => {
-    navigator.clipboard.writeText(text)
-    ElMessage.success("内容已复制到剪贴板")
+    handleCopy(text, "租户信息")
   }
 
   const formatTimestamp = (ts: string | number) => {

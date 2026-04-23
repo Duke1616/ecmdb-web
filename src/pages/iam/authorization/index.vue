@@ -81,6 +81,7 @@
               ? { name: 'UserDetail', query: { username: row.subject } }
               : { name: 'RoleDetail', query: { code: row.subject } }
           "
+          centered
         />
       </template>
 
@@ -94,6 +95,7 @@
               ? { name: 'RoleDetail', query: { code: row.target } }
               : { name: 'PolicyDetail', query: { code: row.target } }
           "
+          centered
         />
       </template>
 
@@ -144,8 +146,8 @@ const {
 } = useAuthorizeList()
 
 const tableColumns: Column[] = [
-  { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "left" },
-  { label: "授权对象", prop: "target", slot: "target", minWidth: 150, align: "left" },
+  { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "center" },
+  { label: "授权对象", prop: "target", slot: "target", minWidth: 150, align: "center" },
   { label: "备注", prop: "note", slot: "note", minWidth: 200, align: "center" },
   { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]

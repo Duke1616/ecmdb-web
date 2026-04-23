@@ -1,13 +1,14 @@
 import { ref, computed, onMounted, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
 import { userDetailApi, deleteUserApi } from "@/api/iam/user"
 import type { User, Tenant } from "@/api/iam/user/type"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import dayjs from "dayjs"
 
 export function useUserDetail() {
   const route = useRoute()
   const router = useRouter()
+  const { handleConfirmAction, handleCopy } = useGovernanceActions()
 
   // 1. 既然日志显示返回的是 User 对象，我们直接以 User 类型存储
   const rawData = ref<User>()
@@ -64,15 +65,11 @@ export function useUserDetail() {
     const target = userInfo.value
     if (!target) return
 
-    ElMessageBox.confirm(`确定要注销主体 "${target.nickname || target.username}" 吗？`, "治理风险确认", {
-      confirmButtonText: "注销",
-      cancelButtonText: "取消",
-      type: "warning",
-      confirmButtonClass: "el-button--danger"
-    }).then(async () => {
-      await deleteUserApi(target.id)
-      ElMessage.success("主体已注销")
-      router.push("/identity/user")
+    handleConfirmAction({
+      message: `确定要注销主体 "${target.nickname || target.username}" 吗？此操作将移除该主体所有关联权限。`,
+      api: () => deleteUserApi(target.id),
+      onSuccess: () => router.push("/identity/user"),
+      successMsg: "主体已成功注销"
     })
   }
 
@@ -91,8 +88,7 @@ export function useUserDetail() {
   }
 
   const copyText = (text: string) => {
-    navigator.clipboard.writeText(text)
-    ElMessage.success({ message: "已复制", duration: 800 })
+    handleCopy(text, "标识信息")
   }
 
   onMounted(() => {

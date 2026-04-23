@@ -15,11 +15,13 @@ import type { Policy } from "@/api/iam/policy/type"
 import type { InlinePolicy, InheritanceItem } from "@/api/iam/role/type"
 import { useListManager } from "@/common/composables/useListManager"
 
+import { useTabRouter } from "@/common/composables/useTabRouter"
+
 export function useRoleGovernance(
   roleId: MaybeRefOrGetter<number | undefined>,
   roleCode: MaybeRefOrGetter<string | undefined>
 ) {
-  const activeTab = ref("members")
+  const { activeTab } = useTabRouter("members")
 
   // --- 成员管理 (Users) ---
   const {
