@@ -52,7 +52,7 @@ export function useRoleGovernance(
       addMemberVisible.value = false
       fetchMembers()
     } catch (err: any) {
-      ElMessage.error(err.message || "添加失败")
+      // 错误已由全局拦截器处理，此处仅需重置状态或执行必要逻辑
     }
   }
 
@@ -90,7 +90,7 @@ export function useRoleGovernance(
       ElMessage.success("策略解绑成功")
       fetchPolicies()
     } catch (err: any) {
-      ElMessage.error(err.message || "操作失败")
+      // 错误已由全局拦截器处理
     }
   }
 
@@ -156,7 +156,7 @@ export function useRoleGovernance(
       ElMessage.success("成功添加父角色")
       fetchParentRoles()
     } catch (err: any) {
-      ElMessage.error(err.message || "添加失败")
+      // 错误已由全局拦截器处理
     }
   }
 
@@ -168,7 +168,7 @@ export function useRoleGovernance(
       ElMessage.success("成功移除父角色")
       fetchParentRoles()
     } catch (err: any) {
-      ElMessage.error(err.message || "移除失败")
+      // 错误已由全局拦截器处理
     }
   }
 
@@ -184,7 +184,7 @@ export function useRoleGovernance(
       addParentVisible.value = false
       fetchParentRoles()
     } catch (err: any) {
-      ElMessage.error(err.message || "部分角色添加失败")
+      // 错误已由全局拦截器处理
     } finally {
       inheritanceLoading.value = false
     }

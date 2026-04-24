@@ -1,330 +1,322 @@
 <script setup lang="ts">
-import { ref, watch } from "vue"
-import { Search, Check } from "@element-plus/icons-vue"
+import { watch } from "vue"
+import { Search, Close, UserFilled } from "@element-plus/icons-vue"
 import { listUsersApi } from "@/api/iam/user"
 import type { User } from "@/api/iam/user/type"
+import { Drawer } from "@@/components/Dialogs"
+import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
 
-const visible = defineModel<boolean>()
+const visible = defineModel<boolean>({ default: false })
 
-const props = defineProps<{
-  loading?: boolean
+defineProps<{
   confirmLoading?: boolean
 }>()
 
 const emit = defineEmits<{
   confirm: [selectedIds: number[]]
-  cancel: []
 }>()
 
-// 状态管理
-const users = ref<User[]>([])
-const total = ref(0)
-const drawerLoading = ref(false)
-const currentPage = ref(1)
-const pageSize = ref(10)
-const keyword = ref("")
+// --- 用户选择器核心逻辑 (从全局用户池中选择) ---
+const userSelector = useResourceSelector<User, { keyword: string }>({
+  fetchApi: listUsersApi,
+  listKey: "users",
+  rowKey: (row: User) => String(row.id),
+  initialQuery: { keyword: "" }
+})
 
-const selectedUsers = ref<User[]>([])
-
-// 加载数据
-const fetchUsers = async () => {
-  drawerLoading.value = true
-  try {
-    const { data } = await listUsersApi({
-      keyword: keyword.value,
-      offset: (currentPage.value - 1) * pageSize.value,
-      limit: pageSize.value
-    })
-    users.value = data.users || []
-    total.value = data.total || 0
-  } catch (error) {
-    console.error("加载全局用户列表失败:", error)
-  } finally {
-    drawerLoading.value = false
-  }
-}
-
-// 监听显隐，重置状态
+// --- 弹窗生命周期管理 ---
 watch(visible, (val) => {
   if (val) {
-    currentPage.value = 1
-    keyword.value = ""
-    selectedUsers.value = []
-    fetchUsers()
+    userSelector.fetchList()
+  } else {
+    userSelector.reset()
   }
 })
 
-// 处理选择逻辑
-const toggleSelection = (user: User) => {
-  const index = selectedUsers.value.findIndex((u) => u.id === user.id)
-  if (index > -1) {
-    selectedUsers.value.splice(index, 1)
-  } else {
-    selectedUsers.value.push(user)
-  }
-}
-
-const isSelected = (id: number) => {
-  return selectedUsers.value.some((u) => u.id === id)
-}
-
 const handleConfirm = () => {
-  if (selectedUsers.value.length === 0) return
+  if (userSelector.selectedTotal.value === 0) return
   emit(
     "confirm",
-    selectedUsers.value.map((u) => u.id)
+    userSelector.selectedList.value.map((u) => u.id)
   )
 }
 </script>
 
 <template>
-  <el-drawer v-model="visible" title="分派新成员" size="580px" destroy-on-close class="user-select-drawer">
-    <template #header>
-      <div class="drawer-header-custom">
-        <span class="title">分派新成员</span>
-        <span class="subtitle">从全平台用户池中检索并加入当前空间</span>
-      </div>
-    </template>
-
-    <div class="drawer-content-wrapper">
-      <!-- 搜索工具栏 -->
-      <div class="search-toolbar">
-        <el-input
-          v-model="keyword"
-          placeholder="搜索姓名、用户名或邮箱..."
-          :prefix-icon="Search"
-          clearable
-          @input="
-            () => {
-              currentPage = 1
-              fetchUsers()
-            }
-          "
-        />
-        <div v-if="selectedUsers.length > 0" class="selection-status">
-          已选择 <span>{{ selectedUsers.length }}</span> 位待分派成员
+  <Drawer
+    v-model="visible"
+    title="分派新成员"
+    subtitle="从全平台用户池中检索并加入当前租户空间"
+    size="880px"
+    :header-icon="UserFilled"
+    :confirm-loading="confirmLoading"
+    @confirm="handleConfirm"
+  >
+    <div class="dual-panel-container">
+      <!-- 左侧：待选列表 -->
+      <div class="panel-source">
+        <div class="panel-source-header">
+          <el-input
+            v-model="userSelector.query.keyword"
+            placeholder="搜索姓名、用户名或邮箱..."
+            class="search-input"
+            clearable
+            @input="userSelector.debouncedSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
         </div>
-      </div>
 
-      <!-- 用户列表容器 -->
-      <div v-loading="drawerLoading || props.loading" class="user-list-scroller">
-        <div
-          v-for="user in users"
-          :key="user.id"
-          class="user-select-card"
-          :class="{ 'is-active': isSelected(user.id) }"
-          @click="toggleSelection(user)"
+        <el-table
+          :ref="userSelector.tableRef"
+          v-loading="userSelector.loading.value"
+          :data="userSelector.list.value"
+          height="100%"
+          :row-key="(row) => String(row.id)"
+          @selection-change="userSelector.handleSelectionChange"
         >
-          <div class="card-inner">
-            <el-avatar :size="36" :src="user.avatar" class="u-avatar">
-              {{ user.nickname?.charAt(0) }}
-            </el-avatar>
-            <div class="u-info">
-              <div class="top">
-                <span class="nick">{{ user.nickname }}</span>
-                <span class="user">@{{ user.username }}</span>
-              </div>
-              <div class="bottom">{{ user.email || "暂无邮箱地址" }}</div>
-            </div>
-            <div class="selection-indicator">
-              <el-icon v-if="isSelected(user.id)"><Check /></el-icon>
-            </div>
-          </div>
-        </div>
+          <el-table-column type="selection" width="45" reserve-selection />
 
-        <el-empty v-if="!drawerLoading && users.length === 0" description="未找到匹配的用户" />
+          <el-table-column label="用户信息" min-width="220">
+            <template #default="{ row }">
+              <div class="user-info-cell">
+                <el-avatar :size="32" :src="row.avatar" class="u-avatar">
+                  {{ row.nickname?.charAt(0) || row.username.charAt(0) }}
+                </el-avatar>
+                <div class="u-detail">
+                  <span class="nickname">{{ row.nickname || "—" }}</span>
+                  <span class="username mono">@{{ row.username }}</span>
+                </div>
+              </div>
+            </template>
+          </el-table-column>
+
+          <el-table-column label="联系邮箱" min-width="180" show-overflow-tooltip>
+            <template #default="{ row }">
+              <span class="email-text mono">{{ row.email || "—" }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <div class="pagination-bar">
+          <el-pagination
+            v-model:current-page="userSelector.query.page"
+            v-model:page-size="userSelector.query.limit"
+            small
+            background
+            layout="total, prev, pager, next"
+            :total="userSelector.total.value"
+            @current-change="userSelector.fetchList"
+          />
+        </div>
       </div>
 
-      <!-- 分页栏 -->
-      <div class="pagination-footer">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          small
-          layout="total, prev, pager, next"
-          @current-change="fetchUsers"
-        />
+      <!-- 右侧：已选清单 (购物车) -->
+      <div class="panel-buffer">
+        <div class="buffer-header">
+          <div class="left">
+            <span>已选成员</span>
+            <span class="count-tag">{{ userSelector.selectedTotal.value }}</span>
+          </div>
+          <el-button
+            v-if="userSelector.selectedTotal.value > 0"
+            link
+            type="danger"
+            size="small"
+            @click="userSelector.clearSelection()"
+          >
+            清空
+          </el-button>
+        </div>
+
+        <div class="buffer-list">
+          <TransitionGroup name="list-fade">
+            <div v-for="item in userSelector.selectedList.value" :key="item.id" class="buffer-item">
+              <div class="info">
+                <span class="name">{{ item.nickname || item.username }}</span>
+                <span class="id mono">@{{ item.username }}</span>
+              </div>
+              <el-icon class="remove-btn" @click="userSelector.removeSelection(item)">
+                <Close />
+              </el-icon>
+            </div>
+          </TransitionGroup>
+          <el-empty v-if="userSelector.selectedTotal.value === 0" description="暂未选择成员" :image-size="40" />
+        </div>
       </div>
     </div>
-
-    <template #footer>
-      <div class="drawer-footer">
-        <el-button @click="visible = false">取消</el-button>
-        <el-button
-          type="primary"
-          :loading="confirmLoading"
-          :disabled="selectedUsers.length === 0"
-          class="confirm-btn"
-          @click="handleConfirm"
-        >
-          确定分派 ({{ selectedUsers.length }})
-        </el-button>
-      </div>
-    </template>
-  </el-drawer>
+  </Drawer>
 </template>
 
 <style lang="scss" scoped>
-.user-select-drawer {
-  :deep(.el-drawer__header) {
-    margin-bottom: 0;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f1f5f9;
-  }
-}
-
-.drawer-header-custom {
+.dual-panel-container {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  .title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #1e293b;
-  }
-  .subtitle {
-    font-size: 11px;
-    color: #94a3b8;
-    font-weight: 500;
-  }
+  height: 520px;
+  background: #ffffff;
 }
 
-.drawer-content-wrapper {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.search-toolbar {
-  padding: 16px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-
-  .selection-status {
-    font-size: 12px;
-    color: #64748b;
-    padding: 6px 12px;
-    background: #eff6ff;
-    border-radius: 6px;
-    span {
-      color: #3b82f6;
-      font-weight: 700;
-    }
-  }
-}
-
-.user-list-scroller {
+.panel-source {
   flex: 1;
-  overflow-y: auto;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-right: 4px;
+  border-right: 1px solid #f1f5f9;
+  min-height: 0;
 
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
-    border-radius: 10px;
-  }
-}
-
-.user-select-card {
-  border: 1px solid #f1f5f9;
-  border-radius: 10px;
-  padding: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: #3b82f6;
-    background: #f9f8ff;
-  }
-
-  &.is-active {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    .selection-indicator {
-      background: #3b82f6;
-      color: #ffffff;
-      border-color: #3b82f6;
+  .panel-source-header {
+    margin-bottom: 16px;
+    .search-input {
+      :deep(.el-input__wrapper) {
+        border-radius: 8px;
+        background-color: #f8fafc;
+        box-shadow: 0 0 0 1px #e2e8f0 inset;
+      }
     }
   }
 
-  .card-inner {
+  .pagination-bar {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.panel-buffer {
+  width: 280px;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+
+  .buffer-header {
+    padding: 14px 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    border-bottom: 1px solid #e2e8f0;
 
-    .u-avatar {
-      background: #f1f5f9;
-      color: #64748b;
-      font-weight: 700;
-    }
-
-    .u-info {
-      flex: 1;
-      min-width: 0;
-      .top {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        .nick {
-          font-size: 13px;
-          font-weight: 700;
-          color: #1e293b;
-        }
-        .user {
-          font-size: 11px;
-          color: #94a3b8;
-        }
-      }
-      .bottom {
-        font-size: 11px;
-        color: #64748b;
-        margin-top: 2px;
-        font-family: ui-monospace, SFMono-Regular, monospace;
-      }
-    }
-
-    .selection-indicator {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 2px solid #e2e8f0;
+    .left {
       display: flex;
       align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-      .el-icon {
-        font-size: 12px;
-        font-weight: 800;
-      }
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
     }
+
+    .count-tag {
+      background: #3b82f6;
+      color: white;
+      padding: 0 6px;
+      height: 18px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 800;
+    }
+  }
+
+  .buffer-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 }
 
-.pagination-footer {
-  padding-top: 16px;
+.user-info-cell {
   display: flex;
-  justify-content: center;
-}
-
-.drawer-footer {
-  display: flex;
-  justify-content: flex-end;
+  align-items: center;
   gap: 12px;
-  padding-top: 10px;
-
-  .confirm-btn {
-    background: #3b82f6;
-    border-color: #3b82f6;
-    &:disabled {
-      opacity: 0.5;
+  .u-avatar {
+    background: #f1f5f9;
+    color: #64748b;
+    font-weight: 700;
+  }
+  .u-detail {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    .nickname {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .username {
+      font-size: 11px;
+      color: #94a3b8;
     }
   }
+}
+
+.email-text {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.buffer-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+
+  .info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 80%;
+    .name {
+      font-size: 12px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .id {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+  }
+
+  .remove-btn {
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 14px;
+    &:hover {
+      color: #ef4444;
+    }
+  }
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+}
+
+.list-fade-enter-active,
+.list-fade-leave-active {
+  transition: all 0.2s ease;
+}
+.list-fade-enter-from,
+.list-fade-leave-to {
+  opacity: 0;
+  transform: translateX(10px);
+}
+
+:deep(.el-table) {
+  --el-table-header-bg-color: #f8fafc;
+  --el-table-header-text-color: #475569;
+  font-size: 12px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
 }
 </style>

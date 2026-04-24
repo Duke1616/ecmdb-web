@@ -31,7 +31,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
       members.value = res.data.members || []
       memberTotal.value = res.data.total || 0
     } catch (err: any) {
-      ElMessage.error(err.message || "获取成员列表失败")
+      // 错误已由全局拦截器处理
     } finally {
       memberLoading.value = false
     }
@@ -68,7 +68,6 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
       fetchMembers()
       return true
     } catch (err: any) {
-      ElMessage.error(err.message || "分派过程中发生错误")
       fetchMembers()
       return false
     } finally {
@@ -88,7 +87,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
       ElMessage.success("成员分配成功")
       fetchMembers()
     } catch (err: any) {
-      ElMessage.error(err.message || "分配失败")
+      // 错误已由全局拦截器处理
     }
   }
 

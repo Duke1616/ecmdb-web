@@ -133,25 +133,25 @@ const formatEffect = (effect: string) => {
 
 <style lang="scss" scoped>
 .header-label-font {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8a99ad;
-  letter-spacing: 0.01em;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.02em;
 }
 
 .svc-cols {
   display: grid;
-  grid-template-columns: 200px 80px 100px 1.4fr 0.8fr 1.2fr;
-  gap: 20px;
+  grid-template-columns: 220px 100px 120px 1.5fr 1fr 1.5fr;
+  gap: 16px;
   width: 100%;
   align-items: center;
 }
 
 .svc-grid-row {
   display: grid;
-  grid-template-columns: 200px 80px 100px 1.4fr 0.8fr 1.2fr;
+  grid-template-columns: 220px 100px 120px 1.5fr 1fr 1.5fr;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
   min-height: 68px;
   border-radius: 8px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -253,7 +253,8 @@ const formatEffect = (effect: string) => {
   gap: 16px;
   .gauge-bar {
     flex: 1;
-    max-width: 160px;
+    min-width: 100px;
+    max-width: 240px;
   }
   .gauge-stats {
     font-size: 12px;

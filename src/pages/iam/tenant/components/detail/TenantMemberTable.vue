@@ -33,6 +33,7 @@ const emit = defineEmits<{
     :loading="loading"
     :current-page="currentPage"
     :page-size="pageSize"
+    show-search
     indicator-color="#3b82f6"
     show-selection
     empty-text="该租户下暂无关联的成员"
