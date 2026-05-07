@@ -38,6 +38,7 @@ const form = reactive<SaveIdentitySourceReq>({
         username_attribute: "sAMAccountName",
         mail_attribute: "mail",
         display_name_attribute: "displayName",
+        title_attribute: "title",
         user_filter: "(objectClass=user)",
         sync_user_filter: ""
       }
@@ -62,6 +63,7 @@ watch(
         username_attribute: "sAMAccountName",
         mail_attribute: "mail",
         display_name_attribute: "displayName",
+        title_attribute: "title",
         user_filter: "(objectClass=user)",
         sync_user_filter: ""
       }

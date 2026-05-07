@@ -51,7 +51,7 @@ const fetchProviders = async () => {
   loading.value = true
   try {
     const res = await listIdentitySourcesApi()
-    providers.value = res.data?.sources || []
+    providers.value = res.data || []
     if (providers.value.length > 0 && activeIndex.value >= providers.value.length) {
       activeIndex.value = 0
     }
