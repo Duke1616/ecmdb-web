@@ -64,6 +64,13 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/callback",
+    component: () => import("@/pages/login/callback.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
     path: "/logicflow-preview",
     component: Logicflow,
     meta: {

@@ -83,6 +83,12 @@ export interface UserListData {
 export interface UserData {
   user: User
   tenants: Tenant[]
+  must_select_tenant: boolean
+}
+
+/** 切换租户请求 */
+export interface SwitchTenantRequest {
+  tenant_id: number
 }
 
 /** 更新用户请求 */
@@ -158,4 +164,18 @@ export interface ManageIdentitiesRequest {
   ldap_info?: LdapInfo
   wechat_info?: WechatInfo
   feishu_info?: FeishuInfo
+}
+
+/** OIDC 渲染授权 URL 请求 */
+export interface OidcRenderRequest {
+  source_id: string
+}
+
+/** OIDC 渲染授权 URL 响应（后端 Data 直接返回 URL 字符串） */
+export type OidcRenderResponse = string
+
+/** OIDC 回调登录请求 */
+export interface OidcCallbackRequest {
+  code: string
+  state: string
 }

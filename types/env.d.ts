@@ -12,6 +12,7 @@ interface ImportMetaEnv {
   readonly VITE_IAM_API_PREFIX: string
   readonly VITE_ROUTER_HISTORY: "hash" | "html5"
   readonly VITE_PUBLIC_PATH: string
+  readonly VITE_FEISHU_SOURCE_ID: string
 }
 
 interface ImportMeta {

@@ -13,6 +13,7 @@ import { useTenantGovernance } from "./composables/useTenantGovernance"
 
 // Components
 import TenantMemberTable from "./components/detail/TenantMemberTable.vue"
+import TenantIdentitySources from "./components/detail/TenantIdentitySources.vue"
 import UserSelectDrawer from "./components/detail/UserSelectDrawer.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
@@ -117,6 +118,10 @@ const onAssignConfirm = async (userIds: number[]) => {
                 @add="assignVisible = true"
                 @unbind="(row) => $message.warning(`即将移除成员: ${row.username}`)"
               />
+            </el-tab-pane>
+
+            <el-tab-pane label="身份源管理" name="identities">
+              <TenantIdentitySources :tenant-id="tenantInfo.id" />
             </el-tab-pane>
           </el-tabs>
         </div>

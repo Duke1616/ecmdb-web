@@ -18,10 +18,6 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button class="eiam-secondary-btn" @click="ldapSyncVisible = true">
-              <el-icon><Connection /></el-icon>
-              <span>同步用户</span>
-            </el-button>
             <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>新增主体</span>
@@ -100,44 +96,28 @@
     <!-- 用户编辑/创建 弹窗 -->
     <FormDialog
       v-model="formVisible"
-      :title="currentEditId ? '编辑主体资料' : '新增系统主体'"
+      :title="currentEditId ? '治理用户资产' : '创建新身份主体'"
       :header-icon="UserIcon"
-      width="750px"
-      top="10vh"
+      width="640px"
       :confirm-loading="submitting"
-      @confirm="handleDrawerConfirm"
+      @confirm="handleConfirm"
       @cancel="formVisible = false"
     >
-      <!-- 保留滚动管理 -->
-      <el-scrollbar max-height="65vh">
-        <div class="user-dialog-content">
-          <UserForm
-            ref="userFormRef"
-            :key="currentEditId || 'create'"
-            :is-edit="!!currentEditId"
-            :id="currentEditId!"
-            @success="handleFormSuccess"
-          />
-        </div>
-      </el-scrollbar>
+      <UserForm ref="userFormRef" :user-id="currentEditId!" :is-edit="!!currentEditId" @success="handleFormSuccess" />
     </FormDialog>
-
-    <!-- LDAP 同步弹窗 -->
-    <LdapSyncDialog v-model="ldapSyncVisible" @success="handleRefresh" />
   </PageContainer>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { Search, Plus, RefreshRight, User as UserIcon, Connection } from "@element-plus/icons-vue"
+import { Search, Plus, RefreshRight, User as UserIcon } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import UserForm from "./components/UserForm.vue"
-import LdapSyncDialog from "./components/LdapSyncDialog.vue"
 import type { Column } from "@@/components/DataTable/types"
 import { useUserList } from "./composables/useUserList"
 
@@ -172,7 +152,6 @@ const handleView = (row: any) => {
 
 const userFormRef = ref<InstanceType<typeof UserForm>>()
 const submitting = ref(false)
-const ldapSyncVisible = ref(false)
 
 /**
  * 用户操作配置项
@@ -210,7 +189,7 @@ const tableColumns = computed<Column[]>(() => {
   return baseColumns
 })
 
-const handleDrawerConfirm = async () => {
+const handleConfirm = async () => {
   if (!userFormRef.value) return
   submitting.value = true
   try {

@@ -6,7 +6,10 @@ import { get } from "lodash-es"
 import { useUserStoreHook } from "@/pinia/stores/user"
 
 // 退出登录并重定向到登录页
+let isLoggingOut = false
 async function logout() {
+  if (isLoggingOut) return
+  isLoggingOut = true
   useUserStoreHook().logout()
 
   // 重定向到登录页，而不是刷新整个页面

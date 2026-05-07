@@ -26,6 +26,9 @@
     <el-button :loading="loading" class="login-btn" type="primary" size="large" @click.prevent="handleLogin"
       >登 录</el-button
     >
+
+    <!-- 租户选择弹窗 -->
+    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
   </el-form>
 </template>
 
@@ -35,7 +38,8 @@ import { useRouter } from "vue-router"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { User, Lock } from "@element-plus/icons-vue"
 import { loginLdapApi, loginSystemApi } from "@/api/iam/user"
-import type { LoginLdapRequest } from "@/api/iam/user/type"
+import type { LoginLdapRequest, Tenant } from "@/api/iam/user/type"
+import TenantSelectModal from "./components/TenantSelectModal.vue"
 
 const router = useRouter()
 
@@ -60,6 +64,10 @@ const loginFormRef = ref<FormInstance | null>(null)
 
 /** 登录按钮 Loading */
 const loading = ref(false)
+
+/** 租户选择相关 */
+const showTenantSelect = ref(false)
+const tenantList = ref<Tenant[]>([])
 
 /** 登录表单数据 */
 const loginFormData: LoginLdapRequest = reactive({
@@ -95,8 +103,15 @@ function handleLogin() {
     loading.value = true
     const loginApi = props.active === "ldap" ? loginLdapApi : loginSystemApi
     loginApi(loginFormData)
-      .then(() => {
-        router.push({ path: "/" })
+      .then((res: any) => {
+        // --- 核心拦截逻辑：从 res.data 中读取业务字段 ---
+        const businessData = res.data
+        if (businessData && businessData.must_select_tenant) {
+          tenantList.value = businessData.tenants
+          showTenantSelect.value = true
+        } else {
+          router.push({ path: "/" })
+        }
       })
       .catch(() => {
         loginFormData.password = ""

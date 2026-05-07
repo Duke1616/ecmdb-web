@@ -12,7 +12,7 @@ export function signupApi(data: user.SignupRequest) {
 
 /** LDAP 登录 */
 export function loginLdapApi(data: user.LoginLdapRequest) {
-  return instance.post<user.User>({
+  return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/ldap/login`,
     data
   })
@@ -20,8 +20,16 @@ export function loginLdapApi(data: user.LoginLdapRequest) {
 
 /** 系统登录 */
 export function loginSystemApi(data: user.LoginSystemRequest) {
-  return instance.post<user.User>({
+  return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/system/login`,
+    data
+  })
+}
+
+/** 切换租户 */
+export function switchTenantApi(data: user.SwitchTenantRequest) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/switch-tenant`,
     data
   })
 }
@@ -131,5 +139,21 @@ export function manageIdentitiesApi(data: user.ManageIdentitiesRequest) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/user/identity/manage`,
     data
+  })
+}
+
+/** 获取 OIDC 授权渲染 URL */
+export function getOidcRenderApi(providerType: string) {
+  return instance.get<user.OidcRenderResponse>({
+    url: `${API_SERVICE.IAM}/user/oidc/render`,
+    params: { provider_type: providerType }
+  })
+}
+
+/** OIDC 回调登录 */
+export function oidcCallbackApi(data: user.OidcCallbackRequest) {
+  return instance.get<user.UserData>({
+    url: `${API_SERVICE.IAM}/user/oidc/callback`,
+    params: data
   })
 }
