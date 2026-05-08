@@ -167,8 +167,10 @@ export function passkeyLoginStartApi() {
   })
 }
 
+import type { AuthenticationResponseJSON, RegistrationResponseJSON } from "@simplewebauthn/browser"
+
 /** 验证 Passkey 登录 (Assertion) */
-export function passkeyLoginFinishApi(data: any, headers?: Record<string, string>) {
+export function passkeyLoginFinishApi(data: AuthenticationResponseJSON, headers?: Record<string, string>) {
   return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/passkey/login/finish`,
     data,
@@ -184,10 +186,48 @@ export function passkeyRegisterStartApi() {
 }
 
 /** 验证并保存 Passkey 凭据 (Attestation) */
-export function passkeyRegisterFinishApi(data: any, headers?: Record<string, string>) {
-  return instance.post<string>({
+export function passkeyRegisterFinishApi(data: RegistrationResponseJSON, headers?: Record<string, string>) {
+  return instance.post<any>({
     url: `${API_SERVICE.IAM}/user/passkey/register/finish`,
     data,
     headers
+  })
+}
+
+/** 获取我的身份绑定列表 */
+export function listMyIdentitiesApi(params: { provider?: string }) {
+  return instance.get<user.IdentityVo[]>({
+    url: `${API_SERVICE.IAM}/user/identity/list`,
+    params
+  })
+}
+
+/** 获取 TOTP 绑定配置 (二维码) */
+export function mfaTotpSetupApi() {
+  return instance.get<user.MfaTotpSetupResponse>({
+    url: `${API_SERVICE.IAM}/user/mfa/totp/setup`
+  })
+}
+
+/** 绑定 TOTP */
+export function mfaTotpBindApi(data: user.MfaTotpBindRequest) {
+  return instance.post<any>({
+    url: `${API_SERVICE.IAM}/user/mfa/totp/bind`,
+    data
+  })
+}
+
+/** 关闭 MFA */
+export function mfaDisableApi() {
+  return instance.post<any>({
+    url: `${API_SERVICE.IAM}/user/mfa/disable`
+  })
+}
+
+/** 登录时的 MFA 校验 */
+export function loginMfaVerifyApi(data: user.MfaLoginVerifyRequest) {
+  return instance.post<user.UserData>({
+    url: `${API_SERVICE.IAM}/user/login/mfa/verify`,
+    data
   })
 }

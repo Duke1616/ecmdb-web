@@ -169,7 +169,7 @@ const infoItems = computed(() => {
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
             <!-- 特有：认证与安全治理 -->
             <el-tab-pane label="认证治理" name="auth">
-              <AuthGovernance :user="userInfo" />
+              <AuthGovernance :user="userInfo" @refresh="loadDetail" />
             </el-tab-pane>
 
             <!-- 特有：多维度身份源 -->

@@ -68,6 +68,7 @@
     "pinia-plugin-persistedstate": "^3.2.1",
     "postcss-pxtorem": "^6.1.0",
     "prismjs": "^1.29.0",
+    "qrcode.vue": "^3.9.0",
     "relation-graph": "^2.2.0",
     "relation-graph-vue3": "^2.2.0",
     "rollup-plugin-visualizer": "^5.12.0",

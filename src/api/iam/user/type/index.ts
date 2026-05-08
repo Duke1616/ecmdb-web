@@ -23,6 +23,34 @@ export interface PasskeyRegisterFinishRequest {
   session_token: string
 }
 
+export interface IdentityVo {
+  provider: string
+  identity_id: string
+  passkey_info?: PasskeyInfo
+}
+
+export interface PasskeyInfo {
+  sign_count: number
+  backup_eligible: boolean
+  backup_state: boolean
+  nickname: string
+}
+
+export interface MfaTotpSetupResponse {
+  secret: string
+  qrcode_url: string
+}
+
+export interface MfaTotpBindRequest {
+  code: string
+  secret: string
+}
+
+export interface MfaLoginVerifyRequest {
+  mfa_token: string
+  code: string
+}
+
 export interface User {
   id: number
   username: string
@@ -39,6 +67,7 @@ export interface User {
   last_login_at: number
   console_login: boolean
   mfa_bound: boolean
+  mfa_type: string
   identities: Identity[]
 }
 
@@ -182,6 +211,7 @@ export interface BindIdentityRequest {
 export interface UnbindIdentityRequest {
   user_id: number
   provider: string
+  identity_id: string
 }
 
 /** 批量治理身份请求 */

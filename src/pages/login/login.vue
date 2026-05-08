@@ -45,6 +45,9 @@
 
     <!-- 租户选择弹窗 -->
     <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
+
+    <!-- MFA 二次验证弹窗 -->
+    <MfaVerifyModal v-model="showMfaVerify" :mfa-token="mfaToken" @success="handleLoginSuccess" />
   </el-form>
 </template>
 
@@ -56,6 +59,7 @@ import { Message, Lock } from "@element-plus/icons-vue"
 import { loginLdapApi, loginSystemApi } from "@/api/iam/user"
 import type { LoginLdapRequest, Tenant } from "@/api/iam/user/type"
 import TenantSelectModal from "./components/TenantSelectModal.vue"
+import MfaVerifyModal from "./components/MfaVerifyModal.vue"
 
 const router = useRouter()
 const props = defineProps<{
@@ -69,8 +73,12 @@ const handleFocus = (field: string) => emits("focus", field)
 
 const loginFormRef = ref<FormInstance | null>(null)
 const loading = ref(false)
+
+// 弹窗状态
 const showTenantSelect = ref(false)
 const tenantList = ref<Tenant[]>([])
+const showMfaVerify = ref(false)
+const mfaToken = ref("")
 
 const loginFormData: LoginLdapRequest = reactive({ username: "", password: "" })
 
@@ -98,13 +106,7 @@ function handleLogin() {
 
     loginApi(loginFormData, headers)
       .then((res: any) => {
-        const businessData = res.data
-        if (businessData && businessData.must_select_tenant) {
-          tenantList.value = businessData.tenants
-          showTenantSelect.value = true
-        } else {
-          router.push({ path: "/" })
-        }
+        handleLoginSuccess(res.data)
       })
       .catch(() => {
         loginFormData.password = ""
@@ -113,6 +115,33 @@ function handleLogin() {
         loading.value = false
       })
   })
+}
+
+/**
+ * 统一处理登录/验证成功后的后续逻辑（租户选择/直接进入）
+ */
+function handleLoginSuccess(businessData: any) {
+  if (!businessData) {
+    router.push({ path: "/" })
+    return
+  }
+
+  // 1. MFA 校验拦截
+  if (businessData.mfa_required) {
+    mfaToken.value = businessData.mfa_token
+    showMfaVerify.value = true
+    return
+  }
+
+  // 2. 租户选择拦截
+  if (businessData.must_select_tenant) {
+    tenantList.value = businessData.tenants
+    showTenantSelect.value = true
+    return
+  }
+
+  // 3. 正常进入
+  router.push({ path: "/" })
 }
 </script>
 

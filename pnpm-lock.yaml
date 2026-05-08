@@ -173,6 +173,9 @@ importers:
       prismjs:
         specifier: ^1.29.0
         version: 1.30.0
+      qrcode.vue:
+        specifier: ^3.9.0
+        version: 3.9.0(vue@3.5.21(typescript@5.8.3))
       relation-graph:
         specifier: ^2.2.0
         version: 2.2.11
@@ -3962,6 +3965,11 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  qrcode.vue@3.9.0:
+    resolution: {integrity: sha512-AxkgdNXd6R6N1rJcSKna3GfMz3cMpLZo95CLuF/3227nNY32iACBtyqRr6mJc3SW7w628Iy0vgnLWYqxHqgRLw==}
+    peerDependencies:
+      vue: ^3.0.0
 
   qs@6.14.0:
     resolution: {integrity: sha512-YWWTjgABSKcvs/nWBi9PycY/JiPJqOD4JA6o9Sej2AtvSGarXxKC3OQSk4pAarbdQlKAh5D4FCQkJNkW+GAn3w==}
@@ -9032,6 +9040,10 @@ snapshots:
   proxy-from-env@1.1.0: {}
 
   punycode@2.3.1: {}
+
+  qrcode.vue@3.9.0(vue@3.5.21(typescript@5.8.3)):
+    dependencies:
+      vue: 3.5.21(typescript@5.8.3)
 
   qs@6.14.0:
     dependencies:

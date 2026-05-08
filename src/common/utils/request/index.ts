@@ -65,7 +65,7 @@ class HyRequest {
             return response
           default:
             ElMessage.error(apiData.msg || "Error")
-            return Promise.reject(new Error("Error"))
+            return Promise.reject(apiData)
         }
       },
       (error) => {
