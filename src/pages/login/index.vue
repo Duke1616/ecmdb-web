@@ -278,24 +278,29 @@ const handlePasskeyLogin = async () => {
   if (!isEnabled(IdentitySourceType.PASSKEY)) return
 
   try {
-    // 1. 获取服务端签发的 Challenge
-    const optionsRes = await passkeyLoginStartApi()
+    // 1. 获取服务端签发的 Challenge (包含 options 和 session_token)
+    const res = await passkeyLoginStartApi()
+    const { options, session_token } = res.data
 
     // 2. 唤起设备生物识别 / 硬件密钥验证
     let asseResp
     try {
-      asseResp = await startAuthentication({ optionsJSON: optionsRes.data })
-    } catch (err: any) {
-      if (err.name === "NotAllowedError") {
+      // 提取真正的 WebAuthn 配置
+      const authOptions = (options.publicKey || options) as any
+      asseResp = await startAuthentication({ optionsJSON: authOptions })
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "NotAllowedError") {
         ElMessage.warning("用户取消了验证或设备不支持")
       } else {
-        ElMessage.error(err.message || "生物识别验证失败")
+        ElMessage.error((err as Error).message || "生物识别验证失败")
       }
       return
     }
 
-    // 3. 将加密签名发回服务器验证
-    const verifyRes: any = await passkeyLoginFinishApi(asseResp)
+    // 3. 将加密签名发回服务器验证，同时带上 session_token
+    const verifyRes = await passkeyLoginFinishApi(asseResp, {
+      "X-Passkey-Session": session_token
+    })
     const businessData = verifyRes.data
 
     // 4. 处理多租户分支
@@ -306,8 +311,12 @@ const handlePasskeyLogin = async () => {
       ElMessage.success("通行证登录成功")
       router.push({ path: "/" })
     }
-  } catch (error: any) {
-    ElMessage.error(error.message || "通行证验证异常")
+  } catch (error: unknown) {
+    // 只有非 Axios 错误（即非接口返回的业务错误）才在这里处理
+    // 因为业务错误已经在 request 拦截器中弹窗了
+    if (error instanceof Error && !(error as any).code) {
+      console.error("[Passkey Login Error]:", error)
+    }
   }
 }
 </script>

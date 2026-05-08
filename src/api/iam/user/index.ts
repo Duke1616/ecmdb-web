@@ -162,30 +162,32 @@ export function oidcCallbackApi(data: user.OidcCallbackRequest) {
 
 /** 获取 Passkey 登录选项 (Challenge) */
 export function passkeyLoginStartApi() {
-  return instance.post<any>({
+  return instance.post<user.PasskeyOptionsResponse>({
     url: `${API_SERVICE.IAM}/user/passkey/login/start`
   })
 }
 
 /** 验证 Passkey 登录 (Assertion) */
-export function passkeyLoginFinishApi(data: any) {
+export function passkeyLoginFinishApi(data: any, headers?: Record<string, string>) {
   return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/passkey/login/finish`,
-    data
+    data,
+    headers
   })
 }
 
 /** 获取 Passkey 注册选项 (Challenge) */
 export function passkeyRegisterStartApi() {
-  return instance.post<any>({
+  return instance.post<user.PasskeyOptionsResponse>({
     url: `${API_SERVICE.IAM}/user/passkey/register/start`
   })
 }
 
 /** 验证并保存 Passkey 凭据 (Attestation) */
-export function passkeyRegisterFinishApi(data: any) {
-  return instance.post<any>({
+export function passkeyRegisterFinishApi(data: any, headers?: Record<string, string>) {
+  return instance.post<string>({
     url: `${API_SERVICE.IAM}/user/passkey/register/finish`,
-    data
+    data,
+    headers
   })
 }

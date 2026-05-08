@@ -1,4 +1,28 @@
 /** 用户基本信息 */
+import type {
+  PublicKeyCredentialCreationOptionsJSON,
+  PublicKeyCredentialRequestOptionsJSON,
+  RegistrationResponseJSON,
+  AuthenticationResponseJSON
+} from "@simplewebauthn/browser"
+
+export interface PasskeyOptionsResponse {
+  options: {
+    publicKey: PublicKeyCredentialCreationOptionsJSON | PublicKeyCredentialRequestOptionsJSON
+  }
+  session_token: string
+}
+
+export interface PasskeyLoginFinishRequest {
+  credential: AuthenticationResponseJSON
+  session_token: string
+}
+
+export interface PasskeyRegisterFinishRequest {
+  credential: RegistrationResponseJSON
+  session_token: string
+}
+
 export interface User {
   id: number
   username: string
