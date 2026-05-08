@@ -1,24 +1,14 @@
 <template>
   <div class="callback-container">
     <div class="callback-content">
-      <el-result
-        v-if="loading"
-        icon="info"
-        title="登录中"
-        sub-title="正在处理飞书授权，请稍候..."
-      >
+      <el-result v-if="loading" icon="info" title="登录中" sub-title="正在处理飞书授权，请稍候...">
         <template #icon>
           <el-icon :size="60" class="is-loading">
             <Loading />
           </el-icon>
         </template>
       </el-result>
-      <el-result
-        v-else-if="error"
-        icon="error"
-        title="登录失败"
-        :sub-title="error"
-      >
+      <el-result v-else-if="error" icon="error" title="登录失败" :sub-title="error">
         <template #extra>
           <el-button type="primary" @click="goToLogin">返回登录页</el-button>
         </template>
@@ -66,6 +56,15 @@ onMounted(async () => {
   try {
     const res = await oidcCallbackApi({ code, state })
     const businessData = res.data
+
+    // 如果返回了 bind_token，说明该账号尚未绑定，跳转到登录页进入绑定模式
+    if (businessData.bind_token) {
+      router.push({ 
+        path: "/login", 
+        query: { bind_token: businessData.bind_token } 
+      })
+      return
+    }
 
     // 如果后端返回了 must_select_tenant，弹出租户选择弹窗
     if (businessData && businessData.must_select_tenant) {

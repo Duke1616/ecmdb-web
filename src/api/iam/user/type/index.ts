@@ -84,6 +84,7 @@ export interface UserData {
   user: User
   tenants: Tenant[]
   must_select_tenant: boolean
+  bind_token?: string
 }
 
 /** 切换租户请求 */

@@ -116,9 +116,25 @@
               <div class="switcher-slider" :style="sliderStyle" />
             </div>
 
-            <Login :active="activeName" @focus="handleFieldFocus" @blur="isPasswordFocused = false" />
+            <!-- 绑定提示条 -->
+            <div v-if="bindToken" class="bind-alert-box">
+              <div class="alert-icon">
+                <el-icon><InfoFilled /></el-icon>
+              </div>
+              <div class="alert-body">
+                <div class="alert-title">账号绑定中</div>
+                <div class="alert-desc">请验证您的本地账号以完成关联</div>
+              </div>
+            </div>
 
-            <div class="quick-login-wrap">
+            <Login
+              :active="activeName"
+              :bind-token="bindToken"
+              @focus="handleFieldFocus"
+              @blur="isPasswordFocused = false"
+            />
+
+            <div v-if="!bindToken" class="quick-login-wrap">
               <div class="divider"><span class="divider-text">快捷登录</span></div>
               <div class="social-row-grid">
                 <div
@@ -180,7 +196,18 @@
 import { ref, computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { ElMessage } from "element-plus"
-import { Promotion, ChatDotRound, Share, Cpu, Box, Tickets, CopyDocument, Bell, Lock } from "@element-plus/icons-vue"
+import {
+  Promotion,
+  ChatDotRound,
+  Share,
+  Cpu,
+  Box,
+  Tickets,
+  CopyDocument,
+  Bell,
+  Lock,
+  InfoFilled
+} from "@element-plus/icons-vue"
 import Login from "./login.vue"
 import Owl from "./components/Owl.vue"
 import { getOidcRenderApi } from "@/api/iam/user"
@@ -189,6 +216,9 @@ import { IdentitySourceType, OIDCProviderType } from "@/api/iam/identity-source/
 
 const route = useRoute()
 const isDemoEnv = window.location.hostname === "82.156.165.98"
+
+// 获取绑定 Token
+const bindToken = computed(() => route.query.bind_token as string)
 const activeName = ref<IdentitySourceType>((route.query.mode as IdentitySourceType) || IdentitySourceType.LOCAL)
 const isPasswordFocused = ref(false)
 const enabledProviders = ref<string[]>([])
@@ -313,9 +343,12 @@ const handlePasskeyLogin = () => {
     .hero-title {
       font-size: 38px;
       font-weight: 800;
-      color: #0f172a;
-      line-height: 1.1;
+      line-height: 1.15;
       letter-spacing: -0.04em;
+      // 高级感渐变文字
+      background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
   }
 
@@ -325,13 +358,16 @@ const handlePasskeyLogin = () => {
     left: 16px;
     width: 28px;
     height: 28px;
-    background: #f0fdf4;
-    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #10b981;
-    font-size: 14px; // 统一所有图标为绿色，容器更小
+    font-size: 14px;
+    // 拟真质感：渐变底色 + 微边框 + 绿光阴影
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    border: 1px solid #e6f6ec;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
   }
 
   .card-info {
@@ -340,13 +376,14 @@ const handlePasskeyLogin = () => {
       font-size: 13px;
       font-weight: 700;
       color: #1e293b;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
+    // 提升对比度与呼吸感
     .info-desc {
       font-size: 11px;
-      color: #94a3b8;
+      color: #64748b;
       font-weight: 500;
-      line-height: 1.4;
+      line-height: 1.5;
     }
   }
 }
@@ -426,6 +463,34 @@ const handlePasskeyLogin = () => {
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
     }
+  }
+}
+
+.bind-alert-box {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 16px;
+  background: linear-gradient(to right, #f0fdf4, #ffffff);
+  border: 1px solid #dcfce7;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  .alert-icon {
+    color: #10b981;
+    font-size: 18px;
+    margin-right: 12px;
+    margin-top: 2px;
+  }
+  .alert-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #166534;
+    margin-bottom: 2px;
+  }
+  .alert-desc {
+    font-size: 11px;
+    color: #15803d;
+    line-height: 1.4;
   }
 }
 

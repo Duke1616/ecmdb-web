@@ -145,17 +145,17 @@ const handleSelect = async (tenant: Tenant) => {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(37, 99, 235, 0.02) 100%);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(5, 150, 105, 0.02) 100%);
     opacity: 0;
     transition: opacity 0.3s;
   }
 
   &:hover {
-    border-color: #3b82f6;
+    border-color: #10b981;
     transform: translateY(-4px) scale(1.01);
     box-shadow:
-      0 12px 24px -10px rgba(59, 130, 246, 0.2),
-      0 4px 10px -5px rgba(59, 130, 246, 0.1);
+      0 12px 24px -10px rgba(16, 185, 129, 0.25),
+      0 4px 10px -5px rgba(16, 185, 129, 0.1);
 
     &::before {
       opacity: 1;
@@ -163,26 +163,28 @@ const handleSelect = async (tenant: Tenant) => {
 
     .card-icon-box {
       transform: scale(1.1);
-      background: #3b82f6;
+      background: #10b981;
       color: #ffffff;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      border: none;
     }
 
     .arrow-icon {
       transform: translateX(6px);
-      color: #3b82f6;
+      color: #10b981;
     }
   }
 
   &.is-active {
-    border-color: #3b82f6;
-    background: #eff6ff;
+    border-color: #10b981;
+    background: #f0fdf4;
     border-width: 2px;
   }
 
   .card-icon-box {
     width: 52px;
     height: 52px;
-    background: #f1f5f9;
+    background: #f8fafc;
     border-radius: 14px;
     display: flex;
     align-items: center;
@@ -190,8 +192,9 @@ const handleSelect = async (tenant: Tenant) => {
     font-size: 24px;
     color: #64748b;
     margin-right: 20px;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     z-index: 1;
+    border: 1px solid #e2e8f0;
     box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8);
   }
 
@@ -212,12 +215,13 @@ const handleSelect = async (tenant: Tenant) => {
 
       .code-tag {
         font-size: 11px;
-        background: #f1f5f9;
+        background: #f8fafc;
         color: #64748b;
-        padding: 2px 8px;
+        padding: 3px 8px;
         border-radius: 6px;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-weight: 600;
+        border: 1px solid #e2e8f0;
       }
 
       .domain-info {

@@ -39,7 +39,9 @@
     </el-form-item>
 
     <!-- 提交按钮 -->
-    <el-button :loading="loading" class="refined-submit-btn" @click.prevent="handleLogin"> 登 录 </el-button>
+    <el-button :loading="loading" class="refined-submit-btn" @click.prevent="handleLogin">
+      {{ props.bindToken ? "验证并绑定" : "登 录" }}
+    </el-button>
 
     <!-- 租户选择弹窗 -->
     <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
@@ -56,7 +58,10 @@ import type { LoginLdapRequest, Tenant } from "@/api/iam/user/type"
 import TenantSelectModal from "./components/TenantSelectModal.vue"
 
 const router = useRouter()
-const props = defineProps<{ active: string }>()
+const props = defineProps<{
+  active: string
+  bindToken?: string
+}>()
 const emits = defineEmits(["focus", "blur"])
 
 const handleBlur = () => emits("blur")
@@ -87,7 +92,11 @@ function handleLogin() {
     if (!valid) return
     loading.value = true
     const loginApi = props.active === "ldap" ? loginLdapApi : loginSystemApi
-    loginApi(loginFormData)
+
+    // 显式声明类型以解决 TS 索引签名兼容性问题
+    const headers: Record<string, string> = props.bindToken ? { "X-Bind-Token": props.bindToken } : {}
+
+    loginApi(loginFormData, headers)
       .then((res: any) => {
         const businessData = res.data
         if (businessData && businessData.must_select_tenant) {

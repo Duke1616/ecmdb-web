@@ -11,18 +11,20 @@ export function signupApi(data: user.SignupRequest) {
 }
 
 /** LDAP 登录 */
-export function loginLdapApi(data: user.LoginLdapRequest) {
+export function loginLdapApi(data: user.LoginLdapRequest, headers?: Record<string, string>) {
   return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/ldap/login`,
-    data
+    data,
+    headers
   })
 }
 
 /** 系统登录 */
-export function loginSystemApi(data: user.LoginSystemRequest) {
+export function loginSystemApi(data: user.LoginSystemRequest, headers?: Record<string, string>) {
   return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/system/login`,
-    data
+    data,
+    headers
   })
 }
 
