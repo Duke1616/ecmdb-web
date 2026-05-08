@@ -95,6 +95,25 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/profile",
+    component: Layouts,
+    redirect: "/profile/index",
+    meta: {
+      hidden: true
+    },
+    children: [
+      {
+        path: "index",
+        component: () => import("@/pages/iam/user/profile.vue"),
+        name: "Profile",
+        meta: {
+          title: "个人中心",
+          svgIcon: "user"
+        }
+      }
+    ]
+  },
+  {
     path: "/change",
     component: () => import("@/pages/change/index.vue"),
     meta: {

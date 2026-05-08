@@ -42,7 +42,7 @@ const DEFAULT_CONFIG: LayoutsConfig = {
   showFooter: false,
   showLogo: true,
   showNotify: false,
-  showThemeSwitch: true,
+  showThemeSwitch: false,
   showScreenfull: true,
   showSearchMenu: true,
   cacheTagsView: false,

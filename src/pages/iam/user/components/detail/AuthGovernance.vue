@@ -1,7 +1,43 @@
 <script setup lang="ts">
 import { ref } from "vue"
+import { startRegistration } from "@simplewebauthn/browser"
+import { passkeyRegisterStartApi, passkeyRegisterFinishApi } from "@/api/iam/user"
+import { ElMessage } from "element-plus"
+
+const props = defineProps<{
+  user: any
+}>()
 
 const consoleAccess = ref(true)
+const passkeyLoading = ref(false)
+
+/**
+ * 绑定 Passkey (WebAuthn 注册)
+ */
+const handleBindPasskey = async () => {
+  passkeyLoading.value = true
+  try {
+    // 1. 获取注册选项 (Challenge)
+    const { data: options } = await passkeyRegisterStartApi()
+
+    // 2. 调用浏览器 API 进行生物识别/硬件秘钥采集
+    const attestationResponse = await startRegistration(options)
+
+    // 3. 将采集到的凭据发送给后端验证并保存
+    await passkeyRegisterFinishApi(attestationResponse)
+
+    ElMessage.success("通行证 (Passkey) 绑定成功")
+  } catch (err: any) {
+    console.error("[Passkey Bind Error]:", err)
+    if (err.name === "NotAllowedError") {
+      ElMessage.warning("用户取消了操作或操作超时")
+    } else {
+      ElMessage.error(err.message || "Passkey 绑定失败")
+    }
+  } finally {
+    passkeyLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -31,6 +67,24 @@ const consoleAccess = ref(true)
         </div>
         <div class="setting-action">
           <el-button plain class="action-btn">去绑定</el-button>
+        </div>
+      </div>
+
+      <!-- 新增：Passkey 绑定 -->
+      <div class="setting-row">
+        <div class="setting-main">
+          <span class="setting-title">通行证 (Passkey)</span>
+          <p class="setting-desc">使用面容、指纹或硬件密钥实现无密码登录，安全且便捷。</p>
+        </div>
+        <div class="setting-action">
+          <el-button
+            plain
+            class="action-btn"
+            :loading="passkeyLoading"
+            @click="handleBindPasskey"
+          >
+            去绑定
+          </el-button>
         </div>
       </div>
     </div>

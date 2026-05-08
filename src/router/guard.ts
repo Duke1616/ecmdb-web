@@ -39,7 +39,9 @@ export function registerNavigationGuard(router: Router) {
 
     // 否则要重新获取权限角色
     try {
-      // 生成可访问的 Routes
+      // 1. 先拉取用户信息 (头像、昵称等)
+      await userStore.getInfo()
+      // 2. 再生成可访问的 Routes
       await permissionStore.setRoutes()
       // 将 "有访问权限的动态路由" 添加到 Router 中
       permissionStore.dynamicRoutes.forEach((route) => router.addRoute(route))

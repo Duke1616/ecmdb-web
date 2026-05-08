@@ -72,7 +72,7 @@
 
       <!-- 操作权限: 使用 OperateBtn 重构 -->
       <template #actions="{ row }">
-        <OperateBtn :items="tenantOperateItems" :operate-item="row" :max-length="3" @route-event="handleOperate" />
+        <OperateBtn :items="tenantOperateItems" :operate-item="row" :max-length="2" @route-event="handleOperate" />
       </template>
     </DataTable>
 

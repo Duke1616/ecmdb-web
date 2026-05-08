@@ -83,6 +83,7 @@ export interface UserListData {
 export interface UserData {
   user: User
   tenants: Tenant[]
+  current_tenant_id: number
   must_select_tenant: boolean
   bind_token?: string
 }

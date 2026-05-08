@@ -30,7 +30,7 @@ export function loginSystemApi(data: user.LoginSystemRequest, headers?: Record<s
 
 /** 切换租户 */
 export function switchTenantApi(data: user.SwitchTenantRequest) {
-  return instance.post<string>({
+  return instance.post<user.UserData>({
     url: `${API_SERVICE.IAM}/user/switch-tenant`,
     data
   })
@@ -157,5 +157,35 @@ export function oidcCallbackApi(data: user.OidcCallbackRequest) {
   return instance.get<user.UserData>({
     url: `${API_SERVICE.IAM}/user/oidc/callback`,
     params: data
+  })
+}
+
+/** 获取 Passkey 登录选项 (Challenge) */
+export function passkeyLoginStartApi() {
+  return instance.post<any>({
+    url: `${API_SERVICE.IAM}/user/passkey/login/start`
+  })
+}
+
+/** 验证 Passkey 登录 (Assertion) */
+export function passkeyLoginFinishApi(data: any) {
+  return instance.post<user.UserData>({
+    url: `${API_SERVICE.IAM}/user/passkey/login/finish`,
+    data
+  })
+}
+
+/** 获取 Passkey 注册选项 (Challenge) */
+export function passkeyRegisterStartApi() {
+  return instance.post<any>({
+    url: `${API_SERVICE.IAM}/user/passkey/register/start`
+  })
+}
+
+/** 验证并保存 Passkey 凭据 (Attestation) */
+export function passkeyRegisterFinishApi(data: any) {
+  return instance.post<any>({
+    url: `${API_SERVICE.IAM}/user/passkey/register/finish`,
+    data
   })
 }

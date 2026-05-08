@@ -92,6 +92,9 @@ importers:
       '@prometheus-io/codemirror-promql':
         specifier: ^0.311.1
         version: 0.311.1(@codemirror/autocomplete@6.18.6)(@codemirror/language@6.11.3)(@codemirror/lint@6.8.5)(@codemirror/state@6.5.2)(@codemirror/view@6.38.1)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)
+      '@simplewebauthn/browser':
+        specifier: ^13.3.0
+        version: 13.3.0
       '@vitejs/plugin-vue-jsx':
         specifier: ^3.1.0
         version: 3.1.0(vite@7.1.3(@types/node@20.19.11)(jiti@2.6.1)(lightningcss@1.30.2)(sass-embedded@1.78.0)(yaml@2.8.1))(vue@3.5.21(typescript@5.8.3))
@@ -137,9 +140,6 @@ importers:
       guacamole-common-js:
         specifier: ^1.5.0
         version: 1.5.0
-      index.css:
-        specifier: link:@logicflow/core/dist/style/index.css
-        version: link:@logicflow/core/dist/style/index.css
       js-cookie:
         specifier: ^3.0.5
         version: 3.0.5
@@ -185,9 +185,6 @@ importers:
       screenfull:
         specifier: ^6.0.2
         version: 6.0.2
-      shell:
-        specifier: link:@codemirror/legacy-modes/mode/shell
-        version: link:@codemirror/legacy-modes/mode/shell
       thememirror:
         specifier: ^2.0.1
         version: 2.0.1(@codemirror/language@6.11.3)(@codemirror/state@6.5.2)(@codemirror/view@6.38.1)
@@ -1190,6 +1187,9 @@ packages:
 
   '@rushstack/eslint-patch@1.12.0':
     resolution: {integrity: sha512-5EwMtOqvJMMa3HbmxLlF74e+3/HhwBTMcvt3nqVJgGCozO6hzIPOBlwm8mGVNR9SN2IJpxSnlxczyDjcn7qIyw==}
+
+  '@simplewebauthn/browser@13.3.0':
+    resolution: {integrity: sha512-BE/UWv6FOToAdVk0EokzkqQQDOWtNydYlY6+OrmiZ5SCNmb41VehttboTetUM3T/fr6EAFYVXjz4My2wg230rQ==}
 
   '@sphinxxxx/color-conversion@2.2.2':
     resolution: {integrity: sha512-XExJS3cLqgrmNBIP3bBw6+1oQ1ksGjFh0+oClDKFYpCCqx/hlqwWO5KO/S63fzUo67SxI9dMrF0y5T/Ey7h8Zw==}
@@ -6055,6 +6055,8 @@ snapshots:
     optional: true
 
   '@rushstack/eslint-patch@1.12.0': {}
+
+  '@simplewebauthn/browser@13.3.0': {}
 
   '@sphinxxxx/color-conversion@2.2.2': {}
 

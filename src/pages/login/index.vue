@@ -189,12 +189,15 @@
         </div>
       </div>
     </div>
+
+    <!-- 租户选择弹窗 (用于 Passkey 登录后的多租户情况) -->
+    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ref, computed, onMounted } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import {
   Promotion,
@@ -208,20 +211,26 @@ import {
   Lock,
   InfoFilled
 } from "@element-plus/icons-vue"
+import { startAuthentication } from "@simplewebauthn/browser"
 import Login from "./login.vue"
 import Owl from "./components/Owl.vue"
-import { getOidcRenderApi } from "@/api/iam/user"
+import TenantSelectModal from "./components/TenantSelectModal.vue"
+import { getOidcRenderApi, passkeyLoginStartApi, passkeyLoginFinishApi } from "@/api/iam/user"
 import { getEnabledProvidersApi } from "@/api/iam/identity-source"
 import { IdentitySourceType, OIDCProviderType } from "@/api/iam/identity-source/type"
+import type { Tenant } from "@/api/iam/user/type"
 
 const route = useRoute()
+const router = useRouter()
 const isDemoEnv = window.location.hostname === "82.156.165.98"
 
-// 获取绑定 Token
 const bindToken = computed(() => route.query.bind_token as string)
 const activeName = ref<IdentitySourceType>((route.query.mode as IdentitySourceType) || IdentitySourceType.LOCAL)
 const isPasswordFocused = ref(false)
 const enabledProviders = ref<string[]>([])
+
+const showTenantSelect = ref(false)
+const tenantList = ref<Tenant[]>([])
 
 const sliderStyle = computed(() => ({
   transform: `translateX(${activeName.value === IdentitySourceType.LOCAL ? "0" : "100%"})`
@@ -265,9 +274,41 @@ const handleFeishuLogin = async () => {
   }
 }
 
-const handlePasskeyLogin = () => {
+const handlePasskeyLogin = async () => {
   if (!isEnabled(IdentitySourceType.PASSKEY)) return
-  ElMessage.info("唤起生物识别...")
+
+  try {
+    // 1. 获取服务端签发的 Challenge
+    const optionsRes = await passkeyLoginStartApi()
+
+    // 2. 唤起设备生物识别 / 硬件密钥验证
+    let asseResp
+    try {
+      asseResp = await startAuthentication({ optionsJSON: optionsRes.data })
+    } catch (err: any) {
+      if (err.name === "NotAllowedError") {
+        ElMessage.warning("用户取消了验证或设备不支持")
+      } else {
+        ElMessage.error(err.message || "生物识别验证失败")
+      }
+      return
+    }
+
+    // 3. 将加密签名发回服务器验证
+    const verifyRes: any = await passkeyLoginFinishApi(asseResp)
+    const businessData = verifyRes.data
+
+    // 4. 处理多租户分支
+    if (businessData && businessData.must_select_tenant) {
+      tenantList.value = businessData.tenants
+      showTenantSelect.value = true
+    } else {
+      ElMessage.success("通行证登录成功")
+      router.push({ path: "/" })
+    }
+  } catch (error: any) {
+    ElMessage.error(error.message || "通行证验证异常")
+  }
 }
 </script>
 
@@ -348,6 +389,7 @@ const handlePasskeyLogin = () => {
       // 高级感渐变文字
       background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
     }
   }

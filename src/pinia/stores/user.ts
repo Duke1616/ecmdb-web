@@ -8,7 +8,7 @@ import { getProfileApi } from "@/api/iam/user"
 import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
-import { logoutApi } from "@/api/iam/user"
+import { logoutApi, switchTenantApi } from "@/api/iam/user"
 
 export const useUserStore = defineStore(
   "user",
@@ -16,6 +16,8 @@ export const useUserStore = defineStore(
     const token = ref<string>("")
     const username = ref<string>("")
     const userInfo = ref<user.User | null>(null)
+    const tenants = ref<user.Tenant[]>([])
+    const currentTenantId = ref<number>(0)
     const roles = ref<string[]>(["admin"]) // TODO: 从 IAM 获取真实的 roles
 
     const tagsViewStore = useTagsViewStore()
@@ -26,7 +28,6 @@ export const useUserStore = defineStore(
 
     /** 获取登录用户信息 */
     const getInfo = async () => {
-      if (userInfo.value) return
       if (_infoPromise) return _infoPromise
 
       _infoPromise = (async () => {
@@ -34,12 +35,31 @@ export const useUserStore = defineStore(
           const { data } = await getProfileApi()
           userInfo.value = data.user
           username.value = data.user.username
+          tenants.value = data.tenants || []
+          currentTenantId.value = data.current_tenant_id
         } finally {
           _infoPromise = null
         }
       })()
 
       return _infoPromise
+    }
+
+    /** 切换租户 */
+    const switchTenant = async (tenant: user.Tenant) => {
+      try {
+        const { data } = await switchTenantApi({ tenant_id: tenant.id })
+
+        // 切换成功后，利用后端返回的最新数据更新 Store
+        userInfo.value = data.user
+        tenants.value = data.tenants || []
+        currentTenantId.value = data.current_tenant_id
+
+        // 刷新页面以应用新租户的配置、权限和菜单
+        location.reload()
+      } catch (err: any) {
+        ElMessage.error(err.message || "切换租户失败")
+      }
     }
 
     /** 统一解析用户详情（安全模式：仅缓存自己，别人按需查询） */
@@ -100,9 +120,12 @@ export const useUserStore = defineStore(
     return {
       username,
       userInfo,
+      tenants,
+      currentTenantId,
       roles,
       setToken,
       getInfo,
+      switchTenant,
       resolveUser,
       logout,
       resetToken,
