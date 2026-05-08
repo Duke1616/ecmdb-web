@@ -34,11 +34,11 @@ export function useIdentityManage(user: Ref<User>, emit: (e: "refresh") => void)
   /**
    * 动态获取身份源标识符
    */
-  const getIdentityId = (item: Identity) => {
+  const getIdentityId = (item: Identity): string => {
     const p = item.provider.toLowerCase()
-    if (p === "ldap") return item.ldap_info?.dn
-    if (p === "wechat") return item.wechat_info?.user_id
-    if (p === "feishu") return item.feishu_info?.user_id || item.feishu_info?.open_id
+    if (p === "ldap") return item.ldap_info?.dn || ""
+    if (p === "wechat") return item.wechat_info?.user_id || ""
+    if (p === "feishu") return item.feishu_info?.user_id || item.feishu_info?.open_id || ""
     return ""
   }
 
@@ -128,7 +128,8 @@ export function useIdentityManage(user: Ref<User>, emit: (e: "refresh") => void)
       try {
         await unbindIdentityApi({
           user_id: user.value.id,
-          provider: row.provider
+          provider: row.provider,
+          identity_id: getIdentityId(row)
         })
         ElMessage.success("已成功解除身份绑定")
         activeIndex.value = 0
