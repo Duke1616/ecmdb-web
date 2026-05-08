@@ -1,6 +1,5 @@
 import { ref, watch, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
-import { ElMessage } from "element-plus"
 import { listUserRolesApi } from "@/api/iam/role"
 import { listUserPoliciesApi } from "@/api/iam/policy"
 import { listUserTenantsApi } from "@/api/iam/tenant"
@@ -74,14 +73,24 @@ export function useUserGovernance(userId: Ref<number | undefined>) {
     handlePolicySearch()
   }
 
-  // 交互逻辑 (占位)
-  const handleAddRole = () => ElMessage.info("角色分配功能即将集成...")
+  // 交互逻辑
+  const handleAddRole = () => {
+    // TODO: 角色分配功能待集成
+  }
   const handleAddPolicy = () => (attachPolicyVisible.value = true)
   const handleAttachSuccess = () => loadPolicies()
-  const handleAddTenant = () => ElMessage.info("租户入驻功能即将集成...")
-  const handleUnbindRole = (row: Role) => ElMessage.info(`即将解绑角色: ${row.name}`)
-  const handleUnbindPolicy = (row: Policy) => ElMessage.info(`即将解绑策略: ${row.name}`)
-  const handleUnbindTenant = (row: Tenant) => ElMessage.info(`即将移除租户关联: ${row.name}`)
+  const handleAddTenant = () => {
+    // TODO: 租户入驻功能待集成
+  }
+  const handleUnbindRole = (_row: Role) => {
+    // TODO: 角色解绑功能待集成
+  }
+  const handleUnbindPolicy = (_row: Policy) => {
+    // TODO: 策略解绑功能待集成
+  }
+  const handleUnbindTenant = (_row: Tenant) => {
+    // TODO: 租户关联移除功能待集成
+  }
 
   // 批量选择状态
   const selectedRoles = ref<Role[]>([])
@@ -89,17 +98,17 @@ export function useUserGovernance(userId: Ref<number | undefined>) {
   const selectedTenants = ref<Tenant[]>([])
 
   const handleBatchUnbindRoles = () => {
-    ElMessage.warning(`即将批量解绑 ${selectedRoles.value.length} 个角色`)
+    // TODO: 批量角色解绑功能待集成
     selectedRoles.value = []
   }
 
   const handleBatchUnbindPolicies = () => {
-    ElMessage.warning(`即将批量解绑 ${selectedPolicies.value.length} 个策略`)
+    // TODO: 批量策略解绑功能待集成
     selectedPolicies.value = []
   }
 
   const handleBatchUnbindTenants = () => {
-    ElMessage.warning(`即将批量移除 ${selectedTenants.value.length} 个租户关联`)
+    // TODO: 批量租户移除功能待集成
     selectedTenants.value = []
   }
 

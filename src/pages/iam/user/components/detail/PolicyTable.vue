@@ -43,7 +43,7 @@ const emit = defineEmits<{
   >
     <!-- 表头定义 -->
     <template #column-header>
-      <div class="policy-cols header-label-font">
+      <div class="gov-table-cols header-label-font">
         <span>策略名称 / 标识</span>
         <span>策略描述</span>
         <span>关联时间</span>
@@ -61,7 +61,7 @@ const emit = defineEmits<{
 
     <!-- 批量操作 -->
     <template #batch-actions>
-      <el-button type="danger" plain size="small" @click="emit('batchUnbind')">
+      <el-button type="danger" plain size="small" disabled @click="emit('batchUnbind')">
         <el-icon><Delete /></el-icon>
         <span>批量移除</span>
       </el-button>
@@ -69,7 +69,7 @@ const emit = defineEmits<{
 
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
-      <div class="policy-grid-row">
+      <div class="gov-table-grid-row">
         <!-- 策略标识 (使用蓝色主题共享组件) -->
         <div class="cell-identity">
           <AssetIdentityCell
@@ -88,7 +88,7 @@ const emit = defineEmits<{
         </div>
 
         <div class="cell-actions">
-          <el-button type="danger" link size="small" class="delete-btn" @click.stop="emit('unbind', row)">
+          <el-button type="danger" link size="small" class="delete-btn" disabled @click.stop="emit('unbind', row)">
             <el-icon><Delete /></el-icon>
             <span>移除</span>
           </el-button>
@@ -99,79 +99,5 @@ const emit = defineEmits<{
 </template>
 
 <style lang="scss" scoped>
-.toolbar-action-btn {
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-
-  &:hover {
-    background: #2563eb;
-    border-color: #2563eb;
-  }
-}
-
-.header-label-font {
-  font-size: 11px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.policy-cols {
-  display: grid;
-  grid-template-columns: 240px 1fr 180px 100px;
-  gap: 24px;
-  width: 100%;
-  align-items: center;
-
-  .align-center {
-    text-align: center;
-  }
-}
-
-.policy-grid-row {
-  display: grid;
-  grid-template-columns: 240px 1fr 180px 100px;
-  align-items: center;
-  gap: 24px;
-  min-height: 72px;
-  transition: background 0.2s;
-
-  &:hover {
-    background: #f8fafc;
-  }
-}
-
-.cell-desc .desc-text {
-  font-size: 13px;
-  color: #64748b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cell-time .time-text {
-  font-size: 13px;
-  color: #8a99ad;
-  font-family: ui-monospace, SFMono-Regular, monospace;
-}
-
-.cell-actions {
-  display: flex;
-  justify-content: center;
-  .delete-btn {
-    color: #cbd5e1;
-    font-size: 12px;
-    font-weight: 600;
-    &:hover {
-      color: #ef4444;
-    }
-  }
-}
+@use "./governance-table.scss";
 </style>

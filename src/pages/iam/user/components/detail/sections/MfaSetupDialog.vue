@@ -43,7 +43,7 @@ const initSetup = async () => {
 /**
  * 处理输入逻辑
  */
-const handleInput = (index: number, e: any) => {
+const handleInput = async (index: number, e: any) => {
   const val = e.target.value
   if (val && index < 5) {
     inputRefs.value[index + 1]?.focus()
@@ -51,7 +51,15 @@ const handleInput = (index: number, e: any) => {
 
   // 检查是否输完 6 位，自动触发验证
   if (codes.value.every((c) => c !== "")) {
-    handleBind()
+    try {
+      await handleBind()
+    } catch {
+      // 绑定失败，清空输入让用户重试
+      codes.value = ["", "", "", "", "", ""]
+      nextTick(() => {
+        inputRefs.value[0]?.focus()
+      })
+    }
   }
 }
 

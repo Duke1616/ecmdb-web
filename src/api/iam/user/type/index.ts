@@ -154,6 +154,7 @@ export interface UpdateUserReq {
   nickname: string
   avatar: string
   job_title: string
+  status?: string
 }
 
 /** 修改密码请求 */

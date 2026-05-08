@@ -181,14 +181,16 @@ const strengthColor = computed(() => {
 const loadUserDetail = async () => {
   if (!props.userId) return
   const { data } = await userDetailApi({ id: props.userId })
-  Object.assign(formData, data.user)
+  const user = data.user ? data.user : data
+  Object.assign(formData, user)
 }
 
 const submit = async () => {
   if (!formRef.value) return
   await formRef.value.validate()
   if (props.isEdit) {
-    await updateUserApi({ id: Number(props.userId), ...formData })
+    const { username, nickname, email, job_title, avatar, status } = formData
+    await updateUserApi({ id: Number(props.userId), username, nickname, email, job_title, avatar, status })
   } else {
     await signupApi({ ...formData })
   }
@@ -201,6 +203,13 @@ onMounted(() => {
 
 const formRules = reactive<FormRules>({
   username: [{ required: true, message: "请输入主体标识", trigger: "blur" }],
+  email: [
+    {
+      type: "email",
+      message: "请输入有效的邮箱地址",
+      trigger: "blur"
+    }
+  ],
   confirm_password: [
     {
       validator: (rule, value, callback) => {

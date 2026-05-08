@@ -10,6 +10,7 @@ import { useUserStore } from "@/pinia/stores/user"
 // Composables
 import { useUserDetail } from "./composables/useUserDetail"
 import { useUserGovernance } from "./composables/useUserGovernance"
+import { useUserDisplayItems } from "./composables/useUserDisplayItems"
 import { formatTimestamp } from "@@/utils/day"
 
 // Components
@@ -18,7 +19,7 @@ import IdentitySources from "./components/detail/IdentitySources.vue"
 import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
 import TenantTable from "./components/detail/TenantTable.vue"
-import StatusStrip, { type StatusItem } from "@/common/components/Governance/StatusStrip.vue"
+import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
 const userStore = useUserStore()
@@ -33,6 +34,8 @@ const {
   handleEditSuccess,
   copyText
 } = useUserDetail()
+
+const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
 const userId = computed(() => userInfo.value?.id)
 
@@ -72,52 +75,9 @@ onMounted(() => {
   }
 })
 
-/**
- * 提交编辑表单
- */
 const handleEditConfirm = () => {
   userFormRef.value?.submit()
 }
-
-const statusItems = computed<StatusItem[]>(() => {
-  if (!userInfo.value) return []
-  return [
-    {
-      label: "账号来源",
-      value: userInfo.value.source === "ldap" ? "LDAP 同步" : "本地账户",
-      dot: true,
-      type: "success"
-    },
-    {
-      label: "控制台登录",
-      value: userInfo.value.console_login ? "已开启" : "未授权",
-      dot: true,
-      type: userInfo.value.console_login ? "success" : "info"
-    },
-    {
-      label: "MFA 状态",
-      value: userInfo.value.mfa_bound ? "已绑定" : "未绑定",
-      dot: true,
-      type: userInfo.value.mfa_bound ? "success" : "warning"
-    },
-    { label: "风险等级", value: "L0 (安全)", dot: true, type: "success" }
-  ]
-})
-
-const infoItems = computed(() => {
-  if (!userInfo.value) return []
-  return [
-    { label: "姓名/昵称", value: userInfo.value.nickname || userInfo.value.username },
-    { label: "登录用户名", value: userInfo.value.username, mono: true, copyable: true },
-    { label: "当前职位/职能", value: userInfo.value.job_title || "未定义职责" },
-    {
-      label: "核心职责描述",
-      value: userInfo.value.job_title ? `该主体主要负责 ${userInfo.value.job_title} 相关治理职能` : "暂无详细职责说明",
-      full: true,
-      desc: true
-    }
-  ]
-})
 </script>
 
 <template>
@@ -145,7 +105,7 @@ const infoItems = computed(() => {
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
             <el-tab-pane label="认证治理" name="auth">
-              <AuthGovernance :user="userInfo" />
+              <AuthGovernance :user="userInfo" @refresh="() => loadDetail(userStore.username)" />
             </el-tab-pane>
 
             <el-tab-pane label="身份源关联" name="sources">
