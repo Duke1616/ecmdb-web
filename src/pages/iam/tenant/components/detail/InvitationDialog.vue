@@ -21,7 +21,7 @@ import useClipboard from "vue-clipboard3"
 
 const visible = defineModel<boolean>({ default: false })
 
-defineProps<{
+const props = defineProps<{
   tenantId?: number
 }>()
 
@@ -79,7 +79,8 @@ const handleGenerate = async () => {
       max_uses: form.value.max_uses,
       expiry_days: form.value.expiry_days,
       role_codes: form.value.role_codes,
-      require_approval: form.value.require_approval
+      require_approval: form.value.require_approval,
+      tenant_id: props.tenantId
     })
     invitationCode.value = res.data.code
     const baseUrl = window.location.origin

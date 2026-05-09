@@ -377,7 +377,12 @@ const handleLoginSuccess = (businessData: any) => {
 
   // 3. 正常进入
   ElMessage.success("登录成功")
-  router.push({ path: "/" })
+  const redirect = route.query.redirect as string
+  if (redirect) {
+    router.push({ path: redirect })
+  } else {
+    router.push({ path: "/" })
+  }
 }
 
 const handleMfaSuccess = (businessData: any) => {

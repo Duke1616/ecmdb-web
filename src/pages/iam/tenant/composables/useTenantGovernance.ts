@@ -41,7 +41,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
     handlePageChange: handleLinksPageChange,
     handleSearch: handleLinksSearch
   } = useListManager<InvitationVO, any>({
-    fetchApi: (params) => listInvitationsApi(params),
+    fetchApi: (params) => listInvitationsApi({ ...params, tenant_id: tid.value! }),
     listKey: "invitations",
     immediate: false
   })
@@ -57,7 +57,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
     handlePageChange: handleRequestsPageChange,
     handleSearch: handleRequestsSearch
   } = useListManager<JoinRequestVO, any>({
-    fetchApi: (params) => listJoinRequestsApi(params),
+    fetchApi: (params) => listJoinRequestsApi({ ...params, tenant_id: tid.value! }),
     listKey: "requests",
     immediate: false
   })
@@ -94,7 +94,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
       cancelButtonText: "取消",
       type: "warning"
     }).then(async () => {
-      await revokeInvitationApi(row.code)
+      await revokeInvitationApi(row.code, tid.value!)
       ElMessage.success("邀请链接已撤回")
       loadLinks()
     })
@@ -103,7 +103,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
   const handleApproval = async (id: number, approve: boolean) => {
     const action = approve ? "通过" : "拒绝"
     try {
-      await handleJoinRequestApi({ id, approve })
+      await handleJoinRequestApi({ id, approve, tenant_id: tid.value! })
       ElMessage.success(`申请已${action}`)
       loadRequests()
     } catch (error) {

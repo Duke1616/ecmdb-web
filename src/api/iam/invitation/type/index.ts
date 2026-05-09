@@ -13,6 +13,7 @@ export interface InvitationPageReq {
   offset: number
   limit: number
   keyword?: string
+  tenant_id?: number
 }
 
 export interface InvitationPageVO {
@@ -25,6 +26,7 @@ export interface CreateInvitationReq {
   expiry_days: number
   role_codes: string[]
   require_approval: boolean
+  tenant_id?: number
 }
 
 export interface AcceptInvitationReq {
@@ -45,6 +47,7 @@ export interface JoinRequestPageReq {
   offset: number
   limit: number
   keyword?: string
+  tenant_id?: number
 }
 
 export interface JoinRequestPageVO {
@@ -55,4 +58,5 @@ export interface JoinRequestPageVO {
 export interface HandleJoinRequestReq {
   id: number
   approve: boolean
+  tenant_id?: number
 }

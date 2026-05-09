@@ -44,9 +44,10 @@ export function listInvitationsApi(data: invitation.InvitationPageReq) {
 /**
  * 撤回邀请链接
  */
-export function revokeInvitationApi(code: string) {
+export function revokeInvitationApi(code: string, tenantId?: number) {
   return instance.delete<void>({
-    url: `${API_SERVICE.IAM}/invitation/revoke/${code}`
+    url: `${API_SERVICE.IAM}/invitation/revoke/${code}`,
+    params: { tenant_id: tenantId }
   })
 }
 

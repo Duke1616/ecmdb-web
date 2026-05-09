@@ -53,7 +53,7 @@
 
 <script lang="ts" setup>
 import { reactive, ref, onMounted } from "vue"
-import { useRouter } from "vue-router"
+import { useRouter, useRoute } from "vue-router"
 import { type FormInstance, type FormRules } from "element-plus"
 import { Message, Lock } from "@element-plus/icons-vue"
 import { loginLdapApi, loginSystemApi } from "@/api/iam/user"
@@ -62,6 +62,7 @@ import TenantSelectModal from "./components/TenantSelectModal.vue"
 import MfaVerifyModal from "./components/MfaVerifyModal.vue"
 
 const router = useRouter()
+const route = useRoute()
 const props = defineProps<{
   active: string
   bindToken?: string
@@ -141,7 +142,12 @@ function handleLoginSuccess(businessData: any) {
   }
 
   // 3. 正常进入
-  router.push({ path: "/" })
+  const redirect = route.query.redirect as string
+  if (redirect) {
+    router.push({ path: redirect })
+  } else {
+    router.push({ path: "/" })
+  }
 }
 </script>
 
