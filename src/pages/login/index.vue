@@ -127,6 +127,17 @@
               </div>
             </div>
 
+            <!-- 邀请入驻提示条 -->
+            <div v-if="inviteInfo" class="bind-alert-box invite">
+              <div class="alert-icon">
+                <el-icon><OfficeBuilding /></el-icon>
+              </div>
+              <div class="alert-body">
+                <div class="alert-title">入驻邀请：{{ inviteInfo.tenant_name }}</div>
+                <div class="alert-desc">登录后将自动为您发起入驻申请</div>
+              </div>
+            </div>
+
             <Login
               :active="activeName"
               :bind-token="bindToken"
@@ -192,6 +203,9 @@
 
     <!-- 租户选择弹窗 (用于 Passkey 登录后的多租户情况) -->
     <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
+
+    <!-- MFA 二次验证弹窗 -->
+    <MfaVerifyModal v-model="showMfaVerify" :mfa-token="mfaToken" @success="handleMfaSuccess" />
   </div>
 </template>
 
@@ -209,15 +223,19 @@ import {
   CopyDocument,
   Bell,
   Lock,
-  InfoFilled
+  InfoFilled,
+  OfficeBuilding
 } from "@element-plus/icons-vue"
 import { startAuthentication } from "@simplewebauthn/browser"
 import Login from "./login.vue"
 import Owl from "./components/Owl.vue"
 import TenantSelectModal from "./components/TenantSelectModal.vue"
+import MfaVerifyModal from "./components/MfaVerifyModal.vue"
 import { getOidcRenderApi, passkeyLoginStartApi, passkeyLoginFinishApi } from "@/api/iam/user"
 import { getEnabledProvidersApi } from "@/api/iam/identity-source"
+import { verifyInvitationApi } from "@/api/iam/invitation"
 import { IdentitySourceType, OIDCProviderType } from "@/api/iam/identity-source/type"
+import type { InvitationVO } from "@/api/iam/invitation/type"
 import type { Tenant } from "@/api/iam/user/type"
 
 const route = useRoute()
@@ -231,6 +249,9 @@ const enabledProviders = ref<string[]>([])
 
 const showTenantSelect = ref(false)
 const tenantList = ref<Tenant[]>([])
+const inviteInfo = ref<InvitationVO | null>(null)
+const showMfaVerify = ref(false)
+const mfaToken = ref("")
 
 const sliderStyle = computed(() => ({
   transform: `translateX(${activeName.value === IdentitySourceType.LOCAL ? "0" : "100%"})`
@@ -247,10 +268,28 @@ onMounted(async () => {
     } else if (isEnabled(IdentitySourceType.LDAP) && !isDemoEnv && !route.query.mode) {
       activeName.value = IdentitySourceType.LDAP
     }
+    // 检查邀请信息
+    fetchInviteInfo()
   } catch {
     console.error("加载身份源失败")
   }
 })
+
+const fetchInviteInfo = async () => {
+  const redirect = route.query.redirect as string
+  if (!redirect || !redirect.includes("/join")) return
+
+  try {
+    const url = new URL(redirect, window.location.origin)
+    const code = url.searchParams.get("code")
+    if (code) {
+      const res = await verifyInvitationApi(code)
+      inviteInfo.value = res.data
+    }
+  } catch (e) {
+    console.error("获取邀请信息失败", e)
+  }
+}
 
 const handleTabChange = (mode: IdentitySourceType) => {
   if (!isEnabled(mode)) {
@@ -303,14 +342,7 @@ const handlePasskeyLogin = async () => {
     })
     const businessData = verifyRes.data
 
-    // 4. 处理多租户分支
-    if (businessData && businessData.must_select_tenant) {
-      tenantList.value = businessData.tenants
-      showTenantSelect.value = true
-    } else {
-      ElMessage.success("通行密钥登录成功")
-      router.push({ path: "/" })
-    }
+    handleLoginSuccess(businessData)
   } catch (error: unknown) {
     // 只有非 Axios 错误（即非接口返回的业务错误）才在这里处理
     // 因为业务错误已经在 request 拦截器中弹窗了
@@ -318,6 +350,38 @@ const handlePasskeyLogin = async () => {
       console.error("[Passkey Login Error]:", error)
     }
   }
+}
+
+/**
+ * 统一处理登录/验证成功后的后续逻辑
+ */
+const handleLoginSuccess = (businessData: any) => {
+  if (!businessData) {
+    router.push({ path: "/" })
+    return
+  }
+
+  // 1. MFA 校验拦截
+  if (businessData.mfa_required) {
+    mfaToken.value = businessData.mfa_token
+    showMfaVerify.value = true
+    return
+  }
+
+  // 2. 租户选择拦截
+  if (businessData.must_select_tenant) {
+    tenantList.value = businessData.tenants
+    showTenantSelect.value = true
+    return
+  }
+
+  // 3. 正常进入
+  ElMessage.success("登录成功")
+  router.push({ path: "/" })
+}
+
+const handleMfaSuccess = (businessData: any) => {
+  handleLoginSuccess(businessData)
 }
 </script>
 

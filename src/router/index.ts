@@ -71,6 +71,14 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/join",
+    component: () => import("@/pages/join/join.vue"),
+    meta: {
+      hidden: true,
+      title: "加入租户"
+    }
+  },
+  {
     path: "/callback",
     component: () => import("@/pages/login/callback.vue"),
     meta: {
@@ -84,13 +92,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       hidden: true
     }
   },
-  {
-    path: "/terminal",
-    component: Terminal,
-    meta: {
-      hidden: true
-    }
-  },
+
   {
     path: "/process/template/discovery",
     component: () => import("@/views/process/discovery/index.vue"),
