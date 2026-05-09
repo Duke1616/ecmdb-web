@@ -30,7 +30,7 @@ export function loginSystemApi(data: user.LoginSystemRequest, headers?: Record<s
 
 /** 切换租户 */
 export function switchTenantApi(data: user.SwitchTenantRequest) {
-  return instance.post<user.UserData>({
+  return instance.post<string>({
     url: `${API_SERVICE.IAM}/user/switch-tenant`,
     data
   })

@@ -48,15 +48,11 @@ export const useUserStore = defineStore(
     /** 切换租户 */
     const switchTenant = async (tenant: user.Tenant) => {
       try {
-        const { data } = await switchTenantApi({ tenant_id: tenant.id })
+        await switchTenantApi({ tenant_id: tenant.id })
 
-        // 切换成功后，利用后端返回的最新数据更新 Store
-        userInfo.value = data.user
-        tenants.value = data.tenants || []
-        currentTenantId.value = data.current_tenant_id
-
-        // 刷新页面以应用新租户的配置、权限和菜单
-        location.reload()
+        // 切换租户后跳转到首页导航页，避免因新租户权限不同导致当前页面 404
+        // 同时触发全页刷新以重新执行路由守卫并加载新权限
+        window.location.href = "/navigation"
       } catch (err: any) {
         ElMessage.error(err.message || "切换租户失败")
       }

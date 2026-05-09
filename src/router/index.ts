@@ -40,6 +40,13 @@ export const constantRoutes: RouteRecordRaw[] = [
     alias: "/:pathMatch(.*)*"
   },
   {
+    path: "/500",
+    component: () => import("@/pages/error/500.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
     path: "/",
     component: Layouts,
     redirect: "/navigation",

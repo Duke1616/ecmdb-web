@@ -133,7 +133,13 @@ class HyRequest {
           }
         })
         .catch((error) => {
-          reject(error.response ? error.response.data : error)
+          if (error.response && error.response.data && typeof error.response.data === "object") {
+            // 将 HTTP 状态码注入到返回对象中，方便 guard.ts 等地方判断
+            error.response.data.status = error.response.status
+            reject(error.response.data)
+          } else {
+            reject(error.response ? error.response.data : error)
+          }
         })
     })
   }
@@ -167,7 +173,12 @@ class HyRequest {
           resolve(response)
         })
         .catch((error) => {
-          reject(error.response ? error.response.data : error)
+          if (error.response && error.response.data && typeof error.response.data === "object") {
+            error.response.data.status = error.response.status
+            reject(error.response.data)
+          } else {
+            reject(error.response ? error.response.data : error)
+          }
         })
     })
   }
