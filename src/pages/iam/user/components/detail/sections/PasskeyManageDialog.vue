@@ -30,7 +30,7 @@ const fetchBoundPasskeys = async () => {
     const { data } = await listMyIdentitiesApi({ provider: "passkey" })
     boundPasskeys.value = data || []
   } catch (err) {
-    console.error("获取通行证列表失败:", err)
+    console.error("获取通行密钥列表失败:", err)
   } finally {
     loading.value = false
   }
@@ -49,7 +49,7 @@ const handleBindPasskey = async () => {
       "X-Passkey-Session": data.session_token
     })
 
-    ElMessage.success("通行证 (Passkey) 绑定成功")
+    ElMessage.success("通行密钥 (Passkey) 绑定成功")
     await fetchBoundPasskeys()
   } catch (err: unknown) {
     if (err instanceof Error && err.name === "NotAllowedError") {
@@ -94,7 +94,7 @@ defineExpose({ initData: fetchBoundPasskeys })
 <template>
   <FormDialog
     v-model="visible"
-    title="管理通行证 (Passkey)"
+    title="管理通行密钥 (Passkey)"
     subtitle="监控并管理已绑定的生物识别凭据与硬件密钥"
     width="600px"
     header-icon="Monitor"
@@ -130,7 +130,7 @@ defineExpose({ initData: fetchBoundPasskeys })
 
       <div class="manager-footer mt-6">
         <el-button type="primary" class="w-full h-10" :loading="loading" @click="handleBindPasskey">
-          添加新通行证
+          添加新通行密钥
         </el-button>
       </div>
     </div>

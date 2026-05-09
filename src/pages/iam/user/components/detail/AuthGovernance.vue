@@ -80,13 +80,7 @@ const handleOpenPasskey = () => {
           <p class="setting-desc">使用身份验证器（如 Google Authenticator）增加登录校验。</p>
         </div>
         <div class="setting-action">
-          <el-button
-            :type="user.mfa_bound ? 'danger' : 'primary'"
-            plain
-            class="action-btn"
-            :loading="mfaLoading"
-            @click="handleMfaAction"
-          >
+          <el-button plain class="action-btn" :loading="mfaLoading" @click="handleMfaAction">
             {{ user.mfa_bound ? "关闭验证" : "立即开启" }}
           </el-button>
         </div>
@@ -95,7 +89,7 @@ const handleOpenPasskey = () => {
       <!-- Passkey 绑定 -->
       <div class="setting-row">
         <div class="setting-main">
-          <span class="setting-title">通行证 (Passkey)</span>
+          <span class="setting-title">通行密钥 (Passkey)</span>
           <p class="setting-desc">使用面容、指纹或硬件密钥实现无密码登录，安全且便捷。</p>
         </div>
         <div class="setting-action">

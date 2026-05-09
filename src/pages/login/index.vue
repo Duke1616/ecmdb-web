@@ -165,7 +165,7 @@
                       stroke-linejoin="round"
                     />
                   </svg>
-                  <span>指纹登录</span>
+                  <span>通行密钥</span>
                 </div>
                 <div
                   class="social-box"
@@ -308,7 +308,7 @@ const handlePasskeyLogin = async () => {
       tenantList.value = businessData.tenants
       showTenantSelect.value = true
     } else {
-      ElMessage.success("通行证登录成功")
+      ElMessage.success("通行密钥登录成功")
       router.push({ path: "/" })
     }
   } catch (error: unknown) {
