@@ -1,14 +1,17 @@
 import { ref, watch, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
 import { listUserRolesApi } from "@/api/iam/role"
-import { listUserPoliciesApi } from "@/api/iam/policy"
+import { listUserPoliciesApi, batchDetachPolicyApi } from "@/api/iam/policy"
 import { listUserTenantsApi } from "@/api/iam/tenant"
 import { useListManager } from "@/common/composables/useListManager"
+import { ElMessage, ElMessageBox } from "element-plus"
+import type { User } from "@/api/iam/user/type"
 import type { Role } from "@/api/iam/role/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { Tenant } from "@/api/iam/tenant/type"
 
-export function useUserGovernance(userId: Ref<number | undefined>) {
+export function useUserGovernance(user: Ref<User | undefined>) {
+  const userId = computed(() => user.value?.id)
   const { activeTab } = useTabRouter("sources")
   const attachPolicyVisible = ref(false)
 
@@ -85,8 +88,24 @@ export function useUserGovernance(userId: Ref<number | undefined>) {
   const handleUnbindRole = (_row: Role) => {
     // TODO: 角色解绑功能待集成
   }
-  const handleUnbindPolicy = (_row: Policy) => {
-    // TODO: 策略解绑功能待集成
+  const handleUnbindPolicy = (row: Policy) => {
+    if (!user.value) return
+    ElMessageBox.confirm(`确认要为用户 [${user.value.username}] 解除策略 [${row.name}] 的关联吗？`, "解除授权", {
+      confirmButtonText: "确认解除",
+      cancelButtonText: "取消",
+      type: "warning"
+    }).then(async () => {
+      try {
+        await batchDetachPolicyApi({
+          subjects: [{ type: "user", code: user.value!.username }],
+          policy_codes: [row.code]
+        })
+        ElMessage.success("成功解除策略授权")
+        loadPolicies()
+      } catch (err) {
+        console.error(err)
+      }
+    })
   }
   const handleUnbindTenant = (_row: Tenant) => {
     // TODO: 租户关联移除功能待集成
@@ -103,8 +122,29 @@ export function useUserGovernance(userId: Ref<number | undefined>) {
   }
 
   const handleBatchUnbindPolicies = () => {
-    // TODO: 批量策略解绑功能待集成
-    selectedPolicies.value = []
+    if (!user.value || selectedPolicies.value.length === 0) return
+    const names = selectedPolicies.value.map((p) => p.name).join(", ")
+    ElMessageBox.confirm(
+      `确认要批量解除以下 ${selectedPolicies.value.length} 条策略的关联吗？\n[${names}]`,
+      "批量解除授权",
+      {
+        confirmButtonText: "确认解除",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    ).then(async () => {
+      try {
+        await batchDetachPolicyApi({
+          subjects: [{ type: "user", code: user.value!.username }],
+          policy_codes: selectedPolicies.value.map((p) => p.code)
+        })
+        ElMessage.success("成功批量解除策略授权")
+        selectedPolicies.value = []
+        loadPolicies()
+      } catch (err) {
+        console.error(err)
+      }
+    })
   }
 
   const handleBatchUnbindTenants = () => {

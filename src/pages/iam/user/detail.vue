@@ -39,8 +39,6 @@ const {
 
 const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
-const userId = computed(() => userInfo.value?.id)
-
 const {
   activeTab,
   roles,
@@ -74,7 +72,7 @@ const {
   handleUnbindPolicy,
   handleBatchUnbindRoles,
   handleBatchUnbindPolicies
-} = useUserGovernance(userId)
+} = useUserGovernance(userInfo)
 
 const handleEditConfirm = () => {
   userFormRef.value?.submit()

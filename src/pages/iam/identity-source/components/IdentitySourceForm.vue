@@ -44,18 +44,21 @@
             <el-icon class="section-icon"><Connection /></el-icon>
             <span>{{ selectedProvider === "ad" ? "域控协议配置" : "目录协议配置" }}</span>
           </div>
-          <el-button
-            v-if="selectedProvider === 'ad'"
-            :loading="testing"
-            size="small"
-            class="section-test-btn"
-            @click.stop="handleTestConnection"
-          >
-            <el-icon><Monitor /></el-icon>
-            测试连接
-          </el-button>
         </div>
-        <LdapSection v-model="form.ldap" :is-ad="selectedProvider === 'ad'" />
+        <LdapSection v-model="form.ldap" :is-ad="selectedProvider === 'ad'">
+          <template #test-connectivity>
+            <!-- 连通性测试卡片: 采用紧凑型 Bar 样式 -->
+            <div class="test-connection-bar">
+              <div class="bar-info">
+                <el-icon><InfoFilled /></el-icon>
+                <span>验证目录服务的连通性，确保配置正确</span>
+              </div>
+              <el-button :loading="testing" class="premium-test-btn" @click="handleTestConnection">
+                测试连通性
+              </el-button>
+            </div>
+          </template>
+        </LdapSection>
       </div>
 
       <div v-if="form.type === IdentitySourceType.OIDC && form.oidc" class="form-section">
@@ -95,16 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  InfoFilled,
-  Monitor,
-  CircleCheckFilled,
-  Connection,
-  ChatLineRound,
-  Link,
-  Lock,
-  Key
-} from "@element-plus/icons-vue"
+import { InfoFilled, CircleCheckFilled, Connection, ChatLineRound, Link, Lock, Key } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import adIcon from "../svg/Windows AD.svg"
 import ldapIcon from "../svg/ldap.svg"
@@ -471,20 +465,43 @@ watch(() => props.data, initForm)
         font-weight: 600;
         color: #374151;
       }
+    }
 
-      .section-test-btn {
-        height: 28px;
-        padding: 0 10px;
-        background: #ffffff;
-        border: 1px solid #bfdbfe;
-        color: #2563eb;
+    .test-connection-bar {
+      margin-top: 16px;
+      padding: 10px 16px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .bar-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-size: 12px;
-        font-weight: 600;
-        border-radius: 5px;
+        color: #64748b;
+        font-weight: 500;
+        .el-icon {
+          color: #3b82f6;
+          font-size: 15px;
+        }
+      }
 
+      .premium-test-btn {
+        background: #ffffff;
+        border: 1px solid #d1d5db;
+        color: #475569;
+        font-weight: 700;
+        font-size: 12px;
+        border-radius: 6px;
+        height: 30px;
         &:hover {
-          background: #eff6ff;
           border-color: #3b82f6;
+          color: #3b82f6;
+          background: #eff6ff;
         }
       }
     }

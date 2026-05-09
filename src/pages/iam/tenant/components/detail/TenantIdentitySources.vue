@@ -186,16 +186,16 @@ onMounted(() => {
             <template v-if="activeProvider.ldap">
               <div class="bento-card full-width">
                 <div class="card-label">
-                  <el-icon><Connection /></el-icon> 连接终结点 (LDAP URL)
+                  <el-icon><Connection /></el-icon> 连接终结点
                 </div>
                 <div class="card-value mono">{{ activeProvider.ldap.url }}</div>
               </div>
               <div class="bento-card">
-                <div class="card-label">基础搜索基准 (Base DN)</div>
+                <div class="card-label">搜索基准</div>
                 <div class="card-value mono">{{ activeProvider.ldap.base_dn }}</div>
               </div>
               <div class="bento-card">
-                <div class="card-label">绑定账号 (Bind DN)</div>
+                <div class="card-label">绑定账号</div>
                 <div class="card-value mono">{{ activeProvider.ldap.bind_dn }}</div>
               </div>
             </template>

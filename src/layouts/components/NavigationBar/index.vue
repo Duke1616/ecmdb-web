@@ -57,19 +57,20 @@ const logout = () => {
       <div class="divider" />
 
       <!-- 租户/工作空间切换器 -->
-      <el-dropdown class="right-menu-item tenant-select" trigger="click">
-        <div class="tenant-display">
-          <div class="space-icon-wrapper">
-            <el-icon><OfficeBuilding /></el-icon>
+      <template v-if="userStore.tenants.length > 0">
+        <!-- 多个租户时支持切换 -->
+        <el-dropdown v-if="userStore.tenants.length > 1" class="right-menu-item tenant-select" trigger="click">
+          <div class="tenant-display">
+            <div class="space-icon-wrapper">
+              <el-icon><OfficeBuilding /></el-icon>
+            </div>
+            <span class="space-name">{{ currentTenant?.name || "默认空间" }}</span>
+            <el-icon class="arrow-icon"><ArrowDown /></el-icon>
           </div>
-          <span class="space-name">{{ currentTenant?.name || "默认空间" }}</span>
-          <el-icon class="arrow-icon"><ArrowDown /></el-icon>
-        </div>
-        <template #dropdown>
-          <div class="tenant-dropdown-container">
-            <div class="dropdown-title">切换工作空间</div>
-            <el-dropdown-menu class="tenant-dropdown-menu">
-              <template v-if="userStore.tenants.length > 0">
+          <template #dropdown>
+            <div class="tenant-dropdown-container">
+              <div class="dropdown-title">切换租户空间</div>
+              <el-dropdown-menu class="tenant-dropdown-menu">
                 <el-dropdown-item
                   v-for="item in userStore.tenants"
                   :key="item.id"
@@ -84,12 +85,19 @@ const logout = () => {
                     <el-icon v-if="item.id === userStore.currentTenantId" class="check-icon"><Select /></el-icon>
                   </div>
                 </el-dropdown-item>
-              </template>
-              <div v-else class="tenant-empty">暂无可用空间</div>
-            </el-dropdown-menu>
+              </el-dropdown-menu>
+            </div>
+          </template>
+        </el-dropdown>
+
+        <!-- 仅一个租户时仅做展示 -->
+        <div v-else class="right-menu-item tenant-display-static">
+          <div class="space-icon-wrapper">
+            <el-icon><OfficeBuilding /></el-icon>
           </div>
-        </template>
-      </el-dropdown>
+          <span class="space-name">{{ currentTenant?.name || "默认空间" }}</span>
+        </div>
+      </template>
 
       <el-dropdown class="right-menu-item">
         <div class="right-menu-avatar">
@@ -199,6 +207,27 @@ const logout = () => {
         }
         &:hover .arrow-icon {
           transform: translateY(1px);
+        }
+      }
+
+      // 静态展示模式（只有一个租户时）
+      &.tenant-display-static {
+        cursor: default;
+        padding: 0 12px;
+        &:hover {
+          background-color: transparent;
+        }
+        .space-icon-wrapper {
+          display: flex;
+          align-items: center;
+          font-size: 16px;
+          color: #3b82f6;
+          margin-right: 8px;
+        }
+        .space-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: #1e293b;
         }
       }
 

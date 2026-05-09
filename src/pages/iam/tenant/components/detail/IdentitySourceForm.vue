@@ -158,13 +158,13 @@ defineExpose({ submit, testing, submitting })
         </div>
 
         <div class="section-content">
-          <el-form-item label="LDAP 服务地址 (URL)" required>
+          <el-form-item label="LDAP 服务地址" required>
             <el-input v-model="form.ldap!.url" placeholder="ldap://hostname:389" class="premium-input code-font" />
             <div class="input-tip">通常格式为 ldap://&lt;地址&gt;:&lt;端口&gt;</div>
           </el-form-item>
 
           <div class="flex-row gap-4">
-            <el-form-item label="绑定账号 (Bind DN)" required class="flex-1">
+            <el-form-item label="绑定账号" required class="flex-1">
               <el-input
                 v-model="form.ldap!.bind_dn"
                 placeholder="cn=admin,dc=example..."
@@ -182,7 +182,7 @@ defineExpose({ submit, testing, submitting })
             </el-form-item>
           </div>
 
-          <el-form-item label="搜索基准 (Base DN)" required>
+          <el-form-item label="搜索基准" required>
             <el-input
               v-model="form.ldap!.base_dn"
               placeholder="ou=users,dc=example,dc=com"
@@ -212,13 +212,13 @@ defineExpose({ submit, testing, submitting })
 
         <div class="section-content">
           <div class="mapping-grid">
-            <el-form-item label="账号属性 (Username)">
+            <el-form-item label="账号属性">
               <el-input v-model="form.ldap!.username_attribute" class="premium-input" />
             </el-form-item>
-            <el-form-item label="邮箱属性 (Mail)">
+            <el-form-item label="邮箱属性">
               <el-input v-model="form.ldap!.mail_attribute" class="premium-input" />
             </el-form-item>
-            <el-form-item label="显示名 (DisplayName)">
+            <el-form-item label="显示名">
               <el-input v-model="form.ldap!.display_name_attribute" class="premium-input" />
             </el-form-item>
           </div>

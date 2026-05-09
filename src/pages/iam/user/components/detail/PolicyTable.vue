@@ -61,7 +61,7 @@ const emit = defineEmits<{
 
     <!-- 批量操作 -->
     <template #batch-actions>
-      <el-button type="danger" plain size="small" disabled @click="emit('batchUnbind')">
+      <el-button type="danger" plain size="small" @click="emit('batchUnbind')">
         <el-icon><Delete /></el-icon>
         <span>批量移除</span>
       </el-button>
@@ -88,7 +88,7 @@ const emit = defineEmits<{
         </div>
 
         <div class="cell-actions">
-          <el-button type="danger" link size="small" class="delete-btn" disabled @click.stop="emit('unbind', row)">
+          <el-button type="danger" link size="small" class="delete-btn" @click.stop="emit('unbind', row)">
             <el-icon><Delete /></el-icon>
             <span>移除</span>
           </el-button>
