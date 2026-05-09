@@ -103,6 +103,7 @@ import TenantForm from "./components/TenantForm.vue"
 import { useTenantList } from "./composables/useTenantList"
 import { useRouter } from "vue-router"
 import type { Column } from "@@/components/DataTable/types"
+import type { Tenant } from "@/api/iam/tenant/type"
 
 const router = useRouter()
 
@@ -136,7 +137,7 @@ const tenantOperateItems = [
   { name: "租户销毁", code: "delete", type: "danger" }
 ]
 
-const handleViewDetail = (row: any) => {
+const handleViewDetail = (row: Tenant) => {
   router.push({
     name: "TenantDetail",
     query: { id: row.id }
@@ -146,7 +147,7 @@ const handleViewDetail = (row: any) => {
 /**
  * 统一执行操作分发
  */
-const handleOperate = (row: any, code: string) => {
+const handleOperate = (row: Tenant, code: string) => {
   if (code === "view") handleViewDetail(row)
   if (code === "edit") handleEdit(row)
   if (code === "delete") handleDelete(row)

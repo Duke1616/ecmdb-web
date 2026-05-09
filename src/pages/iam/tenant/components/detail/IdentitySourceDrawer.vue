@@ -2,12 +2,12 @@
 import { ref } from "vue"
 import { Drawer } from "@@/components/Dialogs"
 import { Connection } from "@element-plus/icons-vue"
-import IdentitySourceForm from "./IdentitySourceForm.vue"
+import IdentitySourceForm from "@/pages/iam/identity-source/components/IdentitySourceForm.vue"
 import type { IdentitySourceVO } from "@/api/iam/identity-source/type"
 
 const visible = defineModel<boolean>({ default: false })
 
-defineProps<{
+const props = defineProps<{
   initialData?: IdentitySourceVO
 }>()
 
@@ -48,6 +48,11 @@ const handleSuccess = () => {
     :confirm-loading="submitting"
     @confirm="handleConfirm"
   >
-    <IdentitySourceForm ref="formRef" :initial-data="initialData" @success="handleSuccess" />
+    <IdentitySourceForm
+      ref="formRef"
+      :is-edit="!!props.initialData"
+      :data="props.initialData"
+      @success="handleSuccess"
+    />
   </Drawer>
 </template>

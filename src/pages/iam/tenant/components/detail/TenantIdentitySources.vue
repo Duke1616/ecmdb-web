@@ -9,8 +9,9 @@ import {
   Connection,
   Check,
   Close,
-  Refresh,
-  Delete
+  Delete,
+  Cpu,
+  Rank
 } from "@element-plus/icons-vue"
 import { listIdentitySourcesApi, deleteIdentitySourceApi, saveIdentitySourceApi } from "@/api/iam/identity-source"
 import type { IdentitySourceVO } from "@/api/iam/identity-source/type"
@@ -169,34 +170,53 @@ onMounted(() => {
             </div>
           </div>
 
-          <div class="bento-grid">
-            <div class="bento-card">
-              <div class="card-label">
-                <el-icon><Cpu /></el-icon> 内部标识 (ID)
+          <div class="detail-content-scroller">
+            <div class="info-section">
+              <div class="detail-section-header">
+                <el-icon><Cpu /></el-icon>
+                <span>基础标识信息</span>
               </div>
-              <div class="card-value mono">{{ activeProvider.id }}</div>
-            </div>
-            <div class="bento-card">
-              <div class="card-label">
-                <el-icon><Refresh /></el-icon> 最后同步时间
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="label">内部标识 ID</div>
+                  <div class="value mono">{{ activeProvider.id }}</div>
+                </div>
+                <div class="info-item">
+                  <div class="label">最后同步时间</div>
+                  <div class="value">{{ new Date(activeProvider.utime).toLocaleString() }}</div>
+                </div>
               </div>
-              <div class="card-value">{{ new Date(activeProvider.utime).toLocaleString() }}</div>
             </div>
 
             <template v-if="activeProvider.ldap">
-              <div class="bento-card full-width">
-                <div class="card-label">
-                  <el-icon><Connection /></el-icon> 连接终结点
+              <div class="info-section">
+                <div class="detail-section-header">
+                  <el-icon><Connection /></el-icon>
+                  <span>目录连接参数</span>
                 </div>
-                <div class="card-value mono">{{ activeProvider.ldap.url }}</div>
+                <div class="info-grid single">
+                  <div class="info-item">
+                    <div class="label">连接终结点</div>
+                    <div class="value mono">{{ activeProvider.ldap.url }}</div>
+                  </div>
+                </div>
               </div>
-              <div class="bento-card">
-                <div class="card-label">搜索基准</div>
-                <div class="card-value mono">{{ activeProvider.ldap.base_dn }}</div>
-              </div>
-              <div class="bento-card">
-                <div class="card-label">绑定账号</div>
-                <div class="card-value mono">{{ activeProvider.ldap.bind_dn }}</div>
+
+              <div class="info-section">
+                <div class="detail-section-header">
+                  <el-icon><Rank /></el-icon>
+                  <span>搜索与鉴权配置</span>
+                </div>
+                <div class="info-grid">
+                  <div class="info-item">
+                    <div class="label">搜索基准</div>
+                    <div class="value mono">{{ activeProvider.ldap.base_dn }}</div>
+                  </div>
+                  <div class="info-item">
+                    <div class="label">绑定账号</div>
+                    <div class="value mono">{{ activeProvider.ldap.bind_dn }}</div>
+                  </div>
+                </div>
               </div>
             </template>
           </div>
@@ -403,24 +423,25 @@ onMounted(() => {
 /* 右侧详情面板 */
 .governance-insight-panel {
   flex: 1;
-  padding: 40px;
+  padding: 32px 40px;
   background: #ffffff;
   display: flex;
   flex-direction: column;
-  gap: 32px;
-  overflow-y: auto;
+  overflow-y: hidden;
 
   .insight-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    margin-bottom: 24px;
+    flex-shrink: 0;
 
     .title-group {
       .main-title {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 800;
         color: #1e293b;
-        margin-bottom: 6px;
+        margin-bottom: 4px;
         letter-spacing: -0.02em;
       }
       .sub-text {
@@ -462,56 +483,79 @@ onMounted(() => {
     }
   }
 
-  .bento-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+  .detail-content-scroller {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
 
-    .bento-card {
+    /* Custom Scrollbar */
+    &::-webkit-scrollbar {
+      width: 4px;
+    }
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: #e2e8f0;
+      border-radius: 4px;
+    }
+  }
+
+  .info-section {
+    margin-bottom: 24px;
+
+    .detail-section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
       background: #f8fafc;
-      border: 1px solid #f1f5f9;
-      border-radius: 16px;
-      padding: 24px;
-      transition: all 0.2s;
-      &:hover {
-        border-color: #e2e8f0;
-        background: #fcfdfe;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-      }
+      border-left: 3px solid #3b82f6;
+      border-radius: 4px;
+      margin-bottom: 16px;
 
-      &.full-width {
-        grid-column: span 2;
-      }
-
-      .card-label {
-        font-size: 11px;
-        font-weight: 700;
-        color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        .el-icon {
-          font-size: 14px;
-        }
-      }
-
-      .card-value {
+      .el-icon {
         font-size: 15px;
-        color: #334155;
-        font-weight: 600;
-        word-break: break-all;
-        &.mono {
-          font-family: ui-monospace, SFMono-Regular, monospace;
-          background: #ffffff;
-          padding: 8px 12px;
-          border-radius: 8px;
-          border: 1px solid #edf2f7;
-          display: inline-block;
-          margin-top: 4px;
-          font-size: 13px;
+        color: #3b82f6;
+      }
+      span {
+        font-size: 13px;
+        font-weight: 700;
+        color: #475569;
+      }
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 0 12px;
+
+      &.single {
+        grid-template-columns: 1fr;
+      }
+
+      .info-item {
+        .label {
+          font-size: 12px;
+          font-weight: 700;
+          color: #94a3b8;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .value {
+          font-size: 14px;
+          color: #334155;
+          font-weight: 500;
+          &.mono {
+            font-family: ui-monospace, SFMono-Regular, monospace;
+            background: #f1f5f9;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: inline-block;
+          }
         }
       }
     }
@@ -525,6 +569,7 @@ onMounted(() => {
     justify-content: flex-end;
     align-items: center;
     gap: 16px;
+    flex-shrink: 0;
 
     .footer-btn {
       height: 38px;

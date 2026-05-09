@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Plus, Delete } from "@element-plus/icons-vue"
+import { Plus, Delete, Message } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { TenantMember } from "@/api/iam/tenant/type"
@@ -18,6 +18,7 @@ defineProps<{
 const emit = defineEmits<{
   pageChange: [page: number]
   add: []
+  invite: []
   unbind: [row: TenantMember]
   search: [keyword: string]
 }>()
@@ -54,10 +55,16 @@ const emit = defineEmits<{
 
     <!-- 头部操作 -->
     <template #header-actions>
-      <el-button plain class="toolbar-action-btn" @click="emit('add')">
-        <el-icon><Plus /></el-icon>
-        <span>分派成员</span>
-      </el-button>
+      <div class="header-action-stack">
+        <el-button plain class="toolbar-action-btn invite" @click="emit('invite')">
+          <el-icon><Message /></el-icon>
+          <span>邀请入驻</span>
+        </el-button>
+        <el-button plain class="toolbar-action-btn" @click="emit('add')">
+          <el-icon><Plus /></el-icon>
+          <span>分派成员</span>
+        </el-button>
+      </div>
     </template>
 
     <!-- 列表项内容 -->
@@ -106,6 +113,11 @@ const emit = defineEmits<{
 </template>
 
 <style lang="scss" scoped>
+.header-action-stack {
+  display: flex;
+  gap: 10px;
+}
+
 .toolbar-action-btn {
   height: 34px;
   padding: 0 14px;
@@ -119,6 +131,16 @@ const emit = defineEmits<{
   &:hover {
     background: #2563eb;
     border-color: #2563eb;
+  }
+
+  &.invite {
+    background: #ffffff;
+    color: #3b82f6;
+    border-color: #dbeafe;
+    &:hover {
+      background: #eff6ff;
+      border-color: #3b82f6;
+    }
   }
 }
 

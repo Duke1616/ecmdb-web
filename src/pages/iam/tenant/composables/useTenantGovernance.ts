@@ -1,118 +1,168 @@
-import { ref, watch, toValue, type MaybeRefOrGetter } from "vue"
-import { ElMessage } from "element-plus"
+import { ref, watch, toValue, type MaybeRefOrGetter, computed, type Ref } from "vue"
+import { ElMessage, ElMessageBox } from "element-plus"
 import { listTenantMembersApi, assignTenantUserApi } from "@/api/iam/tenant"
+import {
+  listInvitationsApi,
+  revokeInvitationApi,
+  listJoinRequestsApi,
+  handleJoinRequestApi
+} from "@/api/iam/invitation"
+import { useListManager } from "@/common/composables/useListManager"
 import type { TenantMember } from "@/api/iam/tenant/type"
+import type { InvitationVO, JoinRequestVO } from "@/api/iam/invitation/type"
 
-export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefined>) {
-  const activeTab = ref("members")
+export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefined>, activeTab: Ref<string>) {
+  const tid = computed(() => toValue(tenantId))
 
-  // --- 成员治理状态 ---
-  const members = ref<TenantMember[]>([])
-  const memberTotal = ref(0)
-  const memberLoading = ref(false)
-  const memberQuery = ref({
-    currentPage: 1,
-    pageSize: 10,
-    keyword: ""
+  // --- 1. 成员治理 ---
+  const {
+    list: members,
+    total: memberTotal,
+    loading: memberLoading,
+    pagination: memberPagination,
+    query: memberQuery,
+    fetchList: loadMembers,
+    handlePageChange: handleMemberPageChange,
+    handleSearch: handleMemberSearch
+  } = useListManager<TenantMember, any>({
+    fetchApi: (params) => listTenantMembersApi({ ...params, tenant_id: tid.value! }),
+    listKey: "members",
+    immediate: false
   })
 
-  const fetchMembers = async () => {
-    const tid = toValue(tenantId)
-    if (!tid) return
+  // --- 2. 邀请链接治理 ---
+  const {
+    list: links,
+    total: linksTotal,
+    loading: linksLoading,
+    pagination: linksPagination,
+    query: linksQuery,
+    fetchList: loadLinks,
+    handlePageChange: handleLinksPageChange,
+    handleSearch: handleLinksSearch
+  } = useListManager<InvitationVO, any>({
+    fetchApi: (params) => listInvitationsApi(params),
+    listKey: "invitations",
+    immediate: false
+  })
 
-    memberLoading.value = true
-    try {
-      const res = await listTenantMembersApi({
-        tenant_id: tid,
-        offset: (memberQuery.value.currentPage - 1) * memberQuery.value.pageSize,
-        limit: memberQuery.value.pageSize,
-        keyword: memberQuery.value.keyword
-      })
-      members.value = res.data.members || []
-      memberTotal.value = res.data.total || 0
-    } catch (err: any) {
-      // 错误已由全局拦截器处理
-    } finally {
-      memberLoading.value = false
-    }
-  }
+  // --- 3. 入驻申请治理 ---
+  const {
+    list: requests,
+    total: requestsTotal,
+    loading: requestsLoading,
+    pagination: requestsPagination,
+    query: requestsQuery,
+    fetchList: loadRequests,
+    handlePageChange: handleRequestsPageChange,
+    handleSearch: handleRequestsSearch
+  } = useListManager<JoinRequestVO, any>({
+    fetchApi: (params) => listJoinRequestsApi(params),
+    listKey: "requests",
+    immediate: false
+  })
 
-  const handleMemberPageChange = (page: number) => {
-    memberQuery.value.currentPage = page
-    fetchMembers()
-  }
-
-  const handleMemberSearch = (keyword: string) => {
-    memberQuery.value.keyword = keyword
-    memberQuery.value.currentPage = 1
-    fetchMembers()
-  }
+  // --- 操作处理 ---
 
   const assignConfirmLoading = ref(false)
   const handleBatchAssignMember = async (userIds: number[]) => {
-    const tid = toValue(tenantId)
-    if (!tid || userIds.length === 0) return
-
+    if (!tid.value || userIds.length === 0) return
     assignConfirmLoading.value = true
     try {
-      // 当前后端仅支持单次分配，前端模拟批量并行提交
       await Promise.all(
         userIds.map((uid) =>
           assignTenantUserApi({
-            tenant_id: tid,
+            tenant_id: tid.value!,
             user_id: uid
           })
         )
       )
       ElMessage.success(`成功分派 ${userIds.length} 位成员`)
-      fetchMembers()
+      loadMembers()
       return true
     } catch (err: any) {
-      fetchMembers()
+      loadMembers()
       return false
     } finally {
       assignConfirmLoading.value = false
     }
   }
 
-  const handleAssignMember = async (userId: number) => {
-    const tid = toValue(tenantId)
-    if (!tid) return
+  const handleRevokeInvitation = (row: InvitationVO) => {
+    ElMessageBox.confirm(`确定要撤回邀请码 "${row.code}" 吗？撤回后该链接将立即失效。`, "安全警告", {
+      confirmButtonText: "确定撤回",
+      cancelButtonText: "取消",
+      type: "warning"
+    }).then(async () => {
+      await revokeInvitationApi(row.code)
+      ElMessage.success("邀请链接已撤回")
+      loadLinks()
+    })
+  }
 
+  const handleApproval = async (id: number, approve: boolean) => {
+    const action = approve ? "通过" : "拒绝"
     try {
-      await assignTenantUserApi({
-        tenant_id: tid,
-        user_id: userId
-      })
-      ElMessage.success("成员分配成功")
-      fetchMembers()
-    } catch (err: any) {
-      // 错误已由全局拦截器处理
+      await handleJoinRequestApi({ id, approve })
+      ElMessage.success(`申请已${action}`)
+      loadRequests()
+    } catch (error) {
+      console.error("Approval failed:", error)
     }
   }
 
-  // --- 联动逻辑 ---
-  watch(
-    [() => activeTab.value, () => toValue(tenantId)],
-    ([tab, id]) => {
-      if (id && tab === "members") {
-        fetchMembers()
-      }
-    },
-    { immediate: true }
-  )
+  // --- 核心联动逻辑：根据当前选中的 Tab 触发请求 ---
+  const refresh = () => {
+    if (!tid.value) return
+    const tab = toValue(activeTab)
+    if (tab === "members") loadMembers()
+    if (tab === "invitation" || tab === "links") loadLinks()
+    if (tab === "requests") loadRequests()
+  }
+
+  watch([tid, () => toValue(activeTab)], () => refresh(), { immediate: true })
 
   return {
-    activeTab,
     // 成员
     members,
     memberTotal,
     memberLoading,
-    memberQuery,
-    assignConfirmLoading,
+    memberQuery: computed(() => ({
+      ...memberQuery,
+      currentPage: memberPagination.currentPage,
+      pageSize: memberPagination.pageSize
+    })),
     handleMemberPageChange,
     handleMemberSearch,
-    handleAssignMember,
-    handleBatchAssignMember
+    handleBatchAssignMember,
+    assignConfirmLoading,
+
+    // 邀请
+    links,
+    linksTotal,
+    linksLoading,
+    linksQuery: computed(() => ({
+      ...linksQuery,
+      currentPage: linksPagination.currentPage,
+      pageSize: linksPagination.pageSize
+    })),
+    handleLinksPageChange,
+    handleLinksSearch,
+    handleRevokeInvitation,
+    fetchLinks: loadLinks,
+
+    // 申请
+    requests,
+    requestsTotal,
+    requestsLoading,
+    requestsQuery: computed(() => ({
+      ...requestsQuery,
+      currentPage: requestsPagination.currentPage,
+      pageSize: requestsPagination.pageSize
+    })),
+    handleRequestsPageChange,
+    handleRequestsSearch,
+    handleApproval,
+    fetchRequests: loadRequests
   }
 }

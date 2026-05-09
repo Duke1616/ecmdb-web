@@ -59,6 +59,7 @@ export function useTenantDetail() {
     loading,
     handleDelete,
     copyText,
-    formatTimestamp
+    formatTimestamp,
+    fetchTenantDetail
   }
 }

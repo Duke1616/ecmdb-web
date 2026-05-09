@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
 import { Delete, Edit, OfficeBuilding, Lock } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
@@ -13,12 +13,20 @@ import { useTenantGovernance } from "./composables/useTenantGovernance"
 
 // Components
 import TenantMemberTable from "./components/detail/TenantMemberTable.vue"
-import TenantIdentitySources from "./components/detail/TenantIdentitySources.vue"
+import TenantInvitationList from "./components/detail/TenantInvitationList.vue"
+import TenantJoinRequestList from "./components/detail/TenantJoinRequestList.vue"
 import UserSelectDrawer from "./components/detail/UserSelectDrawer.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
 const router = useRouter()
-const { tenantInfo, loading: detailLoading, handleDelete, copyText, formatTimestamp } = useTenantDetail()
+const {
+  tenantInfo,
+  loading: detailLoading,
+  handleDelete,
+  copyText,
+  formatTimestamp,
+  fetchTenantDetail
+} = useTenantDetail()
 
 const infoItems = computed(() => {
   if (!tenantInfo.value) return []
@@ -34,8 +42,11 @@ const infoItems = computed(() => {
     }
   ]
 })
+const editVisible = ref(false)
+const assignVisible = ref(false)
+const activeTab = ref("members")
+
 const {
-  activeTab,
   members,
   memberTotal,
   memberLoading,
@@ -43,17 +54,31 @@ const {
   assignConfirmLoading,
   handleMemberPageChange,
   handleMemberSearch,
-  handleBatchAssignMember
-} = useTenantGovernance(() => tenantInfo.value?.id)
-
-const editVisible = ref(false)
-const assignVisible = ref(false)
+  handleBatchAssignMember,
+  // 邀请
+  links,
+  linksTotal,
+  linksLoading,
+  linksQuery,
+  handleLinksPageChange,
+  handleLinksSearch,
+  handleRevokeInvitation,
+  fetchLinks,
+  // 申请
+  requests,
+  requestsTotal,
+  requestsLoading,
+  requestsQuery,
+  handleRequestsPageChange,
+  handleRequestsSearch,
+  handleApproval
+} = useTenantGovernance(() => tenantInfo.value?.id, activeTab)
 const tenantFormRef = ref<InstanceType<typeof TenantForm>>()
 const submitting = ref(false)
 
 const handleEditSuccess = () => {
   editVisible.value = false
-  window.location.reload()
+  tenantInfo.value && fetchTenantDetail()
 }
 
 const handleEditConfirm = async () => {
@@ -105,13 +130,14 @@ const onAssignConfirm = async (userIds: number[]) => {
         <!-- 治理内容 -->
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
+            <!-- 成员管理 -->
             <el-tab-pane label="成员管理" name="members">
               <TenantMemberTable
                 :loading="memberLoading"
                 :data="members"
                 :total="memberTotal"
                 :current-page="memberQuery.currentPage"
-                :pageSize="memberQuery.pageSize"
+                :page-size="memberQuery.pageSize"
                 :format-timestamp="formatTimestamp"
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
@@ -120,8 +146,33 @@ const onAssignConfirm = async (userIds: number[]) => {
               />
             </el-tab-pane>
 
-            <el-tab-pane label="身份源管理" name="identities">
-              <TenantIdentitySources :tenant-id="tenantInfo.id" />
+            <!-- 邀请链接 -->
+            <el-tab-pane label="邀请链接" name="invitation">
+              <TenantInvitationList
+                :data="links"
+                :loading="linksLoading"
+                :total="linksTotal"
+                :current-page="linksQuery.currentPage"
+                :page-size="linksQuery.pageSize"
+                @page-change="handleLinksPageChange"
+                @search="handleLinksSearch"
+                @revoke="handleRevokeInvitation"
+                @refresh="fetchLinks"
+              />
+            </el-tab-pane>
+
+            <!-- 入驻申请 -->
+            <el-tab-pane label="入驻申请" name="requests">
+              <TenantJoinRequestList
+                :data="requests"
+                :loading="requestsLoading"
+                :total="requestsTotal"
+                :current-page="requestsQuery.currentPage"
+                :page-size="requestsQuery.pageSize"
+                @page-change="handleRequestsPageChange"
+                @search="handleRequestsSearch"
+                @approve="handleApproval"
+              />
             </el-tab-pane>
           </el-tabs>
         </div>
