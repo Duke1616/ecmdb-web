@@ -18,10 +18,10 @@ export function useUserDisplayItems(user: Ref<User | undefined>) {
         type: "success"
       },
       {
-        label: "控制台登录",
-        value: user.value.console_login ? "已开启" : "未授权",
+        label: "账号状态",
+        value: user.value.status === "active" ? "正常" : "已禁用",
         dot: true,
-        type: user.value.console_login ? "success" : "info"
+        type: user.value.status === "active" ? "success" : "danger"
       },
       {
         label: "MFA 状态",

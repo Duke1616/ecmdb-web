@@ -9,7 +9,7 @@ import type { Policy } from "@/api/iam/policy/type"
 import type { Tenant } from "@/api/iam/tenant/type"
 
 export function useUserGovernance(userId: Ref<number | undefined>) {
-  const { activeTab } = useTabRouter("auth")
+  const { activeTab } = useTabRouter("sources")
   const attachPolicyVisible = ref(false)
 
   // --- 使用通用列表管理器 ---

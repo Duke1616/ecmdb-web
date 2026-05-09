@@ -14,7 +14,6 @@ import { useUserDisplayItems } from "./composables/useUserDisplayItems"
 import { formatTimestamp } from "@@/utils/day"
 
 // Components
-import AuthGovernance from "./components/detail/AuthGovernance.vue"
 import IdentitySources from "./components/detail/IdentitySources.vue"
 import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
@@ -127,12 +126,7 @@ const userSubjects = computed<Subject[]>(() => {
         <!-- 3. 治理内容区 -->
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
-            <!-- 特有：认证与安全治理 -->
-            <el-tab-pane label="认证治理" name="auth">
-              <AuthGovernance :user="userInfo" @refresh="loadDetail" />
-            </el-tab-pane>
-
-            <!-- 特有：多维度身份源 -->
+            <!-- 多维度身份源 -->
             <el-tab-pane label="身份源关联" name="sources">
               <IdentitySources :user="userInfo" @refresh="loadDetail" />
             </el-tab-pane>
@@ -199,7 +193,7 @@ const userSubjects = computed<Subject[]>(() => {
         @confirm="handleEditConfirm"
         @cancel="editVisible = false"
       >
-        <UserForm ref="userFormRef" :is-edit="true" :id="userInfo?.id" @success="handleEditSuccess" />
+        <UserForm ref="userFormRef" :is-edit="true" :user-id="userInfo?.id" @success="handleEditSuccess" />
       </FormDialog>
 
       <!-- 授权向导 -->

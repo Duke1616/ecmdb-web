@@ -68,6 +68,7 @@ export interface User {
   console_login: boolean
   mfa_bound: boolean
   mfa_type: string
+  status: string
   identities: Identity[]
 }
 

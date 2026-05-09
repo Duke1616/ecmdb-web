@@ -46,22 +46,29 @@
 
               <!-- 编辑模式下增加状态控制 -->
               <el-row v-if="isEdit" :gutter="24">
-                <el-col :span="12">
-                  <el-form-item label="账号状态">
-                    <div class="status-control-box">
+                <el-col :span="24">
+                  <div class="status-panel-card">
+                    <div class="panel-left">
+                      <span class="panel-label">账号状态</span>
+                      <el-tooltip
+                        :content="formData.status === 'active' ? '用户可以正常登录系统' : '用户将被禁止登录'"
+                        placement="top"
+                      >
+                        <el-icon class="panel-icon"><QuestionFilled /></el-icon>
+                      </el-tooltip>
+                    </div>
+                    <div class="panel-right">
                       <el-switch
                         v-model="formData.status"
                         active-value="active"
-                        inactive-value="disabled"
+                        inactive-value="disable"
                         inline-prompt
                         active-text="正常"
-                        inactive-text="锁定"
+                        inactive-text="禁用"
+                        class="gov-switch"
                       />
-                      <span class="status-hint">
-                        {{ formData.status === "active" ? "用户可以正常登录系统" : "用户将被禁止登录" }}
-                      </span>
                     </div>
-                  </el-form-item>
+                  </div>
                 </el-col>
               </el-row>
             </div>
@@ -138,7 +145,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue"
 import type { FormInstance, FormRules } from "element-plus"
-import { Lock, SuccessFilled, User } from "@element-plus/icons-vue"
+import { Lock, SuccessFilled, User, QuestionFilled } from "@element-plus/icons-vue"
 import { signupApi, updateUserApi, userDetailApi } from "@/api/iam/user"
 
 const props = defineProps<{
@@ -233,10 +240,11 @@ defineExpose({ submit })
 
 .form-scrollbar {
   max-height: 60vh;
+  overflow-x: hidden;
 }
 
 .form-content {
-  padding: 4px 10px 20px;
+  padding: 4px 12px 20px;
 }
 
 .governance-section {
@@ -296,18 +304,56 @@ defineExpose({ submit })
   }
 }
 
-.status-control-box {
+.status-panel-card {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-radius: 8px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
+  margin-top: 8px;
+  transition: all 0.3s ease;
 
-  .status-hint {
-    font-size: 12px;
-    color: #64748b;
+  &:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  }
+
+  .panel-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .panel-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .panel-icon {
+      font-size: 14px;
+      color: #94a3b8;
+      cursor: help;
+      &:hover {
+        color: #64748b;
+      }
+    }
+  }
+}
+
+.gov-switch {
+  --el-switch-on-color: #10b981;
+  --el-switch-off-color: #e2e8f0;
+  height: 28px;
+
+  :deep(.el-switch__core) {
+    border-radius: 14px;
+    border: none;
+    .el-switch__inner {
+      font-weight: 700;
+      font-size: 11px;
+    }
   }
 }
 

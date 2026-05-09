@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue"
+import { ref, onMounted } from "vue"
 import { Edit, User, Coordinate } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -9,16 +9,9 @@ import { useUserStore } from "@/pinia/stores/user"
 
 // Composables
 import { useUserDetail } from "./composables/useUserDetail"
-import { useUserGovernance } from "./composables/useUserGovernance"
 import { useUserDisplayItems } from "./composables/useUserDisplayItems"
-import { formatTimestamp } from "@@/utils/day"
-
 // Components
 import AuthGovernance from "./components/detail/AuthGovernance.vue"
-import IdentitySources from "./components/detail/IdentitySources.vue"
-import RoleTable from "./components/detail/RoleTable.vue"
-import PolicyTable from "./components/detail/PolicyTable.vue"
-import TenantTable from "./components/detail/TenantTable.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
@@ -37,39 +30,8 @@ const {
 
 const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
-const userId = computed(() => userInfo.value?.id)
-
-const {
-  activeTab,
-  roles,
-  roleTotal,
-  roleLoading,
-  roleQuery,
-  selectedRoles,
-  policies,
-  policyTotal,
-  policyLoading,
-  policyQuery,
-  selectedPolicies,
-  tenants,
-  tenantTotal,
-  tenantLoading,
-  tenantQuery,
-  handleRolePageChange,
-  handlePolicyPageChange,
-  handleTenantPageChange,
-  handleRoleSearch,
-  handleRoleTypeChange,
-  handlePolicySearch,
-  handlePolicyTypeChange,
-  handleTenantSearch,
-  handleUnbindRole,
-  handleUnbindPolicy
-} = useUserGovernance(userId)
-
-// 默认切换到认证治理
+// 初始加载详情
 onMounted(() => {
-  activeTab.value = "auth"
   if (userStore.username) {
     loadDetail(userStore.username)
   }
@@ -102,64 +64,7 @@ const handleEditConfirm = () => {
         <InfoCard title="我的身份实证资料" :icon="User" :items="infoItems" @copy="copyText" />
 
         <!-- 3. 治理内容区 -->
-        <div class="governance-tabs-card">
-          <el-tabs v-model="activeTab" class="governance-raw-tabs">
-            <el-tab-pane label="认证治理" name="auth">
-              <AuthGovernance :user="userInfo" @refresh="() => loadDetail(userStore.username)" />
-            </el-tab-pane>
-
-            <el-tab-pane label="身份源关联" name="sources">
-              <IdentitySources :user="userInfo" @refresh="loadDetail" />
-            </el-tab-pane>
-
-            <el-tab-pane v-if="userInfo.is_member" label="我的角色" name="roles">
-              <RoleTable
-                v-model:selection="selectedRoles"
-                :loading="roleLoading"
-                :data="roles"
-                :total="roleTotal"
-                :current-page="roleQuery.currentPage"
-                :pageSize="roleQuery.pageSize"
-                :format-timestamp="formatTimestamp"
-                :show-actions="false"
-                @page-change="handleRolePageChange"
-                @search="handleRoleSearch"
-                @type-change="handleRoleTypeChange"
-                @unbind="handleUnbindRole"
-              />
-            </el-tab-pane>
-
-            <el-tab-pane v-if="userInfo.is_member" label="我的权限" name="permissions">
-              <PolicyTable
-                v-model:selection="selectedPolicies"
-                :loading="policyLoading"
-                :data="policies"
-                :total="policyTotal"
-                :current-page="policyQuery.currentPage"
-                :pageSize="policyQuery.pageSize"
-                :format-timestamp="formatTimestamp"
-                :show-actions="false"
-                @page-change="handlePolicyPageChange"
-                @search="handlePolicySearch"
-                @type-change="handlePolicyTypeChange"
-                @unbind="handleUnbindPolicy"
-              />
-            </el-tab-pane>
-
-            <el-tab-pane v-if="userInfo.is_system_space" label="租户映射" name="tenants">
-              <TenantTable
-                :loading="tenantLoading"
-                :data="tenants"
-                :total="tenantTotal"
-                :current-page="tenantQuery.currentPage"
-                :pageSize="tenantQuery.pageSize"
-                :format-timestamp="formatTimestamp"
-                @page-change="handleTenantPageChange"
-                @search="handleTenantSearch"
-              />
-            </el-tab-pane>
-          </el-tabs>
-        </div>
+        <AuthGovernance :user="userInfo" @refresh="() => loadDetail(userStore.username)" />
       </div>
 
       <!-- 编辑弹窗 -->
@@ -171,7 +76,7 @@ const handleEditConfirm = () => {
         @confirm="handleEditConfirm"
         @cancel="editVisible = false"
       >
-        <UserForm ref="userFormRef" :is-edit="true" :id="userInfo?.id" @success="handleEditSuccess" />
+        <UserForm ref="userFormRef" :is-edit="true" :user-id="userInfo?.id" @success="handleEditSuccess" />
       </FormDialog>
     </template>
   </PageContainer>
@@ -193,13 +98,6 @@ const handleEditConfirm = () => {
   flex-direction: column;
   gap: 20px;
   padding: 0 4px;
-}
-
-.governance-tabs-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 8px 24px 24px;
 }
 
 .header-action-stack {

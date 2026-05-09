@@ -51,6 +51,14 @@
         </div>
       </template>
 
+      <!-- 账号状态 -->
+      <template #status="{ row }">
+        <div class="status-dot-group">
+          <span class="status-dot" :class="row.status === 'active' ? 'active' : 'disabled'" />
+          <span class="status-text">{{ row.status === "active" ? "正常" : "禁用" }}</span>
+        </div>
+      </template>
+
       <!-- 租户成员标记 -->
       <template #is_member="{ row }">
         <el-tag v-if="row.is_member" size="small" effect="light" class="member-badge" type="success"> 已入驻 </el-tag>
@@ -172,6 +180,7 @@ const handleOperate = (row: any, code: string) => {
 const tableColumns = computed<Column[]>(() => {
   const baseColumns: Column[] = [
     { label: "主身份信息", prop: "username", slot: "user", minWidth: 200, align: "center" },
+    { label: "账号状态", prop: "status", slot: "status", width: 120, align: "center" },
     { label: "电子邮箱", prop: "email", slot: "email", minWidth: 180, align: "center" }
   ]
 
@@ -340,6 +349,31 @@ const handleConfirm = async () => {
   font-weight: 600;
   border-radius: 999px;
   line-height: 18px;
+}
+
+.status-dot-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    &.active {
+      background-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    &.disabled {
+      background-color: #94a3b8;
+    }
+  }
+  .status-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+  }
 }
 
 .column-text {
