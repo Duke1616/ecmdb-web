@@ -7,6 +7,7 @@ export interface InvitationVO {
   used_count: number
   expire_at: number
   require_approval: boolean
+  is_member: boolean
 }
 
 export interface InvitationPageReq {

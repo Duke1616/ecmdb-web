@@ -79,3 +79,8 @@ export interface AssignUserReq {
   tenant_id: number
   user_id: number
 }
+/** 移除租户成员请求 */
+export interface RemoveMemberReq {
+  tenant_id: number
+  user_id: number
+}

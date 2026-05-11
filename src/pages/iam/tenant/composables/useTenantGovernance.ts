@@ -1,6 +1,6 @@
 import { ref, watch, toValue, type MaybeRefOrGetter, computed, type Ref } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { listTenantMembersApi, assignTenantUserApi } from "@/api/iam/tenant"
+import { listTenantMembersApi, assignTenantUserApi, removeTenantMemberApi } from "@/api/iam/tenant"
 import {
   listInvitationsApi,
   revokeInvitationApi,
@@ -100,6 +100,26 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
     })
   }
 
+  const handleRemoveMember = (row: TenantMember) => {
+    if (!tid.value) return
+    ElMessageBox.confirm(
+      `确定要将成员 "${row.nickname || row.username}" 移出当前租户空间吗？移除后该用户将失去在该租户下的所有权限。`,
+      "移除成员",
+      {
+        confirmButtonText: "确定移除",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    ).then(async () => {
+      await removeTenantMemberApi({
+        tenant_id: tid.value!,
+        user_id: row.id
+      })
+      ElMessage.success("成员已移除")
+      loadMembers()
+    })
+  }
+
   const handleApproval = async (id: number, approve: boolean) => {
     const action = approve ? "通过" : "拒绝"
     try {
@@ -135,6 +155,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
     handleMemberPageChange,
     handleMemberSearch,
     handleBatchAssignMember,
+    handleRemoveMember,
     assignConfirmLoading,
 
     // 邀请

@@ -573,35 +573,33 @@ onBeforeUnmount(() => {
 }
 
 .content-labels {
-  display: flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: v-bind('showSelection ? "48px 1fr" : "1fr"');
   min-height: 44px;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.7) 100%);
   border-bottom: 1px solid #f1f5f9;
 
   .label-check {
-    width: 48px;
-    height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
   }
   .label-main {
-    flex: 1;
-    height: 100%;
-    display: flex;
-    align-items: center;
+    min-width: 0;
     padding: 0 24px;
     font-size: 13px;
+    display: flex;
+    align-items: center;
   }
 }
 
 .item-row {
-  display: flex;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: v-bind('showSelection ? "48px 1fr" : "1fr"');
   border-bottom: 1px solid #f1f5f9;
   transition: all 0.1s ease;
+  min-height: 72px;
+
   &:last-child {
     border-bottom: none;
   }
@@ -613,14 +611,11 @@ onBeforeUnmount(() => {
   }
 
   .row-checkbox {
-    width: 48px;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
   }
   .row-body {
-    flex: 1;
     min-width: 0;
     padding: 0 24px;
   }

@@ -55,6 +55,7 @@ const {
   handleMemberPageChange,
   handleMemberSearch,
   handleBatchAssignMember,
+  handleRemoveMember,
   // 邀请
   links,
   linksTotal,
@@ -142,13 +143,14 @@ const onAssignConfirm = async (userIds: number[]) => {
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
                 @add="assignVisible = true"
-                @unbind="(row) => $message.warning(`即将移除成员: ${row.username}`)"
+                @unbind="handleRemoveMember"
               />
             </el-tab-pane>
 
             <!-- 邀请链接 -->
             <el-tab-pane label="邀请链接" name="invitation">
               <TenantInvitationList
+                :tenant-id="tenantInfo.id"
                 :data="links"
                 :loading="linksLoading"
                 :total="linksTotal"

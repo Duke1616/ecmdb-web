@@ -40,7 +40,6 @@ const formatTime = (ts: number) => {
       :page-size="pageSize"
       @page-change="(page) => emit('page-change', page)"
       :show-search="false"
-      indicator-color="#f59e0b"
     >
       <template #column-header>
         <div class="gov-table-cols header-label-font request-cols">

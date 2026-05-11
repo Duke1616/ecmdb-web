@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue"
-import { Plus, CopyDocument, Delete } from "@element-plus/icons-vue"
+import { ref, watch } from "vue"
+import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@@/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import InvitationDialog from "./InvitationDialog.vue"
@@ -15,6 +15,7 @@ defineProps<{
   total: number
   currentPage: number
   pageSize: number
+  tenantId?: number
 }>()
 
 const emit = defineEmits<{
@@ -26,10 +27,23 @@ const emit = defineEmits<{
 
 const { toClipboard } = useClipboard()
 const invitationDialogVisible = ref(false)
+const selectedInvitation = ref<InvitationVO | null>(null)
 
 const handleRevoke = (row: InvitationVO) => {
   emit("revoke", row)
 }
+
+const handleCreate = () => {
+  selectedInvitation.value = null
+  invitationDialogVisible.value = true
+}
+
+// 监听弹窗关闭，清空选中
+watch(invitationDialogVisible, (val) => {
+  if (!val) {
+    selectedInvitation.value = null
+  }
+})
 
 const copyLink = async (code: string) => {
   const url = `${window.location.origin}/join?code=${code}`
@@ -55,7 +69,7 @@ const formatTime = (ts: number) => {
       :loading="loading"
       :total="total"
       :current-page="currentPage"
-      :page-size="pageSize"
+      :pageSize="pageSize"
       @page-change="(page) => emit('page-change', page)"
       :show-search="false"
       indicator-color="#3b82f6"
@@ -63,24 +77,24 @@ const formatTime = (ts: number) => {
       disabled
     >
       <template #header-actions>
-        <el-button type="primary" class="toolbar-action-btn" @click="invitationDialogVisible = true">
+        <el-button type="primary" class="toolbar-action-btn" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           <span>初始化凭证</span>
         </el-button>
       </template>
 
       <template #column-header>
-        <div class="gov-table-cols header-label-font link-cols">
+        <div class="link-cols header-label-font">
           <span>邀请码 / 分享</span>
-          <span>载荷情况</span>
+          <span class="align-center">载荷情况</span>
           <span>有效期限</span>
-          <span>审批模式</span>
-          <span class="align-center">操作治理</span>
+          <span class="align-center">审批模式</span>
+          <span class="align-center">操作</span>
         </div>
       </template>
 
       <template #item="{ item: row }">
-        <div class="gov-table-grid-row link-cols">
+        <div class="link-cols row-hover">
           <div class="cell-identity">
             <AssetIdentityCell :title="row.code" sub-title="点击复制邀请链接" @click="copyLink(row.code)" />
           </div>
@@ -106,12 +120,8 @@ const formatTime = (ts: number) => {
             </el-tag>
           </div>
 
-          <div class="cell-actions align-center">
-            <el-button type="primary" link size="small" @click="copyLink(row.code)">
-              <el-icon><CopyDocument /></el-icon>
-              <span>复制</span>
-            </el-button>
-            <el-button type="danger" link size="small" @click="handleRevoke(row)">
+          <div class="cell-actions">
+            <el-button type="danger" link size="small" class="delete-btn" @click="handleRevoke(row)">
               <el-icon><Delete /></el-icon>
               <span>撤回</span>
             </el-button>
@@ -120,7 +130,12 @@ const formatTime = (ts: number) => {
       </template>
     </PremiumList>
 
-    <InvitationDialog v-model="invitationDialogVisible" @success="emit('refresh')" />
+    <InvitationDialog
+      v-model="invitationDialogVisible"
+      :tenant-id="tenantId"
+      :initial-data="selectedInvitation"
+      @success="emit('refresh')"
+    />
   </div>
 </template>
 
@@ -128,16 +143,42 @@ const formatTime = (ts: number) => {
 @use "./governance-table.scss";
 
 .link-cols {
-  display: grid;
-  grid-template-columns: 1.5fr 1fr 1.2fr 1fr 1.2fr;
-  align-items: stretch;
-  gap: 16px;
+  display: grid !important;
+  /* 基础比例 + 关键对齐列固定宽度 */
+  grid-template-columns: 1.5fr 1.2fr 1.2fr 1.2fr 100px;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  flex: 1 1 0%;
+  box-sizing: border-box;
+
+  &.row-hover {
+    min-height: 72px;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f1f5f9;
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+
+  /* 统一对齐类 */
+  .align-center {
+    text-align: center;
+    display: block;
+    width: 100%;
+  }
+
+  .align-right {
+    text-align: right;
+    display: block;
+    width: 100%;
+  }
 }
 
 .cell-identity {
   display: flex;
   align-items: center;
-  height: 100%;
+  overflow: hidden;
 }
 
 .cell-payload {
@@ -146,8 +187,6 @@ const formatTime = (ts: number) => {
   align-items: center;
   justify-content: center;
   text-align: center;
-  height: 100%;
-  width: fit-content;
 
   .usage-info {
     font-size: 14px;
@@ -172,15 +211,24 @@ const formatTime = (ts: number) => {
 .cell-expiry {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  height: 100%;
 }
 
 .cell-mode {
+  text-align: center;
+}
+
+.cell-actions {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  height: 100%;
+  justify-content: center;
+
+  .delete-btn {
+    color: #cbd5e1;
+    font-size: 12px;
+    font-weight: 600;
+    &:hover {
+      color: #ef4444;
+    }
+  }
 }
 
 .time-text {
@@ -190,13 +238,5 @@ const formatTime = (ts: number) => {
     color: #3b82f6;
     font-weight: 600;
   }
-}
-
-.cell-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  height: 100%;
 }
 </style>

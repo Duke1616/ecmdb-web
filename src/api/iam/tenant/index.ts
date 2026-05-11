@@ -78,3 +78,10 @@ export function assignTenantUserApi(data: tenant.AssignUserReq) {
     data
   })
 }
+/** 移除租户成员 */
+export function removeTenantMemberApi(data: tenant.RemoveMemberReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/tenant/remove/member`,
+    data
+  })
+}
