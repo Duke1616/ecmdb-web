@@ -8,7 +8,8 @@ import { getProfileApi } from "@/api/iam/user"
 import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
-import { logoutApi, switchTenantApi } from "@/api/iam/user"
+import { logoutApi } from "@/api/iam/user"
+import { switchTenantApi } from "@/api/iam/tenant"
 
 export const useUserStore = defineStore(
   "user",
@@ -18,6 +19,7 @@ export const useUserStore = defineStore(
     const userInfo = ref<user.User | null>(null)
     const tenants = ref<user.Tenant[]>([])
     const currentTenantId = ref<number>(0)
+    const isAdmin = ref<boolean>(false)
     const roles = ref<string[]>(["admin"]) // TODO: 从 IAM 获取真实的 roles
 
     const tagsViewStore = useTagsViewStore()
@@ -37,6 +39,7 @@ export const useUserStore = defineStore(
           username.value = data.user.username
           tenants.value = data.tenants || []
           currentTenantId.value = data.current_tenant_id
+          isAdmin.value = data.is_admin
         } finally {
           _infoPromise = null
         }
@@ -118,6 +121,7 @@ export const useUserStore = defineStore(
       userInfo,
       tenants,
       currentTenantId,
+      isAdmin,
       roles,
       setToken,
       getInfo,

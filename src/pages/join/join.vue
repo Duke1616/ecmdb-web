@@ -102,10 +102,7 @@
 
           <div v-else-if="invitation" class="invitation-main">
             <div class="card-header">
-              <div class="welcome-badge">
-                <span class="badge-dot" />
-                <span class="badge-text">IDENTITY GOVERNANCE</span>
-              </div>
+              <!-- 移除冗余徽章 -->
               <h1 class="main-title">接受入驻邀请</h1>
               <p class="header-desc">您正受邀加入平台，请确认入驻信息</p>
             </div>
@@ -447,28 +444,6 @@ onMounted(fetchInvitation)
 
 .card-header {
   margin-bottom: 32px;
-  .welcome-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: #f0fdf4;
-    padding: 4px 12px;
-    border-radius: 100px;
-    margin-bottom: 12px;
-    .badge-dot {
-      width: 6px;
-      height: 6px;
-      background: #10b981;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    .badge-text {
-      font-size: 10px;
-      font-weight: 800;
-      color: #10b981;
-      letter-spacing: 1px;
-    }
-  }
   .main-title {
     font-size: 28px;
     font-weight: 800;

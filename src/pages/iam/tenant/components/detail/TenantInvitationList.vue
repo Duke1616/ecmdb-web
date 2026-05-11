@@ -108,7 +108,7 @@ const formatTime = (ts: number) => {
             <div class="usage-label">已用 / 上限</div>
           </div>
 
-          <div class="cell-expiry">
+          <div class="cell-time">
             <span class="time-text" :class="{ 'is-permanent': row.expire_at === 0 }">
               {{ row.expire_at === 0 ? "永久有效" : formatTime(row.expire_at) }}
             </span>
@@ -231,12 +231,16 @@ const formatTime = (ts: number) => {
   }
 }
 
-.time-text {
-  font-size: 12px;
-  color: #64748b;
-  &.is-permanent {
-    color: #3b82f6;
-    font-weight: 600;
+.cell-time {
+  display: flex;
+  align-items: center;
+  .time-text {
+    font-size: 13px;
+    color: #8a99ad;
+    font-weight: 500;
+    &.is-permanent {
+      color: #3b82f6;
+    }
   }
 }
 </style>

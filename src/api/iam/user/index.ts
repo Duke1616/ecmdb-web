@@ -28,14 +28,6 @@ export function loginSystemApi(data: user.LoginSystemRequest, headers?: Record<s
   })
 }
 
-/** 切换租户 */
-export function switchTenantApi(data: user.SwitchTenantRequest) {
-  return instance.post<string>({
-    url: `${API_SERVICE.IAM}/user/switch-tenant`,
-    data
-  })
-}
-
 /** 获取个人资料 */
 export function getProfileApi() {
   return instance.get<user.UserData>({

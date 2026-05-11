@@ -123,6 +123,25 @@ export const constantRoutes: RouteRecordRaw[] = [
     ]
   },
   {
+    path: "/governance",
+    component: Layouts,
+    redirect: "/governance/index",
+    meta: {
+      hidden: true
+    },
+    children: [
+      {
+        path: "index",
+        component: () => import("@/pages/iam/governance/index.vue"),
+        name: "Governance",
+        meta: {
+          title: "治理工作台",
+          svgIcon: "operation"
+        }
+      }
+    ]
+  },
+  {
     path: "/change",
     component: () => import("@/pages/change/index.vue"),
     meta: {

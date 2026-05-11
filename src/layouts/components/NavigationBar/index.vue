@@ -9,6 +9,7 @@ import Hamburger from "../Hamburger/index.vue"
 import Breadcrumb from "../Breadcrumb/index.vue"
 import Sidebar from "../Sidebar/index.vue"
 import Notify from "@@/components/Notify/index.vue"
+import Governance from "./Governance.vue"
 import Screenfull from "@@/components/Screenfull/index.vue"
 import SearchMenu from "@@/components/SearchMenu/index.vue"
 import { useDevice } from "@/common/composables/useDevice"
@@ -53,6 +54,7 @@ const logout = () => {
       <SearchMenu v-if="showSearchMenu" class="right-menu-item" />
       <Screenfull v-if="showScreenfull" class="right-menu-item" />
       <Notify v-if="showNotify" class="right-menu-item" />
+      <Governance v-if="userStore.isAdmin" class="right-menu-item" />
 
       <div class="divider" />
 

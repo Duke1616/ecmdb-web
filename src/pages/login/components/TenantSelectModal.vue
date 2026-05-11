@@ -2,7 +2,7 @@
 import { ref } from "vue"
 import { OfficeBuilding, ArrowRight } from "@element-plus/icons-vue"
 import type { Tenant } from "@/api/iam/user/type"
-import { switchTenantApi } from "@/api/iam/user"
+import { switchTenantApi } from "@/api/iam/tenant"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
 

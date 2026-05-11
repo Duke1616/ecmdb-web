@@ -44,7 +44,17 @@ const infoItems = computed(() => {
 })
 const editVisible = ref(false)
 const assignVisible = ref(false)
-const activeTab = ref("members")
+const activeTab = ref((router.currentRoute.value.query.tab as string) || "members")
+
+// 响应查询参数变化，自动切换 Tab
+watch(
+  () => router.currentRoute.value.query.tab,
+  (newTab) => {
+    if (newTab) {
+      activeTab.value = newTab as string
+    }
+  }
+)
 
 const {
   members,

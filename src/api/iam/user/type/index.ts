@@ -139,6 +139,7 @@ export interface UserData {
   tenants: Tenant[]
   current_tenant_id: number
   must_select_tenant: boolean
+  is_admin: boolean
   bind_token?: string
 }
 
