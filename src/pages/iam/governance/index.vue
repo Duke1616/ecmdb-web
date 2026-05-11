@@ -4,6 +4,8 @@ import { useRouter, useRoute } from "vue-router"
 import { storeToRefs } from "pinia"
 import { useUserStore } from "@/pinia/stores/user"
 import { useTenantGovernance } from "../tenant/composables/useTenantGovernance"
+import { usePermission } from "@/common/composables/usePermission"
+import { Auth } from "@/common/auth/capability"
 
 // UI Components
 import PageContainer from "@@/components/PageContainer/index.vue"
@@ -28,6 +30,8 @@ const assignVisible = ref(false)
 const currentTenant = computed(() => {
   return tenants.value.find((t) => t.id === currentTenantId.value)
 })
+
+const { hasPermission } = usePermission()
 
 /** 治理核心逻辑复用 */
 const {
@@ -113,7 +117,7 @@ const onAssignConfirm = async (userIds: number[]) => {
           </el-tab-pane>
 
           <!-- 邀请链接 -->
-          <el-tab-pane label="邀请链接" name="invitation">
+          <el-tab-pane v-if="hasPermission(Auth.Invitation.View)" label="邀请链接" name="invitation">
             <TenantInvitationList
               :tenant-id="currentTenantId"
               :data="links"
@@ -129,7 +133,7 @@ const onAssignConfirm = async (userIds: number[]) => {
           </el-tab-pane>
 
           <!-- 入驻申请 -->
-          <el-tab-pane label="入驻申请" name="requests">
+          <el-tab-pane v-if="hasPermission(Auth.User.ManageIdentity)" label="入驻申请" name="requests">
             <TenantJoinRequestList
               :data="requests"
               :loading="requestsLoading"

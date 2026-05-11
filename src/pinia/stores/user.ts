@@ -20,6 +20,7 @@ export const useUserStore = defineStore(
     const tenants = ref<user.Tenant[]>([])
     const currentTenantId = ref<number>(0)
     const isAdmin = ref<boolean>(false)
+    const permissions = ref<string[]>([])
     const roles = ref<string[]>(["admin"]) // TODO: 从 IAM 获取真实的 roles
 
     const tagsViewStore = useTagsViewStore()
@@ -40,6 +41,7 @@ export const useUserStore = defineStore(
           tenants.value = data.tenants || []
           currentTenantId.value = data.current_tenant_id
           isAdmin.value = data.is_admin
+          permissions.value = data.permissions || []
         } finally {
           _infoPromise = null
         }
@@ -129,7 +131,8 @@ export const useUserStore = defineStore(
       resolveUser,
       logout,
       resetToken,
-      changeRoles
+      changeRoles,
+      permissions
     }
   },
   {

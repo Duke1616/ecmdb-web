@@ -141,6 +141,7 @@ export interface UserData {
   must_select_tenant: boolean
   is_admin: boolean
   bind_token?: string
+  permissions: string[]
 }
 
 /** 切换租户请求 */

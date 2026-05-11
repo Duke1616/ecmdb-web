@@ -1,6 +1,6 @@
 import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { listPoliciesApi } from "@/api/iam/policy"
+import { listPoliciesApi, deletePolicyApi } from "@/api/iam/policy"
 import type { Policy, ListPolicyRequest } from "@/api/iam/policy/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -44,7 +44,7 @@ export function usePolicyList() {
   const handleDelete = (row: Policy) => {
     handleConfirmAction({
       message: `确定要永久删除策略 "${row.name}" 吗？此操作不可逆。`,
-      api: () => Promise.resolve(true), // TODO: 待接入真实删除 API
+      api: () => deletePolicyApi(row.code),
       onSuccess: loadData,
       successMsg: "策略已成功删除"
     })

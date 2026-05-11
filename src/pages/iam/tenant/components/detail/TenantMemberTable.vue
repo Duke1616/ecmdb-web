@@ -3,6 +3,7 @@ import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { TenantMember } from "@/api/iam/tenant/type"
+import { Auth } from "@/common/auth/capability"
 
 const selection = ref<TenantMember[]>([])
 
@@ -103,7 +104,14 @@ const emit = defineEmits<{
 
         <!-- 操作列 -->
         <div class="cell-actions">
-          <el-button type="danger" link size="small" class="delete-btn" @click.stop="emit('unbind', row)">
+          <el-button
+            v-permission="Auth.Tenant.RemoveMember"
+            type="danger"
+            link
+            size="small"
+            class="delete-btn"
+            @click.stop="emit('unbind', row)"
+          >
             <el-icon><Delete /></el-icon>
             <span>移除</span>
           </el-button>

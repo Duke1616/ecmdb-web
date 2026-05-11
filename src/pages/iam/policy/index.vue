@@ -40,7 +40,7 @@
 
           <!-- 主动作区 -->
           <div class="action-group">
-            <el-button type="primary" class="eiam-main-btn" @click="handleCreate">
+            <el-button v-permission="Auth.Policy.Add" type="primary" class="eiam-main-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>创建策略</span>
             </el-button>
@@ -102,25 +102,35 @@
       </template>
     </DataTable>
 
-    <!-- JSON 详情弹窗 -->
-    <el-dialog v-model="jsonVisible" title="策略详情 (JSON)" width="700px" custom-class="json-dialog">
+    <!-- 源代码 详情弹窗 -->
+    <FormDialog
+      v-model="jsonVisible"
+      title="策略源代码"
+      subtitle="查看权限策略的底层 JSON 定义与规则配置"
+      width="800px"
+      header-icon="Document"
+      :show-footer="false"
+    >
       <div class="json-viewer-container">
         <pre><code class="language-json">{{ JSON.stringify(selectedPolicy, null, 2) }}</code></pre>
       </div>
-    </el-dialog>
+    </FormDialog>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { Search, Plus, RefreshRight, Edit, Delete, Connection } from "@element-plus/icons-vue"
+import { Search, Plus, RefreshRight, Edit, Delete, Document } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import type { Column } from "@@/components/DataTable/types"
 import type { Policy } from "@/api/iam/policy/type"
+import { FormDialog } from "@/common/components/Dialogs"
 import { useRouter } from "vue-router"
 import { usePolicyList } from "./composables/usePolicyList"
+import { usePermission } from "@/common/composables/usePermission"
+import { Auth } from "@/common/auth/capability"
 
 const router = useRouter()
 
@@ -141,6 +151,8 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = usePolicyList()
+
+const { hasPermission } = usePermission()
 
 /**
  * 跳转到策略治理详情页
@@ -163,11 +175,13 @@ const tableColumns: Column[] = [
 ]
 
 const getOperateItems = (row: Policy) => {
-  const items = [
-    { name: "编辑", code: "edit", icon: Edit, type: "primary" },
-    { name: "JSON", code: "json", icon: Connection, type: "info" }
-  ]
-  if (row.type !== 1) {
+  const items = []
+  if (hasPermission(Auth.Policy.Edit)) {
+    items.push({ name: "编辑", code: "edit", icon: Edit, type: "primary" })
+  }
+  items.push({ name: "源代码", code: "source", icon: Document, type: "info" })
+
+  if (row.type !== 1 && hasPermission(Auth.Policy.Delete)) {
     items.push({ name: "删除", code: "delete", icon: Delete, type: "danger" })
   }
   return items
@@ -178,7 +192,7 @@ const handleAction = (row: Policy, code: string) => {
     case "edit":
       handleEdit(row)
       break
-    case "json":
+    case "source":
       handleViewJson(row)
       break
     case "delete":

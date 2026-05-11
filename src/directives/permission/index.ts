@@ -1,18 +1,38 @@
 import { Directive, DirectiveBinding } from "vue"
+import { useUserStoreHook } from "@/pinia/stores/user"
 
 /**
- * 按钮权限 eg: v-permission="['user-add','user-edit']"
- * TODO: 适配新的 IAM 权限模型 (URN / Capability)
+ * 权限控制指令 (Pro Version)
+ * 使用方式:
+ * 1. 移除模式 (默认): v-permission="Auth.User.Edit"
+ * 2. 禁用模式: v-permission:disable="Auth.User.Edit"
+ * 3. 满足其一: v-permission="[Auth.User.Add, Auth.User.Edit]"
  */
 export const permission: Directive = {
   mounted(el: HTMLElement, binding: DirectiveBinding) {
-    const { value } = binding
-    if (!value) {
-      throw new Error("need perms! Like v-permission=\"['user-add','user-edit']\"")
-    }
+    const { value, arg } = binding
+    const userStore = useUserStoreHook()
 
-    // NOTE: 目前已切换至 IAM 模型，前端暂不根据 roles/buttons 物理过滤按钮
-    // 后续可根据授权接口返回的权限 URN 进行过滤
-    return true
+    if (!value) return
+
+    const requiredPermissions = Array.isArray(value) ? value : [value]
+
+    // 权限匹配逻辑
+    const hasPermission = userStore.permissions.some((p) => requiredPermissions.includes(p))
+
+    if (!hasPermission) {
+      if (arg === "disable") {
+        // 禁用模式：不移除 DOM，仅设置禁用状态
+        el.setAttribute("disabled", "disabled")
+        el.classList.add("is-disabled")
+        // 如果是 Element Plus 按钮，由于它是自定义组件，可能需要额外处理 pointer-events
+        el.style.pointerEvents = "none"
+        el.style.opacity = "0.5"
+        el.style.cursor = "not-allowed"
+      } else {
+        // 移除模式：直接从父节点中剥离
+        el.parentNode && el.parentNode.removeChild(el)
+      }
+    }
   }
 }

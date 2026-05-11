@@ -82,3 +82,10 @@ export function batchDetachPolicyApi(data: policy.BatchAttachPolicyRequest) {
     data
   })
 }
+
+/** 删除权限策略 */
+export function deletePolicyApi(code: string) {
+  return instance.delete<string>({
+    url: `${API_SERVICE.IAM}/policy/delete/${code}`
+  })
+}
