@@ -12,6 +12,8 @@ import { useUserDetail } from "./composables/useUserDetail"
 import { useUserGovernance } from "./composables/useUserGovernance"
 import { useUserDisplayItems } from "./composables/useUserDisplayItems"
 import { formatTimestamp } from "@@/utils/day"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // Components
 import IdentitySources from "./components/detail/IdentitySources.vue"
@@ -36,6 +38,8 @@ const {
   handleEditSuccess,
   copyText
 } = useUserDetail()
+
+const { hasPermission } = usePermission()
 
 const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
@@ -102,11 +106,20 @@ const userSubjects = computed<Subject[]>(() => {
       >
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="gov-action-btn primary" @click="handleEdit">
+            <el-button
+              class="gov-action-btn primary"
+              :disabled="!hasPermission(IAM_CAPABILITIES.User.Edit)"
+              @click="handleEdit"
+            >
               <el-icon><Edit /></el-icon>
               <span>完善资料</span>
             </el-button>
-            <el-button v-if="userInfo.is_member" class="gov-action-btn danger" @click="handleDelete">
+            <el-button
+              v-if="userInfo.is_member"
+              class="gov-action-btn danger"
+              :disabled="!hasPermission(IAM_CAPABILITIES.User.Delete)"
+              @click="handleDelete"
+            >
               <el-icon><Delete /></el-icon>
               <span>注销主体</span>
             </el-button>
@@ -126,7 +139,11 @@ const userSubjects = computed<Subject[]>(() => {
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
             <!-- 多维度身份源 -->
             <el-tab-pane label="身份源关联" name="sources">
-              <IdentitySources :user="userInfo" @refresh="loadDetail" />
+              <IdentitySources
+                :user="userInfo"
+                :can-manage="hasPermission(IAM_CAPABILITIES.User.ManageIdentity)"
+                @refresh="loadDetail"
+              />
             </el-tab-pane>
 
             <el-tab-pane v-if="userInfo.is_member" label="角色治理" name="roles">
@@ -138,6 +155,9 @@ const userSubjects = computed<Subject[]>(() => {
                 :current-page="roleQuery.currentPage"
                 :pageSize="roleQuery.pageSize"
                 :format-timestamp="formatTimestamp"
+                :can-add="hasPermission(IAM_CAPABILITIES.Role.Assign)"
+                :can-unbind="hasPermission(IAM_CAPABILITIES.Role.Unassign)"
+                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Role.BatchUnassign)"
                 @page-change="handleRolePageChange"
                 @search="handleRoleSearch"
                 @type-change="handleRoleTypeChange"
@@ -156,6 +176,9 @@ const userSubjects = computed<Subject[]>(() => {
                 :current-page="policyQuery.currentPage"
                 :pageSize="policyQuery.pageSize"
                 :format-timestamp="formatTimestamp"
+                :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+                :can-unbind="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
+                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
                 @page-change="handlePolicyPageChange"
                 @search="handlePolicySearch"
                 @type-change="handlePolicyTypeChange"
@@ -173,6 +196,9 @@ const userSubjects = computed<Subject[]>(() => {
                 :current-page="tenantQuery.currentPage"
                 :pageSize="tenantQuery.pageSize"
                 :format-timestamp="formatTimestamp"
+                :can-add="hasPermission(IAM_CAPABILITIES.Tenant.AddMember)"
+                :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.RemoveMember)"
+                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Tenant.RemoveMember)"
                 @page-change="handleTenantPageChange"
                 @search="handleTenantSearch"
                 @add="handleAddTenant"

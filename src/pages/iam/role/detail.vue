@@ -208,7 +208,7 @@ const infoItems = computed(() => {
                 @search="handlePolicySearch"
                 @type-change="handlePolicyTypeChange"
                 @add="handleAddPolicy"
-                @unbind="(row) => handleUnbindPolicy(roleInfo?.code || '', row)"
+                @unbind="(row) => handleUnbindPolicy(row)"
                 @batch-unbind="handleBatchUnbindPolicies"
               />
             </el-tab-pane>

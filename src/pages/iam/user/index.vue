@@ -18,7 +18,12 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
+            <el-button
+              type="primary"
+              class="eiam-primary-btn"
+              :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)"
+              @click="handleCreate"
+            >
               <el-icon><Plus /></el-icon>
               <span>新增主体</span>
             </el-button>
@@ -44,9 +49,16 @@
       <!-- 用户身份: 采用 Governance 风格的 Dual-Line -->
       <template #user="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link" @click="handleView(row)">
+          <el-link
+            v-if="hasPermission(IAM_CAPABILITIES.User.Detail)"
+            type="primary"
+            :underline="false"
+            class="main-link"
+            @click="handleView(row)"
+          >
             {{ row.nickname || row.username }}
           </el-link>
+          <span v-else class="main-title-static">{{ row.nickname || row.username }}</span>
           <div class="sub-detail mono">{{ row.username }}</div>
         </div>
       </template>
@@ -97,7 +109,7 @@
 
       <!-- 操作权限: 重新接入 OperateBtn -->
       <template #actions="{ row }">
-        <OperateBtn :items="userOperateItems" :operate-item="row" :max-length="3" @route-event="handleOperate" />
+        <OperateBtn :items="userOperateItems" :operate-item="row" :max-length="2" @route-event="handleOperate" />
       </template>
     </DataTable>
 
@@ -128,6 +140,10 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import UserForm from "./components/UserForm.vue"
 import type { Column } from "@@/components/DataTable/types"
 import { useUserList } from "./composables/useUserList"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+
+const { hasPermission } = usePermission()
 
 const router = useRouter()
 const {
@@ -152,6 +168,7 @@ const {
  * 跳转至详情页
  */
 const handleView = (row: any) => {
+  if (!hasPermission(IAM_CAPABILITIES.User.Detail)) return
   router.push({
     name: "UserDetail",
     query: { id: row.id }
@@ -165,8 +182,8 @@ const submitting = ref(false)
  * 用户操作配置项
  */
 const userOperateItems = [
-  { name: "资料维护", code: "edit", type: "primary" },
-  { name: "权限注销", code: "delete", type: "danger" }
+  { name: "资料维护", code: "edit", type: "primary", capability: IAM_CAPABILITIES.User.Edit },
+  { name: "权限注销", code: "delete", type: "danger", capability: IAM_CAPABILITIES.User.Delete }
 ]
 
 const handleOperate = (row: any, code: string) => {
@@ -322,15 +339,24 @@ const handleConfirm = async () => {
   gap: 0px;
   line-height: 1.2;
 
-  .main-link {
-    color: #1e293b;
+  .main-link,
+  .main-title-static {
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 2px;
     justify-content: center;
+  }
+
+  .main-link {
+    color: #3b82f6;
     &:hover {
-      color: #3b82f6;
+      color: #2563eb;
     }
+  }
+
+  .main-title-static {
+    color: #1e293b;
+    cursor: default;
   }
   .sub-detail {
     font-size: 11px;

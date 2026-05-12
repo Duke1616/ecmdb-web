@@ -3,6 +3,10 @@ import { Delete, Plus } from "@element-plus/icons-vue"
 import PremiumList from "@@/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { Tenant } from "@/api/iam/tenant/type"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+
+const { hasPermission } = usePermission()
 
 const selection = defineModel<Tenant[]>("selection", { default: () => [] })
 
@@ -13,6 +17,9 @@ defineProps<{
   currentPage: number
   pageSize: number
   formatTimestamp: (ts: string | number) => string
+  canAdd?: boolean
+  canUnbind?: boolean
+  canBatchUnbind?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -53,15 +60,15 @@ const emit = defineEmits<{
 
     <!-- 顶部操作 -->
     <template #header-actions>
-      <el-button plain class="toolbar-action-btn" disabled @click="emit('add')">
+      <el-button plain class="toolbar-action-btn" :disabled="!canAdd" @click="emit('add')">
         <el-icon><Plus /></el-icon>
-        <span>加入租户 (即将集成)</span>
+        <span>加入租户</span>
       </el-button>
     </template>
 
     <!-- 批量操作 -->
     <template #batch-actions>
-      <el-button type="danger" plain size="small" disabled @click="emit('batchUnbind')">
+      <el-button type="danger" plain size="small" :disabled="!canBatchUnbind" @click="emit('batchUnbind')">
         <el-icon><Delete /></el-icon>
         <span>批量移除</span>
       </el-button>
@@ -75,7 +82,11 @@ const emit = defineEmits<{
           <AssetIdentityCell
             :title="row.name"
             :sub-title="row.code"
-            :link-to="{ name: 'TenantDetail', query: { id: row.id } }"
+            :link-to="
+              hasPermission(IAM_CAPABILITIES.Tenant.Detail)
+                ? { name: 'TenantDetail', query: { id: row.id } }
+                : undefined
+            "
           />
         </div>
 
@@ -88,7 +99,14 @@ const emit = defineEmits<{
         </div>
 
         <div class="cell-actions">
-          <el-button type="danger" link size="small" class="delete-btn" disabled @click.stop="emit('unbind', row)">
+          <el-button
+            type="danger"
+            link
+            size="small"
+            class="delete-btn"
+            :disabled="!canUnbind"
+            @click.stop="emit('unbind', row)"
+          >
             <el-icon><Delete /></el-icon>
             <span>移除</span>
           </el-button>

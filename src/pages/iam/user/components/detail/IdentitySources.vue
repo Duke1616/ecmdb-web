@@ -6,9 +6,15 @@ import type { User } from "@/api/iam/user/type"
 import { useIdentityManage } from "../../composables/useIdentityManage"
 import IdentityManageDialog from "./IdentityManageDialog.vue"
 
-const props = defineProps<{
-  user: User
-}>()
+const props = withDefaults(
+  defineProps<{
+    user: User
+    canManage?: boolean
+  }>(),
+  {
+    canManage: true
+  }
+)
 
 const emit = defineEmits<{
   (e: "refresh"): void
@@ -53,7 +59,7 @@ const getProviderIcon = (p: string) => {
         <span class="count-badge">{{ filteredIdentities.length }}</span>
       </div>
       <div class="header-right">
-        <el-button class="manage-action-btn" @click="handleOpenManage">
+        <el-button class="manage-action-btn" :disabled="!canManage" @click="handleOpenManage">
           <el-icon><Setting /></el-icon>
           <span>治理身份源</span>
         </el-button>
@@ -122,7 +128,9 @@ const getProviderIcon = (p: string) => {
 
           <!-- 底部操作区 -->
           <div v-if="activeIdentity.provider.toLowerCase() !== 'ldap'" class="action-footer">
-            <el-button link type="danger" class="unbind-btn" @click="handleUnbind"> 解除账号关联 </el-button>
+            <el-button link type="danger" class="unbind-btn" :disabled="!canManage" @click="handleUnbind">
+              解除账号关联
+            </el-button>
           </div>
           <div v-else class="action-footer-info">
             <el-icon><InfoFilled /></el-icon>

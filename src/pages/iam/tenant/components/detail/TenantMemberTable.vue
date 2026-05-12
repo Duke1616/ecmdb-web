@@ -180,10 +180,6 @@ const emit = defineEmits<{
   width: 100%;
 }
 
-.cell-identity {
-  // 逻辑已托管
-}
-
 .cell-email .email-text {
   font-size: 13px;
   color: #475569;

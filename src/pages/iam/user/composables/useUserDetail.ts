@@ -35,7 +35,6 @@ export function useUserDetail() {
     try {
       // 这里的 params 会被透传到 instance.get 的 query 中
       const { data }: any = await userDetailApi(params)
-      console.log("[useUserDetail] Load success (Flattened):", data)
 
       // 兼容性处理：如果后端返回的是 { user: {...} } 则取 data.user，否则直接取 data
       rawData.value = data.user ? data.user : data
@@ -46,7 +45,6 @@ export function useUserDetail() {
       }
     } catch (err: any) {
       console.error("[useUserDetail] Load failed:", err)
-      ElMessage.error(err?.message || "获取用户详情失败")
     } finally {
       loading.value = false
     }

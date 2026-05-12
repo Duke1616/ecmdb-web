@@ -9,7 +9,7 @@
         size="small"
         :icon="el.icon ? el.icon : ''"
         link
-        :disabled="el.disabled"
+        :disabled="isBtnDisabled(el)"
         @click="routeEvent(props.operateItem, el.code)"
       >
         <span> {{ el.name }}</span>
@@ -25,9 +25,16 @@
               v-for="(item, index) in dropData"
               :key="index"
               :command="beforeHandleCommand(props.operateItem, item.name, item.code)"
+              :disabled="isBtnDisabled(item)"
               class="link-text"
             >
-              <el-button :type="item.type || 'primary'" link :icon="item.icon ? item.icon : ''" size="small">
+              <el-button
+                :type="item.type || 'primary'"
+                link
+                :icon="item.icon ? item.icon : ''"
+                size="small"
+                :disabled="isBtnDisabled(item)"
+              >
                 {{ item.name }}
               </el-button>
             </el-dropdown-item>
@@ -44,7 +51,7 @@
           link
           :icon="item.icon ? item.icon : ''"
           size="small"
-          :disabled="item.disabled"
+          :disabled="isBtnDisabled(item)"
           @click="routeEvent(operateItem, item.code)"
         >
           <span> {{ item.name }}</span>
@@ -57,6 +64,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { More } from "@element-plus/icons-vue"
+import { usePermission } from "@/common/composables/usePermission"
 
 interface Item {
   name: string
@@ -64,6 +72,8 @@ interface Item {
   type?: any
   icon?: any
   disabled?: boolean
+  /** 权限能力标识 */
+  capability?: string | string[]
 }
 
 interface Props {
@@ -74,6 +84,19 @@ interface Props {
 
 const props = defineProps<Props>()
 const emit = defineEmits(["routeEvent"])
+
+const { hasPermission } = usePermission()
+
+/**
+ * 判定按钮是否被禁用 (逻辑: 业务禁用 OR 权限缺失)
+ */
+const isBtnDisabled = (item: Item) => {
+  if (item.disabled) return true
+  if (item.capability) {
+    return !hasPermission(item.capability)
+  }
+  return false
+}
 
 // NOTE: 使用 computed 替代 watch + ref 以避免在 DataTable 大量渲染时触发局部刷新导致的死循环
 /**

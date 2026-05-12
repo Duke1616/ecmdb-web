@@ -6,13 +6,9 @@ import type { Policy } from "@/api/iam/policy/type"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
 
 const props = defineProps<{
-  // 外部同步选中的列表
   selection: Policy[]
-  // 卡片标题，默认为“权限策略”
   title?: string
-  // 是否显示高风险标记
   showRisk?: boolean
-  // 是否开启扁平模式（无边框、无阴影，适用于嵌入式场景）
   flat?: boolean
 }>()
 
@@ -20,47 +16,58 @@ const emit = defineEmits<{
   (e: "update:selection", val: Policy[]): void
 }>()
 
-// --- 识别高风险策略 ---
+// --- 1. 业务逻辑：识别高风险策略 ---
 const isHighRisk = (name: string) => {
   if (!props.showRisk) return false
   const risks = ["Admin", "FullAccess", "Owner", "Super"]
   return risks.some((r) => name.toLowerCase().includes(r.toLowerCase()))
 }
 
-// --- 权限策略治理选择器核心逻辑 ---
-const policySelector = useResourceSelector<Policy, { keyword: string; type: string | number }>({
+// --- 2. 核心逻辑：优雅解构 ---
+const {
+  list,
+  total,
+  loading,
+  query,
+  pagination,
+  tableRef,
+  selectedList,
+  selectedTotal,
+  fetchList,
+  handleSearch,
+  handlePageChange,
+  handleSelectionChange,
+  removeSelection,
+  clearSelection,
+  reset
+} = useResourceSelector<Policy, { keyword: string; type: string | number }>({
   fetchApi: listPoliciesApi,
   listKey: "policies",
   rowKey: (row: Policy) => `${row.type}-${row.code}`,
   initialQuery: { keyword: "", type: "" }
 })
 
-// --- 外部同步逻辑 ---
-// 当内部选中列表变化时，向外派发事件
+// --- 3. 同步逻辑 ---
 watch(
-  () => policySelector.selectedList.value,
+  selectedList,
   (newList) => {
     emit("update:selection", newList)
   },
   { deep: true }
 )
 
-// 当外部清空或修改 selection 时，同步内部 Map 和 Table 勾选状态
 watch(
   () => props.selection,
   (newSelection) => {
-    if (newSelection.length === 0 && policySelector.selectedTotal.value > 0) {
-      policySelector.clearSelection()
+    if (newSelection.length === 0 && selectedTotal.value > 0) {
+      clearSelection()
     }
   },
   { deep: true }
 )
 
-// 对外暴露主动刷新的方法
-defineExpose({
-  fetchList: policySelector.fetchList,
-  reset: policySelector.reset
-})
+// --- 4. 对外暴露 ---
+defineExpose({ fetchList, reset })
 </script>
 
 <template>
@@ -71,13 +78,7 @@ defineExpose({
         <span class="text">{{ title || "权限策略" }}</span>
       </div>
       <div class="header-actions">
-        <el-button
-          v-if="policySelector.selectedTotal.value > 0"
-          link
-          type="danger"
-          size="small"
-          @click="policySelector.clearSelection()"
-        >
+        <el-button v-if="selectedTotal > 0" link type="danger" size="small" @click="clearSelection()">
           清空已选
         </el-button>
       </div>
@@ -88,21 +89,17 @@ defineExpose({
       <div class="panel-source">
         <div class="panel-source-header">
           <el-input
-            v-model="policySelector.query.keyword"
+            v-model="query.keyword"
             placeholder="搜索策略名称或标识..."
             class="search-input"
             clearable
-            @input="policySelector.debouncedSearch"
+            @input="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
             </template>
           </el-input>
-          <el-radio-group
-            v-model="policySelector.query.type"
-            class="eiam-radio-filter"
-            @change="policySelector.fetchList"
-          >
+          <el-radio-group v-model="query.type" class="eiam-radio-filter" @change="fetchList">
             <el-radio-button label="">全部</el-radio-button>
             <el-radio-button :value="1">系统</el-radio-button>
             <el-radio-button :value="2">自定义</el-radio-button>
@@ -110,12 +107,12 @@ defineExpose({
         </div>
 
         <el-table
-          :ref="policySelector.tableRef"
-          v-loading="policySelector.loading.value"
-          :data="policySelector.list.value"
+          ref="tableRef"
+          v-loading="loading"
+          :data="list"
           height="100%"
-          :row-key="(row) => String(row.type) + '-' + row.code"
-          @selection-change="policySelector.handleSelectionChange"
+          :row-key="(row: Policy) => String(row.type) + '-' + row.code"
+          @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="40" reserve-selection />
           <el-table-column label="策略资产" width="160">
@@ -123,9 +120,9 @@ defineExpose({
               <div class="policy-info">
                 <div class="name-box">
                   <span class="policy-name">{{ row.name }}</span>
-                  <el-tag v-if="isHighRisk(row.name)" type="danger" size="small" effect="dark" class="risk-badge"
-                    >高风险</el-tag
-                  >
+                  <el-tag v-if="isHighRisk(row.name)" type="danger" size="small" effect="dark" class="risk-badge">
+                    高风险
+                  </el-tag>
                 </div>
                 <span class="policy-code mono">{{ row.code }}</span>
               </div>
@@ -146,13 +143,13 @@ defineExpose({
         </el-table>
         <div class="pagination-bar">
           <el-pagination
-            v-model:current-page="policySelector.query.page"
-            v-model:page-size="policySelector.query.limit"
+            v-model:current-page="pagination.currentPage"
+            v-model:page-size="pagination.pageSize"
             small
             background
             layout="total, prev, pager, next"
-            :total="policySelector.total.value"
-            @current-change="policySelector.fetchList"
+            :total="total"
+            @current-change="handlePageChange"
           />
         </div>
       </div>
@@ -161,25 +158,21 @@ defineExpose({
       <div class="panel-buffer">
         <div class="buffer-header">
           <span>已选授权项</span>
-          <span class="count-tag">{{ policySelector.selectedTotal.value }}</span>
+          <span class="count-tag">{{ selectedTotal }}</span>
         </div>
         <div class="buffer-list">
           <TransitionGroup name="list-fade">
-            <div
-              v-for="item in policySelector.selectedList.value"
-              :key="String(item.type) + '-' + item.code"
-              class="buffer-item"
-            >
+            <div v-for="item in selectedList" :key="String(item.type) + '-' + item.code" class="buffer-item">
               <div class="info">
                 <span class="name">{{ item.name }}</span>
                 <span class="id mono">{{ item.code }}</span>
               </div>
               <div class="actions">
-                <el-icon class="remove-btn" @click="policySelector.removeSelection(item)"><Close /></el-icon>
+                <el-icon class="remove-btn" @click="removeSelection(item)"><Close /></el-icon>
               </div>
             </div>
           </TransitionGroup>
-          <el-empty v-if="policySelector.selectedTotal.value === 0" description="点击左侧勾选" :image-size="40" />
+          <el-empty v-if="selectedTotal === 0" description="点击左侧勾选" :image-size="40" />
         </div>
       </div>
     </div>
@@ -227,12 +220,12 @@ defineExpose({
   }
 
   &.is-flat {
-    border: 1px solid #f1f5f9; /* 使用极致淡的灰线 */
+    border: 1px solid #f1f5f9;
     border-radius: 12px;
     box-shadow: none;
 
     .card-header {
-      background: #ffffff; /* 统一回纯白 */
+      background: #ffffff;
       padding: 14px 20px;
       border-bottom: 1px solid #f1f5f9;
 

@@ -188,7 +188,7 @@ const OPERATE_BUTTONS = computed(() => [
 
 const showAuthorizeDrawer = ref(false)
 const selectedRows = ref<Authorization[]>([])
-const tableRef = ref<any>()
+const tableRef = ref<InstanceType<typeof DataTable>>()
 
 /**
  * 判定行是否可勾选：拥有单条解绑或批量解绑权限的用户可以勾选
@@ -200,7 +200,7 @@ const isSelectable = () => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)
  */
 const getSubjectLink = (row: Authorization) => {
   const isUser = row.sub_type === AuthorizationSubType.USER
-  const capability = isUser ? IAM_CAPABILITIES.User.View : IAM_CAPABILITIES.Role.View
+  const capability = isUser ? IAM_CAPABILITIES.User.Detail : IAM_CAPABILITIES.Role.Detail
 
   if (!hasPermission(capability)) return undefined
 

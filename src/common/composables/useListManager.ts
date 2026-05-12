@@ -1,93 +1,91 @@
 import { ref, reactive, computed, toRaw, type Ref } from "vue"
 
 /**
- * 通用列表数据结构
+ * 列表响应的基础结构
+ * 兼容性优化：不再强制要求索引签名，使用交叉类型 Record<string, any>
  */
-/**
- * 通用列表数据结构
- */
-export interface ListResponse {
+export type ListResponse<T> = {
   total: number
-}
+} & Record<string, T[] | any>
 
 /**
- * 通用 API 响应包装
+ * 列表管理配置项
  */
-export interface ApiResponse<T> {
-  code: number
-  data: ListResponse & Record<string, T[] | any>
-  msg: string
-}
-
-interface ListManagerOptions<T, Q> {
+interface ListManagerOptions<_T, Q> {
   /**
    * API 请求函数
-   * 参数自动合并业务查询参数 Q 与分页参数 (offset, limit)
+   * 返回值兼容项目的标准响应格式 { data: { total, ... } }
    */
-  fetchApi: (
-    params: Q & { offset: number; limit: number }
-  ) => Promise<{ data: ListResponse & Record<string, T[] | any> }>
-  /** 列表数据在 data 对象中的键名 (如 'users', 'roles', 'tenants') */
+  fetchApi: (params: Q & { offset: number; limit: number }) => Promise<{ data: any }>
+  /** 列表数据在 data 对象中的键名 (如 'users', 'policies') */
   listKey: string
   /** 初始业务查询参数 */
   initialQuery?: Partial<Q>
-  /** 是否在组件挂载时立即执行查询，默认为 true */
+  /** 是否立即加载 */
   immediate?: boolean
 }
 
 /**
- * 通用列表管理逻辑 Composable
- * 封装分页、加载、搜索、重置等常用列表操作逻辑
+ * 辅助函数：清理对象中的空字符串，适配后端 omitempty
+ */
+const cleanEmptyParams = (obj: Record<string, any>) => {
+  const newObj = { ...obj }
+  Object.keys(newObj).forEach((key) => {
+    if (newObj[key] === "" || newObj[key] === null) {
+      newObj[key] = undefined
+    }
+  })
+  return newObj
+}
+
+/**
+ * 通用列表管理逻辑 Hook
  */
 export function useListManager<T, Q extends object>(options: ListManagerOptions<T, Q>) {
+  // --- 1. 核心状态 ---
   const list = ref<T[]>([]) as Ref<T[]>
   const total = ref(0)
   const loading = ref(false)
 
-  // 分页状态
   const pagination = reactive({
     currentPage: 1,
     pageSize: 10
   })
 
-  // 基础查询参数 (强制包含 keyword，并合并初始参数)
   const query = reactive({
     keyword: "",
     ...(options.initialQuery || {})
   }) as Q & { keyword: string }
 
-  // 计算偏移量
+  // --- 2. 计算属性 ---
   const offset = computed(() => (pagination.currentPage - 1) * pagination.pageSize)
 
+  // --- 3. 核心行为 ---
   const fetchList = async () => {
     loading.value = true
     try {
-      // 组合最终的 API 请求参数
-      // 使用 toRaw 确保从 reactive 对象中提取出当前的纯数据状态
-      const params = {
-        ...toRaw(query),
+      const requestParams = {
+        ...cleanEmptyParams(toRaw(query)),
         offset: offset.value,
         limit: pagination.pageSize
-      } as Q & { offset: number; limit: number; keyword: string }
+      } as Q & { offset: number; limit: number }
 
-      const res = await options.fetchApi(params)
+      const res = await options.fetchApi(requestParams)
 
-      const apiData = res.data
+      // 提取数据：兼容各种深度的 API 返回结构
+      const apiData = res.data as ListResponse<T>
       if (apiData) {
-        // NOTE: 使用 Record<string, any> 局部断言以支持动态键名访问
-        const data = apiData as Record<string, any>
-        list.value = (data[options.listKey] as T[]) || []
+        list.value = (apiData[options.listKey] as T[]) || []
         total.value = apiData.total || 0
       }
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : String(err)
-      console.error(`[ListManager] 加载数据失败:`, errorMsg)
+      console.error(`[ListManager] 数据加载失败:`, err)
     } finally {
       loading.value = false
     }
   }
 
-  // 分页变更处理
+  // --- 4. 辅助方法 ---
   const handlePageChange = (page: number) => {
     pagination.currentPage = page
     fetchList()
@@ -99,26 +97,20 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
     fetchList()
   }
 
-  // 搜索处理：支持直接传入关键字（用于嵌套组件 emit 场景）
   const handleSearch = (keyword?: unknown) => {
-    if (typeof keyword === "string") {
-      query.keyword = keyword
-    }
+    if (typeof keyword === "string") query.keyword = keyword
     pagination.currentPage = 1
     fetchList()
   }
 
-  // 重置处理
   const reset = () => {
     pagination.currentPage = 1
     query.keyword = ""
-    if (options.initialQuery) {
-      Object.assign(query, options.initialQuery)
-    }
+    if (options.initialQuery) Object.assign(query, options.initialQuery)
     fetchList()
   }
 
-  // 生命周期：初始加载
+  // --- 5. 初始化 ---
   if (options.immediate !== false) {
     fetchList()
   }
@@ -129,7 +121,6 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
     loading,
     pagination,
     query,
-    offset,
     fetchList,
     handlePageChange,
     handleSizeChange,

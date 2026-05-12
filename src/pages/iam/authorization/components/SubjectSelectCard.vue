@@ -6,15 +6,10 @@ import type { Subject } from "@/api/iam/permission/type"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
 
 const props = defineProps<{
-  // 外部同步选中的列表
   selection: Subject[]
-  // 卡片标题，默认为“授权主体”
   title?: string
-  // 是否关闭边框和阴影（扁平模式）
   flat?: boolean
-  // 默认过滤类型
   initialType?: "user" | "role" | ""
-  // 是否隐藏类型转换器（用于固定主体的场景）
   hideTypeSelector?: boolean
 }>()
 
@@ -22,17 +17,33 @@ const emit = defineEmits<{
   (e: "update:selection", val: Subject[]): void
 }>()
 
-// --- 授权主体治理选择器核心逻辑 (Subject) ---
-const subjectSelector = useResourceSelector<Subject, { keyword: string; sub_type: string }>({
+// --- 1. 核心逻辑：优雅解构 ---
+const {
+  list,
+  total,
+  loading,
+  query,
+  pagination,
+  tableRef,
+  selectedList,
+  selectedTotal,
+  fetchList,
+  handleSearch,
+  handlePageChange,
+  handleSelectionChange,
+  removeSelection,
+  clearSelection,
+  reset
+} = useResourceSelector<Subject, { keyword: string; sub_type: string }>({
   fetchApi: searchSubjectsApi,
   listKey: "subjects",
   rowKey: (row: Subject) => `${row.type}-${row.id}`,
   initialQuery: { keyword: "", sub_type: props.initialType || "" }
 })
 
-// --- 外部同步逻辑 ---
+// --- 2. 同步逻辑 ---
 watch(
-  () => subjectSelector.selectedList.value,
+  selectedList,
   (newList) => {
     emit("update:selection", newList)
   },
@@ -42,18 +53,15 @@ watch(
 watch(
   () => props.selection,
   (newSelection) => {
-    if (newSelection.length === 0 && subjectSelector.selectedTotal.value > 0) {
-      subjectSelector.clearSelection()
+    if (newSelection.length === 0 && selectedTotal.value > 0) {
+      clearSelection()
     }
   },
   { deep: true }
 )
 
-// 对外暴露主动刷新的方法
-defineExpose({
-  fetchList: subjectSelector.fetchList,
-  reset: subjectSelector.reset
-})
+// --- 3. 对外暴露 ---
+defineExpose({ fetchList, reset })
 </script>
 
 <template>
@@ -64,13 +72,7 @@ defineExpose({
         <span class="text">{{ title || "授权主体" }}</span>
       </div>
       <div class="header-actions">
-        <el-button
-          v-if="subjectSelector.selectedTotal.value > 0"
-          link
-          type="danger"
-          size="small"
-          @click="subjectSelector.clearSelection()"
-        >
+        <el-button v-if="selectedTotal > 0" link type="danger" size="small" @click="clearSelection()">
           清空已选
         </el-button>
       </div>
@@ -80,11 +82,11 @@ defineExpose({
       <div class="panel-source">
         <div class="panel-source-header">
           <el-input
-            v-model="subjectSelector.query.keyword"
+            v-model="query.keyword"
             placeholder="搜索主体名称或标识..."
             class="search-input"
             clearable
-            @input="subjectSelector.debouncedSearch"
+            @input="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -92,22 +94,23 @@ defineExpose({
           </el-input>
           <el-radio-group
             v-if="!hideTypeSelector"
-            v-model="subjectSelector.query.sub_type"
+            v-model="query.sub_type"
             class="eiam-radio-filter"
-            @change="subjectSelector.fetchList"
+            @change="fetchList"
           >
             <el-radio-button label="">全部</el-radio-button>
             <el-radio-button value="user">用户</el-radio-button>
             <el-radio-button value="role">角色</el-radio-button>
           </el-radio-group>
         </div>
+
         <el-table
-          :ref="subjectSelector.tableRef"
-          v-loading="subjectSelector.loading.value"
-          :data="subjectSelector.list.value"
+          ref="tableRef"
+          v-loading="loading"
+          :data="list"
           height="100%"
-          :row-key="(row) => row.type + '-' + row.id"
-          @selection-change="subjectSelector.handleSelectionChange"
+          :row-key="(row: Subject) => row.type + '-' + row.id"
+          @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="40" reserve-selection />
           <el-table-column label="身份标识" width="140">
@@ -129,15 +132,16 @@ defineExpose({
             </template>
           </el-table-column>
         </el-table>
+
         <div class="pagination-bar">
           <el-pagination
-            v-model:current-page="subjectSelector.query.page"
-            v-model:page-size="subjectSelector.query.limit"
+            v-model:current-page="pagination.currentPage"
+            v-model:page-size="pagination.pageSize"
             small
             background
             layout="total, prev, pager, next"
-            :total="subjectSelector.total.value"
-            @current-change="subjectSelector.fetchList"
+            :total="total"
+            @current-change="handlePageChange"
           />
         </div>
       </div>
@@ -145,26 +149,22 @@ defineExpose({
       <div class="panel-buffer">
         <div class="buffer-header">
           <span>已选主体</span>
-          <span class="count-tag">{{ subjectSelector.selectedTotal.value }}</span>
+          <span class="count-tag">{{ selectedTotal }}</span>
         </div>
         <div class="buffer-list">
           <TransitionGroup name="list-fade">
-            <div
-              v-for="item in subjectSelector.selectedList.value"
-              :key="item.type + '-' + item.id"
-              class="buffer-item"
-            >
+            <div v-for="item in selectedList" :key="item.type + '-' + item.id" class="buffer-item">
               <div class="info">
                 <span class="name">{{ item.name }}</span>
                 <span class="id mono">{{ item.id }}</span>
               </div>
               <div class="actions">
                 <span class="type-badge small" :class="item.type">{{ item.type === "user" ? "用户" : "角色" }}</span>
-                <el-icon class="remove-btn" @click="subjectSelector.removeSelection(item)"><Close /></el-icon>
+                <el-icon class="remove-btn" @click="removeSelection(item)"><Close /></el-icon>
               </div>
             </div>
           </TransitionGroup>
-          <el-empty v-if="subjectSelector.selectedTotal.value === 0" description="点击左侧勾选" :image-size="40" />
+          <el-empty v-if="selectedTotal === 0" description="点击左侧勾选" :image-size="40" />
         </div>
       </div>
     </div>
@@ -172,7 +172,6 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-/* 样式与 PolicySelectCard.vue 保持高度一致 */
 .governance-card {
   background: #ffffff;
   border-radius: 12px;

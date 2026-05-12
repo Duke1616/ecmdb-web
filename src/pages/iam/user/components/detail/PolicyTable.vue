@@ -3,6 +3,10 @@ import { Delete, Plus } from "@element-plus/icons-vue"
 import PremiumList from "@@/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { Policy } from "@/api/iam/policy/type"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+
+const { hasPermission } = usePermission()
 
 const selection = defineModel<Policy[]>("selection", { default: () => [] })
 
@@ -81,7 +85,11 @@ const emit = defineEmits<{
           <AssetIdentityCell
             :title="row.name"
             :sub-title="row.code"
-            :link-to="{ name: 'PolicyDetail', query: { code: row.code } }"
+            :link-to="
+              hasPermission(IAM_CAPABILITIES.Policy.Detail)
+                ? { name: 'PolicyDetail', query: { code: row.code } }
+                : undefined
+            "
           />
         </div>
 

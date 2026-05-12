@@ -9,8 +9,12 @@ export const IAM_CAPABILITIES = {
     ViewMine: "iam:tenant:view_mine",
     /** 切换租户上下文 */
     Switch: "iam:tenant:switch",
+    /** 查看租户详情 */
+    Detail: "iam:tenant:get",
     /** 查看租户成员列表 */
     ViewMembers: "iam:tenant:view_members",
+    /** 添加租户成员 */
+    AddMember: "iam:tenant:add_member",
     /** 移除租户成员 */
     RemoveMember: "iam:tenant:remove_member",
     /** 租户分派成员 */
@@ -20,13 +24,15 @@ export const IAM_CAPABILITIES = {
   /** 邀请管理相关 */
   Invitation: {
     /** 查看邀请链接列表 */
-    View: "iam:policy:view"
+    View: "iam:invitation:view"
   },
 
   /** 身份策略与授权相关 */
   Policy: {
     /** 查看权限策略 */
     View: "iam:policy:view",
+    /** 查看策略详情 */
+    Detail: "iam:policy:get",
     /** 编辑权限策略 */
     Edit: "iam:policy:edit",
     /** 新增权限策略 */
@@ -49,24 +55,28 @@ export const IAM_CAPABILITIES = {
     View: "iam:role:view",
     /** 编辑角色 */
     Edit: "iam:role:edit",
+    /** 获取角色详情 */
+    Detail: "iam:role:get",
     /** 分配角色到用户 (单条) */
     Assign: "iam:role:assign",
     /** 批量分配角色 */
     BatchAssign: "iam:role:batch_assign",
     /** 移除用户角色关联 (单条) */
-    Detach: "iam:role:detach",
+    Unassign: "iam:role:detach",
     /** 批量移除用户角色 */
-    BatchDetach: "iam:role:batch_detach"
+    BatchUnassign: "iam:role:batch_detach"
   },
 
   /** 用户治理相关 */
   User: {
     /** 查看用户列表 */
     View: "iam:user:view",
+    /** 新增用户 */
+    Add: "iam:user:add",
     /** 编辑用户资料 */
     Edit: "iam:user:edit",
     /** 获取用户详情 */
-    Get: "iam:user:get",
+    Detail: "iam:user:get",
     /** 注销/删除用户 */
     Delete: "iam:user:delete",
     /** 重置密码 */
