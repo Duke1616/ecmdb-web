@@ -26,6 +26,7 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
 
   // 2. 扩展选择器特性
   const tableRef = ref()
+  //使用 ref(Map) 时，修改内部元素不会触发响应式，必须通过替换 Map 对象来触发
   const selectedMap = ref(new Map<string, T>())
 
   const selectedList = computed(() => Array.from(selectedMap.value.values()))
@@ -43,12 +44,16 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
 
   const removeSelection = (item: T) => {
     tableRef.value?.toggleRowSelection(item, false)
-    selectedMap.value.delete(getRowKey(item))
+    // 触发响应式：替换 Map 对象
+    const newMap = new Map(selectedMap.value)
+    newMap.delete(getRowKey(item))
+    selectedMap.value = newMap
   }
 
   const clearSelection = () => {
     tableRef.value?.clearSelection()
-    selectedMap.value.clear()
+    // 触发响应式：重置为新 Map
+    selectedMap.value = new Map()
   }
 
   // 覆写重置逻辑：不触发网络请求
@@ -63,7 +68,7 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
 
   // 3. 完美组合并返回
   return {
-    ...manager, // 展开基础列表的所有 Ref 和方法
+    ...manager,
     tableRef,
     selectedMap,
     selectedList,
@@ -71,6 +76,6 @@ export function useResourceSelector<T, Q extends object>(options: UseResourceSel
     handleSelectionChange,
     removeSelection,
     clearSelection,
-    reset // 使用覆写后的 reset
+    reset
   }
 }

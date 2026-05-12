@@ -16,7 +16,7 @@
         v-model:selection="selectedRoles"
         title="选择要继承的父角色"
         flat
-        initial-type="role"
+        :initial-type="AuthorizationSubType.ROLE"
         hide-type-selector
       />
     </div>
@@ -28,15 +28,16 @@ import { ref, watch, nextTick } from "vue"
 import { Plus } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import SubjectSelectCard from "@/pages/iam/authorization/components/SubjectSelectCard.vue"
-import type { Subject } from "@/api/iam/permission/type"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 import { ElMessage } from "element-plus"
 
 defineProps<{
   loading?: boolean
+  excludeCodes?: string[]
 }>()
 
 const emit = defineEmits<{
-  confirm: [parentCodes: string[]]
+  confirm: [roleCodes: string[]]
 }>()
 
 const visible = defineModel<boolean>({ default: false })
@@ -49,27 +50,34 @@ const handleSubmit = () => {
     return
   }
 
-  // 提取角色编码 (在 Subject 中，id 可能就是编码或者数据库 ID，取决于接口返回)
-  // Backend RoleInheritanceReq requires RoleCode (string)
-  const codes = selectedRoles.value.filter((s) => s.type === "role").map((s) => s.id)
+  // 过滤出角色类型的 ID (即 role_code)
+  const roleCodes = selectedRoles.value.filter((s) => s.type === AuthorizationSubType.ROLE).map((s) => s.id)
 
-  emit("confirm", codes)
+  if (roleCodes.length === 0) {
+    ElMessage.warning("请选择有效角色类型")
+    return
+  }
+
+  emit("confirm", roleCodes)
 }
 
+// 监听弹窗显示，自动加载数据
 watch(visible, async (val) => {
   if (val) {
     await nextTick()
-    // 强制触发拉取，且默认过滤为角色
     subjectSelectRef.value?.fetchList()
   } else {
     selectedRoles.value = []
+    subjectSelectRef.value?.reset()
   }
 })
 </script>
 
 <style lang="scss" scoped>
 .drawer-body {
-  padding: 16px 20px;
-  background: #ffffff;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>

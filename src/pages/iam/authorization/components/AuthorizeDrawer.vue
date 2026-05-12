@@ -10,16 +10,16 @@
     class="eiam-auth-wizard"
     @confirm="handleSubmit"
     :confirm-loading="submitting"
-    :show-confirm-button="true"
+    show-confirm-button
   >
     <div class="wizard-workflow">
-      <!-- 1. 授权主体卡片 -->
+      <!-- 1. 授权主体卡片 (非固定模式下显示) -->
       <SubjectSelectCard v-if="!isFixedSubjects" ref="subjectSelectorRef" v-model:selection="selectedSubjects" flat />
 
-      <!-- 🚦 分隔指示器 (当两者都存在且其中一个被隐藏时可能需要调整，这里保持逻辑清晰) -->
+      <!-- 🚦 分隔指示器 -->
       <div v-if="!isFixedSubjects && !isFixedPolicies" class="wizard-connector" />
 
-      <!-- 2. 权限策略卡片 -->
+      <!-- 2. 权限策略卡片 (非固定模式下显示) -->
       <PolicySelectCard
         v-if="!isFixedPolicies"
         ref="policySelectorRef"
@@ -38,20 +38,18 @@ import { batchAttachPolicyApi } from "@/api/iam/policy"
 import type { Subject } from "@/api/iam/permission/type"
 import type { Policy } from "@/api/iam/policy/type"
 import { ElMessage } from "element-plus"
-import { AuthorizationSubType } from "@/api/iam/permission/type"
-import { Drawer } from "@/common/components/Dialogs"
+import { Drawer } from "@@/components/Dialogs"
 import SubjectSelectCard from "./SubjectSelectCard.vue"
 import PolicySelectCard from "./PolicySelectCard.vue"
 
 // --- 1. 定义 & 属性 ---
 interface Props {
-  fixedSubjects?: Subject[] // 固定授权主体模式
-  fixedPolicies?: Policy[] // 固定权限策略模式
+  fixedSubjects?: Subject[] // 固定授权主体模式 (由外部传入，不可更改)
+  fixedPolicies?: Policy[] // 固定权限策略模式 (由外部传入，不可更改)
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{ (e: "success"): void }>()
-
 const visible = defineModel<boolean>({ default: false })
 
 // --- 2. 治理选区状态 ---
@@ -59,7 +57,6 @@ const selectedSubjects = ref<Subject[]>([])
 const selectedPolicies = ref<Policy[]>([])
 const submitting = ref(false)
 
-// 组件实例引用
 const subjectSelectorRef = ref<InstanceType<typeof SubjectSelectCard>>()
 const policySelectorRef = ref<InstanceType<typeof PolicySelectCard>>()
 
@@ -68,58 +65,64 @@ const isFixedSubjects = computed(() => !!props.fixedSubjects?.length)
 const isFixedPolicies = computed(() => !!props.fixedPolicies?.length)
 const isFixedMode = computed(() => isFixedSubjects.value || isFixedPolicies.value)
 
+// 最终生效的主体与策略清单 (固定模式优于选择模式)
 const effectiveSubjects = computed(() => (isFixedSubjects.value ? props.fixedSubjects! : selectedSubjects.value))
 const effectivePolicies = computed(() => (isFixedPolicies.value ? props.fixedPolicies! : selectedPolicies.value))
 
-// 提交按钮的激活状态
-const canSubmit = computed(() => effectiveSubjects.value.length > 0 && effectivePolicies.value.length > 0)
+// 提交按钮的激活状态与错误信息
+const validation = computed(() => {
+  const hasSubjects = effectiveSubjects.value.length > 0
+  const hasPolicies = effectivePolicies.value.length > 0
+  return {
+    valid: hasSubjects && hasPolicies,
+    error: !hasSubjects ? "未找到有效的授权主体" : !hasPolicies ? "请至少勾选一个权限策略" : ""
+  }
+})
 
 // --- 4. 业务逻辑方法 ---
 
 /**
- * 构造提交载荷：将治理选区状态转换为后端需要的协议格式
- */
-const preparePayload = () => ({
-  subjects: effectiveSubjects.value.map((s) => ({
-    type: s.type as AuthorizationSubType,
-    code: s.id
-  })),
-  policy_codes: effectivePolicies.value.map((p) => p.code)
-})
-
-/**
- * 处理提交后的反馈提示
+ * 处理提交后的反馈提示 (增强视觉区分度)
  */
 const notifyFeedback = (inserted: number, ignored: number) => {
   if (inserted === 0 && ignored === 0) return
 
-  const hasNew = inserted > 0
-  ElMessage({
-    type: hasNew ? "success" : "warning",
-    message: hasNew
-      ? `授权成功：新建立 ${inserted} 条关联` + (ignored > 0 ? ` (自动跳过 ${ignored} 条重复项)` : "")
-      : `所选项均已存在，无需重复授权`,
-    duration: 4000
-  })
+  if (inserted > 0) {
+    ElMessage.success({
+      message: `授权成功：新建立 ${inserted} 条关联` + (ignored > 0 ? ` (已跳过 ${ignored} 条重复项)` : ""),
+      duration: 5000
+    })
+  } else {
+    ElMessage.warning("所选项均已存在，系统已自动忽略重复操作")
+  }
 }
 
 /**
  * 提交治理结果
  */
 const handleSubmit = async () => {
-  if (!canSubmit.value) {
-    ElMessage.warning(effectiveSubjects.value.length === 0 ? "未找到有效的授权主体" : "请至少勾选一个权限策略")
+  if (!validation.value.valid) {
+    ElMessage.warning(validation.value.error)
     return
   }
 
   submitting.value = true
   try {
-    const { data } = await batchAttachPolicyApi(preparePayload())
+    const payload = {
+      subjects: effectiveSubjects.value.map((s) => ({
+        type: s.type,
+        code: s.id
+      })),
+      policy_codes: effectivePolicies.value.map((p) => p.code)
+    }
+
+    const { data } = await batchAttachPolicyApi(payload)
     notifyFeedback(data.inserted, data.ignored)
+
     emit("success")
     visible.value = false
   } catch (err) {
-    ElMessage.error("授权执行失败，服务器响应异常")
+    ElMessage.error("授权执行失败，请检查网络或权限设置")
   } finally {
     submitting.value = false
   }
@@ -129,13 +132,13 @@ const handleSubmit = async () => {
 watch(visible, async (open) => {
   if (open) {
     await nextTick()
+    // 打开时按需触发子组件列表加载
     if (!isFixedSubjects.value) subjectSelectorRef.value?.fetchList()
     if (!isFixedPolicies.value) policySelectorRef.value?.fetchList()
   } else {
-    // 重置缓冲区
+    // 关闭时彻底清理状态
     selectedSubjects.value = []
     selectedPolicies.value = []
-    // 重置子组件内部状态
     if (!isFixedSubjects.value) subjectSelectorRef.value?.reset()
     if (!isFixedPolicies.value) policySelectorRef.value?.reset()
   }
@@ -144,20 +147,19 @@ watch(visible, async (open) => {
 
 <style lang="scss" scoped>
 .wizard-workflow {
-  padding: 16px 20px; /* 压缩外边距 */
+  padding: 16px 20px;
   display: flex;
   flex-direction: column;
-  gap: 8px; /* 显著收紧卡片间距 */
+  gap: 8px;
   background: #ffffff;
 }
 
-/* 步骤连接符：精简高度 */
 .wizard-connector {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 16px; /* 从 32px 压缩到 16px */
+  height: 16px;
   margin: -4px 0;
 
   &::before {

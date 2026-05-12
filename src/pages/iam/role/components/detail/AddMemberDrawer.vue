@@ -16,7 +16,7 @@
         v-model:selection="selectedUsers"
         title="选择要添加的用户"
         flat
-        initial-type="user"
+        :initial-type="AuthorizationSubType.USER"
         hide-type-selector
       />
     </div>
@@ -28,7 +28,7 @@ import { ref, watch, nextTick } from "vue"
 import { Plus } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import SubjectSelectCard from "@/pages/iam/authorization/components/SubjectSelectCard.vue"
-import type { Subject } from "@/api/iam/permission/type"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 import { ElMessage } from "element-plus"
 
 defineProps<{
@@ -49,26 +49,33 @@ const handleSubmit = () => {
     return
   }
 
-  const usernames = selectedUsers.value.filter((s) => s.type === "user").map((s) => s.id)
+  const usernames = selectedUsers.value.filter((s) => s.type === AuthorizationSubType.USER).map((s) => s.id)
+
+  if (usernames.length === 0) {
+    ElMessage.warning("请选择有效用户类型")
+    return
+  }
 
   emit("confirm", usernames)
 }
 
-// 每次打开时，自动请求列表
+// 监听弹窗显示，自动加载数据
 watch(visible, async (val) => {
   if (val) {
     await nextTick()
-    // 强制先重置并重新拉取列表，确保数据是最新的且 drawer 动画结束后台显示
     subjectSelectRef.value?.fetchList()
   } else {
     selectedUsers.value = []
+    subjectSelectRef.value?.reset()
   }
 })
 </script>
 
 <style lang="scss" scoped>
 .drawer-body {
-  padding: 16px 20px;
-  background: #ffffff;
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 </style>

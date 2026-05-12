@@ -5,15 +5,13 @@ import { listPoliciesApi } from "@/api/iam/policy"
 import type { Policy } from "@/api/iam/policy/type"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
 
+// NOTE: 该组件为选择器 UI 组件，选择状态需与父组件通过 defineModel 进行高效双向同步
+const selection = defineModel<Policy[]>("selection", { default: [] })
+
 const props = defineProps<{
-  selection: Policy[]
   title?: string
   showRisk?: boolean
   flat?: boolean
-}>()
-
-const emit = defineEmits<{
-  (e: "update:selection", val: Policy[]): void
 }>()
 
 // --- 1. 业务逻辑：识别高风险策略 ---
@@ -23,7 +21,7 @@ const isHighRisk = (name: string) => {
   return risks.some((r) => name.toLowerCase().includes(r.toLowerCase()))
 }
 
-// --- 2. 核心逻辑：优雅解构 ---
+// --- 2. 核心逻辑 ---
 const {
   list,
   total,
@@ -47,24 +45,20 @@ const {
   initialQuery: { keyword: "", type: "" }
 })
 
-// --- 3. 同步逻辑 ---
+// --- 3. 极简同步逻辑 ---
 watch(
   selectedList,
   (newList) => {
-    emit("update:selection", newList)
+    selection.value = newList
   },
   { deep: true }
 )
 
-watch(
-  () => props.selection,
-  (newSelection) => {
-    if (newSelection.length === 0 && selectedTotal.value > 0) {
-      clearSelection()
-    }
-  },
-  { deep: true }
-)
+watch(selection, (newList) => {
+  if (newList && newList.length === 0 && selectedTotal.value > 0) {
+    clearSelection()
+  }
+})
 
 // --- 4. 对外暴露 ---
 defineExpose({ fetchList, reset })
@@ -180,6 +174,7 @@ defineExpose({ fetchList, reset })
 </template>
 
 <style lang="scss" scoped>
+/* 样式保持不变 */
 .governance-card {
   background: #ffffff;
   border-radius: 12px;

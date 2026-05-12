@@ -100,7 +100,7 @@ export interface SearchSubjectsReq {
 
 /** 搜索主体响应项 */
 export interface Subject {
-  type: string
+  type: AuthorizationSubType
   id: string
   name: string
   desc: string

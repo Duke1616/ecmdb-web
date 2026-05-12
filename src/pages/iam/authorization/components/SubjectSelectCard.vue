@@ -2,22 +2,20 @@
 import { watch } from "vue"
 import { Search, User, Close } from "@element-plus/icons-vue"
 import { searchSubjectsApi } from "@/api/iam/permission"
-import type { Subject } from "@/api/iam/permission/type"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
 
+// NOTE: 该组件为选择器 UI 组件，选择状态需与父组件通过 defineModel 进行高效双向同步
+const selection = defineModel<Subject[]>("selection", { default: [] })
+
 const props = defineProps<{
-  selection: Subject[]
   title?: string
   flat?: boolean
-  initialType?: "user" | "role" | ""
+  initialType?: AuthorizationSubType | ""
   hideTypeSelector?: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: "update:selection", val: Subject[]): void
-}>()
-
-// --- 1. 核心逻辑：优雅解构 ---
+// --- 1. 核心逻辑 ---
 const {
   list,
   total,
@@ -41,24 +39,23 @@ const {
   initialQuery: { keyword: "", sub_type: props.initialType || "" }
 })
 
-// --- 2. 同步逻辑 ---
+// --- 2. 极简同步逻辑 ---
+// 内部 -> 外部：当选择发生变化时，自动更新 model
 watch(
   selectedList,
   (newList) => {
-    emit("update:selection", newList)
+    selection.value = newList
   },
   { deep: true }
 )
 
-watch(
-  () => props.selection,
-  (newSelection) => {
-    if (newSelection.length === 0 && selectedTotal.value > 0) {
-      clearSelection()
-    }
-  },
-  { deep: true }
-)
+// 外部 -> 内部：主要用于外部清空 (如重置表单) 时，同步清空内部选中状态
+watch(selection, (newList) => {
+  // 增加 newList 的非空判断，避免初始化时的循环触发
+  if (newList && newList.length === 0 && selectedTotal.value > 0) {
+    clearSelection()
+  }
+})
 
 // --- 3. 对外暴露 ---
 defineExpose({ fetchList, reset })
@@ -99,8 +96,8 @@ defineExpose({ fetchList, reset })
             @change="fetchList"
           >
             <el-radio-button label="">全部</el-radio-button>
-            <el-radio-button value="user">用户</el-radio-button>
-            <el-radio-button value="role">角色</el-radio-button>
+            <el-radio-button :value="AuthorizationSubType.USER">用户</el-radio-button>
+            <el-radio-button :value="AuthorizationSubType.ROLE">角色</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -123,7 +120,9 @@ defineExpose({ fetchList, reset })
           </el-table-column>
           <el-table-column label="类型" width="80" align="center">
             <template #default="{ row }">
-              <span class="type-badge" :class="row.type">{{ row.type === "user" ? "用户" : "角色" }}</span>
+              <span class="type-badge" :class="row.type">
+                {{ row.type === AuthorizationSubType.USER ? "用户" : "角色" }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column label="描述" min-width="180" show-overflow-tooltip>
@@ -159,7 +158,9 @@ defineExpose({ fetchList, reset })
                 <span class="id mono">{{ item.id }}</span>
               </div>
               <div class="actions">
-                <span class="type-badge small" :class="item.type">{{ item.type === "user" ? "用户" : "角色" }}</span>
+                <span class="type-badge small" :class="item.type">
+                  {{ item.type === AuthorizationSubType.USER ? "用户" : "角色" }}
+                </span>
                 <el-icon class="remove-btn" @click="removeSelection(item)"><Close /></el-icon>
               </div>
             </div>
@@ -172,6 +173,7 @@ defineExpose({ fetchList, reset })
 </template>
 
 <style lang="scss" scoped>
+/* 样式已略，保持不变 */
 .governance-card {
   background: #ffffff;
   border-radius: 12px;
