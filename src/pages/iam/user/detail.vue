@@ -23,7 +23,7 @@ import TenantTable from "./components/detail/TenantTable.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
-import type { Subject } from "@/api/iam/permission/type"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
 const userFormRef = ref<InstanceType<typeof UserForm>>()
@@ -86,7 +86,7 @@ const userSubjects = computed<Subject[]>(() => {
   if (!userInfo.value) return []
   return [
     {
-      type: "user",
+      type: AuthorizationSubType.USER,
       id: userInfo.value.username,
       name: userInfo.value.nickname || userInfo.value.username,
       desc: userInfo.value.job_title

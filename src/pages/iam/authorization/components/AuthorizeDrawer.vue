@@ -35,6 +35,7 @@
 import { ref, computed, watch, nextTick } from "vue"
 import { Connection } from "@element-plus/icons-vue"
 import { batchAttachPolicyApi } from "@/api/iam/policy"
+import type { BatchAttachPolicyRequest, SubjectItem } from "@/api/iam/policy/type"
 import type { Subject } from "@/api/iam/permission/type"
 import type { Policy } from "@/api/iam/policy/type"
 import { ElMessage } from "element-plus"
@@ -108,11 +109,13 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    const payload = {
-      subjects: effectiveSubjects.value.map((s) => ({
-        type: s.type,
-        code: s.id
-      })),
+    const payload: BatchAttachPolicyRequest = {
+      subjects: effectiveSubjects.value.map(
+        (s): SubjectItem => ({
+          type: s.type,
+          code: s.id
+        })
+      ),
       policy_codes: effectivePolicies.value.map((p) => p.code)
     }
 

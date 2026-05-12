@@ -19,7 +19,7 @@ import InheritanceTable from "./components/detail/InheritanceTable.vue"
 import AddParentDrawer from "./components/detail/AddParentDrawer.vue"
 import AddMemberDrawer from "./components/detail/AddMemberDrawer.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
-import type { Subject } from "@/api/iam/permission/type"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
 
@@ -106,7 +106,7 @@ const roleSubjects = computed<Subject[]>(() => {
   if (!roleInfo.value) return []
   return [
     {
-      type: "role",
+      type: AuthorizationSubType.ROLE,
       id: roleInfo.value.code,
       name: roleInfo.value.name,
       desc: roleInfo.value.desc
