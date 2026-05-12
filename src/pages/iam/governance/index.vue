@@ -5,7 +5,7 @@ import { storeToRefs } from "pinia"
 import { useUserStore } from "@/pinia/stores/user"
 import { useTenantGovernance } from "../tenant/composables/useTenantGovernance"
 import { usePermission } from "@/common/composables/usePermission"
-import { Auth } from "@/common/auth/capability"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // UI Components
 import PageContainer from "@@/components/PageContainer/index.vue"
@@ -117,7 +117,7 @@ const onAssignConfirm = async (userIds: number[]) => {
           </el-tab-pane>
 
           <!-- 邀请链接 -->
-          <el-tab-pane v-if="hasPermission(Auth.Invitation.View)" label="邀请链接" name="invitation">
+          <el-tab-pane v-if="hasPermission(IAM_CAPABILITIES.Invitation.View)" label="邀请链接" name="invitation">
             <TenantInvitationList
               :tenant-id="currentTenantId"
               :data="links"
@@ -133,7 +133,7 @@ const onAssignConfirm = async (userIds: number[]) => {
           </el-tab-pane>
 
           <!-- 入驻申请 -->
-          <el-tab-pane v-if="hasPermission(Auth.User.ManageIdentity)" label="入驻申请" name="requests">
+          <el-tab-pane v-if="hasPermission(IAM_CAPABILITIES.User.ManageIdentity)" label="入驻申请" name="requests">
             <TenantJoinRequestList
               :data="requests"
               :loading="requestsLoading"

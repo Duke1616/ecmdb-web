@@ -36,11 +36,12 @@
               <el-option label="系统预设" :value="1" />
               <el-option label="自定义" :value="2" />
             </el-select>
-          </div>
-
-          <!-- 主动作区 -->
-          <div class="action-group">
-            <el-button v-permission="Auth.Policy.Add" type="primary" class="eiam-main-btn" @click="handleCreate">
+            <el-button
+              type="primary"
+              class="eiam-main-btn"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
+              @click="handleCreate"
+            >
               <el-icon><Plus /></el-icon>
               <span>创建策略</span>
             </el-button>
@@ -130,7 +131,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import { useRouter } from "vue-router"
 import { usePolicyList } from "./composables/usePolicyList"
 import { usePermission } from "@/common/composables/usePermission"
-import { Auth } from "@/common/auth/capability"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 const router = useRouter()
 
@@ -176,12 +177,12 @@ const tableColumns: Column[] = [
 
 const getOperateItems = (row: Policy) => {
   const items = []
-  if (hasPermission(Auth.Policy.Edit)) {
+  if (hasPermission(IAM_CAPABILITIES.Policy.Edit)) {
     items.push({ name: "编辑", code: "edit", icon: Edit, type: "primary" })
   }
   items.push({ name: "源代码", code: "source", icon: Document, type: "info" })
 
-  if (row.type !== 1 && hasPermission(Auth.Policy.Delete)) {
+  if (row.type !== 1 && hasPermission(IAM_CAPABILITIES.Policy.Delete)) {
     items.push({ name: "删除", code: "delete", icon: Delete, type: "danger" })
   }
   return items

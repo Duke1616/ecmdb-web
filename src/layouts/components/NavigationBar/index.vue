@@ -14,6 +14,8 @@ import Screenfull from "@@/components/Screenfull/index.vue"
 import SearchMenu from "@@/components/SearchMenu/index.vue"
 import { useDevice } from "@/common/composables/useDevice"
 import { useLayoutMode } from "@/common/composables/useLayoutMode"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 const { isMobile } = useDevice()
 const { isTop } = useLayoutMode()
@@ -22,6 +24,7 @@ const appStore = useAppStore()
 const userStore = useUserStore()
 const settingsStore = useSettingsStore()
 const { showNotify, showScreenfull, showSearchMenu } = storeToRefs(settingsStore)
+const { hasPermission } = usePermission()
 
 /** 当前激活的租户对象 */
 const currentTenant = computed(() => {
@@ -54,7 +57,7 @@ const logout = () => {
       <SearchMenu v-if="showSearchMenu" class="right-menu-item" />
       <Screenfull v-if="showScreenfull" class="right-menu-item" />
       <Notify v-if="showNotify" class="right-menu-item" />
-      <Governance v-if="userStore.isAdmin" class="right-menu-item" />
+      <Governance v-if="hasPermission(IAM_CAPABILITIES.Tenant.ViewMembers)" class="right-menu-item" />
 
       <div class="divider" />
 

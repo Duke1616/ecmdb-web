@@ -38,7 +38,8 @@ import { batchAttachPolicyApi } from "@/api/iam/policy"
 import type { Subject } from "@/api/iam/permission/type"
 import type { Policy } from "@/api/iam/policy/type"
 import { ElMessage } from "element-plus"
-import { Drawer } from "@@/components/Dialogs"
+import { AuthorizationSubType } from "@/api/iam/permission/type"
+import { Drawer } from "@/common/components/Dialogs"
 import SubjectSelectCard from "./SubjectSelectCard.vue"
 import PolicySelectCard from "./PolicySelectCard.vue"
 
@@ -80,7 +81,7 @@ const canSubmit = computed(() => effectiveSubjects.value.length > 0 && effective
  */
 const preparePayload = () => ({
   subjects: effectiveSubjects.value.map((s) => ({
-    type: s.type,
+    type: s.type as AuthorizationSubType,
     code: s.id
   })),
   policy_codes: effectivePolicies.value.map((p) => p.code)

@@ -50,7 +50,12 @@
           <!-- 主动作区 -->
           <div class="action-group">
             <template v-if="selectedRows.length > 0">
-              <el-button type="danger" class="eiam-main-btn is-danger" @click="handleBatchRevoke(selectedRows)">
+              <el-button
+                type="danger"
+                class="eiam-main-btn is-danger"
+                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+                @click="handleBatchRevoke(selectedRows)"
+              >
                 <el-icon><Delete /></el-icon>
                 <span>批量解除 ({{ selectedRows.length }})</span>
               </el-button>
@@ -60,7 +65,12 @@
               </el-button>
             </template>
             <template v-else>
-              <el-button type="primary" class="eiam-main-btn" @click="handleCreate">
+              <el-button
+                type="primary"
+                class="eiam-main-btn"
+                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+                @click="handleCreate"
+              >
                 <el-icon><Plus /></el-icon>
                 <span>新增授权</span>
               </el-button>
@@ -77,6 +87,7 @@
       :data="authorizations"
       :columns="tableColumns"
       :show-selection="true"
+      :selectable="isSelectable"
       :show-pagination="true"
       :total="total"
       :page-size="pageSize"
@@ -90,11 +101,7 @@
         <AssetIdentityCell
           :title="row.subject"
           :sub-title="row.sub_type === AuthorizationSubType.USER ? 'IAM 用户' : 'IAM 角色'"
-          :link-to="
-            row.sub_type === AuthorizationSubType.USER
-              ? { name: 'UserDetail', query: { username: row.subject } }
-              : { name: 'RoleDetail', query: { code: row.subject } }
-          "
+          :link-to="getSubjectLink(row)"
           centered
         />
       </template>
@@ -102,13 +109,9 @@
       <!-- 授权对象 -->
       <template #target="{ row }">
         <AssetIdentityCell
-          :title="row.target"
-          :sub-title="row.obj_type === AuthorizationObjType.ROLE ? 'IAM 角色' : 'IAM 策略'"
-          :link-to="
-            row.obj_type === AuthorizationObjType.ROLE
-              ? { name: 'RoleDetail', query: { code: row.target } }
-              : { name: 'PolicyDetail', query: { code: row.target } }
-          "
+          :title="row.target_name || row.target"
+          :sub-title="row.obj_type === AuthorizationObjType.ROLE ? 'IAM 角色' : '权限策略'"
+          :link-to="getTargetLink(row)"
           centered
         />
       </template>
@@ -135,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { Search, RefreshRight, Plus, Delete, Close } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
@@ -147,6 +150,8 @@ import type { Column } from "@@/components/DataTable/types"
 import { type Authorization, AuthorizationSubType, AuthorizationObjType } from "@/api/iam/permission/type"
 import { useAuthorizeList } from "./composables/useAuthorizeList"
 import { formatTimestamp } from "@@/utils/day"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 const {
   loading,
@@ -162,6 +167,8 @@ const {
   handleBatchRevoke
 } = useAuthorizeList()
 
+const { hasPermission } = usePermission()
+
 const tableColumns: Column[] = [
   { label: "授权主体", prop: "subject", slot: "subject", minWidth: 150, align: "center" },
   { label: "授权对象", prop: "target", slot: "target", minWidth: 150, align: "center" },
@@ -169,18 +176,47 @@ const tableColumns: Column[] = [
   { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]
 
-const OPERATE_BUTTONS = [
+const OPERATE_BUTTONS = computed(() => [
   {
     name: "解除授权",
     code: "revoke",
     type: "danger",
-    icon: Delete
+    icon: Delete,
+    disabled: !hasPermission(IAM_CAPABILITIES.Policy.Detach)
   }
-]
+])
 
 const showAuthorizeDrawer = ref(false)
 const selectedRows = ref<Authorization[]>([])
 const tableRef = ref<any>()
+
+/**
+ * 判定行是否可勾选：拥有单条解绑或批量解绑权限的用户可以勾选
+ */
+const isSelectable = () => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)
+
+/**
+ * 动态计算主体详情跳转链接 (带权限校验)
+ */
+const getSubjectLink = (row: Authorization) => {
+  const isUser = row.sub_type === AuthorizationSubType.USER
+  const capability = isUser ? IAM_CAPABILITIES.User.View : IAM_CAPABILITIES.Role.View
+
+  if (!hasPermission(capability)) return undefined
+
+  return isUser
+    ? { name: "UserDetail", query: { username: row.subject } }
+    : { name: "RoleDetail", query: { code: row.subject } }
+}
+
+/**
+ * 动态计算对象详情跳转链接 (带权限校验)
+ */
+const getTargetLink = (row: Authorization) => {
+  // 目前授权对象均为 Policy
+  if (!hasPermission(IAM_CAPABILITIES.Policy.View)) return undefined
+  return { name: "PolicyDetail", query: { code: row.target } }
+}
 
 const handleOperateEvent = (row: Authorization, code: string) => {
   if (code === "revoke") {

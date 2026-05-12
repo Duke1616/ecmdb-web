@@ -3,7 +3,10 @@ import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { TenantMember } from "@/api/iam/tenant/type"
-import { Auth } from "@/common/auth/capability"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
+
+const { hasPermission } = usePermission()
 
 const selection = ref<TenantMember[]>([])
 
@@ -62,7 +65,12 @@ const emit = defineEmits<{
     <!-- 头部操作 -->
     <template #header-actions>
       <div v-if="showAssign" class="header-action-stack">
-        <el-button plain class="toolbar-action-btn" @click="emit('add')">
+        <el-button
+          plain
+          class="toolbar-action-btn"
+          :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Assign)"
+          @click="emit('add')"
+        >
           <el-icon><Plus /></el-icon>
           <span>分派成员</span>
         </el-button>
@@ -105,11 +113,11 @@ const emit = defineEmits<{
         <!-- 操作列 -->
         <div class="cell-actions">
           <el-button
-            v-permission="Auth.Tenant.RemoveMember"
             type="danger"
             link
             size="small"
             class="delete-btn"
+            :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.RemoveMember)"
             @click.stop="emit('unbind', row)"
           >
             <el-icon><Delete /></el-icon>

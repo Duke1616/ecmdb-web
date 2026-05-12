@@ -17,7 +17,7 @@
             row-key="id"
           >
             <!-- 选择列 -->
-            <el-table-column v-if="showSelection" type="selection" width="50" align="center" />
+            <el-table-column v-if="showSelection" type="selection" width="50" align="center" :selectable="selectable" />
 
             <!-- 拖拽列 -->
             <el-table-column v-if="enableRowDrag" label="拖拽" width="85" align="center">
@@ -137,6 +137,8 @@ interface Props {
 
   // 行拖拽相关
   enableRowDrag?: boolean
+  // 选择逻辑控制
+  selectable?: (row: any, index: number) => boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -146,7 +148,8 @@ const props = withDefaults(defineProps<Props>(), {
   enableRowDrag: false,
   actionColumnFixed: "right",
   tableProps: () => ({}),
-  showPagination: false
+  showPagination: false,
+  selectable: () => true
 })
 
 const slots = useSlots()
