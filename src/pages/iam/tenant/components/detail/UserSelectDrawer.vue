@@ -16,28 +16,44 @@ const emit = defineEmits<{
   confirm: [selectedIds: number[]]
 }>()
 
-// --- 用户选择器核心逻辑 (从全局用户池中选择) ---
-const userSelector = useResourceSelector<User, { keyword: string }>({
+// --- 1. 用户选择器核心逻辑 (优雅解构) ---
+const {
+  list,
+  total,
+  loading,
+  query,
+  pagination,
+  tableRef,
+  selectedList,
+  selectedTotal,
+  fetchList,
+  handleSearch,
+  handlePageChange,
+  handleSelectionChange,
+  removeSelection,
+  clearSelection,
+  reset
+} = useResourceSelector<User, { keyword: string }>({
   fetchApi: listUsersApi,
   listKey: "users",
   rowKey: (row: User) => String(row.id),
   initialQuery: { keyword: "" }
 })
 
-// --- 弹窗生命周期管理 ---
+// --- 2. 弹窗生命周期管理 ---
 watch(visible, (val) => {
   if (val) {
-    userSelector.fetchList()
+    fetchList()
   } else {
-    userSelector.reset()
+    reset()
   }
 })
 
 const handleConfirm = () => {
-  if (userSelector.selectedTotal.value === 0) return
+  if (selectedTotal.value === 0) return
   emit(
     "confirm",
-    userSelector.selectedList.value.map((u) => u.id)
+    selectedList.value.map((u) => u.id)
   )
 }
 </script>
@@ -57,11 +73,11 @@ const handleConfirm = () => {
       <div class="panel-source">
         <div class="panel-source-header">
           <el-input
-            v-model="userSelector.query.keyword"
+            v-model="query.keyword"
             placeholder="搜索姓名、用户名或邮箱..."
             class="search-input"
             clearable
-            @input="userSelector.debouncedSearch"
+            @input="handleSearch"
           >
             <template #prefix>
               <el-icon><Search /></el-icon>
@@ -70,12 +86,12 @@ const handleConfirm = () => {
         </div>
 
         <el-table
-          :ref="userSelector.tableRef"
-          v-loading="userSelector.loading.value"
-          :data="userSelector.list.value"
+          ref="tableRef"
+          v-loading="loading"
+          :data="list"
           height="100%"
-          :row-key="(row) => String(row.id)"
-          @selection-change="userSelector.handleSelectionChange"
+          :row-key="(row: User) => String(row.id)"
+          @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="45" reserve-selection />
 
@@ -102,13 +118,13 @@ const handleConfirm = () => {
 
         <div class="pagination-bar">
           <el-pagination
-            v-model:current-page="userSelector.query.page"
-            v-model:page-size="userSelector.query.limit"
+            v-model:current-page="pagination.currentPage"
+            v-model:page-size="pagination.pageSize"
             small
             background
             layout="total, prev, pager, next"
-            :total="userSelector.total.value"
-            @current-change="userSelector.fetchList"
+            :total="total"
+            @current-change="handlePageChange"
           />
         </div>
       </div>
@@ -118,32 +134,26 @@ const handleConfirm = () => {
         <div class="buffer-header">
           <div class="left">
             <span>已选成员</span>
-            <span class="count-tag">{{ userSelector.selectedTotal.value }}</span>
+            <span class="count-tag">{{ selectedTotal }}</span>
           </div>
-          <el-button
-            v-if="userSelector.selectedTotal.value > 0"
-            link
-            type="danger"
-            size="small"
-            @click="userSelector.clearSelection()"
-          >
+          <el-button v-if="selectedTotal > 0" link type="danger" size="small" @click="clearSelection()">
             清空
           </el-button>
         </div>
 
         <div class="buffer-list">
           <TransitionGroup name="list-fade">
-            <div v-for="item in userSelector.selectedList.value" :key="item.id" class="buffer-item">
+            <div v-for="item in selectedList" :key="item.id" class="buffer-item">
               <div class="info">
                 <span class="name">{{ item.nickname || item.username }}</span>
                 <span class="id mono">@{{ item.username }}</span>
               </div>
-              <el-icon class="remove-btn" @click="userSelector.removeSelection(item)">
+              <el-icon class="remove-btn" @click="removeSelection(item)">
                 <Close />
               </el-icon>
             </div>
           </TransitionGroup>
-          <el-empty v-if="userSelector.selectedTotal.value === 0" description="暂未选择成员" :image-size="40" />
+          <el-empty v-if="selectedTotal === 0" description="暂未选择成员" :image-size="40" />
         </div>
       </div>
     </div>
