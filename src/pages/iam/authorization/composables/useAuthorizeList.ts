@@ -1,5 +1,6 @@
 import { listAuthorizationsApi } from "@/api/iam/permission"
 import { type Authorization, type AuthorizationQueryReq } from "@/api/iam/permission/type"
+import { batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
@@ -37,9 +38,37 @@ export function useAuthorizeList() {
       message: `确定要解除主体 [${row.subject}] 对目标 [${row.target}] 的授权吗？此操作将立即回收相关访问权限。`,
       confirmType: "danger",
       api: async () => {
-        // TODO: 等待后端解除授权 API 完善
-        // return await revokeAuthorizationApi(row.id)
-        return Promise.resolve()
+        // NOTE: 单条解除授权使用专门的 /detach 接口，已支持通用主体类型
+        return await detachPolicyApi({
+          sub_type: row.sub_type,
+          sub_code: row.subject,
+          policy_code: row.target
+        })
+      },
+      onSuccess: () => handleRefresh()
+    })
+  }
+
+  /**
+   * 批量解除授权
+   */
+  const handleBatchRevoke = (rows: Authorization[]) => {
+    if (rows.length === 0) return
+
+    handleConfirmAction({
+      title: "批量回收确认",
+      message: `确定要批量解除选中的 ${rows.length} 条授权记录吗？`,
+      confirmType: "danger",
+      api: async () => {
+        // NOTE: 后端已修复 batch-detach 接口，支持精准的 assignments 列表解绑
+        // 这样可以一次性回收所有选中的 (主体 + 策略) 关联，而不再需要循环调用
+        return await batchDetachPolicyApi({
+          assignments: rows.map((row) => ({
+            sub_type: row.sub_type,
+            sub_code: row.subject,
+            policy_code: row.target
+          }))
+        })
       },
       onSuccess: () => handleRefresh()
     })
@@ -55,6 +84,7 @@ export function useAuthorizeList() {
     handleRefresh,
     handleSizeChange,
     handleCurrentChange,
-    handleRevoke
+    handleRevoke,
+    handleBatchRevoke
   }
 }

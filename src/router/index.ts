@@ -6,7 +6,6 @@ import { routerConfig } from "@/router/config"
 // import { taskRoutes } from "./modules/alert"
 
 const Layouts = () => import("@/layouts/index.vue")
-const Terminal = () => import("@/views/terminal/index.vue")
 const Logicflow = () => import("@/views/process/preview/logicflow.vue")
 
 /**
@@ -135,8 +134,7 @@ export const constantRoutes: RouteRecordRaw[] = [
         component: () => import("@/pages/iam/governance/index.vue"),
         name: "Governance",
         meta: {
-          title: "治理工作台",
-          svgIcon: "operation"
+          title: "治理工作台"
         }
       }
     ]

@@ -49,10 +49,22 @@
 
           <!-- 主动作区 -->
           <div class="action-group">
-            <el-button type="primary" class="eiam-main-btn" @click="handleCreate">
-              <el-icon><Plus /></el-icon>
-              <span>新增授权</span>
-            </el-button>
+            <template v-if="selectedRows.length > 0">
+              <el-button type="danger" class="eiam-main-btn is-danger" @click="handleBatchRevoke(selectedRows)">
+                <el-icon><Delete /></el-icon>
+                <span>批量解除 ({{ selectedRows.length }})</span>
+              </el-button>
+              <el-button class="cancel-selection-btn" @click="clearSelection">
+                <el-icon><Close /></el-icon>
+                <span>取消选择</span>
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button type="primary" class="eiam-main-btn" @click="handleCreate">
+                <el-icon><Plus /></el-icon>
+                <span>新增授权</span>
+              </el-button>
+            </template>
             <el-button :icon="RefreshRight" class="eiam-icon-outline" circle @click="handleRefresh" />
           </div>
         </div>
@@ -60,6 +72,7 @@
     </ManagerHeader>
 
     <DataTable
+      ref="tableRef"
       v-loading="loading"
       :data="authorizations"
       :columns="tableColumns"
@@ -70,6 +83,7 @@
       :current-page="currentPage"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
+      @selection-change="handleSelectionChange"
     >
       <!-- 授权主体 -->
       <template #subject="{ row }">
@@ -111,7 +125,7 @@
 
       <!-- 操作 -->
       <template #actions="{ row }">
-        <el-button type="primary" link @click="handleRevoke(row)">解除授权</el-button>
+        <OperateBtn :items="OPERATE_BUTTONS" :operate-item="row" :max-length="2" @route-event="handleOperateEvent" />
       </template>
     </DataTable>
 
@@ -122,14 +136,15 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Search, RefreshRight, Plus } from "@element-plus/icons-vue"
+import { Search, RefreshRight, Plus, Delete, Close } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
 import AuthorizeDrawer from "./components/AuthorizeDrawer.vue"
 import type { Column } from "@@/components/DataTable/types"
-import { AuthorizationSubType, AuthorizationObjType } from "@/api/iam/permission/type"
+import { type Authorization, AuthorizationSubType, AuthorizationObjType } from "@/api/iam/permission/type"
 import { useAuthorizeList } from "./composables/useAuthorizeList"
 import { formatTimestamp } from "@@/utils/day"
 
@@ -143,7 +158,8 @@ const {
   handleRefresh,
   handleSizeChange,
   handleCurrentChange,
-  handleRevoke
+  handleRevoke,
+  handleBatchRevoke
 } = useAuthorizeList()
 
 const tableColumns: Column[] = [
@@ -153,7 +169,32 @@ const tableColumns: Column[] = [
   { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]
 
+const OPERATE_BUTTONS = [
+  {
+    name: "解除授权",
+    code: "revoke",
+    type: "danger",
+    icon: Delete
+  }
+]
+
 const showAuthorizeDrawer = ref(false)
+const selectedRows = ref<Authorization[]>([])
+const tableRef = ref<any>()
+
+const handleOperateEvent = (row: Authorization, code: string) => {
+  if (code === "revoke") {
+    handleRevoke(row)
+  }
+}
+
+const handleSelectionChange = (val: Authorization[]) => {
+  selectedRows.value = val
+}
+
+const clearSelection = () => {
+  tableRef.value?.clearSelection()
+}
 
 const handleCreate = () => {
   showAuthorizeDrawer.value = true
@@ -241,6 +282,15 @@ const handleCreate = () => {
       transform: translateY(-1px);
       box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
     }
+
+    &.is-danger {
+      background: #ef4444;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+      &:hover {
+        background: #dc2626;
+        box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+      }
+    }
   }
 
   .eiam-icon-outline {
@@ -251,6 +301,32 @@ const handleCreate = () => {
       color: #0ea5e9;
       border-color: #0ea5e9;
       background: #f0f9ff;
+    }
+  }
+
+  .cancel-selection-btn {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+
+    &:hover {
+      color: #0ea5e9;
+      border-color: #0ea5e9;
+      background: #f0f9ff;
+    }
+
+    .el-icon {
+      font-size: 14px;
     }
   }
 }

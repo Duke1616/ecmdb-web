@@ -93,16 +93,19 @@ export interface ListRolePoliciesReq extends ListPolicyRequest {
   role_code: string
 }
 
+import { AuthorizationSubType } from "@/api/iam/permission/type"
+
 /** 绑定/解绑策略请求 */
 export interface AttachPolicyRequest {
-  role_code: string
-  poly_code: string
+  sub_type: AuthorizationSubType
+  sub_code: string
+  policy_code: string
 }
 
 /** 主体项：用于批量绑定 */
 export interface SubjectItem {
   /** 主体类型: user 或 role */
-  type: string
+  type: AuthorizationSubType
   /** 主体标识（用户名或角色代码） */
   code: string
 }
@@ -123,4 +126,16 @@ export interface BatchAttachPolicyResponse {
   inserted: number
   /** 已存在而被忽略的数量 */
   ignored: number
+}
+
+/** 授权关联项：用于批量解绑 */
+export interface AssignmentItem {
+  sub_type: AuthorizationSubType
+  sub_code: string
+  policy_code: string
+}
+
+/** 批量解绑策略请求 */
+export interface BatchDetachPolicyRequest {
+  assignments: AssignmentItem[]
 }

@@ -76,7 +76,7 @@ export function listRolePoliciesApi(data: policy.ListRolePoliciesReq) {
 }
 
 /** 批量从主体解绑策略 */
-export function batchDetachPolicyApi(data: policy.BatchAttachPolicyRequest) {
+export function batchDetachPolicyApi(data: policy.BatchDetachPolicyRequest) {
   return instance.post<number>({
     url: `${API_SERVICE.IAM}/policy/batch-detach`,
     data

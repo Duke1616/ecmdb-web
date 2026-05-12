@@ -379,9 +379,9 @@ const handleLoginSuccess = (businessData: any) => {
   ElMessage.success("登录成功")
   const redirect = route.query.redirect as string
   if (redirect) {
-    router.push({ path: redirect })
+    router.push(redirect)
   } else {
-    router.push({ path: "/" })
+    router.push("/")
   }
 }
 

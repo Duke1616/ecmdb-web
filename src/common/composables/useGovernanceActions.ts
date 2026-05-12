@@ -50,10 +50,6 @@ export function useGovernanceActions() {
     } catch (err: unknown) {
       // 排除用户取消操作
       if (err === "cancel") return
-
-      console.error("[GovernanceAction Error]:", err)
-      const errorMsg = err instanceof Error ? err.message : "操作执行失败，请检查网络或权限"
-      ElMessage.error(errorMsg)
     }
   }
 

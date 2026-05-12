@@ -1,7 +1,6 @@
 import { ref, watch, toValue, computed, type MaybeRefOrGetter } from "vue"
-import { ElMessage } from "element-plus"
 import { listRoleUsersApi } from "@/api/iam/user"
-import { listRolePoliciesApi, detachPolicyApi } from "@/api/iam/policy"
+import { listRolePoliciesApi, detachPolicyApi, batchDetachPolicyApi } from "@/api/iam/policy"
 import {
   batchAssignRoleApi,
   analyzeRoleInlinePoliciesApi,
@@ -14,6 +13,8 @@ import type { User } from "@/api/iam/user/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { InlinePolicy, InheritanceItem } from "@/api/iam/role/type"
 import { useListManager } from "@/common/composables/useListManager"
+import { ElMessage, ElMessageBox } from "element-plus"
+import { AuthorizationSubType } from "@/api/iam/permission/type"
 
 import { useTabRouter } from "@/common/composables/useTabRouter"
 
@@ -84,19 +85,58 @@ export function useRoleGovernance(
   const handleAttachPolicySuccess = () => fetchPolicies()
 
   // 解绑策略
-  const handleUnbindPolicy = async (roleCode: string, policy: Policy) => {
+  const handleUnbindPolicy = async (policy: Policy) => {
+    const code = toValue(roleCode)
+    if (!code) return
+
     try {
-      await detachPolicyApi({ role_code: roleCode, poly_code: policy.code })
+      await ElMessageBox.confirm(`确认要为角色 [${code}] 解除策略 [${policy.name}] 的关联吗？`, "解除授权", {
+        confirmButtonText: "确认解除",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+
+      await detachPolicyApi({
+        sub_type: AuthorizationSubType.ROLE,
+        sub_code: code,
+        policy_code: policy.code
+      })
       ElMessage.success("策略解绑成功")
       fetchPolicies()
     } catch (err: any) {
-      // 错误已由全局拦截器处理
+      // 捕获取消点击或其他错误
     }
   }
 
   const handleBatchUnbindPolicies = () => {
-    ElMessage.warning(`即将批量解绑 ${selectedPolicies.value.length} 个策略`)
-    selectedPolicies.value = []
+    const code = toValue(roleCode)
+    if (!code || selectedPolicies.value.length === 0) return
+
+    const names = selectedPolicies.value.map((p) => p.name).join(", ")
+    ElMessageBox.confirm(
+      `确认要批量解除以下 ${selectedPolicies.value.length} 条策略的关联吗？\n[${names}]`,
+      "批量解除授权",
+      {
+        confirmButtonText: "确认解除",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    ).then(async () => {
+      try {
+        await batchDetachPolicyApi({
+          assignments: selectedPolicies.value.map((p) => ({
+            sub_type: AuthorizationSubType.ROLE,
+            sub_code: code,
+            policy_code: p.code
+          }))
+        })
+        ElMessage.success("成功批量解除策略授权")
+        selectedPolicies.value = []
+        fetchPolicies()
+      } catch (err) {
+        console.error(err)
+      }
+    })
   }
 
   // --- 内联策略分析 (Inline Analysis) ---

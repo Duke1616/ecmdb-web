@@ -1,10 +1,11 @@
 import { ref, watch, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
 import { listUserRolesApi } from "@/api/iam/role"
-import { listUserPoliciesApi, batchDetachPolicyApi } from "@/api/iam/policy"
+import { listUserPoliciesApi, batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
 import { listUserTenantsApi } from "@/api/iam/tenant"
 import { useListManager } from "@/common/composables/useListManager"
 import { ElMessage, ElMessageBox } from "element-plus"
+import { AuthorizationSubType } from "@/api/iam/permission/type"
 import type { User } from "@/api/iam/user/type"
 import type { Role } from "@/api/iam/role/type"
 import type { Policy } from "@/api/iam/policy/type"
@@ -96,9 +97,10 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       type: "warning"
     }).then(async () => {
       try {
-        await batchDetachPolicyApi({
-          subjects: [{ type: "user", code: user.value!.username }],
-          policy_codes: [row.code]
+        await detachPolicyApi({
+          sub_type: AuthorizationSubType.USER,
+          sub_code: user.value!.username,
+          policy_code: row.code
         })
         ElMessage.success("成功解除策略授权")
         loadPolicies()
@@ -107,6 +109,8 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       }
     })
   }
+
+  // 批量选择状态
   const handleUnbindTenant = (_row: Tenant) => {
     // TODO: 租户关联移除功能待集成
   }
@@ -135,8 +139,11 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     ).then(async () => {
       try {
         await batchDetachPolicyApi({
-          subjects: [{ type: "user", code: user.value!.username }],
-          policy_codes: selectedPolicies.value.map((p) => p.code)
+          assignments: selectedPolicies.value.map((p) => ({
+            sub_type: AuthorizationSubType.USER,
+            sub_code: user.value!.username,
+            policy_code: p.code
+          }))
         })
         ElMessage.success("成功批量解除策略授权")
         selectedPolicies.value = []

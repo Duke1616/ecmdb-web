@@ -144,9 +144,9 @@ function handleLoginSuccess(businessData: any) {
   // 3. 正常进入
   const redirect = route.query.redirect as string
   if (redirect) {
-    router.push({ path: redirect })
+    router.push(redirect)
   } else {
-    router.push({ path: "/" })
+    router.push("/")
   }
 }
 </script>

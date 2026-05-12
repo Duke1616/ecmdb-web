@@ -3,7 +3,7 @@ import { useRouter } from "vue-router"
 
 interface Props {
   /** 主标题（标识码/姓名） */
-  title: string
+  title?: string
   /** 副标题（类型/其它辅助信息） */
   subTitle?: string
   /** 跳转路由名 */
@@ -13,6 +13,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  title: "",
   centered: false
 })
 

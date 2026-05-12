@@ -30,7 +30,7 @@ export function registerNavigationGuard(router: Router) {
 
     // 2. 检查是否有 Token
     if (!getToken()) {
-      return LOGIN_PATH
+      return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
     }
 
     // 如果用户已经获得其权限路由则直接进入
@@ -56,7 +56,7 @@ export function registerNavigationGuard(router: Router) {
       if (status === 401) {
         userStore.resetToken()
         ElMessage.error("登录已过期，请重新登录")
-        return LOGIN_PATH
+        return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
       }
 
       // 如果是 500 等服务器错误，不清除 Token，跳转到专门的 500 错误页
