@@ -1,10 +1,10 @@
 import { ref, watch, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
-import { listUserRolesApi } from "@/api/iam/role"
+import { listUserRolesApi, batchAssignRoleApi, batchUnassignRoleApi } from "@/api/iam/role"
 import { listUserPoliciesApi, batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
-import { listUserTenantsApi } from "@/api/iam/tenant"
+import { listUserTenantsApi, removeTenantMemberApi } from "@/api/iam/tenant"
 import { useListManager } from "@/common/composables/useListManager"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { AuthorizationSubType } from "@/api/iam/permission/type"
 import type { User } from "@/api/iam/user/type"
 import type { Role } from "@/api/iam/role/type"
@@ -13,10 +13,17 @@ import type { Tenant } from "@/api/iam/tenant/type"
 
 export function useUserGovernance(user: Ref<User | undefined>) {
   const userId = computed(() => user.value?.id)
+  const username = computed(() => user.value?.username)
   const { activeTab } = useTabRouter("sources")
-  const attachPolicyVisible = ref(false)
+  const { handleConfirmAction } = useGovernanceActions()
 
-  // --- 使用通用列表管理器 ---
+  // --- 1. 状态控制 ---
+  const roleSelectVisible = ref(false)
+  const attachPolicyVisible = ref(false)
+  const tenantSelectVisible = ref(false)
+  const submitting = ref(false)
+
+  // --- 2. 列表治理集成 ---
 
   // 角色列表管理
   const {
@@ -66,7 +73,114 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     immediate: false
   })
 
-  // 特殊类型切换逻辑
+  // --- 3. 核心业务动作 ---
+
+  /** 批量分配角色 (UserSelectDrawer 回调) */
+  const handleAssignRoles = async (selectedRoles: Role[]) => {
+    if (!username.value || !selectedRoles.length) return
+    submitting.value = true
+    try {
+      // NOTE: 利用后端优化的 Cartesian 笛卡尔积接口，单次请求完成所有绑定
+      await batchAssignRoleApi({
+        usernames: [username.value],
+        role_codes: selectedRoles.map((r) => r.code)
+      })
+      roleSelectVisible.value = false
+      loadRoles()
+    } finally {
+      submitting.value = false
+    }
+  }
+
+  /** 解除角色关联 (单条) */
+  const handleUnbindRole = (row: Role) => {
+    if (!username.value) return
+    handleConfirmAction({
+      title: "移除角色关联",
+      message: `确认要为用户 [${username.value}] 移除角色 [${row.name}] 的关联吗？`,
+      api: () =>
+        batchUnassignRoleApi({
+          usernames: [username.value!],
+          role_codes: [row.code]
+        }),
+      onSuccess: () => loadRoles()
+    })
+  }
+
+  /** 批量解除角色关联 */
+  const selectedRoles = ref<Role[]>([])
+  const handleBatchUnbindRoles = () => {
+    if (!username.value || selectedRoles.value.length === 0) return
+    handleConfirmAction({
+      title: "批量移除角色",
+      message: `确认要为用户 [${username.value}] 批量移除所选的 ${selectedRoles.value.length} 条角色关联吗？`,
+      api: () =>
+        batchUnassignRoleApi({
+          usernames: [username.value!],
+          role_codes: selectedRoles.value.map((r) => r.code)
+        }),
+      onSuccess: () => {
+        selectedRoles.value = []
+        loadRoles()
+      }
+    })
+  }
+
+  /** 解除策略授权 (单条) */
+  const handleUnbindPolicy = (row: Policy) => {
+    if (!username.value) return
+    handleConfirmAction({
+      title: "解除策略授权",
+      message: `确认要为用户 [${username.value}] 解除策略 [${row.name}] 的关联吗？`,
+      api: () =>
+        detachPolicyApi({
+          sub_type: AuthorizationSubType.USER,
+          sub_code: username.value!,
+          policy_code: row.code
+        }),
+      onSuccess: () => loadPolicies()
+    })
+  }
+
+  /** 批量解除策略授权 */
+  const selectedPolicies = ref<Policy[]>([])
+  const handleBatchUnbindPolicies = () => {
+    if (!username.value || selectedPolicies.value.length === 0) return
+    handleConfirmAction({
+      title: "批量解除授权",
+      message: `确认要批量解除所选的 ${selectedPolicies.value.length} 条策略关联吗？`,
+      api: () =>
+        batchDetachPolicyApi({
+          assignments: selectedPolicies.value.map((p) => ({
+            sub_type: AuthorizationSubType.USER,
+            sub_code: username.value!,
+            policy_code: p.code
+          }))
+        }),
+      onSuccess: () => {
+        selectedPolicies.value = []
+        loadPolicies()
+      }
+    })
+  }
+
+  /** 移除租户关联 (单条) */
+  const handleUnbindTenant = (row: Tenant) => {
+    if (!userId.value) return
+    handleConfirmAction({
+      title: "移除租户关联",
+      message: `确定要将用户从租户空间 [${row.name}] 中移除吗？此操作将立即收回在该空间下的所有权限。`,
+      api: () =>
+        removeTenantMemberApi({
+          tenant_id: row.id,
+          user_id: userId.value!
+        }),
+      onSuccess: () => loadTenants()
+    })
+  }
+
+  // --- 4. 辅助状态与联动 ---
+
   const handleRoleTypeChange = (type?: number) => {
     roleQuery.type = type
     handleRoleSearch()
@@ -77,89 +191,12 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     handlePolicySearch()
   }
 
-  // 交互逻辑
-  const handleAddRole = () => {
-    // TODO: 角色分配功能待集成
-  }
   const handleAddPolicy = () => (attachPolicyVisible.value = true)
   const handleAttachSuccess = () => loadPolicies()
-  const handleAddTenant = () => {
-    // TODO: 租户入驻功能待集成
-  }
-  const handleUnbindRole = (_row: Role) => {
-    // TODO: 角色解绑功能待集成
-  }
-  const handleUnbindPolicy = (row: Policy) => {
-    if (!user.value) return
-    ElMessageBox.confirm(`确认要为用户 [${user.value.username}] 解除策略 [${row.name}] 的关联吗？`, "解除授权", {
-      confirmButtonText: "确认解除",
-      cancelButtonText: "取消",
-      type: "warning"
-    }).then(async () => {
-      try {
-        await detachPolicyApi({
-          sub_type: AuthorizationSubType.USER,
-          sub_code: user.value!.username,
-          policy_code: row.code
-        })
-        ElMessage.success("成功解除策略授权")
-        loadPolicies()
-      } catch (err) {
-        console.error(err)
-      }
-    })
-  }
 
-  // 批量选择状态
-  const handleUnbindTenant = (_row: Tenant) => {
-    // TODO: 租户关联移除功能待集成
-  }
-
-  // 批量选择状态
-  const selectedRoles = ref<Role[]>([])
-  const selectedPolicies = ref<Policy[]>([])
+  // 批量选择 Ref
   const selectedTenants = ref<Tenant[]>([])
 
-  const handleBatchUnbindRoles = () => {
-    // TODO: 批量角色解绑功能待集成
-    selectedRoles.value = []
-  }
-
-  const handleBatchUnbindPolicies = () => {
-    if (!user.value || selectedPolicies.value.length === 0) return
-    const names = selectedPolicies.value.map((p) => p.name).join(", ")
-    ElMessageBox.confirm(
-      `确认要批量解除以下 ${selectedPolicies.value.length} 条策略的关联吗？\n[${names}]`,
-      "批量解除授权",
-      {
-        confirmButtonText: "确认解除",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
-    ).then(async () => {
-      try {
-        await batchDetachPolicyApi({
-          assignments: selectedPolicies.value.map((p) => ({
-            sub_type: AuthorizationSubType.USER,
-            sub_code: user.value!.username,
-            policy_code: p.code
-          }))
-        })
-        ElMessage.success("成功批量解除策略授权")
-        selectedPolicies.value = []
-        loadPolicies()
-      } catch (err) {
-        console.error(err)
-      }
-    })
-  }
-
-  const handleBatchUnbindTenants = () => {
-    // TODO: 批量租户移除功能待集成
-    selectedTenants.value = []
-  }
-
-  // 核心渲染驱动逻辑
   const refresh = () => {
     if (!userId.value) return
     if (activeTab.value === "roles") loadRoles()
@@ -171,6 +208,8 @@ export function useUserGovernance(user: Ref<User | undefined>) {
 
   return {
     activeTab,
+    submitting,
+    // 角色
     roles,
     roleTotal,
     roleLoading,
@@ -180,6 +219,14 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       pageSize: rolePagination.pageSize
     })),
     selectedRoles,
+    roleSelectVisible,
+    handleRolePageChange,
+    handleRoleSearch,
+    handleRoleTypeChange,
+    handleAssignRoles,
+    handleUnbindRole,
+    handleBatchUnbindRoles,
+    // 策略
     policies,
     policyTotal,
     policyLoading,
@@ -189,6 +236,15 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       pageSize: policyPagination.pageSize
     })),
     selectedPolicies,
+    attachPolicyVisible,
+    handlePolicyPageChange,
+    handlePolicySearch,
+    handlePolicyTypeChange,
+    handleAddPolicy,
+    handleAttachSuccess,
+    handleUnbindPolicy,
+    handleBatchUnbindPolicies,
+    // 租户
     tenants,
     tenantTotal,
     tenantLoading,
@@ -198,27 +254,9 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       pageSize: tenantPagination.pageSize
     })),
     selectedTenants,
-    loadRoles,
-    loadPolicies,
-    loadTenants,
-    handleRolePageChange,
-    handlePolicyPageChange,
+    tenantSelectVisible,
     handleTenantPageChange,
-    handleRoleSearch,
-    handleRoleTypeChange,
-    handlePolicySearch,
-    handlePolicyTypeChange,
     handleTenantSearch,
-    handleAddRole,
-    handleAddPolicy,
-    attachPolicyVisible,
-    handleAttachSuccess,
-    handleAddTenant,
-    handleUnbindRole,
-    handleUnbindPolicy,
-    handleUnbindTenant,
-    handleBatchUnbindRoles,
-    handleBatchUnbindPolicies,
-    handleBatchUnbindTenants
+    handleUnbindTenant
   }
 }

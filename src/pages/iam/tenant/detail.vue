@@ -15,8 +15,9 @@ import { useTenantGovernance } from "./composables/useTenantGovernance"
 import TenantMemberTable from "./components/detail/TenantMemberTable.vue"
 import TenantInvitationList from "./components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "./components/detail/TenantJoinRequestList.vue"
-import UserSelectDrawer from "./components/detail/UserSelectDrawer.vue"
+import UserSelectDrawer from "@/pages/iam/user/components/UserSelectDrawer.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
+import type { User } from "@/api/iam/user/type"
 
 const router = useRouter()
 const {
@@ -103,10 +104,12 @@ const handleEditConfirm = async () => {
 }
 
 // 分派处理
-const onAssignConfirm = async (userIds: number[]) => {
+const onAssignConfirm = async (users: User[]) => {
+  const userIds = users.map((u) => u.id)
   const success = await handleBatchAssignMember(userIds)
   if (success) {
     assignVisible.value = false
+    fetchTenantDetail()
   }
 }
 </script>

@@ -13,7 +13,8 @@ import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import TenantMemberTable from "../tenant/components/detail/TenantMemberTable.vue"
 import TenantInvitationList from "../tenant/components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "../tenant/components/detail/TenantJoinRequestList.vue"
-import UserSelectDrawer from "../tenant/components/detail/UserSelectDrawer.vue"
+import UserSelectDrawer from "@/pages/iam/user/components/UserSelectDrawer.vue"
+import type { User } from "@/api/iam/user/type"
 
 import { Monitor } from "@element-plus/icons-vue"
 
@@ -70,7 +71,8 @@ watch(activeTab, (newTab) => {
   router.replace({ query: { ...route.query, tab: newTab } })
 })
 
-const onAssignConfirm = async (userIds: number[]) => {
+const onAssignConfirm = async (users: User[]) => {
+  const userIds = users.map((u) => u.id)
   const success = await handleBatchAssignMember(userIds)
   if (success) assignVisible.value = false
 }

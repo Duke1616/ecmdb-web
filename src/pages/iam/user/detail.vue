@@ -23,6 +23,7 @@ import TenantTable from "./components/detail/TenantTable.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
+import RoleSelectDrawer from "@/pages/iam/role/components/RoleSelectDrawer.vue"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
@@ -45,20 +46,25 @@ const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
 const {
   activeTab,
+  submitting,
+  // 角色
   roles,
   roleTotal,
   roleLoading,
   roleQuery,
   selectedRoles,
+  // 策略
   policies,
   policyTotal,
   policyLoading,
   policyQuery,
   selectedPolicies,
+  // 租户
   tenants,
   tenantTotal,
   tenantLoading,
   tenantQuery,
+  selectedTenants,
   handleRolePageChange,
   handlePolicyPageChange,
   handleTenantPageChange,
@@ -67,14 +73,14 @@ const {
   handlePolicySearch,
   handlePolicyTypeChange,
   handleTenantSearch,
-  handleAddRole,
+  handleAssignRoles,
   handleAddPolicy,
+  roleSelectVisible,
   attachPolicyVisible,
   handleAttachSuccess,
-  handleAddTenant,
   handleUnbindRole,
   handleUnbindPolicy,
-  handleBatchUnbindRoles,
+  handleUnbindTenant,
   handleBatchUnbindPolicies
 } = useUserGovernance(userInfo)
 
@@ -156,14 +162,13 @@ const userSubjects = computed<Subject[]>(() => {
                 :pageSize="roleQuery.pageSize"
                 :format-timestamp="formatTimestamp"
                 :can-add="hasPermission(IAM_CAPABILITIES.Role.Assign)"
-                :can-unbind="hasPermission(IAM_CAPABILITIES.Role.Unassign)"
-                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Role.BatchUnassign)"
+                :can-unbind="false"
+                :can-batch-unbind="false"
                 @page-change="handleRolePageChange"
                 @search="handleRoleSearch"
                 @type-change="handleRoleTypeChange"
-                @add="handleAddRole"
+                @add="roleSelectVisible = true"
                 @unbind="handleUnbindRole"
-                @batch-unbind="handleBatchUnbindRoles"
               />
             </el-tab-pane>
 
@@ -190,18 +195,18 @@ const userSubjects = computed<Subject[]>(() => {
 
             <el-tab-pane v-if="userInfo.is_system_space" label="租户映射" name="tenants">
               <TenantTable
+                v-model:selection="selectedTenants"
                 :loading="tenantLoading"
                 :data="tenants"
                 :total="tenantTotal"
                 :current-page="tenantQuery.currentPage"
                 :pageSize="tenantQuery.pageSize"
                 :format-timestamp="formatTimestamp"
-                :can-add="hasPermission(IAM_CAPABILITIES.Tenant.AddMember)"
-                :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.RemoveMember)"
-                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Tenant.RemoveMember)"
+                :can-add="false"
+                :can-unbind="true"
                 @page-change="handleTenantPageChange"
                 @search="handleTenantSearch"
-                @add="handleAddTenant"
+                @unbind="handleUnbindTenant"
               />
             </el-tab-pane>
           </el-tabs>
@@ -219,6 +224,14 @@ const userSubjects = computed<Subject[]>(() => {
       >
         <UserForm ref="userFormRef" :is-edit="true" :user-id="userInfo?.id" @success="handleEditSuccess" />
       </FormDialog>
+
+      <!-- 角色分配器 -->
+      <RoleSelectDrawer
+        v-model="roleSelectVisible"
+        title="分配角色"
+        :confirm-loading="submitting"
+        @confirm="handleAssignRoles"
+      />
 
       <!-- 授权向导 -->
       <AuthorizeDrawer v-model="attachPolicyVisible" :fixed-subjects="userSubjects" @success="handleAttachSuccess" />

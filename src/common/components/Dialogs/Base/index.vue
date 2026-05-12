@@ -104,8 +104,8 @@ body {
   .base-dialog.is-full-height {
     display: flex;
     flex-direction: column;
-    height: 90vh;
-    max-height: 90vh;
+    height: 80vh;
+    max-height: 80vh;
     margin: 0;
 
     .el-dialog__body {

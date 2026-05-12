@@ -47,6 +47,8 @@ const {
   addMemberVisible,
   handleAddMember,
   handleAssignMembers,
+  handleUnbindMember,
+  handleBatchUnbindMembers,
   handlePolicyPageChange,
   handlePolicySearch,
   handlePolicyTypeChange,
@@ -169,8 +171,8 @@ const infoItems = computed(() => {
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
                 @add="handleAddMember"
-                @unbind="(row) => ElMessage.info(`即将解绑用户: ${row.username}`)"
-                @batch-unbind="() => {}"
+                @unbind="handleUnbindMember"
+                @batch-unbind="handleBatchUnbindMembers"
               />
             </el-tab-pane>
 

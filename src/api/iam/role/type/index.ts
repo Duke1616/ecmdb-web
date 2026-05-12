@@ -101,7 +101,13 @@ export type RoleDetail = Role
 /** 批量分配角色请求 */
 export interface BatchAssignRoleReq {
   usernames: string[]
-  role_code: string
+  role_codes: string[]
+}
+
+/** 批量移除角色请求 */
+export interface BatchUnassignRoleReq {
+  usernames: string[]
+  role_codes: string[]
 }
 
 /** 角色策略分析请求 */

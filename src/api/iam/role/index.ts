@@ -56,6 +56,14 @@ export function batchAssignRoleApi(data: role.BatchAssignRoleReq) {
   })
 }
 
+/** 批量移除用户关联的角色 */
+export function batchUnassignRoleApi(data: role.BatchUnassignRoleReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/role/batch_unassign`,
+    data
+  })
+}
+
 /** 分析角色的内联策略 */
 export function analyzeRoleInlinePoliciesApi(data: role.RoleAnalysisReq) {
   return instance.post<role.RoleAnalysisRes>({

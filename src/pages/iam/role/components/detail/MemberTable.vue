@@ -181,7 +181,6 @@ const emit = defineEmits<{
   display: flex;
   justify-content: center;
   .delete-btn {
-    color: #cbd5e1;
     font-size: 12px;
     font-weight: 600;
     &:hover {

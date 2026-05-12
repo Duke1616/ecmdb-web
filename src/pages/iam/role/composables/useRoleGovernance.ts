@@ -3,6 +3,7 @@ import { listRoleUsersApi } from "@/api/iam/user"
 import { listRolePoliciesApi, detachPolicyApi, batchDetachPolicyApi } from "@/api/iam/policy"
 import {
   batchAssignRoleApi,
+  batchUnassignRoleApi,
   analyzeRoleInlinePoliciesApi,
   getParentRolesApi,
   addParentRoleApi,
@@ -44,17 +45,74 @@ export function useRoleGovernance(
   const addMemberVisible = ref(false)
   const handleAddMember = () => (addMemberVisible.value = true)
 
+  /** 批量分派成员 (UserSelectDrawer 回调) */
   const handleAssignMembers = async (usernames: string[]) => {
     const code = toValue(roleCode)
     if (!code || !usernames.length) return
     try {
-      await batchAssignRoleApi({ usernames, role_code: code })
+      // NOTE: 利用后端优化的 Cartesian 接口，单次请求完成该角色下所有用户的绑定
+      await batchAssignRoleApi({ usernames, role_codes: [code] })
       ElMessage.success(`成功添加 ${usernames.length} 名成员`)
       addMemberVisible.value = false
       fetchMembers()
     } catch (err: any) {
-      // 错误已由全局拦截器处理，此处仅需重置状态或执行必要逻辑
+      // 错误已由全局拦截器处理
     }
+  }
+
+  /** 移除成员关联 (单条) */
+  const handleUnbindMember = async (user: User) => {
+    const code = toValue(roleCode)
+    if (!code) return
+
+    try {
+      await ElMessageBox.confirm(
+        `确认要从角色 [${code}] 中移除成员 [${user.nickname || user.username}] 吗？`,
+        "移除成员",
+        {
+          confirmButtonText: "确认移除",
+          cancelButtonText: "取消",
+          type: "warning"
+        }
+      )
+
+      await batchUnassignRoleApi({
+        usernames: [user.username],
+        role_codes: [code]
+      })
+      ElMessage.success("成员移除成功")
+      fetchMembers()
+    } catch (err: any) {
+      // 捕获取消
+    }
+  }
+
+  /** 批量移除成员关联 */
+  const handleBatchUnbindMembers = () => {
+    const code = toValue(roleCode)
+    if (!code || selectedMembers.value.length === 0) return
+
+    ElMessageBox.confirm(
+      `确认要从角色 [${code}] 中批量移除选中的 ${selectedMembers.value.length} 名成员吗？`,
+      "批量移除成员",
+      {
+        confirmButtonText: "确认移除",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    ).then(async () => {
+      try {
+        await batchUnassignRoleApi({
+          usernames: selectedMembers.value.map((u) => u.username),
+          role_codes: [code]
+        })
+        ElMessage.success("成功批量移除成员关联")
+        selectedMembers.value = []
+        fetchMembers()
+      } catch (err) {
+        console.error(err)
+      }
+    })
   }
 
   // --- 策略管理 (Policies) ---
@@ -275,6 +333,8 @@ export function useRoleGovernance(
     handleAddPolicy,
     handleAttachPolicySuccess,
     handleUnbindPolicy,
+    handleUnbindMember,
+    handleBatchUnbindMembers,
     analyzedInlinePolicies,
     analyzedLoading,
     fetchInlineAnalysis,
