@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { watch } from "vue"
-import { Close, OfficeBuilding, Check } from "@element-plus/icons-vue"
+import { watch, computed } from "vue"
+import { Close, OfficeBuilding } from "@element-plus/icons-vue"
 import { listRolesApi } from "@/api/iam/role"
 import type { Role } from "@/api/iam/role/type"
 import ResourceSelectorLayout from "@/common/components/ResourceSelector/ResourceSelectorLayout.vue"
@@ -8,7 +8,6 @@ import { useResourceSelector } from "@/pages/iam/authorization/composables/useRe
 
 /**
  * 角色选择器 (通用版)
- * 采用 ResourceSelectorLayout 架构，支持搜索、分页、多选及已选预览
  */
 
 const visible = defineModel<boolean>({ default: false })
@@ -17,12 +16,14 @@ interface RoleSelectProps {
   confirmLoading?: boolean
   title?: string
   subtitle?: string
+  confirmText?: string
   excludeCodes?: string[]
 }
 
 const props = withDefaults(defineProps<RoleSelectProps>(), {
-  title: "选择角色主体",
-  subtitle: "通过建立角色继承关系，实现权限的阶梯式传递与复用",
+  title: "选择角色对象",
+  subtitle: "检索并选择业务角色，实现权限的批量继承或关联",
+  confirmText: "确认选择",
   excludeCodes: () => []
 })
 
@@ -47,13 +48,12 @@ const {
   clearSelection,
   reset
 } = useResourceSelector<Role, { keyword: string }>({
-  fetchApi: (params) => listRolesApi({ ...params }),
+  fetchApi: listRolesApi,
   listKey: "roles",
   rowKey: (row: Role) => row.code,
   initialQuery: { keyword: "" }
 })
 
-// 过滤掉需要排除的角色
 const filteredList = computed(() => {
   if (!props.excludeCodes.length) return list.value
   return list.value.filter((role) => !props.excludeCodes.includes(role.code))
@@ -68,8 +68,6 @@ const handleConfirm = () => {
   if (selectedTotal.value === 0) return
   emit("confirm", [...selectedList.value])
 }
-
-import { computed } from "vue"
 </script>
 
 <template>
@@ -84,6 +82,7 @@ import { computed } from "vue"
     :total="total"
     :page-size="pagination.pageSize"
     :confirm-loading="confirmLoading"
+    :confirm-text="confirmText"
     search-placeholder="搜索角色名称、标识码..."
     accent-color="#3b82f6"
     layer-bg="#f8fafc"
@@ -107,9 +106,6 @@ import { computed } from "vue"
         <el-table-column label="角色信息" min-width="220">
           <template #default="{ row }">
             <div class="role-row">
-              <div class="role-icon">
-                <el-icon><OfficeBuilding /></el-icon>
-              </div>
               <div class="u-meta">
                 <span class="name">{{ row.name }}</span>
                 <span class="id">{{ row.code }}</span>
@@ -117,12 +113,12 @@ import { computed } from "vue"
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="desc" label="职责描述" min-width="300" show-overflow-tooltip />
-        <el-table-column label="类型" width="120" align="center">
+        <el-table-column prop="desc" label="描述" min-width="260" show-overflow-tooltip />
+        <el-table-column label="类型" width="100" align="center">
           <template #default="{ row }">
-            <div class="type-tag" :class="{ 'is-system': row.type === 1 }">
-              {{ row.type === 1 ? "系统预设" : "自定义" }}
-            </div>
+            <span class="type-tag" :class="{ 'is-system': row.type === 1 }">
+              {{ row.type === 1 ? "系统" : "自定义" }}
+            </span>
           </template>
         </el-table-column>
       </el-table>
@@ -130,11 +126,8 @@ import { computed } from "vue"
 
     <!-- 2. 已选清单 -->
     <template #selected-list>
-      <div v-for="role in selectedList" :key="role.code" class="entity-card">
+      <div v-for="role in selectedList" :key="role.code" class="resource-entity-card">
         <div class="card-content">
-          <div class="ok-mark">
-            <el-icon><Check /></el-icon>
-          </div>
           <div class="entity-info">
             <span class="entity-name">{{ role.name }}</span>
             <span class="entity-id">{{ role.code }}</span>
@@ -143,27 +136,12 @@ import { computed } from "vue"
         </div>
       </div>
     </template>
-
-    <!-- 3. 自定义确认按钮 -->
-    <template #footer-action>
-      <el-button
-        type="primary"
-        class="prime-action role-theme-btn"
-        :disabled="selectedTotal === 0"
-        :loading="confirmLoading"
-        @click="handleConfirm"
-      >
-        确认选择并建立继承关系
-      </el-button>
-    </template>
   </ResourceSelectorLayout>
 </template>
 
 <style lang="scss" scoped>
-$accent: #3b82f6;
 $text-main: #0f172a;
 $text-sub: #64748b;
-$line: #e2e8f0;
 
 .role-row {
   display: flex;
@@ -172,12 +150,12 @@ $line: #e2e8f0;
   .role-icon {
     width: 32px;
     height: 32px;
-    background: #eff6ff;
+    background: #f8fafc;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: $accent;
+    color: #64748b;
     font-size: 16px;
   }
   .u-meta {
@@ -196,74 +174,14 @@ $line: #e2e8f0;
 }
 
 .type-tag {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 6px;
   font-size: 11px;
+  padding: 1px 6px;
   background: #f1f5f9;
   color: #64748b;
+  border-radius: 4px;
   &.is-system {
-    background: #fef3c7;
-    color: #92400e;
+    background: #eff6ff;
+    color: #2563eb;
   }
-}
-
-.entity-card {
-  margin-bottom: 8px;
-  .card-content {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    background: #ffffff;
-    border: 1px solid $line;
-    border-radius: 8px;
-    transition: border-color 0.2s;
-    &:hover {
-      border-color: $accent;
-      .del-btn {
-        opacity: 1;
-      }
-    }
-    .ok-mark {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #eff6ff;
-      color: $accent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-    }
-    .entity-info {
-      flex: 1;
-      min-width: 0;
-      .entity-name {
-        display: block;
-        font-size: 13px;
-        font-weight: 600;
-        color: $text-main;
-      }
-      .entity-id {
-        font-size: 11px;
-        color: $text-sub;
-      }
-    }
-    .del-btn {
-      opacity: 0;
-      cursor: pointer;
-      color: #94a3b8;
-      font-size: 14px;
-      &:hover {
-        color: #ef4444;
-      }
-    }
-  }
-}
-
-.role-theme-btn {
-  width: 100%;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 </style>

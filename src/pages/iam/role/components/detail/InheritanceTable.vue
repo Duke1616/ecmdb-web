@@ -22,7 +22,6 @@ const emit = defineEmits<{
     :total="data.length"
     :loading="loading"
     :show-pagination="false"
-    indicator-color="#6366f1"
     show-selection
     disabled
     empty-text="暂无关联的父角色或继承关系"
@@ -223,6 +222,7 @@ const emit = defineEmits<{
     line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }

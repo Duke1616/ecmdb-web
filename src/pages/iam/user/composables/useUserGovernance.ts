@@ -1,7 +1,7 @@
 import { ref, watch, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
 import { listUserRolesApi, batchAssignRoleApi, batchUnassignRoleApi } from "@/api/iam/role"
-import { listUserPoliciesApi, batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
+import { listUserPoliciesApi, batchDetachPolicyApi, detachPolicyApi, batchAttachPolicyApi } from "@/api/iam/policy"
 import { listUserTenantsApi, removeTenantMemberApi } from "@/api/iam/tenant"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -19,6 +19,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
 
   // --- 1. 状态控制 ---
   const roleSelectVisible = ref(false)
+  const policySelectVisible = ref(false)
   const attachPolicyVisible = ref(false)
   const tenantSelectVisible = ref(false)
   const submitting = ref(false)
@@ -75,7 +76,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
 
   // --- 3. 核心业务动作 ---
 
-  /** 批量分配角色 (UserSelectDrawer 回调) */
+  /** 批量分配角色 (RoleSelectDialog 回调) */
   const handleAssignRoles = async (selectedRoles: Role[]) => {
     if (!username.value || !selectedRoles.length) return
     submitting.value = true
@@ -164,6 +165,22 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     })
   }
 
+  /** 批量关联策略 (PolicySelectDialog 回调) */
+  const handleAttachPolicies = async (selectedPolicies: Policy[]) => {
+    if (!username.value || !selectedPolicies.length) return
+    policyLoading.value = true
+    try {
+      await batchAttachPolicyApi({
+        subjects: [{ type: AuthorizationSubType.USER, code: username.value }],
+        policy_codes: selectedPolicies.map((p) => p.code)
+      })
+      policySelectVisible.value = false
+      loadPolicies()
+    } finally {
+      policyLoading.value = false
+    }
+  }
+
   /** 移除租户关联 (单条) */
   const handleUnbindTenant = (row: Tenant) => {
     if (!userId.value) return
@@ -191,7 +208,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     handlePolicySearch()
   }
 
-  const handleAddPolicy = () => (attachPolicyVisible.value = true)
+  const handleAddPolicy = () => (policySelectVisible.value = true)
   const handleAttachSuccess = () => loadPolicies()
 
   // 批量选择 Ref
@@ -236,11 +253,13 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       pageSize: policyPagination.pageSize
     })),
     selectedPolicies,
+    policySelectVisible,
     attachPolicyVisible,
     handlePolicyPageChange,
     handlePolicySearch,
     handlePolicyTypeChange,
     handleAddPolicy,
+    handleAttachPolicies,
     handleAttachSuccess,
     handleUnbindPolicy,
     handleBatchUnbindPolicies,

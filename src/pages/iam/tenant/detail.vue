@@ -15,7 +15,7 @@ import { useTenantGovernance } from "./composables/useTenantGovernance"
 import TenantMemberTable from "./components/detail/TenantMemberTable.vue"
 import TenantInvitationList from "./components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "./components/detail/TenantJoinRequestList.vue"
-import UserSelectDrawer from "@/pages/iam/user/components/UserSelectDrawer.vue"
+import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import type { User } from "@/api/iam/user/type"
 
@@ -207,7 +207,7 @@ const onAssignConfirm = async (users: User[]) => {
       </FormDialog>
 
       <!-- 分派成员抽屉 -->
-      <UserSelectDrawer v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
+      <UserSelectDialog v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
     </template>
   </PageContainer>
 </template>

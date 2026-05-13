@@ -1,6 +1,6 @@
 import { ref, watch, toValue, computed, type MaybeRefOrGetter } from "vue"
 import { listRoleUsersApi } from "@/api/iam/user"
-import { listRolePoliciesApi, detachPolicyApi, batchDetachPolicyApi } from "@/api/iam/policy"
+import { listRolePoliciesApi, detachPolicyApi, batchDetachPolicyApi, batchAttachPolicyApi } from "@/api/iam/policy"
 import {
   batchAssignRoleApi,
   batchUnassignRoleApi,
@@ -45,7 +45,7 @@ export function useRoleGovernance(
   const addMemberVisible = ref(false)
   const handleAddMember = () => (addMemberVisible.value = true)
 
-  /** 批量分派成员 (UserSelectDrawer 回调) */
+  /** 批量分派成员 (UserSelectDialog 回调) */
   const handleAssignMembers = async (usernames: string[]) => {
     const code = toValue(roleCode)
     if (!code || !usernames.length) return
@@ -139,8 +139,26 @@ export function useRoleGovernance(
 
   // 授权向导
   const attachPolicyVisible = ref(false)
-  const handleAddPolicy = () => (attachPolicyVisible.value = true)
+  const policySelectVisible = ref(false)
+  const handleAddPolicy = () => (policySelectVisible.value = true)
   const handleAttachPolicySuccess = () => fetchPolicies()
+
+  /** 批量关联策略 (PolicySelectDialog 回调) */
+  const handleAttachPolicies = async (selectedPolicies: Policy[]) => {
+    const code = toValue(roleCode)
+    if (!code || !selectedPolicies.length) return
+    policyLoading.value = true
+    try {
+      await batchAttachPolicyApi({
+        subjects: [{ type: AuthorizationSubType.ROLE, code }],
+        policy_codes: selectedPolicies.map((p) => p.code)
+      })
+      policySelectVisible.value = false
+      fetchPolicies()
+    } finally {
+      policyLoading.value = false
+    }
+  }
 
   // 解绑策略
   const handleUnbindPolicy = async (policy: Policy) => {
@@ -261,12 +279,22 @@ export function useRoleGovernance(
   const handleRemoveParent = async (parentCode: string) => {
     const code = toValue(roleCode)
     if (!code) return
+
     try {
+      await ElMessageBox.confirm(`确认要移除对角色 [${parentCode}] 的继承关系吗？`, "移除继承", {
+        confirmButtonText: "确认移除",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+
+      inheritanceLoading.value = true
       await removeParentRoleApi({ role_code: code, parent_role_code: parentCode })
-      ElMessage.success("成功移除父角色")
+      ElMessage.success("继承关系已移除")
       fetchParentRoles()
     } catch (err: any) {
-      // 错误已由全局拦截器处理
+      // 捕获取消或由全局拦截器处理
+    } finally {
+      inheritanceLoading.value = false
     }
   }
 
@@ -330,7 +358,9 @@ export function useRoleGovernance(
     handlePolicySearch,
     handlePolicyTypeChange,
     attachPolicyVisible,
+    policySelectVisible,
     handleAddPolicy,
+    handleAttachPolicies,
     handleAttachPolicySuccess,
     handleUnbindPolicy,
     handleUnbindMember,

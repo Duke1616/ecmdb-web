@@ -13,7 +13,7 @@ import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import TenantMemberTable from "../tenant/components/detail/TenantMemberTable.vue"
 import TenantInvitationList from "../tenant/components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "../tenant/components/detail/TenantJoinRequestList.vue"
-import UserSelectDrawer from "@/pages/iam/user/components/UserSelectDrawer.vue"
+import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
 import type { User } from "@/api/iam/user/type"
 
 import { Monitor } from "@element-plus/icons-vue"
@@ -152,7 +152,7 @@ const onAssignConfirm = async (users: User[]) => {
     </div>
 
     <!-- 分派成员抽屉 -->
-    <UserSelectDrawer v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
+    <UserSelectDialog v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
   </PageContainer>
 </template>
 

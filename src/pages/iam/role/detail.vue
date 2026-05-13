@@ -22,8 +22,9 @@ import MemberTable from "./components/detail/MemberTable.vue"
 import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
 import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
 import InheritanceTable from "./components/detail/InheritanceTable.vue"
-import RoleSelectDrawer from "./components/RoleSelectDrawer.vue"
-import UserSelectDrawer from "@/pages/iam/user/components/UserSelectDrawer.vue"
+import RoleSelectDialog from "./components/RoleSelectDialog.vue"
+import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
+import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
@@ -73,7 +74,9 @@ const {
   parentRoles,
   inheritanceLoading,
   addParentVisible,
+  policySelectVisible,
   handleAddParents,
+  handleAttachPolicies,
   handleRemoveParent
 } = useRoleGovernance(
   computed(() => roleInfo.value?.id),
@@ -233,15 +236,20 @@ const handleConfirmEdit = () => {
         </div>
       </div>
 
-      <!-- 功能侧边栏 -->
-      <UserSelectDrawer
+      <!-- 功能对话框 -->
+      <UserSelectDialog
         v-model="addMemberVisible"
+        title="关联用户"
+        subtitle="检索并添加目标用户，将其加入到当前角色组中"
+        confirm-text="确认关联"
         :confirm-loading="memberLoading"
         @confirm="(users) => handleAssignMembers(users.map((u) => u.username))"
       />
-      <RoleSelectDrawer
+      <RoleSelectDialog
         v-model="addParentVisible"
         title="建立信任继承关系"
+        subtitle="通过建立角色继承关系，实现权限的阶梯式传递与复用"
+        confirm-text="确认建立继承关系"
         :confirm-loading="inheritanceLoading"
         :exclude-codes="[roleInfo.code, ...parentRoles.map((r) => r.code)]"
         @confirm="(roles) => handleAddParents(roles.map((r) => r.code))"
@@ -250,6 +258,14 @@ const handleConfirmEdit = () => {
         v-model="attachPolicyVisible"
         :fixed-subjects="roleSubjects"
         @success="handleAttachPolicySuccess"
+      />
+      <PolicySelectDialog
+        v-model="policySelectVisible"
+        title="为角色分派权限策略"
+        confirm-text="确认分派策略"
+        :confirm-loading="policyLoading"
+        :exclude-codes="policies.map((p) => p.code)"
+        @confirm="handleAttachPolicies"
       />
 
       <!-- 编辑主体资料弹窗 -->

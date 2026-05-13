@@ -15,6 +15,8 @@ import StatusStrip, { type StatusItem } from "@/common/components/Governance/Sta
 import PolicyServiceInsights from "./components/detail/PolicyServiceInsights.vue"
 import PolicyAssignmentTable from "./components/detail/PolicyAssignmentTable.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
+import SubjectSelectDialog from "@/pages/iam/authorization/components/SubjectSelectDialog.vue"
+import { batchAttachPolicyApi } from "@/api/iam/policy"
 import { formatTimestamp } from "@@/utils/day"
 
 const router = useRouter()
@@ -25,10 +27,27 @@ const { activeTab } = useTabRouter("insights")
 
 // --- 授权管理向导逻辑 ---
 const attachSubjectVisible = ref(false)
+const subjectSelectVisible = ref(false)
+const submitting = ref(false)
 const assignmentTableRef = ref<InstanceType<typeof PolicyAssignmentTable>>()
 
 const handleAddSubject = () => {
-  attachSubjectVisible.value = true
+  subjectSelectVisible.value = true
+}
+
+const handleAttachSubjects = async (selectedSubjects: any[]) => {
+  if (!policy.value || !selectedSubjects.length) return
+  submitting.value = true
+  try {
+    await batchAttachPolicyApi({
+      subjects: selectedSubjects.map((s) => ({ type: s.type, code: s.id })),
+      policy_codes: [policy.value.code]
+    })
+    subjectSelectVisible.value = false
+    assignmentTableRef.value?.fetchAssignments()
+  } finally {
+    submitting.value = false
+  }
 }
 
 const handleAttachSuccess = () => {
@@ -151,6 +170,15 @@ const handleEdit = () => {
 
       <!-- 授权向导 (固定策略模式) -->
       <AuthorizeDrawer v-model="attachSubjectVisible" :fixed-policies="[policy]" @success="handleAttachSuccess" />
+
+      <!-- 主体选择对话框 -->
+      <SubjectSelectDialog
+        v-model="subjectSelectVisible"
+        title="关联授权主体"
+        confirm-text="确认关联主体"
+        :confirm-loading="submitting"
+        @confirm="handleAttachSubjects"
+      />
     </template>
 
     <el-empty v-else-if="!loading" description="未能获取到策略治理指标" />

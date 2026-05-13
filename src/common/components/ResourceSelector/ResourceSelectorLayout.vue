@@ -23,6 +23,8 @@ interface Props {
   listWidth?: string
   // 搜索相关
   searchPlaceholder?: string
+  // 确认按钮相关
+  confirmText?: string
 }
 
 withDefaults(defineProps<Props>(), {
@@ -31,7 +33,8 @@ withDefaults(defineProps<Props>(), {
   listWidth: "340px",
   searchPlaceholder: "请输入关键词检索...",
   total: 0,
-  pageSize: 10
+  pageSize: 10,
+  confirmText: "确认确认"
 })
 
 const visible = defineModel<boolean>({ default: false })
@@ -58,7 +61,7 @@ const emit = defineEmits<{
     :full-height="true"
     class="premium-resource-selector"
   >
-    <div class="studio-layout" :style="{ '--accent': accentColor, '--layer-bg': layerBg }">
+    <div class="studio-layout" :style="{ '--accent-color': accentColor, '--layer-bg': layerBg }">
       <div class="main-panel">
         <!-- 1. 操作层 (Action Layer) -->
         <div class="action-layer">
@@ -68,7 +71,11 @@ const emit = defineEmits<{
                 <el-icon><Search /></el-icon>
               </template>
             </el-input>
-            <el-button :icon="Refresh" circle class="refresh-tool" @click="emit('refresh')" />
+
+            <div class="action-tools">
+              <slot name="toolbar-extra" />
+              <el-button :icon="Refresh" class="refresh-tool" @click="emit('refresh')" />
+            </div>
           </div>
 
           <div class="vertical-divider" />
@@ -94,7 +101,7 @@ const emit = defineEmits<{
             <el-scrollbar
               class="selected-scroller"
               wrap-style="overflow-x: hidden;"
-              view-style="padding-right: 12px; padding-bottom: 20px;"
+              view-style="padding-right: 16px; padding-bottom: 20px;"
             >
               <slot name="selected-list" />
 
@@ -131,7 +138,7 @@ const emit = defineEmits<{
                 :loading="confirmLoading"
                 @click="emit('confirm')"
               >
-                完成确认
+                {{ confirmText }}
               </el-button>
             </slot>
           </div>
@@ -141,17 +148,142 @@ const emit = defineEmits<{
   </FormDialog>
 </template>
 
+<!-- 全局样式块：处理插槽内容和第三方组件样式 -->
+<style lang="scss">
+.premium-resource-selector {
+  $tool-h: 36px;
+  $line: #e2e8f0;
+  $text-main: #0f172a;
+  $text-sub: #64748b;
+  $radius: 10px;
+
+  @mixin tool-base-global {
+    height: $tool-h !important;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: top;
+  }
+
+  // 1. 分段过滤器
+  .eiam-segment-filter {
+    display: flex;
+    height: $tool-h !important;
+    align-items: stretch;
+    .el-radio-button {
+      height: 100% !important;
+      display: flex;
+    }
+    .el-radio-button__inner {
+      @include tool-base-global;
+      width: 100%;
+      line-height: 1 !important;
+      padding: 0 16px !important;
+      background-color: #f1f5f9;
+      border: 1px solid $line;
+      border-radius: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: $text-sub;
+      box-shadow: none !important;
+      &:hover {
+        color: var(--accent-color);
+      }
+    }
+    .el-radio-button:first-child .el-radio-button__inner {
+      border-radius: 8px 0 0 8px;
+    }
+    .el-radio-button:last-child .el-radio-button__inner {
+      border-radius: 0 8px 8px 0;
+    }
+    .el-radio-button__original-radio:checked + .el-radio-button__inner {
+      background-color: #ffffff;
+      color: var(--accent-color);
+      border-color: $line;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+      position: relative;
+      z-index: 1;
+    }
+  }
+
+  // 2. 已选清单卡片
+  .resource-entity-card {
+    margin-bottom: 8px;
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .card-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #ffffff;
+      border: 1px solid $line;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+
+      &:hover {
+        border-color: var(--accent-color);
+        .del-btn {
+          opacity: 1;
+        }
+      }
+    }
+
+    .entity-info {
+      flex: 1;
+      min-width: 0;
+      .entity-name {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: $text-main;
+      }
+      .entity-id {
+        font-size: 11px;
+        color: $text-sub;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+    }
+
+    .del-btn {
+      opacity: 0.3;
+      cursor: pointer;
+      color: #94a3b8;
+      font-size: 14px;
+      transition: all 0.2s;
+      &:hover {
+        color: #ef4444;
+        opacity: 1;
+      }
+    }
+  }
+}
+</style>
+
 <style lang="scss" scoped>
+$tool-h: 36px;
 $line: #e2e8f0;
 $text-main: #0f172a;
 $text-sub: #64748b;
+$radius: 8px;
+
+@mixin tool-base {
+  height: $tool-h !important;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: top;
+}
 
 .studio-layout {
   flex: 1;
   display: flex;
   flex-direction: column;
   height: 0;
-  --accent-color: var(--accent);
   --bg-color: var(--layer-bg);
 }
 
@@ -179,23 +311,40 @@ $text-sub: #64748b;
     .compact-search {
       flex: 1;
       :deep(.el-input__wrapper) {
+        @include tool-base;
         box-shadow: none;
         border: 1px solid $line;
-        border-radius: 6px;
+        border-radius: $radius;
         background: #fff;
-        height: 36px;
         &:hover,
         &.is-focus {
           border-color: var(--accent-color);
         }
       }
     }
+    .action-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .refresh-tool {
+      @include tool-base;
+      width: $tool-h !important;
+      padding: 0 !important;
+      background-color: #f1f5f9;
+      border: 1px solid $line;
+      border-radius: $radius;
       color: $text-sub;
-      border-color: $line;
+      transition: all 0.2s;
+
       &:hover {
+        background-color: #e2e8f0;
         color: var(--accent-color);
         border-color: var(--accent-color);
+      }
+      &:active {
+        background-color: #cbd5e1;
       }
     }
   }
@@ -207,7 +356,7 @@ $text-sub: #64748b;
   }
 
   .selection-header {
-    padding: 0 24px;
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -255,7 +404,7 @@ $text-sub: #64748b;
   }
   .selection-list-area {
     background: var(--bg-color);
-    padding: 16px 4px 16px 16px;
+    padding: 16px 4px 16px 20px;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
@@ -286,10 +435,33 @@ $text-sub: #64748b;
     box-sizing: border-box;
     .prime-action {
       width: 100%;
-      height: 42px;
-      border-radius: 8px;
+      height: 44px;
+      background: #2563eb !important;
+      border-color: #2563eb !important;
+      border-radius: 10px;
       font-weight: 700;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      font-size: 14px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &:hover:not(:disabled) {
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &.is-disabled {
+        background: #94a3b8 !important;
+        border-color: #94a3b8 !important;
+        box-shadow: none;
+        opacity: 0.6;
+      }
     }
   }
 }

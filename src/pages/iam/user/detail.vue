@@ -23,7 +23,8 @@ import TenantTable from "./components/detail/TenantTable.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
-import RoleSelectDrawer from "@/pages/iam/role/components/RoleSelectDrawer.vue"
+import RoleSelectDialog from "@/pages/iam/role/components/RoleSelectDialog.vue"
+import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
@@ -46,7 +47,6 @@ const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
 const {
   activeTab,
-  submitting,
   // 角色
   roles,
   roleTotal,
@@ -81,7 +81,9 @@ const {
   handleUnbindRole,
   handleUnbindPolicy,
   handleUnbindTenant,
-  handleBatchUnbindPolicies
+  handleBatchUnbindPolicies,
+  policySelectVisible,
+  handleAttachPolicies
 } = useUserGovernance(userInfo)
 
 const handleEditConfirm = () => {
@@ -222,15 +224,25 @@ const userSubjects = computed<Subject[]>(() => {
       </FormDialog>
 
       <!-- 角色分配器 -->
-      <RoleSelectDrawer
+      <RoleSelectDialog
         v-model="roleSelectVisible"
-        title="分配角色"
-        :confirm-loading="submitting"
-        @confirm="handleAssignRoles"
+        title="分配角色主体"
+        confirm-text="确认分配角色"
+        :confirm-loading="roleLoading"
+        :exclude-codes="roles.map((r) => r.code)"
+        @confirm="(roles) => handleAssignRoles(roles)"
       />
 
       <!-- 授权向导 -->
       <AuthorizeDrawer v-model="attachPolicyVisible" :fixed-subjects="userSubjects" @success="handleAttachSuccess" />
+      <PolicySelectDialog
+        v-model="policySelectVisible"
+        title="为用户授予权限策略"
+        confirm-text="确认授予策略"
+        :confirm-loading="policyLoading"
+        :exclude-codes="policies.map((p) => p.code)"
+        @confirm="handleAttachPolicies"
+      />
     </template>
   </PageContainer>
 </template>
