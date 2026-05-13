@@ -77,14 +77,14 @@ const formatTime = (ts: number) => {
       disabled
     >
       <template #header-actions>
-        <el-button type="primary" class="toolbar-action-btn" @click="handleCreate">
+        <el-button class="u-gov-btn" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           <span>初始化凭证</span>
         </el-button>
       </template>
 
       <template #column-header>
-        <div class="link-cols header-label-font">
+        <div class="gov-table-grid is-header is-invitation u-gov-label">
           <span>邀请码 / 分享</span>
           <span class="align-center">载荷情况</span>
           <span>有效期限</span>
@@ -94,7 +94,7 @@ const formatTime = (ts: number) => {
       </template>
 
       <template #item="{ item: row }">
-        <div class="link-cols row-hover">
+        <div class="gov-table-grid is-row is-invitation">
           <div class="cell-identity">
             <AssetIdentityCell :title="row.code" sub-title="点击复制邀请链接" @click="copyLink(row.code)" />
           </div>
@@ -114,7 +114,7 @@ const formatTime = (ts: number) => {
             </span>
           </div>
 
-          <div class="cell-mode">
+          <div class="cell-status">
             <el-tag :type="row.require_approval ? 'warning' : 'success'" effect="plain" size="small">
               {{ row.require_approval ? "需审核" : "自动通过" }}
             </el-tag>
@@ -140,47 +140,6 @@ const formatTime = (ts: number) => {
 </template>
 
 <style lang="scss" scoped>
-@use "./governance-table.scss";
-
-.link-cols {
-  display: grid !important;
-  /* 基础比例 + 关键对齐列固定宽度 */
-  grid-template-columns: 1.5fr 1.2fr 1.2fr 1.2fr 100px;
-  align-items: center;
-  gap: 24px;
-  width: 100%;
-  flex: 1 1 0%;
-  box-sizing: border-box;
-
-  &.row-hover {
-    min-height: 72px;
-    transition: background 0.2s;
-    border-bottom: 1px solid #f1f5f9;
-    &:hover {
-      background: #f8fafc;
-    }
-  }
-
-  /* 统一对齐类 */
-  .align-center {
-    text-align: center;
-    display: block;
-    width: 100%;
-  }
-
-  .align-right {
-    text-align: right;
-    display: block;
-    width: 100%;
-  }
-}
-
-.cell-identity {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
 .cell-payload {
   display: flex;
   flex-direction: column;
@@ -208,39 +167,9 @@ const formatTime = (ts: number) => {
   }
 }
 
-.cell-expiry {
-  display: flex;
-  align-items: center;
-}
-
-.cell-mode {
-  text-align: center;
-}
-
-.cell-actions {
-  display: flex;
-  justify-content: center;
-
-  .delete-btn {
-    color: #cbd5e1;
-    font-size: 12px;
-    font-weight: 600;
-    &:hover {
-      color: #ef4444;
-    }
-  }
-}
-
-.cell-time {
-  display: flex;
-  align-items: center;
-  .time-text {
-    font-size: 13px;
-    color: #8a99ad;
-    font-weight: 500;
-    &.is-permanent {
-      color: #3b82f6;
-    }
+.time-text {
+  &.is-permanent {
+    color: #3b82f6 !important;
   }
 }
 </style>

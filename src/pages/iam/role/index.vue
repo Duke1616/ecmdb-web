@@ -22,7 +22,7 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
+            <el-button class="u-gov-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>初始化角色</span>
             </el-button>
@@ -87,7 +87,7 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { useRouter } from "vue-router"
-import { Search, Plus, RefreshRight, Lock } from "@element-plus/icons-vue"
+import { Search, Plus, RefreshRight, Lock, Edit, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -133,8 +133,8 @@ const handleViewDetail = (row: any) => {
  * 角色操作配置项
  */
 const roleOperateItems = [
-  { name: "资料维护", code: "edit", type: "info" },
-  { name: "职责注销", code: "delete", type: "danger" }
+  { name: "编辑", code: "edit", type: "primary", icon: Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
 ]
 
 const handleOperate = (row: any, code: string) => {

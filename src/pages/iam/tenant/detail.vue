@@ -125,11 +125,11 @@ const onAssignConfirm = async (users: User[]) => {
       >
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="gov-action-btn primary" @click="editVisible = true">
+            <el-button class="u-gov-btn" @click="editVisible = true">
               <el-icon><Edit /></el-icon>
               <span>完善资料</span>
             </el-button>
-            <el-button class="gov-action-btn danger" @click="handleDelete">
+            <el-button class="u-gov-btn is-danger" @click="handleDelete">
               <el-icon><Delete /></el-icon>
               <span>销毁空间</span>
             </el-button>

@@ -53,7 +53,7 @@ const emit = defineEmits<{
   >
     <!-- 表头定义 -->
     <template #column-header>
-      <div class="gov-table-cols header-label-font">
+      <div class="gov-table-grid is-header u-gov-label">
         <span>角色名称 / 标识</span>
         <span>角色描述</span>
         <span>关联时间</span>
@@ -63,7 +63,7 @@ const emit = defineEmits<{
 
     <!-- 顶部操作 -->
     <template #header-actions>
-      <el-button plain class="toolbar-action-btn" :disabled="!canAdd" @click="emit('add')">
+      <el-button class="u-gov-btn" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>分派角色</span>
       </el-button>
@@ -79,7 +79,7 @@ const emit = defineEmits<{
 
     <!-- 列表项内容 -->
     <template #item="{ item: row }">
-      <div class="gov-table-grid-row">
+      <div class="gov-table-grid is-row">
         <!-- 角色标识 (使用共享组件) -->
         <div class="cell-identity">
           <AssetIdentityCell
@@ -94,7 +94,9 @@ const emit = defineEmits<{
         </div>
 
         <div class="cell-desc">
-          <span class="desc-text">{{ row.desc || "—" }}</span>
+          <el-tooltip :content="row.desc" placement="top" :show-after="500" :disabled="!row.desc">
+            <span class="desc-text">{{ row.desc || "—" }}</span>
+          </el-tooltip>
         </div>
 
         <div class="cell-time">
@@ -118,7 +120,3 @@ const emit = defineEmits<{
     </template>
   </PremiumList>
 </template>
-
-<style lang="scss" scoped>
-@use "./governance-table.scss";
-</style>

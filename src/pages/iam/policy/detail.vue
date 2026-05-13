@@ -114,11 +114,11 @@ const handleEdit = () => {
       <ManagerHeader :title="policy.name" :subtitle="policy.code" :show-back-button="true" @back="router.back()">
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="gov-action-btn primary" @click="handleEdit">
+            <el-button class="u-gov-btn" @click="handleEdit">
               <el-icon><Edit /></el-icon>
               <span>完善策略</span>
             </el-button>
-            <el-button class="gov-action-btn danger" plain @click="handleDelete">
+            <el-button class="u-gov-btn is-danger" @click="handleDelete">
               <el-icon><Delete /></el-icon>
               <span>移除策略</span>
             </el-button>
@@ -185,35 +185,6 @@ const handleEdit = () => {
 .header-action-stack {
   display: flex;
   gap: 12px;
-  .gov-action-btn {
-    height: 38px;
-    padding: 0 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-
-    &.primary {
-      color: #3b82f6;
-      border-color: #ede9fe;
-      background: #f5f3ff;
-      &:hover {
-        background: #ede9fe;
-      }
-    }
-
-    &.danger {
-      color: #ef4444;
-      border-color: #fee2e2;
-      background: #ffffff;
-      &:hover {
-        background: #fef2f2;
-      }
-    }
-
-    .el-icon {
-      margin-right: 6px;
-    }
-  }
 }
 
 .governance-raw-tabs :deep(.el-tabs__item) {

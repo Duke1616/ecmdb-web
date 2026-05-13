@@ -22,7 +22,7 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
+            <el-button class="u-gov-btn" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>新增租户</span>
             </el-button>
@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Search, Plus, RefreshRight, OfficeBuilding } from "@element-plus/icons-vue"
+import { Search, Plus, RefreshRight, OfficeBuilding, Edit, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -132,9 +132,8 @@ const submitting = ref(false)
  * 租户操作配置项
  */
 const tenantOperateItems = [
-  { name: "管理看板", code: "view", type: "primary" },
-  { name: "资料维护", code: "edit", type: "info" },
-  { name: "租户销毁", code: "delete", type: "danger" }
+  { name: "编辑", code: "edit", type: "primary", icon: Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
 ]
 
 const handleViewDetail = (row: Tenant) => {

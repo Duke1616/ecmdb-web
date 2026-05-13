@@ -29,7 +29,7 @@ const emit = defineEmits<{
   >
     <!-- 表头定义 -->
     <template #column-header>
-      <div class="inheritance-cols header-label-font">
+      <div class="inheritance-cols u-gov-label">
         <span>父角色资料</span>
         <span>角色来源</span>
         <span>继承层级</span>
@@ -39,7 +39,7 @@ const emit = defineEmits<{
 
     <!-- 头部操作 -->
     <template #header-actions>
-      <el-button plain class="toolbar-action-btn" @click="emit('add')">
+      <el-button class="u-gov-btn" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>添加父角色</span>
       </el-button>
@@ -95,34 +95,6 @@ const emit = defineEmits<{
 </template>
 
 <style lang="scss" scoped>
-.toolbar-action-btn {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 9px;
-  border-color: #6366f1;
-  background: #6366f1;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-
-  :deep(.el-icon) {
-    margin-right: 6px;
-    font-size: 14px;
-  }
-
-  &:hover {
-    border-color: #4f46e5;
-    background: #4f46e5;
-    color: #ffffff;
-  }
-}
-
-.header-label-font {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8a99ad;
-}
-
 .inheritance-cols {
   display: grid;
   grid-template-columns: 240px 140px 1fr 120px;

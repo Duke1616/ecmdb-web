@@ -43,7 +43,7 @@ const emit = defineEmits<{
   >
     <!-- 表头定义 -->
     <template #column-header>
-      <div class="member-cols header-label-font">
+      <div class="member-cols u-gov-label">
         <span>用户信息 / 账号</span>
         <span>联系邮箱</span>
         <span>职位与职责</span>
@@ -55,7 +55,7 @@ const emit = defineEmits<{
 
     <!-- 头部操作 -->
     <template #header-actions>
-      <el-button plain class="toolbar-action-btn" @click="emit('add')">
+      <el-button class="u-gov-btn" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>分派成员</span>
       </el-button>
@@ -80,11 +80,15 @@ const emit = defineEmits<{
 
         <!-- 详细信息列 -->
         <div class="cell-email">
-          <span class="email-text">{{ row.email || "—" }}</span>
+          <el-tooltip :content="row.email" placement="top" :show-after="500" :disabled="!row.email">
+            <span class="email-text">{{ row.email || "—" }}</span>
+          </el-tooltip>
         </div>
 
         <div class="cell-job">
-          <span class="job-text">{{ row.job_title || "普通成员" }}</span>
+          <el-tooltip :content="row.job_title" placement="top" :show-after="500" :disabled="!row.job_title">
+            <span class="job-text">{{ row.job_title || "普通成员" }}</span>
+          </el-tooltip>
         </div>
 
         <!-- 状态列 (默认为活跃状态) -->
@@ -109,30 +113,6 @@ const emit = defineEmits<{
 </template>
 
 <style lang="scss" scoped>
-.toolbar-action-btn {
-  height: 34px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-
-  &:hover {
-    background: #2563eb;
-    border-color: #2563eb;
-  }
-}
-
-.header-label-font {
-  font-size: 11px;
-  font-weight: 700;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
 .member-cols {
   display: grid;
   grid-template-columns: 200px 1.5fr 1fr 100px 1.2fr 100px;
@@ -154,41 +134,8 @@ const emit = defineEmits<{
   width: 100%;
 }
 
-.cell-email .email-text {
-  font-size: 13px;
-  color: #475569;
-  font-family: ui-monospace, SFMono-Regular, monospace;
-}
-
-.cell-job .job-text {
-  font-size: 13px;
-  color: #475569;
-  font-weight: 500;
-}
-
-.cell-status {
-  display: flex;
-  justify-content: center;
-}
-
-.cell-time .time-text {
-  font-size: 13px;
-  color: #8a99ad;
-  font-weight: 500;
-}
-
-.cell-actions {
-  display: flex;
-  justify-content: center;
-  .delete-btn {
-    font-size: 12px;
-    font-weight: 600;
-    &:hover {
-      color: #ef4444;
-    }
-    :deep(.el-icon) {
-      margin-right: 4px;
-    }
-  }
+.status-tag {
+  border-radius: 6px;
+  font-weight: 600;
 }
 </style>

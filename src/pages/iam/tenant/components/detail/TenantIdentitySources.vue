@@ -126,8 +126,8 @@ onMounted(() => {
         <span class="count-badge">{{ providers.length }} 个节点</span>
       </div>
       <div class="header-right">
-        <el-button class="manage-action-btn primary" @click="handleAdd">
-          <el-icon><Connection /></el-icon>
+        <el-button class="u-gov-btn" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
           <span>集成新协议</span>
         </el-button>
       </div>
@@ -222,9 +222,10 @@ onMounted(() => {
           </div>
 
           <div class="action-footer">
-            <el-button link class="footer-btn danger" :icon="Delete" @click="handleDelete(activeProvider)"
-              >删除配置</el-button
-            >
+            <el-button link class="delete-btn" @click="handleDelete(activeProvider)">
+              <el-icon><Delete /></el-icon>
+              <span>删除配置</span>
+            </el-button>
             <el-button link class="footer-btn primary" :icon="Setting" @click="handleEdit">修改配置参数</el-button>
             <el-button
               class="footer-btn outline"
@@ -288,23 +289,6 @@ onMounted(() => {
       border-radius: 99px;
       font-size: 12px;
       font-weight: 700;
-    }
-  }
-
-  .manage-action-btn {
-    &.primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      border: none;
-      color: white;
-      font-weight: 600;
-      padding: 0 20px;
-      height: 38px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-      &:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
-      }
     }
   }
 }
@@ -582,12 +566,6 @@ onMounted(() => {
       align-items: center;
       gap: 8px;
 
-      &.danger {
-        color: #ef4444;
-        &:hover {
-          background: #fef2f2;
-        }
-      }
       &.primary {
         background: #eff6ff;
         color: #3b82f6;

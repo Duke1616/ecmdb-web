@@ -112,17 +112,13 @@ const userSubjects = computed<Subject[]>(() => {
       >
         <template #actions>
           <div class="header-action-stack">
-            <el-button
-              class="gov-action-btn primary"
-              :disabled="!hasPermission(IAM_CAPABILITIES.User.Edit)"
-              @click="handleEdit"
-            >
+            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.User.Edit)" @click="handleEdit">
               <el-icon><Edit /></el-icon>
               <span>完善资料</span>
             </el-button>
             <el-button
               v-if="userInfo.is_member"
-              class="gov-action-btn danger"
+              class="u-gov-btn is-danger"
               :disabled="!hasPermission(IAM_CAPABILITIES.User.Delete)"
               @click="handleDelete"
             >

@@ -140,11 +140,11 @@ const infoItems = computed(() => {
       <ManagerHeader :title="roleInfo.name" :subtitle="roleInfo.code" :show-back-button="true" @back="router.back()">
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="gov-action-btn primary" plain>
+            <el-button class="u-gov-btn" @click="handleEdit">
               <el-icon><Edit /></el-icon>
               <span>完善职责</span>
             </el-button>
-            <el-button class="gov-action-btn danger" @click="handleDelete">
+            <el-button class="u-gov-btn is-danger" @click="handleDelete">
               <el-icon><Delete /></el-icon>
               <span>注销主体</span>
             </el-button>

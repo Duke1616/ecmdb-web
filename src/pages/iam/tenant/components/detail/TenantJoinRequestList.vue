@@ -44,7 +44,7 @@ const formatTime = (ts: number) => {
       disabled
     >
       <template #column-header>
-        <div class="request-cols header-label-font">
+        <div class="gov-table-grid is-header is-request u-gov-label">
           <span>申请人信息</span>
           <span>来源凭证</span>
           <span>申请时间</span>
@@ -54,7 +54,7 @@ const formatTime = (ts: number) => {
       </template>
 
       <template #item="{ item: row }">
-        <div class="request-cols row-hover">
+        <div class="gov-table-grid is-row is-request">
           <div class="cell-user">
             <AssetIdentityCell :title="row.nickname || row.username" :sub-title="row.username" />
           </div>
@@ -105,41 +105,6 @@ const formatTime = (ts: number) => {
 </template>
 
 <style lang="scss" scoped>
-@use "./governance-table.scss";
-
-.request-cols {
-  display: grid !important;
-  /* 比例对齐，操作列固定宽度 */
-  grid-template-columns: 1.5fr 1.2fr 1.2fr 1fr 140px;
-  align-items: center;
-  gap: 24px;
-  width: 100%;
-  flex: 1 1 0%;
-  box-sizing: border-box;
-
-  &.row-hover {
-    min-height: 72px;
-    transition: background 0.2s;
-    border-bottom: 1px solid #f1f5f9;
-    &:hover {
-      background: #f8fafc;
-    }
-  }
-
-  /* 统一对齐类 */
-  .align-center {
-    text-align: center;
-    display: block;
-    width: 100%;
-  }
-}
-
-.cell-user {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
 .cell-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
   font-size: 12px;
@@ -152,27 +117,8 @@ const formatTime = (ts: number) => {
   }
 }
 
-.time-text {
-  font-size: 13px;
-  color: #8a99ad;
-  font-weight: 500;
-}
-
-.role-tag {
-  border-radius: 6px;
-  font-weight: 500;
-}
-
 .cell-actions {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-
   .action-btn {
-    font-size: 12px;
-    font-weight: 600;
-    transition: all 0.2s;
-
     &.approve-btn {
       color: #10b981;
       &:hover {

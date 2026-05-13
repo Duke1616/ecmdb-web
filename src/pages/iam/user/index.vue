@@ -18,12 +18,7 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button
-              type="primary"
-              class="eiam-primary-btn"
-              :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)"
-              @click="handleCreate"
-            >
+            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>新增主体</span>
             </el-button>
@@ -131,7 +126,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { Search, Plus, RefreshRight, User as UserIcon } from "@element-plus/icons-vue"
+import { Search, Plus, RefreshRight, User as UserIcon, Edit, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -182,8 +177,8 @@ const submitting = ref(false)
  * 用户操作配置项
  */
 const userOperateItems = [
-  { name: "资料维护", code: "edit", type: "primary", capability: IAM_CAPABILITIES.User.Edit },
-  { name: "权限注销", code: "delete", type: "danger", capability: IAM_CAPABILITIES.User.Delete }
+  { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.User.Edit },
+  { name: "注销", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.User.Delete }
 ]
 
 const handleOperate = (row: any, code: string) => {

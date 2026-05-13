@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Collection, InfoFilled, Setting, Monitor, Iphone, Promotion } from "@element-plus/icons-vue"
+import { ArrowRight, Collection, InfoFilled, Monitor, Iphone, Promotion } from "@element-plus/icons-vue"
 import { toRefs } from "vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { User } from "@/api/iam/user/type"
@@ -59,8 +59,8 @@ const getProviderIcon = (p: string) => {
         <span class="count-badge">{{ filteredIdentities.length }}</span>
       </div>
       <div class="header-right">
-        <el-button class="manage-action-btn" :disabled="!canManage" @click="handleOpenManage">
-          <el-icon><Setting /></el-icon>
+        <el-button class="u-gov-btn" :disabled="!canManage" @click="handleOpenManage">
+          <el-icon><Plus /></el-icon>
           <span>治理身份源</span>
         </el-button>
       </div>
@@ -128,8 +128,9 @@ const getProviderIcon = (p: string) => {
 
           <!-- 底部操作区 -->
           <div v-if="activeIdentity.provider.toLowerCase() !== 'ldap'" class="action-footer">
-            <el-button link type="danger" class="unbind-btn" :disabled="!canManage" @click="handleUnbind">
-              解除账号关联
+            <el-button link class="delete-btn" :disabled="!canManage" @click="handleUnbind">
+              <el-icon><Delete /></el-icon>
+              <span>解除账号关联</span>
             </el-button>
           </div>
           <div v-else class="action-footer-info">
@@ -197,27 +198,6 @@ const getProviderIcon = (p: string) => {
       border: 1px solid #e5edf5;
       padding: 0 8px;
       border-radius: 999px;
-    }
-  }
-
-  .manage-action-btn {
-    height: 34px;
-    padding: 0 14px;
-    border-radius: 8px;
-    border: 1px solid #3b82f6;
-    background: #3b82f6;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 600;
-    transition: all 0.2s;
-
-    .el-icon {
-      margin-right: 6px;
-    }
-
-    &:hover {
-      background: #2563eb;
-      border-color: #2563eb;
     }
   }
 }
@@ -449,15 +429,6 @@ const getProviderIcon = (p: string) => {
     border-top: 1px solid #f1f5f9;
     display: flex;
     justify-content: flex-end;
-
-    .unbind-btn {
-      font-weight: 600;
-      font-size: 12px;
-      color: #94a3b8;
-      &:hover {
-        color: #ef4444;
-      }
-    }
   }
 
   .action-footer-info {

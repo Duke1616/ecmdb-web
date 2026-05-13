@@ -125,7 +125,7 @@ defineExpose({
     >
       <!-- 表头定义 -->
       <template #column-header>
-        <div class="assign-cols header-label-font">
+        <div class="assign-cols u-gov-label">
           <span>授权主体</span>
           <span>资源范围</span>
           <span>备注说明</span>
@@ -136,7 +136,7 @@ defineExpose({
 
       <!-- 头部操作 -->
       <template #header-actions>
-        <el-button plain class="toolbar-action-btn" @click="emit('add')">
+        <el-button plain class="u-gov-btn" @click="emit('add')">
           <el-icon><Plus /></el-icon>
           <span>新增授权主体</span>
         </el-button>
@@ -170,10 +170,14 @@ defineExpose({
             </div>
           </div>
 
-          <div class="cell-note">
-            <span class="note-text" :title="row.note">
-              {{ row.note || "该授权项允许主体在指定资源范围内执行预定义的策略动作。" }}
-            </span>
+          <div class="cell-desc">
+            <el-tooltip
+              :content="row.note || '该授权项允许主体在指定资源范围内执行预定义的策略动作。'"
+              placement="top"
+              :show-after="500"
+            >
+              <span class="desc-text">{{ row.note || "该授权项允许主体在指定资源范围内执行预定义的策略动作。" }}</span>
+            </el-tooltip>
           </div>
 
           <div class="cell-time">
@@ -195,35 +199,6 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-.toolbar-action-btn {
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 9px;
-  border-color: #3b82f6;
-  background: #3b82f6;
-  color: #ffffff;
-  font-size: 13px;
-  font-weight: 600;
-
-  :deep(.el-icon) {
-    margin-right: 6px;
-    font-size: 14px;
-  }
-
-  &:hover {
-    border-color: #2563eb;
-    background: #2563eb;
-    color: #ffffff;
-  }
-}
-
-.header-label-font {
-  font-size: 12px;
-  font-weight: 600;
-  color: #8a99ad;
-  letter-spacing: 0.01em;
-}
-
 .assign-cols {
   display: grid;
   grid-template-columns: 240px 140px 1fr 150px 90px;
@@ -303,41 +278,14 @@ defineExpose({
   }
 }
 
-.cell-note {
-  min-width: 0;
-  .note-text {
-    font-size: 13px;
-    color: #64748b;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.delete-btn {
+  color: #94a3b8;
+  transition: all 0.2s;
+  &:hover {
+    color: #ef4444;
   }
-}
-
-.cell-time {
-  display: flex;
-  justify-content: center;
-  .time-item {
-    font-size: 12px;
-    color: #64748b;
-    font-family: ui-monospace, SFMono-Regular, monospace;
-  }
-}
-
-.cell-actions {
-  display: flex;
-  justify-content: center;
-  .delete-btn {
-    color: #94a3b8;
-    transition: all 0.2s;
-    &:hover {
-      color: #ef4444;
-    }
-    .el-icon {
-      margin-right: 4px;
-    }
+  .el-icon {
+    margin-right: 4px;
   }
 }
 </style>

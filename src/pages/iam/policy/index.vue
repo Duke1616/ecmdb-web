@@ -36,12 +36,7 @@
               <el-option label="系统预设" :value="1" />
               <el-option label="自定义" :value="2" />
             </el-select>
-            <el-button
-              type="primary"
-              class="eiam-main-btn"
-              :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
-              @click="handleCreate"
-            >
+            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>创建策略</span>
             </el-button>
@@ -170,7 +165,7 @@ const TYPE_ALL = undefined as any
 const tableColumns: Column[] = [
   { label: "策略名称", prop: "name", slot: "name", minWidth: 150, align: "center" },
   { label: "策略类型", prop: "type", slot: "type", width: 120, align: "center" },
-  { label: "描述说明", prop: "desc", slot: "desc", minWidth: 200, align: "center" },
+  { label: "描述说明", prop: "desc", slot: "desc", minWidth: 200, align: "center", showOverflowTooltip: true },
   { label: "关联主体", prop: "assignment_count", slot: "assignment", width: 120, align: "center" },
   { label: "创建时间", prop: "ctime", slot: "ctime", width: 170, align: "center" }
 ]
