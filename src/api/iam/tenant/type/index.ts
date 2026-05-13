@@ -31,6 +31,7 @@ export interface SwitchTenantReq {
 export interface ListTenantReq {
   offset: number
   limit: number
+  keyword?: string
 }
 
 /** 租户列表响应数据 */
@@ -83,4 +84,16 @@ export interface AssignUserReq {
 export interface RemoveMemberReq {
   tenant_id: number
   user_id: number
+}
+
+/** 批量分配租户到用户请求 */
+export interface BatchAssignTenantsReq {
+  user_id: number
+  tenant_ids: number[]
+}
+
+/** 批量取消租户分配请求 */
+export interface BatchUnassignTenantsReq {
+  user_id: number
+  tenant_ids: number[]
 }

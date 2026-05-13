@@ -1,8 +1,13 @@
 import { ref, watch, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
-import { listUserRolesApi, batchAssignRoleApi, batchUnassignRoleApi } from "@/api/iam/role"
+import { listUserRolesApi, batchAssignRoleApi, batchUnassignRoleApi, unassignRoleApi } from "@/api/iam/role"
 import { listUserPoliciesApi, batchDetachPolicyApi, detachPolicyApi, batchAttachPolicyApi } from "@/api/iam/policy"
-import { listUserTenantsApi, removeTenantMemberApi } from "@/api/iam/tenant"
+import {
+  listUserTenantsApi,
+  removeTenantMemberApi,
+  batchAssignTenantsApi,
+  batchUnassignTenantsApi
+} from "@/api/iam/tenant"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { AuthorizationSubType } from "@/api/iam/permission/type"
@@ -100,9 +105,9 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       title: "移除角色关联",
       message: `确认要为用户 [${username.value}] 移除角色 [${row.name}] 的关联吗？`,
       api: () =>
-        batchUnassignRoleApi({
-          usernames: [username.value!],
-          role_codes: [row.code]
+        unassignRoleApi({
+          username: username.value!,
+          role_code: row.code
         }),
       onSuccess: () => loadRoles()
     })
@@ -196,6 +201,40 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     })
   }
 
+  /** 批量分配租户 (TenantSelectDialog 回调) */
+  const handleAssignTenants = async (selectedTenants: Tenant[]) => {
+    if (!userId.value || !selectedTenants.length) return
+    tenantLoading.value = true
+    try {
+      await batchAssignTenantsApi({
+        user_id: userId.value,
+        tenant_ids: selectedTenants.map((t) => t.id)
+      })
+      tenantSelectVisible.value = false
+      loadTenants()
+    } finally {
+      tenantLoading.value = false
+    }
+  }
+
+  /** 批量解除租户关联 */
+  const handleBatchUnbindTenants = () => {
+    if (!userId.value || selectedTenants.value.length === 0) return
+    handleConfirmAction({
+      title: "批量移除租户",
+      message: `确认要将用户从所选的 ${selectedTenants.value.length} 个租户空间中移除吗？此操作将导致用户立即失去相关空间的所有访问权限。`,
+      api: () =>
+        batchUnassignTenantsApi({
+          user_id: userId.value!,
+          tenant_ids: selectedTenants.value.map((t) => t.id)
+        }),
+      onSuccess: () => {
+        selectedTenants.value = []
+        loadTenants()
+      }
+    })
+  }
+
   // --- 4. 辅助状态与联动 ---
 
   const handleRoleTypeChange = (type?: number) => {
@@ -276,6 +315,8 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     tenantSelectVisible,
     handleTenantPageChange,
     handleTenantSearch,
-    handleUnbindTenant
+    handleAssignTenants,
+    handleUnbindTenant,
+    handleBatchUnbindTenants
   }
 }

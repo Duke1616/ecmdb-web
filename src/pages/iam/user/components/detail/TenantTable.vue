@@ -60,7 +60,7 @@ const emit = defineEmits<{
 
     <!-- 顶部操作 -->
     <template #header-actions>
-      <el-button class="u-gov-btn" @click="emit('add')">
+      <el-button class="u-gov-btn is-primary" :disabled="!canAdd" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>加入租户</span>
       </el-button>
@@ -68,7 +68,7 @@ const emit = defineEmits<{
 
     <!-- 批量操作 -->
     <template #batch-actions>
-      <el-button type="danger" plain size="small" :disabled="!canBatchUnbind" @click="emit('batchUnbind')">
+      <el-button class="u-gov-btn is-danger" :disabled="!canBatchUnbind" @click="emit('batchUnbind')">
         <el-icon><Delete /></el-icon>
         <span>批量移除</span>
       </el-button>

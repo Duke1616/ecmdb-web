@@ -112,14 +112,6 @@ export function listRoleUsersApi(data: user.ListRoleUsersReq) {
   })
 }
 
-/** 绑定外部身份 */
-export function bindIdentityApi(data: user.BindIdentityRequest) {
-  return instance.post<string>({
-    url: `${API_SERVICE.IAM}/user/identity/bind`,
-    data
-  })
-}
-
 /** 解绑外部身份 */
 export function unbindIdentityApi(data: user.UnbindIdentityRequest) {
   return instance.post<string>({

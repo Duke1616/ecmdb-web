@@ -21,7 +21,6 @@ interface Props {
   emptyImageSize?: number
   // 选择相关
   showSelection?: boolean
-  selection?: T[]
   rowKey?: PropertyKey
   disabled?: boolean
   selectable?: (item: T) => boolean
@@ -44,15 +43,15 @@ const props = withDefaults(defineProps<Props>(), {
   emptyText: "暂无符合条件的数据项",
   emptyImageSize: 100,
   showSelection: false,
-  selection: () => [],
   rowKey: "id",
   disabled: false,
   selectable: () => true
 })
 
+const selection = defineModel<T[]>("selection", { default: () => [] })
+
 const emit = defineEmits<{
   "update:currentPage": [page: number]
-  "update:selection": [selection: T[]]
   pageChange: [page: number]
   selectionChange: [selection: T[]]
   search: [keyword: string]
@@ -86,22 +85,20 @@ const getRowValue = (item: T) => {
   return (item as Record<PropertyKey, unknown>)[props.rowKey]
 }
 
-const selectedKeySet = computed(() => new Set(props.selection.map((item) => getRowValue(item))))
+const selectedKeySet = computed(() => new Set(selection.value.map((item) => getRowValue(item))))
 
 const currentPageKeys = computed(() => props.data.map((item) => getRowValue(item)))
 
-const currentSelectedCount = computed(() => {
-  return currentPageKeys.value.filter((key) => selectedKeySet.value.has(key)).length
-})
-
-const emitSelection = (selection: T[]) => {
-  emit("update:selection", selection)
-  emit("selectionChange", selection)
+const emitSelection = (val: T[]) => {
+  selection.value = val
+  emit("selectionChange", val)
 }
 
+const selectableItems = computed(() => props.data.filter((item) => props.selectable(item)))
+
 const selectCurrentPage = () => {
-  const nextSelection = [...props.selection]
-  props.data.forEach((item) => {
+  const nextSelection = [...selection.value]
+  selectableItems.value.forEach((item) => {
     if (!selectedKeySet.value.has(getRowValue(item))) {
       nextSelection.push(item)
     }
@@ -110,12 +107,12 @@ const selectCurrentPage = () => {
 }
 
 const clearCurrentPageSelection = () => {
-  const nextSelection = props.selection.filter((item) => !currentPageKeys.value.includes(getRowValue(item)))
+  const nextSelection = selection.value.filter((item) => !currentPageKeys.value.includes(getRowValue(item)))
   emitSelection(nextSelection)
 }
 
 const isAllSelected = computed({
-  get: () => props.data.length > 0 && currentSelectedCount.value === props.data.length,
+  get: () => selectableItems.value.length > 0 && selectableItems.value.every((item) => isItemSelected(item)),
   set: (val) => {
     if (val) {
       selectCurrentPage()
@@ -126,13 +123,16 @@ const isAllSelected = computed({
   }
 })
 
-const isIndeterminate = computed(() => currentSelectedCount.value > 0 && currentSelectedCount.value < props.data.length)
+const isIndeterminate = computed(() => {
+  const selectedInPage = selectableItems.value.filter((item) => isItemSelected(item)).length
+  return selectedInPage > 0 && selectedInPage < selectableItems.value.length
+})
 
 const toggleItemSelection = (item: T) => {
   const rowValue = getRowValue(item)
   const nextSelection = selectedKeySet.value.has(rowValue)
-    ? props.selection.filter((selectedItem) => getRowValue(selectedItem) !== rowValue)
-    : [...props.selection, item]
+    ? selection.value.filter((selectedItem) => getRowValue(selectedItem) !== rowValue)
+    : [...selection.value, item]
   emitSelection(nextSelection)
 }
 
@@ -244,7 +244,11 @@ onBeforeUnmount(() => {
       <!-- 字段头 -->
       <div v-if="data.length > 0 && !hideColumnHeader" class="content-labels">
         <div v-if="showSelection" class="label-check">
-          <el-checkbox v-model="isAllSelected" :indeterminate="isIndeterminate" :disabled="disabled" />
+          <el-checkbox
+            v-model="isAllSelected"
+            :indeterminate="isIndeterminate"
+            :disabled="disabled || selectableItems.length === 0"
+          />
         </div>
         <div class="label-main">
           <slot name="column-header">

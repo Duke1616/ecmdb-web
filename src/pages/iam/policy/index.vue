@@ -8,7 +8,7 @@
     >
       <template #actions>
         <div class="eiam-governance-bar">
-          <!-- 搜索治理区 -->
+          <!-- 1. 搜索治理区 -->
           <div class="search-command-inner">
             <el-input
               v-model="query.keyword"
@@ -36,6 +36,10 @@
               <el-option label="系统预设" :value="1" />
               <el-option label="自定义" :value="2" />
             </el-select>
+          </div>
+
+          <!-- 2. 操作区 -->
+          <div class="action-group">
             <el-button
               class="u-gov-btn is-large"
               :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
@@ -230,10 +234,10 @@ const formatDate = (ts: number) => {
     flex: 1;
     max-width: 680px;
     height: 38px;
-    transition: border-color 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:focus-within {
-      border-color: #409eff;
+      border-color: #0ea5e9;
       box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
     }
 

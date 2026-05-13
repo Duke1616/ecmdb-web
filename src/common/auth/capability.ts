@@ -13,18 +13,24 @@ export const IAM_CAPABILITIES = {
     Detail: "iam:tenant:get",
     /** 查看租户成员列表 */
     ViewMembers: "iam:tenant:view_members",
-    /** 添加租户成员 */
-    AddMember: "iam:tenant:add_member",
-    /** 移除租户成员 */
-    RemoveMember: "iam:tenant:remove_member",
     /** 租户分派成员 */
-    Assign: "iam:tenant:assign"
+    Assign: "iam:tenant:assign",
+    /** 批量分派租户 */
+    BatchAssign: "iam:tenant:batch_assign",
+    /** 移除租户分配 (单条) */
+    Unassign: "iam:tenant:unassign",
+    /** 批量移除租户分配 */
+    BatchUnassign: "iam:tenant:batch_unassign"
   },
 
   /** 邀请管理相关 */
   Invitation: {
     /** 查看邀请链接列表 */
-    View: "iam:invitation:view"
+    View: "iam:invitation:view",
+    /** 查看待审批申请列表 */
+    ViewRequests: "iam:invitation:view_requests",
+    /** 处理加入申请 (审批/拒绝) */
+    Handle: "iam:invitation:handle_request"
   },
 
   /** 身份策略与授权相关 */
@@ -62,9 +68,9 @@ export const IAM_CAPABILITIES = {
     /** 批量分配角色 */
     BatchAssign: "iam:role:batch_assign",
     /** 移除用户角色关联 (单条) */
-    Unassign: "iam:role:detach",
+    Unassign: "iam:role:unassign",
     /** 批量移除用户角色 */
-    BatchUnassign: "iam:role:batch_detach"
+    BatchUnassign: "iam:role:batch_unassign"
   },
 
   /** 用户治理相关 */
@@ -81,8 +87,16 @@ export const IAM_CAPABILITIES = {
     Delete: "iam:user:delete",
     /** 重置密码 */
     ResetPassword: "iam:user:reset_password",
+    /** 查询用户角色 */
+    ViewUserRoles: "iam:user:view_user_roles",
+    /** 查询用户策略 */
+    ViewUserPolicies: "iam:user:view_user_policies",
+    /** 查询用户租户 */
+    ViewUserTenants: "iam:user:view_user_tenants",
     /** 管理外部身份绑定 */
-    ManageIdentity: "iam:user:manage_identity"
+    ManageIdentity: "iam:user:manage_identity",
+    /** 解绑外部身份 */
+    UnbindIdentity: "iam:user:unbind_identity"
   },
 
   /** 身份源管理相关 */

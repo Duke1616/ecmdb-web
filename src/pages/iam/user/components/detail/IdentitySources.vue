@@ -5,6 +5,8 @@ import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { User } from "@/api/iam/user/type"
 import { useIdentityManage } from "../../composables/useIdentityManage"
 import IdentityManageDialog from "./IdentityManageDialog.vue"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 const props = withDefaults(
   defineProps<{
@@ -36,6 +38,8 @@ const {
   handleUnbind
 } = useIdentityManage(user, emit)
 
+const { hasPermission } = usePermission()
+
 /**
  * 获取身份源对应图标
  */
@@ -59,7 +63,11 @@ const getProviderIcon = (p: string) => {
         <span class="count-badge">{{ filteredIdentities.length }}</span>
       </div>
       <div class="header-right">
-        <el-button class="u-gov-btn" :disabled="!canManage" @click="handleOpenManage">
+        <el-button
+          class="u-gov-btn"
+          :disabled="!hasPermission(IAM_CAPABILITIES.User.ManageIdentity)"
+          @click="handleOpenManage"
+        >
           <el-icon><Plus /></el-icon>
           <span>治理身份源</span>
         </el-button>
@@ -128,7 +136,13 @@ const getProviderIcon = (p: string) => {
 
           <!-- 底部操作区 -->
           <div v-if="activeIdentity.provider.toLowerCase() !== 'ldap'" class="action-footer">
-            <el-button link class="delete-btn" :disabled="!canManage" @click="handleUnbind">
+            <el-button
+              link
+              type="danger"
+              class="delete-btn"
+              :disabled="!hasPermission(IAM_CAPABILITIES.User.UnbindIdentity)"
+              @click="handleUnbind"
+            >
               <el-icon><Delete /></el-icon>
               <span>解除账号关联</span>
             </el-button>

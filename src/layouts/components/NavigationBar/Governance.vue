@@ -1,54 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { ref } from "vue"
 import { useRouter } from "vue-router"
-import { useUserStore } from "@/pinia/stores/user"
-import { listJoinRequestsApi } from "@/api/iam/invitation"
 import { Operation } from "@element-plus/icons-vue"
 
 const router = useRouter()
-const userStore = useUserStore()
 const pendingCount = ref(0)
-const loading = ref(false)
-
-/** 获取待审批数量 */
-const fetchPendingCount = async () => {
-  if (!userStore.currentTenantId) return
-  loading.value = true
-  try {
-    const { data } = await listJoinRequestsApi({
-      offset: 0,
-      limit: 1,
-      tenant_id: userStore.currentTenantId
-    })
-    pendingCount.value = data.total
-  } catch (error) {
-    console.error("获取审批数量失败:", error)
-  } finally {
-    loading.value = false
-  }
-}
-
-/** 监听租户切换，刷新数据 */
-watch(
-  () => userStore.currentTenantId,
-  () => {
-    fetchPendingCount()
-  },
-  { immediate: true }
-)
 
 /** 跳转到治理门户 */
 const goToGovernancePage = () => {
   router.push("/governance")
 }
 
-onMounted(() => {
-  fetchPendingCount()
-})
-
-// 为外部使用提供刷新方法
+// 为外部使用提供刷新方法 (供手动触发或目标页面回刷)
 defineExpose({
-  refresh: fetchPendingCount
+  refresh: () => {} // 暂时占位，保持接口兼容
 })
 </script>
 

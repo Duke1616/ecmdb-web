@@ -110,6 +110,12 @@ export interface BatchUnassignRoleReq {
   role_codes: string[]
 }
 
+/** 移除单条角色请求 */
+export interface UnassignRoleReq {
+  username: string
+  role_code: string
+}
+
 /** 角色策略分析请求 */
 export interface RoleAnalysisReq {
   role_code: string

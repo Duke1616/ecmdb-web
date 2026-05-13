@@ -81,7 +81,23 @@ export function assignTenantUserApi(data: tenant.AssignUserReq) {
 /** 移除租户成员 */
 export function removeTenantMemberApi(data: tenant.RemoveMemberReq) {
   return instance.post<string>({
-    url: `${API_SERVICE.IAM}/tenant/remove/member`,
+    url: `${API_SERVICE.IAM}/tenant/unassign`,
+    data
+  })
+}
+
+/** 批量分配租户到用户 */
+export function batchAssignTenantsApi(data: tenant.BatchAssignTenantsReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/tenant/batch_assign`,
+    data
+  })
+}
+
+/** 批量取消租户分配 (从用户维度) */
+export function batchUnassignTenantsApi(data: tenant.BatchUnassignTenantsReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/tenant/batch_unassign`,
     data
   })
 }

@@ -116,7 +116,7 @@ const emit = defineEmits<{
             link
             size="small"
             class="delete-btn"
-            :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.RemoveMember)"
+            :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
             @click.stop="emit('unbind', row)"
           >
             <el-icon><Delete /></el-icon>
