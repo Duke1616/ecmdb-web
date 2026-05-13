@@ -1,5 +1,5 @@
 import { ref, computed } from "vue"
-import { listUsersApi, deleteUserApi } from "@/api/iam/user"
+import { listUsersApi, deleteUserApi, batchDeleteUsersApi } from "@/api/iam/user"
 import type { User, ListUserRequest } from "@/api/iam/user/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -26,6 +26,20 @@ export function useUserList() {
   const { handleConfirmAction } = useGovernanceActions()
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
+  const selectedRows = ref<User[]>([])
+
+  const handleBatchDelete = () => {
+    if (selectedRows.value.length === 0) return
+    handleConfirmAction({
+      message: `确定要注销选中的 ${selectedRows.value.length} 个用户吗？此操作不可逆。`,
+      api: () => batchDeleteUsersApi({ ids: selectedRows.value.map((r) => r.id) }),
+      onSuccess: () => {
+        selectedRows.value = []
+        loadData()
+      },
+      successMsg: "选中的用户已成功注销"
+    })
+  }
 
   const handleCreate = () => {
     currentEditId.value = null
@@ -65,6 +79,8 @@ export function useUserList() {
     handleCreate,
     handleEdit,
     handleDelete,
+    handleBatchDelete,
+    selectedRows,
     handleFormSuccess,
     handleSizeChange,
     handleCurrentChange

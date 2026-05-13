@@ -6,6 +6,8 @@ import type { InheritanceItem } from "@/api/iam/role/type"
 defineProps<{
   loading: boolean
   data: InheritanceItem[]
+  canAdd?: boolean
+  canRemove?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -39,7 +41,7 @@ const emit = defineEmits<{
 
     <!-- 头部操作 -->
     <template #header-actions>
-      <el-button class="u-gov-btn" @click="emit('add')">
+      <el-button class="u-gov-btn" :disabled="!canAdd" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>添加父角色</span>
       </el-button>
@@ -84,7 +86,7 @@ const emit = defineEmits<{
                 link
                 size="small"
                 class="delete-btn"
-                :disabled="!row.is_direct || row.is_immutable"
+                :disabled="!row.is_direct || row.is_immutable || !canRemove"
                 @click.stop="emit('remove', row)"
               >
                 <el-icon><Delete /></el-icon>

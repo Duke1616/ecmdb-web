@@ -18,14 +18,26 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button
-              class="u-gov-btn is-large"
-              :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)"
-              @click="handleCreate"
-            >
-              <el-icon><Plus /></el-icon>
-              <span>新增主体</span>
-            </el-button>
+            <template v-if="selectedRows.length > 0">
+              <el-button
+                class="u-gov-btn is-danger is-large"
+                :disabled="!hasPermission(IAM_CAPABILITIES.User.BatchDelete)"
+                @click="handleBatchDelete"
+              >
+                <el-icon><Delete /></el-icon>
+                <span>批量注销 ({{ selectedRows.length }})</span>
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button
+                class="u-gov-btn is-large"
+                :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)"
+                @click="handleCreate"
+              >
+                <el-icon><Plus /></el-icon>
+                <span>新增主体</span>
+              </el-button>
+            </template>
             <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
           </div>
         </div>
@@ -34,10 +46,14 @@
 
     <!-- 治理列表 -->
     <DataTable
+      ref="tableRef"
       v-loading="loading"
       :data="users"
+      @selection-change="handleSelectionChange"
       :columns="tableColumns"
       :show-selection="true"
+      :selectable="() => hasPermission(IAM_CAPABILITIES.User.BatchDelete)"
+      :table-props="!hasPermission(IAM_CAPABILITIES.User.BatchDelete) ? { class: 'selection-disabled' } : {}"
       :show-pagination="true"
       :total="total"
       :page-size="pageSize"
@@ -147,6 +163,7 @@ import type { Column } from "@@/components/DataTable/types"
 import { useUserList } from "./composables/useUserList"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import type { User } from "@/api/iam/user/type"
 
 const { hasPermission } = usePermission()
 
@@ -164,6 +181,8 @@ const {
   handleCreate,
   handleEdit,
   handleDelete,
+  handleBatchDelete,
+  selectedRows,
   handleFormSuccess,
   handleSizeChange,
   handleCurrentChange
@@ -172,7 +191,7 @@ const {
 /**
  * 跳转至详情页
  */
-const handleView = (row: any) => {
+const handleView = (row: User) => {
   if (!hasPermission(IAM_CAPABILITIES.User.Detail)) return
   router.push({
     name: "UserDetail",
@@ -181,7 +200,12 @@ const handleView = (row: any) => {
 }
 
 const userFormRef = ref<InstanceType<typeof UserForm>>()
+const tableRef = ref<InstanceType<typeof DataTable>>()
 const submitting = ref(false)
+
+const handleSelectionChange = (val: User[]) => {
+  selectedRows.value = val
+}
 
 /**
  * 用户操作配置项
@@ -191,7 +215,7 @@ const userOperateItems = [
   { name: "注销", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.User.Delete }
 ]
 
-const handleOperate = (row: any, code: string) => {
+const handleOperate = (row: User, code: string) => {
   if (code === "edit") handleEdit(row)
   if (code === "delete") handleDelete(row)
 }
@@ -232,6 +256,14 @@ const handleConfirm = async () => {
 </script>
 
 <style lang="scss" scoped>
+/* NOTE: 无批量删除权限时，禁用表头全选 Checkbox */
+:deep(.selection-disabled) {
+  .el-table__header-wrapper .el-checkbox {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
 .eiam-governance-bar {
   display: flex;
   align-items: center;

@@ -173,6 +173,11 @@ export interface ListUserRequest {
   keyword?: string
 }
 
+/** 批量删除用户请求 */
+export interface BatchDeleteReq {
+  ids: number[]
+}
+
 /** 角色关联用户列表请求 */
 export interface ListRoleUsersReq extends ListUserRequest {
   role_code: string

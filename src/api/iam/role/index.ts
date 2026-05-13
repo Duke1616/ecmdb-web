@@ -40,6 +40,14 @@ export function deleteRoleApi(id: number) {
   })
 }
 
+/** 批量删除角色 */
+export function batchDeleteRolesApi(data: role.BatchDeleteReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/role/batch_delete`,
+    data
+  })
+}
+
 /** 获取用户关联的角色列表 (管理侧) */
 export function listUserRolesApi(data: role.ListUserRolesReq) {
   return instance.post<role.ListRoleRes>({

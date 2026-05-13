@@ -22,10 +22,26 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button class="u-gov-btn is-large" @click="handleCreate">
-              <el-icon><Plus /></el-icon>
-              <span>初始化角色</span>
-            </el-button>
+            <template v-if="selectedRows.length > 0">
+              <el-button
+                class="u-gov-btn is-danger is-large"
+                :disabled="!hasPermission(IAM_CAPABILITIES.Role.BatchDelete)"
+                @click="handleBatchDelete"
+              >
+                <el-icon><Delete /></el-icon>
+                <span>批量注销 ({{ selectedRows.length }})</span>
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button
+                class="u-gov-btn is-large"
+                :disabled="!hasPermission(IAM_CAPABILITIES.Role.Add)"
+                @click="handleCreate"
+              >
+                <el-icon><Plus /></el-icon>
+                <span>初始化角色</span>
+              </el-button>
+            </template>
             <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
           </div>
         </div>
@@ -34,10 +50,14 @@
 
     <!-- 治理列表 -->
     <DataTable
+      ref="tableRef"
       v-loading="loading"
       :data="roles"
+      @selection-change="handleSelectionChange"
       :columns="tableColumns"
       :show-selection="true"
+      :selectable="() => hasPermission(IAM_CAPABILITIES.Role.BatchDelete)"
+      :table-props="!hasPermission(IAM_CAPABILITIES.Role.BatchDelete) ? { class: 'selection-disabled' } : {}"
       :show-pagination="true"
       :total="total"
       :page-size="pageSize"
@@ -48,9 +68,16 @@
       <!-- 角色核心资产: Dual-Line 风格 -->
       <template #role_info="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link" @click="handleViewDetail(row)">
+          <el-link
+            v-if="hasPermission(IAM_CAPABILITIES.Role.Detail)"
+            type="primary"
+            :underline="false"
+            class="main-link"
+            @click="handleViewDetail(row)"
+          >
             {{ row.name }}
           </el-link>
+          <span v-else class="main-title-static">{{ row.name }}</span>
           <div class="sub-detail mono">{{ row.code }}</div>
         </div>
       </template>
@@ -107,6 +134,11 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import RoleForm from "./components/RoleForm.vue"
 import { useRoleList } from "./composables/useRoleList"
 import type { Column } from "@@/components/DataTable/types"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import type { Role } from "@/api/iam/role/type"
+
+const { hasPermission } = usePermission()
 
 const router = useRouter()
 const {
@@ -122,18 +154,26 @@ const {
   handleCreate,
   handleEdit,
   handleDelete,
+  handleBatchDelete,
+  selectedRows,
   handleFormSuccess,
   handleSizeChange,
   handleCurrentChange
 } = useRoleList()
 
 const roleFormRef = ref<InstanceType<typeof RoleForm>>()
+const tableRef = ref<InstanceType<typeof DataTable>>()
 const submitting = ref(false)
+
+const handleSelectionChange = (val: Role[]) => {
+  selectedRows.value = val
+}
 
 /**
  * 角色跳转详情
  */
-const handleViewDetail = (row: any) => {
+const handleViewDetail = (row: Role) => {
+  if (!hasPermission(IAM_CAPABILITIES.Role.Detail)) return
   router.push({
     name: "RoleDetail",
     query: { code: row.code }
@@ -144,11 +184,11 @@ const handleViewDetail = (row: any) => {
  * 角色操作配置项
  */
 const roleOperateItems = [
-  { name: "编辑", code: "edit", type: "primary", icon: Edit },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.Role.Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.Role.Delete }
 ]
 
-const handleOperate = (row: any, code: string) => {
+const handleOperate = (row: Role, code: string) => {
   if (code === "edit") handleEdit(row)
   if (code === "delete") handleDelete(row)
 }
@@ -171,6 +211,14 @@ const handleConfirm = async () => {
 </script>
 
 <style lang="scss" scoped>
+/* NOTE: 无批量删除权限时，禁用表头全选 Checkbox */
+:deep(.selection-disabled) {
+  .el-table__header-wrapper .el-checkbox {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
 .eiam-governance-bar {
   display: flex;
   align-items: center;
@@ -277,16 +325,26 @@ const handleConfirm = async () => {
   gap: 0px;
   line-height: 1.2;
 
-  .main-link {
-    color: #1e293b;
+  .main-link,
+  .main-title-static {
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 2px;
     justify-content: center;
+  }
+
+  .main-link {
+    color: #1e293b;
     &:hover {
       color: #3b82f6;
     }
   }
+
+  .main-title-static {
+    color: #1e293b;
+    cursor: default;
+  }
+
   .sub-detail {
     font-size: 11px;
     color: #94a3b8;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue"
+import { ref, computed } from "vue"
 import { Drawer } from "@@/components/Dialogs"
 import {
   CopyDocument,
@@ -121,7 +121,12 @@ const reset = () => {
   }
 }
 
-onMounted(fetchRoles)
+// 监听打开时加载角色 (仅在创建模式且列表为空时)
+watch(visible, (val) => {
+  if (val && !isDetailMode.value && roles.value.length === 0) {
+    fetchRoles()
+  }
+})
 </script>
 
 <template>

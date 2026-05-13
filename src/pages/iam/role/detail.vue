@@ -77,7 +77,8 @@ const {
   policySelectVisible,
   handleAddParents,
   handleAttachPolicies,
-  handleRemoveParent
+  handleRemoveParent,
+  tabPermissions
 } = useRoleGovernance(
   computed(() => roleInfo.value?.id),
   computed(() => roleInfo.value?.code)
@@ -157,7 +158,7 @@ const handleConfirmEdit = () => {
             </el-button>
             <el-button
               class="u-gov-btn is-danger"
-              :disabled="!hasPermission(IAM_CAPABILITIES.Role.Edit)"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Role.Delete)"
               @click="handleDelete"
             >
               <el-icon><Delete /></el-icon>
@@ -177,7 +178,7 @@ const handleConfirmEdit = () => {
         <!-- 3. 治理深度内容区 (Tabs) -->
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
-            <el-tab-pane label="关联用户管理" name="members">
+            <el-tab-pane label="关联用户管理" name="members" :disabled="!tabPermissions.members">
               <MemberTable
                 v-model:selection="selectedMembers"
                 :loading="memberLoading"
@@ -186,6 +187,10 @@ const handleConfirmEdit = () => {
                 :current-page="memberQuery.currentPage"
                 :pageSize="memberQuery.pageSize"
                 :format-timestamp="formatTimestamp"
+                :selectable="() => hasPermission(IAM_CAPABILITIES.Role.BatchUnassign)"
+                :can-add="hasPermission(IAM_CAPABILITIES.Role.BatchAssign)"
+                :can-unbind="hasPermission(IAM_CAPABILITIES.Role.Unassign)"
+                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Role.BatchUnassign) && selectedMembers.length > 0"
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
                 @add="handleAddMember"
@@ -194,17 +199,19 @@ const handleConfirmEdit = () => {
               />
             </el-tab-pane>
 
-            <el-tab-pane label="信任继承关系" name="inheritance">
+            <el-tab-pane label="信任继承关系" name="inheritance" :disabled="!tabPermissions.inheritance">
               <InheritanceTable
                 :loading="inheritanceLoading"
                 :data="parentRoles"
+                :can-add="hasPermission(IAM_CAPABILITIES.Role.AddParent)"
+                :can-remove="hasPermission(IAM_CAPABILITIES.Role.RemoveParent)"
                 @add="addParentVisible = true"
                 @remove="(row) => handleRemoveParent(row.code)"
                 @view="(row) => router.push({ query: { ...router.currentRoute.value.query, code: row.code } })"
               />
             </el-tab-pane>
 
-            <el-tab-pane label="内联策略分析" name="inline">
+            <el-tab-pane label="内联策略分析" name="inline" :disabled="!tabPermissions.inline">
               <div v-loading="analyzedLoading" class="inline-gov-container">
                 <template v-if="analyzedInlinePolicies.length > 0">
                   <PolicyServiceInsights :policy="aggregatedPolicy" :services="aggregatedServices" @copy="handleCopy" />
@@ -215,7 +222,7 @@ const handleConfirmEdit = () => {
               </div>
             </el-tab-pane>
 
-            <el-tab-pane label="托管策略治理" name="permissions">
+            <el-tab-pane label="托管策略治理" name="permissions" :disabled="!tabPermissions.permissions">
               <PolicyTable
                 v-model:selection="selectedPolicies"
                 :loading="policyLoading"
@@ -224,6 +231,10 @@ const handleConfirmEdit = () => {
                 :current-page="policyQuery.currentPage"
                 :pageSize="policyQuery.pageSize"
                 :format-timestamp="formatTimestamp"
+                :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+                :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+                :can-unbind="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
+                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach) && selectedPolicies.length > 0"
                 @page-change="handlePolicyPageChange"
                 @search="handlePolicySearch"
                 @type-change="handlePolicyTypeChange"
@@ -413,6 +424,10 @@ const handleConfirmEdit = () => {
   color: #64748b;
   &.is-active {
     color: var(--gov-brand);
+  }
+  &.is-disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
   }
 }
 

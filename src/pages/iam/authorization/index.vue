@@ -58,10 +58,6 @@
                 <el-icon><Delete /></el-icon>
                 <span>批量解除 ({{ selectedRows.length }})</span>
               </el-button>
-              <el-button class="u-gov-btn is-ghost" @click="clearSelection">
-                <el-icon><Close /></el-icon>
-                <span>取消选择</span>
-              </el-button>
             </template>
             <template v-else>
               <el-button
@@ -86,6 +82,7 @@
       :columns="tableColumns"
       :show-selection="true"
       :selectable="isSelectable"
+      :table-props="!hasPermission(IAM_CAPABILITIES.Policy.BatchDetach) ? { class: 'selection-disabled' } : {}"
       :show-pagination="true"
       :total="total"
       :page-size="pageSize"
@@ -137,7 +134,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { Search, RefreshRight, Plus, Delete, Close } from "@element-plus/icons-vue"
+import { Search, RefreshRight, Plus, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -226,16 +223,20 @@ const handleSelectionChange = (val: Authorization[]) => {
   selectedRows.value = val
 }
 
-const clearSelection = () => {
-  tableRef.value?.clearSelection()
-}
-
 const handleCreate = () => {
   showAuthorizeDrawer.value = true
 }
 </script>
 
 <style lang="scss" scoped>
+/* NOTE: 无批量解除权限时，禁用表头全选 Checkbox */
+:deep(.selection-disabled) {
+  .el-table__header-wrapper .el-checkbox {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
 .eiam-governance-bar {
   display: flex;
   align-items: center;

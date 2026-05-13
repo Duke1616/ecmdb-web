@@ -1,4 +1,6 @@
 import { ref, watch, toValue, computed, type MaybeRefOrGetter } from "vue"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { listRoleUsersApi } from "@/api/iam/user"
 import { listRolePoliciesApi, detachPolicyApi, batchDetachPolicyApi, batchAttachPolicyApi } from "@/api/iam/policy"
 import {
@@ -317,14 +319,24 @@ export function useRoleGovernance(
   }
 
   // --- 联动逻辑 (Lazy Loading) ---
+  // NOTE: 统一管理各个 Tab 的权限，既用于禁用 UI，也用于拦截非法的 API 请求
+  const { hasPermission } = usePermission()
+
+  const tabPermissions = computed(() => ({
+    members: hasPermission(IAM_CAPABILITIES.Role.ViewRoleMembers),
+    permissions: hasPermission(IAM_CAPABILITIES.Role.ViewRolePolicies),
+    inline: hasPermission(IAM_CAPABILITIES.Role.InlineAnalysis),
+    inheritance: hasPermission(IAM_CAPABILITIES.Role.ViewParents)
+  }))
+
   watch(
     [() => activeTab.value, () => toValue(roleCode)],
     ([tab, code]) => {
       if (!code) return
-      if (tab === "members") fetchMembers()
-      else if (tab === "permissions") fetchPolicies()
-      else if (tab === "inline") fetchInlineAnalysis()
-      else if (tab === "inheritance") fetchParentRoles()
+      if (tab === "members" && tabPermissions.value.members) fetchMembers()
+      else if (tab === "permissions" && tabPermissions.value.permissions) fetchPolicies()
+      else if (tab === "inline" && tabPermissions.value.inline) fetchInlineAnalysis()
+      else if (tab === "inheritance" && tabPermissions.value.inheritance) fetchParentRoles()
     },
     { immediate: true }
   )
@@ -375,6 +387,7 @@ export function useRoleGovernance(
     handleRemoveParent,
     addParentVisible,
     handleAddParents,
-    handleBatchUnbindPolicies
+    handleBatchUnbindPolicies,
+    tabPermissions
   }
 }

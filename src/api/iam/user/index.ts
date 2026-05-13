@@ -81,6 +81,14 @@ export function deleteUserApi(id: number) {
   })
 }
 
+/** 批量删除用户 */
+export function batchDeleteUsersApi(data: user.BatchDeleteReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/user/batch_delete`,
+    data
+  })
+}
+
 /** 搜索 LDAP 用户 */
 export function searchLdapUserApi(data: user.SearchLdapUserReq) {
   return instance.post<user.LdapUserListData>({

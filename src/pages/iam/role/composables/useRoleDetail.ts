@@ -55,10 +55,7 @@ export function useRoleDetail() {
     return dayjs(Number(ts)).format("YYYY-MM-DD HH:mm:ss")
   }
 
-  watch(
-    () => [route.query.id, route.query.code],
-    () => fetchRoleDetail()
-  )
+  watch([() => route.query.id, () => route.query.code], () => fetchRoleDetail())
 
   onMounted(() => {
     fetchRoleDetail()

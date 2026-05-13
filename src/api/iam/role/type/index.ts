@@ -98,6 +98,11 @@ export interface ListRoleRes {
 /** 角色详情 (Alias for Role) */
 export type RoleDetail = Role
 
+/** 批量删除角色请求 */
+export interface BatchDeleteReq {
+  ids: number[]
+}
+
 /** 批量分配角色请求 */
 export interface BatchAssignRoleReq {
   usernames: string[]

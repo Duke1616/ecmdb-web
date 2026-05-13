@@ -13,6 +13,10 @@ defineProps<{
   currentPage: number
   pageSize: number
   formatTimestamp: (ts: string | number) => string
+  selectable?: (row: User) => boolean
+  canAdd?: boolean
+  canUnbind?: boolean
+  canBatchUnbind?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -37,6 +41,7 @@ const emit = defineEmits<{
     :show-search="true"
     indicator-color="#3b82f6"
     show-selection
+    :selectable="selectable"
     empty-text="该角色下暂无关联的成员"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"
@@ -55,7 +60,7 @@ const emit = defineEmits<{
 
     <!-- 头部操作 -->
     <template #header-actions>
-      <el-button class="u-gov-btn" @click="emit('add')">
+      <el-button class="u-gov-btn" :disabled="!canAdd" @click="emit('add')">
         <el-icon><Plus /></el-icon>
         <span>分派成员</span>
       </el-button>
@@ -63,7 +68,9 @@ const emit = defineEmits<{
 
     <!-- 批量操作 -->
     <template #batch-actions>
-      <el-button type="danger" size="small" @click="emit('batchUnbind')">批量移除成员</el-button>
+      <el-button type="danger" size="small" :disabled="!canBatchUnbind" @click="emit('batchUnbind')"
+        >批量移除成员</el-button
+      >
     </template>
 
     <!-- 列表项内容 -->
@@ -102,7 +109,14 @@ const emit = defineEmits<{
 
         <!-- 操作行为 -->
         <div class="cell-actions">
-          <el-button type="danger" link size="small" class="delete-btn" @click.stop="emit('unbind', row)">
+          <el-button
+            type="danger"
+            link
+            size="small"
+            class="delete-btn"
+            :disabled="!canUnbind"
+            @click.stop="emit('unbind', row)"
+          >
             <el-icon><Delete /></el-icon>
             <span>移除</span>
           </el-button>

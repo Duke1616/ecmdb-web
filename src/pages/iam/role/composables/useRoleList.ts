@@ -1,5 +1,5 @@
 import { ref, computed } from "vue"
-import { listRolesApi, deleteRoleApi } from "@/api/iam/role"
+import { listRolesApi, deleteRoleApi, batchDeleteRolesApi } from "@/api/iam/role"
 import type { Role, ListRoleReq } from "@/api/iam/role/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -27,6 +27,20 @@ export function useRoleList() {
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
   const currentEditCode = ref<string | null>(null)
+  const selectedRows = ref<Role[]>([])
+
+  const handleBatchDelete = () => {
+    if (selectedRows.value.length === 0) return
+    handleConfirmAction({
+      message: `确定要注销选中的 ${selectedRows.value.length} 个角色吗？此操作不可逆。`,
+      api: () => batchDeleteRolesApi({ ids: selectedRows.value.map((r) => r.id) }),
+      onSuccess: () => {
+        selectedRows.value = []
+        loadData()
+      },
+      successMsg: "选中的角色已成功注销"
+    })
+  }
 
   const handleCreate = () => {
     currentEditId.value = null
@@ -69,6 +83,8 @@ export function useRoleList() {
     handleCreate,
     handleEdit,
     handleDelete,
+    handleBatchDelete,
+    selectedRows,
     handleFormSuccess,
     handleSizeChange,
     handleCurrentChange

@@ -69,8 +69,26 @@ export const IAM_CAPABILITIES = {
     BatchAssign: "iam:role:batch_assign",
     /** 移除用户角色关联 (单条) */
     Unassign: "iam:role:unassign",
+    /** 内联角色分析 */
+    InlineAnalysis: "iam:role:analysis",
     /** 批量移除用户角色 */
-    BatchUnassign: "iam:role:batch_unassign"
+    BatchUnassign: "iam:role:batch_unassign",
+    /** 添加父角色 */
+    AddParent: "iam:role:add_parent",
+    /** 移除父角色 */
+    RemoveParent: "iam:role:remove_parent",
+    /** 获取父角色 */
+    ViewParents: "iam:role:view_parents",
+    /** 查看角色成员 */
+    ViewRoleMembers: "iam:role:view_role_members",
+    /** 查看角色策略 */
+    ViewRolePolicies: "iam:role:view_role_policies",
+    /** 删除角色 */
+    Delete: "iam:role:delete",
+    /** 批量删除角色 */
+    BatchDelete: "iam:role:batch_delete",
+    /** 新增角色 */
+    Add: "iam:role:add"
   },
 
   /** 用户治理相关 */
@@ -85,6 +103,8 @@ export const IAM_CAPABILITIES = {
     Detail: "iam:user:get",
     /** 注销/删除用户 */
     Delete: "iam:user:delete",
+    /** 批量删除用户 */
+    BatchDelete: "iam:user:batch_delete",
     /** 重置密码 */
     ResetPassword: "iam:user:reset_password",
     /** 查询用户角色 */
