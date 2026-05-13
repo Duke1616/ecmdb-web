@@ -1,9 +1,9 @@
 // 治理模块通用表格样式 (Governance Table System)
 // 旨在统一 IAM 模块下所有基于 PremiumList/DataTable 的列表展示风格
 
-// 1. 基础按钮工具 (Premium 风格，参考 Element Plus 原生配色)
+// 1. 基础按钮工具 (Premium 风格，支持双规格)
 .el-button.u-gov-btn {
-  height: 34px;
+  height: 34px; // 默认 34px (用于表格治理区)
   padding: 0 16px;
   border-radius: 8px;
   border: 1px solid #409eff;
@@ -17,6 +17,13 @@
   gap: 6px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 4px rgba(64, 158, 255, 0.15);
+
+  // 大号规格 (用于 ManagerHeader 主动作区)
+  &.is-large {
+    height: 38px;
+    padding: 0 20px;
+    font-size: 14px;
+  }
 
   &:hover, &:focus {
     background: #66b1ff;
@@ -42,6 +49,22 @@
       border-color: #f78989;
       box-shadow: 0 4px 12px rgba(247, 137, 137, 0.25);
       color: #ffffff;
+    }
+  }
+
+  // 3. 次要/幽灵按钮 (用于取消、返回等)
+  &.is-ghost {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &:hover, &:focus {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #475569;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
     }
   }
 

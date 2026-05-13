@@ -18,11 +18,15 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)" @click="handleCreate">
+            <el-button
+              class="u-gov-btn is-large"
+              :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)"
+              @click="handleCreate"
+            >
               <el-icon><Plus /></el-icon>
               <span>新增主体</span>
             </el-button>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" circle @click="handleRefresh" />
+            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
           </div>
         </div>
       </template>
@@ -245,8 +249,8 @@ const handleConfirm = async () => {
     }
 
     &:focus-within {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.05);
+      border-color: #409eff;
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
     }
 
     .search-icon {
@@ -316,11 +320,22 @@ const handleConfirm = async () => {
   }
 
   .eiam-refresh-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #64748b;
+    transition: all 0.2s;
+
     &:hover {
-      color: #3b82f6;
-      border-color: #3b82f6;
-      transform: rotate(180deg);
+      color: #409eff;
+      border-color: #409eff;
       background: #f0f7ff;
+      transform: translateY(-1px);
     }
   }
 }
@@ -343,9 +358,9 @@ const handleConfirm = async () => {
   }
 
   .main-link {
-    color: #3b82f6;
+    color: #1e293b;
     &:hover {
-      color: #2563eb;
+      color: #3b82f6;
     }
   }
 

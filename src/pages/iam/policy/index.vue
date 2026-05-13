@@ -36,11 +36,15 @@
               <el-option label="系统预设" :value="1" />
               <el-option label="自定义" :value="2" />
             </el-select>
-            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)" @click="handleCreate">
+            <el-button
+              class="u-gov-btn is-large"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
+              @click="handleCreate"
+            >
               <el-icon><Plus /></el-icon>
               <span>创建策略</span>
             </el-button>
-            <el-button :icon="RefreshRight" class="eiam-icon-outline" circle @click="handleRefresh" />
+            <el-button :icon="RefreshRight" class="eiam-icon-outline" @click="handleRefresh" />
           </div>
         </div>
       </template>
@@ -229,7 +233,8 @@ const formatDate = (ts: number) => {
     transition: border-color 0.2s;
 
     &:focus-within {
-      border-color: #3b82f6;
+      border-color: #409eff;
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
     }
 
     .command-input {
@@ -292,13 +297,21 @@ const formatDate = (ts: number) => {
   }
 
   .eiam-icon-outline {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #e2e8f0;
     background: white;
     color: #64748b;
+    transition: all 0.2s;
     &:hover {
-      color: #3b82f6;
-      border-color: #3b82f6;
-      background: #eff6ff;
+      color: #409eff;
+      border-color: #409eff;
+      background: #f0f7ff;
+      transform: translateY(-1px);
     }
   }
 }

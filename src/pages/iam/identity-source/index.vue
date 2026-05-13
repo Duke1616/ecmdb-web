@@ -9,11 +9,11 @@
       <template #actions>
         <div class="eiam-governance-bar">
           <div class="action-group">
-            <el-button type="primary" class="eiam-primary-btn" @click="handleCreate">
+            <el-button class="u-gov-btn is-large" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>集成身份源</span>
             </el-button>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" circle @click="handleRefresh" />
+            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
           </div>
         </div>
       </template>
@@ -198,36 +198,23 @@ const getProviderInfo = (row: IdentitySourceVO) => {
   align-items: center;
   gap: 12px;
 
-  .eiam-primary-btn {
-    background: #3b82f6;
-    border: none;
-    border-radius: 8px;
-    height: 38px;
-    padding: 0 20px;
-    color: #ffffff;
-    font-weight: 600;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.16);
-    transition: all 0.2s;
-
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  }
-
   .eiam-refresh-btn {
     width: 38px;
     height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #e2e8f0;
     background: #ffffff;
     color: #64748b;
     transition: all 0.2s;
 
     &:hover {
-      color: #3b82f6;
-      border-color: #3b82f6;
+      color: #409eff;
+      border-color: #409eff;
       background: #f0f7ff;
-      transform: rotate(180deg);
+      transform: translateY(-1px);
     }
   }
 }

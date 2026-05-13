@@ -140,7 +140,7 @@ const infoItems = computed(() => {
       <ManagerHeader :title="roleInfo.name" :subtitle="roleInfo.code" :show-back-button="true" @back="router.back()">
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="u-gov-btn" @click="handleEdit">
+            <el-button class="u-gov-btn">
               <el-icon><Edit /></el-icon>
               <span>完善职责</span>
             </el-button>

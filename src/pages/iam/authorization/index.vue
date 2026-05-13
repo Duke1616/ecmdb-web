@@ -51,23 +51,21 @@
           <div class="action-group">
             <template v-if="selectedRows.length > 0">
               <el-button
-                type="danger"
-                class="eiam-main-btn is-danger"
+                class="u-gov-btn is-danger is-large"
                 :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
                 @click="handleBatchRevoke(selectedRows)"
               >
                 <el-icon><Delete /></el-icon>
                 <span>批量解除 ({{ selectedRows.length }})</span>
               </el-button>
-              <el-button class="cancel-selection-btn" @click="clearSelection">
+              <el-button class="u-gov-btn is-ghost" @click="clearSelection">
                 <el-icon><Close /></el-icon>
                 <span>取消选择</span>
               </el-button>
             </template>
             <template v-else>
               <el-button
-                type="primary"
-                class="eiam-main-btn"
+                class="u-gov-btn is-large"
                 :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
                 @click="handleCreate"
               >
@@ -303,66 +301,22 @@ const handleCreate = () => {
   align-items: center;
   gap: 12px;
 
-  .eiam-main-btn {
-    background: #3b82f6;
-    border: none;
-    border-radius: 8px;
-    height: 36px;
-    padding: 0 18px;
-    font-weight: 600;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-    transition: all 0.2s;
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-    }
-
-    &.is-danger {
-      background: #ef4444;
-      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
-      &:hover {
-        background: #dc2626;
-        box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
-      }
-    }
-  }
-
   .eiam-icon-outline {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #e2e8f0;
     background: white;
     color: #64748b;
-    &:hover {
-      color: #0ea5e9;
-      border-color: #0ea5e9;
-      background: #f0f9ff;
-    }
-  }
-
-  .cancel-selection-btn {
-    height: 36px;
-    padding: 0 16px;
-    border-radius: 8px;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #64748b;
-    font-size: 13px;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
     transition: all 0.2s;
-    cursor: pointer;
-
     &:hover {
-      color: #0ea5e9;
-      border-color: #0ea5e9;
+      color: #409eff;
+      border-color: #409eff;
       background: #f0f9ff;
-    }
-
-    .el-icon {
-      font-size: 14px;
+      transform: translateY(-1px);
     }
   }
 }

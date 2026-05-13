@@ -22,11 +22,11 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button class="u-gov-btn" @click="handleCreate">
+            <el-button class="u-gov-btn is-large" @click="handleCreate">
               <el-icon><Plus /></el-icon>
               <span>初始化角色</span>
             </el-button>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" circle @click="handleRefresh" />
+            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
           </div>
         </div>
       </template>
@@ -61,6 +61,11 @@
           <span class="dot" />
           {{ row.type === 1 ? "系统预设" : "自定义角色" }}
         </div>
+      </template>
+
+      <!-- 角色职责描述: 降噪备注风格 -->
+      <template #desc="{ row }">
+        <span class="column-text">{{ row.desc || "--" }}</span>
       </template>
 
       <!-- 操作权限: 使用优化后的 OperateBtn -->
@@ -145,7 +150,7 @@ const handleOperate = (row: any, code: string) => {
 const tableColumns: Column[] = [
   { label: "角色核心资产", prop: "name", slot: "role_info", minWidth: 200, align: "center" },
   { label: "角色来源/类型", prop: "type", slot: "type", width: 160, align: "center" },
-  { label: "职责描述说明", prop: "desc", minWidth: 400, align: "center" }
+  { label: "职责描述说明", prop: "desc", slot: "desc", minWidth: 400, align: "center" }
 ]
 
 const handleConfirm = async () => {
@@ -183,8 +188,8 @@ const handleConfirm = async () => {
     }
 
     &:focus-within {
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.05);
+      border-color: #409eff;
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
     }
 
     .search-icon {
@@ -206,6 +211,12 @@ const handleConfirm = async () => {
       }
     }
   }
+}
+
+.column-text {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.6;
 }
 
 .action-group {
@@ -233,16 +244,20 @@ const handleConfirm = async () => {
   .eiam-refresh-btn {
     width: 38px;
     height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid #e2e8f0;
     background: #ffffff;
     color: #64748b;
     transition: all 0.2s;
 
     &:hover {
-      color: #3b82f6;
-      border-color: #3b82f6;
-      transform: rotate(180deg);
+      color: #409eff;
+      border-color: #409eff;
       background: #f0f7ff;
+      transform: translateY(-1px);
     }
   }
 }
