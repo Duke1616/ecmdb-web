@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { watch } from "vue"
-import { Close, Coordinate, Check } from "@element-plus/icons-vue"
+import { Close, OfficeBuilding, Check } from "@element-plus/icons-vue"
 import { listRolesApi } from "@/api/iam/role"
 import type { Role } from "@/api/iam/role/type"
 import ResourceSelectorLayout from "@/common/components/ResourceSelector/ResourceSelectorLayout.vue"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
 
 /**
- * 角色选择器 (极简版)
- * 已将布局、搜索、分页完全委托给 ResourceSelectorLayout。
+ * 角色选择器 (通用版)
+ * 采用 ResourceSelectorLayout 架构，支持搜索、分页、多选及已选预览
  */
 
 const visible = defineModel<boolean>({ default: false })
@@ -16,10 +16,14 @@ const visible = defineModel<boolean>({ default: false })
 interface RoleSelectProps {
   confirmLoading?: boolean
   title?: string
+  subtitle?: string
+  excludeCodes?: string[]
 }
 
-withDefaults(defineProps<RoleSelectProps>(), {
-  title: "分派角色主体"
+const props = withDefaults(defineProps<RoleSelectProps>(), {
+  title: "选择角色主体",
+  subtitle: "通过建立角色继承关系，实现权限的阶梯式传递与复用",
+  excludeCodes: () => []
 })
 
 const emit = defineEmits<{
@@ -43,10 +47,16 @@ const {
   clearSelection,
   reset
 } = useResourceSelector<Role, { keyword: string }>({
-  fetchApi: listRolesApi,
+  fetchApi: (params) => listRolesApi({ ...params }),
   listKey: "roles",
-  rowKey: (row: Role) => String(row.id),
+  rowKey: (row: Role) => row.code,
   initialQuery: { keyword: "" }
+})
+
+// 过滤掉需要排除的角色
+const filteredList = computed(() => {
+  if (!props.excludeCodes.length) return list.value
+  return list.value.filter((role) => !props.excludeCodes.includes(role.code))
 })
 
 watch(visible, (val) => {
@@ -58,6 +68,8 @@ const handleConfirm = () => {
   if (selectedTotal.value === 0) return
   emit("confirm", [...selectedList.value])
 }
+
+import { computed } from "vue"
 </script>
 
 <template>
@@ -66,15 +78,15 @@ const handleConfirm = () => {
     v-model:keyword="query.keyword"
     v-model:current-page="pagination.currentPage"
     :title="title"
-    subtitle="检索系统定义并建立主体关联"
-    :header-icon="Coordinate"
+    :subtitle="subtitle"
+    :header-icon="OfficeBuilding"
     :selected-total="selectedTotal"
     :total="total"
     :page-size="pagination.pageSize"
     :confirm-loading="confirmLoading"
-    search-placeholder="搜索角色名、标识码..."
-    accent-color="#8b5cf6"
-    layer-bg="#fbfbfe"
+    search-placeholder="搜索角色名称、标识码..."
+    accent-color="#3b82f6"
+    layer-bg="#f8fafc"
     @update:keyword="handleSearch"
     @page-change="handlePageChange"
     @refresh="fetchList"
@@ -86,28 +98,31 @@ const handleConfirm = () => {
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="list"
+        :data="filteredList"
         height="100%"
-        row-key="id"
+        row-key="code"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" reserve-selection />
-        <el-table-column label="角色标识" min-width="180">
+        <el-table-column label="角色信息" min-width="220">
           <template #default="{ row }">
             <div class="role-row">
-              <div class="role-icon-box">
-                <el-icon><Coordinate /></el-icon>
+              <div class="role-icon">
+                <el-icon><OfficeBuilding /></el-icon>
               </div>
-              <div class="role-meta">
+              <div class="u-meta">
                 <span class="name">{{ row.name }}</span>
-                <span class="code">#{{ row.code }}</span>
+                <span class="id">{{ row.code }}</span>
               </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="desc" label="业务职责描述" min-width="300">
+        <el-table-column prop="desc" label="职责描述" min-width="300" show-overflow-tooltip />
+        <el-table-column label="类型" width="120" align="center">
           <template #default="{ row }">
-            <span class="desc-text">{{ row.desc || "尚未定义职责说明" }}</span>
+            <div class="type-tag" :class="{ 'is-system': row.type === 1 }">
+              {{ row.type === 1 ? "系统预设" : "自定义" }}
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -115,16 +130,16 @@ const handleConfirm = () => {
 
     <!-- 2. 已选清单 -->
     <template #selected-list>
-      <div v-for="item in selectedList" :key="item.id" class="entity-card">
+      <div v-for="role in selectedList" :key="role.code" class="entity-card">
         <div class="card-content">
           <div class="ok-mark">
             <el-icon><Check /></el-icon>
           </div>
           <div class="entity-info">
-            <span class="entity-name">{{ item.name }}</span>
-            <span class="entity-id">#{{ item.code }}</span>
+            <span class="entity-name">{{ role.name }}</span>
+            <span class="entity-id">{{ role.code }}</span>
           </div>
-          <el-icon class="del-btn" @click="removeSelection(item)"><Close /></el-icon>
+          <el-icon class="del-btn" @click="removeSelection(role)"><Close /></el-icon>
         </div>
       </div>
     </template>
@@ -138,51 +153,59 @@ const handleConfirm = () => {
         :loading="confirmLoading"
         @click="handleConfirm"
       >
-        完成角色授权
+        确认选择并建立继承关系
       </el-button>
     </template>
   </ResourceSelectorLayout>
 </template>
 
 <style lang="scss" scoped>
-$accent: #8b5cf6;
-$text-main: #1e293b;
+$accent: #3b82f6;
+$text-main: #0f172a;
 $text-sub: #64748b;
 $line: #e2e8f0;
 
 .role-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  .role-icon-box {
-    width: 30px;
-    height: 30px;
+  gap: 12px;
+  .role-icon {
+    width: 32px;
+    height: 32px;
+    background: #eff6ff;
     border-radius: 8px;
-    background: #f5f3ff;
-    color: $accent;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
-    border: 1px solid #ddd6fe;
+    color: $accent;
+    font-size: 16px;
   }
-  .role-meta {
+  .u-meta {
     .name {
       display: block;
       font-weight: 600;
       color: $text-main;
+      font-size: 13px;
     }
-    .code {
+    .id {
       font-size: 11px;
       color: $text-sub;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
   }
 }
 
-.desc-text {
-  font-size: 13px;
-  color: #475569;
-  line-height: 1.5;
+.type-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  background: #f1f5f9;
+  color: #64748b;
+  &.is-system {
+    background: #fef3c7;
+    color: #92400e;
+  }
 }
 
 .entity-card {
@@ -206,7 +229,7 @@ $line: #e2e8f0;
       width: 16px;
       height: 16px;
       border-radius: 50%;
-      background: #f5f3ff;
+      background: #eff6ff;
       color: $accent;
       display: flex;
       align-items: center;
@@ -241,8 +264,6 @@ $line: #e2e8f0;
 
 .role-theme-btn {
   width: 100%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 </style>

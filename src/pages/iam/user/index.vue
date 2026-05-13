@@ -122,7 +122,13 @@
       @confirm="handleConfirm"
       @cancel="formVisible = false"
     >
-      <UserForm ref="userFormRef" :user-id="currentEditId!" :is-edit="!!currentEditId" @success="handleFormSuccess" />
+      <UserForm
+        :key="currentEditId || 'create'"
+        ref="userFormRef"
+        :user-id="currentEditId!"
+        :is-edit="!!currentEditId"
+        @success="handleFormSuccess"
+      />
     </FormDialog>
   </PageContainer>
 </template>

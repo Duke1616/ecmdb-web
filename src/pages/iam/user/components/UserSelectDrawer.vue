@@ -108,11 +108,11 @@ const handleConfirm = () => {
           </template>
         </el-table-column>
         <el-table-column prop="email" label="联系邮箱" min-width="240" show-overflow-tooltip />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column label="状态" width="200" align="center">
           <template #default="{ row }">
-            <div class="status-tag" :class="{ 'is-active': row.status === 1 }">
+            <div class="status-tag" :class="{ 'is-active': row.status === 'active' }">
               <span class="dot" />
-              {{ row.status === 1 ? "正常" : "禁用" }}
+              {{ row.status === "active" ? "正常" : "禁用" }}
             </div>
           </template>
         </el-table-column>
@@ -155,6 +155,13 @@ $accent: #3b82f6;
 $text-main: #0f172a;
 $text-sub: #64748b;
 $line: #e2e8f0;
+
+:deep(.el-table) {
+  .el-table__header-wrapper,
+  .el-table__body-wrapper {
+    padding-right: 16px; // 增加右侧呼吸感
+  }
+}
 
 .user-row {
   display: flex;

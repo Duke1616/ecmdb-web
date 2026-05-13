@@ -84,7 +84,13 @@
       @confirm="handleConfirm"
       @cancel="formVisible = false"
     >
-      <RoleForm ref="roleFormRef" :code="currentEditCode!" :is-edit="!!currentEditCode" @success="handleFormSuccess" />
+      <RoleForm
+        :key="currentEditCode || 'new'"
+        ref="roleFormRef"
+        :code="currentEditCode!"
+        :is-edit="!!currentEditCode"
+        @success="handleFormSuccess"
+      />
     </FormDialog>
   </PageContainer>
 </template>

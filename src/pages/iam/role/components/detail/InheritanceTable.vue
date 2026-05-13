@@ -33,6 +33,7 @@ const emit = defineEmits<{
         <span>父角色资料</span>
         <span>角色来源</span>
         <span>继承层级</span>
+        <span>职责描述</span>
         <span class="align-center">操作</span>
       </div>
     </template>
@@ -68,6 +69,10 @@ const emit = defineEmits<{
           </div>
         </div>
 
+        <div class="cell-desc">
+          <span class="desc-text">{{ row.desc || "暂无职责描述" }}</span>
+        </div>
+
         <div class="cell-actions">
           <el-tooltip
             :disabled="row.is_direct && !row.is_immutable"
@@ -97,7 +102,7 @@ const emit = defineEmits<{
 <style lang="scss" scoped>
 .inheritance-cols {
   display: grid;
-  grid-template-columns: 240px 140px 1fr 120px;
+  grid-template-columns: 240px 140px 120px 1fr 120px;
   gap: 24px;
   width: 100%;
   align-items: center;
@@ -109,7 +114,7 @@ const emit = defineEmits<{
 
 .inheritance-grid-row {
   display: grid;
-  grid-template-columns: 240px 140px 1fr 120px;
+  grid-template-columns: 240px 140px 120px 1fr 120px;
   align-items: center;
   gap: 24px;
   min-height: 72px;
@@ -208,6 +213,18 @@ const emit = defineEmits<{
       cursor: not-allowed;
       opacity: 0.6;
     }
+  }
+}
+
+.cell-desc {
+  .desc-text {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
 </style>

@@ -43,34 +43,6 @@
                   </el-form-item>
                 </el-col>
               </el-row>
-
-              <!-- 编辑模式下增加状态控制 -->
-              <el-row v-if="isEdit" :gutter="24">
-                <el-col :span="24">
-                  <div class="status-panel-card">
-                    <div class="panel-left">
-                      <span class="panel-label">账号状态</span>
-                      <el-tooltip
-                        :content="formData.status === 'active' ? '用户可以正常登录系统' : '用户将被禁止登录'"
-                        placement="top"
-                      >
-                        <el-icon class="panel-icon"><QuestionFilled /></el-icon>
-                      </el-tooltip>
-                    </div>
-                    <div class="panel-right">
-                      <el-switch
-                        v-model="formData.status"
-                        active-value="active"
-                        inactive-value="disable"
-                        inline-prompt
-                        active-text="正常"
-                        inactive-text="禁用"
-                        class="gov-switch"
-                      />
-                    </div>
-                  </div>
-                </el-col>
-              </el-row>
             </div>
           </div>
 
@@ -144,9 +116,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from "vue"
+import { pick } from "lodash-es"
 import type { FormInstance, FormRules } from "element-plus"
-import { Lock, SuccessFilled, User, QuestionFilled } from "@element-plus/icons-vue"
+import { Lock, SuccessFilled, User } from "@element-plus/icons-vue"
 import { signupApi, updateUserApi, userDetailApi } from "@/api/iam/user"
+import type { UpdateUserReq } from "@/api/iam/user/type"
 
 const props = defineProps<{
   isEdit: boolean
@@ -158,16 +132,21 @@ const emit = defineEmits<{
 }>()
 
 const formRef = ref<FormInstance>()
-const formData = reactive({
+
+// 定义表单关心的核心字段 (Single Source of Truth)
+const USER_FORM_FIELDS = ["username", "nickname", "email", "job_title", "avatar"]
+
+const getInitialData = () => ({
   username: "",
   nickname: "",
   email: "",
   job_title: "",
   avatar: "",
   password: "",
-  confirm_password: "",
-  status: "active"
+  confirm_password: ""
 })
+
+const formData = reactive(getInitialData())
 
 const passwordStrength = computed(() => {
   const p = formData.password || ""
@@ -187,23 +166,34 @@ const strengthColor = computed(() => {
 
 const loadUserDetail = async () => {
   if (!props.userId) return
-  const { data } = await userDetailApi({ id: props.userId })
-  const user = data.user ? data.user : data
-  Object.assign(formData, user)
+  try {
+    const { data } = await userDetailApi({ id: props.userId })
+    const user = data.user || data
+    // 使用 lodash 精准拣选字段，实现声明式同步
+    Object.assign(formData, pick(user, USER_FORM_FIELDS))
+  } catch (error) {
+    console.error("加载用户详情失败:", error)
+  }
 }
 
 const submit = async () => {
   if (!formRef.value) return
   await formRef.value.validate()
   if (props.isEdit) {
-    const { username, nickname, email, job_title, avatar, status } = formData
-    await updateUserApi({ id: Number(props.userId), username, nickname, email, job_title, avatar, status })
+    // 核心修复：通过类型断言解决 lodash.pick 返回 Partial 类型导致的兼容性问题
+    const updatePayload = {
+      id: Number(props.userId),
+      ...pick(formData, USER_FORM_FIELDS)
+    } as UpdateUserReq
+
+    await updateUserApi(updatePayload)
   } else {
     await signupApi({ ...formData })
   }
   emit("success")
 }
 
+// 采用父组件 :key 驱动方案，子组件回归单次挂载逻辑
 onMounted(() => {
   if (props.isEdit) loadUserDetail()
 })

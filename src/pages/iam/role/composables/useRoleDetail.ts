@@ -40,6 +40,16 @@ export function useRoleDetail() {
     handleCopy(text, "角色信息")
   }
 
+  const editVisible = ref(false)
+  const handleEdit = () => {
+    editVisible.value = true
+  }
+
+  const handleEditSuccess = () => {
+    editVisible.value = false
+    fetchRoleDetail()
+  }
+
   const formatTimestamp = (ts: string | number) => {
     if (!ts) return "-"
     return dayjs(Number(ts)).format("YYYY-MM-DD HH:mm:ss")
@@ -57,8 +67,12 @@ export function useRoleDetail() {
   return {
     roleInfo,
     loading,
+    editVisible,
+    handleEdit,
+    handleEditSuccess,
     handleDelete,
     copyText,
-    formatTimestamp
+    formatTimestamp,
+    fetchRoleDetail
   }
 }

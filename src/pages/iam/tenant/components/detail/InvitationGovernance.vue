@@ -217,8 +217,6 @@ const formatTime = (ts: number) => {
 </template>
 
 <style lang="scss" scoped>
-@use "./governance-table.scss";
-
 .invitation-governance {
   padding: 8px 0;
 }

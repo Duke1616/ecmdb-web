@@ -1,34 +1,45 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, ref } from "vue"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
-import { Delete, OfficeBuilding, Edit } from "@element-plus/icons-vue"
+import { Delete, OfficeBuilding, Edit, Coordinate } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { FormDialog } from "@/common/components/Dialogs"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
+import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 
 // Composables
 import { useRoleDetail } from "./composables/useRoleDetail"
 import { useRoleGovernance } from "./composables/useRoleGovernance"
+import { useRoleDisplayItems } from "./composables/useRoleDisplayItems"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // Components
+import RoleForm from "./components/RoleForm.vue"
 import MemberTable from "./components/detail/MemberTable.vue"
 import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
 import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
 import InheritanceTable from "./components/detail/InheritanceTable.vue"
-import AddParentDrawer from "./components/detail/AddParentDrawer.vue"
-import AddMemberDrawer from "./components/detail/AddMemberDrawer.vue"
+import RoleSelectDrawer from "./components/RoleSelectDrawer.vue"
+import UserSelectDrawer from "@/pages/iam/user/components/UserSelectDrawer.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
 
-const { roleInfo, loading: detailLoading, handleDelete, formatTimestamp } = useRoleDetail()
+const {
+  roleInfo,
+  loading: detailLoading,
+  editVisible,
+  handleEdit,
+  handleEditSuccess,
+  handleDelete,
+  formatTimestamp
+} = useRoleDetail()
 
-const handleCopy = (text: string) => {
-  navigator.clipboard.writeText(text)
-  ElMessage.success("已复制到剪贴板")
-}
+const { hasPermission } = usePermission()
 
 const {
   activeTab,
@@ -68,6 +79,16 @@ const {
   computed(() => roleInfo.value?.id),
   computed(() => roleInfo.value?.code)
 )
+
+const { statusItems, infoItems } = useRoleDisplayItems(roleInfo, memberTotal, policyTotal)
+
+// 完善职责 (编辑角色) 逻辑
+const roleFormRef = ref()
+
+const handleCopy = (text: string) => {
+  navigator.clipboard.writeText(text)
+  ElMessage.success("已复制到剪贴板")
+}
 
 /**
  * 核心聚合算法：将多条内联策略的服务描述进行打平展示
@@ -115,23 +136,10 @@ const roleSubjects = computed<Subject[]>(() => {
     }
   ]
 })
-const infoItems = computed(() => {
-  if (!roleInfo.value) return []
-  return [
-    { label: "角色显示名称", value: roleInfo.value.name },
-    { label: "唯一识别码 (CODE)", value: roleInfo.value.code, mono: true, copyable: true },
-    {
-      label: "角色类型",
-      value: roleInfo.value.type === 1 ? "系统预设 (System)" : "自定义 (Custom)"
-    },
-    {
-      label: "职责描述说明",
-      value: roleInfo.value.desc || "暂无详细职责说明",
-      full: true,
-      desc: true
-    }
-  ]
-})
+
+const handleConfirmEdit = () => {
+  roleFormRef.value?.submit()
+}
 </script>
 
 <template>
@@ -140,11 +148,15 @@ const infoItems = computed(() => {
       <ManagerHeader :title="roleInfo.name" :subtitle="roleInfo.code" :show-back-button="true" @back="router.back()">
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="u-gov-btn">
+            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.Role.Edit)" @click="handleEdit">
               <el-icon><Edit /></el-icon>
               <span>完善职责</span>
             </el-button>
-            <el-button class="u-gov-btn is-danger" @click="handleDelete">
+            <el-button
+              class="u-gov-btn is-danger"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Role.Edit)"
+              @click="handleDelete"
+            >
               <el-icon><Delete /></el-icon>
               <span>注销主体</span>
             </el-button>
@@ -153,7 +165,10 @@ const infoItems = computed(() => {
       </ManagerHeader>
 
       <div class="governance-body">
-        <!-- 身份与职责概览 -->
+        <!-- 1. 治理状态概览 -->
+        <StatusStrip :items="statusItems" />
+
+        <!-- 2. 主体身份与职责概览 -->
         <InfoCard title="主体身份与职责定义" :icon="OfficeBuilding" :items="infoItems" @copy="handleCopy" />
 
         <!-- 3. 治理深度内容区 (Tabs) -->
@@ -219,18 +234,41 @@ const infoItems = computed(() => {
       </div>
 
       <!-- 功能侧边栏 -->
-      <AddMemberDrawer v-model="addMemberVisible" :loading="memberLoading" @confirm="handleAssignMembers" />
-      <AddParentDrawer
+      <UserSelectDrawer
+        v-model="addMemberVisible"
+        :confirm-loading="memberLoading"
+        @confirm="(users) => handleAssignMembers(users.map((u) => u.username))"
+      />
+      <RoleSelectDrawer
         v-model="addParentVisible"
-        :loading="inheritanceLoading"
+        title="建立信任继承关系"
+        :confirm-loading="inheritanceLoading"
         :exclude-codes="[roleInfo.code, ...parentRoles.map((r) => r.code)]"
-        @confirm="handleAddParents"
+        @confirm="(roles) => handleAddParents(roles.map((r) => r.code))"
       />
       <AuthorizeDrawer
         v-model="attachPolicyVisible"
         :fixed-subjects="roleSubjects"
         @success="handleAttachPolicySuccess"
       />
+
+      <!-- 编辑主体资料弹窗 -->
+      <FormDialog
+        v-model="editVisible"
+        title="完善主体职责定义"
+        :header-icon="Coordinate"
+        width="640px"
+        @confirm="handleConfirmEdit"
+        @cancel="editVisible = false"
+      >
+        <RoleForm
+          :key="roleInfo.code"
+          ref="roleFormRef"
+          :code="roleInfo.code"
+          :is-edit="true"
+          @success="handleEditSuccess"
+        />
+      </FormDialog>
     </template>
   </PageContainer>
 </template>

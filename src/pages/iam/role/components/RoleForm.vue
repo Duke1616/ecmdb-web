@@ -10,14 +10,19 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="名称" prop="name">
-              <el-input v-model="formData.name" placeholder="例如: 财务分析师" class="gov-input" />
+              <el-input
+                v-model="formData.name"
+                :disabled="isSystemRole"
+                placeholder="例如: 财务分析师"
+                class="gov-input"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="标识码" prop="code">
               <el-input
                 v-model="formData.code"
-                :disabled="isEdit"
+                :disabled="isEdit || isSystemRole"
                 placeholder="例如: financial_analyst"
                 class="gov-input mono"
               />
@@ -28,6 +33,7 @@
           <el-input
             v-model="formData.desc"
             type="textarea"
+            :disabled="isSystemRole"
             :rows="3"
             placeholder="描述该角色承担的具体业务职责..."
             class="gov-input gov-textarea"
@@ -54,7 +60,9 @@
 import { ref, reactive, onMounted } from "vue"
 import type { FormInstance, FormRules } from "element-plus"
 import { Lock } from "@element-plus/icons-vue"
+import { pick } from "lodash-es"
 import { createRoleApi, updateRoleApi, roleDetailApi } from "@/api/iam/role"
+import type { UpdateRoleReq } from "@/api/iam/role/type"
 
 const props = defineProps<{
   isEdit: boolean
@@ -66,13 +74,22 @@ const emit = defineEmits<{
 }>()
 
 const formRef = ref<FormInstance>()
-const formData = reactive({
+
+// 定义角色表单关心的核心字段 (包含更新所需的 ID)
+const ROLE_FORM_FIELDS = ["id", "name", "code", "desc", "type"]
+
+const getInitialData = () => ({
   id: 0,
   name: "",
   code: "",
   desc: "",
   type: 2
 })
+
+const formData = reactive(getInitialData())
+
+// 判定是否为系统预设角色
+const isSystemRole = computed(() => formData.type === 1)
 
 const formRules = reactive<FormRules>({
   name: [{ required: true, message: "请输入角色名称", trigger: "blur" }],
@@ -84,9 +101,13 @@ const formRules = reactive<FormRules>({
 
 const loadDetail = async () => {
   if (!props.code) return
-  // NOTE: 修正 API 方法名为 roleDetailApi
-  const { data } = await roleDetailApi(props.code)
-  Object.assign(formData, data)
+  try {
+    const { data } = await roleDetailApi(props.code)
+    // 使用 lodash 精准拣选字段
+    Object.assign(formData, pick(data, ROLE_FORM_FIELDS))
+  } catch (error) {
+    console.error("加载角色详情失败:", error)
+  }
 }
 
 const submit = async () => {
@@ -94,13 +115,19 @@ const submit = async () => {
   await formRef.value.validate()
 
   if (props.isEdit) {
-    await updateRoleApi(formData)
+    // 核心修复：通过类型断言解决 lodash.pick 返回 Partial 类型导致的兼容性问题
+    const updatePayload = {
+      ...pick(formData, ROLE_FORM_FIELDS)
+    } as UpdateRoleReq
+
+    await updateRoleApi(updatePayload)
   } else {
-    await createRoleApi(formData)
+    await createRoleApi({ ...formData })
   }
   emit("success")
 }
 
+// 采用父组件 :key 驱动方案，组件逻辑回归单次挂载
 onMounted(() => {
   if (props.isEdit) loadDetail()
 })
@@ -119,7 +146,7 @@ defineExpose({ submit })
 }
 
 .form-chapter {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
   &:last-child {
     margin-bottom: 0;
   }
@@ -154,7 +181,7 @@ defineExpose({ submit })
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  margin-top: 12px;
+  margin-top: 4px;
 
   .control-label {
     .title {
@@ -190,7 +217,7 @@ defineExpose({ submit })
 }
 
 :deep(.el-form-item) {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 :deep(.el-form-item__label) {
