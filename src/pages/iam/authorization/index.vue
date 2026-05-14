@@ -208,8 +208,16 @@ const getSubjectLink = (row: Authorization) => {
  * 动态计算对象详情跳转链接 (带权限校验)
  */
 const getTargetLink = (row: Authorization) => {
-  // 目前授权对象均为 Policy
-  if (!hasPermission(IAM_CAPABILITIES.Policy.View)) return undefined
+  // 判断对象类型：可能是 Role (角色继承) 或 Policy (直接授权)
+  const isRoleTarget = row.obj_type === AuthorizationObjType.ROLE
+
+  if (isRoleTarget) {
+    if (!hasPermission(IAM_CAPABILITIES.Role.Detail)) return undefined
+    return { name: "RoleDetail", query: { code: row.target } }
+  }
+
+  // 默认视为 Policy 类型
+  if (!hasPermission(IAM_CAPABILITIES.Policy.Detail)) return undefined
   return { name: "PolicyDetail", query: { code: row.target } }
 }
 
