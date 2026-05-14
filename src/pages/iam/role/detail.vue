@@ -1,152 +1,3 @@
-<script setup lang="ts">
-import { computed, ref } from "vue"
-import { ElMessage } from "element-plus"
-import { useRouter } from "vue-router"
-import { Delete, OfficeBuilding, Edit, Coordinate } from "@element-plus/icons-vue"
-import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
-import { FormDialog } from "@/common/components/Dialogs"
-import InfoCard from "@/common/components/Governance/InfoCard.vue"
-import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
-
-// Composables
-import { useRoleDetail } from "./composables/useRoleDetail"
-import { useRoleGovernance } from "./composables/useRoleGovernance"
-import { useRoleDisplayItems } from "./composables/useRoleDisplayItems"
-import { usePermission } from "@/common/composables/usePermission"
-import { IAM_CAPABILITIES } from "@/common/auth/capability"
-
-// Components
-import RoleForm from "./components/RoleForm.vue"
-import MemberTable from "./components/detail/MemberTable.vue"
-import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
-import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
-import InheritanceTable from "./components/detail/InheritanceTable.vue"
-import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
-import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
-import RoleSelectDialog from "./components/RoleSelectDialog.vue"
-import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
-import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
-import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
-import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
-
-const router = useRouter()
-
-const {
-  roleInfo,
-  loading: detailLoading,
-  editVisible,
-  handleEdit,
-  handleEditSuccess,
-  handleDelete,
-  formatTimestamp
-} = useRoleDetail()
-
-const { hasPermission } = usePermission()
-
-const {
-  activeTab,
-  members,
-  memberTotal,
-  memberLoading,
-  memberQuery,
-  selectedMembers,
-  policies,
-  policyTotal,
-  policyLoading,
-  policyQuery,
-  selectedPolicies,
-  handleMemberPageChange,
-  handleMemberSearch,
-  addMemberVisible,
-  handleAddMember,
-  handleAssignMembers,
-  handleUnbindMember,
-  handleBatchUnbindMembers,
-  handlePolicyPageChange,
-  handlePolicySearch,
-  handlePolicyTypeChange,
-  attachPolicyVisible,
-  handleAddPolicy,
-  handleAttachPolicySuccess,
-  handleUnbindPolicy,
-  handleBatchUnbindPolicies,
-  analyzedInlinePolicies,
-  analyzedLoading,
-  parentRoles,
-  inheritanceLoading,
-  addParentVisible,
-  policySelectVisible,
-  handleAddParents,
-  handleAttachPolicies,
-  handleRemoveParent,
-  tabPermissions
-} = useRoleGovernance(
-  computed(() => roleInfo.value?.id),
-  computed(() => roleInfo.value?.code)
-)
-
-const { statusItems, infoItems } = useRoleDisplayItems(roleInfo, memberTotal, policyTotal)
-
-// 完善职责 (编辑角色) 逻辑
-const roleFormRef = ref()
-
-const handleCopy = (text: string) => {
-  navigator.clipboard.writeText(text)
-  ElMessage.success("已复制到剪贴板")
-}
-
-/**
- * 核心聚合算法：将多条内联策略的服务描述进行打平展示
- */
-const aggregatedServices = computed(() => {
-  const allServices: any[] = []
-
-  analyzedInlinePolicies.value.forEach((p) => {
-    ;(p.services || []).forEach((s) => {
-      // 携带来源策略信息，以便在下钻时区分
-      allServices.push({
-        ...JSON.parse(JSON.stringify(s)),
-        policy_code: p.code
-      })
-    })
-  })
-
-  // 按服务名称排序，让相同子系统的记录挨在一起
-  return allServices.sort((a, b) => a.service_name.localeCompare(b.service_name))
-})
-
-/**
- * 聚合策略源码：将多条策略的 Statement 拼接
- */
-const aggregatedPolicy = computed(() => {
-  if (analyzedInlinePolicies.value.length === 0) return null
-  return {
-    code: "aggregated",
-    name: "聚合内联分析视图",
-    statement: analyzedInlinePolicies.value.flatMap((p) => p.statement || [])
-  } as any
-})
-
-/**
- * 将当前角色包装为固定授权主体
- */
-const roleSubjects = computed<Subject[]>(() => {
-  if (!roleInfo.value) return []
-  return [
-    {
-      type: AuthorizationSubType.ROLE,
-      id: roleInfo.value.code,
-      name: roleInfo.value.name,
-      desc: roleInfo.value.desc
-    }
-  ]
-})
-
-const handleConfirmEdit = () => {
-  roleFormRef.value?.submit()
-}
-</script>
-
 <template>
   <ProGovernanceLayout
     v-if="roleInfo"
@@ -299,6 +150,155 @@ const handleConfirmEdit = () => {
     </FormDialog>
   </ProGovernanceLayout>
 </template>
+
+<script setup lang="ts">
+import { computed, ref } from "vue"
+import { ElMessage } from "element-plus"
+import { useRouter } from "vue-router"
+import { Delete, OfficeBuilding, Edit, Coordinate } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import { FormDialog } from "@/common/components/Dialogs"
+import InfoCard from "@/common/components/Governance/InfoCard.vue"
+import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
+
+// Composables
+import { useRoleDetail } from "./composables/useRoleDetail"
+import { useRoleGovernance } from "./composables/useRoleGovernance"
+import { useRoleDisplayItems } from "./composables/useRoleDisplayItems"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+
+// Components
+import RoleForm from "./components/RoleForm.vue"
+import MemberTable from "./components/detail/MemberTable.vue"
+import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
+import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
+import InheritanceTable from "./components/detail/InheritanceTable.vue"
+import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
+import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
+import RoleSelectDialog from "./components/RoleSelectDialog.vue"
+import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
+import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
+import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
+
+const router = useRouter()
+
+const {
+  roleInfo,
+  loading: detailLoading,
+  editVisible,
+  handleEdit,
+  handleEditSuccess,
+  handleDelete,
+  formatTimestamp
+} = useRoleDetail()
+
+const { hasPermission } = usePermission()
+
+const {
+  activeTab,
+  members,
+  memberTotal,
+  memberLoading,
+  memberQuery,
+  selectedMembers,
+  policies,
+  policyTotal,
+  policyLoading,
+  policyQuery,
+  selectedPolicies,
+  handleMemberPageChange,
+  handleMemberSearch,
+  addMemberVisible,
+  handleAddMember,
+  handleAssignMembers,
+  handleUnbindMember,
+  handleBatchUnbindMembers,
+  handlePolicyPageChange,
+  handlePolicySearch,
+  handlePolicyTypeChange,
+  attachPolicyVisible,
+  handleAddPolicy,
+  handleAttachPolicySuccess,
+  handleUnbindPolicy,
+  handleBatchUnbindPolicies,
+  analyzedInlinePolicies,
+  analyzedLoading,
+  parentRoles,
+  inheritanceLoading,
+  addParentVisible,
+  policySelectVisible,
+  handleAddParents,
+  handleAttachPolicies,
+  handleRemoveParent,
+  tabPermissions
+} = useRoleGovernance(
+  computed(() => roleInfo.value?.id),
+  computed(() => roleInfo.value?.code)
+)
+
+const { statusItems, infoItems } = useRoleDisplayItems(roleInfo, memberTotal, policyTotal)
+
+// 完善职责 (编辑角色) 逻辑
+const roleFormRef = ref()
+
+const handleCopy = (text: string) => {
+  navigator.clipboard.writeText(text)
+  ElMessage.success("已复制到剪贴板")
+}
+
+/**
+ * 核心聚合算法：将多条内联策略的服务描述进行打平展示
+ */
+const aggregatedServices = computed(() => {
+  const allServices: any[] = []
+
+  analyzedInlinePolicies.value.forEach((p) => {
+    ;(p.services || []).forEach((s) => {
+      // 携带来源策略信息，以便在下钻时区分
+      allServices.push({
+        ...JSON.parse(JSON.stringify(s)),
+        policy_code: p.code
+      })
+    })
+  })
+
+  // 按服务名称排序，让相同子系统的记录挨在一起
+  return allServices.sort((a, b) => a.service_name.localeCompare(b.service_name))
+})
+
+/**
+ * 聚合策略源码：将多条策略的 Statement 拼接
+ */
+const aggregatedPolicy = computed(() => {
+  if (analyzedInlinePolicies.value.length === 0) return null
+  return {
+    code: "aggregated",
+    name: "聚合内联分析视图",
+    statement: analyzedInlinePolicies.value.flatMap((p) => p.statement || [])
+  } as any
+})
+
+/**
+ * 将当前角色包装为固定授权主体
+ */
+const roleSubjects = computed<Subject[]>(() => {
+  if (!roleInfo.value) return []
+  return [
+    {
+      type: AuthorizationSubType.ROLE,
+      id: roleInfo.value.code,
+      name: roleInfo.value.name,
+      desc: roleInfo.value.desc
+    }
+  ]
+})
+
+const handleConfirmEdit = () => {
+  roleFormRef.value?.submit()
+}
+</script>
 
 <style lang="scss" scoped>
 .role-detail-page {

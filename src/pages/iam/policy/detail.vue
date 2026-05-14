@@ -1,3 +1,78 @@
+<template>
+  <ProGovernanceLayout
+    v-if="policy"
+    :title="policy.name"
+    :subtitle="policy.code"
+    :show-back-button="true"
+    :show-refresh="false"
+    :is-detail="true"
+    :swap-actions="false"
+    :primary-action="{
+      capability: IAM_CAPABILITIES.Policy.Edit,
+      label: '完善策略',
+      icon: Edit
+    }"
+    :danger-action="
+      policy.type !== 1
+        ? {
+            capability: IAM_CAPABILITIES.Policy.Delete,
+            label: '移除策略',
+            icon: Delete
+          }
+        : undefined
+    "
+    class="policy-detail-page"
+    @back="router.back()"
+    @primary-action="handleEdit"
+    @danger-action="handleDelete"
+  >
+    <div v-loading="loading" class="governance-body">
+      <!-- 1. 置顶横向状态条 -->
+      <StatusStrip :items="statusItems" />
+
+      <!-- 2. 基础识别与职能定义 -->
+      <InfoCard title="策略身份与职能定义" :icon="OfficeBuilding" :items="infoItems" @copy="copyText" />
+
+      <!-- 治理深度内容区 -->
+      <GovernanceTabs v-model="activeTab">
+        <!-- 看板：策略内容 -->
+        <AuthTabPane label="策略内容洞察" name="insights" :allowed="tabPermissions.insights" disable-mode lazy>
+          <PolicyServiceInsights :policy="policy" :services="services" @copy="copyText" />
+        </AuthTabPane>
+
+        <!-- 看板：授权管理 -->
+        <AuthTabPane label="授权主体管理" name="assignments" :allowed="tabPermissions.assignments" disable-mode lazy>
+          <PolicyAssignmentTable
+            ref="assignmentTableRef"
+            :policy-code="policy.code"
+            :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+            :can-detach="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
+            :can-batch-detach="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+            :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+            @add="handleAddSubject"
+          />
+        </AuthTabPane>
+      </GovernanceTabs>
+    </div>
+
+    <!-- 授权向导 (固定策略模式) -->
+    <AuthorizeDrawer v-model="attachSubjectVisible" :fixed-policies="[policy]" @success="handleAttachSuccess" />
+
+    <!-- 主体选择对话框 -->
+    <SubjectSelectDialog
+      v-model="subjectSelectVisible"
+      title="关联授权主体"
+      confirm-text="确认关联主体"
+      :confirm-loading="submitting"
+      @confirm="handleAttachSubjects"
+    />
+
+    <template #empty>
+      <el-empty v-if="!loading" description="未能获取到策略治理指标" />
+    </template>
+  </ProGovernanceLayout>
+</template>
+
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
@@ -135,81 +210,6 @@ const handleEdit = () => {
   })
 }
 </script>
-
-<template>
-  <ProGovernanceLayout
-    v-if="policy"
-    :title="policy.name"
-    :subtitle="policy.code"
-    :show-back-button="true"
-    :show-refresh="false"
-    :is-detail="true"
-    :swap-actions="false"
-    :primary-action="{
-      capability: IAM_CAPABILITIES.Policy.Edit,
-      label: '完善策略',
-      icon: Edit
-    }"
-    :danger-action="
-      policy.type !== 1
-        ? {
-            capability: IAM_CAPABILITIES.Policy.Delete,
-            label: '移除策略',
-            icon: Delete
-          }
-        : undefined
-    "
-    class="policy-detail-page"
-    @back="router.back()"
-    @primary-action="handleEdit"
-    @danger-action="handleDelete"
-  >
-    <div v-loading="loading" class="governance-body">
-      <!-- 1. 置顶横向状态条 -->
-      <StatusStrip :items="statusItems" />
-
-      <!-- 2. 基础识别与职能定义 -->
-      <InfoCard title="策略身份与职能定义" :icon="OfficeBuilding" :items="infoItems" @copy="copyText" />
-
-      <!-- 治理深度内容区 -->
-      <GovernanceTabs v-model="activeTab">
-        <!-- 看板：策略内容 -->
-        <AuthTabPane label="策略内容洞察" name="insights" :allowed="tabPermissions.insights" disable-mode lazy>
-          <PolicyServiceInsights :policy="policy" :services="services" @copy="copyText" />
-        </AuthTabPane>
-
-        <!-- 看板：授权管理 -->
-        <AuthTabPane label="授权主体管理" name="assignments" :allowed="tabPermissions.assignments" disable-mode lazy>
-          <PolicyAssignmentTable
-            ref="assignmentTableRef"
-            :policy-code="policy.code"
-            :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
-            :can-detach="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
-            :can-batch-detach="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
-            :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
-            @add="handleAddSubject"
-          />
-        </AuthTabPane>
-      </GovernanceTabs>
-    </div>
-
-    <!-- 授权向导 (固定策略模式) -->
-    <AuthorizeDrawer v-model="attachSubjectVisible" :fixed-policies="[policy]" @success="handleAttachSuccess" />
-
-    <!-- 主体选择对话框 -->
-    <SubjectSelectDialog
-      v-model="subjectSelectVisible"
-      title="关联授权主体"
-      confirm-text="确认关联主体"
-      :confirm-loading="submitting"
-      @confirm="handleAttachSubjects"
-    />
-
-    <template #empty>
-      <el-empty v-if="!loading" description="未能获取到策略治理指标" />
-    </template>
-  </ProGovernanceLayout>
-</template>
 
 <style lang="scss" scoped>
 .policy-detail-page {

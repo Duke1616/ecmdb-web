@@ -196,6 +196,7 @@
   .desc-text,
   .email-text,
   .job-text,
+  .domain-text,
   .time-text {
     font-size: 13px;
     color: #64748b;
@@ -203,6 +204,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     width: 100%;
+    display: block;
   }
 
   &.is-bold span {

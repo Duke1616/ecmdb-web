@@ -1,115 +1,3 @@
-<script setup lang="ts">
-import { ref, computed } from "vue"
-import { useRouter } from "vue-router"
-import { Edit, Delete, User, Coordinate } from "@element-plus/icons-vue"
-import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
-import { FormDialog } from "@/common/components/Dialogs"
-import UserForm from "./components/UserForm.vue"
-
-// Composables
-import { useUserDetail } from "./composables/useUserDetail"
-import { useUserGovernance } from "./composables/useUserGovernance"
-import { useUserDisplayItems } from "./composables/useUserDisplayItems"
-import { formatTimestamp } from "@@/utils/day"
-import { usePermission } from "@/common/composables/usePermission"
-import { IAM_CAPABILITIES } from "@/common/auth/capability"
-
-// Components
-import IdentitySources from "./components/detail/IdentitySources.vue"
-import RoleTable from "./components/detail/RoleTable.vue"
-import PolicyTable from "./components/detail/PolicyTable.vue"
-import TenantTable from "./components/detail/TenantTable.vue"
-import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
-import InfoCard from "@/common/components/Governance/InfoCard.vue"
-import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
-import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
-import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
-import RoleSelectDialog from "@/pages/iam/role/components/RoleSelectDialog.vue"
-import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
-import TenantSelectDialog from "@/pages/iam/tenant/components/TenantSelectDialog.vue"
-import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
-
-const router = useRouter()
-const userFormRef = ref<InstanceType<typeof UserForm>>()
-
-const {
-  userInfo,
-  loading: detailLoading,
-  editVisible,
-  loadDetail,
-  handleDelete,
-  handleEdit,
-  handleEditSuccess,
-  copyText
-} = useUserDetail()
-
-const { hasPermission } = usePermission()
-
-const { statusItems, infoItems } = useUserDisplayItems(userInfo)
-
-const {
-  activeTab,
-  // 角色
-  roles,
-  roleTotal,
-  roleLoading,
-  roleQuery,
-  selectedRoles,
-  // 策略
-  policies,
-  policyTotal,
-  policyLoading,
-  policyQuery,
-  selectedPolicies,
-  // 租户
-  tenants,
-  tenantTotal,
-  tenantLoading,
-  tenantQuery,
-  selectedTenants,
-  handleRolePageChange,
-  handlePolicyPageChange,
-  handleTenantPageChange,
-  handleRoleSearch,
-  handleRoleTypeChange,
-  handlePolicySearch,
-  handlePolicyTypeChange,
-  handleTenantSearch,
-  handleAssignRoles,
-  handleAddPolicy,
-  roleSelectVisible,
-  attachPolicyVisible,
-  handleAttachSuccess,
-  handleUnbindRole,
-  handleBatchUnbindRoles,
-  handleUnbindPolicy,
-  handleUnbindTenant,
-  handleBatchUnbindPolicies,
-  policySelectVisible,
-  handleAttachPolicies,
-  tenantSelectVisible,
-  handleAssignTenants,
-  handleBatchUnbindTenants,
-  tabPermissions
-} = useUserGovernance(userInfo)
-
-const handleEditConfirm = () => {
-  userFormRef.value?.submit()
-}
-
-const userSubjects = computed<Subject[]>(() => {
-  if (!userInfo.value) return []
-  return [
-    {
-      type: AuthorizationSubType.USER,
-      id: userInfo.value.username,
-      name: userInfo.value.nickname || userInfo.value.username,
-      desc: userInfo.value.job_title
-    }
-  ]
-})
-</script>
-
 <template>
   <ProGovernanceLayout
     v-if="userInfo"
@@ -275,6 +163,118 @@ const userSubjects = computed<Subject[]>(() => {
     <TenantSelectDialog v-model="tenantSelectVisible" :confirm-loading="tenantLoading" @confirm="handleAssignTenants" />
   </ProGovernanceLayout>
 </template>
+
+<script setup lang="ts">
+import { ref, computed } from "vue"
+import { useRouter } from "vue-router"
+import { Edit, Delete, User, Coordinate } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import { FormDialog } from "@/common/components/Dialogs"
+import UserForm from "./components/UserForm.vue"
+
+// Composables
+import { useUserDetail } from "./composables/useUserDetail"
+import { useUserGovernance } from "./composables/useUserGovernance"
+import { useUserDisplayItems } from "./composables/useUserDisplayItems"
+import { formatTimestamp } from "@@/utils/day"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+
+// Components
+import IdentitySources from "./components/detail/IdentitySources.vue"
+import RoleTable from "./components/detail/RoleTable.vue"
+import PolicyTable from "./components/detail/PolicyTable.vue"
+import TenantTable from "./components/detail/TenantTable.vue"
+import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
+import InfoCard from "@/common/components/Governance/InfoCard.vue"
+import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
+import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
+import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
+import RoleSelectDialog from "@/pages/iam/role/components/RoleSelectDialog.vue"
+import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
+import TenantSelectDialog from "@/pages/iam/tenant/components/TenantSelectDialog.vue"
+import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
+
+const router = useRouter()
+const userFormRef = ref<InstanceType<typeof UserForm>>()
+
+const {
+  userInfo,
+  loading: detailLoading,
+  editVisible,
+  loadDetail,
+  handleDelete,
+  handleEdit,
+  handleEditSuccess,
+  copyText
+} = useUserDetail()
+
+const { hasPermission } = usePermission()
+
+const { statusItems, infoItems } = useUserDisplayItems(userInfo)
+
+const {
+  activeTab,
+  // 角色
+  roles,
+  roleTotal,
+  roleLoading,
+  roleQuery,
+  selectedRoles,
+  // 策略
+  policies,
+  policyTotal,
+  policyLoading,
+  policyQuery,
+  selectedPolicies,
+  // 租户
+  tenants,
+  tenantTotal,
+  tenantLoading,
+  tenantQuery,
+  selectedTenants,
+  handleRolePageChange,
+  handlePolicyPageChange,
+  handleTenantPageChange,
+  handleRoleSearch,
+  handleRoleTypeChange,
+  handlePolicySearch,
+  handlePolicyTypeChange,
+  handleTenantSearch,
+  handleAssignRoles,
+  handleAddPolicy,
+  roleSelectVisible,
+  attachPolicyVisible,
+  handleAttachSuccess,
+  handleUnbindRole,
+  handleBatchUnbindRoles,
+  handleUnbindPolicy,
+  handleUnbindTenant,
+  handleBatchUnbindPolicies,
+  policySelectVisible,
+  handleAttachPolicies,
+  tenantSelectVisible,
+  handleAssignTenants,
+  handleBatchUnbindTenants,
+  tabPermissions
+} = useUserGovernance(userInfo)
+
+const handleEditConfirm = () => {
+  userFormRef.value?.submit()
+}
+
+const userSubjects = computed<Subject[]>(() => {
+  if (!userInfo.value) return []
+  return [
+    {
+      type: AuthorizationSubType.USER,
+      id: userInfo.value.username,
+      name: userInfo.value.nickname || userInfo.value.username,
+      desc: userInfo.value.job_title
+    }
+  ]
+})
+</script>
 
 <style lang="scss" scoped>
 .user-detail-page {

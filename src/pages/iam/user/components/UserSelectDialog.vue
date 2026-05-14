@@ -36,7 +36,6 @@ const {
   loading,
   query,
   pagination,
-  tableRef,
   selectedList,
   selectedTotal,
   fetchList,
