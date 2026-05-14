@@ -16,7 +16,7 @@
       <!-- 治理内容 -->
       <GovernanceTabs v-model="activeTab">
         <AuthTabPane label="成员管理" name="members" :allowed="tabPermissions.members" disable-mode>
-          <TenantMemberTable v-bind="memberTableProps" />
+          <TenantMemberList v-bind="memberTableProps" />
         </AuthTabPane>
 
         <!-- 邀请链接 -->
@@ -49,7 +49,7 @@ import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
 import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
-import TenantMemberTable from "../tenant/components/detail/TenantMemberTable.vue"
+import TenantMemberList from "../tenant/components/detail/TenantMemberList.vue"
 import TenantInvitationList from "../tenant/components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "../tenant/components/detail/TenantJoinRequestList.vue"
 import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
