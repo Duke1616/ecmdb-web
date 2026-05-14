@@ -6,7 +6,7 @@
     v-model:keyword="query.keyword"
     :selection-count="selectedRows.length"
     :primary-action="{ capability: IAM_CAPABILITIES.Role.Add, label: '初始化角色' }"
-    :danger-action="{ capability: IAM_CAPABILITIES.Role.BatchDelete, label: '批量注销' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.Role.BatchDelete, label: '批量删除' }"
     @search="handleRefresh"
     @refresh="handleRefresh"
     @primary-action="handleCreate"

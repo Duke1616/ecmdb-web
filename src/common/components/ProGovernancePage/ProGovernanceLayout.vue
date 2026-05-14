@@ -92,7 +92,7 @@ const handleSearch = () => {
                 <AuthButton
                   v-if="dangerAction"
                   type="danger"
-                  class="u-gov-btn"
+                  class="u-gov-btn is-danger-btn"
                   :class="{ 'is-detail': isDetail }"
                   :capability="dangerAction.capability"
                   disable-mode

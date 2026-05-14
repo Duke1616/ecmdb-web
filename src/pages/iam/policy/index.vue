@@ -4,7 +4,7 @@
     subtitle="集中化管理系统访问控制策略，支持自定义扩展与编排"
     :selection-count="selectedRows.length"
     :primary-action="{ capability: IAM_CAPABILITIES.Policy.Add, label: '创建策略' }"
-    :danger-action="{ capability: IAM_CAPABILITIES.Policy.BatchDelete, label: '批量注销' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.Policy.BatchDelete, label: '批量删除' }"
     @refresh="handleRefresh"
     @primary-action="handleCreate"
     @danger-action="handleBatchDelete"

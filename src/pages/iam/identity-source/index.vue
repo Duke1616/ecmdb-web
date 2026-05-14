@@ -9,7 +9,7 @@
     <!-- 治理列表 -->
     <DataTable v-bind="tableProps" :columns="tableColumns">
       <template #name="{ row }">
-        <AssetIdentityCell :title="row.name" :sub-title="row.id" centered />
+        <AssetIdentityCell :title="row.name" centered />
       </template>
 
       <template #type="{ row }">
