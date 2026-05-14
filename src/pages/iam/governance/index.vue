@@ -1,3 +1,43 @@
+<template>
+  <ProGovernanceLayout
+    title="治理工作台"
+    :subtitle="currentTenant ? `当前管理租户: ${currentTenant.name} (${currentTenant.code})` : '正在初始化治理环境...'"
+    :show-refresh="false"
+  >
+    <template #actions-suffix>
+      <div class="gov-status-badge">
+        <span class="pulse-dot" />
+        <el-icon class="badge-icon"><Monitor /></el-icon>
+        <span class="badge-text">治理模式已激活</span>
+      </div>
+    </template>
+
+    <div class="governance-body">
+      <!-- 治理内容 -->
+      <div class="governance-tabs-card">
+        <el-tabs v-model="activeTab" class="governance-raw-tabs">
+          <el-tab-pane label="成员管理" name="members" :disabled="!tabPermissions.members">
+            <TenantMemberTable v-bind="memberTableProps" />
+          </el-tab-pane>
+
+          <!-- 邀请链接 -->
+          <el-tab-pane label="邀请链接" name="invitation" :disabled="!tabPermissions.invitation">
+            <TenantInvitationList v-bind="invitationTableProps" @refresh="fetchLinks" />
+          </el-tab-pane>
+
+          <!-- 入驻申请 -->
+          <el-tab-pane label="入驻申请" name="requests" :disabled="!tabPermissions.requests">
+            <TenantJoinRequestList v-bind="requestTableProps" />
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </div>
+
+    <!-- 分派成员抽屉 -->
+    <UserSelectDialog v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
+  </ProGovernanceLayout>
+</template>
+
 <script setup lang="ts">
 import { ref, watch, computed } from "vue"
 import { useRouter, useRoute } from "vue-router"
@@ -8,8 +48,7 @@ import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // UI Components
-import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import TenantMemberTable from "../tenant/components/detail/TenantMemberTable.vue"
 import TenantInvitationList from "../tenant/components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "../tenant/components/detail/TenantJoinRequestList.vue"
@@ -23,7 +62,6 @@ const route = useRoute()
 const userStore = useUserStore()
 const { currentTenantId, tenants } = storeToRefs(userStore)
 
-const loading = ref(false)
 const activeTab = ref((route.query.tab as string) || "members")
 const assignVisible = ref(false)
 
@@ -81,97 +119,68 @@ const onAssignConfirm = async (users: User[]) => {
   const success = await handleBatchAssignMember(userIds)
   if (success) assignVisible.value = false
 }
+
+/**
+ * 成员管理表格属性打包
+ */
+const memberTableProps = computed(() => ({
+  selection: membersSelection.value,
+  loading: memberLoading.value,
+  data: members.value,
+  total: memberTotal.value,
+  currentPage: memberQuery.value.currentPage,
+  pageSize: memberQuery.value.pageSize,
+  formatTimestamp,
+  showAssign: false,
+  canAdd: hasPermission(IAM_CAPABILITIES.Tenant.Assign),
+  canUnbind: hasPermission(IAM_CAPABILITIES.Tenant.Unassign),
+  canBatchUnbind: hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign) && membersSelection.value.length > 0,
+  selectable: () => hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign),
+  onPageChange: handleMemberPageChange,
+  onSearch: handleMemberSearch,
+  onAdd: () => (assignVisible.value = true),
+  onUnbind: handleRemoveMember,
+  onBatchUnbind: handleBatchRemoveMember,
+  "onUpdate:selection": (val: any) => (membersSelection.value = val)
+}))
+
+/**
+ * 邀请链接表格属性打包
+ */
+const invitationTableProps = computed(() => ({
+  selection: linksSelection.value,
+  tenantId: currentTenantId.value,
+  data: links.value,
+  loading: linksLoading.value,
+  total: linksTotal.value,
+  currentPage: linksQuery.value.currentPage,
+  pageSize: linksQuery.value.pageSize,
+  canAdd: hasPermission(IAM_CAPABILITIES.Invitation.Add),
+  canRevoke: hasPermission(IAM_CAPABILITIES.Invitation.Revoke),
+  canBatchRevoke: hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke) && linksSelection.value.length > 0,
+  selectable: () => hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke),
+  onPageChange: handleLinksPageChange,
+  onSearch: handleLinksSearch,
+  onRevoke: handleRevokeInvitation,
+  onBatchRevoke: handleBatchRevokeInvitation,
+  "onUpdate:selection": (val: any) => (linksSelection.value = val)
+}))
+
+/**
+ * 入驻申请表格属性打包
+ */
+const requestTableProps = computed(() => ({
+  data: requests.value,
+  loading: requestsLoading.value,
+  total: requestsTotal.value,
+  currentPage: requestsQuery.value.currentPage,
+  pageSize: requestsQuery.value.pageSize,
+  canHandle: hasPermission(IAM_CAPABILITIES.Invitation.Handle),
+  onPageChange: handleRequestsPageChange,
+  onSearch: handleRequestsSearch,
+  onApprove: handleApproval
+}))
 </script>
-
-<template>
-  <PageContainer v-loading="loading" class="tenant-detail-page">
-    <ManagerHeader
-      title="治理工作台"
-      :subtitle="
-        currentTenant ? `当前管理租户: ${currentTenant.name} (${currentTenant.code})` : '正在初始化治理环境...'
-      "
-    >
-      <template #actions>
-        <div class="header-action-stack">
-          <div class="gov-status-badge">
-            <span class="pulse-dot" />
-            <el-icon class="badge-icon"><Monitor /></el-icon>
-            <span class="badge-text">治理模式已激活</span>
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
-
-    <div class="governance-body">
-      <!-- 治理内容 -->
-      <div class="governance-tabs-card">
-        <el-tabs v-model="activeTab" class="governance-raw-tabs">
-          <el-tab-pane label="成员管理" name="members" :disabled="!tabPermissions.members">
-            <TenantMemberTable
-              v-model:selection="membersSelection"
-              :loading="memberLoading"
-              :data="members"
-              :total="memberTotal"
-              :current-page="memberQuery.currentPage"
-              :pageSize="memberQuery.pageSize"
-              :format-timestamp="formatTimestamp"
-              :show-assign="false"
-              :can-add="hasPermission(IAM_CAPABILITIES.Tenant.Assign)"
-              :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
-              :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign) && membersSelection.length > 0"
-              :selectable="() => hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign)"
-              @page-change="handleMemberPageChange"
-              @search="handleMemberSearch"
-              @add="assignVisible = true"
-              @unbind="handleRemoveMember"
-              @batch-unbind="handleBatchRemoveMember"
-            />
-          </el-tab-pane>
-
-          <!-- 邀请链接 -->
-          <el-tab-pane label="邀请链接" name="invitation" :disabled="!tabPermissions.invitation">
-            <TenantInvitationList
-              v-model:selection="linksSelection"
-              :tenant-id="currentTenantId"
-              :data="links"
-              :loading="linksLoading"
-              :total="linksTotal"
-              :current-page="linksQuery.currentPage"
-              :pageSize="linksQuery.pageSize"
-              :can-add="hasPermission(IAM_CAPABILITIES.Invitation.Add)"
-              :can-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke)"
-              :can-batch-revoke="hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke) && linksSelection.length > 0"
-              :selectable="() => hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke)"
-              @page-change="handleLinksPageChange"
-              @search="handleLinksSearch"
-              @revoke="handleRevokeInvitation"
-              @batch-revoke="handleBatchRevokeInvitation"
-              @refresh="fetchLinks"
-            />
-          </el-tab-pane>
-
-          <!-- 入驻申请 -->
-          <el-tab-pane label="入驻申请" name="requests" :disabled="!tabPermissions.requests">
-            <TenantJoinRequestList
-              :data="requests"
-              :loading="requestsLoading"
-              :total="requestsTotal"
-              :current-page="requestsQuery.currentPage"
-              :pageSize="requestsQuery.pageSize"
-              :can-handle="hasPermission(IAM_CAPABILITIES.Invitation.Handle)"
-              @page-change="handleRequestsPageChange"
-              @search="handleRequestsSearch"
-              @approve="handleApproval"
-            />
-          </el-tab-pane>
-        </el-tabs>
-      </div>
-    </div>
-
-    <!-- 分派成员抽屉 -->
-    <UserSelectDialog v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
-  </PageContainer>
-</template>
 
 <style lang="scss" scoped>
 .tenant-detail-page {

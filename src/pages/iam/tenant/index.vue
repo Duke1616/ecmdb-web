@@ -10,33 +10,19 @@
     @add="handleCreate"
   >
     <!-- 治理列表 -->
-    <DataTable
-      v-loading="loading"
-      :data="tenants"
-      :columns="tableColumns"
-      :show-selection="true"
-      :show-pagination="true"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-      <!-- 租户核心资产 -->
+    <DataTable v-bind="tableProps" :columns="tableColumns">
+      <!-- 租户核心资产: 使用统一的资产单元组件 -->
       <template #tenant_info="{ row }">
-        <div class="dual-line-info">
-          <el-link
-            v-if="hasPermission(IAM_CAPABILITIES.Tenant.Detail)"
-            type="primary"
-            :underline="false"
-            class="main-link"
-            @click="handleViewDetail(row)"
-          >
-            {{ row.name }}
-          </el-link>
-          <span v-else class="main-title-static">{{ row.name }}</span>
-          <div class="sub-detail mono">{{ row.code }}</div>
-        </div>
+        <AssetIdentityCell
+          :title="row.name"
+          :sub-title="row.code"
+          :link-to="
+            hasPermission(IAM_CAPABILITIES.Tenant.Detail)
+              ? { name: 'TenantDetail', query: { code: row.code } }
+              : undefined
+          "
+          centered
+        />
       </template>
 
       <!-- 身份域名 -->
@@ -76,21 +62,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { ref, computed } from "vue"
 import { OfficeBuilding, Edit, Delete } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import TenantForm from "./components/TenantForm.vue"
 import { useTenantList } from "./composables/useTenantList"
-import { useRouter } from "vue-router"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import type { Column } from "@@/components/DataTable/types"
 import type { Tenant } from "@/api/iam/tenant/type"
 
-const router = useRouter()
 const { hasPermission } = usePermission()
 
 const {
@@ -111,6 +96,21 @@ const {
   handleCurrentChange
 } = useTenantList()
 
+/**
+ * 打包表格通用属性，实现模板瘦身
+ */
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: tenants.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showPagination: true,
+  showSelection: true,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
+
 const tenantFormRef = ref<InstanceType<typeof TenantForm>>()
 const submitting = ref(false)
 
@@ -122,18 +122,10 @@ const tenantOperateItems = [
   { name: "删除", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.Tenant.Delete }
 ]
 
-const handleViewDetail = (row: Tenant) => {
-  router.push({
-    name: "TenantDetail",
-    query: { id: row.id }
-  })
-}
-
 /**
  * 统一执行操作分发
  */
 const handleOperate = (row: Tenant, code: string) => {
-  if (code === "view") handleViewDetail(row)
   if (code === "edit") handleEdit(row)
   if (code === "delete") handleDelete(row)
 }

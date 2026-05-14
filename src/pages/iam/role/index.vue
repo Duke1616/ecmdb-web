@@ -13,37 +13,17 @@
     @batchDelete="handleBatchDelete"
   >
     <!-- 治理列表 -->
-    <DataTable
-      ref="tableRef"
-      v-loading="loading"
-      :data="roles"
-      @selection-change="handleSelectionChange"
-      :columns="tableColumns"
-      :show-selection="true"
-      :selectable="() => hasPermission(IAM_CAPABILITIES.Role.BatchDelete)"
-      :table-props="!hasPermission(IAM_CAPABILITIES.Role.BatchDelete) ? { class: 'selection-disabled' } : {}"
-      :show-pagination="true"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-      <!-- 角色核心资产: Dual-Line 风格 -->
+    <DataTable ref="tableRef" v-bind="tableProps" :columns="tableColumns">
+      <!-- 角色核心资产: 使用统一的资产单元组件 -->
       <template #role_info="{ row }">
-        <div class="dual-line-info">
-          <el-link
-            v-if="hasPermission(IAM_CAPABILITIES.Role.Detail)"
-            type="primary"
-            :underline="false"
-            class="main-link"
-            @click="handleViewDetail(row)"
-          >
-            {{ row.name }}
-          </el-link>
-          <span v-else class="main-title-static">{{ row.name }}</span>
-          <div class="sub-detail mono">{{ row.code }}</div>
-        </div>
+        <AssetIdentityCell
+          :title="row.name"
+          :sub-title="row.code"
+          :link-to="
+            hasPermission(IAM_CAPABILITIES.Role.Detail) ? { name: 'RoleDetail', query: { code: row.code } } : undefined
+          "
+          centered
+        />
       </template>
 
       <!-- 角色来源/类型: 极简指示器 -->
@@ -87,11 +67,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import { useRouter } from "vue-router"
+import { ref, computed } from "vue"
 import { Lock, Edit, Delete } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import RoleForm from "./components/RoleForm.vue"
@@ -103,7 +83,6 @@ import type { Role } from "@/api/iam/role/type"
 
 const { hasPermission } = usePermission()
 
-const router = useRouter()
 const {
   roles,
   total,
@@ -133,15 +112,22 @@ const handleSelectionChange = (val: Role[]) => {
 }
 
 /**
- * 角色跳转详情
+ * 打包表格通用属性，实现模板瘦身
  */
-const handleViewDetail = (row: Role) => {
-  if (!hasPermission(IAM_CAPABILITIES.Role.Detail)) return
-  router.push({
-    name: "RoleDetail",
-    query: { code: row.code }
-  })
-}
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: roles.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showPagination: true,
+  showSelection: true,
+  selectable: () => hasPermission(IAM_CAPABILITIES.Role.BatchDelete),
+  tableProps: !hasPermission(IAM_CAPABILITIES.Role.BatchDelete) ? { class: "selection-disabled" } : {},
+  onSelectionChange: handleSelectionChange,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
 
 /**
  * 角色操作配置项

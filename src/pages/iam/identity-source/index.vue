@@ -7,9 +7,9 @@
     @add="handleCreate"
   >
     <!-- 治理列表 -->
-    <DataTable v-loading="loading" :data="sources" :columns="tableColumns">
+    <DataTable v-bind="tableProps" :columns="tableColumns">
       <template #name="{ row }">
-        <span class="main-name-text">{{ row.name }}</span>
+        <AssetIdentityCell :title="row.name" :sub-title="row.id" centered />
       </template>
 
       <template #type="{ row }">
@@ -72,10 +72,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, markRaw } from "vue"
+import { ref, computed, markRaw } from "vue"
 import { Share, Edit, VideoPause, VideoPlay, Delete, Refresh } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import IdentitySourceForm from "./components/IdentitySourceForm.vue"
@@ -108,6 +109,16 @@ const {
   handleSyncUsers,
   handleFormSuccess
 } = useIdentitySource()
+
+/**
+ * 打包表格通用属性，实现模板瘦身
+ */
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: sources.value,
+  showPagination: false,
+  showSelection: false
+}))
 
 const formRef = ref<InstanceType<typeof IdentitySourceForm>>()
 const submitting = ref(false)

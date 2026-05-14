@@ -35,34 +35,19 @@
     </template>
 
     <!-- 数据列表: 遵循排班管理的高级质感 -->
-    <DataTable
-      v-loading="loading"
-      :data="policies"
-      :columns="tableColumns"
-      :show-selection="true"
-      :selectable="(row) => row.type !== 1 && hasPermission(IAM_CAPABILITIES.Policy.BatchDelete)"
-      :table-props="!hasPermission(IAM_CAPABILITIES.Policy.BatchDelete) ? { class: 'selection-disabled' } : {}"
-      :show-pagination="true"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      action-column-width="160"
-      @selection-change="handleSelectionChange"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-      <!-- 策略名称 -->
+    <DataTable v-bind="tableProps" :columns="tableColumns">
+      <!-- 策略名称: 使用统一的资产单元组件 -->
       <template #name="{ row }">
-        <el-link
-          v-if="hasPermission(IAM_CAPABILITIES.Policy.Detail)"
-          type="primary"
-          :underline="false"
-          class="policy-name"
-          @click="handleViewDetail(row)"
-        >
-          {{ row.name }}
-        </el-link>
-        <span v-else class="policy-name-static">{{ row.name }}</span>
+        <AssetIdentityCell
+          :title="row.name"
+          :sub-title="row.code"
+          :link-to="
+            hasPermission(IAM_CAPABILITIES.Policy.Detail)
+              ? { name: 'PolicyDetail', query: { code: row.code } }
+              : undefined
+          "
+          centered
+        />
       </template>
 
       <!-- 类型: 语义化 Dot 状态 -->
@@ -113,19 +98,18 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { Search, Edit, Delete, Document } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import type { Column } from "@@/components/DataTable/types"
 import type { Policy } from "@/api/iam/policy/type"
 import { FormDialog } from "@/common/components/Dialogs"
-import { useRouter } from "vue-router"
 import { usePolicyList } from "./composables/usePolicyList"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
-
-const router = useRouter()
 
 const {
   policies,
@@ -148,18 +132,26 @@ const {
   handleCurrentChange
 } = usePolicyList()
 
-const { hasPermission } = usePermission()
-
 /**
- * 跳转到策略治理详情页
+ * 打包表格通用属性，实现模板瘦身
  */
-const handleViewDetail = (row: Policy) => {
-  if (!hasPermission(IAM_CAPABILITIES.Policy.Detail)) return
-  router.push({
-    name: "PolicyDetail",
-    query: { code: row.code }
-  })
-}
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: policies.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showPagination: true,
+  showSelection: true,
+  actionColumnWidth: 160,
+  selectable: (row: Policy) => row.type !== 1 && hasPermission(IAM_CAPABILITIES.Policy.BatchDelete),
+  tableProps: !hasPermission(IAM_CAPABILITIES.Policy.BatchDelete) ? { class: "selection-disabled" } : {},
+  onSelectionChange: handleSelectionChange,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
+
+const { hasPermission } = usePermission()
 
 const TYPE_ALL = undefined as any
 

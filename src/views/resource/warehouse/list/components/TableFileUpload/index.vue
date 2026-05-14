@@ -217,7 +217,7 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
       width: 100%;
     }
 
-    ::v-deep .el-upload-list__item {
+    :deep(.el-upload-list__item) {
       transition: none !important;
     }
   }
@@ -238,7 +238,7 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
     width: 100%;
   }
 
-  ::v-deep .el-upload-list__item {
+  :deep(.el-upload-list__item) {
     transition: none !important;
   }
 }

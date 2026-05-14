@@ -54,22 +54,7 @@
       </div>
     </template>
 
-    <DataTable
-      ref="tableRef"
-      v-loading="loading"
-      :data="authorizations"
-      :columns="tableColumns"
-      :show-selection="true"
-      :selectable="isSelectable"
-      :table-props="!hasPermission(IAM_CAPABILITIES.Policy.BatchDetach) ? { class: 'selection-disabled' } : {}"
-      :show-pagination="true"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-      @selection-change="handleSelectionChange"
-    >
+    <DataTable ref="tableRef" v-bind="tableProps" :columns="tableColumns">
       <!-- 授权主体 -->
       <template #subject="{ row }">
         <AssetIdentityCell
@@ -139,6 +124,24 @@ const {
   handleRevoke,
   handleBatchRevoke
 } = useAuthorizeList()
+
+/**
+ * 打包表格通用属性，实现模板瘦身
+ */
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: authorizations.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showPagination: true,
+  showSelection: true,
+  selectable: isSelectable,
+  tableProps: !hasPermission(IAM_CAPABILITIES.Policy.BatchDetach) ? { class: "selection-disabled" } : {},
+  onSelectionChange: handleSelectionChange,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
 
 const { hasPermission } = usePermission()
 

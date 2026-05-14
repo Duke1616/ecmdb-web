@@ -20,10 +20,13 @@ withDefaults(
     batchDeleteConfig?: { capability?: string | string[]; label?: string; icon?: any }
     /** 动作切换模式：true=选中数据时隐藏新增按钮，false=并排显示 */
     swapActions?: boolean
+    /** 是否显示刷新按钮 */
+    showRefresh?: boolean
   }>(),
   {
     selectionCount: 0,
-    swapActions: true
+    swapActions: true,
+    showRefresh: true
   }
 )
 
@@ -121,7 +124,7 @@ const handleSearch = () => {
             <!-- 优化 3: 增加后置插槽 (例如放"导出"按钮) -->
             <slot name="actions-suffix" />
 
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="emit('refresh')" />
+            <el-button v-if="showRefresh" :icon="RefreshRight" class="eiam-refresh-btn" @click="emit('refresh')" />
           </div>
         </div>
       </template>

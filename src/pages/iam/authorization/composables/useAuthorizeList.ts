@@ -1,3 +1,4 @@
+import { computed } from "vue"
 import { listAuthorizationsApi } from "@/api/iam/permission"
 import { type Authorization, type AuthorizationQueryReq } from "@/api/iam/permission/type"
 import { batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
@@ -79,8 +80,8 @@ export function useAuthorizeList() {
     authorizations,
     total,
     query,
-    currentPage: pagination.currentPage,
-    pageSize: pagination.pageSize,
+    currentPage: computed(() => pagination.currentPage),
+    pageSize: computed(() => pagination.pageSize),
     handleRefresh,
     handleSizeChange,
     handleCurrentChange,

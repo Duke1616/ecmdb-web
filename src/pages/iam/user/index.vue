@@ -13,37 +13,17 @@
     @batchDelete="handleBatchDelete"
   >
     <!-- 治理列表 -->
-    <DataTable
-      ref="tableRef"
-      v-loading="loading"
-      :data="users"
-      @selection-change="handleSelectionChange"
-      :columns="tableColumns"
-      :show-selection="true"
-      :selectable="() => hasPermission(IAM_CAPABILITIES.User.BatchDelete)"
-      :table-props="!hasPermission(IAM_CAPABILITIES.User.BatchDelete) ? { class: 'selection-disabled' } : {}"
-      :show-pagination="true"
-      :total="total"
-      :page-size="pageSize"
-      :current-page="currentPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-      <!-- 用户身份: 采用 Governance 风格的 Dual-Line -->
+    <DataTable ref="tableRef" v-bind="tableProps" :columns="tableColumns">
+      <!-- 用户身份: 使用统一的资产单元组件 -->
       <template #user="{ row }">
-        <div class="dual-line-info">
-          <el-link
-            v-if="hasPermission(IAM_CAPABILITIES.User.Detail)"
-            type="primary"
-            :underline="false"
-            class="main-link"
-            @click="handleView(row)"
-          >
-            {{ row.nickname || row.username }}
-          </el-link>
-          <span v-else class="main-title-static">{{ row.nickname || row.username }}</span>
-          <div class="sub-detail mono">{{ row.username }}</div>
-        </div>
+        <AssetIdentityCell
+          :title="row.nickname || row.username"
+          :sub-title="row.username"
+          :link-to="
+            hasPermission(IAM_CAPABILITIES.User.Detail) ? { name: 'UserDetail', query: { id: row.id } } : undefined
+          "
+          centered
+        />
       </template>
 
       <!-- 账号状态 -->
@@ -119,10 +99,10 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { useRouter } from "vue-router"
 import { User as UserIcon, Edit, Delete } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import UserForm from "./components/UserForm.vue"
@@ -134,7 +114,6 @@ import type { User } from "@/api/iam/user/type"
 
 const { hasPermission } = usePermission()
 
-const router = useRouter()
 const {
   users,
   total,
@@ -155,17 +134,6 @@ const {
   handleCurrentChange
 } = useUserList()
 
-/**
- * 跳转至详情页
- */
-const handleView = (row: User) => {
-  if (!hasPermission(IAM_CAPABILITIES.User.Detail)) return
-  router.push({
-    name: "UserDetail",
-    query: { id: row.id }
-  })
-}
-
 const userFormRef = ref<InstanceType<typeof UserForm>>()
 const tableRef = ref<InstanceType<typeof DataTable>>()
 const submitting = ref(false)
@@ -173,6 +141,24 @@ const submitting = ref(false)
 const handleSelectionChange = (val: User[]) => {
   selectedRows.value = val
 }
+
+/**
+ * 打包表格通用属性，实现模板瘦身
+ */
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: users.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showPagination: true,
+  showSelection: true,
+  selectable: () => hasPermission(IAM_CAPABILITIES.User.BatchDelete),
+  tableProps: !hasPermission(IAM_CAPABILITIES.User.BatchDelete) ? { class: "selection-disabled" } : {},
+  onSelectionChange: handleSelectionChange,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
 
 /**
  * 用户操作配置项

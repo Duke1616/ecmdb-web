@@ -74,10 +74,10 @@ const onResourceTextUpdate = (text: string) => {
     background: #fafafa;
     border-bottom: 1px solid #f0f0f0;
   }
-  ::v-deep(.panel-input-area) {
+  :deep(.panel-input-area) {
     padding: 16px;
   }
-  ::v-deep(.panel-desc-area) {
+  :deep(.panel-desc-area) {
     padding: 16px;
     font-size: 12px;
     color: #888;

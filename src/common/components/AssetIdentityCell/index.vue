@@ -51,6 +51,8 @@ $governance-blue: #3b82f6;
   min-width: 0;
   width: 100%;
 
+  cursor: default;
+
   &.is-centered {
     justify-content: center;
     .meta-info {
@@ -58,8 +60,6 @@ $governance-blue: #3b82f6;
       text-align: center;
     }
   }
-
-  cursor: default;
   &.is-link {
     cursor: pointer;
     pointer-events: auto;
