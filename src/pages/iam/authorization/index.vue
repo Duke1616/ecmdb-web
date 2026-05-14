@@ -1,79 +1,58 @@
 <template>
-  <PageContainer>
-    <ManagerHeader title="授权治理" subtitle="身份主体与权限策略的原子级关联治理" @refresh="handleRefresh">
-      <template #actions>
-        <div class="eiam-governance-bar">
-          <!-- 搜索治理区 -->
-          <div class="search-command-inner">
-            <el-input
-              v-model="query.keyword"
-              placeholder="全域搜索授权条目..."
-              class="command-input"
-              clearable
-              @keyup.enter="handleRefresh"
-            >
-              <template #prefix>
-                <el-icon class="search-icon"><Search /></el-icon>
-              </template>
-            </el-input>
+  <ProGovernanceLayout
+    title="授权治理"
+    subtitle="身份主体与权限策略的原子级关联治理"
+    :selection-count="selectedRows.length"
+    :add-config="{ capability: IAM_CAPABILITIES.Policy.BatchAttach, label: '新增授权' }"
+    :batch-delete-config="{ capability: IAM_CAPABILITIES.Policy.BatchDetach, label: '批量解除' }"
+    @refresh="handleRefresh"
+    @add="handleCreate"
+    @batchDelete="handleBatchRevoke(selectedRows)"
+  >
+    <template #search>
+      <div class="search-command-inner">
+        <el-input
+          v-model="query.keyword"
+          placeholder="全域搜索授权条目..."
+          class="command-input"
+          clearable
+          @keyup.enter="handleRefresh"
+        >
+          <template #prefix>
+            <el-icon class="search-icon"><Search /></el-icon>
+          </template>
+        </el-input>
 
-            <div class="divider" />
+        <div class="divider" />
 
-            <!-- 主体过滤 -->
-            <el-select
-              v-model="query.sub_type"
-              placeholder="主体类型"
-              clearable
-              class="command-select"
-              @change="handleRefresh"
-            >
-              <el-option label="所有主体" value="" />
-              <el-option label="IAM 用户" :value="AuthorizationSubType.USER" />
-              <el-option label="IAM 角色" :value="AuthorizationSubType.ROLE" />
-            </el-select>
+        <!-- 主体过滤 -->
+        <el-select
+          v-model="query.sub_type"
+          placeholder="主体类型"
+          clearable
+          class="command-select"
+          @change="handleRefresh"
+        >
+          <el-option label="所有主体" value="" />
+          <el-option label="IAM 用户" :value="AuthorizationSubType.USER" />
+          <el-option label="IAM 角色" :value="AuthorizationSubType.ROLE" />
+        </el-select>
 
-            <!-- 对象过滤 -->
-            <el-select
-              v-model="query.obj_type"
-              placeholder="对象类型"
-              clearable
-              class="command-select"
-              @change="handleRefresh"
-            >
-              <el-option label="所有对象" value="" />
-              <el-option label="所有角色" :value="AuthorizationObjType.ROLE" />
-              <el-option label="系统策略" :value="AuthorizationObjType.SYSTEM_POLICY" />
-              <el-option label="自定义策略" :value="AuthorizationObjType.CUSTOM_POLICY" />
-            </el-select>
-          </div>
-
-          <!-- 主动作区 -->
-          <div class="action-group">
-            <template v-if="selectedRows.length > 0">
-              <el-button
-                class="u-gov-btn is-danger is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
-                @click="handleBatchRevoke(selectedRows)"
-              >
-                <el-icon><Delete /></el-icon>
-                <span>批量解除 ({{ selectedRows.length }})</span>
-              </el-button>
-            </template>
-            <template v-else>
-              <el-button
-                class="u-gov-btn is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
-                @click="handleCreate"
-              >
-                <el-icon><Plus /></el-icon>
-                <span>新增授权</span>
-              </el-button>
-            </template>
-            <el-button :icon="RefreshRight" class="eiam-icon-outline" circle @click="handleRefresh" />
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
+        <!-- 对象过滤 -->
+        <el-select
+          v-model="query.obj_type"
+          placeholder="对象类型"
+          clearable
+          class="command-select"
+          @change="handleRefresh"
+        >
+          <el-option label="所有对象" value="" />
+          <el-option label="所有角色" :value="AuthorizationObjType.ROLE" />
+          <el-option label="系统策略" :value="AuthorizationObjType.SYSTEM_POLICY" />
+          <el-option label="自定义策略" :value="AuthorizationObjType.CUSTOM_POLICY" />
+        </el-select>
+      </div>
+    </template>
 
     <DataTable
       ref="tableRef"
@@ -129,14 +108,13 @@
 
     <!-- 授权向导侧边栏 -->
     <AuthorizeDrawer v-model="showAuthorizeDrawer" @success="handleRefresh" />
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { Search, RefreshRight, Plus, Delete } from "@element-plus/icons-vue"
-import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import { Search, Delete } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"

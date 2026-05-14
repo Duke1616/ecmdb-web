@@ -1,24 +1,11 @@
 <template>
-  <PageContainer>
-    <!-- 头部治理区 -->
-    <ManagerHeader
-      title="认证管理"
-      subtitle="多租户身份治理中心，集成 Windows AD、飞书 OIDC 等企业级身份源"
-      @refresh="handleRefresh"
-    >
-      <template #actions>
-        <div class="eiam-governance-bar">
-          <div class="action-group">
-            <el-button class="u-gov-btn is-large" @click="handleCreate">
-              <el-icon><Plus /></el-icon>
-              <span>集成身份源</span>
-            </el-button>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="认证管理"
+    subtitle="多租户身份治理中心，集成 Windows AD、飞书 OIDC 等企业级身份源"
+    :add-config="{ label: '集成身份源' }"
+    @refresh="handleRefresh"
+    @add="handleCreate"
+  >
     <!-- 治理列表 -->
     <DataTable v-loading="loading" :data="sources" :columns="tableColumns">
       <template #name="{ row }">
@@ -81,14 +68,13 @@
 
     <!-- LDAP 同步弹窗 -->
     <LdapSyncDialog v-model="syncVisible" />
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, markRaw } from "vue"
-import { Plus, RefreshRight, Share, Edit, VideoPause, VideoPlay, Delete, Refresh } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { Share, Edit, VideoPause, VideoPlay, Delete, Refresh } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"

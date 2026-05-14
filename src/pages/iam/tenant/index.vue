@@ -1,41 +1,14 @@
 <template>
-  <PageContainer>
-    <!-- 头部治理区 -->
-    <ManagerHeader
-      title="租户治理"
-      subtitle="多租户架构核心治理，支持多维度的租户实体管理与维护"
-      @refresh="handleRefresh"
-    >
-      <template #actions>
-        <div class="eiam-governance-bar">
-          <!-- 搜索治理 -->
-          <div class="search-command-inner">
-            <el-icon class="search-icon"><Search /></el-icon>
-            <el-input
-              v-model="query.keyword"
-              placeholder="搜索租户名称或空间编码..."
-              class="command-input"
-              clearable
-              @keyup.enter="handleRefresh"
-            />
-          </div>
-
-          <!-- 动作组 -->
-          <div class="action-group">
-            <el-button
-              class="u-gov-btn is-large"
-              :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Add)"
-              @click="handleCreate"
-            >
-              <el-icon><Plus /></el-icon>
-              <span>新增租户</span>
-            </el-button>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="租户治理"
+    subtitle="多租户架构核心治理，支持多维度的租户实体管理与维护"
+    search-placeholder="搜索租户名称或空间编码..."
+    v-model:keyword="query.keyword"
+    :add-config="{ capability: IAM_CAPABILITIES.Tenant.Add, label: '新增租户' }"
+    @search="handleRefresh"
+    @refresh="handleRefresh"
+    @add="handleCreate"
+  >
     <!-- 治理列表 -->
     <DataTable
       v-loading="loading"
@@ -99,14 +72,13 @@
     >
       <TenantForm ref="tenantFormRef" :id="currentEditId!" :is-edit="!!currentEditId" @success="handleFormSuccess" />
     </FormDialog>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Search, Plus, RefreshRight, OfficeBuilding, Edit, Delete } from "@element-plus/icons-vue"
-import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import { OfficeBuilding, Edit, Delete } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"

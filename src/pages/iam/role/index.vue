@@ -1,53 +1,17 @@
 <template>
-  <PageContainer>
-    <!-- 头部治理区 -->
-    <ManagerHeader
-      title="角色治理"
-      subtitle="系统权限体系的核心载体，支持自定义与系统预设角色治理"
-      @refresh="handleRefresh"
-    >
-      <template #actions>
-        <div class="eiam-governance-bar">
-          <!-- 搜索治理 -->
-          <div class="search-command-inner">
-            <el-icon class="search-icon"><Search /></el-icon>
-            <el-input
-              v-model="query.keyword"
-              placeholder="搜索角色名称或标识码..."
-              class="command-input"
-              clearable
-              @keyup.enter="handleRefresh"
-            />
-          </div>
-
-          <!-- 动作组 -->
-          <div class="action-group">
-            <template v-if="selectedRows.length > 0">
-              <el-button
-                class="u-gov-btn is-danger is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.Role.BatchDelete)"
-                @click="handleBatchDelete"
-              >
-                <el-icon><Delete /></el-icon>
-                <span>批量注销 ({{ selectedRows.length }})</span>
-              </el-button>
-            </template>
-            <template v-else>
-              <el-button
-                class="u-gov-btn is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.Role.Add)"
-                @click="handleCreate"
-              >
-                <el-icon><Plus /></el-icon>
-                <span>初始化角色</span>
-              </el-button>
-            </template>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="角色治理"
+    subtitle="系统权限体系的核心载体，支持自定义与系统预设角色治理"
+    search-placeholder="搜索角色名称或标识码..."
+    v-model:keyword="query.keyword"
+    :selection-count="selectedRows.length"
+    :add-config="{ capability: IAM_CAPABILITIES.Role.Add, label: '初始化角色' }"
+    :batch-delete-config="{ capability: IAM_CAPABILITIES.Role.BatchDelete, label: '批量注销' }"
+    @search="handleRefresh"
+    @refresh="handleRefresh"
+    @add="handleCreate"
+    @batchDelete="handleBatchDelete"
+  >
     <!-- 治理列表 -->
     <DataTable
       ref="tableRef"
@@ -119,15 +83,14 @@
         @success="handleFormSuccess"
       />
     </FormDialog>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref } from "vue"
 import { useRouter } from "vue-router"
-import { Search, Plus, RefreshRight, Lock, Edit, Delete } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { Lock, Edit, Delete } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"

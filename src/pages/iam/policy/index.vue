@@ -1,70 +1,38 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域: 引入高级筛选 bar -->
-    <ManagerHeader
-      title="策略管理"
-      subtitle="集中化管理系统访问控制策略，支持自定义扩展与编排"
-      @refresh="handleRefresh"
-    >
-      <template #actions>
-        <div class="eiam-governance-bar">
-          <!-- 1. 搜索治理区 -->
-          <div class="search-command-inner">
-            <el-input
-              v-model="query.keyword"
-              placeholder="搜索策略名称或识别码..."
-              class="command-input"
-              clearable
-              @keyup.enter="handleRefresh"
-            >
-              <template #prefix>
-                <el-icon class="search-icon"><Search /></el-icon>
-              </template>
-            </el-input>
+  <ProGovernanceLayout
+    title="策略管理"
+    subtitle="集中化管理系统访问控制策略，支持自定义扩展与编排"
+    :selection-count="selectedRows.length"
+    :add-config="{ capability: IAM_CAPABILITIES.Policy.Add, label: '创建策略' }"
+    :batch-delete-config="{ capability: IAM_CAPABILITIES.Policy.BatchDelete, label: '批量注销' }"
+    @refresh="handleRefresh"
+    @add="handleCreate"
+    @batchDelete="handleBatchDelete"
+  >
+    <template #search>
+      <div class="search-command-inner">
+        <el-input
+          v-model="query.keyword"
+          placeholder="搜索策略名称或识别码..."
+          class="command-input"
+          clearable
+          @keyup.enter="handleRefresh"
+        >
+          <template #prefix>
+            <el-icon class="search-icon"><Search /></el-icon>
+          </template>
+        </el-input>
 
-            <div class="divider" />
+        <div class="divider" />
 
-            <!-- 类型过滤 -->
-            <el-select
-              v-model="query.type"
-              placeholder="策略类型"
-              clearable
-              class="command-select"
-              @change="handleRefresh"
-            >
-              <el-option label="所有类型" :value="TYPE_ALL" />
-              <el-option label="系统预设" :value="1" />
-              <el-option label="自定义" :value="2" />
-            </el-select>
-          </div>
-
-          <!-- 2. 操作区 -->
-          <div class="action-group">
-            <template v-if="selectedRows.length > 0">
-              <el-button
-                class="u-gov-btn is-danger is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchDelete)"
-                @click="handleBatchDelete"
-              >
-                <el-icon><Delete /></el-icon>
-                <span>批量注销 ({{ selectedRows.length }})</span>
-              </el-button>
-            </template>
-            <template v-else>
-              <el-button
-                class="u-gov-btn is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
-                @click="handleCreate"
-              >
-                <el-icon><Plus /></el-icon>
-                <span>创建策略</span>
-              </el-button>
-            </template>
-            <el-button :icon="RefreshRight" class="eiam-icon-outline" @click="handleRefresh" />
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
+        <!-- 类型过滤 -->
+        <el-select v-model="query.type" placeholder="策略类型" clearable class="command-select" @change="handleRefresh">
+          <el-option label="所有类型" :value="TYPE_ALL" />
+          <el-option label="系统预设" :value="1" />
+          <el-option label="自定义" :value="2" />
+        </el-select>
+      </div>
+    </template>
 
     <!-- 数据列表: 遵循排班管理的高级质感 -->
     <DataTable
@@ -141,13 +109,12 @@
         <pre><code class="language-json">{{ JSON.stringify(selectedPolicy, null, 2) }}</code></pre>
       </div>
     </FormDialog>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { Search, Plus, RefreshRight, Edit, Delete, Document } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { Search, Edit, Delete, Document } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import type { Column } from "@@/components/DataTable/types"

@@ -1,49 +1,17 @@
 <template>
-  <PageContainer>
-    <!-- 头部治理区 -->
-    <ManagerHeader title="用户治理" subtitle="全域身份主体的生命周期管理与属性维度治理" @refresh="handleRefresh">
-      <template #actions>
-        <div class="eiam-governance-bar">
-          <!-- 组合搜索治理 -->
-          <div class="search-command-inner">
-            <el-icon class="search-icon"><Search /></el-icon>
-            <el-input
-              v-model="query.keyword"
-              placeholder="搜索用户 ID、昵称或邮箱..."
-              class="command-input"
-              clearable
-              @keyup.enter="handleRefresh"
-            />
-          </div>
-
-          <!-- 动作组 -->
-          <div class="action-group">
-            <template v-if="selectedRows.length > 0">
-              <el-button
-                class="u-gov-btn is-danger is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.User.BatchDelete)"
-                @click="handleBatchDelete"
-              >
-                <el-icon><Delete /></el-icon>
-                <span>批量注销 ({{ selectedRows.length }})</span>
-              </el-button>
-            </template>
-            <template v-else>
-              <el-button
-                class="u-gov-btn is-large"
-                :disabled="!hasPermission(IAM_CAPABILITIES.User.Add)"
-                @click="handleCreate"
-              >
-                <el-icon><Plus /></el-icon>
-                <span>新增主体</span>
-              </el-button>
-            </template>
-            <el-button :icon="RefreshRight" class="eiam-refresh-btn" @click="handleRefresh" />
-          </div>
-        </div>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="用户治理"
+    subtitle="全域身份主体的生命周期管理与属性维度治理"
+    search-placeholder="搜索用户 ID、昵称或邮箱..."
+    v-model:keyword="query.keyword"
+    :selection-count="selectedRows.length"
+    :add-config="{ capability: IAM_CAPABILITIES.User.Add, label: '新增主体' }"
+    :batch-delete-config="{ capability: IAM_CAPABILITIES.User.BatchDelete, label: '批量注销' }"
+    @search="handleRefresh"
+    @refresh="handleRefresh"
+    @add="handleCreate"
+    @batchDelete="handleBatchDelete"
+  >
     <!-- 治理列表 -->
     <DataTable
       ref="tableRef"
@@ -146,15 +114,14 @@
         @success="handleFormSuccess"
       />
     </FormDialog>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { Search, Plus, RefreshRight, User as UserIcon, Edit, Delete } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { User as UserIcon, Edit, Delete } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
