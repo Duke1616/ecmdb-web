@@ -248,3 +248,42 @@
   justify-content: center;
   align-items: center;
 }
+
+/* 7. 核心语义化状态样式*/
+.minimal-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .text {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  &.primary {
+    .dot { background: #3b82f6; }
+    .text { color: #3b82f6; }
+  }
+  &.success {
+    .dot { background: #10b981; }
+    .text { color: #10b981; }
+  }
+  &.warning {
+    .dot { background: #f59e0b; }
+    .text { color: #f59e0b; }
+  }
+  &.danger {
+    .dot { background: #ef4444; }
+    .text { color: #ef4444; }
+  }
+  &.info {
+    .dot { background: #94a3b8; }
+    .text { color: #94a3b8; }
+  }
+}

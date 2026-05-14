@@ -5,12 +5,12 @@
     search-placeholder="搜索角色名称或标识码..."
     v-model:keyword="query.keyword"
     :selection-count="selectedRows.length"
-    :add-config="{ capability: IAM_CAPABILITIES.Role.Add, label: '初始化角色' }"
-    :batch-delete-config="{ capability: IAM_CAPABILITIES.Role.BatchDelete, label: '批量注销' }"
+    :primary-action="{ capability: IAM_CAPABILITIES.Role.Add, label: '初始化角色' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.Role.BatchDelete, label: '批量注销' }"
     @search="handleRefresh"
     @refresh="handleRefresh"
-    @add="handleCreate"
-    @batchDelete="handleBatchDelete"
+    @primary-action="handleCreate"
+    @danger-action="handleBatchDelete"
   >
     <!-- 治理列表 -->
     <DataTable ref="tableRef" v-bind="tableProps" :columns="tableColumns">
@@ -168,81 +168,10 @@ const handleConfirm = async () => {
   }
 }
 
-.eiam-governance-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-
-  .search-command-inner {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 0 12px;
-    flex: 1;
-    width: 380px;
-    height: 38px;
-    transition: all 0.2s;
-
-    &:hover {
-      border-color: #cbd5e1;
-    }
-
-    &:focus-within {
-      border-color: #409eff;
-      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-    }
-
-    .search-icon {
-      color: #94a3b8;
-      font-size: 16px;
-      margin-right: 8px;
-    }
-
-    .command-input {
-      width: 100%;
-      :deep(.el-input__wrapper) {
-        box-shadow: none !important;
-        background: transparent;
-        padding: 0;
-        .el-input__inner {
-          font-size: 13px;
-          color: #1e293b;
-        }
-      }
-    }
-  }
-}
-
 .column-text {
   font-size: 12px;
   color: #475569;
   line-height: 1.6;
-}
-
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .eiam-primary-btn {
-    background: #3b82f6;
-    border: none;
-    border-radius: 8px;
-    height: 38px;
-    padding: 0 20px;
-    font-weight: 600;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-    transition: all 0.2s;
-
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  }
 }
 
 .dual-line-info {

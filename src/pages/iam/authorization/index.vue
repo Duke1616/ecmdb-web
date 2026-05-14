@@ -3,11 +3,11 @@
     title="授权治理"
     subtitle="身份主体与权限策略的原子级关联治理"
     :selection-count="selectedRows.length"
-    :add-config="{ capability: IAM_CAPABILITIES.Policy.BatchAttach, label: '新增授权' }"
-    :batch-delete-config="{ capability: IAM_CAPABILITIES.Policy.BatchDetach, label: '批量解除' }"
+    :primary-action="{ capability: IAM_CAPABILITIES.Policy.BatchAttach, label: '新增授权' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.Policy.BatchDetach, label: '批量解除' }"
     @refresh="handleRefresh"
-    @add="handleCreate"
-    @batchDelete="handleBatchRevoke(selectedRows)"
+    @primary-action="handleCreate"
+    @danger-action="handleBatchRevoke(selectedRows)"
   >
     <template #search>
       <div class="search-command-inner">
@@ -282,31 +282,6 @@ const handleCreate = () => {
           font-size: 13px;
         }
       }
-    }
-  }
-}
-
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .eiam-icon-outline {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: #64748b;
-    transition: all 0.2s;
-    &:hover {
-      color: #409eff;
-      border-color: #409eff;
-      background: #f0f9ff;
-      transform: translateY(-1px);
     }
   }
 }

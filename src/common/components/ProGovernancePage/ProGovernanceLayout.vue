@@ -14,27 +14,37 @@ withDefaults(
     searchPlaceholder?: string
     /** 当前选中的行数组长度，用于决定显示“新增”还是“批量删除” */
     selectionCount?: number
-    /** 新增按钮配置 */
-    addConfig?: { capability?: string | string[]; label?: string; icon?: any }
-    /** 批量注销按钮配置 */
-    batchDeleteConfig?: { capability?: string | string[]; label?: string; icon?: any }
+    /** 主动作配置 (如“新增”或“完善资料”) */
+    primaryAction?: { capability?: string | string[]; label?: string; icon?: any }
+    /** 危险/次要动作配置 (如“批量删除”或“注销主体”) */
+    dangerAction?: { capability?: string | string[]; label?: string; icon?: any }
     /** 动作切换模式：true=选中数据时隐藏新增按钮，false=并排显示 */
     swapActions?: boolean
+    /** 是否吸顶 */
+    sticky?: boolean
+    /** 是否详情模式 (详情模式下批量注销按钮不依赖选中数) */
+    isDetail?: boolean
     /** 是否显示刷新按钮 */
     showRefresh?: boolean
+    /** 是否显示返回按钮 */
+    showBackButton?: boolean
   }>(),
   {
     selectionCount: 0,
     swapActions: true,
-    showRefresh: true
+    showRefresh: true,
+    showBackButton: false,
+    sticky: false,
+    isDetail: false
   }
 )
 
 const emit = defineEmits<{
   search: [val: string]
   refresh: []
-  add: []
-  batchDelete: []
+  primaryAction: []
+  dangerAction: []
+  back: []
 }>()
 
 // 使用 defineModel 极大简化双向绑定逻辑
@@ -47,7 +57,14 @@ const handleSearch = () => {
 
 <template>
   <PageContainer>
-    <ManagerHeader :title="title" :subtitle="subtitle" @refresh="emit('refresh')">
+    <ManagerHeader
+      :title="title"
+      :subtitle="subtitle"
+      :show-back-button="showBackButton"
+      :sticky="sticky"
+      @refresh="emit('refresh')"
+      @back="emit('back')"
+    >
       <template #actions>
         <div class="eiam-governance-bar">
           <!-- 优化 2: 暴露 search 插槽，允许彻底自定义搜索区 -->
@@ -73,58 +90,78 @@ const handleSearch = () => {
             <template v-if="swapActions">
               <template v-if="selectionCount > 0">
                 <AuthButton
-                  v-if="batchDeleteConfig"
-                  class="u-gov-btn is-danger is-large"
-                  :capability="batchDeleteConfig.capability"
-                  disableMode
-                  @click="emit('batchDelete')"
+                  v-if="dangerAction"
+                  type="danger"
+                  class="u-gov-btn"
+                  :class="{ 'is-detail': isDetail }"
+                  :capability="dangerAction.capability"
+                  disable-mode
+                  @click="emit('dangerAction')"
                 >
-                  <el-icon><component :is="batchDeleteConfig.icon || Delete" /></el-icon>
-                  <span>{{ batchDeleteConfig.label || "批量删除" }} ({{ selectionCount }})</span>
+                  <el-icon><component :is="dangerAction.icon || Delete" /></el-icon>
+                  <span
+                    >{{ dangerAction.label || "批量删除"
+                    }}<template v-if="!isDetail"> ({{ selectionCount }})</template></span
+                  >
                 </AuthButton>
               </template>
               <template v-else>
                 <AuthButton
-                  v-if="addConfig"
-                  class="u-gov-btn is-large"
-                  :capability="addConfig.capability"
-                  disableMode
-                  @click="emit('add')"
+                  v-if="primaryAction"
+                  type="primary"
+                  class="u-gov-btn"
+                  :class="{ 'is-detail': isDetail }"
+                  :capability="primaryAction.capability"
+                  disable-mode
+                  @click="emit('primaryAction')"
                 >
-                  <el-icon><component :is="addConfig.icon || Plus" /></el-icon>
-                  <span>{{ addConfig.label || "新增数据" }}</span>
+                  <el-icon><component :is="primaryAction.icon || Plus" /></el-icon>
+                  <span>{{ primaryAction.label || "新增数据" }}</span>
                 </AuthButton>
               </template>
             </template>
             <template v-else>
-              <!-- 并排显示模式 -->
+              <!-- 并排显示模式: 编辑在前，删除在后 -->
               <AuthButton
-                v-if="batchDeleteConfig"
-                class="u-gov-btn is-danger is-large"
-                :capability="batchDeleteConfig.capability"
-                :disabled="selectionCount === 0"
-                disableMode
-                @click="emit('batchDelete')"
+                v-if="primaryAction"
+                type="primary"
+                class="u-gov-btn"
+                :class="{ 'is-detail': isDetail }"
+                :capability="primaryAction.capability"
+                disable-mode
+                @click="emit('primaryAction')"
               >
-                <el-icon><component :is="batchDeleteConfig.icon || Delete" /></el-icon>
-                <span>{{ batchDeleteConfig.label || "批量删除" }} ({{ selectionCount }})</span>
+                <el-icon><component :is="primaryAction.icon || Plus" /></el-icon>
+                <span>{{ primaryAction.label || "新增数据" }}</span>
               </AuthButton>
               <AuthButton
-                v-if="addConfig"
-                class="u-gov-btn is-large"
-                :capability="addConfig.capability"
-                disableMode
-                @click="emit('add')"
+                v-if="dangerAction"
+                type="danger"
+                class="u-gov-btn is-danger-btn"
+                :class="{ 'is-detail': isDetail }"
+                :capability="dangerAction.capability"
+                :disabled="!isDetail && selectionCount === 0"
+                disable-mode
+                @click="emit('dangerAction')"
               >
-                <el-icon><component :is="addConfig.icon || Plus" /></el-icon>
-                <span>{{ addConfig.label || "新增数据" }}</span>
+                <el-icon><component :is="dangerAction.icon || Delete" /></el-icon>
+                <span
+                  >{{ dangerAction.label || "批量删除"
+                  }}<template v-if="!isDetail"> ({{ selectionCount }})</template></span
+                >
               </AuthButton>
             </template>
 
             <!-- 优化 3: 增加后置插槽 (例如放"导出"按钮) -->
             <slot name="actions-suffix" />
 
-            <el-button v-if="showRefresh" :icon="RefreshRight" class="eiam-refresh-btn" @click="emit('refresh')" />
+            <el-button
+              v-if="showRefresh"
+              :icon="RefreshRight"
+              class="eiam-refresh-btn"
+              :class="{ 'is-detail': isDetail }"
+              @click="emit('refresh')"
+            />
           </div>
         </div>
       </template>
@@ -142,7 +179,6 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  width: 100%;
 
   .search-command-inner {
     display: flex;
@@ -190,6 +226,57 @@ const handleSearch = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+
+  .u-gov-btn,
+  .eiam-refresh-btn {
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+    font-size: 14px;
+
+    &.is-detail {
+      height: 34px;
+      padding: 0 12px;
+      font-size: 14px;
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &.eiam-refresh-btn {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      padding: 0 10px;
+
+      &:hover {
+        color: #3b82f6;
+        border-color: #3b82f6;
+        background: #eff6ff;
+      }
+    }
+
+    /* 强制危险操作按钮为红色 */
+    &.is-danger-btn {
+      background-color: #ef4444 !important;
+      border-color: #ef4444 !important;
+      color: #ffffff !important;
+
+      &:hover {
+        background-color: #dc2626 !important;
+        border-color: #dc2626 !important;
+      }
+
+      &:disabled {
+        background-color: #fca5a5 !important;
+        border-color: #fca5a5 !important;
+        opacity: 0.6;
+      }
+    }
+  }
 }
 
 .pro-gov-content {

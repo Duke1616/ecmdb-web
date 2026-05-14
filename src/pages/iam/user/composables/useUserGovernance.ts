@@ -1,5 +1,7 @@
-import { ref, watch, type Ref, computed } from "vue"
+import { ref, watch, type Ref, computed, toValue } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { listUserRolesApi, batchAssignRoleApi, batchUnassignRoleApi, unassignRoleApi } from "@/api/iam/role"
 import { listUserPoliciesApi, batchDetachPolicyApi, detachPolicyApi, batchAttachPolicyApi } from "@/api/iam/policy"
 import {
@@ -253,14 +255,24 @@ export function useUserGovernance(user: Ref<User | undefined>) {
   // 批量选择 Ref
   const selectedTenants = ref<Tenant[]>([])
 
+  const { hasPermission } = usePermission()
+
+  const tabPermissions = computed(() => ({
+    sources: hasPermission(IAM_CAPABILITIES.User.Detail),
+    roles: hasPermission(IAM_CAPABILITIES.User.ViewUserRoles),
+    permissions: hasPermission(IAM_CAPABILITIES.User.ViewUserPolicies),
+    tenants: hasPermission(IAM_CAPABILITIES.User.ViewUserTenants)
+  }))
+
   const refresh = () => {
     if (!userId.value) return
-    if (activeTab.value === "roles") loadRoles()
-    if (activeTab.value === "permissions") loadPolicies()
-    if (activeTab.value === "tenants") loadTenants()
+    const tab = toValue(activeTab)
+    if (tab === "roles" && tabPermissions.value.roles) loadRoles()
+    if (tab === "permissions" && tabPermissions.value.permissions) loadPolicies()
+    if (tab === "tenants" && tabPermissions.value.tenants) loadTenants()
   }
 
-  watch([userId, activeTab], () => refresh(), { immediate: true })
+  watch([userId, () => toValue(activeTab)], () => refresh(), { immediate: true })
 
   return {
     activeTab,
@@ -317,6 +329,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     handleTenantSearch,
     handleAssignTenants,
     handleUnbindTenant,
-    handleBatchUnbindTenants
+    handleBatchUnbindTenants,
+    tabPermissions
   }
 }

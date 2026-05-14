@@ -2,8 +2,7 @@
 import { ref, watch, onMounted, computed } from "vue"
 import { useRouter } from "vue-router"
 import { Delete, Edit, OfficeBuilding } from "@element-plus/icons-vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 
 // Composables
 import { usePolicyDetail } from "./composables/usePolicyDetail"
@@ -14,6 +13,8 @@ import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import StatusStrip, { type StatusItem } from "@/common/components/Governance/StatusStrip.vue"
 import PolicyServiceInsights from "./components/detail/PolicyServiceInsights.vue"
 import PolicyAssignmentTable from "./components/detail/PolicyAssignmentTable.vue"
+import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
+import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import SubjectSelectDialog from "@/pages/iam/authorization/components/SubjectSelectDialog.vue"
 import { batchAttachPolicyApi } from "@/api/iam/policy"
@@ -136,74 +137,78 @@ const handleEdit = () => {
 </script>
 
 <template>
-  <PageContainer v-loading="loading" class="policy-detail-page">
-    <template v-if="policy">
-      <!-- 1. 头部概览 -->
-      <ManagerHeader :title="policy.name" :subtitle="policy.code" :show-back-button="true" @back="router.back()">
-        <template #actions>
-          <div class="header-action-stack">
-            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Edit)" @click="handleEdit">
-              <el-icon><Edit /></el-icon>
-              <span>完善策略</span>
-            </el-button>
-            <el-button
-              class="u-gov-btn is-danger"
-              :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Delete) || policy.type === 1"
-              @click="handleDelete"
-            >
-              <el-icon><Delete /></el-icon>
-              <span>移除策略</span>
-            </el-button>
-          </div>
-        </template>
-      </ManagerHeader>
+  <ProGovernanceLayout
+    v-if="policy"
+    :title="policy.name"
+    :subtitle="policy.code"
+    :show-back-button="true"
+    :show-refresh="false"
+    :is-detail="true"
+    :swap-actions="false"
+    :primary-action="{
+      capability: IAM_CAPABILITIES.Policy.Edit,
+      label: '完善策略',
+      icon: Edit
+    }"
+    :danger-action="
+      policy.type !== 1
+        ? {
+            capability: IAM_CAPABILITIES.Policy.Delete,
+            label: '移除策略',
+            icon: Delete
+          }
+        : undefined
+    "
+    class="policy-detail-page"
+    @back="router.back()"
+    @primary-action="handleEdit"
+    @danger-action="handleDelete"
+  >
+    <div v-loading="loading" class="governance-body">
+      <!-- 1. 置顶横向状态条 -->
+      <StatusStrip :items="statusItems" />
 
-      <div class="governance-body">
-        <!-- 1. 置顶横向状态条 -->
-        <StatusStrip :items="statusItems" />
+      <!-- 2. 基础识别与职能定义 -->
+      <InfoCard title="策略身份与职能定义" :icon="OfficeBuilding" :items="infoItems" @copy="copyText" />
 
-        <!-- 2. 基础识别与职能定义 -->
-        <InfoCard title="策略身份与职能定义" :icon="OfficeBuilding" :items="infoItems" @copy="copyText" />
+      <!-- 治理深度内容区 -->
+      <GovernanceTabs v-model="activeTab">
+        <!-- 看板：策略内容 -->
+        <AuthTabPane label="策略内容洞察" name="insights" :allowed="tabPermissions.insights" disable-mode lazy>
+          <PolicyServiceInsights :policy="policy" :services="services" @copy="copyText" />
+        </AuthTabPane>
 
-        <!-- 治理深度内容区 -->
-        <div class="governance-tabs-card">
-          <el-tabs v-model="activeTab" class="governance-raw-tabs">
-            <!-- 看板：策略内容 -->
-            <el-tab-pane label="策略内容洞察" name="insights" :disabled="!tabPermissions.insights" lazy>
-              <PolicyServiceInsights :policy="policy" :services="services" @copy="copyText" />
-            </el-tab-pane>
+        <!-- 看板：授权管理 -->
+        <AuthTabPane label="授权主体管理" name="assignments" :allowed="tabPermissions.assignments" disable-mode lazy>
+          <PolicyAssignmentTable
+            ref="assignmentTableRef"
+            :policy-code="policy.code"
+            :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+            :can-detach="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
+            :can-batch-detach="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+            :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+            @add="handleAddSubject"
+          />
+        </AuthTabPane>
+      </GovernanceTabs>
+    </div>
 
-            <!-- 看板：授权管理 -->
-            <el-tab-pane label="授权主体管理" name="assignments" :disabled="!tabPermissions.assignments" lazy>
-              <PolicyAssignmentTable
-                ref="assignmentTableRef"
-                :policy-code="policy.code"
-                :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
-                :can-detach="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
-                :can-batch-detach="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
-                :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
-                @add="handleAddSubject"
-              />
-            </el-tab-pane>
-          </el-tabs>
-        </div>
-      </div>
+    <!-- 授权向导 (固定策略模式) -->
+    <AuthorizeDrawer v-model="attachSubjectVisible" :fixed-policies="[policy]" @success="handleAttachSuccess" />
 
-      <!-- 授权向导 (固定策略模式) -->
-      <AuthorizeDrawer v-model="attachSubjectVisible" :fixed-policies="[policy]" @success="handleAttachSuccess" />
+    <!-- 主体选择对话框 -->
+    <SubjectSelectDialog
+      v-model="subjectSelectVisible"
+      title="关联授权主体"
+      confirm-text="确认关联主体"
+      :confirm-loading="submitting"
+      @confirm="handleAttachSubjects"
+    />
 
-      <!-- 主体选择对话框 -->
-      <SubjectSelectDialog
-        v-model="subjectSelectVisible"
-        title="关联授权主体"
-        confirm-text="确认关联主体"
-        :confirm-loading="submitting"
-        @confirm="handleAttachSubjects"
-      />
+    <template #empty>
+      <el-empty v-if="!loading" description="未能获取到策略治理指标" />
     </template>
-
-    <el-empty v-else-if="!loading" description="未能获取到策略治理指标" />
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <style lang="scss" scoped>
@@ -224,34 +229,9 @@ const handleEdit = () => {
   padding: 0 4px;
 }
 
-.governance-tabs-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 8px 24px 24px;
-}
-
 .header-action-stack {
   display: flex;
   gap: 12px;
-}
-
-.governance-raw-tabs :deep(.el-tabs__item) {
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-  &.is-active {
-    color: var(--gov-brand);
-  }
-  &.is-disabled {
-    color: #94a3b8;
-    cursor: not-allowed;
-  }
-}
-:deep(.el-tabs__active-bar) {
-  background-color: var(--gov-brand);
-  height: 3px;
-  border-radius: 2px;
 }
 
 .success-text {

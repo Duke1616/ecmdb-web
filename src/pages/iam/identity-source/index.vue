@@ -2,9 +2,9 @@
   <ProGovernanceLayout
     title="认证管理"
     subtitle="多租户身份治理中心，集成 Windows AD、飞书 OIDC 等企业级身份源"
-    :add-config="{ label: '集成身份源' }"
+    :primary-action="{ label: '集成身份源' }"
     @refresh="handleRefresh"
-    @add="handleCreate"
+    @primary-action="handleCreate"
   >
     <!-- 治理列表 -->
     <DataTable v-bind="tableProps" :columns="tableColumns">

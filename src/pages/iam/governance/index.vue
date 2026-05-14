@@ -14,23 +14,21 @@
 
     <div class="governance-body">
       <!-- 治理内容 -->
-      <div class="governance-tabs-card">
-        <el-tabs v-model="activeTab" class="governance-raw-tabs">
-          <el-tab-pane label="成员管理" name="members" :disabled="!tabPermissions.members">
-            <TenantMemberTable v-bind="memberTableProps" />
-          </el-tab-pane>
+      <GovernanceTabs v-model="activeTab">
+        <AuthTabPane label="成员管理" name="members" :allowed="tabPermissions.members" disable-mode>
+          <TenantMemberTable v-bind="memberTableProps" />
+        </AuthTabPane>
 
-          <!-- 邀请链接 -->
-          <el-tab-pane label="邀请链接" name="invitation" :disabled="!tabPermissions.invitation">
-            <TenantInvitationList v-bind="invitationTableProps" @refresh="fetchLinks" />
-          </el-tab-pane>
+        <!-- 邀请链接 -->
+        <AuthTabPane label="邀请链接" name="invitation" :allowed="tabPermissions.invitation" disable-mode>
+          <TenantInvitationList v-bind="invitationTableProps" @refresh="fetchLinks" />
+        </AuthTabPane>
 
-          <!-- 入驻申请 -->
-          <el-tab-pane label="入驻申请" name="requests" :disabled="!tabPermissions.requests">
-            <TenantJoinRequestList v-bind="requestTableProps" />
-          </el-tab-pane>
-        </el-tabs>
-      </div>
+        <!-- 入驻申请 -->
+        <AuthTabPane label="入驻申请" name="requests" :allowed="tabPermissions.requests" disable-mode>
+          <TenantJoinRequestList v-bind="requestTableProps" />
+        </AuthTabPane>
+      </GovernanceTabs>
     </div>
 
     <!-- 分派成员抽屉 -->
@@ -49,6 +47,8 @@ import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // UI Components
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
+import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
 import TenantMemberTable from "../tenant/components/detail/TenantMemberTable.vue"
 import TenantInvitationList from "../tenant/components/detail/TenantInvitationList.vue"
 import TenantJoinRequestList from "../tenant/components/detail/TenantJoinRequestList.vue"
@@ -200,13 +200,6 @@ const requestTableProps = computed(() => ({
   padding: 0 4px;
 }
 
-.governance-tabs-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 8px 24px 24px;
-}
-
 .header-action-stack {
   display: flex;
   gap: 12px;
@@ -275,24 +268,5 @@ const requestTableProps = computed(() => ({
     transform: scale(1);
     opacity: 0;
   }
-}
-
-.governance-raw-tabs :deep(.el-tabs__item) {
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-  &.is-active {
-    color: var(--gov-brand);
-  }
-  &.is-disabled {
-    color: #94a3b8;
-    cursor: not-allowed;
-  }
-}
-
-:deep(.el-tabs__active-bar) {
-  background-color: var(--gov-brand);
-  height: 3px;
-  border-radius: 2px;
 }
 </style>

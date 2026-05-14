@@ -157,9 +157,10 @@ const formatTime = (ts: number) => {
           </div>
 
           <div class="cell-status">
-            <el-tag :type="row.require_approval ? 'warning' : 'success'" effect="plain" size="small">
-              {{ row.require_approval ? "需审核" : "自动通过" }}
-            </el-tag>
+            <div class="minimal-status" :class="row.require_approval ? 'warning' : 'success'">
+              <span class="dot" />
+              <span class="text">{{ row.require_approval ? "需审核" : "自动通过" }}</span>
+            </div>
           </div>
 
           <div class="cell-actions align-center">

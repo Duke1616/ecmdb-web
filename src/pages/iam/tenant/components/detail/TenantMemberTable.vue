@@ -111,9 +111,10 @@ const emit = defineEmits<{
 
         <!-- 状态列 -->
         <div class="cell-status">
-          <el-tag :type="row.status === 1 ? 'success' : 'info'" size="small" effect="plain" class="status-tag">
-            {{ row.status === 1 ? "活跃" : "注销" }}
-          </el-tag>
+          <div class="minimal-status" :class="row.status === 1 ? 'success' : 'danger'">
+            <span class="dot" />
+            <span class="text">{{ row.status === 1 ? "活跃" : "注销" }}</span>
+          </div>
         </div>
 
         <!-- 时间列 -->

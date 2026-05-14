@@ -4,10 +4,10 @@
     subtitle="多租户架构核心治理，支持多维度的租户实体管理与维护"
     search-placeholder="搜索租户名称或空间编码..."
     v-model:keyword="query.keyword"
-    :add-config="{ capability: IAM_CAPABILITIES.Tenant.Add, label: '新增租户' }"
+    :primary-action="{ capability: IAM_CAPABILITIES.Tenant.Add, label: '新增租户' }"
     @search="handleRefresh"
     @refresh="handleRefresh"
-    @add="handleCreate"
+    @primary-action="handleCreate"
   >
     <!-- 治理列表 -->
     <DataTable v-bind="tableProps" :columns="tableColumns">
@@ -17,9 +17,7 @@
           :title="row.name"
           :sub-title="row.code"
           :link-to="
-            hasPermission(IAM_CAPABILITIES.Tenant.Detail)
-              ? { name: 'TenantDetail', query: { code: row.code } }
-              : undefined
+            hasPermission(IAM_CAPABILITIES.Tenant.Detail) ? { name: 'TenantDetail', query: { id: row.id } } : undefined
           "
           centered
         />
@@ -148,77 +146,6 @@ const handleConfirm = async () => {
 </script>
 
 <style lang="scss" scoped>
-.eiam-governance-bar {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-
-  .search-command-inner {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 0 12px;
-    flex: 1;
-    width: 380px;
-    height: 38px;
-    transition: all 0.2s;
-
-    &:hover {
-      border-color: #cbd5e1;
-    }
-
-    &:focus-within {
-      border-color: #409eff;
-      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-    }
-
-    .search-icon {
-      color: #94a3b8;
-      font-size: 16px;
-      margin-right: 8px;
-    }
-
-    .command-input {
-      width: 100%;
-      :deep(.el-input__wrapper) {
-        box-shadow: none !important;
-        background: transparent;
-        padding: 0;
-        .el-input__inner {
-          font-size: 13px;
-          color: #1e293b;
-        }
-      }
-    }
-  }
-}
-
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .eiam-primary-btn {
-    background: #3b82f6;
-    border: none;
-    border-radius: 8px;
-    height: 38px;
-    padding: 0 20px;
-    font-weight: 600;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
-    transition: all 0.2s;
-
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
-  }
-}
-
 .dual-line-info {
   display: flex;
   flex-direction: column;

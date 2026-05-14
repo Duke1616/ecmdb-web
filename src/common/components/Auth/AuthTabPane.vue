@@ -6,6 +6,8 @@ const props = withDefaults(
   defineProps<{
     /** 权限代码或数组 */
     capability?: string | string[]
+    /** 外部传入的权限计算结果 (优先级最高) */
+    allowed?: boolean
     /** 权限匹配模式 */
     mode?: PermissionMode
     /** 无权限时的行为： true=置灰且不可点击(类似 disabled), false=直接隐藏标签页 */
@@ -13,13 +15,15 @@ const props = withDefaults(
   }>(),
   {
     mode: PermissionMode.ANY,
-    disableMode: false
+    disableMode: false,
+    allowed: undefined
   }
 )
 
 const { hasPermission } = usePermission()
 
 const isAllowed = computed(() => {
+  if (props.allowed !== undefined) return props.allowed
   if (!props.capability) return true
   return hasPermission(props.capability, props.mode)
 })

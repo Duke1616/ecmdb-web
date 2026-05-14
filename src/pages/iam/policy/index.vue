@@ -3,11 +3,11 @@
     title="策略管理"
     subtitle="集中化管理系统访问控制策略，支持自定义扩展与编排"
     :selection-count="selectedRows.length"
-    :add-config="{ capability: IAM_CAPABILITIES.Policy.Add, label: '创建策略' }"
-    :batch-delete-config="{ capability: IAM_CAPABILITIES.Policy.BatchDelete, label: '批量注销' }"
+    :primary-action="{ capability: IAM_CAPABILITIES.Policy.Add, label: '创建策略' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.Policy.BatchDelete, label: '批量注销' }"
     @refresh="handleRefresh"
-    @add="handleCreate"
-    @batchDelete="handleBatchDelete"
+    @primary-action="handleCreate"
+    @danger-action="handleBatchDelete"
   >
     <template #search>
       <div class="search-command-inner">
@@ -223,105 +223,56 @@ const formatDate = (ts: number) => {
   }
 }
 
-.eiam-governance-bar {
+.search-command-inner {
   display: flex;
   align-items: center;
-  gap: 20px;
-  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  padding: 0 12px;
+  flex: 1;
+  max-width: 680px;
+  height: 38px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  .search-command-inner {
-    display: flex;
-    align-items: center;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    border-radius: 8px;
-    padding: 0 12px;
-    flex: 1;
-    max-width: 680px;
-    height: 38px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-
-    &:focus-within {
-      border-color: #0ea5e9;
-      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
-    }
-
-    .command-input {
-      width: 240px;
-      :deep(.el-input__wrapper) {
-        box-shadow: none !important;
-        background: transparent;
-        padding: 0;
-      }
-      .search-icon {
-        color: #94a3b8;
-        font-size: 16px;
-      }
-    }
-
-    .divider {
-      width: 1px;
-      height: 16px;
-      background: #e2e8f0;
-      margin: 0 8px;
-      flex-shrink: 0;
-    }
-
-    .command-select {
-      width: 120px;
-      :deep(.el-select__wrapper) {
-        box-shadow: none !important;
-        background: transparent;
-        padding: 0 8px;
-
-        .el-select__placeholder {
-          color: #64748b;
-          font-size: 13px;
-        }
-      }
-    }
+  &:focus-within {
+    border-color: #0ea5e9;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
   }
-}
 
-.action-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .eiam-main-btn {
-    background: #3b82f6;
-    border: none;
-    border-radius: 8px;
-    height: 36px;
-    padding: 0 18px;
-    font-weight: 600;
-    color: #ffffff;
-    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-    transition: all 0.2s;
-    &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+  .command-input {
+    width: 240px;
+    :deep(.el-input__wrapper) {
+      box-shadow: none !important;
+      background: transparent;
+      padding: 0;
+    }
+    .search-icon {
+      color: #94a3b8;
+      font-size: 16px;
     }
   }
 
-  .eiam-icon-outline {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e2e8f0;
-    background: white;
-    color: #64748b;
-    transition: all 0.2s;
-    &:hover {
-      color: #409eff;
-      border-color: #409eff;
-      background: #f0f7ff;
-      transform: translateY(-1px);
+  .divider {
+    width: 1px;
+    height: 16px;
+    background: #e2e8f0;
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
+  .command-select {
+    width: 120px;
+    :deep(.el-select__wrapper) {
+      box-shadow: none !important;
+      background: transparent;
+      padding: 0 8px;
+
+      .el-select__placeholder {
+        color: #64748b;
+        font-size: 13px;
+      }
     }
   }
 }
@@ -340,39 +291,6 @@ const formatDate = (ts: number) => {
   font-size: 13px;
   font-weight: 600;
   cursor: default;
-}
-
-/* 核心语义化状态样式 */
-.minimal-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .text {
-    font-size: 12px;
-    font-weight: 500;
-  }
-  &.primary {
-    .dot {
-      background: #3b82f6;
-    }
-    .text {
-      color: #3b82f6;
-    }
-  }
-  &.success {
-    .dot {
-      background: #10b981;
-    }
-    .text {
-      color: #10b981;
-    }
-  }
 }
 
 .desc-text {
