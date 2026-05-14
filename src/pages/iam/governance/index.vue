@@ -45,6 +45,8 @@ const {
   handleMemberSearch,
   handleBatchAssignMember,
   handleRemoveMember,
+  handleBatchRemoveMember,
+  membersSelection,
   links,
   linksTotal,
   linksLoading,
@@ -52,6 +54,8 @@ const {
   handleLinksPageChange,
   handleLinksSearch,
   handleRevokeInvitation,
+  handleBatchRevokeInvitation,
+  linksSelection,
   fetchLinks,
   requests,
   requestsTotal,
@@ -102,9 +106,9 @@ const onAssignConfirm = async (users: User[]) => {
       <!-- 治理内容 -->
       <div class="governance-tabs-card">
         <el-tabs v-model="activeTab" class="governance-raw-tabs">
-          <!-- 成员管理 -->
           <el-tab-pane label="成员管理" name="members" :disabled="!tabPermissions.members">
             <TenantMemberTable
+              v-model:selection="membersSelection"
               :loading="memberLoading"
               :data="members"
               :total="memberTotal"
@@ -114,16 +118,20 @@ const onAssignConfirm = async (users: User[]) => {
               :show-assign="false"
               :can-add="hasPermission(IAM_CAPABILITIES.Tenant.Assign)"
               :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
+              :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign) && membersSelection.length > 0"
+              :selectable="() => hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign)"
               @page-change="handleMemberPageChange"
               @search="handleMemberSearch"
               @add="assignVisible = true"
               @unbind="handleRemoveMember"
+              @batch-unbind="handleBatchRemoveMember"
             />
           </el-tab-pane>
 
           <!-- 邀请链接 -->
           <el-tab-pane label="邀请链接" name="invitation" :disabled="!tabPermissions.invitation">
             <TenantInvitationList
+              v-model:selection="linksSelection"
               :tenant-id="currentTenantId"
               :data="links"
               :loading="linksLoading"
@@ -132,9 +140,12 @@ const onAssignConfirm = async (users: User[]) => {
               :pageSize="linksQuery.pageSize"
               :can-add="hasPermission(IAM_CAPABILITIES.Invitation.Add)"
               :can-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke)"
+              :can-batch-revoke="hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke) && linksSelection.length > 0"
+              :selectable="() => hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke)"
               @page-change="handleLinksPageChange"
               @search="handleLinksSearch"
               @revoke="handleRevokeInvitation"
+              @batch-revoke="handleBatchRevokeInvitation"
               @refresh="fetchLinks"
             />
           </el-tab-pane>
@@ -263,6 +274,10 @@ const onAssignConfirm = async (users: User[]) => {
   color: #64748b;
   &.is-active {
     color: var(--gov-brand);
+  }
+  &.is-disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
   }
 }
 

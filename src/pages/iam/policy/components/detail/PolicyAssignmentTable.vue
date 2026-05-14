@@ -4,21 +4,34 @@ import { Plus, Delete } from "@element-plus/icons-vue"
 import dayjs from "dayjs"
 import { useRouter } from "vue-router"
 import { listAuthorizationsApi } from "@/api/iam/permission"
+import { batchDetachPolicyApi } from "@/api/iam/policy"
 import type { Authorization } from "@/api/iam/permission/type"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 interface Props {
   policyCode: string
+  canAdd?: boolean
+  canDetach?: boolean
+  canBatchDetach?: boolean
+  selectable?: () => boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  canAdd: true,
+  canDetach: true,
+  canBatchDetach: true,
+  selectable: () => true
+})
 
 const emit = defineEmits<{
   (e: "add"): void
 }>()
 
 const router = useRouter()
+const { hasPermission } = usePermission()
 const loading = ref(false)
 const list = ref<Authorization[]>([])
 const total = ref(0)
@@ -77,9 +90,18 @@ const handleRemove = (row: Authorization) => {
     type: "warning",
     confirmButtonText: "确定移除",
     confirmButtonClass: "el-button--danger"
-  }).then(() => {
+  }).then(async () => {
+    await batchDetachPolicyApi({
+      assignments: [
+        {
+          sub_type: row.sub_type,
+          sub_code: row.subject,
+          policy_code: row.target
+        }
+      ]
+    })
     ElMessage.success("授权移除成功！")
-    fetchAssignments() // 模拟成功后刷新
+    fetchAssignments()
   })
 }
 
@@ -90,9 +112,17 @@ const handleBatchRemove = () => {
     type: "warning",
     confirmButtonText: "确定批量移除",
     confirmButtonClass: "el-button--danger"
-  }).then(() => {
+  }).then(async () => {
+    await batchDetachPolicyApi({
+      assignments: selectedItems.value.map((item) => ({
+        sub_type: item.sub_type,
+        sub_code: item.subject,
+        policy_code: item.target
+      }))
+    })
     ElMessage.success(`已成功批量移除 ${count} 项授权记录！`)
-    fetchAssignments() // 模拟成功后刷新
+    selectedItems.value = []
+    fetchAssignments()
   })
 }
 
@@ -119,7 +149,9 @@ defineExpose({
       indicator-color="#3b82f6"
       show-selection
       row-key="id"
+      :selectable="selectable"
       v-model:selection="selectedItems"
+      :table-props="!selectable() ? { class: 'selection-disabled' } : {}"
       @page-change="handlePageChange"
       @search="handleSearch"
     >
@@ -136,7 +168,7 @@ defineExpose({
 
       <!-- 头部操作 -->
       <template #header-actions>
-        <el-button plain class="u-gov-btn" @click="emit('add')">
+        <el-button plain class="u-gov-btn" :disabled="!canAdd" @click="emit('add')">
           <el-icon><Plus /></el-icon>
           <span>新增授权主体</span>
         </el-button>
@@ -144,7 +176,13 @@ defineExpose({
 
       <!-- 批量操作 -->
       <template #batch-actions>
-        <el-button type="danger" plain size="small" @click="handleBatchRemove">
+        <el-button
+          type="danger"
+          plain
+          size="small"
+          :disabled="!canBatchDetach || selectedItems.length === 0"
+          @click="handleBatchRemove"
+        >
           <el-icon><Delete /></el-icon>
           <span>批量移除</span>
         </el-button>
@@ -155,9 +193,30 @@ defineExpose({
         <div class="assign-grid-row">
           <div class="cell-subject">
             <div class="dual-line-info">
-              <el-link type="primary" :underline="false" class="main-title" @click="handleSubjectClick(row)">
-                {{ row.subject_name || row.subject }}
-              </el-link>
+              <template v-if="row.sub_type === 'user'">
+                <el-link
+                  v-if="hasPermission(IAM_CAPABILITIES.User.View)"
+                  type="primary"
+                  :underline="false"
+                  class="main-title"
+                  @click="handleSubjectClick(row)"
+                >
+                  {{ row.subject_name || row.subject }}
+                </el-link>
+                <span v-else class="main-title-static">{{ row.subject_name || row.subject }}</span>
+              </template>
+              <template v-else>
+                <el-link
+                  v-if="hasPermission(IAM_CAPABILITIES.Role.View)"
+                  type="primary"
+                  :underline="false"
+                  class="main-title"
+                  @click="handleSubjectClick(row)"
+                >
+                  {{ row.subject_name || row.subject }}
+                </el-link>
+                <span v-else class="main-title-static">{{ row.subject_name || row.subject }}</span>
+              </template>
               <div class="sub-detail">
                 <span class="type-text">{{ row.sub_type === "user" ? "IAM 用户" : "IAM 角色" }}</span>
               </div>
@@ -187,7 +246,14 @@ defineExpose({
           </div>
 
           <div class="cell-actions">
-            <el-button type="danger" link size="small" class="delete-btn" @click="handleRemove(row)">
+            <el-button
+              type="danger"
+              link
+              size="small"
+              class="delete-btn"
+              :disabled="!canDetach"
+              @click="handleRemove(row)"
+            >
               <el-icon><Delete /></el-icon>
               <span>移除</span>
             </el-button>
@@ -208,6 +274,14 @@ defineExpose({
 
   .align-center {
     text-align: center;
+  }
+}
+
+/* NOTE: 无操作权限时，禁用表头全选 Checkbox */
+:deep(.selection-disabled) {
+  .el-table__header-wrapper .el-checkbox {
+    pointer-events: none;
+    opacity: 0.4;
   }
 }
 
@@ -245,6 +319,15 @@ defineExpose({
         color: #3b82f6;
       }
     }
+    .main-title-static {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e293b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: default;
+    }
     .sub-detail {
       font-size: 12px;
       color: #94a3b8;
@@ -279,7 +362,6 @@ defineExpose({
 }
 
 .delete-btn {
-  color: #94a3b8;
   transition: all 0.2s;
   &:hover {
     color: #ef4444;

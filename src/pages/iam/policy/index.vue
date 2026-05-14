@@ -40,14 +40,26 @@
 
           <!-- 2. 操作区 -->
           <div class="action-group">
-            <el-button
-              class="u-gov-btn is-large"
-              :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
-              @click="handleCreate"
-            >
-              <el-icon><Plus /></el-icon>
-              <span>创建策略</span>
-            </el-button>
+            <template v-if="selectedRows.length > 0">
+              <el-button
+                class="u-gov-btn is-danger is-large"
+                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.BatchDelete)"
+                @click="handleBatchDelete"
+              >
+                <el-icon><Delete /></el-icon>
+                <span>批量注销 ({{ selectedRows.length }})</span>
+              </el-button>
+            </template>
+            <template v-else>
+              <el-button
+                class="u-gov-btn is-large"
+                :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Add)"
+                @click="handleCreate"
+              >
+                <el-icon><Plus /></el-icon>
+                <span>创建策略</span>
+              </el-button>
+            </template>
             <el-button :icon="RefreshRight" class="eiam-icon-outline" @click="handleRefresh" />
           </div>
         </div>
@@ -59,20 +71,30 @@
       v-loading="loading"
       :data="policies"
       :columns="tableColumns"
-      :show-selection="false"
+      :show-selection="true"
+      :selectable="(row) => row.type !== 1 && hasPermission(IAM_CAPABILITIES.Policy.BatchDelete)"
+      :table-props="!hasPermission(IAM_CAPABILITIES.Policy.BatchDelete) ? { class: 'selection-disabled' } : {}"
       :show-pagination="true"
       :total="total"
       :page-size="pageSize"
       :current-page="currentPage"
       action-column-width="160"
+      @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
       <!-- 策略名称 -->
       <template #name="{ row }">
-        <el-link type="primary" :underline="false" class="policy-name" @click="handleViewDetail(row)">
+        <el-link
+          v-if="hasPermission(IAM_CAPABILITIES.Policy.Detail)"
+          type="primary"
+          :underline="false"
+          class="policy-name"
+          @click="handleViewDetail(row)"
+        >
           {{ row.name }}
         </el-link>
+        <span v-else class="policy-name-static">{{ row.name }}</span>
       </template>
 
       <!-- 类型: 语义化 Dot 状态 -->
@@ -147,11 +169,14 @@ const {
   query,
   jsonVisible,
   selectedPolicy,
+  selectedRows,
   handleRefresh,
   handleCreate,
   handleEdit,
   handleDelete,
+  handleBatchDelete,
   handleViewJson,
+  handleSelectionChange,
   handleSizeChange,
   handleCurrentChange
 } = usePolicyList()
@@ -162,6 +187,7 @@ const { hasPermission } = usePermission()
  * 跳转到策略治理详情页
  */
 const handleViewDetail = (row: Policy) => {
+  if (!hasPermission(IAM_CAPABILITIES.Policy.Detail)) return
   router.push({
     name: "PolicyDetail",
     query: { code: row.code }
@@ -179,16 +205,29 @@ const tableColumns: Column[] = [
 ]
 
 const getOperateItems = (row: Policy) => {
-  const items = []
-  if (hasPermission(IAM_CAPABILITIES.Policy.Edit)) {
-    items.push({ name: "编辑", code: "edit", icon: Edit, type: "primary" })
-  }
-  items.push({ name: "源代码", code: "source", icon: Document, type: "info" })
-
-  if (row.type !== 1 && hasPermission(IAM_CAPABILITIES.Policy.Delete)) {
-    items.push({ name: "删除", code: "delete", icon: Delete, type: "danger" })
-  }
-  return items
+  return [
+    {
+      name: "编辑",
+      code: "edit",
+      icon: Edit,
+      type: "primary",
+      capability: IAM_CAPABILITIES.Policy.Edit
+    },
+    {
+      name: "源代码",
+      code: "source",
+      icon: Document,
+      type: "info"
+    },
+    {
+      name: "删除",
+      code: "delete",
+      icon: Delete,
+      type: "danger",
+      disabled: row.type === 1, // 系统预设策略禁止删除
+      capability: IAM_CAPABILITIES.Policy.Delete
+    }
+  ]
 }
 
 const handleAction = (row: Policy, code: string) => {
@@ -217,6 +256,14 @@ const formatDate = (ts: number) => {
 </script>
 
 <style lang="scss" scoped>
+/* NOTE: 无批量删除权限时，禁用表头全选 Checkbox */
+:deep(.selection-disabled) {
+  .el-table__header-wrapper .el-checkbox {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
 .eiam-governance-bar {
   display: flex;
   align-items: center;
@@ -327,6 +374,13 @@ const formatDate = (ts: number) => {
   &:hover {
     color: #3b82f6;
   }
+}
+
+.policy-name-static {
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: default;
 }
 
 /* 核心语义化状态样式 */

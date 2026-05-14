@@ -173,6 +173,7 @@ const onAssignConfirm = async (users: User[]) => {
                 :can-add="hasPermission(IAM_CAPABILITIES.Tenant.Assign)"
                 :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
                 :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign) && membersSelection.length > 0"
+                :selectable="() => hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign)"
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
                 @add="assignVisible = true"
@@ -193,7 +194,8 @@ const onAssignConfirm = async (users: User[]) => {
                 :page-size="linksQuery.pageSize"
                 :can-add="hasPermission(IAM_CAPABILITIES.Invitation.Add)"
                 :can-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke)"
-                :can-batch-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke) && linksSelection.length > 0"
+                :can-batch-revoke="hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke) && linksSelection.length > 0"
+                :selectable="() => hasPermission(IAM_CAPABILITIES.Invitation.BatchRevoke)"
                 @page-change="handleLinksPageChange"
                 @search="handleLinksSearch"
                 @revoke="handleRevokeInvitation"
@@ -303,7 +305,7 @@ const onAssignConfirm = async (users: User[]) => {
     color: var(--gov-brand);
   }
   &.is-disabled {
-    color: #cbd5e1;
+    color: #94a3b8;
     cursor: not-allowed;
   }
 }

@@ -22,6 +22,7 @@ withDefaults(
     canAdd?: boolean
     canRevoke?: boolean
     canBatchRevoke?: boolean
+    selectable?: (row: InvitationVO) => boolean
   }>(),
   {
     canAdd: true,
@@ -31,11 +32,11 @@ withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: "page-change", page: number): void
-  (e: "search", val: string): void
-  (e: "revoke", row: InvitationVO): void
-  (e: "batch-revoke"): void
-  (e: "refresh"): void
+  pageChange: [page: number]
+  search: [val: string]
+  revoke: [row: InvitationVO]
+  batchRevoke: []
+  refresh: []
 }>()
 
 const { toClipboard } = useClipboard()
@@ -84,10 +85,11 @@ const formatTime = (ts: number) => {
       :total="total"
       :current-page="currentPage"
       :pageSize="pageSize"
-      @page-change="(page) => emit('page-change', page)"
+      @page-change="(page) => emit('pageChange', page)"
       :show-search="false"
       indicator-color="#3b82f6"
       show-selection
+      :selectable="selectable"
       row-key="code"
     >
       <template #header-actions>
@@ -98,7 +100,7 @@ const formatTime = (ts: number) => {
       </template>
 
       <template #batch-actions>
-        <el-button class="u-gov-btn is-danger" :disabled="!canBatchRevoke" @click="emit('batch-revoke')">
+        <el-button class="u-gov-btn is-danger" :disabled="!canBatchRevoke" @click="emit('batchRevoke')">
           <el-icon><Delete /></el-icon>
           <span>批量撤回凭证</span>
         </el-button>
@@ -108,6 +110,7 @@ const formatTime = (ts: number) => {
         <div class="gov-table-grid is-header is-invitation u-gov-label">
           <span>邀请码 / 分享</span>
           <span class="align-center">载荷情况</span>
+          <span>预设角色</span>
           <span>有效期限</span>
           <span class="align-center">审批模式</span>
           <span class="align-center">操作</span>
@@ -129,6 +132,24 @@ const formatTime = (ts: number) => {
             <div class="usage-label">已用 / 上限</div>
           </div>
 
+          <div class="cell-roles">
+            <div class="role-tags">
+              <template v-if="row.role_codes && row.role_codes.length > 0">
+                <el-tag
+                  v-for="role in row.role_codes"
+                  :key="role"
+                  size="small"
+                  type="info"
+                  effect="light"
+                  class="role-tag"
+                >
+                  {{ role }}
+                </el-tag>
+              </template>
+              <span v-else class="empty-text">默认角色</span>
+            </div>
+          </div>
+
           <div class="cell-time">
             <span class="time-text" :class="{ 'is-permanent': row.expire_at === 0 }">
               {{ row.expire_at === 0 ? "永久有效" : formatTime(row.expire_at) }}
@@ -141,7 +162,7 @@ const formatTime = (ts: number) => {
             </el-tag>
           </div>
 
-          <div class="cell-actions">
+          <div class="cell-actions align-center">
             <el-button
               type="danger"
               link
@@ -199,5 +220,39 @@ const formatTime = (ts: number) => {
   &.is-permanent {
     color: #3b82f6 !important;
   }
+}
+
+.cell-roles {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  .role-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    max-width: 100%;
+  }
+  .role-tag {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 4px;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #475569;
+    font-weight: 500;
+  }
+  .empty-text {
+    font-size: 12px;
+    color: #94a3b8;
+    font-style: italic;
+  }
+}
+
+/* 调整 Grid 比例：邀请码(280) | 载荷(100) | 角色(自适应) | 时间(180) | 审批(100) | 操作(80) */
+:deep(.is-invitation) {
+  grid-template-columns: 280px 120px 1fr 200px 200px 80px !important;
+  align-items: center;
 }
 </style>

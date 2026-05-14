@@ -18,12 +18,21 @@ import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawe
 import SubjectSelectDialog from "@/pages/iam/authorization/components/SubjectSelectDialog.vue"
 import { batchAttachPolicyApi } from "@/api/iam/policy"
 import { formatTimestamp } from "@@/utils/day"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 const router = useRouter()
+const { hasPermission } = usePermission()
 const { policy, services, loading, copyText, handleDelete } = usePolicyDetail()
 
 // 治理项 Tabs 控制
 const { activeTab } = useTabRouter("insights")
+
+/** 页签权限控制 */
+const tabPermissions = computed(() => ({
+  insights: true, // 策略内容洞察作为核心内容，默认开启
+  assignments: hasPermission(IAM_CAPABILITIES.Permission.ViewAuthorizations) // 授权主体管理跟随详情权限
+}))
 
 // --- 授权管理向导逻辑 ---
 const attachSubjectVisible = ref(false)
@@ -133,11 +142,15 @@ const handleEdit = () => {
       <ManagerHeader :title="policy.name" :subtitle="policy.code" :show-back-button="true" @back="router.back()">
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="u-gov-btn" @click="handleEdit">
+            <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Edit)" @click="handleEdit">
               <el-icon><Edit /></el-icon>
               <span>完善策略</span>
             </el-button>
-            <el-button class="u-gov-btn is-danger" @click="handleDelete">
+            <el-button
+              class="u-gov-btn is-danger"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Policy.Delete) || policy.type === 1"
+              @click="handleDelete"
+            >
               <el-icon><Delete /></el-icon>
               <span>移除策略</span>
             </el-button>
@@ -156,13 +169,21 @@ const handleEdit = () => {
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
             <!-- 看板：策略内容 -->
-            <el-tab-pane label="策略内容洞察" name="insights" lazy>
+            <el-tab-pane label="策略内容洞察" name="insights" :disabled="!tabPermissions.insights" lazy>
               <PolicyServiceInsights :policy="policy" :services="services" @copy="copyText" />
             </el-tab-pane>
 
             <!-- 看板：授权管理 -->
-            <el-tab-pane label="授权主体管理" name="assignments" lazy>
-              <PolicyAssignmentTable ref="assignmentTableRef" :policy-code="policy.code" @add="handleAddSubject" />
+            <el-tab-pane label="授权主体管理" name="assignments" :disabled="!tabPermissions.assignments" lazy>
+              <PolicyAssignmentTable
+                ref="assignmentTableRef"
+                :policy-code="policy.code"
+                :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+                :can-detach="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
+                :can-batch-detach="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+                :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+                @add="handleAddSubject"
+              />
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -221,6 +242,10 @@ const handleEdit = () => {
   color: #64748b;
   &.is-active {
     color: var(--gov-brand);
+  }
+  &.is-disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
   }
 }
 :deep(.el-tabs__active-bar) {

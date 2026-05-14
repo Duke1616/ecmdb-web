@@ -18,6 +18,7 @@ withDefaults(
     canAdd?: boolean
     canUnbind?: boolean
     canBatchUnbind?: boolean
+    selectable?: (row: TenantMember) => boolean
   }>(),
   {
     showAssign: true,
@@ -49,6 +50,7 @@ const emit = defineEmits<{
     show-search
     indicator-color="#3b82f6"
     show-selection
+    :selectable="selectable"
     empty-text="该租户下暂无关联的成员"
     @page-change="emit('pageChange', $event)"
     @search="emit('search', $event)"

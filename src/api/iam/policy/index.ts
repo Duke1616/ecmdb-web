@@ -89,3 +89,10 @@ export function deletePolicyApi(code: string) {
     url: `${API_SERVICE.IAM}/policy/delete/${code}`
   })
 }
+/** 批量删除权限策略 */
+export function batchDeletePoliciesApi(data: policy.BatchDeletePolicyRequest) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/policy/batch-delete`,
+    data
+  })
+}

@@ -58,7 +58,7 @@ const loadTemplates = async (params: any) => {
 }
 
 // 定义获取单个模板详情函数
-const getTemplateById = async (id: number) => {
-  return await detailTemplateApi(id)
+const getTemplateById = async (id: string | number) => {
+  return await detailTemplateApi(id as number)
 }
 </script>

@@ -1,5 +1,5 @@
 import { ref, watch, toValue, type MaybeRefOrGetter, computed, type Ref } from "vue"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage } from "element-plus"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { listTenantMembersApi, removeTenantMemberApi } from "@/api/iam/tenant"
@@ -11,12 +11,14 @@ import {
   handleJoinRequestApi
 } from "@/api/iam/invitation"
 import { useListManager } from "@/common/composables/useListManager"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { batchAssignTenantsApi, batchUnassignTenantsApi } from "@/api/iam/tenant"
 import type { TenantMember } from "@/api/iam/tenant/type"
 import type { InvitationVO, JoinRequestVO } from "@/api/iam/invitation/type"
 
 export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefined>, activeTab: Ref<string>) {
   const tid = computed(() => toValue(tenantId))
+  const { handleConfirmAction } = useGovernanceActions()
 
   // --- 1. 成员治理 ---
   const {
@@ -93,74 +95,59 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
   }
 
   const handleRevokeInvitation = (row: InvitationVO) => {
-    ElMessageBox.confirm(`确定要撤回邀请码 "${row.code}" 吗？撤回后该链接将立即失效。`, "安全警告", {
-      confirmButtonText: "确定撤回",
-      cancelButtonText: "取消",
-      type: "warning"
-    }).then(async () => {
-      await revokeInvitationApi(row.code)
-      ElMessage.success("邀请链接已撤回")
-      loadLinks()
+    handleConfirmAction({
+      title: "撤回邀请凭证",
+      message: `确定要撤回邀请码 "${row.code}" 吗？撤回后该链接将立即失效。`,
+      api: () => revokeInvitationApi(row.code),
+      onSuccess: () => loadLinks()
     })
   }
 
   const handleBatchRevokeInvitation = () => {
     if (linksSelection.value.length === 0) return
     const codes = linksSelection.value.map((l) => l.code)
-    ElMessageBox.confirm(`确定要撤回选中的 ${codes.length} 个邀请吗？撤回后这些链接将立即失效。`, "批量撤回警告", {
-      confirmButtonText: "确定撤回",
-      cancelButtonText: "取消",
-      type: "warning"
-    }).then(async () => {
-      await batchRevokeInvitationApi({ codes })
-      ElMessage.success("选中的邀请链接已全部撤回")
-      linksSelection.value = []
-      loadLinks()
+    handleConfirmAction({
+      title: "批量撤回凭证",
+      message: `确定要批量撤回选中的 ${codes.length} 个邀请吗？撤回后这些链接将立即失效。`,
+      api: () => batchRevokeInvitationApi({ codes }),
+      onSuccess: () => {
+        linksSelection.value = []
+        loadLinks()
+      }
     })
   }
 
   const handleRemoveMember = (row: TenantMember) => {
     if (!tid.value) return
-    ElMessageBox.confirm(
-      `确定要将成员 "${row.nickname || row.username}" 移出当前租户空间吗？移除后该用户将失去在该租户下的所有权限。`,
-      "移除成员",
-      {
-        confirmButtonText: "确定移除",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
-    ).then(async () => {
-      await removeTenantMemberApi({
-        tenant_id: tid.value!,
-        user_id: row.id
-      })
-      ElMessage.success("成员已移除")
-      loadMembers()
+    handleConfirmAction({
+      title: "移除成员",
+      message: `确定要将成员 "${row.nickname || row.username}" 移出当前租户空间吗？移除后该用户将失去在该租户下的所有权限。`,
+      api: () =>
+        removeTenantMemberApi({
+          tenant_id: tid.value!,
+          user_id: row.id
+        }),
+      onSuccess: () => loadMembers()
     })
   }
 
   const handleBatchRemoveMember = () => {
-    if (membersSelection.value.length === 0) return
+    if (membersSelection.value.length === 0 || !tid.value) return
     const targets = membersSelection.value
     const userIds = targets.map((m) => m.id)
 
-    ElMessageBox.confirm(
-      `确定要将选中的 ${targets.length} 位成员移出当前租户空间吗？移除后他们将失去在该租户下的所有权限。`,
-      "批量移除成员",
-      {
-        confirmButtonText: "确定移除",
-        cancelButtonText: "取消",
-        confirmButtonClass: "el-button--danger",
-        type: "warning"
+    handleConfirmAction({
+      title: "批量移除成员",
+      message: `确定要将选中的 ${targets.length} 位成员批量移出当前租户空间吗？移除后他们将失去在该租户下的所有权限。`,
+      api: () =>
+        batchUnassignTenantsApi({
+          user_ids: userIds,
+          tenant_ids: [tid.value!]
+        }),
+      onSuccess: () => {
+        membersSelection.value = []
+        loadMembers()
       }
-    ).then(async () => {
-      await batchUnassignTenantsApi({
-        user_ids: userIds,
-        tenant_ids: [tid.value!]
-      })
-      ElMessage.success(`已成功移除 ${targets.length} 位成员`)
-      membersSelection.value = []
-      loadMembers()
     })
   }
 

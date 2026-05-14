@@ -59,13 +59,19 @@ $governance-blue: #3b82f6;
     }
   }
 
+  cursor: default;
   &.is-link {
     cursor: pointer;
+    pointer-events: auto;
 
     &:hover .main-title,
     &:hover .main-link {
       color: $governance-blue !important;
     }
+  }
+
+  &:not(.is-link) {
+    pointer-events: none;
   }
 
   .meta-info {

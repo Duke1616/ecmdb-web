@@ -139,3 +139,8 @@ export interface AssignmentItem {
 export interface BatchDetachPolicyRequest {
   assignments: AssignmentItem[]
 }
+
+/** 批量删除策略请求 */
+export interface BatchDeletePolicyRequest {
+  codes: string[]
+}

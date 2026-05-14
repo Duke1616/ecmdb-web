@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { watch, computed } from "vue"
-import { Close, User } from "@element-plus/icons-vue"
+import { Close, User, OfficeBuilding } from "@element-plus/icons-vue"
 import { searchSubjectsApi } from "@/api/iam/permission"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 import ResourceSelectorLayout from "@/common/components/ResourceSelector/ResourceSelectorLayout.vue"
@@ -128,6 +128,10 @@ const handleTypeChange = (val: any) => {
         <el-table-column label="主体信息" min-width="220">
           <template #default="{ row }">
             <div class="subject-row">
+              <div class="subject-icon" :class="row.type">
+                <el-icon v-if="row.type === AuthorizationSubType.USER"><User /></el-icon>
+                <el-icon v-else><OfficeBuilding /></el-icon>
+              </div>
               <div class="u-meta">
                 <span class="name">{{ row.name }}</span>
                 <span class="id">{{ row.id }}</span>
@@ -197,16 +201,40 @@ $text-sub: #64748b;
 
 .type-badge {
   font-size: 11px;
-  font-weight: 600;
-  padding: 1px 6px;
+  font-weight: 700;
+  padding: 2px 8px;
   border-radius: 4px;
+  text-transform: uppercase;
   &.user {
-    background: #e0f2fe;
-    color: #0284c7;
+    background: #eff6ff;
+    color: #3b82f6;
+    border: 1px solid #dbeafe;
   }
   &.role {
-    background: #fef3c7;
-    color: #d97706;
+    background: #fff7ed;
+    color: #f59e0b;
+    border: 1px solid #ffedd5;
+  }
+}
+
+.subject-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.3s ease;
+
+  &.user {
+    background: #f0f7ff;
+    color: #3b82f6;
+  }
+
+  &.role {
+    background: #fffbf0;
+    color: #f59e0b;
   }
 }
 </style>

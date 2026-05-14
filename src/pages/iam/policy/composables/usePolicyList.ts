@@ -1,6 +1,6 @@
 import { ref, computed } from "vue"
 import { useRouter } from "vue-router"
-import { listPoliciesApi, deletePolicyApi } from "@/api/iam/policy"
+import { listPoliciesApi, deletePolicyApi, batchDeletePoliciesApi } from "@/api/iam/policy"
 import type { Policy, ListPolicyRequest } from "@/api/iam/policy/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -29,6 +29,11 @@ export function usePolicyList() {
   const { handleConfirmAction } = useGovernanceActions()
   const jsonVisible = ref(false)
   const selectedPolicy = ref<Policy | null>(null)
+  const selectedRows = ref<Policy[]>([])
+
+  const handleSelectionChange = (val: Policy[]) => {
+    selectedRows.value = val
+  }
 
   const handleCreate = () => {
     router.push({ name: "PolicyCreation" })
@@ -55,6 +60,19 @@ export function usePolicyList() {
     jsonVisible.value = true
   }
 
+  const handleBatchDelete = () => {
+    const codes = selectedRows.value.map((p) => p.code)
+    handleConfirmAction({
+      message: `确定要批量删除这 ${codes.length} 个策略定义吗？系统预设策略将被自动忽略。`,
+      api: () => batchDeletePoliciesApi({ codes }),
+      onSuccess: () => {
+        selectedRows.value = []
+        loadData()
+      },
+      successMsg: "选中的策略已批量注销"
+    })
+  }
+
   return {
     policies,
     total,
@@ -64,12 +82,15 @@ export function usePolicyList() {
     query,
     jsonVisible,
     selectedPolicy,
+    selectedRows,
     loadData,
     handleRefresh,
     handleCreate,
     handleEdit,
     handleDelete,
+    handleBatchDelete,
     handleViewJson,
+    handleSelectionChange,
     handleSizeChange,
     handleCurrentChange
   }

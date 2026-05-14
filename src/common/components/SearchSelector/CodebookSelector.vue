@@ -61,8 +61,8 @@ const loadCodebooks = async (params: any) => {
 }
 
 // 定义获取单个详情函数
-const getCodebookById = async (id: number) => {
-  const response = await detailCodebookApi(id)
+const getCodebookById = async (id: string | number) => {
+  const response = await detailCodebookApi(id as number)
   if (response.data && response.data.codebooks && response.data.codebooks.length > 0) {
     return {
       ...response,

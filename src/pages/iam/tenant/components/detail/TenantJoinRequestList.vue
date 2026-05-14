@@ -20,9 +20,9 @@ withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: "page-change", page: number): void
-  (e: "search", val: string): void
-  (e: "approve", id: number, approve: boolean): void
+  pageChange: [page: number]
+  search: [val: string]
+  approve: [id: number, approve: boolean]
 }>()
 
 const handleApproval = (id: number, approve: boolean) => {
@@ -44,7 +44,7 @@ const formatTime = (ts: number) => {
       :total="total"
       :current-page="currentPage"
       :page-size="pageSize"
-      @page-change="(page) => emit('page-change', page)"
+      @page-change="(page) => emit('pageChange', page)"
       :show-search="false"
       show-selection
       disabled

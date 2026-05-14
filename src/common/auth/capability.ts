@@ -40,7 +40,14 @@ export const IAM_CAPABILITIES = {
     /** 创建邀请链接/凭证 */
     Add: "iam:invitation:add",
     /** 撤回/销毁邀请链接 */
-    Revoke: "iam:invitation:revoke"
+    Revoke: "iam:invitation:delete",
+    /** 批量撤回邀请链接 */
+    BatchRevoke: "iam:invitation:batch_delete"
+  },
+
+  Permission: {
+    /** 查看授权关系列表 */
+    ViewAuthorizations: "iam:permission:view_authorizations"
   },
 
   /** 身份策略与授权相关 */
@@ -62,7 +69,9 @@ export const IAM_CAPABILITIES = {
     /** 批量解除策略关联 */
     BatchDetach: "iam:policy:batch_detach",
     /** 删除权限策略定义 */
-    Delete: "iam:policy:delete"
+    Delete: "iam:policy:delete",
+    /** 批量删除权限策略定义 */
+    BatchDelete: "iam:policy:batch_delete"
   },
 
   /** 角色管理相关 */

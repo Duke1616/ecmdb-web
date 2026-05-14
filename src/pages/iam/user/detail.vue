@@ -343,7 +343,7 @@ const userSubjects = computed<Subject[]>(() => {
     color: var(--gov-brand);
   }
   &.is-disabled {
-    color: #cbd5e1;
+    color: #94a3b8;
     cursor: not-allowed;
   }
 }

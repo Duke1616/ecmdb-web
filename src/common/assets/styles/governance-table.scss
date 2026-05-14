@@ -82,12 +82,12 @@
   }
 
   &:disabled, &.is-disabled {
-    background: #f1f5f9 !important;
-    border-color: #e2e8f0 !important;
-    color: #cbd5e1 !important;
-    cursor: not-allowed !important;
-    transform: none !important;
-    box-shadow: none !important;
+    background: #94a3b8;
+    border-color: #94a3b8;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 }
 
