@@ -82,6 +82,7 @@ export interface ListRoleReq {
   limit: number
   keyword?: string
   type?: number
+  tenant_id?: number
 }
 
 /** 用户关联角色列表请求 */

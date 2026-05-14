@@ -59,7 +59,8 @@ const {
   requestsQuery,
   handleRequestsPageChange,
   handleRequestsSearch,
-  handleApproval
+  handleApproval,
+  tabPermissions
 } = useTenantGovernance(() => currentTenantId.value, activeTab)
 
 const formatTimestamp = (ts: string | number) => {
@@ -102,7 +103,7 @@ const onAssignConfirm = async (users: User[]) => {
       <div class="governance-tabs-card">
         <el-tabs v-model="activeTab" class="governance-raw-tabs">
           <!-- 成员管理 -->
-          <el-tab-pane label="成员管理" name="members">
+          <el-tab-pane label="成员管理" name="members" :disabled="!tabPermissions.members">
             <TenantMemberTable
               :loading="memberLoading"
               :data="members"
@@ -111,6 +112,8 @@ const onAssignConfirm = async (users: User[]) => {
               :pageSize="memberQuery.pageSize"
               :format-timestamp="formatTimestamp"
               :show-assign="false"
+              :can-add="hasPermission(IAM_CAPABILITIES.Tenant.Assign)"
+              :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
               @page-change="handleMemberPageChange"
               @search="handleMemberSearch"
               @add="assignVisible = true"
@@ -119,7 +122,7 @@ const onAssignConfirm = async (users: User[]) => {
           </el-tab-pane>
 
           <!-- 邀请链接 -->
-          <el-tab-pane v-if="hasPermission(IAM_CAPABILITIES.Invitation.View)" label="邀请链接" name="invitation">
+          <el-tab-pane label="邀请链接" name="invitation" :disabled="!tabPermissions.invitation">
             <TenantInvitationList
               :tenant-id="currentTenantId"
               :data="links"
@@ -127,6 +130,8 @@ const onAssignConfirm = async (users: User[]) => {
               :total="linksTotal"
               :current-page="linksQuery.currentPage"
               :pageSize="linksQuery.pageSize"
+              :can-add="hasPermission(IAM_CAPABILITIES.Invitation.Add)"
+              :can-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke)"
               @page-change="handleLinksPageChange"
               @search="handleLinksSearch"
               @revoke="handleRevokeInvitation"
@@ -135,13 +140,14 @@ const onAssignConfirm = async (users: User[]) => {
           </el-tab-pane>
 
           <!-- 入驻申请 -->
-          <el-tab-pane v-if="hasPermission(IAM_CAPABILITIES.User.ManageIdentity)" label="入驻申请" name="requests">
+          <el-tab-pane label="入驻申请" name="requests" :disabled="!tabPermissions.requests">
             <TenantJoinRequestList
               :data="requests"
               :loading="requestsLoading"
               :total="requestsTotal"
               :current-page="requestsQuery.currentPage"
               :pageSize="requestsQuery.pageSize"
+              :can-handle="hasPermission(IAM_CAPABILITIES.Invitation.Handle)"
               @page-change="handleRequestsPageChange"
               @search="handleRequestsSearch"
               @approve="handleApproval"

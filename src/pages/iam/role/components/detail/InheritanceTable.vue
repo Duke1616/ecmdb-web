@@ -3,12 +3,18 @@ import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import type { InheritanceItem } from "@/api/iam/role/type"
 
-defineProps<{
-  loading: boolean
-  data: InheritanceItem[]
-  canAdd?: boolean
-  canRemove?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    loading: boolean
+    data: InheritanceItem[]
+    canAdd?: boolean
+    canRemove?: boolean
+  }>(),
+  {
+    canAdd: true,
+    canRemove: true
+  }
+)
 
 const emit = defineEmits<{
   add: []

@@ -22,7 +22,11 @@
 
           <!-- 动作组 -->
           <div class="action-group">
-            <el-button class="u-gov-btn is-large" @click="handleCreate">
+            <el-button
+              class="u-gov-btn is-large"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Add)"
+              @click="handleCreate"
+            >
               <el-icon><Plus /></el-icon>
               <span>新增租户</span>
             </el-button>
@@ -45,24 +49,31 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 租户核心资产: 朴素版 Dual-Line -->
+      <!-- 租户核心资产 -->
       <template #tenant_info="{ row }">
         <div class="dual-line-info">
-          <el-link type="primary" :underline="false" class="main-link" @click="handleViewDetail(row)">
+          <el-link
+            v-if="hasPermission(IAM_CAPABILITIES.Tenant.Detail)"
+            type="primary"
+            :underline="false"
+            class="main-link"
+            @click="handleViewDetail(row)"
+          >
             {{ row.name }}
           </el-link>
+          <span v-else class="main-title-static">{{ row.name }}</span>
           <div class="sub-detail mono">{{ row.code }}</div>
         </div>
       </template>
 
-      <!-- 身份域名: 朴素文本风格 -->
+      <!-- 身份域名 -->
       <template #domain="{ row }">
         <span class="domain-text-indicator mono">
           {{ row.domain || "-" }}
         </span>
       </template>
 
-      <!-- 运行状态: 极简版 -->
+      <!-- 运行状态 -->
       <template #status="{ row }">
         <div class="status-indicator" :class="row.status === 1 ? 'active' : 'locked'">
           <span class="dot" />
@@ -70,7 +81,7 @@
         </div>
       </template>
 
-      <!-- 操作权限: 使用 OperateBtn 重构 -->
+      <!-- 操作权限 -->
       <template #actions="{ row }">
         <OperateBtn :items="tenantOperateItems" :operate-item="row" :max-length="2" @route-event="handleOperate" />
       </template>
@@ -102,10 +113,13 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import TenantForm from "./components/TenantForm.vue"
 import { useTenantList } from "./composables/useTenantList"
 import { useRouter } from "vue-router"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import type { Column } from "@@/components/DataTable/types"
 import type { Tenant } from "@/api/iam/tenant/type"
 
 const router = useRouter()
+const { hasPermission } = usePermission()
 
 const {
   tenants,
@@ -132,8 +146,8 @@ const submitting = ref(false)
  * 租户操作配置项
  */
 const tenantOperateItems = [
-  { name: "编辑", code: "edit", type: "primary", icon: Edit },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.Tenant.Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.Tenant.Delete }
 ]
 
 const handleViewDetail = (row: Tenant) => {
@@ -270,16 +284,26 @@ const handleConfirm = async () => {
   gap: 0px;
   line-height: 1.2;
 
-  .main-link {
-    color: #1e293b;
+  .main-link,
+  .main-title-static {
     font-size: 13px;
     font-weight: 600;
     margin-bottom: 2px;
     justify-content: center;
+  }
+
+  .main-link {
+    color: #1e293b;
     &:hover {
       color: #3b82f6;
     }
   }
+
+  .main-title-static {
+    color: #1e293b;
+    cursor: default;
+  }
+
   .sub-detail {
     font-size: 11px;
     color: #94a3b8;

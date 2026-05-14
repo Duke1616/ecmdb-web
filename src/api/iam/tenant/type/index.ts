@@ -88,12 +88,12 @@ export interface RemoveMemberReq {
 
 /** 批量分配租户到用户请求 */
 export interface BatchAssignTenantsReq {
-  user_id: number
+  user_ids: number[]
   tenant_ids: number[]
 }
 
 /** 批量取消租户分配请求 */
 export interface BatchUnassignTenantsReq {
-  user_id: number
+  user_ids: number[]
   tenant_ids: number[]
 }

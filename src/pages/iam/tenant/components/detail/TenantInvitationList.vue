@@ -9,19 +9,32 @@ import { ElMessage } from "element-plus"
 import useClipboard from "vue-clipboard3"
 import dayjs from "dayjs"
 
-defineProps<{
-  data: InvitationVO[]
-  loading: boolean
-  total: number
-  currentPage: number
-  pageSize: number
-  tenantId?: number
-}>()
+const selection = defineModel<InvitationVO[]>("selection", { default: () => [] })
+
+withDefaults(
+  defineProps<{
+    data: InvitationVO[]
+    loading: boolean
+    total: number
+    currentPage: number
+    pageSize: number
+    tenantId?: number
+    canAdd?: boolean
+    canRevoke?: boolean
+    canBatchRevoke?: boolean
+  }>(),
+  {
+    canAdd: true,
+    canRevoke: true,
+    canBatchRevoke: true
+  }
+)
 
 const emit = defineEmits<{
   (e: "page-change", page: number): void
   (e: "search", val: string): void
   (e: "revoke", row: InvitationVO): void
+  (e: "batch-revoke"): void
   (e: "refresh"): void
 }>()
 
@@ -64,7 +77,8 @@ const formatTime = (ts: number) => {
 <template>
   <div class="invitation-list-page">
     <PremiumList
-      title="邀请资产列表"
+      v-model:selection="selection"
+      title="邀请凭证列表"
       :data="data"
       :loading="loading"
       :total="total"
@@ -74,12 +88,19 @@ const formatTime = (ts: number) => {
       :show-search="false"
       indicator-color="#3b82f6"
       show-selection
-      disabled
+      row-key="code"
     >
       <template #header-actions>
-        <el-button class="u-gov-btn" @click="handleCreate">
+        <el-button class="u-gov-btn" :disabled="!canAdd" @click="handleCreate">
           <el-icon><Plus /></el-icon>
           <span>初始化凭证</span>
+        </el-button>
+      </template>
+
+      <template #batch-actions>
+        <el-button class="u-gov-btn is-danger" :disabled="!canBatchRevoke" @click="emit('batch-revoke')">
+          <el-icon><Delete /></el-icon>
+          <span>批量撤回凭证</span>
         </el-button>
       </template>
 
@@ -121,7 +142,14 @@ const formatTime = (ts: number) => {
           </div>
 
           <div class="cell-actions">
-            <el-button type="danger" link size="small" class="delete-btn" @click="handleRevoke(row)">
+            <el-button
+              type="danger"
+              link
+              size="small"
+              class="delete-btn"
+              :disabled="!canRevoke"
+              @click="handleRevoke(row)"
+            >
               <el-icon><Delete /></el-icon>
               <span>撤回</span>
             </el-button>

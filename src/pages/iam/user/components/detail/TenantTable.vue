@@ -10,17 +10,24 @@ const { hasPermission } = usePermission()
 
 const selection = defineModel<Tenant[]>("selection", { default: () => [] })
 
-defineProps<{
-  loading: boolean
-  data: Tenant[]
-  total: number
-  currentPage: number
-  pageSize: number
-  formatTimestamp: (ts: string | number) => string
-  canAdd?: boolean
-  canUnbind?: boolean
-  canBatchUnbind?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    loading: boolean
+    data: Tenant[]
+    total: number
+    currentPage: number
+    pageSize: number
+    formatTimestamp: (ts: string | number) => string
+    canAdd?: boolean
+    canUnbind?: boolean
+    canBatchUnbind?: boolean
+  }>(),
+  {
+    canAdd: true,
+    canUnbind: true,
+    canBatchUnbind: true
+  }
+)
 
 const emit = defineEmits<{
   pageChange: [page: number]

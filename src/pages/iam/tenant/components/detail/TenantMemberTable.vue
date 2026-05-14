@@ -3,12 +3,8 @@ import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { TenantMember } from "@/api/iam/tenant/type"
-import { IAM_CAPABILITIES } from "@/common/auth/capability"
-import { usePermission } from "@/common/composables/usePermission"
 
-const { hasPermission } = usePermission()
-
-const selection = ref<TenantMember[]>([])
+const selection = defineModel<TenantMember[]>("selection", { default: () => [] })
 
 withDefaults(
   defineProps<{
@@ -19,9 +15,15 @@ withDefaults(
     pageSize: number
     formatTimestamp: (ts: string | number) => string
     showAssign?: boolean
+    canAdd?: boolean
+    canUnbind?: boolean
+    canBatchUnbind?: boolean
   }>(),
   {
-    showAssign: true
+    showAssign: true,
+    canAdd: true,
+    canUnbind: true,
+    canBatchUnbind: true
   }
 )
 
@@ -29,6 +31,7 @@ const emit = defineEmits<{
   pageChange: [page: number]
   add: []
   unbind: [row: TenantMember]
+  batchUnbind: []
   search: [keyword: string]
 }>()
 </script>
@@ -65,11 +68,18 @@ const emit = defineEmits<{
     <!-- 头部操作 -->
     <template #header-actions>
       <div v-if="showAssign" class="header-action-stack">
-        <el-button class="u-gov-btn" :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Assign)" @click="emit('add')">
+        <el-button class="u-gov-btn" :disabled="!canAdd" @click="emit('add')">
           <el-icon><Plus /></el-icon>
           <span>分派成员</span>
         </el-button>
       </div>
+    </template>
+
+    <template #batch-actions>
+      <el-button class="u-gov-btn is-danger" :disabled="!canBatchUnbind" @click="emit('batchUnbind')">
+        <el-icon><Delete /></el-icon>
+        <span>批量移除成员</span>
+      </el-button>
     </template>
 
     <!-- 列表项内容 -->
@@ -116,7 +126,7 @@ const emit = defineEmits<{
             link
             size="small"
             class="delete-btn"
-            :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
+            :disabled="!canUnbind"
             @click.stop="emit('unbind', row)"
           >
             <el-icon><Delete /></el-icon>

@@ -11,6 +11,12 @@ export const IAM_CAPABILITIES = {
     Switch: "iam:tenant:switch",
     /** 查看租户详情 */
     Detail: "iam:tenant:get",
+    /** 新增租户空间 */
+    Add: "iam:tenant:add",
+    /** 编辑租户资料 */
+    Edit: "iam:tenant:edit",
+    /** 销毁租户空间 */
+    Delete: "iam:tenant:delete",
     /** 查看租户成员列表 */
     ViewMembers: "iam:tenant:view_members",
     /** 租户分派成员 */
@@ -30,7 +36,11 @@ export const IAM_CAPABILITIES = {
     /** 查看待审批申请列表 */
     ViewRequests: "iam:invitation:view_requests",
     /** 处理加入申请 (审批/拒绝) */
-    Handle: "iam:invitation:handle_request"
+    Handle: "iam:invitation:handle_request",
+    /** 创建邀请链接/凭证 */
+    Add: "iam:invitation:add",
+    /** 撤回/销毁邀请链接 */
+    Revoke: "iam:invitation:revoke"
   },
 
   /** 身份策略与授权相关 */

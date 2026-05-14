@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { useRouter } from "vue-router"
 import { Delete, Edit, OfficeBuilding, Lock } from "@element-plus/icons-vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
@@ -10,6 +10,8 @@ import TenantForm from "./components/TenantForm.vue"
 // Composables
 import { useTenantDetail } from "./composables/useTenantDetail"
 import { useTenantGovernance } from "./composables/useTenantGovernance"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // Components
 import TenantMemberTable from "./components/detail/TenantMemberTable.vue"
@@ -20,6 +22,7 @@ import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import type { User } from "@/api/iam/user/type"
 
 const router = useRouter()
+const { hasPermission } = usePermission()
 const {
   tenantInfo,
   loading: detailLoading,
@@ -67,6 +70,8 @@ const {
   handleMemberSearch,
   handleBatchAssignMember,
   handleRemoveMember,
+  handleBatchRemoveMember,
+  membersSelection,
   // 邀请
   links,
   linksTotal,
@@ -75,6 +80,8 @@ const {
   handleLinksPageChange,
   handleLinksSearch,
   handleRevokeInvitation,
+  handleBatchRevokeInvitation,
+  linksSelection,
   fetchLinks,
   // 申请
   requests,
@@ -83,7 +90,8 @@ const {
   requestsQuery,
   handleRequestsPageChange,
   handleRequestsSearch,
-  handleApproval
+  handleApproval,
+  tabPermissions
 } = useTenantGovernance(() => tenantInfo.value?.id, activeTab)
 const tenantFormRef = ref<InstanceType<typeof TenantForm>>()
 const submitting = ref(false)
@@ -125,11 +133,19 @@ const onAssignConfirm = async (users: User[]) => {
       >
         <template #actions>
           <div class="header-action-stack">
-            <el-button class="u-gov-btn" @click="editVisible = true">
+            <el-button
+              class="u-gov-btn"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Edit)"
+              @click="editVisible = true"
+            >
               <el-icon><Edit /></el-icon>
               <span>完善资料</span>
             </el-button>
-            <el-button class="u-gov-btn is-danger" @click="handleDelete">
+            <el-button
+              class="u-gov-btn is-danger"
+              :disabled="!hasPermission(IAM_CAPABILITIES.Tenant.Delete)"
+              @click="handleDelete"
+            >
               <el-icon><Delete /></el-icon>
               <span>销毁空间</span>
             </el-button>
@@ -145,45 +161,56 @@ const onAssignConfirm = async (users: User[]) => {
         <div class="governance-tabs-card">
           <el-tabs v-model="activeTab" class="governance-raw-tabs">
             <!-- 成员管理 -->
-            <el-tab-pane label="成员管理" name="members">
+            <el-tab-pane label="成员管理" name="members" :disabled="!tabPermissions.members">
               <TenantMemberTable
+                v-model:selection="membersSelection"
                 :loading="memberLoading"
                 :data="members"
                 :total="memberTotal"
                 :current-page="memberQuery.currentPage"
                 :page-size="memberQuery.pageSize"
                 :format-timestamp="formatTimestamp"
+                :can-add="hasPermission(IAM_CAPABILITIES.Tenant.Assign)"
+                :can-unbind="hasPermission(IAM_CAPABILITIES.Tenant.Unassign)"
+                :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Tenant.BatchUnassign) && membersSelection.length > 0"
                 @page-change="handleMemberPageChange"
                 @search="handleMemberSearch"
                 @add="assignVisible = true"
                 @unbind="handleRemoveMember"
+                @batch-unbind="handleBatchRemoveMember"
               />
             </el-tab-pane>
 
             <!-- 邀请链接 -->
-            <el-tab-pane label="邀请链接" name="invitation">
+            <el-tab-pane label="邀请链接" name="invitation" :disabled="!tabPermissions.invitation">
               <TenantInvitationList
+                v-model:selection="linksSelection"
                 :tenant-id="tenantInfo.id"
                 :data="links"
                 :loading="linksLoading"
                 :total="linksTotal"
                 :current-page="linksQuery.currentPage"
                 :page-size="linksQuery.pageSize"
+                :can-add="hasPermission(IAM_CAPABILITIES.Invitation.Add)"
+                :can-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke)"
+                :can-batch-revoke="hasPermission(IAM_CAPABILITIES.Invitation.Revoke) && linksSelection.length > 0"
                 @page-change="handleLinksPageChange"
                 @search="handleLinksSearch"
                 @revoke="handleRevokeInvitation"
+                @batch-revoke="handleBatchRevokeInvitation"
                 @refresh="fetchLinks"
               />
             </el-tab-pane>
 
             <!-- 入驻申请 -->
-            <el-tab-pane label="入驻申请" name="requests">
+            <el-tab-pane label="入驻申请" name="requests" :disabled="!tabPermissions.requests">
               <TenantJoinRequestList
                 :data="requests"
                 :loading="requestsLoading"
                 :total="requestsTotal"
                 :current-page="requestsQuery.currentPage"
                 :page-size="requestsQuery.pageSize"
+                :can-handle="hasPermission(IAM_CAPABILITIES.Invitation.Handle)"
                 @page-change="handleRequestsPageChange"
                 @search="handleRequestsSearch"
                 @approve="handleApproval"
@@ -274,6 +301,10 @@ const onAssignConfirm = async (users: User[]) => {
   color: #64748b;
   &.is-active {
     color: var(--gov-brand);
+  }
+  &.is-disabled {
+    color: #cbd5e1;
+    cursor: not-allowed;
   }
 }
 :deep(.el-tabs__active-bar) {

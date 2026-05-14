@@ -10,19 +10,26 @@ const { hasPermission } = usePermission()
 
 const selection = defineModel<Role[]>("selection", { default: () => [] })
 
-defineProps<{
-  loading: boolean
-  data: Role[]
-  total: number
-  currentPage: number
-  pageSize: number
-  formatTimestamp: (ts: string | number) => string
-  // 权限控制
-  selectable?: (row: Role) => boolean
-  canAdd?: boolean
-  canUnbind?: boolean
-  canBatchUnbind?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    loading: boolean
+    data: Role[]
+    total: number
+    currentPage: number
+    pageSize: number
+    formatTimestamp: (ts: string | number) => string
+    // 权限控制
+    selectable?: (row: Role) => boolean
+    canAdd?: boolean
+    canUnbind?: boolean
+    canBatchUnbind?: boolean
+  }>(),
+  {
+    canAdd: true,
+    canUnbind: true,
+    canBatchUnbind: true
+  }
+)
 
 const emit = defineEmits<{
   pageChange: [page: number]

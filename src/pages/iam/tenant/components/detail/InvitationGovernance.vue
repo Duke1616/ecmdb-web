@@ -64,7 +64,7 @@ const formatTime = (ts: number) => {
         </template>
 
         <PremiumList
-          title="邀请资产列表"
+          title="邀请凭证列表"
           :data="links"
           :loading="linksLoading"
           :total="linksTotal"

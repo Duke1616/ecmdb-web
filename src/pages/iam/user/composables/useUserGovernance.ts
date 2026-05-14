@@ -207,7 +207,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     tenantLoading.value = true
     try {
       await batchAssignTenantsApi({
-        user_id: userId.value,
+        user_ids: [userId.value],
         tenant_ids: selectedTenants.map((t) => t.id)
       })
       tenantSelectVisible.value = false
@@ -225,7 +225,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
       message: `确认要将用户从所选的 ${selectedTenants.value.length} 个租户空间中移除吗？此操作将导致用户立即失去相关空间的所有访问权限。`,
       api: () =>
         batchUnassignTenantsApi({
-          user_id: userId.value!,
+          user_ids: [userId.value!],
           tenant_ids: selectedTenants.value.map((t) => t.id)
         }),
       onSuccess: () => {

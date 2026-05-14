@@ -44,10 +44,9 @@ export function listInvitationsApi(data: invitation.InvitationPageReq) {
 /**
  * 撤回邀请链接
  */
-export function revokeInvitationApi(code: string, tenantId?: number) {
+export function revokeInvitationApi(code: string) {
   return instance.delete<void>({
-    url: `${API_SERVICE.IAM}/invitation/revoke/${code}`,
-    params: { tenant_id: tenantId }
+    url: `${API_SERVICE.IAM}/invitation/revoke/${code}`
   })
 }
 
@@ -67,6 +66,16 @@ export function listJoinRequestsApi(data: invitation.JoinRequestPageReq) {
 export function handleJoinRequestApi(data: invitation.HandleJoinRequestReq) {
   return instance.post<void>({
     url: `${API_SERVICE.IAM}/invitation/requests/handle`,
+    data
+  })
+}
+
+/**
+ * 批量撤回邀请链接
+ */
+export function batchRevokeInvitationApi(data: invitation.BatchRevokeInvitationReq) {
+  return instance.post<void>({
+    url: `${API_SERVICE.IAM}/invitation/batch_revoke`,
     data
   })
 }

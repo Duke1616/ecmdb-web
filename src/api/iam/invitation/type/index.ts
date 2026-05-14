@@ -61,3 +61,7 @@ export interface HandleJoinRequestReq {
   approve: boolean
   tenant_id?: number
 }
+
+export interface BatchRevokeInvitationReq {
+  codes: string[]
+}

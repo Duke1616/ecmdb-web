@@ -5,13 +5,19 @@ import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import type { JoinRequestVO } from "@/api/iam/invitation/type"
 import dayjs from "dayjs"
 
-defineProps<{
-  data: JoinRequestVO[]
-  loading: boolean
-  total: number
-  currentPage: number
-  pageSize: number
-}>()
+withDefaults(
+  defineProps<{
+    data: JoinRequestVO[]
+    loading: boolean
+    total: number
+    currentPage: number
+    pageSize: number
+    canHandle?: boolean
+  }>(),
+  {
+    canHandle: true
+  }
+)
 
 const emit = defineEmits<{
   (e: "page-change", page: number): void
@@ -82,6 +88,7 @@ const formatTime = (ts: number) => {
               link
               size="small"
               class="action-btn approve-btn"
+              :disabled="!canHandle"
               @click="handleApproval(row.id, true)"
             >
               <el-icon><Check /></el-icon>
@@ -92,6 +99,7 @@ const formatTime = (ts: number) => {
               link
               size="small"
               class="action-btn reject-btn"
+              :disabled="!canHandle"
               @click="handleApproval(row.id, false)"
             >
               <el-icon><Close /></el-icon>

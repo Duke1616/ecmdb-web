@@ -6,18 +6,25 @@ import type { User } from "@/api/iam/user/type"
 
 const selection = defineModel<User[]>("selection", { default: () => [] })
 
-defineProps<{
-  loading: boolean
-  data: User[]
-  total: number
-  currentPage: number
-  pageSize: number
-  formatTimestamp: (ts: string | number) => string
-  selectable?: (row: User) => boolean
-  canAdd?: boolean
-  canUnbind?: boolean
-  canBatchUnbind?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    loading: boolean
+    data: User[]
+    total: number
+    currentPage: number
+    pageSize: number
+    formatTimestamp: (ts: string | number) => string
+    selectable?: (row: User) => boolean
+    canAdd?: boolean
+    canUnbind?: boolean
+    canBatchUnbind?: boolean
+  }>(),
+  {
+    canAdd: true,
+    canUnbind: true,
+    canBatchUnbind: true
+  }
+)
 
 const emit = defineEmits<{
   pageChange: [page: number]
