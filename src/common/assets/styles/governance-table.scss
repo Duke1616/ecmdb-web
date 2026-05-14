@@ -25,7 +25,8 @@
     font-size: 14px;
   }
 
-  &:hover, &:focus {
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
     background: #66b1ff;
     border-color: #66b1ff;
     transform: translateY(-1px);
@@ -39,14 +40,15 @@
     border-color: #3b82f6;
     box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
 
-    &:hover, &:focus {
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
       background: #2563eb;
       border-color: #2563eb;
       box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
     }
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(0);
   }
 
@@ -57,7 +59,8 @@
     color: #ffffff;
     box-shadow: 0 2px 4px rgba(245, 108, 108, 0.15);
 
-    &:hover, &:focus {
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
       background: #f78989;
       border-color: #f78989;
       box-shadow: 0 4px 12px rgba(247, 137, 137, 0.25);
@@ -72,7 +75,8 @@
     color: #64748b;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
-    &:hover, &:focus {
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
       background: #f8fafc;
       border-color: #cbd5e1;
       color: #475569;
@@ -81,13 +85,47 @@
     }
   }
 
-  &:disabled, &.is-disabled {
+  &:disabled,
+  &.is-disabled {
     background: #94a3b8;
     border-color: #94a3b8;
     color: rgba(255, 255, 255, 0.8);
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
+    pointer-events: none; // NOTE: 去除禁用状态下的所有鼠标交互（悬浮、点击等）
+  }
+}
+
+// 1.2 刷新/次要动作按钮 (Square Icon Style)
+.el-button.eiam-refresh-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  border-radius: 8px;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    color: #409eff;
+    border-color: #409eff;
+    background: #f0f7ff;
+    transform: translateY(-1px);
+  }
+
+  &:disabled,
+  &.is-disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
   }
 }
 

@@ -294,26 +294,6 @@ const handleConfirm = async () => {
       transform: translateY(-1px);
     }
   }
-
-  .eiam-refresh-btn {
-    width: 38px;
-    height: 38px;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    color: #64748b;
-    transition: all 0.2s;
-
-    &:hover {
-      color: #409eff;
-      border-color: #409eff;
-      background: #f0f7ff;
-      transform: translateY(-1px);
-    }
-  }
 }
 
 .dual-line-info {
