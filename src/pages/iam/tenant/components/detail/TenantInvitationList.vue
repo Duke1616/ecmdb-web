@@ -120,7 +120,7 @@ const formatTime = (ts: number) => {
       <template #item="{ item: row }">
         <div class="gov-table-grid is-row is-invitation">
           <div class="cell-identity">
-            <AssetIdentityCell :title="row.code" sub-title="点击复制邀请链接" @click="copyLink(row.code)" />
+            <AssetIdentityCell :title="row.code" sub-title="点击复制邀请链接" clickable @click="copyLink(row.code)" />
           </div>
 
           <div class="cell-payload">

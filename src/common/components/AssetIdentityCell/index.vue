@@ -10,24 +10,39 @@ interface Props {
   linkTo?: any
   /** 居中对齐 */
   centered?: boolean
+  /** 是否可点击（即使没有 linkTo） */
+  clickable?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: "",
-  centered: false
+  centered: false,
+  clickable: false
 })
+
+const emit = defineEmits<{
+  click: [event: MouseEvent]
+}>()
 
 const router = useRouter()
 
-const handleNavigate = () => {
+const handleClick = (event: MouseEvent) => {
   if (props.linkTo) {
     router.push(props.linkTo)
   }
+  emit("click", event)
 }
 </script>
 
 <template>
-  <div class="asset-identity-cell" :class="{ 'is-link': !!linkTo, 'is-centered': centered }" @click="handleNavigate">
+  <div
+    class="asset-identity-cell"
+    :class="{
+      'is-link': !!linkTo || clickable,
+      'is-centered': centered
+    }"
+    @click="handleClick"
+  >
     <div class="meta-info">
       <div class="main-title-wrap">
         <span v-if="!linkTo" class="main-title">{{ title }}</span>
@@ -52,6 +67,7 @@ $governance-blue: #3b82f6;
   width: 100%;
 
   cursor: default;
+  pointer-events: auto;
 
   &.is-centered {
     justify-content: center;
@@ -60,18 +76,19 @@ $governance-blue: #3b82f6;
       text-align: center;
     }
   }
+
   &.is-link {
     cursor: pointer;
-    pointer-events: auto;
 
     &:hover .main-title,
     &:hover .main-link {
       color: $governance-blue !important;
     }
-  }
 
-  &:not(.is-link) {
-    pointer-events: none;
+    &:hover .sub-label {
+      color: $governance-blue;
+      opacity: 0.8;
+    }
   }
 
   .meta-info {
@@ -109,6 +126,7 @@ $governance-blue: #3b82f6;
       color: #94a3b8;
       font-family: ui-monospace, SFMono-Regular, "Cascadia Code", Menlo, monospace;
       letter-spacing: 0.01em;
+      transition: color 0.15s ease;
     }
   }
 }
