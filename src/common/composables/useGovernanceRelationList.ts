@@ -2,7 +2,7 @@ import { watch, type Ref, toValue } from "vue"
 import { useListManager } from "./useListManager"
 import { useSelectionAction } from "./useSelectionAction"
 
-interface GovernanceRelationOptions<T, Q> {
+interface GovernanceRelationOptions<Q extends object> {
   /** 获取列表数据的接口 */
   fetchApi: (params: Q) => Promise<any>
   /** 返回数据中列表对应的 key */
@@ -23,7 +23,7 @@ interface GovernanceRelationOptions<T, Q> {
  * 治理详情页关联列表通用逻辑抽象
  * 集成了：列表分页管理、批量勾选、Tab 联动懒加载、刷新机制
  */
-export function useGovernanceRelationList<T, Q>(options: GovernanceRelationOptions<T, Q>) {
+export function useGovernanceRelationList<T, Q extends object>(options: GovernanceRelationOptions<Q>) {
   const { fetchApi, listKey, activeTab, tabName, enabled, initialQuery, afterMutate } = options
 
   // 1. 核心列表管理 (分页、搜索、加载状态)
