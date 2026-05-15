@@ -7,7 +7,7 @@
     :danger-action="{ capability: IAM_CAPABILITIES.Policy.BatchDetach, label: '批量解除' }"
     @refresh="handleRefresh"
     @primary-action="handleCreate"
-    @danger-action="handleBatchRevoke(selectedRows)"
+    @danger-action="handleBatchRevoke"
   >
     <template #search>
       <div class="search-command-inner">
@@ -118,7 +118,9 @@ const {
   query,
   currentPage,
   pageSize,
+  selectedRows,
   handleRefresh,
+  handleSelectionChange,
   handleSizeChange,
   handleCurrentChange,
   handleRevoke,
@@ -163,7 +165,6 @@ const OPERATE_BUTTONS = computed(() => [
 ])
 
 const showAuthorizeDrawer = ref(false)
-const selectedRows = ref<Authorization[]>([])
 const tableRef = ref<InstanceType<typeof DataTable>>()
 
 /**
@@ -206,10 +207,6 @@ const handleOperateEvent = (row: Authorization, code: string) => {
   if (code === "revoke") {
     handleRevoke(row)
   }
-}
-
-const handleSelectionChange = (val: Authorization[]) => {
-  selectedRows.value = val
 }
 
 const handleCreate = () => {

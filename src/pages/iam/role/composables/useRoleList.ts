@@ -3,6 +3,7 @@ import { listRolesApi, deleteRoleApi, batchDeleteRolesApi } from "@/api/iam/role
 import type { Role, ListRoleReq } from "@/api/iam/role/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import { useSelectionAction } from "@/common/composables/useSelectionAction"
 
 export function useRoleList() {
   // 使用通用列表管理器
@@ -24,20 +25,16 @@ export function useRoleList() {
 
   // 交互与动作管理器
   const { handleConfirmAction } = useGovernanceActions()
+  const { selectedRows, handleSelectionChange, runSelectionAction } = useSelectionAction<Role>()
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
   const currentEditCode = ref<string | null>(null)
-  const selectedRows = ref<Role[]>([])
 
   const handleBatchDelete = () => {
-    if (selectedRows.value.length === 0) return
-    handleConfirmAction({
-      message: `确定要注销选中的 ${selectedRows.value.length} 个角色吗？此操作不可逆。`,
-      api: () => batchDeleteRolesApi({ ids: selectedRows.value.map((r) => r.id) }),
-      onSuccess: () => {
-        selectedRows.value = []
-        loadData()
-      },
+    runSelectionAction({
+      message: (items) => `确定要注销选中的 ${items.length} 个角色吗？此操作不可逆。`,
+      api: (items) => batchDeleteRolesApi({ ids: items.map((r) => r.id) }),
+      onSuccess: loadData,
       successMsg: "选中的角色已成功注销"
     })
   }
@@ -85,6 +82,7 @@ export function useRoleList() {
     handleDelete,
     handleBatchDelete,
     selectedRows,
+    handleSelectionChange,
     handleFormSuccess,
     handleSizeChange,
     handleCurrentChange

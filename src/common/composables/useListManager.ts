@@ -51,6 +51,7 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
     currentPage: 1,
     pageSize: 10
   })
+  let requestSeq = 0
 
   const query = reactive({
     keyword: "",
@@ -62,6 +63,7 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
 
   // --- 3. 核心行为 ---
   const fetchList = async () => {
+    const seq = ++requestSeq
     loading.value = true
     try {
       const requestParams = {
@@ -71,6 +73,7 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
       } as Q & { offset: number; limit: number }
 
       const res = await options.fetchApi(requestParams)
+      if (seq !== requestSeq) return
 
       // 提取数据：兼容各种深度的 API 返回结构
       const apiData = res.data as ListResponse<T>
@@ -79,9 +82,12 @@ export function useListManager<T, Q extends object>(options: ListManagerOptions<
         total.value = apiData.total || 0
       }
     } catch (err: unknown) {
+      if (seq !== requestSeq) return
       console.error(`[ListManager] 数据加载失败:`, err)
     } finally {
-      loading.value = false
+      if (seq === requestSeq) {
+        loading.value = false
+      }
     }
   }
 

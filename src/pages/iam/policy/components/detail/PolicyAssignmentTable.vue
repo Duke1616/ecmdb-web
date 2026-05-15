@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { computed, ref, watch } from "vue"
 import { Plus, Delete } from "@element-plus/icons-vue"
-import dayjs from "dayjs"
 import { useRouter } from "vue-router"
 import { listAuthorizationsApi } from "@/api/iam/permission"
 import { batchDetachPolicyApi } from "@/api/iam/policy"
-import type { Authorization } from "@/api/iam/permission/type"
+import type { Authorization, AuthorizationQueryReq } from "@/api/iam/permission/type"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import { formatTimestamp } from "@@/utils/day"
+import { useListManager } from "@/common/composables/useListManager"
 
 interface Props {
   policyCode: string
@@ -32,33 +33,35 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const { hasPermission } = usePermission()
-const loading = ref(false)
-const list = ref<Authorization[]>([])
-const total = ref(0)
 const selectedItems = ref<Authorization[]>([])
-const query = ref({
-  currentPage: 1,
-  pageSize: 10,
-  keyword: ""
+const {
+  list,
+  total,
+  loading,
+  pagination,
+  fetchList: loadAssignments,
+  handlePageChange: handleListPageChange,
+  handleSearch: handleListSearch
+} = useListManager<Authorization, AuthorizationQueryReq>({
+  fetchApi: (params) =>
+    listAuthorizationsApi({
+      ...params,
+      keyword: params.keyword || props.policyCode
+    }),
+  listKey: "authorizations",
+  initialQuery: {
+    keyword: "",
+    sub_type: undefined,
+    obj_type: undefined
+  }
 })
 
-/**
- * 核心：修复 API 调用时的解构逻辑，确保获取的是业务 data
- */
+const currentPage = computed(() => pagination.currentPage)
+const pageSize = computed(() => pagination.pageSize)
+
 const fetchAssignments = async () => {
-  loading.value = true
-  try {
-    const { data } = await listAuthorizationsApi({
-      keyword: query.value.keyword || props.policyCode,
-      offset: (query.value.currentPage - 1) * query.value.pageSize,
-      limit: query.value.pageSize
-    })
-    list.value = data.authorizations
-    total.value = data.total
-    selectedItems.value = [] // 翻页或刷新时清空选中的项
-  } finally {
-    loading.value = false
-  }
+  selectedItems.value = []
+  await loadAssignments()
 }
 
 /**
@@ -73,32 +76,36 @@ const handleSubjectClick = (row: Authorization) => {
 }
 
 const handlePageChange = (page: number) => {
-  query.value.currentPage = page
-  fetchAssignments()
+  selectedItems.value = []
+  handleListPageChange(page)
 }
 
 // 修复：处理搜索事件
 const handleSearch = (keyword: string) => {
-  query.value.keyword = keyword
-  query.value.currentPage = 1
-  fetchAssignments()
+  selectedItems.value = []
+  handleListSearch(keyword)
 }
+
+const toDetachAssignment = (item: Authorization) => ({
+  sub_type: item.sub_type,
+  sub_code: item.subject,
+  policy_code: item.target
+})
 
 // 移除单一权限
 const handleRemove = (row: Authorization) => {
+  if (!props.canDetach) {
+    ElMessage.warning("当前账号无权移除授权")
+    return
+  }
+
   ElMessageBox.confirm(`确定要移除对主体 [${row.subject}] 的授权吗？`, "移除授权警告", {
     type: "warning",
     confirmButtonText: "确定移除",
     confirmButtonClass: "el-button--danger"
   }).then(async () => {
     await batchDetachPolicyApi({
-      assignments: [
-        {
-          sub_type: row.sub_type,
-          sub_code: row.subject,
-          policy_code: row.target
-        }
-      ]
+      assignments: [toDetachAssignment(row)]
     })
     ElMessage.success("授权移除成功！")
     fetchAssignments()
@@ -108,17 +115,19 @@ const handleRemove = (row: Authorization) => {
 // 批量移除权限
 const handleBatchRemove = () => {
   const count = selectedItems.value.length
+  if (count === 0) return
+  if (!props.canBatchDetach) {
+    ElMessage.warning("当前账号无权批量移除授权")
+    return
+  }
+
   ElMessageBox.confirm(`确定要批量移除这 ${count} 项授权记录吗？此操作无法撤销。`, "批量移除警告", {
     type: "warning",
     confirmButtonText: "确定批量移除",
     confirmButtonClass: "el-button--danger"
   }).then(async () => {
     await batchDetachPolicyApi({
-      assignments: selectedItems.value.map((item) => ({
-        sub_type: item.sub_type,
-        sub_code: item.subject,
-        policy_code: item.target
-      }))
+      assignments: selectedItems.value.map(toDetachAssignment)
     })
     ElMessage.success(`已成功批量移除 ${count} 项授权记录！`)
     selectedItems.value = []
@@ -126,9 +135,7 @@ const handleBatchRemove = () => {
   })
 }
 
-onMounted(() => {
-  fetchAssignments()
-})
+watch(() => props.policyCode, fetchAssignments)
 
 // 暴露方法给父组件，用于刷新
 defineExpose({
@@ -142,8 +149,8 @@ defineExpose({
       :data="list"
       :total="total"
       :loading="loading"
-      :current-page="query.currentPage"
-      :page-size="query.pageSize"
+      :current-page="currentPage"
+      :page-size="pageSize"
       title="授权关系治理"
       search-placeholder="搜索关联的主体标识、名称或备注..."
       indicator-color="#3b82f6"
@@ -241,7 +248,7 @@ defineExpose({
 
           <div class="cell-time">
             <div class="time-item">
-              <span>{{ dayjs(row.ctime).isValid() ? dayjs(row.ctime).format("YYYY-MM-DD HH:mm") : "-" }}</span>
+              <span>{{ formatTimestamp(row.ctime) || "-" }}</span>
             </div>
           </div>
 

@@ -78,7 +78,7 @@ export function usePolicyForm(props: { isEdit: boolean; code?: string }, emit: (
   }
 
   const duplicateStatement = (index: number) => {
-    const copy = normalizeStatements([JSON.parse(JSON.stringify(formData.statement[index]))])[0]
+    const copy = normalizeStatements([structuredClone(formData.statement[index])])[0]
     formData.statement.splice(index + 1, 0, copy)
   }
 

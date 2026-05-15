@@ -82,15 +82,8 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import IdentitySourceForm from "./components/IdentitySourceForm.vue"
 import LdapSyncDialog from "./components/LdapSyncDialog.vue"
 import { useIdentitySource } from "./composables/useIdentitySource"
-import { IdentitySourceType, OIDCProviderType, type IdentitySourceVO } from "@/api/iam/identity-source/type"
-
-// 导入自定义 SVG 图标
-import adIcon from "./svg/Windows AD.svg"
-import ldapIcon from "./svg/ldap.svg"
-import feishuIcon from "./svg/feishu.svg"
-import oidcIcon from "./svg/oidc.svg"
-import passkeyIcon from "./svg/webauthn.svg"
-import localIcon from "./svg/pass.svg"
+import { IdentitySourceType, type IdentitySourceVO } from "@/api/iam/identity-source/type"
+import { getProviderInfo } from "./providerRegistry"
 
 import type { Column } from "@@/components/DataTable/types"
 
@@ -158,28 +151,6 @@ const handleDrawerConfirm = async () => {
   } finally {
     submitting.value = false
   }
-}
-
-const getProviderInfo = (row: IdentitySourceVO) => {
-  if (row.type === IdentitySourceType.LDAP) {
-    // 简单判定是否为 AD (通过名称或特定配置，这里简单以名称判定示例，实际可按业务逻辑)
-    const isAD = row.name.toLowerCase().includes("ad") || row.name.includes("域")
-    return {
-      label: isAD ? "Windows AD" : "LDAP",
-      icon: isAD ? adIcon : ldapIcon
-    }
-  }
-  if (row.type === IdentitySourceType.OIDC) {
-    const isFeishu = row.oidc?.provider_type === OIDCProviderType.FEISHU
-    return {
-      label: isFeishu ? "飞书 SSO" : "通用 OIDC",
-      icon: isFeishu ? feishuIcon : oidcIcon
-    }
-  }
-  if (row.type === IdentitySourceType.PASSKEY) {
-    return { label: "Passkey", icon: passkeyIcon }
-  }
-  return { label: "静态密码", icon: localIcon }
 }
 </script>
 

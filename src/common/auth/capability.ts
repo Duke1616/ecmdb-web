@@ -17,6 +17,8 @@ export const IAM_CAPABILITIES = {
     Edit: "iam:tenant:edit",
     /** 销毁租户空间 */
     Delete: "iam:tenant:delete",
+    /** 批量销毁租户空间 */
+    BatchDelete: "iam:tenant:batch_delete",
     /** 查看租户成员列表 */
     ViewMembers: "iam:tenant:view_members",
     /** 租户分派成员 */

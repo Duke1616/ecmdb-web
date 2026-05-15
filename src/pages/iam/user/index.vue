@@ -129,18 +129,14 @@ const {
   handleDelete,
   handleBatchDelete,
   selectedRows,
+  handleSelectionChange,
   handleFormSuccess,
   handleSizeChange,
   handleCurrentChange
 } = useUserList()
 
 const userFormRef = ref<InstanceType<typeof UserForm>>()
-const tableRef = ref<InstanceType<typeof DataTable>>()
 const submitting = ref(false)
-
-const handleSelectionChange = (val: User[]) => {
-  selectedRows.value = val
-}
 
 /**
  * 打包表格通用属性，实现模板瘦身

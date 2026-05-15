@@ -1,11 +1,13 @@
-import { ref, onMounted } from "vue"
-import { useRoute } from "vue-router"
-import { getPolicyDetailApi } from "@/api/iam/policy"
+import { ref, onMounted, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
+import { ElMessage } from "element-plus"
+import { deletePolicyApi, getPolicyDetailApi } from "@/api/iam/policy"
 import type { Policy, ServiceSummary } from "@/api/iam/policy/type"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
 export function usePolicyDetail() {
   const route = useRoute()
+  const router = useRouter()
   const policy = ref<Policy | null>(null)
   const services = ref<ServiceSummary[]>([])
   const loading = ref(false)
@@ -35,11 +37,16 @@ export function usePolicyDetail() {
     if (!policy.value) return
     handleConfirmAction({
       message: `确定要永久删除策略 "${policy.value.name}" 吗？此操作不可逆。`,
-      api: () => Promise.resolve(true), // TODO: 接入真实删除 API
-      onSuccess: () => window.history.back(),
+      api: () => deletePolicyApi(policy.value!.code),
+      onSuccess: () => router.push("/iam/permission/policy"),
       successMsg: "策略已成功移除"
     })
   }
+
+  watch(
+    () => route.query.code,
+    () => fetchDetail()
+  )
 
   onMounted(() => {
     fetchDetail()

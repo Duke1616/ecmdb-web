@@ -97,3 +97,8 @@ export interface BatchUnassignTenantsReq {
   user_ids: number[]
   tenant_ids: number[]
 }
+
+/** 批量删除租户请求 */
+export interface BatchDeleteTenantsReq {
+  ids: number[]
+}

@@ -1,12 +1,14 @@
 import { ref, onMounted, watch } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
+import { ElMessage } from "element-plus"
 import { roleDetailApi, deleteRoleApi } from "@/api/iam/role"
 import type { Role } from "@/api/iam/role/type"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
-import dayjs from "dayjs"
+import { formatTimestamp } from "@@/utils/day"
 
 export function useRoleDetail() {
   const route = useRoute()
+  const router = useRouter()
   const roleInfo = ref<Role>()
   const loading = ref(false)
   const { handleConfirmAction, handleCopy } = useGovernanceActions()
@@ -31,7 +33,7 @@ export function useRoleDetail() {
     handleConfirmAction({
       message: `确定要注销角色 "${roleInfo.value.name}" 吗？此操作不可逆。`,
       api: () => deleteRoleApi(roleInfo.value!.id),
-      onSuccess: () => window.history.back(),
+      onSuccess: () => router.back(),
       successMsg: "角色已成功注销"
     })
   }
@@ -48,11 +50,6 @@ export function useRoleDetail() {
   const handleEditSuccess = () => {
     editVisible.value = false
     fetchRoleDetail()
-  }
-
-  const formatTimestamp = (ts: string | number) => {
-    if (!ts) return "-"
-    return dayjs(Number(ts)).format("YYYY-MM-DD HH:mm:ss")
   }
 
   watch([() => route.query.id, () => route.query.code], () => fetchRoleDetail())

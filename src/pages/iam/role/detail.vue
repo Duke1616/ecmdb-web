@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, toRaw } from "vue"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
 import { Delete, OfficeBuilding, Edit, Coordinate } from "@element-plus/icons-vue"
@@ -258,7 +258,7 @@ const aggregatedServices = computed(() => {
     ;(p.services || []).forEach((s) => {
       // 携带来源策略信息，以便在下钻时区分
       allServices.push({
-        ...JSON.parse(JSON.stringify(s)),
+        ...structuredClone(toRaw(s)),
         policy_code: p.code
       })
     })

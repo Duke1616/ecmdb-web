@@ -119,7 +119,7 @@ import { ref, reactive, onMounted, computed } from "vue"
 import { pick } from "lodash-es"
 import type { FormInstance, FormRules } from "element-plus"
 import { Lock, SuccessFilled, User } from "@element-plus/icons-vue"
-import { signupApi, updateUserApi, userDetailApi } from "@/api/iam/user"
+import { createUserApi, updateUserApi, userDetailApi } from "@/api/iam/user"
 import type { UpdateUserReq } from "@/api/iam/user/type"
 
 const props = defineProps<{
@@ -188,7 +188,8 @@ const submit = async () => {
 
     await updateUserApi(updatePayload)
   } else {
-    await signupApi({ ...formData })
+    // 管理侧创建用户，改用专用的 create 接口
+    await createUserApi({ ...formData })
   }
   emit("success")
 }

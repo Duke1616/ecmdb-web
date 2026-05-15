@@ -100,24 +100,16 @@
 <script setup lang="ts">
 import { InfoFilled, CircleCheckFilled, Connection, ChatLineRound, Link, Lock, Key } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
-import adIcon from "../svg/Windows AD.svg"
-import ldapIcon from "../svg/ldap.svg"
-import feishuIcon from "../svg/feishu.svg"
-import oidcIcon from "../svg/oidc.svg"
-import passwordIcon from "../svg/pass.svg"
-import passkeyIcon from "../svg/webauthn.svg"
 import type { FormInstance, FormRules } from "element-plus"
 import { saveIdentitySourceApi, testIdentitySourceApi } from "@/api/iam/identity-source"
+import { type IdentitySourceVO, type SaveIdentitySourceReq, IdentitySourceType } from "@/api/iam/identity-source/type"
 import {
-  type IdentitySourceVO,
-  type SaveIdentitySourceReq,
-  type LDAPVO,
-  type OIDCVO,
-  type LocalVO,
-  type PasskeyVO,
-  IdentitySourceType,
-  OIDCProviderType
-} from "@/api/iam/identity-source/type"
+  createDefaultIdentitySourceForm,
+  getProviderConfig,
+  getProviderIdFromSource,
+  IDENTITY_SOURCE_PROVIDERS,
+  type IdentityProviderId
+} from "../providerRegistry"
 
 // 导入子区块组件
 import LdapSection from "./sections/LdapSection.vue"
@@ -137,108 +129,9 @@ const emit = defineEmits<{
 
 const formRef = ref<FormInstance>()
 const testing = ref(false)
-const selectedProvider = ref("ad")
-
-const providers = [
-  {
-    id: "local",
-    name: "静态密码",
-    desc: "本地数据库校验",
-    type: IdentitySourceType.LOCAL,
-    icon: passwordIcon
-  },
-  {
-    id: "ad",
-    name: "Windows AD",
-    desc: "集成域控身份体系",
-    type: IdentitySourceType.LDAP,
-    icon: adIcon
-  },
-  {
-    id: "ldap",
-    name: "LDAP",
-    desc: "通用目录服务",
-    type: IdentitySourceType.LDAP,
-    icon: ldapIcon
-  },
-  {
-    id: "feishu",
-    name: "飞书 SSO",
-    desc: "集成飞书企业身份",
-    type: IdentitySourceType.OIDC,
-    icon: feishuIcon
-  },
-  {
-    id: "oidc",
-    name: "OIDC",
-    desc: "通用单点登录",
-    type: IdentitySourceType.OIDC,
-    icon: oidcIcon
-  },
-  {
-    id: "passkey",
-    name: "通行密钥",
-    desc: "无密码登录",
-    type: IdentitySourceType.PASSKEY,
-    icon: passkeyIcon
-  }
-]
-
-const defaultLdap = (isAD = false): LDAPVO => ({
-  url: "",
-  base_dn: "",
-  bind_dn: "",
-  bind_password: "",
-  username_attribute: isAD ? "sAMAccountName" : "uid",
-  mail_attribute: "mail",
-  display_name_attribute: isAD ? "displayName" : "cn",
-  title_attribute: "title",
-  user_filter: isAD ? "(&(objectClass=user)(objectCategory=person))" : "(objectClass=inetOrgPerson)",
-  sync_user_filter: ""
-})
-
-const defaultOidc = (provider: OIDCProviderType): OIDCVO => ({
-  issuer: provider === OIDCProviderType.FEISHU ? "https://open.feishu.cn/open-apis/authen/v1" : "",
-  client_id: "",
-  client_secret: "",
-  redirect_uri: window.location.origin + "/api/iam/user/oidc/callback",
-  scopes: ["openid", "profile", "email"],
-  user_info_url: provider === OIDCProviderType.FEISHU ? "https://open.feishu.cn/open-apis/authen/v1/user_info" : "",
-  user_id_field: "sub",
-  provider_type: provider,
-  auth_url: provider === OIDCProviderType.FEISHU ? "https://passport.feishu.cn/suite/passport/oauth/authorize" : "",
-  token_url: provider === OIDCProviderType.FEISHU ? "https://passport.feishu.cn/suite/passport/oauth/token" : "",
-  jit_enabled: false,
-  mapping: {
-    username: provider === OIDCProviderType.FEISHU ? "name" : "preferred_username",
-    email: "email"
-  }
-})
-
-const defaultLocal = (): LocalVO => ({
-  min_length: 8,
-  require_digit: true,
-  require_upper: false,
-  require_lower: true,
-  require_symbol: false,
-  max_failed_attempts: 5,
-  lockout_duration: 30
-})
-
-const defaultPasskey = (): PasskeyVO => ({
-  rp_id: window.location.hostname,
-  rp_name: "EIAM Governance",
-  rp_origins: [window.location.origin],
-  attestation_preference: "none",
-  user_verification: "preferred"
-})
-
-const form = ref<SaveIdentitySourceReq>({
-  name: "",
-  type: IdentitySourceType.LDAP,
-  enabled: true,
-  ldap: defaultLdap(true)
-})
+const selectedProvider = ref<IdentityProviderId>("ad")
+const providers = IDENTITY_SOURCE_PROVIDERS
+const form = ref<SaveIdentitySourceReq>(createDefaultIdentitySourceForm("ad"))
 
 const rules: FormRules = {
   name: [{ required: true, message: "请输入名称", trigger: "blur" }],
@@ -251,47 +144,16 @@ const rules: FormRules = {
   "passkey.rp_name": [{ required: true, message: "请输入应用名称", trigger: "blur" }]
 }
 
-const selectProvider = (pid: string) => {
+const selectProvider = (pid: IdentityProviderId) => {
   if (props.isEdit) return
   selectedProvider.value = pid
-  const p = providers.find((i) => i.id === pid)
-  if (!p) return
-
-  form.value.type = p.type as IdentitySourceType
-  if (p.type === IdentitySourceType.LDAP) {
-    form.value.ldap = defaultLdap(pid === "ad")
-    form.value.oidc = undefined
-    form.value.local = undefined
-  } else if (p.type === IdentitySourceType.OIDC) {
-    form.value.oidc = defaultOidc(pid === "feishu" ? OIDCProviderType.FEISHU : OIDCProviderType.GENERIC)
-    form.value.ldap = undefined
-    form.value.local = undefined
-  } else if (p.type === IdentitySourceType.LOCAL) {
-    form.value.local = defaultLocal()
-    form.value.ldap = undefined
-    form.value.oidc = undefined
-    form.value.passkey = undefined
-  } else if (p.type === IdentitySourceType.PASSKEY) {
-    form.value.passkey = defaultPasskey()
-    form.value.ldap = undefined
-    form.value.oidc = undefined
-    form.value.local = undefined
-  }
+  Object.assign(form.value, getProviderConfig(pid))
 }
 
 const initForm = () => {
   if (props.isEdit && props.data) {
-    form.value = JSON.parse(JSON.stringify(props.data))
-    const { type } = form.value
-    if (type === IdentitySourceType.LDAP) {
-      selectedProvider.value = form.value.ldap?.user_filter?.includes("objectCategory=person") ? "ad" : "ldap"
-    } else if (type === IdentitySourceType.OIDC) {
-      selectedProvider.value = form.value.oidc?.provider_type === OIDCProviderType.FEISHU ? "feishu" : "oidc"
-    } else if (type === IdentitySourceType.PASSKEY) {
-      selectedProvider.value = "passkey"
-    } else if (type === IdentitySourceType.LOCAL) {
-      selectedProvider.value = "local"
-    }
+    form.value = structuredClone(props.data)
+    selectedProvider.value = getProviderIdFromSource(form.value)
   }
 }
 

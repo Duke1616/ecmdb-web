@@ -66,7 +66,7 @@ export function useUserDetail() {
     handleConfirmAction({
       message: `确定要注销主体 "${target.nickname || target.username}" 吗？此操作将移除该主体所有关联权限。`,
       api: () => deleteUserApi(target.id),
-      onSuccess: () => router.push("/identity/user"),
+      onSuccess: () => router.back(),
       successMsg: "主体已成功注销"
     })
   }

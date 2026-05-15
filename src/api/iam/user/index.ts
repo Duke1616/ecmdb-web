@@ -2,10 +2,18 @@ import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 import type * as user from "./type"
 
-/** 用户注册 */
+/** 用户注册 (公开) */
 export function signupApi(data: user.SignupRequest) {
   return instance.post<user.User>({
     url: `${API_SERVICE.IAM}/user/signup`,
+    data
+  })
+}
+
+/** 创建用户 (管理侧) */
+export function createUserApi(data: user.SignupRequest) {
+  return instance.post<user.User>({
+    url: `${API_SERVICE.IAM}/user/create`,
     data
   })
 }

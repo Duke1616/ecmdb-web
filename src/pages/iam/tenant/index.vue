@@ -4,10 +4,13 @@
     subtitle="多租户架构核心治理，支持多维度的租户实体管理与维护"
     search-placeholder="搜索租户名称或空间编码..."
     v-model:keyword="query.keyword"
+    :selection-count="selectedRows.length"
     :primary-action="{ capability: IAM_CAPABILITIES.Tenant.Add, label: '新增租户' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.Tenant.BatchDelete, label: '批量销毁' }"
     @search="handleRefresh"
     @refresh="handleRefresh"
     @primary-action="handleCreate"
+    @danger-action="handleBatchDelete"
   >
     <!-- 治理列表 -->
     <DataTable v-bind="tableProps" :columns="tableColumns">
@@ -89,6 +92,9 @@ const {
   handleCreate,
   handleEdit,
   handleDelete,
+  handleBatchDelete,
+  selectedRows,
+  handleSelectionChange,
   handleFormSuccess,
   handleSizeChange,
   handleCurrentChange
@@ -105,6 +111,9 @@ const tableProps = computed(() => ({
   currentPage: currentPage.value,
   showPagination: true,
   showSelection: true,
+  selectable: () => hasPermission(IAM_CAPABILITIES.Tenant.BatchDelete),
+  tableProps: !hasPermission(IAM_CAPABILITIES.Tenant.BatchDelete) ? { class: "selection-disabled" } : {},
+  onSelectionChange: handleSelectionChange,
   onSizeChange: handleSizeChange,
   onCurrentChange: handleCurrentChange
 }))

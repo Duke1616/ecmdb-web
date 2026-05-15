@@ -1,12 +1,14 @@
 import { ref, onMounted, watch } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
+import { ElMessage } from "element-plus"
 import { getTenantDetailApi, deleteTenantApi } from "@/api/iam/tenant"
 import type { Tenant } from "@/api/iam/tenant/type"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
-import dayjs from "dayjs"
+import { formatTimestamp } from "@@/utils/day"
 
 export function useTenantDetail() {
   const route = useRoute()
+  const router = useRouter()
   const tenantInfo = ref<Tenant>()
   const loading = ref(false)
   const { handleConfirmAction, handleCopy } = useGovernanceActions()
@@ -31,18 +33,13 @@ export function useTenantDetail() {
     handleConfirmAction({
       message: `确定要永久删除租户 "${tenantInfo.value.name}" 吗？此操作不可逆。`,
       api: () => deleteTenantApi(tenantInfo.value!.id),
-      onSuccess: () => window.history.back(),
+      onSuccess: () => router.back(),
       successMsg: "租户空间已成功销毁"
     })
   }
 
   const copyText = (text: string) => {
     handleCopy(text, "租户信息")
-  }
-
-  const formatTimestamp = (ts: string | number) => {
-    if (!ts) return "-"
-    return dayjs(Number(ts)).format("YYYY-MM-DD HH:mm:ss")
   }
 
   watch(

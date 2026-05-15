@@ -67,7 +67,7 @@
 
       <!-- 创建时间 -->
       <template #ctime="{ row }">
-        <span class="ctime-text">{{ row.ctime ? formatDate(row.ctime) : "-" }}</span>
+        <span class="ctime-text">{{ formatTimestamp(row.ctime) || "-" }}</span>
       </template>
 
       <!-- 描述: 柔和次级文本 -->
@@ -110,6 +110,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import { usePolicyList } from "./composables/usePolicyList"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import { formatTimestamp } from "@@/utils/day"
 
 const {
   policies,
@@ -153,7 +154,7 @@ const tableProps = computed(() => ({
 
 const { hasPermission } = usePermission()
 
-const TYPE_ALL = undefined as any
+const TYPE_ALL = ""
 
 const tableColumns: Column[] = [
   { label: "策略名称", prop: "name", slot: "name", minWidth: 150, align: "center" },
@@ -201,16 +202,6 @@ const handleAction = (row: Policy, code: string) => {
       handleDelete(row)
       break
   }
-}
-const formatDate = (ts: number) => {
-  if (!ts) return "-"
-  const d = new Date(ts)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, "0")
-  const dd = String(d.getDate()).padStart(2, "0")
-  const hh = String(d.getHours()).padStart(2, "0")
-  const mm = String(d.getMinutes()).padStart(2, "0")
-  return `${y}-${m}-${dd} ${hh}:${mm}`
 }
 </script>
 

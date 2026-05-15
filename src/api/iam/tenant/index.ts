@@ -101,3 +101,11 @@ export function batchUnassignTenantsApi(data: tenant.BatchUnassignTenantsReq) {
     data
   })
 }
+
+/** 批量删除租户 */
+export function batchDeleteTenantsApi(data: tenant.BatchDeleteTenantsReq) {
+  return instance.post<string>({
+    url: `${API_SERVICE.IAM}/tenant/batch_delete`,
+    data
+  })
+}

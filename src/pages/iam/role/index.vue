@@ -98,6 +98,7 @@ const {
   handleDelete,
   handleBatchDelete,
   selectedRows,
+  handleSelectionChange,
   handleFormSuccess,
   handleSizeChange,
   handleCurrentChange
@@ -106,10 +107,6 @@ const {
 const roleFormRef = ref<InstanceType<typeof RoleForm>>()
 const tableRef = ref<InstanceType<typeof DataTable>>()
 const submitting = ref(false)
-
-const handleSelectionChange = (val: Role[]) => {
-  selectedRows.value = val
-}
 
 /**
  * 打包表格通用属性，实现模板瘦身

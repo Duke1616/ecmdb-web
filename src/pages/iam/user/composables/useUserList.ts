@@ -3,6 +3,7 @@ import { listUsersApi, deleteUserApi, batchDeleteUsersApi } from "@/api/iam/user
 import type { User, ListUserRequest } from "@/api/iam/user/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import { useSelectionAction } from "@/common/composables/useSelectionAction"
 
 export function useUserList() {
   // 使用通用列表管理器
@@ -24,19 +25,15 @@ export function useUserList() {
 
   // 交互与动作管理器
   const { handleConfirmAction } = useGovernanceActions()
+  const { selectedRows, handleSelectionChange, runSelectionAction } = useSelectionAction<User>()
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
-  const selectedRows = ref<User[]>([])
 
   const handleBatchDelete = () => {
-    if (selectedRows.value.length === 0) return
-    handleConfirmAction({
-      message: `确定要注销选中的 ${selectedRows.value.length} 个用户吗？此操作不可逆。`,
-      api: () => batchDeleteUsersApi({ ids: selectedRows.value.map((r) => r.id) }),
-      onSuccess: () => {
-        selectedRows.value = []
-        loadData()
-      },
+    runSelectionAction({
+      message: (items) => `确定要注销选中的 ${items.length} 个用户吗？此操作不可逆。`,
+      api: (items) => batchDeleteUsersApi({ ids: items.map((r) => r.id) }),
+      onSuccess: loadData,
       successMsg: "选中的用户已成功注销"
     })
   }
@@ -81,6 +78,7 @@ export function useUserList() {
     handleDelete,
     handleBatchDelete,
     selectedRows,
+    handleSelectionChange,
     handleFormSuccess,
     handleSizeChange,
     handleCurrentChange

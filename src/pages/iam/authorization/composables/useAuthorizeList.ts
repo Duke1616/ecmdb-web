@@ -4,12 +4,14 @@ import { type Authorization, type AuthorizationQueryReq } from "@/api/iam/permis
 import { batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import { useSelectionAction } from "@/common/composables/useSelectionAction"
 
 /**
  * 授权治理列表管理
  */
 export function useAuthorizeList() {
   const { handleConfirmAction } = useGovernanceActions()
+  const { selectedRows, handleSelectionChange, runSelectionAction } = useSelectionAction<Authorization>()
 
   // 核心列表管理
   const {
@@ -53,18 +55,16 @@ export function useAuthorizeList() {
   /**
    * 批量解除授权
    */
-  const handleBatchRevoke = (rows: Authorization[]) => {
-    if (rows.length === 0) return
-
-    handleConfirmAction({
+  const handleBatchRevoke = () => {
+    runSelectionAction({
       title: "批量回收确认",
-      message: `确定要批量解除选中的 ${rows.length} 条授权记录吗？`,
+      message: (items) => `确定要批量解除选中的 ${items.length} 条授权记录吗？`,
       confirmType: "danger",
-      api: async () => {
+      api: async (items) => {
         // NOTE: 后端已修复 batch-detach 接口，支持精准的 assignments 列表解绑
         // 这样可以一次性回收所有选中的 (主体 + 策略) 关联，而不再需要循环调用
         return await batchDetachPolicyApi({
-          assignments: rows.map((row) => ({
+          assignments: items.map((row) => ({
             sub_type: row.sub_type,
             sub_code: row.subject,
             policy_code: row.target
@@ -80,9 +80,11 @@ export function useAuthorizeList() {
     authorizations,
     total,
     query,
+    selectedRows,
     currentPage: computed(() => pagination.currentPage),
     pageSize: computed(() => pagination.pageSize),
     handleRefresh,
+    handleSelectionChange,
     handleSizeChange,
     handleCurrentChange,
     handleRevoke,

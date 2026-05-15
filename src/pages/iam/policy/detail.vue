@@ -93,6 +93,7 @@ import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import SubjectSelectDialog from "@/pages/iam/authorization/components/SubjectSelectDialog.vue"
 import { batchAttachPolicyApi } from "@/api/iam/policy"
+import type { Subject } from "@/api/iam/permission/type"
 import { formatTimestamp } from "@@/utils/day"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
@@ -120,7 +121,7 @@ const handleAddSubject = () => {
   subjectSelectVisible.value = true
 }
 
-const handleAttachSubjects = async (selectedSubjects: any[]) => {
+const handleAttachSubjects = async (selectedSubjects: Subject[]) => {
   if (!policy.value || !selectedSubjects.length) return
   submitting.value = true
   try {
