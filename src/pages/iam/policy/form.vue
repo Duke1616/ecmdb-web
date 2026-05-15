@@ -31,7 +31,7 @@
 
     <!-- 2. 权限语句编排区 -->
     <div class="statement-orchestrator-section">
-      <!-- 新增：编辑器模式切换与功能 Bar -->
+      <!-- 编辑器模式切换与功能 Bar -->
       <div class="editor-tabs-bar">
         <div class="left-tabs">
           <el-radio-group v-model="editorMode" size="default" class="premium-radio-group">
@@ -49,6 +49,7 @@
           </el-button>
         </div>
       </div>
+
       <!-- 模式切换渲染 -->
       <div class="editor-body">
         <!-- 可视化模式 -->
@@ -91,11 +92,12 @@
     </div>
   </el-form>
 
+  <!-- 完善信息弹窗 -->
   <FormDialog
     v-model="dialogVisible"
     :title="dialogTitle"
     :subtitle="dialogSubtitle"
-    :header-icon="dialogHeaderIcon"
+    header-icon="Coordinate"
     width="500px"
     :confirm-text="dialogConfirmText"
     @confirm="handleFinalSubmit"
@@ -118,24 +120,21 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from "vue"
+import { ElMessage, type FormInstance } from "element-plus"
 import { Plus, Monitor, Document, Download } from "@element-plus/icons-vue"
-import { ref, watch } from "vue"
-import { ElMessage } from "element-plus"
 import { Codemirror } from "vue-codemirror"
 import { json } from "@codemirror/lang-json"
-import { usePolicyForm } from "./composables/usePolicyForm"
-import { parseStatementsJson, getStatementValidationMessage } from "./composables/usePolicyData"
-import PolicyStatement from "./components/PolicyStatement.vue"
 import { FormDialog } from "@@/components/Dialogs"
-import type { FormInstance } from "element-plus"
+import { usePolicyForm } from "./composables/usePolicyForm"
+import PolicyStatement from "./components/PolicyStatement.vue"
 
 const props = defineProps<{ isEdit: boolean; code?: string; hideBasic?: boolean }>()
 const emit = defineEmits(["success", "update:submitting"])
 
-// 编辑模式：visual | json
-const editorMode = ref<"visual" | "json">("visual")
-const jsonCode = ref("")
 const codemirrorExtensions = [json()]
+const dialogVisible = ref(false)
+const dialogFormRef = ref<FormInstance>()
 
 const {
   formRef,
@@ -143,88 +142,42 @@ const {
   formRules,
   loading,
   permissionManifest,
+  editorMode,
+  jsonCode,
   addStatement,
   removeStatement,
   duplicateStatement,
-  submitForm,
-  setForm
+  validateStatements,
+  submitForm
 } = usePolicyForm(props, emit)
 
-const dialogVisible = ref(false)
-const dialogFormRef = ref<FormInstance>()
+// --- 弹窗 UI 文本计算 ---
 const isEdit = computed(() => props.isEdit)
-
 const dialogTitle = computed(() => (isEdit.value ? "确认策略信息" : "完善策略信息"))
 const dialogSubtitle = computed(() =>
   isEdit.value ? "您可以修改策略名称或描述，识别码 (Code) 通常不建议变更" : "为您的权限策略设置名称与识别码"
 )
-const dialogHeaderIcon = computed(() => (isEdit.value ? "EditPen" : "DocumentChecked"))
 const dialogConfirmText = computed(() => (isEdit.value ? "确认并保存" : "确认并提交"))
 const namePlaceholder = computed(() => (isEdit.value ? "" : "建议简单明了，如：财务读写权限"))
 const codePlaceholder = computed(() => (isEdit.value ? "" : "建议大驼峰或下划线，如：FinanceAdmin"))
 
+/**
+ * 校验并开启提交对话框
+ */
 const validateAndOpenDialog = () => {
-  const message = getStatementValidationMessage(
-    formData.statement,
-    isEdit.value ? "请至少保留一条权限语句" : "请至少添加一条权限语句"
-  )
-  if (message) {
-    ElMessage.warning(message)
-    return
+  if (validateStatements()) {
+    dialogVisible.value = true
   }
-  dialogVisible.value = true
 }
 
-const syncJsonCodeFromStatements = () => {
-  jsonCode.value = JSON.stringify(formData.statement, null, 2)
-}
-
-// 深度监听：编辑器模式切换时的同步逻辑
-watch(editorMode, (newMode, oldMode) => {
-  if (newMode === "json") {
-    // 进入脚本模式：对象 -> 字符串
-    syncJsonCodeFromStatements()
-  } else if (newMode === "visual" && oldMode === "json") {
-    // 退出脚本模式：字符串 -> 对象 (带校验)
-    try {
-      formData.statement = parseStatementsJson(jsonCode.value)
-    } catch (e: any) {
-      ElMessage.error(`脚本解析失败: ${e.message}`)
-      // 强制切回 JSON 模式，防止数据丢失或错误同步
-      setTimeout(() => (editorMode.value = "json"), 0)
-    }
-  }
-})
-
-watch(
-  () => formData.statement,
-  () => {
-    if (editorMode.value === "visual") {
-      syncJsonCodeFromStatements()
-    }
-  },
-  { deep: true, immediate: true }
-)
-
-const handleImport = () => {
-  ElMessage.info("策略导入功能开发中...")
-}
-
+/**
+ * 最终提交逻辑
+ */
 const handleFinalSubmit = async () => {
   if (!dialogFormRef.value) return
 
   try {
     await dialogFormRef.value.validate()
-
-    if (editorMode.value === "json") {
-      try {
-        formData.statement = parseStatementsJson(jsonCode.value)
-      } catch (e: any) {
-        ElMessage.error(`保存失败：脚本格式有误 (${e.message})`)
-        return
-      }
-    }
-
     emit("update:submitting", true)
     await submitForm()
     dialogVisible.value = false
@@ -235,10 +188,13 @@ const handleFinalSubmit = async () => {
   }
 }
 
+const handleImport = () => {
+  ElMessage.info("策略导入功能开发中...")
+}
+
 // 暴露给父组件调用
 defineExpose({
   validateAndOpenDialog,
-  setForm,
   formData
 })
 </script>

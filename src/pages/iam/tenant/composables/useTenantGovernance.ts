@@ -1,4 +1,4 @@
-import { ref, watch, toValue, type MaybeRefOrGetter, computed, type Ref } from "vue"
+import { ref, toValue, type MaybeRefOrGetter, computed, type Ref } from "vue"
 import { ElMessage } from "element-plus"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
@@ -10,7 +10,7 @@ import {
   listJoinRequestsApi,
   handleJoinRequestApi
 } from "@/api/iam/invitation"
-import { useListManager } from "@/common/composables/useListManager"
+import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { batchAssignTenantsApi, batchUnassignTenantsApi } from "@/api/iam/tenant"
 import type { TenantMember } from "@/api/iam/tenant/type"
@@ -19,57 +19,39 @@ import type { InvitationVO, JoinRequestVO } from "@/api/iam/invitation/type"
 export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefined>, activeTab: Ref<string>) {
   const tid = computed(() => toValue(tenantId))
   const { handleConfirmAction } = useGovernanceActions()
+  const { hasPermission } = usePermission()
+
+  const tabPermissions = computed(() => ({
+    members: hasPermission(IAM_CAPABILITIES.Tenant.ViewMembers),
+    invitation: hasPermission(IAM_CAPABILITIES.Invitation.View),
+    requests: hasPermission(IAM_CAPABILITIES.Invitation.ViewRequests)
+  }))
 
   // --- 1. 成员治理 ---
-  const {
-    list: members,
-    total: memberTotal,
-    loading: memberLoading,
-    pagination: memberPagination,
-    query: memberQuery,
-    fetchList: loadMembers,
-    handlePageChange: handleMemberPageChange,
-    handleSearch: handleMemberSearch
-  } = useListManager<TenantMember, any>({
+  const memberRelation = useGovernanceRelationList<TenantMember, any>({
     fetchApi: (params) => listTenantMembersApi({ ...params, tenant_id: tid.value! }),
     listKey: "members",
-    immediate: false
+    activeTab,
+    tabName: "members",
+    enabled: () => !!tid.value && tabPermissions.value.members
   })
-
-  const membersSelection = ref<TenantMember[]>([])
 
   // --- 2. 邀请链接治理 ---
-  const {
-    list: links,
-    total: linksTotal,
-    loading: linksLoading,
-    pagination: linksPagination,
-    query: linksQuery,
-    fetchList: loadLinks,
-    handlePageChange: handleLinksPageChange,
-    handleSearch: handleLinksSearch
-  } = useListManager<InvitationVO, any>({
+  const linksRelation = useGovernanceRelationList<InvitationVO, any>({
     fetchApi: (params) => listInvitationsApi({ ...params, tenant_id: tid.value! }),
     listKey: "invitations",
-    immediate: false
+    activeTab,
+    tabName: "invitation", // 注意：detail.vue 中名字可能是 invitation 或 links，这里需同步
+    enabled: () => !!tid.value && tabPermissions.value.invitation
   })
 
-  const linksSelection = ref<InvitationVO[]>([])
-
   // --- 3. 入驻申请治理 ---
-  const {
-    list: requests,
-    total: requestsTotal,
-    loading: requestsLoading,
-    pagination: requestsPagination,
-    query: requestsQuery,
-    fetchList: loadRequests,
-    handlePageChange: handleRequestsPageChange,
-    handleSearch: handleRequestsSearch
-  } = useListManager<JoinRequestVO, any>({
+  const requestsRelation = useGovernanceRelationList<JoinRequestVO, any>({
     fetchApi: (params) => listJoinRequestsApi({ ...params, tenant_id: tid.value! }),
     listKey: "requests",
-    immediate: false
+    activeTab,
+    tabName: "requests",
+    enabled: () => !!tid.value && tabPermissions.value.requests
   })
 
   // --- 操作处理 ---
@@ -84,10 +66,10 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
         tenant_ids: [tid.value!]
       })
       ElMessage.success(`成功分派 ${userIds.length} 位成员`)
-      loadMembers()
+      memberRelation.refresh()
       return true
     } catch (err: any) {
-      loadMembers()
+      memberRelation.refresh()
       return false
     } finally {
       assignConfirmLoading.value = false
@@ -99,21 +81,18 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
       title: "撤回邀请凭证",
       message: `确定要撤回邀请码 "${row.code}" 吗？撤回后该链接将立即失效。`,
       api: () => revokeInvitationApi(row.code),
-      onSuccess: () => loadLinks()
+      onSuccess: () => linksRelation.refresh()
     })
   }
 
   const handleBatchRevokeInvitation = () => {
-    if (linksSelection.value.length === 0) return
-    const codes = linksSelection.value.map((l) => l.code)
+    if (linksRelation.selectedRows.value.length === 0) return
+    const codes = linksRelation.selectedRows.value.map((l) => l.code)
     handleConfirmAction({
       title: "批量撤回凭证",
       message: `确定要批量撤回选中的 ${codes.length} 个邀请吗？撤回后这些链接将立即失效。`,
       api: () => batchRevokeInvitationApi({ codes }),
-      onSuccess: () => {
-        linksSelection.value = []
-        loadLinks()
-      }
+      onSuccess: () => linksRelation.refresh()
     })
   }
 
@@ -127,27 +106,23 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
           tenant_id: tid.value!,
           user_id: row.id
         }),
-      onSuccess: () => loadMembers()
+      onSuccess: () => memberRelation.refresh()
     })
   }
 
   const handleBatchRemoveMember = () => {
-    if (membersSelection.value.length === 0 || !tid.value) return
-    const targets = membersSelection.value
-    const userIds = targets.map((m) => m.id)
+    if (memberRelation.selectedRows.value.length === 0 || !tid.value) return
+    const userIds = memberRelation.selectedRows.value.map((m) => m.id)
 
     handleConfirmAction({
       title: "批量移除成员",
-      message: `确定要将选中的 ${targets.length} 位成员批量移出当前租户空间吗？移除后他们将失去在该租户下的所有权限。`,
+      message: `确定要将选中的 ${userIds.length} 位成员批量移出当前租户空间吗？移除后他们将失去在该租户下的所有权限。`,
       api: () =>
         batchUnassignTenantsApi({
           user_ids: userIds,
           tenant_ids: [tid.value!]
         }),
-      onSuccess: () => {
-        membersSelection.value = []
-        loadMembers()
-      }
+      onSuccess: () => memberRelation.refresh()
     })
   }
 
@@ -156,78 +131,59 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
     try {
       await handleJoinRequestApi({ id, approve, tenant_id: tid.value! })
       ElMessage.success(`申请已${action}`)
-      loadRequests()
+      requestsRelation.refresh()
     } catch (error) {
       console.error("Approval failed:", error)
     }
   }
 
-  // --- 4. 联动逻辑 (Lazy Loading) ---
-  const { hasPermission } = usePermission()
-
-  const tabPermissions = computed(() => ({
-    members: hasPermission(IAM_CAPABILITIES.Tenant.ViewMembers),
-    invitation: hasPermission(IAM_CAPABILITIES.Invitation.View),
-    requests: hasPermission(IAM_CAPABILITIES.Invitation.ViewRequests)
-  }))
-
-  const refresh = () => {
-    if (!tid.value) return
-    const tab = toValue(activeTab)
-    if (tab === "members" && tabPermissions.value.members) loadMembers()
-    if ((tab === "invitation" || tab === "links") && tabPermissions.value.invitation) loadLinks()
-    if (tab === "requests" && tabPermissions.value.requests) loadRequests()
-  }
-
-  watch([tid, () => toValue(activeTab)], () => refresh(), { immediate: true })
-
   return {
     // 成员
-    members,
-    memberTotal,
-    memberLoading,
+    members: memberRelation.list,
+    memberTotal: memberRelation.total,
+    memberLoading: memberRelation.loading,
     memberQuery: computed(() => ({
-      ...memberQuery,
-      currentPage: memberPagination.currentPage,
-      pageSize: memberPagination.pageSize
+      ...memberRelation.query,
+      currentPage: memberRelation.pagination.currentPage,
+      pageSize: memberRelation.pagination.pageSize
     })),
-    handleMemberPageChange,
-    handleMemberSearch,
+    handleMemberPageChange: memberRelation.handlePageChange,
+    handleMemberSearch: memberRelation.handleSearch,
     handleBatchAssignMember,
     handleRemoveMember,
     handleBatchRemoveMember,
-    membersSelection,
+    membersSelection: memberRelation.selectedRows,
     assignConfirmLoading,
 
     // 邀请
-    links,
-    linksTotal,
-    linksLoading,
+    links: linksRelation.list,
+    linksTotal: linksRelation.total,
+    linksLoading: linksRelation.loading,
     linksQuery: computed(() => ({
-      ...linksQuery,
-      currentPage: linksPagination.currentPage,
-      pageSize: linksPagination.pageSize
+      ...linksRelation.query,
+      currentPage: linksRelation.pagination.currentPage,
+      pageSize: linksRelation.pagination.pageSize
     })),
-    handleLinksPageChange,
-    handleLinksSearch,
+    handleLinksPageChange: linksRelation.handlePageChange,
+    handleLinksSearch: linksRelation.handleSearch,
     handleRevokeInvitation,
     handleBatchRevokeInvitation,
-    linksSelection,
-    fetchLinks: loadLinks,
+    linksSelection: linksRelation.selectedRows,
+    fetchLinks: linksRelation.refresh,
 
     // 申请
-    requests,
-    requestsTotal,
-    requestsLoading,
+    requests: requestsRelation.list,
+    requestsTotal: requestsRelation.total,
+    requestsLoading: requestsRelation.loading,
     requestsQuery: computed(() => ({
-      ...requestsQuery,
-      currentPage: requestsPagination.currentPage,
-      pageSize: requestsPagination.pageSize
+      ...requestsRelation.query,
+      currentPage: requestsRelation.pagination.currentPage,
+      pageSize: requestsRelation.pagination.pageSize
     })),
-    handleRequestsPageChange,
-    handleRequestsSearch,
+    handleRequestsPageChange: requestsRelation.handlePageChange,
+    handleRequestsSearch: requestsRelation.handleSearch,
     handleApproval,
-    fetchRequests: loadRequests,
+    fetchRequests: requestsRelation.refresh,
     tabPermissions
   }
 }

@@ -1,16 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { toRef } from "vue"
 import { Plus, Delete } from "@element-plus/icons-vue"
-import { useRouter } from "vue-router"
-import { listAuthorizationsApi } from "@/api/iam/permission"
-import { batchDetachPolicyApi } from "@/api/iam/policy"
-import type { Authorization, AuthorizationQueryReq } from "@/api/iam/permission/type"
 import PremiumList from "@/common/components/PremiumList/index.vue"
-import { ElMessage, ElMessageBox } from "element-plus"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { formatTimestamp } from "@@/utils/day"
-import { useListManager } from "@/common/composables/useListManager"
+import { usePolicyAssignments } from "../../composables/usePolicyAssignments"
 
 interface Props {
   policyCode: string
@@ -31,133 +26,47 @@ const emit = defineEmits<{
   (e: "add"): void
 }>()
 
-const router = useRouter()
 const { hasPermission } = usePermission()
-const selectedItems = ref<Authorization[]>([])
+
+// 1. 集成授权管理能力
 const {
   list,
   total,
   loading,
   pagination,
-  fetchList: loadAssignments,
-  handlePageChange: handleListPageChange,
-  handleSearch: handleListSearch
-} = useListManager<Authorization, AuthorizationQueryReq>({
-  fetchApi: (params) =>
-    listAuthorizationsApi({
-      ...params,
-      keyword: params.keyword || props.policyCode
-    }),
-  listKey: "authorizations",
-  initialQuery: {
-    keyword: "",
-    sub_type: undefined,
-    obj_type: undefined
-  }
+  selectedRows,
+  handlePageChange,
+  handleSearch,
+  refresh,
+  handleSubjectClick,
+  handleRemove,
+  handleBatchRemove
+} = usePolicyAssignments(toRef(props, "policyCode"), {
+  canDetach: () => props.canDetach,
+  canBatchDetach: () => props.canBatchDetach
 })
-
-const currentPage = computed(() => pagination.currentPage)
-const pageSize = computed(() => pagination.pageSize)
-
-const fetchAssignments = async () => {
-  selectedItems.value = []
-  await loadAssignments()
-}
-
-/**
- * 跳转到主体详情
- */
-const handleSubjectClick = (row: Authorization) => {
-  const isUser = row.sub_type === "user"
-  router.push({
-    name: isUser ? "UserDetail" : "RoleDetail",
-    query: isUser ? { username: row.subject } : { code: row.subject }
-  })
-}
-
-const handlePageChange = (page: number) => {
-  selectedItems.value = []
-  handleListPageChange(page)
-}
-
-// 修复：处理搜索事件
-const handleSearch = (keyword: string) => {
-  selectedItems.value = []
-  handleListSearch(keyword)
-}
-
-const toDetachAssignment = (item: Authorization) => ({
-  sub_type: item.sub_type,
-  sub_code: item.subject,
-  policy_code: item.target
-})
-
-// 移除单一权限
-const handleRemove = (row: Authorization) => {
-  if (!props.canDetach) {
-    ElMessage.warning("当前账号无权移除授权")
-    return
-  }
-
-  ElMessageBox.confirm(`确定要移除对主体 [${row.subject}] 的授权吗？`, "移除授权警告", {
-    type: "warning",
-    confirmButtonText: "确定移除",
-    confirmButtonClass: "el-button--danger"
-  }).then(async () => {
-    await batchDetachPolicyApi({
-      assignments: [toDetachAssignment(row)]
-    })
-    ElMessage.success("授权移除成功！")
-    fetchAssignments()
-  })
-}
-
-// 批量移除权限
-const handleBatchRemove = () => {
-  const count = selectedItems.value.length
-  if (count === 0) return
-  if (!props.canBatchDetach) {
-    ElMessage.warning("当前账号无权批量移除授权")
-    return
-  }
-
-  ElMessageBox.confirm(`确定要批量移除这 ${count} 项授权记录吗？此操作无法撤销。`, "批量移除警告", {
-    type: "warning",
-    confirmButtonText: "确定批量移除",
-    confirmButtonClass: "el-button--danger"
-  }).then(async () => {
-    await batchDetachPolicyApi({
-      assignments: selectedItems.value.map(toDetachAssignment)
-    })
-    ElMessage.success(`已成功批量移除 ${count} 项授权记录！`)
-    selectedItems.value = []
-    fetchAssignments()
-  })
-}
-
-watch(() => props.policyCode, fetchAssignments)
 
 // 暴露方法给父组件，用于刷新
 defineExpose({
-  fetchAssignments
+  fetchAssignments: refresh
 })
 </script>
 
 <template>
   <div class="policy-assignment-table">
     <PremiumList
+      v-model:selection="selectedRows"
       :data="list"
       :total="total"
       :loading="loading"
-      :current-page="currentPage"
-      :page-size="pageSize"
+      :current-page="pagination.currentPage"
+      :page-size="pagination.pageSize"
       title="授权关系治理"
       search-placeholder="搜索关联的主体标识、名称或备注..."
       indicator-color="#3b82f6"
       show-selection
       row-key="id"
       :selectable="selectable"
-      v-model:selection="selectedItems"
       :table-props="!selectable() ? { class: 'selection-disabled' } : {}"
       @page-change="handlePageChange"
       @search="handleSearch"
@@ -187,7 +96,7 @@ defineExpose({
           type="danger"
           plain
           size="small"
-          :disabled="!canBatchDetach || selectedItems.length === 0"
+          :disabled="!canBatchDetach || selectedRows.length === 0"
           @click="handleBatchRemove"
         >
           <el-icon><Delete /></el-icon>

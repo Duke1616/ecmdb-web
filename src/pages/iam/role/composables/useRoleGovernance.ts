@@ -1,4 +1,4 @@
-import { ref, watch, toValue, computed, type MaybeRefOrGetter } from "vue"
+import { ref, toValue, computed, watch, type MaybeRefOrGetter } from "vue"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { listRoleUsersApi } from "@/api/iam/user"
@@ -12,12 +12,12 @@ import {
   removeParentRoleApi,
   listRolesApi
 } from "@/api/iam/role"
+import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import { AuthorizationSubType } from "@/api/iam/permission/type"
 import type { User } from "@/api/iam/user/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { InlinePolicy, InheritanceItem } from "@/api/iam/role/type"
-import { useListManager } from "@/common/composables/useListManager"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { AuthorizationSubType } from "@/api/iam/permission/type"
 
 import { useTabRouter } from "@/common/composables/useTabRouter"
 
@@ -26,24 +26,25 @@ export function useRoleGovernance(
   roleCode: MaybeRefOrGetter<string | undefined>
 ) {
   const { activeTab } = useTabRouter("members")
+  const { hasPermission } = usePermission()
+  const { handleConfirmAction } = useGovernanceActions()
 
-  // --- 成员管理 (Users) ---
-  const {
-    list: members,
-    total: memberTotal,
-    loading: memberLoading,
-    query: memberQuery,
-    pagination: memberPagination,
-    fetchList: fetchMembers,
-    handlePageChange: handleMemberPageChange,
-    handleSearch: handleMemberSearch
-  } = useListManager<User, any>({
+  const tabPermissions = computed(() => ({
+    members: hasPermission(IAM_CAPABILITIES.Role.ViewRoleMembers),
+    permissions: hasPermission(IAM_CAPABILITIES.Role.ViewRolePolicies),
+    inline: hasPermission(IAM_CAPABILITIES.Role.InlineAnalysis),
+    inheritance: hasPermission(IAM_CAPABILITIES.Role.ViewParents)
+  }))
+
+  // --- 1. 成员管理 (Users) ---
+  const memberRelation = useGovernanceRelationList<User, any>({
     fetchApi: (params) => listRoleUsersApi({ ...params, role_code: toValue(roleCode)! }),
     listKey: "users",
-    immediate: false
+    activeTab,
+    tabName: "members",
+    enabled: () => !!toValue(roleCode) && tabPermissions.value.members
   })
 
-  const selectedMembers = ref<User[]>([])
   const addMemberVisible = ref(false)
   const handleAddMember = () => (addMemberVisible.value = true)
 
@@ -52,11 +53,9 @@ export function useRoleGovernance(
     const code = toValue(roleCode)
     if (!code || !usernames.length) return
     try {
-      // NOTE: 利用后端优化的 Cartesian 接口，单次请求完成该角色下所有用户的绑定
       await batchAssignRoleApi({ usernames, role_codes: [code] })
-      ElMessage.success(`成功添加 ${usernames.length} 名成员`)
       addMemberVisible.value = false
-      fetchMembers()
+      memberRelation.refresh()
     } catch (err: any) {
       // 错误已由全局拦截器处理
     }
@@ -67,98 +66,68 @@ export function useRoleGovernance(
     const code = toValue(roleCode)
     if (!code) return
 
-    try {
-      await ElMessageBox.confirm(
-        `确认要从角色 [${code}] 中移除成员 [${user.nickname || user.username}] 吗？`,
-        "移除成员",
-        {
-          confirmButtonText: "确认移除",
-          cancelButtonText: "取消",
-          type: "warning"
-        }
-      )
-
-      await batchUnassignRoleApi({
-        usernames: [user.username],
-        role_codes: [code]
-      })
-      ElMessage.success("成员移除成功")
-      fetchMembers()
-    } catch (err: any) {
-      // 捕获取消
-    }
+    handleConfirmAction({
+      title: "移除成员",
+      message: `确认要从角色 [${code}] 中移除成员 [${user.nickname || user.username}] 吗？`,
+      api: () =>
+        batchUnassignRoleApi({
+          usernames: [user.username],
+          role_codes: [code]
+        }),
+      onSuccess: () => memberRelation.refresh()
+    })
   }
 
   /** 批量移除成员关联 */
   const handleBatchUnbindMembers = () => {
     const code = toValue(roleCode)
-    if (!code || selectedMembers.value.length === 0) return
+    if (!code || memberRelation.selectedRows.value.length === 0) return
 
-    ElMessageBox.confirm(
-      `确认要从角色 [${code}] 中批量移除选中的 ${selectedMembers.value.length} 名成员吗？`,
-      "批量移除成员",
-      {
-        confirmButtonText: "确认移除",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
-    ).then(async () => {
-      try {
-        await batchUnassignRoleApi({
-          usernames: selectedMembers.value.map((u) => u.username),
+    handleConfirmAction({
+      title: "批量移除成员",
+      message: `确认要从角色 [${code}] 中批量移除选中的 ${memberRelation.selectedRows.value.length} 名成员吗？`,
+      api: () =>
+        batchUnassignRoleApi({
+          usernames: memberRelation.selectedRows.value.map((u) => u.username),
           role_codes: [code]
-        })
-        ElMessage.success("成功批量移除成员关联")
-        selectedMembers.value = []
-        fetchMembers()
-      } catch (err) {
-        console.error(err)
-      }
+        }),
+      onSuccess: () => memberRelation.refresh()
     })
   }
 
-  // --- 策略管理 (Policies) ---
-  const {
-    list: policies,
-    total: policyTotal,
-    loading: policyLoading,
-    query: policyQuery,
-    pagination: policyPagination,
-    fetchList: fetchPolicies,
-    handlePageChange: handlePolicyPageChange,
-    handleSearch: handlePolicySearch
-  } = useListManager<Policy, any>({
+  // --- 2. 策略管理 (Policies) ---
+  const policyRelation = useGovernanceRelationList<Policy, any>({
     fetchApi: (params) => listRolePoliciesApi({ ...params, role_code: toValue(roleCode)! }),
     listKey: "policies",
-    immediate: false
+    activeTab,
+    tabName: "permissions",
+    enabled: () => !!toValue(roleCode) && tabPermissions.value.permissions
   })
 
-  const selectedPolicies = ref<Policy[]>([])
   const handlePolicyTypeChange = (type?: number) => {
-    policyQuery.type = type
-    handlePolicySearch()
+    policyRelation.query.type = type
+    policyRelation.handleSearch()
   }
 
-  // 授权向导
   const attachPolicyVisible = ref(false)
   const policySelectVisible = ref(false)
   const handleAddPolicy = () => (policySelectVisible.value = true)
-  const handleAttachPolicySuccess = () => fetchPolicies()
+  const handleAttachPolicySuccess = () => policyRelation.refresh()
 
   /** 批量关联策略 (PolicySelectDialog 回调) */
   const handleAttachPolicies = async (selectedPolicies: Policy[]) => {
     const code = toValue(roleCode)
     if (!code || !selectedPolicies.length) return
-    policyLoading.value = true
+    policyRelation.loading.value = true
     try {
       await batchAttachPolicyApi({
         subjects: [{ type: AuthorizationSubType.ROLE, code }],
         policy_codes: selectedPolicies.map((p) => p.code)
       })
       policySelectVisible.value = false
-      fetchPolicies()
+      policyRelation.refresh()
     } finally {
-      policyLoading.value = false
+      policyRelation.loading.value = false
     }
   }
 
@@ -167,57 +136,39 @@ export function useRoleGovernance(
     const code = toValue(roleCode)
     if (!code) return
 
-    try {
-      await ElMessageBox.confirm(`确认要为角色 [${code}] 解除策略 [${policy.name}] 的关联吗？`, "解除授权", {
-        confirmButtonText: "确认解除",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
-
-      await detachPolicyApi({
-        sub_type: AuthorizationSubType.ROLE,
-        sub_code: code,
-        policy_code: policy.code
-      })
-      ElMessage.success("策略解绑成功")
-      fetchPolicies()
-    } catch (err: any) {
-      // 捕获取消点击或其他错误
-    }
+    handleConfirmAction({
+      title: "解除授权",
+      message: `确认要为角色 [${code}] 解除策略 [${policy.name}] 的关联吗？`,
+      api: () =>
+        detachPolicyApi({
+          sub_type: AuthorizationSubType.ROLE,
+          sub_code: code,
+          policy_code: policy.code
+        }),
+      onSuccess: () => policyRelation.refresh()
+    })
   }
 
   const handleBatchUnbindPolicies = () => {
     const code = toValue(roleCode)
-    if (!code || selectedPolicies.value.length === 0) return
+    if (!code || policyRelation.selectedRows.value.length === 0) return
 
-    const names = selectedPolicies.value.map((p) => p.name).join(", ")
-    ElMessageBox.confirm(
-      `确认要批量解除以下 ${selectedPolicies.value.length} 条策略的关联吗？\n[${names}]`,
-      "批量解除授权",
-      {
-        confirmButtonText: "确认解除",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
-    ).then(async () => {
-      try {
-        await batchDetachPolicyApi({
-          assignments: selectedPolicies.value.map((p) => ({
+    handleConfirmAction({
+      title: "批量解除授权",
+      message: `确认要批量解除选中的 ${policyRelation.selectedRows.value.length} 条策略关联吗？`,
+      api: () =>
+        batchDetachPolicyApi({
+          assignments: policyRelation.selectedRows.value.map((p) => ({
             sub_type: AuthorizationSubType.ROLE,
             sub_code: code,
             policy_code: p.code
           }))
-        })
-        ElMessage.success("成功批量解除策略授权")
-        selectedPolicies.value = []
-        fetchPolicies()
-      } catch (err) {
-        console.error(err)
-      }
+        }),
+      onSuccess: () => policyRelation.refresh()
     })
   }
 
-  // --- 内联策略分析 (Inline Analysis) ---
+  // --- 3. 非标准列表 (内联策略分析 & 角色继承) ---
   const analyzedInlinePolicies = ref<InlinePolicy[]>([])
   const analyzedLoading = ref(false)
 
@@ -234,7 +185,6 @@ export function useRoleGovernance(
     }
   }
 
-  // --- 角色继承 (Inheritance) ---
   const parentRoles = ref<InheritanceItem[]>([])
   const inheritanceLoading = ref(false)
   const addParentVisible = ref(false)
@@ -266,40 +216,6 @@ export function useRoleGovernance(
     }
   }
 
-  const handleAddParent = async (parentCode: string) => {
-    const code = toValue(roleCode)
-    if (!code) return
-    try {
-      await addParentRoleApi({ role_code: code, parent_role_code: parentCode })
-      ElMessage.success("成功添加父角色")
-      fetchParentRoles()
-    } catch (err: any) {
-      // 错误已由全局拦截器处理
-    }
-  }
-
-  const handleRemoveParent = async (parentCode: string) => {
-    const code = toValue(roleCode)
-    if (!code) return
-
-    try {
-      await ElMessageBox.confirm(`确认要移除对角色 [${parentCode}] 的继承关系吗？`, "移除继承", {
-        confirmButtonText: "确认移除",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
-
-      inheritanceLoading.value = true
-      await removeParentRoleApi({ role_code: code, parent_role_code: parentCode })
-      ElMessage.success("继承关系已移除")
-      fetchParentRoles()
-    } catch (err: any) {
-      // 捕获取消或由全局拦截器处理
-    } finally {
-      inheritanceLoading.value = false
-    }
-  }
-
   const handleAddParents = async (parentCodes: string[]) => {
     const code = toValue(roleCode)
     if (!code || !parentCodes.length) return
@@ -308,66 +224,69 @@ export function useRoleGovernance(
       for (const pCode of parentCodes) {
         await addParentRoleApi({ role_code: code, parent_role_code: pCode })
       }
-      ElMessage.success(`成功添加 ${parentCodes.length} 个父角色`)
       addParentVisible.value = false
       fetchParentRoles()
-    } catch (err: any) {
-      // 错误已由全局拦截器处理
     } finally {
       inheritanceLoading.value = false
     }
   }
 
-  // --- 联动逻辑 (Lazy Loading) ---
-  // NOTE: 统一管理各个 Tab 的权限，既用于禁用 UI，也用于拦截非法的 API 请求
-  const { hasPermission } = usePermission()
+  const handleRemoveParent = async (parentCode: string) => {
+    const code = toValue(roleCode)
+    if (!code) return
 
-  const tabPermissions = computed(() => ({
-    members: hasPermission(IAM_CAPABILITIES.Role.ViewRoleMembers),
-    permissions: hasPermission(IAM_CAPABILITIES.Role.ViewRolePolicies),
-    inline: hasPermission(IAM_CAPABILITIES.Role.InlineAnalysis),
-    inheritance: hasPermission(IAM_CAPABILITIES.Role.ViewParents)
-  }))
+    handleConfirmAction({
+      title: "移除继承",
+      message: `确认要移除对角色 [${parentCode}] 的继承关系吗？`,
+      api: () => removeParentRoleApi({ role_code: code, parent_role_code: parentCode }),
+      onSuccess: () => fetchParentRoles()
+    })
+  }
 
+  // 手动控制非标准 Tab 的加载 (不符合通用治理列表形态的)
   watch(
     [() => activeTab.value, () => toValue(roleCode)],
     ([tab, code]) => {
       if (!code) return
-      if (tab === "members" && tabPermissions.value.members) fetchMembers()
-      else if (tab === "permissions" && tabPermissions.value.permissions) fetchPolicies()
-      else if (tab === "inline" && tabPermissions.value.inline) fetchInlineAnalysis()
-      else if (tab === "inheritance" && tabPermissions.value.inheritance) fetchParentRoles()
+      if (tab === "inline" && tabPermissions.value.inline && analyzedInlinePolicies.value.length === 0)
+        fetchInlineAnalysis()
+      else if (tab === "inheritance" && tabPermissions.value.inheritance && parentRoles.value.length === 0)
+        fetchParentRoles()
     },
     { immediate: true }
   )
 
   return {
     activeTab,
-    members,
-    memberTotal,
-    memberLoading,
-    selectedMembers,
+    // 成员
+    members: memberRelation.list,
+    memberTotal: memberRelation.total,
+    memberLoading: memberRelation.loading,
+    selectedMembers: memberRelation.selectedRows,
     memberQuery: computed(() => ({
-      ...memberQuery,
-      currentPage: memberPagination.currentPage,
-      pageSize: memberPagination.pageSize
+      ...memberRelation.query,
+      currentPage: memberRelation.pagination.currentPage,
+      pageSize: memberRelation.pagination.pageSize
     })),
-    policies,
-    policyTotal,
-    policyLoading,
-    selectedPolicies,
-    policyQuery: computed(() => ({
-      ...policyQuery,
-      currentPage: policyPagination.currentPage,
-      pageSize: policyPagination.pageSize
-    })),
-    handleMemberPageChange,
-    handleMemberSearch,
+    handleMemberPageChange: memberRelation.handlePageChange,
+    handleMemberSearch: memberRelation.handleSearch,
     addMemberVisible,
     handleAddMember,
     handleAssignMembers,
-    handlePolicyPageChange,
-    handlePolicySearch,
+    handleUnbindMember,
+    handleBatchUnbindMembers,
+    // 策略
+    policies: policyRelation.list,
+    policyTotal: policyRelation.total,
+    policyLoading: policyRelation.loading,
+    selectedPolicies: policyRelation.selectedRows,
+    policyQuery: computed(() => ({
+      ...policyRelation.query,
+      currentPage: policyRelation.pagination.currentPage,
+      pageSize: policyRelation.pagination.pageSize
+    })),
+    handlePolicyPageChange: policyRelation.handlePageChange,
+    handlePolicySearch: policyRelation.handleSearch,
     handlePolicyTypeChange,
     attachPolicyVisible,
     policySelectVisible,
@@ -375,19 +294,17 @@ export function useRoleGovernance(
     handleAttachPolicies,
     handleAttachPolicySuccess,
     handleUnbindPolicy,
-    handleUnbindMember,
-    handleBatchUnbindMembers,
+    handleBatchUnbindPolicies,
+    // 其他
     analyzedInlinePolicies,
     analyzedLoading,
     fetchInlineAnalysis,
     parentRoles,
     inheritanceLoading,
     fetchParentRoles,
-    handleAddParent,
     handleRemoveParent,
     addParentVisible,
     handleAddParents,
-    handleBatchUnbindPolicies,
     tabPermissions
   }
 }

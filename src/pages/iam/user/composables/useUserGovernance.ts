@@ -1,4 +1,4 @@
-import { ref, watch, type Ref, computed, toValue } from "vue"
+import { ref, type Ref, computed } from "vue"
 import { useTabRouter } from "@/common/composables/useTabRouter"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
@@ -10,8 +10,8 @@ import {
   batchAssignTenantsApi,
   batchUnassignTenantsApi
 } from "@/api/iam/tenant"
-import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
 import { AuthorizationSubType } from "@/api/iam/permission/type"
 import type { User } from "@/api/iam/user/type"
 import type { Role } from "@/api/iam/role/type"
@@ -23,62 +23,49 @@ export function useUserGovernance(user: Ref<User | undefined>) {
   const username = computed(() => user.value?.username)
   const { activeTab } = useTabRouter("sources")
   const { handleConfirmAction } = useGovernanceActions()
+  const { hasPermission } = usePermission()
 
-  // --- 1. 状态控制 ---
+  // --- 1. 状态控制与权限 ---
   const roleSelectVisible = ref(false)
   const policySelectVisible = ref(false)
   const attachPolicyVisible = ref(false)
   const tenantSelectVisible = ref(false)
   const submitting = ref(false)
 
-  // --- 2. 列表治理集成 ---
+  const tabPermissions = computed(() => ({
+    sources: hasPermission(IAM_CAPABILITIES.User.Detail),
+    roles: hasPermission(IAM_CAPABILITIES.User.ViewUserRoles),
+    permissions: hasPermission(IAM_CAPABILITIES.User.ViewUserPolicies),
+    tenants: hasPermission(IAM_CAPABILITIES.User.ViewUserTenants)
+  }))
+
+  // --- 2. 关联列表治理抽象 ---
 
   // 角色列表管理
-  const {
-    list: roles,
-    total: roleTotal,
-    loading: roleLoading,
-    pagination: rolePagination,
-    query: roleQuery,
-    fetchList: loadRoles,
-    handlePageChange: handleRolePageChange,
-    handleSearch: handleRoleSearch
-  } = useListManager<Role, any>({
+  const roleRelation = useGovernanceRelationList<Role, any>({
     fetchApi: (params) => listUserRolesApi({ ...params, user_id: userId.value! }),
     listKey: "roles",
-    immediate: false
+    activeTab,
+    tabName: "roles",
+    enabled: () => !!userId.value && tabPermissions.value.roles
   })
 
   // 策略列表管理
-  const {
-    list: policies,
-    total: policyTotal,
-    loading: policyLoading,
-    pagination: policyPagination,
-    query: policyQuery,
-    fetchList: loadPolicies,
-    handlePageChange: handlePolicyPageChange,
-    handleSearch: handlePolicySearch
-  } = useListManager<Policy, any>({
+  const policyRelation = useGovernanceRelationList<Policy, any>({
     fetchApi: (params) => listUserPoliciesApi({ ...params, user_id: userId.value! }),
     listKey: "policies",
-    immediate: false
+    activeTab,
+    tabName: "permissions",
+    enabled: () => !!userId.value && tabPermissions.value.permissions
   })
 
   // 租户列表管理
-  const {
-    list: tenants,
-    total: tenantTotal,
-    loading: tenantLoading,
-    pagination: tenantPagination,
-    query: tenantQuery,
-    fetchList: loadTenants,
-    handlePageChange: handleTenantPageChange,
-    handleSearch: handleTenantSearch
-  } = useListManager<Tenant, any>({
+  const tenantRelation = useGovernanceRelationList<Tenant, any>({
     fetchApi: (params) => listUserTenantsApi({ ...params, user_id: userId.value! }),
     listKey: "tenants",
-    immediate: false
+    activeTab,
+    tabName: "tenants",
+    enabled: () => !!userId.value && tabPermissions.value.tenants
   })
 
   // --- 3. 核心业务动作 ---
@@ -88,13 +75,12 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     if (!username.value || !selectedRoles.length) return
     submitting.value = true
     try {
-      // NOTE: 利用后端优化的 Cartesian 笛卡尔积接口，单次请求完成所有绑定
       await batchAssignRoleApi({
         usernames: [username.value],
         role_codes: selectedRoles.map((r) => r.code)
       })
       roleSelectVisible.value = false
-      loadRoles()
+      roleRelation.refresh()
     } finally {
       submitting.value = false
     }
@@ -111,26 +97,22 @@ export function useUserGovernance(user: Ref<User | undefined>) {
           username: username.value!,
           role_code: row.code
         }),
-      onSuccess: () => loadRoles()
+      onSuccess: () => roleRelation.refresh()
     })
   }
 
   /** 批量解除角色关联 */
-  const selectedRoles = ref<Role[]>([])
   const handleBatchUnbindRoles = () => {
-    if (!username.value || selectedRoles.value.length === 0) return
+    if (!username.value || roleRelation.selectedRows.value.length === 0) return
     handleConfirmAction({
       title: "批量移除角色",
-      message: `确认要为用户 [${username.value}] 批量移除所选的 ${selectedRoles.value.length} 条角色关联吗？`,
+      message: `确认要为用户 [${username.value}] 批量移除所选的 ${roleRelation.selectedRows.value.length} 条角色关联吗？`,
       api: () =>
         batchUnassignRoleApi({
           usernames: [username.value!],
-          role_codes: selectedRoles.value.map((r) => r.code)
+          role_codes: roleRelation.selectedRows.value.map((r) => r.code)
         }),
-      onSuccess: () => {
-        selectedRoles.value = []
-        loadRoles()
-      }
+      onSuccess: () => roleRelation.refresh()
     })
   }
 
@@ -146,45 +128,41 @@ export function useUserGovernance(user: Ref<User | undefined>) {
           sub_code: username.value!,
           policy_code: row.code
         }),
-      onSuccess: () => loadPolicies()
+      onSuccess: () => policyRelation.refresh()
     })
   }
 
   /** 批量解除策略授权 */
-  const selectedPolicies = ref<Policy[]>([])
   const handleBatchUnbindPolicies = () => {
-    if (!username.value || selectedPolicies.value.length === 0) return
+    if (!username.value || policyRelation.selectedRows.value.length === 0) return
     handleConfirmAction({
       title: "批量解除授权",
-      message: `确认要批量解除所选的 ${selectedPolicies.value.length} 条策略关联吗？`,
+      message: `确认要批量解除所选的 ${policyRelation.selectedRows.value.length} 条策略关联吗？`,
       api: () =>
         batchDetachPolicyApi({
-          assignments: selectedPolicies.value.map((p) => ({
+          assignments: policyRelation.selectedRows.value.map((p) => ({
             sub_type: AuthorizationSubType.USER,
             sub_code: username.value!,
             policy_code: p.code
           }))
         }),
-      onSuccess: () => {
-        selectedPolicies.value = []
-        loadPolicies()
-      }
+      onSuccess: () => policyRelation.refresh()
     })
   }
 
   /** 批量关联策略 (PolicySelectDialog 回调) */
   const handleAttachPolicies = async (selectedPolicies: Policy[]) => {
     if (!username.value || !selectedPolicies.length) return
-    policyLoading.value = true
+    policyRelation.loading.value = true
     try {
       await batchAttachPolicyApi({
         subjects: [{ type: AuthorizationSubType.USER, code: username.value }],
         policy_codes: selectedPolicies.map((p) => p.code)
       })
       policySelectVisible.value = false
-      loadPolicies()
+      policyRelation.refresh()
     } finally {
-      policyLoading.value = false
+      policyRelation.loading.value = false
     }
   }
 
@@ -199,115 +177,90 @@ export function useUserGovernance(user: Ref<User | undefined>) {
           tenant_id: row.id,
           user_id: userId.value!
         }),
-      onSuccess: () => loadTenants()
+      onSuccess: () => tenantRelation.refresh()
     })
   }
 
   /** 批量分配租户 (TenantSelectDialog 回调) */
   const handleAssignTenants = async (selectedTenants: Tenant[]) => {
     if (!userId.value || !selectedTenants.length) return
-    tenantLoading.value = true
+    tenantRelation.loading.value = true
     try {
       await batchAssignTenantsApi({
         user_ids: [userId.value],
         tenant_ids: selectedTenants.map((t) => t.id)
       })
       tenantSelectVisible.value = false
-      loadTenants()
+      tenantRelation.refresh()
     } finally {
-      tenantLoading.value = false
+      tenantRelation.loading.value = false
     }
   }
 
   /** 批量解除租户关联 */
   const handleBatchUnbindTenants = () => {
-    if (!userId.value || selectedTenants.value.length === 0) return
+    if (!userId.value || tenantRelation.selectedRows.value.length === 0) return
     handleConfirmAction({
       title: "批量移除租户",
-      message: `确认要将用户从所选的 ${selectedTenants.value.length} 个租户空间中移除吗？此操作将导致用户立即失去相关空间的所有访问权限。`,
+      message: `确认要将用户从所选的 ${tenantRelation.selectedRows.value.length} 个租户空间中移除吗？此操作将导致用户立即失去相关空间的所有访问权限。`,
       api: () =>
         batchUnassignTenantsApi({
           user_ids: [userId.value!],
-          tenant_ids: selectedTenants.value.map((t) => t.id)
+          tenant_ids: tenantRelation.selectedRows.value.map((t) => t.id)
         }),
-      onSuccess: () => {
-        selectedTenants.value = []
-        loadTenants()
-      }
+      onSuccess: () => tenantRelation.refresh()
     })
   }
 
   // --- 4. 辅助状态与联动 ---
 
   const handleRoleTypeChange = (type?: number) => {
-    roleQuery.type = type
-    handleRoleSearch()
+    roleRelation.query.type = type
+    roleRelation.handleSearch()
   }
 
   const handlePolicyTypeChange = (type?: number) => {
-    policyQuery.type = type
-    handlePolicySearch()
+    policyRelation.query.type = type
+    policyRelation.handleSearch()
   }
 
   const handleAddPolicy = () => (policySelectVisible.value = true)
-  const handleAttachSuccess = () => loadPolicies()
-
-  // 批量选择 Ref
-  const selectedTenants = ref<Tenant[]>([])
-
-  const { hasPermission } = usePermission()
-
-  const tabPermissions = computed(() => ({
-    sources: hasPermission(IAM_CAPABILITIES.User.Detail),
-    roles: hasPermission(IAM_CAPABILITIES.User.ViewUserRoles),
-    permissions: hasPermission(IAM_CAPABILITIES.User.ViewUserPolicies),
-    tenants: hasPermission(IAM_CAPABILITIES.User.ViewUserTenants)
-  }))
-
-  const refresh = () => {
-    if (!userId.value) return
-    const tab = toValue(activeTab)
-    if (tab === "roles" && tabPermissions.value.roles) loadRoles()
-    if (tab === "permissions" && tabPermissions.value.permissions) loadPolicies()
-    if (tab === "tenants" && tabPermissions.value.tenants) loadTenants()
-  }
-
-  watch([userId, () => toValue(activeTab)], () => refresh(), { immediate: true })
+  const handleAttachSuccess = () => policyRelation.refresh()
 
   return {
     activeTab,
     submitting,
     // 角色
-    roles,
-    roleTotal,
-    roleLoading,
+    roles: roleRelation.list,
+    roleTotal: roleRelation.total,
+    roleLoading: roleRelation.loading,
     roleQuery: computed(() => ({
-      ...roleQuery,
-      currentPage: rolePagination.currentPage,
-      pageSize: rolePagination.pageSize
+      ...roleRelation.query,
+      currentPage: roleRelation.pagination.currentPage,
+      pageSize: roleRelation.pagination.pageSize
     })),
-    selectedRoles,
+    selectedRoles: roleRelation.selectedRows,
     roleSelectVisible,
-    handleRolePageChange,
-    handleRoleSearch,
+    handleRolePageChange: roleRelation.handlePageChange,
+    handleRoleSearch: roleRelation.handleSearch,
     handleRoleTypeChange,
     handleAssignRoles,
     handleUnbindRole,
     handleBatchUnbindRoles,
     // 策略
-    policies,
-    policyTotal,
-    policyLoading,
+    policies: policyRelation.list,
+    policyTotal: policyRelation.total,
+    policyLoading: policyRelation.loading,
     policyQuery: computed(() => ({
-      ...policyQuery,
-      currentPage: policyPagination.currentPage,
-      pageSize: policyPagination.pageSize
+      ...policyRelation.query,
+      currentPage: policyRelation.pagination.currentPage,
+      pageSize: policyRelation.pagination.pageSize
     })),
-    selectedPolicies,
+    selectedPolicies: policyRelation.selectedRows,
     policySelectVisible,
     attachPolicyVisible,
-    handlePolicyPageChange,
-    handlePolicySearch,
+    handlePolicyPageChange: policyRelation.handlePageChange,
+    handlePolicySearch: policyRelation.handleSearch,
     handlePolicyTypeChange,
     handleAddPolicy,
     handleAttachPolicies,
@@ -315,18 +268,18 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     handleUnbindPolicy,
     handleBatchUnbindPolicies,
     // 租户
-    tenants,
-    tenantTotal,
-    tenantLoading,
+    tenants: tenantRelation.list,
+    tenantTotal: tenantRelation.total,
+    tenantLoading: tenantRelation.loading,
     tenantQuery: computed(() => ({
-      ...tenantQuery,
-      currentPage: tenantPagination.currentPage,
-      pageSize: tenantPagination.pageSize
+      ...tenantRelation.query,
+      currentPage: tenantRelation.pagination.currentPage,
+      pageSize: tenantRelation.pagination.pageSize
     })),
-    selectedTenants,
+    selectedTenants: tenantRelation.selectedRows,
     tenantSelectVisible,
-    handleTenantPageChange,
-    handleTenantSearch,
+    handleTenantPageChange: tenantRelation.handlePageChange,
+    handleTenantSearch: tenantRelation.handleSearch,
     handleAssignTenants,
     handleUnbindTenant,
     handleBatchUnbindTenants,
