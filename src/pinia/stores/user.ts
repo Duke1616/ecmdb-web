@@ -53,7 +53,7 @@ export const useUserStore = defineStore(
     /** 切换租户 */
     const switchTenant = async (tenant: user.Tenant) => {
       try {
-        await switchTenantApi({ tenant_id: tenant.id })
+        await switchTenantApi(tenant.id)
 
         // 切换租户后跳转到首页导航页，避免因新租户权限不同导致当前页面 404
         // 同时触发全页刷新以重新执行路由守卫并加载新权限

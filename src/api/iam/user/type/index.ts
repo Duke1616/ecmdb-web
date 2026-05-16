@@ -144,9 +144,9 @@ export interface UserData {
   permissions: string[]
 }
 
-/** 切换租户请求 */
+/** 切换租户请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
 export interface SwitchTenantRequest {
-  tenant_id: number
+  // 空结构体，tenant_id 通过 Header 传递
 }
 
 /** 更新用户请求 */

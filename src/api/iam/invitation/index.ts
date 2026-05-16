@@ -5,10 +5,11 @@ import type * as invitation from "./type"
 /**
  * 创建邀请码
  */
-export function createInvitationApi(data: invitation.CreateInvitationReq) {
+export function createInvitationApi(data: invitation.CreateInvitationReq, tenantId: number) {
   return instance.post<{ code: string }>({
     url: `${API_SERVICE.IAM}/invitation/create`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -34,10 +35,11 @@ export function acceptInvitationApi(data: invitation.AcceptInvitationReq) {
 /**
  * 获取活跃邀请列表
  */
-export function listInvitationsApi(data: invitation.InvitationPageReq) {
+export function listInvitationsApi(data: invitation.InvitationPageReq, tenantId: number) {
   return instance.post<invitation.InvitationPageVO>({
     url: `${API_SERVICE.IAM}/invitation/list`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -53,20 +55,22 @@ export function revokeInvitationApi(code: string) {
 /**
  * 获取入驻申请列表
  */
-export function listJoinRequestsApi(data: invitation.JoinRequestPageReq) {
+export function listJoinRequestsApi(data: invitation.JoinRequestPageReq, tenantId: number) {
   return instance.post<invitation.JoinRequestPageVO>({
     url: `${API_SERVICE.IAM}/invitation/requests`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 
 /**
  * 处理入驻申请
  */
-export function handleJoinRequestApi(data: invitation.HandleJoinRequestReq) {
+export function handleJoinRequestApi(data: invitation.HandleJoinRequestReq, tenantId: number) {
   return instance.post<void>({
     url: `${API_SERVICE.IAM}/invitation/requests/handle`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 

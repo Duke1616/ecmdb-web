@@ -76,13 +76,12 @@ export interface UpdateRoleReq {
   desc?: string
 }
 
-/** 角色列表请求 */
+/** 角色列表请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
 export interface ListRoleReq {
   offset: number
   limit: number
   keyword?: string
   type?: number
-  tenant_id?: number
 }
 
 /** 用户关联角色列表请求 */

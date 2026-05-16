@@ -172,11 +172,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     handleConfirmAction({
       title: "移除租户关联",
       message: `确定要将用户从租户空间 [${row.name}] 中移除吗？此操作将立即收回在该空间下的所有权限。`,
-      api: () =>
-        removeTenantMemberApi({
-          tenant_id: row.id,
-          user_id: userId.value!
-        }),
+      api: () => removeTenantMemberApi({ user_id: userId.value! }, row.id),
       onSuccess: () => tenantRelation.refresh()
     })
   }

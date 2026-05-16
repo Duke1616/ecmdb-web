@@ -29,7 +29,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
 
   // --- 1. 成员治理 ---
   const memberRelation = useGovernanceRelationList<TenantMember, any>({
-    fetchApi: (params) => listTenantMembersApi({ ...params, tenant_id: tid.value! }),
+    fetchApi: (params) => listTenantMembersApi(params, tid.value!),
     listKey: "members",
     activeTab,
     tabName: "members",
@@ -38,7 +38,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
 
   // --- 2. 邀请链接治理 ---
   const linksRelation = useGovernanceRelationList<InvitationVO, any>({
-    fetchApi: (params) => listInvitationsApi({ ...params, tenant_id: tid.value! }),
+    fetchApi: (params) => listInvitationsApi(params, tid.value!),
     listKey: "invitations",
     activeTab,
     tabName: "invitation", // 注意：detail.vue 中名字可能是 invitation 或 links，这里需同步
@@ -47,7 +47,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
 
   // --- 3. 入驻申请治理 ---
   const requestsRelation = useGovernanceRelationList<JoinRequestVO, any>({
-    fetchApi: (params) => listJoinRequestsApi({ ...params, tenant_id: tid.value! }),
+    fetchApi: (params) => listJoinRequestsApi(params, tid.value!),
     listKey: "requests",
     activeTab,
     tabName: "requests",
@@ -101,11 +101,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
     handleConfirmAction({
       title: "移除成员",
       message: `确定要将成员 "${row.nickname || row.username}" 移出当前租户空间吗？移除后该用户将失去在该租户下的所有权限。`,
-      api: () =>
-        removeTenantMemberApi({
-          tenant_id: tid.value!,
-          user_id: row.id
-        }),
+      api: () => removeTenantMemberApi({ user_id: row.id }, tid.value!),
       onSuccess: () => memberRelation.refresh()
     })
   }
@@ -129,7 +125,7 @@ export function useTenantGovernance(tenantId: MaybeRefOrGetter<number | undefine
   const handleApproval = async (id: number, approve: boolean) => {
     const action = approve ? "通过" : "拒绝"
     try {
-      await handleJoinRequestApi({ id, approve, tenant_id: tid.value! })
+      await handleJoinRequestApi({ id, approve }, tid.value!)
       ElMessage.success(`申请已${action}`)
       requestsRelation.refresh()
     } catch (error) {

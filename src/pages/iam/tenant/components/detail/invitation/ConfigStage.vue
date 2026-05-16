@@ -141,10 +141,7 @@ const updateForm = (key: string, value: any) => {
 }
 
 const loadRoles = async (params: any) => {
-  return await listRolesApi({
-    ...params,
-    tenant_id: props.tenantId
-  })
+  return await listRolesApi(params)
 }
 </script>
 

@@ -48,8 +48,8 @@ export function useGovernanceRelationList<T, Q extends object>(options: Governan
       return
     }
 
-    // 仅在当前 Tab 激活且数据为空时触发
-    if (toValue(activeTab) === tabName && listManager.list.value.length === 0) {
+    // 当前 Tab 激活时触发
+    if (toValue(activeTab) === tabName) {
       listManager.fetchList()
     }
   }

@@ -64,7 +64,7 @@ export function useTenantList() {
       title: "上下文切换",
       message: `确定要切换到租户空间 "${row.name}" 吗？`,
       confirmType: "primary",
-      api: () => switchTenantApi({ tenant_id: row.id }),
+      api: () => switchTenantApi(row.id),
       onSuccess: () => window.location.reload(),
       successMsg: `已成功切换至: ${row.name}`
     })

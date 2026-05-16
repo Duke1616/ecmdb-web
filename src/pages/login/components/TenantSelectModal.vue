@@ -19,7 +19,7 @@ const handleSelect = async (tenant: Tenant) => {
   selectedId.value = tenant.id
   switching.value = true
   try {
-    await switchTenantApi({ tenant_id: tenant.id })
+    await switchTenantApi(tenant.id)
     ElMessage.success(`欢迎进入：${tenant.name}`)
     visible.value = false
     router.push("/")

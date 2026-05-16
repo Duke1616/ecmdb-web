@@ -138,7 +138,7 @@ const handleOperate = (row: Tenant, code: string) => {
 }
 
 const tableColumns: Column[] = [
-  { label: "租户实体", prop: "name", slot: "tenant_info", minWidth: 280, align: "center" },
+  { label: "租户实体", prop: "name", slot: "tenant_info", minWidth: 200, align: "center" },
   { label: "身份域名标识", prop: "domain", slot: "domain", minWidth: 320, align: "center" },
   { label: "运行状态", prop: "status", slot: "status", width: 140, align: "center" }
 ]

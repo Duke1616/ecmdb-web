@@ -22,9 +22,9 @@ export interface UpdateTenantReq {
   status?: number
 }
 
-/** 切换租户请求 */
+/** 切换租户请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
 export interface SwitchTenantReq {
-  tenant_id: number
+  // 空结构体，tenant_id 通过 Header 传递
 }
 
 /** 租户列表请求 */
@@ -48,9 +48,8 @@ export interface ListUserTenantsReq {
   keyword: string
 }
 
-/** 租户成员列表请求 */
+/** 租户成员列表请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
 export interface ListMembersReq {
-  tenant_id: number
   offset: number
   limit: number
   keyword?: string
@@ -75,14 +74,12 @@ export interface TenantMember {
   ctime: number
 }
 
-/** 分配用户到租户请求 */
+/** 分配用户到租户请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
 export interface AssignUserReq {
-  tenant_id: number
   user_id: number
 }
-/** 移除租户成员请求 */
+/** 移除租户成员请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
 export interface RemoveMemberReq {
-  tenant_id: number
   user_id: number
 }
 

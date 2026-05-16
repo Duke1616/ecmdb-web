@@ -18,10 +18,10 @@ export function listMyTenantsApi() {
 }
 
 /** 租户上下文切换 */
-export function switchTenantApi(data: tenant.SwitchTenantReq) {
+export function switchTenantApi(tenantId: number) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/switch`,
-    data
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -64,25 +64,28 @@ export function listUserTenantsApi(data: tenant.ListUserTenantsReq) {
 }
 
 /** 租户成员列表 (治理侧) */
-export function listTenantMembersApi(data: tenant.ListMembersReq) {
+export function listTenantMembersApi(data: tenant.ListMembersReq, tenantId: number) {
   return instance.post<tenant.ListMembersRes>({
     url: `${API_SERVICE.IAM}/tenant/members`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 
 /** 分配用户到租户 */
-export function assignTenantUserApi(data: tenant.AssignUserReq) {
+export function assignTenantUserApi(data: tenant.AssignUserReq, tenantId: number) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/assign`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 /** 移除租户成员 */
-export function removeTenantMemberApi(data: tenant.RemoveMemberReq) {
+export function removeTenantMemberApi(data: tenant.RemoveMemberReq, tenantId: number) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/unassign`,
-    data
+    data,
+    headers: { "X-Tenant-ID": String(tenantId) }
   })
 }
 
