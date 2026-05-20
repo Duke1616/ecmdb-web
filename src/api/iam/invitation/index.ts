@@ -5,11 +5,15 @@ import type * as invitation from "./type"
 /**
  * 创建邀请码
  */
-export function createInvitationApi(data: invitation.CreateInvitationReq, tenantId: number) {
+export function createInvitationApi(data: invitation.CreateInvitationReq, tenantId?: number) {
+  const headers: Record<string, string> = {}
+  if (tenantId !== undefined) {
+    headers["X-Active-Tenant-ID"] = String(tenantId)
+  }
   return instance.post<{ code: string }>({
     url: `${API_SERVICE.IAM}/invitation/create`,
     data,
-    headers: { "X-Active-Tenant-ID": String(tenantId) }
+    headers
   })
 }
 
@@ -35,11 +39,15 @@ export function acceptInvitationApi(data: invitation.AcceptInvitationReq) {
 /**
  * 获取活跃邀请列表
  */
-export function listInvitationsApi(data: invitation.InvitationPageReq, tenantId: number) {
+export function listInvitationsApi(data: invitation.InvitationPageReq, tenantId?: number) {
+  const headers: Record<string, string> = {}
+  if (tenantId !== undefined) {
+    headers["X-Active-Tenant-ID"] = String(tenantId)
+  }
   return instance.post<invitation.InvitationPageVO>({
     url: `${API_SERVICE.IAM}/invitation/list`,
     data,
-    headers: { "X-Active-Tenant-ID": String(tenantId) }
+    headers
   })
 }
 
@@ -55,22 +63,30 @@ export function revokeInvitationApi(code: string) {
 /**
  * 获取入驻申请列表
  */
-export function listJoinRequestsApi(data: invitation.JoinRequestPageReq, tenantId: number) {
+export function listJoinRequestsApi(data: invitation.JoinRequestPageReq, tenantId?: number) {
+  const headers: Record<string, string> = {}
+  if (tenantId !== undefined) {
+    headers["X-Active-Tenant-ID"] = String(tenantId)
+  }
   return instance.post<invitation.JoinRequestPageVO>({
     url: `${API_SERVICE.IAM}/invitation/requests`,
     data,
-    headers: { "X-Active-Tenant-ID": String(tenantId) }
+    headers
   })
 }
 
 /**
  * 处理入驻申请
  */
-export function handleJoinRequestApi(data: invitation.HandleJoinRequestReq, tenantId: number) {
+export function handleJoinRequestApi(data: invitation.HandleJoinRequestReq, tenantId?: number) {
+  const headers: Record<string, string> = {}
+  if (tenantId !== undefined) {
+    headers["X-Active-Tenant-ID"] = String(tenantId)
+  }
   return instance.post<void>({
     url: `${API_SERVICE.IAM}/invitation/requests/handle`,
     data,
-    headers: { "X-Active-Tenant-ID": String(tenantId) }
+    headers
   })
 }
 

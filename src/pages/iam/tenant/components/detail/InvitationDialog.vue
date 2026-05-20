@@ -70,15 +70,12 @@ const displayExpiry = computed(() => {
 const handleGenerate = async () => {
   submitting.value = true
   try {
-    const res = await createInvitationApi(
-      {
-        max_uses: form.value.max_uses,
-        expiry_days: form.value.expiry_days,
-        role_codes: form.value.role_codes,
-        require_approval: form.value.require_approval
-      },
-      props.tenantId!
-    )
+    const res = await createInvitationApi({
+      max_uses: form.value.max_uses,
+      expiry_days: form.value.expiry_days,
+      role_codes: form.value.role_codes,
+      require_approval: form.value.require_approval
+    })
     invitationCode.value = res.data.code
     generatedLink.value = `${window.location.origin}/join?code=${res.data.code}`
     step.value = 2
