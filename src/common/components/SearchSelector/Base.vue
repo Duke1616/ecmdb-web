@@ -617,6 +617,38 @@ onUnmounted(() => {
       margin-top: 2px;
     }
   }
+
+  .selected-indicator {
+    color: #409eff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 10px;
+  color: #909399;
+  font-size: 13px;
+  gap: 8px;
+
+  svg {
+    width: 24px;
+    height: 24px;
+    color: #c0c4cc;
+  }
 }
 
 .pagination-section {
