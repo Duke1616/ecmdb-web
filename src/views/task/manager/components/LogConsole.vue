@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted, computed, nextTick } from "vue"
+import { ref } from "vue"
 import { Refresh, Coordinate, Monitor, Clock, Pointer } from "@element-plus/icons-vue"
-import { getTaskLogsApi } from "@/api/etask/manager"
 import type { TaskExecutionVO } from "@/api/etask/manager/type"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import type { TagInfo } from "@/common/components/EnumTag/index.vue"
+import { useLogConsoleStream } from "../composables/useLogConsoleStream"
 
 /**
  * 任务执行控制台 (LogConsole)
@@ -26,71 +26,15 @@ const STATUS_MAP: Record<string, TagInfo> = {
   PREEMPTED: { type: "warning", text: "已抢占" }
 }
 
-const loading = ref(false)
-const fullLogs = ref("")
-const lastLogId = ref(0)
-const lastRefreshTime = ref("")
-const autoRefresh = ref(true)
-const viewResultVisible = ref(false)
-let timer: any = null
-
-// 核心：日志抓取 (支持初始覆盖与增量追加)
-const fetchLogs = async (silent = false) => {
-  if (!props.execution?.id) return
-  if (!silent) loading.value = true
-
-  try {
-    const res = await getTaskLogsApi({
-      execution_id: props.execution.id,
-      min_id: lastLogId.value,
-      limit: 1000
-    })
-
-    const newLogs = res.data.logs || []
-    if (newLogs.length > 0 || lastLogId.value === 0) {
-      const contentBatch = newLogs.map((l) => l.content).join("\n")
-      // lastLogId 为 0 时是切换实例，直接覆盖；否则追加
-      fullLogs.value = lastLogId.value === 0 ? contentBatch : `${fullLogs.value}\n${contentBatch}`
-      if (newLogs.length > 0) {
-        lastLogId.value = Math.max(...newLogs.map((l) => l.id))
-      }
-      if (autoRefresh.value) nextTick(() => editorRef.value?.scrollToBottom())
-    }
-    lastRefreshTime.value = new Date().toLocaleTimeString()
-  } finally {
-    if (!silent) loading.value = false
-  }
-}
-
-const resetAndFetch = () => {
-  lastLogId.value = 0
-  fetchLogs()
-}
-
-// 切换实例监听
-watch(
-  () => props.execution?.id,
-  (id) => (id ? resetAndFetch() : (fullLogs.value = "")),
-  { immediate: true }
+// 托管日志轮询逻辑与聚合状态机，消除零散状态声明，实现逻辑与视图解耦
+const { state, isRunning, resetAndFetch, handleAutoRefreshChange } = useLogConsoleStream(
+  () => props.execution,
+  () => editorRef.value?.scrollToBottom()
 )
-
-// 自动轮询控制
-const isRunning = computed(() => ["RUNNING", "PREEMPTED"].includes(props.execution?.status || ""))
-watch(
-  [autoRefresh, isRunning],
-  ([active, running]) => {
-    clearInterval(timer)
-    if (active && running) timer = setInterval(() => fetchLogs(true), 4000)
-  },
-  { immediate: true }
-)
-
-onUnmounted(() => clearInterval(timer))
-defineExpose({ refresh: resetAndFetch })
 </script>
 
 <template>
-  <div class="log-console-container" v-loading="loading">
+  <div class="log-console-container" v-loading="state.loading">
     <template v-if="execution">
       <div class="main-header">
         <div class="status-summary">
@@ -104,18 +48,18 @@ defineExpose({ refresh: resetAndFetch })
         <div class="header-actions">
           <div class="control-unit" v-if="isRunning">
             <span class="label">自动跟踪</span>
-            <el-switch v-model="autoRefresh" size="small" />
+            <el-switch v-model="state.autoRefresh" size="small" @change="handleAutoRefreshChange" />
           </div>
           <div class="action-divider" v-if="isRunning" />
           <div class="btn-cluster">
-            <el-button :icon="Refresh" circle size="default" :disabled="loading" @click="resetAndFetch" />
+            <el-button :icon="Refresh" circle size="default" :disabled="state.loading" @click="resetAndFetch" />
             <el-button
               v-if="execution.task_result"
               :icon="Monitor"
               type="info"
               circle
               plain
-              @click="viewResultVisible = true"
+              @click="state.viewResultVisible = true"
             />
           </div>
         </div>
@@ -125,15 +69,15 @@ defineExpose({ refresh: resetAndFetch })
         <div class="console-title-bar">
           <span class="prefix">控制台输出 (STDOUT)</span>
           <div class="spacer" />
-          <span class="sync-time" v-if="lastRefreshTime">
-            <el-icon><Clock /></el-icon>同步于 {{ lastRefreshTime }}
+          <span class="sync-time" v-if="state.lastRefreshTime">
+            <el-icon><Clock /></el-icon>同步于 {{ state.lastRefreshTime }}
           </span>
         </div>
         <div class="terminal-view">
           <CodeEditor
-            v-if="fullLogs"
+            v-if="state.fullLogs"
             ref="editorRef"
-            :code="fullLogs"
+            :code="state.fullLogs"
             language="text"
             :read-only="true"
             class="terminal-editor"
@@ -147,7 +91,7 @@ defineExpose({ refresh: resetAndFetch })
       <h3>请选择监控实例以查看日志</h3>
     </div>
 
-    <el-dialog v-model="viewResultVisible" title="运行结果" width="800px" append-to-body center>
+    <el-dialog v-model="state.viewResultVisible" title="运行结果" width="800px" append-to-body center>
       <CodeEditor :code="execution?.task_result || ''" language="json" :read-only="true" height="500px" />
     </el-dialog>
   </div>

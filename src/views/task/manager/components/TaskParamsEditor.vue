@@ -95,21 +95,6 @@ watch(paramModes, (newModes) => {
 watch(() => props.metadata, initModes, { immediate: true })
 
 /**
- * 编辑场景适配：当外部传入的 scheduleParams (初次打开抽屉) 发生根本性变化时，强制同步一次
- * 仅在 ID 或 关键业务场景切换时通过父组件重置
- */
-watch(
-  () => taskMetadata.value,
-  (val, oldVal) => {
-    // 仅在从空变成有，或者明显是重置行为时进行初始化 (例如切换了任务)
-    if (Object.keys(val).length > 0 && Object.keys(oldVal || {}).length === 0) {
-      initModes()
-    }
-  },
-  { deep: true }
-)
-
-/**
  * 全屏切换逻辑与键盘管理
  */
 const toggleFullScreen = (key: string) => {
@@ -128,8 +113,17 @@ const handleKeyDown = (e: KeyboardEvent) => {
   }
 }
 
-onMounted(() => window.addEventListener("keydown", handleKeyDown, true))
-onUnmounted(() => window.removeEventListener("keydown", handleKeyDown, true))
+// 挂载时进行初始数据映射，并绑定全局键盘快捷键
+onMounted(() => {
+  initModes()
+  window.addEventListener("keydown", handleKeyDown, true)
+})
+
+// 销毁时强制释放全局 Body 样式滚动锁，杜绝由于组件卸载导致的整页滚动死锁瘫痪
+onUnmounted(() => {
+  document.body.style.overflow = ""
+  window.removeEventListener("keydown", handleKeyDown, true)
+})
 </script>
 
 <style lang="scss" scoped>

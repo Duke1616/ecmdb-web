@@ -87,21 +87,27 @@ const syncToParent = () => {
   }
 }
 
-// 监听外部数据变更 (仅在非内部操作引起的数据量变化时同步，防止输入冲突)
+// 监听外部数据变更 (深度检查内容一致性，防止丢失外部修改与输入框闪烁)
 watch(
   () => props.modelValue,
   (val) => {
-    const currentLen = list.value.filter((i) => i.key.trim()).length
+    // 将当前内部列表转化成对比格式
+    let currentTransformed: any
     if (props.valueType === "array") {
-      const incomingLen = Array.isArray(val) ? val.length : 0
-      if (incomingLen !== currentLen) {
-        list.value = parseModelToList(val)
-      }
+      currentTransformed = list.value
+        .filter((i) => i.key?.trim())
+        .map((i) => ({ key: i.key.trim(), value: i.value, secret: !!i.secret }))
     } else {
-      const incomingLen = Object.keys(val || {}).length
-      if (incomingLen !== currentLen) {
-        list.value = parseModelToList(val)
-      }
+      const currentMap: Record<string, string> = {}
+      list.value.forEach((i) => {
+        if (i.key?.trim()) currentMap[i.key.trim()] = i.value || ""
+      })
+      currentTransformed = currentMap
+    }
+
+    // 只有当解析出的外部内容与内部当前内容产生实质性不同时，才触发强制刷新
+    if (JSON.stringify(currentTransformed) !== JSON.stringify(val)) {
+      list.value = parseModelToList(val)
     }
   },
   { deep: true }

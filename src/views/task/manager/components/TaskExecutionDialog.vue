@@ -91,14 +91,14 @@
         </div>
       </div>
 
-      <!-- 右侧栏: 日志看板 (抽离为独立组件，支持增量刷新) -->
-      <LogConsole :execution="currentExecution" />
+      <!-- 右侧栏: 日志看板 (通过 key 键绑定实现实例切换时组件自动销毁重构，完全消除子组件内部复杂的 watch 监听) -->
+      <LogConsole :key="currentExecution?.id || 'empty'" :execution="currentExecution" />
     </div>
   </FormDialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onUnmounted } from "vue"
+import { ref, reactive, onUnmounted } from "vue"
 import { Refresh, Coordinate, Calendar, Timer, Loading } from "@element-plus/icons-vue"
 import { listExecutionsApi } from "@/api/etask/manager"
 import type { TaskExecutionVO } from "@/api/etask/manager/type"
@@ -106,18 +106,13 @@ import { FormDialog } from "@/common/components/Dialogs"
 import { formatTimestamp } from "@@/utils/day"
 import LogConsole from "./LogConsole.vue"
 
+// NOTE: 该组件为状态型 UI 组件，使用 defineModel 进行可见性（visible）的双向状态同步，由父组件统一调配
+const visible = defineModel<boolean>({ default: false })
+
 const props = defineProps<{
-  modelValue: boolean
   taskId: number | null
   taskName?: string
 }>()
-
-const emit = defineEmits(["update:modelValue"])
-
-const visible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit("update:modelValue", value)
-})
 
 const execLoading = ref(false)
 const executions = ref<TaskExecutionVO[]>([])
@@ -189,6 +184,11 @@ const calculateDuration = (start: number, end: number) => {
 }
 
 const handleDialogClosed = () => {
+  // 释放后台静默轮询定时器，防止组件关闭后轮询空转及内存泄露
+  if (timer) {
+    clearInterval(timer)
+    timer = null
+  }
   executions.value = []
   currentExecution.value = null
   totalCount.value = 0

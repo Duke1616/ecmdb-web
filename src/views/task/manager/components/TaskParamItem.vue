@@ -1,56 +1,3 @@
-<script setup lang="ts">
-import { computed } from "vue"
-import { FullScreen, Close, Link } from "@element-plus/icons-vue"
-import CodeEditor from "@@/components/CodeEditor/index.vue"
-import { CodebookSelector, RunnerSelector } from "@@/components/SearchSelector"
-import type { Parameter } from "@/api/etask/executor/type"
-import KVEditor from "./KVEditor.vue"
-
-/**
- * NOTE: 该组件为 TaskParamsEditor 的子单元，负责单个参数的视察与编辑
- * 职责：处理单一参数的模式切换、全屏状态展示及具体的渲染逻辑
- */
-interface Props {
-  parameter: Parameter
-  modelValue: string
-  activeMode: string
-  isFullScreen: boolean
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<{
-  (e: "update:modelValue", val: string): void
-  (e: "update:activeMode", val: string): void
-  (e: "toggleFullScreen"): void
-}>()
-
-// 获取当前激活的绑定配置 (带容错兜底，防止元数据不完整导致崩溃)
-const currentBinding = computed(() => {
-  if (!props.parameter?.bindings || !props.activeMode) return null
-  return props.parameter.bindings[props.activeMode] || null
-})
-
-// 处理值更新，确保类型统一为 string
-const handleValueChange = (val: string | number) => {
-  emit("update:modelValue", String(val))
-}
-
-// 为 KV 字典类型提供转换逻辑 (支持 kv-input)
-const mapValue = computed({
-  get: () => {
-    try {
-      if (!props.modelValue) return []
-      return JSON.parse(props.modelValue)
-    } catch (e) {
-      return []
-    }
-  },
-  set: (val) => {
-    emit("update:modelValue", JSON.stringify(val))
-  }
-})
-</script>
-
 <template>
   <div class="inspector-field">
     <!-- 1. 属性元数据 (左侧) -->
@@ -162,6 +109,67 @@ const mapValue = computed({
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import { computed } from "vue"
+import { FullScreen, Close, Link } from "@element-plus/icons-vue"
+import CodeEditor from "@@/components/CodeEditor/index.vue"
+import { CodebookSelector, RunnerSelector } from "@@/components/SearchSelector"
+import type { Parameter } from "@/api/etask/executor/type"
+import KVEditor from "./KVEditor.vue"
+
+/**
+ * NOTE: 该组件为 TaskParamsEditor 的子单元，负责单个参数的视察与编辑
+ * 职责：处理单一参数的模式切换、全屏状态展示及具体的渲染逻辑
+ */
+interface Props {
+  parameter: Parameter
+  modelValue: string
+  activeMode: string
+  isFullScreen: boolean
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<{
+  (e: "update:modelValue", val: string): void
+  (e: "update:activeMode", val: string): void
+  (e: "toggleFullScreen"): void
+}>()
+
+// 获取当前激活的绑定配置 (带容错兜底，防止元数据不完整导致崩溃)
+const currentBinding = computed(() => {
+  if (!props.parameter?.bindings || !props.activeMode) return null
+  return props.parameter.bindings[props.activeMode] || null
+})
+
+// 处理值更新，确保类型统一为 string
+const handleValueChange = (val: string | number) => {
+  emit("update:modelValue", String(val))
+}
+
+// 缓存最近一次解析成功的合法字典值，规避 TypeScript 自引用类型推导死锁，并防范非法输入抹除数据
+let lastValidValue: any[] = []
+
+const mapValue = computed({
+  get: () => {
+    if (!props.modelValue) return []
+    try {
+      const parsed = JSON.parse(props.modelValue)
+      lastValidValue = Array.isArray(parsed) ? parsed : []
+      return lastValidValue
+    } catch (e) {
+      // 捕获临时语法异常（如手打中途）时，维持上一次成功解析的值，防止输入中途字符被强行抹除
+      return lastValidValue
+    }
+  },
+  set: (val) => {
+    const rawString = JSON.stringify(val)
+    if (rawString !== props.modelValue) {
+      emit("update:modelValue", rawString)
+    }
+  }
+})
+</script>
 
 <style lang="scss" scoped>
 .inspector-field {

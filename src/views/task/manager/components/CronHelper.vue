@@ -76,10 +76,10 @@ const currentPresets = computed(() => {
     const oneHour = new Date(now.getTime() + 60 * 60 * 1000)
     const threeHours = new Date(now.getTime() + 180 * 60 * 1000)
 
-    // 明天凌晨
+    // 明天凌晨 (优先清零小时锁定零点锚点，再累加天数，规避极端时区与夏令时溢出时差纠滚)
     const tomorrow00 = new Date(now)
-    tomorrow00.setDate(now.getDate() + 1)
     tomorrow00.setHours(0, 0, 0, 0)
+    tomorrow00.setDate(tomorrow00.getDate() + 1)
 
     return [
       { label: "立即执行", value: "* * * * * *" },
@@ -92,8 +92,22 @@ const currentPresets = computed(() => {
 })
 </script>
 
+<style lang="scss" scoped>
+/* 触发器 trigger 样式安全锁死在 scoped 范围内，彻底避免发生全局样式污染 */
+.cron-helper-trigger {
+  padding: 0 6px 0 0;
+  height: 32px;
+  font-size: 13px;
+
+  .el-icon {
+    font-size: 15px;
+    margin-right: 2px;
+  }
+}
+</style>
+
 <style lang="scss">
-/* 注意：由于 Popover 挂载在 body 之下，样式不能使用 scoped，或者使用 :deep 配合 popper-class */
+/* 由于 Popover 挂载在 body 之下，样式不能使用 scoped，但通过严格的 popper-class 进行局部全局隔离 */
 .cron-popover {
   padding: 0 !important;
   border-radius: 10px !important;
@@ -165,17 +179,6 @@ const currentPresets = computed(() => {
         padding-left: 22px;
       }
     }
-  }
-}
-
-.cron-helper-trigger {
-  padding: 0 6px 0 0;
-  height: 32px;
-  font-size: 13px;
-
-  .el-icon {
-    font-size: 15px;
-    margin-right: 2px;
   }
 }
 </style>

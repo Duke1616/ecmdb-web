@@ -485,7 +485,7 @@ const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
   const payload: CreateTaskReq = {
     name: state.name,
     type: state.type,
-    cron_expr: state.type === TaskType.RECURRING ? state.cron_expr : "",
+    cron_expr: state.cron_expr,
     schedule_params: cloneDeep(state.schedule_params),
     metadata: cloneDeep(state.metadata)
   }
