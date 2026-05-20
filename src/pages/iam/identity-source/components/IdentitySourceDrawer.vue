@@ -1,106 +1,130 @@
 <template>
-  <div class="identity-source-form">
-    <!-- 提供商选择: 采用横向卡片样式 (参考 TaskManager) -->
-    <div class="mode-selector">
-      <div
-        v-for="p in providers"
-        :key="p.id"
-        class="mode-card"
-        :class="{ 'is-active': selectedProvider === p.id }"
-        @click="selectProvider(p.id)"
-      >
-        <div class="mode-card__icon">
-          <img :src="p.icon" alt="icon" />
-        </div>
-        <div class="mode-card__body">
-          <span class="mode-card__title">{{ p.name }}</span>
-          <span class="mode-card__desc">{{ p.desc }}</span>
-        </div>
-        <el-icon class="mode-card__check"><CircleCheckFilled /></el-icon>
-      </div>
-    </div>
-
-    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="governance-form">
-      <!-- 基础信息 -->
-      <div class="form-section">
-        <div class="section-title">
-          <div class="title-left">
-            <el-icon class="section-icon"><InfoFilled /></el-icon>
-            <span>基础核心配置</span>
+  <Drawer
+    v-model="visible"
+    :title="data ? '治理现有身份源' : '集成新企业身份源'"
+    :subtitle="
+      data ? '调整当前集成协议的连接参数与属性映射逻辑' : '配置基于标准协议的身份提供商，实现企业级 SSO 统一接入'
+    "
+    size="38%"
+    :header-icon="Share"
+    :confirm-loading="saving"
+    @confirm="submit"
+    @cancel="visible = false"
+  >
+    <div class="identity-source-form">
+      <!-- 提供商选择: 采用横向卡片样式 -->
+      <div class="mode-selector">
+        <div
+          v-for="p in providers"
+          :key="p.id"
+          class="mode-card"
+          :class="{ 'is-active': selectedProvider === p.id }"
+          @click="selectProvider(p.id)"
+        >
+          <div class="mode-card__icon">
+            <img :src="p.icon" alt="icon" />
           </div>
-        </div>
-
-        <div class="basic-config-grid">
-          <el-form-item label="身份源名称" prop="name" class="name-field">
-            <el-input v-model="form.name" placeholder="例如：北京研发中心" />
-          </el-form-item>
+          <div class="mode-card__body">
+            <span class="mode-card__title">{{ p.name }}</span>
+            <span class="mode-card__desc">{{ p.desc }}</span>
+          </div>
+          <el-icon class="mode-card__check"><CircleCheckFilled /></el-icon>
         </div>
       </div>
 
-      <!-- 动态配置区块 -->
-      <div v-if="form.type === IdentitySourceType.LDAP && form.ldap" class="form-section">
-        <div class="section-title">
-          <div class="title-left">
-            <el-icon class="section-icon"><Connection /></el-icon>
-            <span>{{ selectedProvider === "ad" ? "域控协议配置" : "目录协议配置" }}</span>
-          </div>
-        </div>
-        <LdapSection v-model="form.ldap" :is-ad="selectedProvider === 'ad'">
-          <template #test-connectivity>
-            <!-- 连通性测试卡片: 采用紧凑型 Bar 样式 -->
-            <div class="test-connection-bar">
-              <div class="bar-info">
-                <el-icon><InfoFilled /></el-icon>
-                <span>验证目录服务的连通性，确保配置正确</span>
-              </div>
-              <el-button :loading="testing" class="premium-test-btn" @click="handleTestConnection">
-                测试连通性
-              </el-button>
+      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="governance-form">
+        <!-- 基础信息 -->
+        <div class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><InfoFilled /></el-icon>
+              <span>基础核心配置</span>
             </div>
-          </template>
-        </LdapSection>
-      </div>
+          </div>
 
-      <div v-if="form.type === IdentitySourceType.OIDC && form.oidc" class="form-section">
-        <div class="section-title">
-          <div class="title-left">
-            <el-icon class="section-icon">
-              <ChatLineRound v-if="selectedProvider === 'feishu'" />
-              <Link v-else />
-            </el-icon>
-            <span>{{ selectedProvider === "feishu" ? "飞书单点登录配置" : "单点登录配置" }}</span>
+          <div class="basic-config-grid">
+            <el-form-item label="身份源名称" prop="name" class="name-field">
+              <el-input v-model="form.name" placeholder="例如：北京研发中心" />
+            </el-form-item>
           </div>
         </div>
-        <OidcSection v-model="form.oidc" />
-      </div>
 
-      <div v-if="form.type === IdentitySourceType.LOCAL && form.local" class="form-section">
-        <div class="section-title">
-          <div class="title-left">
-            <el-icon class="section-icon"><Lock /></el-icon>
-            <span>本地密码安全策略</span>
+        <!-- 动态配置区块 -->
+        <div v-if="form.type === IdentitySourceType.LDAP && form.ldap" class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Connection /></el-icon>
+              <span>{{ selectedProvider === "ad" ? "域控协议配置" : "目录协议配置" }}</span>
+            </div>
           </div>
+          <LdapSection v-model="form.ldap" :is-ad="selectedProvider === 'ad'">
+            <template #test-connectivity>
+              <!-- 连通性测试卡片: 采用紧凑型 Bar 样式 -->
+              <div class="test-connection-bar">
+                <div class="bar-info">
+                  <el-icon><InfoFilled /></el-icon>
+                  <span>验证目录服务的连通性，确保配置正确</span>
+                </div>
+                <el-button :loading="testing" class="premium-test-btn" @click="handleTestConnection">
+                  测试连通性
+                </el-button>
+              </div>
+            </template>
+          </LdapSection>
         </div>
-        <LocalSection v-model="form.local" />
-      </div>
 
-      <div v-if="form.type === IdentitySourceType.PASSKEY && form.passkey" class="form-section">
-        <div class="section-title">
-          <div class="title-left">
-            <el-icon class="section-icon"><Key /></el-icon>
-            <span>通行密钥配置</span>
+        <div v-if="form.type === IdentitySourceType.OIDC && form.oidc" class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon">
+                <ChatLineRound v-if="selectedProvider === 'feishu'" />
+                <Link v-else />
+              </el-icon>
+              <span>{{ selectedProvider === "feishu" ? "飞书单点登录配置" : "单点登录配置" }}</span>
+            </div>
           </div>
+          <OidcSection v-model="form.oidc" />
         </div>
-        <PasskeySection v-model="form.passkey" />
-      </div>
-    </el-form>
-  </div>
+
+        <div v-if="form.type === IdentitySourceType.LOCAL && form.local" class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Lock /></el-icon>
+              <span>本地密码安全策略</span>
+            </div>
+          </div>
+          <LocalSection v-model="form.local" />
+        </div>
+
+        <div v-if="form.type === IdentitySourceType.PASSKEY && form.passkey" class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Key /></el-icon>
+              <span>通行密钥配置</span>
+            </div>
+          </div>
+          <PasskeySection v-model="form.passkey" />
+        </div>
+      </el-form>
+    </div>
+  </Drawer>
 </template>
 
 <script setup lang="ts">
-import { InfoFilled, CircleCheckFilled, Connection, ChatLineRound, Link, Lock, Key } from "@element-plus/icons-vue"
+import { ref, computed, watch, nextTick } from "vue"
+import {
+  InfoFilled,
+  CircleCheckFilled,
+  Connection,
+  ChatLineRound,
+  Link,
+  Lock,
+  Key,
+  Share
+} from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import type { FormInstance, FormRules } from "element-plus"
+import { Drawer } from "@@/components/Dialogs"
 import { saveIdentitySourceApi, testIdentitySourceApi } from "@/api/iam/identity-source"
 import { type IdentitySourceVO, type SaveIdentitySourceReq, IdentitySourceType } from "@/api/iam/identity-source/type"
 import {
@@ -117,21 +141,25 @@ import OidcSection from "./sections/OidcSection.vue"
 import LocalSection from "./sections/LocalSection.vue"
 import PasskeySection from "./sections/PasskeySection.vue"
 
-interface Props {
-  isEdit: boolean
-  data?: IdentitySourceVO | null
-}
+// NOTE: 该组件为纯 UI 抽屉控制器，使用 defineModel 进行开放/折叠的状态双向绑定
+const visible = defineModel<boolean>({ default: false })
 
-const props = defineProps<Props>()
+const props = defineProps<{
+  data?: IdentitySourceVO | null
+}>()
+
 const emit = defineEmits<{
   (e: "success"): void
 }>()
 
 const formRef = ref<FormInstance>()
 const testing = ref(false)
+const saving = ref(false)
 const selectedProvider = ref<IdentityProviderId>("ad")
 const providers = IDENTITY_SOURCE_PROVIDERS
 const form = ref<SaveIdentitySourceReq>(createDefaultIdentitySourceForm("ad"))
+
+const isEdit = computed(() => !!props.data)
 
 const rules: FormRules = {
   name: [{ required: true, message: "请输入名称", trigger: "blur" }],
@@ -145,16 +173,9 @@ const rules: FormRules = {
 }
 
 const selectProvider = (pid: IdentityProviderId) => {
-  if (props.isEdit) return
+  if (isEdit.value) return
   selectedProvider.value = pid
   Object.assign(form.value, getProviderConfig(pid))
-}
-
-const initForm = () => {
-  if (props.isEdit && props.data) {
-    form.value = structuredClone(props.data)
-    selectedProvider.value = getProviderIdFromSource(form.value)
-  }
 }
 
 const handleTestConnection = async () => {
@@ -174,18 +195,34 @@ const handleTestConnection = async () => {
 const submit = async () => {
   if (!formRef.value) return
   await formRef.value.validate()
+
+  saving.value = true
   try {
     await saveIdentitySourceApi(form.value)
-    ElMessage.success(props.isEdit ? "更新成功" : "集成成功")
+    ElMessage.success(isEdit.value ? "更新成功" : "集成成功")
+    visible.value = false
     emit("success")
   } catch (error) {
     console.error("保存身份源配置失败:", error)
+  } finally {
+    saving.value = false
   }
 }
 
-defineExpose({ submit })
-onMounted(initForm)
-watch(() => props.data, initForm)
+watch(visible, (val) => {
+  if (val) {
+    if (props.data) {
+      form.value = structuredClone(props.data)
+      selectedProvider.value = getProviderIdFromSource(form.value)
+    } else {
+      selectedProvider.value = "ad"
+      form.value = createDefaultIdentitySourceForm("ad")
+      nextTick(() => {
+        formRef.value?.clearValidate()
+      })
+    }
+  }
+})
 </script>
 
 <style lang="scss" scoped>

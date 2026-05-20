@@ -1,14 +1,13 @@
 <template>
   <Drawer
     v-model="visible"
-    :title="isEdit ? '编辑调度任务' : '创建调度任务'"
-    :subtitle="isEdit ? '调整当前分布式任务的执行逻辑与资源引用' : '配置基于 gRPC 或 HTTP 协议的自动化调度流程'"
+    :title="taskId ? '编辑调度任务' : '创建调度任务'"
+    :subtitle="taskId ? '调整当前分布式任务的执行逻辑与资源引用' : '配置基于 gRPC 或 HTTP 协议的自动化调度流程'"
     :header-icon="Calendar"
     size="35%"
-    :confirm-loading="loading"
-    @confirm="handleSave"
+    :confirm-loading="saving"
+    @confirm="submit"
     @cancel="visible = false"
-    @closed="handleClosed"
   >
     <div class="task-form-container">
       <el-form
@@ -18,7 +17,6 @@
         label-position="top"
         class="task-form"
         :validate-on-rule-change="false"
-        :key="formKey"
       >
         <!-- 1. 基础核心配置 -->
         <div class="form-section">
@@ -64,9 +62,9 @@
                 size="large"
                 class="code-font premium-input"
               >
-                <template #prefix
-                  ><el-icon><Calendar /></el-icon
-                ></template>
+                <template #prefix>
+                  <el-icon><Calendar /></el-icon>
+                </template>
                 <template #suffix>
                   <CronHelper :type="form.type" @select="handleCronSelect" />
                 </template>
@@ -89,8 +87,8 @@
               v-for="item in protocols"
               :key="item.value"
               class="mode-card"
-              :class="{ 'is-active': activeProtocol === item.value }"
-              @click="activeProtocol = item.value"
+              :class="{ 'is-active': form.protocol === item.value }"
+              @click="handleProtocolChange(item.value)"
             >
               <div class="mode-card__icon">
                 <el-icon><component :is="item.icon" /></el-icon>
@@ -103,15 +101,15 @@
             </div>
           </div>
 
-          <div class="protocol-content-wrapper" v-loading="loading">
+          <div class="protocol-content-wrapper" v-loading="resourceLoading">
             <transition name="slide-fade" mode="out-in">
-              <div :key="activeProtocol" class="protocol-pane">
+              <div :key="form.protocol" class="protocol-pane">
                 <!-- gRPC 模式 -->
-                <div v-if="activeProtocol === 'grpc'" class="grpc-config-pane">
+                <div v-if="form.protocol === TaskProtocol.GRPC" class="grpc-config-pane">
                   <div class="service-selector-row flex-row gap-4">
-                    <el-form-item label="执行器服务" prop="grpc_config.service_name" class="flex-1">
+                    <el-form-item label="执行器服务" prop="grpc_service" class="flex-1">
                       <el-autocomplete
-                        v-model="form.grpc_config!.service_name"
+                        v-model="form.grpc_service"
                         :fetch-suggestions="queryServiceSuggestions"
                         placeholder="选择注册节点"
                         size="large"
@@ -123,9 +121,9 @@
                         </template>
                       </el-autocomplete>
                     </el-form-item>
-                    <el-form-item label="处理方法" prop="grpc_config.handler_name" class="flex-1">
+                    <el-form-item label="处理方法" prop="grpc_handler" class="flex-1">
                       <el-autocomplete
-                        v-model="form.grpc_config!.handler_name"
+                        v-model="form.grpc_handler"
                         :fetch-suggestions="queryHandlers"
                         placeholder="绑定接口能力"
                         size="large"
@@ -139,7 +137,7 @@
                     </el-form-item>
                   </div>
 
-                  <!-- 动态元数据区域: 仅在选择 Handler 后且匹配到实体时显示 -->
+                  <!-- 动态元数据区域 -->
                   <div
                     v-if="currentHandler"
                     class="metadata-container animate-in"
@@ -155,14 +153,14 @@
                     <div class="parameters-grid-wrapper">
                       <TaskParamsEditor
                         v-if="currentHandler?.metadata?.length"
-                        v-model="form.grpc_config!.params!"
-                        v-model:task-metadata="form.metadata!"
+                        v-model="form.grpc_params"
+                        v-model:task-metadata="form.metadata"
                         :metadata="currentHandler.metadata"
                       />
                       <div v-else class="empty-params">
                         <el-empty :image-size="60" description="未识别到元数据，支持自由 Payload 配置" />
                         <div class="manual-map-box">
-                          <KVEditor v-model="form.grpc_config!.params" show-secret />
+                          <KVEditor v-model="form.grpc_params" show-secret />
                         </div>
                       </div>
                     </div>
@@ -170,7 +168,7 @@
                 </div>
 
                 <!-- HTTP 模式 -->
-                <div v-else-if="activeProtocol === 'http'" class="http-config-pane animate-in">
+                <div v-else-if="form.protocol === TaskProtocol.HTTP" class="http-config-pane animate-in">
                   <div class="metadata-container has-metadata">
                     <div class="metadata-header">
                       <div class="metadata-title">
@@ -180,9 +178,9 @@
                     </div>
 
                     <div class="http-form-content">
-                      <el-form-item prop="http_config.endpoint" required class="mb-6">
+                      <el-form-item prop="http_endpoint" required class="mb-6">
                         <el-input
-                          v-model="form.http_config!.endpoint"
+                          v-model="form.http_endpoint"
                           placeholder="请输入全路径地址 (https://...)"
                           size="large"
                           class="code-font premium-input endpoint-input"
@@ -210,7 +208,7 @@
                             <div :key="httpConfigTab" class="params-editor-box">
                               <KVEditor
                                 v-if="httpConfigTab === 'headers'"
-                                v-model="form.http_config!.headers"
+                                v-model="form.http_headers"
                                 title-key="头部字段"
                                 title-value="内容值"
                                 add-text="新增请求头..."
@@ -218,7 +216,7 @@
                               />
                               <KVEditor
                                 v-else
-                                v-model="form.http_config!.params"
+                                v-model="form.http_params"
                                 title-key="参数名"
                                 title-value="参数值"
                                 add-text="新增 Body 字段..."
@@ -244,23 +242,17 @@
               <span>重试配置与超时</span>
             </div>
             <div class="title-right">
-              <el-switch
-                v-model="retryEnabled"
-                inline-prompt
-                active-text="启用"
-                inactive-text="关闭"
-                @change="handleRetryToggle"
-              />
+              <el-switch v-model="form.retry_enabled" inline-prompt active-text="启用" inactive-text="关闭" />
             </div>
           </div>
 
           <transition name="el-zoom-in-top">
             <RetryConfigEditor
-              v-if="retryEnabled && form.retry_config"
+              v-if="form.retry_enabled"
               v-model:maxExecutionSeconds="form.max_execution_seconds"
-              v-model:maxRetries="form.retry_config.max_retries"
-              v-model:initialInterval="form.retry_config.initial_interval"
-              v-model:maxInterval="form.retry_config.max_interval"
+              v-model:maxRetries="form.max_retries"
+              v-model:initialInterval="form.initial_interval"
+              v-model:maxInterval="form.max_interval"
             />
           </transition>
         </div>
@@ -270,8 +262,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from "vue"
-import { pick, cloneDeep } from "lodash-es"
+import { ref, computed, onMounted, nextTick, watch } from "vue"
 import {
   Setting,
   Cpu,
@@ -285,31 +276,31 @@ import {
   Pointer,
   Operation
 } from "@element-plus/icons-vue"
-import { TaskType, type CreateTaskReq, type TaskItem } from "@/api/etask/manager/type"
+import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/etask/manager"
+import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem, type UpdateTaskReq } from "@/api/etask/manager/type"
 import type { HandlerDetail } from "@/api/etask/executor/type"
 import { useTaskResources } from "../composables/useTaskResources"
 import KVEditor from "./KVEditor.vue"
 import CronHelper from "./CronHelper.vue"
 import TaskParamsEditor from "./TaskParamsEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
-import { Drawer } from "@@/components/Dialogs"
 import type { FormInstance, FormRules } from "element-plus"
+import { ElMessage } from "element-plus"
+import { cloneDeep } from "lodash-es"
+import { Drawer } from "@@/components/Dialogs"
 
-/**
- * 任务配置抽屉组件
- * @description 采用 Metadata-Driven 交互模式，业务逻辑已解耦至 useTaskResources
- */
-const props = defineProps<{
-  isEdit?: boolean
-  initialData?: TaskItem | null
-}>()
-
+// NOTE: 该组件为纯业务抽屉控制器，使用 defineModel 进行开放/折叠的 UI 状态双向绑定
 const visible = defineModel<boolean>({ default: false })
-const emit = defineEmits<{
-  (e: "save", payload: CreateTaskReq): void
+
+const props = defineProps<{
+  taskId?: number
 }>()
 
-// --- 外部资源联运 ---
+const emit = defineEmits<{
+  (e: "success"): void
+}>()
+
+// --- 外部注册中心资源 ---
 const {
   loading: resourceLoading,
   executorList,
@@ -318,200 +309,266 @@ const {
   queryHandlerSuggestions
 } = useTaskResources()
 
-// --- 基础状态管理 ---
-const formRef = ref<FormInstance>()
-const saving = ref(false)
-const activeProtocol = ref("grpc")
+// --- 扁平化 UI 状态定义 ---
+interface TaskFormState {
+  name: string
+  type: TaskType
+  cron_expr: string
+  protocol: TaskProtocol
 
-// 复合 Loading
-const loading = computed(() => resourceLoading.value || saving.value)
+  // gRPC 关联配置
+  grpc_service: string
+  grpc_handler: string
+  grpc_params: Record<string, any>
 
-// HTTP 配置切换 Tab
-const httpConfigTab = ref("headers")
+  // HTTP 关联配置
+  http_endpoint: string
+  http_headers: Record<string, string>
+  http_params: Record<string, any>
 
-// 重试配置开启状态
-const retryEnabled = ref(false)
+  // 超时与退避重试
+  retry_enabled: boolean
+  max_retries: number
+  initial_interval: number
+  max_interval: number
+  max_execution_seconds: number
 
-const handleRetryToggle = (val: boolean | string | number) => {
-  if (!val) {
-    // 关闭时，如果不想要这些字段，可以在保存时处理，或者这里直接清理
-    // 保持状态同步
-  } else {
-    if (!form.retry_config) {
-      form.retry_config = { max_retries: 3, initial_interval: 1000, max_interval: 5000 }
-    }
-  }
+  // 分布式调度系统内置扩展属性
+  schedule_params: Record<string, any>
+  metadata: Record<string, any>
 }
 
-// 计算表单唯一索引，用于强制重置组件生命周期与内部校验状态 (优雅替代双重 nextTick 同步难题)
-const formKey = computed(() => {
-  return props.isEdit ? `edit-${props.initialData?.id || 0}` : "create"
-})
+const formRef = ref<FormInstance>()
+const saving = ref(false)
+const httpConfigTab = ref("headers")
 
 const protocols = [
-  { label: "gRPC", value: "grpc", icon: Connection, desc: "分布式标准通信协议" },
-  { label: "HTTP", value: "http", icon: Link, desc: "标准 RESTful 后端回调" }
-]
+  { label: "gRPC", value: TaskProtocol.GRPC, icon: Connection, desc: "分布式标准通信协议" },
+  { label: "HTTP", value: TaskProtocol.HTTP, icon: Link, desc: "标准 RESTful 后端回调" }
+] as const
 
-const defaultForm = (): CreateTaskReq => ({
+/** 完美的零脏值默认扁平化状态初始化 */
+const createDefaultFormState = (): TaskFormState => ({
   name: "",
   type: TaskType.RECURRING,
   cron_expr: "",
+  protocol: TaskProtocol.GRPC,
+  grpc_service: "",
+  grpc_handler: "",
+  grpc_params: {},
+  http_endpoint: "",
+  http_headers: {},
+  http_params: {},
+  retry_enabled: false,
+  max_retries: 3,
+  initial_interval: 1000,
+  max_interval: 5000,
   max_execution_seconds: 360,
-  grpc_config: {
-    service_name: "",
-    handler_name: "",
-    params: {}
-  },
-  http_config: { endpoint: "", headers: {}, params: {} },
-  retry_config: { max_retries: 3, initial_interval: 1000, max_interval: 5000 },
   schedule_params: {},
   metadata: {}
 })
 
-const form = reactive<CreateTaskReq>(defaultForm())
+const form = ref<TaskFormState>(createDefaultFormState())
 
-// --- 表单联动逻辑 ---
+// --- 计算属性与辅助查询 ---
 const currentHandler = computed(() => {
-  if (!form.grpc_config?.service_name) return null
-  const ex = executorList.value.find((e) => e.name === form.grpc_config!.service_name)
-  return ex?.handlers.find((h) => h.name === form.grpc_config!.handler_name)
+  const serviceName = form.value.grpc_service
+  if (!serviceName) return null
+
+  const executor = executorList.value.find((e) => e.name === serviceName)
+  if (!executor) return null
+
+  return executor.handlers.find((h) => h.name === form.value.grpc_handler) ?? null
 })
 
+// --- 表单联动与 UI 事件处理 ---
 const handleServiceSelect = () => {
-  form.grpc_config!.handler_name = ""
+  form.value.grpc_handler = ""
 }
 
 const handleHandlerSelect = (item: Record<string, any>) => {
-  const val = item as HandlerDetail
-  if (val.metadata) {
-    val.metadata.forEach((p) => {
-      if (!form.grpc_config!.params![p.key]) {
-        form.grpc_config!.params![p.key] = p.default || ""
-      }
-    })
+  const handler = item as HandlerDetail
+  const params = form.value.grpc_params
+
+  for (const meta of handler.metadata ?? []) {
+    params[meta.key] = params[meta.key] || meta.default || ""
   }
 }
 
-// 封装后的过滤器
-const queryHandlers = (qs: string, cb: (res: (HandlerDetail & { value: string })[]) => void) =>
-  queryHandlerSuggestions(form.grpc_config!.service_name, qs, cb)
+const queryHandlers = (qs: string, cb: (res: (HandlerDetail & { value: string })[]) => void) => {
+  const serviceName = form.value.grpc_service
+  queryHandlerSuggestions(serviceName, qs, cb)
+}
 
-const rules = computed<FormRules>(() => {
-  const r: FormRules = {
+const handleCronSelect = (val: string) => {
+  form.value.cron_expr = val
+  formRef.value?.validateField("cron_expr").catch(() => {})
+}
+
+const handleProtocolChange = (protocol: TaskProtocol) => {
+  form.value.protocol = protocol
+  nextTick(() => {
+    formRef.value?.clearValidate()
+  })
+}
+
+// --- 类型安全与高度智能的扁平化校验规则 ---
+const rules = computed<FormRules<TaskFormState>>(() => {
+  const r: FormRules<TaskFormState> = {
     name: [{ required: true, message: "请输入任务标识", trigger: "blur" }]
   }
 
-  // 周期性任务必须有 Cron
-  if (form.type === TaskType.RECURRING) {
+  if (form.value.type === TaskType.RECURRING) {
     r.cron_expr = [{ required: true, message: "请输入有效的 Cron 表达式", trigger: ["blur", "change"] }]
   }
 
-  // 根据协议校验必填项
-  if (activeProtocol.value === "grpc") {
-    r["grpc_config.service_name"] = [{ required: true, message: "请选择执行器服务", trigger: "change" }]
-    r["grpc_config.handler_name"] = [{ required: true, message: "请选择处理方法", trigger: "change" }]
+  if (form.value.protocol === TaskProtocol.GRPC) {
+    r.grpc_service = [{ required: true, message: "请选择执行器服务", trigger: "change" }]
+    r.grpc_handler = [{ required: true, message: "请选择处理方法", trigger: "change" }]
   } else {
-    r["http_config.endpoint"] = [{ required: true, message: "请输入接口地址", trigger: "blur" }]
+    r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "blur" }]
   }
 
   return r
 })
 
-// --- 监听器集 ---
+// --- UI 隔离映射层（Mappers） ---
 
-// 显隐同步
-// 显隐同步：打开时刷新资源
-watch(visible, (val) => val && fetchResources(), { immediate: true })
+/** 将 API 后端嵌套结构精细化解析并摊平至 UI 状态机，保证模板安全 */
+const mapToFormState = (data?: TaskItem): TaskFormState => {
+  const state = createDefaultFormState()
+  if (!data) return state
 
-// 数据回填
-watch(
-  () => props.initialData,
-  (val) => {
-    // 1. 初始化/重置表单
-    const base = defaultForm()
-    if (!val) {
-      Object.assign(form, base)
-      activeProtocol.value = "grpc"
-      retryEnabled.value = false
-      return
-    }
+  state.name = data.name || ""
+  state.type = data.type || TaskType.RECURRING
+  state.cron_expr = data.cron_expr || ""
 
-    // 2. 挑选业务需要的字段并深拷贝，自然过滤 ctime, utime, next_time 等系统字段
-    const businessFields = [
-      "id",
-      "name",
-      "type",
-      "cron_expr",
-      "max_execution_seconds",
-      "grpc_config",
-      "http_config",
-      "retry_config",
-      "schedule_params",
-      "metadata"
-    ]
-    const cleanData = cloneDeep(pick(val, businessFields))
+  // 协议推断
+  if (data.http_config && !data.grpc_config) {
+    state.protocol = TaskProtocol.HTTP
+  } else {
+    state.protocol = TaskProtocol.GRPC
+  }
 
-    // 3. 结构补全：确保嵌套对象始终存在，防止协议切换时 UI 访问到 null (业界健壮性标准)
-    Object.assign(form, {
-      ...base,
-      ...cleanData,
-      grpc_config: { ...base.grpc_config, ...(cleanData.grpc_config || {}) },
-      http_config: { ...base.http_config, ...(cleanData.http_config || {}) },
-      retry_config: cleanData.retry_config || base.retry_config,
-      schedule_params: cleanData.schedule_params || base.schedule_params,
-      metadata: cleanData.metadata || base.metadata
-    })
+  if (data.grpc_config) {
+    state.grpc_service = data.grpc_config.service_name || ""
+    state.grpc_handler = data.grpc_config.handler_name || ""
+    state.grpc_params = cloneDeep(data.grpc_config.params) ?? {}
+  }
 
-    // 4. 同步 UI 辅助状态
-    activeProtocol.value = val.grpc_config ? "grpc" : val.http_config ? "http" : "grpc"
-    retryEnabled.value = !!(val.retry_config || val.max_execution_seconds)
-  },
-  { immediate: true }
-)
+  if (data.http_config) {
+    state.http_endpoint = data.http_config.endpoint || ""
+    state.http_headers = cloneDeep(data.http_config.headers) ?? {}
+    state.http_params = cloneDeep(data.http_config.params) ?? {}
+  }
 
-// 当协议切换时，清理校验信息防止残留
-watch(activeProtocol, () => {
-  formRef.value?.clearValidate()
-})
+  if (data.retry_config) {
+    state.retry_enabled = true
+    state.max_retries = data.retry_config.max_retries ?? 3
+    state.initial_interval = data.retry_config.initial_interval ?? 1000
+    state.max_interval = data.retry_config.max_interval ?? 5000
+  }
 
-// --- 核心操作 ---
-const handleCronSelect = (val: string) => {
-  form.cron_expr = val
-  // 主动触发校验，清除可能存在的验证错误
-  formRef.value?.validateField("cron_expr").catch(() => {})
+  if (data.max_execution_seconds) {
+    state.retry_enabled = true
+    state.max_execution_seconds = data.max_execution_seconds
+  }
+
+  state.schedule_params = cloneDeep(data.schedule_params) ?? {}
+  state.metadata = cloneDeep(data.metadata) ?? {}
+
+  return state
 }
 
-const handleSave = async () => {
-  if (!formRef.value) return
+/** 提交前将扁平 UI 状态进行深度剪裁与类型转换，组装出标准 API 嵌套载荷 */
+const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
+  const payload: CreateTaskReq = {
+    name: state.name,
+    type: state.type,
+    cron_expr: state.type === TaskType.RECURRING ? state.cron_expr : "",
+    schedule_params: cloneDeep(state.schedule_params),
+    metadata: cloneDeep(state.metadata)
+  }
+
+  if (state.protocol === TaskProtocol.GRPC) {
+    payload.grpc_config = {
+      service_name: state.grpc_service,
+      handler_name: state.grpc_handler,
+      params: cloneDeep(state.grpc_params)
+    }
+  } else {
+    payload.http_config = {
+      endpoint: state.http_endpoint,
+      headers: cloneDeep(state.http_headers),
+      params: cloneDeep(state.http_params)
+    }
+  }
+
+  if (state.retry_enabled) {
+    payload.max_execution_seconds = state.max_execution_seconds
+    payload.retry_config = {
+      max_retries: state.max_retries,
+      initial_interval: state.initial_interval,
+      max_interval: state.max_interval
+    }
+  }
+
+  return payload
+}
+
+// --- 生命周期与数据加载 ---
+const loadDetail = async () => {
+  if (!props.taskId) return
+
   try {
-    const valid = await formRef.value.validate()
-    if (!valid) return
+    const { data } = await getTaskDetailApi(props.taskId)
+    form.value = mapToFormState(data)
+  } catch (error) {
+    console.error("加载任务详情失败:", error)
+  }
+}
 
-    saving.value = true
-    const payload = cloneDeep(form)
-    if (activeProtocol.value === "grpc") {
-      delete payload.http_config
+onMounted(async () => {
+  await fetchResources()
+})
+
+// 当抽屉开启状态变化时，决定是拉取详情还是重置状态
+watch(visible, async (val) => {
+  if (val) {
+    if (props.taskId) {
+      await loadDetail()
     } else {
-      delete payload.grpc_config
+      form.value = createDefaultFormState()
+      nextTick(() => {
+        formRef.value?.clearValidate()
+      })
+    }
+  }
+})
+
+// --- 提交操作 ---
+const submit = async () => {
+  if (!formRef.value) return
+  await formRef.value.validate()
+
+  saving.value = true
+  try {
+    const payload = mapToApiPayload(form.value)
+
+    if (props.taskId) {
+      await updateTaskApi({ ...payload, id: props.taskId } as UpdateTaskReq)
+      ElMessage.success("更新任务成功")
+    } else {
+      await createTaskApi(payload)
+      ElMessage.success("创建任务成功")
     }
 
-    // 处理重试配置与超时逻辑：未启用或数据为空时彻底剥离
-    if (!retryEnabled.value || !payload.retry_config) {
-      delete payload.retry_config
-      delete (payload as any).max_execution_seconds
-    }
-
-    emit("save", payload)
-  } catch (err) {
-    // 校验未通过
+    visible.value = false
+    emit("success")
   } finally {
     saving.value = false
   }
 }
-
-const handleClosed = () => formRef.value?.resetFields()
-defineExpose({ handleClosed })
 </script>
 
 <style scoped lang="scss">
@@ -713,7 +770,7 @@ defineExpose({ handleClosed })
 }
 
 .endpoint-input :deep(.el-input__inner) {
-  padding-left: 4px !important; // 因为 prefix 已经占用了空间，这里只需要微调文本起始位置
+  padding-left: 4px !important;
 }
 
 .metadata-container {
@@ -758,81 +815,6 @@ defineExpose({ handleClosed })
   }
 }
 
-.http-config-integrated {
-  background: #ffffff;
-  border: 1px solid #edf2f7;
-  border-radius: 10px;
-  padding: 14px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  margin-top: 10px;
-
-  .header-indicator {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    .indicator-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #64748b;
-    }
-
-    .label-icon {
-      font-size: 14px;
-      color: #3b82f6;
-    }
-  }
-
-  .method-badge {
-    margin-left: 8px;
-    background: #ecfdf5;
-    color: #059669;
-    font-size: 9px;
-    font-weight: 800;
-    padding: 0px 4px;
-    border-radius: 4px;
-    border: 1px solid #10b981;
-    line-height: 1.4;
-  }
-
-  .config-content-box {
-    margin-top: 12px;
-    background: #fdfdfe;
-    border: 1px dashed #e2e8f0;
-    border-radius: 8px;
-    padding: 12px;
-  }
-}
-
-.tab-switcher :deep(.el-radio-button__inner) {
-  border-radius: 6px !important;
-  border: 1px solid #e2e8f0 !important;
-  margin: 0 4px;
-  background: #f8fafc;
-  color: #64748b;
-  font-weight: 600;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #f1f5f9;
-  }
-}
-
-.tab-switcher :deep(.el-radio-button.is-active .el-radio-button__inner) {
-  background: #3b82f6 !important;
-  color: white !important;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2) !important;
-}
-
-.tab-switcher :deep(.el-radio-button:first-child .el-radio-button__inner),
-.tab-switcher :deep(.el-radio-button:last-child .el-radio-button__inner) {
-  border-left: 1px solid #e2e8f0 !important;
-}
-
 .premium-input :deep(.el-input__wrapper),
 .premium-input :deep(.el-select__wrapper) {
   border-radius: 8px !important;
@@ -853,7 +835,7 @@ defineExpose({ handleClosed })
 }
 
 .service-selector-row {
-  margin-bottom: 28px; // 留出足够空间放置校验错误提示
+  margin-bottom: 28px;
   :deep(.el-form-item) {
     margin-bottom: 0 !important;
   }
@@ -877,9 +859,6 @@ defineExpose({ handleClosed })
   flex: 1;
 }
 .gap-4 {
-  gap: 24px;
-}
-.gap-6 {
   gap: 24px;
 }
 

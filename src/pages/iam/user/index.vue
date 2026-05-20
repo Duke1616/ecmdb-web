@@ -76,36 +76,19 @@
       </template>
     </DataTable>
 
-    <!-- 用户编辑/创建 弹窗 -->
-    <FormDialog
-      v-model="formVisible"
-      :title="currentEditId ? '治理用户资产' : '创建新身份主体'"
-      :header-icon="UserIcon"
-      width="640px"
-      :confirm-loading="submitting"
-      @confirm="handleConfirm"
-      @cancel="formVisible = false"
-    >
-      <UserForm
-        :key="currentEditId || 'create'"
-        ref="userFormRef"
-        :user-id="currentEditId!"
-        :is-edit="!!currentEditId"
-        @success="handleFormSuccess"
-      />
-    </FormDialog>
+    <!-- 用户编辑/创建自治弹窗 -->
+    <UserDialog v-model="formVisible" :user-id="currentEditId!" @success="handleFormSuccess" />
   </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
-import { User as UserIcon, Edit, Delete } from "@element-plus/icons-vue"
+import { computed } from "vue"
+import { Edit, Delete } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
-import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import UserForm from "./components/UserForm.vue"
+import UserDialog from "./components/UserDialog.vue"
 import type { Column } from "@@/components/DataTable/types"
 import { useUserList } from "./composables/useUserList"
 import { usePermission } from "@/common/composables/usePermission"
@@ -134,9 +117,6 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = useUserList()
-
-const userFormRef = ref<InstanceType<typeof UserForm>>()
-const submitting = ref(false)
 
 /**
  * 打包表格通用属性，实现模板瘦身
@@ -192,16 +172,6 @@ const tableColumns = computed<Column[]>(() => {
 
   return baseColumns
 })
-
-const handleConfirm = async () => {
-  if (!userFormRef.value) return
-  submitting.value = true
-  try {
-    await userFormRef.value.submit()
-  } finally {
-    submitting.value = false
-  }
-}
 </script>
 
 <style lang="scss" scoped>

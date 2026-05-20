@@ -23,7 +23,6 @@
         <div class="policy-form-container">
           <PolicyForm
             ref="formRef"
-            :is-edit="isEdit"
             :code="policyCode"
             hide-basic
             @update:submitting="submitting = $event"

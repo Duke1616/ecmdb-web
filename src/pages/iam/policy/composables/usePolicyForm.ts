@@ -19,10 +19,11 @@ import {
  * 策略表单总控 Composable
  * 核心优化：将逻辑拆分为「基础数据」、「编辑器同步」、「业务动作」三个高内聚模块
  */
-export function usePolicyForm(props: { isEdit: boolean; code?: string }, emit: (e: "success") => void) {
+export function usePolicyForm(props: { code?: string }, emit: (e: "success") => void) {
   const formRef = ref<FormInstance>()
   const loading = ref(false)
   const permissionManifest = ref<ManifestService[]>([])
+  const isEdit = computed(() => !!props.code)
 
   // --- 1. 核心表单数据状态 ---
   const formData = reactive<PolicyFormVO>({
@@ -53,7 +54,7 @@ export function usePolicyForm(props: { isEdit: boolean; code?: string }, emit: (
 
     const message = getStatementValidationMessage(
       formData.statement,
-      props.isEdit ? "请至少保留一条权限语句" : "请至少添加一条权限语句"
+      isEdit.value ? "请至少保留一条权限语句" : "请至少添加一条权限语句"
     )
 
     if (message) {
@@ -70,7 +71,7 @@ export function usePolicyForm(props: { isEdit: boolean; code?: string }, emit: (
       loading.value = true
 
       const payload = mapVOToRequest(formData)
-      if (props.isEdit) {
+      if (isEdit.value) {
         await updatePolicyApi(payload as unknown as UpdatePolicyRequest)
       } else {
         await createPolicyApi(payload)
@@ -104,7 +105,7 @@ export function usePolicyForm(props: { isEdit: boolean; code?: string }, emit: (
     try {
       const [manifestRes, detailRes] = await Promise.all([
         getPermissionManifestApi(),
-        props.isEdit && props.code ? getPolicyDetailApi(props.code) : null
+        props.code ? getPolicyDetailApi(props.code) : null
       ])
 
       permissionManifest.value = enrichManifest(manifestRes.data)

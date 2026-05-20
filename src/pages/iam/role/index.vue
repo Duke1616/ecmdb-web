@@ -45,36 +45,19 @@
       </template>
     </DataTable>
 
-    <!-- 角色表单弹窗 -->
-    <FormDialog
-      v-model="formVisible"
-      :title="currentEditCode ? '治理角色资产' : '初始化角色定义'"
-      :header-icon="Lock"
-      width="640px"
-      :confirm-loading="submitting"
-      @confirm="handleConfirm"
-      @cancel="formVisible = false"
-    >
-      <RoleForm
-        :key="currentEditCode || 'new'"
-        ref="roleFormRef"
-        :code="currentEditCode!"
-        :is-edit="!!currentEditCode"
-        @success="handleFormSuccess"
-      />
-    </FormDialog>
+    <!-- 角色自治弹窗 -->
+    <RoleDialog v-model="formVisible" :code="currentEditCode!" @success="handleFormSuccess" />
   </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { Lock, Edit, Delete } from "@element-plus/icons-vue"
+import { Edit, Delete } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
-import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import RoleForm from "./components/RoleForm.vue"
+import RoleDialog from "./components/RoleDialog.vue"
 import { useRoleList } from "./composables/useRoleList"
 import type { Column } from "@@/components/DataTable/types"
 import { usePermission } from "@/common/composables/usePermission"
@@ -104,9 +87,7 @@ const {
   handleCurrentChange
 } = useRoleList()
 
-const roleFormRef = ref<InstanceType<typeof RoleForm>>()
 const tableRef = ref<InstanceType<typeof DataTable>>()
-const submitting = ref(false)
 
 /**
  * 打包表格通用属性，实现模板瘦身
@@ -144,16 +125,6 @@ const tableColumns: Column[] = [
   { label: "角色来源/类型", prop: "type", slot: "type", width: 160, align: "center" },
   { label: "职责描述说明", prop: "desc", slot: "desc", minWidth: 400, align: "center" }
 ]
-
-const handleConfirm = async () => {
-  if (!roleFormRef.value) return
-  submitting.value = true
-  try {
-    await roleFormRef.value.submit()
-  } finally {
-    submitting.value = false
-  }
-}
 </script>
 
 <style lang="scss" scoped>

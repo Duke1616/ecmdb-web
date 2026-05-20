@@ -1,56 +1,41 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域: 遵循标准 Search-in-Actions 模式 -->
-    <ManagerHeader
-      title="调度任务管理"
-      subtitle="集中化配置与监控分布式的定时/单次触发业务任务"
-      @refresh="fetchTasksData"
-    >
-      <template #actions>
-        <div class="header-actions-bar">
-          <el-input
-            v-model="searchQuery"
-            placeholder="搜索任务名称..."
-            class="search-input premium-input"
-            clearable
-            @clear="fetchTasksData"
-            @keyup.enter="fetchTasksData"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
+  <ProGovernanceLayout
+    title="调度任务管理"
+    subtitle="集中化配置与监控分布式的定时/单次触发业务任务"
+    :primary-action="{ label: '添加任务' }"
+    @refresh="loadData"
+    @primary-action="handleCreate"
+  >
+    <!-- 自定义搜索栏 -->
+    <template #search>
+      <div class="search-command-inner">
+        <el-input
+          v-model="query.query"
+          placeholder="搜索任务名称..."
+          class="command-input"
+          clearable
+          @keyup.enter="handleRefresh"
+        >
+          <template #prefix>
+            <el-icon class="search-icon"><Search /></el-icon>
+          </template>
+        </el-input>
 
-          <el-select v-model="typeFilter" placeholder="执行类型" clearable class="type-filter premium-input">
-            <el-option label="定期执行" :value="TaskType.RECURRING" />
-            <el-option label="单次触发" :value="TaskType.ONE_TIME" />
-          </el-select>
+        <div class="divider" />
 
-          <el-button type="primary" :icon="Plus" class="action-btn" @click="handleAddClick"> 添加任务 </el-button>
-
-          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="fetchTasksData" />
-        </div>
-      </template>
-    </ManagerHeader>
+        <el-select v-model="typeFilter" placeholder="执行类型" clearable class="command-select">
+          <el-option label="定期执行" :value="TaskType.RECURRING" />
+          <el-option label="单次触发" :value="TaskType.ONE_TIME" />
+        </el-select>
+      </div>
+    </template>
 
     <!-- 数据列表 -->
-    <DataTable
-      v-loading="loading"
-      :data="filteredTasks"
-      :columns="tableColumns"
-      :show-selection="false"
-      :show-pagination="true"
-      :total="paginationData.total"
-      :page-size="paginationData.pageSize"
-      :current-page="paginationData.currentPage"
-      :page-sizes="paginationData.pageSizes"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
+    <DataTable v-bind="tableProps" :columns="tableColumns">
       <!-- 任务名称 -->
       <template #name="{ row }">
         <div class="minimal-name-info">
-          <span class="main-title">{{ formatTaskName(row.name).title }}</span>
+          <span class="main-title">{{ formatTaskName(row.name) }}</span>
         </div>
       </template>
 
@@ -69,12 +54,9 @@
         <span v-else>-</span>
       </template>
 
-      <!-- 状态列 -->
+      <!-- 状态列: 引入 StatusBadge 增强极致排版视觉效果 -->
       <template #status="{ row }">
-        <div class="minimal-status" :class="getStatusType(row.status)">
-          <span class="dot" />
-          <span class="text">{{ getStatusLabel(row.status) }}</span>
-        </div>
+        <StatusBadge :type="getStatusType(row.status)" :label="getStatusLabel(row.status)" />
       </template>
 
       <!-- 操作插槽 -->
@@ -83,57 +65,73 @@
       </template>
     </DataTable>
 
-    <!-- 核心表单抽屉 -->
-    <TaskFormDrawer
-      v-if="formVisible"
-      v-model="formVisible"
-      :is-edit="!!currentEditId"
-      :initial-data="currentEditData"
-      @save="handleFormSave"
-    />
+    <!-- 任务自治表单抽屉 -->
+    <TaskDrawer v-model="formVisible" :task-id="currentEditId!" @success="handleFormSuccess" />
 
     <!-- 运行历史与日志弹窗 -->
     <TaskExecutionDialog v-if="logVisible" v-model="logVisible" :task-id="logTaskId" :task-name="logTaskName" />
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, markRaw } from "vue"
-import { Search, Plus, RefreshRight, VideoPause, VideoPlay, Monitor, Edit, Delete } from "@element-plus/icons-vue"
-import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import { ref, computed } from "vue"
+import { Search, VideoPause, VideoPlay, Monitor, Edit, Delete } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import TaskFormDrawer from "./components/TaskFormDrawer.vue"
+import TaskDrawer from "./components/TaskDrawer.vue"
 import TaskExecutionDialog from "./components/TaskExecutionDialog.vue"
-import { TaskType, TaskStatus, type TaskItem, type CreateTaskReq, type UpdateTaskReq } from "@/api/etask/manager/type"
+import StatusBadge, { type StatusBadgeType } from "@/common/components/StatusBadge/index.vue"
+import { TaskType, TaskStatus, type TaskItem } from "@/api/etask/manager/type"
 import { useTaskManager } from "./composables/useTaskManager"
 import type { Column } from "@@/components/DataTable/types"
 import { formatTimestamp } from "@@/utils/day"
 
 const {
-  loading,
   tasksData,
-  searchQuery,
-  paginationData,
-  fetchTasksData,
-  handleCreateTask,
-  handleUpdateTask,
-  handleDeleteTask,
-  fetchTaskDetail,
+  total,
+  currentPage,
+  pageSize,
+  loading,
+  query,
+  formVisible,
+  currentEditId,
+  logVisible,
+  logTaskId,
+  logTaskName,
+  loadData,
+  handleRefresh,
+  handleCreate,
+  handleEdit,
+  handleDelete,
+  handleLogs,
   handleRunTask,
   handleStopTask,
-  handleCurrentChange,
-  handleSizeChange
+  handleFormSuccess,
+  handleSizeChange,
+  handleCurrentChange
 } = useTaskManager()
 
+// --- 前端类型过滤 ---
 const typeFilter = ref<string | null>(null)
 
-// 过滤后的数据逻辑 (前端组合过滤)
 const filteredTasks = computed(() => {
   if (!typeFilter.value) return tasksData.value
   return tasksData.value.filter((t) => t.type === typeFilter.value)
 })
+
+/** 打包表格通用属性，实现模板瘦身 */
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: filteredTasks.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showSelection: false,
+  showPagination: true,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
 
 const tableColumns: Column[] = [
   { prop: "name", label: "任务名称", slot: "name", align: "center" },
@@ -143,99 +141,112 @@ const tableColumns: Column[] = [
   { prop: "next_time", label: "下次运行时间", slot: "next_time", align: "center" }
 ]
 
-// 格式化任务名称
-const formatTaskName = (name: string) => {
-  const parts = name.split("_")
-  if (parts.length > 1) {
-    return { title: parts[0], sub: parts.slice(1).join("_") }
-  }
-  return { title: name, sub: "" }
-}
+// --- 格式化 & 语义化 ---
+const formatTaskName = (name: string) => name.split("_")[0] || name
 
-// --- 状态与语义化配置 ---
-const STATUS_META: Record<TaskStatus, { label: string; type: string }> = {
+const STATUS_META: Record<TaskStatus, { label: string; type: StatusBadgeType }> = {
   [TaskStatus.COMPLETED]: { label: "已完成", type: "success" },
   [TaskStatus.ACTIVE]: { label: "等待调度", type: "primary" },
   [TaskStatus.INACTIVE]: { label: "停止执行", type: "info" },
   [TaskStatus.PREEMPTED]: { label: "已抢占", type: "warning" }
 }
 
-const getStatusType = (status: TaskStatus) => STATUS_META[status]?.type || "info"
+const getStatusType = (status: TaskStatus): StatusBadgeType => STATUS_META[status]?.type || "info"
 const getStatusLabel = (status: TaskStatus) => STATUS_META[status]?.label || status
 
-const formVisible = ref(false)
-const currentEditId = ref<number | null>(null)
-const currentEditData = ref<TaskItem | null>(null)
-
-const logVisible = ref(false)
-const logTaskId = ref<number>(0)
-const logTaskName = ref<string>("")
-
+/** 操作按钮配置 */
 const getOperateItems = (row: TaskItem) => {
-  const items = []
-  if (row.status === TaskStatus.ACTIVE) {
-    items.push({ name: "停止", code: "stop", type: "warning", icon: markRaw(VideoPause) })
-  } else {
-    items.push({ name: "执行", code: "run", type: "success", icon: markRaw(VideoPlay) })
-  }
-  items.push({ name: "记录", code: "logs", type: "info", icon: markRaw(Monitor) })
-  items.push({ name: "编辑", code: "edit", type: "primary", icon: markRaw(Edit) })
-  items.push({ name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) })
-  return items
+  const isActive = row.status === TaskStatus.ACTIVE
+
+  return [
+    {
+      name: isActive ? "停止" : "执行",
+      code: isActive ? "stop" : "run",
+      icon: isActive ? VideoPause : VideoPlay,
+      type: isActive ? "warning" : "success"
+    },
+    { name: "记录", code: "logs", icon: Monitor, type: "info" },
+    { name: "编辑", code: "edit", icon: Edit, type: "primary" },
+    { name: "删除", code: "delete", icon: Delete, type: "danger" }
+  ]
 }
 
-const handleAddClick = () => {
-  currentEditId.value = null
-  currentEditData.value = null
-  formVisible.value = true
-}
-
-const handleAction = async (row: TaskItem, code: string) => {
-  if (code === "edit") {
-    const detail = await fetchTaskDetail(row.id)
-    if (detail) {
-      currentEditId.value = row.id
-      currentEditData.value = JSON.parse(JSON.stringify(detail))
-      formVisible.value = true
-    }
-  } else if (code === "run") {
-    handleRunTask(row.id)
-  } else if (code === "stop") {
-    handleStopTask(row.id)
-  } else if (code === "logs") {
-    logTaskId.value = row.id
-    logTaskName.value = row.name
-    logVisible.value = true
-  } else if (code === "delete") {
-    handleDeleteTask(row.id)
+const handleAction = (row: TaskItem, code: string) => {
+  switch (code) {
+    case "edit":
+      handleEdit(row)
+      break
+    case "logs":
+      handleLogs(row)
+      break
+    case "run":
+      handleRunTask(row.id)
+      break
+    case "stop":
+      handleStopTask(row.id)
+      break
+    case "delete":
+      handleDelete(row)
+      break
   }
 }
-
-const handleFormSave = async (data: CreateTaskReq) => {
-  let success = false
-  if (currentEditId.value) {
-    success = await handleUpdateTask({ ...data, id: currentEditId.value } as UpdateTaskReq)
-  } else {
-    success = await handleCreateTask(data)
-  }
-  if (success) formVisible.value = false
-}
-
-onMounted(() => fetchTasksData())
 </script>
 
 <style scoped lang="scss">
-.header-actions-bar {
+.search-command-inner {
   display: flex;
-  gap: 12px;
   align-items: center;
-  .search-input {
-    width: 220px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+  padding: 0 12px;
+  flex: 1;
+  max-width: 680px;
+  height: 38px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:focus-within {
+    border-color: var(--el-color-primary);
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
   }
-  .type-filter {
+
+  .command-input {
+    width: 240px;
+    :deep(.el-input__wrapper) {
+      box-shadow: none !important;
+      background: transparent;
+      padding: 0;
+    }
+    .search-icon {
+      color: #94a3b8;
+      font-size: 16px;
+    }
+  }
+
+  .divider {
+    width: 1px;
+    height: 16px;
+    background: #e2e8f0;
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+
+  .command-select {
     width: 120px;
+    :deep(.el-select__wrapper) {
+      box-shadow: none !important;
+      background: transparent;
+      padding: 0 8px;
+
+      .el-select__placeholder {
+        color: #64748b;
+        font-size: 13px;
+      }
+    }
   }
 }
+
 .minimal-name-info {
   display: flex;
   align-items: center;
@@ -251,81 +262,10 @@ onMounted(() => fetchTasksData())
   color: #7c3aed;
   font-weight: 600;
 }
-.minimal-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  justify-content: center;
-  .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-  }
-  .text {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-  }
-  &.success {
-    .dot {
-      background: #10b981;
-    }
-    .text {
-      color: #059669;
-    }
-  }
-  &.primary {
-    .dot {
-      background: #3b82f6;
-    }
-    .text {
-      color: #2563eb;
-    }
-  }
-  &.danger {
-    .dot {
-      background: #ef4444;
-    }
-    .text {
-      color: #dc2626;
-    }
-  }
-  &.warning {
-    .dot {
-      background: #f59e0b;
-    }
-    .text {
-      color: #d97706;
-    }
-  }
-  &.info {
-    .dot {
-      background: #94a3b8;
-    }
-    .text {
-      color: #475569;
-    }
-  }
-}
 .code-font {
   font-family: var(--el-font-family-mono);
 }
 :deep(.el-table__row):hover {
   background: #f8fafc !important;
-}
-.premium-input :deep(.el-input__wrapper),
-.premium-input :deep(.el-select__wrapper) {
-  border-radius: 8px !important;
-  border: 1px solid #d1d5db !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  background: #fff;
-  &:hover {
-    border-color: #9ca3af !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
-  }
-  &.is-focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12) !important;
-  }
 }
 </style>

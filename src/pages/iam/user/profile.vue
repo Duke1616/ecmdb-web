@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import { Edit, User, Coordinate } from "@element-plus/icons-vue"
+import { onMounted } from "vue"
+import { Edit, User } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
-import { FormDialog } from "@/common/components/Dialogs"
-import UserForm from "./components/UserForm.vue"
+import UserDialog from "./components/UserDialog.vue"
 import { useUserStore } from "@/pinia/stores/user"
 
 // Composables
@@ -16,7 +15,6 @@ import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
 const userStore = useUserStore()
-const userFormRef = ref<InstanceType<typeof UserForm>>()
 
 const {
   userInfo,
@@ -36,10 +34,6 @@ onMounted(() => {
     loadDetail(userStore.username)
   }
 })
-
-const handleEditConfirm = () => {
-  userFormRef.value?.submit()
-}
 </script>
 
 <template>
@@ -67,17 +61,8 @@ const handleEditConfirm = () => {
         <AuthGovernance :user="userInfo" @refresh="() => loadDetail(userStore.username)" />
       </div>
 
-      <!-- 编辑弹窗 -->
-      <FormDialog
-        v-model="editVisible"
-        title="修改个人资料"
-        :header-icon="Coordinate"
-        width="640px"
-        @confirm="handleEditConfirm"
-        @cancel="editVisible = false"
-      >
-        <UserForm ref="userFormRef" :is-edit="true" :user-id="userInfo?.id" @success="handleEditSuccess" />
-      </FormDialog>
+      <!-- 编辑自治弹窗 -->
+      <UserDialog v-model="editVisible" :user-id="userInfo?.id" @success="handleEditSuccess" />
     </template>
   </PageContainer>
 </template>

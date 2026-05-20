@@ -225,7 +225,7 @@ const handleSearch = () => {
 .action-group {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
 
   .u-gov-btn,
   .eiam-refresh-btn {

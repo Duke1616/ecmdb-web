@@ -132,33 +132,17 @@
       @confirm="handleAttachPolicies"
     />
 
-    <!-- 编辑主体资料弹窗 -->
-    <FormDialog
-      v-model="editVisible"
-      title="完善主体职责定义"
-      :header-icon="Coordinate"
-      width="640px"
-      @confirm="handleConfirmEdit"
-      @cancel="editVisible = false"
-    >
-      <RoleForm
-        :key="roleInfo.code"
-        ref="roleFormRef"
-        :code="roleInfo.code"
-        :is-edit="true"
-        @success="handleEditSuccess"
-      />
-    </FormDialog>
+    <!-- 编辑自治弹窗 -->
+    <RoleDialog v-model="editVisible" :code="roleInfo.code" @success="handleEditSuccess" />
   </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, toRaw } from "vue"
+import { computed, toRaw } from "vue"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
-import { Delete, OfficeBuilding, Edit, Coordinate } from "@element-plus/icons-vue"
+import { Delete, OfficeBuilding, Edit } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
-import { FormDialog } from "@/common/components/Dialogs"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 
@@ -170,7 +154,7 @@ import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 // Components
-import RoleForm from "./components/RoleForm.vue"
+import RoleDialog from "./components/RoleDialog.vue"
 import MemberTable from "./components/detail/MemberTable.vue"
 import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
 import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
@@ -242,7 +226,6 @@ const {
 const { statusItems, infoItems } = useRoleDisplayItems(roleInfo, memberTotal, policyTotal)
 
 // 完善职责 (编辑角色) 逻辑
-const roleFormRef = ref()
 
 const handleCopy = (text: string) => {
   navigator.clipboard.writeText(text)
@@ -295,10 +278,6 @@ const roleSubjects = computed<Subject[]>(() => {
     }
   ]
 })
-
-const handleConfirmEdit = () => {
-  roleFormRef.value?.submit()
-}
 </script>
 
 <style lang="scss" scoped>

@@ -47,30 +47,19 @@
       </template>
     </DataTable>
 
-    <!-- 租户编辑/创建 弹窗 -->
-    <FormDialog
-      v-model="formVisible"
-      :title="currentEditId ? '编辑租户资料' : '新增租户'"
-      :header-icon="OfficeBuilding"
-      width="700px"
-      :confirm-loading="submitting"
-      @confirm="handleConfirm"
-      @cancel="formVisible = false"
-    >
-      <TenantForm ref="tenantFormRef" :id="currentEditId!" :is-edit="!!currentEditId" @success="handleFormSuccess" />
-    </FormDialog>
+    <!-- 租户自治弹窗 -->
+    <TenantDialog v-model="formVisible" :id="currentEditId!" @success="handleFormSuccess" />
   </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
-import { OfficeBuilding, Edit, Delete } from "@element-plus/icons-vue"
+import { computed } from "vue"
+import { Edit, Delete } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
-import { FormDialog } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import TenantForm from "./components/TenantForm.vue"
+import TenantDialog from "./components/TenantDialog.vue"
 import { useTenantList } from "./composables/useTenantList"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
@@ -118,9 +107,6 @@ const tableProps = computed(() => ({
   onCurrentChange: handleCurrentChange
 }))
 
-const tenantFormRef = ref<InstanceType<typeof TenantForm>>()
-const submitting = ref(false)
-
 /**
  * 租户操作配置项
  */
@@ -142,16 +128,6 @@ const tableColumns: Column[] = [
   { label: "身份域名标识", prop: "domain", slot: "domain", minWidth: 320, align: "center" },
   { label: "运行状态", prop: "status", slot: "status", width: 140, align: "center" }
 ]
-
-const handleConfirm = async () => {
-  if (!tenantFormRef.value) return
-  submitting.value = true
-  try {
-    await tenantFormRef.value.submit()
-  } finally {
-    submitting.value = false
-  }
-}
 </script>
 
 <style lang="scss" scoped>

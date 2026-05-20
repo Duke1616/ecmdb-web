@@ -26,6 +26,11 @@ export enum TaskStatus {
   COMPLETED = "COMPLETED"
 }
 
+export enum TaskProtocol {
+  GRPC = "grpc",
+  HTTP = "http"
+}
+
 export interface GrpcConfig {
   service_name: string
   auth_token?: string

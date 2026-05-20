@@ -128,17 +128,8 @@
       </GovernanceTabs>
     </div>
 
-    <!-- 编辑弹窗 -->
-    <FormDialog
-      v-model="editVisible"
-      title="完善主体资料"
-      :header-icon="Coordinate"
-      width="640px"
-      @confirm="handleEditConfirm"
-      @cancel="editVisible = false"
-    >
-      <UserForm ref="userFormRef" :is-edit="true" :user-id="userInfo?.id" @success="handleEditSuccess" />
-    </FormDialog>
+    <!-- 编辑自治弹窗 -->
+    <UserDialog v-model="editVisible" :user-id="userInfo?.id" @success="handleEditSuccess" />
 
     <!-- 角色分配器 -->
     <RoleSelectDialog
@@ -165,12 +156,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { computed } from "vue"
 import { useRouter } from "vue-router"
-import { Edit, Delete, User, Coordinate } from "@element-plus/icons-vue"
+import { Edit, Delete, User } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
-import { FormDialog } from "@/common/components/Dialogs"
-import UserForm from "./components/UserForm.vue"
+import UserDialog from "./components/UserDialog.vue"
 
 // Composables
 import { useUserDetail } from "./composables/useUserDetail"
@@ -196,7 +186,6 @@ import TenantSelectDialog from "@/pages/iam/tenant/components/TenantSelectDialog
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
-const userFormRef = ref<InstanceType<typeof UserForm>>()
 
 const {
   userInfo,
@@ -258,10 +247,6 @@ const {
   handleBatchUnbindTenants,
   tabPermissions
 } = useUserGovernance(userInfo)
-
-const handleEditConfirm = () => {
-  userFormRef.value?.submit()
-}
 
 const userSubjects = computed<Subject[]>(() => {
   if (!userInfo.value) return []

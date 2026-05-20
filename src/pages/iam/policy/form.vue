@@ -129,7 +129,7 @@ import { FormDialog } from "@@/components/Dialogs"
 import { usePolicyForm } from "./composables/usePolicyForm"
 import PolicyStatement from "./components/PolicyStatement.vue"
 
-const props = defineProps<{ isEdit: boolean; code?: string; hideBasic?: boolean }>()
+const props = defineProps<{ code?: string; hideBasic?: boolean }>()
 const emit = defineEmits(["success", "update:submitting"])
 
 const codemirrorExtensions = [json()]
@@ -151,8 +151,7 @@ const {
   submitForm
 } = usePolicyForm(props, emit)
 
-// --- 弹窗 UI 文本计算 ---
-const isEdit = computed(() => props.isEdit)
+const isEdit = computed(() => !!props.code)
 const dialogTitle = computed(() => (isEdit.value ? "确认策略信息" : "完善策略信息"))
 const dialogSubtitle = computed(() =>
   isEdit.value ? "您可以修改策略名称或描述，识别码 (Code) 通常不建议变更" : "为您的权限策略设置名称与识别码"

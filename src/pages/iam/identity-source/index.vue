@@ -42,29 +42,8 @@
       </template>
     </DataTable>
 
-    <!-- 配置侧滑窗 (Drawer) - 严格遵循 TaskManager 标准 -->
-    <Drawer
-      v-model="formVisible"
-      :title="currentEditId ? '治理现有身份源' : '集成新企业身份源'"
-      :subtitle="
-        currentEditId
-          ? '调整当前集成协议的连接参数与属性映射逻辑'
-          : '配置基于标准协议的身份提供商，实现企业级 SSO 统一接入'
-      "
-      size="38%"
-      :header-icon="Share"
-      :confirm-loading="submitting"
-      @confirm="handleDrawerConfirm"
-      @cancel="formVisible = false"
-    >
-      <IdentitySourceForm
-        ref="formRef"
-        :key="currentEditId || 'new'"
-        :is-edit="!!currentEditId"
-        :data="editData"
-        @success="handleFormSuccess"
-      />
-    </Drawer>
+    <!-- 身份源自治抽屉 -->
+    <IdentitySourceDrawer v-model="formVisible" :data="editData" @success="handleFormSuccess" />
 
     <!-- LDAP 同步弹窗 -->
     <LdapSyncDialog v-model="syncVisible" />
@@ -72,14 +51,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, markRaw } from "vue"
-import { Share, Edit, VideoPause, VideoPlay, Delete, Refresh } from "@element-plus/icons-vue"
+import { computed, markRaw } from "vue"
+import { Edit, VideoPause, VideoPlay, Delete, Refresh } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
-import { Drawer } from "@@/components/Dialogs"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import IdentitySourceForm from "./components/IdentitySourceForm.vue"
+import IdentitySourceDrawer from "./components/IdentitySourceDrawer.vue"
 import LdapSyncDialog from "./components/LdapSyncDialog.vue"
 import { useIdentitySource } from "./composables/useIdentitySource"
 import { IdentitySourceType, type IdentitySourceVO } from "@/api/iam/identity-source/type"
@@ -92,7 +70,6 @@ const {
   sources,
   formVisible,
   syncVisible,
-  currentEditId,
   editData,
   handleRefresh,
   handleCreate,
@@ -112,9 +89,6 @@ const tableProps = computed(() => ({
   showPagination: false,
   showSelection: false
 }))
-
-const formRef = ref<InstanceType<typeof IdentitySourceForm>>()
-const submitting = ref(false)
 
 const tableColumns: Column[] = [
   { label: "身份源名称", prop: "name", slot: "name", align: "center" },
@@ -141,16 +115,6 @@ const handleOperate = (row: IdentitySourceVO, code: string) => {
   if (code === "edit") handleEdit(row)
   if (code === "toggle") handleToggleStatus(row)
   if (code === "delete") handleDelete(row)
-}
-
-const handleDrawerConfirm = async () => {
-  if (!formRef.value) return
-  submitting.value = true
-  try {
-    await formRef.value.submit()
-  } finally {
-    submitting.value = false
-  }
 }
 </script>
 

@@ -1,137 +1,106 @@
-import { ref, reactive } from "vue"
-import {
-  listTasksApi,
-  createTaskApi,
-  deleteTaskApi,
-  getTaskDetailApi,
-  updateTaskApi,
-  runTaskApi,
-  stopTaskApi
-} from "@/api/etask/manager"
-import { type TaskItem, type CreateTaskReq, type UpdateTaskReq } from "@/api/etask/manager/type"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ref, computed } from "vue"
+import { listTasksApi, deleteTaskApi, runTaskApi, stopTaskApi } from "@/api/etask/manager"
+import type { TaskItem, PageQuery } from "@/api/etask/manager/type"
+import { ElMessage } from "element-plus"
+import { useListManager } from "@/common/composables/useListManager"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 
+/**
+ * 任务管理核心逻辑 Hook
+ * @description 对齐 useRoleList / usePolicyList 标准范式
+ */
 export function useTaskManager() {
-  const loading = ref(false)
-  const tasksData = ref<TaskItem[]>([])
-  const searchQuery = ref("")
-  const paginationData = reactive({
-    currentPage: 1,
-    pageSize: 20,
-    total: 0,
-    pageSizes: [10, 20, 50, 100],
-    layout: "total, sizes, prev, pager, next, jumper"
+  // 通用列表管理器
+  const {
+    list: tasksData,
+    total,
+    loading,
+    pagination,
+    query,
+    fetchList: loadData,
+    handlePageChange: handleCurrentChange,
+    handleSizeChange,
+    handleSearch: handleRefresh
+  } = useListManager<TaskItem, PageQuery>({
+    fetchApi: listTasksApi,
+    listKey: "tasks",
+    initialQuery: { query: "", offset: 0, limit: 20 }
   })
 
-  const fetchTasksData = async () => {
-    loading.value = true
-    try {
-      const res = await listTasksApi({
-        offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-        limit: paginationData.pageSize,
-        query: searchQuery.value
-      })
-      tasksData.value = res.data.tasks
-      paginationData.total = res.data.total
-    } catch (error) {
-      console.error("Fetch tasks failed:", error)
-    } finally {
-      loading.value = false
-    }
+  // 交互动作管理器
+  const { handleConfirmAction } = useGovernanceActions()
+
+  // 表单弹窗状态
+  const formVisible = ref(false)
+  const currentEditId = ref<number | null>(null)
+
+  // 日志弹窗状态
+  const logVisible = ref(false)
+  const logTaskId = ref(0)
+  const logTaskName = ref("")
+
+  const handleCreate = () => {
+    currentEditId.value = null
+    formVisible.value = true
   }
 
-  const handleCreateTask = async (data: CreateTaskReq) => {
-    try {
-      await createTaskApi(data)
-      ElMessage.success("创建任务成功")
-      fetchTasksData()
-      return true
-    } catch (error) {
-      return false
-    }
+  const handleEdit = (row: TaskItem) => {
+    currentEditId.value = row.id
+    formVisible.value = true
   }
 
-  const handleUpdateTask = async (data: UpdateTaskReq) => {
-    try {
-      await updateTaskApi(data)
-      ElMessage.success("更新任务成功")
-      fetchTasksData()
-      return true
-    } catch (error) {
-      return false
-    }
+  const handleDelete = (row: TaskItem) => {
+    handleConfirmAction({
+      message: `确定要永久删除任务 "${row.name}" 吗？此操作不可逆。`,
+      api: () => deleteTaskApi(row.id),
+      onSuccess: loadData,
+      successMsg: "任务已成功删除"
+    })
   }
 
-  const fetchTaskDetail = async (id: number) => {
-    loading.value = true
-    try {
-      const res = await getTaskDetailApi(id)
-      return res.data
-    } catch (error) {
-      return null
-    } finally {
-      loading.value = false
-    }
+  const handleFormSuccess = () => {
+    formVisible.value = false
+    loadData()
   }
 
-  const handleDeleteTask = async (id: number) => {
-    try {
-      await ElMessageBox.confirm("确定要删除该任务吗？", "警告", {
-        type: "warning",
-        confirmButtonText: "确定",
-        cancelButtonText: "取消"
-      })
-      await deleteTaskApi(id)
-      ElMessage.success("删除成功")
-      fetchTasksData()
-    } catch (error) {
-      console.error("删除失败:", error)
-    }
+  const handleLogs = (row: TaskItem) => {
+    logTaskId.value = row.id
+    logTaskName.value = row.name
+    logVisible.value = true
   }
 
-  const handleRunTask = async (id: number) => {
-    try {
-      await runTaskApi(id)
-      ElMessage.success("指令已下发: 立即执行一次")
-      fetchTasksData()
-    } catch (error) {
-      // 错误已由请求层统一处理
-    }
+  /** 通用调度指令执行 */
+  const executeCommand = async (api: (id: number) => Promise<unknown>, id: number, msg: string) => {
+    await api(id)
+    ElMessage.success(msg)
+    loadData()
   }
 
-  const handleStopTask = async (id: number) => {
-    try {
-      await stopTaskApi(id)
-      ElMessage.success("指令已下发: 强制停止/禁用成功")
-      fetchTasksData()
-    } catch (error) {
-      // 错误已由请求层统一处理
-    }
-  }
-
-  const handleCurrentChange = (val: number) => {
-    paginationData.currentPage = val
-    fetchTasksData()
-  }
-
-  const handleSizeChange = (val: number) => {
-    paginationData.pageSize = val
-    fetchTasksData()
-  }
+  const handleRunTask = (id: number) => executeCommand(runTaskApi, id, "指令已下发: 立即执行一次")
+  const handleStopTask = (id: number) => executeCommand(stopTaskApi, id, "指令已下发: 强制停止/禁用成功")
 
   return {
-    loading,
     tasksData,
-    searchQuery,
-    paginationData,
-    fetchTasksData,
-    handleCreateTask,
-    handleUpdateTask,
-    handleDeleteTask,
-    fetchTaskDetail,
+    total,
+    currentPage: computed(() => pagination.currentPage),
+    pageSize: computed(() => pagination.pageSize),
+    loading,
+    query,
+    formVisible,
+    currentEditId,
+    logVisible,
+    logTaskId,
+    logTaskName,
+    loadData,
+    handleRefresh,
+    handleCreate,
+    handleEdit,
+    handleDelete,
+    handleLogs,
     handleRunTask,
     handleStopTask,
-    handleCurrentChange,
-    handleSizeChange
+    handleFormSuccess,
+    handleSizeChange,
+    handleCurrentChange
   }
 }

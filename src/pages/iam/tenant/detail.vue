@@ -89,18 +89,8 @@
       </GovernanceTabs>
     </div>
 
-    <!-- 编辑弹窗 -->
-    <FormDialog
-      v-model="editVisible"
-      title="完善租户资料"
-      :header-icon="Lock"
-      width="640px"
-      :confirm-loading="submitting"
-      @confirm="handleEditConfirm"
-      @cancel="editVisible = false"
-    >
-      <TenantForm ref="tenantFormRef" :is-edit="true" :id="tenantInfo?.id" @success="handleEditSuccess" />
-    </FormDialog>
+    <!-- 编辑租户自治弹窗 -->
+    <TenantDialog v-model="editVisible" :id="tenantInfo?.id" @success="handleEditSuccess" />
 
     <!-- 分派成员抽屉 -->
     <UserSelectDialog
@@ -115,10 +105,9 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { useRouter } from "vue-router"
-import { Delete, Edit, OfficeBuilding, Lock } from "@element-plus/icons-vue"
+import { Delete, Edit, OfficeBuilding } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
-import { FormDialog } from "@@/components/Dialogs"
-import TenantForm from "./components/TenantForm.vue"
+import TenantDialog from "./components/TenantDialog.vue"
 
 // Composables
 import { useTenantDetail } from "./composables/useTenantDetail"
@@ -208,22 +197,10 @@ const {
   handleApproval,
   tabPermissions
 } = useTenantGovernance(() => tenantInfo.value?.id, activeTab)
-const tenantFormRef = ref<InstanceType<typeof TenantForm>>()
-const submitting = ref(false)
 
 const handleEditSuccess = () => {
   editVisible.value = false
   tenantInfo.value && fetchTenantDetail()
-}
-
-const handleEditConfirm = async () => {
-  if (!tenantFormRef.value) return
-  submitting.value = true
-  try {
-    await tenantFormRef.value.submit()
-  } finally {
-    submitting.value = false
-  }
 }
 
 // 分派处理
