@@ -9,7 +9,7 @@ export function createInvitationApi(data: invitation.CreateInvitationReq, tenant
   return instance.post<{ code: string }>({
     url: `${API_SERVICE.IAM}/invitation/create`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -39,7 +39,7 @@ export function listInvitationsApi(data: invitation.InvitationPageReq, tenantId:
   return instance.post<invitation.InvitationPageVO>({
     url: `${API_SERVICE.IAM}/invitation/list`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -59,7 +59,7 @@ export function listJoinRequestsApi(data: invitation.JoinRequestPageReq, tenantI
   return instance.post<invitation.JoinRequestPageVO>({
     url: `${API_SERVICE.IAM}/invitation/requests`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -70,7 +70,7 @@ export function handleJoinRequestApi(data: invitation.HandleJoinRequestReq, tena
   return instance.post<void>({
     url: `${API_SERVICE.IAM}/invitation/requests/handle`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 

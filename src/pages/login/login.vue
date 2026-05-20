@@ -56,7 +56,7 @@ import { reactive, ref, onMounted } from "vue"
 import { useRouter, useRoute } from "vue-router"
 import { type FormInstance, type FormRules } from "element-plus"
 import { Message, Lock } from "@element-plus/icons-vue"
-import { loginLdapApi, loginSystemApi } from "@/api/iam/user"
+import { loginLdapApi, loginSystemApi, bindConfirmApi } from "@/api/iam/user"
 import type { LoginLdapRequest, Tenant } from "@/api/iam/user/type"
 import TenantSelectModal from "./components/TenantSelectModal.vue"
 import MfaVerifyModal from "./components/MfaVerifyModal.vue"
@@ -100,12 +100,18 @@ function handleLogin() {
   loginFormRef.value?.validate((valid) => {
     if (!valid) return
     loading.value = true
-    const loginApi = props.active === "ldap" ? loginLdapApi : loginSystemApi
 
-    // 显式声明类型以解决 TS 索引签名兼容性问题
-    const headers: Record<string, string> = props.bindToken ? { "X-Bind-Token": props.bindToken } : {}
+    const reqPromise = props.bindToken
+      ? bindConfirmApi({
+          username: loginFormData.username,
+          password: loginFormData.password,
+          bind_token: props.bindToken
+        })
+      : props.active === "ldap"
+        ? loginLdapApi(loginFormData)
+        : loginSystemApi(loginFormData)
 
-    loginApi(loginFormData, headers)
+    reqPromise
       .then((res: any) => {
         handleLoginSuccess(res.data)
       })

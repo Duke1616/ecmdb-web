@@ -21,7 +21,7 @@ export function listMyTenantsApi() {
 export function switchTenantApi(tenantId: number) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/switch`,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -68,7 +68,7 @@ export function listTenantMembersApi(data: tenant.ListMembersReq, tenantId: numb
   return instance.post<tenant.ListMembersRes>({
     url: `${API_SERVICE.IAM}/tenant/members`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 
@@ -77,7 +77,7 @@ export function assignTenantUserApi(data: tenant.AssignUserReq, tenantId: number
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/assign`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 /** 移除租户成员 */
@@ -85,7 +85,7 @@ export function removeTenantMemberApi(data: tenant.RemoveMemberReq, tenantId: nu
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/unassign`,
     data,
-    headers: { "X-Tenant-ID": String(tenantId) }
+    headers: { "X-Active-Tenant-ID": String(tenantId) }
   })
 }
 

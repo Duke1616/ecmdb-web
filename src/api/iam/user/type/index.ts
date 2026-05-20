@@ -144,11 +144,6 @@ export interface UserData {
   permissions: string[]
 }
 
-/** 切换租户请求 (tenant_id 通过 X-Tenant-ID Header 传递) */
-export interface SwitchTenantRequest {
-  // 空结构体，tenant_id 通过 Header 传递
-}
-
 /** 更新用户请求 */
 export interface UpdateUserReq {
   id: number
@@ -242,4 +237,11 @@ export type OidcRenderResponse = string
 export interface OidcCallbackRequest {
   code: string
   state: string
+}
+
+/** 账号绑定确认请求 */
+export interface BindConfirmRequest {
+  username: string
+  password: string
+  bind_token: string
 }

@@ -231,3 +231,11 @@ export function loginMfaVerifyApi(data: user.MfaLoginVerifyRequest) {
     data
   })
 }
+
+/** 账号绑定确认 (第三方账号关联) */
+export function bindConfirmApi(data: user.BindConfirmRequest) {
+  return instance.post<user.UserData>({
+    url: `${API_SERVICE.IAM}/user/bind/confirm`,
+    data
+  })
+}
