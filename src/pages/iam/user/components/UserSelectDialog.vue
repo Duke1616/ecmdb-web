@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from "vue"
+import { watch, computed } from "vue"
 import { Close, User as UserIcon } from "@element-plus/icons-vue"
 import { listUsersApi } from "@/api/iam/user"
 import type { User } from "@/api/iam/user/type"
@@ -11,6 +11,7 @@ import { useResourceSelector } from "@/pages/iam/authorization/composables/useRe
  * 已将布局、搜索、分页完全委托给 ResourceSelectorLayout。
  */
 
+// NOTE: 该组件为纯 UI 控制组件，状态需由父组件统一管理
 const visible = defineModel<boolean>({ default: false })
 
 interface UserSelectProps {
@@ -18,12 +19,14 @@ interface UserSelectProps {
   title?: string
   subtitle?: string
   confirmText?: string
+  excludeCodes?: string[]
 }
 
-withDefaults(defineProps<UserSelectProps>(), {
+const props = withDefaults(defineProps<UserSelectProps>(), {
   title: "选择用户对象",
   subtitle: "快速检索用户账户并建立主体关联",
-  confirmText: "确认选择"
+  confirmText: "确认选择",
+  excludeCodes: () => []
 })
 
 const emit = defineEmits<{
@@ -36,6 +39,7 @@ const {
   loading,
   query,
   pagination,
+  tableRef,
   selectedList,
   selectedTotal,
   fetchList,
@@ -50,6 +54,11 @@ const {
   listKey: "users",
   rowKey: (row: User) => String(row.id),
   initialQuery: { keyword: "" }
+})
+
+const filteredList = computed(() => {
+  if (!props.excludeCodes.length) return list.value
+  return list.value.filter((user) => !props.excludeCodes.includes(user.username))
 })
 
 watch(visible, (val) => {
@@ -90,7 +99,7 @@ const handleConfirm = () => {
       <el-table
         ref="tableRef"
         v-loading="loading"
-        :data="list"
+        :data="filteredList"
         height="100%"
         row-key="id"
         @selection-change="handleSelectionChange"

@@ -103,7 +103,12 @@
     </FormDialog>
 
     <!-- 分派成员抽屉 -->
-    <UserSelectDialog v-model="assignVisible" :confirm-loading="assignConfirmLoading" @confirm="onAssignConfirm" />
+    <UserSelectDialog
+      v-model="assignVisible"
+      :confirm-loading="assignConfirmLoading"
+      :exclude-codes="members.map((u) => u.username)"
+      @confirm="onAssignConfirm"
+    />
   </ProGovernanceLayout>
 </template>
 

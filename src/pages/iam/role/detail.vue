@@ -106,6 +106,7 @@
       subtitle="检索并添加目标用户，将其加入到当前角色组中"
       confirm-text="确认关联"
       :confirm-loading="memberLoading"
+      :exclude-codes="members.map((u) => u.username)"
       @confirm="(users) => handleAssignMembers(users.map((u) => u.username))"
     />
     <RoleSelectDialog
