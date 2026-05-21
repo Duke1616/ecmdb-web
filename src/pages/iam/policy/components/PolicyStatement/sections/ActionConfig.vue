@@ -8,7 +8,7 @@
       <span v-else class="placeholder-text">点击配置模块权限...</span>
     </template>
 
-    <div class="dual-pane-layout orchestrator-panel">
+    <div class="dual-pane-layout orchestrator-panel" :class="{ 'is-fullscreen': isFullscreen }">
       <aside class="pane-nav">
         <div class="pane-title">
           <span>业务模块</span>
@@ -29,34 +29,56 @@
           />
         </div>
         <div class="pane-list scroll-area">
-          <el-checkbox-group v-model="managedServiceCodes" @change="onServiceChange">
-            <div
-              v-for="s in filteredManifest"
-              :key="s.code"
-              class="svc-item-check"
-              :class="{ is_active: managedServiceCodes.includes(s.code) }"
+          <div
+            v-for="s in filteredManifest"
+            :key="s.code"
+            class="svc-item-check"
+            :class="{ is_active: managedServiceCodes.includes(s.code) }"
+          >
+            <el-checkbox
+              :model-value="managedServiceCodes.includes(s.code)"
+              @change="(checked: string | number | boolean) => handleServiceItemChange(s.code, Boolean(checked))"
             >
-              <el-checkbox :label="s.code">
-                <span class="name">{{ s.name }}</span>
-                <span class="code">{{ s.code }}</span>
-              </el-checkbox>
-            </div>
-          </el-checkbox-group>
+              <span class="name">{{ s.name }}</span>
+              <span class="code">{{ s.code }}</span>
+            </el-checkbox>
+          </div>
         </div>
       </aside>
       <main class="pane-content">
         <div class="pane-header">
           <span class="title">操作项配置</span>
-          <el-radio-group :model-value="actionMode" size="small" @update:model-value="onActionModeChange">
-            <el-radio-button label="all">全部</el-radio-button>
-            <el-radio-button label="specific">精细化</el-radio-button>
-          </el-radio-group>
+          <div class="header-actions">
+            <el-radio-group :model-value="actionMode" size="small" @update:model-value="onActionModeChange">
+              <el-radio-button label="all">全部</el-radio-button>
+              <el-radio-button label="specific">精细化</el-radio-button>
+            </el-radio-group>
+            <el-divider direction="vertical" />
+            <el-button type="primary" link class="fullscreen-btn" @click="toggleFullscreen">
+              <el-icon class="btn-icon">
+                <FullScreen />
+              </el-icon>
+              <span>{{ isFullscreen ? "收起" : "全屏" }}</span>
+            </el-button>
+          </div>
+        </div>
+        <!-- 搜索操作项过滤栏 -->
+        <div v-if="actionMode === 'specific' && activeServices.length > 0" class="search-bar">
+          <el-input
+            v-model="actionSearchQuery"
+            placeholder="搜索操作项(支持名称、Code码 过滤)..."
+            prefix-icon="Search"
+            clearable
+            size="small"
+            class="v4-search-input"
+          />
         </div>
         <div class="pane-body scroll-area">
           <PermissionMatrix
             v-if="actionMode === 'specific' && activeServices.length > 0"
             :active-services="activeServices"
             :selected-actions="stmt.action"
+            :search-query="actionSearchQuery"
             @toggle-action="onActionToggle"
             @update-actions="onActionsUpdate"
           />
@@ -73,8 +95,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
-import { Pointer } from "@element-plus/icons-vue"
+import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { ElMessage } from "element-plus"
+import { Pointer, FullScreen } from "@element-plus/icons-vue"
 import SectionPanel from "./SectionPanel.vue"
 import PermissionMatrix from "../PermissionMatrix.vue"
 import type { StatementVO, ManifestService } from "../../../composables/usePolicyData"
@@ -91,6 +114,32 @@ const emit = defineEmits(["update:stmt"])
 // 授权操作默认为展开状态，使用 v-model:expanded 与子组件同步
 const isExpanded = ref(true)
 const searchQuery = ref("")
+const actionSearchQuery = ref("")
+const isFullscreen = ref(false)
+
+const toggleFullscreen = () => {
+  isFullscreen.value = !isFullscreen.value
+  if (isFullscreen.value) {
+    document.body.style.overflow = "hidden"
+  } else {
+    document.body.style.overflow = ""
+  }
+}
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === "Escape" && isFullscreen.value) {
+    toggleFullscreen()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeyDown)
+  document.body.style.overflow = ""
+})
 
 /** 过滤后的展示列表 */
 const filteredManifest = computed(() => {
@@ -132,21 +181,32 @@ const activeServices = computed(() =>
   props.permissionManifest.filter((s) => managedServiceCodes.value.includes(s.code))
 )
 
-const onServiceChange = (val: (string | number | boolean)[]) => {
-  const newCodes = val as string[]
-  const removed = managedServiceCodes.value.filter((c) => !newCodes.includes(c))
+const handleServiceItemChange = (code: string, checked: boolean) => {
+  if (!checked) {
+    // NOTE: 校验防错阻断，如果该模块下已经有勾选的具体操作项，则不允许直接取消勾选，引导用户先清空操作项
+    const hasSelectedActions = props.stmt.action.some((a) => a.startsWith(`${code}:`))
+    if (hasSelectedActions) {
+      const s = props.permissionManifest.find((pm) => pm.code === code)
+      const name = s ? s.name : code
+      ElMessage.warning(`业务模块“${name}”下已有选中的操作项，无法取消勾选。请先清空对应操作项。`)
+      return
+    }
 
-  let nextActions = [...props.stmt.action]
-  removed.forEach((code) => {
-    nextActions = nextActions.filter((a) => !a.startsWith(`${code}:`))
-  })
+    // 正常取消勾选流程
+    managedServiceCodes.value = managedServiceCodes.value.filter((c) => c !== code)
+    const nextActions = props.stmt.action.filter((a) => !a.startsWith(`${code}:`))
+    patchStmt({ action: nextActions })
+  } else {
+    // 正常勾选流程
+    managedServiceCodes.value = [...new Set([...managedServiceCodes.value, code])]
 
-  // 如果处于全选模式，新增的 service 也要补全 :*
-  if (actionMode.value === "all") {
-    nextActions = newCodes.map((c) => `${c}:*`)
+    // 如果处于全选模式，新增的 service 也要补全 :*
+    let nextActions = [...props.stmt.action]
+    if (actionMode.value === "all") {
+      nextActions = managedServiceCodes.value.map((c) => `${c}:*`)
+    }
+    patchStmt({ action: nextActions })
   }
-
-  patchStmt({ action: nextActions })
 }
 
 const onActionModeChange = (val: string | number | boolean | undefined) => {
@@ -181,6 +241,23 @@ const toggleAllServices = (checked: boolean) => {
 .orchestrator-panel {
   display: flex;
   height: 480px;
+  background: #fff;
+  transition: all 0.25s ease-in-out;
+
+  &.is-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh !important;
+    z-index: 3000;
+    background: #fff;
+    padding: 16px 24px 24px;
+    box-sizing: border-box;
+    box-shadow:
+      0 20px 25px -5px rgba(0, 0, 0, 0.1),
+      0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
 
   .pane-nav {
     width: 180px;
@@ -195,7 +272,34 @@ const toggleAllServices = (checked: boolean) => {
     flex-direction: column;
   }
 
-  .pane-title,
+  .pane-title {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 12px;
+    font-weight: bold;
+    color: #475569;
+    box-sizing: border-box;
+
+    .bulk-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: normal;
+      .el-link {
+        font-size: 11px;
+        color: #64748b;
+        &:hover {
+          color: #3b82f6;
+        }
+      }
+    }
+  }
+
   .pane-header {
     height: 40px;
     display: flex;
@@ -208,15 +312,6 @@ const toggleAllServices = (checked: boolean) => {
     font-weight: bold;
     color: #999;
     box-sizing: border-box;
-
-    .bulk-actions {
-      display: flex;
-      gap: 8px;
-      font-weight: normal;
-      .el-link {
-        font-size: 11px;
-      }
-    }
   }
 
   .search-bar {
@@ -231,6 +326,48 @@ const toggleAllServices = (checked: boolean) => {
 
   .pane-header {
     justify-content: space-between;
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      height: 24px;
+
+      :deep(.el-divider--vertical) {
+        margin: 0;
+        border-color: #cbd5e1;
+        height: 12px;
+        align-self: center;
+      }
+
+      .fullscreen-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #3b82f6;
+        transition: color 0.15s;
+        height: 24px; /* 精确适配单选按钮组高度 */
+        padding: 0 2px;
+        border: none;
+        background: transparent;
+        line-height: 1;
+
+        &:hover {
+          color: #2563eb;
+        }
+
+        .btn-icon {
+          font-size: 14px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 14px;
+        }
+      }
+    }
   }
 
   .scroll-area {
@@ -238,37 +375,65 @@ const toggleAllServices = (checked: boolean) => {
     overflow-y: auto;
   }
 
+  .pane-list {
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
   .svc-item-check {
-    padding: 6px 12px;
+    padding: 10px 12px;
     cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+    background: #f8fafc; /* 默认微灰渐变背景 */
+
     &:hover {
-      background: #f5f5f5;
+      background: #f1f5f9;
+      border-color: #e2e8f0;
     }
+
     &.is_active {
-      background: #e6f7ff;
+      background: #eff6ff; /* 精致柔和淡蓝 */
+      border-color: #bfdbfe;
+      box-shadow: 0 1px 2px 0 rgba(59, 130, 246, 0.05);
+
       .name {
-        color: #1890ff;
+        color: #2563eb;
+      }
+      .code {
+        color: #3b82f6;
       }
     }
+
     .el-checkbox {
       width: 100%;
       display: flex;
       align-items: center;
-      .el-checkbox__label {
+      margin-right: 0;
+
+      :deep(.el-checkbox__label) {
         flex: 1;
-        padding-left: 10px;
+        padding-left: 12px;
+        line-height: 1.4;
       }
     }
+
     .name {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       display: block;
-      color: #262626;
+      color: #1e293b;
+      margin-bottom: 2px;
     }
+
     .code {
-      font-size: 10px;
-      color: #bfbfbf;
-      font-family: mono;
+      font-size: 11px;
+      color: #64748b;
+      font-family: ui-monospace, monospace;
+      font-weight: 500;
     }
   }
 

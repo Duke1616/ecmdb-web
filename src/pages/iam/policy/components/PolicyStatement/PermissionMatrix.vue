@@ -1,6 +1,6 @@
 <template>
   <div class="iam-matrix">
-    <div v-for="svc in activeServices" :key="svc.code" class="svc-segment">
+    <div v-for="svc in filteredActiveServices" :key="svc.code" class="svc-segment">
       <div class="segment-title">
         <el-icon><Monitor /></el-icon>
         <span>{{ svc.name }}</span>
@@ -45,15 +45,40 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { Monitor } from "@element-plus/icons-vue"
 import type { ManifestService, ManifestGroup } from "../../composables/usePolicyData"
 
 const props = defineProps<{
   activeServices: ManifestService[]
   selectedActions: string[]
+  searchQuery?: string
 }>()
 
 const emit = defineEmits(["toggleAction", "updateActions"])
+
+/** 过滤后的展示服务与操作项矩阵 */
+const filteredActiveServices = computed(() => {
+  const query = props.searchQuery?.toLowerCase().trim()
+  if (!query) return props.activeServices
+
+  return props.activeServices
+    .map((svc) => {
+      // 过滤分组
+      const filteredEntries = svc.entries
+        .map((grp) => {
+          // 过滤操作项
+          const filteredActions = grp.actions.filter(
+            (act) => act.name.toLowerCase().includes(query) || act.code.toLowerCase().includes(query)
+          )
+          return { ...grp, actions: filteredActions }
+        })
+        .filter((grp) => grp.actions.length > 0)
+
+      return { ...svc, entries: filteredEntries }
+    })
+    .filter((svc) => svc.entries.length > 0)
+})
 
 /** 获取分组下所有 code */
 const getGrpCodes = (grp: ManifestGroup): string[] => grp.actions.map((a) => a.code)
