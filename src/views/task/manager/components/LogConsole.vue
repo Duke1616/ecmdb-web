@@ -1,38 +1,3 @@
-<script setup lang="ts">
-import { ref } from "vue"
-import { Refresh, Coordinate, Monitor, Clock, Pointer } from "@element-plus/icons-vue"
-import type { TaskExecutionVO } from "@/api/etask/manager/type"
-import CodeEditor from "@/common/components/CodeEditor/index.vue"
-import EnumTag from "@/common/components/EnumTag/index.vue"
-import type { TagInfo } from "@/common/components/EnumTag/index.vue"
-import { useLogConsoleStream } from "../composables/useLogConsoleStream"
-
-/**
- * 任务执行控制台 (LogConsole)
- * 职责：实时/增量拉取任务执行日志、展示节点状态
- */
-interface Props {
-  execution: TaskExecutionVO | null
-}
-
-const props = defineProps<Props>()
-const editorRef = ref<InstanceType<typeof CodeEditor>>()
-
-const STATUS_MAP: Record<string, TagInfo> = {
-  RUNNING: { type: "primary", text: "进行中" },
-  SUCCESS: { type: "success", text: "成功" },
-  FAILED: { type: "danger", text: "失败" },
-  TERMINATED: { type: "info", text: "停止" },
-  PREEMPTED: { type: "warning", text: "已抢占" }
-}
-
-// 托管日志轮询逻辑与聚合状态机，消除零散状态声明，实现逻辑与视图解耦
-const { state, isRunning, resetAndFetch, handleAutoRefreshChange } = useLogConsoleStream(
-  () => props.execution,
-  () => editorRef.value?.scrollToBottom()
-)
-</script>
-
 <template>
   <div class="log-console-container" v-loading="state.loading">
     <template v-if="execution">
@@ -48,7 +13,7 @@ const { state, isRunning, resetAndFetch, handleAutoRefreshChange } = useLogConso
         <div class="header-actions">
           <div class="control-unit" v-if="isRunning">
             <span class="label">自动跟踪</span>
-            <el-switch v-model="state.autoRefresh" size="small" @change="handleAutoRefreshChange" />
+            <el-switch v-model="state.autoRefresh" size="small" />
           </div>
           <div class="action-divider" v-if="isRunning" />
           <div class="btn-cluster">
@@ -96,6 +61,41 @@ const { state, isRunning, resetAndFetch, handleAutoRefreshChange } = useLogConso
     </el-dialog>
   </div>
 </template>
+
+<script setup lang="ts">
+import { ref } from "vue"
+import { Refresh, Coordinate, Monitor, Clock, Pointer } from "@element-plus/icons-vue"
+import type { TaskExecutionVO } from "@/api/etask/manager/type"
+import CodeEditor from "@/common/components/CodeEditor/index.vue"
+import EnumTag from "@/common/components/EnumTag/index.vue"
+import type { TagInfo } from "@/common/components/EnumTag/index.vue"
+import { useLogConsoleStream } from "../composables/useLogConsoleStream"
+
+/**
+ * 任务执行控制台 (LogConsole)
+ * 职责：实时/增量拉取任务执行日志、展示节点状态
+ */
+interface Props {
+  execution: TaskExecutionVO | null
+}
+
+const props = defineProps<Props>()
+const editorRef = ref<InstanceType<typeof CodeEditor>>()
+
+const STATUS_MAP: Record<string, TagInfo> = {
+  RUNNING: { type: "primary", text: "进行中" },
+  SUCCESS: { type: "success", text: "成功" },
+  FAILED: { type: "danger", text: "失败" },
+  TERMINATED: { type: "info", text: "停止" },
+  PREEMPTED: { type: "warning", text: "已抢占" }
+}
+
+// 托管日志轮询逻辑与聚合状态机，消除零散状态声明，实现逻辑与视图解耦
+const { state, isRunning, resetAndFetch } = useLogConsoleStream(
+  () => props.execution,
+  () => editorRef.value?.scrollToBottom()
+)
+</script>
 
 <style scoped lang="scss">
 .log-console-container {

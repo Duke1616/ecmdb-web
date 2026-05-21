@@ -84,6 +84,7 @@ import TaskExecutionDialog from "./components/TaskExecutionDialog.vue"
 import StatusBadge, { type StatusBadgeType } from "@/common/components/StatusBadge/index.vue"
 import { TaskType, TaskStatus, type TaskItem } from "@/api/etask/manager/type"
 import { useTaskManager } from "./composables/useTaskManager"
+import { useTaskSSE } from "./composables/useTaskSSE"
 import type { Column } from "@@/components/DataTable/types"
 import { formatTimestamp } from "@@/utils/day"
 
@@ -111,6 +112,17 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = useTaskManager()
+
+// 引入 SSE 实时状态同步监听，局部热更新列表中对应行的属性，达成零 Loading 极速视觉响应
+useTaskSSE((event) => {
+  const task = tasksData.value.find((t) => t.id === event.task_id)
+  if (task) {
+    task.status = event.status as TaskStatus
+    if (event.next_time) {
+      task.next_time = event.next_time
+    }
+  }
+})
 
 // --- 前端类型过滤 ---
 const typeFilter = ref<string | null>(null)

@@ -262,12 +262,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick, watch } from "vue"
 import {
   Setting,
   Cpu,
   Connection,
-  Link,
   CircleCheckFilled,
   RefreshRight,
   Calendar,
@@ -276,17 +274,13 @@ import {
   Pointer,
   Operation
 } from "@element-plus/icons-vue"
-import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/etask/manager"
-import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem, type UpdateTaskReq } from "@/api/etask/manager/type"
-import type { HandlerDetail } from "@/api/etask/executor/type"
-import { useTaskResources } from "../composables/useTaskResources"
+import { TaskType, TaskProtocol } from "@/api/etask/manager/type"
+import { useTaskForm } from "../composables/useTaskForm"
+import { protocols } from "../composables/useTaskData"
 import KVEditor from "./KVEditor.vue"
 import CronHelper from "./CronHelper.vue"
 import TaskParamsEditor from "./TaskParamsEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
-import type { FormInstance, FormRules } from "element-plus"
-import { ElMessage } from "element-plus"
-import { cloneDeep } from "lodash-es"
 import { Drawer } from "@@/components/Dialogs"
 
 // NOTE: 该组件为纯业务抽屉控制器，使用 defineModel 进行开放/折叠的 UI 状态双向绑定
@@ -300,275 +294,27 @@ const emit = defineEmits<{
   (e: "success"): void
 }>()
 
-// --- 外部注册中心资源 ---
+// --- 托管于业务控制 Composable ---
 const {
-  loading: resourceLoading,
-  executorList,
-  fetchResources,
-  queryServiceSuggestions,
-  queryHandlerSuggestions
-} = useTaskResources()
-
-// --- 扁平化 UI 状态定义 ---
-interface TaskFormState {
-  name: string
-  type: TaskType
-  cron_expr: string
-  protocol: TaskProtocol
-
-  // gRPC 关联配置
-  grpc_service: string
-  grpc_handler: string
-  grpc_params: Record<string, any>
-
-  // HTTP 关联配置
-  http_endpoint: string
-  http_headers: Record<string, string>
-  http_params: Record<string, any>
-
-  // 超时与退避重试
-  retry_enabled: boolean
-  max_retries: number
-  initial_interval: number
-  max_interval: number
-  max_execution_seconds: number
-
-  // 分布式调度系统内置扩展属性
-  schedule_params: Record<string, any>
-  metadata: Record<string, any>
-}
-
-const formRef = ref<FormInstance>()
-const saving = ref(false)
-const httpConfigTab = ref("headers")
-
-const protocols = [
-  { label: "gRPC", value: TaskProtocol.GRPC, icon: Connection, desc: "分布式标准通信协议" },
-  { label: "HTTP", value: TaskProtocol.HTTP, icon: Link, desc: "标准 RESTful 后端回调" }
-] as const
-
-/** 完美的零脏值默认扁平化状态初始化 */
-const createDefaultFormState = (): TaskFormState => ({
-  name: "",
-  type: TaskType.RECURRING,
-  cron_expr: "",
-  protocol: TaskProtocol.GRPC,
-  grpc_service: "",
-  grpc_handler: "",
-  grpc_params: {},
-  http_endpoint: "",
-  http_headers: {},
-  http_params: {},
-  retry_enabled: false,
-  max_retries: 3,
-  initial_interval: 1000,
-  max_interval: 5000,
-  max_execution_seconds: 360,
-  schedule_params: {},
-  metadata: {}
+  formRef,
+  form,
+  saving,
+  httpConfigTab,
+  resourceLoading,
+  currentHandler,
+  rules,
+  handleServiceSelect,
+  handleHandlerSelect,
+  queryHandlers,
+  handleCronSelect,
+  handleProtocolChange,
+  submit,
+  queryServiceSuggestions
+} = useTaskForm({
+  taskId: () => props.taskId,
+  visible,
+  emit: (e) => emit(e)
 })
-
-const form = ref<TaskFormState>(createDefaultFormState())
-
-// --- 计算属性与辅助查询 ---
-const currentHandler = computed(() => {
-  const serviceName = form.value.grpc_service
-  if (!serviceName) return null
-
-  const executor = executorList.value.find((e) => e.name === serviceName)
-  if (!executor) return null
-
-  return executor.handlers.find((h) => h.name === form.value.grpc_handler) ?? null
-})
-
-// --- 表单联动与 UI 事件处理 ---
-const handleServiceSelect = () => {
-  form.value.grpc_handler = ""
-}
-
-const handleHandlerSelect = (item: Record<string, any>) => {
-  const handler = item as HandlerDetail
-  const params = form.value.grpc_params
-
-  for (const meta of handler.metadata ?? []) {
-    params[meta.key] = params[meta.key] || meta.default || ""
-  }
-}
-
-const queryHandlers = (qs: string, cb: (res: (HandlerDetail & { value: string })[]) => void) => {
-  const serviceName = form.value.grpc_service
-  queryHandlerSuggestions(serviceName, qs, cb)
-}
-
-const handleCronSelect = (val: string) => {
-  form.value.cron_expr = val
-  formRef.value?.validateField("cron_expr").catch(() => {})
-}
-
-const handleProtocolChange = (protocol: TaskProtocol) => {
-  form.value.protocol = protocol
-  nextTick(() => {
-    formRef.value?.clearValidate()
-  })
-}
-
-// --- 类型安全与高度智能的扁平化校验规则 ---
-const rules = computed<FormRules<TaskFormState>>(() => {
-  const r: FormRules<TaskFormState> = {
-    name: [{ required: true, message: "请输入任务标识", trigger: "blur" }]
-  }
-
-  if (form.value.type === TaskType.RECURRING) {
-    r.cron_expr = [{ required: true, message: "请输入有效的 Cron 表达式", trigger: ["blur", "change"] }]
-  }
-
-  if (form.value.protocol === TaskProtocol.GRPC) {
-    r.grpc_service = [{ required: true, message: "请选择执行器服务", trigger: "change" }]
-    r.grpc_handler = [{ required: true, message: "请选择处理方法", trigger: "change" }]
-  } else {
-    r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "blur" }]
-  }
-
-  return r
-})
-
-// --- UI 隔离映射层（Mappers） ---
-
-/** 将 API 后端嵌套结构精细化解析并摊平至 UI 状态机，保证模板安全 */
-const mapToFormState = (data?: TaskItem): TaskFormState => {
-  const state = createDefaultFormState()
-  if (!data) return state
-
-  state.name = data.name || ""
-  state.type = data.type || TaskType.RECURRING
-  state.cron_expr = data.cron_expr || ""
-
-  // 协议推断
-  if (data.http_config && !data.grpc_config) {
-    state.protocol = TaskProtocol.HTTP
-  } else {
-    state.protocol = TaskProtocol.GRPC
-  }
-
-  if (data.grpc_config) {
-    state.grpc_service = data.grpc_config.service_name || ""
-    state.grpc_handler = data.grpc_config.handler_name || ""
-    state.grpc_params = cloneDeep(data.grpc_config.params) ?? {}
-  }
-
-  if (data.http_config) {
-    state.http_endpoint = data.http_config.endpoint || ""
-    state.http_headers = cloneDeep(data.http_config.headers) ?? {}
-    state.http_params = cloneDeep(data.http_config.params) ?? {}
-  }
-
-  if (data.retry_config) {
-    state.retry_enabled = true
-    state.max_retries = data.retry_config.max_retries ?? 3
-    state.initial_interval = data.retry_config.initial_interval ?? 1000
-    state.max_interval = data.retry_config.max_interval ?? 5000
-  }
-
-  if (data.max_execution_seconds) {
-    state.retry_enabled = true
-    state.max_execution_seconds = data.max_execution_seconds
-  }
-
-  state.schedule_params = cloneDeep(data.schedule_params) ?? {}
-  state.metadata = cloneDeep(data.metadata) ?? {}
-
-  return state
-}
-
-/** 提交前将扁平 UI 状态进行深度剪裁与类型转换，组装出标准 API 嵌套载荷 */
-const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
-  const payload: CreateTaskReq = {
-    name: state.name,
-    type: state.type,
-    cron_expr: state.cron_expr,
-    schedule_params: cloneDeep(state.schedule_params),
-    metadata: cloneDeep(state.metadata)
-  }
-
-  if (state.protocol === TaskProtocol.GRPC) {
-    payload.grpc_config = {
-      service_name: state.grpc_service,
-      handler_name: state.grpc_handler,
-      params: cloneDeep(state.grpc_params)
-    }
-  } else {
-    payload.http_config = {
-      endpoint: state.http_endpoint,
-      headers: cloneDeep(state.http_headers),
-      params: cloneDeep(state.http_params)
-    }
-  }
-
-  if (state.retry_enabled) {
-    payload.max_execution_seconds = state.max_execution_seconds
-    payload.retry_config = {
-      max_retries: state.max_retries,
-      initial_interval: state.initial_interval,
-      max_interval: state.max_interval
-    }
-  }
-
-  return payload
-}
-
-// --- 生命周期与数据加载 ---
-const loadDetail = async () => {
-  if (!props.taskId) return
-
-  try {
-    const { data } = await getTaskDetailApi(props.taskId)
-    form.value = mapToFormState(data)
-  } catch (error) {
-    console.error("加载任务详情失败:", error)
-  }
-}
-
-onMounted(async () => {
-  await fetchResources()
-})
-
-// 当抽屉开启状态变化时，决定是拉取详情还是重置状态
-watch(visible, async (val) => {
-  if (val) {
-    if (props.taskId) {
-      await loadDetail()
-    } else {
-      form.value = createDefaultFormState()
-      nextTick(() => {
-        formRef.value?.clearValidate()
-      })
-    }
-  }
-})
-
-// --- 提交操作 ---
-const submit = async () => {
-  if (!formRef.value) return
-  await formRef.value.validate()
-
-  saving.value = true
-  try {
-    const payload = mapToApiPayload(form.value)
-
-    if (props.taskId) {
-      await updateTaskApi({ ...payload, id: props.taskId } as UpdateTaskReq)
-      ElMessage.success("更新任务成功")
-    } else {
-      await createTaskApi(payload)
-      ElMessage.success("创建任务成功")
-    }
-
-    visible.value = false
-    emit("success")
-  } finally {
-    saving.value = false
-  }
-}
 </script>
 
 <style scoped lang="scss">

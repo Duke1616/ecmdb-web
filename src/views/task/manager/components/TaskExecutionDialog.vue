@@ -98,10 +98,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onUnmounted } from "vue"
 import { Refresh, Coordinate, Calendar, Timer, Loading } from "@element-plus/icons-vue"
-import { listExecutionsApi } from "@/api/etask/manager"
-import type { TaskExecutionVO } from "@/api/etask/manager/type"
+import { useTaskExecutions } from "../composables/useTaskExecutions"
 import { FormDialog } from "@/common/components/Dialogs"
 import { formatTimestamp } from "@@/utils/day"
 import LogConsole from "./LogConsole.vue"
@@ -114,87 +112,19 @@ const props = defineProps<{
   taskName?: string
 }>()
 
-const execLoading = ref(false)
-const executions = ref<TaskExecutionVO[]>([])
-const currentExecution = ref<TaskExecutionVO | null>(null)
-
-const totalCount = ref(0)
-const pagination = reactive({
-  page: 1,
-  size: 10
-})
-
-// 列表级静默刷新 (探测新实例)
-let timer: any = null
-const startTimer = () => {
-  if (timer) clearInterval(timer)
-  timer = setInterval(() => {
-    if (props.taskId) fetchExecutionList(true)
-  }, 10000)
-}
-
-const initData = async () => {
-  if (!props.taskId) return
-  pagination.page = 1
-  currentExecution.value = null
-  startTimer()
-  await fetchExecutionList()
-}
-
-const fetchExecutionList = async (silent = false) => {
-  if (!props.taskId) return
-  if (!silent) execLoading.value = true
-  try {
-    const res = await listExecutionsApi({
-      task_id: props.taskId,
-      offset: (pagination.page - 1) * pagination.size,
-      limit: pagination.size
-    })
-    executions.value = res.data.executions
-    totalCount.value = res.data.total
-
-    // 如果当前选中的实例在刷新后的列表中，同步最新的状态
-    if (currentExecution.value) {
-      const updated = executions.value.find((e) => e.id === currentExecution.value?.id)
-      if (updated) {
-        currentExecution.value = updated
-      }
-    } else if (executions.value.length > 0) {
-      handleSelectExecution(executions.value[0])
-    }
-  } finally {
-    if (!silent) execLoading.value = false
-  }
-}
-
-const handlePageChange = async (page: number) => {
-  pagination.page = page
-  await fetchExecutionList()
-}
-
-const handleSelectExecution = (item: TaskExecutionVO) => {
-  currentExecution.value = item
-}
-
-const calculateDuration = (start: number, end: number) => {
-  if (!end || end <= 0) return "计算中..."
-  const diff = (end - start) / 1000
-  if (diff < 60) return `${diff.toFixed(1)}s`
-  return `${(diff / 60).toFixed(1)}m`
-}
-
-const handleDialogClosed = () => {
-  // 释放后台静默轮询定时器，防止组件关闭后轮询空转及内存泄露
-  if (timer) {
-    clearInterval(timer)
-    timer = null
-  }
-  executions.value = []
-  currentExecution.value = null
-  totalCount.value = 0
-}
-
-onUnmounted(() => clearInterval(timer))
+const {
+  execLoading,
+  executions,
+  currentExecution,
+  totalCount,
+  pagination,
+  initData,
+  handlePageChange,
+  handleSelectExecution,
+  calculateDuration,
+  handleDialogClosed,
+  fetchExecutionList
+} = useTaskExecutions(() => props.taskId)
 
 defineExpose({ initData })
 </script>

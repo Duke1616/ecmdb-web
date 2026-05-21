@@ -69,3 +69,33 @@ export function stopTaskApi(taskId: number) {
     url: `${API_SERVICE.TASK}/manager/stop/${taskId}`
   })
 }
+
+/** 任务状态实时推送事件结构定义 */
+export interface TaskStatusEvent {
+  task_id: number
+  status: string
+  next_time?: number
+}
+
+/** 任务日志实时推送事件结构定义 */
+export interface TaskLogEvent {
+  id: number
+  task_id: number
+  execution_id: number
+  content: string
+  c_time: number
+}
+
+/** 任务执行进度及状态变更事件结构定义 */
+export interface TaskExecutionEvent {
+  id: number
+  task_id: number
+  task_name: string
+  start_time: number
+  end_time: number
+  status: string
+  running_progress: number
+  executor_node_id: string
+  task_result: string
+  c_time: number
+}
