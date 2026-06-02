@@ -47,7 +47,7 @@ import Flow from "./flow.vue"
 import Record from "./record.vue"
 import Task from "./task.vue"
 import CustomTabs from "@@/components/Tabs/CustomTabs.vue"
-import { order } from "@/api/order/types/order"
+import { order } from "@/api/ticket/order/types/order.js"
 import { Drawer } from "@@/components/Dialogs"
 import { Document } from "@element-plus/icons-vue"
 

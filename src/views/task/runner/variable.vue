@@ -69,7 +69,7 @@
 import { ref, watch } from "vue"
 import { Plus, Delete, Key, Document, Setting } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
-import type { variables } from "@/api/runner/types/runner"
+import type { variables } from "@/api/ticket/runner/types/runner"
 
 // 接收父组件传递
 interface Props {

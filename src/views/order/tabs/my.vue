@@ -46,8 +46,8 @@
 <script lang="ts" setup>
 import { h, ref, watch, markRaw } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { order } from "@/api/order/types/order"
-import { revokeOrderApi, startByOrderApi } from "@/api/order"
+import { order } from "@/api/ticket/order/types/order.js"
+import { revokeOrderApi, startByOrderApi } from "@/api/ticket/order/index.js"
 import { Column, ElMessage, ElMessageBox, TableColumnCtx } from "element-plus"
 import Detail from "../approved/detail.vue"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
@@ -93,7 +93,7 @@ const startByOrdersData = async () => {
     })
 
     paginationData.total = data.total
-    ordersData.value = data.orders
+    ordersData.value = data.tasks || []
 
     // 需要合并的字段名，按照合并登记来排序
     const colFields = ["id", "template_name", "withdraw", "current_step", "proc_inst_create_time", "active"]

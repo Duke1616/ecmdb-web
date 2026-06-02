@@ -5,7 +5,7 @@ import { API_SERVICE } from "@@/utils/service"
 /** 创建工单任务 */
 export function startTaskApi(data: task.startTaskReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/task/start`,
+    url: `${API_SERVICE.TICKET}/task/start`,
     data: data
   })
 }
@@ -13,7 +13,7 @@ export function startTaskApi(data: task.startTaskReq) {
 /** 自动化任务列表 */
 export function listTasksApi(data: task.page) {
   return instance.post<task.tasks>({
-    url: `${API_SERVICE.CMDB}/task/list`,
+    url: `${API_SERVICE.TICKET}/task/list`,
     data: data
   })
 }
@@ -21,7 +21,7 @@ export function listTasksApi(data: task.page) {
 /** 自动化任务列表 */
 export function listTasksByInstanceIdApi(data: task.listByInstanceId) {
   return instance.post<task.tasks>({
-    url: `${API_SERVICE.CMDB}/task/list/by_instance_id`,
+    url: `${API_SERVICE.TICKET}/task/list/by_instance_id`,
     data: data
   })
 }
@@ -29,7 +29,7 @@ export function listTasksByInstanceIdApi(data: task.listByInstanceId) {
 /** 修改传入参数 */
 export function updateTaskArgsApi(data: task.args) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/task/update/args`,
+    url: `${API_SERVICE.TICKET}/task/update/args`,
     data: data
   })
 }
@@ -37,7 +37,7 @@ export function updateTaskArgsApi(data: task.args) {
 /** 修改传入参数 */
 export function updateTaskVariablesApi(data: task.varibales) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/task/update/variables`,
+    url: `${API_SERVICE.TICKET}/task/update/variables`,
     data: data
   })
 }
@@ -45,7 +45,7 @@ export function updateTaskVariablesApi(data: task.varibales) {
 /** 修改传入参数 */
 export function retryTaskApi(id: number) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/task/retry`,
+    url: `${API_SERVICE.TICKET}/task/retry`,
     data: { id: id }
   })
 }
@@ -53,6 +53,6 @@ export function retryTaskApi(id: number) {
 /** 获取任务日志 */
 export function getTaskLogsApi(taskId: number) {
   return instance.get<string>({
-    url: `${API_SERVICE.CMDB}/task/logs/${taskId}`
+    url: `${API_SERVICE.TICKET}/task/logs/${taskId}`
   })
 }

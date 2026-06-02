@@ -122,14 +122,14 @@
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Refresh, Monitor, ChatDotRound, Right, Document, DataLine, Setting, Box } from "@element-plus/icons-vue"
-import { task, Kind } from "@/api/task/types/task"
+import { task, Kind } from "@/api/ticket/task/types/task"
 import {
   listTasksByInstanceIdApi,
   retryTaskApi,
   updateTaskArgsApi,
   updateTaskVariablesApi,
   getTaskLogsApi
-} from "@/api/task"
+} from "@/api/ticket/task"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import type { TagInfo } from "@/common/components/EnumTag/index.vue"
 import TaskResultDialog from "@/views/task/history/components/TaskResultDialog.vue"

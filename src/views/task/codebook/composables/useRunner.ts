@@ -1,11 +1,11 @@
 import { ref } from "vue"
-import { runner, Kind } from "@/api/runner/types/runner"
+import { runner, Kind } from "@/api/ticket/runner/types/runner"
 import {
   listRunnerApi,
   listRunnerByCodebookUidApi,
   listRunnerExcludeCodebookUidApi,
   deleteRunnerApi
-} from "@/api/runner"
+} from "@/api/ticket/runner"
 import { ElMessage, ElMessageBox } from "element-plus"
 
 export function useRunner() {

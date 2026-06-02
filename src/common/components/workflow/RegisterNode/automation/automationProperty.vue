@@ -184,8 +184,8 @@
 </template>
 
 <script setup lang="ts">
-import { listRunnerTagsApi } from "@/api/runner"
-import { runnerTags, TagDetail } from "@/api/runner/types/runner"
+import { listRunnerTagsApi } from "@/api/ticket/runner"
+import { runnerTags, TagDetail } from "@/api/ticket/runner/types/runner"
 import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { Document, Setting, Timer, Bell, MagicStick, Collection } from "@element-plus/icons-vue"
 import { ref, onMounted, reactive } from "vue"

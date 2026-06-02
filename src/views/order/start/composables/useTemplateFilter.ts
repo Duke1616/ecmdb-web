@@ -1,5 +1,5 @@
 import { ref, computed } from "vue"
-import type { templateCombination, template } from "@/api/template/types/template"
+import type { templateCombination, template } from "@/api/ticket/template/types/template"
 import type { Ref } from "vue"
 
 export function useTemplateFilter(

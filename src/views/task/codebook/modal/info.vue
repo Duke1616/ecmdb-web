@@ -130,7 +130,7 @@
 import { ref, computed, watch } from "vue"
 import UserPicker from "@/common/components/UserPicker/index.vue"
 import FormActions from "@@/components/FormActions/index.vue"
-import { type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
+import { type createOrUpdateCodebookReq } from "@/api/ticket/codebook/types/codebook"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 // 不再需要用户API导入，owner 直接存储为 username
 import { useFormHandler } from "@@/composables/useFormHandler"

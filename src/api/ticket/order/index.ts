@@ -5,7 +5,7 @@ import { API_SERVICE } from "@@/utils/service"
 /** 新增工单 */
 export function createOrderApi(data: order.createOrderReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/order/create`,
+    url: `${API_SERVICE.TICKET}/ticket/create`,
     data: data
   })
 }
@@ -13,7 +13,7 @@ export function createOrderApi(data: order.createOrderReq) {
 /** 查看待办工单 */
 export function todoOrderApi(data: order.todoOrderReq) {
   return instance.post<order.ordersListRes>({
-    url: `${API_SERVICE.CMDB}/order/todo`,
+    url: `${API_SERVICE.TICKET}/ticket/todo`,
     data: data
   })
 }
@@ -21,7 +21,7 @@ export function todoOrderApi(data: order.todoOrderReq) {
 /** 撤销工单 */
 export function revokeOrderApi(data: order.revokeOrderReq) {
   return instance.post<boolean>({
-    url: `${API_SERVICE.CMDB}/order/revoke`,
+    url: `${API_SERVICE.TICKET}/ticket/revoke`,
     data: data
   })
 }
@@ -29,7 +29,7 @@ export function revokeOrderApi(data: order.revokeOrderReq) {
 /** 查看我受办待处理工单 */
 export function todoOrderByUserApi(data: order.todoOrderReq) {
   return instance.post<order.ordersListRes>({
-    url: `${API_SERVICE.CMDB}/order/todo/user`,
+    url: `${API_SERVICE.TICKET}/ticket/todo/user`,
     data: data
   })
 }
@@ -37,7 +37,7 @@ export function todoOrderByUserApi(data: order.todoOrderReq) {
 /** 查看我提交的待处理工单 */
 export function startByOrderApi(data: order.startByOrderReq) {
   return instance.post<order.ordersListRes>({
-    url: `${API_SERVICE.CMDB}/order/start/user`,
+    url: `${API_SERVICE.TICKET}/ticket/start/user`,
     data: data
   })
 }
@@ -45,7 +45,7 @@ export function startByOrderApi(data: order.startByOrderReq) {
 /** 查看我的工单 */
 export function getOrderByProcessInstIdApi(processInstId: number) {
   return instance.post<order.order>({
-    url: `${API_SERVICE.CMDB}/order/detail/process_inst_id`,
+    url: `${API_SERVICE.TICKET}/ticket/detail/process_inst_id`,
     data: { process_instance_id: processInstId }
   })
 }
@@ -53,7 +53,7 @@ export function getOrderByProcessInstIdApi(processInstId: number) {
 /** 查看历史工单 */
 export function getHisotryOrderApi(data: order.historyOrderReq) {
   return instance.post<order.orders>({
-    url: `${API_SERVICE.CMDB}/order/history`,
+    url: `${API_SERVICE.TICKET}/ticket/history`,
     data: data
   })
 }
@@ -61,7 +61,7 @@ export function getHisotryOrderApi(data: order.historyOrderReq) {
 /** 同意工单 */
 export function passOrderApi(data: order.passOrder) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/order/pass`,
+    url: `${API_SERVICE.TICKET}/ticket/pass`,
     data: data
   })
 }
@@ -69,7 +69,7 @@ export function passOrderApi(data: order.passOrder) {
 /** 驳回工单 */
 export function rejectOrderApi(data: order.rejectOrder) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/order/reject`,
+    url: `${API_SERVICE.TICKET}/ticket/reject`,
     data: data
   })
 }
@@ -77,7 +77,7 @@ export function rejectOrderApi(data: order.rejectOrder) {
 /** 工单历史任务记录 */
 export function orderTaskRecordsApi(data: order.taskRecordReq) {
   return instance.post<order.taskRecords>({
-    url: `${API_SERVICE.CMDB}/order/task/record`,
+    url: `${API_SERVICE.TICKET}/ticket/task/record`,
     data: data
   })
 }
@@ -85,7 +85,7 @@ export function orderTaskRecordsApi(data: order.taskRecordReq) {
 /** 获取任务表单配置 */
 export function getTaskFormConfigApi(data: order.TaskFormConfigReq) {
   return instance.post<any[]>({
-    url: `${API_SERVICE.CMDB}/order/task/form_config`,
+    url: `${API_SERVICE.TICKET}/ticket/task/form_config`,
     data: data
   })
 }
@@ -93,7 +93,7 @@ export function getTaskFormConfigApi(data: order.TaskFormConfigReq) {
 /** 转签工单 */
 export function transferOrderApi(data: order.transferOrderReq) {
   return instance.post<boolean>({
-    url: `${API_SERVICE.CMDB}/order/transfer`,
+    url: `${API_SERVICE.TICKET}/ticket/transfer`,
     data: data
   })
 }

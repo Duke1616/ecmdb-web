@@ -206,8 +206,8 @@ import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import RunnerForm from "@/views/task/runner/form.vue"
 import { useRunner } from "../composables/useRunner"
 import { cloneDeep } from "lodash-es"
-import { codebook } from "@/api/codebook/types/codebook"
-import { runner, Kind } from "@/api/runner/types/runner"
+import { codebook } from "@/api/ticket/codebook/types/codebook"
+import { runner, Kind } from "@/api/ticket/runner/types/runner"
 
 const visible = ref(false)
 const isCreatingRunner = ref(false)

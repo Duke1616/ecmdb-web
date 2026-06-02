@@ -5,7 +5,7 @@
         <div class="table-wrapper">
           <el-table
             ref="tableRef"
-            :data="enableRowDrag ? draggableData : data"
+            :data="enableRowDrag ? draggableData : data || []"
             class="data-table"
             stripe
             :height="finalTableHeight"
@@ -142,6 +142,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  data: () => [],
   showSelection: false,
   actionColumnLabel: "操作",
   actionColumnWidth: 200,
@@ -158,7 +159,7 @@ const slots = useSlots()
 const tableRef = ref()
 
 // 可拖拽的数据数组
-const draggableData = ref([...props.data])
+const draggableData = ref(Array.isArray(props.data) ? [...props.data] : [])
 
 // 窗口宽度响应式变量
 const windowWidth = ref(window.innerWidth)
@@ -184,7 +185,8 @@ onUnmounted(() => {
 watch(
   () => props.data,
   (newData) => {
-    draggableData.value = [...newData]
+    // NOTE: 加上防御性判断，防止异步或未定义数据在展开时抛出 is not iterable 异常
+    draggableData.value = Array.isArray(newData) ? [...newData] : []
   },
   { deep: true, immediate: true }
 )

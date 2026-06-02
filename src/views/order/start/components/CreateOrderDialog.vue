@@ -59,9 +59,9 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from "vue"
-import { detailTemplateApi } from "@/api/template"
-import { createOrderApi } from "@/api/order"
-import type { createOrderReq } from "@/api/order/types/order"
+import { detailTemplateApi } from "@/api/ticket/template"
+import { createOrderApi } from "@/api/ticket/order"
+import type { createOrderReq } from "@/api/ticket/order/types/order"
 import type { Api, FormRule, Options } from "@form-create/element-ui"
 import formCreate from "@form-create/element-ui"
 import { ElMessage } from "element-plus"

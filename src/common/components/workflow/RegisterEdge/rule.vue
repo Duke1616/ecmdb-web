@@ -144,7 +144,7 @@
 <script setup lang="ts">
 import { reactive, computed } from "vue"
 import { ArrowRight, Monitor } from "@element-plus/icons-vue"
-import { template } from "@/api/template/types/template"
+import { template } from "@/api/ticket/template/types/template"
 
 interface Props {
   templates: template[]

@@ -11,8 +11,8 @@
 
 <script lang="ts" setup>
 import { ref } from "vue"
-import { createTemplateGroupApi } from "@/api/template"
-import { createTemplateGroupReq } from "@/api/template/types/template"
+import { createTemplateGroupApi } from "@/api/ticket/template"
+import { createTemplateGroupReq } from "@/api/ticket/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 

@@ -81,7 +81,7 @@ import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
 import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
-import { createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
+import { createOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 

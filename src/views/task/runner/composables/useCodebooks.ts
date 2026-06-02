@@ -1,8 +1,8 @@
 import { ref, computed, watch } from "vue"
-import { codebook } from "@/api/codebook/types/codebook"
-import { listCodebookApi } from "@/api/codebook"
+import { codebook } from "@/api/ticket/codebook/types/codebook"
+import { listCodebookApi } from "@/api/ticket/codebook"
 import type { Ref } from "vue"
-import type { registerOrUpdateReq } from "@/api/runner/types/runner"
+import type { registerOrUpdateReq } from "@/api/ticket/runner/types/runner"
 
 /**
  * 获取任务模版列表，并处理 codebook_secret 自动填充

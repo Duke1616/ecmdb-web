@@ -12,7 +12,7 @@
       >
         <el-card class="timeline-card" shadow="hover">
           <div class="card-header">
-            <span class="node-name">{{ activity.nodename }}</span>
+            <span class="node-name">{{ activity.node_name }}</span>
             <el-tag :type="getTagType(activity)" effect="plain" size="small">
               {{ getTagLabel(activity) }}
             </el-tag>
@@ -62,8 +62,8 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { orderTaskRecordsApi } from "@/api/order"
-import { taskRecord } from "@/api/order/types/order"
+import { orderTaskRecordsApi } from "@/api/ticket/order"
+import { taskRecord } from "@/api/ticket/order/types/order"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 interface Props {
@@ -85,8 +85,9 @@ const getTagType = (row: taskRecord) => {
 }
 
 const getTagLabel = (row: taskRecord) => {
-  if (row.status === 1 && !row.nodename.startsWith("自动化-") && row.is_finished === 1) return "确认通过"
-  if (row.status === 1 && row.nodename.startsWith("自动化-") && row.is_finished === 1) return "自动通过"
+  const isAutomation = row.node_name?.startsWith("自动化-") ?? false
+  if (row.status === 1 && !isAutomation && row.is_finished === 1) return "确认通过"
+  if (row.status === 1 && isAutomation && row.is_finished === 1) return "自动通过"
   if (row.status === 3 && row.is_finished === 1) return "系统通过"
   if (row.status === 4 && row.is_finished === 1) return "系统驳回"
   if (row.status === 2 && row.is_finished === 1) return "手动驳回"

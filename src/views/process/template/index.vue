@@ -101,14 +101,14 @@ import { h, nextTick, ref, watch, computed, markRaw } from "vue"
 import { useRouter } from "vue-router"
 import { CirclePlus, RefreshRight, EditPen, Connection, Search, Delete, CopyDocument } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { template, createOrUpdateTemplateReq } from "@/api/template/types/template"
+import { template, createOrUpdateTemplateReq } from "@/api/ticket/template/types/template.js"
 import {
   deleteTemplateApi,
   getTemplateGroupsByIdsApi,
   listTemplateApi,
   createTemplateApi,
   updateTemplateApi
-} from "@/api/template"
+} from "@/api/ticket/template/index.js"
 import TemplateGroup from "./group/index.vue"
 import thirdParty from "./thirdparty.vue"
 import { ElMessageBox } from "element-plus"

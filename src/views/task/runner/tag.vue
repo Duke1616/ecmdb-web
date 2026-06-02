@@ -67,7 +67,7 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted } from "vue"
 import { PriceTag } from "@element-plus/icons-vue"
-import { listRunnerTagsApi } from "@/api/runner"
+import { listRunnerTagsApi } from "@/api/ticket/runner"
 
 // NOTE: 该组件为第三版设计，追求「呼吸感」与「现代工业设计」的平衡。
 // 引入了 transition 动画，使用了更细腻的 HSL 配色方案，强调组件的自愈能力与输入流畅度。

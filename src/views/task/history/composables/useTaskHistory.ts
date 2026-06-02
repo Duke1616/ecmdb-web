@@ -1,7 +1,7 @@
 import { ref, watch } from "vue"
-import { listTasksApi } from "@/api/task"
+import { listTasksApi } from "@/api/ticket/task"
 import { usePagination } from "@/common/composables/usePagination"
-import type { task } from "@/api/task/types/task"
+import type { task } from "@/api/ticket/task/types/task"
 
 export function useTaskHistory() {
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()

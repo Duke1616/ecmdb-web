@@ -5,7 +5,7 @@ import { API_SERVICE } from "@@/utils/service"
 /** 新增工作流程 */
 export function createWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/workflow/create`,
+    url: `${API_SERVICE.TICKET}/workflow/create`,
     data: data
   })
 }
@@ -13,7 +13,7 @@ export function createWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
 /** 修改工作流程 */
 export function updateWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/workflow/update`,
+    url: `${API_SERVICE.TICKET}/workflow/update`,
     data: data
   })
 }
@@ -21,7 +21,7 @@ export function updateWorkflowApi(data: workflow.createOrUpdateWorkflowReq) {
 /** 删除工作流程 */
 export function deleteWorkflowApi(id: number) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/workflow/delete`,
+    url: `${API_SERVICE.TICKET}/workflow/delete`,
     data: { id: id }
   })
 }
@@ -29,7 +29,7 @@ export function deleteWorkflowApi(id: number) {
 /** 部署工作流程 */
 export function deployWorkflowApi(id: number) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/workflow/deploy`,
+    url: `${API_SERVICE.TICKET}/workflow/deploy`,
     data: { id: id }
   })
 }
@@ -37,7 +37,7 @@ export function deployWorkflowApi(id: number) {
 /** 列表 */
 export function listWorkflowApi(data: workflow.listWorkflowReq) {
   return instance.post<workflow.workflows>({
-    url: `${API_SERVICE.CMDB}/workflow/list`,
+    url: `${API_SERVICE.TICKET}/workflow/list`,
     data: data
   })
 }
@@ -45,7 +45,7 @@ export function listWorkflowApi(data: workflow.listWorkflowReq) {
 /** 获取流程状态图 */
 export function getWorkflowGraphApi(data: workflow.workflowGraphReq) {
   return instance.post<workflow.workflowGraph>({
-    url: `${API_SERVICE.CMDB}/workflow/graph`,
+    url: `${API_SERVICE.TICKET}/workflow/graph`,
     data: data
   })
 }
@@ -53,7 +53,7 @@ export function getWorkflowGraphApi(data: workflow.workflowGraphReq) {
 /** 根据关键字搜索工作流程 */
 export function listWorkflowsByKeywordApi(data: workflow.ListByKeywordReq) {
   return instance.post<workflow.workflows>({
-    url: `${API_SERVICE.CMDB}/workflow/list/by_keyword`,
+    url: `${API_SERVICE.TICKET}/workflow/list/by_keyword`,
     data: data
   })
 }
@@ -61,6 +61,6 @@ export function listWorkflowsByKeywordApi(data: workflow.ListByKeywordReq) {
 /** 获取工作流详情 */
 export function getWorkflowDetailApi(id: number) {
   return instance.get<workflow.workflow>({
-    url: `${API_SERVICE.CMDB}/workflow/detail/${id}`
+    url: `${API_SERVICE.TICKET}/workflow/detail/${id}`
   })
 }

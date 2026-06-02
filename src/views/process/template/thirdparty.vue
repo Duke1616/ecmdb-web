@@ -24,14 +24,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { createTemplateApi, listTemplateGroupApi, updateTemplateApi } from "@/api/template"
-import { template, templateGroup, type createOrUpdateTemplateReq } from "@/api/template/types/template"
+import { createTemplateApi, listTemplateGroupApi, updateTemplateApi } from "@/api/ticket/template"
+import { template, templateGroup, type createOrUpdateTemplateReq } from "@/api/ticket/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { ref, onMounted } from "vue"
 import { cloneDeep } from "lodash-es"
 import "vue3-icon-picker/dist/style.css"
-import { workflow } from "@/api/workflow/types/workflow"
-import { listWorkflowApi } from "@/api/workflow/workflow"
+import { workflow } from "@/api/ticket/workflow/types/workflow"
+import { listWorkflowApi } from "@/api/ticket/workflow/workflow"
 
 const emits = defineEmits(["closed", "list-templates", "success"])
 const onClosed = () => {

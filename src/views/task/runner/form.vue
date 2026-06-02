@@ -147,8 +147,8 @@ import {
   Monitor,
   CircleCheckFilled
 } from "@element-plus/icons-vue"
-import { registerOrUpdateReq, variables, Kind } from "@/api/runner/types/runner"
-import { registerRunnerApi, updateRunnerAPi } from "@/api/runner"
+import { registerOrUpdateReq, variables, Kind } from "@/api/ticket/runner/types/runner"
+import { registerRunnerApi, updateRunnerAPi } from "@/api/ticket/runner"
 import { useCodebooks } from "./composables/useCodebooks"
 import WorkerSection from "./components/WorkerSection.vue"
 import ExecuteSection from "./components/ExecuteSection.vue"

@@ -93,8 +93,8 @@ import {
   createWorkflowApi,
   updateWorkflowApi,
   getWorkflowDetailApi
-} from "@/api/workflow/workflow"
-import { workflow, createOrUpdateWorkflowReq } from "@/api/workflow/types/workflow"
+} from "@/api/ticket/workflow/workflow.js"
+import { workflow, createOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow.js"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import Preview from "./preview/Preview.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
@@ -255,6 +255,7 @@ const handleCreate = () => {
 
 const handleUpdate = async (row: workflow) => {
   try {
+    console.log("Editing workflow:", row)
     const { data } = await getWorkflowDetailApi(row.id)
     // 展示新增页面，隐藏底层列表卡片
     elCardVisibe.value = false

@@ -37,7 +37,7 @@ import { ref, onMounted, onBeforeUnmount, watch } from "vue"
 import FcDesigner from "@form-create/designer"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
-import { createOrUpdateTemplateReq } from "@/api/template/types/template"
+import { createOrUpdateTemplateReq } from "@/api/ticket/template/types/template"
 
 const props = defineProps<{
   formData: createOrUpdateTemplateReq

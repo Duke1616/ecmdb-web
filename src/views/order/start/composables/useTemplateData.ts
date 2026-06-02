@@ -1,6 +1,6 @@
 import { ref, computed, onMounted } from "vue"
-import { pipelineGroupApi, listFavoriteApi, toggleFavoriteApi } from "@/api/template"
-import type { templateCombination, template } from "@/api/template/types/template"
+import { pipelineGroupApi, listFavoriteApi, toggleFavoriteApi } from "@/api/ticket/template"
+import type { templateCombination, template } from "@/api/ticket/template/types/template"
 import { ElMessage } from "element-plus"
 
 export function useTemplateData() {

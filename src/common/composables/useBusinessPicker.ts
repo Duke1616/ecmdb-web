@@ -1,9 +1,9 @@
 import { ref, nextTick, type Ref } from "vue"
 import { usePagination } from "@@/composables/usePagination"
 import { listWorkspacesByKeywordApi } from "@/api/alert/workspace"
-import { listWorkflowsByKeywordApi } from "@/api/workflow/workflow"
+import { listWorkflowsByKeywordApi } from "@/api/ticket/workflow/workflow"
 import type { Workspace } from "@/api/alert/workspace/types"
-import type { workflow } from "@/api/workflow/types/workflow"
+import type { workflow } from "@/api/ticket/workflow/types/workflow"
 
 // 业务类型枚举（数字ID用于数据库存储，字符串用于API调用）
 export enum BUSINESS_TYPES {

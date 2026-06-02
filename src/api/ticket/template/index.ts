@@ -5,7 +5,7 @@ import { API_SERVICE } from "@@/utils/service"
 /** 新增模版 */
 export function createTemplateApi(data: template.createOrUpdateTemplateReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/template/create`,
+    url: `${API_SERVICE.TICKET}/template/create`,
     data: data
   })
 }
@@ -13,23 +13,22 @@ export function createTemplateApi(data: template.createOrUpdateTemplateReq) {
 /** 修改模版 */
 export function updateTemplateApi(data: template.createOrUpdateTemplateReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/template/update`,
+    url: `${API_SERVICE.TICKET}/template/update`,
     data: data
   })
 }
 
-/** 查看模版详情 */
+/** 获取工作流详情 */
 export function detailTemplateApi(id: number) {
-  return instance.post<template.template>({
-    url: `${API_SERVICE.CMDB}/template/detail`,
-    data: { id: id }
+  return instance.get<template.template>({
+    url: `${API_SERVICE.TICKET}/template/detail/${id}`
   })
 }
 
 /** 根据模版列表 */
 export function listTemplateApi(data: template.PageReq) {
   return instance.post<template.templates>({
-    url: `${API_SERVICE.CMDB}/template/list`,
+    url: `${API_SERVICE.TICKET}/template/list`,
     data: data
   })
 }
@@ -37,7 +36,7 @@ export function listTemplateApi(data: template.PageReq) {
 /** 删除模版 */
 export function deleteTemplateApi(id: number) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/template/delete`,
+    url: `${API_SERVICE.TICKET}/template/delete`,
     data: { id: id }
   })
 }
@@ -45,7 +44,7 @@ export function deleteTemplateApi(id: number) {
 /** 新增模版分组 */
 export function createTemplateGroupApi(data: template.createTemplateGroupReq) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/template/group/create`,
+    url: `${API_SERVICE.TICKET}/template/group/create`,
     data: data
   })
 }
@@ -53,7 +52,7 @@ export function createTemplateGroupApi(data: template.createTemplateGroupReq) {
 /** 根据模版列表 */
 export function listTemplateGroupApi(data: template.PageReq) {
   return instance.post<template.templateGroups>({
-    url: `${API_SERVICE.CMDB}/template/group/list`,
+    url: `${API_SERVICE.TICKET}/template/group/list`,
     data: data
   })
 }
@@ -61,14 +60,14 @@ export function listTemplateGroupApi(data: template.PageReq) {
 /** 聚合组数据查看 */
 export function pipelineGroupApi() {
   return instance.post<template.templateCombinations>({
-    url: `${API_SERVICE.CMDB}/template/list/pipeline`
+    url: `${API_SERVICE.TICKET}/template/list/pipeline`
   })
 }
 
 /** 根据模版 Ids 获取模版列表 */
 export function findByTemplateIdsApi(ids: number[]) {
   return instance.post<template.templates>({
-    url: `${API_SERVICE.CMDB}/template/by_ids`,
+    url: `${API_SERVICE.TICKET}/template/by_ids`,
     data: { ids: ids }
   })
 }
@@ -76,7 +75,7 @@ export function findByTemplateIdsApi(ids: number[]) {
 /** 根据流程ID获取所有模版 */
 export function getTemplateByWorkflowIdApi(workflow_id: number) {
   return instance.post<template.templates>({
-    url: `${API_SERVICE.CMDB}/template/get_by_workflow_id`,
+    url: `${API_SERVICE.TICKET}/template/get_by_workflow_id`,
     data: { workflow_id: workflow_id }
   })
 }
@@ -84,7 +83,7 @@ export function getTemplateByWorkflowIdApi(workflow_id: number) {
 /** 根据流程ID获取所有模版的Rule信息 */
 export function getTemplateRulesByWorkflowIdApi(workflow_id: number) {
   return instance.post<template.templateRules>({
-    url: `${API_SERVICE.CMDB}/template/rules/by_workflow_id`,
+    url: `${API_SERVICE.TICKET}/template/rules/by_workflow_id`,
     data: { workflow_id: workflow_id }
   })
 }
@@ -92,7 +91,7 @@ export function getTemplateRulesByWorkflowIdApi(workflow_id: number) {
 /** 根据 ids 获取模版组 */
 export function getTemplateGroupsByIdsApi(ids: number[]) {
   return instance.post<template.templateGroups>({
-    url: `${API_SERVICE.CMDB}/template/group/by_ids`,
+    url: `${API_SERVICE.TICKET}/template/group/by_ids`,
     data: { ids: ids }
   })
 }
@@ -100,7 +99,7 @@ export function getTemplateGroupsByIdsApi(ids: number[]) {
 /** 根据关键字搜索模版 */
 export function searchTemplateByKeywordApi(data: template.ByKeywordReq) {
   return instance.post<template.templates>({
-    url: `${API_SERVICE.CMDB}/template/list/by_keyword`,
+    url: `${API_SERVICE.TICKET}/template/list/by_keyword`,
     data: data
   })
 }
@@ -108,7 +107,7 @@ export function searchTemplateByKeywordApi(data: template.ByKeywordReq) {
 /** 收藏/取消收藏模版 */
 export function toggleFavoriteApi(data: template.toggleFavoriteReq) {
   return instance.post<boolean>({
-    url: `${API_SERVICE.CMDB}/template/favorite/toggle`,
+    url: `${API_SERVICE.TICKET}/template/favorite/toggle`,
     data: data
   })
 }
@@ -116,6 +115,6 @@ export function toggleFavoriteApi(data: template.toggleFavoriteReq) {
 /** 获取用户收藏的模版数据 */
 export function listFavoriteApi() {
   return instance.post<template.templateCombination>({
-    url: `${API_SERVICE.CMDB}/template/favorite/list`
+    url: `${API_SERVICE.TICKET}/template/favorite/list`
   })
 }

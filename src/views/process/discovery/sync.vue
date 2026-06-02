@@ -30,8 +30,8 @@
 <script setup lang="ts">
 import { syncDiscoveryApi } from "@/api/discovery"
 import { syncDiscoveryReq } from "@/api/discovery/types/discovery"
-import { pipelineGroupApi } from "@/api/template"
-import { template as tls, templateCombination } from "@/api/template/types/template"
+import { pipelineGroupApi } from "@/api/ticket/template"
+import { template as tls, templateCombination } from "@/api/ticket/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { onMounted, ref, watch } from "vue"

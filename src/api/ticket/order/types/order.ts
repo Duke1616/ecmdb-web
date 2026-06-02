@@ -59,7 +59,7 @@ export interface revokeOrderReq {
 }
 
 export interface ordersListRes {
-  orders: order[]
+  tasks: order[]
   total: number
 }
 
@@ -81,7 +81,7 @@ export interface taskRecordReq {
 }
 
 export interface taskRecord {
-  nodename: string // 当前步骤
+  node_name: string // 当前步骤
   approved_by: string // 处理人
   is_cosigned: number // 是否会签
   status: number // 任务状态:0:初始 1:通过 2:驳回
@@ -104,7 +104,7 @@ export interface taskRecords {
 }
 
 export interface orders {
-  orders: order[]
+  tasks: order[]
   total: number
 }
 

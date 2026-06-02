@@ -45,8 +45,8 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { order } from "@/api/order/types/order"
-import { todoOrderByUserApi } from "@/api/order"
+import { order } from "@/api/ticket/order/types/order.js"
+import { todoOrderByUserApi } from "@/api/ticket/order/index.js"
 import Detail from "../approved/detail.vue"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
 import DataTable from "@@/components/DataTable/index.vue"
@@ -91,7 +91,7 @@ const listOrdersData = async () => {
     })
 
     paginationData.total = data.total
-    ordersData.value = data.orders
+    ordersData.value = data.tasks || []
 
     // 根据模版ID获取模版名称
     const templateIds = ordersData.value.map((item) => item.template_id)

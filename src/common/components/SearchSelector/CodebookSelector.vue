@@ -29,7 +29,7 @@
 
 <script setup lang="ts">
 import SearchSelectorBase from "./Base.vue"
-import { listCodebookApi, detailCodebookApi } from "@/api/codebook"
+import { listCodebookApi, detailCodebookApi } from "@/api/ticket/codebook/index.js"
 
 interface Props {
   modelValue?: number

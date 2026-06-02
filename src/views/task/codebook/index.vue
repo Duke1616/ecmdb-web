@@ -52,9 +52,14 @@ import { Document, Edit, Delete, Setting } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import WizardContainer from "@@/components/WizardContainer/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import { codebook, type createOrUpdateCodebookReq } from "@/api/codebook/types/codebook"
+import { codebook, type createOrUpdateCodebookReq } from "@/api/ticket/codebook/types/codebook.js"
 import { cloneDeep } from "lodash-es"
-import { deleteCodebookApi, listCodebookApi, createCodebookApi, updateCodebookApi } from "@/api/codebook"
+import {
+  deleteCodebookApi,
+  listCodebookApi,
+  createCodebookApi,
+  updateCodebookApi
+} from "@/api/ticket/codebook/index.js"
 import { ElMessage, ElMessageBox } from "element-plus"
 import InfoPage from "./modal/info.vue"
 import Code from "./modal/code.vue"

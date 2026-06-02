@@ -102,8 +102,8 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { task, Kind } from "@/api/task/types/task"
-import { retryTaskApi, updateTaskArgsApi, updateTaskVariablesApi, getTaskLogsApi } from "@/api/task"
+import { task, Kind } from "@/api/ticket/task/types/task.js"
+import { retryTaskApi, updateTaskArgsApi, updateTaskVariablesApi, getTaskLogsApi } from "@/api/ticket/task/index.js"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage } from "element-plus"
 import EnumTag from "@/common/components/EnumTag/index.vue"

@@ -11,7 +11,7 @@ import { Menu, Snapshot, MiniMap } from "@logicflow/extension"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
-import { getWorkflowGraphApi } from "@/api/workflow/workflow"
+import { getWorkflowGraphApi } from "@/api/ticket/workflow/workflow"
 
 interface Props {
   workflowId: number | undefined

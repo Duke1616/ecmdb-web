@@ -27,7 +27,7 @@
 
 <script setup lang="ts">
 import SearchSelectorBase from "./Base.vue"
-import { searchTemplateByKeywordApi, detailTemplateApi } from "@/api/template"
+import { searchTemplateByKeywordApi, detailTemplateApi } from "@/api/ticket/template/index.js"
 
 interface Props {
   modelValue?: number
