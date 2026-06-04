@@ -166,6 +166,8 @@ export interface ListUserRequest {
   offset: number
   limit: number
   keyword?: string
+  /** 按用户名精确批量查询（优先级高于 keyword 模糊搜索） */
+  usernames?: string[]
 }
 
 /** 批量删除用户请求 */

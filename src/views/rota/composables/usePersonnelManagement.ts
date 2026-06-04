@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import { user as userInfo } from "@/api/user/types/user"
+import type { User as IIamUser } from "@/api/iam/user/type"
 import { rotaGroup } from "@/api/rota/types/rota"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 
@@ -8,7 +8,7 @@ export function usePersonnelManagement() {
   const members = ref<string[]>([])
 
   // 添加人员到轮换组
-  const addRotaGroup = (user: userInfo, rotaGroups: rotaGroup[]) => {
+  const addRotaGroup = (user: IIamUser, rotaGroups: rotaGroup[]) => {
     // 检查用户是否已经存在于任何组中
     const userExists = rotaGroups.some((group) => group.members.includes(user.username))
 
@@ -25,7 +25,7 @@ export function usePersonnelManagement() {
     }
 
     // 缓存用户信息
-    userToolsStore.setToMap(user.username, user.display_name + " [" + user.username + "] ")
+    userToolsStore.setDisplayName(user.username, `${user.nickname || user.username} [${user.username}]`)
     rotaGroups.push(newGroup)
   }
 
@@ -58,7 +58,7 @@ export function usePersonnelManagement() {
 
   // 获取用户显示名称
   const getUserByUsername = (username: string) => {
-    return userToolsStore.getOnlyDisplayName(username) || username
+    return userToolsStore.getNickname(username) || username
   }
 
   return {

@@ -32,10 +32,10 @@
             </div>
             <div class="user-info">
               <div class="user-avatar" :style="{ background: generateUserColor(user.username) }">
-                {{ user.display_name?.charAt(0) || user.username?.charAt(0) }}
+                {{ user.nickname?.charAt(0) || user.username?.charAt(0) }}
               </div>
               <div class="user-details">
-                <div class="user-name">{{ user.display_name || user.username }}</div>
+                <div class="user-name">{{ user.nickname || user.username }}</div>
                 <div class="user-username">@{{ user.username }}</div>
               </div>
             </div>
@@ -78,10 +78,10 @@
           <div v-for="user in getSelectedUsers()" :key="user.id" class="user-card selected">
             <div class="user-info">
               <div class="user-avatar" :style="{ background: generateUserColor(user.username) }">
-                {{ user.display_name?.charAt(0) || user.username?.charAt(0) }}
+                {{ user.nickname?.charAt(0) || user.username?.charAt(0) }}
               </div>
               <div class="user-details">
-                <div class="user-name">{{ user.display_name || user.username }}</div>
+                <div class="user-name">{{ user.nickname || user.username }}</div>
                 <div class="user-username">@{{ user.username }}</div>
               </div>
             </div>
@@ -98,19 +98,28 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue"
 import { User, Close } from "@element-plus/icons-vue"
-import { listDepartmentTreeApi } from "@/api/department"
-import { listUsersByDepartmentApi, findByUsernamesApi } from "@/api/user"
+import { listDepartmentTreeApi, listDeptMembersApi } from "@/api/iam/department"
+import { listUsersApi } from "@/api/iam/user"
 import { usePagination } from "@@/composables/usePagination"
-import type { user } from "@/api/user/types/user"
-import type { department } from "@/api/department/types/department"
+import type { IDepartmentNode as IDepartment } from "@/api/iam/department/type"
+import { useUsers } from "@/common/composables/useUsers"
+
+interface IMemberUser {
+  id: number
+  username: string
+  nickname: string
+  avatar: string
+  email: string
+  phone: string
+}
 
 const model = defineModel<string[]>({ default: () => [] })
 
 // 部门选择相关
 const selectedDepartment = ref<number | null>(null)
-const departments = ref<department[]>([])
-const users = ref<user[]>([])
-const selectedUsers = ref<user[]>([])
+const departments = ref<IDepartment[]>([])
+const users = ref<IMemberUser[]>([])
+const { selectedUsers, loadSelectedUsers } = useUsers()
 
 // 使用分页封装
 const { paginationData, handleCurrentChange } = usePagination({
@@ -160,12 +169,12 @@ const generateUserColor = (username: string) => {
 }
 
 // 判断用户是否被选中
-const isUserSelected = (user: user) => {
+const isUserSelected = (user: IMemberUser) => {
   return selectedUsers.value.some((u) => u.id === user.id)
 }
 
 // 切换用户选择
-const toggleUser = (user: user) => {
+const toggleUser = (user: IMemberUser) => {
   const index = selectedUsers.value.findIndex((u) => u.id === user.id)
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
@@ -177,7 +186,7 @@ const toggleUser = (user: user) => {
 }
 
 // 移除用户
-const removeUser = (user: user) => {
+const removeUser = (user: IMemberUser) => {
   const index = selectedUsers.value.findIndex((u) => u.id === user.id)
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
@@ -212,12 +221,13 @@ const loadDepartments = async () => {
     departments.value = [
       {
         id: 0,
-        pid: 0,
+        parent_id: 0,
         name: "全部部门",
         sort: 0,
-        enabled: true,
         leaders: [],
         main_leader: "",
+        ctime: 0,
+        utime: 0,
         children: []
       },
       ...(data || [])
@@ -237,13 +247,25 @@ const loadUsersByDepartment = async () => {
 
   loading.value = true
   try {
-    const { data } = await listUsersByDepartmentApi({
-      department_id: selectedDepartment.value,
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
-    })
-    users.value = data.users || []
-    paginationData.total = data.total || 0
+    if (selectedDepartment.value === 0) {
+      // 全部部门，调用 listUsersApi
+      const { data } = await listUsersApi({
+        offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+        limit: paginationData.pageSize
+      })
+      users.value = data.users || []
+      paginationData.total = data.total || 0
+    } else {
+      // 正常部门，调用 listDeptMembersApi
+      const { data } = await listDeptMembersApi({
+        dept_id: selectedDepartment.value,
+        offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+        limit: paginationData.pageSize,
+        keyword: ""
+      })
+      users.value = data.members || []
+      paginationData.total = data.total || 0
+    }
   } catch (error) {
     console.error("加载部门用户失败:", error)
     users.value = []
@@ -253,30 +275,7 @@ const loadUsersByDepartment = async () => {
   }
 }
 
-// 根据用户名找到对应的用户对象（仅从当前用户列表中查找）
-const findUsersByUsernames = (usernames: string[]) => {
-  return users.value.filter((user) => usernames.includes(user.username))
-}
-
-// 加载已选择的用户详情（通过 API）
-const loadSelectedUsers = async (usernames: string[]) => {
-  if (!Array.isArray(usernames) || usernames.length === 0) {
-    selectedUsers.value = []
-    return
-  }
-
-  try {
-    // 直接通过 API 加载所有已选择的用户（不依赖当前用户列表）
-    const { data } = await findByUsernamesApi(usernames)
-    const apiUsers = data.users || []
-    selectedUsers.value = apiUsers
-  } catch (error) {
-    console.error("加载已选择用户失败:", error)
-    // 如果 API 失败，尝试从当前用户列表中查找
-    const foundUsers = findUsersByUsernames(usernames)
-    selectedUsers.value = foundUsers
-  }
-}
+// 已选用户列表加载逻辑已由 useUsers Composable 接管
 
 // 监听 model 变化
 watch(

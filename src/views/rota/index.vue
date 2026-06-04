@@ -34,7 +34,7 @@
 
       <!-- 管理员列自定义插槽 -->
       <template #owner="{ row }">
-        {{ userToolsStore.getOnlyDisplayName(row.owner) }}
+        {{ userToolsStore.getNickname(row.owner) }}
       </template>
 
       <!-- 操作列自定义插槽 -->
@@ -210,7 +210,7 @@ const listRotasData = () => {
 
       const usernames = rotasData.value.map((item) => item.owner)
       if (usernames.length > 0) {
-        userToolsStore.setByUsernames(usernames)
+        userToolsStore.batchResolveUsers(usernames)
       }
     })
     .catch(() => {

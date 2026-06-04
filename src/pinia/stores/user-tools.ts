@@ -1,50 +1,67 @@
 import { defineStore } from "pinia"
 import { ref } from "vue"
 import store from "@/pinia"
-import { findByUsernamesApi } from "@/api/user"
+import { useUserStore } from "./user"
 
 export const useUserToolsStore = defineStore("user-tools", () => {
-  const userMap = ref(new Map<string, string>())
+  /** 用户名 → 展示名称 的内存缓存映射 */
+  const displayNameCache = ref(new Map<string, string>())
+  const userStore = useUserStore()
 
-  const setByUsernames = (members: string[]) => {
-    // 查看是否为空
-    if (!members || members.length === 0) return
+  /**
+   * 批量解析用户名，获取用户的展示名称并缓存
+   * @param usernames 用户名数组
+   */
+  const batchResolveUsers = async (usernames: string[]) => {
+    if (!usernames?.length) return
 
-    // 去重
-    const uniqueMembers = Array.from(new Set(members))
+    const uniqueNames = [...new Set(usernames)]
+    const missingNames = uniqueNames.filter((name) => !displayNameCache.value.has(name))
+    if (!missingNames.length) return
 
-    // 筛选出 userMap 中没有的用户名
-    const missingMembers = uniqueMembers.filter((username) => !userMap.value.has(username))
-
-    // 如果所有用户都已存在，则不处理
-    if (missingMembers.length === 0) return
-
-    // 获取用户信息存储到 map 中
-    findByUsernamesApi(missingMembers)
-      .then((data) => {
-        const newUsers = new Map(
-          data.data.users.map((user) => [user.username, user.display_name + " [" + user.username + "] "])
-        )
-        newUsers.forEach((name, username) => userMap.value.set(username, name))
+    await Promise.all(
+      missingNames.map(async (name) => {
+        try {
+          const userInfo = await userStore.getUserByUsername(name)
+          if (userInfo) {
+            const displayName = `${userInfo.nickname || userInfo.username} [${userInfo.username}]`
+            displayNameCache.value.set(name, displayName)
+          }
+        } catch (error) {
+          console.error(`批量解析用户失败: ${name}`, error)
+        }
       })
-      .catch((error) => {
-        console.log("catch", error)
-      })
-      .finally(() => {})
+    )
   }
 
-  const setToMap = (username: string, name: string) => {
-    userMap.value.set(username, name)
+  /**
+   * 手动设置用户的展示名称缓存
+   */
+  const setDisplayName = (username: string, displayName: string) => {
+    displayNameCache.value.set(username, displayName)
   }
 
-  const getUsername = (username: string) => {
-    return userMap.value.get(username)
+  /**
+   * 获取用户的完整展示名称（格式：nickname [username]）
+   */
+  const getFullDisplayName = (username: string): string | undefined => {
+    return displayNameCache.value.get(username)
   }
 
-  const getOnlyDisplayName = (username: string) => {
-    return userMap.value.get(username)?.split(" [")[0]
+  /**
+   * 仅获取用户的昵称（不含 username 后缀）
+   */
+  const getNickname = (username: string): string | undefined => {
+    return displayNameCache.value.get(username)?.split(" [")[0]
   }
-  return { userMap, setByUsernames, setToMap, getUsername, getOnlyDisplayName }
+
+  return {
+    displayNameCache,
+    batchResolveUsers,
+    setDisplayName,
+    getFullDisplayName,
+    getNickname
+  }
 })
 
 /** 在 setup 外使用 */

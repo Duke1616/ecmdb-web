@@ -85,7 +85,7 @@ const searchApi = async (params: { keyword: string; offset: number; limit: numbe
  * 包装详情查询 API
  */
 const resolveApi = async (username: string): Promise<IIamUser | null> => {
-  return await userStore.resolveUser(username)
+  return await userStore.getUserByUsername(username)
 }
 
 /**
@@ -116,7 +116,7 @@ const fallbackBuilder = (username: string): IIamUser => {
  * 设置默认用户为当前登录用户
  */
 const setDefaultToCurrentUser = async () => {
-  await userStore.getInfo()
+  await userStore.fetchCurrentUser()
   if (userStore.username) {
     model.value = userStore.username
   }

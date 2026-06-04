@@ -25,7 +25,7 @@
     >
       <!-- 成员姓名插槽 -->
       <template #displayName="{ row }">
-        <div class="member-name">{{ row.display_name || row.username }}</div>
+        <div class="member-name">{{ row.nickname || row.username }}</div>
       </template>
 
       <!-- 用户名插槽 -->
@@ -40,7 +40,7 @@
 
       <!-- 职位插槽 -->
       <template #title="{ row }">
-        <div class="member-title">{{ row.title || "未设置职位" }}</div>
+        <div class="member-title">{{ row.job_title || "未设置职位" }}</div>
       </template>
     </DataTable>
   </PageContainer>
@@ -51,13 +51,13 @@ import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { getTeamDetailApi } from "@/api/alert/team"
-import { findByUsernamesApi } from "@/api/user"
 import type { Team } from "@/api/alert/team/types"
-import type { user } from "@/api/user/types/user"
 import { usePagination } from "@/common/composables/usePagination"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import { useUsers } from "@/common/composables/useUsers"
+import type { IMemberUser } from "@/common/composables/useUsers"
 
 interface Props {
   teamId: number
@@ -66,7 +66,8 @@ interface Props {
 const props = defineProps<Props>()
 
 // 成员列表
-const members = ref<user[]>([])
+const members = ref<IMemberUser[]>([])
+const { selectedUsers, loadSelectedUsers } = useUsers()
 const loading = ref(false)
 const teamInfo = ref<Team | null>(null)
 
@@ -97,7 +98,7 @@ const tableColumns: Column[] = [
     slot: "email"
   },
   {
-    prop: "title",
+    prop: "job_title",
     label: "职位",
     minWidth: 150,
     slot: "title"
@@ -138,9 +139,9 @@ const loadMembersData = async () => {
       const endIndex = startIndex + paginationData.pageSize
       const paginatedUsernames = usernames.slice(startIndex, endIndex)
 
-      // 3. 批量获取用户详情
-      const usersResponse = await findByUsernamesApi(paginatedUsernames)
-      members.value = usersResponse.data.users || []
+      // 3. 批量获取用户详情 (由 useUsers Hook 并发接管)
+      await loadSelectedUsers(paginatedUsernames)
+      members.value = selectedUsers.value
 
       // 设置总数
       total.value = usernames.length

@@ -66,7 +66,7 @@
     </el-form>
 
     <!-- 用户选择器 -->
-    <UserPopover ref="userPopoverRef" :add-rota-group="addRotaGroup" :existing-users="existingUsers" />
+    <UserPopoverPicker ref="userPopoverPickerRef" :disabled-keys="existingUsers" @select="handleUserSelect" />
   </div>
 </template>
 
@@ -76,8 +76,8 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 import { ref, computed } from "vue"
-import { user as userInfo } from "@/api/user/types/user"
-import UserPopover from "../components/userPopover.vue"
+import type { User as IIamUser } from "@/api/iam/user/type"
+import UserPopoverPicker from "@/common/components/UserPopoverPicker/UserPopoverPicker.vue"
 import { addShifAdjustmentRuleApi, updateShifAdjustmentRuleApi } from "@/api/rota"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 import { Plus, Close } from "@element-plus/icons-vue"
@@ -86,7 +86,7 @@ const userToolsStore = useUserToolsStore()
 const emits = defineEmits(["closed", "callback"])
 
 // 用户选择器引用
-const userPopoverRef = ref()
+const userPopoverPickerRef = ref<{ show: (targetElement?: HTMLElement) => void }>()
 
 // 已存在的用户列表
 const existingUsers = computed(() => {
@@ -94,17 +94,17 @@ const existingUsers = computed(() => {
 })
 
 const getUserByUsername = (username: string) => {
-  return userToolsStore.getUsername(username)
+  return userToolsStore.getFullDisplayName(username)
 }
 
 // 添加成员按钮点击事件
 const addMember = (event: Event) => {
   const buttonElement = event.target as HTMLElement
-  userPopoverRef.value?.show(buttonElement)
+  userPopoverPickerRef.value?.show(buttonElement)
 }
 
-// 添加用户并创建新组
-const addRotaGroup = (user: userInfo) => {
+// 处理用户选择
+const handleUserSelect = (user: IIamUser) => {
   // 检查用户是否已经存在
   const existingGroup = formData.value.rota_rule.rota_group
   const userExists = existingGroup.members.includes(user.username)
@@ -118,7 +118,7 @@ const addRotaGroup = (user: userInfo) => {
   existingGroup.members.push(user.username)
 
   // 更新用户映射
-  userToolsStore.setToMap(user.username, user.display_name + " [" + user.username + "] ")
+  userToolsStore.setDisplayName(user.username, `${user.nickname || user.username} [${user.username}]`)
 }
 
 const removeAndToLeftList = (index: number) => {
@@ -206,7 +206,7 @@ const setMembers = (members: string[]) => {
   formData.value.rota_rule.rota_group.members = members
 
   // 获取所有的用户信息
-  userToolsStore.setByUsernames(members)
+  userToolsStore.batchResolveUsers(members)
 }
 
 const memberLen = ref<number>(0)

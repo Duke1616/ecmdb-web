@@ -4,28 +4,101 @@ import { defineStore } from "pinia"
 import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
 import { resetRouter } from "@/router"
-import { getProfileApi, logoutApi, userDetailApi, listUsersApi } from "@/api/iam/user"
+import { getProfileApi, logoutApi, listUsersApi } from "@/api/iam/user"
 import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
 import { switchTenantApi } from "@/api/iam/tenant"
 
+// ============================================================
+// 通用工具函数
+// ============================================================
+
 /**
- * 安全请求封装函数，用以精简 store 内的 try-catch，并在出错时提供降级防护
- * @param req 异步请求方法
+ * 创建单例 Promise 包装器
+ * 确保同一异步操作在并发场景下只执行一次，防止重复请求
  */
-async function safeRequest<T>(req: () => Promise<T>): Promise<T | null> {
-  try {
-    return await req()
-  } catch (error) {
-    console.warn("safeRequest caught error:", error)
-    return null
+function createSingletonPromise<T>(executor: () => Promise<T>): () => Promise<T> {
+  let promise: Promise<T> | null = null
+  return async () => {
+    if (promise) return promise
+    promise = executor()
+    try {
+      return await promise
+    } finally {
+      promise = null
+    }
   }
 }
+
+/**
+ * 创建批量请求解析器
+ * 利用微任务队列将同一事件循环内的多次调用合并为一次批量请求，并缓存结果
+ */
+function createBatchResolver<TKey, TValue>(options: {
+  execute: (keys: TKey[]) => Promise<Map<TKey, TValue>>
+}): (key: TKey) => Promise<TValue | null> {
+  const cache = new Map<TKey, TValue | null>()
+  let pending: Set<TKey> | null = null
+  let batchPromise: Promise<void> | null = null
+
+  const flushBatch = async () => {
+    if (!pending?.size) return
+    const keys = Array.from(pending)
+    pending = null
+
+    try {
+      const results = await options.execute(keys)
+      for (const [key, value] of results) {
+        cache.set(key, value)
+      }
+      for (const key of keys) {
+        if (!cache.has(key)) {
+          cache.set(key, null)
+        }
+      }
+    } catch (error) {
+      console.error("Batch resolver failed:", error)
+      for (const key of keys) {
+        if (!cache.has(key)) {
+          cache.set(key, null)
+        }
+      }
+    }
+  }
+
+  return async (key: TKey): Promise<TValue | null> => {
+    if (cache.has(key)) {
+      return cache.get(key) ?? null
+    }
+
+    if (!pending) pending = new Set()
+    pending.add(key)
+
+    if (!batchPromise) {
+      batchPromise = new Promise((resolve) => {
+        Promise.resolve().then(() => {
+          flushBatch().then(() => {
+            batchPromise = null
+            resolve()
+          })
+        })
+      })
+    }
+
+    await batchPromise
+    return cache.get(key) ?? null
+  }
+}
+
+// ============================================================
+// Store 定义
+// ============================================================
 
 export const useUserStore = defineStore(
   "user",
   () => {
+    // -------------------- State --------------------
     const token = ref("")
     const username = ref("")
     const userInfo = ref<user.User | null>(null)
@@ -35,71 +108,95 @@ export const useUserStore = defineStore(
     const permissions = ref<string[]>([])
     const roles = ref<string[]>(["admin"])
 
+    // -------------------- 依赖 Store --------------------
     const tagsViewStore = useTagsViewStore()
     const settingsStore = useSettingsStore()
     const permissionStore = usePermissionStoreHook()
 
+    // -------------------- Actions --------------------
+
     /**
-     * 获取当前登录用户信息（闭包单例 Promise 缓存，全局防止并发请求风暴）
+     * 获取当前登录用户资料（带 Promise 单例缓存，防止并发重复请求）
      */
-    const getInfo = (() => {
-      let promise: Promise<void> | null = null
-      return async () => {
-        if (promise) return promise
-        promise = (async () => {
-          const { data } = await getProfileApi()
-          userInfo.value = data.user
-          username.value = data.user.username
-          tenants.value = data.tenants || []
-          currentTenantId.value = data.current_tenant_id
-          isAdmin.value = data.is_admin
-          permissions.value = data.permissions || []
-        })()
-        try {
-          await promise
-        } finally {
-          promise = null
+    const fetchCurrentUser = createSingletonPromise(async () => {
+      const { data } = await getProfileApi()
+      userInfo.value = data.user
+      username.value = data.user.username
+      tenants.value = data.tenants ?? []
+      currentTenantId.value = data.current_tenant_id
+      isAdmin.value = data.is_admin
+      permissions.value = data.permissions ?? []
+    })
+
+    /**
+     * 批量用户详情解析器（内部使用，合并请求 + 内存缓存）
+     */
+    const batchUserResolver = createBatchResolver<string, user.User>({
+      execute: async (usernames) => {
+        const { data } = await listUsersApi({
+          usernames,
+          offset: 0,
+          limit: usernames.length
+        })
+        const result = new Map<string, user.User>()
+        for (const u of data?.users ?? []) {
+          result.set(u.username, u)
         }
+        return result
       }
-    })()
+    })
 
     /**
-     * 统一解析用户详情（二阶段防御降级检索）
-     * @param un 目标用户名
+     * 根据用户名获取用户详情
+     * 优先返回当前登录用户（免查询），否则走批量查询解析器
      */
-    const resolveUser = async (un: string): Promise<user.User | null> => {
-      if (!un) return null
-      await getInfo()
-      if (username.value === un && userInfo.value) return userInfo.value
+    const getUserByUsername = async (targetUsername: string): Promise<user.User | null> => {
+      if (!targetUsername) return null
 
-      // 1. 优先采用详情接口反解
-      const userDetail = await safeRequest(() => userDetailApi({ username: un }))
-      if (userDetail?.data?.user) return userDetail.data.user
+      await fetchCurrentUser()
+      if (username.value === targetUsername && userInfo.value) {
+        return userInfo.value
+      }
 
-      // 2. 详情查询报错/权限受限时，降级使用列表查询精确过滤
-      const userList = await safeRequest(() => listUsersApi({ keyword: un, offset: 0, limit: 10 }))
-      return userList?.data?.users?.find((u) => u.username === un) || null
+      return batchUserResolver(targetUsername)
     }
 
     /**
-     * 切换租户
-     * @param tenant 目标租户
+     * 批量根据用户名获取用户详情
+     * 自动去重并利用内部缓存，合并为一次网络请求
+     */
+    const batchGetUsersByUsername = async (targetUsernames: string[]): Promise<user.User[]> => {
+      if (!targetUsernames.length) return []
+
+      const uniqueNames = [...new Set(targetUsernames)]
+      const users = await Promise.all(uniqueNames.map((un) => getUserByUsername(un)))
+      return users.filter((u): u is user.User => u !== null)
+    }
+
+    /**
+     * 切换当前租户
      */
     const switchTenant = async (tenant: user.Tenant) => {
       try {
         await switchTenantApi(tenant.id)
-        // 切换租户后跳转到首页导航页并刷新，以重新执行路由守卫并加载新权限
         window.location.href = "/navigation"
-      } catch (err: any) {
-        ElMessage.error(err.message || "切换租户失败")
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "切换租户失败"
+        ElMessage.error(message)
       }
     }
 
+    /**
+     * 设置登录 Token
+     */
     const setToken = (value: string) => {
       token.value = value
       _setToken(value)
     }
 
+    /**
+     * 重置 Token 及相关状态
+     */
     const resetToken = () => {
       removeToken()
       token.value = ""
@@ -107,7 +204,7 @@ export const useUserStore = defineStore(
     }
 
     /**
-     * 登出系统并清空状态
+     * 退出登录并清空所有状态
      */
     const logout = async () => {
       try {
@@ -124,11 +221,16 @@ export const useUserStore = defineStore(
       }
     }
 
+    /**
+     * 切换当前角色（用于权限测试）
+     */
     const changeRoles = (val: string) => {
       roles.value = [val]
     }
 
+    // -------------------- 返回值 --------------------
     return {
+      // State
       token,
       username,
       userInfo,
@@ -137,8 +239,10 @@ export const useUserStore = defineStore(
       isAdmin,
       permissions,
       roles,
-      getInfo,
-      resolveUser,
+      // Actions
+      fetchCurrentUser,
+      getUserByUsername,
+      batchGetUsersByUsername,
       switchTenant,
       setToken,
       resetToken,
@@ -146,9 +250,7 @@ export const useUserStore = defineStore(
       changeRoles
     }
   },
-  {
-    persist: true
-  }
+  { persist: true }
 )
 
 /** 在 setup 外使用 */

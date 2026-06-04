@@ -1,3 +1,4 @@
+/* eslint-disable */
 // JavaScript 脚本模板
 // 脚本描述信息
 

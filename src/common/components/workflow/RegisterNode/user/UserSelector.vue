@@ -73,8 +73,17 @@
 import { ref, watch, onMounted, computed, onUnmounted } from "vue"
 import { ElTree } from "element-plus"
 import { Search, Close } from "@element-plus/icons-vue"
-import { userDepartmentCombination } from "@/api/user/types/user"
-import { pipelineUserByDepartmentApi } from "@/api/user"
+import { listDepartmentTreeApi, listDeptMembersApi } from "@/api/iam/department"
+import type { IDepartmentNode, IDeptUser } from "@/api/iam/department/type"
+
+interface userDepartmentCombination {
+  id: number
+  name: string
+  display_name: string
+  type: "department" | "person"
+  uniqueId?: string
+  children?: userDepartmentCombination[]
+}
 
 interface Props {
   defaultCheckedKeys?: number[]
@@ -185,36 +194,68 @@ const filterNode = (value: string, data: any) => {
   return (typeof data.display_name === "string" && data.display_name.includes(value)) || data.name.includes(value)
 }
 
+// 递归获取部门成员并构建树
+const processDeptNode = async (deptNode: IDepartmentNode): Promise<userDepartmentCombination> => {
+  const deptId = deptNode.id
+  const [membersRes, childNodes] = await Promise.all([
+    listDeptMembersApi({
+      dept_id: deptId,
+      offset: 0,
+      limit: 1000,
+      keyword: ""
+    }).catch(() => ({ data: { members: [] } })),
+    deptNode.children && deptNode.children.length > 0
+      ? Promise.all(deptNode.children.map((child) => processDeptNode(child)))
+      : Promise.resolve([])
+  ])
+
+  const members: IDeptUser[] = membersRes.data.members || []
+  const memberNodes: userDepartmentCombination[] = members.map((m) => ({
+    id: m.id,
+    name: m.username,
+    display_name: m.nickname || m.username,
+    type: "person"
+  }))
+
+  return {
+    id: deptId,
+    name: deptNode.name,
+    display_name: deptNode.name,
+    type: "department",
+    children: [...childNodes, ...memberNodes]
+  }
+}
+
 // 获取部门用户树数据
-const listDepartmentTreeData = () => {
-  pipelineUserByDepartmentApi()
-    .then(({ data }) => {
-      treeData.value = addUniqueId(data)
+const listDepartmentTreeData = async () => {
+  try {
+    const { data: deptTree } = await listDepartmentTreeApi()
+    const fullTree = await Promise.all(deptTree.map((dept) => processDeptNode(dept)))
+    treeData.value = addUniqueId(fullTree)
 
-      // 树数据加载完成后，同步 checkedKeys 状态
-      setTimeout(() => {
-        if (treeRef.value) {
-          // 如果有默认选中项，设置到树形控件
-          if (
-            props.defaultCheckedKeys &&
-            Array.isArray(props.defaultCheckedKeys) &&
-            props.defaultCheckedKeys.length > 0
-          ) {
-            props.defaultCheckedKeys.forEach((key) => {
-              treeRef.value?.setChecked(key, true, false)
-            })
+    // 树数据加载完成后，同步 checkedKeys 状态
+    setTimeout(() => {
+      if (treeRef.value) {
+        // 如果有默认选中项，设置到树形控件
+        if (
+          props.defaultCheckedKeys &&
+          Array.isArray(props.defaultCheckedKeys) &&
+          props.defaultCheckedKeys.length > 0
+        ) {
+          props.defaultCheckedKeys.forEach((key) => {
+            treeRef.value?.setChecked(`person_${key}`, true, false)
+          })
 
-            // 更新 checkedKeys
-            const updatedCheckedKeys = treeRef.value.getCheckedKeys() as string[]
-            checkedKeys.value = updatedCheckedKeys
-          }
+          // 更新 checkedKeys
+          const updatedCheckedKeys = treeRef.value.getCheckedKeys() as string[]
+          checkedKeys.value = updatedCheckedKeys
         }
-      }, 100)
-    })
-    .catch((error) => {
-      console.error("获取部门用户树数据失败:", error)
-      treeData.value = []
-    })
+      }
+    }, 100)
+  } catch (error) {
+    console.error("获取部门用户树数据失败:", error)
+    treeData.value = []
+  }
 }
 
 // 获取已选择的节点信息

@@ -31,7 +31,7 @@
             :class="{ 'user-disabled': isUserExists(user.username) }"
             @click="handleUserClick(user)"
           >
-            <span class="user-name">{{ user.display_name + " [" + user.username + "] " }}</span>
+            <span class="user-name">{{ (user.nickname || user.username) + " [" + user.username + "] " }}</span>
             <el-icon v-if="isUserExists(user.username)" class="disabled-icon">
               <Check />
             </el-icon>
@@ -48,13 +48,11 @@
           <div v-if="!loading && usersData.length > 0" class="pager-wrapper">
             <el-pagination
               background
-              :layout="paginationData.layout"
-              :page-sizes="paginationData.pageSizes"
-              :total="paginationData.total"
-              :page-size="paginationData.pageSize"
-              :current-page="paginationData.currentPage"
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
+              layout="total, prev, next"
+              :total="total"
+              :page-size="pageSize"
+              :current-page="currentPage"
+              @current-change="handlePageChange"
             />
           </div>
 
@@ -68,115 +66,46 @@
 </template>
 
 <script setup lang="ts">
-import { listUsersApi, listUsersByKeywordApi } from "@/api/user"
-import { user as userInfo } from "@/api/user/types/user"
+import type { User as IIamUser } from "@/api/iam/user/type"
 import { Loading, Check } from "@element-plus/icons-vue"
-import { debounce } from "lodash-es"
-import { ref, onUnmounted, nextTick } from "vue"
+import { ref, nextTick } from "vue"
+import { useUsers } from "@/common/composables/useUsers"
 
 interface Props {
-  addRotaGroup: (user: userInfo) => void
+  addRotaGroup: (user: IIamUser) => void
   existingUsers?: string[] // 已存在的用户名列表
 }
 
 const props = defineProps<Props>()
 
-// 基础状态
+// 弹窗特有状态
 const visible = ref<boolean>(false)
-const loading = ref<boolean>(false)
-const keyword = ref<string>("")
-const usersData = ref<userInfo[]>([])
 const popoverStyle = ref<Record<string, string>>({})
 
-// 分页状态
-const paginationData = ref({
-  total: 0,
-  currentPage: 1,
-  pageSizes: [10, 20, 50],
-  pageSize: 5,
-  layout: "total, prev, next"
-})
-
-// 请求控制器
-let abortController: AbortController | null = null
-
-// 防抖搜索
-const debouncedSearch = debounce(() => {
-  paginationData.value.currentPage = 1
-  loadUsers()
-}, 300)
-
-// 加载用户数据
-const loadUsers = async (): Promise<void> => {
-  // 取消之前的请求
-  if (abortController) {
-    abortController.abort()
-  }
-
-  // 创建新的请求控制器
-  abortController = new AbortController()
-  loading.value = true
-
-  try {
-    const params = {
-      offset: (paginationData.value.currentPage - 1) * paginationData.value.pageSize,
-      limit: paginationData.value.pageSize
-    }
-
-    const response = keyword.value
-      ? await listUsersByKeywordApi({ ...params, keyword: keyword.value })
-      : await listUsersApi(params)
-
-    if (!abortController.signal.aborted) {
-      paginationData.value.total = response.data.total
-      usersData.value = response.data.users || []
-    }
-  } catch (error: any) {
-    if (error.name !== "AbortError") {
-      console.error("加载用户数据失败:", error)
-      usersData.value = []
-    }
-  } finally {
-    if (!abortController?.signal.aborted) {
-      loading.value = false
-    }
-    abortController = null
-  }
-}
-
-// 处理搜索
-const handleSearch = (): void => {
-  debouncedSearch()
-}
-
-// 处理分页变化
-const handleSizeChange = (size: number): void => {
-  paginationData.value.pageSize = size
-  paginationData.value.currentPage = 1
-  loadUsers()
-}
-
-const handleCurrentChange = (page: number): void => {
-  paginationData.value.currentPage = page
-  loadUsers()
-}
+// 使用通用的用户 Hook
+const {
+  loading,
+  usersList: usersData,
+  total,
+  currentPage,
+  pageSize,
+  keyword,
+  loadUsersList: loadUsers,
+  handleSearch,
+  handlePageChange
+} = useUsers({ pageSize: 5 })
 
 // 暴露给父组件的方法
 const show = async (targetElement?: HTMLElement): Promise<void> => {
   if (targetElement) {
-    // 计算弹窗位置 - 在按钮下方居中
     const rect = targetElement.getBoundingClientRect()
     const popoverWidth = 320
     const windowWidth = window.innerWidth
-
-    // 计算居中位置
     let left = rect.left + (rect.width - popoverWidth) / 2
-
-    // 边界检测 - 确保弹窗不会超出屏幕
     if (left < 8) {
-      left = 8 // 距离左边至少8px
+      left = 8
     } else if (left + popoverWidth > windowWidth - 8) {
-      left = windowWidth - popoverWidth - 8 // 距离右边至少8px
+      left = windowWidth - popoverWidth - 8
     }
 
     popoverStyle.value = {
@@ -188,7 +117,6 @@ const show = async (targetElement?: HTMLElement): Promise<void> => {
     }
   }
 
-  // 显示弹窗并加载数据
   visible.value = true
   await nextTick()
   loadUsers()
@@ -205,55 +133,31 @@ const isUserExists = (username: string): boolean => {
 }
 
 // 处理用户点击
-const handleUserClick = (user: userInfo): void => {
-  console.log("用户点击:", user)
-
-  // 如果用户已存在，不执行添加操作
-  if (isUserExists(user.username)) {
-    console.log("用户已存在，跳过添加")
-    return
-  }
-
+const handleUserClick = (user: IIamUser): void => {
+  if (isUserExists(user.username)) return
   props.addRotaGroup(user)
   visible.value = false
   cleanup()
 }
 
-// 处理取消按钮
+// 处理取消和遮罩层点击
 const handleCancel = (): void => {
   visible.value = false
   cleanup()
 }
 
-// 处理遮罩层点击
 const handleOverlayClick = (): void => {
   visible.value = false
   cleanup()
 }
 
-// 清理资源
 const cleanup = (): void => {
-  // 取消进行中的请求
-  if (abortController) {
-    abortController.abort()
-    abortController = null
-  }
-
-  // 重置状态
   keyword.value = ""
   usersData.value = []
   loading.value = false
-  paginationData.value.currentPage = 1
-  paginationData.value.total = 0
-
-  // 取消防抖
-  debouncedSearch.cancel()
+  currentPage.value = 1
+  total.value = 0
 }
-
-// 组件卸载时清理
-onUnmounted(() => {
-  cleanup()
-})
 </script>
 
 <style scoped>

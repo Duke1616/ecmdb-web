@@ -52,7 +52,7 @@
 <script lang="ts" setup>
 import { schedule as scheduleCard } from "@/api/rota/types/rota"
 import { isEqual } from "lodash-es"
-import { defineProps, watch, computed } from "vue"
+import { watch, computed } from "vue"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 import { Calendar, Clock, User } from "@element-plus/icons-vue"
 
@@ -76,9 +76,9 @@ const memberList = computed(() => {
   if (!props.schedule?.rota_group?.members) return []
 
   const usernames = props.schedule.rota_group.members
-  userToolsStore.setByUsernames(usernames)
+  userToolsStore.batchResolveUsers(usernames)
 
-  return usernames.map((username) => userToolsStore.getOnlyDisplayName(username) || username).filter((name) => name)
+  return usernames.map((username) => userToolsStore.getNickname(username) || username).filter((name) => name)
 })
 
 // 获取成员名字并处理缓存逻辑
@@ -86,10 +86,10 @@ const getMemberNames = (usernames: string[] | undefined): string => {
   if (!usernames || usernames.length === 0) return ""
 
   // 录入 map 数据
-  userToolsStore.setByUsernames(usernames)
+  userToolsStore.batchResolveUsers(usernames)
 
   // 从缓存中获取数据
-  const names: string[] = usernames.map((username) => userToolsStore.getOnlyDisplayName(username) || "")
+  const names: string[] = usernames.map((username) => userToolsStore.getNickname(username) || "")
 
   return names.filter((name) => name).join(", ")
 }

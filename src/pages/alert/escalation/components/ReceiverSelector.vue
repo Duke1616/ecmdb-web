@@ -122,13 +122,13 @@ import { ref, computed, onMounted, watch } from "vue"
 import { Search, Close, User, UserFilled, OfficeBuilding, Clock, Loading } from "@element-plus/icons-vue"
 import type { ReceiverRef, ReceiverType } from "@/api/alert/escalation/types"
 import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
-import { listUsersApi } from "@/api/user"
+import { listUsersApi } from "@/api/iam/user"
 import { listTeamsApi } from "@/api/alert/team"
-import { listDepartmentTreeApi } from "@/api/department"
+import { listDepartmentTreeApi } from "@/api/iam/department"
 import { listRotasApi } from "@/api/rota"
-import type { user } from "@/api/user/types/user"
+import type { User as IIamUser } from "@/api/iam/user/type"
 import type { Team } from "@/api/alert/team/types"
-import type { department } from "@/api/department/types/department"
+import type { IDepartmentNode as IDepartment } from "@/api/iam/department/type"
 import type { rota } from "@/api/rota/types/rota"
 import { usePagination } from "@/common/composables/usePagination"
 
@@ -228,11 +228,11 @@ const loadUsers = async () => {
     }
 
     const { data } = await listUsersApi(params)
-    receiversData.value[RECEIVER_TYPES.USER] = data.users.map((user: user) => ({
+    receiversData.value[RECEIVER_TYPES.USER] = data.users.map((user: IIamUser) => ({
       id: user.id,
       name: user.username,
-      display_name: user.display_name,
-      description: user.title || user.email || "用户"
+      display_name: user.nickname || user.username,
+      description: user.job_title || user.email || "用户"
     }))
     paginationData.total = data.total || 0
   } catch (error) {
@@ -272,7 +272,7 @@ const loadDepartments = async () => {
     const { data } = await listDepartmentTreeApi()
 
     // 扁平化部门数据，并添加层级路径信息
-    const flattenDepartments = (depts: department[], parentPath: string = ""): any[] => {
+    const flattenDepartments = (depts: IDepartment[], parentPath: string = ""): any[] => {
       let result: any[] = []
       depts.forEach((dept) => {
         const currentPath = parentPath ? `${parentPath} - ${dept.name}` : dept.name

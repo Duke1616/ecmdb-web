@@ -33,11 +33,11 @@
       >
         <div class="user-avatar">
           <el-avatar :size="32" :style="{ backgroundColor: generateColor(user.username) }">
-            {{ (user.display_name || user.username).charAt(0).toUpperCase() }}
+            {{ (user.nickname || user.username).charAt(0).toUpperCase() }}
           </el-avatar>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ user.display_name || user.username }}</div>
+          <div class="user-name">{{ user.nickname || user.username }}</div>
           <div class="user-meta">{{ user.username }}</div>
         </div>
         <el-icon v-if="isSelected(user.username)" class="check-icon"><Check /></el-icon>
@@ -52,9 +52,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { onMounted, watch } from "vue"
 import { Search, Check, User } from "@element-plus/icons-vue"
-import { listUsersByKeywordApi } from "@/api/user"
+import { useUsers } from "@/common/composables/useUsers"
+import type { IMemberUser } from "@/common/composables/useUsers"
 
 interface Props {
   selectedUsernames: string[]
@@ -65,16 +66,22 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  (e: "change", users: any[]): void
+  (e: "change", users: IMemberUser[]): void
 }>()
 
-const searchQuery = ref("")
-const loading = ref(false)
-const currentPage = ref(1)
-const pageSize = 10
-const total = ref(0)
-const displayUsers = ref<any[]>([])
-const selectedUsers = ref<any[]>([])
+const {
+  loading,
+  usersList: displayUsers,
+  total,
+  currentPage,
+  pageSize,
+  keyword: searchQuery,
+  loadUsersList: loadUsers,
+  handleSearch,
+  handlePageChange,
+  selectedUsers,
+  loadSelectedUsers
+} = useUsers({ pageSize: 10 })
 
 const isSelected = (username: string) => {
   return selectedUsers.value.some((u) => u.username === username)
@@ -85,37 +92,16 @@ const toggleUser = (user: any) => {
   if (index > -1) {
     selectedUsers.value.splice(index, 1)
   } else {
-    selectedUsers.value.push(user)
+    selectedUsers.value.push({
+      id: user.id,
+      username: user.username,
+      nickname: user.nickname || user.username,
+      avatar: user.avatar || "",
+      email: user.email || "",
+      phone: user.phone || ""
+    })
   }
   emit("change", selectedUsers.value)
-}
-
-const loadUsers = async () => {
-  loading.value = true
-  try {
-    const { data } = await listUsersByKeywordApi({
-      offset: (currentPage.value - 1) * pageSize,
-      limit: pageSize,
-      keyword: searchQuery.value
-    })
-    displayUsers.value = data.users || []
-    total.value = data.total || 0
-  } catch (e) {
-    console.error(e)
-    displayUsers.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadUsers()
-}
-
-const handlePageChange = () => {
-  loadUsers()
 }
 
 // 生成头像颜色
@@ -128,23 +114,11 @@ const generateColor = (str: string) => {
   return colors[Math.abs(hash) % colors.length]
 }
 
-// 初始化已选用户
+// 监控 selectedUsernames 并更新
 watch(
   () => props.selectedUsernames,
-  async (usernames) => {
-    if (usernames.length > 0 && selectedUsers.value.length === 0) {
-      // 如果有初始选中的用户名，需要加载这些用户的完整信息
-      try {
-        const { data } = await listUsersByKeywordApi({
-          offset: 0,
-          limit: 100,
-          keyword: ""
-        })
-        selectedUsers.value = (data.users || []).filter((u: any) => usernames.includes(u.username))
-      } catch (e) {
-        console.error(e)
-      }
-    }
+  (usernames) => {
+    loadSelectedUsers(usernames)
   },
   { immediate: true }
 )

@@ -253,7 +253,7 @@ const getRuleList = async () => {
 function handleEventMouseEnter(info: EventHoveringArg) {
   // 创建 Vue 应用程序
   const memberNames = (info.event.extendedProps.members || [])
-    .map((username: string) => userToolsStore.getOnlyDisplayName(username) || username)
+    .map((username: string) => userToolsStore.getNickname(username) || username)
     .join("、")
 
   console.log(info.event.start)
@@ -442,7 +442,7 @@ watch(
   (newMembers, oldMembers) => {
     if (!isEqual(newMembers, oldMembers)) {
       // 例如，重新加载数据或更新视图
-      userToolsStore.setByUsernames(newMembers)
+      userToolsStore.batchResolveUsers(newMembers)
     }
   },
   { deep: true }

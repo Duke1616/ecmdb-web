@@ -1,7 +1,7 @@
 import { listTeamsApi, getTeamDetailApi } from "@/api/alert/team"
 import { listRotasApi } from "@/api/rota"
-import { listDepartmentTreeApi } from "@/api/department"
-import { findByUsernamesApi } from "@/api/user"
+import { listDepartmentTreeApi } from "@/api/iam/department"
+import { useUserStore } from "@/pinia/stores/user"
 import { OfficeBuilding, Clock, User } from "@element-plus/icons-vue"
 
 import type { ReceiverStrategy } from "./registry"
@@ -112,17 +112,17 @@ export const UserAppointStrategy: ReceiverStrategy = {
   // 人员选择器由专门的组件 UserSelector 管控，无需注册 fetchList
   resolveNames: async (ids) => {
     const dict: Record<string, string> = {}
-    try {
-      const { data } = await findByUsernamesApi(ids)
-      data.users.forEach((u) => {
-        dict[u.username] = u.display_name || u.username
+    const userStore = useUserStore()
+    await Promise.allSettled(
+      ids.map(async (username) => {
+        try {
+          const user = await userStore.getUserByUsername(username)
+          dict[username] = user ? user.nickname || user.username : username
+        } catch {
+          dict[username] = username
+        }
       })
-      ids.forEach((id) => {
-        if (!dict[id]) dict[id] = id
-      })
-    } catch {
-      ids.forEach((id) => (dict[id] = id))
-    }
+    )
     return dict
   }
 }

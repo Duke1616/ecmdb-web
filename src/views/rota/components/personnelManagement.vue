@@ -87,7 +87,7 @@
     </div>
 
     <!-- 用户选择器 -->
-    <UserPopover ref="userPopoverRef" :add-rota-group="addRotaGroup" :existing-users="existingUsers" />
+    <UserPopoverPicker ref="userPopoverPickerRef" :disabled-keys="existingUsers" @select="handleUserSelect" />
   </div>
 </template>
 
@@ -97,8 +97,8 @@ import { ElMessage } from "element-plus"
 import { VueDraggable } from "vue-draggable-plus"
 import { User, Close, Grid, Plus, Delete } from "@element-plus/icons-vue"
 import type { rotaGroup } from "@/api/rota/types/rota"
-import { user as userInfo } from "@/api/user/types/user"
-import UserPopover from "./userPopover.vue"
+import type { User as IIamUser } from "@/api/iam/user/type"
+import UserPopoverPicker from "@/common/components/UserPopoverPicker/UserPopoverPicker.vue"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 import { useGroupManagement } from "../composables/useGroupManagement"
 
@@ -112,26 +112,26 @@ const renderKey = ref(0)
 const { currentAddingGroupId, existingUsers, addNewGroup, removeGroup, addUserToGroup, removeUserFromGroup } =
   useGroupManagement(rotaGroupsForm, renderKey)
 
-const userPopoverRef = ref()
+const userPopoverPickerRef = ref<{ show: (targetElement?: HTMLElement) => void }>()
 
 const getUserByUsername = (username: string) => {
-  return userToolsStore.getUsername(username)
+  return userToolsStore.getFullDisplayName(username)
 }
 
 // 添加成员到指定组
 const addMemberToGroup = (groupId: number, event: Event) => {
   currentAddingGroupId.value = groupId
   const buttonElement = event.target as HTMLElement
-  userPopoverRef.value?.show(buttonElement)
+  userPopoverPickerRef.value?.show(buttonElement)
 }
 
-// 添加用户到当前组
-const addRotaGroup = (user: userInfo) => {
+// 处理用户选择
+const handleUserSelect = (user: IIamUser) => {
   if (!currentAddingGroupId.value) return
 
   const success = addUserToGroup(currentAddingGroupId.value, user)
   if (success) {
-    userToolsStore.setToMap(user.username, user.display_name + " [" + user.username + "] ")
+    userToolsStore.setDisplayName(user.username, `${user.nickname || user.username} [${user.username}]`)
   }
   currentAddingGroupId.value = null
 }

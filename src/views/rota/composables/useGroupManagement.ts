@@ -1,9 +1,10 @@
 import { ref, computed } from "vue"
+import type { Ref } from "vue"
 import { ElMessage } from "element-plus"
 import { rotaGroup } from "@/api/rota/types/rota"
-import { user as userInfo } from "@/api/user/types/user"
+import type { User as IIamUser } from "@/api/iam/user/type"
 
-export function useGroupManagement(rotaGroups: any, renderKey: any) {
+export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<number>) {
   const currentAddingGroupId = ref<number | null>(null)
 
   // 计算当前组已存在的用户列表
@@ -51,7 +52,7 @@ export function useGroupManagement(rotaGroups: any, renderKey: any) {
   }
 
   // 添加用户到组
-  const addUserToGroup = (groupId: number, user: userInfo) => {
+  const addUserToGroup = (groupId: number, user: IIamUser) => {
     const groupIndex = rotaGroups.value.findIndex((g: rotaGroup) => g.id === groupId)
     if (groupIndex === -1) return false
 

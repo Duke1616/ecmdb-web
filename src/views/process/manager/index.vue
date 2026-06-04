@@ -98,7 +98,7 @@ import { workflow, createOrUpdateWorkflowReq } from "@/api/ticket/workflow/types
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import Preview from "./preview/Preview.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { findByUsernamesApi } from "@/api/user"
+import { useUserStore } from "@/pinia/stores/user"
 import WizardContainer from "@/common/components/WizardContainer/index.vue"
 import { COMMON_STEPS } from "@/common/constants/wizard-steps"
 import { getFormRulesByStep } from "@/common/constants/form-rules"
@@ -306,16 +306,20 @@ const listFlowsData = () => {
     })
     .finally(() => {})
 }
+const userStore = useUserStore()
 const userMaps = ref(new Map<string, string>())
-const getUsernamesData = (uns: string[]) => {
-  findByUsernamesApi(uns)
-    .then(({ data }) => {
-      data.users.forEach((node) => {
-        userMaps.value.set(node.username, node.display_name)
-      })
-    })
-    .catch(() => {})
-    .finally(() => {})
+const getUsernamesData = async (uns: string[]) => {
+  const promises = uns.map(async (username) => {
+    try {
+      const u = await userStore.getUserByUsername(username)
+      if (u) {
+        userMaps.value.set(username, u.nickname || u.username)
+      }
+    } catch (error) {
+      console.error(`process manager getUsernamesData failed for ${username}:`, error)
+    }
+  })
+  await Promise.all(promises)
 }
 
 const formatOwner = (row: workflow) => {
