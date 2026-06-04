@@ -59,9 +59,9 @@ onMounted(async () => {
 
     // 如果返回了 bind_token，说明该账号尚未绑定，跳转到登录页进入绑定模式
     if (businessData.bind_token) {
-      router.push({ 
-        path: "/login", 
-        query: { bind_token: businessData.bind_token } 
+      router.push({
+        path: "/login",
+        query: { bind_token: businessData.bind_token }
       })
       return
     }

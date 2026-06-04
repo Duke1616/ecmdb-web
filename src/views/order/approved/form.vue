@@ -83,7 +83,13 @@
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
 import formCreate, { FormRule, Api } from "@form-create/element-ui"
 import { ref, watch } from "vue"
-import { getOrderByProcessInstIdApi, passOrderApi, rejectOrderApi, revokeOrderApi, transferOrderApi } from "@/api/ticket/order/index.js"
+import {
+  getOrderByProcessInstIdApi,
+  passOrderApi,
+  rejectOrderApi,
+  revokeOrderApi,
+  transferOrderApi
+} from "@/api/ticket/order/index.js"
 import { passOrder } from "@/api/ticket/order/types/order.js"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, Options, ElMessageBox, ElMessage } from "element-plus"

@@ -45,7 +45,7 @@
 
       <div v-if="displayUsers.length === 0 && !loading" class="empty-state">
         <el-icon><User /></el-icon>
-        <span>{{ searchQuery ? '未找到匹配的用户' : '暂无用户数据' }}</span>
+        <span>{{ searchQuery ? "未找到匹配的用户" : "暂无用户数据" }}</span>
       </div>
     </div>
   </div>
@@ -120,16 +120,7 @@ const handlePageChange = () => {
 
 // 生成头像颜色
 const generateColor = (str: string) => {
-  const colors = [
-    "#3b82f6",
-    "#8b5cf6",
-    "#ec4899",
-    "#f59e0b",
-    "#10b981",
-    "#06b6d4",
-    "#6366f1",
-    "#f43f5e"
-  ]
+  const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4", "#6366f1", "#f43f5e"]
   let hash = 0
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)

@@ -216,12 +216,12 @@ defineExpose({
 </style>
 
 <style lang="scss">
-.department-form-inner .user-picker-container {
-  .user-picker-input {
+.department-form-inner .generic-picker-container {
+  .picker-input-box {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 6px 12px;
+    padding: 0 12px;
     min-height: 38px;
     height: auto;
     box-shadow: none;
@@ -238,12 +238,27 @@ defineExpose({
     }
   }
 
-  .selected-users {
+  &.is-single {
+    .picker-input-box {
+      height: 38px;
+      min-height: 38px;
+    }
+  }
+
+  &.is-multiple {
+    .picker-input-box {
+      padding: 4px 12px;
+      min-height: 38px;
+      height: auto;
+    }
+  }
+
+  .selected-tags {
     gap: 4px;
     min-height: 22px;
   }
 
-  .user-tag {
+  .picker-tag {
     padding: 1px 4px;
     border-radius: 6px;
     font-size: 11px;

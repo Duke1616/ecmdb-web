@@ -4,37 +4,49 @@ import { defineStore } from "pinia"
 import { useTagsViewStore } from "./tags-view"
 import { useSettingsStore } from "./settings"
 import { resetRouter } from "@/router"
-import { getProfileApi } from "@/api/iam/user"
+import { getProfileApi, logoutApi, userDetailApi, listUsersApi } from "@/api/iam/user"
 import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
-import { logoutApi } from "@/api/iam/user"
 import { switchTenantApi } from "@/api/iam/tenant"
+
+/**
+ * 安全请求封装函数，用以精简 store 内的 try-catch，并在出错时提供降级防护
+ * @param req 异步请求方法
+ */
+async function safeRequest<T>(req: () => Promise<T>): Promise<T | null> {
+  try {
+    return await req()
+  } catch (error) {
+    console.warn("safeRequest caught error:", error)
+    return null
+  }
+}
 
 export const useUserStore = defineStore(
   "user",
   () => {
-    const token = ref<string>("")
-    const username = ref<string>("")
+    const token = ref("")
+    const username = ref("")
     const userInfo = ref<user.User | null>(null)
     const tenants = ref<user.Tenant[]>([])
-    const currentTenantId = ref<number>(0)
-    const isAdmin = ref<boolean>(false)
+    const currentTenantId = ref(0)
+    const isAdmin = ref(false)
     const permissions = ref<string[]>([])
-    const roles = ref<string[]>(["admin"]) // TODO: 从 IAM 获取真实的 roles
+    const roles = ref<string[]>(["admin"])
 
     const tagsViewStore = useTagsViewStore()
     const settingsStore = useSettingsStore()
     const permissionStore = usePermissionStoreHook()
 
-    let _infoPromise: Promise<void> | null = null
-
-    /** 获取登录用户信息 */
-    const getInfo = async () => {
-      if (_infoPromise) return _infoPromise
-
-      _infoPromise = (async () => {
-        try {
+    /**
+     * 获取当前登录用户信息（闭包单例 Promise 缓存，全局防止并发请求风暴）
+     */
+    const getInfo = (() => {
+      let promise: Promise<void> | null = null
+      return async () => {
+        if (promise) return promise
+        promise = (async () => {
           const { data } = await getProfileApi()
           userInfo.value = data.user
           username.value = data.user.username
@@ -42,51 +54,61 @@ export const useUserStore = defineStore(
           currentTenantId.value = data.current_tenant_id
           isAdmin.value = data.is_admin
           permissions.value = data.permissions || []
+        })()
+        try {
+          await promise
         } finally {
-          _infoPromise = null
+          promise = null
         }
-      })()
+      }
+    })()
 
-      return _infoPromise
+    /**
+     * 统一解析用户详情（二阶段防御降级检索）
+     * @param un 目标用户名
+     */
+    const resolveUser = async (un: string): Promise<user.User | null> => {
+      if (!un) return null
+      await getInfo()
+      if (username.value === un && userInfo.value) return userInfo.value
+
+      // 1. 优先采用详情接口反解
+      const userDetail = await safeRequest(() => userDetailApi({ username: un }))
+      if (userDetail?.data?.user) return userDetail.data.user
+
+      // 2. 详情查询报错/权限受限时，降级使用列表查询精确过滤
+      const userList = await safeRequest(() => listUsersApi({ keyword: un, offset: 0, limit: 10 }))
+      return userList?.data?.users?.find((u) => u.username === un) || null
     }
 
-    /** 切换租户 */
+    /**
+     * 切换租户
+     * @param tenant 目标租户
+     */
     const switchTenant = async (tenant: user.Tenant) => {
       try {
         await switchTenantApi(tenant.id)
-
-        // 切换租户后跳转到首页导航页，避免因新租户权限不同导致当前页面 404
-        // 同时触发全页刷新以重新执行路由守卫并加载新权限
+        // 切换租户后跳转到首页导航页并刷新，以重新执行路由守卫并加载新权限
         window.location.href = "/navigation"
       } catch (err: any) {
         ElMessage.error(err.message || "切换租户失败")
       }
     }
 
-    /** 统一解析用户详情（安全模式：仅缓存自己，别人按需查询） */
-    const resolveUser = async (un: string): Promise<user.User | null> => {
-      if (!un) return null
-
-      // 1. 确保已获取“我”的信息
-      await getInfo()
-
-      // 2. 如果查的是“自己”，精准返回缓存
-      if (username.value === un && userInfo.value) {
-        return userInfo.value
-      }
-
-      // 3. 查的是别人，发起请求但不存入全局 Store 缓存
-      // TODO: 等待 IAM 实现相关查询接口
-      return null
-    }
-
-    // 设置 Token
     const setToken = (value: string) => {
       token.value = value
       _setToken(value)
     }
 
-    /** 登出 */
+    const resetToken = () => {
+      removeToken()
+      token.value = ""
+      userInfo.value = null
+    }
+
+    /**
+     * 登出系统并清空状态
+     */
     const logout = async () => {
       try {
         await logoutApi()
@@ -94,23 +116,11 @@ export const useUserStore = defineStore(
         resetToken()
         permissionStore.dynamicRoutes = []
         resetRouter()
-        _resetTagsView()
+        if (!settingsStore.cacheTagsView) {
+          tagsViewStore.delAllVisitedViews()
+          tagsViewStore.delAllCachedViews()
+        }
         window.location.href = "/login"
-      }
-    }
-
-    /** 重置 Token */
-    const resetToken = () => {
-      removeToken()
-      token.value = ""
-      userInfo.value = null
-    }
-
-    /** 重置 Visited Views 和 Cached Views */
-    const _resetTagsView = () => {
-      if (!settingsStore.cacheTagsView) {
-        tagsViewStore.delAllVisitedViews()
-        tagsViewStore.delAllCachedViews()
       }
     }
 
@@ -119,20 +129,21 @@ export const useUserStore = defineStore(
     }
 
     return {
+      token,
       username,
       userInfo,
       tenants,
       currentTenantId,
       isAdmin,
+      permissions,
       roles,
-      setToken,
       getInfo,
-      switchTenant,
       resolveUser,
-      logout,
+      switchTenant,
+      setToken,
       resetToken,
-      changeRoles,
-      permissions
+      logout,
+      changeRoles
     }
   },
   {
