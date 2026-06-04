@@ -140,6 +140,26 @@ export const IAM_CAPABILITIES = {
     UnbindIdentity: "iam:user:unbind_identity"
   },
 
+  /** 部门管理相关 */
+  Department: {
+    /** 查看部门列表 */
+    View: "iam:department:view",
+    /** 新增部门 */
+    Add: "iam:department:add",
+    /** 编辑部门 */
+    Edit: "iam:department:edit",
+    /** 获取部门详情 */
+    Detail: "iam:department:get",
+    /** 删除部门 */
+    Delete: "iam:department:delete",
+    /** 分配成员 */
+    Assign: "iam:department:assign",
+    /** 移除成员 */
+    Remove: "iam:department:remove",
+    /** 查看部门成员 */
+    ViewMembers: "iam:department:members"
+  },
+
   /** 身份源管理相关 */
   IdentitySource: {
     /** 查看身份源 */
