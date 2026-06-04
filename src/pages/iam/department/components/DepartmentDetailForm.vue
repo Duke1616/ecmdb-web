@@ -39,7 +39,7 @@
           <el-col :span="12">
             <el-form-item label="部门主管" prop="leaders">
               <UserPicker
-                v-model="selectedLeaders"
+                v-model="localFormData.leaders"
                 placeholder="选择部门主管"
                 :multiple="true"
                 :default-to-current-user="false"
@@ -50,25 +50,10 @@
           <el-col :span="12">
             <el-form-item label="分管领导" prop="main_leader">
               <UserPicker
-                v-model="selectedMainLeaderUsername"
+                v-model="localFormData.main_leader"
                 placeholder="选择分管领导"
                 :default-to-current-user="false"
                 class="modern-select"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="24">
-          <el-col :span="12">
-            <el-form-item label="部门排序" prop="sort">
-              <el-input-number
-                v-model="localFormData.sort"
-                :min="0"
-                :max="9999"
-                placeholder="请输入排序值"
-                controls-position="right"
-                class="form-input-number"
               />
             </el-form-item>
           </el-col>
@@ -104,17 +89,13 @@ const props = defineProps<IDepartmentDetailFormProps>()
 // NOTE: 为遵守 ESLint 规则并避免在模板中直接修改 props 对象属性，本地声明 localFormData 代理引用
 const localFormData = props.formData
 
-// NOTE: selectedLeaders 与 selectedMainLeaderUsername 用于选择框双向绑定，采用 defineModel 来处理，由父组件接收更改以支持多页面状态共享
-const selectedLeaders = defineModel<string[]>("selectedLeaders", { default: () => [] })
-const selectedMainLeaderUsername = defineModel<string>("selectedMainLeaderUsername", { default: "" })
-
 const formRef = ref<FormInstance | null>(null)
 
-const defaultProps = ref<any>({
+const defaultProps = {
   children: "children",
   label: (node: IDepartmentNode) => node.name,
   key: "id"
-})
+}
 
 const formRules: FormRules = {
   name: [{ required: true, message: "部门名称不能为空", trigger: "blur" }]

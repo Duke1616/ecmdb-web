@@ -38,7 +38,9 @@
             node-key="id"
             :highlight-current="true"
             :expand-on-click-node="false"
+            draggable
             @node-click="handleNodeClick"
+            @node-drop="handleNodeDrop"
             :current-node-key="currentNodeKey || undefined"
             :props="defaultProps"
             :filter-node-method="filterNode"
@@ -75,17 +77,18 @@ const emits = defineEmits<{
   (e: "node-click", node: IDepartmentNode): void
   (e: "add-dept"): void
   (e: "add-sub-dept"): void
+  (e: "node-drop", data: { draggingId: number; parentId: number }): void
 }>()
 
 const filterInput = ref("")
 const isExpand = ref(false)
 const treeRef = ref<InstanceType<typeof ElTree>>()
 
-const defaultProps = ref<any>({
+const defaultProps = {
   children: "children",
-  label: (node: IDepartmentNode) => node.name,
+  label: "name",
   key: "id"
-})
+}
 
 const departmentCount = computed(() => props.treeData?.length || 0)
 
@@ -95,11 +98,20 @@ const handleNodeClick = (node: IDepartmentNode) => {
 }
 
 interface ITreeNode {
-  [key: string]: any
+  data: IDepartmentNode
+}
+
+// NOTE: 树节点拖拽完成回调。根据放置类型计算拖拽后节点的最新父节点 parentId 并向父组件发射更新事件
+const handleNodeDrop = (draggingNode: ITreeNode, dropNode: ITreeNode, dropType: "before" | "after" | "inner") => {
+  const parentId = dropType === "inner" ? dropNode.data.id : dropNode.data.parent_id || 0
+  emits("node-drop", {
+    draggingId: draggingNode.data.id,
+    parentId
+  })
 }
 
 // 树搜索过滤规则
-const filterNode = (value: string, data: ITreeNode) => {
+const filterNode = (value: string, data: Record<string, any>) => {
   if (!value) return true
   return typeof data.name === "string" && data.name.includes(value)
 }

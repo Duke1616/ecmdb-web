@@ -1,5 +1,6 @@
 import { ref, computed } from "vue"
-import { listDepartmentTreeApi } from "@/api/iam/department"
+import { ElMessage } from "element-plus"
+import { listDepartmentTreeApi, updateDepartmentApi } from "@/api/iam/department"
 import type { IDepartmentNode } from "@/api/iam/department/type"
 
 /**
@@ -51,12 +52,54 @@ export function useDepartmentTree() {
     }
   }
 
+  /**
+   * 更新指定父节点下所有子部门的排序与层级关系并保存
+   */
+  const saveTreeLayout = async (parentId: number) => {
+    // 1. 查找拖拽放置后的新父节点下的所有直接子部门列表
+    const siblings = parentId === 0 ? treeData.value : findDepartmentById(treeData.value, parentId)?.children || []
+
+    // 2. 使用函数式链映射出真正发生实质变化的节点的更新请求
+    const updateRequests = siblings
+      .map((node, index) => ({ node, sort: (index + 1) * 10 }))
+      .filter(({ node, sort }) => node.parent_id !== parentId || node.sort !== sort)
+      .map(({ node, sort }) => {
+        // 同步修改内存以防止页面闪烁或渲染延迟
+        node.parent_id = parentId
+        node.sort = sort
+
+        return updateDepartmentApi({
+          id: node.id,
+          parent_id: parentId,
+          name: node.name,
+          sort,
+          leaders: node.leaders || [],
+          main_leader: node.main_leader || ""
+        })
+      })
+
+    if (updateRequests.length === 0) return
+
+    loading.value = true
+    try {
+      await Promise.all(updateRequests)
+      ElMessage.success("部门排序与层级更新成功")
+    } catch (error) {
+      console.error("更新部门排序或层级失败:", error)
+      ElMessage.error("更新位置失败，请刷新页面重试")
+    } finally {
+      loading.value = false
+      await refreshTreeData()
+    }
+  }
+
   return {
     treeData,
     loading,
     currentNodeKey,
     departmentCount,
     refreshTreeData,
-    findDepartmentById
+    findDepartmentById,
+    saveTreeLayout
   }
 }

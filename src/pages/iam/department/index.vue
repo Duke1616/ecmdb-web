@@ -15,6 +15,7 @@
         @node-click="handleNodeClick"
         @add-dept="addDepartment"
         @add-sub-dept="handleCreateSubDepartment"
+        @node-drop="handleNodeDrop"
       />
 
       <!-- 右侧内容区域 - 详情与成员 -->
@@ -28,8 +29,6 @@
                 ref="detailFormRef"
                 :form-data="formData"
                 :department-data="treeData"
-                v-model:selected-leaders="selectedLeaders"
-                v-model:selected-main-leader-username="selectedMainLeaderUsername"
               />
               <DepartmentUser v-slot="{}" v-if="activeTab === 'user'" ref="userRef" :department-id="currentNodeKey" />
             </template>
@@ -91,14 +90,20 @@ const userRef = ref<InstanceType<typeof DepartmentUser> | null>(null)
 const deptTreeComponentRef = ref<InstanceType<typeof DepartmentTree> | null>(null)
 
 // 引入树数据管理
-const { treeData, loading: treeLoading, currentNodeKey, refreshTreeData, findDepartmentById } = useDepartmentTree()
+const {
+  treeData,
+  loading: treeLoading,
+  currentNodeKey,
+  refreshTreeData,
+  findDepartmentById,
+  saveTreeLayout
+} = useDepartmentTree()
 
 // 引入表单数据管理
-const { formData, selectedLeaders, selectedMainLeaderUsername, saving, setDepartmentData, submitUpdateForm } =
-  useDepartmentForm(() => {
-    ElMessage.success("修改成功")
-    refreshTreeData()
-  })
+const { formData, saving, setDepartmentData, submitUpdateForm } = useDepartmentForm(() => {
+  ElMessage.success("修改成功")
+  refreshTreeData()
+})
 
 /**
  * 节点点击事件
@@ -196,6 +201,13 @@ const handleTabChange = (tabName: string) => {
 const handleFormSuccess = () => {
   dialogVisible.value = false
   refreshTreeData()
+}
+
+/**
+ * 处理树节点拖拽完成事件，同步更新后端关系
+ */
+const handleNodeDrop = async (eventData: { parentId: number }) => {
+  await saveTreeLayout(eventData.parentId)
 }
 
 onMounted(() => {

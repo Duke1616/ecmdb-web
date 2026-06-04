@@ -9,13 +9,7 @@
     @cancel="visible = false"
   >
     <div class="dept-form-container">
-      <DepartmentDetailForm
-        ref="detailFormRef"
-        :form-data="formData"
-        :department-data="departmentData || []"
-        v-model:selected-leaders="selectedLeaders"
-        v-model:selected-main-leader-username="selectedMainLeaderUsername"
-      />
+      <DepartmentDetailForm ref="detailFormRef" :form-data="formData" :department-data="departmentData || []" />
     </div>
   </FormDialog>
 </template>
@@ -47,20 +41,11 @@ const detailFormRef = ref<InstanceType<typeof DepartmentDetailForm> | null>(null
 const departmentData = ref<IDepartmentNode[]>()
 
 // 引入 Composable 来统一看护状态和提交
-const {
-  formData,
-  selectedLeaders,
-  selectedMainLeaderUsername,
-  saving,
-  resetForm,
-  setDepartmentData,
-  setFormForPid,
-  submitCreateForm,
-  submitUpdateForm
-} = useDepartmentForm(() => {
-  visible.value = false
-  emits("success")
-})
+const { formData, saving, resetForm, setDepartmentData, setFormForPid, submitCreateForm, submitUpdateForm } =
+  useDepartmentForm(() => {
+    visible.value = false
+    emits("success")
+  })
 
 // 递归过滤当前部门及其子部门，防止上级部门选择时死循环
 const filterSelfAndDescendants = (nodes: IDepartmentNode[], targetId: number): IDepartmentNode[] => {

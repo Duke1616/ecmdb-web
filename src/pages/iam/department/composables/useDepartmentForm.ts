@@ -18,8 +18,6 @@ interface IDepartmentFormState {
 export function useDepartmentForm(onSuccess?: (id?: number) => void) {
   const formRef = ref<FormInstance | null>(null)
   const saving = ref(false)
-  const selectedLeaders = ref<string[]>([])
-  const selectedMainLeaderUsername = ref("")
 
   const getInitialData = (): IDepartmentFormState => ({
     id: 0,
@@ -42,8 +40,6 @@ export function useDepartmentForm(onSuccess?: (id?: number) => void) {
   const resetForm = () => {
     formRef.value?.clearValidate()
     Object.assign(formData, getInitialData())
-    selectedLeaders.value = []
-    selectedMainLeaderUsername.value = ""
   }
 
   /**
@@ -57,9 +53,6 @@ export function useDepartmentForm(onSuccess?: (id?: number) => void) {
     formData.sort = node.sort
     formData.leaders = node.leaders || []
     formData.main_leader = node.main_leader || ""
-
-    selectedLeaders.value = formData.leaders
-    selectedMainLeaderUsername.value = formData.main_leader
   }
 
   /**
@@ -83,8 +76,8 @@ export function useDepartmentForm(onSuccess?: (id?: number) => void) {
         parent_id: formData.parent_id || 0,
         name: formData.name,
         sort: formData.sort || 0,
-        leaders: selectedLeaders.value,
-        main_leader: selectedMainLeaderUsername.value
+        leaders: formData.leaders,
+        main_leader: formData.main_leader
       }
       const { data } = await createDepartmentApi(payload)
       resetForm()
@@ -113,8 +106,8 @@ export function useDepartmentForm(onSuccess?: (id?: number) => void) {
         parent_id: formData.parent_id || 0,
         name: formData.name,
         sort: formData.sort || 0,
-        leaders: selectedLeaders.value,
-        main_leader: selectedMainLeaderUsername.value
+        leaders: formData.leaders,
+        main_leader: formData.main_leader
       }
       await updateDepartmentApi(payload)
       resetForm()
@@ -133,8 +126,6 @@ export function useDepartmentForm(onSuccess?: (id?: number) => void) {
     formData,
     formRules,
     saving,
-    selectedLeaders,
-    selectedMainLeaderUsername,
     resetForm,
     setDepartmentData,
     setFormForPid,
