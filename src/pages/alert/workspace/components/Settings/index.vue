@@ -198,7 +198,7 @@ import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import TeamSelector from "./TeamSelector.vue"
 import TemplateSelector from "./TemplateSelector.vue"
-import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/alert/workspace"
+import { getWorkspaceDetailApi, updateWorkspaceApi } from "@/api/alert/workspace"
 import { getTeamDetailApi } from "@/api/alert/team"
 import { getTemplateDetailApi } from "@/api/alert/template"
 import type { Workspace, SaveWorkspaceReq } from "@/api/alert/workspace/types"
@@ -321,7 +321,7 @@ const handleSaveSettings = async () => {
     await formRef.value.validate()
 
     saving.value = true
-    await saveWorkspaceApi(formData)
+    await updateWorkspaceApi(formData)
 
     ElMessage.success("设置保存成功")
 
@@ -356,7 +356,7 @@ const handleTeamConfirm = async (teamId: number, selectedTeamName: string) => {
     teamName.value = selectedTeamName
 
     // 保存设置
-    await saveWorkspaceApi(formData)
+    await updateWorkspaceApi(formData)
 
     ElMessage.success("团队修改成功")
 
@@ -376,7 +376,7 @@ const handleTemplateConfirm = async (templateId: number, selectedTemplateName: s
     templateName.value = selectedTemplateName
 
     // 保存设置
-    await saveWorkspaceApi(formData)
+    await updateWorkspaceApi(formData)
 
     ElMessage.success("模版修改成功")
 

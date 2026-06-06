@@ -104,15 +104,15 @@ export function getRuleGroupApi(id: number) {
 /** 创建告警规则组 */
 export function createRuleGroupApi(data: CreateRuleGroupReq) {
   return instance.post<CreateRuleGroupResp>({
-    url: `${API_SERVICE.ALERT}/rule/group/save`,
+    url: `${API_SERVICE.ALERT}/rule/group/create`,
     data
   })
 }
 
 /** 更新告警规则组 */
 export function updateRuleGroupApi(data: UpdateRuleGroupReq) {
-  return instance.post<RuleGroup>({
-    url: `${API_SERVICE.ALERT}/rule/group/save`,
+  return instance.put<RuleGroup>({
+    url: `${API_SERVICE.ALERT}/rule/group/update`,
     data
   })
 }

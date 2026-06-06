@@ -145,7 +145,7 @@ import { ref, onMounted } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { InfoFilled, Setting, Monitor, User } from "@element-plus/icons-vue"
-import { saveWorkspaceApi } from "@/api/alert/workspace"
+import { createWorkspaceApi, updateWorkspaceApi } from "@/api/alert/workspace"
 import { SaveWorkspaceReq } from "@/api/alert/workspace/types"
 import { listTeamsApi } from "@/api/alert/team"
 import { Team as TeamType } from "@/api/alert/team/types"
@@ -220,7 +220,8 @@ const submitForm = () => {
       return
     }
 
-    saveWorkspaceApi(formData.value)
+    const apiCall = formData.value.id ? updateWorkspaceApi(formData.value) : createWorkspaceApi(formData.value)
+    apiCall
       .then(() => {
         onClosed()
         ElMessage.success("工作空间保存成功")

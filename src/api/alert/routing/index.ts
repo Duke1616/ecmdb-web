@@ -29,14 +29,6 @@ export const updateRoutingRuleApi = (data: SaveRoutingRuleReq) => {
   })
 }
 
-// 保存路由规则（统一创建和更新）
-export const saveRoutingRuleApi = (data: SaveRoutingRuleReq) => {
-  if (data.id) {
-    return updateRoutingRuleApi(data)
-  }
-  return createRoutingRuleApi(data)
-}
-
 // 删除路由规则
 export const deleteRoutingRuleApi = (id: number) => {
   return instance.delete<DeleteRoutingRuleResponse>({

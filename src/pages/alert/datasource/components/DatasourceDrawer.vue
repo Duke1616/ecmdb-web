@@ -173,7 +173,7 @@ import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { Setting, Monitor, Check } from "@element-plus/icons-vue"
 import type { Datasource, DatasourceType } from "@/api/alert/datasource/types/datasource"
 import { DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
-import { saveDatasourceApi } from "@/api/alert/datasource"
+import { createDatasourceApi, updateDatasourceApi } from "@/api/alert/datasource"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
 
 // 引入 Logo 资源，确保 Vite 在生产环境能正确打包
@@ -417,7 +417,11 @@ const handleTestAndSave = async () => {
       auth: formData.auth
     }
 
-    await saveDatasourceApi(submitData)
+    if (isEdit.value) {
+      await updateDatasourceApi(submitData)
+    } else {
+      await createDatasourceApi(submitData)
+    }
 
     ElMessage.success(isEdit.value ? "测试连接成功并更新完成" : "测试连接成功并保存完成")
     emit("success")

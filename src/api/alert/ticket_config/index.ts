@@ -27,14 +27,6 @@ export const updateTicketConfigApi = (data: SaveTicketConfigReq) => {
   })
 }
 
-// 保存工单配置（统一创建和更新）
-export const saveTicketConfigApi = (data: SaveTicketConfigReq) => {
-  if (data.id) {
-    return updateTicketConfigApi(data)
-  }
-  return createTicketConfigApi(data)
-}
-
 // 删除工单配置
 export const deleteTicketConfigApi = (id: number) => {
   return instance.delete<DeleteTicketConfigResponse>({

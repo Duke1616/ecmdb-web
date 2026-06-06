@@ -12,10 +12,18 @@ import type {
   ToggleInhibitRuleStatusResponse
 } from "./types/index"
 
-// 保存抑制规则
-export const saveInhibitRuleApi = (data: SaveInhibitRuleReq) => {
+// 创建抑制规则
+export const createInhibitRuleApi = (data: SaveInhibitRuleReq) => {
   return instance.post<SaveInhibitRuleResponse>({
-    url: `${API_SERVICE.ALERT}/inhibit/save`,
+    url: `${API_SERVICE.ALERT}/inhibit/create`,
+    data
+  })
+}
+
+// 更新抑制规则
+export const updateInhibitRuleApi = (data: SaveInhibitRuleReq) => {
+  return instance.put<SaveInhibitRuleResponse>({
+    url: `${API_SERVICE.ALERT}/inhibit/update`,
     data
   })
 }

@@ -29,9 +29,16 @@ export const listMyTeamsApi = () => {
   })
 }
 
-export const saveWorkspaceApi = (data: SaveWorkspaceReq) => {
+export const createWorkspaceApi = (data: SaveWorkspaceReq) => {
   return instance.post<Workspace>({
-    url: `${API_SERVICE.ALERT}/workspace/save`,
+    url: `${API_SERVICE.ALERT}/workspace/create`,
+    data
+  })
+}
+
+export const updateWorkspaceApi = (data: SaveWorkspaceReq) => {
+  return instance.put<Workspace>({
+    url: `${API_SERVICE.ALERT}/workspace/update`,
     data
   })
 }

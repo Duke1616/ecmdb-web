@@ -193,7 +193,8 @@ import { FormDialog } from "@@/components/Dialogs"
 import {
   listInhibitRulesByWorkspaceApi,
   deleteInhibitRuleApi,
-  saveInhibitRuleApi,
+  createInhibitRuleApi,
+  updateInhibitRuleApi,
   toggleInhibitRuleStatusApi
 } from "@/api/alert/inhibit"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
@@ -384,7 +385,11 @@ const handleConfirm = async () => {
 
   try {
     submitting.value = true
-    await saveInhibitRuleApi(formData.value)
+    if (isEdit.value) {
+      await updateInhibitRuleApi(formData.value)
+    } else {
+      await createInhibitRuleApi(formData.value)
+    }
     ElMessage.success(isEdit.value ? "规则更新成功" : "规则创建成功")
 
     dialogVisible.value = false

@@ -36,11 +36,21 @@ export const getTeamDetailApi = (id: number) => {
 }
 
 /**
- * 保存团队
+ * 创建团队
  */
-export const saveTeamApi = (data: SaveTeamReq) => {
+export const createTeamApi = (data: SaveTeamReq) => {
   return instance.post<Team>({
-    url: `${API_SERVICE.ALERT}/team/save`,
+    url: `${API_SERVICE.ALERT}/team/create`,
+    data
+  })
+}
+
+/**
+ * 更新团队
+ */
+export const updateTeamApi = (data: SaveTeamReq) => {
+  return instance.put<Team>({
+    url: `${API_SERVICE.ALERT}/team/update`,
     data
   })
 }
