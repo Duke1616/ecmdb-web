@@ -1,4 +1,4 @@
-import { ref, reactive, onMounted, watch, toRef } from "vue"
+import { ref, reactive, computed, onMounted, watch, toRef } from "vue"
 import { ElMessage, type FormInstance } from "element-plus"
 import { getPermissionManifestApi, listMenusByURNsApi } from "@/api/iam/permission"
 import { createPolicyApi, getPolicyDetailApi, updatePolicyApi } from "@/api/iam/policy"
@@ -111,19 +111,16 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
 
       permissionManifest.value = enrichManifest(manifestRes.data)
 
-      // 提取 URN 列表并批量查询菜单详情
-      const urnList: string[] = []
-      if (manifestRes.data && Array.isArray(manifestRes.data.actions)) {
-        manifestRes.data.actions.forEach((act) => {
-          if (act.has_menu && Array.isArray(act.menu_urns)) {
-            act.menu_urns.forEach((u) => {
-              if (u && !urnList.includes(u)) {
-                urnList.push(u)
-              }
-            })
-          }
-        })
-      }
+      // NOTE: 扁平提取 URN 列表并批量查询菜单详情。使用 flatMap 与 Set 简化层级嵌套，提升可读性。
+      const rawActions = manifestRes.data?.actions || []
+      const urnList = [
+        ...new Set(
+          rawActions
+            .filter((act) => act.has_menu && Array.isArray(act.menu_urns))
+            .flatMap((act) => act.menu_urns || [])
+            .filter(Boolean)
+        )
+      ] as string[]
 
       if (urnList.length > 0) {
         try {
@@ -173,6 +170,7 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
 
 /**
  * 内部辅助 Composable：管理可视化与 JSON 模式的平滑同步
+ * NOTE: 此 Composable 将模式切换及底层双重同步封装为黑盒，确保双向绑定状态的一致性，防止视图和代码脱节。
  */
 function useDualModeEditor(statement: import("vue").Ref<any[]>) {
   const editorMode = ref<"visual" | "json">("visual")
@@ -192,19 +190,20 @@ function useDualModeEditor(statement: import("vue").Ref<any[]>) {
     }
   }
 
-  // 模式切换拦截与自动同步
+  // NOTE: 侦听 editorMode。当用户切换到 json 编辑模式时，自动由可视化数据生成最新 JSON；
+  // 当切换回 visual 模式时，对当前编辑的 JSON 运行反序列化，若解析失败则强制拦截并停留于 json 模式。
   watch(editorMode, (newMode, oldMode) => {
     if (newMode === "json") {
       syncFromVisual()
     } else if (newMode === "visual" && oldMode === "json") {
       if (!trySyncFromJson()) {
-        // 解析失败，强制停留（不使用 setTimeout，通过 nextTick 解决或直接重置）
         editorMode.value = "json"
       }
     }
   })
 
-  // 实时监听可视化变更（保持 JSON 预览同步）
+  // NOTE: 实时侦听可视化状态的变化。只有在处于可视化模式（visual）下，才执行 JSON 状态的静默同步，
+  // 避免在脚本模式下键入不完整 JSON 时触发错误的解析警报。
   watch(
     statement,
     () => {

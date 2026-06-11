@@ -1,19 +1,23 @@
 <template>
   <div class="grp-row" :class="getGrpRowClass(grp.name)">
-    <!-- 左侧：目录分类 Header，带有树连线和全选复选框，宽度缩窄至 140px -->
-    <div class="grp-header" :class="getGrpHeaderClass(grp.name)">
-      <!-- 树形连接线 -->
-      <div v-if="getGrpDepth(grp.name) > 1" class="tree-indent-wrapper">
+    <!-- 左侧：目录分类 Header，采用层级缩进与极细引导线，宽度 160px -->
+    <div
+      class="grp-header"
+      :class="[getGrpHeaderClass(grp.name), { 'is-header-active': getGrpState(grp).all || getGrpState(grp).some }]"
+      :style="{ paddingLeft: `${14 + (getGrpDepth(grp.name) - 1) * 20}px` }"
+    >
+      <!-- 渲染极细的垂直层级引导线，不使用折角连线 -->
+      <template v-if="getGrpDepth(grp.name) > 1">
         <div
-          v-for="i in getGrpDepth(grp.name) - 1"
-          :key="i"
-          class="tree-indent-col"
-          :class="{ 'is-last': i === getGrpDepth(grp.name) - 1 }"
-        >
-          <div class="tree-line-vertical" />
-          <div v-if="i === getGrpDepth(grp.name) - 1" class="tree-line-horizontal" />
-        </div>
-      </div>
+          v-for="d in getGrpDepth(grp.name) - 1"
+          :key="d"
+          class="tree-scope-track"
+          :style="{ left: `${20 + (d - 1) * 20}px` }"
+        />
+      </template>
+
+      <!-- 最左侧激活指示条 -->
+      <div class="depth-indicator-bar" />
 
       <el-checkbox
         :model-value="getGrpState(grp).all"
@@ -23,11 +27,13 @@
       >
         <div class="grp-name-wrapper">
           <template v-if="getGrpDepth(grp.name) > 1">
-            <!-- 微型直属父级路径，没有背景，仅文字展示，极省空间 -->
-            <span class="parent-prefix">{{ getGrpNameParts(grp.name).slice(0, -1).join(" / ") }}</span>
-            <span class="child-name">{{ getGrpNameParts(grp.name)[getGrpNameParts(grp.name).length - 1] }}</span>
+            <!-- 子分类：正常字重，略微淡化字色，保证清晰的从属关系 -->
+            <span class="child-name">
+              {{ getGrpNameParts(grp.name)[getGrpNameParts(grp.name).length - 1] }}
+            </span>
           </template>
           <template v-else>
+            <!-- 一级分类：加粗，高亮显示 -->
             <span class="main-name">{{ grp.name }}</span>
           </template>
         </div>
@@ -99,114 +105,109 @@ const getGrpHeaderClass = (name: string): string => {
 /** 获取 Row 样式 Class */
 const getGrpRowClass = (name: string): string => {
   const depth = getGrpDepth(name)
-  return `row-depth-${depth}`
+  return `row-depth-${depth} row-depth-${depth > 3 ? "n" : depth}`
 }
 </script>
 
 <style lang="scss" scoped>
 .grp-row {
   display: flex;
-  background: #fff;
+  background: var(--el-bg-color);
   align-items: stretch;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  /* 整行 Hover 视觉效果提升 */
+  &:hover {
+    background-color: var(--el-fill-color-extra-light);
+
+    .grp-header {
+      background-color: var(--el-fill-color-extra-light);
+    }
+  }
 
   .grp-header {
-    width: 140px; /* 左侧宽度调窄，从 180px 缩为 140px */
+    width: 160px; /* 宽度调回至 160px，紧凑实用 */
     padding: 12px 10px;
-    background: #f8fafc;
-    border-right: 1px solid #e2e8f0;
+    background: var(--el-bg-color);
+    border-right: 1px solid var(--el-border-color-extra-light); /* 极其淡雅的竖向虚隔线 */
     flex-shrink: 0;
     display: flex;
-    align-items: center;
+    align-items: center; /* 居中对齐 */
     position: relative;
     box-sizing: border-box;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
     :deep(.el-checkbox) {
       width: 100%;
       display: flex;
-      align-items: center;
+      align-items: center; /* 居中对齐 */
       margin-right: 0;
     }
 
     :deep(.el-checkbox__label) {
       flex: 1;
-      padding-left: 6px;
-      line-height: 1.3;
+      padding-left: 8px;
+      line-height: 1.4;
       white-space: normal;
       word-break: break-all;
       display: block;
     }
+  }
 
-    &::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 15%;
-      bottom: 15%;
-      width: 3px;
-      border-radius: 0 4px 4px 0;
+  /* 极细的垂直层级引导线轨 (Scope Track) */
+  .tree-scope-track {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--el-border-color-lighter);
+    pointer-events: none;
+    transition: background-color 0.2s;
+  }
+
+  /* 最左侧指示条 */
+  .depth-indicator-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: transparent;
+    border-radius: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &.depth-1 {
+    background: var(--el-bg-color);
+    .depth-indicator-bar {
       background-color: transparent;
     }
-
-    &.depth-1 {
-      background: #f8fafc;
-    }
-
-    &.depth-2 {
-      background: #fafcfd;
-      &::after {
-        background-color: #93c5fd;
-      }
-    }
-
-    &.depth-3 {
-      background: #f5fafd;
-      &::after {
-        background-color: #60a5fa;
-      }
-    }
   }
 
-  /* 树形连接线在 Header 内部的排列 */
-  .tree-indent-wrapper {
-    display: flex;
-    align-items: stretch;
-    align-self: stretch;
-    margin-right: 4px;
-    flex-shrink: 0;
-  }
+  /* 激活态表现：极其柔和的选中背景与主题色联动高亮 */
+  .grp-header.is-header-active {
+    background: var(--el-color-primary-light-9) !important;
+    border-right-color: var(--el-color-primary-light-8);
 
-  .tree-indent-col {
-    position: relative;
-    width: 10px;
-    height: 100%;
-    flex-shrink: 0;
-    display: flex;
-    justify-content: center;
-
-    .tree-line-vertical {
-      position: absolute;
-      left: 50%;
-      top: 0;
-      bottom: 0;
-      width: 1px;
-      background-color: #cbd5e1;
-      transform: translateX(-50%);
+    .depth-indicator-bar {
+      background-color: var(--el-color-primary) !important;
     }
 
-    .tree-line-horizontal {
-      position: absolute;
-      left: 50%;
-      right: -5px;
-      top: 50%;
-      height: 1px;
-      background-color: #cbd5e1;
-      transform: translateY(-50%);
+    .tree-scope-track {
+      background-color: var(--el-color-primary-light-5) !important;
     }
 
-    &.is-last {
-      .tree-line-vertical {
-        bottom: 50%;
-      }
+    .main-name {
+      color: var(--el-color-primary) !important;
+    }
+
+    .child-name {
+      color: var(--el-color-primary) !important;
     }
   }
 
@@ -215,30 +216,19 @@ const getGrpRowClass = (name: string): string => {
     flex-direction: column;
     align-items: flex-start;
     text-align: left;
-    line-height: 1.2;
-  }
-
-  .parent-prefix {
-    font-size: 10px;
-    color: #94a3b8;
-    font-weight: 400;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.25;
   }
 
   .child-name {
-    font-size: 11px;
-    font-weight: 600;
-    color: #334155;
+    font-size: 12px;
+    font-weight: 400; /* 子级正常字重 */
+    color: var(--el-text-color-regular);
   }
 
   .main-name {
-    font-size: 11px;
-    font-weight: 700;
-    color: #0f172a;
+    font-size: 12px;
+    font-weight: 700; /* 一级粗体 */
+    color: var(--el-text-color-primary);
   }
 
   .grp-actions-grid {
@@ -247,8 +237,9 @@ const getGrpRowClass = (name: string): string => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 8px 12px;
-    background: #ffffff;
+    background: var(--el-bg-color);
     align-items: center;
+    transition: background-color 0.2s ease;
   }
 }
 </style>

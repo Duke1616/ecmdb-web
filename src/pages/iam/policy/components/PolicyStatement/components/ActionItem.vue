@@ -75,14 +75,20 @@ defineEmits<{
   border: 1px solid transparent;
 
   &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    background: var(--el-fill-color-light);
+    border-color: var(--el-border-color-light);
   }
 
   &.is-checked {
-    background: #eff6ff;
-    border-color: #bfdbfe;
-    box-shadow: 0 1px 2px 0 rgba(59, 130, 246, 0.03);
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary-light-7);
+    box-shadow: 0 1px 2px 0 rgba(0, 187, 153, 0.03);
+
+    .act-info {
+      .act-name {
+        color: var(--el-color-primary);
+      }
+    }
   }
 
   :deep(.el-checkbox__label) {
@@ -93,7 +99,7 @@ defineEmits<{
   .act-info {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 2px;
     text-align: left;
 
     .act-title-row {
@@ -106,8 +112,9 @@ defineEmits<{
     .act-name {
       font-size: 12px;
       font-weight: 600;
-      color: #334155;
-      line-height: 1.2;
+      color: var(--el-text-color-regular);
+      line-height: 1.25;
+      transition: color 0.15s ease;
     }
 
     /* 极致微型微发光雷达点菜单指示图标 */
@@ -118,27 +125,27 @@ defineEmits<{
       width: 14px;
       height: 14px;
       border-radius: 50%;
-      color: #10b981;
-      background: rgba(16, 185, 129, 0.06);
-      border: 1px solid rgba(16, 185, 129, 0.15);
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      border: 1px solid var(--el-color-primary-light-7);
       transition: all 0.2s ease;
       cursor: pointer;
 
       .menu-indicator-icon {
         font-size: 9px;
-        transition: transform 0.3s ease;
+        transition: transform 0.25s ease;
       }
 
       &:hover {
-        background: rgba(16, 185, 129, 0.16);
-        border-color: rgba(16, 185, 129, 0.35);
-        color: #047857;
+        background: var(--el-color-primary-light-8);
+        border-color: var(--el-color-primary-light-5);
+        color: var(--el-color-primary-dark-2);
       }
     }
 
     .act-code {
       font-size: 10px;
-      color: #94a3b8;
+      color: var(--el-text-color-placeholder);
       font-family: ui-monospace, monospace;
     }
   }
@@ -146,9 +153,6 @@ defineEmits<{
 
 .pure-act-item:hover {
   .menu-indicator {
-    background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.3);
-
     .menu-indicator-icon {
       transform: rotate(45deg);
     }

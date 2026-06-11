@@ -129,18 +129,23 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding-bottom: 6px;
-      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--el-color-primary);
       margin-bottom: 12px;
       font-weight: 700;
       font-size: 14px;
-      color: #1e293b;
+      color: var(--el-text-color-primary);
+
+      .el-icon {
+        color: var(--el-color-primary);
+        font-size: 15px;
+      }
 
       .selection-info {
         margin-left: auto;
         font-size: 11px;
         font-weight: 400;
-        color: #94a3b8;
+        color: var(--el-text-color-secondary);
         display: flex;
         align-items: center;
         gap: 12px;
@@ -154,9 +159,9 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
   .groups-container {
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    background: #e2e8f0;
-    border: 1px solid #e2e8f0;
+    gap: 0;
+    background: var(--el-border-color-lighter);
+    border: 1px solid var(--el-border-color-lighter);
     border-radius: 6px;
     overflow: hidden;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
@@ -191,7 +196,7 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
       display: flex;
       align-items: center;
       gap: 6px;
-      color: #34d399;
+      color: var(--el-color-primary-light-3);
 
       .header-icon {
         font-size: 13px;
@@ -235,7 +240,7 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
 
         .item-icon {
           font-size: 12px;
-          color: #10b981;
+          color: var(--el-color-primary);
           margin-top: 2px;
         }
 
