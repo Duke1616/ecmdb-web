@@ -6,7 +6,7 @@
           <el-form-item prop="desc" label="开始时间">
             <el-date-picker
               disabled
-              v-model="formData.rota_rule.start_time"
+              v-model="formData.oncall_rule.start_time"
               type="datetime"
               placeholder="选择日期和时间"
               format="YYYY-MM-DD HH:mm"
@@ -18,7 +18,7 @@
           <el-form-item prop="desc" label="结束时间">
             <el-date-picker
               disabled
-              v-model="formData.rota_rule.end_time"
+              v-model="formData.oncall_rule.end_time"
               type="datetime"
               placeholder="选择日期和时间"
               format="YYYY-MM-DD HH:mm"
@@ -35,7 +35,7 @@
         </div>
         <div>
           <VueDraggable
-            v-model="formData.rota_rule.rota_group.members"
+            v-model="formData.oncall_rule.oncall_group.members"
             :animation="200"
             group="rotaGroup"
             ghostClass="ghost"
@@ -45,7 +45,7 @@
             class="flex flex-col gap-4 p-0 rounded"
           >
             <div
-              v-for="(member, itemIndex) in formData.rota_rule.rota_group.members"
+              v-for="(member, itemIndex) in formData.oncall_rule.oncall_group.members"
               :key="member"
               class="h-40px bg-gray-500/5 px-2 rounded flex items-center"
             >
@@ -71,14 +71,14 @@
 </template>
 
 <script setup lang="ts">
-import { addOrUpdateAdjustmentRuleReq, rotaGroup } from "@/api/rota/types/rota"
+import { AddOrUpdateAdjustmentRuleReq, OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 import { ref, computed } from "vue"
 import type { User as IIamUser } from "@/api/iam/user/type"
 import UserPopoverPicker from "@/common/components/UserPopoverPicker/UserPopoverPicker.vue"
-import { addShifAdjustmentRuleApi, updateShifAdjustmentRuleApi } from "@/api/rota"
+import { addShiftAdjustmentRuleApi, updateShiftAdjustmentRuleApi } from "@/api/alert/oncall"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 import { Plus, Close } from "@element-plus/icons-vue"
 const userToolsStore = useUserToolsStore()
@@ -90,7 +90,7 @@ const userPopoverPickerRef = ref<{ show: (targetElement?: HTMLElement) => void }
 
 // 已存在的用户列表
 const existingUsers = computed(() => {
-  return formData.value.rota_rule.rota_group.members
+  return formData.value.oncall_rule.oncall_group.members
 })
 
 const getUserByUsername = (username: string) => {
@@ -106,7 +106,7 @@ const addMember = (event: Event) => {
 // 处理用户选择
 const handleUserSelect = (user: IIamUser) => {
   // 检查用户是否已经存在
-  const existingGroup = formData.value.rota_rule.rota_group
+  const existingGroup = formData.value.oncall_rule.oncall_group
   const userExists = existingGroup.members.includes(user.username)
 
   if (userExists) {
@@ -122,43 +122,43 @@ const handleUserSelect = (user: IIamUser) => {
 }
 
 const removeAndToLeftList = (index: number) => {
-  formData.value.rota_rule.rota_group.members.splice(index, 1)
+  formData.value.oncall_rule.oncall_group.members.splice(index, 1)
 }
 
 const handleStartDateTimeChange = (date: Date | null) => {
   if (date) {
-    formData.value.rota_rule.start_time = date.getTime()
+    formData.value.oncall_rule.start_time = date.getTime()
   }
 }
 
 const handleEndDateTimeChange = (date: Date | null) => {
   if (date) {
     const endTime = date.getTime()
-    const startTime = formData.value.rota_rule.start_time
+    const startTime = formData.value.oncall_rule.start_time
 
     if (startTime && endTime < startTime) {
       ElMessage.error("结束时间不能小于开始时间")
-      formData.value.rota_rule.end_time = 0
+      formData.value.oncall_rule.end_time = 0
     } else {
-      formData.value.rota_rule.end_time = endTime
+      formData.value.oncall_rule.end_time = endTime
     }
   } else {
-    formData.value.rota_rule.end_time = 0
+    formData.value.oncall_rule.end_time = 0
   }
 }
 
-const rotaGroups = ref<rotaGroup>({ id: 0, name: "", members: [] }) // 组列表
-const DEFAULT_FORM_DATA: addOrUpdateAdjustmentRuleReq = {
+const oncallGroup = ref<OnCallGroup>({ id: 0, name: "", members: [] }) // 组列表
+const DEFAULT_FORM_DATA: AddOrUpdateAdjustmentRuleReq = {
   id: 0,
   group_id: 0,
-  rota_rule: {
+  oncall_rule: {
     start_time: 0,
     end_time: 0,
-    rota_group: rotaGroups.value
+    oncall_group: oncallGroup.value
   }
 }
 
-const formData = ref<addOrUpdateAdjustmentRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<AddOrUpdateAdjustmentRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [{ required: true, message: "必须输入值班名称", trigger: "blur" }],
@@ -179,31 +179,31 @@ const onClosed = () => {
 
 const setStartDate = (startTime: Date | null) => {
   if (!startTime) return
-  formData.value.rota_rule.start_time = startTime.getTime()
+  formData.value.oncall_rule.start_time = startTime.getTime()
 }
 
 const setEndDate = (endTime: Date | null) => {
   if (!endTime) return
-  formData.value.rota_rule.end_time = endTime.getTime()
+  formData.value.oncall_rule.end_time = endTime.getTime()
 }
 
 const setGroupId = (groupId: number) => {
-  formData.value.rota_rule.rota_group.name = "TEMP"
+  formData.value.oncall_rule.oncall_group.name = "TEMP"
   // 修改逻辑处理时需要知道上次生成的 group_id
   formData.value.group_id = groupId
 
-  if (formData.value.rota_rule.rota_group.members.length === 0) {
-    formData.value.rota_rule.rota_group.id = Date.now()
+  if (formData.value.oncall_rule.oncall_group.members.length === 0) {
+    formData.value.oncall_rule.oncall_group.id = Date.now()
   } else {
-    formData.value.rota_rule.rota_group.id = groupId
+    formData.value.oncall_rule.oncall_group.id = groupId
   }
 
   // 根据是否传有传入成员来判断是新增还是编辑
-  memberLen.value = formData.value.rota_rule.rota_group.members.length
+  memberLen.value = formData.value.oncall_rule.oncall_group.members.length
 }
 
 const setMembers = (members: string[]) => {
-  formData.value.rota_rule.rota_group.members = members
+  formData.value.oncall_rule.oncall_group.members = members
 
   // 获取所有的用户信息
   userToolsStore.batchResolveUsers(members)
@@ -216,13 +216,13 @@ const submitForm = (rotaId: number) => {
     return
   }
 
-  if (formData.value.rota_rule.rota_group.members.length === 0) {
+  if (formData.value.oncall_rule.oncall_group.members.length === 0) {
     ElMessage.error("值班人员不能为空")
     return
   }
 
   formData.value.id = rotaId
-  const api = memberLen.value === 0 ? addShifAdjustmentRuleApi : updateShifAdjustmentRuleApi
+  const api = memberLen.value === 0 ? addShiftAdjustmentRuleApi : updateShiftAdjustmentRuleApi
   api(formData.value)
     .then(() => {
       onClosed()

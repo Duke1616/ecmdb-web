@@ -26,8 +26,8 @@
 import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { createOrUpdateRotaReq, rota } from "@/api/rota/types/rota"
-import { createRotaApi, updateRotaApi } from "@/api/rota"
+import { CreateOrUpdateOnCallReq, OnCall } from "@/api/alert/oncall/types/oncall"
+import { createOnCallApi, updateOnCallApi } from "@/api/alert/oncall"
 import UserPicker from "@/common/components/UserPicker/index.vue"
 
 // 接收父组建传递
@@ -36,14 +36,14 @@ const emits = defineEmits(["closed", "callback"])
 const onClosed = () => {
   emits("closed")
 }
-const DEFAULT_FORM_DATA: createOrUpdateRotaReq = {
+const DEFAULT_FORM_DATA: CreateOrUpdateOnCallReq = {
   name: "",
   owner: "",
   desc: "",
   enabled: true
 }
 
-const formData = ref<createOrUpdateRotaReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<CreateOrUpdateOnCallReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   name: [{ required: true, message: "必须输入值班名称", trigger: "blur" }],
@@ -53,7 +53,7 @@ const formRules: FormRules = {
 const submitForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
     if (!valid) return console.error("表单校验不通过", fields)
-    const api = formData.value.id === undefined ? createRotaApi : updateRotaApi
+    const api = formData.value.id === undefined ? createOnCallApi : updateOnCallApi
     api(formData.value)
       .then(() => {
         onClosed()
@@ -67,7 +67,7 @@ const submitForm = () => {
   })
 }
 
-const setFrom = (row: rota) => {
+const setFrom = (row: OnCall) => {
   formData.value = cloneDeep(row)
 }
 

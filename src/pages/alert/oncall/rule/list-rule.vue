@@ -2,7 +2,7 @@
   <div class="rule-list-container">
     <!-- 规则列表 -->
     <div class="rule-list">
-      <div v-if="rotaRuleData.length === 0" class="empty-state">
+      <div v-if="oncallRuleData.length === 0" class="empty-state">
         <el-icon class="empty-icon"><DocumentRemove /></el-icon>
         <p class="empty-text">暂无规则</p>
         <p class="empty-hint">请先添加排班规则</p>
@@ -10,13 +10,13 @@
 
       <div v-else class="rule-cards">
         <div
-          v-for="(rule, ruleIndex) in rotaRuleData"
+          v-for="(rule, ruleIndex) in oncallRuleData"
           :key="ruleIndex"
           class="rule-card"
           :class="{
             active: activeCollapse.includes(ruleIndex),
             hidden: activeCollapse.length > 0 && !activeCollapse.includes(ruleIndex),
-            'single-rule': rotaRuleData.length === 1
+            'single-rule': oncallRuleData.length === 1
           }"
         >
           <!-- 规则卡片头部 -->
@@ -60,8 +60,8 @@
 </template>
 
 <script setup lang="ts">
-import { updateShifSchedulingRuleApi } from "@/api/rota"
-import { addRuleReq, rotaRule } from "@/api/rota/types/rota"
+import { updateShiftSchedulingRuleApi } from "@/api/alert/oncall"
+import { AddRuleReq, OnCallRule } from "@/api/alert/oncall/types/oncall"
 import { h, nextTick, ref } from "vue"
 import Rule from "./rule.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
@@ -70,7 +70,7 @@ import { DocumentRemove, Setting, ArrowDown, Edit, Delete } from "@element-plus/
 const ruleRefs = ref<InstanceType<typeof Rule>[]>([])
 const activeCollapse = ref<number[]>([])
 const rotaId = ref<number>(0)
-const rotaRuleData = ref<rotaRule[]>([])
+const oncallRuleData = ref<OnCallRule[]>([])
 
 const emits = defineEmits(["closed", "callback"])
 
@@ -81,9 +81,9 @@ const setRuleRef = (el: any, index: number) => {
   }
 }
 
-const setRules = (id: number, rules: rotaRule[]) => {
+const setRules = (id: number, rules: OnCallRule[]) => {
   rotaId.value = id
-  rotaRuleData.value = rules
+  oncallRuleData.value = rules
 
   // 如果只有一个规则，直接展开
   if (rules.length === 1) {
@@ -95,7 +95,7 @@ const setRules = (id: number, rules: rotaRule[]) => {
 }
 
 const resetRule = () => {
-  rotaRuleData.value = []
+  oncallRuleData.value = []
   activeCollapse.value = []
 }
 
@@ -111,11 +111,11 @@ const deleteRule = (ruleIndex: number) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(async () => {
-    rotaRuleData.value.splice(ruleIndex, 1)
+    oncallRuleData.value.splice(ruleIndex, 1)
 
     // 重置
     activeCollapse.value = []
-    deleteShifSchedulingRule()
+    deleteShiftSchedulingRule()
   })
 }
 
@@ -128,13 +128,13 @@ const replaceRule = (ruleIndex: number) => {
 
     if (ruleComponent) {
       const rota = ruleComponent.getFrom()
-      const rule = rota?.value.rota_rule
+      const rule = rota?.value.oncall_rule
       if (rule !== undefined) {
         // 替换数据
-        rotaRuleData.value[ruleIndex] = rule
+        oncallRuleData.value[ruleIndex] = rule
 
         // 更新数据库
-        updateShifSchedulingRule()
+        updateShiftSchedulingRule()
       } else {
         ElMessage.error("获取规则数据失败")
       }
@@ -146,12 +146,12 @@ const replaceRule = (ruleIndex: number) => {
 
 const handleCollapseChange = (active: any) => {
   const ruleComponent = ruleRefs.value[active]
-  const rule = rotaRuleData.value[active]
+  const rule = oncallRuleData.value[active]
 
   if (ruleComponent && rule) {
-    const ruleToUpdate: addRuleReq = {
+    const ruleToUpdate: AddRuleReq = {
       id: Number(rotaId.value),
-      rota_rule: {
+      oncall_rule: {
         ...rule
       }
     }
@@ -174,7 +174,7 @@ const toggleRule = (ruleIndex: number) => {
 
   // 触发数据加载
   if (activeCollapse.value.includes(ruleIndex)) {
-    console.log("Toggling rule:", ruleIndex, "Data:", rotaRuleData.value[ruleIndex])
+    console.log("Toggling rule:", ruleIndex, "Data:", oncallRuleData.value[ruleIndex])
     // 确保组件已经渲染
     nextTick(() => {
       handleCollapseChange(ruleIndex)
@@ -183,24 +183,24 @@ const toggleRule = (ruleIndex: number) => {
 }
 
 // 获取规则摘要
-const getRuleSummary = (rule: rotaRule) => {
+const getRuleSummary = (rule: OnCallRule) => {
   if (!rule) return "无信息"
 
-  const groups = rule.rota_groups?.length || 0
-  const members = rule.rota_groups?.reduce((total, group) => total + (group.members?.length || 0), 0) || 0
+  const groups = rule.oncall_groups?.length || 0
+  const members = rule.oncall_groups?.reduce((total, group) => total + (group.members?.length || 0), 0) || 0
 
   return `${groups} 个组，${members} 人`
 }
 
-const deleteShifSchedulingRule = () => {
-  updateShifSchedulingRuleApi({
+const deleteShiftSchedulingRule = () => {
+  updateShiftSchedulingRuleApi({
     id: rotaId.value,
-    rota_rules: rotaRuleData.value
+    oncall_rules: oncallRuleData.value
   })
     .then(() => {
       ElMessage.success("删除成功")
 
-      if (rotaRuleData.value.length === 0) {
+      if (oncallRuleData.value.length === 0) {
         emits("closed")
       }
 
@@ -211,15 +211,15 @@ const deleteShifSchedulingRule = () => {
     .finally(() => {})
 }
 
-const updateShifSchedulingRule = () => {
-  updateShifSchedulingRuleApi({
+const updateShiftSchedulingRule = () => {
+  updateShiftSchedulingRuleApi({
     id: rotaId.value,
-    rota_rules: rotaRuleData.value
+    oncall_rules: oncallRuleData.value
   })
     .then(() => {
       ElMessage.success("修改成功")
 
-      if (rotaRuleData.value.length === 0) {
+      if (oncallRuleData.value.length === 0) {
         emits("closed")
       }
 

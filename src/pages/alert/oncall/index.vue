@@ -12,7 +12,7 @@
 
     <!-- 数据表格 -->
     <DataTable
-      :data="rotasData"
+      :data="oncallsData"
       :columns="tableColumns"
       :show-selection="true"
       :show-pagination="true"
@@ -57,7 +57,7 @@
       @closed="onClosed"
     >
       <div class="form-content">
-        <Form ref="apiRef" @callback="listRotasData" @closed="onClosed" />
+        <Form ref="apiRef" @callback="listOnCallsData" @closed="onClosed" />
       </div>
     </FormDialog>
   </PageContainer>
@@ -67,8 +67,8 @@
 import { ref, watch, nextTick, h, computed } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
-import { rota } from "@/api/rota/types/rota"
-import { deleteRotaApi, listRotasApi } from "@/api/rota"
+import { OnCall } from "@/api/alert/oncall/types/oncall"
+import { deleteOnCallApi, listOnCallsApi } from "@/api/alert/oncall"
 import Form from "./form.vue"
 import router from "@/router"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
@@ -138,15 +138,15 @@ const operateBtnStatus = ref([
 ])
 
 // 选中的行
-const selectedRows = ref<rota[]>([])
+const selectedRows = ref<OnCall[]>([])
 
 // 选择变化事件
-const handleSelectionChange = (selection: rota[]) => {
+const handleSelectionChange = (selection: OnCall[]) => {
   selectedRows.value = selection
 }
 
 // OperateBtn 操作事件处理
-const operateEvent = (data: rota, name: string) => {
+const operateEvent = (data: OnCall, name: string) => {
   console.log("OperateBtn action triggered:", name, data)
   switch (name) {
     case "view":
@@ -161,14 +161,14 @@ const operateEvent = (data: rota, name: string) => {
   }
 }
 
-const handleDetailClick = (row: rota) => {
+const handleDetailClick = (row: OnCall) => {
   router.push({
-    path: "/cmdb/rota/detail",
+    path: "/alert/oncall/detail",
     query: { id: row.id }
   })
 }
 
-const handleUpdateClick = (row: rota) => {
+const handleUpdateClick = (row: OnCall) => {
   isEdit.value = true
   dialogVisible.value = true
   nextTick(() => {
@@ -192,36 +192,36 @@ const handlerCreate = () => {
 }
 
 const handleRefresh = () => {
-  listRotasData()
+  listOnCallsData()
   ElMessage.success("数据已刷新")
 }
 
 /** 查询排班列表 */
-const rotasData = ref<rota[]>([])
-const listRotasData = () => {
+const oncallsData = ref<OnCall[]>([])
+const listOnCallsData = () => {
   loading.value = true
-  listRotasApi({
+  listOnCallsApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
     limit: paginationData.pageSize
   })
     .then(({ data }) => {
       paginationData.total = data.total
-      rotasData.value = data.rotas
+      oncallsData.value = data.oncalls
 
-      const usernames = rotasData.value.map((item) => item.owner)
+      const usernames = oncallsData.value.map((item) => item.owner)
       if (usernames.length > 0) {
         userToolsStore.batchResolveUsers(usernames)
       }
     })
     .catch(() => {
-      rotasData.value = []
+      oncallsData.value = []
     })
     .finally(() => {
       loading.value = false
     })
 }
 
-const handleDeleteClick = (row: rota) => {
+const handleDeleteClick = (row: OnCall) => {
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -233,15 +233,15 @@ const handleDeleteClick = (row: rota) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(() => {
-    deleteRotaApi(row.id).then(() => {
+    deleteOnCallApi(row.id).then(() => {
       ElMessage.success("删除成功")
-      listRotasData()
+      listOnCallsData()
     })
   })
 }
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listRotasData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listOnCallsData, { immediate: true })
 </script>
 
 <style lang="scss" scoped>

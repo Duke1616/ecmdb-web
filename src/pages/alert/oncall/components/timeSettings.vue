@@ -45,10 +45,10 @@
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Calendar } from "@element-plus/icons-vue"
-import type { rotaRule } from "@/api/rota/types/rota"
+import type { OnCallRule } from "@/api/alert/oncall/types/oncall"
 
-// 接收 v-model:rotaRuleForm
-const rotaRuleForm = defineModel<rotaRule>("rotaRuleForm", { required: true })
+// NOTE: 该组件为时间规则配置的输入子组件，需要与父表单进行时间状态同步
+const rotaRuleForm = defineModel<OnCallRule>("rotaRuleForm", { required: true })
 const isEndTimeVisible = ref<boolean>(false)
 
 // 根据 end_time 初始化开关状态（加上安全判断）

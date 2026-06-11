@@ -16,11 +16,11 @@
       <div class="schedule-cards">
         <!-- 当前值班 -->
         <div class="schedule-card-wrapper">
-          <ScheduleCard title="当前值班" :schedule="currentSchecule" :formatTimestamp="formatTimestamp" />
+          <ScheduleCard title="当前值班" :schedule="currentSchedule" :formatTimestamp="formatTimestamp" />
         </div>
         <!-- 下期值班 -->
         <div class="schedule-card-wrapper">
-          <ScheduleCard title="下期值班" :schedule="nextSchecule" :formatTimestamp="formatTimestamp" />
+          <ScheduleCard title="下期值班" :schedule="nextSchedule" :formatTimestamp="formatTimestamp" />
         </div>
       </div>
 
@@ -117,8 +117,8 @@ import Rule from "./rule/rule.vue"
 import ListRule from "./rule/list-rule.vue"
 import AdjustmentRule from "./rule/adjustment-rule.vue"
 import { useRoute } from "vue-router"
-import { deleteShifAdjustmentRuleApi, getRotaRuleById, previewSchedule } from "@/api/rota"
-import { rotaRule, schedule } from "@/api/rota/types/rota"
+import { deleteShiftAdjustmentRuleApi, getOnCallRuleByIdApi, previewScheduleApi } from "@/api/alert/oncall"
+import { OnCallRule, Schedule } from "@/api/alert/oncall/types/oncall"
 import { ElButton, ElDivider, ElMessage, ElTooltip } from "element-plus"
 import { Plus, Setting, RefreshRight, Calendar } from "@element-plus/icons-vue"
 import tippy, { followCursor } from "tippy.js"
@@ -137,8 +137,8 @@ const userToolsStore = useUserToolsStore()
 const route = useRoute()
 const rotaId = route.query.id as string
 
-const currentSchecule = ref<schedule>()
-const nextSchecule = ref<schedule>()
+const currentSchedule = ref<Schedule>()
+const nextSchedule = ref<Schedule>()
 
 const onClosed = () => {
   dialogVisible.value = false
@@ -229,7 +229,7 @@ const event = ref<EventInput[]>([])
 async function addShifSchedulingRule() {
   await getRuleList()
 
-  if (rotaRuleData.value.length >= 1) {
+  if (oncallRuleData.value.length >= 1) {
     ElMessage.warning("当前最多只能添加 1 个规则")
     return
   }
@@ -238,14 +238,14 @@ async function addShifSchedulingRule() {
 }
 
 // 获取指定排班-规则列表
-const rotaRuleData = ref<rotaRule[]>([])
+const oncallRuleData = ref<OnCallRule[]>([])
 const getRuleList = async () => {
-  await getRotaRuleById(Number(rotaId))
+  await getOnCallRuleByIdApi(Number(rotaId))
     .then(({ data }) => {
-      rotaRuleData.value = data
+      oncallRuleData.value = data
     })
     .catch(() => {
-      rotaRuleData.value = []
+      oncallRuleData.value = []
     })
     .finally(() => {})
 }
@@ -273,7 +273,7 @@ function handleEventMouseEnter(info: EventHoveringArg) {
               size: "small",
               style: { flex: "1" },
               onClick: () => {
-                deleteShifAdjustmentRuleApi({ id: Number(rotaId), group_id: info.event.extendedProps.groupid })
+                deleteShiftAdjustmentRuleApi({ id: Number(rotaId), group_id: info.event.extendedProps.groupid })
                   .then(() => {
                     ElMessage.success("撤销成功")
                     preview()
@@ -362,14 +362,14 @@ function handleEventMouseEnter(info: EventHoveringArg) {
 async function listShifSchedulingRule() {
   await getRuleList()
 
-  if (rotaRuleData.value.length === 0) {
+  if (oncallRuleData.value.length === 0) {
     ElMessage.warning("暂无规则, 请先添加")
     return
   }
   dialogListRuleVisible.value = true
 
   nextTick(() => {
-    ruleListRef.value?.setRules(Number(rotaId), rotaRuleData.value)
+    ruleListRef.value?.setRules(Number(rotaId), oncallRuleData.value)
   })
 }
 
@@ -391,7 +391,7 @@ function handleDateSelect(selectInfo: DateSelectArg) {
 
 const members = ref<string[]>([])
 const preview = () => {
-  previewSchedule({
+  previewScheduleApi({
     id: Number(rotaId),
     start_time: visibleStart.value,
     end_time: endStart.value
@@ -401,25 +401,25 @@ const preview = () => {
       members.value = data.members
 
       // 录入当前值班，下期值班
-      currentSchecule.value = data.current_schedule
-      nextSchecule.value = data.next_schedule
+      currentSchedule.value = data.current_schedule
+      nextSchedule.value = data.next_schedule
 
-      data.final_schedule.forEach((item: schedule) => {
+      data.final_schedule.forEach((item: Schedule) => {
         // 计算时间戳差值，确保时间戳为毫秒单位
         const duration = (item.end_time - item.start_time) / (1000 * 60 * 60 * 24)
         const isAllDay = duration >= 1
 
         event.value.push({
           id: createEventId(),
-          title: item.title + " - " + item.rota_group.name,
+          title: item.title + " - " + item.oncall_group.name,
           start: item.start_time,
           end: item.end_time,
-          backgroundColor: colorMap.get(item.rota_group.name)?.color,
+          backgroundColor: colorMap.get(item.oncall_group.name)?.color,
           allDay: isAllDay,
-          groupId: item.rota_group.name,
+          groupId: item.oncall_group.name,
           extendedProps: {
-            groupid: item.rota_group.id,
-            members: item.rota_group.members
+            groupid: item.oncall_group.id,
+            members: item.oncall_group.members
           }
         })
       })

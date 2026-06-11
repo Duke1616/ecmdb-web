@@ -1,5 +1,5 @@
 import { listTeamsApi, getTeamDetailApi } from "@/api/alert/team"
-import { listRotasApi } from "@/api/rota"
+import { listOnCallsApi } from "@/api/alert/oncall"
 import { listDepartmentTreeApi } from "@/api/iam/department"
 import { useUserStore } from "@/pinia/stores/user"
 import { OfficeBuilding, Clock, User } from "@element-plus/icons-vue"
@@ -64,17 +64,17 @@ export const RotaStrategy: ReceiverStrategy = {
   icon: Clock,
   fetchList: async (params) => {
     const paramsAny: any = { offset: params.offset, limit: params.limit, keyword: params.query }
-    const { data } = await listRotasApi(paramsAny)
-    return { items: data.rotas, total: data.total }
+    const { data } = await listOnCallsApi(paramsAny)
+    return { items: data.oncalls, total: data.total }
   },
   resolveNames: async (ids) => {
     const dict: Record<string, string> = {}
-    // 注意: 目前没有 batchId 获取 Rota 详情的接口，我们大范围拉一下前 200 条作为轻量缓存找
+    // 注意: 目前没有 batchId 获取 OnCall 详情的接口，我们大范围拉一下前 200 条作为轻量缓存找
     try {
-      const { data } = await listRotasApi({ offset: 0, limit: 200 })
-      const rotasMap = new Map(data.rotas.map((r) => [String(r.id), r.name]))
+      const { data } = await listOnCallsApi({ offset: 0, limit: 200 })
+      const oncallsMap = new Map(data.oncalls.map((r) => [String(r.id), r.name]))
       ids.forEach((id) => {
-        dict[id] = rotasMap.get(id) || id
+        dict[id] = oncallsMap.get(id) || id
       })
     } catch {
       ids.forEach((id) => (dict[id] = id))

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Calendar, Clock, RefreshRight } from "@element-plus/icons-vue"
 
+// NOTE: 该组件为纯 UI 状态选择组件，将轮换时长双向同步到父级表单
 const time_duration = defineModel<number>("time_duration")
+// NOTE: 该组件为纯 UI 状态选择组件，将轮换时间单位双向同步到父级表单
 const time_unit = defineModel<number>("time_unit")
 </script>
 

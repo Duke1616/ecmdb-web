@@ -14,12 +14,12 @@
           <div class="form-section">
             <div class="settings-content">
               <!-- 时间设置 -->
-              <TimeSettings v-model:rotaRuleForm="formData.rota_rule" />
+              <TimeSettings v-model:rotaRuleForm="formData.oncall_rule" />
 
               <!-- 轮换设置 -->
               <RotationSettings
-                v-model:time_duration="formData.rota_rule.rotate.time_duration"
-                v-model:time_unit="formData.rota_rule.rotate.time_unit"
+                v-model:time_duration="formData.oncall_rule.rotate.time_duration"
+                v-model:time_unit="formData.oncall_rule.rotate.time_unit"
               />
             </div>
           </div>
@@ -27,7 +27,7 @@
 
         <!-- 右侧：排班人员 -->
         <div class="right-section">
-          <PersonnelManagement v-model:rotaGroupsForm="formData.rota_rule.rota_groups" />
+          <PersonnelManagement v-model:rotaGroupsForm="formData.oncall_rule.oncall_groups" />
         </div>
       </div>
     </el-form>
@@ -37,8 +37,8 @@
 import { ref } from "vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import { addRuleReq } from "@/api/rota/types/rota"
-import { addShifSchedulingRuleApi } from "@/api/rota"
+import { AddRuleReq } from "@/api/alert/oncall/types/oncall"
+import { addShiftSchedulingRuleApi } from "@/api/alert/oncall"
 import TimeSettings from "../components/timeSettings.vue"
 import RotationSettings from "../components/rotationSettings.vue"
 import PersonnelManagement from "../components/personnelManagement.vue"
@@ -46,12 +46,12 @@ import PersonnelManagement from "../components/personnelManagement.vue"
 const emits = defineEmits(["closed", "callback"])
 
 // 表单数据
-const DEFAULT_FORM_DATA: addRuleReq = {
+const DEFAULT_FORM_DATA: AddRuleReq = {
   id: 0,
-  rota_rule: {
+  oncall_rule: {
     start_time: new Date(new Date().setHours(0, 0, 0, 0)).getTime(),
     end_time: 0,
-    rota_groups: [],
+    oncall_groups: [],
     rotate: {
       time_unit: 4,
       time_duration: 1
@@ -59,7 +59,7 @@ const DEFAULT_FORM_DATA: addRuleReq = {
   }
 }
 
-const formData = ref<addRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<AddRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 
 const formRules: FormRules = {
@@ -67,7 +67,7 @@ const formRules: FormRules = {
   owner: [{ required: true, message: "必须输入值班管理人员", trigger: "blur" }]
 }
 
-const setFrom = (row: addRuleReq) => {
+const setFrom = (row: AddRuleReq) => {
   formData.value = cloneDeep(row)
 }
 
@@ -87,7 +87,7 @@ const submitFormApi = (rotaId: number) => {
     return Promise.reject("值班不存在")
   }
 
-  return addShifSchedulingRuleApi(formData.value)
+  return addShiftSchedulingRuleApi(formData.value)
     .then(() => {
       ElMessage.success("保存成功")
     })

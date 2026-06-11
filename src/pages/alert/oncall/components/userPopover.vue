@@ -72,7 +72,7 @@ import { ref, nextTick } from "vue"
 import { useUsers } from "@/common/composables/useUsers"
 
 interface Props {
-  addRotaGroup: (user: IIamUser) => void
+  addOnCallGroup: (user: IIamUser) => void
   existingUsers?: string[] // 已存在的用户名列表
 }
 
@@ -135,7 +135,7 @@ const isUserExists = (username: string): boolean => {
 // 处理用户点击
 const handleUserClick = (user: IIamUser): void => {
   if (isUserExists(user.username)) return
-  props.addRotaGroup(user)
+  props.addOnCallGroup(user)
   visible.value = false
   cleanup()
 }

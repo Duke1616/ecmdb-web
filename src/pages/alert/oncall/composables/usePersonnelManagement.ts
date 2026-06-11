@@ -1,6 +1,6 @@
 import { ref } from "vue"
 import type { User as IIamUser } from "@/api/iam/user/type"
-import { rotaGroup } from "@/api/rota/types/rota"
+import { OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 
 export function usePersonnelManagement() {
@@ -8,7 +8,7 @@ export function usePersonnelManagement() {
   const members = ref<string[]>([])
 
   // 添加人员到轮换组
-  const addRotaGroup = (user: IIamUser, rotaGroups: rotaGroup[]) => {
+  const addOnCallGroup = (user: IIamUser, rotaGroups: OnCallGroup[]) => {
     // 检查用户是否已经存在于任何组中
     const userExists = rotaGroups.some((group) => group.members.includes(user.username))
 
@@ -30,7 +30,7 @@ export function usePersonnelManagement() {
   }
 
   // 从轮换组中移除人员
-  const removeAndToLeftList = (index: number, member: string, group: rotaGroup, rotaGroups: rotaGroup[]) => {
+  const removeAndToLeftList = (index: number, member: string, group: OnCallGroup, rotaGroups: OnCallGroup[]) => {
     // 从当前组中移除成员
     group.members.splice(index, 1)
 
@@ -44,7 +44,7 @@ export function usePersonnelManagement() {
   }
 
   // 处理拖拽结束
-  const handleDragEnd = (rotaGroups: rotaGroup[]) => {
+  const handleDragEnd = (rotaGroups: OnCallGroup[]) => {
     rotaGroups.forEach((group, index) => {
       if (group.members.length === 0) {
         rotaGroups.splice(index, 1)
@@ -63,7 +63,7 @@ export function usePersonnelManagement() {
 
   return {
     members,
-    addRotaGroup,
+    addOnCallGroup,
     removeAndToLeftList,
     handleDragEnd,
     getUserByUsername

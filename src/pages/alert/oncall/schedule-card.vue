@@ -50,7 +50,7 @@
 </template>
 
 <script lang="ts" setup>
-import { schedule as scheduleCard } from "@/api/rota/types/rota"
+import { Schedule as scheduleCard } from "@/api/alert/oncall/types/oncall"
 import { isEqual } from "lodash-es"
 import { watch, computed } from "vue"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
@@ -73,9 +73,9 @@ const isCurrent = computed(() => {
 
 // 获取成员名字列表
 const memberList = computed(() => {
-  if (!props.schedule?.rota_group?.members) return []
+  if (!props.schedule?.oncall_group?.members) return []
 
-  const usernames = props.schedule.rota_group.members
+  const usernames = props.schedule.oncall_group.members
   userToolsStore.batchResolveUsers(usernames)
 
   return usernames.map((username) => userToolsStore.getNickname(username) || username).filter((name) => name)
@@ -95,7 +95,7 @@ const getMemberNames = (usernames: string[] | undefined): string => {
 }
 
 watch(
-  () => props.schedule?.rota_group?.members,
+  () => props.schedule?.oncall_group?.members,
   (newUsernames, oldUsernames) => {
     if (isEqual(oldUsernames, newUsernames)) {
       getMemberNames(newUsernames)

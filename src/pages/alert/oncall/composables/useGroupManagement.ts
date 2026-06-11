@@ -1,21 +1,21 @@
 import { ref, computed } from "vue"
 import type { Ref } from "vue"
 import { ElMessage } from "element-plus"
-import { rotaGroup } from "@/api/rota/types/rota"
+import { OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import type { User as IIamUser } from "@/api/iam/user/type"
 
-export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<number>) {
+export function useGroupManagement(rotaGroups: Ref<OnCallGroup[]>, renderKey: Ref<number>) {
   const currentAddingGroupId = ref<number | null>(null)
 
   // 计算当前组已存在的用户列表
   const existingUsers = computed(() => {
     if (!currentAddingGroupId.value) return []
-    const currentGroup = rotaGroups.value.find((g: rotaGroup) => g.id === currentAddingGroupId.value)
+    const currentGroup = rotaGroups.value.find((g: OnCallGroup) => g.id === currentAddingGroupId.value)
     return currentGroup ? currentGroup.members : []
   })
 
   // 创建新组
-  const createNewGroup = (): rotaGroup => {
+  const createNewGroup = (): OnCallGroup => {
     const newGroupName = `${String.fromCharCode(65 + rotaGroups.value.length)}`
     return {
       id: Date.now(),
@@ -39,10 +39,10 @@ export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<
   // 删除组
   const removeGroup = (groupId: number) => {
     // 先过滤掉要删除的组
-    const filteredGroups = rotaGroups.value.filter((g: rotaGroup) => g.id !== groupId)
+    const filteredGroups = rotaGroups.value.filter((g: OnCallGroup) => g.id !== groupId)
 
     // 重新命名剩余组
-    const renamedGroups = filteredGroups.map((group: rotaGroup, index: number) => ({
+    const renamedGroups = filteredGroups.map((group: OnCallGroup, index: number) => ({
       ...group,
       name: `${String.fromCharCode(65 + index)}`
     }))
@@ -53,7 +53,7 @@ export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<
 
   // 添加用户到组
   const addUserToGroup = (groupId: number, user: IIamUser) => {
-    const groupIndex = rotaGroups.value.findIndex((g: rotaGroup) => g.id === groupId)
+    const groupIndex = rotaGroups.value.findIndex((g: OnCallGroup) => g.id === groupId)
     if (groupIndex === -1) return false
 
     const group = rotaGroups.value[groupIndex]
@@ -66,7 +66,7 @@ export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<
 
     // 添加用户
     const newMembers = [...group.members, user.username]
-    const newGroups = rotaGroups.value.map((g: rotaGroup, index: number) => {
+    const newGroups = rotaGroups.value.map((g: OnCallGroup, index: number) => {
       if (index === groupIndex) {
         return { ...g, members: newMembers }
       }
@@ -80,13 +80,13 @@ export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<
 
   // 从组中移除用户
   const removeUserFromGroup = (groupId: number, memberIndex: number) => {
-    const groupIndex = rotaGroups.value.findIndex((g: rotaGroup) => g.id === groupId)
+    const groupIndex = rotaGroups.value.findIndex((g: OnCallGroup) => g.id === groupId)
     if (groupIndex === -1) return
 
     const group = rotaGroups.value[groupIndex]
     const newMembers = group.members.filter((_: string, index: number) => index !== memberIndex)
 
-    const newGroups = rotaGroups.value.map((g: rotaGroup, index: number) => {
+    const newGroups = rotaGroups.value.map((g: OnCallGroup, index: number) => {
       if (index === groupIndex) {
         return { ...g, members: newMembers }
       }
@@ -99,7 +99,7 @@ export function useGroupManagement(rotaGroups: Ref<rotaGroup[]>, renderKey: Ref<
 
   // 更新组成员 - 简化版本
   const updateGroupMembers = (groupId: number, newMembers: string[]) => {
-    const groupIndex = rotaGroups.value.findIndex((g: rotaGroup) => g.id === groupId)
+    const groupIndex = rotaGroups.value.findIndex((g: OnCallGroup) => g.id === groupId)
     if (groupIndex === -1) {
       console.log("组不存在:", groupId)
       return

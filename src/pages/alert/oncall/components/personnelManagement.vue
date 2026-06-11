@@ -96,13 +96,14 @@ import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { VueDraggable } from "vue-draggable-plus"
 import { User, Close, Grid, Plus, Delete } from "@element-plus/icons-vue"
-import type { rotaGroup } from "@/api/rota/types/rota"
+import type { OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import type { User as IIamUser } from "@/api/iam/user/type"
 import UserPopoverPicker from "@/common/components/UserPopoverPicker/UserPopoverPicker.vue"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 import { useGroupManagement } from "../composables/useGroupManagement"
 
-const rotaGroupsForm = defineModel<rotaGroup[]>("rotaGroupsForm", { default: () => [] })
+// NOTE: 该组件为值班组配置的表单输入组件，人员和组信息需双向同步至父组件表单状态
+const rotaGroupsForm = defineModel<OnCallGroup[]>("rotaGroupsForm", { default: () => [] })
 const userToolsStore = useUserToolsStore()
 
 // 渲染键

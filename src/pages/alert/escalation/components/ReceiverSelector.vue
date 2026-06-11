@@ -125,11 +125,11 @@ import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
 import { listUsersApi } from "@/api/iam/user"
 import { listTeamsApi } from "@/api/alert/team"
 import { listDepartmentTreeApi } from "@/api/iam/department"
-import { listRotasApi } from "@/api/rota"
+import { listOnCallsApi } from "@/api/alert/oncall"
 import type { User as IIamUser } from "@/api/iam/user/type"
 import type { Team } from "@/api/alert/team/types"
 import type { IDepartmentNode as IDepartment } from "@/api/iam/department/type"
-import type { rota } from "@/api/rota/types/rota"
+import type { OnCall } from "@/api/alert/oncall/types/oncall"
 import { usePagination } from "@/common/composables/usePagination"
 
 interface Props {
@@ -309,12 +309,12 @@ const loadRotas = async () => {
       params.keyword = filterInput.value.trim()
     }
 
-    const { data } = await listRotasApi(params)
-    receiversData.value[RECEIVER_TYPES.ONCALL] = data.rotas.map((rota: rota) => ({
-      id: rota.id,
-      name: rota.name,
-      display_name: rota.name,
-      description: rota.desc || "排班"
+    const { data } = await listOnCallsApi(params)
+    receiversData.value[RECEIVER_TYPES.ONCALL] = data.oncalls.map((oncall: OnCall) => ({
+      id: oncall.id,
+      name: oncall.name,
+      display_name: oncall.name,
+      description: oncall.desc || "排班"
     }))
     paginationData.total = data.total || 0
   } catch (error) {
