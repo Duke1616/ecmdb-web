@@ -17,16 +17,16 @@
 </template>
 
 <script setup lang="ts">
-import { createOrUpdateDiscoveryReq, discovery } from "@/api/discovery/types/discovery"
+import { createOrUpdateDispatchReq, dispatch } from "@/api/ticket/dispatch/types/dispatch"
 import { ref } from "vue"
 
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import { createDiscoveryApi, updateDiscoveryApi } from "@/api/discovery"
+import { createDispatchApi, updateDispatchApi } from "@/api/ticket/dispatch"
 
 const emits = defineEmits(["closed", "callback"])
 
-// 接收父组建传递
+// 接收父组件传递
 interface Props {
   fieldsMap: Map<string, string>
   runnerMap: Map<number, string>
@@ -42,14 +42,14 @@ const onClosed = () => {
   emits("closed")
 }
 
-const DEFAULT_FORM_DATA: createOrUpdateDiscoveryReq = {
+const DEFAULT_FORM_DATA: createOrUpdateDispatchReq = {
   template_id: 0,
   runner_id: 0,
   field: "",
   value: ""
 }
 
-const formData = ref<createOrUpdateDiscoveryReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<createOrUpdateDispatchReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   runner_id: [{ required: true, message: "必须输入执行器", trigger: "blur" }],
@@ -63,7 +63,7 @@ const submitForm = async () => {
     if (!props.templateId) return
     formData.value.template_id = props.templateId
 
-    const api = formData.value.id === undefined ? createDiscoveryApi : updateDiscoveryApi
+    const api = formData.value.id === undefined ? createDispatchApi : updateDispatchApi
     await api(formData.value)
 
     ElMessage.success("保存成功")
@@ -72,12 +72,12 @@ const submitForm = async () => {
   } catch (error) {
     // 表单验证错误已由Element Plus处理
     if (!(error instanceof Error)) {
-      ElMessage.error("操作失败")
+      console.log(error)
     }
   }
 }
 
-const setForm = (row: discovery) => {
+const setForm = (row: dispatch) => {
   formData.value = cloneDeep(row)
 }
 

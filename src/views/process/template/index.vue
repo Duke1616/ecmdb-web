@@ -166,8 +166,8 @@ const getOperateBtnItems = (row: template) => {
   }
 
   items.push({
-    name: "路由",
-    code: "discover",
+    name: "派发",
+    code: "dispatch",
     icon: markRaw(Search)
   })
 
@@ -194,8 +194,8 @@ const operateEvent = (data: template, action: string) => {
     handleUpdate(data)
   } else if (action === "sync") {
     handlerSync(data)
-  } else if (action === "discover") {
-    handleDiscover(data)
+  } else if (action === "dispatch") {
+    handleDispatch(data)
   } else if (action === "delete") {
     handleDelete(data)
   } else if (action === "clone") {
@@ -341,10 +341,10 @@ const handleThirdPartySuccess = () => {
   listTemplatesData()
 }
 
-const handleDiscover = (row: template) => {
-  // 跳转到自动发现页面
+const handleDispatch = (row: template) => {
+  // 通过命名路由跳转到自动派发页面
   router.push({
-    path: "/process/template/discovery",
+    name: "ProcessTemplateDispatch",
     query: {
       id: row.id
     }

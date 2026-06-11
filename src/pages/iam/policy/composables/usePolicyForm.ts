@@ -1,6 +1,6 @@
 import { ref, reactive, onMounted, watch, toRef } from "vue"
 import { ElMessage, type FormInstance } from "element-plus"
-import { getPermissionManifestApi } from "@/api/iam/permission"
+import { getPermissionManifestApi, listMenusByURNsApi } from "@/api/iam/permission"
 import { createPolicyApi, getPolicyDetailApi, updatePolicyApi } from "@/api/iam/policy"
 import type { UpdatePolicyRequest } from "@/api/iam/policy/type"
 import {
@@ -23,6 +23,7 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
   const formRef = ref<FormInstance>()
   const loading = ref(false)
   const permissionManifest = ref<ManifestService[]>([])
+  const menuDetailsMap = ref<Record<string, any>>({})
   const isEdit = computed(() => !!props.code)
 
   // --- 1. 核心表单数据状态 ---
@@ -109,6 +110,37 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
       ])
 
       permissionManifest.value = enrichManifest(manifestRes.data)
+
+      // 提取 URN 列表并批量查询菜单详情
+      const urnList: string[] = []
+      if (manifestRes.data && Array.isArray(manifestRes.data.actions)) {
+        manifestRes.data.actions.forEach((act) => {
+          if (act.has_menu && Array.isArray(act.menu_urns)) {
+            act.menu_urns.forEach((u) => {
+              if (u && !urnList.includes(u)) {
+                urnList.push(u)
+              }
+            })
+          }
+        })
+      }
+
+      if (urnList.length > 0) {
+        try {
+          const menuRes = await listMenusByURNsApi({ urns: urnList })
+          const details: Record<string, any> = {}
+          if (Array.isArray(menuRes.data)) {
+            menuRes.data.forEach((m) => {
+              const urn = `eiam:menu:${m.name}`
+              details[urn] = m
+            })
+          }
+          menuDetailsMap.value = details
+        } catch (menuErr) {
+          console.error("[GetMenuDetailsError]", menuErr)
+        }
+      }
+
       if (detailRes) {
         Object.assign(formData, mapResponseToVO(detailRes.data.policy ?? detailRes.data))
         // 初始同步一次 JSON
@@ -128,6 +160,7 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
     formRules,
     loading,
     permissionManifest,
+    menuDetailsMap,
     editorMode,
     jsonCode,
     addStatement,

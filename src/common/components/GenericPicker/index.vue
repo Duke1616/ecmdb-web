@@ -292,8 +292,8 @@ onUnmounted(() => {
 .generic-picker-container.variant-simple .picker-input-box {
   background: #ffffff;
   border: 1px solid #dcdfe6;
-  border-radius: 8px;
-  min-height: 38px;
+  border-radius: 4px;
+  min-height: 32px;
   padding: 0 12px;
   box-shadow: none;
   gap: 6px;
@@ -301,7 +301,7 @@ onUnmounted(() => {
 }
 
 .generic-picker-container.variant-simple .picker-input-box:hover {
-  border-color: #cbd5e1;
+  border-color: #c0c4cc;
   background: #ffffff;
   box-shadow: none;
 }
@@ -309,8 +309,18 @@ onUnmounted(() => {
 .generic-picker-container.variant-simple .picker-input-box.is-focus {
   border-color: #3b82f6;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+  box-shadow: 0 0 0 1px #3b82f6 inset;
   outline: none;
+}
+
+/* 当父级 el-form-item 校验失败时，将边框变红以配合 element plus 整体校验视觉 */
+:global(.is-error) .generic-picker-container.variant-simple .picker-input-box {
+  border-color: #f56c6c;
+}
+
+:global(.is-error) .generic-picker-container.variant-simple .picker-input-box.is-focus {
+  border-color: #f56c6c;
+  box-shadow: 0 0 0 1px #f56c6c inset;
 }
 
 .selected-single {
@@ -354,6 +364,10 @@ onUnmounted(() => {
 }
 
 /* simple 变体的文字与占位符样式 */
+.generic-picker-container.variant-simple .selected-single {
+  gap: 6px;
+}
+
 .generic-picker-container.variant-simple .single-text {
   font-size: 13px;
   color: #606266;

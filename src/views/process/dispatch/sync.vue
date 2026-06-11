@@ -28,8 +28,8 @@
 </template>
 
 <script setup lang="ts">
-import { syncDiscoveryApi } from "@/api/discovery"
-import { syncDiscoveryReq } from "@/api/discovery/types/discovery"
+import { syncDispatchApi } from "@/api/ticket/dispatch"
+import { syncDispatchReq } from "@/api/ticket/dispatch/types/dispatch"
 import { pipelineGroupApi } from "@/api/ticket/template"
 import { template as tls, templateCombination } from "@/api/ticket/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
@@ -38,20 +38,20 @@ import { onMounted, ref, watch } from "vue"
 
 const emits = defineEmits(["closed", "callback"])
 
-// 接收父组建传递
+// 接收父组件传递
 interface Props {
   templateId: number | undefined
 }
 
 const props = defineProps<Props>()
 
-const DEFAULT_FORM_DATA: syncDiscoveryReq = {
+const DEFAULT_FORM_DATA: syncDispatchReq = {
   template_id: undefined,
   sync_template_id: undefined,
   template_group_id: undefined
 }
 
-const formData = ref<syncDiscoveryReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<syncDispatchReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const formRules: FormRules = {
   template_group_id: [{ required: true, message: "必须输入模版组", trigger: "blur" }],
@@ -77,7 +77,7 @@ const syncSubmit = async () => {
     if (!props.templateId) return
     formData.value.template_id = props.templateId
 
-    await syncDiscoveryApi(formData.value)
+    await syncDispatchApi(formData.value)
 
     ElMessage.success("同步成功")
     onClosed()
@@ -85,7 +85,7 @@ const syncSubmit = async () => {
   } catch (error) {
     // 表单验证错误已由Element Plus处理
     if (!(error instanceof Error)) {
-      ElMessage.error("操作失败")
+      console.error("操作失败:", error)
     }
   }
 }

@@ -1,6 +1,35 @@
 /**
- * 查询历史记录相关类型定义
+ * Explore 模块类型定义
+ * 包含查询范围和查询历史相关的类型
  */
+
+// ============= Query Range 相关类型 =============
+
+export type TimeUnix = number
+
+export interface QueryRange {
+  datasource_id: number
+  query: string
+  start_time: TimeUnix
+  end_time: TimeUnix
+  step: number
+}
+
+export interface RetrieveResult {
+  metrics: Metric[]
+}
+
+export interface Metric {
+  labels: Record<string, string>
+  points: Point[]
+}
+
+export interface Point {
+  timestamp: number
+  value: number
+}
+
+// ============= Query History 相关类型 =============
 
 /**
  * 时间范围

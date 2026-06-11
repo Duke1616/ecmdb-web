@@ -124,7 +124,6 @@ const fetchTemplateDetail = async (id: number) => {
     rule.value = formCreate.parseJson(res.data.rules)
   } catch (error) {
     console.error("获取模板详情失败:", error)
-    ElMessage.error("获取模板详情失败")
     visible.value = false
   } finally {
     loadingDetail.value = false

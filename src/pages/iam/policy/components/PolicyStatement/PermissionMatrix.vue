@@ -12,41 +12,25 @@
       </div>
 
       <div class="groups-container">
-        <div v-for="grp in svc.entries" :key="grp.name" class="grp-row">
-          <div class="grp-header">
-            <el-checkbox
-              :model-value="getGrpState(grp).all"
-              :indeterminate="getGrpState(grp).some"
-              size="small"
-              @change="(val: string | number | boolean) => toggleGrp(grp, Boolean(val))"
-            >
-              {{ grp.name }}
-            </el-checkbox>
-          </div>
-          <div class="grp-actions-grid">
-            <el-checkbox
-              v-for="act in grp.actions"
-              :key="act.code"
-              :model-value="selectedActions.includes(act.code)"
-              :label="act.code"
-              class="pure-act-item"
-              @change="(checked: string | number | boolean) => $emit('toggleAction', act.code, Boolean(checked))"
-            >
-              <div class="act-info">
-                <span class="act-name">{{ act.name }}</span>
-                <span class="act-code">{{ act.code.split(":").pop() }}</span>
-              </div>
-            </el-checkbox>
-          </div>
-        </div>
+        <MatrixRow
+          v-for="grp in svc.entries"
+          :key="grp.name"
+          :grp="grp"
+          :selected-actions="selectedActions"
+          :menu-details-map="menuDetailsMap"
+          @toggle-action="(code, checked) => $emit('toggleAction', code, checked)"
+          @update-actions="(actions) => $emit('updateActions', actions)"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, inject, ref } from "vue"
+import type { Ref } from "vue"
 import { Monitor } from "@element-plus/icons-vue"
+import MatrixRow from "./components/MatrixRow.vue"
 import type { ManifestService, ManifestGroup } from "../../composables/usePolicyData"
 
 const props = defineProps<{
@@ -57,17 +41,48 @@ const props = defineProps<{
 
 const emit = defineEmits(["toggleAction", "updateActions"])
 
+const menuDetailsMap = inject<Ref<Record<string, any>>>("menuDetailsMap", ref({}))
+
+/** 递归展平多级目录分组 */
+const flattenGroups = (entries: ManifestGroup[]): ManifestGroup[] => {
+  const result: ManifestGroup[] = []
+
+  const traverse = (grp: ManifestGroup, parentNames: string[] = []) => {
+    const currentNames = [...parentNames, grp.name]
+
+    if (grp.actions && grp.actions.length > 0) {
+      result.push({
+        name: currentNames.join(" / "),
+        actions: grp.actions
+      })
+    }
+
+    if (grp.children && grp.children.length > 0) {
+      grp.children.forEach((child) => traverse(child, currentNames))
+    }
+  }
+
+  ;(entries || []).forEach((entry) => traverse(entry))
+  return result
+}
+
 /** 过滤后的展示服务与操作项矩阵 */
 const filteredActiveServices = computed(() => {
   const query = props.searchQuery?.toLowerCase().trim()
-  if (!query) return props.activeServices
 
-  return props.activeServices
+  // 1. 先将每个服务下的 entries 展平
+  const flattenedServices = props.activeServices.map((svc) => ({
+    ...svc,
+    entries: flattenGroups(svc.entries)
+  }))
+
+  if (!query) return flattenedServices
+
+  // 2. 对扁平化后的服务和条目进行常规搜索过滤
+  return flattenedServices
     .map((svc) => {
-      // 过滤分组
       const filteredEntries = svc.entries
         .map((grp) => {
-          // 过滤操作项
           const filteredActions = grp.actions.filter(
             (act) => act.name.toLowerCase().includes(query) || act.code.toLowerCase().includes(query)
           )
@@ -83,30 +98,13 @@ const filteredActiveServices = computed(() => {
 /** 获取分组下所有 code */
 const getGrpCodes = (grp: ManifestGroup): string[] => grp.actions.map((a) => a.code)
 
-/** 获取服务下所有 code */
-const getSvcCodes = (svc: ManifestService): string[] => svc.entries.flatMap((g) => getGrpCodes(g))
+/** 获取服务下所有 code (递归支持多级 entries 展平) */
+const getSvcCodes = (svc: ManifestService): string[] => flattenGroups(svc.entries).flatMap((g) => getGrpCodes(g))
 
 const getSelectedCount = (svc: ManifestService) =>
   getSvcCodes(svc).filter((c) => props.selectedActions.includes(c)).length
 
 const getSvcTotal = (svc: ManifestService) => getSvcCodes(svc).length
-
-const getGrpState = (grp: ManifestGroup) => {
-  const codes = getGrpCodes(grp)
-  const count = codes.filter((c) => props.selectedActions.includes(c)).length
-  return {
-    all: count === codes.length && codes.length > 0,
-    some: count > 0 && count < codes.length
-  }
-}
-
-const toggleGrp = (grp: ManifestGroup, checked: boolean) => {
-  const codes = getGrpCodes(grp)
-  const next = checked
-    ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((c) => !codes.includes(c))
-  emit("updateActions", next)
-}
 
 const toggleSvc = (svc: ManifestService, checked: boolean) => {
   const codes = getSvcCodes(svc)
@@ -119,9 +117,10 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
 
 <style lang="scss" scoped>
 .iam-matrix {
-  padding: 20px;
+  padding: 16px;
+
   .svc-segment {
-    margin-bottom: 32px;
+    margin-bottom: 24px;
     &:last-child {
       margin-bottom: 0;
     }
@@ -129,24 +128,24 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
     .segment-title {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding-bottom: 8px;
+      gap: 8px;
+      padding-bottom: 6px;
       border-bottom: 2px solid #3b82f6;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       font-weight: 700;
-      font-size: 15px;
+      font-size: 14px;
       color: #1e293b;
 
       .selection-info {
         margin-left: auto;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 400;
         color: #94a3b8;
         display: flex;
         align-items: center;
         gap: 12px;
         .bulk-btn {
-          font-size: 12px;
+          font-size: 11px;
         }
       }
     }
@@ -158,61 +157,114 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
     gap: 1px;
     background: #e2e8f0;
     border: 1px solid #e2e8f0;
-    border-radius: 4px;
+    border-radius: 6px;
     overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+  }
+}
+</style>
+
+<style lang="scss">
+.el-popper.menu-tooltip-popper {
+  background: rgba(15, 23, 42, 0.95) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    0 10px 25px -5px rgba(0, 0, 0, 0.4),
+    0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+  border-radius: 8px !important;
+  padding: 10px 14px !important;
+  max-width: 360px;
+
+  .el-popper__arrow::before {
+    background: rgba(15, 23, 42, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
-  .grp-row {
+  .menu-tooltip-content {
+    padding: 0;
     display: flex;
-    background: #fff;
-    .grp-header {
-      width: 160px;
-      padding: 12px 16px;
-      background: #f8fafc;
-      border-right: 1px solid #e2e8f0;
-      flex-shrink: 0;
-      :deep(.el-checkbox__label) {
-        font-weight: 700;
+    flex-direction: column;
+    gap: 8px;
+
+    .tooltip-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #34d399;
+
+      .header-icon {
         font-size: 13px;
-        color: #475569;
+      }
+
+      .tooltip-title {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
       }
     }
-    .grp-actions-grid {
-      flex: 1;
-      padding: 12px 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-    }
-  }
 
-  .pure-act-item {
-    margin-right: 0 !important;
-    height: auto;
-    padding: 6px;
-    border-radius: 4px;
-    transition: background 0.15s;
-    &:hover {
-      background: #f1f5f9;
+    .tooltip-divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0) 100%);
     }
-    :deep(.el-checkbox__label) {
-      flex: 1;
-      padding-left: 10px;
-    }
-    .act-info {
+
+    .tooltip-list {
       display: flex;
       flex-direction: column;
-      gap: 1px;
-      .act-name {
-        font-size: 13px;
-        font-weight: 600;
-        color: #334155;
-        line-height: 1.2;
-      }
-      .act-code {
-        font-size: 11px;
-        color: #94a3b8;
-        font-family: ui-monospace, monospace;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+
+      .tooltip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 6px 10px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        color: #e2e8f0;
+        transition: all 0.2s;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.07);
+          border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .item-icon {
+          font-size: 12px;
+          color: #10b981;
+          margin-top: 2px;
+        }
+
+        .menu-desc {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          flex: 1;
+
+          .menu-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #f8fafc;
+            line-height: 1.3;
+          }
+
+          .urn-text {
+            font-size: 10px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            word-break: break-all;
+            letter-spacing: 0.1px;
+            color: #94a3b8;
+
+            &.is-subtext {
+              color: #64748b;
+              font-size: 9px;
+            }
+          }
+        }
       }
     }
   }

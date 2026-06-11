@@ -116,7 +116,6 @@ const loadConfigs = async () => {
     configs.value = Array.isArray(response.data.ticket_configs) ? response.data.ticket_configs : []
   } catch (error) {
     console.error("加载工单配置失败:", error)
-    ElMessage.error("加载工单配置失败")
     configs.value = []
   } finally {
     loading.value = false

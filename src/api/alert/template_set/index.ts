@@ -71,14 +71,6 @@ export const listTemplateSetsByIDsApi = (data: ListTemplateSetsByIDsReq) => {
   })
 }
 
-// 统计条目数量
-export const countItemsApi = (data: CountItemsReq) => {
-  return instance.post<CountItemsResp>({
-    url: `${API_SERVICE.ALERT}/template/set/items/count`,
-    data
-  })
-}
-
 // 新增条目
 export const addItemApi = (data: AddItemReq) => {
   return instance.post<AddItemResp>({
@@ -115,14 +107,6 @@ export const deleteItemsApi = (data: DeleteItemsReq) => {
 export const deleteAllItemsApi = (data: DeleteAllItemsReq) => {
   return instance.post({
     url: `${API_SERVICE.ALERT}/template/set/items/delete-all`,
-    data
-  })
-}
-
-// 解析模板
-export const resolveTemplateApi = (data: ResolveTemplateReq) => {
-  return instance.post<ResolveTemplateResp>({
-    url: `${API_SERVICE.ALERT}/template/set/resolve`,
     data
   })
 }

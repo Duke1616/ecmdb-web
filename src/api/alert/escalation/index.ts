@@ -78,13 +78,6 @@ export const updateConfigStatusApi = (id: number) => {
   })
 }
 
-export const listEnabledConfigsApi = (data: ListEnabledConfigsReq) => {
-  return instance.post<ListEnabledConfigsResp>({
-    url: `${API_SERVICE.ALERT}/escalation/config/enabled`,
-    data
-  })
-}
-
 // 升级步骤管理API
 export const createStepApi = (data: CreateStepReq) => {
   return instance.post<CreateStepResp>({
@@ -116,12 +109,6 @@ export const listStepsByConfigIDApi = (data: ListStepsByConfigIDReq) => {
 export const deleteStepApi = (id: number) => {
   return instance.delete({
     url: `${API_SERVICE.ALERT}/escalation/step/delete/${id}`
-  })
-}
-
-export const deleteStepsByConfigIDApi = (configId: number) => {
-  return instance.delete({
-    url: `${API_SERVICE.ALERT}/escalation/step/config/${configId}`
   })
 }
 

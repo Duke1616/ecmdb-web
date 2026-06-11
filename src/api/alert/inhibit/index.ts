@@ -28,13 +28,6 @@ export const updateInhibitRuleApi = (data: SaveInhibitRuleReq) => {
   })
 }
 
-// 获取抑制规则列表
-export const listInhibitRulesApi = () => {
-  return instance.get<ListInhibitRulesResponse>({
-    url: `${API_SERVICE.ALERT}/inhibit/list`
-  })
-}
-
 // 删除抑制规则
 export const deleteInhibitRuleApi = (id: number) => {
   return instance.delete<DeleteInhibitRuleResponse>({

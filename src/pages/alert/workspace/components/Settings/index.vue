@@ -332,7 +332,6 @@ const handleSaveSettings = async () => {
     emit("refresh")
   } catch (error) {
     console.error("保存设置失败:", error)
-    ElMessage.error("保存设置失败")
   } finally {
     saving.value = false
   }

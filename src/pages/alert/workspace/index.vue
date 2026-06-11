@@ -299,8 +299,11 @@ const loadWorkspacesData = async () => {
 // 处理工作空间点击
 const handleWorkspaceClick = (workspace: Workspace) => {
   console.log("进入工作空间:", workspace)
-  // 跳转到工作空间详情页面
-  router.push(`/alert/workspace/${workspace.id}`)
+  // 使用命名路由进行跳转，以避免与列表页的 path 产生歧义匹配冲突
+  router.push({
+    name: "AlertWorkspaceDetail",
+    params: { id: workspace.id }
+  })
 }
 
 // 创建工作空间

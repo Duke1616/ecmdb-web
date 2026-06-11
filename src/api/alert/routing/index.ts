@@ -43,20 +43,6 @@ export const getRoutingRuleByIdApi = (id: number) => {
   })
 }
 
-// 按作用域获取路由规则列表
-export const listRoutingRulesByScopeApi = (scope: string) => {
-  return instance.get<ListRoutingRulesResponse>({
-    url: `${API_SERVICE.ALERT}/routing_rule/list/${scope}`
-  })
-}
-
-// 根据告警规则ID获取路由规则列表
-export const listRoutingRulesByRuleApi = (ruleId: number) => {
-  return instance.get<ListRoutingRulesResponse>({
-    url: `${API_SERVICE.ALERT}/routing_rule/by_rule/${ruleId}`
-  })
-}
-
 // 切换路由规则状态
 export const toggleRoutingRuleStatusApi = (id: number) => {
   return instance.patch<ToggleRoutingRuleStatusResponse>({

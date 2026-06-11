@@ -211,7 +211,6 @@ const listModelGraphData = async () => {
   } catch (err) {
     console.error("获取模型关系图数据失败:", err)
     error.value = true
-    ElMessage.error("获取数据失败，请重试")
   } finally {
     loading.value = false
   }

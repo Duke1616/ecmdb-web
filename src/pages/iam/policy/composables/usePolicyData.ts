@@ -9,12 +9,15 @@ import type { PermissionManifest } from "@/api/iam/permission/type"
 export interface ManifestAction {
   code: string
   name: string
+  has_menu?: boolean
+  menu_urns?: string[]
 }
 
 /** 权限分组 */
 export interface ManifestGroup {
   name: string
   actions: ManifestAction[]
+  children?: ManifestGroup[]
 }
 
 /** 服务权限条目 */
@@ -110,27 +113,39 @@ export const getStatementValidationMessage = (statements: StatementVO[], emptyTe
 export const enrichManifest = (raw: PermissionManifest): ManifestService[] => {
   if (!raw || !raw.services) return []
 
-  // 构建 code -> name 查表
-  const nameMap = new Map<string, string>()
+  // 构建 code -> action 查表
+  const actionMap = new Map<string, { name: string; has_menu?: boolean; menu_urns?: string[] }>()
   if (Array.isArray(raw.actions)) {
-    raw.actions.forEach((a) => nameMap.set(a.code, a.name))
+    raw.actions.forEach((a) =>
+      actionMap.set(a.code, {
+        name: a.name,
+        has_menu: a.has_menu,
+        menu_urns: a.menu_urns
+      })
+    )
+  }
+
+  const enrichGroup = (grp: any): ManifestGroup => {
+    return {
+      name: grp.name,
+      actions: (grp.actions || []).map((code: string): ManifestAction => {
+        const detail = actionMap.get(code)
+        return {
+          code,
+          name: detail ? detail.name : code,
+          has_menu: detail?.has_menu,
+          menu_urns: detail?.menu_urns
+        }
+      }),
+      children: Array.isArray(grp.children) ? grp.children.map(enrichGroup) : undefined
+    }
   }
 
   return raw.services.map(
     (svc): ManifestService => ({
       code: svc.code,
       name: svc.name,
-      entries: (svc.entries || []).map(
-        (grp): ManifestGroup => ({
-          name: grp.name,
-          actions: (grp.actions || []).map(
-            (code: string): ManifestAction => ({
-              code,
-              name: nameMap.get(code) || code
-            })
-          )
-        })
-      )
+      entries: (svc.entries || []).map(enrichGroup)
     })
   )
 }

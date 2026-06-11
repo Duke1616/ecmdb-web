@@ -236,7 +236,7 @@ const generateUserColor = (username: string) => {
 }
 
 /* Simple 风格尺寸与样式覆盖 */
-:deep(.variant-simple) {
+.variant-simple {
   .size-single {
     width: 16px;
     height: 16px;

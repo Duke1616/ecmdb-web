@@ -176,7 +176,6 @@ const loadAlerts = async () => {
     paginationData.total = response.data.total || 0
   } catch (error) {
     console.error("加载告警列表失败:", error)
-    ElMessage.error("加载告警列表失败")
   } finally {
     loading.value = false
   }

@@ -27,12 +27,15 @@ export interface ActionDetail {
   group: string
   code: string
   name: string
+  has_menu?: boolean
+  menu_urns?: string[]
 }
 
 /** 功能分组 */
 export interface PermissionGroup {
   name: string
   actions: string[]
+  children?: PermissionGroup[]
 }
 
 /** 服务权限条目 */

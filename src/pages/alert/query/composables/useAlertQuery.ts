@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import { QueryRangeApi } from "@/api/alert/proxy"
+import { QueryRangeApi } from "@/api/alert/explore"
 
 /**
  * 告警查询逻辑 Composable

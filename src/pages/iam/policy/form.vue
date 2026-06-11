@@ -120,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, provide } from "vue"
 import { ElMessage, type FormInstance } from "element-plus"
 import { Plus, Monitor, Document, Download } from "@element-plus/icons-vue"
 import { Codemirror } from "vue-codemirror"
@@ -142,6 +142,7 @@ const {
   formRules,
   loading,
   permissionManifest,
+  menuDetailsMap,
   editorMode,
   jsonCode,
   addStatement,
@@ -150,6 +151,8 @@ const {
   validateStatements,
   submitForm
 } = usePolicyForm(props, emit)
+
+provide("menuDetailsMap", menuDetailsMap)
 
 const isEdit = computed(() => !!props.code)
 const dialogTitle = computed(() => (isEdit.value ? "确认策略信息" : "完善策略信息"))

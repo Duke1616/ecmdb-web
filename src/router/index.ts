@@ -91,17 +91,6 @@ export const constantRoutes: RouteRecordRaw[] = [
       hidden: true
     }
   },
-
-  {
-    path: "/process/template/discovery",
-    component: () => import("@/views/process/discovery/index.vue"),
-    name: "process-template-discovery",
-    meta: {
-      title: "自动发现",
-      svgIcon: "search",
-      hidden: true // 隐藏菜单，只能通过编程式导航访问
-    }
-  },
   {
     path: "/profile",
     component: Layouts,

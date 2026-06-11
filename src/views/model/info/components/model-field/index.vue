@@ -18,7 +18,7 @@
         <el-button :icon="allExpanded ? Expand : ArrowUp" @click="toggleAllGroups" size="default">
           {{ allExpanded ? "全部收起" : "全部展开" }}
         </el-button>
-        <el-button :icon="Setting" @click="handleSortDrawer" size="default"> 排序设置 </el-button>
+        <el-button :icon="Setting" @click="handleSortDrawer" size="default"> 自定义列展示 </el-button>
       </div>
     </div>
 
@@ -184,7 +184,7 @@
 
     <Drawer
       v-model="sortFieldVisibe"
-      title="排序设置"
+      title="自定义列展示"
       subtitle="设置字段显示顺序"
       size="35%"
       direction="rtl"

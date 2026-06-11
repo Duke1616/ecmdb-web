@@ -69,7 +69,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { ElMessage } from "element-plus"
 import { Setting } from "@element-plus/icons-vue"
 import { listRulesByWorkspaceApi } from "@/api/alert/rule"
 import type { ListRulesByWorkspaceReq, Rule } from "@/api/alert/rule/types/rule"
@@ -103,7 +102,6 @@ const loadRules = async () => {
     total.value = response.data.total || 0
   } catch (error) {
     console.error("加载告警规则失败:", error)
-    ElMessage.error("加载告警规则失败")
   } finally {
     loading.value = false
   }

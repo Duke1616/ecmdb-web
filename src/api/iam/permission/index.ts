@@ -31,3 +31,11 @@ export function searchSubjectsApi(data: permission.SearchSubjectsReq) {
     data
   })
 }
+
+/** 批量根据 URN 查询菜单详情 */
+export function listMenusByURNsApi(data: { urns: string[] }) {
+  return instance.post<permission.Menu[]>({
+    url: `${API_SERVICE.IAM}/permission/menus/by_urns`,
+    data
+  })
+}

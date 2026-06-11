@@ -1,4 +1,4 @@
-export interface discovery {
+export interface dispatch {
   id: number
   template_id: number
   runner_id: number
@@ -6,7 +6,7 @@ export interface discovery {
   value: string
 }
 
-export interface createOrUpdateDiscoveryReq {
+export interface createOrUpdateDispatchReq {
   id?: number
   template_id: number
   runner_id: number
@@ -14,8 +14,8 @@ export interface createOrUpdateDiscoveryReq {
   value: string
 }
 
-export interface discoveries {
-  discoveries: discovery[]
+export interface dispatches {
+  dispatches: dispatch[]
   total: number
 }
 
@@ -28,7 +28,7 @@ export interface listByTemplateIdReq {
   template_id: number
 }
 
-export interface syncDiscoveryReq {
+export interface syncDispatchReq {
   /** 模版ID */
   template_group_id: number | undefined
   /** 模版ID */

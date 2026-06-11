@@ -2,9 +2,9 @@
   <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
-      :title="`自动发现 - ${templateData?.name || '未选择模版'}`"
+      :title="`自动派发 - ${templateData?.name || '未选择模版'}`"
       subtitle="根据模版字段自行匹配执行器"
-      @refresh="listDiscoveriesData"
+      @refresh="listDispatchesData"
       @back="handleBack"
     >
       <template #actions>
@@ -15,7 +15,7 @@
 
     <!-- 主内容区域 -->
     <DataTable
-      :data="discoveriesData"
+      :data="dispatchesData"
       :columns="tableColumns"
       :pagination="paginationData"
       :loading="loading"
@@ -44,12 +44,12 @@
       </template>
     </DataTable>
 
-    <!-- 自动发现 -->
+    <!-- 自动派发 -->
     <FormDialog
       v-model="dialogVisible"
-      title="自动发现"
+      title="自动派发"
       width="30%"
-      @confirm="handlerSubmitDiscovery"
+      @confirm="handlerSubmitDispatch"
       @cancel="onClosed"
     >
       <Form
@@ -57,25 +57,25 @@
         :fields-map="fieldMap"
         :template-id="templateData?.id"
         :runner-map="runnerMap"
-        @callback="listDiscoveriesData"
+        @callback="listDispatchesData"
         @closed="onClosed"
       />
     </FormDialog>
 
     <!-- 同步其他 -->
     <FormDialog v-model="syncVisible" title="同步数据" width="30%" @confirm="handlerSubmiSync" @cancel="onSyncClosed">
-      <Sync ref="syncRef" :template-id="templateData?.id" @callback="listDiscoveriesData" @closed="onSyncClosed" />
+      <Sync ref="syncRef" :template-id="templateData?.id" @callback="listDispatchesData" @closed="onSyncClosed" />
     </FormDialog>
   </PageContainer>
 </template>
 
 <script setup lang="ts">
 // ==================== 导入模块 ====================
-import { discovery } from "@/api/discovery/types/discovery"
+import { dispatch } from "@/api/ticket/dispatch/types/dispatch.js"
 import { usePagination } from "@/common/composables/usePagination"
 import { h, nextTick, ref, watch, onMounted } from "vue"
 import { CirclePlus } from "@element-plus/icons-vue"
-import { deleteDiscoveryApi, listDiscoveriesByTemplateIdApi } from "@/api/discovery"
+import { deleteDispatchApi, listDispatchesByTemplateIdApi } from "@/api/ticket/dispatch/index.js"
 import { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { runner } from "@/api/ticket/runner/types/runner.js"
@@ -111,7 +111,7 @@ const runnerMap = ref<Map<number, string>>(new Map())
 const fieldMap = new Map<string, string>()
 
 // 表格数据
-const discoveriesData = ref<discovery[]>([])
+const dispatchesData = ref<dispatch[]>([])
 
 import type { Column } from "@@/components/DataTable/types"
 
@@ -160,7 +160,7 @@ const processRules = (rules: any, fieldMap: Map<string, string>) => {
 const setForm = (row: template) => {
   templateData.value = row
   processRules(row.rules, fieldMap)
-  listDiscoveriesData()
+  listDispatchesData()
 }
 
 // ==================== 执行器管理 ====================
@@ -190,7 +190,7 @@ const listRunnerByWorkflowId = async (): Promise<boolean> => {
 }
 
 const supplementRunnerNames = async () => {
-  const missingRunnerIds = discoveriesData.value
+  const missingRunnerIds = dispatchesData.value
     .filter((item) => !runnerMap.value.has(item.runner_id))
     .map((item) => item.runner_id)
     .filter((id, index, arr) => arr.indexOf(id) === index)
@@ -227,22 +227,22 @@ const checkRunners = async (): Promise<boolean> => {
 }
 
 // ==================== 数据查询 ====================
-const listDiscoveriesData = async () => {
+const listDispatchesData = async () => {
   if (!templateData.value) return
 
   loading.value = true
   try {
-    const { data } = await listDiscoveriesByTemplateIdApi({
+    const { data } = await listDispatchesByTemplateIdApi({
       template_id: templateData.value.id,
       offset: (paginationData.currentPage - 1) * paginationData.pageSize,
       limit: paginationData.pageSize
     })
 
     paginationData.total = data.total
-    discoveriesData.value = data.discoveries
+    dispatchesData.value = data.dispatches
     await supplementRunnerNames()
   } catch (error) {
-    discoveriesData.value = []
+    dispatchesData.value = []
   } finally {
     loading.value = false
   }
@@ -264,7 +264,7 @@ const handlerCreate = async () => {
   })
 }
 
-const handlerUpdate = async (row: discovery) => {
+const handlerUpdate = async (row: dispatch) => {
   if (!(await checkRunners())) {
     return
   }
@@ -275,7 +275,7 @@ const handlerUpdate = async (row: discovery) => {
   })
 }
 
-const handlerDelete = (row: discovery) => {
+const handlerDelete = (row: dispatch) => {
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -288,9 +288,9 @@ const handlerDelete = (row: discovery) => {
     type: "warning"
   }).then(async () => {
     try {
-      await deleteDiscoveryApi(row.id)
+      await deleteDispatchApi(row.id)
       ElMessage.success("删除成功")
-      listDiscoveriesData()
+      listDispatchesData()
     } catch (error) {
       // 错误由后端处理
     }
@@ -301,7 +301,7 @@ const handlerSync = () => {
   syncVisible.value = true
 }
 
-const handlerSubmitDiscovery = () => {
+const handlerSubmitDispatch = () => {
   apiRef.value?.submitForm()
 }
 
@@ -309,7 +309,7 @@ const handlerSubmiSync = () => {
   syncRef.value?.syncSubmit()
 }
 
-const operateEvent = (action: string, row: discovery) => {
+const operateEvent = (action: string, row: dispatch) => {
   switch (action) {
     case "edit":
       handlerUpdate(row)
@@ -353,7 +353,7 @@ onMounted(() => {
 })
 
 // ==================== 监听器 ====================
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listDiscoveriesData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listDispatchesData, { immediate: true })
 </script>
 
 <style lang="scss">
