@@ -10,17 +10,13 @@ import type {
   ListTemplateSetReq,
   RetrieveTemplateSets,
   ListTemplateSetsByIDsReq,
-  CountItemsReq,
-  CountItemsResp,
   AddItemReq,
   AddItemResp,
   AddItemsReq,
   ListItemsReq,
   ListItemsResp,
   DeleteItemsReq,
-  DeleteAllItemsReq,
-  ResolveTemplateReq,
-  ResolveTemplateResp
+  DeleteAllItemsReq
 } from "./types"
 
 // 创建模板集合

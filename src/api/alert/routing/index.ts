@@ -3,7 +3,6 @@ import { API_SERVICE } from "@@/utils/service"
 import type {
   SaveRoutingRuleReq,
   SaveRoutingRuleResponse,
-  ListRoutingRulesResponse,
   DeleteRoutingRuleResponse,
   ToggleRoutingRuleStatusResponse,
   SwapPrioritiesReq,

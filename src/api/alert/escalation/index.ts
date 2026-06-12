@@ -11,8 +11,6 @@ import type {
   GetConfigResp,
   ListConfigsReq,
   ListConfigsResp,
-  ListEnabledConfigsReq,
-  ListEnabledConfigsResp,
   CreateStepReq,
   CreateStepResp,
   UpdateStepReq,
