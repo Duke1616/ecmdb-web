@@ -1,6 +1,8 @@
 import type { App } from "vue"
 import SvgIcon from "~virtual/svg-component"
-import "~virtual/svg-component/organization"
+
+// 使用 Vite 的 import.meta.glob 批量静态引入 icons 目录下所有 SVG 文件，防止生产打包时 Tree Shaking 导致动态加载失败
+import.meta.glob("@@/assets/icons/**/*.svg")
 
 export function loadIconSvg(app: App) {
   // 注册 SvgIcon 组件
