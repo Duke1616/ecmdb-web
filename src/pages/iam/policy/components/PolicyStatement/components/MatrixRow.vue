@@ -1,111 +1,97 @@
 <template>
-  <div class="grp-row" :class="getGrpRowClass(grp.name)">
-    <!-- 左侧：目录分类 Header，采用层级缩进与极细引导线，宽度 160px -->
-    <div
-      class="grp-header"
-      :class="[getGrpHeaderClass(grp.name), { 'is-header-active': getGrpState(grp).all || getGrpState(grp).some }]"
-      :style="{ paddingLeft: `${14 + (getGrpDepth(grp.name) - 1) * 20}px` }"
-    >
-      <!-- 渲染极细的垂直层级引导线，不使用折角连线 -->
-      <template v-if="getGrpDepth(grp.name) > 1">
-        <div
-          v-for="d in getGrpDepth(grp.name) - 1"
-          :key="d"
-          class="tree-scope-track"
-          :style="{ left: `${20 + (d - 1) * 20}px` }"
-        />
-      </template>
-
-      <!-- 最左侧激活指示条 -->
-      <div class="depth-indicator-bar" />
-
+  <div class="grp-row">
+    <!-- 第一列：一级大类分类列，采用垂直居中 -->
+    <div class="main-group-col">
       <el-checkbox
-        :model-value="getGrpState(grp).all"
-        :indeterminate="getGrpState(grp).some"
+        :model-value="getMainGrpState().all"
+        :indeterminate="getMainGrpState().some"
         size="small"
-        @change="(val: string | number | boolean) => toggleGrp(grp, Boolean(val))"
+        @change="(val) => toggleMainGrp(Boolean(val))"
       >
-        <div class="grp-name-wrapper">
-          <template v-if="getGrpDepth(grp.name) > 1">
-            <!-- 子分类：正常字重，略微淡化字色，保证清晰的从属关系 -->
-            <span class="child-name">
-              {{ getGrpNameParts(grp.name)[getGrpNameParts(grp.name).length - 1] }}
-            </span>
-          </template>
-          <template v-else>
-            <!-- 一级分类：加粗，高亮显示 -->
-            <span class="main-name">{{ grp.name }}</span>
-          </template>
-        </div>
+        <span class="main-name">{{ grp.name }}</span>
       </el-checkbox>
     </div>
 
-    <!-- 右侧：该组下所有的具体操作权限项网格 -->
-    <div class="grp-actions-grid">
-      <ActionItem
-        v-for="act in grp.actions"
-        :key="act.code"
-        :act="act"
-        :selected="selectedActions.includes(act.code)"
-        :menu-details-map="menuDetailsMap"
-        @toggle="(checked) => $emit('toggleAction', act.code, checked)"
-      />
+    <!-- 右侧容器：渲染每一个 subGroup 的二级分类子行 -->
+    <div class="sub-rows-container">
+      <div v-for="(sub, idx) in grp.subGroups" :key="idx" class="sub-group-row">
+        <!-- 第二列：子分类列（二级分类），只有当包含多个子行分类时才展示，仅有 1 个子类时直接隐藏让操作网格撑满 -->
+        <div v-if="grp.subGroups.length > 1" class="sub-group-col">
+          <el-checkbox
+            :model-value="getSubGrpState(sub).all"
+            :indeterminate="getSubGrpState(sub).some"
+            size="small"
+            @change="(val) => toggleSubGrp(sub, Boolean(val))"
+          >
+            <span class="sub-name">{{ sub.name || grp.name }}</span>
+          </el-checkbox>
+        </div>
+
+        <!-- 第三列：操作权限项网格 -->
+        <div class="grp-actions-grid">
+          <ActionItem
+            v-for="act in sub.actions"
+            :key="act.code"
+            :act="act"
+            :selected="selectedActions.includes(act.code)"
+            :menu-details-map="menuDetailsMap"
+            @toggle="(checked) => $emit('toggleAction', act.code, checked)"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import ActionItem from "./ActionItem.vue"
-import type { ManifestGroup } from "../../../composables/usePolicyData"
 
+// grp 为半展平后的一级分类，结构：
+// { name: string, subGroups: { name: string, actions: [] }[], allActions: [] }
 const props = defineProps<{
-  grp: ManifestGroup
+  grp: any
   selectedActions: string[]
   menuDetailsMap: Record<string, any>
 }>()
 
 const emit = defineEmits(["toggleAction", "updateActions"])
 
-/** 获取分组下所有 code */
-const getGrpCodes = (grp: ManifestGroup): string[] => grp.actions.map((a) => a.code)
-
-const getGrpState = (grp: ManifestGroup) => {
-  const codes = getGrpCodes(grp)
-  const count = codes.filter((c) => props.selectedActions.includes(c)).length
+// 计算一级分类状态
+const getMainGrpState = () => {
+  const codes = props.grp.allActions.map((a: any) => a.code)
+  const count = codes.filter((c: any) => props.selectedActions.includes(c)).length
   return {
     all: count === codes.length && codes.length > 0,
     some: count > 0 && count < codes.length
   }
 }
 
-const toggleGrp = (grp: ManifestGroup, checked: boolean) => {
-  const codes = getGrpCodes(grp)
+// 切换一级分类下所有操作
+const toggleMainGrp = (checked: boolean) => {
+  const codes = props.grp.allActions.map((a: any) => a.code)
   const next = checked
     ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((c) => !codes.includes(c))
+    : props.selectedActions.filter((c: any) => !codes.includes(c))
   emit("updateActions", next)
 }
 
-/** 解析目录层级名称 */
-const getGrpNameParts = (name: string): string[] => {
-  return name.split(" / ")
+// 计算二级子分类状态
+const getSubGrpState = (sub: any) => {
+  const codes = sub.actions.map((a: any) => a.code)
+  const count = codes.filter((c: any) => props.selectedActions.includes(c)).length
+  return {
+    all: count === codes.length && codes.length > 0,
+    some: count > 0 && count < codes.length
+  }
 }
 
-/** 获取层级深度 */
-const getGrpDepth = (name: string): number => {
-  return getGrpNameParts(name).length
-}
-
-/** 获取 Header 样式 Class */
-const getGrpHeaderClass = (name: string): string => {
-  const depth = getGrpDepth(name)
-  return `depth-${depth} ${depth > 1 ? "has-parent" : ""}`
-}
-
-/** 获取 Row 样式 Class */
-const getGrpRowClass = (name: string): string => {
-  const depth = getGrpDepth(name)
-  return `row-depth-${depth} row-depth-${depth > 3 ? "n" : depth}`
+// 切换二级子分类下所有操作
+const toggleSubGrp = (sub: any, checked: boolean) => {
+  const codes = sub.actions.map((a: any) => a.code)
+  const next = checked
+    ? [...new Set([...props.selectedActions, ...codes])]
+    : props.selectedActions.filter((c: any) => !codes.includes(c))
+  emit("updateActions", next)
 }
 </script>
 
@@ -121,23 +107,23 @@ const getGrpRowClass = (name: string): string => {
     border-bottom: none;
   }
 
-  /* 整行 Hover 视觉效果提升 */
   &:hover {
     background-color: var(--el-fill-color-extra-light);
 
-    .grp-header {
+    .main-group-col {
       background-color: var(--el-fill-color-extra-light);
     }
   }
 
-  .grp-header {
-    width: 160px; /* 宽度调回至 160px，紧凑实用 */
-    padding: 12px 10px;
+  /* 第一列：一级大类 */
+  .main-group-col {
+    width: 140px;
+    padding: 12px 14px;
     background: var(--el-bg-color);
-    border-right: 1px solid var(--el-border-color-extra-light); /* 极其淡雅的竖向虚隔线 */
+    border-right: 1px solid var(--el-border-color-lighter);
     flex-shrink: 0;
     display: flex;
-    align-items: center; /* 居中对齐 */
+    align-items: center;
     position: relative;
     box-sizing: border-box;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -145,7 +131,7 @@ const getGrpRowClass = (name: string): string => {
     :deep(.el-checkbox) {
       width: 100%;
       display: flex;
-      align-items: center; /* 居中对齐 */
+      align-items: center;
       margin-right: 0;
     }
 
@@ -157,89 +143,79 @@ const getGrpRowClass = (name: string): string => {
       word-break: break-all;
       display: block;
     }
-  }
-
-  /* 极细的垂直层级引导线轨 (Scope Track) */
-  .tree-scope-track {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background-color: var(--el-border-color-lighter);
-    pointer-events: none;
-    transition: background-color 0.2s;
-  }
-
-  /* 最左侧指示条 */
-  .depth-indicator-bar {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: transparent;
-    border-radius: 0;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  &.depth-1 {
-    background: var(--el-bg-color);
-    .depth-indicator-bar {
-      background-color: transparent;
-    }
-  }
-
-  /* 激活态表现：极其柔和的选中背景与主题色联动高亮 */
-  .grp-header.is-header-active {
-    background: var(--el-color-primary-light-9) !important;
-    border-right-color: var(--el-color-primary-light-8);
-
-    .depth-indicator-bar {
-      background-color: var(--el-color-primary) !important;
-    }
-
-    .tree-scope-track {
-      background-color: var(--el-color-primary-light-5) !important;
-    }
 
     .main-name {
-      color: var(--el-color-primary) !important;
-    }
-
-    .child-name {
-      color: var(--el-color-primary) !important;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--el-text-color-primary);
     }
   }
 
-  .grp-name-wrapper {
+  /* 右侧多行列表容器 */
+  .sub-rows-container {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    line-height: 1.25;
-  }
 
-  .child-name {
-    font-size: 12px;
-    font-weight: 400; /* 子级正常字重 */
-    color: var(--el-text-color-regular);
-  }
+    .sub-group-row {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid var(--el-border-color-extra-light);
 
-  .main-name {
-    font-size: 12px;
-    font-weight: 700; /* 一级粗体 */
-    color: var(--el-text-color-primary);
-  }
+      &:last-child {
+        border-bottom: none;
+      }
 
-  .grp-actions-grid {
-    flex: 1;
-    padding: 12px 18px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 8px 12px;
-    background: var(--el-bg-color);
-    align-items: center;
-    transition: background-color 0.2s ease;
+      &:hover {
+        background-color: rgba(0, 187, 153, 0.01);
+      }
+    }
+
+    /* 第二列：二级子类 */
+    .sub-group-col {
+      width: 150px;
+      padding: 10px 12px;
+      background: var(--el-bg-color);
+      border-right: 1px solid var(--el-border-color-extra-light);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+
+      :deep(.el-checkbox) {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        margin-right: 0;
+      }
+
+      :deep(.el-checkbox__label) {
+        flex: 1;
+        padding-left: 6px;
+        line-height: 1.4;
+        white-space: normal;
+        word-break: break-all;
+        display: block;
+      }
+
+      .sub-name {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--el-text-color-regular);
+      }
+    }
+
+    /* 第三列：操作选项网格 */
+    .grp-actions-grid {
+      flex: 1;
+      padding: 10px 16px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 6px 12px;
+      background: var(--el-bg-color);
+      align-items: center;
+    }
   }
 }
 </style>

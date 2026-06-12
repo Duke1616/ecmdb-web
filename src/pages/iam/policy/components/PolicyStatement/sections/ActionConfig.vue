@@ -42,6 +42,13 @@
               <span class="name">{{ s.name }}</span>
               <span class="code">{{ s.code }}</span>
             </el-checkbox>
+
+            <!-- 精致微型定位小按钮 -->
+            <el-tooltip content="定位到右侧配置" placement="top" :show-after="200" :teleported="false">
+              <el-button link class="locate-btn" @click.stop="scrollToService(s.code)">
+                <el-icon><Aim /></el-icon>
+              </el-button>
+            </el-tooltip>
           </div>
         </div>
       </aside>
@@ -73,7 +80,7 @@
             class="v4-search-input"
           />
         </div>
-        <div class="pane-body scroll-area">
+        <div ref="scrollAreaRef" class="pane-body scroll-area">
           <PermissionMatrix
             v-if="actionMode === 'specific' && activeServices.length > 0"
             :active-services="activeServices"
@@ -95,12 +102,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue"
 import { ElMessage } from "element-plus"
-import { Pointer, FullScreen } from "@element-plus/icons-vue"
+import { Pointer, FullScreen, Aim } from "@element-plus/icons-vue"
 import SectionPanel from "./SectionPanel.vue"
 import PermissionMatrix from "../PermissionMatrix.vue"
 import type { StatementVO, ManifestService } from "../../../composables/usePolicyData"
+import scrollIntoView from "scroll-into-view-if-needed"
 
 const props = defineProps<{
   label: string
@@ -116,6 +124,7 @@ const isExpanded = ref(true)
 const searchQuery = ref("")
 const actionSearchQuery = ref("")
 const isFullscreen = ref(false)
+const scrollAreaRef = ref<HTMLElement>()
 
 const toggleFullscreen = () => {
   isFullscreen.value = !isFullscreen.value
@@ -226,6 +235,30 @@ const onActionToggle = (actionCode: string, checked: boolean) => {
 
 const onActionsUpdate = (actions: string[]) => patchStmt({ action: actions })
 
+/** 点击左侧服务直接定位到右侧对应的矩阵模块 */
+const scrollToService = async (code: string) => {
+  // 如果尚未激活该模块，则帮其勾选激活
+  if (!managedServiceCodes.value.includes(code)) {
+    handleServiceItemChange(code, true)
+  }
+
+  // 双重 nextTick 确保跨组件单向数据流完整同步，并渲染出新增模块的 DOM 结构
+  await nextTick()
+  await nextTick()
+
+  const container = scrollAreaRef.value
+  const target = container?.querySelector(`[data-svc-code="${code}"]`) as HTMLElement
+  if (container && target) {
+    scrollIntoView(target, {
+      scrollMode: "always", // 总是执行滚动定位
+      block: "start", // 对齐至局部滚动容器最上方
+      inline: "nearest",
+      behavior: "smooth", // 平滑滚动
+      boundary: container // 限制滚动边界在局部，防止误滚外部 window 页面
+    })
+  }
+}
+
 /** 批量切换全场所有服务的 Actions */
 const toggleAllServices = (checked: boolean) => {
   if (!checked) {
@@ -250,7 +283,7 @@ const toggleAllServices = (checked: boolean) => {
     left: 0;
     width: 100vw;
     height: 100vh !important;
-    z-index: 3000;
+    z-index: 1900;
     background: #fff;
     padding: 16px 24px 24px;
     box-sizing: border-box;
@@ -384,19 +417,26 @@ const toggleAllServices = (checked: boolean) => {
 
   .svc-item-check {
     padding: 10px 12px;
-    cursor: pointer;
     border-radius: 8px;
     border: 1px solid transparent;
     transition: all 0.2s ease-in-out;
-    background: #f8fafc; /* 默认微灰渐变背景 */
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 
     &:hover {
       background: #f1f5f9;
       border-color: #e2e8f0;
+
+      .locate-btn {
+        opacity: 0.8;
+      }
     }
 
     &.is_active {
-      background: #eff6ff; /* 精致柔和淡蓝 */
+      background: #eff6ff;
       border-color: #bfdbfe;
       box-shadow: 0 1px 2px 0 rgba(59, 130, 246, 0.05);
 
@@ -406,10 +446,14 @@ const toggleAllServices = (checked: boolean) => {
       .code {
         color: #3b82f6;
       }
+
+      .locate-btn {
+        color: #3b82f6;
+      }
     }
 
     .el-checkbox {
-      width: 100%;
+      flex: 1;
       display: flex;
       align-items: center;
       margin-right: 0;
@@ -434,6 +478,21 @@ const toggleAllServices = (checked: boolean) => {
       color: #64748b;
       font-family: ui-monospace, monospace;
       font-weight: 500;
+    }
+
+    .locate-btn {
+      color: #64748b;
+      padding: 4px;
+      font-size: 15px;
+      border-radius: 4px;
+      transition: all 0.2s;
+      opacity: 0.3;
+
+      &:hover {
+        color: #3b82f6;
+        background: #eff6ff;
+        opacity: 1 !important;
+      }
     }
   }
 

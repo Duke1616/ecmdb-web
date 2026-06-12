@@ -1,6 +1,6 @@
 <template>
   <div class="iam-matrix">
-    <div v-for="svc in filteredActiveServices" :key="svc.code" class="svc-segment">
+    <div v-for="svc in filteredActiveServices" :key="svc.code" :data-svc-code="svc.code" class="svc-segment">
       <div class="segment-title">
         <el-icon><Monitor /></el-icon>
         <span>{{ svc.name }}</span>
@@ -31,7 +31,7 @@ import { computed, inject, ref } from "vue"
 import type { Ref } from "vue"
 import { Monitor } from "@element-plus/icons-vue"
 import MatrixRow from "./components/MatrixRow.vue"
-import type { ManifestService, ManifestGroup } from "../../composables/usePolicyData"
+import type { ManifestService, ManifestGroup, ManifestAction } from "../../composables/usePolicyData"
 
 const props = defineProps<{
   activeServices: ManifestService[]
@@ -43,70 +43,70 @@ const emit = defineEmits(["toggleAction", "updateActions"])
 
 const menuDetailsMap = inject<Ref<Record<string, any>>>("menuDetailsMap", ref({}))
 
-/** 递归展平多级目录分组 */
-const flattenGroups = (entries: ManifestGroup[]): ManifestGroup[] => {
-  const result: ManifestGroup[] = []
+/** 展平一级分组下的子孙分组，并应用搜索过滤 */
+const getFilteredSubGroups = (mainGrp: ManifestGroup, query: string): { name: string; actions: ManifestAction[] }[] => {
+  const result: { name: string; actions: ManifestAction[] }[] = []
 
-  const traverse = (grp: ManifestGroup, parentNames: string[] = []) => {
-    const currentNames = [...parentNames, grp.name]
+  const traverse = (grp: ManifestGroup, isMain: boolean = true) => {
+    // 过滤 actions
+    let filteredActions = grp.actions || []
+    if (query) {
+      filteredActions = filteredActions.filter(
+        (act) => act.name.toLowerCase().includes(query) || act.code.toLowerCase().includes(query)
+      )
+    }
 
-    if (grp.actions && grp.actions.length > 0) {
+    if (filteredActions.length > 0) {
       result.push({
-        name: currentNames.join(" / "),
-        actions: grp.actions
+        name: isMain ? "" : grp.name,
+        actions: filteredActions
       })
     }
 
     if (grp.children && grp.children.length > 0) {
-      grp.children.forEach((child) => traverse(child, currentNames))
+      grp.children.forEach((child) => traverse(child, false))
     }
   }
 
-  ;(entries || []).forEach((entry) => traverse(entry))
+  traverse(mainGrp, true)
   return result
 }
 
-/** 过滤后的展示服务与操作项矩阵 */
+/** 过滤并半展平后的展示服务与操作项矩阵 */
 const filteredActiveServices = computed(() => {
-  const query = props.searchQuery?.toLowerCase().trim()
+  const query = props.searchQuery?.toLowerCase().trim() || ""
 
-  // 1. 先将每个服务下的 entries 展平
-  const flattenedServices = props.activeServices.map((svc) => ({
-    ...svc,
-    entries: flattenGroups(svc.entries)
-  }))
-
-  if (!query) return flattenedServices
-
-  // 2. 对扁平化后的服务和条目进行常规搜索过滤
-  return flattenedServices
+  return props.activeServices
     .map((svc) => {
-      const filteredEntries = svc.entries
-        .map((grp) => {
-          const filteredActions = grp.actions.filter(
-            (act) => act.name.toLowerCase().includes(query) || act.code.toLowerCase().includes(query)
-          )
-          return { ...grp, actions: filteredActions }
+      const filteredEntries = (svc.entries || [])
+        .map((mainGrp) => {
+          const subGroups = getFilteredSubGroups(mainGrp, query)
+          return {
+            name: mainGrp.name,
+            subGroups: subGroups,
+            allActions: subGroups.flatMap((sg) => sg.actions)
+          }
         })
-        .filter((grp) => grp.actions.length > 0)
+        .filter((entry) => entry.subGroups.length > 0)
 
-      return { ...svc, entries: filteredEntries }
+      return {
+        ...svc,
+        entries: filteredEntries
+      }
     })
     .filter((svc) => svc.entries.length > 0)
 })
 
-/** 获取分组下所有 code */
-const getGrpCodes = (grp: ManifestGroup): string[] => grp.actions.map((a) => a.code)
+/** 获取服务下所有 code */
+const getSvcCodes = (svc: any): string[] => {
+  return (svc.entries || []).flatMap((entry: any) => entry.allActions.map((a: any) => a.code))
+}
 
-/** 获取服务下所有 code (递归支持多级 entries 展平) */
-const getSvcCodes = (svc: ManifestService): string[] => flattenGroups(svc.entries).flatMap((g) => getGrpCodes(g))
+const getSelectedCount = (svc: any) => getSvcCodes(svc).filter((c) => props.selectedActions.includes(c)).length
 
-const getSelectedCount = (svc: ManifestService) =>
-  getSvcCodes(svc).filter((c) => props.selectedActions.includes(c)).length
+const getSvcTotal = (svc: any) => getSvcCodes(svc).length
 
-const getSvcTotal = (svc: ManifestService) => getSvcCodes(svc).length
-
-const toggleSvc = (svc: ManifestService, checked: boolean) => {
+const toggleSvc = (svc: any, checked: boolean) => {
   const codes = getSvcCodes(svc)
   const next = checked
     ? [...new Set([...props.selectedActions, ...codes])]
@@ -198,7 +198,7 @@ const toggleSvc = (svc: ManifestService, checked: boolean) => {
       gap: 6px;
       color: var(--el-color-primary-light-3);
 
-      .header-icon {
+      .el-icon {
         font-size: 13px;
       }
 
