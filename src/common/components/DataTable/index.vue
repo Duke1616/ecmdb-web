@@ -89,16 +89,7 @@
             <!-- 空状态自定义插槽，统一系统品牌调性 -->
             <template #empty>
               <slot name="empty">
-                <el-empty :image-size="120" description="暂无数据">
-                  <template #image>
-                    <div class="empty-icon" style="display: flex; justify-content: center; margin-bottom: 8px">
-                      <svg viewBox="0 0 64 64" width="64" height="64">
-                        <circle cx="32" cy="32" r="20" fill="#f0f2f5" stroke="#d9d9d9" stroke-width="2" />
-                        <path d="M32 24v16M24 32h16" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" />
-                      </svg>
-                    </div>
-                  </template>
-                </el-empty>
+                <el-empty :image-size="120" description="暂无数据" />
               </slot>
             </template>
           </el-table>

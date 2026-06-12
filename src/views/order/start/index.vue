@@ -3,19 +3,7 @@
     <!-- 空状态优化设计 -->
     <div v-if="empty === true" class="empty-state">
       <el-empty :image-size="160" description="暂无模板数据">
-        <template #image>
-          <div class="empty-icon" style="display: flex; justify-content: center">
-            <svg viewBox="0 0 64 64" width="64" height="64">
-              <circle cx="32" cy="32" r="20" fill="#f0f2f5" stroke="#d9d9d9" stroke-width="2" />
-              <path d="M32 24v16M24 32h16" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </div>
-        </template>
-        <template #default>
-          <div style="margin-top: 16px">
-            <el-button type="primary" @click="refreshData">刷新数据</el-button>
-          </div>
-        </template>
+        <el-button type="primary" @click="refreshData">刷新数据</el-button>
       </el-empty>
     </div>
 
@@ -98,16 +86,7 @@
                 selectedCategory === 'favorites' && !searchQuery ? '您还未收藏任何模板' : '没有找到匹配的工单模板'
               "
               :image-size="120"
-            >
-              <template #image>
-                <div class="empty-icon" style="display: flex; justify-content: center">
-                  <svg viewBox="0 0 64 64" width="48" height="48">
-                    <circle cx="32" cy="32" r="20" fill="#f0f2f5" stroke="#d9d9d9" stroke-width="2" />
-                    <path d="M32 24v16M24 32h16" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" />
-                  </svg>
-                </div>
-              </template>
-            </el-empty>
+            />
           </div>
 
           <!-- 显示检索后的平铺列表或单个分类的模板 -->
@@ -177,11 +156,21 @@ const handleDetail = (id: number) => {
 <style lang="scss" scoped>
 .app-container {
   height: 100%;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--v3-body-bg-color);
   display: flex;
   flex-direction: column;
   width: 100%;
   box-sizing: border-box;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Updated content area with scrollable container */

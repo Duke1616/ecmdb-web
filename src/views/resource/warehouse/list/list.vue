@@ -59,14 +59,6 @@
       <!-- 自定义空状态插槽，支持快捷导入和新增，操作更友好 -->
       <template #empty>
         <el-empty :image-size="160" description="该模型暂无资源数据">
-          <template #image>
-            <div class="empty-icon" style="display: flex; justify-content: center">
-              <svg viewBox="0 0 64 64" width="64" height="64">
-                <circle cx="32" cy="32" r="20" fill="#f0f2f5" stroke="#d9d9d9" stroke-width="2" />
-                <path d="M32 24v16M24 32h16" stroke="#bfbfbf" stroke-width="2" stroke-linecap="round" />
-              </svg>
-            </div>
-          </template>
           <template #default>
             <div class="empty-actions" style="margin-top: 16px; display: flex; gap: 12px; justify-content: center">
               <el-button type="success" :icon="Upload" class="action-btn" @click="handleShowImportDialog">

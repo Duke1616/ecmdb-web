@@ -185,7 +185,7 @@ useModelData()
 <style scoped>
 .app-container {
   height: calc(100vh - 40px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: var(--v3-body-bg-color);
   padding: 20px;
   display: flex;
   flex-direction: column;
