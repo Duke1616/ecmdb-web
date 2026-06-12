@@ -142,41 +142,7 @@ export const constantRoutes: RouteRecordRaw[] = [
   // ...taskRoutes
 ]
 
-export const defaultRoutes: RouteRecordRaw[] = [
-  {
-    path: "/cmdb",
-    component: Layouts,
-    redirect: "/cmdb/dashboard",
-    meta: {
-      title: "CMDB",
-      svgIcon: "dashboard",
-      platforms: ["cmdb"]
-    },
-    children: [
-      {
-        path: "/cmdb/dashboard",
-        component: () => import("@/views/search/search.vue"),
-        name: "Dashboard",
-        meta: {
-          title: "全局搜索",
-          svgIcon: "search",
-          affix: true,
-          platforms: ["cmdb"]
-        }
-      },
-      {
-        path: "/cmdb/dashboard/search",
-        component: () => import("@/views/search/tabs-info.vue"),
-        name: "search",
-        meta: {
-          title: "搜索列表",
-          hidden: true,
-          platforms: ["cmdb"]
-        }
-      }
-    ]
-  }
-]
+export const defaultRoutes: RouteRecordRaw[] = []
 
 const router = createRouter({
   history: routerConfig.history,

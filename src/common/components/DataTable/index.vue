@@ -84,7 +84,11 @@
               :width="dynamicActionColumnWidth"
               :fixed="actionColumnFixed"
               align="center"
-            />
+            >
+              <template #default="scope">
+                <slot name="actions" :row="scope.row" :column="scope.column" :index="scope.$index" />
+              </template>
+            </el-table-column>
 
             <!-- 空状态自定义插槽，统一系统品牌调性 -->
             <template #empty>

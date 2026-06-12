@@ -1,5 +1,6 @@
 import type { App } from "vue"
 import SvgIcon from "~virtual/svg-component"
+import "~virtual/svg-component/organization"
 
 export function loadIconSvg(app: App) {
   // 注册 SvgIcon 组件
