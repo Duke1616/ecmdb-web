@@ -130,5 +130,12 @@
     "vite-svg-loader": "5.1.0",
     "vitest": "3.2.4",
     "vue-tsc": "^3.0.6"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "core-js-pure",
+      "esbuild",
+      "vue-demi"
+    ]
   }
 }
