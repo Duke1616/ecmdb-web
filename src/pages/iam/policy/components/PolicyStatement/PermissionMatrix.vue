@@ -121,6 +121,8 @@ const toggleSvc = (svc: any, checked: boolean) => {
 
   .svc-segment {
     margin-bottom: 24px;
+    // 避免滚动定位时直接贴紧容器顶部被遮挡，留出 20px 的呼吸缓冲空间
+    scroll-margin-top: 8px;
     &:last-child {
       margin-bottom: 0;
     }

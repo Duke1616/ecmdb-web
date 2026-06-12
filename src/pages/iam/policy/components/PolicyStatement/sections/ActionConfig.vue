@@ -294,7 +294,7 @@ const toggleAllServices = (checked: boolean) => {
 
   .pane-nav {
     width: 180px;
-    border-right: 1px solid #f0f0f0;
+    border-right: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
   }
@@ -310,7 +310,7 @@ const toggleAllServices = (checked: boolean) => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: 0 12px;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
     font-size: 12px;
@@ -334,22 +334,22 @@ const toggleAllServices = (checked: boolean) => {
   }
 
   .pane-header {
-    height: 40px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 12px;
-    background: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
     font-size: 12px;
     font-weight: bold;
-    color: #999;
+    color: #475569;
     box-sizing: border-box;
   }
 
   .search-bar {
     padding: 8px 12px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #e2e8f0;
     :deep(.el-input__wrapper) {
       background: #f5f5f5;
       box-shadow: none !important;
