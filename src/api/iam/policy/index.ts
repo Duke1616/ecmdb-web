@@ -75,6 +75,14 @@ export function listRolePoliciesApi(data: policy.ListRolePoliciesReq) {
   })
 }
 
+/** 分页获取用户组关联的策略列表 (管理侧) */
+export function listGroupPoliciesApi(data: policy.ListGroupPoliciesReq) {
+  return instance.post<policy.ListPolicyResponse>({
+    url: `${API_SERVICE.IAM}/policy/list/attached/group`,
+    data
+  })
+}
+
 /** 批量从主体解绑策略 */
 export function batchDetachPolicyApi(data: policy.BatchDetachPolicyRequest) {
   return instance.post<number>({

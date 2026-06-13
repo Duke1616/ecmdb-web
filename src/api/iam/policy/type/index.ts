@@ -93,6 +93,15 @@ export interface ListRolePoliciesReq extends ListPolicyRequest {
   role_code: string
 }
 
+/** 用户组关联策略列表请求 */
+export interface ListGroupPoliciesReq {
+  group_code: string
+  offset: number
+  limit: number
+  keyword?: string
+  type?: number
+}
+
 import { AuthorizationSubType } from "@/api/iam/permission/type"
 
 /** 绑定/解绑策略请求 */

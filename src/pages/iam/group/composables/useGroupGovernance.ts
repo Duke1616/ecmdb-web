@@ -4,6 +4,7 @@ import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { useTabRouter } from "@/common/composables/useTabRouter"
+import { listGroupPoliciesApi, batchAttachPolicyApi, batchDetachPolicyApi, detachPolicyApi } from "@/api/iam/policy"
 import {
   assignGroupMembersApi,
   assignGroupRoleApi,
@@ -15,6 +16,8 @@ import {
 import type { GroupRole, GroupUser } from "@/api/iam/group/type"
 import type { User } from "@/api/iam/user/type"
 import type { Role } from "@/api/iam/role/type"
+import type { Policy } from "@/api/iam/policy/type"
+import { AuthorizationSubType } from "@/api/iam/permission/type"
 
 const normalizeText = (value?: string) => (value || "").toLowerCase()
 
@@ -25,7 +28,8 @@ export function useGroupGovernance(groupCode: MaybeRefOrGetter<string | undefine
 
   const tabPermissions = computed(() => ({
     members: hasPermission(IAM_CAPABILITIES.Group.ViewMembers),
-    roles: hasPermission(IAM_CAPABILITIES.Group.ViewRoles)
+    roles: hasPermission(IAM_CAPABILITIES.Group.ViewRoles),
+    permissions: hasPermission(IAM_CAPABILITIES.Policy.View)
   }))
 
   const memberRelation = useGovernanceRelationList<GroupUser, any>({
@@ -66,8 +70,17 @@ export function useGroupGovernance(groupCode: MaybeRefOrGetter<string | undefine
     enabled: () => !!toValue(groupCode) && tabPermissions.value.roles
   })
 
+  const policyRelation = useGovernanceRelationList<Policy, any>({
+    fetchApi: (params) => listGroupPoliciesApi({ ...params, group_code: toValue(groupCode)! }),
+    listKey: "policies",
+    activeTab,
+    tabName: "permissions",
+    enabled: () => !!toValue(groupCode) && tabPermissions.value.permissions
+  })
+
   const addMemberVisible = ref(false)
   const addRoleVisible = ref(false)
+  const policySelectVisible = ref(false)
 
   const handleAssignMembers = async (users: User[]) => {
     const code = toValue(groupCode)
@@ -155,6 +168,63 @@ export function useGroupGovernance(groupCode: MaybeRefOrGetter<string | undefine
     })
   }
 
+  const handlePolicyTypeChange = (type?: number) => {
+    policyRelation.query.type = type
+    policyRelation.handleSearch()
+  }
+
+  const handleAttachPolicies = async (selectedPolicies: Policy[]) => {
+    const code = toValue(groupCode)
+    if (!code || !selectedPolicies.length) return
+    policyRelation.loading.value = true
+    try {
+      await batchAttachPolicyApi({
+        subjects: [{ type: AuthorizationSubType.GROUP, code }],
+        policy_codes: selectedPolicies.map((policy) => policy.code)
+      })
+      policySelectVisible.value = false
+      policyRelation.refresh()
+    } finally {
+      policyRelation.loading.value = false
+    }
+  }
+
+  const handleRemovePolicy = (policy: Policy) => {
+    const code = toValue(groupCode)
+    if (!code) return
+
+    handleConfirmAction({
+      title: "解除策略授权",
+      message: `确认要为用户组 [${code}] 解除策略 [${policy.name}] 的关联吗？`,
+      api: () =>
+        detachPolicyApi({
+          sub_type: AuthorizationSubType.GROUP,
+          sub_code: code,
+          policy_code: policy.code
+        }),
+      onSuccess: () => policyRelation.refresh()
+    })
+  }
+
+  const handleBatchRemovePolicies = () => {
+    const code = toValue(groupCode)
+    if (!code || policyRelation.selectedRows.value.length === 0) return
+
+    handleConfirmAction({
+      title: "批量解除授权",
+      message: `确认要批量解除选中的 ${policyRelation.selectedRows.value.length} 条策略关联吗？`,
+      api: () =>
+        batchDetachPolicyApi({
+          assignments: policyRelation.selectedRows.value.map((policy) => ({
+            sub_type: AuthorizationSubType.GROUP,
+            sub_code: code,
+            policy_code: policy.code
+          }))
+        }),
+      onSuccess: () => policyRelation.refresh()
+    })
+  }
+
   watch(
     () => toValue(groupCode),
     (code) => {
@@ -164,6 +234,9 @@ export function useGroupGovernance(groupCode: MaybeRefOrGetter<string | undefine
       }
       if (activeTab.value === "roles" && tabPermissions.value.roles) {
         roleRelation.refresh()
+      }
+      if (activeTab.value === "permissions" && tabPermissions.value.permissions) {
+        policyRelation.refresh()
       }
     }
   )
@@ -200,6 +273,22 @@ export function useGroupGovernance(groupCode: MaybeRefOrGetter<string | undefine
     addRoleVisible,
     handleAssignRoles,
     handleRemoveRole,
-    handleBatchRemoveRoles
+    handleBatchRemoveRoles,
+    policies: policyRelation.list,
+    policyTotal: policyRelation.total,
+    policyLoading: policyRelation.loading,
+    selectedPolicies: policyRelation.selectedRows,
+    policyQuery: computed(() => ({
+      ...policyRelation.query,
+      currentPage: policyRelation.pagination.currentPage,
+      pageSize: policyRelation.pagination.pageSize
+    })),
+    handlePolicyPageChange: policyRelation.handlePageChange,
+    handlePolicySearch: policyRelation.handleSearch,
+    handlePolicyTypeChange,
+    policySelectVisible,
+    handleAttachPolicies,
+    handleRemovePolicy,
+    handleBatchRemovePolicies
   }
 }

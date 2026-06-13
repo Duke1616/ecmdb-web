@@ -68,6 +68,28 @@
             @batch-remove="handleBatchRemoveRoles"
           />
         </AuthTabPane>
+
+        <AuthTabPane label="策略治理" name="permissions" :allowed="tabPermissions.permissions" disable-mode>
+          <PolicyTable
+            v-model:selection="selectedPolicies"
+            :loading="policyLoading"
+            :data="policies"
+            :total="policyTotal"
+            :current-page="policyQuery.currentPage"
+            :page-size="policyQuery.pageSize"
+            :format-timestamp="formatTimestamp"
+            :selectable="() => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)"
+            :can-add="hasPermission(IAM_CAPABILITIES.Policy.BatchAttach)"
+            :can-unbind="hasPermission(IAM_CAPABILITIES.Policy.Detach)"
+            :can-batch-unbind="hasPermission(IAM_CAPABILITIES.Policy.BatchDetach) && selectedPolicies.length > 0"
+            @page-change="handlePolicyPageChange"
+            @search="handlePolicySearch"
+            @type-change="handlePolicyTypeChange"
+            @add="policySelectVisible = true"
+            @unbind="handleRemovePolicy"
+            @batch-unbind="handleBatchRemovePolicies"
+          />
+        </AuthTabPane>
       </GovernanceTabs>
     </div>
 
@@ -91,6 +113,15 @@
       @confirm="handleAssignRoles"
     />
 
+    <PolicySelectDialog
+      v-model="policySelectVisible"
+      title="为用户组授予权限策略"
+      confirm-text="确认授予策略"
+      :confirm-loading="policyLoading"
+      :exclude-codes="policies.map((policy) => policy.code)"
+      @confirm="handleAttachPolicies"
+    />
+
     <GroupDialog v-model="editVisible" :code="groupInfo.code" @success="handleEditSuccess" />
   </ProGovernanceLayout>
 </template>
@@ -106,9 +137,11 @@ import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
 import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
 import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
 import RoleSelectDialog from "@/pages/iam/role/components/RoleSelectDialog.vue"
+import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
 import GroupDialog from "./components/GroupDialog.vue"
 import GroupMemberTable from "./components/detail/GroupMemberTable.vue"
 import GroupRoleTable from "./components/detail/GroupRoleTable.vue"
+import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
 import { useGroupDetail } from "./composables/useGroupDetail"
 import { useGroupDisplayItems } from "./composables/useGroupDisplayItems"
 import { useGroupGovernance } from "./composables/useGroupGovernance"
@@ -153,7 +186,19 @@ const {
   addRoleVisible,
   handleAssignRoles,
   handleRemoveRole,
-  handleBatchRemoveRoles
+  handleBatchRemoveRoles,
+  policies,
+  policyTotal,
+  policyLoading,
+  selectedPolicies,
+  policyQuery,
+  handlePolicyPageChange,
+  handlePolicySearch,
+  handlePolicyTypeChange,
+  policySelectVisible,
+  handleAttachPolicies,
+  handleRemovePolicy,
+  handleBatchRemovePolicies
 } = useGroupGovernance(computed(() => groupInfo.value?.code))
 
 const { statusItems, infoItems } = useGroupDisplayItems(groupInfo)
