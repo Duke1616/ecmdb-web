@@ -82,7 +82,8 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         iconDir: [resolve(__dirname, "src/common/assets/icons")],
         preserveColor: resolve(__dirname, "src/common/assets/icons/preserve-color"),
         dts: true,
-        dtsDir: resolve(__dirname, "types/auto")
+        dtsDir: resolve(__dirname, "types/auto"),
+        treeShaking: false
       }),
       // 原子化 CSS
       UnoCSS(),
