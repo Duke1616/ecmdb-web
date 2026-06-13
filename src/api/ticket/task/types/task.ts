@@ -35,10 +35,9 @@ export enum Kind {
 
 export interface task {
   id: number
-  order_id: number
+  ticket_id: number
   kind: Kind
   codebook_uid: string
-  codebook_name: string
   target: string
   handler: string
   status: number

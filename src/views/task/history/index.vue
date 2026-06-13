@@ -7,7 +7,7 @@
       :show-add-button="false"
       v-model="searchQuery"
       show-search
-      placeholder="搜索工单码或任务名称"
+      placeholder="搜索工单ID或模板标识"
       @refresh="fetchTasksData"
     />
 
@@ -142,8 +142,8 @@ const { tasksData, loading, searchQuery, paginationData, fetchTasksData, handleC
 // 表格配置
 const tableColumns: Column[] = [
   { prop: "kind", label: "", width: 10, slot: "kindBar", fixed: "left", align: "center" },
-  { prop: "order_id", label: "工单号", width: 100, align: "center" },
-  { prop: "codebook_name", label: "任务模板", minWidth: 150 },
+  { prop: "ticket_id", label: "工单ID", width: 100, align: "center" },
+  { prop: "codebook_uid", label: "任务模板标识", minWidth: 150 },
   { prop: "execute_target", label: "执行目标", slot: "execute_target", minWidth: 200, align: "center" },
   { prop: "status", label: "状态", slot: "status", minWidth: 120, align: "center" },
   { prop: "is_timing", label: "类型", slot: "is_timing", minWidth: 100, align: "center" },

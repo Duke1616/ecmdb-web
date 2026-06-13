@@ -10,7 +10,7 @@
             <span class="type-icon-mini"
               ><el-icon><Monitor /></el-icon
             ></span>
-            <span class="node-name-mini">{{ row.codebook_name || "未命名任务" }}</span>
+            <span class="node-name-mini">{{ row.codebook_uid || "未命名任务" }}</span>
             <div class="meta-tags-slim">
               <span class="meta-pill">{{ row.kind === Kind.KAFKA ? "立即执行" : "调度执行" }}</span>
               <span v-if="row.is_timing" class="meta-pill timing">{{ row.scheduled_time }}</span>
