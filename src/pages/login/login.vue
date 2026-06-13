@@ -160,7 +160,7 @@ function handleLoginSuccess(businessData: any) {
 <style lang="scss" scoped>
 .premium-compact-form {
   :deep(.el-form-item) {
-    margin-bottom: 24px;
+    margin-bottom: var(--login-form-gap, 24px);
     &.no-label-item {
       margin-bottom: 12px;
     }
@@ -201,8 +201,8 @@ function handleLoginSuccess(businessData: any) {
   }
   .el-input__inner {
     color: #0f172a;
-    font-size: 14px;
-    height: 32px;
+    font-size: var(--login-input-font-size, 14px);
+    height: var(--login-input-height, 32px);
     &::placeholder {
       color: #94a3b8;
     }
@@ -215,11 +215,11 @@ function handleLoginSuccess(businessData: any) {
 
 .refined-submit-btn {
   width: 100%;
-  height: 48px;
+  height: var(--login-submit-height, 48px);
   background: linear-gradient(to bottom, #10b981, #059669);
   border: none;
   color: white;
-  font-size: 16px;
+  font-size: var(--login-submit-font-size, 16px);
   font-weight: 700;
   border-radius: 12px;
   margin-top: 16px;

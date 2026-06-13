@@ -398,6 +398,24 @@ const handleMfaSuccess = (businessData: any) => {
   background-color: #ffffff;
   overflow: hidden;
   font-family: "Inter", "PingFang SC", sans-serif;
+  --login-shell-width: min(1540px, calc(100vw - 96px));
+  --login-shell-gap: clamp(72px, 5vw, 108px);
+  --login-hero-width: clamp(660px, 41vw, 780px);
+  --login-card-width: clamp(400px, 24vw, 440px);
+  --login-card-padding: clamp(40px, 2.5vw, 46px);
+  --login-logo-height: clamp(44px, 2.8vw, 50px);
+  --login-title-size: clamp(38px, 2.6vw, 46px);
+  --login-bento-gap: clamp(12px, 0.8vw, 15px);
+  --login-bento-padding: clamp(48px, 3.1vw, 58px) clamp(16px, 1vw, 18px) clamp(16px, 1vw, 18px);
+  --login-bento-icon-size: clamp(28px, 1.8vw, 32px);
+  --login-card-title-size: clamp(13px, 0.8vw, 14px);
+  --login-card-desc-size: clamp(11px, 0.7vw, 12px);
+  --login-form-gap: 24px;
+  --login-input-height: clamp(32px, 2vw, 34px);
+  --login-input-font-size: 14px;
+  --login-submit-height: clamp(48px, 3vw, 52px);
+  --login-submit-font-size: 16px;
+
   .bg-pattern {
     position: absolute;
     width: 100%;
@@ -411,28 +429,33 @@ const handleMfaSuccess = (businessData: any) => {
 
 .split-layout {
   display: flex;
-  width: 100%;
+  width: var(--login-shell-width);
+  max-width: calc(100vw - 48px);
   height: 100%;
+  margin: 0 auto;
   position: relative;
   z-index: 1;
+  gap: var(--login-shell-gap);
+  justify-content: center;
 }
 
 .hero-section {
-  flex: 1.4;
+  flex: 0 1 var(--login-hero-width);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding-right: 60px;
+  justify-content: center;
+  min-width: 0;
 
   .bento-wrapper {
-    width: 660px; // 限制宽度以保持紧凑
+    width: var(--login-hero-width);
+    max-width: 100%;
     animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .bento-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px; // 缩小间距
+    gap: var(--login-bento-gap);
   }
 
   .bento-card {
@@ -440,7 +463,7 @@ const handleMfaSuccess = (businessData: any) => {
     background: #ffffff;
     border: 1px solid #f1f5f9;
     border-radius: 16px;
-    padding: 48px 16px 16px 16px;
+    padding: var(--login-bento-padding);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
     transition: all 0.3s;
     display: flex;
@@ -456,14 +479,14 @@ const handleMfaSuccess = (businessData: any) => {
     .logo-wrapper {
       margin-bottom: 16px;
       .main-logo {
-        height: 44px;
+        height: var(--login-logo-height);
       }
     }
     .hero-title {
-      font-size: 38px;
+      font-size: var(--login-title-size);
       font-weight: 800;
       line-height: 1.15;
-      letter-spacing: -0.04em;
+      letter-spacing: 0;
       // 高级感渐变文字
       background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
       -webkit-background-clip: text;
@@ -476,8 +499,8 @@ const handleMfaSuccess = (businessData: any) => {
     position: absolute;
     top: 16px;
     left: 16px;
-    width: 28px;
-    height: 28px;
+    width: var(--login-bento-icon-size);
+    height: var(--login-bento-icon-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -493,14 +516,14 @@ const handleMfaSuccess = (businessData: any) => {
   .card-info {
     .info-title {
       display: block;
-      font-size: 13px;
+      font-size: var(--login-card-title-size);
       font-weight: 700;
       color: #1e293b;
       margin-bottom: 6px;
     }
     // 提升对比度与呼吸感
     .info-desc {
-      font-size: 11px;
+      font-size: var(--login-card-desc-size);
       color: #64748b;
       font-weight: 500;
       line-height: 1.5;
@@ -509,18 +532,18 @@ const handleMfaSuccess = (businessData: any) => {
 }
 
 .auth-section {
-  flex: 1;
+  flex: 0 0 var(--login-card-width);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  padding-left: 60px;
+  justify-content: center;
+  min-width: 0;
 }
 
 .login-card {
-  width: 400px;
+  width: var(--login-card-width);
   background: #ffffff;
   border-radius: 24px;
-  padding: 40px;
+  padding: var(--login-card-padding);
   border: 1px solid #f1f5f9;
   box-shadow:
     0 10px 25px -5px rgba(0, 0, 0, 0.05),
@@ -710,9 +733,96 @@ const handleMfaSuccess = (businessData: any) => {
   }
 }
 
+@media (min-width: 1600px) {
+  .login-container {
+    --login-shell-width: min(1640px, calc(100vw - 128px));
+  }
+}
+
+@media (min-width: 1921px) {
+  .login-container {
+    --login-shell-width: min(1900px, calc(100vw - 160px));
+    --login-shell-gap: clamp(112px, 5.8vw, 152px);
+    --login-hero-width: clamp(860px, 39vw, 980px);
+    --login-card-width: clamp(480px, 22vw, 520px);
+    --login-card-padding: clamp(50px, 2.4vw, 56px);
+    --login-logo-height: clamp(54px, 2.4vw, 62px);
+    --login-title-size: clamp(48px, 2.25vw, 58px);
+    --login-bento-gap: clamp(16px, 0.9vw, 20px);
+    --login-bento-padding: clamp(62px, 2.8vw, 70px) clamp(20px, 1vw, 24px) clamp(20px, 1vw, 24px);
+    --login-bento-icon-size: clamp(34px, 1.55vw, 38px);
+    --login-card-title-size: clamp(15px, 0.72vw, 16px);
+    --login-card-desc-size: clamp(12px, 0.62vw, 13px);
+    --login-form-gap: 28px;
+    --login-input-height: clamp(36px, 1.75vw, 40px);
+    --login-input-font-size: 15px;
+    --login-submit-height: clamp(54px, 2.5vw, 58px);
+    --login-submit-font-size: 17px;
+  }
+
+  .hero-section {
+    .brand-card {
+      .logo-wrapper {
+        margin-bottom: 20px;
+      }
+    }
+
+    .bento-card {
+      min-height: 126px;
+    }
+
+    .card-icon-wrap {
+      top: 20px;
+      left: 20px;
+      font-size: 17px;
+    }
+  }
+
+  .mode-switcher {
+    margin-bottom: 18px;
+
+    .switcher-item {
+      height: 40px;
+      font-size: 14px;
+    }
+  }
+
+  .quick-login-wrap {
+    margin-top: 30px;
+
+    .social-row-grid {
+      gap: 10px;
+
+      .social-box {
+        padding: 14px 6px;
+
+        span {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+}
+
 @media (max-width: 1200px) {
   .hero-section {
     display: none;
+  }
+
+  .split-layout {
+    width: 100%;
+    max-width: none;
+  }
+
+  .auth-section {
+    flex: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .login-container {
+    --login-card-width: min(400px, calc(100vw - 32px));
+    --login-card-padding: 28px 24px;
   }
 }
 </style>
