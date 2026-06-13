@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { watch, computed } from "vue"
-import { Close, User, OfficeBuilding } from "@element-plus/icons-vue"
+import { Close, User, OfficeBuilding, UserFilled } from "@element-plus/icons-vue"
 import { searchSubjectsApi } from "@/api/iam/permission"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 import ResourceSelectorLayout from "@/common/components/ResourceSelector/ResourceSelectorLayout.vue"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
+import { getSubjectTypeLabel } from "@/pages/iam/authorization/utils/subject"
 
 /**
  * 身份主体选择器 (通用版)
- * 采用 ResourceSelectorLayout 架构，支持跨类型检索（用户/角色）、分页、多选及已选预览
+ * 采用 ResourceSelectorLayout 架构，支持跨类型检索（用户/角色/用户组）、分页、多选及已选预览
  */
 
 const visible = defineModel<boolean>({ default: false })
@@ -25,7 +26,7 @@ interface SubjectSelectProps {
 
 const props = withDefaults(defineProps<SubjectSelectProps>(), {
   title: "选择身份主体",
-  subtitle: "检索并选择用户或角色，作为权限授予的目标对象",
+  subtitle: "检索并选择用户、角色或用户组，作为权限授予的目标对象",
   confirmText: "确认选择",
   initialType: "",
   hideTypeSelector: false,
@@ -110,6 +111,7 @@ const handleTypeChange = (val: any) => {
           <el-radio-button value="">全部</el-radio-button>
           <el-radio-button :value="AuthorizationSubType.USER">用户</el-radio-button>
           <el-radio-button :value="AuthorizationSubType.ROLE">角色</el-radio-button>
+          <el-radio-button :value="AuthorizationSubType.GROUP">用户组</el-radio-button>
         </el-radio-group>
       </div>
     </template>
@@ -130,7 +132,8 @@ const handleTypeChange = (val: any) => {
             <div class="subject-row">
               <div class="subject-icon" :class="row.type">
                 <el-icon v-if="row.type === AuthorizationSubType.USER"><User /></el-icon>
-                <el-icon v-else><OfficeBuilding /></el-icon>
+                <el-icon v-else-if="row.type === AuthorizationSubType.ROLE"><OfficeBuilding /></el-icon>
+                <el-icon v-else><UserFilled /></el-icon>
               </div>
               <div class="u-meta">
                 <span class="name">{{ row.name }}</span>
@@ -142,7 +145,7 @@ const handleTypeChange = (val: any) => {
         <el-table-column label="类型" width="100" align="center">
           <template #default="{ row }">
             <span class="type-badge" :class="row.type">
-              {{ row.type === AuthorizationSubType.USER ? "用户" : "角色" }}
+              {{ getSubjectTypeLabel(row.type) }}
             </span>
           </template>
         </el-table-column>
@@ -215,6 +218,11 @@ $text-sub: #64748b;
     color: #f59e0b;
     border: 1px solid #ffedd5;
   }
+  &.group {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+  }
 }
 
 .subject-icon {
@@ -235,6 +243,11 @@ $text-sub: #64748b;
   &.role {
     background: #fffbf0;
     color: #f59e0b;
+  }
+
+  &.group {
+    background: #ecfdf5;
+    color: #059669;
   }
 }
 </style>

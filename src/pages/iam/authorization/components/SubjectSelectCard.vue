@@ -4,6 +4,7 @@ import { Search, User, Close } from "@element-plus/icons-vue"
 import { searchSubjectsApi } from "@/api/iam/permission"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 import { useResourceSelector } from "@/pages/iam/authorization/composables/useResourceSelector"
+import { getSubjectTypeLabel } from "@/pages/iam/authorization/utils/subject"
 
 // NOTE: 该组件为选择器 UI 组件，选择状态需与父组件通过 defineModel 进行高效双向同步
 const selection = defineModel<Subject[]>("selection", { default: [] })
@@ -98,6 +99,7 @@ defineExpose({ fetchList, reset })
             <el-radio-button label="">全部</el-radio-button>
             <el-radio-button :value="AuthorizationSubType.USER">用户</el-radio-button>
             <el-radio-button :value="AuthorizationSubType.ROLE">角色</el-radio-button>
+            <el-radio-button :value="AuthorizationSubType.GROUP">用户组</el-radio-button>
           </el-radio-group>
         </div>
 
@@ -121,7 +123,7 @@ defineExpose({ fetchList, reset })
           <el-table-column label="类型" width="80" align="center">
             <template #default="{ row }">
               <span class="type-badge" :class="row.type">
-                {{ row.type === AuthorizationSubType.USER ? "用户" : "角色" }}
+                {{ getSubjectTypeLabel(row.type) }}
               </span>
             </template>
           </el-table-column>
@@ -159,7 +161,7 @@ defineExpose({ fetchList, reset })
               </div>
               <div class="actions">
                 <span class="type-badge small" :class="item.type">
-                  {{ item.type === AuthorizationSubType.USER ? "用户" : "角色" }}
+                  {{ getSubjectTypeLabel(item.type) }}
                 </span>
                 <el-icon class="remove-btn" @click="removeSelection(item)"><Close /></el-icon>
               </div>
@@ -409,6 +411,10 @@ defineExpose({ fetchList, reset })
   &.role {
     background: #fef3c7;
     color: #d97706;
+  }
+  &.group {
+    background: #ecfdf5;
+    color: #059669;
   }
   &.small {
     font-size: 10px;

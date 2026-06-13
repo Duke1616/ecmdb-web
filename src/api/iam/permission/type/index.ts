@@ -54,7 +54,8 @@ export interface PermissionManifest {
 /** 授权主体类型枚举 */
 export enum AuthorizationSubType {
   USER = "user",
-  ROLE = "role"
+  ROLE = "role",
+  GROUP = "group"
 }
 
 /** 授权目标类型枚举 */
@@ -96,7 +97,7 @@ export interface AuthorizationResp {
 /** 搜索主体请求 */
 export interface SearchSubjectsReq {
   keyword: string
-  sub_type: string // user | role
+  sub_type: string // user | role | group
   offset: number
   limit: number
 }

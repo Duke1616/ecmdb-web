@@ -10,6 +10,7 @@ import {
   batchAssignTenantsApi,
   batchUnassignTenantsApi
 } from "@/api/iam/tenant"
+import { assignGroupMembersApi, listUserGroupsApi, removeGroupMembersApi } from "@/api/iam/group"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
 import { AuthorizationSubType } from "@/api/iam/permission/type"
@@ -17,6 +18,7 @@ import type { User } from "@/api/iam/user/type"
 import type { Role } from "@/api/iam/role/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { Tenant } from "@/api/iam/tenant/type"
+import type { Group } from "@/api/iam/group/type"
 
 export function useUserGovernance(user: Ref<User | undefined>) {
   const userId = computed(() => user.value?.id)
@@ -30,11 +32,13 @@ export function useUserGovernance(user: Ref<User | undefined>) {
   const policySelectVisible = ref(false)
   const attachPolicyVisible = ref(false)
   const tenantSelectVisible = ref(false)
+  const groupSelectVisible = ref(false)
   const submitting = ref(false)
 
   const tabPermissions = computed(() => ({
     sources: hasPermission(IAM_CAPABILITIES.User.Detail),
     roles: hasPermission(IAM_CAPABILITIES.User.ViewUserRoles),
+    groups: hasPermission(IAM_CAPABILITIES.Group.ViewMembers),
     permissions: hasPermission(IAM_CAPABILITIES.User.ViewUserPolicies),
     tenants: hasPermission(IAM_CAPABILITIES.User.ViewUserTenants)
   }))
@@ -66,6 +70,15 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     activeTab,
     tabName: "tenants",
     enabled: () => !!userId.value && tabPermissions.value.tenants
+  })
+
+  // 用户组列表管理
+  const groupRelation = useGovernanceRelationList<Group, any>({
+    fetchApi: (params) => listUserGroupsApi({ ...params, user_id: userId.value!, username: username.value }),
+    listKey: "groups",
+    activeTab,
+    tabName: "groups",
+    enabled: () => !!userId.value && tabPermissions.value.groups
   })
 
   // --- 3. 核心业务动作 ---
@@ -208,6 +221,60 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     })
   }
 
+  /** 将当前用户加入用户组 */
+  const handleAssignGroups = async (selectedGroups: Group[]) => {
+    if (!username.value || !selectedGroups.length) return
+    groupRelation.loading.value = true
+    try {
+      await Promise.all(
+        selectedGroups.map((group) =>
+          assignGroupMembersApi({
+            group_code: group.code,
+            usernames: [username.value!]
+          })
+        )
+      )
+      groupSelectVisible.value = false
+      groupRelation.refresh()
+    } finally {
+      groupRelation.loading.value = false
+    }
+  }
+
+  /** 从单个用户组中移除当前用户 */
+  const handleUnbindGroup = (row: Group) => {
+    if (!username.value) return
+    handleConfirmAction({
+      title: "移除分组关联",
+      message: `确认要将用户 [${username.value}] 从用户组 [${row.name}] 中移除吗？`,
+      api: () =>
+        removeGroupMembersApi({
+          group_code: row.code,
+          usernames: [username.value!]
+        }),
+      onSuccess: () => groupRelation.refresh()
+    })
+  }
+
+  /** 批量移除用户组关联 */
+  const handleBatchUnbindGroups = () => {
+    if (!username.value || groupRelation.selectedRows.value.length === 0) return
+    handleConfirmAction({
+      title: "批量移除用户组",
+      message: `确认要将用户 [${username.value}] 从所选的 ${groupRelation.selectedRows.value.length} 个用户组中移除吗？`,
+      api: () =>
+        Promise.all(
+          groupRelation.selectedRows.value.map((group) =>
+            removeGroupMembersApi({
+              group_code: group.code,
+              usernames: [username.value!]
+            })
+          )
+        ),
+      onSuccess: () => groupRelation.refresh()
+    })
+  }
+
   // --- 4. 辅助状态与联动 ---
 
   const handleRoleTypeChange = (type?: number) => {
@@ -243,6 +310,22 @@ export function useUserGovernance(user: Ref<User | undefined>) {
     handleAssignRoles,
     handleUnbindRole,
     handleBatchUnbindRoles,
+    // 用户组
+    groups: groupRelation.list,
+    groupTotal: groupRelation.total,
+    groupLoading: groupRelation.loading,
+    groupQuery: computed(() => ({
+      ...groupRelation.query,
+      currentPage: groupRelation.pagination.currentPage,
+      pageSize: groupRelation.pagination.pageSize
+    })),
+    selectedGroups: groupRelation.selectedRows,
+    groupSelectVisible,
+    handleGroupPageChange: groupRelation.handlePageChange,
+    handleGroupSearch: groupRelation.handleSearch,
+    handleAssignGroups,
+    handleUnbindGroup,
+    handleBatchUnbindGroups,
     // 策略
     policies: policyRelation.list,
     policyTotal: policyRelation.total,

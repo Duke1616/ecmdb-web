@@ -36,6 +36,7 @@
           <el-option label="所有主体" value="" />
           <el-option label="IAM 用户" :value="AuthorizationSubType.USER" />
           <el-option label="IAM 角色" :value="AuthorizationSubType.ROLE" />
+          <el-option label="IAM 用户组" :value="AuthorizationSubType.GROUP" />
         </el-select>
 
         <!-- 对象过滤 -->
@@ -59,7 +60,7 @@
       <template #subject="{ row }">
         <AssetIdentityCell
           :title="row.subject"
-          :sub-title="row.sub_type === AuthorizationSubType.USER ? 'IAM 用户' : 'IAM 角色'"
+          :sub-title="getSubjectTypeFullLabel(row.sub_type)"
           :link-to="getSubjectLink(row)"
           centered
         />
@@ -107,6 +108,7 @@ import AuthorizeDrawer from "./components/AuthorizeDrawer.vue"
 import type { Column } from "@@/components/DataTable/types"
 import { type Authorization, AuthorizationSubType, AuthorizationObjType } from "@/api/iam/permission/type"
 import { useAuthorizeList } from "./composables/useAuthorizeList"
+import { getSubjectDetailCapability, getSubjectDetailRoute, getSubjectTypeFullLabel } from "./utils/subject"
 import { formatTimestamp } from "@@/utils/day"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
@@ -176,14 +178,11 @@ const isSelectable = () => hasPermission(IAM_CAPABILITIES.Policy.BatchDetach)
  * 动态计算主体详情跳转链接 (带权限校验)
  */
 const getSubjectLink = (row: Authorization) => {
-  const isUser = row.sub_type === AuthorizationSubType.USER
-  const capability = isUser ? IAM_CAPABILITIES.User.Detail : IAM_CAPABILITIES.Role.Detail
+  const capability = getSubjectDetailCapability(row.sub_type)
 
-  if (!hasPermission(capability)) return undefined
+  if (!capability || !hasPermission(capability)) return undefined
 
-  return isUser
-    ? { name: "UserDetail", query: { username: row.subject } }
-    : { name: "RoleDetail", query: { code: row.subject } }
+  return getSubjectDetailRoute(row)
 }
 
 /**

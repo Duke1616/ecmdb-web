@@ -6,6 +6,7 @@ import { batchDetachPolicyApi } from "@/api/iam/policy"
 import type { Authorization, AuthorizationQueryReq } from "@/api/iam/permission/type"
 import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
+import { getSubjectDetailRoute } from "@/pages/iam/authorization/utils/subject"
 
 interface PolicyAssignmentsOptions {
   canDetach?: Ref<boolean> | (() => boolean)
@@ -43,11 +44,8 @@ export function usePolicyAssignments(policyCode: Ref<string>, options: PolicyAss
 
   /** 跳转到主体详情 */
   const handleSubjectClick = (row: Authorization) => {
-    const isUser = row.sub_type === "user"
-    router.push({
-      name: isUser ? "UserDetail" : "RoleDetail",
-      query: isUser ? { username: row.subject } : { code: row.subject }
-    })
+    const route = getSubjectDetailRoute(row)
+    if (route) router.push(route)
   }
 
   const toDetachAssignment = (item: Authorization) => ({

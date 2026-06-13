@@ -3,9 +3,10 @@ import { toRef } from "vue"
 import { Plus, Delete } from "@element-plus/icons-vue"
 import PremiumList from "@/common/components/PremiumList/index.vue"
 import { usePermission } from "@/common/composables/usePermission"
-import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import { formatTimestamp } from "@@/utils/day"
 import { usePolicyAssignments } from "../../composables/usePolicyAssignments"
+import { getSubjectDetailCapability, getSubjectTypeFullLabel } from "@/pages/iam/authorization/utils/subject"
+import type { Authorization } from "@/api/iam/permission/type"
 
 interface Props {
   policyCode: string
@@ -27,6 +28,11 @@ const emit = defineEmits<{
 }>()
 
 const { hasPermission } = usePermission()
+
+const canViewSubject = (row: Authorization) => {
+  const capability = getSubjectDetailCapability(row.sub_type)
+  return !!capability && hasPermission(capability)
+}
 
 // 1. 集成授权管理能力
 const {
@@ -109,32 +115,18 @@ defineExpose({
         <div class="assign-grid-row">
           <div class="cell-subject">
             <div class="dual-line-info">
-              <template v-if="row.sub_type === 'user'">
-                <el-link
-                  v-if="hasPermission(IAM_CAPABILITIES.User.View)"
-                  type="primary"
-                  :underline="false"
-                  class="main-title"
-                  @click="handleSubjectClick(row)"
-                >
-                  {{ row.subject_name || row.subject }}
-                </el-link>
-                <span v-else class="main-title-static">{{ row.subject_name || row.subject }}</span>
-              </template>
-              <template v-else>
-                <el-link
-                  v-if="hasPermission(IAM_CAPABILITIES.Role.View)"
-                  type="primary"
-                  :underline="false"
-                  class="main-title"
-                  @click="handleSubjectClick(row)"
-                >
-                  {{ row.subject_name || row.subject }}
-                </el-link>
-                <span v-else class="main-title-static">{{ row.subject_name || row.subject }}</span>
-              </template>
+              <el-link
+                v-if="canViewSubject(row)"
+                type="primary"
+                :underline="false"
+                class="main-title"
+                @click="handleSubjectClick(row)"
+              >
+                {{ row.subject_name || row.subject }}
+              </el-link>
+              <span v-else class="main-title-static">{{ row.subject_name || row.subject }}</span>
               <div class="sub-detail">
-                <span class="type-text">{{ row.sub_type === "user" ? "IAM 用户" : "IAM 角色" }}</span>
+                <span class="type-text">{{ getSubjectTypeFullLabel(row.sub_type) }}</span>
               </div>
             </div>
           </div>

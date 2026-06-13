@@ -12,12 +12,14 @@ import {
   removeParentRoleApi,
   listRolesApi
 } from "@/api/iam/role"
+import { assignGroupRoleApi, listRoleGroupsApi, removeGroupRoleApi } from "@/api/iam/group"
 import { useGovernanceRelationList } from "@/common/composables/useGovernanceRelationList"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { AuthorizationSubType } from "@/api/iam/permission/type"
 import type { User } from "@/api/iam/user/type"
 import type { Policy } from "@/api/iam/policy/type"
 import type { InlinePolicy, InheritanceItem } from "@/api/iam/role/type"
+import type { Group } from "@/api/iam/group/type"
 
 import { useTabRouter } from "@/common/composables/useTabRouter"
 
@@ -31,6 +33,7 @@ export function useRoleGovernance(
 
   const tabPermissions = computed(() => ({
     members: hasPermission(IAM_CAPABILITIES.Role.ViewRoleMembers),
+    groups: hasPermission(IAM_CAPABILITIES.Group.ViewRoles),
     permissions: hasPermission(IAM_CAPABILITIES.Role.ViewRolePolicies),
     inline: hasPermission(IAM_CAPABILITIES.Role.InlineAnalysis),
     inheritance: hasPermission(IAM_CAPABILITIES.Role.ViewParents)
@@ -44,6 +47,59 @@ export function useRoleGovernance(
     tabName: "members",
     enabled: () => !!toValue(roleCode) && tabPermissions.value.members
   })
+
+  // --- 2. 用户组管理 (Groups) ---
+  const groupRelation = useGovernanceRelationList<Group, any>({
+    fetchApi: (params) => listRoleGroupsApi({ ...params, role_code: toValue(roleCode)! }),
+    listKey: "groups",
+    activeTab,
+    tabName: "groups",
+    enabled: () => !!toValue(roleCode) && tabPermissions.value.groups
+  })
+
+  const groupSelectVisible = ref(false)
+
+  const handleAssignGroups = async (selectedGroups: Group[]) => {
+    const code = toValue(roleCode)
+    if (!code || !selectedGroups.length) return
+    groupRelation.loading.value = true
+    try {
+      await Promise.all(selectedGroups.map((group) => assignGroupRoleApi({ group_code: group.code, role_code: code })))
+      groupSelectVisible.value = false
+      groupRelation.refresh()
+    } finally {
+      groupRelation.loading.value = false
+    }
+  }
+
+  const handleUnbindGroup = (row: Group) => {
+    const code = toValue(roleCode)
+    if (!code) return
+
+    handleConfirmAction({
+      title: "解绑用户组",
+      message: `确认要解除用户组 [${row.name}] 与角色 [${code}] 的绑定吗？`,
+      api: () => removeGroupRoleApi({ group_code: row.code, role_code: code }),
+      onSuccess: () => groupRelation.refresh()
+    })
+  }
+
+  const handleBatchUnbindGroups = () => {
+    const code = toValue(roleCode)
+    if (!code || groupRelation.selectedRows.value.length === 0) return
+
+    handleConfirmAction({
+      title: "批量解绑用户组",
+      message: `确认要解除所选 ${groupRelation.selectedRows.value.length} 个用户组与角色 [${code}] 的绑定吗？`,
+      api: () =>
+        Promise.all(
+          groupRelation.selectedRows.value.map((group) =>
+            removeGroupRoleApi({ group_code: group.code, role_code: code })
+          )
+        ),
+      onSuccess: () => groupRelation.refresh()
+    })
+  }
 
   const addMemberVisible = ref(false)
   const handleAddMember = () => (addMemberVisible.value = true)
@@ -275,6 +331,22 @@ export function useRoleGovernance(
     handleAssignMembers,
     handleUnbindMember,
     handleBatchUnbindMembers,
+    // 用户组
+    groups: groupRelation.list,
+    groupTotal: groupRelation.total,
+    groupLoading: groupRelation.loading,
+    selectedGroups: groupRelation.selectedRows,
+    groupQuery: computed(() => ({
+      ...groupRelation.query,
+      currentPage: groupRelation.pagination.currentPage,
+      pageSize: groupRelation.pagination.pageSize
+    })),
+    groupSelectVisible,
+    handleGroupPageChange: groupRelation.handlePageChange,
+    handleGroupSearch: groupRelation.handleSearch,
+    handleAssignGroups,
+    handleUnbindGroup,
+    handleBatchUnbindGroups,
     // 策略
     policies: policyRelation.list,
     policyTotal: policyRelation.total,

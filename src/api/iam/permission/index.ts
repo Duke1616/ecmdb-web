@@ -24,7 +24,7 @@ export function listAuthorizationsApi(data: permission.AuthorizationQueryReq) {
   })
 }
 
-/** 搜索授权主体 (用户/角色) */
+/** 搜索授权主体 (用户/角色/用户组) */
 export function searchSubjectsApi(data: permission.SearchSubjectsReq) {
   return instance.post<permission.SearchSubjectsResp>({
     url: `${API_SERVICE.IAM}/permission/subjects/search`,

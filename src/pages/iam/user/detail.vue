@@ -35,7 +35,7 @@
 
       <!-- 3. 治理内容区 -->
       <GovernanceTabs v-model="activeTab">
-        <AuthTabPane label="身份源关联" name="sources" :allowed="tabPermissions.sources" disable-mode>
+        <AuthTabPane label="身份治理" name="sources" :allowed="tabPermissions.sources" disable-mode>
           <IdentitySources
             :user="userInfo"
             :can-manage="hasPermission(IAM_CAPABILITIES.User.ManageIdentity)"
@@ -73,6 +73,36 @@
 
         <AuthTabPane
           v-if="userInfo.is_member"
+          label="分组治理"
+          name="groups"
+          :allowed="tabPermissions.groups"
+          disable-mode
+        >
+          <AttachedGroupTable
+            v-model:selection="selectedGroups"
+            title="用户所属分组"
+            add-text="加入用户组"
+            remove-text="移除"
+            batch-remove-text="批量移除"
+            :loading="groupLoading"
+            :data="groups"
+            :total="groupTotal"
+            :current-page="groupQuery.currentPage"
+            :page-size="groupQuery.pageSize"
+            :can-add="hasPermission(IAM_CAPABILITIES.Group.AssignMembers)"
+            :can-remove="hasPermission(IAM_CAPABILITIES.Group.RemoveMembers)"
+            :can-batch-remove="hasPermission(IAM_CAPABILITIES.Group.RemoveMembers) && selectedGroups.length > 0"
+            :selectable="() => hasPermission(IAM_CAPABILITIES.Group.RemoveMembers)"
+            @page-change="handleGroupPageChange"
+            @search="handleGroupSearch"
+            @add="groupSelectVisible = true"
+            @remove="handleUnbindGroup"
+            @batch-remove="handleBatchUnbindGroups"
+          />
+        </AuthTabPane>
+
+        <AuthTabPane
+          v-if="userInfo.is_member"
           label="策略治理"
           name="permissions"
           :allowed="tabPermissions.permissions"
@@ -101,7 +131,7 @@
 
         <AuthTabPane
           v-if="userInfo.is_system_space"
-          label="租户映射"
+          label="租户治理"
           name="tenants"
           :allowed="tabPermissions.tenants"
           disable-mode
@@ -140,6 +170,15 @@
       :exclude-codes="roles.map((r) => r.code)"
       @confirm="(roles) => handleAssignRoles(roles)"
     />
+    <GroupSelectDialog
+      v-model="groupSelectVisible"
+      title="加入用户组"
+      subtitle="检索并选择用户组，将当前用户加入对应分组"
+      confirm-text="确认加入"
+      :confirm-loading="groupLoading"
+      :exclude-codes="groups.map((group) => group.code)"
+      @confirm="handleAssignGroups"
+    />
 
     <!-- 授权向导 -->
     <AuthorizeDrawer v-model="attachPolicyVisible" :fixed-subjects="userSubjects" @success="handleAttachSuccess" />
@@ -175,6 +214,7 @@ import IdentitySources from "./components/detail/IdentitySources.vue"
 import RoleTable from "./components/detail/RoleTable.vue"
 import PolicyTable from "./components/detail/PolicyTable.vue"
 import TenantTable from "./components/detail/TenantTable.vue"
+import AttachedGroupTable from "@/pages/iam/group/components/detail/AttachedGroupTable.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
@@ -183,6 +223,7 @@ import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawe
 import RoleSelectDialog from "@/pages/iam/role/components/RoleSelectDialog.vue"
 import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
 import TenantSelectDialog from "@/pages/iam/tenant/components/TenantSelectDialog.vue"
+import GroupSelectDialog from "@/pages/iam/group/components/GroupSelectDialog.vue"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
 
 const router = useRouter()
@@ -210,6 +251,12 @@ const {
   roleLoading,
   roleQuery,
   selectedRoles,
+  // 用户组
+  groups,
+  groupTotal,
+  groupLoading,
+  groupQuery,
+  selectedGroups,
   // 策略
   policies,
   policyTotal,
@@ -225,11 +272,13 @@ const {
   handleRolePageChange,
   handlePolicyPageChange,
   handleTenantPageChange,
+  handleGroupPageChange,
   handleRoleSearch,
   handleRoleTypeChange,
   handlePolicySearch,
   handlePolicyTypeChange,
   handleTenantSearch,
+  handleGroupSearch,
   handleAssignRoles,
   handleAddPolicy,
   roleSelectVisible,
@@ -237,6 +286,10 @@ const {
   handleAttachSuccess,
   handleUnbindRole,
   handleBatchUnbindRoles,
+  groupSelectVisible,
+  handleAssignGroups,
+  handleUnbindGroup,
+  handleBatchUnbindGroups,
   handleUnbindPolicy,
   handleUnbindTenant,
   handleBatchUnbindPolicies,

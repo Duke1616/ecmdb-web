@@ -140,6 +140,34 @@ export const IAM_CAPABILITIES = {
     UnbindIdentity: "iam:user:unbind_identity"
   },
 
+  /** 用户组治理相关 */
+  Group: {
+    /** 查看用户组列表 */
+    View: "iam:group:view",
+    /** 新增用户组 */
+    Add: "iam:group:add",
+    /** 编辑用户组 */
+    Edit: "iam:group:edit",
+    /** 获取用户组详情 */
+    Detail: "iam:group:get",
+    /** 删除用户组 */
+    Delete: "iam:group:delete",
+    /** 批量删除用户组 */
+    BatchDelete: "iam:group:batch_delete",
+    /** 查看用户组成员 */
+    ViewMembers: "iam:group:view_members",
+    /** 分配用户组成员 */
+    AssignMembers: "iam:group:assign_members",
+    /** 移除用户组成员 */
+    RemoveMembers: "iam:group:remove_members",
+    /** 查看用户组角色 */
+    ViewRoles: "iam:group:view_roles",
+    /** 绑定用户组角色 */
+    AssignRole: "iam:group:assign_role",
+    /** 解绑用户组角色 */
+    RemoveRole: "iam:group:remove_role"
+  },
+
   /** 部门管理相关 */
   Department: {
     /** 查看部门列表 */

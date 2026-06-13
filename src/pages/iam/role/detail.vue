@@ -31,7 +31,7 @@
 
       <!-- 3. 治理深度内容区 (Tabs) -->
       <GovernanceTabs v-model="activeTab">
-        <AuthTabPane label="关联用户管理" name="members" :allowed="tabPermissions.members" disable-mode>
+        <AuthTabPane label="用户治理" name="members" :allowed="tabPermissions.members" disable-mode>
           <MemberTable
             v-model:selection="selectedMembers"
             :loading="memberLoading"
@@ -52,7 +52,31 @@
           />
         </AuthTabPane>
 
-        <AuthTabPane label="信任继承关系" name="inheritance" :allowed="tabPermissions.inheritance" disable-mode>
+        <AuthTabPane label="分组治理" name="groups" :allowed="tabPermissions.groups" disable-mode>
+          <AttachedGroupTable
+            v-model:selection="selectedGroups"
+            title="绑定该角色的用户组"
+            add-text="绑定用户组"
+            remove-text="解绑"
+            batch-remove-text="批量解绑"
+            :loading="groupLoading"
+            :data="groups"
+            :total="groupTotal"
+            :current-page="groupQuery.currentPage"
+            :page-size="groupQuery.pageSize"
+            :can-add="hasPermission(IAM_CAPABILITIES.Group.AssignRole)"
+            :can-remove="hasPermission(IAM_CAPABILITIES.Group.RemoveRole)"
+            :can-batch-remove="hasPermission(IAM_CAPABILITIES.Group.RemoveRole) && selectedGroups.length > 0"
+            :selectable="() => hasPermission(IAM_CAPABILITIES.Group.RemoveRole)"
+            @page-change="handleGroupPageChange"
+            @search="handleGroupSearch"
+            @add="groupSelectVisible = true"
+            @remove="handleUnbindGroup"
+            @batch-remove="handleBatchUnbindGroups"
+          />
+        </AuthTabPane>
+
+        <AuthTabPane label="继承治理" name="inheritance" :allowed="tabPermissions.inheritance" disable-mode>
           <InheritanceTable
             :loading="inheritanceLoading"
             :data="parentRoles"
@@ -64,7 +88,7 @@
           />
         </AuthTabPane>
 
-        <AuthTabPane label="内联策略分析" name="inline" :allowed="tabPermissions.inline" disable-mode>
+        <AuthTabPane label="内联治理" name="inline" :allowed="tabPermissions.inline" disable-mode>
           <div v-loading="analyzedLoading" class="inline-gov-container">
             <template v-if="analyzedInlinePolicies.length > 0">
               <PolicyServiceInsights :policy="aggregatedPolicy" :services="aggregatedServices" @copy="handleCopy" />
@@ -75,7 +99,7 @@
           </div>
         </AuthTabPane>
 
-        <AuthTabPane label="托管策略治理" name="permissions" :allowed="tabPermissions.permissions" disable-mode>
+        <AuthTabPane label="托管治理" name="permissions" :allowed="tabPermissions.permissions" disable-mode>
           <PolicyTable
             v-model:selection="selectedPolicies"
             :loading="policyLoading"
@@ -108,6 +132,15 @@
       :confirm-loading="memberLoading"
       :exclude-codes="members.map((u) => u.username)"
       @confirm="(users) => handleAssignMembers(users.map((u) => u.username))"
+    />
+    <GroupSelectDialog
+      v-model="groupSelectVisible"
+      title="绑定用户组"
+      subtitle="检索并选择用户组，将其绑定到当前角色"
+      confirm-text="确认绑定"
+      :confirm-loading="groupLoading"
+      :exclude-codes="groups.map((group) => group.code)"
+      @confirm="handleAssignGroups"
     />
     <RoleSelectDialog
       v-model="addParentVisible"
@@ -156,6 +189,7 @@ import { IAM_CAPABILITIES } from "@/common/auth/capability"
 // Components
 import RoleDialog from "./components/RoleDialog.vue"
 import MemberTable from "./components/detail/MemberTable.vue"
+import AttachedGroupTable from "@/pages/iam/group/components/detail/AttachedGroupTable.vue"
 import PolicyTable from "@/pages/iam/user/components/detail/PolicyTable.vue"
 import PolicyServiceInsights from "@/pages/iam/policy/components/detail/PolicyServiceInsights.vue"
 import InheritanceTable from "./components/detail/InheritanceTable.vue"
@@ -163,6 +197,7 @@ import GovernanceTabs from "@/common/components/Governance/GovernanceTabs.vue"
 import AuthTabPane from "@/common/components/Auth/AuthTabPane.vue"
 import RoleSelectDialog from "./components/RoleSelectDialog.vue"
 import UserSelectDialog from "@/pages/iam/user/components/UserSelectDialog.vue"
+import GroupSelectDialog from "@/pages/iam/group/components/GroupSelectDialog.vue"
 import PolicySelectDialog from "@/pages/iam/policy/components/PolicySelectDialog.vue"
 import AuthorizeDrawer from "@/pages/iam/authorization/components/AuthorizeDrawer.vue"
 import { AuthorizationSubType, type Subject } from "@/api/iam/permission/type"
@@ -188,6 +223,11 @@ const {
   memberLoading,
   memberQuery,
   selectedMembers,
+  groups,
+  groupTotal,
+  groupLoading,
+  groupQuery,
+  selectedGroups,
   policies,
   policyTotal,
   policyLoading,
@@ -200,6 +240,12 @@ const {
   handleAssignMembers,
   handleUnbindMember,
   handleBatchUnbindMembers,
+  groupSelectVisible,
+  handleGroupPageChange,
+  handleGroupSearch,
+  handleAssignGroups,
+  handleUnbindGroup,
+  handleBatchUnbindGroups,
   handlePolicyPageChange,
   handlePolicySearch,
   handlePolicyTypeChange,
