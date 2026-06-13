@@ -33,7 +33,8 @@
             v-for="act in sub.actions"
             :key="act.code"
             :act="act"
-            :selected="isActionMatched(selectedActions, act.code)"
+            :selected="selectedActions.includes(act.code)"
+            :indirect-selected-pattern="getIndirectPattern(act.code)"
             :menu-details-map="menuDetailsMap"
             @toggle="(checked) => $emit('toggleAction', act.code, checked)"
           />
@@ -60,6 +61,8 @@ const emit = defineEmits(["toggleAction", "updateActions"])
 const isActionMatched = inject<(patterns: string[], code: string) => boolean>("isActionMatched", (patterns, code) =>
   patterns.includes(code)
 )
+
+const getMatchedWildcard = inject<(patterns: string[], code: string) => string | null>("getMatchedWildcard", () => null)
 
 // 计算一级分类状态
 const getMainGrpState = () => {
@@ -97,6 +100,10 @@ const toggleSubGrp = (sub: any, checked: boolean) => {
     ? [...new Set([...props.selectedActions, ...codes])]
     : props.selectedActions.filter((p: any) => !codes.some((c: string) => isActionMatched([p], c)))
   emit("updateActions", next)
+}
+
+const getIndirectPattern = (code: string) => {
+  return getMatchedWildcard(props.selectedActions, code)
 }
 </script>
 

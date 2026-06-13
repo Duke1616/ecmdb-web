@@ -69,7 +69,32 @@ const isActionMatched = (patterns: string[], code: string): boolean => {
   })
 }
 
+const getMatchedWildcard = (patterns: string[], code: string): string | null => {
+  if (!patterns || patterns.length === 0) return null
+  if (patterns.includes(code)) return null
+
+  for (const pattern of patterns) {
+    const regexPattern =
+      "^" +
+      pattern
+        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".") +
+      "$"
+    try {
+      const re = new RegExp(regexPattern, "i")
+      if (re.test(code)) {
+        return pattern
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return null
+}
+
 provide("isActionMatched", isActionMatched)
+provide("getMatchedWildcard", getMatchedWildcard)
 
 /** 展平一级分组下的子孙分组，并应用搜索过滤 */
 const getFilteredSubGroups = (mainGrp: ManifestGroup, query: string): { name: string; actions: ManifestAction[] }[] => {

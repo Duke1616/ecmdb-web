@@ -1,70 +1,82 @@
 <template>
-  <el-checkbox
-    :model-value="selected"
-    :label="act.code"
-    class="pure-act-item"
-    @change="(checked: string | number | boolean) => $emit('toggle', Boolean(checked))"
+  <el-tooltip
+    :disabled="!indirectSelectedPattern || isHoveringMenu"
+    :content="`该权限已由通配符 '${indirectSelectedPattern}' 自动授权，不可在矩阵中单独取消`"
+    placement="top"
+    :show-after="200"
   >
-    <div class="act-info">
-      <div class="act-title-row">
-        <span class="act-name">{{ act.name }}</span>
-      </div>
+    <el-checkbox
+      :model-value="selected || !!indirectSelectedPattern"
+      :disabled="!!indirectSelectedPattern"
+      :label="act.code"
+      class="pure-act-item"
+      :class="{ 'is-indirect-checked': !!indirectSelectedPattern }"
+      @change="(checked: string | number | boolean) => $emit('toggle', Boolean(checked))"
+    >
+      <div class="act-info">
+        <div class="act-title-row">
+          <span class="act-name">{{ act.name }}</span>
+        </div>
 
-      <!-- 极致轻量微发光指示点 - 绝对定位至右上角 -->
-      <el-tooltip
-        v-if="act.has_menu"
-        effect="dark"
-        placement="top"
-        popper-class="menu-tooltip-popper"
-        :show-after="100"
-        :teleported="false"
-      >
-        <template #content>
-          <div class="menu-tooltip-content">
-            <div class="tooltip-header">
-              <el-icon class="header-icon"><Compass /></el-icon>
-              <span class="tooltip-title">关联前端菜单</span>
+        <!-- 极致轻量微发光指示点 - 绝对定位至右上角 -->
+        <el-tooltip
+          v-if="act.has_menu"
+          effect="dark"
+          placement="top"
+          popper-class="menu-tooltip-popper"
+          :show-after="100"
+        >
+          <template #content>
+            <div class="menu-tooltip-content">
+              <div class="tooltip-header">
+                <el-icon class="header-icon"><Compass /></el-icon>
+                <span class="tooltip-title">关联前端菜单</span>
+              </div>
+              <div class="tooltip-divider" />
+              <ul class="tooltip-list">
+                <li v-for="urn in act.menu_urns" :key="urn" class="tooltip-item">
+                  <el-icon class="item-icon"><Document /></el-icon>
+                  <div class="menu-desc">
+                    <span v-if="menuDetailsMap[urn]" class="menu-title">
+                      {{ menuDetailsMap[urn].meta?.title || menuDetailsMap[urn].name }}
+                    </span>
+                    <span class="urn-text" :class="{ 'is-subtext': menuDetailsMap[urn] }">
+                      {{ urn }}
+                    </span>
+                  </div>
+                </li>
+              </ul>
             </div>
-            <div class="tooltip-divider" />
-            <ul class="tooltip-list">
-              <li v-for="urn in act.menu_urns" :key="urn" class="tooltip-item">
-                <el-icon class="item-icon"><Document /></el-icon>
-                <div class="menu-desc">
-                  <span v-if="menuDetailsMap[urn]" class="menu-title">
-                    {{ menuDetailsMap[urn].meta?.title || menuDetailsMap[urn].name }}
-                  </span>
-                  <span class="urn-text" :class="{ 'is-subtext': menuDetailsMap[urn] }">
-                    {{ urn }}
-                  </span>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </template>
+          </template>
 
-        <span class="menu-indicator">
-          <el-icon class="menu-indicator-icon"><Compass /></el-icon>
-        </span>
-      </el-tooltip>
+          <span class="menu-indicator" @mouseenter="isHoveringMenu = true" @mouseleave="isHoveringMenu = false">
+            <el-icon class="menu-indicator-icon"><Compass /></el-icon>
+          </span>
+        </el-tooltip>
 
-      <span class="act-code">{{ act.code.split(":").pop() }}</span>
-    </div>
-  </el-checkbox>
+        <span class="act-code">{{ act.code.split(":").pop() }}</span>
+      </div>
+    </el-checkbox>
+  </el-tooltip>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue"
 import { Compass, Document } from "@element-plus/icons-vue"
 import type { ManifestAction } from "../../../composables/usePolicyData"
 
 defineProps<{
   act: ManifestAction
   selected: boolean
+  indirectSelectedPattern?: string | null
   menuDetailsMap: Record<string, any>
 }>()
 
 defineEmits<{
   (e: "toggle", checked: boolean): void
 }>()
+
+const isHoveringMenu = ref(false)
 </script>
 
 <style lang="scss" scoped>
@@ -98,6 +110,37 @@ defineEmits<{
       background: transparent !important;
       border-color: transparent !important;
       color: var(--el-color-primary) !important;
+    }
+  }
+
+  /* 通配符模式匹配高亮样式 */
+  &.is-indirect-checked {
+    background: var(--el-color-success-light-9) !important;
+    border-color: var(--el-color-success-light-7) !important;
+    opacity: 0.9;
+
+    // 让 Checkbox 即使在 disabled 状态下仍然高亮显示为成功的绿色，而不是灰色
+    :deep(.el-checkbox__input.is-disabled.is-checked .el-checkbox__inner) {
+      background-color: var(--el-color-success) !important;
+      border-color: var(--el-color-success) !important;
+      &::after {
+        border-color: #ffffff !important;
+      }
+    }
+
+    .act-info {
+      .act-name {
+        color: var(--el-color-success-dark-2) !important;
+      }
+      .act-code {
+        color: var(--el-text-color-regular) !important;
+      }
+    }
+
+    .menu-indicator {
+      background: transparent !important;
+      border-color: transparent !important;
+      color: var(--el-color-success) !important;
     }
   }
 
