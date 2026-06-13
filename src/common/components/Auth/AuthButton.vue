@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { computed } from "vue"
+import { computed, useAttrs } from "vue"
 import { usePermission, PermissionMode } from "@/common/composables/usePermission"
+
+defineOptions({
+  inheritAttrs: false
+})
 
 const props = withDefaults(
   defineProps<{
@@ -18,6 +22,7 @@ const props = withDefaults(
 )
 
 const { hasPermission } = usePermission()
+const attrs = useAttrs()
 
 const isAllowed = computed(() => {
   if (!props.capability) return true
@@ -35,10 +40,19 @@ const isDisabled = computed(() => {
   // 仅在禁用模式且无权限时被禁用
   return props.disableMode && !isAllowed.value
 })
+
+const externalDisabled = computed(() => attrs.disabled === true || attrs.disabled === "")
+
+const mergedDisabled = computed(() => isDisabled.value || externalDisabled.value)
+
+const buttonAttrs = computed(() => {
+  const { disabled, ...rest } = attrs
+  return rest
+})
 </script>
 
 <template>
-  <el-button v-if="isRendered" :disabled="isDisabled" v-bind="$attrs">
+  <el-button v-if="isRendered" v-bind="buttonAttrs" :disabled="mergedDisabled">
     <slot />
   </el-button>
 </template>
