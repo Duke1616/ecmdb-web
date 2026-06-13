@@ -16,6 +16,9 @@ export interface PlatformConfig {
   color: string
   route: string
   permission: string
+  aliases?: string[]
+  summary?: string
+  metrics?: string[]
 }
 
 /**
@@ -24,64 +27,69 @@ export interface PlatformConfig {
  */
 export const PLATFORMS: PlatformConfig[] = [
   {
-    id: "cmdb",
-    name: "资产管理",
-    title: "CMDB",
-    description: "配置管理数据库，管理IT基础设施和配置项",
-    icon: "DataBoard",
-    color: "#3B82F6",
-    route: "/cmdb/dashboard",
-    permission: "cmdb"
+    id: "iam",
+    name: "身份治理",
+    title: "IAM",
+    description: "身份、租户、角色、策略与授权关系的统一治理入口",
+    icon: "UserFilled",
+    color: "#2563EB",
+    route: "/governance",
+    permission: "iam",
+    aliases: ["eiam", "system"],
+    summary: "Identity & Access",
+    metrics: ["身份主体", "权限策略", "授权审计"]
   },
   {
-    id: "order",
-    name: "工单管理",
-    title: "工单",
-    description: "处理变更申请和工单流程",
-    icon: "Tickets",
-    color: "#EF4444",
-    route: "/cmdb/order/start",
-    permission: "order"
+    id: "task",
+    name: "自动化任务",
+    title: "TASK",
+    description: "任务编排、执行节点、运行日志与自动化作业管理",
+    icon: "Operation",
+    color: "#059669",
+    route: "/cmdb/task/codebook",
+    permission: "task",
+    aliases: ["etask", "automation"],
+    summary: "Automation Jobs",
+    metrics: ["任务模板", "执行节点", "运行记录"]
   },
   {
     id: "alert",
-    name: "告警平台",
-    title: "告警平台",
-    description: "监控告警管理和处理",
+    name: "告警响应",
+    title: "ALERT",
+    description: "告警规则、降噪、升级策略与值班响应管理",
     icon: "Monitor",
-    color: "#F59E0B",
+    color: "#DC2626",
     route: "/alert/workspace",
-    permission: "alert"
+    permission: "alert",
+    aliases: ["ealert"],
+    summary: "Alert Response",
+    metrics: ["告警规则", "通知升级", "值班响应"]
   },
   {
-    id: "system",
-    name: "系统管理",
-    title: "系统配置",
-    description: "用户、角色、权限等系统配置",
-    icon: "Setting",
-    color: "#8B5CF6",
-    route: "/cmdb/system/user",
-    permission: "system"
+    id: "cmdb",
+    name: "配置资产",
+    title: "CMDB",
+    description: "配置项、资源模型、关系拓扑与资产数据治理",
+    icon: "DataBoard",
+    color: "#EA580C",
+    route: "/cmdb/dashboard",
+    permission: "cmdb",
+    aliases: ["ecmdb"],
+    summary: "Configuration Data",
+    metrics: ["资源模型", "配置关系", "数据仓库"]
   },
   {
-    id: "change",
-    name: "变更平台",
-    title: "变更平台",
-    description: "IT变更管理和审批流程",
+    id: "ticket",
+    name: "流程工单",
+    title: "TICKET",
+    description: "审批流、服务申请、工单流转与流程模板管理",
     icon: "Connection",
-    color: "#10B981",
-    route: "/change",
-    permission: "change"
-  },
-  {
-    id: "automation",
-    name: "自动化平台",
-    title: "自动化平台",
-    description: "自动化任务和流程管理",
-    icon: "List",
-    color: "#6B7280",
-    route: "/cmdb/task/codebook",
-    permission: "automation"
+    color: "#7C3AED",
+    route: "/cmdb/order/start",
+    permission: "ticket",
+    aliases: ["eflow", "order", "change", "workflow"],
+    summary: "Workflow Center",
+    metrics: ["服务目录", "流程审批", "变更协同"]
   }
 ]
 
@@ -91,7 +99,19 @@ export const PLATFORMS: PlatformConfig[] = [
  * @returns 平台配置对象
  */
 export const getPlatformConfig = (platformId: string): PlatformConfig | undefined => {
-  return PLATFORMS.find((platform) => platform.id === platformId)
+  return PLATFORMS.find((platform) => platform.id === platformId || platform.aliases?.includes(platformId))
+}
+
+export const getPlatformMatchKeys = (platformId: string): string[] => {
+  const platform = getPlatformConfig(platformId)
+  return platform ? [platform.id, ...(platform.aliases || [])] : [platformId]
+}
+
+export const platformMatches = (routePlatforms: string[] | undefined, platformId: string): boolean => {
+  if (!routePlatforms || routePlatforms.length === 0) return true
+  if (!platformId) return true
+  const matchKeys = getPlatformMatchKeys(platformId)
+  return routePlatforms.some((platform) => matchKeys.includes(platform))
 }
 
 /**
@@ -101,7 +121,8 @@ export const getPlatformConfig = (platformId: string): PlatformConfig | undefine
 export const getPlatformsForMenu = () => {
   return PLATFORMS.map((platform) => ({
     id: platform.id,
-    name: platform.name
+    name: platform.name,
+    aliases: platform.aliases
   }))
 }
 
@@ -112,12 +133,15 @@ export const getPlatformsForMenu = () => {
 export const getNavigationCards = () => {
   return PLATFORMS.map((platform) => ({
     id: platform.id,
+    name: platform.name,
     title: platform.title,
     description: platform.description,
     icon: platform.icon,
     color: platform.color,
     route: platform.route,
-    permission: platform.permission
+    permission: platform.permission,
+    summary: platform.summary,
+    metrics: platform.metrics
   }))
 }
 

@@ -1,6 +1,8 @@
 <script lang="ts" setup>
-import { computed, watch } from "vue"
-import { useRoute } from "vue-router"
+import { computed, nextTick, ref, watch } from "vue"
+import { useRoute, type RouteRecordRaw } from "vue-router"
+import type { MenuInstance } from "element-plus"
+import path from "path-browserify"
 import { useAppStore } from "@/pinia/stores/app"
 import { usePermissionStore } from "@/pinia/stores/permission"
 import { useSettingsStore } from "@/pinia/stores/settings"
@@ -10,6 +12,7 @@ import Logo from "../Logo/index.vue"
 import { useDevice } from "@/common/composables/useDevice"
 import { useLayoutMode } from "@/common/composables/useLayoutMode"
 import { getCssVar } from "@/common/utils/css"
+import { getPlatformConfig } from "@/common/constants/platforms"
 // import lodash from "lodash"
 const v3SidebarMenuBgColor = getCssVar("--v3-sidebar-menu-bg-color")
 const v3SidebarMenuTextColor = getCssVar("--v3-sidebar-menu-text-color")
@@ -22,12 +25,13 @@ const appStore = useAppStore()
 const permissionStore = usePermissionStore()
 const settingsStore = useSettingsStore()
 const sidebarStore = useSidebarStore()
+const menuRef = ref<MenuInstance>()
 const activeMenu = computed(() => {
   const {
     meta: { activeMenu },
     path
   } = route
-  return activeMenu ? activeMenu : path
+  return activeMenu ? String(activeMenu) : path
 })
 // 结合权限过滤和平台过滤
 const currentroutes = computed(() => {
@@ -61,12 +65,37 @@ const hiddenScrollbarVerticalBar = computed(() => {
   return isTop.value ? "none" : "block"
 })
 
+const getSubMenuIndexes = (routes: RouteRecordRaw[], basePath = ""): string[] => {
+  const indexes: string[] = []
+
+  routes.forEach((routeItem) => {
+    const currentPath = routeItem.path.startsWith("/") ? routeItem.path : path.resolve(basePath, routeItem.path)
+    const children = routeItem.children?.filter((child) => !child.meta?.hidden) ?? []
+
+    if (children.length > 0) {
+      indexes.push(currentPath)
+      indexes.push(...getSubMenuIndexes(children, currentPath))
+    }
+  })
+
+  return indexes
+}
+
+const closeAllSubMenus = async () => {
+  if (settingsStore.expandSidebarOnPlatformEnter) return
+
+  await nextTick()
+  await nextTick()
+  getSubMenuIndexes(currentroutes.value).forEach((index) => menuRef.value?.close(index))
+}
+
 /** 获取当前页面的平台标识 */
 const getCurrentPlatform = (currentRoute: any) => {
   // 从当前路由的 meta.platforms 中获取平台标识
   const routePlatforms = currentRoute.meta?.platforms
   if (routePlatforms && routePlatforms.length > 0) {
-    return routePlatforms[0] // 取第一个平台作为当前平台
+    const platform = getPlatformConfig(routePlatforms[0])
+    return platform?.id || routePlatforms[0] // 取第一个平台作为当前平台
   }
 
   return ""
@@ -103,6 +132,16 @@ watch(
     deep: true
   }
 )
+
+watch(
+  [currentroutes, activeMenu, () => settingsStore.expandSidebarOnPlatformEnter],
+  closeAllSubMenus,
+  {
+    immediate: true,
+    deep: true,
+    flush: "post"
+  }
+)
 </script>
 
 <template>
@@ -110,7 +149,9 @@ watch(
     <Logo v-if="isLogo" :collapse="isCollapse" />
     <el-scrollbar wrap-class="scrollbar-wrapper">
       <el-menu
+        ref="menuRef"
         :default-active="activeMenu"
+        :default-openeds="[]"
         :collapse="isCollapse && !isTop"
         :background-color="backgroundColor"
         :text-color="textColor"

@@ -3,6 +3,7 @@ import type { menu } from "@/api/menu/types/menu"
 import { MenuType } from "@/api/menu/types/menu"
 import { getRolePermissionApi, changeRoleMenuPermissionApi } from "@/api/permission"
 import { ElMessage } from "element-plus"
+import { platformMatches } from "@/common/constants/platforms"
 
 /**
  * NOTE: 扁平化后的菜单项类型
@@ -18,7 +19,7 @@ type FlatMenuItem = Omit<menu, "children"> & {
 const matchesPlatform = (menuItem: menu, selectedPlatforms: string[]): boolean => {
   if (selectedPlatforms.length === 0) return true
   const menuPlatforms = menuItem.meta?.platforms || []
-  return menuPlatforms.some((p) => selectedPlatforms.includes(p))
+  return selectedPlatforms.some((platform) => platformMatches(menuPlatforms, platform))
 }
 
 /**

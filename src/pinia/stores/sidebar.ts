@@ -2,6 +2,7 @@ import { ref } from "vue"
 import store from "@/pinia"
 import { defineStore } from "pinia"
 import { type RouteRecordRaw } from "vue-router"
+import { platformMatches } from "@/common/constants/platforms"
 
 export const useSidebarStore = defineStore("sidebar", () => {
   /** 当前选中的平台标识 */
@@ -23,7 +24,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
     // 2. 若未指定搜索平台，则显示所有
     if (!platform) return true
 
-    return platforms.includes(platform)
+    return platformMatches(platforms as string[] | undefined, platform)
   }
 
   /**
@@ -31,7 +32,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
    * @param routes 原始路由数组
    * @param platform 目标平台 ID
    */
-  const filterAndFlattenRoutes = (routes: RouteRecordRaw[], platform: string): RouteRecordRaw[] => {
+  const filterAndFlattenRoutes = (routes: RouteRecordRaw[], platform: string, flattenFromNavigation: boolean): RouteRecordRaw[] => {
     const result: RouteRecordRaw[] = []
 
     routes.forEach((route) => {
@@ -45,12 +46,16 @@ export const useSidebarStore = defineStore("sidebar", () => {
       }
 
       // 3. 递归处理子路由
-      const filteredChildren = filterAndFlattenRoutes(route.children, platform)
+      const filteredChildren = filterAndFlattenRoutes(route.children, platform, flattenFromNavigation)
       if (filteredChildren.length === 0) return
 
       // 4. 判断是否需要执行“首页导航平铺”逻辑
       // 逻辑：只有指定了平台、且来自导航页、且当前节点属于该平台标识时，才提取子节点
-      const shouldFlatten = platform && isFromNavigation.value && route.meta?.platforms?.includes(platform)
+      const shouldFlatten =
+        flattenFromNavigation &&
+        platform &&
+        isFromNavigation.value &&
+        platformMatches(route.meta?.platforms as string[] | undefined, platform)
 
       if (shouldFlatten) {
         // 平台层级打平：将子路由提升至父级同层展示
@@ -76,8 +81,14 @@ export const useSidebarStore = defineStore("sidebar", () => {
    * @param platform 平台 ID
    * @param allRoutes 需要过滤的总路由表
    * @param fromNavigation 是否来自导航页跳转
+   * @param flattenFromNavigation 是否在导航页进入平台时平铺展示子菜单
    */
-  const setPlatformFilter = (platform: string, allRoutes: RouteRecordRaw[], fromNavigation = false): void => {
+  const setPlatformFilter = (
+    platform: string,
+    allRoutes: RouteRecordRaw[],
+    fromNavigation = false,
+    flattenFromNavigation = fromNavigation
+  ): void => {
     currentPlatform.value = platform
     if (fromNavigation) {
       isFromNavigation.value = true
@@ -85,7 +96,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
 
     // 排除隐藏路由后执行过滤
     const visibleRawRoutes = allRoutes.filter((r) => !r.meta?.hidden)
-    filteredRoutes.value = filterAndFlattenRoutes(visibleRawRoutes, platform)
+    filteredRoutes.value = filterAndFlattenRoutes(visibleRawRoutes, platform, flattenFromNavigation)
   }
 
   /**

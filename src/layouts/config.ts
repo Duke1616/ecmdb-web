@@ -31,6 +31,8 @@ export interface LayoutsConfig {
   showGreyMode: boolean
   /** 是否显示色弱模式 */
   showColorWeakness: boolean
+  /** 进入平台后是否自动展开侧边菜单 */
+  expandSidebarOnPlatformEnter: boolean
 }
 
 /** 默认配置 */
@@ -48,7 +50,8 @@ const DEFAULT_CONFIG: LayoutsConfig = {
   cacheTagsView: false,
   showWatermark: false,
   showGreyMode: false,
-  showColorWeakness: false
+  showColorWeakness: false,
+  expandSidebarOnPlatformEnter: true
 }
 
 /** 项目配置 */
