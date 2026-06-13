@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from "vue"
+import { computed, inject, ref, provide } from "vue"
 import type { Ref } from "vue"
 import { Monitor } from "@element-plus/icons-vue"
 import MatrixRow from "./components/MatrixRow.vue"
@@ -42,6 +42,34 @@ const props = defineProps<{
 const emit = defineEmits(["toggleAction", "updateActions"])
 
 const menuDetailsMap = inject<Ref<Record<string, any>>>("menuDetailsMap", ref({}))
+
+/**
+ * 校验指定的 code 是否被 pattern 模式数组所通配符匹配
+ * @param patterns 策略定义的 actions 模式数组，如 ["iam:*:*view*", "task:*:*view*"]
+ * @param code 具体的权限项 code，如 "iam:user:view"
+ */
+const isActionMatched = (patterns: string[], code: string): boolean => {
+  if (!patterns || patterns.length === 0) return false
+  if (patterns.includes(code)) return true
+
+  return patterns.some((pattern) => {
+    const regexPattern =
+      "^" +
+      pattern
+        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+        .replace(/\*/g, ".*")
+        .replace(/\?/g, ".") +
+      "$"
+    try {
+      const re = new RegExp(regexPattern, "i")
+      return re.test(code)
+    } catch {
+      return false
+    }
+  })
+}
+
+provide("isActionMatched", isActionMatched)
 
 /** 展平一级分组下的子孙分组，并应用搜索过滤 */
 const getFilteredSubGroups = (mainGrp: ManifestGroup, query: string): { name: string; actions: ManifestAction[] }[] => {
@@ -102,7 +130,7 @@ const getSvcCodes = (svc: any): string[] => {
   return (svc.entries || []).flatMap((entry: any) => entry.allActions.map((a: any) => a.code))
 }
 
-const getSelectedCount = (svc: any) => getSvcCodes(svc).filter((c) => props.selectedActions.includes(c)).length
+const getSelectedCount = (svc: any) => getSvcCodes(svc).filter((c) => isActionMatched(props.selectedActions, c)).length
 
 const getSvcTotal = (svc: any) => getSvcCodes(svc).length
 
@@ -110,7 +138,10 @@ const toggleSvc = (svc: any, checked: boolean) => {
   const codes = getSvcCodes(svc)
   const next = checked
     ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((c) => !codes.includes(c))
+    : props.selectedActions.filter((p) => {
+        if (p.startsWith(`${svc.code}:`)) return false
+        return !codes.some((c) => isActionMatched([p], c))
+      })
   emit("updateActions", next)
 }
 </script>

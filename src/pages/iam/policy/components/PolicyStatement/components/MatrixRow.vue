@@ -33,7 +33,7 @@
             v-for="act in sub.actions"
             :key="act.code"
             :act="act"
-            :selected="selectedActions.includes(act.code)"
+            :selected="isActionMatched(selectedActions, act.code)"
             :menu-details-map="menuDetailsMap"
             @toggle="(checked) => $emit('toggleAction', act.code, checked)"
           />
@@ -44,6 +44,7 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from "vue"
 import ActionItem from "./ActionItem.vue"
 
 // grp 为半展平后的一级分类，结构：
@@ -56,10 +57,14 @@ const props = defineProps<{
 
 const emit = defineEmits(["toggleAction", "updateActions"])
 
+const isActionMatched = inject<(patterns: string[], code: string) => boolean>("isActionMatched", (patterns, code) =>
+  patterns.includes(code)
+)
+
 // 计算一级分类状态
 const getMainGrpState = () => {
   const codes = props.grp.allActions.map((a: any) => a.code)
-  const count = codes.filter((c: any) => props.selectedActions.includes(c)).length
+  const count = codes.filter((c: any) => isActionMatched(props.selectedActions, c)).length
   return {
     all: count === codes.length && codes.length > 0,
     some: count > 0 && count < codes.length
@@ -71,14 +76,14 @@ const toggleMainGrp = (checked: boolean) => {
   const codes = props.grp.allActions.map((a: any) => a.code)
   const next = checked
     ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((c: any) => !codes.includes(c))
+    : props.selectedActions.filter((p: any) => !codes.some((c: string) => isActionMatched([p], c)))
   emit("updateActions", next)
 }
 
 // 计算二级子分类状态
 const getSubGrpState = (sub: any) => {
   const codes = sub.actions.map((a: any) => a.code)
-  const count = codes.filter((c: any) => props.selectedActions.includes(c)).length
+  const count = codes.filter((c: any) => isActionMatched(props.selectedActions, c)).length
   return {
     all: count === codes.length && codes.length > 0,
     some: count > 0 && count < codes.length
@@ -90,7 +95,7 @@ const toggleSubGrp = (sub: any, checked: boolean) => {
   const codes = sub.actions.map((a: any) => a.code)
   const next = checked
     ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((c: any) => !codes.includes(c))
+    : props.selectedActions.filter((p: any) => !codes.some((c: string) => isActionMatched([p], c)))
   emit("updateActions", next)
 }
 </script>
