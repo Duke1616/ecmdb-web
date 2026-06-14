@@ -11,7 +11,7 @@
             <div class="logo-wrapper">
               <img src="@@/assets/images/layouts/logo-标准.png" class="main-logo" />
             </div>
-            <h1 class="hero-title">企业级运维<br />一体化治理平台</h1>
+            <h1 class="hero-title">运维资源<br />统一治理平台</h1>
           </div>
 
           <div class="bento-grid">
@@ -22,7 +22,7 @@
               </div>
               <div class="card-info">
                 <span class="info-title">CMDB 资源中心</span>
-                <span class="info-desc">全量资产动态纳管</span>
+                <span class="info-desc">资源信息统一维护</span>
               </div>
             </div>
 
@@ -33,7 +33,7 @@
               </div>
               <div class="card-info">
                 <span class="info-title">分布式任务调度</span>
-                <span class="info-desc">海量任务毫秒级分发</span>
+                <span class="info-desc">任务执行统一编排</span>
               </div>
             </div>
 
@@ -44,7 +44,7 @@
               </div>
               <div class="card-info">
                 <span class="info-title">智能告警中心</span>
-                <span class="info-desc">多维收敛与精准通知</span>
+                <span class="info-desc">告警规则集中管理</span>
               </div>
             </div>
 
@@ -55,7 +55,7 @@
               </div>
               <div class="card-info">
                 <span class="info-title">工单流程中心</span>
-                <span class="info-desc">标准化业务全生命周期</span>
+                <span class="info-desc">流程审批规范流转</span>
               </div>
             </div>
 
@@ -66,7 +66,7 @@
               </div>
               <div class="card-info">
                 <span class="info-title">多租户逻辑隔离</span>
-                <span class="info-desc">安全合规的业务沙箱</span>
+                <span class="info-desc">租户数据逻辑隔离</span>
               </div>
             </div>
 
@@ -77,7 +77,7 @@
               </div>
               <div class="card-info">
                 <span class="info-title">统一身份治理 IGA</span>
-                <span class="info-desc">权限精细化全流程管控</span>
+                <span class="info-desc">账号权限统一管理</span>
               </div>
             </div>
           </div>
@@ -92,6 +92,30 @@
           </div>
 
           <div class="login-content">
+            <div v-if="inviteInfo" class="task-heading">
+              <div class="alert-icon">
+                <el-icon><OfficeBuilding /></el-icon>
+              </div>
+              <div class="alert-body">
+                <div class="alert-title">入驻邀请：{{ inviteInfo.tenant_name }}</div>
+                <div class="alert-desc">登录后将自动为您发起入驻申请</div>
+              </div>
+            </div>
+
+            <div v-else-if="bindToken" class="task-heading">
+              <div class="alert-icon">
+                <el-icon><InfoFilled /></el-icon>
+              </div>
+              <div class="alert-body">
+                <div class="alert-title">账号绑定中</div>
+                <div class="alert-desc">请验证您的本地账号以完成关联</div>
+              </div>
+            </div>
+
+            <div v-else class="auth-heading">
+              <h2>欢迎登录</h2>
+            </div>
+
             <div class="mode-switcher">
               <div
                 class="switcher-item"
@@ -114,28 +138,6 @@
                 AD 域
               </div>
               <div class="switcher-slider" :style="sliderStyle" />
-            </div>
-
-            <!-- 绑定提示条 -->
-            <div v-if="bindToken" class="bind-alert-box">
-              <div class="alert-icon">
-                <el-icon><InfoFilled /></el-icon>
-              </div>
-              <div class="alert-body">
-                <div class="alert-title">账号绑定中</div>
-                <div class="alert-desc">请验证您的本地账号以完成关联</div>
-              </div>
-            </div>
-
-            <!-- 邀请入驻提示条 -->
-            <div v-if="inviteInfo" class="bind-alert-box invite">
-              <div class="alert-icon">
-                <el-icon><OfficeBuilding /></el-icon>
-              </div>
-              <div class="alert-body">
-                <div class="alert-title">入驻邀请：{{ inviteInfo.tenant_name }}</div>
-                <div class="alert-desc">登录后将自动为您发起入驻申请</div>
-              </div>
             </div>
 
             <Login
@@ -402,7 +404,7 @@ const handleMfaSuccess = (businessData: any) => {
   --login-shell-gap: clamp(72px, 5vw, 108px);
   --login-hero-width: clamp(660px, 41vw, 780px);
   --login-card-width: clamp(400px, 24vw, 440px);
-  --login-card-padding: clamp(40px, 2.5vw, 46px);
+  --login-card-padding: clamp(34px, 2.1vw, 40px);
   --login-logo-height: clamp(44px, 2.8vw, 50px);
   --login-title-size: clamp(38px, 2.6vw, 46px);
   --login-bento-gap: clamp(12px, 0.8vw, 15px);
@@ -410,10 +412,10 @@ const handleMfaSuccess = (businessData: any) => {
   --login-bento-icon-size: clamp(28px, 1.8vw, 32px);
   --login-card-title-size: clamp(13px, 0.8vw, 14px);
   --login-card-desc-size: clamp(11px, 0.7vw, 12px);
-  --login-form-gap: 24px;
-  --login-input-height: clamp(32px, 2vw, 34px);
+  --login-form-gap: 18px;
+  --login-input-height: clamp(30px, 1.8vw, 32px);
   --login-input-font-size: 14px;
-  --login-submit-height: clamp(48px, 3vw, 52px);
+  --login-submit-height: clamp(46px, 2.7vw, 50px);
   --login-submit-font-size: 16px;
 
   .bg-pattern {
@@ -460,24 +462,103 @@ const handleMfaSuccess = (businessData: any) => {
 
   .bento-card {
     position: relative;
-    background: #ffffff;
-    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(var(--card-accent-rgb, 16, 185, 129), 0.05), transparent 44%),
+      #ffffff;
+    border: 1px solid #e8eef5;
     border-radius: 16px;
     padding: var(--login-bento-padding);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-    transition: all 0.3s;
+    box-shadow:
+      0 1px 2px rgba(15, 23, 42, 0.03),
+      0 14px 32px -28px rgba(15, 23, 42, 0.42);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+
+    &::after {
+      content: "";
+      position: absolute;
+      inset: auto 18px 0;
+      height: 2px;
+      border-radius: 999px 999px 0 0;
+      background: rgba(var(--card-accent-rgb, 16, 185, 129), 0.52);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    &:hover {
+      border-color: rgba(var(--card-accent-rgb, 16, 185, 129), 0.28);
+      box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 18px 38px -28px rgba(var(--card-accent-rgb, 16, 185, 129), 0.32);
+      transform: translateY(-2px);
+
+      &::after {
+        opacity: 1;
+      }
+    }
+  }
+
+  .biz-card:nth-child(1) {
+    --card-accent-rgb: 16, 185, 129;
+  }
+
+  .biz-card:nth-child(2) {
+    --card-accent-rgb: 59, 130, 246;
+  }
+
+  .biz-card:nth-child(3) {
+    --card-accent-rgb: 14, 165, 233;
+  }
+
+  .biz-card:nth-child(4) {
+    --card-accent-rgb: 99, 102, 241;
+  }
+
+  .biz-card:nth-child(5) {
+    --card-accent-rgb: 20, 184, 166;
+  }
+
+  .biz-card:nth-child(6) {
+    --card-accent-rgb: 168, 85, 247;
   }
 
   .brand-card {
+    position: relative;
     border: none;
     background: transparent;
     box-shadow: none;
-    padding: 0 0 24px 0;
+    padding: 0 0 28px 0;
+    overflow: visible;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 12px;
+      width: 72px;
+      height: 4px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #10b981, #60a5fa);
+    }
+
+    &:hover {
+      transform: none;
+      border-color: transparent;
+      box-shadow: none;
+
+      &::after {
+        opacity: 0;
+      }
+    }
+
     .logo-wrapper {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       .main-logo {
         height: var(--login-logo-height);
       }
@@ -504,13 +585,13 @@ const handleMfaSuccess = (businessData: any) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #10b981;
+    color: rgb(var(--card-accent-rgb, 16, 185, 129));
     font-size: 14px;
     // 拟真质感：渐变底色 + 微边框 + 绿光阴影
-    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
-    border: 1px solid #e6f6ec;
+    background: linear-gradient(135deg, rgba(var(--card-accent-rgb, 16, 185, 129), 0.1) 0%, #ffffff 100%);
+    border: 1px solid rgba(var(--card-accent-rgb, 16, 185, 129), 0.16);
     border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.08);
+    box-shadow: 0 2px 6px rgba(var(--card-accent-rgb, 16, 185, 129), 0.1);
   }
 
   .card-info {
@@ -552,6 +633,73 @@ const handleMfaSuccess = (businessData: any) => {
   animation: slideInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.auth-heading {
+  position: relative;
+  margin-bottom: 16px;
+  padding-left: 14px;
+  text-align: left;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 0;
+    width: 3px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #10b981, #60a5fa);
+  }
+
+  h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 24px;
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+}
+
+.task-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  text-align: left;
+
+  .alert-icon {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: #dcfce7;
+    color: #10b981;
+    font-size: 18px;
+  }
+
+  .alert-title {
+    color: #166534;
+    font-size: 15px;
+    line-height: 1.35;
+    font-weight: 800;
+  }
+
+  .alert-desc {
+    margin-top: 3px;
+    color: #15803d;
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 500;
+  }
+}
+
 .owl-container {
   position: absolute;
   top: -82px;
@@ -566,11 +714,11 @@ const handleMfaSuccess = (businessData: any) => {
   background: #f8fafc;
   padding: 4px;
   border-radius: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   border: 1px solid #f1f5f9;
   .switcher-item {
     flex: 1;
-    height: 34px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -609,40 +757,12 @@ const handleMfaSuccess = (businessData: any) => {
   }
 }
 
-.bind-alert-box {
-  display: flex;
-  align-items: flex-start;
-  padding: 12px 16px;
-  background: linear-gradient(to right, #f0fdf4, #ffffff);
-  border: 1px solid #dcfce7;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  animation: slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  .alert-icon {
-    color: #10b981;
-    font-size: 18px;
-    margin-right: 12px;
-    margin-top: 2px;
-  }
-  .alert-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #166534;
-    margin-bottom: 2px;
-  }
-  .alert-desc {
-    font-size: 11px;
-    color: #15803d;
-    line-height: 1.4;
-  }
-}
-
 .quick-login-wrap {
-  margin-top: 24px;
+  margin-top: 18px;
   .divider {
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 14px;
     &::before,
     &::after {
       content: "";
@@ -667,7 +787,7 @@ const handleMfaSuccess = (businessData: any) => {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px 4px;
+      padding: 10px 4px;
       background: #f8fafc;
       border: 1px solid #f1f5f9;
       border-radius: 12px;
@@ -745,7 +865,7 @@ const handleMfaSuccess = (businessData: any) => {
     --login-shell-gap: clamp(112px, 5.8vw, 152px);
     --login-hero-width: clamp(860px, 39vw, 980px);
     --login-card-width: clamp(480px, 22vw, 520px);
-    --login-card-padding: clamp(50px, 2.4vw, 56px);
+    --login-card-padding: clamp(44px, 2.1vw, 50px);
     --login-logo-height: clamp(54px, 2.4vw, 62px);
     --login-title-size: clamp(48px, 2.25vw, 58px);
     --login-bento-gap: clamp(16px, 0.9vw, 20px);
@@ -753,10 +873,10 @@ const handleMfaSuccess = (businessData: any) => {
     --login-bento-icon-size: clamp(34px, 1.55vw, 38px);
     --login-card-title-size: clamp(15px, 0.72vw, 16px);
     --login-card-desc-size: clamp(12px, 0.62vw, 13px);
-    --login-form-gap: 28px;
-    --login-input-height: clamp(36px, 1.75vw, 40px);
+    --login-form-gap: 22px;
+    --login-input-height: clamp(34px, 1.55vw, 37px);
     --login-input-font-size: 15px;
-    --login-submit-height: clamp(54px, 2.5vw, 58px);
+    --login-submit-height: clamp(50px, 2.25vw, 54px);
     --login-submit-font-size: 17px;
   }
 
@@ -779,22 +899,43 @@ const handleMfaSuccess = (businessData: any) => {
   }
 
   .mode-switcher {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
 
     .switcher-item {
-      height: 40px;
+      height: 36px;
       font-size: 14px;
     }
   }
 
+  .auth-heading {
+    margin-bottom: 18px;
+
+    h2 {
+      font-size: 27px;
+    }
+  }
+
+  .task-heading {
+    margin-bottom: 18px;
+    padding: 16px 18px;
+
+    .alert-title {
+      font-size: 16px;
+    }
+
+    .alert-desc {
+      font-size: 13px;
+    }
+  }
+
   .quick-login-wrap {
-    margin-top: 30px;
+    margin-top: 22px;
 
     .social-row-grid {
       gap: 10px;
 
       .social-box {
-        padding: 14px 6px;
+        padding: 12px 6px;
 
         span {
           font-size: 11px;
@@ -817,12 +958,27 @@ const handleMfaSuccess = (businessData: any) => {
   .auth-section {
     flex: 1;
   }
+
+  .login-card {
+    margin-top: 42px;
+  }
 }
 
 @media (max-width: 520px) {
   .login-container {
     --login-card-width: min(400px, calc(100vw - 32px));
     --login-card-padding: 28px 24px;
+  }
+
+  .auth-heading {
+    width: fit-content;
+    margin-right: auto;
+    margin-left: auto;
+    text-align: left;
+
+    h2 {
+      font-size: 22px;
+    }
   }
 }
 </style>

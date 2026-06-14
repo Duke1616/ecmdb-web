@@ -162,7 +162,7 @@ function handleLoginSuccess(businessData: any) {
   :deep(.el-form-item) {
     margin-bottom: var(--login-form-gap, 24px);
     &.no-label-item {
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     .el-form-item__label {
       display: none !important;
@@ -174,7 +174,7 @@ function handleLoginSuccess(businessData: any) {
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  margin-top: 8px;
+  margin-top: 6px;
   .forgot-link {
     font-size: 12px;
     font-weight: 500;
@@ -187,11 +187,11 @@ function handleLoginSuccess(businessData: any) {
 
 :deep(.refined-input) {
   .el-input__wrapper {
-    background-color: #f8fafc !important; // 稍微带一点灰，提升输入感
+    background-color: #f8fafc !important;
     box-shadow: none !important;
-    border: 1px solid #f1f5f9;
+    border: 1px solid #edf2f7;
     border-radius: 12px;
-    padding: 10px 14px;
+    padding: 9px 14px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     &.is-focus {
       background-color: #ffffff !important;
@@ -222,7 +222,7 @@ function handleLoginSuccess(businessData: any) {
   font-size: var(--login-submit-font-size, 16px);
   font-weight: 700;
   border-radius: 12px;
-  margin-top: 16px;
+  margin-top: 10px;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
   transition: all 0.2s;
   &:hover {
