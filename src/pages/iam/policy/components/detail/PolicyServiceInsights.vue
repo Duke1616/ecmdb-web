@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, inject } from "vue"
+import { ref, computed, onMounted } from "vue"
 import type { Policy, ServiceSummary } from "@/api/iam/policy/type"
 import { getPermissionManifestApi } from "@/api/iam/permission"
 import type { PermissionManifest } from "@/api/iam/permission/type"
@@ -10,20 +10,13 @@ import PolicySourceView from "./PolicySourceView.vue"
 interface Props {
   policy: Policy
   services: ServiceSummary[]
-  borderless?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  borderless: false
-})
+const props = defineProps<Props>()
 
 const emit = defineEmits<{
   (e: "copy", text: string): void
 }>()
-
-// 注入扁平化主题标志
-const isBorderlessInject = inject<boolean>("isBorderless", false)
-const computedBorderless = computed(() => props.borderless || isBorderlessInject)
 
 // 治理层次与展示模式管理
 const currentLevel = ref<"summary" | "service">("summary") // 当前层级
@@ -151,7 +144,7 @@ const paginatedActions = computed(() => {
 </script>
 
 <template>
-  <div class="policy-service-insights premium-card-shelf" :class="{ 'is-borderless': computedBorderless }">
+  <div class="policy-service-insights premium-card-shelf">
     <!-- 1. 深度治理面板头 -->
     <div class="insights-unified-header">
       <div class="header-left">
@@ -335,25 +328,5 @@ const paginatedActions = computed(() => {
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
-}
-
-/* 扁平化无边框主题样式自治 */
-.policy-service-insights.is-borderless {
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-
-  .insights-unified-header {
-    padding: 12px 0 20px 0 !important;
-    min-height: auto !important;
-    background: transparent !important;
-    border-bottom: 1px solid #f1f5f9;
-  }
-
-  .governance-content-pane {
-    background: transparent !important;
-    padding-bottom: 0 !important;
-  }
 }
 </style>

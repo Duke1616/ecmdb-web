@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { provide } from "vue"
-
 /**
  * 治理页面专用 Tabs 容器
  * 封装了 .governance-tabs-card 和 .governance-raw-tabs 的样式
@@ -12,9 +10,6 @@ defineOptions({
 })
 
 const activeTab = defineModel<string>()
-
-// NOTE: 通过 Provide/Inject 机制向下广播扁平化卡片主题配置，让子组件（如 PremiumList 等）自治适配无边框极简形态
-provide("isBorderless", true)
 </script>
 
 <template>
