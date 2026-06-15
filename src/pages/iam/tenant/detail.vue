@@ -229,6 +229,6 @@ const onAssignConfirm = async (users: User[]) => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 0 4px;
+  padding: 0 4px 24px;
 }
 </style>

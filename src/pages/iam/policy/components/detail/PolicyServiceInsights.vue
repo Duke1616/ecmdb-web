@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from "vue"
+import { ref, computed, onMounted, inject } from "vue"
 import type { Policy, ServiceSummary } from "@/api/iam/policy/type"
+import { getPermissionManifestApi } from "@/api/iam/permission"
+import type { PermissionManifest } from "@/api/iam/permission/type"
 import PolicyServiceList from "./PolicyServiceList.vue"
 import PolicyActionDetail from "./PolicyActionDetail.vue"
 import PolicySourceView from "./PolicySourceView.vue"
@@ -8,18 +10,117 @@ import PolicySourceView from "./PolicySourceView.vue"
 interface Props {
   policy: Policy
   services: ServiceSummary[]
+  borderless?: boolean
 }
 
-defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  borderless: false
+})
 
 const emit = defineEmits<{
   (e: "copy", text: string): void
 }>()
 
+// 注入扁平化主题标志
+const isBorderlessInject = inject<boolean>("isBorderless", false)
+const computedBorderless = computed(() => props.borderless || isBorderlessInject)
+
 // 治理层次与展示模式管理
 const currentLevel = ref<"summary" | "service">("summary") // 当前层级
 const selectedSvc = ref<any>(null) // 当前下钻的服务
 const displayMode = ref<"visual" | "source">("visual") // 展示模式：摘要 vs 源代码
+
+const manifest = ref<PermissionManifest | null>(null)
+
+onMounted(async () => {
+  try {
+    const res = await getPermissionManifestApi()
+    manifest.value = res.data
+  } catch (err) {
+    console.error("[GetPermissionManifestError]", err)
+  }
+})
+
+/**
+ * 通配符匹配函数 (对齐 PermissionMatrix.vue 逻辑)
+ */
+const matchAction = (pattern: string, code: string): boolean => {
+  const regexPattern =
+    "^" +
+    pattern
+      .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+      .replace(/\*/g, ".*")
+      .replace(/\?/g, ".") +
+    "$"
+  try {
+    return new RegExp(regexPattern, "i").test(code)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 核心逻辑：直接基于 policy.statement 模式匹配全量权限清单，生成可视化视图映射
+ * 彻底避免了因后端匹配不准确返回空 actions 导致的页面显示空白问题
+ */
+const processedServices = computed(() => {
+  if (!manifest.value || !props.policy || !props.policy.statement) {
+    return props.services || []
+  }
+
+  // 1. 建立 code -> action元数据 查表字典
+  const actionMetaMap = new Map<string, { name: string; group?: string }>()
+  if (Array.isArray(manifest.value.actions)) {
+    manifest.value.actions.forEach((act: any) => {
+      actionMetaMap.set(act.code, { name: act.name, group: act.group })
+    })
+  }
+
+  // 2. 收集策略中所有配置的 action 通配匹配模式
+  const patterns = props.policy.statement.flatMap((s) => s.action || [])
+
+  // 3. 遍历权限清单中的服务，筛选并装配出已被授权的 ServiceSummary
+  return manifest.value.services
+    .map((svc: any) => {
+      const allActionCodes: string[] = []
+      const collect = (grp: any) => {
+        if (Array.isArray(grp.actions)) allActionCodes.push(...grp.actions)
+        if (Array.isArray(grp.children)) grp.children.forEach((child: any) => collect(child))
+      }
+      ;(svc.entries || []).forEach(collect)
+
+      const uniqueActionCodes = [...new Set(allActionCodes)]
+      if (uniqueActionCodes.length === 0) return null
+
+      // 对每个 URN，判定是否匹配策略中的任意模式
+      const matchedActions = uniqueActionCodes
+        .filter((code) => patterns.includes(code) || patterns.some((pat) => matchAction(pat, code)))
+        .map((code) => {
+          const meta = actionMetaMap.get(code)
+          return {
+            action: code,
+            name: meta ? meta.name : code,
+            effect: "Allow",
+            group: meta ? meta.group : "",
+            resource: "*",
+            condition: "-"
+          }
+        })
+
+      return {
+        service_code: svc.code,
+        service_name: svc.name,
+        effect: "Allow",
+        level: matchedActions.length === uniqueActionCodes.length ? "ALL" : "PARTIAL",
+        granted_count: matchedActions.length,
+        total_count: uniqueActionCodes.length,
+        resource_scope: "*",
+        condition: "-",
+        actions: matchedActions
+      }
+    })
+    .filter((svc: any) => svc && svc.granted_count > 0) as ServiceSummary[]
+})
 
 /**
  * 触发服务下钻
@@ -50,11 +151,10 @@ const paginatedActions = computed(() => {
 </script>
 
 <template>
-  <div class="policy-service-insights premium-card-shelf">
-    <!-- 1. 深度治理面板头：手动实现以保证 100% 的对齐灵活性与功能回归 -->
+  <div class="policy-service-insights premium-card-shelf" :class="{ 'is-borderless': computedBorderless }">
+    <!-- 1. 深度治理面板头 -->
     <div class="insights-unified-header">
       <div class="header-left">
-        <!-- 蓝条标记：物理对齐 PremiumList 的 indicator -->
         <div class="indicator-mark" />
         <div class="breadcrumb-nav">
           <template v-if="displayMode === 'visual'">
@@ -70,9 +170,8 @@ const paginatedActions = computed(() => {
             <span class="crumb-item active">策略源代码</span>
           </template>
         </div>
-        <!-- 数量角标：对齐 PremiumList 风格 -->
         <span v-if="displayMode === 'visual' && currentLevel === 'summary'" class="count-badge">
-          {{ services.length }}
+          {{ processedServices.length }}
         </span>
       </div>
 
@@ -88,7 +187,11 @@ const paginatedActions = computed(() => {
     <div class="governance-content-pane">
       <template v-if="displayMode === 'visual'">
         <!-- 第一级：子系统治理概览 -->
-        <PolicyServiceList v-if="currentLevel === 'summary'" :services="services" @drill-down="handleSvcDrillDown" />
+        <PolicyServiceList
+          v-if="currentLevel === 'summary'"
+          :services="processedServices"
+          @drill-down="handleSvcDrillDown"
+        />
 
         <!-- 第二级：具体服务操作明细 -->
         <PolicyActionDetail
@@ -223,6 +326,8 @@ const paginatedActions = computed(() => {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
   overflow: hidden;
+  padding-top: 16px;
+  padding-bottom: 16px;
 }
 
 /* 消除子组件内部 PremiumList 的结构，防止双重边框 */
@@ -230,5 +335,25 @@ const paginatedActions = computed(() => {
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
+}
+
+/* 扁平化无边框主题样式自治 */
+.policy-service-insights.is-borderless {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+
+  .insights-unified-header {
+    padding: 12px 0 20px 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .governance-content-pane {
+    background: transparent !important;
+    padding-bottom: 0 !important;
+  }
 }
 </style>

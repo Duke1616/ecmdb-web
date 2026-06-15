@@ -20,7 +20,7 @@
           </div>
 
           <div class="group-actions">
-            <el-tooltip v-if="canDeleteModelGroup" content="删除分组">
+            <el-tooltip content="删除分组">
               <AuthButton
                 class="delete-button"
                 type="danger"
@@ -28,6 +28,7 @@
                 circle
                 text
                 :capability="CMDB_CAPABILITIES.Model.GroupDelete"
+                disable-mode
                 @click.stop="emit('delete-group', group)"
               />
             </el-tooltip>

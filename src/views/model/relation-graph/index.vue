@@ -72,7 +72,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, nextTick } from "vue"
+import { ref, onMounted, nextTick, onBeforeUnmount } from "vue"
 import { ElMessage } from "element-plus"
 import { Download, FullScreen, Loading } from "@element-plus/icons-vue"
 import RelationGraph, { RGJsonData, RGNode, RGOptions, RelationGraphComponent } from "relation-graph-vue3"
@@ -286,26 +286,32 @@ const toggleFullscreen = async () => {
   }
 }
 
+// 全屏事件监听逻辑
+const handleFullscreenChange = () => {
+  isFullscreen.value = !!document.fullscreenElement
+
+  // 全屏或退出全屏时，Mac 和其他系统有较长的视窗形变动画过渡，必须等动画落位之后计算居中坐标才准确！
+  setTimeout(async () => {
+    // 触发一次 window resize 作为引擎重绘钩子兜底
+    window.dispatchEvent(new Event("resize"))
+
+    const graphInstance = graphRef.value?.getInstance()
+    if (graphInstance) {
+      // 重排图表在中心点并自适应新的画幅
+      await graphInstance.moveToCenter()
+      await graphInstance.zoomToFit()
+    }
+  }, 850) // 延时到 850 毫秒，足以绕过最慢的全屏渐变过场动画
+}
+
 // 监听全屏事件同步状态 (如用户按 Esc 退出)
 onMounted(() => {
   listModelGraphData()
+  document.addEventListener("fullscreenchange", handleFullscreenChange)
+})
 
-  document.addEventListener("fullscreenchange", () => {
-    isFullscreen.value = !!document.fullscreenElement
-
-    // 全屏或退出全屏时，Mac 和其他系统有较长的视窗形变动画过渡，必须等动画落位之后计算居中坐标才准确！
-    setTimeout(async () => {
-      // 触发一次 window resize 作为引擎重绘钩子兜底
-      window.dispatchEvent(new Event("resize"))
-
-      const graphInstance = graphRef.value?.getInstance()
-      if (graphInstance) {
-        // 重排图表在中心点并自适应新的画幅
-        await graphInstance.moveToCenter()
-        await graphInstance.zoomToFit()
-      }
-    }, 850) // 延时到 850 毫秒，足以绕过最慢的全屏渐变过场动画
-  })
+onBeforeUnmount(() => {
+  document.removeEventListener("fullscreenchange", handleFullscreenChange)
 })
 </script>
 

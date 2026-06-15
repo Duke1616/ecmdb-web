@@ -142,6 +142,7 @@ const formatEffect = (effect: string) => {
   justify-content: flex-end;
   margin-top: 24px;
   padding-bottom: 8px;
+  padding-right: 24px;
 }
 
 .action-identity {

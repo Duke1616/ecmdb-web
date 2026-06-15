@@ -341,7 +341,7 @@ const roleSubjects = computed<Subject[]>(() => {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 0 4px;
+  padding: 0 4px 24px;
 }
 
 /* 置顶状态条样式 */

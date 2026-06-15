@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T">
-import { computed, onBeforeUnmount, ref, useAttrs, useSlots } from "vue"
+import { computed, onBeforeUnmount, ref, useAttrs, useSlots, inject } from "vue"
 import { Search, CircleCheckFilled } from "@element-plus/icons-vue"
 
 interface Props {
@@ -19,6 +19,7 @@ interface Props {
   data: T[]
   emptyText?: string
   emptyImageSize?: number
+  borderless?: boolean
   // 选择相关
   showSelection?: boolean
   rowKey?: PropertyKey
@@ -42,6 +43,7 @@ const props = withDefaults(defineProps<Props>(), {
   hideColumnHeader: false,
   emptyText: "暂无符合条件的数据项",
   emptyImageSize: 100,
+  borderless: false,
   showSelection: false,
   rowKey: "id",
   disabled: false,
@@ -58,6 +60,10 @@ const emit = defineEmits<{
 }>()
 
 const attrs = useAttrs()
+
+// 从父容器中注入扁平化无边框主题标志，实现零侵入式无缝融合
+const isBorderlessInject = inject<boolean>("isBorderless", false)
+const computedBorderless = computed(() => props.borderless || isBorderlessInject)
 const slots = useSlots()
 const hasExtraFilters = computed(() => !!slots["extra-filters"])
 const hasHeaderActions = computed(() => !!slots["header-actions"])
@@ -179,7 +185,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="premium-shelf">
+  <div class="premium-shelf" :class="{ 'is-borderless': computedBorderless }">
     <!-- 头部治理区：参考授权治理风格 -->
     <div v-if="!hideHeader" class="shelf-header">
       <div v-show="selection.length === 0" class="header-main-bar">
@@ -639,7 +645,8 @@ onBeforeUnmount(() => {
   border-top: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  padding-right: 24px;
   background: #ffffff;
 }
 
@@ -682,5 +689,29 @@ onBeforeUnmount(() => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* 扁平化无边框主题样式自治 */
+.premium-shelf.is-borderless {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+
+  .shelf-header {
+    padding: 12px 0 20px 0 !important;
+    min-height: auto !important;
+    background: transparent !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .shelf-footer {
+    border-top: none !important;
+    background: transparent !important;
+    height: auto !important;
+    padding: 24px 0 0 0 !important;
+    justify-content: flex-end !important;
+  }
 }
 </style>

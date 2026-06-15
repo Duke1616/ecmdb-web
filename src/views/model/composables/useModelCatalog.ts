@@ -98,7 +98,7 @@ export const useModelCatalog = () => {
     if (!canViewModelDetail.value) return
 
     router.push({
-      path: "/cmdb/model/info",
+      name: "ModelDetail",
       query: { id: String(model.id) }
     })
   }

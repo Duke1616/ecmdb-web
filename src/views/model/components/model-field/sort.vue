@@ -1,105 +1,121 @@
 <template>
-  <!-- 主内容区域 -->
-  <div class="sort-interface">
-    <div class="sort-columns">
-      <div class="sort-column">
-        <div class="column-header">
-          <h4>隐藏字段</h4>
-          <span class="field-count">{{ leftList.length }} 个字段</span>
-        </div>
-        <div class="sort-card">
-          <VueDraggable
-            v-model="leftList"
-            dragClass="drag-item"
-            :animation="animationDuration"
-            group="cmdb"
-            ghostClass="ghost-item"
-            chosenClass="chosen-item"
-            @start="onStart"
-            @end="onEnd"
-            itemKey="id"
-            class="drag-container"
-          >
-            <div v-for="(item, index) in leftList" :key="item.id" class="field-item hidden-field">
-              <div class="field-content">
-                <div class="field-info">
-                  <span class="field-name">{{ item.name }}</span>
+  <!-- NOTE: 该组件为纯 UI 控制组件，Drawer 显隐状态需由父组件双向绑定统一管理 -->
+  <Drawer
+    v-model="visible"
+    title="自定义列展示"
+    subtitle="设置字段显示顺序"
+    size="35%"
+    direction="rtl"
+    header-icon="Setting"
+    :show-footer="true"
+    cancel-button-text="取消"
+    confirm-button-text="保存设置"
+    :confirm-loading="loading"
+    @cancel="visible = false"
+    @confirm="handleConfirm"
+    @closed="visible = false"
+  >
+    <div class="sort-interface">
+      <div class="sort-columns">
+        <div class="sort-column">
+          <div class="column-header">
+            <h4>隐藏字段</h4>
+            <span class="field-count">{{ leftList.length }} 个字段</span>
+          </div>
+          <div class="sort-card">
+            <VueDraggable
+              v-model="leftList"
+              dragClass="drag-item"
+              :animation="animationDuration"
+              group="cmdb"
+              ghostClass="ghost-item"
+              chosenClass="chosen-item"
+              itemKey="id"
+              class="drag-container"
+            >
+              <div v-for="(item, index) in leftList" :key="item.id" class="field-item hidden-field">
+                <div class="field-content">
+                  <div class="field-info">
+                    <span class="field-name">{{ item.name }}</span>
+                  </div>
+                  <el-button
+                    type="primary"
+                    text
+                    :icon="ArrowRight"
+                    @click="removeAndToRightList(index, item)"
+                    class="move-btn"
+                  />
                 </div>
-                <el-button
-                  type="primary"
-                  text
-                  :icon="ArrowRight"
-                  @click="removeAndToRightList(index, item)"
-                  class="move-btn"
-                />
               </div>
-            </div>
-          </VueDraggable>
+            </VueDraggable>
+          </div>
         </div>
-      </div>
 
-      <div class="sort-column">
-        <div class="column-header">
-          <h4>显示字段</h4>
-          <span class="field-count">{{ rightList.length }} 个字段</span>
-        </div>
-        <div class="sort-card">
-          <VueDraggable
-            v-model="rightList"
-            dragClass="drag-item"
-            :animation="animationDuration"
-            group="cmdb"
-            ghostClass="ghost-item"
-            chosenClass="chosen-item"
-            handle=".drag-handle"
-            @start="onStart"
-            @end="onEnd"
-            itemKey="id"
-            class="drag-container"
-          >
-            <div v-for="(item, index) in rightList" :key="item.id" class="field-item visible-field">
-              <div class="field-content">
-                <div class="field-info">
-                  <el-icon class="drag-handle">
-                    <Grid />
-                  </el-icon>
-                  <span class="field-name">{{ item.name }}</span>
+        <div class="sort-column">
+          <div class="column-header">
+            <h4>显示字段</h4>
+            <span class="field-count">{{ rightList.length }} 个字段</span>
+          </div>
+          <div class="sort-card">
+            <VueDraggable
+              v-model="rightList"
+              dragClass="drag-item"
+              :animation="animationDuration"
+              group="cmdb"
+              ghostClass="ghost-item"
+              chosenClass="chosen-item"
+              handle=".drag-handle"
+              itemKey="id"
+              class="drag-container"
+            >
+              <div v-for="(item, index) in rightList" :key="item.id" class="field-item visible-field">
+                <div class="field-content">
+                  <div class="field-info">
+                    <el-icon class="drag-handle">
+                      <Grid />
+                    </el-icon>
+                    <span class="field-name">{{ item.name }}</span>
+                  </div>
+                  <el-button
+                    type="danger"
+                    text
+                    :icon="Close"
+                    @click="removeAndToLeftList(index, item)"
+                    class="remove-btn"
+                  />
                 </div>
-                <el-button
-                  type="danger"
-                  text
-                  :icon="Close"
-                  @click="removeAndToLeftList(index, item)"
-                  class="remove-btn"
-                />
               </div>
-            </div>
-          </VueDraggable>
+            </VueDraggable>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+  </Drawer>
 </template>
 
 <script lang="ts" setup>
+import { ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
+import { Drawer } from "@@/components/Dialogs"
 import { CustomAttributeFieldColumnsApi } from "@/api/attribute"
 import { type CustomField, type CustomAttributeFieldColumnsReq, AttributeGroup } from "@/api/attribute/types/attribute"
-import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { ArrowRight, Close, Grid } from "@element-plus/icons-vue"
 
-// eslint-disable react-hooks/rules-of-hooks
-
-// 接收父组建传递
+// 接收父组件传递
 interface Props {
   modelUid: string
   attributesData: AttributeGroup[]
 }
 
 const props = defineProps<Props>()
+const emits = defineEmits<{
+  success: []
+}>()
 
-const emits = defineEmits(["close", "getAttributesData"])
+// NOTE: 该组件为纯 UI 控制组件，Drawer 显隐状态需由父组件双向绑定统一管理
+const visible = defineModel<boolean>({ default: false })
+const loading = ref(false)
 
 const animationDuration = ref<number>(150)
 
@@ -135,12 +151,21 @@ const handlerCustomAttributeFieldColumns = () => {
   return CustomAttributeFieldColumnsApi(req)
     .then(() => {
       ElMessage.success("操作成功")
-      emits("getAttributesData")
+      emits("success")
       return true
     })
     .catch(() => {
       return false
     })
+}
+
+const handleConfirm = async () => {
+  loading.value = true
+  const success = await handlerCustomAttributeFieldColumns()
+  loading.value = false
+  if (success) {
+    visible.value = false
+  }
 }
 
 function removeAndToLeftList(index: number, item: any) {
@@ -153,19 +178,14 @@ function removeAndToRightList(index: number, item: any) {
   rightList.value.push(item)
 }
 
-const drag = ref(false)
-const onStart = () => {
-  drag.value = true
-}
-
-const onEnd = () => {
-  drag.value = false
-}
-
-defineExpose({
-  handleSortFilter,
-  handlerCustomAttributeFieldColumns
-})
+watch(
+  () => visible.value,
+  (newVal) => {
+    if (newVal) {
+      handleSortFilter()
+    }
+  }
+)
 </script>
 
 <style lang="scss" scoped>
