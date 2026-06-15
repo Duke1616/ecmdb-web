@@ -463,9 +463,7 @@ const handleMfaSuccess = (businessData: any) => {
   .bento-card {
     position: relative;
     overflow: hidden;
-    background:
-      linear-gradient(135deg, rgba(var(--card-accent-rgb, 16, 185, 129), 0.05), transparent 44%),
-      #ffffff;
+    background: linear-gradient(135deg, rgba(var(--card-accent-rgb, 16, 185, 129), 0.05), transparent 44%), #ffffff;
     border: 1px solid #e8eef5;
     border-radius: 16px;
     padding: var(--login-bento-padding);

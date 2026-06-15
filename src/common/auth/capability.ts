@@ -201,5 +201,23 @@ export const IAM_CAPABILITIES = {
   }
 } as const
 
+export const CMDB_CAPABILITIES = {
+  /** 模型管理相关 */
+  Model: {
+    /** 查看模型列表 */
+    View: "cmdb:model:view",
+    /** 查看模型详情 */
+    Detail: "cmdb:model:get",
+    /** 新增模型 */
+    Create: "cmdb:model:add",
+    /** 删除模型 */
+    Delete: "cmdb:model:delete",
+    /** 新增模型分组 */
+    GroupCreate: "cmdb:model_group:add",
+    /** 删除模型分组 */
+    GroupDelete: "cmdb:model_group:delete"
+  }
+} as const
+
 /** 权限常量类型定义 */
 export type AuthType = typeof IAM_CAPABILITIES
