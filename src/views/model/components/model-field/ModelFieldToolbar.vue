@@ -1,12 +1,12 @@
 <template>
   <div class="field-toolbar">
-    <el-input v-model="keyword" placeholder="搜索字段..." :suffix-icon="Search" class="field-search" clearable />
+    <el-input v-model="keyword" placeholder="搜索属性..." :suffix-icon="Search" class="field-search" clearable />
 
     <div class="toolbar-actions">
       <AuthButton
         type="primary"
         :icon="CirclePlus"
-        :capability="CMDB_CAPABILITIES.Model.Create"
+        :capability="CMDB_CAPABILITIES.Attribute.GroupAdd"
         disable-mode
         @click="emit('create-group')"
       >
@@ -16,7 +16,7 @@
         :type="dragMode ? 'warning' : 'default'"
         :icon="dragMode ? CircleCheck : Rank"
         plain
-        :capability="CMDB_CAPABILITIES.Model.Create"
+        :capability="CMDB_CAPABILITIES.Attribute.Sort"
         disable-mode
         @click="toggleDragMode"
       >
@@ -25,7 +25,14 @@
       <el-button :icon="expanded ? Expand : ArrowUp" @click="emit('toggle-expand')">
         {{ expanded ? "全部收起" : "全部展开" }}
       </el-button>
-      <el-button :icon="Setting" @click="emit('custom-columns')">自定义列展示</el-button>
+      <AuthButton
+        :icon="Setting"
+        :capability="CMDB_CAPABILITIES.Attribute.ViewCustomFields"
+        disable-mode
+        @click="emit('custom-columns')"
+      >
+        自定义列展示
+      </AuthButton>
     </div>
   </div>
 </template>

@@ -11,7 +11,6 @@
           :builtin="isBuiltin"
           :exporting="exporting"
           @export="handleExportTemplate"
-          @disable="handleDisableModel"
           @delete="handleDeleteModel"
         />
       </template>
@@ -37,21 +36,12 @@ import ModelRelation from "./components/model-relation/index.vue"
 import { useModelDetail } from "./composables/useModelDetail"
 
 const tabs = [
-  { name: "model-field", label: "模型字段" },
+  { name: "model-field", label: "模型属性" },
   { name: "model-relation", label: "模型关联" }
 ]
 
-const {
-  activeTab,
-  modelUid,
-  modelName,
-  isBuiltin,
-  exporting,
-  goBack,
-  handleExportTemplate,
-  handleDisableModel,
-  handleDeleteModel
-} = useModelDetail()
+const { activeTab, modelUid, modelName, isBuiltin, exporting, goBack, handleExportTemplate, handleDeleteModel } =
+  useModelDetail()
 </script>
 
 <style lang="scss" scoped>

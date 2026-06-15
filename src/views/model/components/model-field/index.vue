@@ -38,7 +38,6 @@
           @sort-attribute="handleSortAttribute"
           @edit-field="handleUpdateAttr"
           @delete-field="handleDelete"
-          @field-detail="handleViewAttr"
         />
       </VueDraggable>
     </div>
@@ -147,13 +146,6 @@ const handleUpdateAttr = (group_id: number, row: Attribute) => {
   attrFieldVisible.value = true
 }
 
-const handleViewAttr = (row: Attribute) => {
-  groupId.value = undefined
-  activeAttribute.value = row
-  isReadonly.value = true
-  attrFieldVisible.value = true
-}
-
 //** 属性表格展示排序 */
 const sortFieldVisibe = ref<boolean>(false)
 
@@ -196,15 +188,15 @@ const filterData = computed(() => {
 
 const handleDelete = (row: Attribute) => {
   if (row.builtin) {
-    ElMessage.warning("内置字段不可删除")
+    ElMessage.warning("内置属性不可删除")
     return
   }
-  ElMessageBox.confirm(`正在删除字段: ${row.field_name} 确认删除？`, "删除确认", {
+  ElMessageBox.confirm(`正在删除属性: ${row.field_name} 确认删除？`, "删除确认", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
     dangerouslyUseHTMLString: true,
-    message: `<p>正在删除字段: <span style="color: red">${row.field_name}</span> 确认删除？</p>`
+    message: `<p>正在删除属性: <span style="color: red">${row.field_name}</span> 确认删除？</p>`
   }).then(() => {
     DeleteAttributeApi(row.id).then(() => {
       ElMessage.success("删除成功")
@@ -233,7 +225,6 @@ const handleSortAttribute = (evt: any) => {
       // getAttributesData()
     })
     .catch(() => {
-      ElMessage.error("排序更新失败")
       getAttributesData() // 失败时刷新以恢复原状
     })
 }
@@ -263,7 +254,6 @@ const handleSortGroup = (evt: any) => {
       ElMessage.success("分组排序更新成功")
     })
     .catch(() => {
-      ElMessage.error("分组排序更新失败")
       getAttributesData()
     })
 }
@@ -283,7 +273,7 @@ const {
   updateApi: renameAttributeGroupApi,
   deleteApi: deleteAttributeGroupApi,
   refreshData: getAttributesData,
-  checkDeleteable: (item) => (item.attributes && item.attributes.length > 0 ? "分组下存在字段，无法删除" : true),
+  checkDeleteable: (item) => (item.attributes && item.attributes.length > 0 ? "分组下存在属性，无法删除" : true),
   confirmDeleteText: (item) => `确认删除分组 "${item.group_name}" 吗？`
 })
 
@@ -319,7 +309,7 @@ const toggleAllGroups = () => {
 </script>
 
 <style lang="scss" scoped>
-/* 字段管理样式 */
+/* 属性管理样式 */
 .field-management {
   height: 100%;
   display: flex;

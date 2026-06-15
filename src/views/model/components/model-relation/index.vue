@@ -11,7 +11,7 @@
           type="primary"
           class="toolbar-btn"
           :icon="CirclePlus"
-          :capability="CMDB_CAPABILITIES.Model.Create"
+          :capability="CMDB_CAPABILITIES.Model.RelationAdd"
           disable-mode
           @click="openCreateDrawer"
         >

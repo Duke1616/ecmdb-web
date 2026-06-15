@@ -69,7 +69,7 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
   const formData = ref<createOrUpdateAttributeReq>(createDefaultFormData())
   const fieldRules: FormRules = {
     field_uid: [
-      { required: true, message: "必须输入字段唯一标识", trigger: "blur" },
+      { required: true, message: "必须输入属性唯一标识", trigger: "blur" },
       {
         type: "string",
         pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/,
@@ -77,7 +77,7 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
         trigger: "blur"
       }
     ],
-    field_name: [{ required: true, message: "必须输入字段名称", trigger: "blur" }]
+    field_name: [{ required: true, message: "必须输入属性名称", trigger: "blur" }]
   }
 
   const currentFieldType = computed(() => formData.value.field_type as FieldType)
@@ -116,8 +116,8 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
 
   const confirmSecureFieldChange = () =>
     ElMessageBox.confirm(
-      "检测到您修改了字段的加密属性，这会影响该字段在资源管理中的显示和存储方式。\n\n请确认是否继续保存？",
-      "字段加密属性修改提醒",
+      "检测到您修改了属性的加密设置，这会影响该属性在资源管理中的显示和存储方式。\n\n请确认是否继续保存？",
+      "属性加密设置修改提醒",
       {
         confirmButtonText: "确认保存",
         cancelButtonText: "取消",
@@ -154,7 +154,7 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
       emitRefresh()
       return true
     } catch (error) {
-      console.error("保存字段失败:", error)
+      console.error("保存属性失败:", error)
       return false
     }
   }

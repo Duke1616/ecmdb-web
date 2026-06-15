@@ -206,16 +206,158 @@ export const CMDB_CAPABILITIES = {
   Model: {
     /** 查看模型列表 */
     View: "cmdb:model:view",
-    /** 查看模型详情 */
+    /** 模型详情 */
     Detail: "cmdb:model:get",
-    /** 新增模型 */
+    /** 新增模型 (兼容旧有引用) */
     Create: "cmdb:model:add",
+    /** 创建模型 */
+    Add: "cmdb:model:add",
     /** 删除模型 */
     Delete: "cmdb:model:delete",
-    /** 新增模型分组 */
-    GroupCreate: "cmdb:model_group:add",
-    /** 删除模型分组 */
-    GroupDelete: "cmdb:model_group:delete"
+    /** 模型关联列表 */
+    RelationView: "cmdb:model:relation_view",
+    /** 模型拓扑图 */
+    RelationGraph: "cmdb:model:relation_graph",
+    /** 更新模型关联关系 */
+    RelationEdit: "cmdb:model:relation_edit",
+    /** 删除模型关联关系 */
+    RelationDelete: "cmdb:model:relation_delete",
+    /** 创建模型关联关系 */
+    RelationAdd: "cmdb:model:relation_add",
+    /** 分组列表 */
+    GroupView: "cmdb:model:group_view",
+    /** 创建分组 */
+    GroupAdd: "cmdb:model:group_add",
+    /** 新增分组 (兼容旧有引用) */
+    GroupCreate: "cmdb:model:group_add",
+    /** 删除分组 */
+    GroupDelete: "cmdb:model:group_delete",
+    /** 重命名分组 */
+    GroupRename: "cmdb:model:group_rename"
+  },
+
+  /** 属性管理相关 */
+  Attribute: {
+    /** 属性列表 */
+    View: "cmdb:attribute:view",
+    /** 创建属性 */
+    Add: "cmdb:attribute:add",
+    /** 更新属性 */
+    Edit: "cmdb:attribute:edit",
+    /** 删除属性 */
+    Delete: "cmdb:attribute:delete",
+    /** 自定义列展示 */
+    ViewCustomFields: "cmdb:attribute:view_custom_fields",
+    /** 属性字段 */
+    ViewFields: "cmdb:attribute:view_fields",
+    /** 分组列表 */
+    GroupList: "cmdb:attribute:group_list",
+    /** 创建分组 */
+    GroupAdd: "cmdb:attribute:group_add",
+    /** 删除分组 */
+    GroupDelete: "cmdb:attribute:group_delete",
+    /** 重命名分组 */
+    GroupRename: "cmdb:attribute:group_rename",
+    /** 属性排序 */
+    Sort: "cmdb:attribute:sort",
+    /** 分组排序 */
+    GroupSort: "cmdb:attribute:group_sort"
+  },
+
+  /** 资产仓库相关 */
+  Resource: {
+    /** 资产列表 */
+    View: "cmdb:resource:view",
+    /** 资产详情 */
+    Detail: "cmdb:resource:get",
+    /** 创建资产 */
+    Add: "cmdb:resource:add",
+    /** 修改资产 */
+    Edit: "cmdb:resource:edit",
+    /** 删除资产 */
+    Delete: "cmdb:resource:delete",
+    /** 全文检索资产 */
+    Search: "cmdb:resource:search",
+    /** 资产关联拓扑图 */
+    ViewRelationGraph: "cmdb:resource:view_relation_graph",
+    /** 查询加密字段 */
+    GetSecure: "cmdb:resource:get_secure",
+    /** 所有资产关系聚合查询 */
+    RelationPipelineAll: "cmdb:resource:relation_pipeline_all",
+    /** 创建资产关系 */
+    RelationAdd: "cmdb:resource:relation_add",
+    /** 删除资产关系 */
+    RelationDelete: "cmdb:resource:relation_delete",
+    /** 设置自定义属性 */
+    EditCustomField: "cmdb:resource:edit_custom_field"
+  },
+
+  /** 关联关系管理 */
+  Relation: {
+    /** 关联类型列表 */
+    View: "cmdb:relation:view",
+    /** 创建关联类型 */
+    Add: "cmdb:relation:add",
+    /** 更新关联类型 */
+    Edit: "cmdb:relation:edit",
+    /** 删除关联类型 */
+    Delete: "cmdb:relation:delete"
+  },
+
+  /** 在线终端相关 */
+  Terminal: {
+    /** 终端会话 */
+    SSHSession: "cmdb:terminal:ssh_session",
+    /** 终端连接验证 */
+    Connect: "cmdb:terminal:connect",
+    /** 远程连接 */
+    GuacTunnel: "cmdb:terminal:guac_tunnel",
+    /** 查看文件 */
+    SFTPFiles: "cmdb:terminal:sftp_files",
+    /** 创建文件 */
+    SFTPNewFile: "cmdb:terminal:sftp_new_file",
+    /** 创建目录 */
+    SFTPNewFolder: "cmdb:terminal:sftp_new_folder",
+    /** 移动文件 */
+    SFTPMove: "cmdb:terminal:sftp_move",
+    /** 重命名文件 */
+    SFTPRename: "cmdb:terminal:sftp_rename",
+    /** 保存文件内容 */
+    SFTPSave: "cmdb:terminal:sftp_save",
+    /** 预览文件 */
+    SFTPPreview: "cmdb:terminal:sftp_preview",
+    /** 搜索文件 */
+    SFTPSearch: "cmdb:terminal:sftp_search",
+    /** 下载文件 */
+    SFTPDownload: "cmdb:terminal:sftp_download",
+    /** 上传文件 */
+    SFTPUploadWS: "cmdb:terminal:sftp_upload_ws",
+    /** 删除文件 */
+    SFTPDelete: "cmdb:terminal:sftp_delete",
+    /** 压缩文件 */
+    SFTPArchive: "cmdb:terminal:sftp_archive",
+    /** 解压文件 */
+    SFTPUnarchive: "cmdb:terminal:sftp_unarchive"
+  },
+
+  /** 文件与对象存储工具 */
+  Tools: {
+    /** 文件下载 */
+    Download: "cmdb:tools:download",
+    /** 文件上传 */
+    Upload: "cmdb:tools:upload",
+    /** 删除对象 */
+    Remove: "cmdb:tools:remove"
+  },
+
+  /** 导入导出数据 IO */
+  DataIO: {
+    /** 数据导入 */
+    Import: "cmdb:dataio:import",
+    /** 数据导出 */
+    Export: "cmdb:dataio:export",
+    /** 模板导出 */
+    ExportTemplate: "cmdb:dataio:export_template"
   }
 } as const
 

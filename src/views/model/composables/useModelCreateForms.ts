@@ -98,7 +98,6 @@ export const useModelCreateForms = (refreshCatalog: () => Promise<void> | void) 
       await refreshCatalog()
     } catch (error) {
       console.error("创建分组失败:", error)
-      ElMessage.error("创建分组失败")
     }
   }
 
@@ -116,7 +115,6 @@ export const useModelCreateForms = (refreshCatalog: () => Promise<void> | void) 
       await refreshCatalog()
     } catch (error) {
       console.error("创建模型失败:", error)
-      ElMessage.error("创建模型失败")
     }
   }
 

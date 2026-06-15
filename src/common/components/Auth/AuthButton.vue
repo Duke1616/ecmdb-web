@@ -46,13 +46,15 @@ const externalDisabled = computed(() => attrs.disabled === true || attrs.disable
 const mergedDisabled = computed(() => isDisabled.value || externalDisabled.value)
 
 const buttonAttrs = computed(() => {
-  const { disabled, ...rest } = attrs
+  const { disabled: _disabled, ...rest } = attrs
   return rest
 })
 </script>
 
 <template>
   <el-button v-if="isRendered" v-bind="buttonAttrs" :disabled="mergedDisabled">
-    <slot />
+    <template v-if="$slots.default">
+      <slot />
+    </template>
   </el-button>
 </template>

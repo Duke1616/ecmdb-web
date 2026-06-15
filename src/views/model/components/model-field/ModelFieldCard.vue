@@ -1,33 +1,31 @@
 <template>
-  <div class="field-item" :data-id="field.id" @click="emit('detail', field)">
+  <div class="field-item" :data-id="field.id">
     <div class="field-content">
       <div class="field-header-info">
         <h4 class="field-name">{{ field.field_name }}</h4>
 
         <div class="field-actions">
           <AuthButton
-            type="primary"
             link
-            :icon="Edit"
-            size="small"
             class="action-btn edit-btn"
             title="编辑"
-            :capability="CMDB_CAPABILITIES.Model.Create"
+            :capability="CMDB_CAPABILITIES.Attribute.Edit"
             disable-mode
             @click.stop="emit('edit', field)"
-          />
+          >
+            <el-icon><Edit /></el-icon>
+          </AuthButton>
           <AuthButton
-            type="danger"
             link
-            :icon="Delete"
-            size="small"
             class="action-btn delete-btn"
-            :capability="CMDB_CAPABILITIES.Model.Delete"
+            :capability="CMDB_CAPABILITIES.Attribute.Delete"
             :disabled="field.builtin"
             disable-mode
-            :title="field.builtin ? '内置字段不可删除' : '删除'"
+            :title="field.builtin ? '内置属性不可删除' : '删除'"
             @click.stop="emit('delete', field)"
-          />
+          >
+            <el-icon><Delete /></el-icon>
+          </AuthButton>
         </div>
       </div>
 
@@ -51,7 +49,6 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
-  detail: [field: Attribute]
   edit: [field: Attribute]
   delete: [field: Attribute]
 }>()
@@ -66,7 +63,7 @@ const emit = defineEmits<{
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: default;
   transition: all 0.2s ease;
 
   &:hover {
@@ -118,55 +115,85 @@ const emit = defineEmits<{
 }
 
 .action-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0;
-  font-size: 12px;
-  border: none;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  height: 22px !important;
+  padding: 0 !important;
+  border: none !important;
   border-radius: 4px;
-  cursor: pointer;
   transition: all 0.2s ease;
-
-  &:disabled {
-    color: #f87171;
-    cursor: not-allowed;
-    background: #fde4e4;
-    opacity: 0.5;
-    transform: none !important;
-  }
+  box-sizing: border-box !important;
+  cursor: pointer !important;
 
   :deep(.el-icon) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    margin: 0;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 12px !important;
+    height: 12px !important;
+    transition: color 0.2s ease;
+
+    svg {
+      width: 12px !important;
+      height: 12px !important;
+    }
   }
 
   &.edit-btn {
-    color: #1d4ed8;
-    background: #dbeafe;
+    background-color: #dbeafe !important; // 默认浅蓝底
 
-    &:hover {
-      color: #ffffff;
-      background: #1d4ed8;
-      transform: scale(1.1);
+    :deep(.el-icon) {
+      color: #1d4ed8 !important; // 默认蓝字
+    }
+
+    &:hover:not(:disabled),
+    &:focus:not(:disabled),
+    &:active:not(:disabled) {
+      background-color: #1d4ed8 !important; // hover 变深蓝底
+      transform: scale(1.1) !important;
+      box-shadow: 0 2px 6px rgba(29, 78, 216, 0.3) !important;
+
+      :deep(.el-icon) {
+        color: #ffffff !important; // hover 图标变白
+      }
     }
   }
 
   &.delete-btn {
-    color: #dc2626;
-    background: #fee2e2;
+    background-color: #fee2e2 !important; // 默认浅红底
 
-    &:hover {
-      color: #ffffff;
-      background: #dc2626;
-      transform: scale(1.1);
+    :deep(.el-icon) {
+      color: #dc2626 !important; // 默认红字
+    }
+
+    &:hover:not(:disabled),
+    &:focus:not(:disabled),
+    &:active:not(:disabled) {
+      background-color: #dc2626 !important; // hover 变深红底
+      transform: scale(1.1) !important;
+      box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3) !important;
+
+      :deep(.el-icon) {
+        color: #ffffff !important; // hover 图标变白
+      }
+    }
+  }
+
+  &:disabled,
+  &.is-disabled {
+    background-color: #fde4e4 !important;
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    pointer-events: none !important;
+
+    :deep(.el-icon) {
+      color: #f87171 !important;
     }
   }
 }

@@ -3,7 +3,7 @@
   <Drawer
     v-model="visible"
     title="自定义列展示"
-    subtitle="设置字段显示顺序"
+    subtitle="设置属性显示顺序"
     size="35%"
     direction="rtl"
     header-icon="Setting"
@@ -19,8 +19,8 @@
       <div class="sort-columns">
         <div class="sort-column">
           <div class="column-header">
-            <h4>隐藏字段</h4>
-            <span class="field-count">{{ leftList.length }} 个字段</span>
+            <h4>隐藏属性</h4>
+            <span class="field-count">{{ leftList.length }} 个属性</span>
           </div>
           <div class="sort-card">
             <VueDraggable
@@ -53,8 +53,8 @@
 
         <div class="sort-column">
           <div class="column-header">
-            <h4>显示字段</h4>
-            <span class="field-count">{{ rightList.length }} 个字段</span>
+            <h4>显示属性</h4>
+            <span class="field-count">{{ rightList.length }} 个属性</span>
           </div>
           <div class="sort-card">
             <VueDraggable

@@ -5,6 +5,7 @@
       title="关联类型管理"
       subtitle="管理模型间的关联关系类型"
       add-button-text="新增关联类型"
+      :add-button-disabled="!hasPermission(CMDB_CAPABILITIES.Relation.Add)"
       @add="handlerCreate"
       @refresh="listRelationTypesData"
     />
@@ -79,8 +80,11 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import { usePermission } from "@/common/composables/usePermission"
+import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const { hasPermission } = usePermission()
 
 // 当前编辑的ID
 const currentId = ref<number>()
@@ -97,8 +101,8 @@ const tableColumns: Column[] = [
 
 // 操作按钮配置（暂时只支持查看，因为后端API不支持更新和删除）
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: Edit },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "修改", code: "edit", type: "primary", icon: Edit, capability: CMDB_CAPABILITIES.Relation.Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete, capability: CMDB_CAPABILITIES.Relation.Delete }
 ]
 
 // 选中的行

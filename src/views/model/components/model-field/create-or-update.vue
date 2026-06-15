@@ -2,8 +2,8 @@
   <!-- NOTE: 该组件为纯 UI 控制组件，Drawer 显隐状态需由父组件双向绑定统一管理 -->
   <Drawer
     v-model="visible"
-    :title="readonly ? '查看字段' : activeAttribute ? '编辑字段' : '新增字段'"
-    subtitle="添加或编辑模型字段"
+    :title="readonly ? '查看属性' : activeAttribute ? '编辑属性' : '新增属性'"
+    subtitle="添加或编辑模型属性"
     size="35%"
     direction="rtl"
     header-icon="Edit"
@@ -36,7 +36,7 @@
               <el-input
                 v-model="formData.field_uid"
                 :disabled="formData.id !== undefined"
-                placeholder="请输入字段唯一标识"
+                placeholder="请输入属性唯一标识"
                 size="large"
                 clearable
               />
@@ -45,13 +45,13 @@
           </div>
 
           <div class="form-row">
-            <el-form-item label="字段名称" prop="field_name" class="form-item">
-              <el-input v-model="formData.field_name" placeholder="请输入字段显示名称" size="large" clearable />
+            <el-form-item label="属性名称" prop="field_name" class="form-item">
+              <el-input v-model="formData.field_name" placeholder="请输入属性显示名称" size="large" clearable />
             </el-form-item>
           </div>
 
           <div class="form-row">
-            <el-form-item label="字段类型" prop="field_type" class="form-item">
+            <el-form-item label="属性类型" prop="field_type" class="form-item">
               <div class="field-type-selector">
                 <div
                   v-for="item in fieldTypeOptions"
@@ -121,7 +121,7 @@
         <div class="form-section">
           <div class="section-title">
             <el-icon class="section-icon"><Setting /></el-icon>
-            <span>字段设置</span>
+            <span>属性设置</span>
           </div>
           <div class="form-row">
             <div class="settings-grid">

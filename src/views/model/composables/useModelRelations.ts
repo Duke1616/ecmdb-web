@@ -26,8 +26,8 @@ export const useModelRelations = (modelUid: string) => {
   ]
 
   const operateBtnItems = [
-    { name: "修改", code: "edit", type: "primary", icon: Edit, capability: CMDB_CAPABILITIES.Model.Create },
-    { name: "删除", code: "delete", type: "danger", icon: Delete, capability: CMDB_CAPABILITIES.Model.Delete }
+    { name: "修改", code: "edit", type: "primary", icon: Edit, capability: CMDB_CAPABILITIES.Model.RelationEdit },
+    { name: "删除", code: "delete", type: "danger", icon: Delete, capability: CMDB_CAPABILITIES.Model.RelationDelete }
   ]
 
   const modelNameMap = computed(() => {
