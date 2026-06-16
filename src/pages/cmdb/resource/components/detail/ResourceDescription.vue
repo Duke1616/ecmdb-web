@@ -1,5 +1,5 @@
 <template>
-  <div class="resource-desc-container">
+  <div class="resource-desc-container" :class="{ 'is-plain': plain }">
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-container">
       <el-skeleton :rows="8" animated />
@@ -112,9 +112,12 @@ import { useResourceDescription } from "../../composables/detail/useResourceDesc
 interface Props {
   modelUid: string
   resourceId: string
+  plain?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  plain: false
+})
 const {
   attributeGroups,
   loading,
@@ -140,6 +143,21 @@ const {
   background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
+
+  &.is-plain {
+    display: block;
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+
+    .content-container {
+      padding: 0;
+      overflow: visible;
+    }
+  }
 }
 
 .loading-container {

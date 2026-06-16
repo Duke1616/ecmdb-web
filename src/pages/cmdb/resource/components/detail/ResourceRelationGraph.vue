@@ -3,7 +3,7 @@
     <div v-loading="loading" class="graph-stage">
       <RelationGraph ref="graphRef" :options="graphOptions" @node-expand="onNodeExpand" @node-collapse="onNodeCollapse">
         <template #node="{ node }">
-          <div class="graph-node" @dblclick.stop="openNodeDetail(node)">
+          <div class="graph-node" @dblclick.stop="openNodeDetailDrawer(node)">
             <div class="graph-node-icon" :style="{ backgroundImage: node.data?.icon ? `url(${node.data.icon})` : 'none' }">
               <span v-if="!node.data?.icon">{{ getNodeInitial(node) }}</span>
             </div>
@@ -16,7 +16,7 @@
               </div>
             </div>
             <el-tooltip v-if="canViewResourceDetail" content="查看资源详情" placement="top">
-              <button class="graph-node-link" type="button" @click.stop="openNodeDetail(node)">
+              <button class="graph-node-link" type="button" @click.stop="openNodeDetailDrawer(node)">
                 <el-icon><View /></el-icon>
               </button>
             </el-tooltip>
@@ -24,6 +24,26 @@
         </template>
       </RelationGraph>
     </div>
+
+    <Drawer
+      v-model="detailDrawerVisible"
+      class="resource-detail-drawer"
+      :title="selectedDetailNode?.resourceName || '资源详情'"
+      :subtitle="selectedDetailNode?.modelName || ''"
+      :header-icon="View"
+      size="42%"
+      direction="rtl"
+      :show-footer="false"
+      @closed="clearNodeDetailDrawer"
+    >
+      <ResourceDescription
+        v-if="selectedDetailNode"
+        :key="`${selectedDetailNode.modelUid}-${selectedDetailNode.resourceId}`"
+        :model-uid="selectedDetailNode.modelUid"
+        :resource-id="selectedDetailNode.resourceId"
+        plain
+      />
+    </Drawer>
   </div>
 </template>
 
@@ -31,6 +51,8 @@
 import { View } from "@element-plus/icons-vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGNode, RGOptions } from "relation-graph-vue3"
+import { Drawer } from "@/common/components/Dialogs"
+import ResourceDescription from "./ResourceDescription.vue"
 import { useResourceRelationGraph } from "../../composables/detail/useResourceRelationGraph"
 
 interface Props {
@@ -76,8 +98,17 @@ const graphOptions: RGOptions = {
   disableNodeClickEffect: true
 }
 
-const { canViewResourceDetail, graphRef, loading, onNodeCollapse, onNodeExpand, openNodeDetail } =
-  useResourceRelationGraph(props)
+const {
+  canViewResourceDetail,
+  detailDrawerVisible,
+  graphRef,
+  loading,
+  selectedDetailNode,
+  clearNodeDetailDrawer,
+  onNodeCollapse,
+  onNodeExpand,
+  openNodeDetailDrawer
+} = useResourceRelationGraph(props)
 
 const getNodeModelName = (node: RGNode) => {
   return node.data?.model_name || node.data?.model_uid || "未知模型"
@@ -289,5 +320,14 @@ const getNodeInitial = (node: RGNode) => {
   margin-top: 0;
   margin-right: -18px;
   margin-left: 100%;
+}
+
+:deep(.resource-detail-drawer .drawer-content) {
+  box-sizing: border-box;
+  padding: 20px 24px 24px;
+}
+
+:deep(.resource-detail-drawer .resource-desc-container) {
+  border: 0;
 }
 </style>
