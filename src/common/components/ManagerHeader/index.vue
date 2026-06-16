@@ -82,17 +82,17 @@ defineEmits<{
 /* 头部区域 */
 .manager-header {
   background: white;
-  border-radius: calc(0.6rem + 0.1vw);
+  border-radius: 8px;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  padding: calc(0.9rem + 0.3vw) calc(1.1rem + 0.4vw);
+  padding: clamp(16px, 1.4vw, 22px) clamp(18px, 1.6vw, 24px);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
-  min-height: calc(3.2rem + 0.5vw);
-  margin-bottom: calc(0.9rem + 0.2vw);
+  min-height: 84px;
+  margin-bottom: clamp(14px, 1.1vw, 20px);
   border: 1px solid #e2e8f0;
   transition: all 0.3s ease;
 
@@ -121,21 +121,21 @@ defineEmits<{
 .header-left {
   display: flex;
   flex-direction: column;
-  gap: calc(0.2rem + 0.05vw);
+  gap: 4px;
 
   .title-section {
     display: flex;
     align-items: center;
-    gap: calc(0.6rem + 0.2vw);
+    gap: 12px;
 
     .back-button {
       display: flex;
       align-items: center;
       justify-content: center;
-      width: calc(1.6rem + 0.3vw);
-      height: calc(1.6rem + 0.3vw);
+      width: 32px;
+      height: 32px;
       border: 1px solid #d1d5db;
-      border-radius: calc(0.3rem + 0.05vw);
+      border-radius: 6px;
       background: white;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -151,7 +151,7 @@ defineEmits<{
       }
 
       .back-icon {
-        font-size: calc(0.8rem + 0.1vw);
+        font-size: 16px;
         font-weight: 600;
         color: #374151;
         line-height: 1;
@@ -161,21 +161,21 @@ defineEmits<{
     .title-content {
       display: flex;
       flex-direction: column;
-      gap: calc(0.2rem + 0.05vw);
+      gap: 4px;
     }
   }
 
   .details-section {
-    margin-top: calc(0.6rem + 0.1vw);
+    margin-top: 10px;
   }
 
   .extra-section {
-    margin-top: calc(0.4rem + 0.1vw);
+    margin-top: 8px;
   }
 }
 
 .manager-title {
-  font-size: calc(1rem + 0.3vw);
+  font-size: 22px;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
@@ -183,7 +183,7 @@ defineEmits<{
 }
 
 .manager-subtitle {
-  font-size: calc(0.7rem + 0.15vw);
+  font-size: 14px;
   color: #6b7280;
   margin: 0;
   line-height: 1.4;
@@ -192,20 +192,20 @@ defineEmits<{
 .header-right {
   display: flex;
   align-items: center;
-  gap: calc(0.6rem + 0.2vw);
+  gap: 14px;
 }
 
 /* 全局按钮样式 - 使用 :deep() 确保覆盖所有子元素 */
 :deep(.action-btn) {
-  height: calc(1.8rem + 0.3vw);
-  padding: 0 calc(0.8rem + 0.2vw);
-  font-size: calc(0.7rem + 0.15vw);
+  height: 36px;
+  padding: 0 14px;
+  font-size: 14px;
   font-weight: 500;
-  border-radius: calc(0.4rem + 0.05vw);
+  border-radius: 7px;
   transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
-  gap: calc(0.3rem + 0.05vw);
+  gap: 6px;
 
   &:hover {
     transform: translateY(-1px);
@@ -224,8 +224,8 @@ defineEmits<{
 }
 
 :deep(.refresh-btn) {
-  width: calc(1.8rem + 0.3vw);
-  height: calc(1.8rem + 0.3vw);
+  width: 36px;
+  height: 36px;
   transition: all 0.3s ease;
 
   &:hover {

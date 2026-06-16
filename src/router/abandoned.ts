@@ -170,7 +170,7 @@
 //       },
 //       {
 //         path: "info",
-//         component: () => import("@/pages/cmdb/resource/info/info.vue"),
+//         component: () => import("@/pages/cmdb/resource/detail.vue"),
 //         name: "resource-warehouse-info",
 //         meta: {
 //           hidden: true,

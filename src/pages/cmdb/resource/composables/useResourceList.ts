@@ -244,7 +244,7 @@ export const useResourceList = () => {
     if (!hasPermission(CMDB_CAPABILITIES.Resource.Detail)) return
 
     router.push({
-      path: "/cmdb/resource/info",
+      name: "AssetDetail",
       query: { model_uid: modelUid.value, id: resource.id, name: resource.name }
     })
   }

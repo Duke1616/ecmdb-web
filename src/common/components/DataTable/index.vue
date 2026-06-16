@@ -70,6 +70,7 @@
                     :type="action.type || 'primary'"
                     :plain="action.plain !== false"
                     :size="action.size || 'small'"
+                    :loading="action.loading && action.loading(scope.row)"
                     :disabled="action.disabled && action.disabled(scope.row)"
                     @click="handleAction(action.key, scope.row, scope.$index)"
                     class="action-btn"

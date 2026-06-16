@@ -359,13 +359,13 @@ const listAttributeFields = async (modelUid: string) => {
 
 const handlerDetailClick = (row: any) => {
   console.log("搜索页面准备跳转到详情页面:", {
-    path: "/cmdb/resource/info",
+    name: "AssetDetail",
     query: { model_uid: row.model_uid, name: row.name, id: row.id }
   })
 
   router
     .push({
-      path: "/cmdb/resource/info",
+      name: "AssetDetail",
       query: { model_uid: row.model_uid, name: row.name, id: row.id }
     })
     .then(() => {

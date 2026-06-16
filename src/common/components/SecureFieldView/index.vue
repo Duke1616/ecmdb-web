@@ -1,5 +1,5 @@
 <template>
-  <div class="secure-field-view">
+  <div class="secure-field-view" :class="{ 'is-compact': compact }">
     <!-- 查看按钮 -->
     <el-button
       v-if="!isDisplaying && !copyOnly"
@@ -30,8 +30,17 @@
       </el-button>
     </div>
 
+    <div v-if="isDisplaying && compact" class="secure-compact-content">
+      <span v-if="enableAutoClose" class="compact-countdown">{{ countdown }}s</span>
+      <el-tooltip content="复制内容">
+        <button class="compact-icon-button" type="button" @click="handleCopyClick">
+          <el-icon><CopyDocument /></el-icon>
+        </button>
+      </el-tooltip>
+    </div>
+
     <!-- 显示内容模式 -->
-    <div v-if="isDisplaying && showContent" class="secure-content" :class="{ 'is-inline': inlineContent }">
+    <div v-if="isDisplaying && showContent && !compact" class="secure-content" :class="{ 'is-inline': inlineContent }">
       <div class="secure-text">{{ content }}</div>
       <div class="secure-actions">
         <span class="auto-close-tip">{{ countdown }}秒后自动关闭</span>
@@ -47,7 +56,7 @@
     </div>
 
     <!-- 不显示内容但显示复制按钮模式 -->
-    <div v-if="isDisplaying && !showContent" class="secure-actions-only">
+    <div v-if="isDisplaying && !showContent && !compact" class="secure-actions-only">
       <span class="auto-close-tip">{{ countdown }}秒后自动关闭</span>
       <el-button
         type="primary"
@@ -84,6 +93,8 @@ interface Props {
   copyOnly?: boolean
   /** 内容是否内嵌展示，默认false */
   inlineContent?: boolean
+  /** 紧凑展示模式，适合详情卡片内联操作 */
+  compact?: boolean
 }
 
 interface Emits {
@@ -102,7 +113,8 @@ const props = withDefaults(defineProps<Props>(), {
   enableAutoClose: true,
   showContent: true,
   copyOnly: false,
-  inlineContent: false
+  inlineContent: false,
+  compact: false
 })
 
 const emits = defineEmits<Emits>()
@@ -231,6 +243,25 @@ onUnmounted(() => {
   min-width: 0;
   position: relative;
 
+  &.is-compact {
+    .secure-button {
+      height: 28px;
+      padding: 0 10px;
+      border-color: #cfd8e6;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 600;
+
+      &:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: #2563eb;
+      }
+    }
+  }
+
   .secure-button {
     border-color: #dbe3ef;
     color: #475569;
@@ -249,6 +280,54 @@ onUnmounted(() => {
       background-color: #f8fbff;
       border-color: #9bbcf8;
       color: #2563eb;
+    }
+  }
+
+  .secure-compact-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .compact-countdown {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .compact-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid #dbe3ef;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #64748b;
+    cursor: pointer;
+    transition:
+      border-color 0.18s ease,
+      color 0.18s ease,
+      background-color 0.18s ease;
+
+    &:hover {
+      background: #f8fbff;
+      border-color: #9bbcf8;
+      color: #2563eb;
+    }
+
+    .el-icon {
+      font-size: 14px;
     }
   }
 

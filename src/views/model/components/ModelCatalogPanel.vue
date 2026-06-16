@@ -129,6 +129,11 @@ const handleImageError = (event: Event) => {
 
 <style lang="scss" scoped>
 .model-catalog-panel {
+  --catalog-sidebar-width: clamp(292px, 18vw, 320px);
+  --catalog-card-min-width: clamp(230px, 17vw, 270px);
+  --catalog-panel-gap: clamp(12px, 1vw, 18px);
+  --catalog-panel-pad: clamp(14px, 1.1vw, 18px);
+
   display: flex;
   flex: 1;
   width: 100%;
@@ -144,8 +149,8 @@ const handleImageError = (event: Event) => {
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
-  width: 292px;
-  min-width: 292px;
+  width: var(--catalog-sidebar-width);
+  min-width: var(--catalog-sidebar-width);
   overflow: hidden;
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
@@ -336,11 +341,11 @@ const handleImageError = (event: Event) => {
 .model-grid {
   display: grid;
   flex: 1;
-  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--catalog-card-min-width), 1fr));
   align-content: start;
-  gap: 14px;
+  gap: var(--catalog-panel-gap);
   min-height: 0;
-  padding: 18px;
+  padding: var(--catalog-panel-pad);
   overflow-y: auto;
 }
 
@@ -463,17 +468,6 @@ const handleImageError = (event: Event) => {
   height: 22px;
   border-radius: 999px;
   font-weight: 700;
-}
-
-@media (min-width: 1440px) {
-  .sidebar {
-    width: 320px;
-    min-width: 320px;
-  }
-
-  .model-grid {
-    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
-  }
 }
 
 @media (max-width: 768px) {

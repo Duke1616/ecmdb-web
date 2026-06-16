@@ -154,13 +154,13 @@ onMounted(() => {
 
 :deep(.manager-header) {
   align-items: center;
-  gap: 24px;
-  padding: 22px 24px;
+  gap: clamp(16px, 1.4vw, 24px);
+  padding: clamp(16px, 1.4vw, 22px) clamp(18px, 1.6vw, 24px);
 }
 
 :deep(.header-left) {
   flex: 0 0 auto;
-  min-width: 330px;
+  min-width: clamp(260px, 22vw, 330px);
 }
 
 :deep(.header-right) {
@@ -171,7 +171,7 @@ onMounted(() => {
 :deep(.eiam-governance-bar) {
   width: 100%;
   justify-content: flex-end;
-  gap: 20px;
+  gap: clamp(12px, 1.2vw, 20px);
 }
 
 :deep(.action-group) {
