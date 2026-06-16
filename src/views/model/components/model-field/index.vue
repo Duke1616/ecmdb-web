@@ -31,6 +31,9 @@
           :group="group"
           :drag-mode="isDragMode"
           :disabled="!!searchInput || !isDragMode"
+          :fields="group.attributes || []"
+          :expanded="group.expanded"
+          :field-count="group.attributes?.length || 0"
           @toggle="toggleGroup"
           @add-field="handleAddAttr"
           @command="handleGroupCommand"
@@ -88,7 +91,7 @@ import {
   SortAttributeApi,
   SortAttributeGroupApi
 } from "@/api/attribute"
-import { type AttributeGroup, type Attribute } from "@/api/attribute/types/attribute"
+import { type Attribute } from "@/api/attribute/types/attribute"
 import { useCrudAttributeGroup } from "../../composables/useCrudAttributeGroup"
 import { type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
@@ -97,6 +100,7 @@ import sortField from "./sort.vue"
 import ModelAttributeGroupCard from "./ModelAttributeGroupCard.vue"
 import ModelFieldToolbar from "./ModelFieldToolbar.vue"
 import { VueDraggable } from "vue-draggable-plus"
+import { createAttributeSchema, type AttributeGroupView } from "@/common/utils/attribute"
 
 defineOptions({ name: "ModelField" })
 
@@ -112,14 +116,11 @@ const handleSortDrawer = () => {
 }
 
 //** 获取字段信息 */
-const AttributesData = ref<AttributeGroup[]>([])
+const AttributesData = ref<AttributeGroupView[]>([])
 const getAttributesData = () => {
   getModelAttributesWithGroupsApi(modelUid)
     .then(({ data }) => {
-      AttributesData.value = (data.attribute_groups || []).map((group) => ({
-        ...group,
-        attributes: group.attributes || []
-      }))
+      AttributesData.value = createAttributeSchema(data).groups
     })
     .catch(() => {
       AttributesData.value = []
@@ -150,7 +151,7 @@ const handleUpdateAttr = (group_id: number, row: Attribute) => {
 const sortFieldVisibe = ref<boolean>(false)
 
 //** 组展开 */
-const toggleGroup = (group: AttributeGroup) => {
+const toggleGroup = (group: AttributeGroupView) => {
   group.expanded = !group.expanded
 }
 
@@ -166,7 +167,7 @@ const filterData = computed(() => {
   }
 
   const query = searchInput.value.trim().toLowerCase()
-  const foundAttrs: AttributeGroup[] = []
+  const foundAttrs: AttributeGroupView[] = []
 
   AttributesData.value.forEach((group) => {
     if (Array.isArray(group.attributes)) {
@@ -268,7 +269,7 @@ const {
   openEditDialog: handleRenameGroup,
   handleDelete: handleDeleteGroup,
   handleSubmit: handlerAddAttributeGroup
-} = useCrudAttributeGroup<AttributeGroup>({
+} = useCrudAttributeGroup<AttributeGroupView>({
   createApi: (data) => createAttributeGroupApi({ ...data, model_uid: modelUid }),
   updateApi: renameAttributeGroupApi,
   deleteApi: deleteAttributeGroupApi,
@@ -281,7 +282,7 @@ const attrGroupRules: FormRules = {
   group_name: [{ required: true, message: "必须输入分组名称", trigger: "blur" }]
 }
 
-const handleGroupCommand = (command: string, group: AttributeGroup) => {
+const handleGroupCommand = (command: string, group: AttributeGroupView) => {
   if (command === "rename") {
     handleRenameGroup(group)
   } else if (command === "delete") {

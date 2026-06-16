@@ -26,7 +26,7 @@
         class="copy-only-button"
         title="点击复制安全内容到剪贴板"
       >
-        {{ isCopying ? "获取中..." : "复制内容" }}
+        {{ isCopying ? "复制中..." : "复制" }}
       </el-button>
     </div>
 
@@ -109,6 +109,47 @@ const internalContent = ref("")
 const isCopying = ref(false)
 let timer: NodeJS.Timeout | null = null
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const getContentToCopy = () => internalContent.value || props.content || ""
+
+const waitForContent = async (timeout = 1200) => {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeout) {
+    const content = getContentToCopy()
+    if (content) return content
+    await sleep(50)
+  }
+
+  return getContentToCopy()
+}
+
+const copyText = async (content: string) => {
+  try {
+    await navigator.clipboard.writeText(content)
+    ElMessage.success("复制成功")
+    emits("copy", content)
+  } catch (error) {
+    try {
+      const textArea = document.createElement("textarea")
+      textArea.value = content
+      textArea.setAttribute("readonly", "readonly")
+      textArea.style.position = "fixed"
+      textArea.style.left = "-9999px"
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand("copy")
+      document.body.removeChild(textArea)
+      ElMessage.success("复制成功")
+      emits("copy", content)
+    } catch (fallbackError) {
+      ElMessage.error("复制失败")
+      console.error("Copy failed:", fallbackError)
+    }
+  }
+}
+
 // 监听 content 变化，更新内部内容
 watch(
   () => props.content,
@@ -148,69 +189,26 @@ const startCountdown = () => {
 }
 
 const handleCopyClick = async () => {
-  // 如果是 copy-only 模式，直接触发 view-click 获取数据并复制
-  if (props.copyOnly) {
-    emits("view-click")
-    // 等待一下让父组件处理数据获取
-    await new Promise((resolve) => setTimeout(resolve, 200))
+  if (isCopying.value) return
 
-    const contentToCopy = internalContent.value || props.content
+  isCopying.value = true
+
+  try {
+    if (props.copyOnly) {
+      emits("view-click")
+      await sleep(60)
+    }
+
+    const contentToCopy = props.copyOnly ? await waitForContent() : getContentToCopy()
 
     if (!contentToCopy) {
       ElMessage.error("没有可复制的内容")
       return
     }
 
-    try {
-      await navigator.clipboard.writeText(contentToCopy)
-      ElMessage.success("复制成功")
-      emits("copy", contentToCopy)
-    } catch (error) {
-      // 降级处理
-      try {
-        const textArea = document.createElement("textarea")
-        textArea.value = contentToCopy
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand("copy")
-        document.body.removeChild(textArea)
-        ElMessage.success("复制成功")
-        emits("copy", contentToCopy)
-      } catch (fallbackError) {
-        ElMessage.error("复制失败")
-        console.error("Copy failed:", fallbackError)
-      }
-    }
-    return
-  }
-
-  // 非 copy-only 模式的正常复制逻辑
-  const contentToCopy = internalContent.value || props.content
-
-  if (!contentToCopy) {
-    ElMessage.error("没有可复制的内容")
-    return
-  }
-
-  try {
-    await navigator.clipboard.writeText(contentToCopy)
-    ElMessage.success("复制成功")
-    emits("copy", contentToCopy)
-  } catch (error) {
-    // 降级处理
-    try {
-      const textArea = document.createElement("textarea")
-      textArea.value = contentToCopy
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand("copy")
-      document.body.removeChild(textArea)
-      ElMessage.success("复制成功")
-      emits("copy", contentToCopy)
-    } catch (fallbackError) {
-      ElMessage.error("复制失败")
-      console.error("Copy failed:", fallbackError)
-    }
+    await copyText(contentToCopy)
+  } finally {
+    isCopying.value = false
   }
 }
 
@@ -231,22 +229,23 @@ onUnmounted(() => {
   position: relative;
 
   .secure-button {
-    border-color: #409eff;
-    color: #409eff;
+    border-color: #dbe3ef;
+    color: #475569;
     font-size: 11px;
-    padding: 3px 6px;
-    height: 22px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    font-weight: 600;
+    padding: 0 8px;
+    height: 26px;
+    border-radius: 6px;
+    transition: all 0.18s ease;
     white-space: nowrap;
     min-width: 0;
     flex-shrink: 0;
+    background: #ffffff;
 
     &:hover {
-      background-color: #409eff;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(64, 158, 255, 0.3);
+      background-color: #f8fbff;
+      border-color: #9bbcf8;
+      color: #2563eb;
     }
   }
 
@@ -259,27 +258,39 @@ onUnmounted(() => {
   }
 
   .copy-only-button {
-    border-color: #67c23a;
-    color: #67c23a;
-    font-size: 11px;
-    padding: 3px 6px;
-    height: 22px;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+    min-width: 64px;
+    height: 28px;
+    padding: 0 9px;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
     white-space: nowrap;
-    min-width: 0;
     flex-shrink: 0;
+    background: #ffffff;
+    border-color: #dbe3ef;
+    border-radius: 6px;
+    transition: all 0.18s ease;
+
+    :deep(.el-icon) {
+      color: #64748b;
+      font-size: 14px;
+    }
 
     &:hover:not(:disabled) {
-      background-color: #67c23a;
-      color: white;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 4px rgba(103, 194, 58, 0.3);
+      color: #2563eb;
+      background-color: #f8fbff;
+      border-color: #9bbcf8;
+
+      :deep(.el-icon) {
+        color: #2563eb;
+      }
     }
 
     &:disabled {
-      opacity: 0.7;
+      color: #94a3b8;
       cursor: not-allowed;
+      background-color: #f8fafc;
+      border-color: #e2e8f0;
     }
   }
 

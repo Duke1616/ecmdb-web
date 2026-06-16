@@ -30,10 +30,10 @@ export interface CreateAttributeGroupReq {
 export interface AttributeGroup {
   group_name: string
   group_id: number
-  expanded: boolean
   index: number
-  total: number
-  attributes: Attribute[]
+  model_uid: string
+  sort_key: number
+  field_uids?: string[]
 }
 
 export interface Attribute {
@@ -49,6 +49,7 @@ export interface Attribute {
   secure: boolean
   link: boolean
   option: any
+  sort_key?: number
   builtin?: boolean
 }
 
@@ -58,7 +59,12 @@ export type listAttributeFieldData = {
 }
 
 export type listAttributesResponseData = {
-  attribute_groups: AttributeGroup[]
+  model: {
+    model_uid: string
+    name: string
+  }
+  groups: AttributeGroup[]
+  fields: Attribute[]
 }
 
 export interface DeleteAttributeGroupReq {

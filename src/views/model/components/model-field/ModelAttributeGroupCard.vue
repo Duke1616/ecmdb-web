@@ -2,11 +2,11 @@
   <div class="group-card">
     <div class="group-header" @click="emit('toggle', group)">
       <div class="group-info">
-        <el-icon class="toggle-icon" :class="{ expanded: group.expanded }">
+        <el-icon class="toggle-icon" :class="{ expanded }">
           <ArrowRight />
         </el-icon>
         <h3 class="group-title">{{ group.group_name }}</h3>
-        <el-tag size="small" type="info">{{ group.attributes?.length || 0 }}</el-tag>
+        <el-tag size="small" type="info">{{ fieldCount }}</el-tag>
       </div>
 
       <div v-if="!dragMode" class="group-actions">
@@ -38,8 +38,8 @@
       </div>
     </div>
 
-    <div v-if="group.expanded" class="fields-container">
-      <div v-if="(!group.attributes || group.attributes.length === 0) && !dragMode" class="empty-placeholder-wrapper">
+    <div v-if="expanded" class="fields-container">
+      <div v-if="fieldCount === 0 && !dragMode" class="empty-placeholder-wrapper">
         <AuthButton
           class="empty-placeholder-card"
           :capability="CMDB_CAPABILITIES.Attribute.Add"
@@ -53,9 +53,9 @@
 
       <VueDraggable
         v-else
-        :model-value="group.attributes || []"
+        :model-value="fields"
         class="fields-grid"
-        :class="{ 'is-empty': !group.attributes?.length }"
+        :class="{ 'is-empty': !fields.length }"
         :group="{ name: 'attributes', pull: true, put: true }"
         ghost-class="ghost"
         fallback-class="sortable-drag"
@@ -74,7 +74,7 @@
         @end="emit('sort-attribute', $event)"
       >
         <ModelFieldCard
-          v-for="item in group.attributes"
+          v-for="item in fields"
           :key="item.id"
           :field="item"
           @edit="emit('edit-field', group.group_id, item)"
@@ -100,24 +100,28 @@
 <script setup lang="ts">
 import { ArrowRight, Delete, Edit, Plus, Rank } from "@element-plus/icons-vue"
 import { VueDraggable } from "vue-draggable-plus"
-import type { Attribute, AttributeGroup } from "@/api/attribute/types/attribute"
+import type { Attribute } from "@/api/attribute/types/attribute"
+import type { AttributeGroupView } from "@/common/utils/attribute"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { usePermission } from "@/common/composables/usePermission"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import ModelFieldCard from "./ModelFieldCard.vue"
 
 defineProps<{
-  group: AttributeGroup
+  group: AttributeGroupView
   dragMode: boolean
   disabled: boolean
+  fields: Attribute[]
+  expanded: boolean
+  fieldCount: number
 }>()
 
 const { hasPermission } = usePermission()
 
 const emit = defineEmits<{
-  toggle: [group: AttributeGroup]
+  toggle: [group: AttributeGroupView]
   "add-field": [groupId: number]
-  command: [command: string, group: AttributeGroup]
+  command: [command: string, group: AttributeGroupView]
   "update-attributes": [groupId: number, attributes: Attribute[]]
   "sort-attribute": [event: any]
   "edit-field": [groupId: number, field: Attribute]

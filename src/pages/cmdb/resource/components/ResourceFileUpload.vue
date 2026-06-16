@@ -38,7 +38,7 @@ import {
   ElMessageBox
 } from "element-plus"
 import { h } from "vue"
-import { useFileUpload } from "../../composables/useFileUpload"
+import { useResourceFileUpload } from "../composables/useResourceFileUpload"
 
 interface Props {
   modelValue: UploadUserFile[]
@@ -66,7 +66,7 @@ const emits = defineEmits<{
 const fileList = ref<UploadUserFile[]>(props.modelValue || [])
 
 // 使用文件上传 composables
-const { uploadFileToMinio, deleteFileFromMinio, updateCustomFieldData, removeFileFromList } = useFileUpload()
+const { uploadFileToMinio, deleteFileFromMinio, updateCustomFieldData, removeFileFromList } = useResourceFileUpload()
 
 // 监听外部值变化
 watch(
@@ -147,12 +147,10 @@ const handleProgress = (event: UploadProgressEvent, file: UploadUserFile) => {
   file.percentage = event.percent
 }
 
-const handlePreview: UploadProps["onPreview"] = (uploadFile) => {
-  console.log("Preview file:", uploadFile)
-}
+const handlePreview: UploadProps["onPreview"] = () => undefined
 
-const handleExceed: UploadProps["onExceed"] = (files) => {
-  ElMessage.warning(`限制最多上传 ${files.length} 个文件`)
+const handleExceed: UploadProps["onExceed"] = () => {
+  ElMessage.warning(`限制最多上传 ${props.limit} 个文件`)
 }
 
 const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
@@ -186,10 +184,10 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
     :deep(.el-upload-dragger) {
       width: 100%;
       height: 120px;
-      border: 2px dashed #d1d5db;
+      border: 1px dashed #cbd5e1;
       border-radius: 8px;
-      background: #fafafa;
-      transition: all 0.3s ease;
+      background: #ffffff;
+      transition: all 0.2s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -198,7 +196,7 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
 
       &:hover {
         border-color: #3b82f6;
-        background: #f0f9ff;
+        background: #eff6ff;
       }
     }
 
@@ -212,7 +210,7 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
 
       .upload-icon {
         font-size: 32px;
-        color: #9ca3af;
+        color: #94a3b8;
         margin-bottom: 12px;
         transition: color 0.3s ease;
       }
@@ -244,11 +242,9 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
       margin-top: 8px;
       padding: 8px 12px;
       background: #fff;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 
       &:hover {
         border-color: #3b82f6;
-        box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
       }
     }
 
@@ -259,7 +255,7 @@ const beforeRemove: UploadProps["beforeRemove"] = (uploadFile) => {
     }
 
     :deep(.el-upload-list__item-status-label) {
-      color: #10b981;
+      color: #3b82f6;
       font-size: 12px;
     }
 

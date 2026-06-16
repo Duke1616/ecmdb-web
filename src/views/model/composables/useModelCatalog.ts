@@ -2,7 +2,8 @@ import { computed, h, ref } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { deleteModelGroupApi } from "@/api/model"
-import type { Model, Models } from "@/api/model/types/model"
+import type { Model } from "@/api/model/types/model"
+import type { ModelGroupView } from "@/common/utils/model"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import { useModelStore } from "@/pinia/stores/model"
@@ -15,7 +16,7 @@ export const useModelCatalog = () => {
 
   const searchInput = ref("")
   const modelStatus = ref<ModelFilterStatus>("all")
-  const modelsData = ref<Models[]>([])
+  const modelsData = ref<ModelGroupView[]>([])
   const selectedGroupId = ref<number | null>(null)
 
   const empty = computed(() => modelsData.value.length === 0)
@@ -53,8 +54,8 @@ export const useModelCatalog = () => {
 
   const getModelsData = async () => {
     try {
-      const { data } = await modelStore.ListModelsByGroup()
-      modelsData.value = data.mgs || []
+      const { groups } = await modelStore.ListModelsByGroup()
+      modelsData.value = groups
       selectedGroupId.value = selectedGroup.value?.group_id ?? null
     } catch (error) {
       console.error("获取模型数据失败:", error)
@@ -63,7 +64,7 @@ export const useModelCatalog = () => {
     }
   }
 
-  const handleDeleteModelGroup = async (item: Models) => {
+  const handleDeleteModelGroup = async (item: ModelGroupView) => {
     if (!canDeleteModelGroup.value) return
 
     try {

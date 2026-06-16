@@ -139,18 +139,19 @@
 <script lang="ts" setup>
 import { ref, computed } from "vue"
 import { Setting, View, Hide } from "@element-plus/icons-vue"
-import FileUpload from "./components/FileUpload/index.vue"
+import FileUpload from "./ResourceFileUpload.vue"
 import { createResourceApi, updateResourceApi } from "@/api/resource"
 import { Resource, type CreateOrUpdateResourceReq } from "@/api/resource/types/resource"
 import { cloneDeep } from "lodash-es"
 import { type FormInstance, type FormRules, ElMessage, UploadUserFile } from "element-plus"
-import { Attribute } from "@/api/attribute/types/attribute"
+import { type Attribute } from "@/api/attribute/types/attribute"
+import type { AttributeGroupView } from "@/common/utils/attribute"
 
 // 接收父组建传递
 interface Props {
   modelUid: string
   attributeFiledsData: Attribute[]
-  attributeGroupsData: any[] // 分组数据
+  attributeGroupsData: AttributeGroupView[]
 }
 
 const props = defineProps<Props>()
@@ -221,8 +222,8 @@ const handleSecureTextareaInput = (fieldUid: string, value: string) => {
 }
 
 // 文件上传事件处理
-const handleUploadSuccess = (file: UploadUserFile, fieldUid: string) => {
-  console.log("Upload success:", file, fieldUid)
+const handleUploadSuccess = (_file: UploadUserFile, _fieldUid: string) => {
+  ElMessage.success("文件上传成功")
 }
 
 const handleUploadError = (error: any, fieldUid: string) => {
@@ -230,8 +231,8 @@ const handleUploadError = (error: any, fieldUid: string) => {
   ElMessage.error("上传失败")
 }
 
-const handleRemoveSuccess = (file: UploadUserFile, fieldUid: string) => {
-  console.log("Remove success:", file, fieldUid)
+const handleRemoveSuccess = (_file: UploadUserFile, _fieldUid: string) => {
+  ElMessage.success("文件删除成功")
 }
 
 const handleRemoveError = (error: any, fieldUid: string) => {

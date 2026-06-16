@@ -1,7 +1,7 @@
 <template>
   <div class="manager-content">
     <div class="content-card">
-      <div class="data-table-container">
+      <div class="data-table-container" v-loading="loading">
         <div class="table-wrapper">
           <el-table
             ref="tableRef"
@@ -92,7 +92,8 @@
 
             <!-- 空状态自定义插槽，统一系统品牌调性 -->
             <template #empty>
-              <slot name="empty">
+              <div v-if="loading" class="table-loading-empty" />
+              <slot v-else name="empty">
                 <el-empty :image-size="120" description="暂无数据" />
               </slot>
             </template>
@@ -133,6 +134,7 @@ interface Props {
   actionColumnWidth?: string | number
   actionColumnFixed?: "left" | "right"
   tableProps?: Record<string, any>
+  loading?: boolean
 
   // 分页相关
   showPagination?: boolean
@@ -156,6 +158,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableRowDrag: false,
   actionColumnFixed: "right",
   tableProps: () => ({}),
+  loading: false,
   showPagination: false,
   selectable: () => true
 })
@@ -428,6 +431,10 @@ defineExpose({
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.table-loading-empty {
+  min-height: 220px;
 }
 
 .data-table {

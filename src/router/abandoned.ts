@@ -92,20 +92,44 @@
 //           platforms: ["cmdb"]
 //         }
 //       },
+//     ]
+//   },
+//   {
+//     path: "/cmdb/relation-graph",
+//     component: Layouts,
+//     redirect: "/cmdb/relation-graph/index",
+//     meta: {
+//       title: "关联关系",
+//       svgIcon: "relation-graph",
+//       platforms: ["cmdb"]
+//     },
+//     children: [
 //       {
-//         path: "relation",
-//         component: () => import("@/views/model/relation-graph/index.vue"),
-//         name: "model-relation",
+//         path: "index",
+//         component: () => import("@/pages/cmdb/relation-graph/index.vue"),
+//         name: "cmdb-relation-graph",
 //         meta: {
 //           title: "关联关系",
 //           svgIcon: "relation-graph",
 //           platforms: ["cmdb"]
 //         }
-//       },
+//       }
+//     ]
+//   },
+//   {
+//     path: "/cmdb/relation-type",
+//     component: Layouts,
+//     redirect: "/cmdb/relation-type/index",
+//     meta: {
+//       title: "关联类型",
+//       svgIcon: "relation-type",
+//       platforms: ["cmdb"]
+//     },
+//     children: [
 //       {
-//         path: "relation-type",
-//         component: () => import("@/views/model/relation-type/index.vue"),
-//         name: "model-type",
+//         path: "index",
+//         component: () => import("@/pages/cmdb/relation-type/index.vue"),
+//         name: "cmdb-relation-type",
 //         meta: {
 //           title: "关联类型",
 //           svgIcon: "relation-type",
@@ -126,7 +150,7 @@
 //     children: [
 //       {
 //         path: "index",
-//         component: () => import("@/views/resource/warehouse/index.vue"),
+//         component: () => import("@/pages/cmdb/resource/index.vue"),
 //         name: "resource-warehouse",
 //         meta: {
 //           title: "资产仓库",
@@ -136,22 +160,22 @@
 //       },
 //       {
 //         path: "list",
-//         component: () => import("@/views/resource/warehouse/list/list.vue"),
+//         component: () => import("@/pages/cmdb/resource/list.vue"),
 //         name: "resource-warehouse-list",
 //         meta: {
 //           hidden: true,
 //           title: "资产列表",
-//           platforms: ["task"]
+//           platforms: ["cmdb"]
 //         }
 //       },
 //       {
 //         path: "info",
-//         component: () => import("@/views/resource/warehouse/info/info.vue"),
+//         component: () => import("@/pages/cmdb/resource/info/info.vue"),
 //         name: "resource-warehouse-info",
 //         meta: {
 //           hidden: true,
 //           title: "资产详情",
-//           platforms: ["task"]
+//           platforms: ["cmdb"]
 //         }
 //       }
 //     ]

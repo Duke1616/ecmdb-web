@@ -98,14 +98,15 @@ import { ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
 import { Drawer } from "@@/components/Dialogs"
 import { CustomAttributeFieldColumnsApi } from "@/api/attribute"
-import { type CustomField, type CustomAttributeFieldColumnsReq, AttributeGroup } from "@/api/attribute/types/attribute"
+import { type CustomField, type CustomAttributeFieldColumnsReq } from "@/api/attribute/types/attribute"
+import type { AttributeGroupView } from "@/common/utils/attribute"
 import { ElMessage } from "element-plus"
 import { ArrowRight, Close, Grid } from "@element-plus/icons-vue"
 
 // 接收父组件传递
 interface Props {
   modelUid: string
-  attributesData: AttributeGroup[]
+  attributesData: AttributeGroupView[]
 }
 
 const props = defineProps<Props>()
@@ -124,20 +125,15 @@ const leftList = ref<CustomField[]>([])
 const rightList = ref<CustomField[]>([])
 
 const handleSortFilter = () => {
-  const attributesData = props.attributesData
-  if (!attributesData || !Array.isArray(attributesData)) {
-    return
-  }
-
   rightList.value = []
   leftList.value = []
 
-  attributesData.forEach((item) => {
-    item.attributes.forEach((attr) => {
+  props.attributesData
+    .flatMap((group) => group.attributes)
+    .forEach((attr) => {
       const list = attr.display ? rightList : leftList
       list.value.push({ name: attr.field_name, id: attr.id, index: attr.index || 0 })
     })
-  })
 
   rightList.value.sort((a, b) => a.index - b.index)
 }

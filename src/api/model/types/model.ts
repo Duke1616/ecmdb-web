@@ -1,17 +1,18 @@
 export interface listModelsReq {}
 
-export interface Models {
+export interface ModelGroup {
   group_id: number
   group_name: string
-  models: Model[]
+  model_uids: string[]
 }
 
 export interface Model {
   id: number
+  group_id: number
   name: string
   uid: string
-  total: number
   icon: string
+  resource_count: number
   builtin?: boolean
 }
 
@@ -28,7 +29,8 @@ export interface CreateModelGroupReq {
 
 export type listModelsResponseData = {
   total: number
-  mgs: Models[]
+  groups: ModelGroup[]
+  models: Model[]
 }
 
 export type retrieveModelsListResp = {

@@ -22,7 +22,7 @@ export function CreateModelGroupApi(data: Model.CreateModelGroupReq) {
 /** 获取模型列表，按照分组 */
 export function ListModelsByGroupApi() {
   return instance.post<Model.listModelsResponseData>({
-    url: `${API_SERVICE.CMDB}/model/by_group`
+    url: `${API_SERVICE.CMDB}/model/list`
   })
 }
 

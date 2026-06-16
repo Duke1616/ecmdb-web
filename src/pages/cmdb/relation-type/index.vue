@@ -1,27 +1,21 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="关联类型管理"
-      subtitle="管理模型间的关联关系类型"
-      add-button-text="新增关联类型"
-      :add-button-disabled="!hasPermission(CMDB_CAPABILITIES.Relation.Add)"
-      @add="handlerCreate"
-      @refresh="listRelationTypesData"
-    />
-
+  <ProGovernanceLayout
+    title="关联类型管理"
+    subtitle="管理模型间的关联关系类型"
+    :primary-action="{ capability: CMDB_CAPABILITIES.Relation.Add, label: '新增关联类型' }"
+    @refresh="listRelationTypesData"
+    @primary-action="handlerCreate"
+  >
     <!-- 主内容区域 -->
     <DataTable
       :data="relationTypesData"
       :columns="tableColumns"
-      :show-selection="true"
       :show-pagination="true"
       :total="paginationData.total"
       :page-size="paginationData.pageSize"
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      @selection-change="handleSelectionChange"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
@@ -39,6 +33,7 @@
       :confirm-text="isEdit ? '保存' : '确认'"
       @confirm="handleCreateOrUpdate"
       @cancel="onClosed"
+      @closed="resetForm"
     >
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px" label-position="top">
         <el-form-item prop="uid" label="唯一标识">
@@ -55,7 +50,7 @@
         </el-form-item>
       </el-form>
     </FormDialog>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script lang="ts" setup>
@@ -75,21 +70,17 @@ import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "elem
 import { Edit, Delete } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { cloneDeep } from "lodash-es"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
-import { usePermission } from "@/common/composables/usePermission"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
+import type { Column } from "@@/components/DataTable/types"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const { hasPermission } = usePermission()
 
 // 当前编辑的ID
 const currentId = ref<number>()
-
-import type { Column } from "@@/components/DataTable/types"
 
 // 表格列配置
 const tableColumns: Column[] = [
@@ -99,14 +90,10 @@ const tableColumns: Column[] = [
   { prop: "target_describe", label: "目标->源描述", align: "center" }
 ]
 
-// 操作按钮配置（暂时只支持查看，因为后端API不支持更新和删除）
 const operateBtnItems = [
   { name: "修改", code: "edit", type: "primary", icon: Edit, capability: CMDB_CAPABILITIES.Relation.Edit },
   { name: "删除", code: "delete", type: "danger", icon: Delete, capability: CMDB_CAPABILITIES.Relation.Delete }
 ]
-
-// 选中的行
-const selectedRows = ref<ListRelationTypeData[]>([])
 
 // 编辑状态
 const isEdit = ref<boolean>(false)
@@ -137,11 +124,6 @@ const handleOperateEvent = (row: ListRelationTypeData, action: string) => {
   } else if (action === "delete") {
     handleDelete(row)
   }
-}
-
-// 选择变化事件
-const handleSelectionChange = (selection: ListRelationTypeData[]) => {
-  selectedRows.value = selection
 }
 
 // 新增操作

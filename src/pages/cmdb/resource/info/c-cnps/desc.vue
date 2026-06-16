@@ -128,6 +128,7 @@ import { getModelAttributesWithGroupsApi } from "@/api/attribute"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { detailResourceApi, findSecureData } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
+import { createAttributeSchema, type AttributeGroupView } from "@/common/utils/attribute"
 
 import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
 import { useFileDownload } from "@/common/composables/useFileDownload"
@@ -139,7 +140,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const attributeFiledsData = ref<Attribute[]>([])
-const attributeGroupsData = ref<any[]>([])
+const attributeGroupsData = ref<AttributeGroupView[]>([])
 const resourceData = ref<Resource>()
 const loading = ref(false)
 
@@ -162,17 +163,9 @@ const getMultilineFields = (fields: Attribute[]) => {
 const listAttributeFields = () => {
   getModelAttributesWithGroupsApi(props.modelUid)
     .then(({ data }) => {
-      // 保存分组数据
-      attributeGroupsData.value = data.attribute_groups
-
-      // 将分组数据转换为平铺的字段列表
-      const allFields: Attribute[] = []
-      data.attribute_groups.forEach((group) => {
-        if (group.attributes) {
-          allFields.push(...group.attributes)
-        }
-      })
-      attributeFiledsData.value = allFields
+      const schema = createAttributeSchema(data)
+      attributeFiledsData.value = schema.fields
+      attributeGroupsData.value = schema.groups
     })
     .catch(() => {
       attributeFiledsData.value = []

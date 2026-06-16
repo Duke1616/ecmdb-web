@@ -93,7 +93,7 @@
                   <div class="file-name">{{ selectedFile.name }}</div>
                   <div class="file-meta">
                     <span class="file-size">{{ formatFileSize(selectedFile.size) }}</span>
-                    <span class="file-status" :class="{ 'text-blue': uploading, 'text-green': !uploading }">
+                    <span class="file-status" :class="{ 'text-blue': uploading, 'text-ready': !uploading }">
                       <el-icon v-if="uploading"><Loading /></el-icon>
                       <el-icon v-else><CircleCheck /></el-icon>
                       {{ uploading ? "上传中..." : "已准备就绪" }}
@@ -242,18 +242,18 @@ const handleClose = () => {
 .import-drawer-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 20px; // 添加左右和上下 padding
+  gap: 16px;
+  padding: 16px;
 }
 
-// 步骤指引
 .steps-guide {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  border-radius: 12px;
+  padding: 14px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
 
   .step-item {
     display: flex;
@@ -262,8 +262,8 @@ const handleClose = () => {
     flex: 1;
 
     .step-number {
-      width: 36px;
-      height: 36px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
       background: #3b82f6;
       color: white;
@@ -271,7 +271,7 @@ const handleClose = () => {
       align-items: center;
       justify-content: center;
       font-weight: 600;
-      font-size: 16px;
+      font-size: 13px;
       flex-shrink: 0;
     }
 
@@ -279,14 +279,8 @@ const handleClose = () => {
       .step-title {
         font-size: 14px;
         font-weight: 600;
-        color: #1e40af;
+        color: #1d4ed8;
         line-height: 1.2;
-      }
-
-      .step-desc {
-        font-size: 12px;
-        color: #64748b;
-        margin-top: 2px;
       }
     }
   }
@@ -299,26 +293,18 @@ const handleClose = () => {
   }
 }
 
-// 融合卡片设计
 .unified-card {
   display: flex;
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
 
-  &:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  }
-
-  // 左侧边栏 - 下载按钮
   .left-sidebar {
     display: flex;
     align-items: stretch;
-    background: white; // 与右侧一致
-    border-right: 1px solid #e5e7eb; // 改为灰色边框
+    background: #f8fafc;
+    border-right: 1px solid #e5e7eb;
     padding: 16px 12px;
 
     .download-btn-wrapper {
@@ -327,19 +313,16 @@ const handleClose = () => {
       align-items: center;
       justify-content: center;
       gap: 12px;
-      padding: 20px 10px;
-      background: linear-gradient(180deg, #06b6d4 0%, #0891b2 100%); // 清新的青色
+      padding: 16px 10px;
+      background: #3b82f6;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s ease;
-      width: 56px;
-      min-height: 180px;
-      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+      transition: all 0.2s ease;
+      width: 52px;
+      min-height: 160px;
 
       &:hover {
-        transform: scale(1.02);
-        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
-        background: linear-gradient(180deg, #0891b2 0%, #0e7490 100%);
+        background: #2563eb;
       }
 
       &:active {
@@ -347,7 +330,7 @@ const handleClose = () => {
       }
 
       .download-icon {
-        font-size: 26px;
+        font-size: 22px;
         color: white;
         flex-shrink: 0;
 
@@ -359,16 +342,15 @@ const handleClose = () => {
       .download-text {
         writing-mode: vertical-rl;
         text-orientation: upright;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 600;
         color: white;
-        letter-spacing: 3px;
+        letter-spacing: 2px;
         line-height: 1;
       }
     }
   }
 
-  // 右侧内容区域
   .right-content {
     flex: 1;
     display: flex;
@@ -389,7 +371,7 @@ const handleClose = () => {
 
         .section-icon {
           font-size: 16px;
-          color: #10b981;
+          color: #3b82f6;
         }
 
         .section-title {
@@ -402,13 +384,12 @@ const handleClose = () => {
     }
 
     .section-body {
-      padding: 16px;
+      padding: 14px;
       flex: 1;
     }
   }
 }
 
-// 上传区域
 .upload-dragger {
   :deep(.el-upload) {
     width: 100%;
@@ -416,12 +397,12 @@ const handleClose = () => {
 
   :deep(.el-upload-dragger) {
     width: 100%;
-    min-height: 180px;
-    border: 2px dashed #d1d5db;
-    border-radius: 10px;
-    background: #fafafa;
-    transition: all 0.3s ease;
-    padding: 24px;
+    min-height: 160px;
+    padding: 22px;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 
     &:hover {
       border-color: #3b82f6;
@@ -437,8 +418,8 @@ const handleClose = () => {
     text-align: center;
 
     .upload-icon {
-      font-size: 48px;
-      color: #9ca3af;
+      font-size: 40px;
+      color: #94a3b8;
       margin-bottom: 12px;
     }
 
@@ -457,15 +438,14 @@ const handleClose = () => {
   }
 }
 
-// 已选择文件
 .file-selected {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: #f0fdf4;
-  border: 1.5px solid #86efac;
-  border-radius: 10px;
+  padding: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
 
   .file-info {
     display: flex;
@@ -475,8 +455,8 @@ const handleClose = () => {
     min-width: 0;
 
     .file-icon {
-      font-size: 32px;
-      color: #10b981;
+      font-size: 28px;
+      color: #3b82f6;
       flex-shrink: 0;
 
       &.is-loading {
@@ -492,7 +472,7 @@ const handleClose = () => {
       .file-name {
         font-size: 14px;
         font-weight: 600;
-        color: #065f46;
+        color: #1e3a8a;
         margin-bottom: 4px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -506,22 +486,22 @@ const handleClose = () => {
         font-size: 12px;
 
         .file-size {
-          color: #059669;
+          color: #2563eb;
         }
 
         .file-status {
           display: flex;
           align-items: center;
           gap: 4px;
-          color: #10b981;
+          color: #3b82f6;
           font-weight: 500;
 
           &.text-blue {
             color: #3b82f6;
           }
 
-          &.text-green {
-            color: #10b981;
+          &.text-ready {
+            color: #2563eb;
           }
         }
       }
@@ -529,12 +509,11 @@ const handleClose = () => {
   }
 }
 
-// 提示区块
 .tips-section {
-  padding: 14px 16px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: 10px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 
   .tips-header {
     display: flex;
@@ -544,21 +523,21 @@ const handleClose = () => {
 
     .tips-icon {
       font-size: 16px;
-      color: #f59e0b;
+      color: #3b82f6;
     }
 
     .tips-title {
       font-size: 13px;
       font-weight: 600;
-      color: #92400e;
+      color: #334155;
     }
   }
 
   .tips-list {
     margin: 0;
     padding-left: 20px;
-    font-size: 12px; // Fixed missing semicolon here in strict sense, but replacing whole block
-    color: #78350f;
+    font-size: 12px;
+    color: #64748b;
 
     li {
       margin: 6px 0;

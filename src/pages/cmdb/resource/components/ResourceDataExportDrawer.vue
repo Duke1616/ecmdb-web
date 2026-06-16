@@ -454,14 +454,13 @@ const handleClose = () => {
 .export-drawer-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px;
+  gap: 14px;
+  padding: 16px;
 }
 
-// 导出说明
 .export-info {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-radius: 8px;
 
   :deep(.el-alert__content) {
@@ -473,41 +472,38 @@ const handleClose = () => {
     align-items: center;
     gap: 8px;
     font-size: 13px;
-    color: #0c4a6e;
+    color: #1e40af;
 
     .info-icon {
       font-size: 16px;
-      color: #0891b2;
+      color: #3b82f6;
     }
   }
 }
 
-// 卡片式布局
 .export-options-grid {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-// 选项卡片
 .option-card {
   background: white;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
   .card-header {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 12px 16px;
-    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    background: #f8fafc;
     border-bottom: 1px solid #e5e7eb;
 
     .header-icon {
       font-size: 16px;
-      color: #0891b2;
+      color: #3b82f6;
     }
 
     .card-title {
@@ -519,7 +515,7 @@ const handleClose = () => {
   }
 
   .card-body {
-    padding: 16px;
+    padding: 14px;
 
     .radio-group {
       display: flex;
@@ -545,7 +541,7 @@ const handleClose = () => {
 
       .selected-count {
         font-size: 12px;
-        color: #0891b2;
+        color: #2563eb;
         font-weight: 600;
         margin-left: 4px;
       }
@@ -557,7 +553,6 @@ const handleClose = () => {
       }
     }
 
-    // 导出字段选择
     .field-checkbox-group {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -573,11 +568,10 @@ const handleClose = () => {
       }
     }
 
-    // 筛选条件组
     .filter-groups {
       display: flex;
       flex-direction: column;
-      gap: 0; // 间距由 or-divider 控制
+      gap: 0;
     }
 
     .filter-group {
@@ -589,8 +583,7 @@ const handleClose = () => {
       transition: all 0.2s ease;
 
       &:hover {
-        border-color: #cbd5e0;
-        background: #f1f5f9;
+        border-color: #cbd5e1;
       }
 
       .group-header {
@@ -604,13 +597,13 @@ const handleClose = () => {
         .group-label {
           font-size: 13px;
           font-weight: 600;
-          color: #4a5568;
+          color: #334155;
         }
 
         .group-logic {
           font-size: 12px;
-          color: #a0aec0;
-          background: #edf2f7;
+          color: #64748b;
+          background: #e2e8f0;
           padding: 2px 6px;
           border-radius: 4px;
         }
@@ -627,15 +620,14 @@ const handleClose = () => {
         margin-top: 8px;
         padding-left: 0;
         font-size: 12px;
-        color: #3182ce;
+        color: #2563eb;
 
         &:hover {
-          color: #2c5aa0;
+          color: #1d4ed8;
         }
       }
     }
 
-    // OR 分隔符
     .or-divider {
       display: flex;
       align-items: center;
@@ -660,12 +652,12 @@ const handleClose = () => {
         z-index: 1;
         background: white;
         padding: 0 12px;
-        color: #f59e0b;
+        color: #2563eb;
         font-weight: 600;
         font-size: 12px;
-        border: 1px solid #fcd34d;
+        border: 1px solid #bfdbfe;
         border-radius: 12px;
-        background: #fffbeb;
+        background: #eff6ff;
       }
     }
 
@@ -673,21 +665,20 @@ const handleClose = () => {
       width: 100%;
       border-style: dashed;
       margin-top: 8px;
-      color: #718096;
+      color: #64748b;
 
       &:hover {
-        color: #3182ce;
-        border-color: #3182ce;
-        background: #ebf8ff;
+        color: #2563eb;
+        border-color: #93c5fd;
+        background: #eff6ff;
       }
     }
 
-    // 筛选条件列表
     .filter-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-bottom: 0; // 去除底部边距，交给 add-filter-btn
+      margin-bottom: 0;
     }
 
     .filter-item {
@@ -695,14 +686,13 @@ const handleClose = () => {
       align-items: center;
       gap: 8px;
       padding: 10px;
-      background: #fafafa;
+      background: #ffffff;
       border-radius: 8px;
       border: 1px solid #e5e7eb;
       transition: all 0.2s ease;
 
       &:hover {
-        background: #f5f5f5;
-        border-color: #d1d5db;
+        border-color: #cbd5e1;
       }
 
       .filter-field {
@@ -723,7 +713,6 @@ const handleClose = () => {
       }
     }
 
-    // 空状态
     .filter-empty {
       display: flex;
       flex-direction: column;
@@ -731,7 +720,7 @@ const handleClose = () => {
       justify-content: center;
       gap: 12px;
       padding: 24px 16px;
-      background: #fafafa;
+      background: #f8fafc;
       border-radius: 8px;
       border: 1px dashed #d1d5db;
 
@@ -743,7 +732,6 @@ const handleClose = () => {
       }
     }
 
-    // 继续添加按钮
     .add-more-btn {
       width: 100%;
       margin-top: 0;
@@ -751,13 +739,11 @@ const handleClose = () => {
   }
 }
 
-// 导出预览
 .export-preview {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border: 1px solid #fcd34d;
-  border-radius: 12px;
-  padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 14px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 
   .preview-header {
     display: flex;
@@ -767,13 +753,13 @@ const handleClose = () => {
 
     .preview-icon {
       font-size: 18px;
-      color: #d97706;
+      color: #3b82f6;
     }
 
     .preview-title {
       font-size: 14px;
       font-weight: 600;
-      color: #92400e;
+      color: #334155;
       margin: 0;
     }
   }
@@ -790,14 +776,14 @@ const handleClose = () => {
       line-height: 1.6;
 
       .preview-label {
-        color: #92400e;
+        color: #64748b;
         font-weight: 500;
         min-width: 90px;
         flex-shrink: 0;
       }
 
       .preview-value {
-        color: #78350f;
+        color: #334155;
         font-weight: 600;
         word-break: break-all;
       }
