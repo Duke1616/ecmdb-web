@@ -4,7 +4,10 @@
       <RelationGraph ref="graphRef" :options="graphOptions" @node-expand="onNodeExpand" @node-collapse="onNodeCollapse">
         <template #node="{ node }">
           <div class="graph-node" @dblclick.stop="openNodeDetailDrawer(node)">
-            <div class="graph-node-icon" :style="{ backgroundImage: node.data?.icon ? `url(${node.data.icon})` : 'none' }">
+            <div
+              class="graph-node-icon"
+              :style="{ backgroundImage: node.data?.icon ? `url(${node.data.icon})` : 'none' }"
+            >
               <span v-if="!node.data?.icon">{{ getNodeInitial(node) }}</span>
             </div>
             <div class="graph-node-content">
@@ -132,9 +135,7 @@ const getNodeInitial = (node: RGNode) => {
   border: 1px solid #edf2f7;
   border-radius: 8px;
   background:
-    linear-gradient(#f8fafc 1px, transparent 1px),
-    linear-gradient(90deg, #f8fafc 1px, transparent 1px),
-    #ffffff;
+    linear-gradient(#f8fafc 1px, transparent 1px), linear-gradient(90deg, #f8fafc 1px, transparent 1px), #ffffff;
   background-size: 24px 24px;
 }
 
@@ -311,15 +312,17 @@ const getNodeInitial = (node: RGNode) => {
 }
 
 :deep(.c-expand-positon-right) {
-  width: 100%;
-  height: 100%;
+  width: 22px;
+  height: 22px;
+  margin-top: 0;
+  margin-right: -10px;
+  margin-left: -10px;
+  flex: 0 0 22px;
   justify-content: center;
 }
 
 :deep(.c-expand-positon-right span) {
-  margin-top: 0;
-  margin-right: -18px;
-  margin-left: 100%;
+  margin: 0;
 }
 
 :deep(.resource-detail-drawer .drawer-content) {
