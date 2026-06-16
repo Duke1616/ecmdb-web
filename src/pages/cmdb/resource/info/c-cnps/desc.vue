@@ -68,7 +68,18 @@
               <div class="field-label">{{ item.field_name }}</div>
               <div class="field-content">
                 <div class="multiline-content">
-                  {{ resourceData.data[item.field_uid] || "暂无内容" }}
+                  <SecureFieldView
+                    v-if="item.secure"
+                    class="multiline-secure-view"
+                    :content="resourceData.data[item.field_uid]"
+                    :is-displaying="!!resourceData.data[`${item.field_uid}_secure_display`]"
+                    :inline-content="true"
+                    :auto-close-time="8"
+                    @view-click="handleSecureClick(item)"
+                    @display-change="(isDisplaying) => handleSecureDisplayChange(item, isDisplaying)"
+                    @copy="(content) => handleCopySecureContent(content)"
+                  />
+                  <template v-else>{{ resourceData.data[item.field_uid] || "暂无内容" }}</template>
                 </div>
               </div>
             </div>
@@ -128,7 +139,7 @@ import { getModelAttributesWithGroupsApi } from "@/api/attribute"
 import { type Attribute } from "@/api/attribute/types/attribute"
 import { detailResourceApi, findSecureData } from "@/api/resource"
 import { type Resource } from "@/api/resource/types/resource"
-import { createAttributeSchema, type AttributeGroupView } from "@/common/utils/attribute"
+import { createAttributeListView, type AttributeGroupView } from "@/common/utils/attribute"
 
 import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
 import { useFileDownload } from "@/common/composables/useFileDownload"
@@ -163,7 +174,7 @@ const getMultilineFields = (fields: Attribute[]) => {
 const listAttributeFields = () => {
   getModelAttributesWithGroupsApi(props.modelUid)
     .then(({ data }) => {
-      const schema = createAttributeSchema(data)
+      const schema = createAttributeListView(data)
       attributeFiledsData.value = schema.fields
       attributeGroupsData.value = schema.groups
     })

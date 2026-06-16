@@ -1,6 +1,6 @@
 import { defineStore } from "pinia"
 import { getByModelUidsApi, ListModelsByGroupApi } from "@/api/model"
-import { createModelGroupViews, type ModelGroupView } from "@/common/utils/model"
+import { createModelListView, type ModelGroupView } from "@/common/utils/model"
 import { ref } from "vue"
 
 export const useModelStore = defineStore(
@@ -12,7 +12,7 @@ export const useModelStore = defineStore(
     /** 获取模型信息 */
     const ListModelsByGroup = async () => {
       const { data } = await ListModelsByGroupApi()
-      const groups = createModelGroupViews(data)
+      const groups = createModelListView(data)
       modelsData.value = groups
       data.models.forEach((model) => modelMap.value.set(model.uid, model.name))
 

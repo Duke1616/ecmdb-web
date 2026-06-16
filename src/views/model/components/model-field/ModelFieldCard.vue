@@ -1,8 +1,14 @@
 <template>
-  <div class="field-item" :data-id="field.id">
+  <div class="field-item" :class="{ 'is-secure': field.secure }" :data-id="field.id">
     <div class="field-content">
       <div class="field-header-info">
-        <h4 class="field-name">{{ field.field_name }}</h4>
+        <h4 class="field-name">
+          <el-icon v-if="field.secure" class="secure-title-icon"><Lock /></el-icon>
+          <el-tooltip v-if="field.required" content="必填属性" placement="top" :show-after="400">
+            <span class="required-dot" />
+          </el-tooltip>
+          <span>{{ field.field_name }}</span>
+        </h4>
 
         <div class="field-actions">
           <AuthButton
@@ -32,14 +38,16 @@
       <div class="field-details">
         <el-tag size="small" type="primary">{{ field.field_type }}</el-tag>
         <el-tag v-if="field.builtin" size="small" type="warning" effect="light">内置</el-tag>
-        <code class="field-uid">{{ field.field_uid }}</code>
+        <el-tooltip :content="field.field_uid" placement="top" :show-after="400">
+          <code class="field-uid">{{ field.field_uid }}</code>
+        </el-tooltip>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Delete, Edit } from "@element-plus/icons-vue"
+import { Delete, Edit, Lock } from "@element-plus/icons-vue"
 import type { Attribute } from "@/api/attribute/types/attribute"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
@@ -76,6 +84,19 @@ const emit = defineEmits<{
       visibility: visible;
     }
   }
+
+  &.is-secure {
+    background: linear-gradient(90deg, #fff7ed 0, #ffffff 18%);
+    border-color: #fed7aa;
+    box-shadow: inset 3px 0 0 #f97316;
+
+    &:hover {
+      border-color: #f97316;
+      box-shadow:
+        inset 3px 0 0 #f97316,
+        0 6px 16px rgba(249, 115, 22, 0.18);
+    }
+  }
 }
 
 .field-content {
@@ -87,10 +108,13 @@ const emit = defineEmits<{
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .field-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex: 1;
   padding-right: 50px;
   margin: 0;
@@ -99,6 +123,28 @@ const emit = defineEmits<{
   font-weight: 600;
   line-height: 1.3;
   user-select: none;
+
+  span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.secure-title-icon {
+  flex-shrink: 0;
+  color: #ea580c;
+  font-size: 14px;
+}
+
+.required-dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px #fee2e2;
 }
 
 .field-actions {
@@ -202,9 +248,11 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
   user-select: none;
 
   :deep(.el-tag) {
+    flex-shrink: 0;
     color: #1e40af;
     font-weight: 500;
     background: #eff6ff;
@@ -219,11 +267,17 @@ const emit = defineEmits<{
 }
 
 .field-uid {
+  display: inline-block;
+  min-width: 0;
+  max-width: 150px;
   padding: 3px 6px;
+  overflow: hidden;
   color: #4b5563;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 11px;
   font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   user-select: none;
   background: #f9fafb;
   border: 1px solid #d1d5db;

@@ -81,24 +81,28 @@
                 :label="item.field_name"
                 :class="['form-item', { 'secure-field': item.secure }]"
               >
-                <div class="secure-textarea-wrapper">
-                  <el-input
-                    :model-value="
-                      showPassword[item.field_uid]
-                        ? formData.data[item.field_uid]
-                        : '●'.repeat(formData.data[item.field_uid]?.length || 0)
-                    "
-                    @input="handleSecureTextareaInput(item.field_uid, $event)"
-                    :autosize="{ minRows: 2, maxRows: 4 }"
-                    type="textarea"
-                    :placeholder="isEditMode ? '不修改则保留原值' : handlerPlaceholder(item.field_name)"
-                    class="secure-textarea"
-                  />
-                  <div class="password-toggle" @click="togglePassword(item.field_uid)">
-                    <el-icon>
-                      <View v-if="!showPassword[item.field_uid]" />
-                      <Hide v-else />
-                    </el-icon>
+                <div class="secure-textarea-wrapper" :class="{ 'is-visible': showPassword[item.field_uid] }">
+                  <div class="secure-textarea-input">
+                    <el-input
+                      :model-value="
+                        showPassword[item.field_uid]
+                          ? formData.data[item.field_uid]
+                          : '•'.repeat(formData.data[item.field_uid]?.length || 0)
+                      "
+                      @input="handleSecureTextareaInput(item.field_uid, $event)"
+                      :autosize="{ minRows: 2, maxRows: 4 }"
+                      type="textarea"
+                      :placeholder="isEditMode ? '不修改则保留原值' : handlerPlaceholder(item.field_name)"
+                      class="secure-textarea"
+                    />
+                  </div>
+                  <div class="secure-textarea-actions">
+                    <button class="password-toggle" type="button" @click="togglePassword(item.field_uid)">
+                      <el-icon>
+                        <View v-if="!showPassword[item.field_uid]" />
+                        <Hide v-else />
+                      </el-icon>
+                    </button>
                   </div>
                 </div>
               </el-form-item>
@@ -430,10 +434,32 @@ defineExpose({
           }
         }
 
-        // 多行文本加密字段样式
         .secure-textarea-wrapper {
-          position: relative;
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 46px;
           width: 100%;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          background: #fff;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+
+          &:hover {
+            border-color: #9ca3af;
+          }
+
+          &:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+          }
+
+          .secure-textarea-input {
+            min-width: 0;
+            border-radius: 5px 0 0 5px;
+            overflow: hidden;
+          }
 
           .secure-textarea {
             width: 100%;
@@ -442,25 +468,72 @@ defineExpose({
               width: 100%;
 
               .el-textarea__inner {
-                // 为密码按钮预留空间
-                padding-right: 40px;
                 width: 100%;
+                min-height: 76px !important;
+                padding: 8px 11px;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+                color: #374151;
+                line-height: 1.6;
+
+                &:hover,
+                &:focus {
+                  border: 0;
+                  box-shadow: none;
+                }
+
+                &::placeholder {
+                  color: #b6bdc8;
+                }
               }
             }
           }
 
-          // 密码切换按钮
+          &:not(.is-visible) {
+            .secure-textarea {
+              :deep(.el-textarea__inner) {
+                color: #606266;
+                letter-spacing: 1px;
+              }
+            }
+          }
+
+          .secure-textarea-actions {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 8px;
+            border-left: 1px solid #e5e7eb;
+            border-radius: 0 5px 5px 0;
+            background: #fff;
+          }
+
           .password-toggle {
-            position: absolute;
-            right: 8px;
-            top: 8px;
-            z-index: 10;
-            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
             color: #909399;
-            transition: color 0.2s ease;
+            cursor: pointer;
+            transition:
+              color 0.2s ease,
+              background-color 0.2s ease;
 
             &:hover {
+              background: #f3f4f6;
               color: #409eff;
+            }
+
+            &:focus-visible {
+              outline: 2px solid rgba(59, 130, 246, 0.22);
+              outline-offset: 2px;
             }
 
             .el-icon {

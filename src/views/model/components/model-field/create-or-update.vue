@@ -1,5 +1,4 @@
 <template>
-  <!-- NOTE: 该组件为纯 UI 控制组件，Drawer 显隐状态需由父组件双向绑定统一管理 -->
   <Drawer
     v-model="visible"
     :title="readonly ? '查看属性' : activeAttribute ? '编辑属性' : '新增属性'"
@@ -126,20 +125,47 @@
           <div class="form-row">
             <div class="settings-grid">
               <div v-if="availableSettings.includes('required')" class="setting-item">
-                <el-form-item label="是否必填" prop="required">
-                  <el-switch v-model="formData.required" active-color="var(--primary)" inactive-color="var(--border)" />
+                <el-form-item prop="required">
+                  <div class="setting-card is-required" :class="{ active: formData.required }">
+                    <div class="setting-icon">
+                      <el-icon><StarFilled /></el-icon>
+                    </div>
+                    <div class="setting-content">
+                      <div class="setting-title">是否必填</div>
+                      <div class="setting-desc">资源录入时必须填写</div>
+                    </div>
+                    <el-switch v-model="formData.required" active-color="#ef4444" inactive-color="var(--border)" />
+                  </div>
                 </el-form-item>
               </div>
 
               <div v-if="availableSettings.includes('secure')" class="setting-item">
-                <el-form-item label="加密属性" prop="secure">
-                  <el-switch v-model="formData.secure" active-color="var(--primary)" inactive-color="var(--border)" />
+                <el-form-item prop="secure">
+                  <div class="setting-card is-secure" :class="{ active: formData.secure }">
+                    <div class="setting-icon">
+                      <el-icon><Lock /></el-icon>
+                    </div>
+                    <div class="setting-content">
+                      <div class="setting-title">加密属性</div>
+                      <div class="setting-desc">敏感内容需授权查看</div>
+                    </div>
+                    <el-switch v-model="formData.secure" active-color="#f97316" inactive-color="var(--border)" />
+                  </div>
                 </el-form-item>
               </div>
 
               <div v-if="availableSettings.includes('link')" class="setting-item">
-                <el-form-item label="是否外链" prop="link">
-                  <el-switch v-model="formData.link" active-color="var(--primary)" inactive-color="var(--border)" />
+                <el-form-item prop="link">
+                  <div class="setting-card is-link" :class="{ active: formData.link }">
+                    <div class="setting-icon">
+                      <el-icon><Link /></el-icon>
+                    </div>
+                    <div class="setting-content">
+                      <div class="setting-title">是否外链</div>
+                      <div class="setting-desc">展示为可跳转链接</div>
+                    </div>
+                    <el-switch v-model="formData.link" active-color="#2563eb" inactive-color="var(--border)" />
+                  </div>
                 </el-form-item>
               </div>
             </div>
@@ -153,7 +179,7 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { Grid, Minus, Plus, Setting } from "@element-plus/icons-vue"
+import { Grid, Link, Lock, Minus, Plus, Setting, StarFilled } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import { useAttributeForm } from "../../composables/useAttributeForm"
 import type { Attribute } from "@/api/attribute/types/attribute"
@@ -171,7 +197,6 @@ const emits = defineEmits<{
   success: []
 }>()
 
-// NOTE: 该组件为纯 UI 控制组件，Drawer 显隐状态需由父组件双向绑定统一管理
 const visible = defineModel<boolean>({ default: false })
 
 const loading = ref(false)
@@ -406,28 +431,107 @@ watch(
 
   .settings-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
 
     .setting-item {
-      background: #f9fafb;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #e5e7eb;
-
       .el-form-item {
         margin-bottom: 0;
 
         :deep(.el-form-item__content) {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+          width: 100%;
         }
 
         :deep(.el-switch) {
-          --el-switch-on-color: #3b82f6;
           --el-switch-off-color: #d1d5db;
+          flex-shrink: 0;
         }
+      }
+
+      .setting-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        min-height: 88px;
+        padding: 14px 16px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transition:
+          border-color 0.2s ease,
+          background 0.2s ease,
+          box-shadow 0.2s ease;
+
+        &.active {
+          box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+        }
+
+        &.is-required {
+          .setting-icon {
+            color: #dc2626;
+            background: #fee2e2;
+          }
+
+          &.active {
+            background: #fff7f7;
+            border-color: #fca5a5;
+          }
+        }
+
+        &.is-secure {
+          .setting-icon {
+            color: #ea580c;
+            background: #ffedd5;
+          }
+
+          &.active {
+            background: #fff7ed;
+            border-color: #fdba74;
+          }
+        }
+
+        &.is-link {
+          .setting-icon {
+            color: #2563eb;
+            background: #dbeafe;
+          }
+
+          &.active {
+            background: #eff6ff;
+            border-color: #93c5fd;
+          }
+        }
+      }
+
+      .setting-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+
+      .setting-content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .setting-title {
+        color: #111827;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .setting-desc {
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 12px;
+        line-height: 1.4;
       }
     }
   }

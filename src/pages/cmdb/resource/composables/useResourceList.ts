@@ -10,7 +10,7 @@ import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { useDataIO } from "@/common/composables/useDataIO"
 import { usePagination } from "@/common/composables/usePagination"
 import { usePermission } from "@/common/composables/usePermission"
-import { createAttributeSchema, type AttributeGroupView } from "@/common/utils/attribute"
+import { createAttributeListView, type AttributeGroupView } from "@/common/utils/attribute"
 import type { Column } from "@@/components/DataTable/types"
 
 type ResourceFormExpose = {
@@ -70,16 +70,27 @@ export const useResourceList = () => {
 
   const selectedResourceIds = computed(() => selectedResources.value.map((resource) => resource.id))
   const currentResourceIds = computed(() => resourcesData.value.map((resource) => resource.id))
+  const customCellFields = computed(() => {
+    return displayFileds.value.filter((item) => item.secure || item.link || item.field_type === "file")
+  })
 
   const tableColumns = computed<Column[]>(() => {
-    return displayFileds.value.map((item) => ({
-      prop: `data.${item.field_uid}`,
-      label: item.field_name,
-      minWidth: 140,
-      align: "center",
-      showOverflowTooltip: !item.secure && !item.link && item.field_type !== "file",
-      slot: `data.${item.field_uid}`
-    }))
+    return displayFileds.value.map((item) => {
+      const useCustomCell = item.secure || item.link || item.field_type === "file"
+
+      return {
+        prop: `data.${item.field_uid}`,
+        label: item.field_name,
+        minWidth: 140,
+        align: "center",
+        showOverflowTooltip: !useCustomCell,
+        slot: useCustomCell ? `data.${item.field_uid}` : undefined,
+        formatter: (_row, _column, value) => {
+          if (value === undefined || value === null || value === "") return "-"
+          return String(value)
+        }
+      }
+    })
   })
 
   const operateBtnItems = computed<ResourceOperateItem[]>(() => {
@@ -125,7 +136,7 @@ export const useResourceList = () => {
 
     try {
       const { data } = await getModelAttributesWithGroupsApi(modelUid.value)
-      return createAttributeSchema(data)
+      return createAttributeListView(data)
     } catch (error) {
       console.error("获取资产字段失败:", error)
       return null
@@ -151,8 +162,8 @@ export const useResourceList = () => {
     }
   }
 
-  const applyAttributeSchema = (schema: Awaited<ReturnType<typeof fetchAttributeFields>>) => {
-    if (!schema) {
+  const applyAttributeView = (attributeView: Awaited<ReturnType<typeof fetchAttributeFields>>) => {
+    if (!attributeView) {
       attributeFiledsData.value = []
       attributeGroupsData.value = []
       displayFileds.value = []
@@ -160,9 +171,9 @@ export const useResourceList = () => {
       return
     }
 
-    attributeFiledsData.value = schema.fields
-    attributeGroupsData.value = schema.groups
-    displayFileds.value = schema.displayFields
+    attributeFiledsData.value = attributeView.fields
+    attributeGroupsData.value = attributeView.groups
+    displayFileds.value = attributeView.displayFields
     attributesLoaded.value = true
   }
 
@@ -179,7 +190,7 @@ export const useResourceList = () => {
 
     try {
       const [schema, resources] = await Promise.all([fetchAttributeFields(), fetchResourceByModelUid()])
-      applyAttributeSchema(schema)
+      applyAttributeView(schema)
       applyResourceData(resources)
     } finally {
       tableLoading.value = false
@@ -275,6 +286,20 @@ export const useResourceList = () => {
 
   const handleSecureDisplayChange = (row: Resource, item: Attribute, isDisplaying: boolean) => {
     row.data[`${item.field_uid}_secure_display`] = isDisplaying
+  }
+
+  const copySecureContent = async (content: string) => {
+    if (!content) {
+      ElMessage.warning("暂无可复制内容")
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(content)
+      ElMessage.success("复制成功")
+    } catch {
+      ElMessage.error("复制失败")
+    }
   }
 
   const handleUploadSuccess = () => {
@@ -380,6 +405,7 @@ export const useResourceList = () => {
     tableLoading,
     exporting,
     exportFields,
+    customCellFields,
     selectedResources,
     selectedResourceIds,
     currentResourceIds,
@@ -400,6 +426,7 @@ export const useResourceList = () => {
     openNewPage,
     handleSecureClick,
     handleSecureDisplayChange,
+    copySecureContent,
     handleUploadSuccess,
     handleUploadError,
     handleRemoveSuccess,

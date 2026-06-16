@@ -4,8 +4,7 @@ export type ModelGroupView = ModelGroup & {
   models: Model[]
 }
 
-export const createModelGroupViews = (data: listModelsResponseData): ModelGroupView[] => {
-  const models = data.models || []
+export const createModelGroups = (groups: ModelGroup[] = [], models: Model[] = []): ModelGroupView[] => {
   const modelByUid = new Map(models.map((model) => [model.uid, model]))
   const modelsByGroupId = new Map<number, Model[]>()
 
@@ -15,7 +14,7 @@ export const createModelGroupViews = (data: listModelsResponseData): ModelGroupV
     modelsByGroupId.set(model.group_id, groupModels)
   })
 
-  return (data.groups || []).map((group) => {
+  return groups.map((group) => {
     const groupedModels = group.model_uids?.length
       ? group.model_uids.map((uid) => modelByUid.get(uid)).filter((model): model is Model => Boolean(model))
       : modelsByGroupId.get(group.group_id) || []
@@ -26,3 +25,6 @@ export const createModelGroupViews = (data: listModelsResponseData): ModelGroupV
     }
   })
 }
+
+export const createModelListView = (data: listModelsResponseData): ModelGroupView[] =>
+  createModelGroups(data.groups || [], data.models || [])

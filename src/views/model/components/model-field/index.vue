@@ -11,7 +11,7 @@
 
     <div class="groups-container" :class="{ 'dragging-groups': isGroupDragging }">
       <VueDraggable
-        v-model="AttributesData"
+        v-model="attributeGroups"
         :disabled="!!searchInput || !isDragMode"
         :animation="150"
         handle=".group-drag-handle"
@@ -22,25 +22,22 @@
         :scroll-sensitivity="100"
         :scroll-speed="10"
         :bubble-scroll="true"
-        @start="handleSortGroupStart"
-        @end="handleSortGroup"
+        @start="startGroupDrag"
+        @end="sortGroup"
       >
         <ModelAttributeGroupCard
-          v-for="group in filterData"
+          v-for="group in visibleGroups"
           :key="group.group_id"
           :group="group"
           :drag-mode="isDragMode"
           :disabled="!!searchInput || !isDragMode"
-          :fields="group.attributes || []"
-          :expanded="group.expanded"
-          :field-count="group.attributes?.length || 0"
           @toggle="toggleGroup"
-          @add-field="handleAddAttr"
+          @add-field="openCreateField"
           @command="handleGroupCommand"
           @update-attributes="updateGroupAttributes"
-          @sort-attribute="handleSortAttribute"
-          @edit-field="handleUpdateAttr"
-          @delete-field="handleDelete"
+          @sort-attribute="sortAttribute"
+          @edit-field="openEditField"
+          @delete-field="deleteField"
         />
       </VueDraggable>
     </div>
@@ -52,12 +49,12 @@
       width="500px"
       header-icon="Folder"
       @closed="() => {}"
-      @confirm="handlerAddAttributeGroup"
+      @confirm="submitAttributeGroup"
       @cancel="dialogAttrGroupVisible = false"
     >
-      <el-form ref="attrGroupRef" :model="AttrGroup" :rules="attrGroupRules" label-width="80px" class="dialog-form">
+      <el-form ref="attrGroupRef" :model="attrGroup" :rules="attrGroupRules" label-width="80px" class="dialog-form">
         <el-form-item prop="group_name" label-position="top" label="组名称">
-          <el-input v-model="AttrGroup.group_name" placeholder="请输入分组名称" class="form-input" />
+          <el-input v-model="attrGroup.group_name" placeholder="请输入分组名称" class="form-input" />
         </el-form-item>
       </el-form>
     </FormDialog>
@@ -72,241 +69,59 @@
     />
 
     <sortField
-      v-model="sortFieldVisibe"
+      v-model="sortFieldVisible"
       :model-uid="modelUid"
-      :attributes-data="AttributesData"
+      :attributes-data="attributeGroups"
       @success="getAttributesData"
     />
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue"
-import {
-  getModelAttributesWithGroupsApi,
-  DeleteAttributeApi,
-  createAttributeGroupApi,
-  renameAttributeGroupApi,
-  deleteAttributeGroupApi,
-  SortAttributeApi,
-  SortAttributeGroupApi
-} from "@/api/attribute"
-import { type Attribute } from "@/api/attribute/types/attribute"
-import { useCrudAttributeGroup } from "../../composables/useCrudAttributeGroup"
-import { type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
+import { VueDraggable } from "vue-draggable-plus"
+import { useModelFields } from "../../composables/useModelFields"
 import createOrUpdateField from "./create-or-update.vue"
 import sortField from "./sort.vue"
 import ModelAttributeGroupCard from "./ModelAttributeGroupCard.vue"
 import ModelFieldToolbar from "./ModelFieldToolbar.vue"
-import { VueDraggable } from "vue-draggable-plus"
-import { createAttributeSchema, type AttributeGroupView } from "@/common/utils/attribute"
 
 defineOptions({ name: "ModelField" })
 
-const searchInput = ref("")
-const isDragMode = ref(false)
-
-// Props Destructuring
 const { modelUid } = defineProps<{ modelUid: string }>()
 
-//** 前端动态表单排序 */
-const handleSortDrawer = () => {
-  sortFieldVisibe.value = true
-}
-
-//** 获取字段信息 */
-const AttributesData = ref<AttributeGroupView[]>([])
-const getAttributesData = () => {
-  getModelAttributesWithGroupsApi(modelUid)
-    .then(({ data }) => {
-      AttributesData.value = createAttributeSchema(data).groups
-    })
-    .catch(() => {
-      AttributesData.value = []
-    })
-}
-
-//** 添加 OR 修改字段属性 */
-const groupId = ref<number>()
-const attrFieldVisible = ref<boolean>(false)
-const activeAttribute = ref<Attribute | null>(null)
-const isReadonly = ref<boolean>(false)
-
-const handleAddAttr = (group_id: number) => {
-  groupId.value = group_id
-  activeAttribute.value = null
-  isReadonly.value = false
-  attrFieldVisible.value = true
-}
-
-const handleUpdateAttr = (group_id: number, row: Attribute) => {
-  groupId.value = group_id
-  activeAttribute.value = row
-  isReadonly.value = false
-  attrFieldVisible.value = true
-}
-
-//** 属性表格展示排序 */
-const sortFieldVisibe = ref<boolean>(false)
-
-//** 组展开 */
-const toggleGroup = (group: AttributeGroupView) => {
-  group.expanded = !group.expanded
-}
-
-const updateGroupAttributes = (groupId: number, attributes: Attribute[]) => {
-  const group = AttributesData.value.find((item) => item.group_id === groupId)
-  if (group) group.attributes = attributes
-}
-
-//** 前端过滤展示 (Computed) */
-const filterData = computed(() => {
-  if (!searchInput.value.trim()) {
-    return AttributesData.value
-  }
-
-  const query = searchInput.value.trim().toLowerCase()
-  const foundAttrs: AttributeGroupView[] = []
-
-  AttributesData.value.forEach((group) => {
-    if (Array.isArray(group.attributes)) {
-      const matchingAttrs = group.attributes.filter(
-        (attr) => attr.field_uid.toLowerCase().includes(query) || attr.field_name.toLowerCase().includes(query)
-      )
-      if (matchingAttrs.length > 0) {
-        foundAttrs.push({
-          ...group,
-          attributes: matchingAttrs,
-          expanded: true
-        })
-      }
-    }
-  })
-
-  return foundAttrs
-})
-
-const handleDelete = (row: Attribute) => {
-  if (row.builtin) {
-    ElMessage.warning("内置属性不可删除")
-    return
-  }
-  ElMessageBox.confirm(`正在删除属性: ${row.field_name} 确认删除？`, "删除确认", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-    dangerouslyUseHTMLString: true,
-    message: `<p>正在删除属性: <span style="color: red">${row.field_name}</span> 确认删除？</p>`
-  }).then(() => {
-    DeleteAttributeApi(row.id).then(() => {
-      ElMessage.success("删除成功")
-      getAttributesData()
-    })
-  })
-}
-
-const handleSortAttribute = (evt: any) => {
-  const { newIndex, to, item } = evt
-  if (newIndex === undefined || !to || !item) return
-
-  const targetGroupId = Number(to.dataset.groupId)
-  const itemId = Number(item.dataset.id)
-
-  if (!targetGroupId || !itemId) return
-
-  SortAttributeApi({
-    id: itemId,
-    target_group_id: targetGroupId,
-    target_position: newIndex
-  })
-    .then(() => {
-      ElMessage.success("排序更新成功")
-      // 不需要全量刷新，因为 VueDraggable 更细粒度控制了视图
-      // getAttributesData()
-    })
-    .catch(() => {
-      getAttributesData() // 失败时刷新以恢复原状
-    })
-}
-
-//** 分组拖拽排序 */
-// NOTE: 拖拽分组时的标志，用于通过 CSS 控制显示
-const isGroupDragging = ref(false)
-
-const handleSortGroupStart = () => {
-  isGroupDragging.value = true
-}
-
-const handleSortGroup = (evt: any) => {
-  isGroupDragging.value = false
-
-  const { newIndex } = evt
-  if (newIndex === undefined) return
-
-  const group = AttributesData.value[newIndex]
-  if (!group) return
-
-  SortAttributeGroupApi({
-    id: group.group_id,
-    target_position: newIndex
-  })
-    .then(() => {
-      ElMessage.success("分组排序更新成功")
-    })
-    .catch(() => {
-      getAttributesData()
-    })
-}
-
-// Attribute Group CRUD
 const {
-  dialogVisible: dialogAttrGroupVisible,
-  isEditMode: isEditGroup,
-  formRef: attrGroupRef,
-  formData: AttrGroup,
-  openCreateDialog: openCreateGroupDialog,
-  openEditDialog: handleRenameGroup,
-  handleDelete: handleDeleteGroup,
-  handleSubmit: handlerAddAttributeGroup
-} = useCrudAttributeGroup<AttributeGroupView>({
-  createApi: (data) => createAttributeGroupApi({ ...data, model_uid: modelUid }),
-  updateApi: renameAttributeGroupApi,
-  deleteApi: deleteAttributeGroupApi,
-  refreshData: getAttributesData,
-  checkDeleteable: (item) => (item.attributes && item.attributes.length > 0 ? "分组下存在属性，无法删除" : true),
-  confirmDeleteText: (item) => `确认删除分组 "${item.group_name}" 吗？`
-})
-
-const attrGroupRules: FormRules = {
-  group_name: [{ required: true, message: "必须输入分组名称", trigger: "blur" }]
-}
-
-const handleGroupCommand = (command: string, group: AttributeGroupView) => {
-  if (command === "rename") {
-    handleRenameGroup(group)
-  } else if (command === "delete") {
-    handleDeleteGroup(group)
-  }
-}
-
-// Watchers
-watch(
-  () => modelUid,
-  (newVal) => {
-    if (newVal) getAttributesData()
-  },
-  { immediate: true }
-)
-
-//** 全部展开/收起功能 */
-const allExpanded = ref(false)
-const toggleAllGroups = () => {
-  allExpanded.value = !allExpanded.value
-  filterData.value.forEach((group) => {
-    group.expanded = allExpanded.value
-  })
-}
+  searchInput,
+  isDragMode,
+  attributeGroups,
+  visibleGroups,
+  allExpanded,
+  isGroupDragging,
+  groupId,
+  attrFieldVisible,
+  activeAttribute,
+  isReadonly,
+  sortFieldVisible,
+  dialogAttrGroupVisible,
+  isEditGroup,
+  attrGroupRef,
+  attrGroup,
+  attrGroupRules,
+  getAttributesData,
+  openCreateField,
+  openEditField,
+  deleteField,
+  toggleGroup,
+  toggleAllGroups,
+  updateGroupAttributes,
+  sortAttribute,
+  startGroupDrag,
+  sortGroup,
+  openCreateGroupDialog,
+  submitAttributeGroup,
+  handleGroupCommand,
+  openSortDrawer: handleSortDrawer
+} = useModelFields(() => modelUid)
 </script>
 
 <style lang="scss" scoped>

@@ -31,7 +31,7 @@
     </div>
 
     <!-- 显示内容模式 -->
-    <div v-if="isDisplaying && showContent" class="secure-content">
+    <div v-if="isDisplaying && showContent" class="secure-content" :class="{ 'is-inline': inlineContent }">
       <div class="secure-text">{{ content }}</div>
       <div class="secure-actions">
         <span class="auto-close-tip">{{ countdown }}秒后自动关闭</span>
@@ -82,6 +82,8 @@ interface Props {
   showContent?: boolean
   /** 是否只显示复制按钮，默认false */
   copyOnly?: boolean
+  /** 内容是否内嵌展示，默认false */
+  inlineContent?: boolean
 }
 
 interface Emits {
@@ -99,7 +101,8 @@ const props = withDefaults(defineProps<Props>(), {
   autoCloseTime: 3,
   enableAutoClose: true,
   showContent: true,
-  copyOnly: false
+  copyOnly: false,
+  inlineContent: false
 })
 
 const emits = defineEmits<Emits>()
@@ -312,6 +315,13 @@ onUnmounted(() => {
 
     word-wrap: break-word;
     overflow-wrap: break-word;
+
+    &.is-inline {
+      position: static;
+      width: 100%;
+      max-width: 100%;
+      box-shadow: none;
+    }
 
     .secure-text {
       font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;

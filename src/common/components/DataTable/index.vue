@@ -41,10 +41,16 @@
               :show-overflow-tooltip="column.showOverflowTooltip"
             >
               <template #default="scope">
-                <!-- 自定义插槽 -->
-                <slot v-if="column.slot" :name="column.slot" :row="scope.row" :column="column" :index="scope.$index" />
-                <!-- 默认显示 -->
-                <span v-else>{{ getColumnValue(scope.row, column) }}</span>
+                <div class="data-table-cell-content" :class="`is-${column.align || 'center'}`">
+                  <slot
+                    v-if="column.slot"
+                    :name="column.slot"
+                    :row="scope.row"
+                    :column="column"
+                    :index="scope.$index"
+                  />
+                  <span v-else class="data-table-cell-text">{{ getColumnValue(scope.row, column) }}</span>
+                </div>
               </template>
             </el-table-column>
 
@@ -466,17 +472,71 @@ defineExpose({
       color: #374151;
       font-weight: 600;
       height: calc(2.4rem + 0.4vw);
-      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      padding: 0;
       font-size: calc(0.6rem + 0.2vw);
+    }
+
+    th .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(2.4rem + 0.4vw);
+      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      box-sizing: border-box;
+      text-align: center;
     }
   }
 
   :deep(.el-table__body) {
     td {
       font-size: calc(0.7rem + 0.25vw);
-      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      padding: 0;
       height: calc(2.6rem + 0.4vw);
     }
+
+    td .cell {
+      display: flex;
+      align-items: center;
+      min-height: calc(2.6rem + 0.4vw);
+      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      box-sizing: border-box;
+    }
+  }
+
+  :deep(.el-table__cell .cell) {
+    width: 100%;
+  }
+
+  .data-table-cell-content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+
+    &.is-left {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    &.is-center {
+      justify-content: center;
+      text-align: center;
+    }
+
+    &.is-right {
+      justify-content: flex-end;
+      text-align: right;
+    }
+  }
+
+  .data-table-cell-text {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    line-height: 1.5;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   // 确保所有列都有一致的背景色 - 使用更高优先级的选择器

@@ -114,33 +114,74 @@
           </el-empty>
         </template>
 
-        <template v-for="item in displayFileds" :key="item.id" #[`data.${item.field_uid}`]="{ row }">
-          <SecureFieldView
-            v-if="item.secure"
-            :content="row.data[item.field_uid]"
-            :is-displaying="!!row.data[`${item.field_uid}_secure_display`]"
-            :copy-only="true"
-            @view-click="handleSecureClick(row, item)"
-            @display-change="(isDisplaying) => handleSecureDisplayChange(row, item, isDisplaying)"
-          />
-          <el-button v-else-if="item.link" type="primary" link @click="openNewPage(row.data[item.field_uid])">
-            {{ row.data[item.field_uid] || "-" }}
-          </el-button>
-          <TableFileUpload
-            v-else-if="item.field_type === 'file'"
-            :model-value="Array.isArray(row.data[item.field_uid]) ? row.data[item.field_uid] : []"
-            :field-uid="item.field_uid"
-            :row="row"
-            :limit="5"
-            :disabled="!canEditCustomField"
-            @update:model-value="(val) => (row.data[item.field_uid] = val)"
-            @upload-success="handleUploadSuccess"
-            @upload-error="handleUploadError"
-            @remove-success="handleRemoveSuccess"
-            @remove-error="handleRemoveError"
-            @preview="handlePreview"
-          />
-          <span v-else>{{ row.data[item.field_uid] || "-" }}</span>
+        <template v-for="item in customCellFields" :key="item.id" #[`data.${item.field_uid}`]="{ row }">
+          <div class="resource-cell">
+            <el-popover
+              v-if="item.secure && item.field_type === 'multiline'"
+              trigger="click"
+              placement="bottom"
+              :width="420"
+              popper-class="resource-secure-popover"
+              :show-arrow="false"
+            >
+              <template #reference>
+                <button type="button" class="secure-preview-button" @click="handleSecureClick(row, item)">
+                  <el-icon><View /></el-icon>
+                  <span>查看</span>
+                </button>
+              </template>
+              <div class="secure-popover-content">
+                <div class="secure-popover-head">
+                  <div class="secure-popover-title">
+                    <el-icon><View /></el-icon>
+                    <span>{{ item.field_name }}</span>
+                  </div>
+                  <span class="secure-popover-badge">敏感内容</span>
+                </div>
+                <div class="secure-popover-text">
+                  {{ row.data[item.field_uid] || "-" }}
+                </div>
+                <div class="secure-popover-actions">
+                  <span>{{ item.field_uid }}</span>
+                  <div class="secure-popover-buttons">
+                    <el-button
+                      text
+                      type="primary"
+                      :icon="CopyDocument"
+                      @click="copySecureContent(row.data[item.field_uid])"
+                    >
+                      复制
+                    </el-button>
+                  </div>
+                </div>
+              </div>
+            </el-popover>
+            <SecureFieldView
+              v-else-if="item.secure"
+              :content="row.data[item.field_uid]"
+              :is-displaying="!!row.data[`${item.field_uid}_secure_display`]"
+              :copy-only="true"
+              @view-click="handleSecureClick(row, item)"
+              @display-change="(isDisplaying) => handleSecureDisplayChange(row, item, isDisplaying)"
+            />
+            <el-button v-else-if="item.link" type="primary" link @click="openNewPage(row.data[item.field_uid])">
+              {{ row.data[item.field_uid] || "-" }}
+            </el-button>
+            <TableFileUpload
+              v-else-if="item.field_type === 'file'"
+              :model-value="Array.isArray(row.data[item.field_uid]) ? row.data[item.field_uid] : []"
+              :field-uid="item.field_uid"
+              :row="row"
+              :limit="5"
+              :disabled="!canEditCustomField"
+              @update:model-value="(val) => (row.data[item.field_uid] = val)"
+              @upload-success="handleUploadSuccess"
+              @upload-error="handleUploadError"
+              @remove-success="handleRemoveSuccess"
+              @remove-error="handleRemoveError"
+              @preview="handlePreview"
+            />
+          </div>
         </template>
 
         <template #actions="{ row }">
@@ -192,7 +233,7 @@
 </template>
 
 <script lang="ts" setup>
-import { CirclePlus, Download, RefreshRight, Setting, Upload } from "@element-plus/icons-vue"
+import { CirclePlus, CopyDocument, Download, RefreshRight, Setting, Upload, View } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
@@ -212,7 +253,6 @@ const {
   modelName,
   attributeFiledsData,
   attributeGroupsData,
-  displayFileds,
   resourcesData,
   drawerVisible,
   importDialogVisible,
@@ -222,6 +262,7 @@ const {
   tableLoading,
   exporting,
   exportFields,
+  customCellFields,
   selectedResourceIds,
   currentResourceIds,
   paginationData,
@@ -241,6 +282,7 @@ const {
   openNewPage,
   handleSecureClick,
   handleSecureDisplayChange,
+  copySecureContent,
   handleUploadSuccess,
   handleUploadError,
   handleRemoveSuccess,
@@ -401,6 +443,140 @@ const {
   justify-content: center;
   gap: 12px;
   margin-top: 16px;
+}
+
+.resource-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.secure-preview-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 6px;
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+
+  .el-icon {
+    color: #64748b;
+    font-size: 14px;
+  }
+
+  &:hover,
+  &:focus {
+    color: #2563eb;
+    background: #f8fbff;
+    border-color: #9bbcf8;
+
+    .el-icon {
+      color: #2563eb;
+    }
+  }
+}
+
+:global(.resource-secure-popover) {
+  padding: 10px !important;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+:global(.resource-secure-popover .secure-popover-content) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  background: #ffffff;
+}
+
+:global(.resource-secure-popover .secure-popover-head) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+}
+
+:global(.resource-secure-popover .secure-popover-title) {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+:global(.resource-secure-popover .secure-popover-title .el-icon) {
+  flex-shrink: 0;
+  margin-right: 6px;
+  color: #2563eb;
+  font-size: 15px;
+}
+
+:global(.resource-secure-popover .secure-popover-title span) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.resource-secure-popover .secure-popover-badge) {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+  background: #ffedd5;
+  border: 1px solid #fdba74;
+  border-radius: 999px;
+}
+
+:global(.resource-secure-popover .secure-popover-text) {
+  max-height: 240px;
+  padding: 12px;
+  overflow: auto;
+  color: #334155;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+:global(.resource-secure-popover .secure-popover-actions) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+:global(.resource-secure-popover .secure-popover-buttons) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 960px) {
