@@ -361,5 +361,175 @@ export const CMDB_CAPABILITIES = {
   }
 } as const
 
+export const TICKET_CAPABILITIES = {
+  /** 工单中心相关 */
+  Center: {
+    /** 进入工单提交流 */
+    Pipeline: "ticket:center:pipeline",
+    /** 流程轨迹图 */
+    Graph: "ticket:center:graph",
+    /** 关联自动化任务 */
+    ViewTasks: "ticket:center:view_tasks",
+    /** 所有待办工单 */
+    Todo: "ticket:center:todo",
+    /** 我发起的工单 */
+    MyStart: "ticket:center:my_start",
+    /** 任务节点表单配置 */
+    FormConfig: "ticket:center:form_config",
+    /** 工单详情 */
+    Detail: "ticket:center:get",
+    /** 历史工单 */
+    History: "ticket:center:history",
+    /** 我的待办工单 */
+    MyTodo: "ticket:center:my_todo",
+    /** 转交审批人 */
+    Transfer: "ticket:center:transfer",
+    /** 创建工单 */
+    Create: "ticket:center:create",
+    /** 撤销工单 */
+    Revoke: "ticket:center:revoke",
+    /** 驳回审批 */
+    Reject: "ticket:center:reject",
+    /** 流转记录 */
+    Record: "ticket:center:record",
+    /** 同意审批 */
+    Pass: "ticket:center:pass",
+    /** @deprecated 使用 Pipeline */
+    View: "ticket:center:pipeline",
+    /** @deprecated 使用 Template.ToggleFavorite */
+    Favorite: "ticket:template:toggle_favorite"
+  },
+
+  /** 工单模板相关 */
+  Template: {
+    /** 创建模板分类 */
+    AddGroup: "ticket:template:add_group",
+    /** 删除工单模板 */
+    Delete: "ticket:template:delete",
+    /** 创建工单模板 */
+    Add: "ticket:template:add",
+    /** 修改工单模板 */
+    Edit: "ticket:template:edit",
+    /** 查看模板详情 */
+    Detail: "ticket:template:get",
+    /** 工单模板列表 */
+    View: "ticket:template:view",
+    /** 收藏/取消收藏工单模板 */
+    ToggleFavorite: "ticket:template:toggle_favorite",
+    /** 查看收藏工单模板 */
+    ViewFavorite: "ticket:template:view_favorite",
+    /** 模板分类列表 */
+    ViewGroup: "ticket:template:view_group",
+    /** 按 ID 查看模板分类 */
+    ViewGroupByIds: "ticket:template:view_group_by_ids",
+    /** 按 ID 查看模板 */
+    ViewByIds: "ticket:template:view_by_ids"
+  },
+
+  /** 流程管理相关 */
+  Workflow: {
+    /** 创建流程 */
+    Add: "ticket:workflow:add",
+    /** 删除流程 */
+    Delete: "ticket:workflow:delete",
+    /** 流程发布 */
+    Deploy: "ticket:workflow:deploy",
+    /** 修改流程 */
+    Edit: "ticket:workflow:edit",
+    /** 流程详情 */
+    Detail: "ticket:workflow:get",
+    /** 流程列表 */
+    View: "ticket:workflow:view"
+  },
+
+  /** 脚本模板相关 */
+  Codebook: {
+    /** 创建脚本模板 */
+    Add: "ticket:codebook:add",
+    /** 删除脚本模板 */
+    Delete: "ticket:codebook:delete",
+    /** 更新脚本模板 */
+    Edit: "ticket:codebook:edit",
+    /** 脚本模板详情 */
+    Detail: "ticket:codebook:get",
+    /** 脚本模板列表 */
+    View: "ticket:codebook:view",
+    /** 当前绑定执行单元 */
+    ViewRunners: "ticket:codebook:view_runners"
+  },
+
+  /** 执行单元相关 */
+  Runner: {
+    /** 注册执行单元 */
+    Add: "ticket:runner:add",
+    /** 删除执行单元 */
+    Delete: "ticket:runner:delete",
+    /** 更新执行单元 */
+    Edit: "ticket:runner:edit",
+    /** 执行单元详情 */
+    Detail: "ticket:runner:get",
+    /** 执行单元标签 */
+    Tags: "ticket:runner:tags",
+    /** 执行单元列表 */
+    View: "ticket:runner:view",
+    /** 按 ID 查看执行单元 */
+    ViewByIds: "ticket:runner:view_by_ids",
+    /** 按流程查看执行单元 */
+    ViewByWorkflowId: "ticket:runner:view_by_workflow_id",
+    /** 查看未绑定当前脚本的执行单元 */
+    ViewExcludeCodebookUid: "ticket:runner:view_exclude_codebook_uid"
+  },
+
+  /** 任务记录相关 */
+  Task: {
+    /** 任务列表 */
+    View: "ticket:task:view",
+    /** 修改任务变量 */
+    UpdateVariables: "ticket:task:update_variables",
+    /** 修改任务参数 */
+    UpdateArgs: "ticket:task:update_args",
+    /** 重试任务 */
+    Retry: "ticket:task:retry",
+    /** 任务日志 */
+    Logs: "ticket:task:logs"
+  },
+
+  /** 自动派发相关 */
+  Dispatch: {
+    /** 创建自动派发 */
+    Add: "ticket:dispatch:add",
+    /** 自动派发列表 */
+    View: "ticket:dispatch:view",
+    /** 删除自动派发 */
+    Delete: "ticket:dispatch:delete",
+    /** 修改自动派发 */
+    Edit: "ticket:dispatch:edit",
+    /** 同步自动派发 */
+    Sync: "ticket:dispatch:sync"
+  },
+
+  /** 工单内部依赖权限 */
+  Ticket: {
+    /** 工单详情 */
+    Detail: "ticket:ticket:get"
+  },
+
+  /** @deprecated 工单操作权限已迁移到 Center 分组 */
+  Order: {
+    /** 创建工单 */
+    Create: "ticket:center:create",
+    /** 查看工单详情 */
+    Detail: "ticket:center:get",
+    /** 处理/同意工单 */
+    Approve: "ticket:center:pass",
+    /** 驳回工单 */
+    Reject: "ticket:center:reject",
+    /** 撤回/撤销工单 */
+    Revoke: "ticket:center:revoke",
+    /** 转签工单 */
+    Transfer: "ticket:center:transfer"
+  }
+} as const
+
 /** 权限常量类型定义 */
 export type AuthType = typeof IAM_CAPABILITIES

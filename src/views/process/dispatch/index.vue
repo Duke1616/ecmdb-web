@@ -4,17 +4,46 @@
     <ManagerHeader
       :title="`自动派发 - ${templateData?.name || '未选择模版'}`"
       subtitle="根据模版字段自行匹配执行器"
-      @refresh="listDispatchesData"
+      :show-back-button="true"
+      :show-refresh-button="false"
       @back="handleBack"
     >
       <template #actions>
-        <el-button type="primary" :icon="CirclePlus" @click="handlerCreate">新增</el-button>
-        <el-button type="success" :icon="CirclePlus" @click="handlerSync">同步</el-button>
+        <div class="action-group">
+          <AuthButton
+            type="primary"
+            :icon="CirclePlus"
+            :capability="TICKET_CAPABILITIES.Dispatch.Add"
+            class="u-gov-btn is-large"
+            @click="handlerCreate"
+          >
+            新增派发
+          </AuthButton>
+          <AuthButton
+            type="success"
+            :icon="Connection"
+            :capability="TICKET_CAPABILITIES.Dispatch.Sync"
+            class="u-gov-btn is-large"
+            @click="handlerSync"
+          >
+            同步配置
+          </AuthButton>
+          <AuthButton
+            type="primary"
+            :icon="RefreshRight"
+            :capability="TICKET_CAPABILITIES.Dispatch.View"
+            class="eiam-refresh-btn dispatch-refresh-btn"
+            circle
+            @click="listDispatchesData"
+          />
+        </div>
       </template>
     </ManagerHeader>
 
     <!-- 主内容区域 -->
+    <el-empty v-if="!canViewDispatch" class="dispatch-empty" description="您没有权限查看自动派发配置" />
     <DataTable
+      v-else
       :data="dispatchesData"
       :columns="tableColumns"
       :pagination="paginationData"
@@ -39,7 +68,7 @@
           :items="operateBtnItems"
           :operate-item="row"
           :max-length="3"
-          @route-event="(data: any, action: string) => operateEvent(action, data)"
+          @route-event="(data: dispatch, action: string) => operateEvent(action, data)"
         />
       </template>
     </DataTable>
@@ -71,16 +100,20 @@
 
 <script setup lang="ts">
 // ==================== 导入模块 ====================
-import { dispatch } from "@/api/ticket/dispatch/types/dispatch.js"
+import type { dispatch } from "@/api/ticket/dispatch/types/dispatch.js"
 import { usePagination } from "@/common/composables/usePagination"
-import { h, nextTick, ref, watch, onMounted } from "vue"
-import { CirclePlus } from "@element-plus/icons-vue"
+import { computed, h, nextTick, onMounted, ref, watch, type Component } from "vue"
+import { CirclePlus, Connection, RefreshRight } from "@element-plus/icons-vue"
 import { deleteDispatchApi, listDispatchesByTemplateIdApi } from "@/api/ticket/dispatch/index.js"
-import { template } from "@/api/ticket/template/types/template.js"
+import type { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { runner } from "@/api/ticket/runner/types/runner.js"
+import type { ButtonType } from "element-plus"
+import type { runner } from "@/api/ticket/runner/types/runner.js"
 import { listRunnerByIdsApi, listRunnerByWorkflowIdApi } from "@/api/ticket/runner/index.js"
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
+import { TICKET_CAPABILITIES } from "@/common/auth/capability"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { usePermission } from "@/common/composables/usePermission"
 import { FormDialog } from "@@/components/Dialogs"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
@@ -94,6 +127,8 @@ import { useRoute, useRouter } from "vue-router"
 const route = useRoute()
 const router = useRouter()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const { hasPermission } = usePermission()
+const canViewDispatch = computed(() => hasPermission(TICKET_CAPABILITIES.Dispatch.View))
 
 // ==================== 响应式数据 ====================
 // 组件引用
@@ -115,6 +150,31 @@ const dispatchesData = ref<dispatch[]>([])
 
 import type { Column } from "@@/components/DataTable/types"
 
+enum DispatchAction {
+  Edit = "edit",
+  Delete = "delete"
+}
+
+interface DispatchOperateItem {
+  code: DispatchAction
+  name: string
+  type?: ButtonType
+  icon?: Component
+  disabled?: boolean
+  capability?: string | string[]
+}
+
+interface TemplateRuleNode {
+  type?: string
+  field?: string
+  title?: string
+  children?: TemplateRuleNode[]
+}
+
+const isTemplateRuleNode = (value: unknown): value is TemplateRuleNode => {
+  return typeof value === "object" && value !== null
+}
+
 // ==================== 表格配置 ====================
 const tableColumns: Column[] = [
   { prop: "template_id", label: "模版名称", slot: "templateName", align: "center" },
@@ -123,35 +183,37 @@ const tableColumns: Column[] = [
   { prop: "runner_name", label: "执行器名称", slot: "runnerName", align: "center" }
 ]
 
-const operateBtnItems = [
-  { code: "edit", name: "修改", type: "primary" },
-  { code: "delete", name: "删除", type: "danger" }
+const operateBtnItems: DispatchOperateItem[] = [
+  { code: DispatchAction.Edit, name: "修改", type: "primary", capability: TICKET_CAPABILITIES.Dispatch.Edit },
+  { code: DispatchAction.Delete, name: "删除", type: "danger", capability: TICKET_CAPABILITIES.Dispatch.Delete }
 ]
 
 // ==================== 模版数据处理 ====================
-const processRules = (rules: any, fieldMap: Map<string, string>) => {
-  let rulesArray: any[] = []
-
+const parseTemplateRules = (rules: unknown): TemplateRuleNode[] => {
   if (typeof rules === "string") {
-    try {
-      rulesArray = JSON.parse(rules)
-    } catch (error) {
-      console.warn("解析 rules JSON 失败:", error)
-      return
-    }
-  } else if (Array.isArray(rules)) {
-    rulesArray = rules
-  } else {
-    console.warn("rules 不是有效的数组或字符串格式:", rules)
+    const parsed: unknown = JSON.parse(rules)
+    return Array.isArray(parsed) ? parsed.filter(isTemplateRuleNode) : []
+  }
+
+  return Array.isArray(rules) ? rules.filter(isTemplateRuleNode) : []
+}
+
+const processRules = (rules: unknown, fieldMap: Map<string, string>) => {
+  let rulesArray: TemplateRuleNode[] = []
+
+  try {
+    rulesArray = parseTemplateRules(rules)
+  } catch (error) {
+    console.warn("解析 rules JSON 失败:", error)
     return
   }
 
-  rulesArray.forEach((item: any) => {
+  rulesArray.forEach((item) => {
     if (item.type !== "fcRow" && item.type !== "col" && item.field) {
-      fieldMap.set(item.field, item.title)
+      fieldMap.set(item.field, item.title || item.field)
     }
 
-    if (item.children && Array.isArray(item.children)) {
+    if (Array.isArray(item.children)) {
       processRules(item.children, fieldMap)
     }
   })
@@ -228,7 +290,7 @@ const checkRunners = async (): Promise<boolean> => {
 
 // ==================== 数据查询 ====================
 const listDispatchesData = async () => {
-  if (!templateData.value) return
+  if (!templateData.value || !canViewDispatch.value) return
 
   loading.value = true
   try {
@@ -254,7 +316,13 @@ const handleBack = () => {
 }
 
 const handlerCreate = async () => {
+  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Add)) {
+    ElMessage.warning("暂无新增自动派发权限")
+    return
+  }
+
   if (!(await checkRunners())) {
+    ElMessage.warning("当前流程暂无可用执行器")
     return
   }
 
@@ -265,7 +333,13 @@ const handlerCreate = async () => {
 }
 
 const handlerUpdate = async (row: dispatch) => {
+  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Edit)) {
+    ElMessage.warning("暂无修改自动派发权限")
+    return
+  }
+
   if (!(await checkRunners())) {
+    ElMessage.warning("当前流程暂无可用执行器")
     return
   }
 
@@ -276,6 +350,11 @@ const handlerUpdate = async (row: dispatch) => {
 }
 
 const handlerDelete = (row: dispatch) => {
+  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Delete)) {
+    ElMessage.warning("暂无删除自动派发权限")
+    return
+  }
+
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -298,6 +377,11 @@ const handlerDelete = (row: dispatch) => {
 }
 
 const handlerSync = () => {
+  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Sync)) {
+    ElMessage.warning("暂无同步自动派发权限")
+    return
+  }
+
   syncVisible.value = true
 }
 
@@ -311,10 +395,10 @@ const handlerSubmiSync = () => {
 
 const operateEvent = (action: string, row: dispatch) => {
   switch (action) {
-    case "edit":
+    case DispatchAction.Edit:
       handlerUpdate(row)
       break
-    case "delete":
+    case DispatchAction.Delete:
       handlerDelete(row)
       break
   }
@@ -333,6 +417,8 @@ const onSyncClosed = () => {
 const templateId = route.query.id as string
 
 const fetchTemplateDetail = async (id: string) => {
+  if (!canViewDispatch.value) return
+
   try {
     const res = await detailTemplateApi(parseInt(id))
     setForm(res.data)
@@ -344,6 +430,8 @@ const fetchTemplateDetail = async (id: string) => {
 }
 
 onMounted(() => {
+  if (!canViewDispatch.value) return
+
   if (templateId) {
     fetchTemplateDetail(templateId)
   } else {
@@ -354,12 +442,84 @@ onMounted(() => {
 
 // ==================== 监听器 ====================
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listDispatchesData, { immediate: true })
+
+watch(canViewDispatch, (allowed) => {
+  if (allowed && templateId) fetchTemplateDetail(templateId)
+})
 </script>
 
 <style lang="scss">
 .add-drawer {
   .el-drawer__header {
     margin: 0;
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+.dispatch-empty {
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+:deep(.action-group) {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+:deep(.action-group .el-button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+:deep(.action-group .u-gov-btn > span) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+:deep(.action-group .el-icon) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+:deep(.action-group .el-icon svg) {
+  display: block;
+}
+
+:deep(.dispatch-refresh-btn.el-button) {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: none;
+
+  &:hover,
+  &:focus {
+    color: #3b82f6;
+    background: #eff6ff;
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: none;
+  }
+
+  .el-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
   }
 }
 </style>

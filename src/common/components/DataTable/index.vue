@@ -139,7 +139,7 @@ interface Props {
   showSelection?: boolean
   actionColumnLabel?: string
   actionColumnWidth?: string | number
-  actionColumnFixed?: "left" | "right"
+  actionColumnFixed?: "left" | "right" | boolean
   tableProps?: Record<string, any>
   loading?: boolean
 
@@ -577,29 +577,64 @@ defineExpose({
     }
   }
 
-  // 额外加强操作列的样式特异性
-  :deep(.el-table__body tr td:last-child) {
-    background-color: transparent !important;
+  :deep(.el-table__cell.el-table-fixed-column--left),
+  :deep(.el-table__cell.el-table-fixed-column--right) {
+    position: relative;
+    z-index: 2;
+    background-color: #ffffff !important;
   }
 
-  :deep(.el-table__body tr.el-table__row--striped td:last-child) {
+  :deep(.el-table__cell.el-table-fixed-column--left .cell),
+  :deep(.el-table__cell.el-table-fixed-column--right .cell) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    background: inherit;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  :deep(th.el-table__cell.el-table-fixed-column--left),
+  :deep(th.el-table__cell.el-table-fixed-column--right) {
+    z-index: 3;
+    background-color: #f8fafc !important;
+  }
+
+  :deep(.el-table__body tr.el-table__row--striped > td.el-table-fixed-column--left),
+  :deep(.el-table__body tr.el-table__row--striped > td.el-table-fixed-column--right) {
     background-color: #fafafa !important;
   }
 
-  :deep(.el-table__body tr.el-table__row--striped:hover td:last-child) {
+  :deep(.el-table__body tr:hover > td.el-table-fixed-column--left),
+  :deep(.el-table__body tr:hover > td.el-table-fixed-column--right),
+  :deep(.el-table__body tr.el-table__row--striped:hover > td.el-table-fixed-column--left),
+  :deep(.el-table__body tr.el-table__row--striped:hover > td.el-table-fixed-column--right) {
     background-color: #f5f7fa !important;
   }
 
-  :deep(.el-table__body tr:hover td:last-child) {
-    background-color: #f5f7fa !important;
+  :deep(.el-table-fixed-column--left.is-last-column) {
+    border-right: 1px solid #e5eaf3;
+  }
+
+  :deep(.el-table-fixed-column--right.is-first-column) {
+    border-left: 1px solid #e5eaf3;
+  }
+
+  :deep(.el-table-fixed-column--left.is-last-column::before),
+  :deep(.el-table-fixed-column--right.is-first-column::before) {
+    display: none;
   }
 }
 
 .action-buttons {
   display: flex;
+  width: 100%;
   gap: calc(0.4rem + 0.15vw);
   justify-content: center;
   align-items: center;
+  box-sizing: border-box;
 
   .action-btn {
     display: inline-flex;

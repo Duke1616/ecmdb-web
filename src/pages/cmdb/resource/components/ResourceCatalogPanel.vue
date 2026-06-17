@@ -145,8 +145,9 @@ const handleImageError = (event: Event) => {
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
+  height: 68px;
   min-height: 68px;
-  padding: 18px 20px;
+  padding: 12px 20px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   box-sizing: border-box;
@@ -162,10 +163,10 @@ const handleImageError = (event: Event) => {
 }
 
 .section-subtitle {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
   color: #64748b;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .total-groups,
@@ -461,18 +462,22 @@ const handleImageError = (event: Event) => {
     display: flex;
     gap: 10px;
     flex-direction: row;
+    padding: 14px;
     overflow-x: auto;
   }
 
   .group-list-item {
     min-width: 180px;
     margin-bottom: 0;
+    border-radius: 8px;
   }
 
   .section-header {
     align-items: flex-start;
     flex-direction: column;
     gap: 8px;
+    height: auto;
+    min-height: 68px;
   }
 }
 

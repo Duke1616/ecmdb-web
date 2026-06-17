@@ -72,11 +72,6 @@ onMounted(() => {
   min-width: clamp(260px, 22vw, 330px);
 }
 
-:deep(.header-right) {
-  flex: 1;
-  min-width: 0;
-}
-
 :deep(.eiam-governance-bar) {
   width: 100%;
   justify-content: flex-end;
@@ -137,6 +132,10 @@ onMounted(() => {
   :deep(.eiam-governance-bar) {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  :deep(.header-right) {
+    min-width: 0;
   }
 }
 

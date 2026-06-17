@@ -3,7 +3,7 @@
     v-model="dialogVisible"
     :title="title"
     width="900px"
-    top="5vh"
+    :top="top"
     @confirm="handleConfirm"
     @cancel="dialogVisible = false"
     class="receiver-selector-dialog"
@@ -142,6 +142,7 @@ const {
 const props = defineProps({
   visible: Boolean,
   title: { type: String, default: "配置/管理接收者策略" },
+  top: { type: String, default: "10vh" },
   resultPanelTitle: { type: String, default: "已选逻辑项" },
   emptyText: { type: String, default: "暂无接收者" },
   initialAssignees: { type: Array, default: () => [] },

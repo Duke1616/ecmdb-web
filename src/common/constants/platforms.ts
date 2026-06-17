@@ -85,7 +85,7 @@ export const PLATFORMS: PlatformConfig[] = [
     description: "审批流、服务申请、工单流转与流程模板管理",
     icon: "Connection",
     color: "#7C3AED",
-    route: "/cmdb/order/start",
+    route: "/ticket/start",
     permission: "ticket",
     aliases: ["eflow", "order", "change", "workflow"],
     summary: "Workflow Center",

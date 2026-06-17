@@ -2,7 +2,7 @@
   <div
     class="generic-picker-container"
     ref="containerRef"
-    :class="[`variant-${variant}`, multiple ? 'is-multiple' : 'is-single']"
+    :class="[`variant-${variant}`, multiple ? 'is-multiple' : 'is-single', containerClass]"
   >
     <div class="picker-input-box" @click="toggleDropdown" :class="{ 'is-focus': showDropdown }">
       <!-- 多选模式下的标签显示区 -->
@@ -38,7 +38,7 @@
 
     <!-- Dropdown Panel -->
     <Teleport to="body">
-      <div v-if="showDropdown" class="picker-dropdown-panel" :style="dropdownStyle" @click.stop>
+      <div v-if="showDropdown" class="picker-dropdown-panel" :class="dropdownClass" :style="dropdownStyle" @click.stop>
         <div class="search-section" @click.stop>
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -56,7 +56,7 @@
           </div>
         </div>
 
-        <div class="items-list" v-loading="loading">
+        <div class="items-list" v-loading="showLoading && loading">
           <div v-if="listData.length === 0 && !loading" class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -85,7 +85,7 @@
           </div>
         </div>
 
-        <div v-if="paginationData.total > paginationData.pageSize" class="pagination-section">
+        <div v-if="showPagination && paginationData.total > paginationData.pageSize" class="pagination-section">
           <el-pagination
             background
             layout="prev, pager, next"
@@ -109,20 +109,28 @@ interface IGenericPickerProps {
   placeholder?: string
   searchPlaceholder?: string
   multiple?: boolean
-  variant?: "fancy" | "simple"
+  variant?: "fancy" | "simple" | "element"
   // API 属性与辅助函数
   searchApi: (params: { keyword: string; offset: number; limit: number }) => Promise<{ total: number; data: T[] }>
   resolveApi: (key: K) => Promise<T | null>
   keyField: keyof T
   labelField: keyof T
   fallbackBuilder: (key: K) => T
+  containerClass?: string
+  dropdownClass?: string
+  pageSize?: number
+  showPagination?: boolean
+  showLoading?: boolean
 }
 
 const props = withDefaults(defineProps<IGenericPickerProps>(), {
   placeholder: "请选择",
   searchPlaceholder: "搜索...",
   multiple: false,
-  variant: "fancy"
+  variant: "fancy",
+  pageSize: 3,
+  showPagination: true,
+  showLoading: false
 })
 
 // NOTE: 该组件为纯通用 UI 选择控制组件，通过 v-model 将选中的主键绑定同步给外部父组件
@@ -147,7 +155,7 @@ const {
   searchApi: props.searchApi,
   resolveApi: props.resolveApi,
   keyField: props.keyField,
-  pageSize: 3
+  pageSize: props.pageSize
 })
 
 // 下拉菜单定位样式计算
@@ -386,6 +394,57 @@ onUnmounted(() => {
 .generic-picker-container.variant-simple .picker-arrow svg {
   width: 12px;
   height: 12px;
+}
+
+/* element 风格输入框：用于需要和 Element Plus 表单控件完全对齐的场景 */
+.generic-picker-container.variant-element .picker-input-box {
+  min-height: 40px;
+  padding: 0 11px;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  box-shadow: none;
+  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.generic-picker-container.variant-element .picker-input-box:hover {
+  background: #ffffff;
+  border-color: #c0c4cc;
+  box-shadow: none;
+}
+
+.generic-picker-container.variant-element .picker-input-box.is-focus {
+  background: #ffffff;
+  border-color: #dcdfe6;
+  box-shadow: none;
+}
+
+.generic-picker-container.variant-element .selected-single {
+  gap: 0;
+}
+
+.generic-picker-container.variant-element .single-text,
+.generic-picker-container.variant-element .placeholder-text {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.generic-picker-container.variant-element .single-text {
+  color: #606266;
+}
+
+.generic-picker-container.variant-element .placeholder-text {
+  color: #a8abb2;
+}
+
+.generic-picker-container.variant-element .picker-arrow {
+  color: #a8abb2;
+}
+
+.generic-picker-container.variant-element .picker-arrow svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* Dropdown Panel 样式 */

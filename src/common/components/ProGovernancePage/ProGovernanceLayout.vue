@@ -16,6 +16,8 @@ withDefaults(
     selectionCount?: number
     /** 主动作配置 (如“新增”或“完善资料”) */
     primaryAction?: { capability?: string | string[]; label?: string; icon?: any }
+    /** 次动作配置 (如“新增分组”或“同步”) */
+    secondaryAction?: { capability?: string | string[]; label?: string; icon?: any }
     /** 危险/次要动作配置 (如“批量删除”或“注销主体”) */
     dangerAction?: { capability?: string | string[]; label?: string; icon?: any }
     /** 动作切换模式：true=选中数据时隐藏新增按钮，false=并排显示 */
@@ -43,6 +45,7 @@ const emit = defineEmits<{
   search: [val: string]
   refresh: []
   primaryAction: []
+  secondaryAction: []
   dangerAction: []
   back: []
 }>()
@@ -107,6 +110,18 @@ const handleSearch = () => {
               </template>
               <template v-else>
                 <AuthButton
+                  v-if="secondaryAction"
+                  type="primary"
+                  class="u-gov-btn"
+                  :class="{ 'is-detail': isDetail }"
+                  :capability="secondaryAction.capability"
+                  disable-mode
+                  @click="emit('secondaryAction')"
+                >
+                  <el-icon><component :is="secondaryAction.icon || Plus" /></el-icon>
+                  <span>{{ secondaryAction.label || "次要操作" }}</span>
+                </AuthButton>
+                <AuthButton
                   v-if="primaryAction"
                   type="primary"
                   class="u-gov-btn"
@@ -122,6 +137,18 @@ const handleSearch = () => {
             </template>
             <template v-else>
               <!-- 并排显示模式: 编辑在前，删除在后 -->
+              <AuthButton
+                v-if="secondaryAction"
+                type="primary"
+                class="u-gov-btn"
+                :class="{ 'is-detail': isDetail }"
+                :capability="secondaryAction.capability"
+                disable-mode
+                @click="emit('secondaryAction')"
+              >
+                <el-icon><component :is="secondaryAction.icon || Plus" /></el-icon>
+                <span>{{ secondaryAction.label || "次要操作" }}</span>
+              </AuthButton>
               <AuthButton
                 v-if="primaryAction"
                 type="primary"

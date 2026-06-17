@@ -83,6 +83,7 @@
         :page-sizes="paginationData.pageSizes"
         :pagination-layout="paginationData.layout"
         action-column-width="180"
+        action-column-fixed="right"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         @selection-change="handleSelectionChange"

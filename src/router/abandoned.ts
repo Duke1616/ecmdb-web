@@ -181,43 +181,43 @@
 //     ]
 //   },
 //   {
-//     path: "/cmdb/order",
+//     path: "/ticket",
 //     component: Layouts,
-//     redirect: "/cmdb/order/index",
+//     redirect: "/ticket/start",
 //     meta: {
 //       title: "工单中心",
 //       svgIcon: "order-center",
-//       platforms: ["cmdb"]
+//       platforms: ["ticket"]
 //     },
 //     children: [
 //       {
 //         path: "start",
-//         component: () => import("@/views/order/start/index.vue"),
-//         name: "order-start",
+//         component: () => import("@/pages/ticket/start/index.vue"),
+//         name: "TicketSubmission",
 //         meta: {
 //           title: "提交工单",
 //           svgIcon: "submit-order",
-//           platforms: ["cmdb"]
+//           platforms: ["ticket"]
 //         }
 //       },
 //       {
 //         path: "list",
-//         component: () => import("@/views/order/index.vue"),
-//         name: "order-list",
+//         component: () => import("@/pages/ticket/center/index.vue"),
+//         name: "TicketCenter",
 //         meta: {
-//           title: "工单列表",
+//           title: "工单中心",
 //           svgIcon: "order-list",
-//           platforms: ["cmdb"]
+//           platforms: ["ticket"]
 //         }
 //       },
 //       {
 //         path: "convert",
-//         component: () => import("@/views/order/convert/index.vue"),
-//         name: "order-convert",
+//         component: () => import("@/pages/ticket/center/convert/index.vue"),
+//         name: "TicketConvert",
 //         meta: {
 //           title: "工单流转",
 //           svgIcon: "order-convert",
-//           platforms: ["cmdb"]
+//           platforms: ["ticket"]
 //         }
 //       }
 //     ]
@@ -234,7 +234,7 @@
 //     children: [
 //       {
 //         path: "template",
-//         component: () => import("@/views/process/template/index.vue"),
+//         component: () => import("@/pages/ticket/template/index.vue"),
 //         name: "process-template",
 //         meta: {
 //           title: "模版管理",
@@ -296,7 +296,7 @@
 //       },
 //       {
 //         path: "history",
-//         component: () => import("@/views/task/history/index.vue"),
+//         component: () => import("@/pages/ticket/task-history/index.vue"),
 //         name: "task-history",
 //         meta: {
 //           title: "历史任务",

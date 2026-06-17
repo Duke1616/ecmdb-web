@@ -72,11 +72,7 @@
           @action="handleResourceTableAction"
         >
           <!-- 安全字段和链接字段插槽 -->
-          <template
-            v-for="field in displayFields"
-            :key="`field-${field.id}`"
-            #[field.field_uid]="{ row }"
-          >
+          <template v-for="field in displayFields" :key="`field-${field.id}`" #[field.field_uid]="{ row }">
             <template v-if="field.secure">
               <el-button
                 v-if="!secureDisplay.get(row.id)"
