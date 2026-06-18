@@ -185,7 +185,7 @@
 //     component: Layouts,
 //     redirect: "/ticket/start",
 //     meta: {
-//       title: "工单中心",
+//       title: "工单管理",
 //       svgIcon: "order-center",
 //       platforms: ["ticket"]
 //     },
@@ -202,17 +202,17 @@
 //       },
 //       {
 //         path: "list",
-//         component: () => import("@/pages/ticket/center/index.vue"),
-//         name: "TicketCenter",
+//         component: () => import("@/pages/ticket/manager/index.vue"),
+//         name: "TicketManager",
 //         meta: {
-//           title: "工单中心",
+//           title: "工单管理",
 //           svgIcon: "order-list",
 //           platforms: ["ticket"]
 //         }
 //       },
 //       {
 //         path: "convert",
-//         component: () => import("@/pages/ticket/center/convert/index.vue"),
+//         component: () => import("@/pages/ticket/manager/convert/index.vue"),
 //         name: "TicketConvert",
 //         meta: {
 //           title: "工单流转",
@@ -244,8 +244,8 @@
 //       },
 //       {
 //         path: "workflow",
-//         component: () => import("@/views/process/index.vue"),
-//         name: "process-workflow",
+//         component: () => import("@/pages/ticket/workflow/index.vue"),
+//         name: "ticket-workflow",
 //         meta: {
 //           title: "流程管理",
 //           svgIcon: "process",

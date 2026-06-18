@@ -65,8 +65,8 @@
 <script lang="ts" setup>
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { orderTaskRecordsApi } from "@/api/ticket/order"
-import { taskRecord } from "@/api/ticket/order/types/order"
+import { listTicketTaskRecordsApi } from "@/api/ticket/manager"
+import { taskRecord } from "@/api/ticket/manager/types/manager"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 interface Props {
@@ -111,12 +111,12 @@ const getTimelineItemColor = (row: taskRecord) => {
 }
 
 /** 查询审批记录列表 */
-const listOrderTaskRecordsData = async () => {
+const listTicketTaskRecordsData = async () => {
   if (!props.processInstId) return
 
   loading.value = true
   try {
-    const { data } = await orderTaskRecordsApi({
+    const { data } = await listTicketTaskRecordsApi({
       offset: (paginationData.currentPage - 1) * paginationData.pageSize,
       limit: paginationData.pageSize,
       process_inst_id: props.processInstId
@@ -132,10 +132,10 @@ const listOrderTaskRecordsData = async () => {
 }
 
 /** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listOrderTaskRecordsData, { immediate: true })
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listTicketTaskRecordsData, { immediate: true })
 
 defineExpose({
-  listOrderTaskRecordsData
+  listTicketTaskRecordsData
 })
 </script>
 

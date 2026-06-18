@@ -1,7 +1,7 @@
-import type { order } from "@/api/ticket/order/types/order"
+import type { Ticket } from "@/api/ticket/manager/types/manager"
 import type { ButtonType } from "element-plus"
 
-export enum TicketOrderAction {
+export enum TicketAction {
   Detail = "detail",
   Urge = "urge",
   Revoke = "revoke",
@@ -12,16 +12,16 @@ export enum TicketOrderAction {
 
 export interface TicketOperateItem {
   name: string
-  code: TicketOrderAction
+  code: TicketAction
   type?: ButtonType
   icon?: unknown
   disabled?: boolean
   capability?: string | string[]
 }
 
-export type TicketOrderFetcher = (params: { offset: number; limit: number }) => Promise<{
+export type TicketFetcher = (params: { offset: number; limit: number }) => Promise<{
   data: {
-    tasks?: order[]
+    tasks?: Ticket[]
     total?: number
   }
 }>

@@ -4,11 +4,11 @@
     title="工单服务目录"
     subtitle="选择服务模板并快速发起流程工单"
     search-placeholder="搜索工单名称..."
-    :show-refresh="canViewTicketStart"
+    :show-refresh="true"
     @refresh="handleRefresh"
   >
     <template #actions-prefix>
-      <div v-if="canViewTicketStart" class="ticket-summary">
+      <div class="ticket-summary">
         <span class="summary-item">
           <span class="summary-label">模板总数</span>
           <strong>{{ totalTemplateCount }}</strong>
@@ -20,11 +20,7 @@
       </div>
     </template>
 
-    <div v-if="!canViewTicketStart" class="ticket-empty">
-      <el-empty :image-size="160" description="您没有权限查看工单服务目录" />
-    </div>
-
-    <div v-else-if="empty" class="ticket-empty">
+    <div v-if="empty" class="ticket-empty">
       <el-empty :image-size="160" description="暂无模板数据">
         <el-button type="primary" :loading="loading" @click="handleRefresh">刷新数据</el-button>
       </el-empty>
@@ -104,13 +100,8 @@ import type { template } from "@/api/ticket/template/types/template"
 
 const { hasPermission } = usePermission()
 
-const canViewTicketStart = computed(() => hasPermission(TICKET_CAPABILITIES.Center.Pipeline))
-const canCreateTicket = computed(() =>
-  hasPermission([TICKET_CAPABILITIES.Center.Pipeline, TICKET_CAPABILITIES.Center.Create])
-)
-const canFavoriteTemplate = computed(() =>
-  hasPermission([TICKET_CAPABILITIES.Center.Pipeline, TICKET_CAPABILITIES.Template.ToggleFavorite])
-)
+const canCreateTicket = computed(() => hasPermission(TICKET_CAPABILITIES.Manager.Submit))
+const canFavoriteTemplate = computed(() => hasPermission(TICKET_CAPABILITIES.Template.ToggleFavorite))
 
 const { selectedCategory, searchQuery } = useTemplateFilter()
 
@@ -158,7 +149,6 @@ const { selectedCategoryName, selectedCategorySubtitle, emptyDescription, displa
   })
 
 const handleRefresh = () => {
-  if (!canViewTicketStart.value) return
   refreshData()
 }
 
@@ -180,13 +170,7 @@ const handleTemplateScroll = (event: Event) => {
   if (distanceToBottom < 120) loadMoreTemplates()
 }
 
-watch(
-  canViewTicketStart,
-  (allowed) => {
-    if (allowed) refreshData()
-  },
-  { immediate: true }
-)
+watch(canCreateTicket, () => refreshData(), { immediate: true })
 
 watch(canFavoriteTemplate, (allowed) => {
   if (!allowed && selectedCategory.value === "favorites") selectedCategory.value = "all"
@@ -301,6 +285,7 @@ watch(
   min-width: 0;
   min-height: 0;
   flex-direction: column;
+  background: #ffffff;
 }
 
 .catalog-section-header {
@@ -309,21 +294,24 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px 20px 0;
+  min-height: 56px;
+  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
 
   h3 {
     margin: 0;
-    color: #111827;
-    font-size: 18px;
+    color: #1e293b;
+    font-size: 15px;
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.35;
   }
 
   p {
-    margin: 4px 0 0;
+    margin: 2px 0 0;
     color: #64748b;
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 12px;
+    line-height: 1.3;
   }
 }
 
@@ -331,14 +319,14 @@ watch(
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 18px 20px 20px;
+  padding: 16px 24px 24px;
   scroll-behavior: smooth;
 }
 
 .templates-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
 }
 
 .template-loading-more,

@@ -161,7 +161,7 @@ export function useTemplateActions(options: {
     }
 
     router.push({
-      name: "ProcessTemplateDispatch",
+      name: "TicketTemplateDispatch",
       query: {
         id: row.id
       }

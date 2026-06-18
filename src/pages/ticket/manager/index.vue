@@ -1,6 +1,6 @@
 <template>
-  <ProGovernanceLayout title="工单中心" subtitle="集中处理工单创建、审批和流转" @refresh="refreshActiveTab">
-    <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange" class="order-tabs">
+  <ProGovernanceLayout title="工单管理" subtitle="集中处理工单创建、审批和流转" @refresh="refreshActiveTab">
+    <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange" class="ticket-tabs">
       <template #default="{ activeTab }">
         <My v-if="activeTab === 'my'" ref="myRef" />
         <TodoUser v-if="activeTab === 'todo'" ref="todoUserRef" />
@@ -35,10 +35,10 @@ const historyRef = ref<InstanceType<typeof History>>()
 
 const refreshActiveTab = () => {
   const refreshMap: Record<string, () => void> = {
-    my: () => myRef.value?.startByOrdersData(),
-    "todo-all": () => todoRef.value?.listOrdersData(),
-    todo: () => todoUserRef.value?.listOrdersData(),
-    history: () => historyRef.value?.listOrdersData()
+    my: () => myRef.value?.listStartedTickets(),
+    "todo-all": () => todoRef.value?.listTicketsData(),
+    todo: () => todoUserRef.value?.listTicketsData(),
+    history: () => historyRef.value?.listTicketsData()
   }
 
   refreshMap[activeName.value]?.()
@@ -51,7 +51,7 @@ const handleTabChange = (tabName: string) => {
 </script>
 
 <style lang="scss" scoped>
-.order-tabs {
+.ticket-tabs {
   flex: 1;
   display: flex;
   flex-direction: column;

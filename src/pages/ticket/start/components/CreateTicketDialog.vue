@@ -60,8 +60,8 @@
 <script setup lang="ts">
 import { ref, watch, onUnmounted } from "vue"
 import { detailTemplateApi } from "@/api/ticket/template"
-import { createOrderApi } from "@/api/ticket/order"
-import type { createOrderReq } from "@/api/ticket/order/types/order"
+import { submitTicketApi } from "@/api/ticket/manager"
+import type { SubmitTicketReq } from "@/api/ticket/manager/types/manager"
 import type { Api, FormRule, Options } from "@form-create/element-ui"
 import formCreate from "@form-create/element-ui"
 import { ElMessage } from "element-plus"
@@ -164,13 +164,13 @@ const handleSubmit = async () => {
       return
     }
 
-    const formData: createOrderReq = {
+    const formData: SubmitTicketReq = {
       data: data.value,
       template_id: currentTemplate.value.id,
       workflow_id: currentTemplate.value.workflow_id
     }
 
-    await createOrderApi(formData)
+    await submitTicketApi(formData)
     visible.value = false
     ElMessage.success("工单创建成功")
   } catch (error) {

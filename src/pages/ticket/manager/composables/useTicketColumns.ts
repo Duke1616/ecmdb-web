@@ -9,7 +9,7 @@ const currentStepColumn: Column = { prop: "current_step", label: "当前步骤",
 const approvedByColumn: Column = { prop: "approved_by", label: "当前处理人", align: "center" }
 const procInstCreateTimeColumn: Column = { prop: "proc_inst_create_time", label: "流程提交时间", align: "center" }
 
-export const myOrderColumns: Column[] = [
+export const myTicketColumns: Column[] = [
   idColumn,
   templateColumn,
   provideColumn,
@@ -18,7 +18,7 @@ export const myOrderColumns: Column[] = [
   procInstCreateTimeColumn
 ]
 
-export const userTodoOrderColumns: Column[] = [
+export const userTodoTicketColumns: Column[] = [
   idColumn,
   taskIdColumn,
   templateColumn,
@@ -28,7 +28,7 @@ export const userTodoOrderColumns: Column[] = [
   procInstCreateTimeColumn
 ]
 
-export const allTodoOrderColumns: Column[] = [
+export const allTodoTicketColumns: Column[] = [
   idColumn,
   taskIdColumn,
   templateColumn,
@@ -39,7 +39,7 @@ export const allTodoOrderColumns: Column[] = [
   procInstCreateTimeColumn
 ]
 
-export const historyOrderColumns: Column[] = [
+export const historyTicketColumns: Column[] = [
   idColumn,
   templateColumn,
   provideColumn,

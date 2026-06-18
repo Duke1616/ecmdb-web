@@ -316,7 +316,7 @@ const getUsernamesData = async (uns: string[]) => {
         userMaps.value.set(username, u.nickname || u.username)
       }
     } catch (error) {
-      console.error(`process manager getUsernamesData failed for ${username}:`, error)
+      console.error(`ticket workflow getUsernamesData failed for ${username}:`, error)
     }
   })
   await Promise.all(promises)

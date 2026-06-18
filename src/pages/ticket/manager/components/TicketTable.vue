@@ -37,9 +37,9 @@ import type { Column, TableColumnCtx } from "element-plus"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
-import type { order } from "@/api/ticket/order/types/order"
+import type { Ticket } from "@/api/ticket/manager/types/manager"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
-import type { TicketOperateItem, TicketOrderAction } from "../composables/types"
+import type { TicketAction, TicketOperateItem } from "../composables/types"
 
 interface RowWithSpan {
   mergeCell?: string[]
@@ -48,7 +48,7 @@ interface RowWithSpan {
 
 const props = withDefaults(
   defineProps<{
-    data: order[]
+    data: Ticket[]
     columns: DataTableColumn[]
     paginationData: {
       total: number
@@ -59,7 +59,7 @@ const props = withDefaults(
     }
     loading?: boolean
     spanMethod?: boolean
-    getOperateItems: (row: order) => TicketOperateItem[]
+    getOperateItems: (row: Ticket) => TicketOperateItem[]
   }>(),
   {
     loading: false,
@@ -70,7 +70,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (event: "size-change", value: number): void
   (event: "current-change", value: number): void
-  (event: "operate", row: order, action: TicketOrderAction): void
+  (event: "operate", row: Ticket, action: TicketAction): void
 }>()
 
 const templateToolsStore = useTemplateToolsStore()
@@ -101,7 +101,7 @@ const resolvedTableProps = computed(() => {
   }
 })
 
-const emitOperateEvent = (row: order, action: TicketOrderAction) => {
+const emitOperateEvent = (row: Ticket, action: TicketAction) => {
   emit("operate", row, action)
 }
 

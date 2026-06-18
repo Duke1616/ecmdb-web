@@ -23,7 +23,7 @@
             <AuthButton
               type="primary"
               :icon="EditPen"
-              :capability="TICKET_CAPABILITIES.Center.Pass"
+              :capability="TICKET_CAPABILITIES.Manager.Pass"
               @click="handlePass"
             >
               修改
@@ -31,7 +31,7 @@
             <AuthButton
               type="danger"
               :icon="RefreshLeft"
-              :capability="TICKET_CAPABILITIES.Center.Revoke"
+              :capability="TICKET_CAPABILITIES.Manager.Revoke"
               @click="handleRevoke"
             >
               撤回
@@ -68,7 +68,7 @@
           <AuthButton
             type="primary"
             :icon="Check"
-            :capability="TICKET_CAPABILITIES.Center.Pass"
+            :capability="TICKET_CAPABILITIES.Manager.Pass"
             @click="handlePassConfirm"
           >
             同意
@@ -76,12 +76,12 @@
           <AuthButton
             type="danger"
             :icon="Close"
-            :capability="TICKET_CAPABILITIES.Center.Reject"
+            :capability="TICKET_CAPABILITIES.Manager.Reject"
             @click="handleRejectConfirm"
           >
             驳回
           </AuthButton>
-          <AuthButton :icon="Switch" :capability="TICKET_CAPABILITIES.Center.Transfer" @click="openTransfer">
+          <AuthButton :icon="Switch" :capability="TICKET_CAPABILITIES.Manager.Transfer" @click="openTransfer">
             转签
           </AuthButton>
         </div>
@@ -109,18 +109,18 @@ import { detailTemplateApi } from "@/api/ticket/template/index.js"
 import formCreate, { Api, FormRule } from "@form-create/element-ui"
 import { ref, watch } from "vue"
 import {
-  getOrderByProcessInstIdApi,
-  passOrderApi,
-  rejectOrderApi,
-  revokeOrderApi,
-  transferOrderApi
-} from "@/api/ticket/order/index.js"
-import { passOrder } from "@/api/ticket/order/types/order.js"
+  getTicketByProcessInstIdApi,
+  passTicketApi,
+  rejectTicketApi,
+  revokeTicketApi,
+  transferTicketApi
+} from "@/api/ticket/manager/index.js"
+import type { PassTicketReq } from "@/api/ticket/manager/types/manager.js"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, ElMessageBox, ElMessage } from "element-plus"
 import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch } from "@element-plus/icons-vue"
 import DynamicForm from "./components/DynamicForm.vue"
-import { getTaskFormConfigApi } from "@/api/ticket/order/index"
+import { getTaskFormConfigApi } from "@/api/ticket/manager/index"
 import { removeFetchFromRules } from "@/common/utils/form-create"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
@@ -154,11 +154,11 @@ const data = ref<TicketFormData>({})
 const rule = ref<FormRule[]>()
 const options = ref<FormCreateOptions>()
 
-const DEFAULT_FORM_DATA: passOrder = {
+const DEFAULT_FORM_DATA: PassTicketReq = {
   task_id: 0,
   comment: ""
 }
-const formData = ref<passOrder>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<PassTicketReq>(cloneDeep(DEFAULT_FORM_DATA))
 const taskFormSchema = ref<DynamicFormField[]>([])
 const taskFormData = ref<DynamicFormData>({})
 const formRef = ref<FormInstance | null>(null)
@@ -181,12 +181,12 @@ const canOperate = (capability: string) => {
 }
 
 const openTransfer = () => {
-  if (!canOperate(TICKET_CAPABILITIES.Center.Transfer)) return
+  if (!canOperate(TICKET_CAPABILITIES.Manager.Transfer)) return
   transferVisible.value = true
 }
 
 const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
-  if (!canOperate(TICKET_CAPABILITIES.Center.Transfer)) return
+  if (!canOperate(TICKET_CAPABILITIES.Manager.Transfer)) return
 
   const usernames = assignees.filter((a) => a.rule === "appoint").flatMap((a) => a.values)
 
@@ -197,7 +197,7 @@ const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
 
   transferLoading.value = true
   try {
-    await transferOrderApi({ task_id: props.taskId!, usernames })
+    await transferTicketApi({ task_id: props.taskId!, usernames })
     ElMessage.success("转签成功")
     resetForm()
   } catch (error) {
@@ -261,20 +261,20 @@ const handleDetail = async (id: number) => {
   }
 }
 
-const handleGetOrderData = async (processInstId: number) => {
+const handleGetTicketData = async (processInstId: number) => {
   try {
-    const { data: orderInfo } = await getOrderByProcessInstIdApi(processInstId)
-    data.value = orderInfo.data as TicketFormData
+    const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
+    data.value = ticketInfo.data as TicketFormData
 
-    const taskId = props.taskId || orderInfo.task_id
-    if (taskId && orderInfo.workflow_id) {
-      await handleGetTaskFormConfig(taskId, orderInfo.workflow_id)
+    const taskId = props.taskId || ticketInfo.task_id
+    if (taskId && ticketInfo.workflow_id) {
+      await handleGetTaskFormConfig(taskId, ticketInfo.workflow_id)
     } else {
       taskFormSchema.value = []
     }
 
-    if (!props.templateId && orderInfo.template_id) {
-      await handleDetail(orderInfo.template_id)
+    if (!props.templateId && ticketInfo.template_id) {
+      await handleDetail(ticketInfo.template_id)
     }
   } catch (error) {
     data.value = {}
@@ -300,7 +300,7 @@ const handleGetTaskFormConfig = async (taskId: number, workflowId: number) => {
 
 // 同意确认弹窗
 const handlePassConfirm = async () => {
-  if (!canOperate(TICKET_CAPABILITIES.Center.Pass)) return
+  if (!canOperate(TICKET_CAPABILITIES.Manager.Pass)) return
   if (!formRef.value) return
 
   try {
@@ -318,7 +318,7 @@ const handlePassConfirm = async () => {
       type: "warning"
     })
       .then(() => {
-        handlePassOrder()
+        handlePassTicket()
       })
       .catch(() => {})
   } catch (error) {
@@ -327,7 +327,7 @@ const handlePassConfirm = async () => {
 }
 
 const handlePass = () => {
-  if (!canOperate(TICKET_CAPABILITIES.Center.Pass)) return
+  if (!canOperate(TICKET_CAPABILITIES.Manager.Pass)) return
 
   fApi.value?.validate((valid: boolean) => {
     if (!valid) return
@@ -344,15 +344,15 @@ const handlePass = () => {
           ...data.value
         }
 
-        handleSubmitChangedOrder(submitData)
+        handleSubmitChangedTicket(submitData)
       })
       .catch(() => {})
   })
 }
 
-const handleSubmitChangedOrder = async (submitData: passOrder) => {
+const handleSubmitChangedTicket = async (submitData: PassTicketReq) => {
   try {
-    await passOrderApi(submitData)
+    await passTicketApi(submitData)
     ElMessage.success("工单已提交")
     resetForm()
   } catch (error) {
@@ -360,7 +360,7 @@ const handleSubmitChangedOrder = async (submitData: passOrder) => {
   }
 }
 
-const handlePassOrder = async () => {
+const handlePassTicket = async () => {
   if (props.taskId) {
     formData.value.task_id = props.taskId
   }
@@ -371,7 +371,7 @@ const handlePassOrder = async () => {
     extra_data: taskFormData.value
   }
   try {
-    await passOrderApi(submitData)
+    await passTicketApi(submitData)
     ElMessage.success("工单已同意")
     resetForm()
   } catch (error) {
@@ -381,7 +381,7 @@ const handlePassOrder = async () => {
 
 // 驳回确认弹窗
 const handleRejectConfirm = async () => {
-  if (!canOperate(TICKET_CAPABILITIES.Center.Reject)) return
+  if (!canOperate(TICKET_CAPABILITIES.Manager.Reject)) return
 
   try {
     await ElMessageBox.confirm("确定要驳回此工单吗？此操作不可撤销。", "确认驳回", {
@@ -405,7 +405,7 @@ const handleReject = async () => {
   // 驳回审批
   const submitData = { ...formData.value, ...taskFormData.value }
   try {
-    await rejectOrderApi(submitData)
+    await rejectTicketApi(submitData)
     ElMessage.success("工单已驳回")
     resetForm()
   } catch (error) {
@@ -414,14 +414,14 @@ const handleReject = async () => {
 }
 
 const handleRevoke = async () => {
-  if (!canOperate(TICKET_CAPABILITIES.Center.Revoke)) return
+  if (!canOperate(TICKET_CAPABILITIES.Manager.Revoke)) return
 
   if (!props.processInstId) {
     return
   }
 
   try {
-    await revokeOrderApi({
+    await revokeTicketApi({
       instance_id: props.processInstId,
       force: true
     })
@@ -446,17 +446,17 @@ const resetForm = () => {
   emits("refresh-data")
 }
 
-const syncOrderContext = async () => {
+const syncTicketContext = async () => {
   if (props.templateId && props.processInstId) {
     await handleDetail(props.templateId)
   }
 
   if (props.processInstId) {
-    await handleGetOrderData(props.processInstId)
+    await handleGetTicketData(props.processInstId)
   }
 }
 
-watch([() => props.templateId, () => props.processInstId], syncOrderContext, { immediate: true })
+watch([() => props.templateId, () => props.processInstId], syncTicketContext, { immediate: true })
 
 defineExpose({})
 </script>

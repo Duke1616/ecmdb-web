@@ -1,11 +1,11 @@
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
-import type { order } from "@/api/ticket/order/types/order"
-import type { TicketOrderFetcher } from "./types"
+import type { Ticket } from "@/api/ticket/manager/types/manager"
+import type { TicketFetcher } from "./types"
 
-interface UseTicketOrderListOptions {
-  fetcher: TicketOrderFetcher
+interface UseTicketListOptions {
+  fetcher: TicketFetcher
   mergeFields?: string[]
 }
 
@@ -15,11 +15,11 @@ interface SpanRow {
   [key: string]: unknown
 }
 
-export const useTicketOrderList = ({ fetcher, mergeFields = [] }: UseTicketOrderListOptions) => {
+export const useTicketList = ({ fetcher, mergeFields = [] }: UseTicketListOptions) => {
   const templateToolsStore = useTemplateToolsStore()
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
-  const ordersData = ref<order[]>([])
+  const ticketsData = ref<Ticket[]>([])
   const loading = ref(false)
 
   const setTableRowSpan = (tableData: SpanRow[], colFields: string[]) => {
@@ -41,7 +41,7 @@ export const useTicketOrderList = ({ fetcher, mergeFields = [] }: UseTicketOrder
     })
   }
 
-  const loadOrdersData = async () => {
+  const loadTicketsData = async () => {
     loading.value = true
 
     try {
@@ -51,33 +51,33 @@ export const useTicketOrderList = ({ fetcher, mergeFields = [] }: UseTicketOrder
       })
 
       paginationData.total = data.total || 0
-      ordersData.value = data.tasks || []
+      ticketsData.value = data.tasks || []
 
       if (mergeFields.length > 0) {
-        setTableRowSpan(ordersData.value as SpanRow[], mergeFields)
+        setTableRowSpan(ticketsData.value as SpanRow[], mergeFields)
       }
 
-      const templateIds = ordersData.value.map((item) => item.template_id).filter(Boolean)
+      const templateIds = ticketsData.value.map((item) => item.template_id).filter(Boolean)
       if (templateIds.length > 0) {
         templateToolsStore.setByTemplateIds(templateIds)
       }
     } catch (error) {
-      ordersData.value = []
+      ticketsData.value = []
       paginationData.total = 0
     } finally {
       loading.value = false
     }
   }
 
-  watch([() => paginationData.currentPage, () => paginationData.pageSize], loadOrdersData, { immediate: true })
+  watch([() => paginationData.currentPage, () => paginationData.pageSize], loadTicketsData, { immediate: true })
 
   return {
     templateToolsStore,
     paginationData,
     handleCurrentChange,
     handleSizeChange,
-    ordersData,
+    ticketsData,
     loading,
-    loadOrdersData
+    loadTicketsData
   }
 }

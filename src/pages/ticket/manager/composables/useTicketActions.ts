@@ -1,10 +1,10 @@
 import { h, markRaw } from "vue"
 import { Bell, Check, Refresh, RefreshLeft, View } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { revokeOrderApi } from "@/api/ticket/order"
-import type { order } from "@/api/ticket/order/types/order"
+import { revokeTicketApi } from "@/api/ticket/manager"
+import type { Ticket } from "@/api/ticket/manager/types/manager"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
-import { TicketOrderAction } from "./types"
+import { TicketAction } from "./types"
 import type { TicketOperateItem } from "./types"
 
 const viewIcon = markRaw(View)
@@ -13,88 +13,88 @@ const revokeIcon = markRaw(RefreshLeft)
 const checkIcon = markRaw(Check)
 const refreshIcon = markRaw(Refresh)
 
-export const myOrderOperateItems: TicketOperateItem[] = [
+export const myTicketOperateItems: TicketOperateItem[] = [
   {
     name: "详情",
-    code: TicketOrderAction.Detail,
+    code: TicketAction.Detail,
     type: "primary",
     icon: viewIcon,
-    capability: TICKET_CAPABILITIES.Center.Detail
+    capability: TICKET_CAPABILITIES.Manager.Detail
   },
   {
     name: "催办",
-    code: TicketOrderAction.Urge,
+    code: TicketAction.Urge,
     type: "warning",
     icon: bellIcon,
-    capability: TICKET_CAPABILITIES.Center.MyStart
+    capability: TICKET_CAPABILITIES.Manager.MyStart
   },
   {
     name: "撤回",
-    code: TicketOrderAction.Revoke,
+    code: TicketAction.Revoke,
     type: "danger",
     icon: revokeIcon,
-    capability: TICKET_CAPABILITIES.Center.Revoke
+    capability: TICKET_CAPABILITIES.Manager.Revoke
   }
 ]
 
 export const userTodoOperateItems: TicketOperateItem[] = [
   {
     name: "处理",
-    code: TicketOrderAction.Approve,
+    code: TicketAction.Approve,
     type: "success",
     icon: checkIcon,
-    capability: TICKET_CAPABILITIES.Center.Pass
+    capability: TICKET_CAPABILITIES.Manager.Pass
   }
 ]
 
-export const getAllTodoOperateItems = (row: order): TicketOperateItem[] => {
+export const getAllTodoOperateItems = (row: Ticket): TicketOperateItem[] => {
   const items: TicketOperateItem[] = [
     {
       name: "处理",
-      code: TicketOrderAction.Approve,
+      code: TicketAction.Approve,
       type: "success",
       icon: checkIcon,
-      capability: TICKET_CAPABILITIES.Center.Pass
+      capability: TICKET_CAPABILITIES.Manager.Pass
     }
   ]
 
   if (row.current_step?.startsWith("自动化-") && row.approved_by?.includes("automation")) {
     items.push({
       name: "刷新",
-      code: TicketOrderAction.Refresh,
+      code: TicketAction.Refresh,
       type: "primary",
       icon: refreshIcon,
-      capability: TICKET_CAPABILITIES.Center.Todo
+      capability: TICKET_CAPABILITIES.Manager.Todo
     })
   }
 
   return items
 }
 
-export const getHistoryOperateItems = (row: order): TicketOperateItem[] => {
+export const getHistoryOperateItems = (row: Ticket): TicketOperateItem[] => {
   if (row.current_step?.startsWith("自动化-")) return []
 
   return [
     {
       name: "查看",
-      code: TicketOrderAction.View,
+      code: TicketAction.View,
       type: "success",
       icon: viewIcon,
-      capability: TICKET_CAPABILITIES.Center.Detail
+      capability: TICKET_CAPABILITIES.Manager.Detail
     }
   ]
 }
 
-export const useTicketOrderActions = (options: {
+export const useTicketActions = (options: {
   refresh: () => void
   getTemplateName: (templateId: number) => string | undefined
-  openDetail: (row: order, action?: string) => void
+  openDetail: (row: Ticket, action?: string) => void
 }) => {
   const handleUrging = () => {
     ElMessage.error("暂不支持功能")
   }
 
-  const handleRevoke = (row: order) => {
+  const handleRevoke = (row: Ticket) => {
     ElMessageBox({
       title: "撤销工单",
       message: h("p", null, [
@@ -106,7 +106,7 @@ export const useTicketOrderActions = (options: {
       cancelButtonText: "取消",
       type: "warning"
     }).then(async () => {
-      await revokeOrderApi({
+      await revokeTicketApi({
         instance_id: row.process_instance_id,
         force: true
       })
@@ -114,24 +114,24 @@ export const useTicketOrderActions = (options: {
     })
   }
 
-  const operateEvent = (data: order, action: TicketOrderAction) => {
+  const operateEvent = (data: Ticket, action: TicketAction) => {
     switch (action) {
-      case TicketOrderAction.Detail:
+      case TicketAction.Detail:
         options.openDetail(data, `my-${data.current_step}`)
         break
-      case TicketOrderAction.Urge:
+      case TicketAction.Urge:
         handleUrging()
         break
-      case TicketOrderAction.Revoke:
+      case TicketAction.Revoke:
         handleRevoke(data)
         break
-      case TicketOrderAction.Approve:
+      case TicketAction.Approve:
         options.openDetail(data, "todo")
         break
-      case TicketOrderAction.Refresh:
+      case TicketAction.Refresh:
         options.refresh()
         break
-      case TicketOrderAction.View:
+      case TicketAction.View:
         options.openDetail(data, "history")
         break
     }

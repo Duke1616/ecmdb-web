@@ -113,7 +113,8 @@ const emit = defineEmits<{
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  min-height: calc(2.4rem + 0.4vw + 1px);
+  height: 49px;
+  min-height: 49px;
   padding: 0 16px;
   background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
@@ -133,8 +134,8 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   min-width: 34px;
-  height: 24px;
-  padding: 0 10px;
+  height: 22px;
+  padding: 0 9px;
   color: #475569;
   background: #e2e8f0;
   border-radius: 999px;

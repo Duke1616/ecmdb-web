@@ -81,7 +81,7 @@
       @confirm="handlerSubmitDispatch"
       @cancel="onClosed"
     >
-      <Form
+      <TemplateDispatchForm
         ref="apiRef"
         :fields-map="fieldMap"
         :template-id="templateData?.id"
@@ -93,7 +93,12 @@
 
     <!-- 同步其他 -->
     <FormDialog v-model="syncVisible" title="同步数据" width="30%" @confirm="handlerSubmiSync" @cancel="onSyncClosed">
-      <Sync ref="syncRef" :template-id="templateData?.id" @callback="listDispatchesData" @closed="onSyncClosed" />
+      <TemplateDispatchSync
+        ref="syncRef"
+        :template-id="templateData?.id"
+        @callback="listDispatchesData"
+        @closed="onSyncClosed"
+      />
     </FormDialog>
   </PageContainer>
 </template>
@@ -119,8 +124,8 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
-import Form from "./form.vue"
-import Sync from "./sync.vue"
+import TemplateDispatchForm from "./components/TemplateDispatchForm.vue"
+import TemplateDispatchSync from "./components/TemplateDispatchSync.vue"
 import { useRoute, useRouter } from "vue-router"
 
 // ==================== 路由和组合式函数 ====================
@@ -132,8 +137,8 @@ const canViewDispatch = computed(() => hasPermission(TICKET_CAPABILITIES.Dispatc
 
 // ==================== 响应式数据 ====================
 // 组件引用
-const apiRef = ref<InstanceType<typeof Form>>()
-const syncRef = ref<InstanceType<typeof Sync>>()
+const apiRef = ref<InstanceType<typeof TemplateDispatchForm>>()
+const syncRef = ref<InstanceType<typeof TemplateDispatchSync>>()
 
 // 页面状态
 const templateData = ref<template>()

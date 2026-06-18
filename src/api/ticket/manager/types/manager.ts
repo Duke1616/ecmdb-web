@@ -1,15 +1,15 @@
-export interface createOrderReq {
+export interface SubmitTicketReq {
   template_id: number
   workflow_id: number
   data: object
 }
 
-export interface transferOrderReq {
+export interface TransferTicketReq {
   task_id: number
   usernames: string[]
 }
 
-export interface todoOrderReq {
+export interface TodoTicketReq {
   user_id?: string
   process_name?: string
   sort_by_asc: boolean
@@ -17,20 +17,20 @@ export interface todoOrderReq {
   limit: number
 }
 
-export interface historyOrderReq {
+export interface HistoryTicketReq {
   user_id?: string
   offset: number
   limit: number
 }
 
-export interface startByOrderReq {
+export interface StartedTicketReq {
   user_id?: string
   process_name?: string
   offset: number
   limit: number
 }
 
-export interface order {
+export interface Ticket {
   id: number
   task_id: number
   process_instance_id: number
@@ -44,32 +44,32 @@ export interface order {
   wtime: number
   current_step: string
   approved_by: string[]
-  steps: steps[]
+  steps: TicketStep[]
   data: object
 }
 
-export interface steps {
+export interface TicketStep {
   current_step: string
   approved_by: string[]
 }
 
-export interface revokeOrderReq {
+export interface RevokeTicketReq {
   instance_id: number
   force: boolean
 }
 
-export interface ordersListRes {
-  tasks: order[]
+export interface TicketListRes {
+  tasks: Ticket[]
   total: number
 }
 
-export interface passOrder {
+export interface PassTicketReq {
   task_id: number
   comment: string
-  extra_data?: Record<string, any>
+  extra_data?: Record<string, unknown>
 }
 
-export interface rejectOrder {
+export interface RejectTicketReq {
   task_id: number
   comment: string
 }
@@ -103,8 +103,8 @@ export interface taskRecords {
   total: number
 }
 
-export interface orders {
-  tasks: order[]
+export interface TicketsRes {
+  tasks: Ticket[]
   total: number
 }
 

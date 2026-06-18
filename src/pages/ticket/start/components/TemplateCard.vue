@@ -58,11 +58,11 @@ const handleClick = () => {
 <style lang="scss" scoped>
 .template-card {
   background: white;
-  border-radius: calc(0.5rem + 0.1vw);
-  padding: calc(0.8rem + 0.2vw);
+  border-radius: 8px;
+  padding: 16px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
   border: 1px solid #e2e8f0;
   position: relative;
   display: flex;
@@ -70,14 +70,10 @@ const handleClick = () => {
   height: 100%;
   min-width: 0;
 
-  @media (min-width: 1280px) and (max-width: 1440px) {
-    padding: calc(0.6rem + 0.1vw);
-  }
-
   &:hover {
-    transform: translateY(calc(-0.1rem + 0.05vw));
-    box-shadow: 0 calc(0.5rem + 0.2vw) calc(1.5rem + 0.3vw) rgba(0, 0, 0, 0.15);
-    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    border-color: #bfdbfe;
 
     .template-icon {
       transform: scale(1.05);
@@ -103,7 +99,7 @@ const handleClick = () => {
 
     &:hover {
       transform: none;
-      box-shadow: 0 calc(0.1rem + 0.05vw) calc(0.2rem + 0.1vw) rgba(0, 0, 0, 0.1);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
       border-color: #e2e8f0;
     }
 
@@ -122,33 +118,35 @@ const handleClick = () => {
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
-  margin-bottom: calc(0.6rem + 0.1vw);
+  margin-bottom: 18px;
 }
 
 .template-icon-wrapper {
-  width: calc(2.4rem + 0.3vw);
-  height: calc(2.4rem + 0.3vw);
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #f1f5f9;
-  border-radius: calc(0.5rem + 0.1vw);
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
 
 .template-icon {
-  font-size: calc(1rem + 0.1vw);
+  font-size: 17px;
   color: #64748b;
   transition: all 0.2s ease;
 }
 
 .template-badge {
-  background: #dbeafe;
-  color: #1d4ed8;
-  padding: calc(0.15rem + 0.05vw) calc(0.3rem + 0.1vw);
-  border-radius: calc(0.3rem + 0.1vw);
-  font-size: calc(0.6rem + 0.1vw);
-  font-weight: 500;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
 }
 
 .template-actions {
@@ -192,14 +190,14 @@ const handleClick = () => {
 .template-card-body {
   flex: 1;
   min-width: 0;
-  margin-bottom: calc(0.6rem + 0.1vw);
+  margin-bottom: 18px;
 }
 
 .template-name {
-  font-size: calc(0.8rem + 0.1vw);
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: #1e293b;
-  margin: 0 0 calc(0.3rem + 0.05vw) 0;
+  margin: 0 0 8px;
   overflow: hidden;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -209,7 +207,7 @@ const handleClick = () => {
 .template-description {
   display: -webkit-box;
   overflow: hidden;
-  font-size: calc(0.7rem + 0.1vw);
+  font-size: 13px;
   color: #64748b;
   margin: 0;
   line-height: 1.5;
@@ -225,15 +223,15 @@ const handleClick = () => {
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
-  padding-top: calc(0.5rem + 0.1vw);
+  padding-top: 12px;
   border-top: 1px solid #f1f5f9;
 }
 
 .action-text {
   min-width: 0;
   overflow: hidden;
-  font-size: calc(0.7rem + 0.1vw);
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 700;
   color: #64748b;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -246,7 +244,7 @@ const handleClick = () => {
   transition: all 0.2s ease;
 
   .el-icon {
-    font-size: calc(0.8rem + 0.1vw);
+    font-size: 14px;
   }
 }
 </style>

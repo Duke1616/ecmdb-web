@@ -362,42 +362,36 @@ export const CMDB_CAPABILITIES = {
 } as const
 
 export const TICKET_CAPABILITIES = {
-  /** 工单中心相关 */
-  Center: {
-    /** 进入工单提交流 */
-    Pipeline: "ticket:center:pipeline",
+  /** 工单管理相关 */
+  Manager: {
     /** 流程轨迹图 */
-    Graph: "ticket:center:graph",
+    Graph: "ticket:manager:graph",
     /** 关联自动化任务 */
-    ViewTasks: "ticket:center:view_tasks",
+    ViewTasks: "ticket:manager:view_tasks",
     /** 所有待办工单 */
-    Todo: "ticket:center:todo",
+    Todo: "ticket:manager:todo",
     /** 我发起的工单 */
-    MyStart: "ticket:center:my_start",
+    MyStart: "ticket:manager:my_start",
     /** 任务节点表单配置 */
-    FormConfig: "ticket:center:form_config",
+    FormConfig: "ticket:manager:form_config",
     /** 工单详情 */
-    Detail: "ticket:center:get",
+    Detail: "ticket:manager:get",
     /** 历史工单 */
-    History: "ticket:center:history",
+    History: "ticket:manager:history",
     /** 我的待办工单 */
-    MyTodo: "ticket:center:my_todo",
+    MyTodo: "ticket:manager:my_todo",
     /** 转交审批人 */
-    Transfer: "ticket:center:transfer",
-    /** 创建工单 */
-    Create: "ticket:center:create",
+    Transfer: "ticket:manager:transfer",
+    /** 提交工单 */
+    Submit: "ticket:manager:submit",
     /** 撤销工单 */
-    Revoke: "ticket:center:revoke",
+    Revoke: "ticket:manager:revoke",
     /** 驳回审批 */
-    Reject: "ticket:center:reject",
+    Reject: "ticket:manager:reject",
     /** 流转记录 */
-    Record: "ticket:center:record",
+    Record: "ticket:manager:record",
     /** 同意审批 */
-    Pass: "ticket:center:pass",
-    /** @deprecated 使用 Pipeline */
-    View: "ticket:center:pipeline",
-    /** @deprecated 使用 Template.ToggleFavorite */
-    Favorite: "ticket:template:toggle_favorite"
+    Pass: "ticket:manager:pass"
   },
 
   /** 工单模板相关 */
@@ -516,22 +510,6 @@ export const TICKET_CAPABILITIES = {
   Ticket: {
     /** 工单详情 */
     Detail: "ticket:ticket:get"
-  },
-
-  /** @deprecated 工单操作权限已迁移到 Center 分组 */
-  Order: {
-    /** 创建工单 */
-    Create: "ticket:center:create",
-    /** 查看工单详情 */
-    Detail: "ticket:center:get",
-    /** 处理/同意工单 */
-    Approve: "ticket:center:pass",
-    /** 驳回工单 */
-    Reject: "ticket:center:reject",
-    /** 撤回/撤销工单 */
-    Revoke: "ticket:center:revoke",
-    /** 转签工单 */
-    Transfer: "ticket:center:transfer"
   }
 } as const
 

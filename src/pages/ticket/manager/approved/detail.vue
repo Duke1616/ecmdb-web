@@ -2,7 +2,7 @@
   <Drawer
     v-model="dialogVisible"
     :title="computedActionName"
-    :subtitle="orderInfo?.id ? `工单号: ${orderInfo.id}` : ''"
+    :subtitle="ticketInfo?.id ? `工单号: ${ticketInfo.id}` : ''"
     :header-icon="Document"
     size="40%"
     direction="rtl"
@@ -15,9 +15,9 @@
           <Form
             v-if="activeTab === 'form'"
             ref="formRef"
-            :template-id="props.orderInfo?.template_id"
-            :process-inst-id="props.orderInfo?.process_instance_id"
-            :task-id="props.orderInfo?.task_id"
+            :template-id="props.ticketInfo?.template_id"
+            :process-inst-id="props.ticketInfo?.process_instance_id"
+            :task-id="props.ticketInfo?.task_id"
             :action="props.action"
             @close="onClosed"
             @refresh-data="refreshData"
@@ -25,16 +25,16 @@
           <Flow
             v-if="activeTab === 'flow'"
             ref="flowRef"
-            :workflow-id="props.orderInfo?.workflow_id"
-            :process-inst-id="props.orderInfo?.process_instance_id"
-            :status="props.orderInfo?.status"
+            :workflow-id="props.ticketInfo?.workflow_id"
+            :process-inst-id="props.ticketInfo?.process_instance_id"
+            :status="props.ticketInfo?.status"
           />
           <Record
             v-if="activeTab === 'process'"
             ref="recordRef"
-            :process-inst-id="props.orderInfo?.process_instance_id"
+            :process-inst-id="props.ticketInfo?.process_instance_id"
           />
-          <Task v-if="activeTab === 'task'" ref="taskRef" :process-inst-id="props.orderInfo?.process_instance_id" />
+          <Task v-if="activeTab === 'task'" ref="taskRef" :process-inst-id="props.ticketInfo?.process_instance_id" />
         </template>
       </CustomTabs>
     </div>
@@ -47,7 +47,7 @@ import Flow from "./flow.vue"
 import Record from "./record.vue"
 import Task from "./task.vue"
 import CustomTabs from "@@/components/Tabs/CustomTabs.vue"
-import { order } from "@/api/ticket/order/types/order.js"
+import type { Ticket } from "@/api/ticket/manager/types/manager.js"
 import { Drawer } from "@@/components/Dialogs"
 import { Document } from "@element-plus/icons-vue"
 
@@ -70,7 +70,7 @@ const handleTabChange = (tabName: string) => {
   if (tabName === "flow") {
     // 流程图相关逻辑
   } else if (tabName === "process") {
-    recordRef.value?.listOrderTaskRecordsData()
+    recordRef.value?.listTicketTaskRecordsData()
   } else if (tabName === "task") {
     taskRef.value?.listTasksData()
   }
@@ -80,7 +80,7 @@ const handleTabChange = (tabName: string) => {
 interface Props {
   action: string
   dialogVisible: boolean | undefined
-  orderInfo: order | undefined
+  ticketInfo: Ticket | undefined
 }
 
 const props = defineProps<Props>()

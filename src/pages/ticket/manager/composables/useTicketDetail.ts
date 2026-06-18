@@ -1,27 +1,27 @@
 import { ref } from "vue"
-import type { order } from "@/api/ticket/order/types/order"
+import type { Ticket } from "@/api/ticket/manager/types/manager"
 
-export const useTicketOrderDetail = (defaultAction: string) => {
+export const useTicketDetail = (defaultAction: string) => {
   const dialogVisible = ref(false)
   const action = ref(defaultAction)
-  const orderInfo = ref<order>()
+  const ticketInfo = ref<Ticket>()
 
-  const openDetail = (row: order, nextAction = defaultAction) => {
+  const openDetail = (row: Ticket, nextAction = defaultAction) => {
     dialogVisible.value = true
-    orderInfo.value = row
+    ticketInfo.value = row
     action.value = nextAction
   }
 
   const closeDetail = () => {
     dialogVisible.value = false
-    orderInfo.value = undefined
+    ticketInfo.value = undefined
     action.value = defaultAction
   }
 
   return {
     dialogVisible,
     action,
-    orderInfo,
+    ticketInfo,
     openDetail,
     closeDetail
   }
