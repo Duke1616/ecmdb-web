@@ -74,7 +74,7 @@
 //     children: [
 //       {
 //         path: "index",
-//         component: () => import("@/views/model/index.vue"),
+//         component: () => import("@/pages/cmdb/model/index.vue"),
 //         name: "model-index",
 //         meta: {
 //           title: "模型资产",
@@ -84,7 +84,7 @@
 //       },
 //       {
 //         path: "info",
-//         component: () => import("@/views/model/info/index.vue"),
+//         component: () => import("@/pages/cmdb/model/info/index.vue"),
 //         name: "model-info",
 //         meta: {
 //           hidden: true,
@@ -306,107 +306,4 @@
 //       }
 //     ]
 //   },
-//   {
-//     path: "/cmdb/system",
-//     component: Layouts,
-//     redirect: "/cmdb/system/menu",
-//     meta: {
-//       title: "系统管理",
-//       svgIcon: "process-control",
-//       platforms: ["cmdb"]
-//     },
-//     children: [
-//       {
-//         path: "role",
-//         component: () => import("@/views/system/role/index.vue"),
-//         name: "system-role",
-//         meta: {
-//           title: "角色管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       },
-//       {
-//         path: "menu",
-//         component: () => import("@/views/system/menu/index.vue"),
-//         name: "system-menu",
-//         meta: {
-//           title: "菜单管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       },
-//       {
-//         path: "api",
-//         component: () => import("@/views/system/api/index.vue"),
-//         name: "system-api",
-//         meta: {
-//           title: "接口管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       },
-//       {
-//         path: "user",
-//         component: () => import("@/views/system/user/index.vue"),
-//         name: "system-user",
-//         meta: {
-//           title: "用户管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       }
-//     ]
-//   },
-//   {
-//     path: "/cmdb/system",
-//     component: Layouts,
-//     redirect: "/cmdb/system/menu",
-//     meta: {
-//       title: "系统管理",
-//       svgIcon: "process-control",
-//       platforms: ["cmdb"]
-//     },
-//     children: []
-//   }
-// ]
-
-/**
- * 动态路由
- * 用来放置有权限 (Roles 属性) 的路由
- * 必须带有 Name 属性
- */
-// export const dynamicRoutes: RouteRecordRaw[] = [
-//   {
-//     path: "/permission",
-//     component: Layouts,
-//     redirect: "/permission/page",
-//     name: "Permission",
-//     meta: {
-//       title: "权限",
-//       svgIcon: "lock",
-//       roles: ["admin", "editor"], // 可以在根路由中设置角色
-//       alwaysShow: true, // 将始终显示根菜单
-//       hidden: true
-//     },
-//     children: [
-//       {
-//         path: "page",
-//         component: () => import("@/views/permission/page.vue"),
-//         name: "PagePermission",
-//         meta: {
-//           title: "页面级",
-//           roles: ["admin"] // 或者在子导航中设置角色
-//         }
-//       },
-//       {
-//         path: "directive",
-//         component: () => import("@/views/permission/directive.vue"),
-//         name: "DirectivePermission",
-//         meta: {
-//           title: "按钮级" // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
-//         }
-//       }
-//     ]
-//   }
 // ]

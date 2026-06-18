@@ -6,7 +6,7 @@ import { routerConfig } from "@/router/config"
 // import { taskRoutes } from "./modules/alert"
 
 const Layouts = () => import("@/layouts/index.vue")
-const Logicflow = () => import("@/views/process/preview/logicflow.vue")
+const Logicflow = () => import("@/pages/ticket/preview/logicflow.vue")
 
 /**
  * 常驻路由

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, nextTick } from "vue"
+import { nextTick, onMounted, reactive, ref, type Ref } from "vue"
 import { v4 as uuidv4 } from "uuid"
 import LogicFlow from "@logicflow/core"
 import { Menu, MiniMap, Snapshot } from "@logicflow/extension"
@@ -13,37 +13,30 @@ import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import { registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 
-const lf = ref()
+const lf = ref<InstanceType<typeof LogicFlow>>()
 const containerRef = ref() as Ref<HTMLDivElement>
 
-const config = reactive<any>({
+const config = reactive({
   background: {
     backgroundColor: "#EFF2F6"
   }
 })
 
-const initLf = (data: any) => {
+const initLf = (data: LogicFlow.GraphConfigData) => {
   const lfInstance = new LogicFlow({
     ...config,
     plugins: [Menu, MiniMap, Snapshot],
     container: containerRef.value
   })
   lf.value = lfInstance
-  console.log("LogicFlow instance created:", lfInstance)
 
-  // 设置主题
   setThemem()
-
-  // 注册节点
   registerNode()
-
-  // 加载数据
   lf.value.render(data)
 
-  // 等待渲染完成后进行居中和缩放
   nextTick(() => {
-    lf.value.translateCenter()
-    lf.value.fitView()
+    lf.value?.translateCenter()
+    lf.value?.fitView()
 
     const el = document.getElementById("LF-preview")
     if (el) {
@@ -53,7 +46,7 @@ const initLf = (data: any) => {
 }
 
 const setThemem = () => {
-  lf.value.setTheme({
+  lf.value?.setTheme({
     circle: {
       stroke: "#3b82f6",
       strokeWidth: 3,
@@ -102,6 +95,7 @@ const setThemem = () => {
       color: "#4b5563",
       fontSize: 14,
       fontWeight: 500,
+      textWidth: 120,
       background: {
         fill: "#EFF2F6",
         stroke: "#d1d5db",
@@ -110,14 +104,15 @@ const setThemem = () => {
         padding: 8
       }
     }
-  })
+  } as Parameters<InstanceType<typeof LogicFlow>["setTheme"]>[0])
 }
 
 const registerNode = () => {
+  if (!lf.value) return
   registerAllNodes(lf.value)
 }
 
-const demo = {
+const demo: LogicFlow.GraphConfigData = {
   nodes: [
     {
       id: uuidv4(),
@@ -142,23 +137,17 @@ onMounted(() => {
   const INTERVAL = 50
   let waited = 0
 
-  const timer = setInterval(() => {
+  const timer = window.setInterval(() => {
     if (window.__DATA__) {
-      clearInterval(timer)
-      try {
-        initLf(window.__DATA__)
-      } catch (e) {
-        console.error("LogicFlow init error:", e)
-      }
+      window.clearInterval(timer)
+      initLf(window.__DATA__ as LogicFlow.GraphConfigData)
       return
     }
 
     waited += INTERVAL
     if (waited >= MAX_WAIT) {
-      clearInterval(timer)
-      console.warn("No data injected after timeout, rendering DEMO data.")
+      window.clearInterval(timer)
 
-      // 如果是本地预览模式，将容器调整为视口大小，以便正确居中显示
       const wrapper = document.querySelector(".logic-flow-preview") as HTMLElement
       const container = document.getElementById("LF-preview")
       if (wrapper && container) {
@@ -176,22 +165,22 @@ onMounted(() => {
 
 <style scoped>
 .logic-flow-preview {
-  display: block;
-  width: 1920px;
-  height: 1080px;
   position: fixed;
   top: 0;
   left: 0;
-  background: #eff2f6;
   z-index: 1000;
+  display: block;
+  width: 1920px;
+  height: 1080px;
   overflow: hidden;
+  background: #eff2f6;
 }
 
 #LF-preview {
   width: 1920px;
   height: 1080px;
-  outline: none;
   background: #eff2f6;
   border-radius: 0;
+  outline: none;
 }
 </style>

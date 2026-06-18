@@ -90,7 +90,7 @@
 import { Box } from "@element-plus/icons-vue"
 import type { Model } from "@/api/model/types/model"
 import type { ModelGroupView } from "@/common/utils/model"
-import { getIconClass, isImageUrl } from "@/views/model/utils/modelDisplay"
+import { getIconClass, isImageUrl } from "@/pages/cmdb/model/utils/modelDisplay"
 
 defineProps<{
   groups: ModelGroupView[]
