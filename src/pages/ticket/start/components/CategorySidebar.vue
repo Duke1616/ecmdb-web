@@ -55,7 +55,7 @@
           @click="selectedCategory = item.id"
         >
           <div class="category-icon">
-            <el-icon><Folder /></el-icon>
+            <AppIcon :name="item.icon || 'Folder'" class="group-custom-icon" />
           </div>
           <div class="category-info">
             <span class="category-name">{{ item.name }}</span>
@@ -68,7 +68,8 @@
 </template>
 
 <script setup lang="ts">
-import { Clock, Grid, Folder, Star } from "@element-plus/icons-vue"
+import { Clock, Grid, Star } from "@element-plus/icons-vue"
+import AppIcon from "@/common/components/AppIcon/index.vue"
 import type { templateGroupSummary } from "@/api/ticket/template/types/template"
 import type { TemplateCategoryKey } from "../composables/useTemplateFilter"
 
@@ -209,6 +210,10 @@ const selectedCategory = defineModel<TemplateCategoryKey>("selectedCategory", {
     background: #ecfdf5 !important;
     color: #059669 !important;
   }
+}
+
+.group-custom-icon {
+  font-size: 16px;
 }
 
 .category-item.active .category-icon.star-icon {

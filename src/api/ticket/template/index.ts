@@ -78,13 +78,6 @@ export function listTemplateGroupSummaryApi() {
   })
 }
 
-/** 聚合组数据查看 */
-export function pipelineGroupApi() {
-  return instance.post<template.templateCombinations>({
-    url: `${API_SERVICE.TICKET}/template/list/pipeline`
-  })
-}
-
 /** 根据模版 Ids 获取模版列表 */
 export function findByTemplateIdsApi(ids: number[]) {
   return instance.post<template.templates>({
@@ -117,14 +110,6 @@ export function getTemplateGroupsByIdsApi(ids: number[]) {
   })
 }
 
-/** 根据关键字搜索模版 */
-export function searchTemplateByKeywordApi(data: template.ByKeywordReq) {
-  return instance.post<template.templates>({
-    url: `${API_SERVICE.TICKET}/template/list/by_keyword`,
-    data: data
-  })
-}
-
 /** 收藏/取消收藏模版 */
 export function toggleFavoriteApi(data: template.toggleFavoriteReq) {
   return instance.post<boolean>({
@@ -135,7 +120,7 @@ export function toggleFavoriteApi(data: template.toggleFavoriteReq) {
 
 /** 获取用户收藏的模版数据 */
 export function listFavoriteApi() {
-  return instance.post<template.templateCombination>({
+  return instance.post<template.favoriteTemplates>({
     url: `${API_SERVICE.TICKET}/template/favorite/list`
   })
 }

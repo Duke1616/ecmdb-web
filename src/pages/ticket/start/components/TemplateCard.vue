@@ -214,6 +214,7 @@ const handleClick = () => {
   margin: 0;
   line-height: 1.5;
   overflow-wrap: anywhere;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }

@@ -2,7 +2,7 @@
   <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto">
     <el-form-item prop="template_group_id" label="模版组">
       <el-select v-model="formData.template_group_id" placeholder="请选择模版字段">
-        <el-option v-for="item in templateCombinations" :key="item.id" :label="item.name" :value="item.id" />
+        <el-option v-for="item in templateGroups" :key="item.id" :label="item.name" :value="item.id" />
       </el-select>
     </el-form-item>
     <el-form-item
@@ -29,9 +29,9 @@
 
 <script setup lang="ts">
 import { syncDispatchApi } from "@/api/ticket/dispatch"
-import { syncDispatchReq } from "@/api/ticket/dispatch/types/dispatch"
-import { pipelineGroupApi } from "@/api/ticket/template"
-import { template as tls, templateCombination } from "@/api/ticket/template/types/template"
+import type { syncDispatchReq } from "@/api/ticket/dispatch/types/dispatch"
+import { listTemplateApi, listTemplateGroupSummaryApi } from "@/api/ticket/template"
+import type { template, templateGroupSummary } from "@/api/ticket/template/types/template"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { onMounted, ref, watch } from "vue"
@@ -58,17 +58,14 @@ const formRules: FormRules = {
   sync_template_id: [{ required: true, message: "必须输入模版", trigger: "blur" }]
 }
 
-/** 查询流程列表 */
-const templateCombinations = ref<templateCombination[]>([])
-const listTemplateCombinations = () => {
-  pipelineGroupApi()
-    .then(({ data }) => {
-      templateCombinations.value = data.template_combinations
-    })
-    .catch(() => {
-      templateCombinations.value = []
-    })
-    .finally(() => {})
+const templateGroups = ref<templateGroupSummary[]>([])
+const listTemplateGroups = async () => {
+  try {
+    const { data } = await listTemplateGroupSummaryApi()
+    templateGroups.value = data.template_groups || []
+  } catch {
+    templateGroups.value = []
+  }
 }
 
 const syncSubmit = async () => {
@@ -98,20 +95,30 @@ const onClosed = () => {
 }
 
 // 当前模板选项
-const currentTemplates = ref<tls[]>([])
+const currentTemplates = ref<template[]>([])
 
 // 监听模板组变化，更新模板列表
 watch(
   () => formData.value.template_group_id,
-  (newGroupId: number | undefined) => {
-    const group = templateCombinations.value.find((g) => g.id === newGroupId)
-    currentTemplates.value = group?.templates ?? []
+  async (newGroupId: number | undefined) => {
+    if (!newGroupId) {
+      currentTemplates.value = []
+      formData.value.sync_template_id = undefined
+      return
+    }
+
+    const { data } = await listTemplateApi({
+      offset: 0,
+      limit: 100,
+      group_id: newGroupId
+    })
+    currentTemplates.value = data.templates || []
     formData.value.sync_template_id = undefined
   }
 )
 
 onMounted(() => {
-  listTemplateCombinations()
+  listTemplateGroups()
 })
 
 defineExpose({

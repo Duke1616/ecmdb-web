@@ -1,4 +1,4 @@
-import { onMounted, ref, watch } from "vue"
+import { onMounted, ref } from "vue"
 import { findByTemplateIdsApi } from "@/api/ticket/template"
 import type { template } from "@/api/ticket/template/types/template"
 
@@ -40,13 +40,18 @@ export function useTemplateUsage() {
     }
   }
 
-  const recordTemplateUsage = (id: number) => {
-    const nextIds = [id, ...recentIds.value.filter((item) => item !== id)].slice(0, MAX_RECENT_COUNT)
+  const recordTemplateUsage = (targetTemplate: template) => {
+    const nextIds = [targetTemplate.id, ...recentIds.value.filter((item) => item !== targetTemplate.id)].slice(
+      0,
+      MAX_RECENT_COUNT
+    )
     recentIds.value = nextIds
     writeRecentIds(nextIds)
+    recentTemplates.value = [
+      targetTemplate,
+      ...recentTemplates.value.filter((item) => item.id !== targetTemplate.id)
+    ].slice(0, MAX_RECENT_COUNT)
   }
-
-  watch(recentIds, syncRecentTemplates)
 
   onMounted(syncRecentTemplates)
 

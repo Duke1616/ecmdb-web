@@ -66,7 +66,7 @@
               :is-favorite="favoriteIds.includes(tpl.id)"
               :disabled="!canCreateTicket"
               :can-favorite="canFavoriteTemplate"
-              @click="handleDetail(tpl.id)"
+              @click="handleDetail(tpl)"
               @toggle-favorite="toggleFavorite"
             />
           </div>
@@ -100,6 +100,7 @@ import { useTemplateData } from "./composables/useTemplateData"
 import { useTemplateFilter } from "./composables/useTemplateFilter"
 import { useTemplateCatalogView } from "./composables/useTemplateCatalogView"
 import { useTemplateUsage } from "./composables/useTemplateUsage"
+import type { template } from "@/api/ticket/template/types/template"
 
 const { hasPermission } = usePermission()
 
@@ -161,13 +162,13 @@ const handleRefresh = () => {
   refreshData()
 }
 
-const handleDetail = (id: number) => {
+const handleDetail = (targetTemplate: template) => {
   if (!canCreateTicket.value) {
     ElMessage.warning("暂无提交工单权限")
     return
   }
-  recordTemplateUsage(id)
-  currentTemplateId.value = id
+  recordTemplateUsage(targetTemplate)
+  currentTemplateId.value = targetTemplate.id
   dialogVisible.value = true
 }
 

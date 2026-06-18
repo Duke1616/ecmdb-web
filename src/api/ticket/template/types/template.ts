@@ -23,11 +23,6 @@ export interface ListTemplateReq extends PageReq {
   keyword?: string
 }
 
-export interface ByKeywordReq extends PageReq {
-  /** 关键字 */
-  keyword: string
-}
-
 export interface rule {
   type: string
   title: string
@@ -90,16 +85,8 @@ export interface templateGroupSummaries {
   template_groups: templateGroupSummary[]
 }
 
-export interface templateCombination {
-  id: number
-  name: string
-  icon: string
-  total: number
+export interface favoriteTemplates {
   templates: template[]
-}
-
-export interface templateCombinations {
-  template_combinations: templateCombination[]
 }
 
 export interface toggleFavoriteReq {
