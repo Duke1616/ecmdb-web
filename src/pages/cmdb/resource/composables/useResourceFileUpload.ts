@@ -1,6 +1,6 @@
 import axios from "axios"
 import { putMinioPresignedUrl, removeMinioObject } from "@/api/tools"
-import { setCustomFieldApi } from "@/api/resource"
+import { setCustomFieldApi } from "@/api/cmdb/resource"
 import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
 import type { UploadRequestOptions, UploadUserFile } from "element-plus"
 

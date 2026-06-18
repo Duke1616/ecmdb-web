@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { getByModelUidsApi, ListModelsByGroupApi } from "@/api/model"
+import { getByModelUidsApi, ListModelsByGroupApi } from "@/api/cmdb/model"
 import { createModelListView, type ModelGroupView } from "@/common/utils/model"
 import { ref } from "vue"
 

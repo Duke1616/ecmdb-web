@@ -1,4 +1,4 @@
-import type { Model, ModelGroup, listModelsResponseData } from "@/api/model/types/model"
+import type { Model, ModelGroup, listModelsResponseData } from "@/api/cmdb/model/types/model"
 
 export type ModelGroupView = ModelGroup & {
   models: Model[]

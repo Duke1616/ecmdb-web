@@ -1,6 +1,6 @@
 import { ref } from "vue"
 import { FormInstance, FormRules } from "element-plus"
-import type { CreateAggregateGroupRuleReq, AggregateGroupRule } from "@/api/aggregate/types"
+import type { CreateAggregateGroupRuleReq, AggregateGroupRule } from "@/api/alert/aggregate/types"
 
 export function useAggregateForm(workspaceId: number) {
   // 表单数据

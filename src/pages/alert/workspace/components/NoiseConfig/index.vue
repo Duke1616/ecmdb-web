@@ -45,8 +45,8 @@ import { ElMessage } from "element-plus"
 import AggregateRules from "./aggregate/rules.vue"
 import InhibitRules from "./inhibit/rules.vue"
 import SilenceRules from "./silence_rules.vue"
-import { getNoiseConfigApi } from "@/api/noise"
-import type { RetrieveNoiseConfig } from "@/api/noise/types"
+import { getNoiseConfigApi } from "@/api/alert/noise"
+import type { RetrieveNoiseConfig } from "@/api/alert/noise/types"
 
 // 接收工作空间ID
 const props = defineProps<{

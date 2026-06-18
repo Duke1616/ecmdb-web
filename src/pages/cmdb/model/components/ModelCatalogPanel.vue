@@ -101,7 +101,7 @@
 
 <script setup lang="ts">
 import { Delete, Document } from "@element-plus/icons-vue"
-import type { Model } from "@/api/model/types/model"
+import type { Model } from "@/api/cmdb/model/types/model"
 import type { ModelGroupView } from "@/common/utils/model"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"

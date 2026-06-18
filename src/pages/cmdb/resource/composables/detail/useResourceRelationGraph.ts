@@ -1,7 +1,7 @@
 import { onMounted, ref, watch } from "vue"
 import type { RGJsonData, RGNode, RGUserEvent, RelationGraphComponent } from "relation-graph-vue3"
-import { findGraphApi, findLeftGraphApi, findRightGraphApi } from "@/api/resource"
-import type { findGraphReq } from "@/api/resource/types/resource"
+import { findGraphApi, findLeftGraphApi, findRightGraphApi } from "@/api/cmdb/resource"
+import type { findGraphReq } from "@/api/cmdb/resource/types/resource"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 

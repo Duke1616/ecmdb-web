@@ -134,9 +134,9 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { Setting, Edit, Delete, PriceTag, Warning, Operation, DataBoard } from "@element-plus/icons-vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 import AggregateDrawer from "./drawer.vue"
-import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/aggregate"
-import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
-import type { RetrieveAggregateGroup } from "@/api/aggregate/types/retrieve"
+import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/alert/aggregate"
+import type { CreateAggregateGroupRuleReq } from "@/api/alert/aggregate/types"
+import type { RetrieveAggregateGroup } from "@/api/alert/aggregate/types/retrieve"
 import { computed } from "vue"
 const props = defineProps<{ workspaceId: number }>()
 const currentWorkspaceId = computed(() => {

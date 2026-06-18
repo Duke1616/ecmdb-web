@@ -1,6 +1,6 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from "vue"
 import { ElMessage } from "element-plus"
-import { listModelGraphApi } from "@/api/model"
+import { listModelGraphApi } from "@/api/cmdb/model"
 import type { RGJsonData, RGNode, RelationGraphComponent } from "relation-graph-vue3"
 
 export const useModelRelationGraph = () => {

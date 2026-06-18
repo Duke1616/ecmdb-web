@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { Delete, Edit, Lock } from "@element-plus/icons-vue"
-import type { Attribute } from "@/api/attribute/types/attribute"
+import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 

@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import SearchSelectorBase from "./Base.vue"
-import { listRunnerApi, listRunnerByIdsApi } from "@/api/ticket/runner/index.js"
+import { listRunnerApi, listRunnerByIdsApi } from "@/api/task/runner/index.js"
 
 interface Props {
   modelValue?: number

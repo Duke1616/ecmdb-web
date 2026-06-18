@@ -1,8 +1,8 @@
 import { computed, h, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { deleteModelApi, getModelDetailApi } from "@/api/model"
-import type { Model } from "@/api/model/types/model"
+import { deleteModelApi, getModelDetailApi } from "@/api/cmdb/model"
+import type { Model } from "@/api/cmdb/model/types/model"
 import { useDataIO } from "@/common/composables/useDataIO"
 
 export const useModelDetail = () => {

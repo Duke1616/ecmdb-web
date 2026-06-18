@@ -8,8 +8,8 @@ import {
   deleteAttributeGroupApi,
   getModelAttributesWithGroupsApi,
   renameAttributeGroupApi
-} from "@/api/attribute"
-import type { Attribute } from "@/api/attribute/types/attribute"
+} from "@/api/cmdb/attribute"
+import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
 import { createAttributeListView, type AttributeGroupView } from "@/common/utils/attribute"
 import { useCrudAttributeGroup } from "./useCrudAttributeGroup"
 

@@ -155,15 +155,15 @@ import { ref, computed, onMounted, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Link, Search, Refresh, Connection, Filter } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { canBeRelatedFilterResourceApi } from "@/api/resource"
-import { canBeRelationFilterReq, type Resource } from "@/api/resource/types/resource"
-import { ListAttributeFieldApi } from "@/api/attribute"
-import { CreateResourceRelationApi, deleteResourceRelationApi } from "@/api/relation"
+import { canBeRelatedFilterResourceApi } from "@/api/cmdb/resource"
+import { canBeRelationFilterReq, type Resource } from "@/api/cmdb/resource/types/resource"
+import { ListAttributeFieldApi } from "@/api/cmdb/attribute"
+import { CreateResourceRelationApi, deleteResourceRelationApi } from "@/api/cmdb/relation"
 import {
   type ModelRelation,
   type ListRelationTypeData,
   type relatedAssetsData as RelatedAssetsData
-} from "@/api/relation/types/relation"
+} from "@/api/cmdb/relation/types/relation"
 import DataTable from "@/common/components/DataTable/index.vue"
 
 interface Props {

@@ -182,7 +182,7 @@ import { VueDraggable } from "vue-draggable-plus"
 import { Grid, Link, Lock, Minus, Plus, Setting, StarFilled } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import { useAttributeForm } from "../../composables/useAttributeForm"
-import type { Attribute } from "@/api/attribute/types/attribute"
+import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
 
 // 接收父组件传递
 interface Props {

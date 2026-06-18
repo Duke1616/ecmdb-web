@@ -144,11 +144,11 @@
 import { ref, computed } from "vue"
 import { Setting, View, Hide } from "@element-plus/icons-vue"
 import FileUpload from "./ResourceFileUpload.vue"
-import { createResourceApi, updateResourceApi } from "@/api/resource"
-import { Resource, type CreateOrUpdateResourceReq } from "@/api/resource/types/resource"
+import { createResourceApi, updateResourceApi } from "@/api/cmdb/resource"
+import { Resource, type CreateOrUpdateResourceReq } from "@/api/cmdb/resource/types/resource"
 import { cloneDeep } from "lodash-es"
 import { type FormInstance, type FormRules, ElMessage, UploadUserFile } from "element-plus"
-import { type Attribute } from "@/api/attribute/types/attribute"
+import { type Attribute } from "@/api/cmdb/attribute/types/attribute"
 import type { AttributeGroupView } from "@/common/utils/attribute"
 
 // 接收父组建传递

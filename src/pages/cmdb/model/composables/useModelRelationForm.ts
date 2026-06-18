@@ -1,13 +1,13 @@
 import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
-import { CreateModelRelationApi, UpdateModelRelationApi } from "@/api/relation"
+import { CreateModelRelationApi, UpdateModelRelationApi } from "@/api/cmdb/relation"
 import type {
   CreateModelRelationReq,
   ListRelationTypeData,
   ModelRelation,
   UpdateModelRelationReq
-} from "@/api/relation/types/relation"
+} from "@/api/cmdb/relation/types/relation"
 
 interface RelationFormProps {
   modelUid: string

@@ -187,7 +187,7 @@ import { Download, InfoFilled, View, Plus, Delete, Filter, List } from "@element
 import { ElMessage } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
 import { useDataIO } from "@/common/composables/useDataIO"
-import { type ExportReq, ExportScope, ExportOperator } from "@/api/resource/dataio/types"
+import { type ExportReq, ExportScope, ExportOperator } from "@/api/cmdb/resource/dataio/types"
 
 // 字段接口
 interface ModelField {

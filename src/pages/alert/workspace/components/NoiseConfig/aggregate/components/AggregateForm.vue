@@ -99,7 +99,7 @@
 import { ref } from "vue"
 import { Setting, Clock } from "@element-plus/icons-vue"
 import LabelSelector from "@@/components/LabelSelector/index.vue"
-import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
+import type { CreateAggregateGroupRuleReq } from "@/api/alert/aggregate/types"
 import type { FormInstance } from "element-plus"
 
 interface Props {

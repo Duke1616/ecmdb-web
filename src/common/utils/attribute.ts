@@ -1,4 +1,4 @@
-import type { Attribute, AttributeGroup, listAttributesResponseData } from "@/api/attribute/types/attribute"
+import type { Attribute, AttributeGroup, listAttributesResponseData } from "@/api/cmdb/attribute/types/attribute"
 
 const DEFAULT_SORT = 10000
 

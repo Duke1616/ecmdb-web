@@ -19,7 +19,7 @@ import { Setting } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import AggregateForm from "./components/AggregateForm.vue"
 import { useAggregateForm } from "./composables/useAggregateForm"
-import type { CreateAggregateGroupRuleReq } from "@/api/aggregate/types"
+import type { CreateAggregateGroupRuleReq } from "@/api/alert/aggregate/types"
 
 const emit = defineEmits<{
   (e: "confirm"): void

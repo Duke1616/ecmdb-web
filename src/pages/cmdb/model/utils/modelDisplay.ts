@@ -1,4 +1,4 @@
-import type { Model } from "@/api/model/types/model"
+import type { Model } from "@/api/cmdb/model/types/model"
 
 export type ModelStatus = "open" | "close" | "unknown"
 export type ModelFilterStatus = "all" | Exclude<ModelStatus, "unknown">

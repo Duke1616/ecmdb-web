@@ -1,6 +1,6 @@
 import { computed, ref } from "vue"
 import { useRouter } from "vue-router"
-import type { Model } from "@/api/model/types/model"
+import type { Model } from "@/api/cmdb/model/types/model"
 import type { ModelGroupView } from "@/common/utils/model"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"

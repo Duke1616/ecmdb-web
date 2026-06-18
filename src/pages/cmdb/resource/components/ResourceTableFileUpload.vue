@@ -106,7 +106,7 @@ import { Delete, Document, Download, FolderOpened, Plus, Upload } from "@element
 
 import { useResourceFileUpload } from "../composables/useResourceFileUpload"
 import { useFileDownload } from "@/common/composables/useFileDownload"
-import type { Resource } from "@/api/resource/types/resource"
+import type { Resource } from "@/api/cmdb/resource/types/resource"
 
 interface Props {
   modelValue: UploadUserFile[]

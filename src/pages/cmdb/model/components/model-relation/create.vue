@@ -106,7 +106,7 @@
 import { watch } from "vue"
 import { useModelStore } from "@/pinia/stores/model"
 import { Drawer } from "@@/components/Dialogs"
-import { type ListRelationTypeData, type ModelRelation } from "@/api/relation/types/relation"
+import { type ListRelationTypeData, type ModelRelation } from "@/api/cmdb/relation/types/relation"
 import { Setting, Link } from "@element-plus/icons-vue"
 import { useModelRelationForm } from "../../composables/useModelRelationForm"
 

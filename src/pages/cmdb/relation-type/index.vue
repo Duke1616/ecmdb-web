@@ -64,12 +64,12 @@ import {
   ListRelationTypeApi,
   UpdateRelationTypeApi,
   DeleteRelationTypeApi
-} from "@/api/relation"
+} from "@/api/cmdb/relation"
 import {
   type CreateRealtionTypeReq,
   type ListRelationTypeData,
   type UpdateRelationTypeReq
-} from "@/api/relation/types/relation"
+} from "@/api/cmdb/relation/types/relation"
 import { type FormInstance, type FormRules, ElMessage, ElMessageBox } from "element-plus"
 import { Edit, Delete } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"

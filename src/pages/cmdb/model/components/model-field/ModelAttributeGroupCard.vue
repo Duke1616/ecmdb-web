@@ -100,7 +100,7 @@
 <script setup lang="ts">
 import { ArrowRight, Delete, Edit, Plus, Rank } from "@element-plus/icons-vue"
 import { VueDraggable } from "vue-draggable-plus"
-import type { Attribute } from "@/api/attribute/types/attribute"
+import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
 import type { AttributeGroupView } from "@/common/utils/attribute"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { usePermission } from "@/common/composables/usePermission"

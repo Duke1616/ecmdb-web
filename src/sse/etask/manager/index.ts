@@ -1,5 +1,5 @@
 import { useSSE } from "@/common/utils/sse/useSSE"
-import type { TaskStatusEvent, TaskLogEvent, TaskExecutionEvent } from "@/api/etask/manager"
+import type { TaskStatusEvent, TaskLogEvent, TaskExecutionEvent } from "@/api/task/manager"
 import { API_SERVICE } from "@@/utils/service"
 import { toValue, type MaybeRefOrGetter } from "vue"
 

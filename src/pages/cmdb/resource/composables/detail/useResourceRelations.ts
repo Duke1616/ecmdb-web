@@ -1,16 +1,16 @@
 import { computed, h, nextTick, onMounted, reactive, ref, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { ListAttributeFieldApi } from "@/api/attribute"
-import type { Attribute } from "@/api/attribute/types/attribute"
+import { ListAttributeFieldApi } from "@/api/cmdb/attribute"
+import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
 import {
   ListModelRelationApi,
   ListRelatedAssetsApi,
   ListRelationTypeApi,
   deleteResourceRelationApi
-} from "@/api/relation"
-import type { ListRelationTypeData, ModelRelation, relatedAssetsData } from "@/api/relation/types/relation"
-import { findSecureData, listResourceByIdsApi } from "@/api/resource"
-import type { Resource } from "@/api/resource/types/resource"
+} from "@/api/cmdb/relation"
+import type { ListRelationTypeData, ModelRelation, relatedAssetsData } from "@/api/cmdb/relation/types/relation"
+import { findSecureData, listResourceByIdsApi } from "@/api/cmdb/resource"
+import type { Resource } from "@/api/cmdb/resource/types/resource"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import { useModelStore } from "@/pinia/stores/model"

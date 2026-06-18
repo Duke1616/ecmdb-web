@@ -266,7 +266,7 @@
 //     children: [
 //       {
 //         path: "codebook",
-//         component: () => import("@/views/task/codebook/index.vue"),
+//         component: () => import("@/pages/task/codebook/index.vue"),
 //         name: "task-codebook",
 //         meta: {
 //           title: "任务模版",
@@ -276,7 +276,7 @@
 //       },
 //       {
 //         path: "worker",
-//         component: () => import("@/views/task/worker/index.vue"),
+//         component: () => import("@/pages/task/worker/index.vue"),
 //         name: "task-worker",
 //         meta: {
 //           title: "工作节点",
@@ -286,7 +286,7 @@
 //       },
 //       {
 //         path: "runner",
-//         component: () => import("@/views/task/runner/index.vue"),
+//         component: () => import("@/pages/task/runner/index.vue"),
 //         name: "task-runner",
 //         meta: {
 //           title: "执行单元",

@@ -1,8 +1,8 @@
 import { ref } from "vue"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import { CreateModelApi, CreateModelGroupApi } from "@/api/model"
-import type { CreateModelGroupReq, CreateModelReq } from "@/api/model/types/model"
+import { CreateModelApi, CreateModelGroupApi } from "@/api/cmdb/model"
+import type { CreateModelGroupReq, CreateModelReq } from "@/api/cmdb/model/types/model"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 
