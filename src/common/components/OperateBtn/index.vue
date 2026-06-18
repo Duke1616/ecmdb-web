@@ -1,7 +1,7 @@
 <template>
-  <div v-if="props.items">
+  <div v-if="props.items" class="operate-actions">
     <!-- 当按钮总数超过限制时，进行折叠 -->
-    <div v-if="props.items.length > props.maxLength" class="btn-box">
+    <div v-if="props.items.length > props.maxLength" class="btn-container">
       <el-button
         v-for="(el, i) in showBtn"
         :key="i"
@@ -12,31 +12,24 @@
         :disabled="isBtnDisabled(el)"
         @click="routeEvent(props.operateItem, el.code)"
       >
-        <span> {{ el.name }}</span>
+        <span>{{ el.name }}</span>
       </el-button>
 
-      <el-dropdown trigger="hover" @command="handleCommand">
-        <span class="el-dropdown-link">
-          <el-icon style="color: #409eff; margin-left: 4px; cursor: pointer"><More /></el-icon>
-        </span>
+      <el-dropdown trigger="click" popper-class="operate-actions-dropdown" @command="handleCommand">
+        <el-button class="more-button" link size="small" aria-label="更多操作">
+          <el-icon><MoreFilled /></el-icon>
+        </el-button>
         <template #dropdown>
-          <el-dropdown-menu class="table-opetation-more-dropdown">
+          <el-dropdown-menu class="operate-dropdown-menu">
             <el-dropdown-item
               v-for="(item, index) in dropData"
               :key="index"
               :command="beforeHandleCommand(props.operateItem, item.name, item.code)"
               :disabled="isBtnDisabled(item)"
-              class="link-text"
+              :class="['operate-dropdown-item', `is-${item.type || 'default'}`]"
             >
-              <el-button
-                :type="item.type || 'primary'"
-                link
-                :icon="item.icon ? item.icon : ''"
-                size="small"
-                :disabled="isBtnDisabled(item)"
-              >
-                {{ item.name }}
-              </el-button>
+              <el-icon v-if="item.icon"><component :is="item.icon" /></el-icon>
+              <span>{{ item.name }}</span>
             </el-dropdown-item>
           </el-dropdown-menu>
         </template>
@@ -54,7 +47,7 @@
           :disabled="isBtnDisabled(item)"
           @click="routeEvent(operateItem, item.code)"
         >
-          <span> {{ item.name }}</span>
+          <span>{{ item.name }}</span>
         </el-button>
       </div>
     </div>
@@ -63,7 +56,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { More } from "@element-plus/icons-vue"
+import { MoreFilled } from "@element-plus/icons-vue"
 import { usePermission } from "@/common/composables/usePermission"
 
 interface Item {
@@ -139,35 +132,100 @@ const handleCommand = (command: any) => {
 </script>
 
 <style lang="scss" scoped>
-.link-text .el-button {
-  width: 100%;
-  text-align: left;
-}
-
 .btn-container {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
 }
 
 .btn-box {
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 
   .el-button {
-    min-width: 0px;
-    margin-right: 4px;
-    font-size: 13px;
-    padding: 4px 8px;
-    height: 32px;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    padding: 0 3px;
+    font-size: 12px;
+    font-weight: 600;
+
+    :deep(.el-icon) {
+      margin-right: 3px;
+      font-size: 14px;
+    }
   }
 }
 
-.el-dropdown-link {
-  display: flex;
+.more-button {
+  display: inline-flex;
   align-items: center;
-  height: 32px;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  color: #64748b;
+  border-radius: 5px;
+
+  :deep(.el-icon) {
+    font-size: 14px;
+  }
+
+  &:hover {
+    color: #2563eb;
+    background: #eff6ff;
+  }
+}
+
+:global(.operate-actions-dropdown) {
+  .el-popper__arrow::before {
+    border-color: #e2e8f0 !important;
+  }
+}
+
+:global(.operate-dropdown-menu) {
+  min-width: 88px;
+  padding: 4px;
+}
+
+:global(.operate-dropdown-item) {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px !important;
+  border-radius: 5px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+
+  .el-icon {
+    margin-right: 0;
+    font-size: 14px;
+  }
+
+  &.is-primary {
+    color: #2563eb;
+  }
+
+  &.is-success {
+    color: #16a34a;
+  }
+
+  &.is-warning {
+    color: #d97706;
+  }
+
+  &.is-danger {
+    color: #dc2626;
+  }
+
+  &.is-info,
+  &.is-default {
+    color: #64748b;
+  }
 }
 </style>

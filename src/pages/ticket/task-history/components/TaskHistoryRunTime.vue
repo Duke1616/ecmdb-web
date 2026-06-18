@@ -30,15 +30,16 @@ defineProps<{
   gap: 4px;
   padding: 2px 4px;
   border-radius: 4px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 
   &.plan {
-    background: #f0f9ff;
-    color: #0369a1;
+    color: #334155;
   }
 
   &.start {
-    background: #fdf2f8;
-    color: #be185d;
+    color: #334155;
   }
 }
 

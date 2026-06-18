@@ -19,6 +19,10 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
+      <template #uid="{ row }">
+        <code class="relation-uid">{{ row.uid }}</code>
+      </template>
+
       <!-- 操作列插槽 -->
       <template #actions="{ row }">
         <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
@@ -85,9 +89,9 @@ const currentId = ref<number>()
 // 表格列配置
 const tableColumns: Column[] = [
   { prop: "name", label: "名称", align: "center" },
-  { prop: "uid", label: "唯一标识", align: "center" },
-  { prop: "source_describe", label: "源->目标描述", align: "center" },
-  { prop: "target_describe", label: "目标->源描述", align: "center" }
+  { prop: "uid", label: "唯一标识", align: "center", slot: "uid" },
+  { prop: "source_describe", label: "源->目标描述", align: "center", minWidth: 160, showOverflowTooltip: true },
+  { prop: "target_describe", label: "目标->源描述", align: "center", minWidth: 160, showOverflowTooltip: true }
 ]
 
 const operateBtnItems = [
@@ -224,3 +228,12 @@ const listRelationTypesData = () => {
 /** 监听分页参数的变化 */
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listRelationTypesData, { immediate: true })
 </script>
+
+<style scoped lang="scss">
+.relation-uid {
+  color: #0f172a;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+</style>

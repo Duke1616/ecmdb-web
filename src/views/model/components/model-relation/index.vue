@@ -39,19 +39,19 @@
       </template>
 
       <template #source_model_uid="{ row }">
-        <div class="model-tag source-model">{{ getModelName(row.source_model_uid) }}</div>
+        <span class="model-name">{{ getModelName(row.source_model_uid) }}</span>
       </template>
 
       <template #target_model_uid="{ row }">
-        <div class="model-tag target-model">{{ getModelName(row.target_model_uid) }}</div>
+        <span class="model-name">{{ getModelName(row.target_model_uid) }}</span>
       </template>
 
       <template #relation_type_uid="{ row }">
-        <el-tag type="info" size="small" class="type-tag">{{ row.relation_type_uid }}</el-tag>
+        <span class="relation-type">{{ row.relation_type_uid }}</span>
       </template>
 
       <template #mapping="{ row }">
-        <div class="mapping-badge">{{ row.mapping }}</div>
+        <span class="mapping-text">{{ row.mapping }}</span>
       </template>
 
       <template #actions="{ row }">
@@ -112,12 +112,11 @@ const {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
-  margin-bottom: 16px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
 .toolbar-title {
@@ -150,47 +149,38 @@ const {
 
 :deep(.el-table) {
   .relation-id {
-    padding: 3px 8px;
-    color: #0369a1;
+    color: #0f172a;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 12px;
     font-weight: 600;
-    background: #e0f2fe;
-    border-radius: 4px;
   }
 
-  .model-tag {
+  .model-name,
+  .relation-type,
+  .mapping-text {
     display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 600;
-
-    &.source-model {
-      color: #1e40af;
-      background: #dbeafe;
-    }
-
-    &.target-model {
-      color: #166534;
-      background: #dcfce7;
-    }
+    max-width: 180px;
+    overflow: hidden;
+    color: #334155;
+    font-size: 13px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  .type-tag {
-    font-size: 11px;
+  .model-name {
     font-weight: 600;
   }
 
-  .mapping-badge {
-    display: inline-block;
-    padding: 3px 6px;
-    color: #374151;
+  .relation-type,
+  .mapping-text {
+    padding: 2px 8px;
+    color: #475569;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
-    font-weight: 600;
-    background: #f3f4f6;
-    border-radius: 3px;
+    font-size: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
   }
 }
 

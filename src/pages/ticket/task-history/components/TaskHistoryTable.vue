@@ -22,9 +22,7 @@
     </template>
 
     <template #is_timing="{ row }">
-      <el-tag :type="row.is_timing ? 'primary' : 'info'" size="small" effect="plain" class="type-tag">
-        {{ row.is_timing ? "定时任务" : "即时任务" }}
-      </el-tag>
+      <span class="type-tag">{{ row.is_timing ? "定时任务" : "即时任务" }}</span>
     </template>
 
     <template #run_time="{ row }">
@@ -84,6 +82,18 @@ const emitOperateEvent = (row: task, action: string) => {
 
 <style scoped lang="scss">
 .type-tag {
-  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 64px;
+  height: 24px;
+  padding: 0 8px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
 }
 </style>

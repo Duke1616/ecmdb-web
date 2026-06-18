@@ -7,7 +7,7 @@
             ref="tableRef"
             :data="enableRowDrag ? draggableData : data || []"
             class="data-table"
-            stripe
+            :stripe="false"
             :height="finalTableHeight"
             v-bind="tableProps"
             @selection-change="handleSelectionChange"
@@ -116,6 +116,7 @@
             :total="total"
             :page-size="pageSize"
             :current-page="currentPage"
+            small
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
             class="pagination"
@@ -310,13 +311,13 @@ const dynamicActionColumnWidth = computed(() => {
     const isSmallScreen = windowWidth.value < 1400
 
     // 基础宽度 - 确保能容纳4字按钮
-    let baseWidth = 200
+    let baseWidth = 180
 
     // 根据屏幕大小调整
     if (isSmallScreen) {
-      baseWidth = 220 // 小屏幕也需要足够宽度显示4字按钮
+      baseWidth = 200 // 小屏幕也需要足够宽度显示4字按钮
     } else if (windowWidth.value > 1920) {
-      baseWidth = 280 // 大屏幕可以使用更宽的列
+      baseWidth = 200 // 大屏幕维持稳定操作列，避免过宽
     }
 
     // 根据数据量调整
@@ -325,7 +326,7 @@ const dynamicActionColumnWidth = computed(() => {
     }
 
     // 确保最小宽度能容纳2个4字按钮
-    const minWidthForTwoButtons = 180 // 2个4字按钮的最小宽度
+    const minWidthForTwoButtons = 170 // 2个4字按钮的最小宽度
     baseWidth = Math.max(baseWidth, minWidthForTwoButtons)
 
     return baseWidth
@@ -414,11 +415,9 @@ defineExpose({
 /* 内容卡片 */
 .content-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -431,6 +430,7 @@ defineExpose({
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
 }
 
 .table-wrapper {
@@ -456,6 +456,8 @@ defineExpose({
     height: 100%;
     display: flex;
     flex-direction: column;
+    color: #334155;
+    font-size: 13px;
   }
 
   :deep(.el-table__body-wrapper) {
@@ -470,19 +472,19 @@ defineExpose({
   :deep(.el-table__header) {
     th {
       background: #f8fafc !important;
-      color: #374151;
-      font-weight: 600;
-      height: calc(2.4rem + 0.4vw);
+      color: #334155;
+      font-weight: 700;
+      height: 48px;
       padding: 0;
-      font-size: calc(0.6rem + 0.2vw);
+      font-size: 13px;
     }
 
     th .cell {
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: calc(2.4rem + 0.4vw);
-      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      min-height: 48px;
+      padding: 12px 14px;
       box-sizing: border-box;
       text-align: center;
     }
@@ -490,16 +492,17 @@ defineExpose({
 
   :deep(.el-table__body) {
     td {
-      font-size: calc(0.7rem + 0.25vw);
+      color: #334155;
+      font-size: 13px;
       padding: 0;
-      height: calc(2.6rem + 0.4vw);
+      height: 56px;
     }
 
     td .cell {
       display: flex;
       align-items: center;
-      min-height: calc(2.6rem + 0.4vw);
-      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
+      min-height: 56px;
+      padding: 12px 14px;
       box-sizing: border-box;
     }
   }
@@ -551,30 +554,43 @@ defineExpose({
 
     // 斑马纹样式 - 确保整行包括所有列都有一致背景
     tr.el-table__row--striped {
-      background-color: #fafafa !important;
+      background-color: #ffffff !important;
 
       td {
-        background-color: #fafafa !important;
+        background-color: #ffffff !important;
       }
     }
 
     // 斑马纹悬停样式
     tr.el-table__row--striped:hover {
-      background-color: #f5f7fa !important;
+      background-color: #f8fafc !important;
 
       td {
-        background-color: #f5f7fa !important;
+        background-color: #f8fafc !important;
       }
     }
 
     // 普通行悬停样式
     tr:hover {
-      background-color: #f5f7fa !important;
+      background-color: #f8fafc !important;
 
       td {
-        background-color: #f5f7fa !important;
+        background-color: #f8fafc !important;
       }
     }
+  }
+
+  :deep(.el-table__inner-wrapper::before),
+  :deep(.el-table__border-left-patch) {
+    background-color: #e2e8f0;
+  }
+
+  :deep(.el-table__cell) {
+    border-color: #e2e8f0;
+  }
+
+  :deep(.el-table--border .el-table__cell) {
+    border-right-color: #eef2f7;
   }
 
   :deep(.el-table__cell.el-table-fixed-column--left),
@@ -604,22 +620,22 @@ defineExpose({
 
   :deep(.el-table__body tr.el-table__row--striped > td.el-table-fixed-column--left),
   :deep(.el-table__body tr.el-table__row--striped > td.el-table-fixed-column--right) {
-    background-color: #fafafa !important;
+    background-color: #ffffff !important;
   }
 
   :deep(.el-table__body tr:hover > td.el-table-fixed-column--left),
   :deep(.el-table__body tr:hover > td.el-table-fixed-column--right),
   :deep(.el-table__body tr.el-table__row--striped:hover > td.el-table-fixed-column--left),
   :deep(.el-table__body tr.el-table__row--striped:hover > td.el-table-fixed-column--right) {
-    background-color: #f5f7fa !important;
+    background-color: #f8fafc !important;
   }
 
   :deep(.el-table-fixed-column--left.is-last-column) {
-    border-right: 1px solid #e5eaf3;
+    border-right: none;
   }
 
   :deep(.el-table-fixed-column--right.is-first-column) {
-    border-left: 1px solid #e5eaf3;
+    border-left: none;
   }
 
   :deep(.el-table-fixed-column--left.is-last-column::before),
@@ -631,7 +647,7 @@ defineExpose({
 .action-buttons {
   display: flex;
   width: 100%;
-  gap: calc(0.4rem + 0.15vw);
+  gap: 8px;
   justify-content: center;
   align-items: center;
   box-sizing: border-box;
@@ -639,18 +655,18 @@ defineExpose({
   .action-btn {
     display: inline-flex;
     align-items: center;
-    gap: calc(0.2rem + 0.08vw);
-    padding: calc(0.15rem + 0.08vw) calc(0.4rem + 0.15vw);
+    gap: 4px;
+    padding: 2px 6px;
     border-radius: 4px;
-    font-size: calc(0.6rem + 0.15vw);
+    font-size: 13px;
     font-weight: 500;
     transition: all 0.3s ease;
     white-space: nowrap;
-    min-height: calc(1.4rem + 0.3vw);
+    min-height: 28px;
 
     &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      transform: none;
+      box-shadow: none;
     }
   }
 }
@@ -659,10 +675,16 @@ defineExpose({
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  padding: calc(0.6rem + 0.25vw) calc(0.8rem + 0.35vw);
-  background: #f8fafc;
+  padding: 12px 16px;
+  background: #ffffff;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
+}
+
+:deep(.pagination) {
+  --el-pagination-button-width: 28px;
+  --el-pagination-button-height: 28px;
+  font-weight: 500;
 }
 
 // 行拖拽相关样式

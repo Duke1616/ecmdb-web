@@ -18,16 +18,11 @@
     </template>
 
     <template #provide="{ row }">
-      <el-tag v-if="row.provide === 1" effect="plain" type="primary" disable-transitions>本系统</el-tag>
-      <el-tag v-else-if="row.provide === 2" effect="plain" type="warning" disable-transitions>企业微信</el-tag>
-      <el-tag v-else-if="row.provide === 3" effect="plain" type="warning" disable-transitions>告警平台</el-tag>
-      <el-tag v-else type="info" effect="plain" disable-transitions>未知类型</el-tag>
+      <span class="quiet-tag">{{ getProvideText(row.provide) }}</span>
     </template>
 
     <template #status="{ row }">
-      <el-tag v-if="row.status === 4" effect="plain" type="danger" disable-transitions>撤单</el-tag>
-      <el-tag v-else-if="row.status === 3" effect="plain" type="success" disable-transitions>结单</el-tag>
-      <el-tag v-else type="info" effect="plain" disable-transitions>未知</el-tag>
+      <span class="quiet-tag" :class="getStatusClass(row.status)">{{ getStatusText(row.status) }}</span>
     </template>
 
     <template #actions="{ row }">
@@ -109,4 +104,57 @@ const resolvedTableProps = computed(() => {
 const emitOperateEvent = (row: order, action: TicketOrderAction) => {
   emit("operate", row, action)
 }
+
+const getProvideText = (provide: number) => {
+  const provideTextMap: Record<number, string> = {
+    1: "本系统",
+    2: "企业微信",
+    3: "告警平台"
+  }
+  return provideTextMap[provide] || "未知类型"
+}
+
+const getStatusText = (status: number) => {
+  const statusTextMap: Record<number, string> = {
+    3: "结单",
+    4: "撤单"
+  }
+  return statusTextMap[status] || "未知"
+}
+
+const getStatusClass = (status: number) => {
+  if (status === 3) return "is-success"
+  if (status === 4) return "is-danger"
+  return ""
+}
 </script>
+
+<style scoped lang="scss">
+.quiet-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 54px;
+  height: 24px;
+  padding: 0 8px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+
+  &.is-success {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  &.is-danger {
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+}
+</style>
