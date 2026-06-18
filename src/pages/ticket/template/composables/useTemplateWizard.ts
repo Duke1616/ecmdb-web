@@ -1,5 +1,6 @@
 import { ref } from "vue"
 import { ElMessage } from "element-plus"
+import { cloneDeep } from "lodash-es"
 import { createTemplateApi, updateTemplateApi } from "@/api/ticket/template"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
@@ -11,7 +12,7 @@ const cloneTemplatePayload = (row: template): TemplateFormData => {
   const { id: _id, ...rest } = row
   return {
     ...createDefaultTemplateFormData(),
-    ...(JSON.parse(JSON.stringify(rest)) as Omit<template, "id">),
+    ...cloneDeep(rest),
     id: undefined,
     name: `${row.name}_copy`
   }

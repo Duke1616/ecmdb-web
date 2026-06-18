@@ -13,6 +13,19 @@ const isTemplateAction = (value: string): value is TicketTemplateAction => {
   return Object.values(TicketTemplateAction).includes(value as TicketTemplateAction)
 }
 
+const confirmDelete = (label: string, name: string) =>
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, `正在删除${label}: `),
+      h("i", { style: "color: red" }, name),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  })
+
 export function useTemplateActions(options: {
   refresh: () => void
   handleUpdateTemplate: (row: template) => void
@@ -117,17 +130,7 @@ export function useTemplateActions(options: {
     }
 
     try {
-      await ElMessageBox({
-        title: "删除确认",
-        message: h("p", null, [
-          h("span", null, "正在删除模板分组: "),
-          h("i", { style: "color: red" }, `${group.name}`),
-          h("span", null, " 确认删除？")
-        ]),
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
+      await confirmDelete("模板分组", group.name)
       await deleteTemplateGroupApi(group.id)
       ElMessage.success("删除成功")
       options.refresh()
@@ -184,17 +187,7 @@ export function useTemplateActions(options: {
     }
 
     try {
-      await ElMessageBox({
-        title: "删除确认",
-        message: h("p", null, [
-          h("span", null, "正在删除模板: "),
-          h("i", { style: "color: red" }, `${row.name}`),
-          h("span", null, " 确认删除？")
-        ]),
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
+      await confirmDelete("模板", row.name)
       await deleteTemplateApi(row.id)
       ElMessage.success("删除成功")
       options.refresh()

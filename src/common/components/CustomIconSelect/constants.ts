@@ -157,7 +157,6 @@ export const fillIconList = [
       { label: "Ubuntu", value: "icon-shidi-Ubuntu" },
       { label: "RedHat", value: "icon-shidi-redhat" },
       { label: "Mac", value: "icon-shidi-Mac" },
-      { label: "Unix", value: "icon-shidi-unix" },
       { label: "Windows", value: "icon-shidi-Windows" }
     ]
   },

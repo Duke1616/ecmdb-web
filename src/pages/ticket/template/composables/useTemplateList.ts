@@ -1,11 +1,13 @@
-import { computed, ref, watch } from "vue"
+import { computed, onBeforeUnmount, ref, watch } from "vue"
 import { listTemplateApi, listTemplateGroupSummaryApi } from "@/api/ticket/template"
-import { getWorkflowDetailApi } from "@/api/ticket/workflow/workflow"
+import { findWorkflowByIdsApi } from "@/api/ticket/workflow/workflow"
 import { usePagination } from "@/common/composables/usePagination"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import type { template, templateGroupSummary } from "@/api/ticket/template/types/template"
 import type { TemplateManageGroupKey } from "../types"
+
+const SEARCH_DEBOUNCE_MS = 300
 
 export function useTemplateList() {
   const { hasPermission } = usePermission()
@@ -13,13 +15,30 @@ export function useTemplateList() {
   const templatesData = ref<template[]>([])
   const templateGroups = ref<templateGroupSummary[]>([])
   const selectedGroup = ref<TemplateManageGroupKey>("all")
+  const keyword = ref("")
   const loading = ref(false)
   const groupLoading = ref(false)
   const workflowMaps = ref(new Map<number, string>())
   const selectedTemplates = ref<template[]>([])
+  let templateRequestId = 0
 
   const canViewTemplate = computed(() => hasPermission(TICKET_CAPABILITIES.Template.View))
   const totalTemplateCount = computed(() => templateGroups.value.reduce((total, group) => total + group.total, 0))
+
+  const getTemplateListParams = () => ({
+    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+    limit: paginationData.pageSize,
+    group_id: selectedGroup.value === "all" ? undefined : selectedGroup.value,
+    keyword: keyword.value.trim() || undefined
+  })
+
+  const getMissingWorkflowIds = (templates: template[]) => {
+    const ids = new Set<number>()
+    templates.forEach((item) => {
+      if (item.workflow_id && !workflowMaps.value.has(item.workflow_id)) ids.add(item.workflow_id)
+    })
+    return Array.from(ids)
+  }
 
   const resetList = () => {
     templatesData.value = []
@@ -29,7 +48,7 @@ export function useTemplateList() {
   const listTemplateGroupsData = async () => {
     if (!canViewTemplate.value) {
       templateGroups.value = []
-      return
+      return false
     }
 
     groupLoading.value = true
@@ -39,12 +58,15 @@ export function useTemplateList() {
 
       if (selectedGroup.value !== "all" && !data.template_groups.some((group) => group.id === selectedGroup.value)) {
         selectedGroup.value = "all"
+        return true
       }
     } catch {
       templateGroups.value = []
     } finally {
       groupLoading.value = false
     }
+
+    return false
   }
 
   const listTemplatesData = async () => {
@@ -53,28 +75,32 @@ export function useTemplateList() {
       return
     }
 
+    const requestId = ++templateRequestId
     loading.value = true
     try {
-      const groupId = selectedGroup.value === "all" ? undefined : selectedGroup.value
-      const { data } = await listTemplateApi({
-        offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-        limit: paginationData.pageSize,
-        group_id: groupId
-      })
+      const { data } = await listTemplateApi(getTemplateListParams())
+      if (requestId !== templateRequestId) return
 
       paginationData.total = data.total
       templatesData.value = data.templates
-      loadWorkflowNames(data.templates)
+      await loadWorkflowNames(data.templates)
     } catch {
+      if (requestId !== templateRequestId) return
       resetList()
     } finally {
-      loading.value = false
+      if (requestId === templateRequestId) loading.value = false
     }
   }
 
   const refreshTemplateManageData = async () => {
-    await listTemplateGroupsData()
-    await listTemplatesData()
+    const groupChanged = await listTemplateGroupsData()
+    if (groupChanged) return
+
+    if (paginationData.currentPage === 1) {
+      await listTemplatesData()
+      return
+    }
+    paginationData.currentPage = 1
   }
 
   const formatWorkflow = (row: template) => {
@@ -83,26 +109,18 @@ export function useTemplateList() {
   }
 
   const loadWorkflowNames = async (templates: template[]) => {
-    const ids = templates.reduce<number[]>((nextIds, item) => {
-      if (item.workflow_id && !workflowMaps.value.has(item.workflow_id) && !nextIds.includes(item.workflow_id)) {
-        nextIds.push(item.workflow_id)
-      }
-      return nextIds
-    }, [])
-
+    const ids = getMissingWorkflowIds(templates)
     if (ids.length === 0) return
 
-    const results = await Promise.allSettled(ids.map((id) => getWorkflowDetailApi(id)))
     const nextMap = new Map(workflowMaps.value)
 
-    results.forEach((result, index) => {
-      const id = ids[index]
-      if (result.status === "fulfilled") {
-        nextMap.set(id, result.value.data.name || `流程 #${id}`)
-      } else {
-        nextMap.set(id, `流程 #${id}`)
-      }
-    })
+    try {
+      const { data } = await findWorkflowByIdsApi(ids)
+      const workflowNameMap = new Map(data.workflows.map((workflow) => [workflow.id, workflow.name]))
+      ids.forEach((id) => nextMap.set(id, workflowNameMap.get(id) || `流程 #${id}`))
+    } catch {
+      ids.forEach((id) => nextMap.set(id, `流程 #${id}`))
+    }
 
     workflowMaps.value = nextMap
   }
@@ -128,6 +146,19 @@ export function useTemplateList() {
     paginationData.currentPage = 1
   })
 
+  let keywordTimer: number | undefined
+  watch(keyword, () => {
+    selectedTemplates.value = []
+    window.clearTimeout(keywordTimer)
+    keywordTimer = window.setTimeout(() => {
+      if (paginationData.currentPage === 1) {
+        listTemplatesData()
+        return
+      }
+      paginationData.currentPage = 1
+    }, SEARCH_DEBOUNCE_MS)
+  })
+
   watch(
     canViewTemplate,
     (allowed) => {
@@ -141,10 +172,15 @@ export function useTemplateList() {
     { immediate: true }
   )
 
+  onBeforeUnmount(() => {
+    window.clearTimeout(keywordTimer)
+  })
+
   return {
     templatesData,
     templateGroups,
     selectedGroup,
+    keyword,
     selectedTemplates,
     totalTemplateCount,
     loading,

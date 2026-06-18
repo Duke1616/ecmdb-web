@@ -1,7 +1,9 @@
 <template>
   <ProGovernanceLayout
+    v-model:keyword="keyword"
     title="模板管理"
     subtitle="管理系统模板和分组"
+    search-placeholder="搜索模板名称..."
     :primary-action="{ label: '新增模板', icon: CirclePlus, capability: TICKET_CAPABILITIES.Template.Add }"
     :secondary-action="{ label: '新增分组', icon: CirclePlus, capability: TICKET_CAPABILITIES.Template.AddGroup }"
     :show-refresh="canViewTemplate"
@@ -94,6 +96,7 @@ const {
   templatesData,
   templateGroups,
   selectedGroup,
+  keyword,
   totalTemplateCount,
   loading,
   groupLoading,

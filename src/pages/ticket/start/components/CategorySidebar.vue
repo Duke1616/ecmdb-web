@@ -5,7 +5,7 @@
       <span class="total-count">{{ totalCount }} 个模板</span>
     </div>
 
-    <div class="category-nav-container">
+    <div v-loading="loading" class="category-nav-container">
       <div class="category-nav">
         <div
           v-if="(recentCount || 0) > 0"
@@ -48,7 +48,7 @@
         </div>
 
         <div
-          v-for="item in templateCombinations"
+          v-for="item in groups"
           :key="item.id"
           class="category-item"
           :class="{ active: selectedCategory === item.id }"
@@ -59,7 +59,7 @@
           </div>
           <div class="category-info">
             <span class="category-name">{{ item.name }}</span>
-            <span class="category-count">{{ item.templates.length }}</span>
+            <span class="category-count">{{ item.total }}</span>
           </div>
         </div>
       </div>
@@ -69,16 +69,24 @@
 
 <script setup lang="ts">
 import { Clock, Grid, Folder, Star } from "@element-plus/icons-vue"
-import type { templateCombination } from "@/api/ticket/template/types/template"
+import type { templateGroupSummary } from "@/api/ticket/template/types/template"
 import type { TemplateCategoryKey } from "../composables/useTemplateFilter"
 
-defineProps<{
-  templateCombinations: templateCombination[]
-  favoriteCount: number
-  totalCount: number
-  recentCount?: number
-  showFavorites?: boolean
-}>()
+withDefaults(
+  defineProps<{
+    groups: templateGroupSummary[]
+    favoriteCount: number
+    totalCount: number
+    recentCount?: number
+    showFavorites?: boolean
+    loading?: boolean
+  }>(),
+  {
+    recentCount: 0,
+    showFavorites: false,
+    loading: false
+  }
+)
 
 const selectedCategory = defineModel<TemplateCategoryKey>("selectedCategory", {
   required: true

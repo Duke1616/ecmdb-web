@@ -64,3 +64,11 @@ export function getWorkflowDetailApi(id: number) {
     url: `${API_SERVICE.TICKET}/workflow/detail/${id}`
   })
 }
+
+/** 根据流程 Ids 批量获取工作流详情 */
+export function findWorkflowByIdsApi(ids: number[]) {
+  return instance.post<workflow.workflows>({
+    url: `${API_SERVICE.TICKET}/workflow/by_ids`,
+    data: { ids }
+  })
+}

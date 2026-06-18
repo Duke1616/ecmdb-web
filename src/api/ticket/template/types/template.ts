@@ -19,6 +19,8 @@ export interface PageReq {
 export interface ListTemplateReq extends PageReq {
   /** 模板分组 ID，不传表示全部 */
   group_id?: number
+  /** 关键字 */
+  keyword?: string
 }
 
 export interface ByKeywordReq extends PageReq {

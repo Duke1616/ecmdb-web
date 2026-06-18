@@ -1,31 +1,121 @@
-import { ref, computed, onMounted } from "vue"
-import { pipelineGroupApi, listFavoriteApi, toggleFavoriteApi } from "@/api/ticket/template"
-import type { templateCombination, template } from "@/api/ticket/template/types/template"
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch, type Ref } from "vue"
+import {
+  findByTemplateIdsApi,
+  listFavoriteApi,
+  listTemplateApi,
+  listTemplateGroupSummaryApi,
+  toggleFavoriteApi
+} from "@/api/ticket/template"
+import type { template, templateGroupSummary } from "@/api/ticket/template/types/template"
 import { ElMessage } from "element-plus"
+import type { TemplateCategoryKey } from "./useTemplateFilter"
 
-export function useTemplateData(options: { immediate?: boolean; canFavorite?: () => boolean } = {}) {
-  const templateCombinations = ref<templateCombination[]>([])
+const PAGE_SIZE = 20
+const SEARCH_DEBOUNCE_MS = 300
+
+interface UseTemplateDataOptions {
+  immediate?: boolean
+  canFavorite?: () => boolean
+  selectedCategory: Ref<TemplateCategoryKey>
+  searchQuery: Ref<string>
+}
+
+const shouldUseTemplateListApi = (category: TemplateCategoryKey) => typeof category === "number" || category === "all"
+
+export function useTemplateData(options: UseTemplateDataOptions) {
+  const templateGroups = ref<templateGroupSummary[]>([])
+  const templatesData = ref<template[]>([])
   const favoriteTemplates = ref<template[]>([])
-  const favoriteIds = computed(() => favoriteTemplates.value.map((t) => t.id))
-  const empty = ref<boolean>(false)
-  const loading = ref<boolean>(false)
+  const loading = ref(false)
+  const groupLoading = ref(false)
+  const templateLoading = ref(false)
+  const paginationData = reactive({
+    total: 0,
+    currentPage: 1,
+    pageSize: PAGE_SIZE
+  })
+  let templateRequestId = 0
+  let keywordTimer: number | undefined
 
-  const listTemplateCombinations = async () => {
-    loading.value = true
+  const favoriteIds = computed(() => favoriteTemplates.value.map((item) => item.id))
+  const totalTemplateCount = computed(() => templateGroups.value.reduce((total, item) => total + item.total, 0))
+  const templateResultTotal = computed(() => paginationData.total)
+  const hasMoreTemplates = computed(() => templatesData.value.length < paginationData.total)
+  const empty = computed(() => !groupLoading.value && totalTemplateCount.value === 0)
+
+  const resetTemplates = () => {
+    templatesData.value = []
+    paginationData.total = 0
+    paginationData.currentPage = 1
+  }
+
+  const getTemplateListParams = () => ({
+    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+    limit: paginationData.pageSize,
+    group_id: typeof options.selectedCategory.value === "number" ? options.selectedCategory.value : undefined,
+    keyword: options.searchQuery.value.trim() || undefined
+  })
+
+  const listTemplateGroups = async () => {
+    groupLoading.value = true
     try {
-      const { data } = await pipelineGroupApi()
-      templateCombinations.value = data.template_combinations || []
-      empty.value = templateCombinations.value.length === 0
+      const { data } = await listTemplateGroupSummaryApi()
+      templateGroups.value = data.template_groups || []
+
+      if (
+        typeof options.selectedCategory.value === "number" &&
+        !templateGroups.value.some((group) => group.id === options.selectedCategory.value)
+      ) {
+        options.selectedCategory.value = "all"
+      }
     } catch (error) {
-      console.error("获取模板数据失败:", error)
-      templateCombinations.value = []
-      empty.value = true
+      console.error("获取模板分组失败:", error)
+      templateGroups.value = []
     } finally {
-      loading.value = false
+      groupLoading.value = false
     }
   }
 
+  const fetchTemplates = async (reset = true) => {
+    if (!shouldUseTemplateListApi(options.selectedCategory.value)) return
+
+    if (reset) {
+      templatesData.value = []
+      paginationData.total = 0
+      paginationData.currentPage = 1
+    }
+
+    const requestId = ++templateRequestId
+    templateLoading.value = true
+    try {
+      const { data } = await listTemplateApi(getTemplateListParams())
+      if (requestId !== templateRequestId) return
+
+      paginationData.total = data.total || 0
+      templatesData.value = reset ? data.templates || [] : [...templatesData.value, ...(data.templates || [])]
+    } catch (error) {
+      if (requestId !== templateRequestId) return
+      console.error("获取模板数据失败:", error)
+      if (reset) resetTemplates()
+    } finally {
+      if (requestId === templateRequestId) templateLoading.value = false
+    }
+  }
+
+  const loadMoreTemplates = async () => {
+    if (!shouldUseTemplateListApi(options.selectedCategory.value) || templateLoading.value || !hasMoreTemplates.value) {
+      return
+    }
+    paginationData.currentPage += 1
+    await fetchTemplates(false)
+  }
+
   const fetchFavoriteList = async () => {
+    if (options.canFavorite && !options.canFavorite()) {
+      favoriteTemplates.value = []
+      return
+    }
+
     try {
       const { data } = await listFavoriteApi()
       favoriteTemplates.value = data?.templates || []
@@ -35,92 +125,110 @@ export function useTemplateData(options: { immediate?: boolean; canFavorite?: ()
     }
   }
 
-  const toggleFavorite = async (id: number, e: Event) => {
-    e.stopPropagation()
+  const findTemplateInCache = (id: number) => {
+    return templatesData.value.find((item) => item.id === id) || favoriteTemplates.value.find((item) => item.id === id)
+  }
+
+  const resolveTemplateById = async (id: number) => {
+    const cachedTemplate = findTemplateInCache(id)
+    if (cachedTemplate) return cachedTemplate
+
+    try {
+      const { data } = await findByTemplateIdsApi([id])
+      return data.templates?.[0] || null
+    } catch {
+      return null
+    }
+  }
+
+  const toggleFavorite = async (id: number, event: Event) => {
+    event.stopPropagation()
     if (options.canFavorite && !options.canFavorite()) {
       ElMessage.warning("暂无收藏模板权限")
       return
     }
 
     const isAdding = !favoriteIds.value.includes(id)
-    let targetTemplate: template | null = null
+    const targetTemplate = isAdding
+      ? await resolveTemplateById(id)
+      : favoriteTemplates.value.find((item) => item.id === id)
 
-    // 乐观更新
     if (isAdding) {
-      // 可以在缓存的数据组合中查找该模板的完整数据并塞进去
-      for (const group of templateCombinations.value) {
-        const found = group.templates?.find((t) => t.id === id)
-        if (found) {
-          targetTemplate = found
-          break
-        }
-      }
-      if (targetTemplate) {
-        favoriteTemplates.value.push(targetTemplate)
-      } else {
-        // 如果极少情况下找不到，就至少构造一个包含必要字段的临时对象
-        targetTemplate = { id, name: "未知模板", icon: "Flag" } as template
-        favoriteTemplates.value.push(targetTemplate)
-      }
+      favoriteTemplates.value.push(targetTemplate || ({ id, name: "未知模板", icon: "Flag" } as template))
     } else {
-      const favIndex = favoriteTemplates.value.findIndex((t) => t.id === id)
-      if (favIndex !== -1) {
-        targetTemplate = favoriteTemplates.value[favIndex]
-        favoriteTemplates.value.splice(favIndex, 1)
-      }
+      favoriteTemplates.value = favoriteTemplates.value.filter((item) => item.id !== id)
     }
 
     try {
       await toggleFavoriteApi({ template_id: id })
       ElMessage.success(isAdding ? "已加入收藏" : "已取消收藏")
-    } catch (error) {
-      // 失败回滚
+    } catch {
       if (isAdding) {
-        const rollbackIndex = favoriteTemplates.value.findIndex((t) => t.id === id)
-        if (rollbackIndex !== -1) favoriteTemplates.value.splice(rollbackIndex, 1)
+        favoriteTemplates.value = favoriteTemplates.value.filter((item) => item.id !== id)
+      } else if (targetTemplate) {
+        favoriteTemplates.value.push(targetTemplate)
       } else {
-        if (targetTemplate) {
-          favoriteTemplates.value.push(targetTemplate)
-        } else {
-          fetchFavoriteList()
-        }
+        fetchFavoriteList()
       }
       ElMessage.error("收藏操作失败，请重试")
     }
   }
 
-  const getTotalTemplateCount = () => {
-    return templateCombinations.value.reduce((total, item) => total + item.templates.length, 0)
-  }
-
   const refreshData = async () => {
     loading.value = true
     try {
-      const tasks = [listTemplateCombinations()]
-      if (!options.canFavorite || options.canFavorite()) {
-        tasks.push(fetchFavoriteList())
-      } else {
-        favoriteTemplates.value = []
-      }
-      await Promise.all(tasks)
+      await Promise.all([listTemplateGroups(), fetchFavoriteList()])
+      await fetchTemplates(true)
     } finally {
       loading.value = false
     }
   }
 
+  watch(
+    () => options.selectedCategory.value,
+    () => {
+      if (shouldUseTemplateListApi(options.selectedCategory.value)) {
+        fetchTemplates(true)
+      }
+    }
+  )
+
+  watch(
+    () => options.searchQuery.value,
+    () => {
+      window.clearTimeout(keywordTimer)
+      keywordTimer = window.setTimeout(() => {
+        if (shouldUseTemplateListApi(options.selectedCategory.value)) {
+          fetchTemplates(true)
+        }
+      }, SEARCH_DEBOUNCE_MS)
+    }
+  )
+
   onMounted(() => {
     if (options.immediate !== false) refreshData()
   })
 
+  onBeforeUnmount(() => {
+    window.clearTimeout(keywordTimer)
+  })
+
   return {
-    templateCombinations,
+    templateGroupSummaries: templateGroups,
+    templatesData,
     favoriteTemplates,
     favoriteIds,
+    totalTemplateCount,
+    templateResultTotal,
     empty,
     loading,
-    listTemplateCombinations,
+    groupLoading,
+    templateLoading,
+    hasMoreTemplates,
+    listTemplateGroups,
+    fetchTemplates,
+    loadMoreTemplates,
     toggleFavorite,
-    getTotalTemplateCount,
     refreshData
   }
 }

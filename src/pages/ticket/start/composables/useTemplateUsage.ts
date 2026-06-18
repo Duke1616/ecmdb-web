@@ -1,4 +1,5 @@
-import { computed, ref, watchEffect, type Ref } from "vue"
+import { onMounted, ref, watch } from "vue"
+import { findByTemplateIdsApi } from "@/api/ticket/template"
 import type { template } from "@/api/ticket/template/types/template"
 
 const STORAGE_KEY = "ticket:start:recent-template-ids"
@@ -18,16 +19,26 @@ const writeRecentIds = (ids: number[]) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ids.slice(0, MAX_RECENT_COUNT)))
 }
 
-export function useTemplateUsage(allTemplates: Ref<template[]>) {
+export function useTemplateUsage() {
   const recentIds = ref<number[]>(readRecentIds())
-  const templateById = computed(() => new Map(allTemplates.value.map((item) => [item.id, item])))
+  const recentTemplates = ref<template[]>([])
 
-  const recentTemplates = computed(() => {
-    return recentIds.value
-      .map((id) => templateById.value.get(id))
-      .filter((item): item is template => Boolean(item))
-      .slice(0, MAX_RECENT_COUNT)
-  })
+  const syncRecentTemplates = async () => {
+    if (recentIds.value.length === 0) {
+      recentTemplates.value = []
+      return
+    }
+
+    try {
+      const { data } = await findByTemplateIdsApi(recentIds.value)
+      const templateMap = new Map((data.templates || []).map((item) => [item.id, item]))
+      recentTemplates.value = recentIds.value
+        .map((id) => templateMap.get(id))
+        .filter((item): item is template => Boolean(item))
+    } catch {
+      recentTemplates.value = []
+    }
+  }
 
   const recordTemplateUsage = (id: number) => {
     const nextIds = [id, ...recentIds.value.filter((item) => item !== id)].slice(0, MAX_RECENT_COUNT)
@@ -35,14 +46,9 @@ export function useTemplateUsage(allTemplates: Ref<template[]>) {
     writeRecentIds(nextIds)
   }
 
-  watchEffect(() => {
-    const validIds = new Set(allTemplates.value.map((item) => item.id))
-    const nextIds = recentIds.value.filter((id) => validIds.has(id))
-    if (nextIds.length !== recentIds.value.length) {
-      recentIds.value = nextIds
-      writeRecentIds(nextIds)
-    }
-  })
+  watch(recentIds, syncRecentTemplates)
+
+  onMounted(syncRecentTemplates)
 
   return {
     recentTemplates,

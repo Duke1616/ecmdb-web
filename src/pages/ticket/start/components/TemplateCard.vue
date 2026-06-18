@@ -68,6 +68,7 @@ const handleClick = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-width: 0;
 
   @media (min-width: 1280px) and (max-width: 1440px) {
     padding: calc(0.6rem + 0.1vw);
@@ -119,6 +120,8 @@ const handleClick = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
   margin-bottom: calc(0.6rem + 0.1vw);
 }
 
@@ -152,6 +155,7 @@ const handleClick = () => {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .favorite-btn {
@@ -187,6 +191,7 @@ const handleClick = () => {
 
 .template-card-body {
   flex: 1;
+  min-width: 0;
   margin-bottom: calc(0.6rem + 0.1vw);
 }
 
@@ -195,32 +200,47 @@ const handleClick = () => {
   font-weight: 600;
   color: #1e293b;
   margin: 0 0 calc(0.3rem + 0.05vw) 0;
+  overflow: hidden;
   line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .template-description {
+  display: -webkit-box;
+  overflow: hidden;
   font-size: calc(0.7rem + 0.1vw);
   color: #64748b;
   margin: 0;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .template-card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
   padding-top: calc(0.5rem + 0.1vw);
   border-top: 1px solid #f1f5f9;
 }
 
 .action-text {
+  min-width: 0;
+  overflow: hidden;
   font-size: calc(0.7rem + 0.1vw);
   font-weight: 500;
   color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 
 .template-arrow {
+  flex-shrink: 0;
   color: #94a3b8;
   transition: all 0.2s ease;
 

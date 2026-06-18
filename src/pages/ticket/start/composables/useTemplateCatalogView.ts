@@ -1,15 +1,15 @@
 import { computed, type Ref } from "vue"
-import type { template, templateCombination } from "@/api/ticket/template/types/template"
+import type { template, templateGroupSummary } from "@/api/ticket/template/types/template"
 import type { TemplateCategoryKey } from "./useTemplateFilter"
 
 interface TemplateCatalogViewOptions {
   selectedCategory: Ref<TemplateCategoryKey>
   searchQuery: Ref<string>
-  templateCombinations: Ref<templateCombination[]>
-  filteredTemplates: Ref<template[]>
+  displayTemplates: Ref<template[]>
   recentTemplates: Ref<template[]>
+  groups: Ref<templateGroupSummary[]>
   totalTemplateCount: Ref<number>
-  getSelectedCategoryName: () => string
+  templateResultTotal: Ref<number>
 }
 
 const filterByKeyword = (templates: template[], keyword: string) => {
@@ -19,9 +19,12 @@ const filterByKeyword = (templates: template[], keyword: string) => {
 }
 
 export function useTemplateCatalogView(options: TemplateCatalogViewOptions) {
-  const isOverview = computed(() => options.selectedCategory.value === "all" && !options.searchQuery.value)
-
-  const selectedCategoryName = computed(() => options.getSelectedCategoryName())
+  const selectedCategoryName = computed(() => {
+    if (options.selectedCategory.value === "favorites") return "我的收藏"
+    if (options.selectedCategory.value === "recent") return "最近使用"
+    if (options.selectedCategory.value === "all") return "全部工单模板"
+    return options.groups.value.find((item) => item.id === options.selectedCategory.value)?.name || ""
+  })
 
   const selectedCategorySubtitle = computed(() => {
     if (options.selectedCategory.value === "favorites") return "快速启动您常用的工单"
@@ -36,29 +39,30 @@ export function useTemplateCatalogView(options: TemplateCatalogViewOptions) {
     return "没有找到匹配的工单模板"
   })
 
-  const visibleTemplateGroups = computed(() => {
-    return options.templateCombinations.value.filter((category) => category.templates && category.templates.length > 0)
-  })
-
   const displayTemplates = computed(() => {
+    if (options.selectedCategory.value === "favorites") {
+      return filterByKeyword(options.displayTemplates.value, options.searchQuery.value)
+    }
+
     if (options.selectedCategory.value === "recent") {
       return filterByKeyword(options.recentTemplates.value, options.searchQuery.value)
     }
 
-    return options.filteredTemplates.value
+    return options.displayTemplates.value
   })
 
   const visibleTemplateCount = computed(() => {
-    if (isOverview.value) return options.totalTemplateCount.value
+    if (options.selectedCategory.value === "all" && !options.searchQuery.value) return options.totalTemplateCount.value
+    if (typeof options.selectedCategory.value === "number" || options.selectedCategory.value === "all") {
+      return options.templateResultTotal.value
+    }
     return displayTemplates.value.length
   })
 
   return {
-    isOverview,
     selectedCategoryName,
     selectedCategorySubtitle,
     emptyDescription,
-    visibleTemplateGroups,
     displayTemplates,
     visibleTemplateCount
   }

@@ -30,14 +30,15 @@
       </el-empty>
     </div>
 
-    <div v-else v-loading="loading" class="ticket-catalog">
+    <div v-else v-loading="initialLoading" class="ticket-catalog">
       <CategorySidebar
         v-model:selectedCategory="selectedCategory"
-        :template-combinations="templateCombinations"
+        :groups="templateGroupSummaries"
         :favorite-count="favoriteIds.length"
         :total-count="totalTemplateCount"
         :recent-count="recentTemplates.length"
         :show-favorites="canFavoriteTemplate"
+        :loading="groupLoading"
       />
 
       <section class="catalog-content">
@@ -48,19 +49,12 @@
           </div>
         </div>
 
-        <div class="templates-container">
-          <TemplateOverview
-            v-if="isOverview"
-            :recent-templates="recentTemplates"
-            :groups="visibleTemplateGroups"
-            :favorite-ids="favoriteIds"
-            :can-create="canCreateTicket"
-            :can-favorite="canFavoriteTemplate"
-            @template-click="handleDetail"
-            @toggle-favorite="toggleFavorite"
-          />
-
-          <div v-else-if="displayTemplates.length === 0" class="ticket-empty is-inline">
+        <div
+          v-loading="templateLoading && displayTemplates.length === 0"
+          class="templates-container"
+          @scroll="handleTemplateScroll"
+        >
+          <div v-if="displayTemplates.length === 0 && !templateLoading" class="ticket-empty is-inline">
             <el-empty :description="emptyDescription" :image-size="120" />
           </div>
 
@@ -75,6 +69,11 @@
               @click="handleDetail(tpl.id)"
               @toggle-favorite="toggleFavorite"
             />
+          </div>
+
+          <div v-if="templateLoading && displayTemplates.length > 0" class="template-loading-more">加载中...</div>
+          <div v-else-if="hasMoreTemplates && displayTemplates.length > 0" class="template-load-hint">
+            继续下滑加载更多
           </div>
         </div>
       </section>
@@ -97,7 +96,6 @@ import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovern
 import TemplateCard from "./components/TemplateCard.vue"
 import CategorySidebar from "./components/CategorySidebar.vue"
 import CreateTicketDialog from "./components/CreateTicketDialog.vue"
-import TemplateOverview from "./components/TemplateOverview.vue"
 import { useTemplateData } from "./composables/useTemplateData"
 import { useTemplateFilter } from "./composables/useTemplateFilter"
 import { useTemplateCatalogView } from "./composables/useTemplateCatalogView"
@@ -113,47 +111,50 @@ const canFavoriteTemplate = computed(() =>
   hasPermission([TICKET_CAPABILITIES.Center.Pipeline, TICKET_CAPABILITIES.Template.ToggleFavorite])
 )
 
+const { selectedCategory, searchQuery } = useTemplateFilter()
+
 const {
-  templateCombinations,
+  templateGroupSummaries,
+  templatesData,
   favoriteTemplates,
   favoriteIds,
+  totalTemplateCount,
+  templateResultTotal,
   empty,
   loading,
+  groupLoading,
+  templateLoading,
+  hasMoreTemplates,
+  loadMoreTemplates,
   toggleFavorite,
-  getTotalTemplateCount,
   refreshData
 } = useTemplateData({
   immediate: false,
-  canFavorite: () => canFavoriteTemplate.value
+  canFavorite: () => canFavoriteTemplate.value,
+  selectedCategory,
+  searchQuery
 })
 
-const { selectedCategory, searchQuery, getSelectedCategoryName, filteredTemplates, allTemplates } = useTemplateFilter(
-  templateCombinations,
-  favoriteTemplates
-)
-const { recentTemplates, recordTemplateUsage } = useTemplateUsage(allTemplates)
+const { recentTemplates, recordTemplateUsage } = useTemplateUsage()
 
 const dialogVisible = ref(false)
 const currentTemplateId = ref<number | null>(null)
-
-const totalTemplateCount = computed(() => getTotalTemplateCount())
-const {
-  isOverview,
-  selectedCategoryName,
-  selectedCategorySubtitle,
-  emptyDescription,
-  visibleTemplateGroups,
-  displayTemplates,
-  visibleTemplateCount
-} = useTemplateCatalogView({
-  selectedCategory,
-  searchQuery,
-  templateCombinations,
-  filteredTemplates,
-  recentTemplates,
-  totalTemplateCount,
-  getSelectedCategoryName
+const initialLoading = computed(() => loading.value && templateGroupSummaries.value.length === 0)
+const currentTemplates = computed(() => {
+  if (selectedCategory.value === "favorites") return favoriteTemplates.value
+  return templatesData.value
 })
+
+const { selectedCategoryName, selectedCategorySubtitle, emptyDescription, displayTemplates, visibleTemplateCount } =
+  useTemplateCatalogView({
+    selectedCategory,
+    searchQuery,
+    displayTemplates: currentTemplates,
+    recentTemplates,
+    groups: templateGroupSummaries,
+    totalTemplateCount,
+    templateResultTotal
+  })
 
 const handleRefresh = () => {
   if (!canViewTicketStart.value) return
@@ -170,6 +171,14 @@ const handleDetail = (id: number) => {
   dialogVisible.value = true
 }
 
+const handleTemplateScroll = (event: Event) => {
+  if (selectedCategory.value === "favorites" || selectedCategory.value === "recent") return
+
+  const target = event.currentTarget as HTMLElement
+  const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight
+  if (distanceToBottom < 120) loadMoreTemplates()
+}
+
 watch(
   canViewTicketStart,
   (allowed) => {
@@ -179,14 +188,18 @@ watch(
 )
 
 watch(canFavoriteTemplate, (allowed) => {
-  if (!allowed && selectedCategory.value === "favorites") {
-    selectedCategory.value = "all"
-  }
+  if (!allowed && selectedCategory.value === "favorites") selectedCategory.value = "all"
 })
 
-watch(recentTemplates, (recent) => {
-  if (selectedCategory.value === "recent" && recent.length === 0) selectedCategory.value = "all"
-})
+watch(
+  recentTemplates,
+  (recent, previousRecent) => {
+    if (selectedCategory.value === "recent" && previousRecent.length > 0 && recent.length === 0) {
+      selectedCategory.value = "all"
+    }
+  },
+  { flush: "post" }
+)
 </script>
 
 <style lang="scss" scoped>
@@ -325,6 +338,15 @@ watch(recentTemplates, (recent) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 16px;
+}
+
+.template-loading-more,
+.template-load-hint {
+  display: flex;
+  justify-content: center;
+  padding: 14px 0 2px;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 @media (max-width: 1100px) {

@@ -56,3 +56,7 @@ export interface ListByKeywordReq {
   offset?: number // 偏移量
   limit?: number // 限制数量
 }
+
+export interface FindByIdsReq {
+  ids: number[]
+}
