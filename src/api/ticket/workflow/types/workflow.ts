@@ -1,4 +1,6 @@
-export interface createOrUpdateWorkflowReq {
+import type LogicFlow from "@logicflow/core"
+
+export interface CreateOrUpdateWorkflowReq {
   id?: number
   name: string
   icon: string
@@ -6,24 +8,19 @@ export interface createOrUpdateWorkflowReq {
   owner: string
   is_notify: boolean
   notify_method: number
-  flow_data: LogicFlow
+  flow_data: WorkflowGraphData
 }
 
-export interface listWorkflowReq {
+export interface ListWorkflowReq {
   /** 跳过条数 */
   offset: number
   /** 查询条数 */
   limit: number
 }
 
-export interface createLFReq {}
+export type WorkflowGraphData = LogicFlow.GraphConfigData
 
-export interface LogicFlow {
-  edges?: any[]
-  nodes?: any[]
-}
-
-export interface workflow {
+export interface Workflow {
   id: number
   template_id: number
   name: string
@@ -32,22 +29,23 @@ export interface workflow {
   icon: string
   is_notify: boolean
   notify_method: number
-  flow_data?: LogicFlow
+  flow_data?: WorkflowGraphData
 }
-export interface workflows {
-  workflows: workflow[]
+
+export interface WorkflowListRes {
+  workflows: Workflow[]
   total: number
 }
 
-export interface workflowGraphReq {
+export interface WorkflowGraphReq {
   id: number
   process_instance_id: number
   status: number
 }
 
-export interface workflowGraph {
+export interface WorkflowGraphRes {
   edge_ids: string[]
-  workflow: workflow
+  workflow: Workflow
 }
 
 // 根据关键字搜索工作流程请求

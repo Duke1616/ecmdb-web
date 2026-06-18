@@ -273,7 +273,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f8fafc;
+  background: #ffffff;
   border: 2px solid #e2e8f0;
   border-radius: 10px;
   min-height: 42px;
@@ -286,7 +286,7 @@ onUnmounted(() => {
 
 .picker-input-box:hover {
   border-color: #3b82f6;
-  background: #f1f5f9;
+  background: #ffffff;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
 }
 

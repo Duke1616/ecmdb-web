@@ -127,7 +127,7 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: transparent;
   min-height: 500px;
 }
 
@@ -231,11 +231,11 @@ watch(
 
 // 统一风格的设置行卡片
 .setting-row-card {
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
   padding: 0 16px;
-  height: 46px;
+  height: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -243,13 +243,13 @@ watch(
 
   &:hover {
     border-color: #cbd5e1;
-    background: #f1f5f9;
+    background: #ffffff;
   }
 
   &.is-active {
-    border-color: #667eea;
+    border-color: #409eff;
     background: white;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.08);
+    box-shadow: none;
 
     .row-desc {
       color: #1e293b;

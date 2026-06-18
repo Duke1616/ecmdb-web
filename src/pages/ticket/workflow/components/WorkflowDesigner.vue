@@ -53,11 +53,11 @@
 
     <!-- 属性面板 -->
     <el-dialog v-model="dataVisible">
-      <DataDialog :graph="graph" />
+      <DataDialog v-if="graph" :graph="graph" />
     </el-dialog>
 
     <PropertyDialog
-      v-if="showAttribute"
+      v-if="showAttribute && lf"
       :nodeData="nodeData"
       :flowDetail="flowDetail"
       :lf="lf"
@@ -81,12 +81,66 @@ import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
 import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
-import { createOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
+import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 
+type RawWorkflowGraphData = CreateOrUpdateWorkflowReq["flow_data"]
+type WorkflowGraphNode = {
+  id?: string
+  type?: string
+  x?: number
+  y?: number
+  properties?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+type WorkflowGraphEdge = {
+  id?: string
+  type?: string
+  sourceNodeId?: string
+  targetNodeId?: string
+  properties?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+type WorkflowGraphData = RawWorkflowGraphData & {
+  nodes?: WorkflowGraphNode[]
+  edges?: WorkflowGraphEdge[]
+}
+
+type WorkflowLogicFlow = Omit<InstanceType<typeof LogicFlow>, "extension" | "getGraphData"> & {
+  getGraphData: () => WorkflowGraphData
+  extension?: {
+    proximityConnect?: {
+      handleNodeDrag?: () => void
+    }
+    dagre?: {
+      layout: (options: Record<string, unknown>) => void
+    }
+  }
+}
+
+type DataDialogGraph = {
+  nodes: Array<{
+    id: string
+    type: string
+    x: number
+    y: number
+    text?: string
+    properties?: Record<string, unknown>
+  }>
+  edges: Array<{
+    id: string
+    type?: string
+    sourceNodeId: string
+    targetNodeId: string
+    text?: string
+  }>
+}
+
 interface Props {
-  formData: createOrUpdateWorkflowReq
+  formData: CreateOrUpdateWorkflowReq
 }
 const props = defineProps<Props>()
 const emits = defineEmits(["previous", "next", "close", "update:formData"])
@@ -94,10 +148,11 @@ const emits = defineEmits(["previous", "next", "close", "update:formData"])
 const { next, previous, close, setFormData } = useFormHandler(props.formData, emits, "lf")
 
 const flowDetail = reactive<Object>({})
-const lf = ref<any>(null)
+const lf = ref<WorkflowLogicFlow>()
 const nodeData = ref()
 const showAttribute = ref(false)
-const container = ref()
+const container = ref<HTMLElement>()
+const isSyncingFromCanvas = ref(false)
 const config = reactive<any>({
   background: {
     backgroundColor: "#f8fafc"
@@ -140,12 +195,50 @@ const config = reactive<any>({
   }
 })
 
+const toWorkflowGraphData = (graphData?: RawWorkflowGraphData) => graphData as WorkflowGraphData | undefined
+
+const getGraphSnapshot = (graphData?: RawWorkflowGraphData) => {
+  const normalizedGraphData = toWorkflowGraphData(graphData)
+  if (!normalizedGraphData) return ""
+
+  try {
+    return JSON.stringify(stripDebugProps(normalizedGraphData))
+  } catch (error) {
+    return ""
+  }
+}
+
+const getCurrentGraphData = () => lf.value?.getGraphData()
+
+const renderGraphData = (graphData?: RawWorkflowGraphData) => {
+  const normalizedGraphData = toWorkflowGraphData(graphData)
+  if (!lf.value || !normalizedGraphData?.nodes) {
+    updateCounts()
+    return
+  }
+
+  const currentSnapshot = getGraphSnapshot(lf.value.getGraphData())
+  const nextSnapshot = getGraphSnapshot(normalizedGraphData)
+  if (currentSnapshot === nextSnapshot) {
+    updateCounts()
+    return
+  }
+
+  lf.value.render(normalizedGraphData)
+  nextTick(() => {
+    updateCounts()
+    smartCenterAndZoom()
+  })
+}
+
 const initLf = () => {
+  if (!container.value) return
+
   const lfInstance = new LogicFlow({
     ...config,
     plugins: [Menu, MiniMap, Snapshot, SelectionSelect, Dagre, ProximityConnect],
     container: container.value
-  })
+  }) as WorkflowLogicFlow
   lf.value = lfInstance
 
   // 设置主题
@@ -157,18 +250,8 @@ const initLf = () => {
   // 设置事件监听
   LfEvent()
 
-  // 加载初始数据（如果有的话）
-  if (props.formData.flow_data && props.formData.flow_data.nodes) {
-    lf.value.render(props.formData.flow_data)
-    // 在数据加载完成后更新计数缩放数据
-    nextTick(() => {
-      updateCounts()
-      smartCenterAndZoom()
-    })
-  } else {
-    // 如果没有初始数据，设置默认计数
-    updateCounts()
-  }
+  renderGraphData(props.formData.flow_data)
+
   // 禁用节点拖拽时的渐进连线，只保留锚点（线条端点）拖拽时的渐进连线
   if (lf.value.extension?.proximityConnect) {
     lf.value.extension.proximityConnect.handleNodeDrag = () => {}
@@ -183,7 +266,9 @@ const initLf = () => {
 const smartCenterAndZoom = () => {
   if (!lf.value || !container.value) return
 
-  const graphData = lf.value.getGraphData()
+  const graphData = getCurrentGraphData()
+  if (!graphData) return
+
   const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
 
   if (nodes.length === 0) return
@@ -195,10 +280,10 @@ const smartCenterAndZoom = () => {
   }
 
   // 节点多 → 计算范围，自适应缩放并居中
-  const minX = Math.min(...nodes.map((n: { x: any }) => n.x))
-  const maxX = Math.max(...nodes.map((n: { x: any }) => n.x))
-  const minY = Math.min(...nodes.map((n: { y: any }) => n.y))
-  const maxY = Math.max(...nodes.map((n: { y: any }) => n.y))
+  const minX = Math.min(...nodes.map((node) => Number(node.x || 0)))
+  const maxX = Math.max(...nodes.map((node) => Number(node.x || 0)))
+  const minY = Math.min(...nodes.map((node) => Number(node.y || 0)))
+  const maxY = Math.max(...nodes.map((node) => Number(node.y || 0)))
 
   const nodesWidth = maxX - minX
   const nodesHeight = maxY - minY
@@ -215,6 +300,8 @@ const smartCenterAndZoom = () => {
 }
 
 const setThemem = () => {
+  if (!lf.value) return
+
   lf.value.setTheme({
     circle: {
       stroke: "#667eea",
@@ -257,6 +344,7 @@ const setThemem = () => {
       color: "#475569",
       fontSize: 12,
       fontWeight: 500,
+      textWidth: 120,
       background: {
         fill: "rgba(255, 255, 255, 0.95)",
         stroke: "#e2e8f0",
@@ -287,42 +375,47 @@ const setThemem = () => {
       strokeWidth: 2,
       strokeDasharray: "5,5"
     }
-  })
+  } as Parameters<WorkflowLogicFlow["setTheme"]>[0])
 }
 
 const registerNode = () => {
+  if (!lf.value) return
+
   registerAllNodes(lf.value)
 }
 
 const LfEvent = () => {
-  lf.value.on("node:click", ({ data }: any) => {
+  const lfInstance = lf.value
+  if (!lfInstance) return
+
+  lfInstance.on("node:click", ({ data }: any) => {
     nodeData.value = data
     if (["start", "user", "condition", "automation", "chat"].includes(data.type)) {
       showAttribute.value = true
     }
   })
 
-  lf.value.on("edge:click", ({ data }: any) => {
+  lfInstance.on("edge:click", ({ data }: any) => {
     nodeData.value = data
     showAttribute.value = true
   })
 
   // 监听节点和连线的变化，实时更新计数并同步调试状态
-  lf.value.on("node:add", (args: any) => {
+  lfInstance.on("node:add", (args: any) => {
     if (isDebugMode.value) {
-      lf.value.setProperties(args.data.id, { isDebug: true })
+      lfInstance.setProperties(args.data.id, { isDebug: true })
     }
     syncFormData()
   })
 
-  lf.value.on("edge:add", (args: any) => {
+  lfInstance.on("edge:add", (args: any) => {
     const { data } = args
     // 禁止自连线（起点和终点是同一节点），检测到后立即删除并提示
     if (data.sourceNodeId === data.targetNodeId) {
       // 虚拟边只是拖拽时的视觉提示，不是真实连线，跳过不处理
       if (data.properties?.style) return
 
-      lf.value.deleteEdge(data.id)
+      lfInstance.deleteEdge(data.id)
       ElNotification({
         title: "不允许自连线",
         message: "节点不能连接自身",
@@ -333,18 +426,21 @@ const LfEvent = () => {
       return
     }
     if (isDebugMode.value) {
-      lf.value.setProperties(data.id, { isDebug: true })
+      lfInstance.setProperties(data.id, { isDebug: true })
     }
     syncFormData()
   })
 
   const syncFormData = () => {
     if (lf.value) {
-      // 获取最新数据
-      const graphData = lf.value.getGraphData()
+      const graphData = getCurrentGraphData()
+      if (!graphData) return
 
-      // 更新数据（保存前剥离 isDebug，避免调试状态持久化）
+      isSyncingFromCanvas.value = true
       emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
+      nextTick(() => {
+        isSyncingFromCanvas.value = false
+      })
     }
 
     // 变更数量
@@ -352,12 +448,12 @@ const LfEvent = () => {
   }
 
   // 监听节点和连线的变化，实时更新计数
-  lf.value.on("node:delete", syncFormData)
-  lf.value.on("edge:delete", syncFormData)
-  lf.value.on("history:change", syncFormData)
+  lfInstance.on("node:delete", syncFormData)
+  lfInstance.on("edge:delete", syncFormData)
+  lfInstance.on("history:change", syncFormData)
 }
 
-const graph = ref<any>(null)
+const graph = ref<DataDialogGraph>()
 const dataVisible = ref<boolean>(false)
 const nodeCount = ref(0)
 const edgeCount = ref(0)
@@ -365,30 +461,32 @@ const isDebugMode = ref(false)
 
 /**
  * 剥离图数据中的 isDebug 属性
- * NOTE: isDebug 仅用于画布预览，不应持久化到 formData，
+ * isDebug 仅用于画布预览，不应持久化到 formData，
  * 否则下次打开时会残留调试状态
  */
-const stripDebugProps = (graphData: any) => {
-  const data = JSON.parse(JSON.stringify(graphData))
-  data.nodes?.forEach((node: any) => {
+const stripDebugProps = (graphData: WorkflowGraphData) => {
+  const data = JSON.parse(JSON.stringify(graphData)) as WorkflowGraphData
+  data.nodes?.forEach((node) => {
     if (node.properties) delete node.properties.isDebug
   })
-  data.edges?.forEach((edge: any) => {
+  data.edges?.forEach((edge) => {
     if (edge.properties) delete edge.properties.isDebug
   })
-  return data
+  return data as WorkflowGraphData
 }
 
 const handleToggleDebug = (val: boolean) => {
   isDebugMode.value = val
   if (!lf.value) return
 
-  // NOTE: 使用 render 全量更新比循环 setProperties 更稳定，避免 VDOM 渲染冲突 (insertBefore error)
-  const graphData = lf.value.getGraphData()
-  graphData.nodes.forEach((node: any) => {
+  // 使用 render 全量更新比循环 setProperties 更稳定，避免 VDOM 渲染冲突 (insertBefore error)
+  const graphData = getCurrentGraphData()
+  if (!graphData) return
+
+  graphData.nodes?.forEach((node) => {
     node.properties = { ...node.properties, isDebug: val }
   })
-  graphData.edges.forEach((edge: any) => {
+  graphData.edges?.forEach((edge) => {
     edge.properties = { ...edge.properties, isDebug: val }
   })
 
@@ -398,7 +496,7 @@ const handleToggleDebug = (val: boolean) => {
 const handleCalibrate = () => {
   if (!lf.value) return
 
-  lf.value.extension.dagre.layout({
+  lf.value.extension?.dagre?.layout({
     rankdir: "LR",
     align: undefined,
     ranker: "network-simplex",
@@ -419,17 +517,20 @@ const handleCalibrate = () => {
   })
 }
 
-// NOTE: 点击下一步前，先截断同步一次画布最新坐标数据到表单状态
+// 点击下一步前，先截断同步一次画布最新坐标数据到表单状态
 // 这样无论用户是否手动工作过，自动布局结果都不会丢失
 const handleNext = () => {
   if (lf.value) {
-    emits("update:formData", { ...props.formData, flow_data: stripDebugProps(lf.value.getGraphData()) })
+    const graphData = getCurrentGraphData()
+    if (graphData) {
+      emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
+    }
   }
   next()
 }
 
 const getData = async () => {
-  graph.value = lf.value.getGraphData()
+  graph.value = getCurrentGraphData() as DataDialogGraph
   dataVisible.value = true
 }
 
@@ -437,7 +538,8 @@ const updateCounts = () => {
   try {
     if (!lf.value) return
 
-    const graphData = lf.value.getGraphData()
+    const graphData = getCurrentGraphData()
+    if (!graphData) return
 
     // 确保 nodes 和 edges 是数组
     const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
@@ -460,11 +562,11 @@ const getEdgeCount = () => {
 }
 
 const getGraphData = () => {
-  return lf.value.getGraphData()
+  return getCurrentGraphData()
 }
 
 const download = () => {
-  return lf.value.getSnapshot()
+  return lf.value?.getSnapshot()
 }
 
 onMounted(() => {
@@ -484,6 +586,15 @@ watch(
     setFormData(newFormData)
   },
   { deep: true, immediate: true }
+)
+
+watch(
+  () => props.formData.flow_data,
+  (flowData) => {
+    if (isSyncingFromCanvas.value) return
+    renderGraphData(flowData)
+  },
+  { deep: true }
 )
 
 defineExpose({

@@ -148,7 +148,9 @@ export const useResourceRelations = (options: UseResourceRelationsOptions) => {
     if (!modelRelationData.value.length) return
 
     modelRelationData.value.forEach((model) => {
-      const relationInfo = relationTypeData.value.find((item) => model.relation_type_uid.toLowerCase().includes(item.uid))
+      const relationInfo = relationTypeData.value.find((item) =>
+        model.relation_type_uid.toLowerCase().includes(item.uid)
+      )
       if (!relationInfo) return
 
       const sourceModelUid = model.relation_name.split("_")[0]
@@ -312,8 +314,7 @@ export const useResourceRelations = (options: UseResourceRelationsOptions) => {
       {
         key: "delete",
         label: "取消关联",
-        type: "primary" as const,
-        plain: true,
+        type: "danger" as const,
         size: "small" as const,
         loading: (row: Resource) => deletingRelationIds.value.has(row.id),
         disabled: (row: Resource) => deletingRelationIds.value.has(row.id)

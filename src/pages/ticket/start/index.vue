@@ -296,7 +296,7 @@ watch(
   gap: 16px;
   min-height: 56px;
   padding: 0 24px;
-  background: #ffffff;
+  background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
 
   h3 {

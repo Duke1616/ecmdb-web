@@ -36,11 +36,9 @@
               <div class="input-container">
                 <el-form-item prop="name" class="no-margin">
                   <el-input
-                    :disabled="!!localFormData.id"
                     v-model="localFormData.name"
                     @input="updateFormData"
                     placeholder="请输入流程名称，如：用户注册流程"
-                    class="modern-input"
                     size="large"
                   />
                 </el-form-item>
@@ -59,7 +57,6 @@
                     v-model="localFormData.owner"
                     placeholder="选择流程负责人"
                     @update:modelValue="updateFormData"
-                    class="modern-select"
                   />
                 </el-form-item>
                 <!-- <div class="input-hint">选择负责此流程的主要人员</div> -->
@@ -98,7 +95,6 @@
                   @input="updateFormData"
                   placeholder="请详细描述此流程的目的、适用场景、预期效果等信息..."
                   :rows="6"
-                  class="modern-textarea"
                   size="large"
                 />
               </el-form-item>
@@ -180,7 +176,7 @@ watch(
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: transparent;
   min-height: 500px;
 }
 
@@ -314,107 +310,6 @@ watch(
     font-size: 11px;
     color: #ef4444;
     line-height: 1.2;
-  }
-}
-
-// 现代化输入框样式
-:deep(.modern-input) {
-  .el-input__wrapper {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-height: 42px;
-    height: 42px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &.is-focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-  }
-
-  .el-input__inner {
-    color: #1e293b;
-    font-size: 13px;
-    font-weight: 500;
-
-    &::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-  }
-}
-
-:deep(.modern-textarea) {
-  .el-textarea__inner {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 14px 18px;
-    color: #1e293b;
-    font-size: 13px;
-    line-height: 1.6;
-    resize: vertical;
-    min-height: 120px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &:focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
-
-    &::placeholder {
-      color: #94a3b8;
-      font-weight: 400;
-    }
-  }
-}
-
-:deep(.modern-select) {
-  .el-input__wrapper {
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 8px 16px;
-    min-height: 42px;
-    height: 42px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-
-    &:hover {
-      border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
-    }
-
-    &.is-focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
-    }
   }
 }
 

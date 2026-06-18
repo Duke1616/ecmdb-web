@@ -1,513 +1,135 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      v-show="elCardVisibe"
+  <div class="workflow-page">
+    <ProGovernanceLayout
+      v-show="isListVisible"
       title="流程管理"
       subtitle="管理工作流程和部署"
-      add-button-text="新增流程"
-      @add="handleCreate"
-      @refresh="listFlowsData"
+      :primary-action="{
+        label: '新增流程',
+        icon: CirclePlus,
+        capability: TICKET_CAPABILITIES.Workflow.Add
+      }"
+      @primary-action="openCreate"
+      @refresh="listWorkflowsData"
+    >
+      <el-empty v-if="!canViewWorkflow" class="workflow-empty" description="您没有权限查看流程管理" />
+      <WorkflowTable
+        v-else
+        :data="workflowsData"
+        :pagination-data="paginationData"
+        :loading="loading"
+        :format-owner="formatOwner"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+        @operate="operateEvent"
+      />
+    </ProGovernanceLayout>
+
+    <WizardContainer
+      v-if="isWizardVisible"
+      ref="workflowWizardRef"
+      :steps="workflowSteps"
+      :form-data="workflowFormData"
+      :form-rules="workflowFormRules"
+      @update:form-data="updateWorkflowFormData"
+      @close="closeWizard"
+      @save="saveWorkflow"
     />
 
-    <!-- 主内容区域 -->
-    <DataTable
-      v-show="elCardVisibe"
-      :data="flowsData"
-      :columns="tableColumns"
-      :show-selection="true"
-      :show-pagination="true"
-      :total="paginationData.total"
-      :page-size="paginationData.pageSize"
-      :current-page="paginationData.currentPage"
-      :page-sizes="paginationData.pageSizes"
-      :pagination-layout="paginationData.layout"
-      :table-props="{}"
-      @selection-change="handleSelectionChange"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-      <!-- 负责人插槽 -->
-      <template #ownerName="{ row }">
-        {{ formatOwner(row) }}
-      </template>
-
-      <!-- 消息通知插槽 -->
-      <template #isNotify="{ row }">
-        <el-tag v-if="row.is_notify === true" effect="plain" type="primary" disable-transitions class="status-tag">
-          开启
-        </el-tag>
-        <el-tag v-else type="warning" effect="plain" disable-transitions class="status-tag"> 关闭 </el-tag>
-      </template>
-
-      <!-- 发送媒介插槽 -->
-      <template #notifyMethod="{ row }">
-        <el-tag v-if="row.notify_method === 1" effect="plain" type="primary" disable-transitions class="method-tag">
-          飞书
-        </el-tag>
-        <el-tag
-          v-else-if="row.notify_method === 2"
-          effect="plain"
-          type="success"
-          disable-transitions
-          class="method-tag"
-        >
-          微信
-        </el-tag>
-        <el-tag v-else type="info" effect="plain" disable-transitions class="method-tag"> 暂未开启 </el-tag>
-      </template>
-
-      <!-- 操作插槽 -->
-      <template #actions="{ row }">
-        <OperateBtn :items="operateBtnStatus" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
-      </template>
-    </DataTable>
-    <!-- 新增模版 -->
-    <el-card v-if="visibleWorkflow">
-      <WizardContainer
-        :steps="workflowSteps"
-        :formData="workflowFormData"
-        :formRules="workflowFormRules"
-        @update:formData="updateWorkflowFormData"
-        @close="onClosed"
-        @save="saveWorkflow"
-        ref="workflowWizardRef"
-      />
-    </el-card>
-
-    <!-- 预览 -->
-    <el-dialog v-model="graphPreviewVisible" width="60%" @closed="onPreviewClosed" @opened="handlePreviewOpened">
-      <Preview ref="previewRef" />
+    <el-dialog v-model="previewVisible" width="60%" @closed="closePreview" @opened="handlePreviewOpened">
+      <WorkflowPreview ref="previewRef" />
     </el-dialog>
-  </PageContainer>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { h, ref, watch, nextTick, computed, markRaw } from "vue"
-import { CopyDocument } from "@element-plus/icons-vue"
-import { usePagination } from "@/common/composables/usePagination"
-import {
-  deleteWorkflowApi,
-  deployWorkflowApi,
-  listWorkflowApi,
-  createWorkflowApi,
-  updateWorkflowApi,
-  getWorkflowDetailApi
-} from "@/api/ticket/workflow/workflow.js"
-import { workflow, createOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow.js"
-import OperateBtn from "@@/components/OperateBtn/index.vue"
-import Preview from "./preview/Preview.vue"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { useUserStore } from "@/pinia/stores/user"
+import { computed, ref } from "vue"
+import { CirclePlus } from "@element-plus/icons-vue"
 import WizardContainer from "@/common/components/WizardContainer/index.vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import { TICKET_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import { COMMON_STEPS } from "@/common/constants/wizard-steps"
-import { getFormRulesByStep } from "@/common/constants/form-rules"
-import Info from "./info.vue"
-import WorkflowEditor from "./lf.vue"
-import Setting from "./setting.vue"
-import { v4 as uuidv4 } from "uuid"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
-import DataTable from "@/common/components/DataTable/index.vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import { refreshGraphId } from "@/common/utils/logicflow"
+import WorkflowDesigner from "./components/WorkflowDesigner.vue"
+import WorkflowInfoForm from "./components/WorkflowInfoForm.vue"
+import WorkflowPreview from "./components/WorkflowPreview.vue"
+import WorkflowSettingForm from "./components/WorkflowSettingForm.vue"
+import WorkflowTable from "./components/WorkflowTable.vue"
+import { useWorkflowActions } from "./composables/useWorkflowActions"
+import { useWorkflowList } from "./composables/useWorkflowList"
+import { useWorkflowWizard } from "./composables/useWorkflowWizard"
 
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const previewRef = ref<InstanceType<typeof Preview>>()
+const { hasPermission } = usePermission()
+const canViewWorkflow = computed(() => hasPermission(TICKET_CAPABILITIES.Workflow.View))
+const previewRef = ref<InstanceType<typeof WorkflowPreview>>()
 
-import type { Column } from "@@/components/DataTable/types"
+const {
+  paginationData,
+  handleCurrentChange,
+  handleSizeChange,
+  workflowsData,
+  loading,
+  listWorkflowsData,
+  formatOwner
+} = useWorkflowList()
 
-// 表格列定义
-const tableColumns: Column[] = [
-  { prop: "name", label: "名称", showOverflowTooltip: true },
-  { prop: "owner", label: "负责人", slot: "ownerName" },
-  { prop: "is_notify", label: "消息通知", slot: "isNotify" },
-  { prop: "notify_method", label: "发送媒介", slot: "notifyMethod" },
-  { prop: "desc", label: "描述", showOverflowTooltip: true }
-]
+const {
+  workflowWizardRef,
+  workflowFormData,
+  workflowFormRules,
+  isListVisible,
+  isWizardVisible,
+  showWizard,
+  openCreate,
+  closeWizard,
+  updateWorkflowFormData,
+  saveWorkflow
+} = useWorkflowWizard({ refresh: listWorkflowsData })
 
-// 选择处理
-const handleSelectionChange = (selection: workflow[]) => {
-  console.log("Selected workflows:", selection)
-}
+const { previewVisible, previewData, operateEvent, closePreview } = useWorkflowActions({
+  refresh: listWorkflowsData,
+  showWizard
+})
 
-// 工作流向导相关
-const workflowWizardRef = ref()
 const workflowSteps = [
   {
     ...COMMON_STEPS.INFO,
     title: "填写流程信息",
-    component: Info
+    component: WorkflowInfoForm
   },
   {
     ...COMMON_STEPS.DESIGN,
     title: "定义配置流程",
     description: "可视化流程设计",
-    component: WorkflowEditor
+    component: WorkflowDesigner
   },
   {
     ...COMMON_STEPS.SETTING,
     title: "配置启动设置",
     description: "通知和参数配置",
-    component: Setting
+    component: WorkflowSettingForm
   }
 ]
 
-const workflowFormData = ref<createOrUpdateWorkflowReq>({
-  id: undefined,
-  is_notify: false,
-  notify_method: 1,
-  name: "",
-  desc: "",
-  icon: "",
-  owner: "",
-  flow_data: {
-    nodes: [
-      {
-        id: uuidv4(),
-        type: "start",
-        x: 350,
-        y: 160,
-        properties: {}
-      },
-      {
-        id: uuidv4(),
-        type: "end",
-        x: 610,
-        y: 160,
-        properties: {}
-      }
-    ],
-    edges: []
-  }
-})
-
-const workflowFormRules = computed(() => {
-  return getFormRulesByStep("WORKFLOW_INFO", workflowWizardRef.value?.currentStep || 0)
-})
-
-// 控制列表卡片
-const elCardVisibe = ref<boolean>(true)
-// 控制新增修改
-const visibleWorkflow = ref<boolean>(false)
-// 预览流程图
-const graphPreviewVisible = ref<boolean>(false)
-
-// 工作流向导相关函数
-const updateWorkflowFormData = (data: createOrUpdateWorkflowReq) => {
-  workflowFormData.value = { ...workflowFormData.value, ...data }
-}
-
-const saveWorkflow = async () => {
-  try {
-    if (workflowFormData.value.id) {
-      await updateWorkflowApi(workflowFormData.value)
-      ElMessage.success("流程更新成功")
-    } else {
-      await createWorkflowApi(workflowFormData.value)
-      ElMessage.success("流程创建成功")
-    }
-    // 保存成功后关闭页面并刷新列表
-    onClosed()
-    listFlowsData()
-  } catch (error) {
-    console.error("操作失败:", error)
-  }
-}
-
-const handleCreate = () => {
-  // 展示新增页面，隐藏底层列表卡片
-  elCardVisibe.value = false
-  visibleWorkflow.value = true
-
-  // 渲然初始化页面
-  nextTick(() => {
-    workflowWizardRef.value?.setStep(0)
-    workflowFormData.value = {
-      id: undefined,
-      is_notify: false,
-      notify_method: 1,
-      name: "",
-      desc: "",
-      icon: "",
-      owner: "",
-      flow_data: {
-        nodes: [
-          {
-            id: uuidv4(),
-            type: "start",
-            x: 350,
-            y: 160,
-            properties: {}
-          },
-          {
-            id: uuidv4(),
-            type: "end",
-            x: 610,
-            y: 160,
-            properties: {}
-          }
-        ],
-        edges: []
-      }
-    }
-  })
-}
-
-const handleUpdate = async (row: workflow) => {
-  try {
-    console.log("Editing workflow:", row)
-    const { data } = await getWorkflowDetailApi(row.id)
-    // 展示新增页面，隐藏底层列表卡片
-    elCardVisibe.value = false
-    visibleWorkflow.value = true
-
-    nextTick(() => {
-      workflowWizardRef.value?.setStep(0)
-      workflowFormData.value = { ...workflowFormData.value, ...data }
-    })
-  } catch (error) {
-    ElMessage.error("获取流程详情失败")
-  }
-}
-
-// 关闭事件 - 父子通信
-const onClosed = () => {
-  visibleWorkflow.value = false
-  elCardVisibe.value = true
-}
-
-const onPreviewClosed = () => {
-  graphPreviewVisible.value = false
-}
-
-const flowsData = ref<workflow[]>([])
-const listFlowsData = () => {
-  listWorkflowApi({
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
-  })
-    .then(({ data }) => {
-      paginationData.total = data.total
-      flowsData.value = data.workflows
-      const uniqueOwners = new Set<string>()
-
-      // 遍历 flowsData.value，提取 onwer 并添加到 Set 中
-      data.workflows.forEach((item) => {
-        console.log(item)
-        if (item.owner) {
-          uniqueOwners.add(item.owner)
-        }
-      })
-
-      getUsernamesData(Array.from(uniqueOwners))
-    })
-    .catch(() => {
-      flowsData.value = []
-    })
-    .finally(() => {})
-}
-const userStore = useUserStore()
-const userMaps = ref(new Map<string, string>())
-const getUsernamesData = async (uns: string[]) => {
-  const promises = uns.map(async (username) => {
-    try {
-      const u = await userStore.getUserByUsername(username)
-      if (u) {
-        userMaps.value.set(username, u.nickname || u.username)
-      }
-    } catch (error) {
-      console.error(`ticket workflow getUsernamesData failed for ${username}:`, error)
-    }
-  })
-  await Promise.all(promises)
-}
-
-const formatOwner = (row: workflow) => {
-  return userMaps.value.get(row.owner) || "未知用户"
-}
-
-const previewData = ref()
 const handlePreviewOpened = () => {
   if (previewRef.value && previewData.value) {
     previewRef.value.initLf(previewData.value)
   }
 }
-
-const operateEvent = async (data: workflow, action: string) => {
-  if (action === "preview") {
-    try {
-      const { data: detail } = await getWorkflowDetailApi(data.id)
-      previewData.value = detail.flow_data
-      graphPreviewVisible.value = true
-    } catch (error) {
-      console.error("获取流程预览失败:", error)
-    }
-  } else if (action === "deploy") {
-    deployWorkflow(data)
-  } else if (action === "edit") {
-    handleUpdate(data)
-  } else if (action === "delete") {
-    handleDelete(data)
-  } else if (action === "clone") {
-    handleClone(data)
-  }
-}
-
-const handleClone = async (row: workflow) => {
-  try {
-    const { data: clonedData } = await getWorkflowDetailApi(row.id)
-    elCardVisibe.value = false
-    visibleWorkflow.value = true
-
-    nextTick(() => {
-      workflowWizardRef.value?.setStep(0)
-
-      // 重生成图数据 ID
-      if (clonedData.flow_data) {
-        clonedData.flow_data = refreshGraphId(clonedData.flow_data)
-      }
-
-      workflowFormData.value = {
-        ...workflowFormData.value,
-        ...clonedData,
-        id: undefined,
-        name: `${row.name}_copy`
-      }
-    })
-  } catch (error) {
-    ElMessage.error("获取流程详情失败")
-  }
-}
-
-const handleDelete = (row: workflow) => {
-  ElMessageBox({
-    title: "删除确认",
-    message: h("p", null, [
-      h("span", null, "正在删除名称: "),
-      h("i", { style: "color: red" }, `${row.name}`),
-      h("span", null, " 确认删除？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    deleteWorkflowApi(row.id).then(() => {
-      ElMessage.success("删除成功")
-      listFlowsData()
-    })
-  })
-}
-
-const deployWorkflow = (row: workflow) => {
-  ElMessageBox({
-    title: "部署确认",
-    message: h("p", null, [
-      h("span", null, "正在部署名称: "),
-      h("i", { style: "color: red" }, `${row.name}`),
-      h("span", null, " 确认部署？")
-    ]),
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  }).then(() => {
-    deployWorkflowApi(row.id).then(() => {
-      ElMessage.success("部署成功")
-      listFlowsData()
-    })
-  })
-}
-
-const operateBtnStatus = ref([
-  {
-    name: "部署",
-    code: "deploy",
-    icon: "Open"
-  },
-  {
-    name: "编辑",
-    code: "edit",
-    icon: "EditPen"
-  },
-  {
-    name: "克隆",
-    code: "clone",
-    icon: markRaw(CopyDocument),
-    type: "success"
-  },
-  {
-    name: "预览",
-    code: "preview",
-    icon: "View"
-  },
-
-  {
-    name: "删除",
-    code: "delete",
-    icon: "Delete",
-    type: "danger"
-  }
-])
-
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listFlowsData, { immediate: true })
 </script>
 
 <style lang="scss" scoped>
-/* 状态标签样式 */
-.status-tag {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid;
-  min-width: 50px;
-  text-align: center;
-  white-space: nowrap;
-  display: inline-block;
-
-  &.el-tag--primary {
-    color: #3b82f6;
-    background: #eff6ff;
-    border-color: #dbeafe;
-  }
-
-  &.el-tag--warning {
-    color: #d97706;
-    background: #fef3c7;
-    border-color: #fde68a;
-  }
+.workflow-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-/* 方法标签样式 */
-.method-tag {
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid;
-  min-width: 60px;
-  text-align: center;
-  white-space: nowrap;
-  display: inline-block;
-
-  &.el-tag--primary {
-    color: #3b82f6;
-    background: #eff6ff;
-    border-color: #dbeafe;
-  }
-
-  &.el-tag--success {
-    color: #059669;
-    background: #ecfdf5;
-    border-color: #d1fae5;
-  }
-
-  &.el-tag--info {
-    color: #6b7280;
-    background: #f9fafb;
-    border-color: #e5e7eb;
-  }
+.workflow-empty {
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
-
-/* WizardContainer 现在自动处理全屏覆盖，无需额外样式 */
 </style>

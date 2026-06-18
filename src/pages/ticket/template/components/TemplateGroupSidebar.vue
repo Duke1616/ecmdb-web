@@ -116,7 +116,7 @@ const emit = defineEmits<{
   height: 49px;
   min-height: 49px;
   padding: 0 16px;
-  background: #ffffff;
+  background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   box-sizing: border-box;
 }

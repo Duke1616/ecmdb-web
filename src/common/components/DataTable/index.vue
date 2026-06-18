@@ -11,13 +11,18 @@
             :height="finalTableHeight"
             v-bind="tableProps"
             @selection-change="handleSelectionChange"
-            :style="{
-              '--fixed-column-bg': '#f8fafc'
-            }"
             row-key="id"
           >
             <!-- 选择列 -->
-            <el-table-column v-if="showSelection" type="selection" width="50" align="center" :selectable="selectable" />
+            <el-table-column
+              v-if="showSelection"
+              type="selection"
+              width="50"
+              align="center"
+              header-align="center"
+              class-name="selection-column"
+              :selectable="selectable"
+            />
 
             <!-- 拖拽列 -->
             <el-table-column v-if="enableRowDrag" label="拖拽" width="85" align="center">
@@ -63,24 +68,12 @@
               align="center"
             >
               <template #default="scope">
-                <div class="action-buttons">
-                  <el-button
-                    v-for="action in actions"
-                    :key="action.key"
-                    :type="action.type || 'primary'"
-                    :plain="action.plain !== false"
-                    :size="action.size || 'small'"
-                    :loading="action.loading && action.loading(scope.row)"
-                    :disabled="action.disabled && action.disabled(scope.row)"
-                    @click="handleAction(action.key, scope.row, scope.$index)"
-                    class="action-btn"
-                  >
-                    <el-icon v-if="action.icon">
-                      <component :is="action.icon" />
-                    </el-icon>
-                    {{ action.label }}
-                  </el-button>
-                </div>
+                <OperateBtn
+                  :items="getOperateItems(scope.row)"
+                  :operate-item="scope.row"
+                  :max-length="2"
+                  @route-event="(row: any, key: string) => handleAction(key, row, scope.$index)"
+                />
               </template>
             </el-table-column>
 
@@ -132,6 +125,7 @@ import { computed, useSlots, ref, onMounted, onUnmounted, watch, nextTick } from
 import { Rank } from "@element-plus/icons-vue"
 import Sortable from "sortablejs"
 import type { Column, Action } from "./types"
+import OperateBtn from "@/common/components/OperateBtn/index.vue"
 
 interface Props {
   data: any[]
@@ -366,6 +360,17 @@ const handleAction = (key: string, row: any, index: number) => {
   emit("action", key, row, index)
 }
 
+const getOperateItems = (row: any) => {
+  return (props.actions || []).map((action) => ({
+    name: action.label,
+    code: action.key,
+    type: action.type,
+    icon: action.icon,
+    disabled: Boolean(action.loading?.(row) || action.disabled?.(row)),
+    capability: action.capability
+  }))
+}
+
 // 处理选择变化
 const handleSelectionChange = (selection: any[]) => {
   emit("selectionChange", selection)
@@ -507,6 +512,25 @@ defineExpose({
     }
   }
 
+  :deep(.selection-column .cell) {
+    justify-content: center;
+    padding: 0;
+  }
+
+  :deep(.selection-column .el-checkbox) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+    margin: 0;
+  }
+
+  :deep(.selection-column .el-checkbox__input) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   :deep(.el-table__cell .cell) {
     width: 100%;
   }
@@ -544,40 +568,20 @@ defineExpose({
   }
 
   // 确保所有列都有一致的背景色 - 使用更高优先级的选择器
-  :deep(.el-table__body) {
-    // 重置所有单元格的背景色，让斑马纹效果统一
-    tr {
-      td {
-        background-color: transparent !important;
-      }
-    }
+  :deep(.el-table__body tr) {
+    --el-table-tr-bg-color: #ffffff;
+    background-color: var(--el-table-tr-bg-color);
+  }
 
-    // 斑马纹样式 - 确保整行包括所有列都有一致背景
-    tr.el-table__row--striped {
-      background-color: #ffffff !important;
+  :deep(.el-table__body tr:hover),
+  :deep(.el-table__body tr.hover-row),
+  :deep(.el-table__body tr.current-row) {
+    --el-table-tr-bg-color: #f8fafc;
+    background-color: var(--el-table-tr-bg-color);
+  }
 
-      td {
-        background-color: #ffffff !important;
-      }
-    }
-
-    // 斑马纹悬停样式
-    tr.el-table__row--striped:hover {
-      background-color: #f8fafc !important;
-
-      td {
-        background-color: #f8fafc !important;
-      }
-    }
-
-    // 普通行悬停样式
-    tr:hover {
-      background-color: #f8fafc !important;
-
-      td {
-        background-color: #f8fafc !important;
-      }
-    }
+  :deep(.el-table__body td) {
+    background-color: var(--el-table-tr-bg-color) !important;
   }
 
   :deep(.el-table__inner-wrapper::before),
@@ -597,7 +601,7 @@ defineExpose({
   :deep(.el-table__cell.el-table-fixed-column--right) {
     position: relative;
     z-index: 2;
-    background-color: #ffffff !important;
+    background-color: var(--el-table-tr-bg-color) !important;
   }
 
   :deep(.el-table__cell.el-table-fixed-column--left .cell),
@@ -618,18 +622,6 @@ defineExpose({
     background-color: #f8fafc !important;
   }
 
-  :deep(.el-table__body tr.el-table__row--striped > td.el-table-fixed-column--left),
-  :deep(.el-table__body tr.el-table__row--striped > td.el-table-fixed-column--right) {
-    background-color: #ffffff !important;
-  }
-
-  :deep(.el-table__body tr:hover > td.el-table-fixed-column--left),
-  :deep(.el-table__body tr:hover > td.el-table-fixed-column--right),
-  :deep(.el-table__body tr.el-table__row--striped:hover > td.el-table-fixed-column--left),
-  :deep(.el-table__body tr.el-table__row--striped:hover > td.el-table-fixed-column--right) {
-    background-color: #f8fafc !important;
-  }
-
   :deep(.el-table-fixed-column--left.is-last-column) {
     border-right: none;
   }
@@ -641,33 +633,6 @@ defineExpose({
   :deep(.el-table-fixed-column--left.is-last-column::before),
   :deep(.el-table-fixed-column--right.is-first-column::before) {
     display: none;
-  }
-}
-
-.action-buttons {
-  display: flex;
-  width: 100%;
-  gap: 8px;
-  justify-content: center;
-  align-items: center;
-  box-sizing: border-box;
-
-  .action-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    min-height: 28px;
-
-    &:hover {
-      transform: none;
-      box-shadow: none;
-    }
   }
 }
 

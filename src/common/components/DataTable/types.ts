@@ -21,4 +21,5 @@ export interface Action {
   icon?: any
   loading?: (row: any) => boolean
   disabled?: (row: any) => boolean
+  capability?: string | string[]
 }

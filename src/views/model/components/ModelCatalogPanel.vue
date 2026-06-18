@@ -161,8 +161,8 @@ const handleImageError = (event: Event) => {
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  min-height: 68px;
-  padding: 18px 20px;
+  min-height: 56px;
+  padding: 0 20px;
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   box-sizing: border-box;
@@ -172,7 +172,7 @@ const handleImageError = (event: Event) => {
 .section-title {
   margin: 0;
   color: #1e293b;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
 }

@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import GenericPicker from "@/common/components/GenericPicker/index.vue"
 import { getWorkflowDetailApi, listWorkflowsByKeywordApi } from "@/api/ticket/workflow/workflow"
-import type { workflow } from "@/api/ticket/workflow/types/workflow"
+import type { Workflow } from "@/api/ticket/workflow/types/workflow"
 
 interface WorkflowPickerProps {
   placeholder?: string
@@ -58,12 +58,12 @@ const searchApi = async (params: { keyword: string; offset: number; limit: numbe
   }
 }
 
-const resolveApi = async (id: number): Promise<workflow | null> => {
+const resolveApi = async (id: number): Promise<Workflow | null> => {
   const { data } = await getWorkflowDetailApi(id)
   return data
 }
 
-const fallbackBuilder = (id: number): workflow => ({
+const fallbackBuilder = (id: number): Workflow => ({
   id,
   template_id: 0,
   name: `流程 #${id}`,
