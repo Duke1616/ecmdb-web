@@ -65,7 +65,7 @@
           <el-input v-model="formData.name" placeholder="请输入名称" />
         </el-form-item>
         <el-form-item prop="icon" label="图标选择">
-          <CustomIconSelect v-model="formData.iconData" iconType="cmdb" @change="handleIconChange" />
+          <AppIconPicker v-model="formData.icon" fallback="Box" @change="formRef?.validateField('icon')" />
         </el-form-item>
       </el-form>
     </FormDialog>
@@ -98,7 +98,7 @@
 <script lang="ts" setup>
 import { onMounted } from "vue"
 import { CirclePlus, FolderAdd } from "@element-plus/icons-vue"
-import CustomIconSelect from "@/common/components/CustomIconSelect/index.vue"
+import AppIconPicker from "@/common/components/AppIconPicker/index.vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { FormDialog } from "@@/components/Dialogs"
@@ -134,7 +134,6 @@ const {
   groupFormRules,
   openModelDialog,
   openGroupDialog,
-  handleIconChange,
   resetForm,
   handleCreateModel,
   handleCreateModelGroup

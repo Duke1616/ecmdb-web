@@ -77,8 +77,7 @@ export const linearIconList = [
       { label: "CentOS", value: "icon-xianxing-centos" },
       { label: "Ubuntu", value: "icon-xianxing-Ubuntu" },
       { label: "RedHat", value: "icon-xianxing-redhat" },
-      { label: "Mac", value: "icon-xianxing-Mac" },
-      { label: "Unix", value: "icon-xianxing-unix" }
+      { label: "Mac", value: "icon-xianxing-Mac" }
     ]
   },
   {

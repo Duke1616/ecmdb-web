@@ -28,6 +28,8 @@ export enum TemplateEditorStep {
   Designer = 1
 }
 
+export type TemplateManageGroupKey = number | "all"
+
 export interface TicketTemplateOperateItem {
   name: string
   code: TicketTemplateAction
@@ -40,6 +42,7 @@ export interface TicketTemplateOperateItem {
 export interface TemplateGroupFormExpose {
   handleCreate: () => void
   resetForm: () => void
+  setForm: (data: { id: number; name: string; icon: string }) => void
 }
 
 export interface TemplateThirdPartyFormExpose {

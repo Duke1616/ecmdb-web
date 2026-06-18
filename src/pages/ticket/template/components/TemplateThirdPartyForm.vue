@@ -13,7 +13,7 @@
         <WorkflowPicker v-model="formData.workflow_id" placeholder="请选择流程" variant="simple" />
       </el-form-item>
       <el-form-item prop="icon" label="应用图标">
-        <e-icon-picker v-model="formData.icon" placeholder="请选择图标" class="icon-picker full-width" />
+        <AppIconPicker v-model="formData.icon" class="icon-picker full-width" />
       </el-form-item>
       <el-form-item prop="desc" label="模板描述">
         <el-input v-model="formData.desc" type="textarea" :rows="3" placeholder="请输入模板描述" />
@@ -28,7 +28,7 @@ import { ElMessage } from "element-plus"
 import type { FormInstance, FormRules } from "element-plus"
 import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
-import "vue3-icon-picker/dist/style.css"
+import AppIconPicker from "@/common/components/AppIconPicker/index.vue"
 import WorkflowPicker from "./WorkflowPicker.vue"
 import { createDefaultTemplateFormData } from "../types"
 import { useTemplateOptions } from "../composables/useTemplateOptions"

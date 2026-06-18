@@ -26,7 +26,7 @@ export function detailTemplateApi(id: number) {
 }
 
 /** 根据模版列表 */
-export function listTemplateApi(data: template.PageReq) {
+export function listTemplateApi(data: template.ListTemplateReq) {
   return instance.post<template.templates>({
     url: `${API_SERVICE.TICKET}/template/list`,
     data: data
@@ -35,9 +35,8 @@ export function listTemplateApi(data: template.PageReq) {
 
 /** 删除模版 */
 export function deleteTemplateApi(id: number) {
-  return instance.post<number>({
-    url: `${API_SERVICE.TICKET}/template/delete`,
-    data: { id: id }
+  return instance.delete<number>({
+    url: `${API_SERVICE.TICKET}/template/delete/${id}`
   })
 }
 
@@ -49,11 +48,33 @@ export function createTemplateGroupApi(data: template.createTemplateGroupReq) {
   })
 }
 
+/** 修改模版分组 */
+export function updateTemplateGroupApi(data: template.updateTemplateGroupReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.TICKET}/template/group/update`,
+    data: data
+  })
+}
+
+/** 删除模版分组 */
+export function deleteTemplateGroupApi(id: number) {
+  return instance.delete<number>({
+    url: `${API_SERVICE.TICKET}/template/group/delete/${id}`
+  })
+}
+
 /** 根据模版列表 */
 export function listTemplateGroupApi(data: template.PageReq) {
   return instance.post<template.templateGroups>({
     url: `${API_SERVICE.TICKET}/template/group/list`,
     data: data
+  })
+}
+
+/** 模版分组摘要 */
+export function listTemplateGroupSummaryApi() {
+  return instance.post<template.templateGroupSummaries>({
+    url: `${API_SERVICE.TICKET}/template/group/summary`
   })
 }
 

@@ -16,7 +16,7 @@
       <div class="dialog-header">
         <div class="dialog-header-content">
           <div class="dialog-icon">
-            <e-icon :icon-name="currentTemplate?.icon || 'DocumentAdd'" class="template-icon" />
+            <AppIcon :name="currentTemplate?.icon || 'DocumentAdd'" class="template-icon" />
           </div>
           <div class="dialog-title-section">
             <h3 class="dialog-title">创建工单 - {{ currentTemplate?.name || "未命名模板" }}</h3>
@@ -65,6 +65,7 @@ import type { createOrderReq } from "@/api/ticket/order/types/order"
 import type { Api, FormRule, Options } from "@form-create/element-ui"
 import formCreate from "@form-create/element-ui"
 import { ElMessage } from "element-plus"
+import AppIcon from "@/common/components/AppIcon/index.vue"
 
 // NOTE: 该组件为纯隔离出来的状态型 UI，使用 defineModel 控制显隐
 const visible = defineModel<boolean>("visible", { default: false })

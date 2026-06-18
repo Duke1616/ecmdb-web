@@ -16,6 +16,11 @@ export interface PageReq {
   limit: number
 }
 
+export interface ListTemplateReq extends PageReq {
+  /** 模板分组 ID，不传表示全部 */
+  group_id?: number
+}
+
 export interface ByKeywordReq extends PageReq {
   /** 关键字 */
   keyword: string
@@ -59,6 +64,10 @@ export interface createTemplateGroupReq {
   icon: string
 }
 
+export interface updateTemplateGroupReq extends createTemplateGroupReq {
+  id: number
+}
+
 export interface templateGroup {
   id: number
   name: string
@@ -68,6 +77,15 @@ export interface templateGroup {
 export interface templateGroups {
   total: number
   template_groups: templateGroup[]
+}
+
+export interface templateGroupSummary extends templateGroup {
+  total: number
+}
+
+export interface templateGroupSummaries {
+  total: number
+  template_groups: templateGroupSummary[]
 }
 
 export interface templateCombination {

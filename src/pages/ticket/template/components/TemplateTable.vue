@@ -15,8 +15,8 @@
     @size-change="emit('size-change', $event)"
     @current-change="emit('current-change', $event)"
   >
-    <template #groupName="{ row }">
-      {{ formatGroup(row) }}
+    <template #workflowName="{ row }">
+      <span class="workflow-name" :class="{ 'is-empty': !row.workflow_id }">{{ formatWorkflow(row) }}</span>
     </template>
 
     <template #createType="{ row }">
@@ -56,7 +56,7 @@ withDefaults(
     columns: DataTableColumn[]
     paginationData: PaginationData
     loading?: boolean
-    formatGroup: (row: template) => string
+    formatWorkflow: (row: template) => string
     getOperateItems: (row: template) => TicketTemplateOperateItem[]
   }>(),
   {
@@ -104,6 +104,21 @@ const emitOperateEvent = (row: template, action: string) => {
     color: #6b7280;
     background: #f9fafb;
     border-color: #e5e7eb;
+  }
+}
+
+.workflow-name {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  color: #374151;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.is-empty {
+    color: #9ca3af;
+    font-weight: 400;
   }
 }
 </style>

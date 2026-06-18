@@ -1,78 +1,159 @@
-import { ref, watch } from "vue"
-import { getTemplateGroupsByIdsApi, listTemplateApi } from "@/api/ticket/template"
+import { computed, ref, watch } from "vue"
+import { listTemplateApi, listTemplateGroupSummaryApi } from "@/api/ticket/template"
+import { getWorkflowDetailApi } from "@/api/ticket/workflow/workflow"
 import { usePagination } from "@/common/composables/usePagination"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import type { template } from "@/api/ticket/template/types/template"
+import type { template, templateGroupSummary } from "@/api/ticket/template/types/template"
+import type { TemplateManageGroupKey } from "../types"
 
 export function useTemplateList() {
   const { hasPermission } = usePermission()
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
   const templatesData = ref<template[]>([])
+  const templateGroups = ref<templateGroupSummary[]>([])
+  const selectedGroup = ref<TemplateManageGroupKey>("all")
   const loading = ref(false)
-  const groupMaps = ref(new Map<number, string>())
+  const groupLoading = ref(false)
+  const workflowMaps = ref(new Map<number, string>())
   const selectedTemplates = ref<template[]>([])
 
-  const getTemplateGroupsData = async (ids: number[]) => {
-    if (ids.length === 0) return
+  const canViewTemplate = computed(() => hasPermission(TICKET_CAPABILITIES.Template.View))
+  const totalTemplateCount = computed(() => templateGroups.value.reduce((total, group) => total + group.total, 0))
 
+  const resetList = () => {
+    templatesData.value = []
+    paginationData.total = 0
+  }
+
+  const listTemplateGroupsData = async () => {
+    if (!canViewTemplate.value) {
+      templateGroups.value = []
+      return
+    }
+
+    groupLoading.value = true
     try {
-      const { data } = await getTemplateGroupsByIdsApi(ids)
-      const nextMap = new Map(groupMaps.value)
-      data.template_groups.forEach((node) => {
-        nextMap.set(node.id, node.name)
-      })
-      groupMaps.value = nextMap
+      const { data } = await listTemplateGroupSummaryApi()
+      templateGroups.value = data.template_groups
+
+      if (selectedGroup.value !== "all" && !data.template_groups.some((group) => group.id === selectedGroup.value)) {
+        selectedGroup.value = "all"
+      }
     } catch {
-      // 分组名称加载失败时列表仍可展示。
+      templateGroups.value = []
+    } finally {
+      groupLoading.value = false
     }
   }
 
   const listTemplatesData = async () => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.View)) {
-      templatesData.value = []
-      paginationData.total = 0
+    if (!canViewTemplate.value) {
+      resetList()
       return
     }
 
     loading.value = true
     try {
+      const groupId = selectedGroup.value === "all" ? undefined : selectedGroup.value
       const { data } = await listTemplateApi({
         offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-        limit: paginationData.pageSize
+        limit: paginationData.pageSize,
+        group_id: groupId
       })
 
       paginationData.total = data.total
       templatesData.value = data.templates
-
-      const uniqueIds = data.templates.reduce<number[]>((ids, item) => {
-        if (item.group_id && !ids.includes(item.group_id)) ids.push(item.group_id)
-        return ids
-      }, [])
-      await getTemplateGroupsData(uniqueIds)
+      loadWorkflowNames(data.templates)
     } catch {
-      templatesData.value = []
-      paginationData.total = 0
+      resetList()
     } finally {
       loading.value = false
     }
   }
 
-  const formatGroup = (row: template) => groupMaps.value.get(row.group_id) || "未知组"
+  const refreshTemplateManageData = async () => {
+    await listTemplateGroupsData()
+    await listTemplatesData()
+  }
+
+  const formatWorkflow = (row: template) => {
+    if (!row.workflow_id) return "-"
+    return workflowMaps.value.get(row.workflow_id) || `流程 #${row.workflow_id}`
+  }
+
+  const loadWorkflowNames = async (templates: template[]) => {
+    const ids = templates.reduce<number[]>((nextIds, item) => {
+      if (item.workflow_id && !workflowMaps.value.has(item.workflow_id) && !nextIds.includes(item.workflow_id)) {
+        nextIds.push(item.workflow_id)
+      }
+      return nextIds
+    }, [])
+
+    if (ids.length === 0) return
+
+    const results = await Promise.allSettled(ids.map((id) => getWorkflowDetailApi(id)))
+    const nextMap = new Map(workflowMaps.value)
+
+    results.forEach((result, index) => {
+      const id = ids[index]
+      if (result.status === "fulfilled") {
+        nextMap.set(id, result.value.data.name || `流程 #${id}`)
+      } else {
+        nextMap.set(id, `流程 #${id}`)
+      }
+    })
+
+    workflowMaps.value = nextMap
+  }
 
   const handleSelectionChange = (selection: template[]) => {
     selectedTemplates.value = selection
   }
 
-  watch([() => paginationData.currentPage, () => paginationData.pageSize], listTemplatesData, { immediate: true })
+  watch(
+    [() => paginationData.currentPage, () => paginationData.pageSize],
+    () => {
+      listTemplatesData()
+    },
+    { immediate: true }
+  )
+
+  watch(selectedGroup, () => {
+    selectedTemplates.value = []
+    if (paginationData.currentPage === 1) {
+      listTemplatesData()
+      return
+    }
+    paginationData.currentPage = 1
+  })
+
+  watch(
+    canViewTemplate,
+    (allowed) => {
+      if (allowed) {
+        listTemplateGroupsData()
+      } else {
+        templateGroups.value = []
+        resetList()
+      }
+    },
+    { immediate: true }
+  )
 
   return {
     templatesData,
+    templateGroups,
+    selectedGroup,
     selectedTemplates,
+    totalTemplateCount,
     loading,
+    groupLoading,
     paginationData,
     listTemplatesData,
-    formatGroup,
+    listTemplateGroupsData,
+    refreshTemplateManageData,
+    formatWorkflow,
     handleSelectionChange,
     handleCurrentChange,
     handleSizeChange

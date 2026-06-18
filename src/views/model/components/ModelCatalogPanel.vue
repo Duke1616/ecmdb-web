@@ -130,7 +130,6 @@ const handleImageError = (event: Event) => {
 <style lang="scss" scoped>
 .model-catalog-panel {
   --catalog-sidebar-width: clamp(292px, 18vw, 320px);
-  --catalog-card-min-width: clamp(230px, 17vw, 270px);
   --catalog-panel-gap: clamp(12px, 1vw, 18px);
   --catalog-panel-pad: clamp(14px, 1.1vw, 18px);
 
@@ -341,7 +340,7 @@ const handleImageError = (event: Event) => {
 .model-grid {
   display: grid;
   flex: 1;
-  grid-template-columns: repeat(auto-fit, minmax(var(--catalog-card-min-width), 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-content: start;
   gap: var(--catalog-panel-gap);
   min-height: 0;
@@ -468,6 +467,18 @@ const handleImageError = (event: Event) => {
   height: 22px;
   border-radius: 999px;
   font-weight: 700;
+}
+
+@media (max-width: 1440px) {
+  .model-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .model-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {

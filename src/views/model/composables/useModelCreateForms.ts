@@ -6,23 +6,11 @@ import type { CreateModelGroupReq, CreateModelReq } from "@/api/model/types/mode
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 
-export interface IconData {
-  name: string
-  color: string
-  id?: string
-  url?: string
-}
-
-interface ExtendedCreateModelReq extends CreateModelReq {
-  iconData: IconData
-}
-
-const DEFAULT_FORM_DATA: ExtendedCreateModelReq = {
+const DEFAULT_FORM_DATA: CreateModelReq = {
   name: "",
   group_id: undefined,
   icon: "",
-  uid: "",
-  iconData: { name: "", color: "", id: "", url: "" }
+  uid: ""
 }
 
 const DEFAULT_MODEL_GROUP_DATA: CreateModelGroupReq = {
@@ -44,7 +32,7 @@ export const useModelCreateForms = (refreshCatalog: () => Promise<void> | void) 
 
   const dialogModelVisible = ref(false)
   const dialogModelGroupVisible = ref(false)
-  const formData = ref<ExtendedCreateModelReq>(cloneDeep(DEFAULT_FORM_DATA))
+  const formData = ref<CreateModelReq>(cloneDeep(DEFAULT_FORM_DATA))
   const formModelGroupData = ref<CreateModelGroupReq>(cloneDeep(DEFAULT_MODEL_GROUP_DATA))
   const formRef = ref<FormInstance | null>(null)
   const formGroupRef = ref<FormInstance | null>(null)
@@ -67,18 +55,6 @@ export const useModelCreateForms = (refreshCatalog: () => Promise<void> | void) 
   }
   const openModelDialog = () => openDialog(CMDB_CAPABILITIES.Model.Create, dialogModelVisible)
   const openGroupDialog = () => openDialog(CMDB_CAPABILITIES.Model.GroupCreate, dialogModelGroupVisible)
-
-  const handleIconChange = (iconData: IconData) => {
-    formData.value.icon = iconData.url || iconData.name || ""
-    formData.value.iconData = {
-      name: iconData.name || "",
-      color: iconData.color || "",
-      id: iconData.id || "",
-      url: iconData.url || ""
-    }
-
-    formRef.value?.validateField("icon")
-  }
 
   const resetForm = () => {
     formRef.value?.clearValidate()
@@ -129,7 +105,6 @@ export const useModelCreateForms = (refreshCatalog: () => Promise<void> | void) 
     groupFormRules,
     openModelDialog,
     openGroupDialog,
-    handleIconChange,
     resetForm,
     handleCreateModel,
     handleCreateModelGroup

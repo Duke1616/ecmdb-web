@@ -404,6 +404,10 @@ export const TICKET_CAPABILITIES = {
   Template: {
     /** 创建模板分类 */
     AddGroup: "ticket:template:add_group",
+    /** 修改模板分类 */
+    EditGroup: "ticket:template:edit_group",
+    /** 删除模板分类 */
+    DeleteGroup: "ticket:template:delete_group",
     /** 删除工单模板 */
     Delete: "ticket:template:delete",
     /** 创建工单模板 */

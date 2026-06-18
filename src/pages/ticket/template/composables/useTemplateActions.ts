@@ -2,10 +2,10 @@ import { h, nextTick, ref } from "vue"
 import { useRouter } from "vue-router"
 import { Connection, CopyDocument, Delete, EditPen, Search } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { deleteTemplateApi } from "@/api/ticket/template"
+import { deleteTemplateApi, deleteTemplateGroupApi } from "@/api/ticket/template"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import type { createOrUpdateTemplateReq, template } from "@/api/ticket/template/types/template"
+import type { createOrUpdateTemplateReq, template, templateGroupSummary } from "@/api/ticket/template/types/template"
 import { TicketTemplateAction } from "../types"
 import type { TemplateGroupFormExpose, TemplateThirdPartyFormExpose, TicketTemplateOperateItem } from "../types"
 
@@ -22,6 +22,7 @@ export function useTemplateActions(options: {
   const { hasPermission } = usePermission()
 
   const groupDialogVisible = ref(false)
+  const groupDialogTitle = ref("新增模板分组")
   const thirdpartyDialogVisible = ref(false)
   const groupFormRef = ref<TemplateGroupFormExpose>()
   const thirdPartyFormRef = ref<TemplateThirdPartyFormExpose>()
@@ -78,12 +79,27 @@ export function useTemplateActions(options: {
       ElMessage.warning("暂无新增模板分组权限")
       return
     }
+    groupDialogTitle.value = "新增模板分组"
     groupDialogVisible.value = true
+  }
+
+  const openEditGroupDialog = (group: templateGroupSummary) => {
+    if (!hasPermission(TICKET_CAPABILITIES.Template.EditGroup)) {
+      ElMessage.warning("暂无修改模板分组权限")
+      return
+    }
+
+    groupDialogTitle.value = "编辑模板分组"
+    groupDialogVisible.value = true
+    nextTick(() => {
+      groupFormRef.value?.setForm(group)
+    })
   }
 
   const onClosedTemplateGroup = () => {
     groupFormRef.value?.resetForm()
     groupDialogVisible.value = false
+    groupDialogTitle.value = "新增模板分组"
   }
 
   const handleGroupSuccess = () => {
@@ -92,6 +108,34 @@ export function useTemplateActions(options: {
 
   const handleCreateTemplateGroup = () => {
     groupFormRef.value?.handleCreate()
+  }
+
+  const handleDeleteTemplateGroup = async (group: templateGroupSummary) => {
+    if (!hasPermission(TICKET_CAPABILITIES.Template.DeleteGroup)) {
+      ElMessage.warning("暂无删除模板分组权限")
+      return
+    }
+
+    try {
+      await ElMessageBox({
+        title: "删除确认",
+        message: h("p", null, [
+          h("span", null, "正在删除模板分组: "),
+          h("i", { style: "color: red" }, `${group.name}`),
+          h("span", null, " 确认删除？")
+        ]),
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+      await deleteTemplateGroupApi(group.id)
+      ElMessage.success("删除成功")
+      options.refresh()
+    } catch (error) {
+      if (error !== "cancel") {
+        ElMessage.error("删除失败，请确认分组下是否仍存在模板")
+      }
+    }
   }
 
   const onClosedThirdParty = () => {
@@ -185,14 +229,17 @@ export function useTemplateActions(options: {
 
   return {
     groupDialogVisible,
+    groupDialogTitle,
     thirdpartyDialogVisible,
     groupFormRef,
     thirdPartyFormRef,
     getOperateBtnItems,
     openGroupDialog,
+    openEditGroupDialog,
     onClosedTemplateGroup,
     handleGroupSuccess,
     handleCreateTemplateGroup,
+    handleDeleteTemplateGroup,
     onClosedThirdParty,
     handleThirdPartySuccess,
     handleCreateThirdParty,

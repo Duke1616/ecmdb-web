@@ -108,13 +108,7 @@
               </div>
               <div class="input-container">
                 <el-form-item prop="icon" class="no-margin">
-                  <e-icon-picker
-                    v-model="localFormData.icon"
-                    @change="updateFormData"
-                    placeholder="请选择图标"
-                    class="icon-picker"
-                    size="large"
-                  />
+                  <AppIconPicker v-model="localFormData.icon" class="icon-picker" @change="updateFormData" />
                 </el-form-item>
               </div>
             </div>
@@ -171,12 +165,12 @@
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import type { FormInstance, FormRules } from "element-plus"
+import AppIconPicker from "@/common/components/AppIconPicker/index.vue"
 import FormActions from "@/common/components/FormActions/index.vue"
 import WorkflowPicker from "./WorkflowPicker.vue"
 import { createDefaultTemplateFormData } from "../types"
 import { useTemplateOptions } from "../composables/useTemplateOptions"
 import type { TemplateFormData } from "../types"
-import "vue3-icon-picker/dist/style.css"
 
 const props = defineProps<{
   formData: TemplateFormData

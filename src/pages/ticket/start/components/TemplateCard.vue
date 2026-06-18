@@ -2,13 +2,7 @@
   <div class="template-card" :class="{ 'is-disabled': disabled }" @click="handleClick">
     <div class="template-card-header">
       <div class="template-icon-wrapper">
-        <!-- 如果 icon 包含空格或 eiconfont 关键字，说明是 iconfont 类名 -->
-        <i
-          v-if="template.icon?.includes(' ') || template.icon?.startsWith('e-')"
-          :class="template.icon"
-          class="template-icon"
-        />
-        <e-icon v-else :icon-name="template.icon || 'Document'" class="template-icon" />
+        <AppIcon :name="template.icon || 'Document'" class="template-icon" />
       </div>
       <div class="template-actions">
         <div class="template-badge">模板</div>
@@ -35,6 +29,7 @@
 
 <script setup lang="ts">
 import { ArrowRight, Star, StarFilled } from "@element-plus/icons-vue"
+import AppIcon from "@/common/components/AppIcon/index.vue"
 
 const props = withDefaults(
   defineProps<{
