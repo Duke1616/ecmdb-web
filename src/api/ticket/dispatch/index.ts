@@ -2,14 +2,6 @@ import type * as dispatch from "./types/dispatch"
 import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
-/** 自动派发列表 */
-export function listDispatchesByTemplateIdApi(data: dispatch.listByTemplateIdReq) {
-  return instance.post<dispatch.dispatches>({
-    url: `${API_SERVICE.TICKET}/dispatch/list/by_template_id`,
-    data: data
-  })
-}
-
 /** 创建自动派发 */
 export function createDispatchApi(data: dispatch.createOrUpdateDispatchReq) {
   return instance.post<number>({

@@ -72,3 +72,11 @@ export function findWorkflowByIdsApi(ids: number[]) {
     data: { ids }
   })
 }
+
+/** 查询工作流画布中自动化节点引用的脚本模板 UID */
+export function getAutomationCodebookUidsApi(workflowId: number) {
+  return instance.post<workflow.RetrieveAutomationCodebookUids>({
+    url: `${API_SERVICE.TICKET}/workflow/automation/codebooks`,
+    data: { workflow_id: workflowId }
+  })
+}

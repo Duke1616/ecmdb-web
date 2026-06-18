@@ -14,20 +14,6 @@ export interface createOrUpdateDispatchReq {
   value: string
 }
 
-export interface dispatches {
-  dispatches: dispatch[]
-  total: number
-}
-
-export interface listByTemplateIdReq {
-  /** 跳过条数 */
-  offset: number
-  /** 查询条数 */
-  limit: number
-  /** 模版ID */
-  template_id: number
-}
-
 export interface syncDispatchReq {
   /** 模版ID */
   template_group_id: number | undefined

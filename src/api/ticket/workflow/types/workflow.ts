@@ -58,3 +58,17 @@ export interface ListByKeywordReq {
 export interface FindByIdsReq {
   ids: number[]
 }
+
+export interface AutomationCodebookUidsReq {
+  workflow_id: number
+}
+
+export interface RetrieveAutomationCodebookUids {
+  automation_codebooks: Record<string, string | AutomationCodebookConfig>
+}
+
+export interface AutomationCodebookConfig {
+  id?: number
+  dispatch_id?: number
+  codebook_uid: string
+}

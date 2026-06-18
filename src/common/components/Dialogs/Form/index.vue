@@ -58,10 +58,6 @@
       </div>
     </template>
 
-    <!-- 当 showFooter 为 false 时，提供一个空的 footer 插槽来覆盖默认行为 -->
-    <template v-else #footer>
-      <!-- 空的 footer 插槽 -->
-    </template>
   </BaseDialog>
 </template>
 
