@@ -44,13 +44,25 @@
           <el-button class="clear-action" size="small" :icon="Delete" @click="clearAllVariables" text> 清空 </el-button>
         </div>
         <div class="variables-list">
+          <div class="variables-list-head">
+            <span>KEY</span>
+            <span>VALUE</span>
+            <span>类型</span>
+          </div>
           <div v-for="(variable, index) in variableList" :key="index" class="variable-item">
             <div class="variable-content">
-              <span class="variable-key">{{ variable.key }}</span>
-              <span class="variable-equals">=</span>
-              <span class="variable-value" :class="{ masked: variable.secret }">
-                {{ variable.secret ? "••••••••" : variable.value }}
-              </span>
+              <div class="variable-key-cell">
+                <el-tooltip :content="variable.key" placement="top" :show-after="300">
+                  <span class="variable-key">{{ variable.key }}</span>
+                </el-tooltip>
+              </div>
+              <div class="variable-value-cell">
+                <el-tooltip :content="variable.secret ? '敏感变量已隐藏' : variable.value" placement="top" :show-after="300">
+                  <span class="variable-value" :class="{ masked: variable.secret }">
+                    {{ variable.secret ? "••••••••" : variable.value }}
+                  </span>
+                </el-tooltip>
+              </div>
             </div>
             <div class="variable-actions">
               <span class="secret-badge" :class="{ sensitive: variable.secret }">
@@ -310,11 +322,30 @@ watch(
         display: flex;
         flex-direction: column;
 
-        .variable-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+        .variables-list-head {
+          display: grid;
+          grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) 70px 28px;
           gap: 10px;
+          min-height: 30px;
+          align-items: center;
+          padding: 0 8px 0 10px;
+          color: #98a2b3;
+          background: #ffffff;
+          border-bottom: 1px solid #edf1f6;
+          font-size: 10px;
+          font-weight: 800;
+          line-height: 1;
+
+          span:nth-child(3) {
+            text-align: center;
+          }
+        }
+
+        .variable-item {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 98px;
+          align-items: center;
+          gap: 8px;
           min-height: 38px;
           padding: 5px 8px 5px 10px;
           background: #ffffff;
@@ -334,22 +365,27 @@ watch(
           }
 
           .variable-content {
-            display: flex;
+            display: grid;
+            grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
             align-items: center;
-            gap: 7px;
+            gap: 10px;
             min-width: 0;
-            flex: 1;
 
             .variable-key,
             .variable-value {
+              display: block;
+              max-width: 100%;
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
             }
 
+            .variable-key-cell,
+            .variable-value-cell {
+              min-width: 0;
+            }
+
             .variable-key {
-              flex: 0 1 auto;
-              max-width: 42%;
               color: #1f2937;
               font-family:
                 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -357,16 +393,8 @@ watch(
               font-weight: 700;
             }
 
-            .variable-equals {
-              flex: 0 0 auto;
-              color: #b4bfcd;
-              font-size: 12px;
-              font-weight: 600;
-            }
-
             .variable-value {
-              flex: 1;
-              min-width: 40px;
+              display: block;
               color: #667085;
               font-size: 12px;
 
@@ -382,7 +410,7 @@ watch(
             align-items: center;
             justify-content: flex-end;
             gap: 6px;
-            flex: 0 0 auto;
+            min-width: 0;
 
             .secret-badge {
               display: inline-flex;
@@ -481,6 +509,29 @@ watch(
           .secret-toggle,
           .el-button {
             width: 100%;
+          }
+        }
+      }
+
+      .variables-display {
+        .variables-list {
+          .variables-list-head {
+            display: none;
+          }
+
+          .variable-item {
+            grid-template-columns: 1fr;
+            gap: 6px;
+            padding: 8px 10px;
+
+            .variable-content {
+              grid-template-columns: 1fr;
+              gap: 4px;
+            }
+
+            .variable-actions {
+              justify-content: space-between;
+            }
           }
         }
       }
