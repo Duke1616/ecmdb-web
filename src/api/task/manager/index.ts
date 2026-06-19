@@ -57,9 +57,10 @@ export function deleteTaskApi(taskId: number) {
 }
 
 /** 立即运行一次任务 */
-export function runTaskApi(taskId: number) {
+export function runTaskApi(data: task.RunTaskReq) {
   return instance.post<void>({
-    url: `${API_SERVICE.TASK}/manager/run/${taskId}`
+    url: `${API_SERVICE.TASK}/manager/run`,
+    data
   })
 }
 

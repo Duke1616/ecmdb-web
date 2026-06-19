@@ -14,6 +14,10 @@ export interface UpdateTaskReq extends CreateTaskReq {
   id: number
 }
 
+export interface RunTaskReq {
+  id: number
+}
+
 export enum TaskType {
   RECURRING = "RECURRING",
   ONE_TIME = "ONE_TIME"

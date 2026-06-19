@@ -70,6 +70,9 @@
 
     <!-- 运行历史与日志弹窗 -->
     <TaskExecutionDialog v-if="logVisible" v-model="logVisible" :task-id="logTaskId" :task-name="logTaskName" />
+
+    <!-- 任务运行确认弹窗 -->
+    <TaskRunDialog v-model="runVisible" :task="runTask" :on-submit="submitRunTask" />
   </ProGovernanceLayout>
 </template>
 
@@ -81,6 +84,7 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import TaskDrawer from "./components/TaskDrawer.vue"
 import TaskExecutionDialog from "./components/TaskExecutionDialog.vue"
+import TaskRunDialog from "./components/TaskRunDialog.vue"
 import StatusBadge, { type StatusBadgeType } from "@/common/components/StatusBadge/index.vue"
 import { TaskType, TaskStatus, type TaskItem } from "@/api/task/manager/type"
 import { useTaskManager } from "./composables/useTaskManager"
@@ -100,6 +104,8 @@ const {
   logVisible,
   logTaskId,
   logTaskName,
+  runVisible,
+  runTask,
   loadData,
   handleRefresh,
   handleCreate,
@@ -107,6 +113,7 @@ const {
   handleDelete,
   handleLogs,
   handleRunTask,
+  submitRunTask,
   handleStopTask,
   handleFormSuccess,
   handleSizeChange,
@@ -192,7 +199,7 @@ const handleAction = (row: TaskItem, code: string) => {
       handleLogs(row)
       break
     case "run":
-      handleRunTask(row.id)
+      handleRunTask(row)
       break
     case "stop":
       handleStopTask(row.id)
