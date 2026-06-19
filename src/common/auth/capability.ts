@@ -440,44 +440,6 @@ export const TICKET_CAPABILITIES = {
     View: "ticket:workflow:view"
   },
 
-  /** 脚本模板相关 */
-  Codebook: {
-    /** 创建脚本模板 */
-    Add: "ticket:codebook:add",
-    /** 删除脚本模板 */
-    Delete: "ticket:codebook:delete",
-    /** 更新脚本模板 */
-    Edit: "ticket:codebook:edit",
-    /** 脚本模板详情 */
-    Detail: "ticket:codebook:get",
-    /** 脚本模板列表 */
-    View: "ticket:codebook:view",
-    /** 当前绑定执行单元 */
-    ViewRunners: "ticket:codebook:view_runners"
-  },
-
-  /** 执行单元相关 */
-  Runner: {
-    /** 注册执行单元 */
-    Add: "ticket:runner:add",
-    /** 删除执行单元 */
-    Delete: "ticket:runner:delete",
-    /** 更新执行单元 */
-    Edit: "ticket:runner:edit",
-    /** 执行单元详情 */
-    Detail: "ticket:runner:get",
-    /** 执行单元标签 */
-    Tags: "ticket:runner:tags",
-    /** 执行单元列表 */
-    View: "ticket:runner:view",
-    /** 按 ID 查看执行单元 */
-    ViewByIds: "ticket:runner:view_by_ids",
-    /** 按流程查看执行单元 */
-    ViewByWorkflowId: "ticket:runner:view_by_workflow_id",
-    /** 查看未绑定当前脚本的执行单元 */
-    ViewExcludeCodebookUid: "ticket:runner:view_exclude_codebook_uid"
-  },
-
   /** 任务记录相关 */
   Task: {
     /** 任务列表 */
@@ -514,6 +476,44 @@ export const TICKET_CAPABILITIES = {
 } as const
 
 export const TASK_CAPABILITIES = {
+  /** 脚本模板相关 */
+  Codebook: {
+    /** 创建脚本模板 */
+    Add: "task:codebook:add",
+    /** 删除脚本模板 */
+    Delete: "task:codebook:delete",
+    /** 更新脚本模板 */
+    Edit: "task:codebook:edit",
+    /** 脚本模板详情 */
+    Detail: "task:codebook:get",
+    /** 脚本模板列表 */
+    View: "task:codebook:view",
+    /** 当前绑定执行单元 */
+    ViewRunners: "task:codebook:view_runners"
+  },
+
+  /** 执行单元相关 */
+  Runner: {
+    /** 注册执行单元 */
+    Add: "task:runner:add",
+    /** 删除执行单元 */
+    Delete: "task:runner:delete",
+    /** 更新执行单元 */
+    Edit: "task:runner:edit",
+    /** 执行单元详情 */
+    Detail: "task:runner:get",
+    /** 执行单元标签 */
+    Tags: "task:runner:tags",
+    /** 执行单元列表 */
+    View: "task:runner:view",
+    /** 按 ID 查看执行单元 */
+    ViewByIds: "task:runner:view_by_ids",
+    /** 按流程查看执行单元 */
+    ViewByWorkflowId: "task:runner:view_by_workflow_id",
+    /** 查看未绑定当前脚本的执行单元 */
+    ViewExcludeCodebookUid: "task:runner:view_exclude_codebook_uid"
+  },
+
   /** 全局变量相关 */
   Variable: {
     /** 创建全局变量 */

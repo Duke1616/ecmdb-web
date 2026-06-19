@@ -83,6 +83,7 @@ import DataTable from "@/common/components/DataTable/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { Drawer } from "@@/components/Dialogs"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 import type { Column } from "@@/components/DataTable/types"
@@ -97,8 +98,8 @@ const tableColumns: Column[] = [
 
 // 操作按钮配置
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: Edit },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  { name: "修改", code: "edit", type: "primary", icon: Edit, capability: TASK_CAPABILITIES.Runner.Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete, capability: TASK_CAPABILITIES.Runner.Delete }
 ]
 
 // 选中的行

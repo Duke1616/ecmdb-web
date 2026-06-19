@@ -67,6 +67,7 @@ import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import RunnerDrawer from "./components/RunnerDrawer.vue"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const addDialogDrawer = ref<boolean>(false)
 
@@ -84,9 +85,15 @@ const tableColumns: Column[] = [
 
 // 操作按钮配置
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit) },
-  { name: "执行单元", code: "runner", type: "success", icon: markRaw(Setting) },
-  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) }
+  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit), capability: TASK_CAPABILITIES.Codebook.Edit },
+  {
+    name: "执行单元",
+    code: "runner",
+    type: "success",
+    icon: markRaw(Setting),
+    capability: TASK_CAPABILITIES.Codebook.ViewRunners
+  },
+  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete), capability: TASK_CAPABILITIES.Codebook.Delete }
 ]
 
 // 选中的行
