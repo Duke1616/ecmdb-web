@@ -4,7 +4,6 @@ import { ElMessage } from "element-plus"
 import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/task/manager"
 import { TaskType, TaskProtocol, type UpdateTaskReq } from "@/api/task/manager/type"
 import type { HandlerDetail } from "@/api/task/executor/type"
-import { useTaskResources } from "./useTaskResources"
 import { type TaskFormState, createDefaultFormState, mapToFormState, mapToApiPayload } from "./useTaskData"
 
 /**
@@ -22,28 +21,10 @@ export function useTaskForm(options: {
 
   const formRef = ref<FormInstance>()
   const saving = ref(false)
+  const resourceLoading = ref(false)
   const httpConfigTab = ref("headers")
   const form = ref<TaskFormState>(createDefaultFormState())
-
-  // --- 外部注册中心资源 ---
-  const {
-    loading: resourceLoading,
-    executorList,
-    fetchResources,
-    queryServiceSuggestions,
-    queryHandlerSuggestions
-  } = useTaskResources()
-
-  // --- 计算属性与联动查询 ---
-  const currentHandler = computed(() => {
-    const serviceName = form.value.grpc_service
-    if (!serviceName) return null
-
-    const executor = executorList.value.find((e) => e.name === serviceName)
-    if (!executor) return null
-
-    return executor.handlers.find((h) => h.name === form.value.grpc_handler) ?? null
-  })
+  const currentHandler = ref<HandlerDetail | null>(null)
 
   // --- 校验规则自适应计算 ---
   const rules = computed<FormRules<TaskFormState>>(() => {
@@ -56,8 +37,16 @@ export function useTaskForm(options: {
     }
 
     if (form.value.protocol === TaskProtocol.GRPC) {
-      r.grpc_service = [{ required: true, message: "请选择执行器服务", trigger: "change" }]
-      r.grpc_handler = [{ required: true, message: "请选择处理方法", trigger: "change" }]
+      r.grpc_handler = [
+        {
+          validator: (_rule, value, callback) => {
+            if (!form.value.grpc_service) return callback(new Error("请选择执行器服务"))
+            if (!value) return callback(new Error("请选择处理方法"))
+            callback()
+          },
+          trigger: "change"
+        }
+      ]
     } else {
       r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "blur" }]
     }
@@ -69,21 +58,18 @@ export function useTaskForm(options: {
   const handleServiceSelect = () => {
     // 切换服务时清空先前绑定的接口
     form.value.grpc_handler = ""
+    currentHandler.value = null
   }
 
-  const handleHandlerSelect = (item: Record<string, any>) => {
-    const handler = item as HandlerDetail
+  const handleHandlerSelect = (handler: HandlerDetail | null) => {
+    currentHandler.value = handler
+    if (!handler) return
     const params = form.value.grpc_params
 
     // 基于元数据自适应初始化参数的默认值
     for (const meta of handler.metadata ?? []) {
       params[meta.key] = params[meta.key] || meta.default || ""
     }
-  }
-
-  const queryHandlers = (qs: string, cb: (res: (HandlerDetail & { value: string })[]) => void) => {
-    const serviceName = form.value.grpc_service
-    queryHandlerSuggestions(serviceName, qs, cb)
   }
 
   const handleCronSelect = (val: string) => {
@@ -115,13 +101,11 @@ export function useTaskForm(options: {
   // 当抽屉开启状态变化时，决定是拉取详情还是重置状态
   watch(visible, async (val) => {
     if (val) {
-      // 仅在打开抽屉时按需拉取执行器资源，避免在列表页挂载时 premature 触发 API 请求
-      fetchResources()
-
       if (currentTaskId.value) {
         await loadDetail()
       } else {
         form.value = createDefaultFormState()
+        currentHandler.value = null
         nextTick(() => {
           formRef.value?.clearValidate()
         })
@@ -164,10 +148,8 @@ export function useTaskForm(options: {
     rules,
     handleServiceSelect,
     handleHandlerSelect,
-    queryHandlers,
     handleCronSelect,
     handleProtocolChange,
-    submit,
-    queryServiceSuggestions
+    submit
   }
 }

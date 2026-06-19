@@ -109,7 +109,7 @@
 
         <div class="form-row">
           <el-form-item prop="tags" class="form-item">
-            <tag v-model="formData.tags" @change="handleTagsChange" />
+            <tag v-model="formData.tags" :suggested-tags="runnerSuggestedTags" @change="handleTagsChange" />
           </el-form-item>
         </div>
       </div>
@@ -208,6 +208,23 @@ const codebookName = computed(() => {
   if (props.presetCodebookName) return props.presetCodebookName
   const matched = codebooks.value.find((item) => item.identifier === formData.value.codebook_uid)
   return matched?.name ?? ""
+})
+
+const runnerSuggestedTags = computed(() => {
+  const modeTag = formData.value.kind === Kind.KAFKA ? "message" : "distributed"
+  const tags = [
+    formData.value.codebook_uid,
+    formData.value.target,
+    formData.value.handler,
+    modeTag,
+    "devops",
+    "automation",
+    "ops",
+    "deploy"
+  ]
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+  return Array.from(new Set(tags))
 })
 
 // ── 自动生成执行单元名称 ──────────────────────────────────────────────────────

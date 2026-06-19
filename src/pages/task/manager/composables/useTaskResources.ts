@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import { listExecutorsApi } from "@/api/task/executor"
+import { listAllExecutorsApi } from "@/api/task/executor"
 import type { Executor, HandlerDetail } from "@/api/task/executor/type"
 
 /**
@@ -16,8 +16,7 @@ export function useTaskResources() {
   const fetchResources = async () => {
     loading.value = true
     try {
-      const res = await listExecutorsApi()
-      executorList.value = res.data || []
+      executorList.value = await listAllExecutorsApi()
     } catch (e) {
       console.error("[TaskManager] Sync context failed", e)
     } finally {

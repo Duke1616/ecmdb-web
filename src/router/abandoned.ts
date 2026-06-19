@@ -275,12 +275,12 @@
 //         }
 //       },
 //       {
-//         path: "worker",
-//         component: () => import("@/pages/task/worker/index.vue"),
-//         name: "task-worker",
+//         path: "executor",
+//         component: () => import("@/pages/task/executor/index.vue"),
+//         name: "task-executor",
 //         meta: {
-//           title: "工作节点",
-//           svgIcon: "worker",
+//           title: "执行器管理",
+//           svgIcon: "executor",
 //           platforms: ["cmdb"]
 //         }
 //       },

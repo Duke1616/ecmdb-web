@@ -1,5 +1,5 @@
 import { ref, computed } from "vue"
-import { listAgentsApi } from "@/api/task/agent"
+import { listAllAgentsApi } from "@/api/task/agent"
 import type { Agent } from "@/api/task/agent/type"
 
 /**
@@ -13,9 +13,9 @@ export function useWorkers(getTargetValue?: () => string | undefined) {
 
   const fetchWorkers = () => {
     loading.value = true
-    listAgentsApi()
-      .then(({ data }) => {
-        agents.value = data || []
+    listAllAgentsApi()
+      .then((data) => {
+        agents.value = data
       })
       .catch(() => {
         agents.value = []

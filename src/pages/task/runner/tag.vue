@@ -1,21 +1,8 @@
 <template>
   <div class="tag-configuration">
-    <!-- 核心输入区域：模拟输入框，不仅是容器，更是视觉焦点 -->
     <div class="tag-editor-container" :class="{ 'is-active': isFocused }" @click="focusInput">
-      <div class="editor-header">
-        <div class="label-group">
-          <el-icon class="label-icon"><PriceTag /></el-icon>
-          <span class="label-text">运行标签</span>
-        </div>
-        <div class="actions">
-          <span v-if="selectedTags.length > 0" class="tag-count">已选 {{ selectedTags.length }}</span>
-          <el-button v-if="selectedTags.length > 0" link type="primary" size="small" @click.stop="clearAll"
-            >清空</el-button
-          >
-        </div>
-      </div>
-
       <div class="editor-content">
+        <el-icon class="label-icon"><PriceTag /></el-icon>
         <transition-group name="tag-list">
           <el-tag
             v-for="(tag, index) in selectedTags"
@@ -40,14 +27,20 @@
           @keydown.enter.prevent="addTag"
           @keydown.backspace="handleBackspace"
         />
+
+        <div class="actions">
+          <span v-if="selectedTags.length > 0" class="tag-count">{{ selectedTags.length }} 个</span>
+          <el-button v-if="selectedTags.length > 0" link type="primary" size="small" @click.stop="clearAll">
+            清空
+          </el-button>
+        </div>
       </div>
     </div>
 
-    <!-- 智能推荐区域：采用流式布局，弱化边框，强化交互态 -->
     <div class="smart-suggestions" v-if="recommendedTags.length > 0">
       <div class="suggestion-header">
         <span class="dot" />
-        <span>快速添加推荐标签</span>
+        <span>推荐标签</span>
       </div>
       <div class="suggestion-wall">
         <div
@@ -69,9 +62,6 @@ import { ref, watch, onMounted } from "vue"
 import { PriceTag } from "@element-plus/icons-vue"
 import { listRunnerTagsApi } from "@/api/task/runner"
 
-// NOTE: 该组件为第三版设计，追求「呼吸感」与「现代工业设计」的平衡。
-// 引入了 transition 动画，使用了更细腻的 HSL 配色方案，强调组件的自愈能力与输入流畅度。
-
 interface Props {
   modelValue?: string[]
   suggestedTags?: string[]
@@ -92,6 +82,7 @@ const inputValue = ref("")
 const isFocused = ref(false)
 const selectedTags = ref<string[]>([])
 const recommendedTags = ref<string[]>([])
+const remoteTags = ref<string[]>([])
 
 const focusInput = () => {
   inputRef.value?.focus()
@@ -110,6 +101,7 @@ const addTag = () => {
     selectedTags.value.push(val)
     inputValue.value = ""
     emitChange()
+    syncRecommendedTags()
   } else {
     inputValue.value = ""
   }
@@ -118,17 +110,20 @@ const addTag = () => {
 const removeTag = (index: number) => {
   selectedTags.value.splice(index, 1)
   emitChange()
+  syncRecommendedTags()
 }
 
 const clearAll = () => {
   selectedTags.value = []
   emitChange()
+  syncRecommendedTags()
 }
 
 const handleBackspace = () => {
   if (inputValue.value === "" && selectedTags.value.length > 0) {
     selectedTags.value.pop()
     emitChange()
+    syncRecommendedTags()
   }
 }
 
@@ -140,11 +135,25 @@ const toggleTag = (tag: string) => {
     selectedTags.value.push(tag)
   }
   emitChange()
+  syncRecommendedTags()
 }
 
 const emitChange = () => {
   emits("update:modelValue", [...selectedTags.value])
   emits("change", [...selectedTags.value])
+}
+
+const syncRecommendedTags = () => {
+  const tags = new Set<string>()
+  for (const tag of props.suggestedTags) {
+    const value = tag.trim()
+    if (value) tags.add(value)
+  }
+  for (const tag of remoteTags.value) {
+    const value = tag.trim()
+    if (value) tags.add(value)
+  }
+  recommendedTags.value = Array.from(tags).filter((tag) => !selectedTags.value.includes(tag)).slice(0, 5)
 }
 
 const loadRecommendedTags = () => {
@@ -154,11 +163,12 @@ const loadRecommendedTags = () => {
       data.runner_tags.forEach((item) => {
         item.tags.forEach((t) => tags.add(t.tag))
       })
-      // 限制展示数量，确保一行平分时不会太拥挤
-      recommendedTags.value = Array.from(tags).slice(0, 7)
+      remoteTags.value = Array.from(tags)
+      syncRecommendedTags()
     })
     .catch(() => {
-      recommendedTags.value = []
+      remoteTags.value = []
+      syncRecommendedTags()
     })
 }
 
@@ -166,93 +176,73 @@ watch(
   () => props.modelValue,
   (val) => {
     if (val) selectedTags.value = [...val]
+    syncRecommendedTags()
   },
   { immediate: true, deep: true }
 )
 
+watch(
+  () => props.suggestedTags,
+  () => {
+    syncRecommendedTags()
+  },
+  { deep: true }
+)
+
 onMounted(() => {
-  if (!props.suggestedTags || props.suggestedTags.length === 0) {
-    loadRecommendedTags()
-  } else {
-    recommendedTags.value = [...props.suggestedTags]
-  }
+  syncRecommendedTags()
+  loadRecommendedTags()
 })
 </script>
 
 <style lang="scss" scoped>
 .tag-configuration {
   width: 100%;
-  --primary-color: #4f46e5;
-  --bg-soft: #f9fafb;
-  --border-color: #e5e7eb;
+  --primary-color: #3b82f6;
+  --bg-soft: #f8fafc;
+  --border-color: #dcdfe6;
 
   .tag-editor-container {
     background: #ffffff;
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 12px 16px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+    padding: 7px 10px;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
     cursor: text;
 
     &:hover {
-      border-color: #d1d5db;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+      border-color: #c0c4cc;
     }
 
     &.is-active {
       border-color: var(--primary-color);
-      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
-    }
-
-    .editor-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-
-      .label-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #374151;
-
-        .label-icon {
-          font-size: 16px;
-          color: var(--primary-color);
-        }
-
-        .label-text {
-          font-size: 13px;
-          font-weight: 600;
-        }
-      }
-
-      .actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-
-        .tag-count {
-          font-size: 12px;
-          color: #9ca3af;
-        }
-      }
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.08);
     }
 
     .editor-content {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
       align-items: center;
+      min-height: 28px;
+
+      .label-icon {
+        flex: 0 0 auto;
+        color: #94a3b8;
+        font-size: 16px;
+      }
 
       .vibrant-tag {
-        height: 28px;
+        height: 24px;
         border: none;
-        background: #eef2ff;
+        background: #eff6ff;
         color: var(--primary-color);
-        font-weight: 500;
+        font-size: 12px;
+        font-weight: 600;
         border-radius: 6px;
-        padding: 0 10px;
+        padding: 0 8px;
 
         :deep(.el-tag__close) {
           color: var(--primary-color);
@@ -267,29 +257,45 @@ onMounted(() => {
         border: none;
         outline: none;
         flex: 1;
-        min-width: 120px;
-        font-size: 14px;
+        min-width: 110px;
+        font-size: 13px;
         color: #1f2937;
-        padding: 4px 0;
+        padding: 3px 0;
 
         &::placeholder {
           color: #9ca3af;
+        }
+      }
+
+      .actions {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+
+        .tag-count {
+          color: #94a3b8;
+          font-size: 12px;
         }
       }
     }
   }
 
   .smart-suggestions {
-    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    min-width: 0;
 
     .suggestion-header {
       display: flex;
+      flex: 0 0 auto;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-size: 12px;
       color: #6b7280;
-      margin-bottom: 12px;
-      padding-left: 4px;
       font-weight: 500;
 
       .dot {
@@ -301,24 +307,26 @@ onMounted(() => {
     }
 
     .suggestion-wall {
-      display: flex;
-      gap: 6px;
-      width: 100%;
+      display: grid;
+      flex: 1 1 0;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 5px;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .modern-chip {
-      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       min-width: 0;
       white-space: nowrap;
       font-size: 11px;
-      padding: 3px 4px;
-      background: var(--bg-soft);
-      border: 1px solid var(--border-color);
-      color: #4b5563;
-      border-radius: 8px;
+      padding: 3px 8px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #64748b;
+      border-radius: 999px;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       user-select: none;
@@ -329,10 +337,9 @@ onMounted(() => {
       }
 
       &:hover {
-        background: #ffffff;
-        border-color: #cbd5e1;
-        transform: scale(1.02);
-        color: #1f2937;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #2563eb;
       }
 
       &.is-picked {
@@ -341,6 +348,24 @@ onMounted(() => {
         color: #ffffff;
       }
     }
+  }
+}
+
+@media (max-width: 1180px) {
+  .tag-configuration .smart-suggestions .suggestion-wall {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .tag-configuration .smart-suggestions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tag-configuration .smart-suggestions .suggestion-wall {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -355,14 +380,4 @@ onMounted(() => {
   transform: translateY(8px) scale(0.9);
 }
 
-@keyframes scale-up {
-  from {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
 </style>

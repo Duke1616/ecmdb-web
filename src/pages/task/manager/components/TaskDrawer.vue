@@ -106,36 +106,16 @@
               <div :key="form.protocol" class="protocol-pane">
                 <!-- gRPC 模式 -->
                 <div v-if="form.protocol === TaskProtocol.GRPC" class="grpc-config-pane">
-                  <div class="service-selector-row flex-row gap-4">
-                    <el-form-item label="执行器服务" prop="grpc_service" class="flex-1">
-                      <el-autocomplete
-                        v-model="form.grpc_service"
-                        :fetch-suggestions="queryServiceSuggestions"
-                        placeholder="选择注册节点"
-                        size="large"
-                        class="premium-input"
-                        @select="handleServiceSelect"
-                      >
-                        <template #prefix>
-                          <el-icon><Connection /></el-icon>
-                        </template>
-                      </el-autocomplete>
-                    </el-form-item>
-                    <el-form-item label="处理方法" prop="grpc_handler" class="flex-1">
-                      <el-autocomplete
-                        v-model="form.grpc_handler"
-                        :fetch-suggestions="queryHandlers"
-                        placeholder="绑定接口能力"
-                        size="large"
-                        class="premium-input"
-                        @select="handleHandlerSelect"
-                      >
-                        <template #prefix>
-                          <el-icon><Monitor /></el-icon>
-                        </template>
-                      </el-autocomplete>
-                    </el-form-item>
-                  </div>
+                  <el-form-item label="执行能力" prop="grpc_handler">
+                    <ExecutorPicker
+                      v-model:service="form.grpc_service"
+                      v-model:handler="form.grpc_handler"
+                      service-placeholder="请选择执行能力"
+                      handler-placeholder=""
+                      @service-change="handleServiceSelect"
+                      @handler-change="handleHandlerSelect"
+                    />
+                  </el-form-item>
 
                   <!-- 动态元数据区域 -->
                   <div
@@ -265,11 +245,9 @@
 import {
   Setting,
   Cpu,
-  Connection,
   CircleCheckFilled,
   RefreshRight,
   Calendar,
-  Monitor,
   Timer,
   Pointer,
   Operation
@@ -281,6 +259,7 @@ import KVEditor from "./KVEditor.vue"
 import CronHelper from "./CronHelper.vue"
 import TaskParamsEditor from "./TaskParamsEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
+import ExecutorPicker from "@/common/components/ExecutorPicker/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 
 // NOTE: 该组件为纯业务抽屉控制器，使用 defineModel 进行开放/折叠的 UI 状态双向绑定
@@ -305,11 +284,9 @@ const {
   rules,
   handleServiceSelect,
   handleHandlerSelect,
-  queryHandlers,
   handleCronSelect,
   handleProtocolChange,
-  submit,
-  queryServiceSuggestions
+  submit
 } = useTaskForm({
   taskId: () => props.taskId,
   visible,

@@ -14,6 +14,7 @@ export interface BindingOption {
 export interface Parameter {
   key: string
   desc: string
+  secret?: boolean
   required: boolean
   bindings: Record<string, BindingOption> // 支持的绑定能力及其详细 UI 配置: inline, codebook, secret, variable 等
   default: string // 默认值
@@ -45,4 +46,16 @@ export interface Executor {
   handlers: HandlerDetail[]
   nodes: NodeDetail[]
   mode?: "PULL" | "PUSH"
+}
+
+export interface ListExecutorsReq {
+  limit?: number
+  cursor?: string
+  keyword?: string
+}
+
+export interface ListExecutorsResp {
+  executors: Executor[]
+  next_cursor?: string
+  has_more: boolean
 }

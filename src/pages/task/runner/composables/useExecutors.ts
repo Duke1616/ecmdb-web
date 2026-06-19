@@ -1,5 +1,5 @@
 import { ref, computed } from "vue"
-import { listExecutorsApi } from "@/api/task/executor"
+import { listAllExecutorsApi } from "@/api/task/executor"
 import type { Executor } from "@/api/task/executor/type"
 
 /**
@@ -12,9 +12,9 @@ export function useExecutors(getTargetValue: () => string | undefined) {
 
   const fetchExecutors = () => {
     loading.value = true
-    listExecutorsApi()
-      .then(({ data }) => {
-        executors.value = data || []
+    listAllExecutorsApi()
+      .then((data) => {
+        executors.value = data
       })
       .catch(() => {
         executors.value = []

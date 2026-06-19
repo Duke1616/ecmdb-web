@@ -1,23 +1,31 @@
 <template>
   <div class="variable-configuration">
     <div class="variables-container">
-      <!-- 变量输入区域 -->
       <div class="variable-input-wrapper">
         <div class="input-row">
-          <el-input v-model="variableInput.key" placeholder="变量名" size="large" class="variable-input" />
+          <el-input v-model="variableInput.key" placeholder="变量名" class="variable-input key-input" @keyup.enter="addVariable">
+            <template #prefix>
+              <span class="input-prefix">KEY</span>
+            </template>
+          </el-input>
           <el-input
             v-model="variableInput.value"
             placeholder="变量值"
-            size="large"
-            class="variable-input"
+            class="variable-input value-input"
             :type="variableInput.secret ? 'password' : 'text'"
-          />
-          <div class="secret-switch">
-            <el-switch v-model="variableInput.secret" size="large" active-text="敏感" inactive-text="普通" />
-          </div>
+            @keyup.enter="addVariable"
+          >
+            <template #prefix>
+              <span class="input-prefix">VALUE</span>
+            </template>
+          </el-input>
+          <button type="button" class="secret-toggle" :class="{ active: variableInput.secret }" @click="variableInput.secret = !variableInput.secret">
+            <span class="toggle-dot"></span>
+            {{ variableInput.secret ? "敏感" : "普通" }}
+          </button>
           <el-button
             type="primary"
-            size="large"
+            class="add-button"
             :icon="Plus"
             @click="addVariable"
             :disabled="!variableInput.key.trim() || !variableInput.value.trim()"
@@ -27,39 +35,38 @@
         </div>
       </div>
 
-      <!-- 变量显示区域 -->
       <div class="variables-display" v-if="variableList.length > 0">
         <div class="variables-header">
-          <span class="variables-count">已配置 {{ variableList.length }} 个变量</span>
-          <el-button type="danger" size="small" :icon="Delete" @click="clearAllVariables" text> 清空 </el-button>
+          <div class="variables-title">
+            <span class="variables-count">变量 {{ variableList.length }}</span>
+            <span class="variables-subtitle">运行时注入</span>
+          </div>
+          <el-button class="clear-action" size="small" :icon="Delete" @click="clearAllVariables" text> 清空 </el-button>
         </div>
         <div class="variables-list">
           <div v-for="(variable, index) in variableList" :key="index" class="variable-item">
             <div class="variable-content">
-              <div class="variable-key">
-                <el-icon><Key /></el-icon>
-                <span>{{ variable.key }}</span>
-              </div>
-              <div class="variable-value">
-                <el-icon><Document /></el-icon>
-                <span v-if="variable.secret">••••••••</span>
-                <span v-else>{{ variable.value }}</span>
-              </div>
-              <div class="variable-secret">
-                <el-tag :type="variable.secret ? 'danger' : 'success'" size="small" effect="light">
-                  {{ variable.secret ? "敏感" : "普通" }}
-                </el-tag>
-              </div>
+              <span class="variable-key">{{ variable.key }}</span>
+              <span class="variable-equals">=</span>
+              <span class="variable-value" :class="{ masked: variable.secret }">
+                {{ variable.secret ? "••••••••" : variable.value }}
+              </span>
             </div>
-            <el-button type="danger" size="small" :icon="Delete" @click="removeVariable(index)" text />
+            <div class="variable-actions">
+              <span class="secret-badge" :class="{ sensitive: variable.secret }">
+                {{ variable.secret ? "敏感" : "普通" }}
+              </span>
+              <button type="button" class="row-delete" @click="removeVariable(index)" title="删除变量">
+                <el-icon><Delete /></el-icon>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- 空状态 -->
       <div class="empty-variables" v-else>
-        <el-icon><Setting /></el-icon>
-        <span>暂无变量，请添加执行器需要的环境变量</span>
+        <span class="empty-dot"></span>
+        <span>按需添加执行器运行时变量</span>
       </div>
     </div>
   </div>
@@ -67,11 +74,10 @@
 
 <script lang="ts" setup>
 import { ref, watch } from "vue"
-import { Plus, Delete, Key, Document, Setting } from "@element-plus/icons-vue"
+import { Plus, Delete } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import type { variables } from "@/api/task/runner/types/runner"
 
-// 接收父组件传递
 interface Props {
   modelValue?: variables[]
 }
@@ -85,7 +91,6 @@ const emits = defineEmits<{
   change: [value: variables[]]
 }>()
 
-// 变量相关状态
 const variableInput = ref({
   key: "",
   value: "",
@@ -94,14 +99,12 @@ const variableInput = ref({
 
 const variableList = ref<variables[]>([])
 
-// 添加变量
 const addVariable = () => {
   const key = variableInput.value.key.trim()
   const value = variableInput.value.value.trim()
 
   if (!key || !value) return
 
-  // 检查是否已存在相同的 key
   if (variableList.value.some((v: variables) => v.key === key)) {
     ElMessage.warning("变量名已存在，请使用不同的名称")
     return
@@ -113,7 +116,6 @@ const addVariable = () => {
     secret: variableInput.value.secret
   })
 
-  // 清空输入
   variableInput.value = {
     key: "",
     value: "",
@@ -123,25 +125,21 @@ const addVariable = () => {
   emitChange()
 }
 
-// 移除变量
 const removeVariable = (index: number) => {
   variableList.value.splice(index, 1)
   emitChange()
 }
 
-// 清空所有变量
 const clearAllVariables = () => {
   variableList.value = []
   emitChange()
 }
 
-// 发送变化事件
 const emitChange = () => {
   emits("update:modelValue", [...variableList.value])
   emits("change", [...variableList.value])
 }
 
-// 监听 props 变化
 watch(
   () => props.modelValue,
   (newValue) => {
@@ -161,187 +159,328 @@ watch(
   .variables-container {
     width: 100%;
     max-width: 100%;
+
     .variable-input-wrapper {
-      margin-bottom: 16px;
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #ffffff;
+      border: 1px solid #dfe5ee;
+      border-radius: 8px;
 
       .input-row {
-        display: flex;
-        gap: 12px;
+        display: grid;
+        grid-template-columns: minmax(130px, 0.85fr) minmax(170px, 1.15fr) 74px 82px;
+        gap: 6px;
         align-items: center;
 
         .variable-input {
-          flex: 1;
+          min-width: 0;
 
           :deep(.el-input__wrapper) {
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
+            height: 34px;
+            min-height: 34px;
+            padding: 0 10px;
+            background: #fbfdff;
+            border-radius: 6px;
+            box-shadow: 0 0 0 1px #d8e0eb inset;
+            transition:
+              background 0.18s ease,
+              box-shadow 0.18s ease;
 
             &:hover {
-              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+              background: #ffffff;
+              box-shadow: 0 0 0 1px #b8c4d4 inset;
             }
 
             &.is-focus {
-              box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+              background: #ffffff;
+              box-shadow:
+                0 0 0 1px #3b82f6 inset,
+                0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+          }
+
+          :deep(.el-input__prefix) {
+            margin-right: 8px;
+          }
+
+          :deep(.el-input__inner) {
+            color: #1f2937;
+            font-size: 13px;
+          }
+        }
+
+        .input-prefix {
+          display: inline-flex;
+          align-items: center;
+          height: 18px;
+          color: #8a96a8;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1;
+        }
+
+        .secret-toggle {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          height: 34px;
+          padding: 0 10px;
+          color: #475569;
+          background: #f8fafc;
+          border: 1px solid #d8e0eb;
+          border-radius: 6px;
+          cursor: pointer;
+          font-size: 12px;
+          font-weight: 600;
+          transition:
+            color 0.18s ease,
+            background 0.18s ease,
+            border-color 0.18s ease;
+
+          .toggle-dot {
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
+            border-radius: 999px;
+          }
+
+          &:hover {
+            background: #ffffff;
+            border-color: #b8c4d4;
+          }
+
+          &.active {
+            color: #b42318;
+            background: #fff7f5;
+            border-color: #f4b7ae;
+
+            .toggle-dot {
+              background: #f04438;
             }
           }
         }
 
-        .secret-switch {
-          min-width: 120px;
-
-          :deep(.el-switch__label) {
-            font-size: 12px;
-          }
+        .add-button {
+          min-width: 0;
+          height: 34px;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: 600;
         }
       }
     }
 
     .variables-display {
-      margin-bottom: 16px;
-      padding: 16px;
-      background: #f8fafc;
+      overflow: hidden;
+      background: #ffffff;
       border-radius: 8px;
-      border: 1px solid #e5e7eb;
+      border: 1px solid #dfe5ee;
 
       .variables-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        min-height: 32px;
+        padding: 0 10px;
+        background: #fbfcfe;
+        border-bottom: 1px solid #edf1f6;
+
+        .variables-title {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
 
         .variables-count {
-          font-size: 14px;
-          color: #6b7280;
-          font-weight: 500;
+          color: #344054;
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .variables-subtitle {
+          color: #98a2b3;
+          font-size: 12px;
         }
       }
 
       .variables-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
 
         .variable-item {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 12px;
+          gap: 10px;
+          min-height: 38px;
+          padding: 5px 8px 5px 10px;
           background: #ffffff;
-          border-radius: 8px;
-          border: 1px solid #e5e7eb;
-          transition: all 0.2s ease;
+          border-bottom: 1px solid #edf1f6;
+          transition: background 0.15s ease;
+
+          &:last-child {
+            border-bottom: none;
+          }
 
           &:hover {
-            border-color: #3b82f6;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+            background: #fbfdff;
+
+            .row-delete {
+              opacity: 1;
+            }
           }
 
           .variable-content {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 7px;
+            min-width: 0;
             flex: 1;
 
+            .variable-key,
+            .variable-value {
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
             .variable-key {
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              min-width: 120px;
+              flex: 0 1 auto;
+              max-width: 42%;
+              color: #1f2937;
+              font-family:
+                ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+              font-size: 12px;
+              font-weight: 700;
+            }
 
-              .el-icon {
-                color: #3b82f6;
-                font-size: 14px;
-              }
-
-              span {
-                font-weight: 500;
-                color: #374151;
-              }
+            .variable-equals {
+              flex: 0 0 auto;
+              color: #b4bfcd;
+              font-size: 12px;
+              font-weight: 600;
             }
 
             .variable-value {
-              display: flex;
-              align-items: center;
-              gap: 6px;
               flex: 1;
-              min-width: 0;
+              min-width: 40px;
+              color: #667085;
+              font-size: 12px;
 
-              .el-icon {
-                color: #10b981;
-                font-size: 14px;
-              }
-
-              span {
-                color: #6b7280;
-                word-break: break-all;
+              &.masked {
+                color: #98a2b3;
+                letter-spacing: 0.08em;
               }
             }
+          }
 
-            .variable-secret {
-              min-width: 60px;
+          .variable-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            flex: 0 0 auto;
+
+            .secret-badge {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              height: 20px;
+              min-width: 38px;
+              padding: 0 7px;
+              color: #16803c;
+              background: #f2fbf5;
+              border: 1px solid #c7efd5;
+              border-radius: 999px;
+              font-size: 11px;
+              font-weight: 600;
+
+              &.sensitive {
+                color: #b42318;
+                background: #fff7f5;
+                border-color: #f4b7ae;
+              }
             }
           }
         }
+      }
+    }
+
+    .clear-action {
+      height: 26px;
+      padding: 0 4px;
+      color: #98a2b3;
+      font-size: 12px;
+
+      &:hover {
+        color: #d92d20;
+      }
+    }
+
+    .row-delete {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      color: #98a2b3;
+      background: transparent;
+      border: 0;
+      border-radius: 5px;
+      cursor: pointer;
+      opacity: 0.45;
+      transition:
+        opacity 0.15s ease,
+        color 0.15s ease,
+        background 0.15s ease;
+
+      &:hover {
+        color: #d92d20;
+        background: #fff1f0;
       }
     }
 
     .empty-variables {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 40px 20px;
-      color: #9ca3af;
-      background: #f8fafc;
+      gap: 7px;
+      min-height: 30px;
+      padding: 0 10px;
+      color: #98a2b3;
+      background: transparent;
+      border: 1px dashed #dfe5ee;
       border-radius: 8px;
-      border: 1px solid #e5e7eb;
-
-      .el-icon {
-        font-size: 32px;
-        margin-bottom: 12px;
-        color: #d1d5db;
-      }
 
       span {
-        font-size: 14px;
-        text-align: center;
+        font-size: 12px;
+      }
+
+      .empty-dot {
+        width: 6px;
+        height: 6px;
+        background: #cbd5e1;
+        border-radius: 999px;
       }
     }
   }
 }
 
-// 响应式设计
 @media (max-width: 768px) {
   .variable-configuration {
     .variables-container {
       .variable-input-wrapper {
         .input-row {
-          flex-direction: column;
+          grid-template-columns: 1fr;
           gap: 8px;
 
-          .secret-switch {
-            min-width: auto;
+          .secret-toggle,
+          .el-button {
             width: 100%;
-          }
-        }
-      }
-
-      .variables-display {
-        padding: 12px;
-
-        .variables-list {
-          .variable-item {
-            .variable-content {
-              flex-direction: column;
-              align-items: flex-start;
-              gap: 8px;
-
-              .variable-key,
-              .variable-value {
-                min-width: auto;
-                width: 100%;
-              }
-            }
           }
         }
       }
