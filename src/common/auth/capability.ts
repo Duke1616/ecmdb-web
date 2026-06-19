@@ -513,5 +513,21 @@ export const TICKET_CAPABILITIES = {
   }
 } as const
 
+export const TASK_CAPABILITIES = {
+  /** 全局变量相关 */
+  Variable: {
+    /** 创建全局变量 */
+    Add: "task:variable:add",
+    /** 删除全局变量 */
+    Delete: "task:variable:delete",
+    /** 更新全局变量 */
+    Edit: "task:variable:edit",
+    /** 全局变量详情 */
+    Detail: "task:variable:get",
+    /** 全局变量列表 */
+    View: "task:variable:view"
+  }
+} as const
+
 /** 权限常量类型定义 */
 export type AuthType = typeof IAM_CAPABILITIES

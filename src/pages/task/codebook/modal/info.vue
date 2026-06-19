@@ -353,7 +353,7 @@ const handleFormNext = async () => {
 // 现代化输入框样式
 :deep(.modern-input) {
   .el-input__wrapper {
-    background: #f8fafc;
+    background: #ffffff;
     border: 2px solid #e2e8f0;
     border-radius: 10px;
     padding: 8px 16px;
@@ -364,16 +364,14 @@ const handleFormNext = async () => {
 
     &:hover {
       border-color: #667eea;
-      background: #f1f5f9;
-      transform: translateY(-1px);
+      background: #ffffff;
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
     }
 
     &.is-focus {
       border-color: #667eea;
-      background: white;
+      background: #ffffff;
       box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-      transform: translateY(-2px);
     }
   }
 
@@ -390,7 +388,7 @@ const handleFormNext = async () => {
 }
 
 .modern-select :deep(.el-select__wrapper) {
-  background: #f8fafc;
+  background: #ffffff;
   border: 2px solid #e2e8f0;
   border-radius: 10px;
   padding: 8px 16px;
@@ -401,16 +399,35 @@ const handleFormNext = async () => {
 
   &:hover {
     border-color: #667eea;
-    background: #f1f5f9;
-    transform: translateY(-1px);
+    background: #ffffff;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   }
 
   &.is-focus {
     border-color: #667eea;
-    background: white;
+    background: #ffffff;
     box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-    transform: translateY(-2px);
+  }
+}
+
+.modern-select :deep(.picker-input-box) {
+  min-height: 42px;
+  padding: 4px 16px;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  &:hover {
+    background: #ffffff;
+    border-color: #667eea;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  }
+
+  &.is-focus {
+    background: #ffffff;
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   }
 }
 
