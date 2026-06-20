@@ -1,75 +1,87 @@
 <template>
-  <div class="executor-page">
-    <DataTable
-      :data="executorsData"
-      :columns="tableColumns"
-      :show-selection="true"
-      :show-pagination="false"
-      :loading="loading"
-      @selection-change="handleSelectionChange"
-    >
-      <template #executor="{ row }">
-        <div class="executor-identity">
-          <div class="identity-mark">{{ row.name?.slice(0, 1)?.toUpperCase() || "E" }}</div>
-          <div class="identity-main">
-            <span class="identity-name">{{ row.name }}</span>
-            <el-tooltip v-if="row.desc" :content="row.desc" placement="top" :show-after="300">
-              <span class="identity-desc">{{ row.desc }}</span>
-            </el-tooltip>
-            <span v-else class="identity-desc is-empty">暂无描述</span>
-          </div>
-        </div>
-      </template>
+  <div class="executor-page" v-loading="loading">
+    <el-empty v-if="executorsData.length === 0" :image-size="200" description="暂无执行器" />
 
-      <template #nodes="{ row }">
-        <div v-if="row.nodes && row.nodes.length > 0" class="node-cell">
-          <span class="status-dot is-online" />
-          <div class="node-main">
-            <span class="node-count">{{ row.nodes.length }} 个在线节点</span>
-            <div class="node-addresses">
-              <el-tooltip v-for="node in row.nodes.slice(0, 2)" :key="node.id" :content="node.id" placement="top">
-                <span class="node-address">{{ node.address }}</span>
-              </el-tooltip>
-              <span v-if="row.nodes.length > 2" class="more-chip">+{{ row.nodes.length - 2 }}</span>
+    <div class="executor-list" v-else>
+      <div
+        v-for="row in executorsData"
+        :key="row.name"
+        class="executor-item-card"
+        :class="{ 'is-offline': !row.nodes || row.nodes.length === 0 }"
+      >
+        <div class="executor-main">
+          <div class="executor-heading">
+            <div class="executor-title">
+              <span class="executor-icon" :class="{ 'is-offline': !row.nodes || row.nodes.length === 0 }">
+                {{ row.name?.slice(0, 1)?.toUpperCase() || "E" }}
+              </span>
+              <div class="executor-name-group">
+                <div class="executor-name">{{ row.name }}</div>
+                <el-tooltip v-if="row.desc" :content="row.desc" placement="top" :show-after="300">
+                  <div class="executor-desc">{{ row.desc }}</div>
+                </el-tooltip>
+                <div v-else class="executor-desc is-empty">暂无描述</div>
+              </div>
+            </div>
+
+            <div class="executor-status">
+              <span class="mode-badge" :class="`is-${String(row.mode || 'unknown').toLowerCase()}`">
+                <span class="mode-dot" />
+                {{ row.mode === "PULL" ? "主动拉取" : row.mode === "PUSH" ? "调度推送" : "未知" }}
+              </span>
+            </div>
+          </div>
+
+          <div class="executor-meta">
+            <div class="meta-item">
+              <span class="meta-label">在线节点</span>
+              <div class="meta-value">
+                <div v-if="row.nodes && row.nodes.length > 0" class="node-info">
+                  <span class="status-dot is-online" />
+                  <span class="node-count">{{ row.nodes.length }} 个节点</span>
+                  <div class="node-addresses">
+                    <el-tooltip v-for="node in row.nodes.slice(0, 3)" :key="node.id" :content="node.id" placement="top">
+                      <span class="node-address">{{ node.address }}</span>
+                    </el-tooltip>
+                    <span v-if="row.nodes.length > 3" class="more-chip">+{{ row.nodes.length - 3 }}</span>
+                  </div>
+                </div>
+                <div v-else class="node-info is-offline">
+                  <span class="status-dot" />
+                  <span class="offline-text">无在线节点</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-label">处理能力</span>
+              <div class="meta-value">
+                <div v-if="row.handlers && row.handlers.length > 0" class="handler-list">
+                  <el-tooltip
+                    v-for="handler in row.handlers.slice(0, 5)"
+                    :key="handler.name"
+                    :content="handler.desc || '暂无描述'"
+                    placement="top"
+                    :show-after="300"
+                  >
+                    <span class="handler-chip">{{ handler.name }}</span>
+                  </el-tooltip>
+                  <el-tooltip v-if="row.handlers.length > 5" placement="top">
+                    <template #content>
+                      <div class="handler-more-list">
+                        <div v-for="handler in row.handlers.slice(5)" :key="handler.name">{{ handler.name }}</div>
+                      </div>
+                    </template>
+                    <span class="more-chip">+{{ row.handlers.length - 5 }}</span>
+                  </el-tooltip>
+                </div>
+                <span v-else class="muted-text">暂无处理方法</span>
+              </div>
             </div>
           </div>
         </div>
-        <div v-else class="node-cell is-offline">
-          <span class="status-dot" />
-          <span class="offline-text">无在线节点</span>
-        </div>
-      </template>
-
-      <template #handlers="{ row }">
-        <div v-if="row.handlers && row.handlers.length > 0" class="handler-cell">
-          <el-tooltip
-            v-for="handler in row.handlers.slice(0, 3)"
-            :key="handler.name"
-            :content="handler.desc || '暂无描述'"
-            placement="top"
-            :show-after="300"
-          >
-            <span class="handler-chip">{{ handler.name }}</span>
-          </el-tooltip>
-          <el-tooltip v-if="row.handlers.length > 3" placement="top">
-            <template #content>
-              <div class="handler-more-list">
-                <div v-for="handler in row.handlers.slice(3)" :key="handler.name">{{ handler.name }}</div>
-              </div>
-            </template>
-            <span class="more-chip">+{{ row.handlers.length - 3 }}</span>
-          </el-tooltip>
-        </div>
-        <span v-else class="muted-text">暂无方法</span>
-      </template>
-
-      <template #mode="{ row }">
-        <span class="mode-badge" :class="`is-${String(row.mode || 'unknown').toLowerCase()}`">
-          <span class="mode-dot" />
-          {{ row.mode === "PULL" ? "主动拉取" : row.mode === "PUSH" ? "调度推送" : "未知" }}
-        </span>
-      </template>
-    </DataTable>
+      </div>
+    </div>
 
     <div class="load-more-bar">
       <el-button v-if="hasMore" :loading="loadingMore" @click="loadMoreExecutors">加载更多</el-button>
@@ -82,7 +94,6 @@
 import { computed, ref, onMounted, watch } from "vue"
 import { listExecutorsApi } from "@/api/task/executor"
 import type { Executor } from "@/api/task/executor/type"
-import DataTable from "@/common/components/DataTable/index.vue"
 
 const props = withDefaults(
   defineProps<{
@@ -98,25 +109,11 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
-import type { Column } from "@@/components/DataTable/types"
-
-const tableColumns: Column[] = [
-  { prop: "name", label: "执行器", align: "left", slot: "executor", minWidth: 260 },
-  { prop: "mode", label: "调度方式", align: "center", slot: "mode", width: 132 },
-  { prop: "nodes", label: "在线节点", align: "left", slot: "nodes", minWidth: 230 },
-  { prop: "handlers", label: "处理能力", align: "left", slot: "handlers", minWidth: 260 }
-]
-
-const selectedRows = ref<Executor[]>([])
 const nextCursor = ref("")
 const hasMore = ref(false)
 const loadingMore = ref(false)
-
-const handleSelectionChange = (selection: Executor[]) => {
-  selectedRows.value = selection
-}
-
 const executorsData = ref<Executor[]>([])
+
 const fetchExecutors = async (append = false) => {
   if (append) loadingMore.value = true
   else loading.value = true
@@ -175,75 +172,100 @@ defineExpose({
 .executor-page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   height: 100%;
+}
 
-  :deep(.content-card) {
-    border-color: #e5e7eb;
+.executor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.executor-item-card {
+  border: 1px solid #e5eaf3;
+  border-left: 3px solid #3b82f6; // 默认在线时为蓝色
+  border-radius: 8px;
+  background: #fbfdff;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #bdd7f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 
-  :deep(.data-table__body tr:hover > td) {
-    background: #f8fafc;
-  }
-
-  :deep(.el-table__header th) {
-    color: #475569;
-    background: #f8fafc;
+  &.is-offline {
+    border-left-color: #cbd5e1; // 离线时为中性灰色
+    background: #fafafa;
   }
 }
 
-.executor-identity {
+.executor-main {
+  padding: 16px 20px;
+}
+
+.executor-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.executor-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  width: 100%;
 }
 
-.identity-mark {
+.executor-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  color: #475569;
-  background: #f8fafc;
-  border: 1px solid #dbe3ef;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
+
+  &.is-offline {
+    color: #64748b;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
 }
 
-.identity-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+.executor-name-group {
   min-width: 0;
 }
 
-.identity-name,
-.identity-desc {
-  display: block;
+.executor-name {
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.executor-desc {
+  max-width: 500px;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.identity-name {
-  color: #111827;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.identity-desc {
-  max-width: 100%;
-  color: #667085;
-  font-size: 12px;
 
   &.is-empty {
-    color: #a0aec0;
+    color: #94a3b8;
   }
+}
+
+.executor-status {
+  flex-shrink: 0;
 }
 
 .mode-badge {
@@ -257,7 +279,7 @@ defineExpose({
   color: #475569;
   background: #ffffff;
   border: 1px solid #dbe3ef;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
 
@@ -266,6 +288,16 @@ defineExpose({
     height: 6px;
     background: #64748b;
     border-radius: 999px;
+  }
+
+  &.is-pull {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+
+    .mode-dot {
+      background: #3b82f6;
+    }
   }
 
   &.is-push {
@@ -289,20 +321,53 @@ defineExpose({
   }
 }
 
-.node-cell {
+.executor-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px 24px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.meta-label {
+  flex-shrink: 0;
+  width: 64px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.meta-value {
+  flex: 1;
+  min-width: 0;
+  color: #334155;
+}
+
+.node-info {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  width: 100%;
+  flex-wrap: wrap;
 
   &.is-offline {
-    color: #98a2b3;
+    color: #94a3b8;
   }
 }
 
 .status-dot {
-  flex: 0 0 auto;
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   background: #cbd5e1;
@@ -310,25 +375,18 @@ defineExpose({
 
   &.is-online {
     background: #22c55e;
-    box-shadow: none;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
   }
 }
 
-.node-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
 .node-count {
+  font-weight: 600;
   color: #334155;
   font-size: 12px;
-  font-weight: 600;
 }
 
 .node-addresses,
-.handler-cell {
+.handler-list {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -341,35 +399,40 @@ defineExpose({
 .more-chip {
   display: inline-flex;
   align-items: center;
-  max-width: 150px;
   height: 22px;
   padding: 0 8px;
-  overflow: hidden;
-  color: #475467;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.node-address {
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
 }
 
 .handler-chip {
-  color: #475467;
-  background: #ffffff;
-  border-color: #e5e7eb;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+
+  &:hover {
+    background: #e5e7eb;
+  }
 }
 
 .more-chip {
-  flex: 0 0 auto;
-  color: #667085;
-  background: #ffffff;
+  color: #4b5563;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 11px;
 }
 
 .offline-text,
 .muted-text {
-  color: #98a2b3;
+  color: #94a3b8;
   font-size: 12px;
 }
 
@@ -384,16 +447,17 @@ defineExpose({
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 34px;
+  min-height: 48px;
   color: #64748b;
   font-size: 12px;
 
   :deep(.el-button) {
-    height: 30px;
-    padding: 0 14px;
-    border-radius: 7px;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 6px;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
   }
 }
 </style>
+

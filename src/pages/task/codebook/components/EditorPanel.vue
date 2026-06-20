@@ -8,8 +8,7 @@
           class="editor-tab-item"
           :class="{
             'is-active':
-              (file.id && activeEditor.id === file.id) ||
-              (!file.id && !activeEditor.id && activeEditor.kind === 'FILE')
+              (file.id && activeEditor.id === file.id) || (!file.id && !activeEditor.id && activeEditor.kind === 'FILE')
           }"
           @click="$emit('select', file)"
         >
@@ -22,20 +21,10 @@
       </div>
 
       <div class="editor-actions">
-        <el-button
-          v-if="activeEditor.id"
-          size="small"
-          :icon="Clock"
-          link
-          @click="$emit('open-version', activeEditor)"
+        <el-button v-if="activeEditor.id" size="small" :icon="Clock" link @click="$emit('open-version', activeEditor)"
           >版本</el-button
         >
-        <el-button
-          v-if="activeEditor.id"
-          size="small"
-          :icon="Setting"
-          link
-          @click="$emit('open-runner', activeEditor)"
+        <el-button v-if="activeEditor.id" size="small" :icon="Setting" link @click="$emit('open-runner', activeEditor)"
           >执行单元</el-button
         >
         <el-button size="small" :icon="Edit" link @click="$emit('open-meta', activeEditor)">信息</el-button>
@@ -181,8 +170,6 @@ defineEmits<{
   &.is-active {
     background: #ffffff;
     border-top: 3px solid #2563eb;
-    border-bottom: 1px solid #ffffff;
-    box-shadow: inset 0 0 0 1px #d7e3f5;
 
     .tab-filename {
       color: #020617;

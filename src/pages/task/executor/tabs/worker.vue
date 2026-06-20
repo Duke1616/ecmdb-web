@@ -1,66 +1,88 @@
 <template>
-  <div class="worker-page">
-    <DataTable
-      :data="agentsData"
-      :columns="tableColumns"
-      :show-selection="true"
-      :show-pagination="false"
-      :loading="loading"
-      @selection-change="handleSelectionChange"
-    >
-      <template #agent="{ row }">
-        <div class="agent-identity">
-          <div class="identity-mark">{{ row.name?.slice(0, 1)?.toUpperCase() || "A" }}</div>
-          <div class="identity-main">
-            <span class="identity-name">{{ row.name }}</span>
-            <el-tooltip v-if="row.desc" :content="row.desc" placement="top" :show-after="300">
-              <span class="identity-desc">{{ row.desc }}</span>
-            </el-tooltip>
-            <span v-else class="identity-desc is-empty">暂无描述</span>
+  <div class="worker-page" v-loading="loading">
+    <el-empty v-if="agentsData.length === 0" :image-size="200" description="暂无推送节点" />
+
+    <div class="worker-list" v-else>
+      <div
+        v-for="row in agentsData"
+        :key="row.name"
+        class="worker-item-card"
+        :class="{ 'is-offline': !row.nodes || row.nodes.length === 0 }"
+      >
+        <div class="worker-main">
+          <div class="worker-heading">
+            <div class="worker-title">
+              <span class="worker-icon" :class="{ 'is-offline': !row.nodes || row.nodes.length === 0 }">
+                {{ row.name?.slice(0, 1)?.toUpperCase() || "A" }}
+              </span>
+              <div class="worker-name-group">
+                <div class="worker-name">{{ row.name }}</div>
+                <el-tooltip v-if="row.desc" :content="row.desc" placement="top" :show-after="300">
+                  <div class="worker-desc">{{ row.desc }}</div>
+                </el-tooltip>
+                <div v-else class="worker-desc is-empty">暂无描述</div>
+              </div>
+            </div>
+
+            <div class="worker-status">
+              <span class="topic-badge" v-if="row.topic">
+                <span class="topic-dot" />
+                {{ row.topic }}
+              </span>
+              <span class="topic-badge is-empty" v-else>未配置 Topic</span>
+            </div>
           </div>
-        </div>
-      </template>
 
-      <template #topic="{ row }">
-        <span class="topic-chip">{{ row.topic || "未配置" }}</span>
-      </template>
+          <div class="worker-meta">
+            <div class="meta-item">
+              <span class="meta-label">在线节点</span>
+              <div class="meta-value">
+                <div v-if="row.nodes && row.nodes.length > 0" class="node-info">
+                  <span class="status-dot is-online" />
+                  <span class="node-count">{{ row.nodes.length }} 个节点</span>
+                  <div class="node-addresses">
+                    <el-tooltip v-for="node in row.nodes.slice(0, 3)" :key="node.id" :content="node.id" placement="top">
+                      <span class="node-address">{{ node.address }}</span>
+                    </el-tooltip>
+                    <span v-if="row.nodes.length > 3" class="more-chip">+{{ row.nodes.length - 3 }}</span>
+                  </div>
+                </div>
+                <div v-else class="node-info is-offline">
+                  <span class="status-dot" />
+                  <span class="offline-text">无在线节点</span>
+                </div>
+              </div>
+            </div>
 
-      <template #nodes="{ row }">
-        <div v-if="row.nodes && row.nodes.length > 0" class="node-cell">
-          <span class="status-dot is-online"></span>
-          <div class="node-main">
-            <span class="node-count">{{ row.nodes.length }} 个在线节点</span>
-            <div class="node-addresses">
-              <el-tooltip v-for="node in row.nodes.slice(0, 2)" :key="node.id" :content="node.id" placement="top">
-                <span class="node-address">{{ node.address }}</span>
-              </el-tooltip>
-              <span v-if="row.nodes.length > 2" class="more-chip">+{{ row.nodes.length - 2 }}</span>
+            <div class="meta-item">
+              <span class="meta-label">处理能力</span>
+              <div class="meta-value">
+                <div v-if="row.handlers && row.handlers.length > 0" class="handler-list">
+                  <el-tooltip
+                    v-for="h in row.handlers.slice(0, 5)"
+                    :key="h.name"
+                    :content="h.desc || '暂无描述'"
+                    placement="top"
+                    :show-after="300"
+                  >
+                    <span class="handler-chip">{{ h.name }}</span>
+                  </el-tooltip>
+                  <el-tooltip v-if="row.handlers.length > 5" placement="top">
+                    <template #content>
+                      <div class="handler-more-list">
+                        <div v-for="h in row.handlers.slice(5)" :key="h.name">{{ h.name }}</div>
+                      </div>
+                    </template>
+                    <span class="more-chip">+{{ row.handlers.length - 5 }}</span>
+                  </el-tooltip>
+                </div>
+                <span v-else class="muted-text">暂无处理器</span>
+              </div>
             </div>
           </div>
         </div>
-        <div v-else class="node-cell is-offline">
-          <span class="status-dot"></span>
-          <span class="offline-text">无在线节点</span>
-        </div>
-      </template>
-
-      <template #handlers="{ row }">
-        <div v-if="row.handlers && row.handlers.length > 0" class="handler-cell">
-          <el-tooltip v-for="h in row.handlers.slice(0, 3)" :key="h.name" :content="h.desc || '暂无描述'" placement="top" :show-after="300">
-            <span class="handler-chip">{{ h.name }}</span>
-          </el-tooltip>
-          <el-tooltip v-if="row.handlers.length > 3" placement="top">
-            <template #content>
-              <div class="handler-more-list">
-                <div v-for="h in row.handlers.slice(3)" :key="h.name">{{ h.name }}</div>
-              </div>
-            </template>
-            <span class="more-chip">+{{ row.handlers.length - 3 }}</span>
-          </el-tooltip>
-        </div>
-        <span v-else class="muted-text">暂无处理器</span>
-      </template>
-    </DataTable>
+      </div>
+    </div>
 
     <div class="load-more-bar">
       <el-button v-if="hasMore" :loading="loadingMore" @click="loadMoreWorkers">加载更多</el-button>
@@ -73,7 +95,6 @@
 import { computed, onMounted, ref, watch } from "vue"
 import type { Agent } from "@/api/task/agent/type"
 import { listAgentsApi } from "@/api/task/agent"
-import DataTable from "@/common/components/DataTable/index.vue"
 
 const props = withDefaults(
   defineProps<{
@@ -88,25 +109,11 @@ const emit = defineEmits<{
   countChange: [count: number]
 }>()
 
-import type { Column } from "@@/components/DataTable/types"
-
-const tableColumns: Column[] = [
-  { prop: "name", label: "推送节点", align: "left", slot: "agent", minWidth: 260 },
-  { prop: "topic", label: "Topic", align: "left", slot: "topic", minWidth: 180 },
-  { prop: "nodes", label: "在线节点", align: "left", slot: "nodes", minWidth: 230 },
-  { prop: "handlers", label: "处理能力", align: "left", slot: "handlers", minWidth: 260 }
-]
-
-const selectedRows = ref<Agent[]>([])
 const agentsData = ref<Agent[]>([])
 const loading = ref(false)
 const loadingMore = ref(false)
 const nextCursor = ref("")
 const hasMore = ref(false)
-
-const handleSelectionChange = (selection: Agent[]) => {
-  selectedRows.value = selection
-}
 
 const fetchWorkers = async (append = false) => {
   if (append) loadingMore.value = true
@@ -165,110 +172,178 @@ defineExpose({
 .worker-page {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   height: 100%;
+}
 
-  :deep(.content-card) {
-    border-color: #e5e7eb;
+.worker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.worker-item-card {
+  border: 1px solid #e5eaf3;
+  border-left: 3px solid #3b82f6; // 默认在线时为蓝色
+  border-radius: 8px;
+  background: #fbfdff;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #bdd7f5;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
 
-  :deep(.data-table__body tr:hover > td) {
-    background: #f8fafc;
-  }
-
-  :deep(.el-table__header th) {
-    color: #475569;
-    background: #f8fafc;
+  &.is-offline {
+    border-left-color: #cbd5e1; // 离线时为中性灰色
+    background: #fafafa;
   }
 }
 
-.agent-identity {
+.worker-main {
+  padding: 16px 20px;
+}
+
+.worker-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.worker-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  width: 100%;
 }
 
-.identity-mark {
+.worker-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  color: #475569;
-  background: #f8fafc;
-  border: 1px solid #dbe3ef;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  color: #3b82f6;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
-}
 
-.identity-main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.identity-name,
-.identity-desc {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.identity-name {
-  color: #111827;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.identity-desc {
-  max-width: 100%;
-  color: #667085;
-  font-size: 12px;
-
-  &.is-empty {
-    color: #a0aec0;
+  &.is-offline {
+    color: #64748b;
+    background: #f1f5f9;
+    border-color: #cbd5e1;
   }
 }
 
-.topic-chip {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  height: 24px;
-  padding: 0 9px;
-  overflow: hidden;
-  color: #475467;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.worker-name-group {
+  min-width: 0;
 }
 
-.node-cell {
+.worker-name {
+  color: #1e293b;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.worker-desc {
+  max-width: 500px;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &.is-empty {
+    color: #94a3b8;
+  }
+}
+
+.worker-status {
+  flex-shrink: 0;
+}
+
+.topic-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  color: #6b21a8;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  font-weight: 600;
+
+  .topic-dot {
+    width: 6px;
+    height: 6px;
+    background: #a855f7;
+    border-radius: 999px;
+  }
+
+  &.is-empty {
+    color: #94a3b8;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+  }
+}
+
+.worker-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px 24px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  min-width: 0;
+}
+
+.meta-label {
+  flex-shrink: 0;
+  width: 64px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.meta-value {
+  flex: 1;
+  min-width: 0;
+  color: #334155;
+}
+
+.node-info {
   display: flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
-  width: 100%;
+  flex-wrap: wrap;
 
   &.is-offline {
-    color: #98a2b3;
+    color: #94a3b8;
   }
 }
 
 .status-dot {
-  flex: 0 0 auto;
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   background: #cbd5e1;
@@ -276,25 +351,18 @@ defineExpose({
 
   &.is-online {
     background: #22c55e;
-    box-shadow: none;
+    box-shadow: 0 0 6px rgba(34, 197, 94, 0.4);
   }
 }
 
-.node-main {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
 .node-count {
+  font-weight: 600;
   color: #334155;
   font-size: 12px;
-  font-weight: 600;
 }
 
 .node-addresses,
-.handler-cell {
+.handler-list {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -307,35 +375,40 @@ defineExpose({
 .more-chip {
   display: inline-flex;
   align-items: center;
-  max-width: 150px;
   height: 22px;
   padding: 0 8px;
-  overflow: hidden;
-  color: #475467;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 12px;
   font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.node-address {
+  color: #065f46;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
 }
 
 .handler-chip {
-  color: #475467;
-  background: #ffffff;
-  border-color: #e5e7eb;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+
+  &:hover {
+    background: #e5e7eb;
+  }
 }
 
 .more-chip {
-  flex: 0 0 auto;
-  color: #667085;
-  background: #ffffff;
+  color: #4b5563;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  font-size: 11px;
 }
 
 .offline-text,
 .muted-text {
-  color: #98a2b3;
+  color: #94a3b8;
   font-size: 12px;
 }
 
@@ -350,16 +423,16 @@ defineExpose({
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 34px;
+  min-height: 48px;
   color: #64748b;
   font-size: 12px;
 
   :deep(.el-button) {
-    height: 30px;
-    padding: 0 14px;
-    border-radius: 7px;
+    height: 32px;
+    padding: 0 16px;
+    border-radius: 6px;
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
   }
 }
 </style>
