@@ -20,7 +20,7 @@
           <!-- Tab 1: 当前绑定 -->
           <div v-show="activeTab === 'bound'" class="tab-pane">
             <div class="filter-header">
-              <div class="search-group">
+              <div class="toolbar-main">
                 <el-input
                   v-model="boundKeyword"
                   placeholder="搜索名称..."
@@ -29,15 +29,17 @@
                   class="premium-search"
                   @change="handleSearchBound"
                 />
+                <div class="header-right">
+                  <el-button type="primary" :icon="Plus" class="glass-add-btn" @click="handleToCreate">新增</el-button>
+                  <el-button @click="handleRefresh" :icon="Refresh" circle class="subtle-refresh" />
+                </div>
+              </div>
+              <div class="toolbar-filters">
                 <el-radio-group v-model="boundKind" class="premium-segmented" @change="handleSearchBound">
                   <el-radio-button :value="undefined">全部</el-radio-button>
                   <el-radio-button :value="Kind.KAFKA">推送模式</el-radio-button>
                   <el-radio-button :value="Kind.GRPC">调度模式</el-radio-button>
                 </el-radio-group>
-              </div>
-              <div class="header-right">
-                <el-button type="primary" :icon="Plus" class="glass-add-btn" @click="handleToCreate">新增</el-button>
-                <el-button @click="handleRefresh" :icon="Refresh" circle class="subtle-refresh" />
               </div>
             </div>
 
@@ -99,7 +101,7 @@
           <!-- Tab 2: 可复用配置 -->
           <div v-show="activeTab === 'fork'" class="tab-pane">
             <div class="filter-header">
-              <div class="search-group">
+              <div class="toolbar-main">
                 <el-input
                   v-model="forkKeyword"
                   placeholder="筛选名称..."
@@ -108,16 +110,18 @@
                   class="premium-search"
                   @change="handleSearchFork"
                 />
+                <div class="header-right">
+                  <el-tooltip content="刷新列表" placement="top">
+                    <el-button @click="() => handleRefreshFork()" :icon="Refresh" circle class="subtle-refresh" />
+                  </el-tooltip>
+                </div>
+              </div>
+              <div class="toolbar-filters">
                 <el-radio-group v-model="forkKind" class="premium-segmented" @change="handleSearchFork">
                   <el-radio-button :value="undefined">全部</el-radio-button>
                   <el-radio-button :value="Kind.KAFKA">推送模式</el-radio-button>
                   <el-radio-button :value="Kind.GRPC">调度模式</el-radio-button>
                 </el-radio-group>
-              </div>
-              <div class="header-right">
-                <el-tooltip content="刷新列表" placement="top">
-                  <el-button @click="() => handleRefreshFork()" :icon="Refresh" circle class="subtle-refresh" />
-                </el-tooltip>
               </div>
             </div>
 
@@ -275,17 +279,17 @@ const open = (row: codebook) => {
   forkPageParams.value.page = 1
   activeTab.value = "bound"
   // NOTE: 打开时只加载当前激活的 bound tab 数据，fork tab 按需加载
-  _fetchBound(row.identifier)
+  _fetchBound(row.id)
 }
 
-const _fetchBound = (uid: string, isAppend: boolean = false) => {
+const _fetchBound = (id: number, isAppend: boolean = false) => {
   const offset = (boundPageParams.value.page - 1) * boundPageParams.value.limit
-  fetchCodebookRunners(uid, offset, boundPageParams.value.limit, boundKeyword.value, boundKind.value, isAppend)
+  fetchCodebookRunners(id, offset, boundPageParams.value.limit, boundKeyword.value, boundKind.value, isAppend)
 }
 
 const handleSearchBound = () => {
   boundPageParams.value.page = 1
-  if (currentCodebook.value) _fetchBound(currentCodebook.value.identifier)
+  if (currentCodebook.value) _fetchBound(currentCodebook.value.id)
 }
 
 const handleScrollBound = (e: Event) => {
@@ -293,7 +297,7 @@ const handleScrollBound = (e: Event) => {
   if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
     if (!loading.value && codebookRunners.value.length < codebookRunnersTotal.value) {
       boundPageParams.value.page++
-      if (currentCodebook.value) _fetchBound(currentCodebook.value.identifier, true)
+      if (currentCodebook.value) _fetchBound(currentCodebook.value.id, true)
     }
   }
 }
@@ -302,7 +306,7 @@ const handleScrollBound = (e: Event) => {
 const handleTabChange = (tabName: string) => {
   activeTab.value = tabName
   if (tabName === "bound") {
-    if (currentCodebook.value) _fetchBound(currentCodebook.value.identifier)
+    if (currentCodebook.value) _fetchBound(currentCodebook.value.id)
   } else if (tabName === "fork") {
     forkPageParams.value.page = 1
     handleRefreshFork()
@@ -312,7 +316,7 @@ const handleTabChange = (tabName: string) => {
 const handleRefresh = () => {
   // NOTE: 刷新时只刷新当前 tab 的数据
   if (activeTab.value === "bound" && currentCodebook.value) {
-    _fetchBound(currentCodebook.value.identifier)
+    _fetchBound(currentCodebook.value.id)
   } else if (activeTab.value === "fork") {
     handleRefreshFork()
   }
@@ -322,7 +326,7 @@ const handleRefreshFork = (isAppend: boolean = false) => {
   if (currentCodebook.value) {
     const offset = (forkPageParams.value.page - 1) * forkPageParams.value.limit
     fetchExcludeCodebookRunners(
-      currentCodebook.value.identifier,
+      currentCodebook.value.id,
       offset,
       forkPageParams.value.limit,
       forkKeyword.value,
@@ -356,7 +360,7 @@ const handleToCreate = () => {
       runnerFormRef.value?.setFrom({
         id: undefined,
         name: currentCodebook.value.name + "_执行单元",
-        codebook_uid: currentCodebook.value.identifier,
+        codebook_id: currentCodebook.value.id,
         codebook_secret: currentCodebook.value.secret,
         kind: Kind.GRPC,
         desc: "",
@@ -387,7 +391,7 @@ const handleFork = (row: runner) => {
       delete (cloned as any).id
       // Optional: don't copy name aggressively, let it auto-generate or use a blank state
       cloned.name = ""
-      cloned.codebook_uid = currentCodebook.value.identifier
+      cloned.codebook_id = currentCodebook.value.id
       cloned.codebook_secret = currentCodebook.value.secret
       runnerFormRef.value?.setFrom(cloned)
     }
@@ -441,52 +445,72 @@ defineExpose({
 
 .filter-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
+  flex-direction: column;
+  padding: 14px 18px;
   background: white;
   border-bottom: 1px solid #f1f5f9;
-  gap: 16px;
+  gap: 10px;
 
-  .search-group {
+  .toolbar-main {
     display: flex;
     align-items: center;
-    gap: 12px;
-    flex: 1;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .toolbar-filters {
+    display: flex;
+    width: 100%;
   }
 
   .premium-search {
-    flex: 1;
-    max-width: 240px;
+    flex: 1 1 auto;
+    min-width: 0;
+
     :deep(.el-input__wrapper) {
+      height: 36px;
       box-shadow: none !important;
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
+      border: 1px solid #dbe3ef;
+      background: #ffffff;
       border-radius: 8px;
       padding: 1px 12px;
       transition: all 0.2s;
+
       &.is-focus {
-        border-color: #3b82f6;
-        background: white;
-        box-shadow: 0 0 0 1px #3b82f6 !important;
+        border-color: #94a3b8;
+        background: #ffffff;
+        box-shadow: none !important;
       }
     }
   }
 
   .premium-segmented {
+    display: flex;
+    width: 100%;
+    padding: 3px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+
+    :deep(.el-radio-button) {
+      flex: 1;
+    }
+
     :deep(.el-radio-button__inner) {
-      height: 32px;
+      width: 100%;
+      height: 30px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0 16px;
+      padding: 0 10px;
       font-size: 13px;
-      background: #f1f5f9;
+      background: transparent;
       border: none !important;
-      margin: 0 2px;
-      border-radius: 8px !important;
+      margin: 0;
+      border-radius: 6px !important;
       color: #64748b;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.2s;
       box-shadow: none !important;
 
@@ -495,25 +519,27 @@ defineExpose({
       }
     }
     :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-      background: #3b82f6;
-      color: white;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
+      background: #ffffff;
+      color: #1f2937;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
     }
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    flex: 0 0 auto;
+    gap: 8px;
   }
 
   .glass-add-btn {
+    height: 36px;
+    padding: 0 14px;
     border-radius: 8px;
-    background: #3b82f6;
-    border: none;
-    font-weight: 500;
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
-    padding: 8px 16px;
+    background: #2563eb;
+    border-color: #2563eb;
+    font-weight: 600;
+    box-shadow: none;
     color: white;
     cursor: pointer;
     display: flex;
@@ -521,18 +547,38 @@ defineExpose({
     gap: 4px;
 
     &:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
+      background: #1d4ed8;
+      border-color: #1d4ed8;
     }
   }
 
   .subtle-refresh {
-    border: none;
-    background: #f1f5f9;
+    width: 36px;
+    height: 36px;
+    border: 1px solid #dbe3ef;
+    background: #ffffff;
     color: #64748b;
+
     &:hover {
-      background: #e2e8f0;
-      color: #3b82f6;
+      background: #f8fafc;
+      color: #334155;
+    }
+  }
+}
+
+@media (max-width: 560px) {
+  .filter-header {
+    .toolbar-main {
+      flex-wrap: wrap;
+    }
+
+    .premium-search,
+    .header-right {
+      width: 100%;
+    }
+
+    .header-right {
+      justify-content: flex-end;
     }
   }
 }

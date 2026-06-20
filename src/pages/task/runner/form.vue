@@ -83,9 +83,9 @@
         </div>
 
         <div class="form-row">
-          <el-form-item prop="codebook_uid" label="任务模版标识" class="form-item">
-            <el-select v-model="formData.codebook_uid" placeholder="请选择任务模版" size="large" clearable filterable>
-              <el-option v-for="item in codebooks" :key="item.id" :label="item.name" :value="item.identifier" />
+          <el-form-item prop="codebook_id" label="任务模版标识" class="form-item">
+            <el-select v-model="formData.codebook_id" placeholder="请选择任务模版" size="large" clearable filterable>
+              <el-option v-for="item in codebooks" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </div>
@@ -165,7 +165,7 @@ const emits = defineEmits(["closed", "callback"])
 // ── 表单数据 ────────────────────────────────────────────────────────────────
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
   name: "",
-  codebook_uid: "",
+  codebook_id: 0,
   codebook_secret: "",
   kind: Kind.GRPC,
   desc: "",
@@ -194,7 +194,7 @@ const formRules: FormRules = {
       trigger: "change"
     }
   ],
-  codebook_uid: [{ required: true, message: "必须输入任务模版唯一标识", trigger: "blur" }],
+  codebook_id: [{ required: true, message: "必须输入任务模版唯一标识", trigger: "blur" }],
   codebook_secret: [{ required: true, message: "必须输入任务模版密钥", trigger: "blur" }],
   tags: [{ required: true, message: "必须输入标签", trigger: "blur" }]
 }
@@ -206,14 +206,14 @@ const { codebooks, fetchCodebooks } = useCodebooks(formData)
 /** 当前 codebook 名称：优先取父组件注入，其次从列表匹配 */
 const codebookName = computed(() => {
   if (props.presetCodebookName) return props.presetCodebookName
-  const matched = codebooks.value.find((item) => item.identifier === formData.value.codebook_uid)
+  const matched = codebooks.value.find((item) => item.id === formData.value.codebook_id)
   return matched?.name ?? ""
 })
 
 const runnerSuggestedTags = computed(() => {
   const modeTag = formData.value.kind === Kind.KAFKA ? "message" : "distributed"
   const tags = [
-    formData.value.codebook_uid,
+    formData.value.codebook_id,
     formData.value.target,
     formData.value.handler,
     modeTag,

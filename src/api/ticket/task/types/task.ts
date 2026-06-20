@@ -37,7 +37,8 @@ export interface task {
   id: number
   ticket_id: number
   kind: Kind
-  codebook_uid: string
+  /** 对应后端 int64 */
+  codebook_id: number
   target: string
   handler: string
   status: number

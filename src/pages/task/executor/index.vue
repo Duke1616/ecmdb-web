@@ -128,6 +128,42 @@ const handleRefresh = () => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+
+  :deep(.custom-tabs) {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: none;
+  }
+
+  :deep(.tabs-header) {
+    background: #f8fafc;
+  }
+
+  :deep(.tab-item) {
+    min-height: 40px;
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  :deep(.tab-item:hover) {
+    color: #334155;
+    background: #f1f5f9;
+  }
+
+  :deep(.tab-item.active) {
+    color: #1f2937;
+    background: #ffffff;
+  }
+
+  :deep(.tab-item.active::after) {
+    width: 24px;
+    background: #64748b;
+  }
+
+  :deep(.tabs-content) {
+    margin: 10px;
+  }
 }
 
 .executor-summary {
@@ -136,15 +172,15 @@ const handleRefresh = () => {
   gap: 8px;
   height: 38px;
   padding: 0 14px;
-  color: #075985;
-  background: #eff6ff;
-  border: 1px solid #93c5fd;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 700;
 
   span {
-    color: #0369a1;
+    color: #64748b;
     font-weight: 600;
   }
 

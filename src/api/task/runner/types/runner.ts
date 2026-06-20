@@ -9,7 +9,7 @@ export enum Kind {
 export interface runner {
   id: number
   name: string
-  codebook_uid: string
+  codebook_id: number
   codebook_name?: string
   codebook_secret: string
   kind: Kind
@@ -23,7 +23,7 @@ export interface runner {
 export interface registerOrUpdateReq {
   id?: number
   name: string
-  codebook_uid: string
+  codebook_id: number
   codebook_secret: string
   kind: Kind
   target: string
@@ -52,7 +52,7 @@ export interface listRunnerReq {
 }
 
 export interface listByCodebookIdReq extends listRunnerReq {
-  codebook_uid: string
+  codebook_id: number
   keyword?: string
   kind?: Kind
 }
@@ -66,7 +66,7 @@ export interface TagDetail {
 
 export interface runnerTags {
   codebook_name: string
-  codebook_uid: string
+  codebook_id: number
   tags: TagDetail[]
 }
 

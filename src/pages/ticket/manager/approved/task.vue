@@ -11,7 +11,7 @@
                 <el-icon><Monitor /></el-icon>
               </span>
               <div class="task-name-group">
-                <div class="task-name">{{ row.codebook_uid || "未命名任务" }}</div>
+                <div class="task-name">{{ row.codebook_id || "未命名任务" }}</div>
                 <div class="task-subtitle">
                   <span>{{ row.kind === Kind.KAFKA ? "消息推送" : "分布式调度" }}</span>
                   <span class="separator">/</span>

@@ -1,373 +1,343 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="代码本管理"
-      subtitle="管理任务代码本和脚本配置"
-      add-button-text="新增代码本"
-      @add="handlerCreate"
-      @refresh="listCodebooksData"
-    />
-
-    <!-- 主内容区域 -->
+  <ProGovernanceLayout
+    title="脚本引擎项目"
+    subtitle="提供基于项目层级的脚本资产隔离与分类管理"
+    :primary-action="{ label: '新建项目', capability: TASK_CAPABILITIES.Codebook.Add }"
+    @refresh="fetchProjects"
+    @primary-action="handleCreate"
+  >
     <DataTable
-      :data="codebooksData"
+      :data="projectsList"
       :columns="tableColumns"
-      :show-selection="true"
+      :show-selection="false"
       :show-pagination="true"
-      :total="paginationData.total"
-      :page-size="paginationData.pageSize"
-      :current-page="paginationData.currentPage"
-      :page-sizes="paginationData.pageSizes"
-      :pagination-layout="paginationData.layout"
-      @selection-change="handleSelectionChange"
+      :loading="projectsLoading"
+      :total="projectsTotal"
+      :page-size="projectLimit"
+      :current-page="projectPage"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 操作列插槽 -->
+      <template #name="{ row }">
+        <div class="project-name-cell" @click="selectProject(row)">
+          <el-icon class="folder-icon"><FolderOpened /></el-icon>
+          <span class="project-name-text">{{ row.name }}</span>
+        </div>
+      </template>
+
+      <template #desc="{ row }">
+        <div class="project-desc-cell">
+          <el-tooltip :content="row.desc" placement="top" :show-after="300">
+            <span class="project-desc-text">{{ row.desc || "-" }}</span>
+          </el-tooltip>
+        </div>
+      </template>
+
+      <template #ctime="{ row }">
+        <span class="time-text">{{ formatProjectTime(row.ctime) }}</span>
+      </template>
+
       <template #actions="{ row }">
-        <OperateBtn :items="operateBtnItems" @routeEvent="handleOperateEvent" :operateItem="row" :maxLength="2" />
+        <OperateBtn :items="operateItems" :operate-item="row" :max-length="2" @routeEvent="handleOperateEvent" />
       </template>
     </DataTable>
-    <!-- 新增/编辑模版 -->
-    <el-card v-show="addDialogDrawer">
-      <WizardContainer
-        :steps="codebookSteps"
-        :formData="formData"
-        :formRules="formRules"
-        @update:formData="updateFormData"
-        @close="onClosed"
-        @save="saveCodebook"
-        ref="wizardRef"
-      />
-    </el-card>
-    <!-- 运行器管理抽屉 -->
-    <RunnerDrawer ref="runnerDrawerRef" />
-  </PageContainer>
+
+    <FormDialog
+      v-model="projectDialogVisible"
+      :title="projectForm.id ? '编辑项目' : '新建项目'"
+      subtitle="配置用于脚本资产隔离的项目维度空间"
+      width="520px"
+      :header-icon="FolderOpened"
+      :confirm-loading="saving"
+      confirm-text="保存"
+      @closed="handleDialogClosed"
+      @cancel="projectDialogVisible = false"
+      @confirm="saveProject"
+    >
+      <el-form
+        ref="projectFormRef"
+        :model="projectForm"
+        :rules="projectRules"
+        label-position="top"
+        class="project-form"
+      >
+        <el-form-item label="项目名称" prop="name">
+          <el-input v-model="projectForm.name" placeholder="请输入项目名称，如：数据库同步" clearable />
+        </el-form-item>
+        <el-form-item label="项目描述" prop="desc">
+          <el-input v-model="projectForm.desc" type="textarea" :rows="4" placeholder="请输入项目描述信息" clearable />
+        </el-form-item>
+      </el-form>
+    </FormDialog>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { h, ref, watch, computed, nextTick, markRaw } from "vue"
-import { Document, Edit, Delete, Setting } from "@element-plus/icons-vue"
-import { usePagination } from "@/common/composables/usePagination"
-import WizardContainer from "@@/components/WizardContainer/index.vue"
-import OperateBtn from "@@/components/OperateBtn/index.vue"
-import { codebook, type createOrUpdateCodebookReq } from "@/api/task/codebook/types/codebook.js"
-import { cloneDeep } from "lodash-es"
-import {
-  deleteCodebookApi,
-  listCodebookApi,
-  createCodebookApi,
-  updateCodebookApi
-} from "@/api/task/codebook/index.js"
-import { ElMessage, ElMessageBox } from "element-plus"
-import InfoPage from "./modal/info.vue"
-import Code from "./modal/code.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { computed, h, ref, watch } from "vue"
+import { useRouter } from "vue-router"
+import { Delete, Edit, FolderOpened } from "@element-plus/icons-vue"
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import RunnerDrawer from "./components/RunnerDrawer.vue"
+import OperateBtn from "@/common/components/OperateBtn/index.vue"
+import { FormDialog } from "@/common/components/Dialogs"
+import { usePagination } from "@/common/composables/usePagination"
+import { formatTimestamp } from "@/common/utils/day"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-const addDialogDrawer = ref<boolean>(false)
-
-const wizardRef = ref()
-const codeEditorMode = ref<"simple" | "advanced">("simple")
-
+import { createProjectApi, listProjectApi, updateProjectApi, deleteProjectApi } from "@/api/task/codebook"
+import type { CodebookProject } from "@/api/task/codebook/types/codebook"
 import type { Column } from "@@/components/DataTable/types"
 
-// 表格列配置
-const tableColumns: Column[] = [
-  { prop: "name", label: "名称", align: "center" },
-  { prop: "identifier", label: "唯一标识", align: "center" },
-  { prop: "secret", label: "密钥", align: "center", width: 400 }
-]
+const router = useRouter()
+const saving = ref(false)
 
-// 操作按钮配置
-const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit), capability: TASK_CAPABILITIES.Codebook.Edit },
-  {
-    name: "执行单元",
-    code: "runner",
-    type: "success",
-    icon: markRaw(Setting),
-    capability: TASK_CAPABILITIES.Codebook.ViewRunners
-  },
-  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete), capability: TASK_CAPABILITIES.Codebook.Delete }
-]
+// 使用项目统一的分页 hooks
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
-// 选中的行
-const selectedRows = ref<codebook[]>([])
-
-// 操作按钮事件
-const handleOperateEvent = (row: codebook, action: string) => {
-  if (action === "edit") {
-    handleUpdate(row)
-  } else if (action === "delete") {
-    handleDelete(row)
-  } else if (action === "runner") {
-    handleOpenRunnerDrawer(row)
+// 映射分页参数到项目接口参数
+const projectPage = computed({
+  get: () => paginationData.currentPage,
+  set: (val) => {
+    paginationData.currentPage = val
   }
-}
-
-// 选择变化事件
-const handleSelectionChange = (selection: codebook[]) => {
-  selectedRows.value = selection
-}
-
-// 向导步骤配置
-const codebookSteps = computed(() => [
-  {
-    title: "基本信息",
-    description: "填写脚本基本信息",
-    icon: markRaw(Document),
-    component: markRaw(InfoPage)
-  },
-  {
-    title: "代码编写",
-    description: codeEditorMode.value === "simple" ? "编写脚本代码" : "管理多文件项目",
-    icon: markRaw(Edit),
-    component: markRaw(Code)
+})
+const projectLimit = computed({
+  get: () => paginationData.pageSize,
+  set: (val) => {
+    paginationData.pageSize = val
   }
-])
-
-// 表单数据
-const formData = ref<createOrUpdateCodebookReq>(createDefaultFormData())
-
-// 表单验证规则
-const formRules = computed(() => {
-  const currentStep = wizardRef.value?.currentStep || 0
-  if (currentStep === 0) {
-    // 基本信息页面验证规则
-    return {
-      name: [{ required: true, message: "必须输入名称", trigger: "blur" }],
-      owner: [{ required: true, message: "必须输入管理员", trigger: "blur" }],
-      identifier: [{ required: true, message: "必须输入唯一标识", trigger: "blur" }],
-      language: [{ required: true, message: "必须选择脚本语言", trigger: "change" }]
-    }
-  }
-  return {}
 })
 
-const codebookRow = ref<codebook>(createDefaultCodebook())
+// 项目管理相关状态
+const projectsList = ref<CodebookProject[]>([])
+const projectsTotal = ref(0)
+const projectsLoading = ref(false)
 
-// 创建默认表单数据
-function createDefaultFormData(): createOrUpdateCodebookReq {
-  return {
-    name: "",
-    code: "",
-    language: "shell",
-    owner: "",
-    identifier: ""
-  }
-}
+// 项目弹窗相关状态
+const projectDialogVisible = ref(false)
+const projectFormRef = ref<FormInstance>()
+const projectForm = ref({
+  id: undefined as number | undefined,
+  name: "",
+  desc: ""
+})
+const projectRules = ref<FormRules>({
+  name: [
+    { required: true, message: "请输入项目名称", trigger: "blur" },
+    { min: 1, max: 64, message: "项目名长度需在 1 到 64 个字符之间", trigger: "blur" }
+  ],
+  desc: [{ required: true, message: "请输入项目描述", trigger: "blur" }]
+})
 
-// 创建默认 codebook 数据
-function createDefaultCodebook(): codebook {
-  return {
-    id: 0,
-    name: "",
-    owner: "",
-    code: "",
-    language: "",
-    identifier: "",
-    secret: ""
-  }
-}
+const tableColumns: Column[] = [
+  { prop: "name", label: "项目名称", slot: "name", align: "center", minWidth: 220 },
+  { prop: "desc", label: "项目描述", slot: "desc", align: "center", minWidth: 320 },
+  { prop: "ctime", label: "创建时间", slot: "ctime", align: "center", minWidth: 170 }
+]
 
-// 重置表单数据
-function resetFormData() {
-  formData.value = createDefaultFormData()
-}
+const operateItems = [
+  { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: TASK_CAPABILITIES.Codebook.Edit },
+  { name: "删除", code: "delete", type: "danger", icon: Delete, capability: TASK_CAPABILITIES.Codebook.Delete }
+]
 
-// 重置 codebook 数据
-function resetCodebookRow() {
-  codebookRow.value = createDefaultCodebook()
-}
-
-// 监听弹窗显示状态
-watch(
-  () => addDialogDrawer.value,
-  (val: any) => {
-    if (val) {
-      // 重置到第一步
-      nextTick(() => {
-        wizardRef.value?.setStep(0)
-      })
-    }
-  }
-)
-
-// 监听编辑数据
-watch(
-  () => codebookRow.value,
-  async (val) => {
-    if (val && addDialogDrawer.value) {
-      // 使用 nextTick 避免循环更新
-      nextTick(async () => {
-        const newFormData = cloneDeep(val)
-        // owner 现在直接存储为 username，无需转换
-        formData.value = newFormData
-      })
-    } else if (!val) {
-      // 重置表单数据
-      resetFormData()
-    }
-  },
-  { immediate: true }
-)
-
-const handlerCreate = () => {
-  resetCodebookRow()
-  addDialogDrawer.value = true
-}
-
-const handleUpdate = (row: codebook) => {
-  codebookRow.value = cloneDeep(row)
-  addDialogDrawer.value = true
-}
-
-const onClosed = () => {
-  addDialogDrawer.value = false
-  listCodebooksData()
-}
-
-// 向导相关方法
-const updateFormData = (data: createOrUpdateCodebookReq) => {
-  formData.value = { ...formData.value, ...data }
-}
-
-// 准备提交数据
-function prepareSubmitData(): createOrUpdateCodebookReq {
-  return { ...formData.value }
-}
-
-// 判断是否为更新操作
-function isUpdateOperation(): boolean {
-  return !!formData.value.id
-}
-
-// 获取对应的 API 函数
-function getApiFunction() {
-  return isUpdateOperation() ? updateCodebookApi : createCodebookApi
-}
-
-// 处理保存成功
-function handleSaveSuccess() {
-  ElMessage.success("保存成功")
-  onClosed()
-}
-
-// 处理保存失败
-function handleSaveError(error: any) {
-  console.error("保存失败:", error)
-}
-
-const saveCodebook = async () => {
+// ==================== 数据加载 ====================
+async function fetchProjects() {
+  projectsLoading.value = true
   try {
-    const submitData = prepareSubmitData()
-    const api = getApiFunction()
-    await api(submitData)
-    handleSaveSuccess()
-  } catch (error) {
-    handleSaveError(error)
+    const { data } = await listProjectApi({
+      offset: (projectPage.value - 1) * projectLimit.value,
+      limit: projectLimit.value
+    })
+    projectsList.value = data.projects || []
+    projectsTotal.value = data.total || 0
+    paginationData.total = data.total || 0
+  } catch {
+    projectsList.value = []
+    projectsTotal.value = 0
+    paginationData.total = 0
+  } finally {
+    projectsLoading.value = false
   }
 }
 
-/** 查询模版列表 */
-const codebooksData = ref<codebook[]>([])
-
-// 构建查询参数
-function buildQueryParams() {
-  return {
-    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
+// ==================== 操作逻辑 ====================
+function handleCreate() {
+  projectForm.value = {
+    id: undefined,
+    name: "",
+    desc: ""
   }
+  projectDialogVisible.value = true
 }
 
-// 处理查询成功
-function handleQuerySuccess(data: any) {
-  paginationData.total = data.total
-  codebooksData.value = data.codebooks
+function handleEdit(row: CodebookProject) {
+  projectForm.value = {
+    id: row.id,
+    name: row.name,
+    desc: row.desc
+  }
+  projectDialogVisible.value = true
 }
 
-// 处理查询失败
-function handleQueryError() {
-  codebooksData.value = []
-}
-
-const listCodebooksData = () => {
-  listCodebookApi(buildQueryParams())
-    .then(({ data }) => handleQuerySuccess(data))
-    .catch(() => handleQueryError())
-    .finally(() => {})
-}
-
-// 构建删除确认消息
-function buildDeleteMessage(row: codebook) {
-  return h("p", null, [
-    h("span", null, "正在删除名称: "),
-    h("i", { style: "color: red" }, `${row.name}`),
-    h("span", null, " 确认删除？")
-  ])
-}
-
-// 处理删除成功
-function handleDeleteSuccess() {
-  ElMessage.success("删除成功")
-  listCodebooksData()
-}
-
-// 执行删除操作
-function executeDelete(row: codebook) {
-  deleteCodebookApi(row.id).then(handleDeleteSuccess)
-}
-
-const handleDelete = (row: codebook) => {
+function handleDeleteProject(row: CodebookProject) {
   ElMessageBox({
     title: "删除确认",
-    message: buildDeleteMessage(row),
+    message: h("p", null, [
+      h("span", null, "正在删除项目: "),
+      h("i", { style: "color: #dc2626" }, row.name),
+      h("span", null, "，项目下的所有脚本和目录将一并删除，确认删除？")
+    ]),
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning"
-  }).then(() => executeDelete(row))
+  }).then(async () => {
+    await deleteProjectApi(row.id)
+    ElMessage.success("删除成功")
+    fetchProjects()
+  })
 }
 
-/** 监听分页参数的变化 */
-watch([() => paginationData.currentPage, () => paginationData.pageSize], listCodebooksData, { immediate: true })
-
-// ------ 执行单元 (Runner) 相关逻辑 ------
-const runnerDrawerRef = ref<InstanceType<typeof RunnerDrawer>>()
-
-const handleOpenRunnerDrawer = (row: codebook) => {
-  runnerDrawerRef.value?.open(row)
+function handleOperateEvent(row: CodebookProject, action: string) {
+  if (action === "edit") handleEdit(row)
+  if (action === "delete") handleDeleteProject(row)
 }
-</script>
 
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
+async function saveProject() {
+  if (!projectFormRef.value) return
+  const valid = await projectFormRef.value.validate()
+  if (!valid) return
+
+  saving.value = true
+  try {
+    const payload = {
+      name: projectForm.value.name.trim(),
+      desc: projectForm.value.desc
+    }
+    if (projectForm.value.id) {
+      await updateProjectApi({
+        id: projectForm.value.id,
+        ...payload
+      })
+      ElMessage.success("更新项目成功")
+    } else {
+      await createProjectApi(payload)
+      ElMessage.success("创建项目成功")
+    }
+    projectDialogVisible.value = false
+    fetchProjects()
+  } finally {
+    saving.value = false
   }
 }
-</style>
 
-<style lang="scss" scoped>
-/* 代码编辑器模式选择器 */
-.editor-mode-selector {
-  padding: 16px 24px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: center;
+function handleDialogClosed() {
+  projectForm.value = {
+    id: undefined,
+    name: "",
+    desc: ""
+  }
+  projectFormRef.value?.clearValidate()
+}
 
-  .el-radio-group {
-    .el-radio-button__inner {
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 500;
+function selectProject(row: CodebookProject) {
+  router.push({
+    name: "ScriptWorkspace",
+    query: {
+      id: row.id.toString(),
+      name: row.name
+    }
+  })
+}
+
+function formatProjectTime(timestamp?: number) {
+  if (!timestamp) return "-"
+  const normalized = timestamp < 10000000000 ? timestamp * 1000 : timestamp
+  return formatTimestamp(normalized)
+}
+
+// 监听分页变更
+watch(
+  [() => paginationData.currentPage, () => paginationData.pageSize],
+  () => {
+    fetchProjects()
+  },
+  { immediate: true }
+)
+</script>
+
+<style scoped lang="scss">
+.project-name-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #2563eb;
+  font-weight: 700;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #1d4ed8;
+  }
+
+  .folder-icon {
+    font-size: 16px;
+    color: #3b82f6;
+  }
+}
+
+.project-desc-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  width: 100%;
+}
+
+.project-name-text,
+.project-desc-text {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-desc-text {
+  color: #667085;
+  font-size: 13px;
+}
+
+.time-text {
+  color: #667085;
+  font-size: 12px;
+}
+
+.project-form {
+  padding: 18px 4px 4px;
+
+  :deep(.el-form-item__label) {
+    color: #344054;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  :deep(.el-input__wrapper),
+  :deep(.el-textarea__inner) {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 0 1px #dfe5ee inset;
+
+    &:hover {
+      box-shadow: 0 0 0 1px #b8c4d4 inset;
+    }
+
+    &.is-focus {
+      box-shadow:
+        0 0 0 1px #3b82f6 inset,
+        0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   }
 }
-
-/* WizardContainer 现在自动处理全屏覆盖，无需额外样式 */
 </style>

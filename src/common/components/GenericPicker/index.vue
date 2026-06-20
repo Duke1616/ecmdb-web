@@ -2,9 +2,9 @@
   <div
     class="generic-picker-container"
     ref="containerRef"
-    :class="[`variant-${variant}`, multiple ? 'is-multiple' : 'is-single', containerClass]"
+    :class="[`variant-${variant}`, multiple ? 'is-multiple' : 'is-single', disabled ? 'is-disabled' : '', containerClass]"
   >
-    <div class="picker-input-box" @click="toggleDropdown" :class="{ 'is-focus': showDropdown }">
+    <div class="picker-input-box" @click="handleInputClick" :class="{ 'is-focus': showDropdown }">
       <!-- 多选模式下的标签显示区 -->
       <div v-if="multiple && selectedItems.length > 0" class="selected-tags">
         <div v-for="item in selectedItems" :key="String(item[keyField])" class="picker-tag">
@@ -12,7 +12,7 @@
           <slot name="tag" :item="item">
             <span class="tag-text">{{ (item[labelField] as string) || (item[keyField] as string) }}</span>
           </slot>
-          <button @click.stop="removeItem(item)" class="remove-btn" type="button" title="移除">
+          <button @click.stop="removeItem(item)" class="remove-btn" type="button" title="移除" :disabled="disabled">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -121,6 +121,7 @@ interface IGenericPickerProps {
   pageSize?: number
   showPagination?: boolean
   showLoading?: boolean
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<IGenericPickerProps>(), {
@@ -130,7 +131,8 @@ const props = withDefaults(defineProps<IGenericPickerProps>(), {
   variant: "fancy",
   pageSize: 3,
   showPagination: true,
-  showLoading: false
+  showLoading: false,
+  disabled: false
 })
 
 // NOTE: 该组件为纯通用 UI 选择控制组件，通过 v-model 将选中的主键绑定同步给外部父组件
@@ -193,6 +195,7 @@ const isItemSelected = (item: T): boolean => {
  * @param item 要移除的项
  */
 const removeItem = (item: T) => {
+  if (props.disabled) return
   const currentKey = item[props.keyField] as unknown as K
   if (props.multiple && Array.isArray(model.value)) {
     model.value = (model.value as K[]).filter((key) => key !== currentKey)
@@ -204,6 +207,7 @@ const removeItem = (item: T) => {
  * @param item 当前点击的项
  */
 const handleSelect = (item: T) => {
+  if (props.disabled) return
   const currentKey = item[props.keyField] as unknown as K
   if (props.multiple) {
     const currentModel = Array.isArray(model.value) ? (model.value as K[]) : []
@@ -217,6 +221,11 @@ const handleSelect = (item: T) => {
     model.value = currentKey
     closeDropdown()
   }
+}
+
+const handleInputClick = () => {
+  if (props.disabled) return
+  toggleDropdown()
 }
 
 // 监听绑定的 model 值，通过 resolveDetail 进行增量解析并反写详情对象
@@ -445,6 +454,18 @@ onUnmounted(() => {
 .generic-picker-container.variant-element .picker-arrow svg {
   width: 14px;
   height: 14px;
+}
+
+.generic-picker-container.is-disabled {
+  cursor: not-allowed;
+}
+
+.generic-picker-container.is-disabled .picker-input-box {
+  cursor: not-allowed;
+  color: #a8abb2;
+  background: #f5f7fa !important;
+  border-color: #e4e7ed !important;
+  box-shadow: none !important;
 }
 
 /* Dropdown Panel 样式 */

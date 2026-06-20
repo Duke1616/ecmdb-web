@@ -488,6 +488,20 @@ export const TASK_CAPABILITIES = {
     Detail: "task:codebook:get",
     /** 脚本模板列表 */
     View: "task:codebook:view",
+    /** 代码资源子节点 */
+    Children: "task:codebook:children",
+    /** 代码资源树 */
+    Tree: "task:codebook:tree",
+    /** 脚本模板排序 */
+    Sort: "task:codebook:sort",
+    /** 创建脚本版本 */
+    CreateVersion: "task:codebook:create_version",
+    /** 脚本版本列表 */
+    ViewVersion: "task:codebook:view_version",
+    /** 脚本版本详情 */
+    DetailVersion: "task:codebook:get_version",
+    /** 使用脚本版本 */
+    UseVersion: "task:codebook:use_version",
     /** 当前绑定执行单元 */
     ViewRunners: "task:codebook:view_runners"
   },
@@ -511,7 +525,7 @@ export const TASK_CAPABILITIES = {
     /** 按流程查看执行单元 */
     ViewByWorkflowId: "task:runner:view_by_workflow_id",
     /** 查看未绑定当前脚本的执行单元 */
-    ViewExcludeCodebookUid: "task:runner:view_exclude_codebook_uid"
+    ViewExcludeCodebookId: "task:runner:view_exclude_codebook_id"
   },
 
   /** 全局变量相关 */

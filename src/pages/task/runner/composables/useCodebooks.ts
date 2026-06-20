@@ -16,7 +16,7 @@ export function useCodebooks(formData: Ref<registerOrUpdateReq>) {
     loading.value = true
     listCodebookApi({ offset: 0, limit: 100 })
       .then(({ data }) => {
-        codebooks.value = data.codebooks || []
+        codebooks.value = (data.codebooks || []).filter((item) => item.kind !== "DIRECTORY")
       })
       .catch(() => {
         codebooks.value = []
@@ -26,9 +26,9 @@ export function useCodebooks(formData: Ref<registerOrUpdateReq>) {
       })
   }
 
-  /** 根据选中的 codebook_uid 自动查找对应的 secret */
+  /** 根据选中的 codebook_id 自动查找对应的 secret */
   const computedSecret = computed(() => {
-    const matched = codebooks.value.find((item) => item.identifier === formData.value.codebook_uid)
+    const matched = codebooks.value.find((item) => item.id === formData.value.codebook_id)
     return matched?.secret ?? ""
   })
 

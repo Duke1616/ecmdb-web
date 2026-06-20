@@ -8,7 +8,7 @@
     :get-item-by-id="getCodebookById"
     id-field="id"
     item-name-field="name"
-    item-description-field="identifier"
+    item-description-field="name"
     search-placeholder="搜索 Codebook..."
     empty-text="未找到匹配的项"
     :page-size="20"
@@ -17,8 +17,8 @@
     <!-- 自定义描述显示 -->
     <template #description="{ item }">
       <div class="codebook-extra">
-        <el-tag size="small" type="info" effect="plain">{{ item.language }}</el-tag>
-        <span class="codebook-id">{{ item.identifier }}</span>
+        <el-tag size="small" type="info" effect="plain">{{ inferLanguage(item.name) }}</el-tag>
+        <span class="codebook-id">{{ item.name }}</span>
       </div>
     </template>
 
@@ -54,21 +54,57 @@ const handleUpdate = (value: number) => {
   emit("update:modelValue", value)
 }
 
+const extLanguageMap: Record<string, string> = {
+  sh: "shell",
+  bash: "shell",
+  zsh: "shell",
+  py: "python",
+  js: "javascript",
+  ts: "javascript",
+  json: "json",
+  yml: "yaml",
+  yaml: "yaml",
+  md: "markdown"
+}
+
+const getFileExt = (name: string) => String(name || "").match(/\.([^.]+)$/)?.[1]?.toLowerCase() || ""
+
+const inferLanguage = (name: string) => extLanguageMap[getFileExt(name)] || "text"
+
 // 定义数据加载函数
 const loadCodebooks = async (params: any) => {
-  const response = await listCodebookApi(params)
+  const response = await listCodebookApi({
+    offset: 0,
+    limit: 200
+  })
+  if (response.data) {
+    const keyword = String(params.keyword || "").trim().toLowerCase()
+    const codebooks = (response.data.codebooks || []).filter((item: any) => {
+      if (item.kind === "DIRECTORY") return false
+      if (!keyword) return true
+      return [item.name, item.owner, inferLanguage(item.name), getFileExt(item.name)].some((value) =>
+        String(value || "")
+          .toLowerCase()
+          .includes(keyword)
+      )
+    })
+    const offset = Number(params.offset || 0)
+    const limit = Number(params.limit || 20)
+    return {
+      ...response,
+      data: {
+        ...response.data,
+        codebooks: codebooks.slice(offset, offset + limit),
+        total: codebooks.length
+      }
+    }
+  }
   return response
 }
 
 // 定义获取单个详情函数
 const getCodebookById = async (id: string | number) => {
   const response = await detailCodebookApi(id as number)
-  if (response.data && response.data.codebooks && response.data.codebooks.length > 0) {
-    return {
-      ...response,
-      data: response.data.codebooks[0]
-    }
-  }
   return response
 }
 </script>

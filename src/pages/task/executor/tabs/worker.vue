@@ -169,7 +169,16 @@ defineExpose({
   height: 100%;
 
   :deep(.content-card) {
-    border-color: #dfe6ef;
+    border-color: #e5e7eb;
+  }
+
+  :deep(.data-table__body tr:hover > td) {
+    background: #f8fafc;
+  }
+
+  :deep(.el-table__header th) {
+    color: #475569;
+    background: #f8fafc;
   }
 }
 
@@ -186,14 +195,14 @@ defineExpose({
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 30px;
-  height: 30px;
-  color: #7c2d12;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 800;
+  width: 28px;
+  height: 28px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #dbe3ef;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .identity-main {
@@ -212,7 +221,7 @@ defineExpose({
 }
 
 .identity-name {
-  color: #1f2937;
+  color: #111827;
   font-size: 13px;
   font-weight: 700;
 }
@@ -234,14 +243,14 @@ defineExpose({
   height: 24px;
   padding: 0 9px;
   overflow: hidden;
-  color: #854d0e;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
+  color: #475467;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -267,7 +276,7 @@ defineExpose({
 
   &.is-online {
     background: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+    box-shadow: none;
   }
 }
 
@@ -279,9 +288,9 @@ defineExpose({
 }
 
 .node-count {
-  color: #344054;
+  color: #334155;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .node-addresses,
@@ -303,19 +312,19 @@ defineExpose({
   padding: 0 8px;
   overflow: hidden;
   color: #475467;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   border-radius: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .handler-chip {
-  color: #166534;
-  background: #f7fdf9;
-  border-color: #cdeed7;
+  color: #475467;
+  background: #ffffff;
+  border-color: #e5e7eb;
 }
 
 .more-chip {

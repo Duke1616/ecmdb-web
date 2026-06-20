@@ -49,7 +49,7 @@ const keyword = defineModel<string>("keyword", { default: "" })
   transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:focus-within {
-    border-color: #0ea5e9;
+    border-color: #94a3b8;
   }
 }
 

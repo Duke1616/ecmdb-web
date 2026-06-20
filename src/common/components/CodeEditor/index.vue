@@ -57,8 +57,6 @@ const config = reactive({
 })
 
 const currentTheme = computed(() => {
-  console.log("Current theme:", config.theme)
-  console.log("Available themes:", themes)
   if (config.theme !== "default" && themes[config.theme as keyof typeof themes]) {
     return themes[config.theme as keyof typeof themes]
   }
@@ -123,7 +121,6 @@ const getLanguageConfig = (language: string) => {
 
 // 处理主题切换
 const handleThemeChange = (theme: string) => {
-  console.log("Theme changing from", config.theme, "to", theme)
   config.theme = theme
 }
 

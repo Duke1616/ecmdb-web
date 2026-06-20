@@ -2,8 +2,8 @@ import { ref } from "vue"
 import { runner, Kind } from "@/api/task/runner/types/runner"
 import {
   listRunnerApi,
-  listRunnerByCodebookUidApi,
-  listRunnerExcludeCodebookUidApi,
+  listRunnerByCodebookIdApi,
+  listRunnerExcludeCodebookIdApi,
   deleteRunnerApi
 } from "@/api/task/runner"
 import { ElMessage, ElMessageBox } from "element-plus"
@@ -31,7 +31,7 @@ export function useRunner() {
   }
 
   const fetchCodebookRunners = async (
-    codebookUid: string,
+    codebookId: number,
     offset: number = 0,
     limit: number = 20,
     keyword?: string,
@@ -40,8 +40,8 @@ export function useRunner() {
   ) => {
     if (!isAppend) loading.value = true
     try {
-      const { data } = await listRunnerByCodebookUidApi({
-        codebook_uid: codebookUid,
+      const { data } = await listRunnerByCodebookIdApi({
+        codebook_id: codebookId,
         offset,
         limit,
         keyword,
@@ -66,7 +66,7 @@ export function useRunner() {
   const forkableRunnersTotal = ref<number>(0)
 
   const fetchExcludeCodebookRunners = async (
-    codebookUid: string,
+    codebookId: number,
     offset: number = 0,
     limit: number = 20,
     keyword?: string,
@@ -75,8 +75,8 @@ export function useRunner() {
   ) => {
     if (!isAppend) loading.value = true
     try {
-      const { data } = await listRunnerExcludeCodebookUidApi({
-        codebook_uid: codebookUid,
+      const { data } = await listRunnerExcludeCodebookIdApi({
+        codebook_id: codebookId,
         offset,
         limit,
         keyword,

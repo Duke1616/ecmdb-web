@@ -92,7 +92,7 @@ import type { Column } from "@@/components/DataTable/types"
 const tableColumns: Column[] = [
   { prop: "name", label: "名称", align: "center", width: 300 },
   { prop: "kind", label: "运行模式", align: "center", slot: "kind" },
-  { prop: "codebook_uid", label: "绑定任务模版", align: "center" },
+  { prop: "codebook_id", label: "绑定任务模版", align: "center" },
   { prop: "tags", label: "标签", align: "center", slot: "tags" }
 ]
 

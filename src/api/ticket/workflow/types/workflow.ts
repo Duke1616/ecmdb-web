@@ -64,11 +64,13 @@ export interface AutomationCodebookUidsReq {
 }
 
 export interface RetrieveAutomationCodebookUids {
-  automation_codebooks: Record<string, string | AutomationCodebookConfig>
+  automation_codebooks: Record<string, AutomationCodebookValue>
 }
+
+export type AutomationCodebookValue = number | string | AutomationCodebookConfig
 
 export interface AutomationCodebookConfig {
   id?: number
   dispatch_id?: number
-  codebook_uid: string
+  codebook_id: number
 }

@@ -15,8 +15,8 @@
           @click="selectAutomation(node.name)"
         >
           <span class="node-name">{{ node.name }}</span>
-          <span class="node-codebook">{{ node.codebookUid }}</span>
-          <span class="node-runner-count">{{ getNodeRunners(node.codebookUid).length }} 个执行器</span>
+          <span class="node-codebook">{{ node.codebookId }}</span>
+          <span class="node-runner-count">{{ getNodeRunners(node.codebookId).length }} 个执行器</span>
         </button>
         <el-empty v-if="automationNodes.length === 0" description="暂无自动化节点" :image-size="88" />
       </el-scrollbar>
@@ -28,7 +28,7 @@
           <div class="summary-label">当前节点</div>
           <div class="summary-title">{{ selectedAutomationName || "未选择" }}</div>
         </div>
-        <el-tag v-if="selectedCodebookUid" type="info" effect="plain">{{ selectedCodebookUid }}</el-tag>
+        <el-tag v-if="selectedCodebookId" type="info" effect="plain">{{ selectedCodebookId }}</el-tag>
       </div>
 
       <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
@@ -79,7 +79,7 @@ const emits = defineEmits(["closed", "callback"])
 // 接收父组件传递
 interface Props {
   fieldsMap: Map<string, string>
-  automationCodebooks: Map<string, string>
+  automationCodebooks: Map<string, number>
   runners: runner[]
   templateId: number | undefined
 }
@@ -105,17 +105,17 @@ const formRef = ref<FormInstance | null>(null)
 const selectedAutomationName = ref("")
 
 const automationNodes = computed(() =>
-  Array.from(props.automationCodebooks, ([name, codebookUid]) => ({
+  Array.from(props.automationCodebooks, ([name, codebookId]) => ({
     name,
-    codebookUid
+    codebookId
   }))
 )
 
-const selectedCodebookUid = computed(() => props.automationCodebooks.get(selectedAutomationName.value) || "")
+const selectedCodebookId = computed(() => props.automationCodebooks.get(selectedAutomationName.value) ?? 0)
 
-const getNodeRunners = (codebookUid: string) => props.runners.filter((item) => item.codebook_uid === codebookUid)
+const getNodeRunners = (codebookId: number) => props.runners.filter((item) => item.codebook_id === codebookId)
 
-const filteredRunners = computed(() => (selectedCodebookUid.value ? getNodeRunners(selectedCodebookUid.value) : []))
+const filteredRunners = computed(() => (selectedCodebookId.value > 0 ? getNodeRunners(selectedCodebookId.value) : []))
 
 const selectAutomation = (name: string) => {
   selectedAutomationName.value = name
@@ -143,7 +143,7 @@ watch(
   { immediate: true }
 )
 
-watch(selectedCodebookUid, () => {
+watch(selectedCodebookId, () => {
   if (!formData.value.runner_id) return
 
   const exists = filteredRunners.value.some((item) => item.id === formData.value.runner_id)
@@ -175,7 +175,7 @@ const submitForm = async () => {
 const setForm = (row: dispatch) => {
   formData.value = cloneDeep(row)
   const matchedNode = automationNodes.value.find((node) =>
-    getNodeRunners(node.codebookUid).some((item) => item.id === row.runner_id)
+    getNodeRunners(node.codebookId).some((item) => item.id === row.runner_id)
   )
   if (matchedNode) {
     selectedAutomationName.value = matchedNode.name

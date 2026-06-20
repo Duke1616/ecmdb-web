@@ -31,11 +31,12 @@
               <template v-if="currentBinding">
                 <!-- A: 脚本库选择器 (codebook-picker) -->
                 <template v-if="currentBinding.component === 'codebook-picker'">
-                  <CodebookSelector
-                    :model-value="Number(modelValue) || undefined"
-                    @update:model-value="handleValueChange"
+                  <CodebookPicker
+                    :model-value="modelValue ? Number(modelValue) : undefined"
+                    variant="element"
                     class="inspector-select w-full"
                     :placeholder="currentBinding.placeholder || '从代码库中选择代码'"
+                    @update:model-value="handleValueChange"
                   />
                 </template>
 
@@ -114,7 +115,8 @@
 import { computed } from "vue"
 import { FullScreen, Close, Link } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
-import { CodebookSelector, RunnerSelector } from "@@/components/SearchSelector"
+import CodebookPicker from "@@/components/CodebookPicker/index.vue"
+import { RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/task/executor/type"
 import KVEditor from "./KVEditor.vue"
 
@@ -143,8 +145,12 @@ const currentBinding = computed(() => {
 })
 
 // 处理值更新，确保类型统一为 string
-const handleValueChange = (val: string | number) => {
-  emit("update:modelValue", String(val))
+const handleValueChange = (val: string | number | number[] | undefined) => {
+  if (Array.isArray(val)) {
+    emit("update:modelValue", val.join(","))
+    return
+  }
+  emit("update:modelValue", val === undefined ? "" : String(val))
 }
 
 // 缓存最近一次解析成功的合法字典值，规避 TypeScript 自引用类型推导死锁，并防范非法输入抹除数据

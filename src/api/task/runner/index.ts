@@ -56,18 +56,18 @@ export function listRunnerByWorkflowIdApi(workflokId: number) {
   })
 }
 
-/** by_codebook_uid 列表 */
-export function listRunnerByCodebookUidApi(data: runner.listByCodebookIdReq) {
+/** by_codebook_id 列表 */
+export function listRunnerByCodebookIdApi(data: runner.listByCodebookIdReq) {
   return instance.post<runner.runners>({
-    url: `${API_SERVICE.TASK}/runner/list/by_codebook_uid`,
+    url: `${API_SERVICE.TASK}/runner/list/by_codebook_id`,
     data: data
   })
 }
 
-/** exclude_codebook_uid 列表 */
-export function listRunnerExcludeCodebookUidApi(data: runner.listByCodebookIdReq) {
+/** exclude_codebook_id 列表 */
+export function listRunnerExcludeCodebookIdApi(data: runner.listByCodebookIdReq) {
   return instance.post<runner.runners>({
-    url: `${API_SERVICE.TASK}/runner/list/exclude_codebook_uid`,
+    url: `${API_SERVICE.TASK}/runner/list/exclude_codebook_id`,
     data: data
   })
 }

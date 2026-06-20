@@ -50,11 +50,8 @@ const code = shallowRef(props.code)
 const extensions = computed(() => {
   const result = []
 
-  console.log("Editor extensions computed, language:", props.language)
-
   // 添加语言支持
   if (props.language && props.language.language) {
-    console.log("Adding language:", props.language.language)
     try {
       // 检查是否是函数，如果是则调用它
       if (typeof props.language.language === "function") {
@@ -81,7 +78,6 @@ const extensions = computed(() => {
     }
   }
 
-  console.log("Final extensions:", result)
   return result
 })
 
@@ -132,8 +128,6 @@ const setCode = (newCode: string) => {
 
 const formatCode = () => {
   // 这里可以添加代码格式化逻辑
-  // 目前只是简单的示例
-  console.log("Format code functionality")
 }
 
 const scrollToBottom = () => {

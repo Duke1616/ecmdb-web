@@ -42,18 +42,13 @@
 
     <!-- 主内容区域 -->
     <el-empty v-if="!canViewDispatch" class="dispatch-empty" description="您没有权限查看自动派发配置" />
-    <DataTable
-      v-else
-      :data="automationRows"
-      :columns="tableColumns"
-      :loading="loading"
-    >
+    <DataTable v-else :data="automationRows" :columns="tableColumns" :loading="loading">
       <template #templateName="{ row }">
         {{ templateData?.name }}
       </template>
 
-      <template #codebookUid="{ row }">
-        <el-tag type="info" effect="plain">{{ row.codebookUid }}</el-tag>
+      <template #codebookId="{ row }">
+        <el-tag type="info" effect="plain">{{ row.codebookId }}</el-tag>
       </template>
 
       <template #runners="{ row }">
@@ -122,11 +117,11 @@ import { CirclePlus, Connection, Delete, RefreshRight, Setting } from "@element-
 import type { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
 import type { runner } from "@/api/task/runner/types/runner.js"
-import { listRunnerByCodebookUidApi } from "@/api/task/runner/index.js"
+import { listRunnerByCodebookIdApi } from "@/api/task/runner/index.js"
 import { deleteDispatchApi } from "@/api/ticket/dispatch"
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
 import { getAutomationCodebookUidsApi } from "@/api/ticket/workflow/workflow"
-import type { AutomationCodebookConfig } from "@/api/ticket/workflow/types/workflow"
+import type { AutomationCodebookValue } from "@/api/ticket/workflow/types/workflow"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { usePermission } from "@/common/composables/usePermission"
@@ -158,7 +153,7 @@ const loading = ref<boolean>(false)
 
 // 数据映射
 const runnerMap = ref<Map<number, string>>(new Map())
-const automationCodebookMap = ref<Map<string, string>>(new Map())
+const automationCodebookMap = ref<Map<string, number>>(new Map())
 const dispatchIdMap = ref<Map<string, number>>(new Map())
 const workflowRunners = ref<runner[]>([])
 const fieldMap = new Map<string, string>()
@@ -178,7 +173,7 @@ interface AutomationDispatchRow {
   id: string
   dispatchId?: number
   nodeName: string
-  codebookUid: string
+  codebookId: number
   runnerCount: number
   runners: runner[]
 }
@@ -201,11 +196,27 @@ const isTemplateRuleNode = (value: unknown): value is TemplateRuleNode => {
   return typeof value === "object" && value !== null
 }
 
+const resolveAutomationCodebookId = (value: AutomationCodebookValue): number => {
+  if (typeof value === "number") return value
+
+  if (typeof value === "string") {
+    const id = Number(value)
+    return Number.isFinite(id) ? id : 0
+  }
+
+  return value.codebook_id
+}
+
+const resolveAutomationDispatchId = (value: AutomationCodebookValue): number | undefined => {
+  if (typeof value !== "object" || value === null) return undefined
+  return value.dispatch_id ?? value.id
+}
+
 // ==================== 表格配置 ====================
 const tableColumns: Column[] = [
   { prop: "template_id", label: "模版名称", slot: "templateName", align: "center" },
   { prop: "nodeName", label: "自动化节点", align: "center", minWidth: 160 },
-  { prop: "codebookUid", label: "脚本模板 UID", slot: "codebookUid", align: "center", minWidth: 180 },
+  { prop: "codebookId", label: "脚本模板 ID", slot: "codebookId", align: "center", minWidth: 180 },
   { prop: "runnerCount", label: "可用执行器", align: "center", width: 110 },
   { prop: "runners", label: "执行器", slot: "runners", align: "center", minWidth: 220 }
 ]
@@ -229,13 +240,13 @@ const getOperateBtnItems = (row: AutomationDispatchRow): DispatchOperateItem[] =
 ]
 
 const automationRows = computed<AutomationDispatchRow[]>(() =>
-  Array.from(automationCodebookMap.value, ([nodeName, codebookUid]) => {
-    const runners = workflowRunners.value.filter((item) => item.codebook_uid === codebookUid)
+  Array.from(automationCodebookMap.value, ([nodeName, codebookId]) => {
+    const runners = workflowRunners.value.filter((item) => item.codebook_id === codebookId)
     return {
-      id: `${nodeName}:${codebookUid}`,
+      id: `${nodeName}:${codebookId}`,
       dispatchId: dispatchIdMap.value.get(nodeName),
       nodeName,
-      codebookUid,
+      codebookId,
       runnerCount: runners.length,
       runners
     }
@@ -287,18 +298,14 @@ const fetchAutomationCodebooks = async (): Promise<boolean> => {
 
   try {
     const { data } = await getAutomationCodebookUidsApi(templateData.value.workflow_id)
-    const entries = Object.entries(data.automation_codebooks || {}).map(([nodeName, value]) => {
-      if (typeof value === "string") {
-        return [nodeName, value] as const
-      }
-
-      return [nodeName, value.codebook_uid] as const
-    })
+    const automationCodebooks = data.automation_codebooks || {}
+    const entries = Object.entries(automationCodebooks)
+      .map(([nodeName, value]) => [nodeName, resolveAutomationCodebookId(value)] as [string, number])
+      .filter((entry): entry is [string, number] => Number.isFinite(entry[1]) && entry[1] > 0)
 
     dispatchIdMap.value = new Map(
-      Object.entries(data.automation_codebooks || {})
-        .filter((entry): entry is [string, AutomationCodebookConfig] => typeof entry[1] === "object" && entry[1] !== null)
-        .map(([nodeName, value]) => [nodeName, value.dispatch_id ?? value.id])
+      Object.entries(automationCodebooks)
+        .map(([nodeName, value]) => [nodeName, resolveAutomationDispatchId(value)] as [string, number | undefined])
         .filter((entry): entry is [string, number] => typeof entry[1] === "number")
     )
     automationCodebookMap.value = new Map(entries)
@@ -311,18 +318,18 @@ const fetchAutomationCodebooks = async (): Promise<boolean> => {
 }
 
 const listRunnersByAutomationCodebooks = async (): Promise<boolean> => {
-  const codebookUids = Array.from(new Set(Array.from(automationCodebookMap.value.values()).filter(Boolean)))
+  const codebookIds = Array.from(new Set(Array.from(automationCodebookMap.value.values()).filter((id) => id > 0)))
 
-  if (codebookUids.length === 0) {
+  if (codebookIds.length === 0) {
     workflowRunners.value = []
     return false
   }
 
   try {
     const responses = await Promise.all(
-      codebookUids.map((codebookUid) =>
-        listRunnerByCodebookUidApi({
-          codebook_uid: codebookUid,
+      codebookIds.map((codebookId) =>
+        listRunnerByCodebookIdApi({
+          codebook_id: codebookId,
           offset: 0,
           limit: 1000
         })
@@ -393,10 +400,10 @@ const handlerCreate = async () => {
     return
   }
 
-  if (!(await checkRunners())) {
-    ElMessage.warning("当前流程暂无可用执行器")
-    return
-  }
+  // if (!(await checkRunners())) {
+  //   ElMessage.warning("当前流程暂无可用执行器")
+  //   return
+  // }
 
   dialogVisible.value = true
   nextTick(() => {
