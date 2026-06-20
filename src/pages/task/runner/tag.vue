@@ -60,7 +60,6 @@
 <script lang="ts" setup>
 import { ref, watch, onMounted } from "vue"
 import { PriceTag } from "@element-plus/icons-vue"
-import { listRunnerTagsApi } from "@/api/task/runner"
 
 interface Props {
   modelValue?: string[]
@@ -82,7 +81,6 @@ const inputValue = ref("")
 const isFocused = ref(false)
 const selectedTags = ref<string[]>([])
 const recommendedTags = ref<string[]>([])
-const remoteTags = ref<string[]>([])
 
 const focusInput = () => {
   inputRef.value?.focus()
@@ -149,27 +147,9 @@ const syncRecommendedTags = () => {
     const value = tag.trim()
     if (value) tags.add(value)
   }
-  for (const tag of remoteTags.value) {
-    const value = tag.trim()
-    if (value) tags.add(value)
-  }
-  recommendedTags.value = Array.from(tags).filter((tag) => !selectedTags.value.includes(tag)).slice(0, 5)
-}
-
-const loadRecommendedTags = () => {
-  listRunnerTagsApi()
-    .then(({ data }) => {
-      const tags = new Set<string>()
-      data.runner_tags.forEach((item) => {
-        item.tags.forEach((t) => tags.add(t.tag))
-      })
-      remoteTags.value = Array.from(tags)
-      syncRecommendedTags()
-    })
-    .catch(() => {
-      remoteTags.value = []
-      syncRecommendedTags()
-    })
+  recommendedTags.value = Array.from(tags)
+    .filter((tag) => !selectedTags.value.includes(tag))
+    .slice(0, 5)
 }
 
 watch(
@@ -191,7 +171,6 @@ watch(
 
 onMounted(() => {
   syncRecommendedTags()
-  loadRecommendedTags()
 })
 </script>
 
@@ -379,5 +358,4 @@ onMounted(() => {
   opacity: 0;
   transform: translateY(8px) scale(0.9);
 }
-
 </style>

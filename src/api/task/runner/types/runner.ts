@@ -64,12 +64,4 @@ export interface TagDetail {
   handler: string
 }
 
-export interface runnerTags {
-  codebook_name: string
-  codebook_id: number
-  tags: TagDetail[]
-}
 
-export interface runnerTagResp {
-  runner_tags: runnerTags[]
-}

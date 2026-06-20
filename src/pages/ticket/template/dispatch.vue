@@ -43,7 +43,7 @@
     <!-- 主内容区域 -->
     <el-empty v-if="!canViewDispatch" class="dispatch-empty" description="您没有权限查看自动派发配置" />
     <DataTable v-else :data="automationRows" :columns="tableColumns" :loading="loading">
-      <template #templateName="{ row }">
+      <template #templateName>
         {{ templateData?.name }}
       </template>
 
@@ -354,21 +354,6 @@ const listRunnersByAutomationCodebooks = async (): Promise<boolean> => {
   }
 }
 
-const checkRunners = async (): Promise<boolean> => {
-  try {
-    if (!templateData.value?.workflow_id) {
-      return false
-    }
-
-    const hasAutomationCodebooks = await fetchAutomationCodebooks()
-    if (!hasAutomationCodebooks) return false
-
-    return await listRunnersByAutomationCodebooks()
-  } catch (error) {
-    return false
-  }
-}
-
 // ==================== 数据查询 ====================
 const loadAutomationDispatchData = async () => {
   if (!templateData.value || !canViewDispatch.value) return
@@ -468,10 +453,6 @@ const handlerSync = () => {
 
 const handlerSubmitDispatch = () => {
   apiRef.value?.submitForm()
-}
-
-const handlerSubmiSync = () => {
-  syncRef.value?.syncSubmit()
 }
 
 const operateEvent = (action: DispatchAction, row: AutomationDispatchRow) => {

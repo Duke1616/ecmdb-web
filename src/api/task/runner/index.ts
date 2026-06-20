@@ -10,13 +10,6 @@ export function listRunnerApi(data: runner.listRunnerReq) {
   })
 }
 
-/** 查看标签 */
-export function listRunnerTagsApi() {
-  return instance.post<runner.runnerTagResp>({
-    url: `${API_SERVICE.TASK}/runner/list/tags`
-  })
-}
-
 /** 注册runner */
 export function registerRunnerApi(data: runner.registerOrUpdateReq) {
   return instance.post<number>({
