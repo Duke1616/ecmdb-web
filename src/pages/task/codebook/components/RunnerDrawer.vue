@@ -283,8 +283,7 @@ const open = (row: codebook) => {
 }
 
 const _fetchBound = (id: number, isAppend: boolean = false) => {
-  const offset = (boundPageParams.value.page - 1) * boundPageParams.value.limit
-  fetchCodebookRunners(id, offset, boundPageParams.value.limit, boundKeyword.value, boundKind.value, isAppend)
+  fetchCodebookRunners(id, isAppend)
 }
 
 const handleSearchBound = () => {

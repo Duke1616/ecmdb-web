@@ -83,16 +83,48 @@
         </div>
 
         <div class="form-row">
-          <el-form-item prop="codebook_id" label="任务模版标识" class="form-item">
-            <el-select v-model="formData.codebook_id" placeholder="请选择任务模版" size="large" clearable filterable>
-              <el-option v-for="item in codebooks" :key="item.id" :label="item.name" :value="item.id" />
+          <el-form-item label="关联项目" class="form-item">
+            <el-select
+              v-model="selectedProjectId"
+              placeholder="请选择项目"
+              size="large"
+              clearable
+              filterable
+              :loading="projectsLoading"
+              @change="onProjectChange"
+              class="full-select"
+            >
+              <el-option v-for="item in projects" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
         </div>
 
         <div class="form-row">
-          <el-form-item prop="codebook_secret" label="任务模版密钥" class="form-item">
-            <el-input disabled v-model="formData.codebook_secret" size="large" placeholder="选择模版后自动填充" />
+          <el-form-item prop="codebook_id" label="任务模版标识" class="form-item">
+            <el-tree-select
+              v-model="formData.codebook_id"
+              :data="codebookTree"
+              node-key="id"
+              :render-after-expand="false"
+              :expand-on-click-node="false"
+              check-strictly
+              :props="treeSelectProps"
+              placeholder="请选择任务模版"
+              size="large"
+              clearable
+              filterable
+              :disabled="!selectedProjectId"
+              v-loading="codebookTreeLoading"
+              class="full-select"
+            >
+              <template #default="{ data }">
+                <span class="custom-tree-node">
+                  <el-icon v-if="data.kind === 'DIRECTORY'" style="margin-right: 6px; color: #e6a23c;"><Folder /></el-icon>
+                  <SvgIcon v-else :name="getFileIconName(data.name)" size="14px" style="margin-right: 6px;" />
+                  <span>{{ data.name }}</span>
+                </span>
+              </template>
+            </el-tree-select>
           </el-form-item>
         </div>
       </div>
@@ -141,6 +173,7 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import {
   Setting,
   Document,
+  Folder,
   PriceTag,
   QuestionFilled,
   Connection,
@@ -149,6 +182,7 @@ import {
 } from "@element-plus/icons-vue"
 import { registerOrUpdateReq, variables, Kind } from "@/api/task/runner/types/runner"
 import { registerRunnerApi, updateRunnerAPi } from "@/api/task/runner"
+import { getFileIconName } from "@/pages/task/codebook/composables/useCodebookFile"
 import { useCodebooks } from "./composables/useCodebooks"
 import WorkerSection from "./components/WorkerSection.vue"
 import ExecuteSection from "./components/ExecuteSection.vue"
@@ -165,7 +199,7 @@ const emits = defineEmits(["closed", "callback"])
 // ── 表单数据 ────────────────────────────────────────────────────────────────
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
   name: "",
-  codebook_id: 0,
+  codebook_id: undefined,
   codebook_secret: "",
   kind: Kind.GRPC,
   desc: "",
@@ -177,6 +211,27 @@ const DEFAULT_FORM_DATA: registerOrUpdateReq = {
 
 const formData = ref<registerOrUpdateReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
+
+// ── Composables ─────────────────────────────────────────────────────────────
+const {
+  projects,
+  selectedProjectId,
+  codebookTree,
+  projectsLoading,
+  codebookTreeLoading,
+  fallbackCodebookName,
+  codebookName: fetchedCodebookName,
+  fetchProjects,
+  fetchCodebookTree,
+  onProjectChange,
+  detailCodebookApi
+} = useCodebooks(formData)
+
+const treeSelectProps = {
+  children: "children",
+  label: "name",
+  disabled: (data: any) => data.kind === "DIRECTORY"
+}
 
 // ── 校验规则 ────────────────────────────────────────────────────────────────
 const formRules: FormRules = {
@@ -194,20 +249,28 @@ const formRules: FormRules = {
       trigger: "change"
     }
   ],
-  codebook_id: [{ required: true, message: "必须输入任务模版唯一标识", trigger: "blur" }],
-  codebook_secret: [{ required: true, message: "必须输入任务模版密钥", trigger: "blur" }],
+  codebook_id: [
+    {
+      validator: (rule: any, value: any, callback: any) => {
+        if (!selectedProjectId.value) {
+          return callback(new Error("必须选择关联项目"))
+        }
+        if (!value || value === 0) {
+          return callback(new Error("必须选择任务模板"))
+        }
+        callback()
+      },
+      trigger: "change"
+    }
+  ],
   tags: [{ required: true, message: "必须输入标签", trigger: "blur" }]
 }
-
-// ── Composables ─────────────────────────────────────────────────────────────
-const { codebooks, fetchCodebooks } = useCodebooks(formData)
 
 // ── 计算属性 ────────────────────────────────────────────────────────────────
 /** 当前 codebook 名称：优先取父组件注入，其次从列表匹配 */
 const codebookName = computed(() => {
   if (props.presetCodebookName) return props.presetCodebookName
-  const matched = codebooks.value.find((item) => item.id === formData.value.codebook_id)
-  return matched?.name ?? ""
+  return fetchedCodebookName.value
 })
 
 const runnerSuggestedTags = computed(() => {
@@ -275,7 +338,7 @@ const submitForm = () => {
   })
 }
 
-const setFrom = (row: any) => {
+const setFrom = async (row: any) => {
   const data = cloneDeep(row)
   // 兼容旧数据的扁平化处理
   if (!data.kind && data.run_mode) {
@@ -285,15 +348,32 @@ const setFrom = (row: any) => {
     data.target = data.worker?.topic || ""
   }
   formData.value = data
+  fallbackCodebookName.value = row.codebook_name || ""
+
+  // 如果有绑定的模板ID，则查询详情获取对应的项目ID并拉取树数据
+  if (row.codebook_id) {
+    try {
+      const { data: codebookDetail } = await detailCodebookApi(row.codebook_id)
+      if (codebookDetail && codebookDetail.project_id) {
+        selectedProjectId.value = codebookDetail.project_id
+        await fetchCodebookTree(codebookDetail.project_id)
+      }
+    } catch (e) {
+      console.error("加载执行单元对应的项目信息失败", e)
+    }
+  }
 }
 
 const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  selectedProjectId.value = undefined
+  codebookTree.value = []
+  fallbackCodebookName.value = ""
 }
 
 // ── 生命周期 ────────────────────────────────────────────────────────────────
 onMounted(() => {
-  fetchCodebooks()
+  fetchProjects()
 })
 
 defineExpose({ submitForm, setFrom, resetForm })
@@ -514,6 +594,14 @@ defineExpose({ submitForm, setFrom, resetForm })
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
     }
+
+    :deep(.el-select) {
+      width: 100%;
+    }
+
+    :deep(.el-tree-select) {
+      width: 100%;
+    }
   }
 }
 
@@ -544,5 +632,12 @@ defineExpose({ submitForm, setFrom, resetForm })
       margin-bottom: 12px;
     }
   }
+}
+
+.custom-tree-node {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  width: 100%;
 }
 </style>

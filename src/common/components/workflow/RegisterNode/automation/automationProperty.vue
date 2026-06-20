@@ -301,11 +301,7 @@ const loadRunnerTagsByCodebook = async (clearTag = true) => {
 
   runnerTagsLoading.value = true
   try {
-    const { data } = await listRunnerByCodebookIdApi({
-      codebook_id: propertyForm.codebook_id,
-      offset: 0,
-      limit: 1000
-    })
+    const { data } = await listRunnerByCodebookIdApi(propertyForm.codebook_id)
     availableTags.value = toRunnerTagDetails(data.runners || [])
   } catch (error) {
     console.log(error)

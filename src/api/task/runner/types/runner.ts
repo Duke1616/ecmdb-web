@@ -23,7 +23,7 @@ export interface runner {
 export interface registerOrUpdateReq {
   id?: number
   name: string
-  codebook_id: number
+  codebook_id?: number
   codebook_secret: string
   kind: Kind
   target: string
@@ -63,5 +63,3 @@ export interface TagDetail {
   target: string
   handler: string
 }
-
-

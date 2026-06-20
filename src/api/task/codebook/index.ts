@@ -35,10 +35,9 @@ export function childrenCodebookApi(data: codebook.childrenCodebookReq) {
 }
 
 /** 资源树 */
-export function treeCodebookApi(data: codebook.treeCodebookReq) {
-  return instance.post<codebook.codebooks>({
-    url: `${API_SERVICE.TASK}/codebook/tree`,
-    data: data
+export function treeCodebookApi(projectId: number) {
+  return instance.get<codebook.codebooks>({
+    url: `${API_SERVICE.TASK}/codebook/tree/${projectId}`
   })
 }
 

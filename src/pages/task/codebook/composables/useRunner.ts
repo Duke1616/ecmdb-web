@@ -30,23 +30,10 @@ export function useRunner() {
     }
   }
 
-  const fetchCodebookRunners = async (
-    codebookId: number,
-    offset: number = 0,
-    limit: number = 20,
-    keyword?: string,
-    kind?: Kind,
-    isAppend: boolean = false
-  ) => {
+  const fetchCodebookRunners = async (codebookId: number, isAppend: boolean = false) => {
     if (!isAppend) loading.value = true
     try {
-      const { data } = await listRunnerByCodebookIdApi({
-        codebook_id: codebookId,
-        offset,
-        limit,
-        keyword,
-        kind
-      })
+      const { data } = await listRunnerByCodebookIdApi(codebookId)
 
       if (isAppend) {
         codebookRunners.value = [...codebookRunners.value, ...(data.runners || [])]

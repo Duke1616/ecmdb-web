@@ -326,15 +326,7 @@ const listRunnersByAutomationCodebooks = async (): Promise<boolean> => {
   }
 
   try {
-    const responses = await Promise.all(
-      codebookIds.map((codebookId) =>
-        listRunnerByCodebookIdApi({
-          codebook_id: codebookId,
-          offset: 0,
-          limit: 1000
-        })
-      )
-    )
+    const responses = await Promise.all(codebookIds.map((codebookId) => listRunnerByCodebookIdApi(codebookId)))
 
     const runners = responses.flatMap(({ data }) => data.runners || [])
     const uniqueRunners = new Map<number, runner>()

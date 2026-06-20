@@ -28,6 +28,7 @@
           @create-file="createFileDraft"
           @delete="handleDelete"
           @select="selectCodebook"
+          @sort="handleCodebookSort"
         />
 
         <EditorPanel
@@ -127,6 +128,7 @@ import {
   createCodebookApi,
   deleteCodebookApi,
   detailCodebookApi,
+  sortCodebookApi,
   treeCodebookApi,
   updateCodebookApi
 } from "@/api/task/codebook"
@@ -414,10 +416,7 @@ async function fetchChildren(parentID: number) {
 async function fetchTreeData() {
   treeLoading.value = true
   try {
-    const { data } = await treeCodebookApi({
-      scope: treeScope.value,
-      project_id: activeProjectId.value
-    })
+    const { data } = await treeCodebookApi(activeProjectId.value)
     treeRawData.value = data.codebooks || []
   } finally {
     treeLoading.value = false
@@ -428,6 +427,23 @@ async function refreshAll() {
   await fetchTreeData()
   if (activeEditor.value.kind === "DIRECTORY") {
     await fetchChildren(activeEditor.value.id)
+  }
+}
+
+async function handleCodebookSort(id: number, targetPosition: number) {
+  try {
+    await sortCodebookApi({
+      id,
+      target_parent_id: activeEditor.value.id || 0,
+      target_position: targetPosition
+    })
+    ElMessage.success("排序更新成功")
+    await refreshAll()
+  } catch (error) {
+    ElMessage.error("排序失败，请重试")
+    if (activeEditor.value.kind === "DIRECTORY") {
+      await fetchChildren(activeEditor.value.id)
+    }
   }
 }
 
@@ -527,7 +543,6 @@ onMounted(async () => {
     return
   }
   await refreshAll()
-  fetchChildren(0)
 })
 
 onBeforeUnmount(() => {

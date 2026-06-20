@@ -50,10 +50,9 @@ export function listRunnerByWorkflowIdApi(workflokId: number) {
 }
 
 /** by_codebook_id 列表 */
-export function listRunnerByCodebookIdApi(data: runner.listByCodebookIdReq) {
-  return instance.post<runner.runners>({
-    url: `${API_SERVICE.TASK}/runner/list/by_codebook_id`,
-    data: data
+export function listRunnerByCodebookIdApi(codebookId: number) {
+  return instance.get<runner.runners>({
+    url: `${API_SERVICE.TASK}/runner/list/${codebookId}`
   })
 }
 

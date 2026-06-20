@@ -26,9 +26,16 @@
       </div>
     </div>
 
-    <div class="resource-grid" v-loading="childrenLoading">
+    <VueDraggable
+      v-model="localChildren"
+      :animation="200"
+      item-key="id"
+      class="resource-grid"
+      v-loading="childrenLoading"
+      @end="onDragEnd"
+    >
       <button
-        v-for="item in directoryChildren"
+        v-for="item in localChildren"
         :key="item.id"
         class="resource-item"
         type="button"
@@ -46,30 +53,54 @@
         </span>
         <el-tag v-if="item.kind === 'FILE'" size="small" effect="plain">{{ getFileExt(item.name) || "file" }}</el-tag>
       </button>
-      <div v-if="!childrenLoading && directoryChildren.length === 0" class="resource-empty">
-        <el-empty :image-size="130" description="当前目录暂无资源" />
-      </div>
-    </div>
+      <template #header>
+        <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
+          <el-empty :image-size="130" description="当前目录暂无资源" />
+        </div>
+      </template>
+    </VueDraggable>
   </section>
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from "vue"
+import { VueDraggable } from "vue-draggable-plus"
 import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened } from "@element-plus/icons-vue"
 import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
-defineProps<{
+const props = defineProps<{
   activeDirectory: codebook
   directoryChildren: codebook[]
   childrenLoading: boolean
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "create-directory"): void
   (e: "create-file"): void
   (e: "delete", row: codebook): void
   (e: "select", row: codebook): void
+  (e: "sort", id: number, targetPosition: number): void
 }>()
+
+const localChildren = ref<codebook[]>([])
+
+watch(
+  () => props.directoryChildren,
+  (newVal) => {
+    localChildren.value = [...newVal]
+  },
+  { immediate: true, deep: true }
+)
+
+const onDragEnd = (evt: any) => {
+  const { newIndex } = evt
+  if (newIndex === undefined) return
+  const movedItem = localChildren.value[newIndex]
+  if (movedItem) {
+    emit("sort", movedItem.id, newIndex)
+  }
+}
 </script>
 
 <style lang="scss" scoped>
