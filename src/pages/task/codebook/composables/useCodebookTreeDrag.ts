@@ -3,6 +3,8 @@ import { ElMessage } from "element-plus"
 import { filter, findIndex, keyBy } from "lodash-es"
 import { sortCodebookApi } from "@/api/task/codebook"
 import type { codebook } from "@/api/task/codebook/types/codebook"
+import { usePermission } from "@/common/composables/usePermission"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import {
   getTreeNodeData,
   normalizeDropType,
@@ -20,17 +22,20 @@ type TreeDragOptions = {
 }
 
 export function useCodebookTreeDrag(options: TreeDragOptions) {
+  const { hasPermission } = usePermission()
+
   function allowTreeDrag(node: TreeNodeLike) {
+    if (!hasPermission(TASK_CAPABILITIES.Codebook.Sort)) return false
     const data = getTreeNodeData(node)
     return Boolean(data.id && !options.keyword.value.trim() && !options.treeLoading.value)
   }
 
   function allowTreeDrop(draggingNode: TreeNodeLike, dropNode: TreeNodeLike, type: TreeDropType) {
+    if (!hasPermission(TASK_CAPABILITIES.Codebook.Sort)) return false
     const dropType = normalizeDropType(type)
     const draggingData = getTreeNodeData(draggingNode)
     const dropData = getTreeNodeData(dropNode)
     if (!draggingData.id || draggingData.id === dropData.id || options.keyword.value.trim()) return false
-
     if (dropType === "inner") {
       return dropData.kind === "DIRECTORY" && !isAncestorNode(draggingData.id, dropData.id)
     }

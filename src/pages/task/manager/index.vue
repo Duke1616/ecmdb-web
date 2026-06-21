@@ -2,7 +2,7 @@
   <ProGovernanceLayout
     title="调度任务管理"
     subtitle="集中化配置与监控分布式的定时/单次触发业务任务"
-    :primary-action="{ label: '添加任务' }"
+    :primary-action="{ capability: TASK_CAPABILITIES.Manager.Add, label: '添加任务' }"
     @refresh="loadData"
     @primary-action="handleCreate"
   >
@@ -91,6 +91,7 @@ import { useTaskManager } from "./composables/useTaskManager"
 import { useTaskSSE } from "./composables/useTaskSSE"
 import type { Column } from "@@/components/DataTable/types"
 import { formatTimestamp } from "@@/utils/day"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 
 const {
   tasksData,
@@ -182,11 +183,12 @@ const getOperateItems = (row: TaskItem) => {
       name: isActive ? "停止" : "执行",
       code: isActive ? "stop" : "run",
       icon: isActive ? VideoPause : VideoPlay,
-      type: isActive ? "warning" : "success"
+      type: isActive ? "warning" : "success",
+      capability: isActive ? TASK_CAPABILITIES.Manager.Stop : TASK_CAPABILITIES.Manager.Start
     },
-    { name: "记录", code: "logs", icon: Monitor, type: "info" },
-    { name: "编辑", code: "edit", icon: Edit, type: "primary" },
-    { name: "删除", code: "delete", icon: Delete, type: "danger" }
+    { name: "记录", code: "logs", icon: Monitor, type: "info", capability: TASK_CAPABILITIES.Manager.Logs },
+    { name: "编辑", code: "edit", icon: Edit, type: "primary", capability: TASK_CAPABILITIES.Manager.Edit },
+    { name: "删除", code: "delete", icon: Delete, type: "danger", capability: TASK_CAPABILITIES.Manager.Delete }
   ]
 }
 

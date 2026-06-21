@@ -21,23 +21,51 @@
       </div>
 
       <div class="editor-actions">
-        <el-button v-if="activeEditor.id" size="small" :icon="Clock" link @click="$emit('open-version', activeEditor)"
-          >版本</el-button
-        >
-        <el-button v-if="activeEditor.id" size="small" :icon="Setting" link @click="$emit('open-runner', activeEditor)"
-          >执行单元</el-button
-        >
-        <el-button size="small" :icon="Edit" link @click="$emit('open-meta', activeEditor)">信息</el-button>
-        <el-button
+        <AuthButton
           v-if="activeEditor.id"
+          :capability="TASK_CAPABILITIES.Codebook.ViewVersion"
+          size="small"
+          :icon="Clock"
+          link
+          @click="$emit('open-version', activeEditor)"
+          >版本</AuthButton
+        >
+        <AuthButton
+          v-if="activeEditor.id"
+          :capability="TASK_CAPABILITIES.Runner.View"
+          size="small"
+          :icon="Setting"
+          link
+          @click="$emit('open-runner', activeEditor)"
+          >执行单元</AuthButton
+        >
+        <AuthButton
+          :capability="TASK_CAPABILITIES.Codebook.Edit"
+          size="small"
+          :icon="Edit"
+          link
+          @click="$emit('open-meta', activeEditor)"
+          >信息</AuthButton
+        >
+        <AuthButton
+          v-if="activeEditor.id"
+          :capability="TASK_CAPABILITIES.Codebook.Delete"
           size="small"
           type="danger"
           link
           :icon="Delete"
           @click="$emit('delete', activeEditor)"
-          >删除</el-button
+          >删除</AuthButton
         >
-        <el-button size="small" type="primary" :loading="saving" :icon="Check" @click="$emit('save')">保存</el-button>
+        <AuthButton
+          :capability="TASK_CAPABILITIES.Codebook.Edit"
+          size="small"
+          type="primary"
+          :loading="saving"
+          :icon="Check"
+          @click="$emit('save')"
+          >保存</AuthButton
+        >
       </div>
     </div>
 
@@ -54,6 +82,8 @@
 <script setup lang="ts">
 import { Check, Clock, Close, Delete, Edit, Setting } from "@element-plus/icons-vue"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { getFileIconName, inferLanguage } from "../composables/useCodebookFile"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 

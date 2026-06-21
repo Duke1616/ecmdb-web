@@ -1,14 +1,11 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="运行器管理"
-      subtitle="管理工作节点运行器配置"
-      add-button-text="新增运行器"
-      @add="handlerCreate"
-      @refresh="listRunnerData"
-    />
-
+  <ProGovernanceLayout
+    title="运行器管理"
+    subtitle="管理工作节点运行器配置"
+    :primary-action="{ label: '新增运行器', capability: TASK_CAPABILITIES.Runner.Add }"
+    @refresh="listRunnerData"
+    @primary-action="handlerCreate"
+  >
     <!-- 主内容区域 -->
     <DataTable
       :data="runnersData"
@@ -67,7 +64,7 @@
       <!-- 注册Runner -->
       <Form ref="runnerApiRef" @callback="listRunnerData" @closed="onClosed" />
     </Drawer>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
@@ -78,9 +75,8 @@ import { runner, Kind } from "@/api/task/runner/types/runner.js"
 import { deleteRunnerApi, listRunnerApi } from "@/api/task/runner/index.js"
 import Form from "./form.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"

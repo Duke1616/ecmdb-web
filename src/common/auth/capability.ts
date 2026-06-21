@@ -476,6 +476,28 @@ export const TICKET_CAPABILITIES = {
 } as const
 
 export const TASK_CAPABILITIES = {
+  /** 任务管理相关 */
+  Manager: {
+    /** 创建任务 */
+    Add: "task:manager:add",
+    /** 任务列表 */
+    View: "task:manager:view",
+    /** 停止任务 */
+    Stop: "task:manager:stop",
+    /** 运行任务 */
+    Start: "task:manager:start",
+    /** 任务日志 */
+    Logs: "task:manager:logs",
+    /** 任务详情 */
+    Detail: "task:manager:get",
+    /** 执行记录 */
+    Executions: "task:manager:executions",
+    /** 更新任务 */
+    Edit: "task:manager:edit",
+    /** 删除任务 */
+    Delete: "task:manager:delete"
+  },
+
   /** 脚本模板相关 */
   Codebook: {
     /** 创建脚本模板 */
@@ -492,10 +514,14 @@ export const TASK_CAPABILITIES = {
     Children: "task:codebook:children",
     /** 代码资源树 */
     Tree: "task:codebook:tree",
+    /** 查看代码资源树 */
+    ViewTree: "task:codebook:view_tree",
     /** 脚本模板排序 */
     Sort: "task:codebook:sort",
     /** 创建脚本版本 */
     CreateVersion: "task:codebook:create_version",
+    /** 创建版本 */
+    AddVersion: "task:codebook:add_version",
     /** 脚本版本列表 */
     ViewVersion: "task:codebook:view_version",
     /** 脚本版本详情 */
@@ -503,7 +529,15 @@ export const TASK_CAPABILITIES = {
     /** 使用脚本版本 */
     UseVersion: "task:codebook:use_version",
     /** 当前绑定执行单元 */
-    ViewRunners: "task:codebook:view_runners"
+    ViewRunners: "task:codebook:view_runners",
+    /** 项目列表 */
+    ViewProject: "task:codebook:view_project",
+    /** 创建项目 */
+    AddProject: "task:codebook:add_project",
+    /** 更新项目 */
+    EditProject: "task:codebook:edit_project",
+    /** 删除项目 */
+    DeleteProject: "task:codebook:delete_project"
   },
 
   /** 执行单元相关 */
@@ -540,6 +574,12 @@ export const TASK_CAPABILITIES = {
     Detail: "task:variable:get",
     /** 全局变量列表 */
     View: "task:variable:view"
+  },
+
+  /** 执行节点相关 */
+  Executor: {
+    /** 执行节点列表 */
+    View: "task:executor:view"
   }
 } as const
 

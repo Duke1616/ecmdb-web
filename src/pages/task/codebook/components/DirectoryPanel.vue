@@ -12,16 +12,30 @@
         </div>
       </div>
       <div class="panel-actions">
-        <el-button size="small" :icon="FolderAdd" @click="$emit('create-directory')">目录</el-button>
-        <el-button size="small" type="primary" :icon="DocumentAdd" @click="$emit('create-file')">脚本</el-button>
-        <el-button
+        <AuthButton
+          :capability="TASK_CAPABILITIES.Codebook.Add"
+          size="small"
+          :icon="FolderAdd"
+          @click="$emit('create-directory')"
+          >目录</AuthButton
+        >
+        <AuthButton
+          :capability="TASK_CAPABILITIES.Codebook.Add"
+          size="small"
+          type="primary"
+          :icon="DocumentAdd"
+          @click="$emit('create-file')"
+          >脚本</AuthButton
+        >
+        <AuthButton
           v-if="activeDirectory.id"
+          :capability="TASK_CAPABILITIES.Codebook.Delete"
           size="small"
           type="danger"
           plain
           :icon="Delete"
           @click="$emit('delete', activeDirectory)"
-          >删除</el-button
+          >删除</AuthButton
         >
       </div>
     </div>
@@ -32,6 +46,7 @@
       item-key="id"
       class="resource-grid"
       v-loading="childrenLoading"
+      :disabled="!hasPermission(TASK_CAPABILITIES.Codebook.Sort)"
       @end="onDragEnd"
     >
       <button
@@ -66,8 +81,13 @@
 import { ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
 import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened } from "@element-plus/icons-vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
 import type { codebook } from "@/api/task/codebook/types/codebook"
+
+const { hasPermission } = usePermission()
 
 const props = defineProps<{
   activeDirectory: codebook

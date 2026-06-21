@@ -1,22 +1,38 @@
 <template>
   <div v-if="visible" class="context-menu" :style="{ top: y + 'px', left: x + 'px' }">
     <div v-if="target?.kind === 'DIRECTORY'" class="menu-group">
-      <div class="menu-item" @click="$emit('action', 'createFile')">
+      <div
+        class="menu-item"
+        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Add) }"
+        @click="hasPermission(TASK_CAPABILITIES.Codebook.Add) && $emit('action', 'createFile')"
+      >
         <el-icon><DocumentAdd /></el-icon>
         <span>新建脚本</span>
       </div>
-      <div class="menu-item" @click="$emit('action', 'createDir')">
+      <div
+        class="menu-item"
+        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Add) }"
+        @click="hasPermission(TASK_CAPABILITIES.Codebook.Add) && $emit('action', 'createDir')"
+      >
         <el-icon><FolderAdd /></el-icon>
         <span>新建目录</span>
       </div>
     </div>
     <div v-if="target && target.id !== 0" class="menu-divider" />
     <div v-if="target && target.id !== 0" class="menu-group">
-      <div class="menu-item" @click="$emit('action', 'edit')">
+      <div
+        class="menu-item"
+        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Edit) }"
+        @click="hasPermission(TASK_CAPABILITIES.Codebook.Edit) && $emit('action', 'edit')"
+      >
         <el-icon><Edit /></el-icon>
         <span>信息</span>
       </div>
-      <div class="menu-item danger" @click="$emit('action', 'delete')">
+      <div
+        class="menu-item danger"
+        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Delete) }"
+        @click="hasPermission(TASK_CAPABILITIES.Codebook.Delete) && $emit('action', 'delete')"
+      >
         <el-icon><Delete /></el-icon>
         <span>删除</span>
       </div>
@@ -27,6 +43,10 @@
 <script setup lang="ts">
 import { Delete, DocumentAdd, Edit, FolderAdd } from "@element-plus/icons-vue"
 import type { codebook } from "@/api/task/codebook/types/codebook"
+import { usePermission } from "@/common/composables/usePermission"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
+
+const { hasPermission } = usePermission()
 
 defineProps<{
   visible: boolean
@@ -104,6 +124,12 @@ defineEmits<{
     span {
       color: #b91c1c;
     }
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    pointer-events: none;
   }
 }
 

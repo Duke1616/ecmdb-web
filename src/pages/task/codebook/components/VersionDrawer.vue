@@ -13,9 +13,15 @@
     <div class="version-shell">
       <aside class="version-list-panel">
         <div class="version-toolbar">
-          <el-button type="primary" :icon="Plus" :disabled="!currentCodebook?.id" @click="openCreateDialog">
+          <AuthButton
+            :capability="TASK_CAPABILITIES.Codebook.CreateVersion"
+            type="primary"
+            :icon="Plus"
+            :disabled="!currentCodebook?.id"
+            @click="openCreateDialog"
+          >
             创建版本
-          </el-button>
+          </AuthButton>
           <el-button :icon="RefreshRight" circle :loading="loading" @click="fetchVersions" />
         </div>
 
@@ -48,7 +54,8 @@
               <p>{{ selectedVersion.message || "无版本说明" }}</p>
             </div>
             <div class="preview-actions">
-              <el-button
+              <AuthButton
+                :capability="TASK_CAPABILITIES.Codebook.UseVersion"
                 type="primary"
                 plain
                 :disabled="selectedVersion.id === currentVersionID"
@@ -56,7 +63,7 @@
                 @click="handleUseVersion(selectedVersion)"
               >
                 使用此版本
-              </el-button>
+              </AuthButton>
             </div>
           </div>
 
@@ -102,6 +109,8 @@
 import { computed, nextTick, ref } from "vue"
 import { Clock, Plus, RefreshRight } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { find, findIndex, orderBy } from "lodash-es"
 import { Drawer, FormDialog } from "@/common/components/Dialogs"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"

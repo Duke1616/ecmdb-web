@@ -29,7 +29,14 @@
                   class="premium-search"
                 />
                 <div class="header-right">
-                  <el-button type="primary" :icon="Plus" class="glass-add-btn" @click="handleToCreate">新增</el-button>
+                  <AuthButton
+                    type="primary"
+                    :icon="Plus"
+                    class="glass-add-btn"
+                    :capability="TASK_CAPABILITIES.Runner.Add"
+                    @click="handleToCreate"
+                    >新增</AuthButton
+                  >
                 </div>
               </div>
               <div class="toolbar-filters">
@@ -78,8 +85,20 @@
                         </div>
                       </div>
                       <div class="item-actions">
-                        <el-button link type="primary" :icon="Edit" @click="handleEdit(item)" />
-                        <el-button link type="danger" :icon="Delete" @click="handleDelete(item)" />
+                        <AuthButton
+                          link
+                          type="primary"
+                          :icon="Edit"
+                          :capability="TASK_CAPABILITIES.Runner.Edit"
+                          @click="handleEdit(item)"
+                        />
+                        <AuthButton
+                          link
+                          type="danger"
+                          :icon="Delete"
+                          :capability="TASK_CAPABILITIES.Runner.Delete"
+                          @click="handleDelete(item)"
+                        />
                       </div>
                     </div>
 
@@ -150,16 +169,17 @@
                         </div>
                       </div>
                       <div class="item-actions">
-                        <el-button
+                        <AuthButton
                           type="primary"
                           size="small"
                           plain
                           class="reuse-btn"
                           :icon="DocumentCopy"
+                          :capability="TASK_CAPABILITIES.Runner.Add"
                           @click="handleFork(item)"
                         >
                           复用
-                        </el-button>
+                        </AuthButton>
                       </div>
                     </div>
                   </div>
@@ -192,6 +212,8 @@ import { useRunner } from "../composables/useRunner"
 import { cloneDeep } from "lodash-es"
 import { codebook } from "@/api/task/codebook/types/codebook"
 import { runner, Kind } from "@/api/task/runner/types/runner"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
 
 const visible = ref(false)
 const isCreatingRunner = ref(false)
