@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="form-row">
-      <el-form-item prop="handler" label="执行能力" class="form-item">
+      <el-form-item prop="handler" label="执行节点" class="form-item">
         <ExecutorPicker
           v-model:service="target"
           v-model:handler="handler"
           kind="agent"
-          service-placeholder="请选择消息推送执行能力"
+          service-placeholder="请选择消息推送执行节点"
           handler-placeholder=""
         />
       </el-form-item>

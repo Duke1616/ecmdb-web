@@ -3,26 +3,25 @@
     class="executor-picker"
     :class="[`variant-${variant}`, { 'is-disabled': disabled, 'has-value': selectedOption }]"
   >
-    <div ref="containerRef" class="picker-input-box" @click="toggleDropdown">
-      <div v-if="selectedOption" class="selected-single">
-        <div class="selected-info">
-          <div class="selected-main">
-            <span class="selected-service">{{ selectedOption.service }}</span>
-            <span class="selected-separator">/</span>
-            <span class="selected-handler">{{ selectedOption.handler.name }}</span>
+    <div ref="containerRef" class="trigger-input-wrapper" @click="toggleDropdown">
+      <el-input
+        :model-value="displayValue"
+        readonly
+        :placeholder="placeholderText"
+        :disabled="disabled"
+        :size="size"
+        class="premium-executor-trigger"
+      >
+        <template #suffix>
+          <div class="input-actions-inside">
+            <button v-if="selectedOption && !disabled" type="button" class="clear-btn" @click.stop="clearSelection">
+              <el-icon><Close /></el-icon>
+            </button>
+            <el-icon v-if="inputLoading" class="loading-icon"><Loading /></el-icon>
+            <el-icon class="picker-arrow" :class="{ 'is-open': showDropdown }"><ArrowDown /></el-icon>
           </div>
-          <span class="selected-desc">{{ selectedOption.handler.desc || selectedExecutor?.desc || "暂无描述" }}</span>
-        </div>
-      </div>
-      <span v-else class="placeholder-text">{{ placeholderText }}</span>
-
-      <div class="input-actions">
-        <button v-if="selectedOption && !disabled" type="button" class="clear-btn" @click.stop="clearSelection">
-          <el-icon><Close /></el-icon>
-        </button>
-        <el-icon v-if="inputLoading" class="loading-icon"><Loading /></el-icon>
-        <el-icon class="picker-arrow" :class="{ 'is-open': showDropdown }"><ArrowDown /></el-icon>
-      </div>
+        </template>
+      </el-input>
     </div>
 
     <Teleport to="body">
@@ -41,7 +40,7 @@
         </div>
 
         <div v-loading="loading" class="items-list" :class="{ 'is-loading': loading && options.length === 0 }">
-          <div v-if="options.length === 0 && !loading" class="empty-state">暂无匹配的执行能力</div>
+          <div v-if="options.length === 0 && !loading" class="empty-state">暂无匹配的执行节点</div>
 
           <template v-for="group in groupedOptions" :key="group.executor.name">
             <div class="executor-group">
@@ -82,7 +81,7 @@
 
         <div class="dropdown-footer">
           <el-button v-if="hasMore" text size="small" :loading="loadingMore" @click="loadMore">加载更多</el-button>
-          <span v-else>{{ options.length ? "已加载全部执行能力" : "暂无执行能力" }}</span>
+          <span v-else>{{ options.length ? "已加载全部执行节点" : "暂无执行节点" }}</span>
         </div>
       </div>
     </Teleport>
@@ -117,8 +116,8 @@ const props = withDefaults(
     inline: true,
     size: "large",
     limit: 20,
-    servicePlaceholder: "请选择执行器服务",
-    handlerPlaceholder: "请选择执行处理器",
+    servicePlaceholder: "请选择执行节点",
+    handlerPlaceholder: "",
     variant: "element",
     kind: "executor"
   }
@@ -441,6 +440,11 @@ onUnmounted(() => {
   destroyPopperInstance()
 })
 
+const displayValue = computed(() => {
+  if (!selectedOption.value) return ""
+  return `${selectedOption.value.service} / ${selectedOption.value.handler.name}`
+})
+
 defineExpose({
   selectedExecutor,
   options
@@ -453,22 +457,53 @@ defineExpose({
   width: 100%;
 }
 
-.picker-input-box {
-  display: flex;
-  min-height: 40px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 11px;
-  background: #ffffff;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
+.trigger-input-wrapper {
+  width: 100%;
   cursor: pointer;
-  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
 
-  &:hover {
-    border-color: #c0c4cc;
+.premium-executor-trigger {
+  cursor: pointer;
+
+  :deep(.el-input__wrapper) {
+    cursor: pointer !important;
+    background-color: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+
+    .el-input__inner {
+      cursor: pointer !important;
+      color: #1f2937;
+      font-weight: 500;
+    }
   }
+
+  &.is-disabled :deep(.el-input__wrapper) {
+    cursor: not-allowed !important;
+    background-color: #f5f7fa;
+    .el-input__inner {
+      cursor: not-allowed !important;
+    }
+  }
+}
+
+.input-actions-inside {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a8abb2;
 }
 
 .executor-picker.variant-fancy .picker-input-box {

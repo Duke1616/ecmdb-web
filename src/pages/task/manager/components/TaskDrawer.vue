@@ -106,11 +106,11 @@
               <div :key="form.protocol" class="protocol-pane">
                 <!-- gRPC 模式 -->
                 <div v-if="form.protocol === TaskProtocol.GRPC" class="grpc-config-pane">
-                  <el-form-item label="执行能力" prop="grpc_handler">
+                  <el-form-item label="执行节点" prop="grpc_handler">
                     <ExecutorPicker
                       v-model:service="form.grpc_service"
                       v-model:handler="form.grpc_handler"
-                      service-placeholder="请选择执行能力"
+                      service-placeholder="请选择执行节点"
                       handler-placeholder=""
                       @service-change="handleServiceSelect"
                       @handler-change="handleHandlerSelect"
