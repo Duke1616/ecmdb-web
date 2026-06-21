@@ -13,14 +13,16 @@
       </div>
       <div class="panel-actions">
         <AuthButton
-          :capability="TASK_CAPABILITIES.Codebook.Add"
+          :capability="capabilities.Codebook.Add"
+          disableMode
           size="small"
           :icon="FolderAdd"
           @click="$emit('create-directory')"
           >目录</AuthButton
         >
         <AuthButton
-          :capability="TASK_CAPABILITIES.Codebook.Add"
+          :capability="capabilities.Codebook.Add"
+          disableMode
           size="small"
           type="primary"
           :icon="DocumentAdd"
@@ -29,7 +31,8 @@
         >
         <AuthButton
           v-if="activeDirectory.id"
-          :capability="TASK_CAPABILITIES.Codebook.Delete"
+          :capability="capabilities.Codebook.Delete"
+          disableMode
           size="small"
           type="danger"
           plain
@@ -46,7 +49,7 @@
       item-key="id"
       class="resource-grid"
       v-loading="childrenLoading"
-      :disabled="!hasPermission(TASK_CAPABILITIES.Codebook.Sort)"
+      :disabled="!hasPermission(capabilities.Codebook.Sort)"
       @end="onDragEnd"
     >
       <button
@@ -88,6 +91,7 @@ import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCo
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
 const { hasPermission } = usePermission()
+const capabilities = TASK_CAPABILITIES
 
 const props = defineProps<{
   activeDirectory: codebook

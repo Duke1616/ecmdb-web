@@ -3,16 +3,16 @@
     <div v-if="target?.kind === 'DIRECTORY'" class="menu-group">
       <div
         class="menu-item"
-        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Add) }"
-        @click="hasPermission(TASK_CAPABILITIES.Codebook.Add) && $emit('action', 'createFile')"
+        :class="{ disabled: !hasPermission(capabilities.Codebook.Add) }"
+        @click="hasPermission(capabilities.Codebook.Add) && $emit('action', 'createFile')"
       >
         <el-icon><DocumentAdd /></el-icon>
         <span>新建脚本</span>
       </div>
       <div
         class="menu-item"
-        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Add) }"
-        @click="hasPermission(TASK_CAPABILITIES.Codebook.Add) && $emit('action', 'createDir')"
+        :class="{ disabled: !hasPermission(capabilities.Codebook.Add) }"
+        @click="hasPermission(capabilities.Codebook.Add) && $emit('action', 'createDir')"
       >
         <el-icon><FolderAdd /></el-icon>
         <span>新建目录</span>
@@ -22,16 +22,16 @@
     <div v-if="target && target.id !== 0" class="menu-group">
       <div
         class="menu-item"
-        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Edit) }"
-        @click="hasPermission(TASK_CAPABILITIES.Codebook.Edit) && $emit('action', 'edit')"
+        :class="{ disabled: !hasPermission(capabilities.Codebook.Edit) }"
+        @click="hasPermission(capabilities.Codebook.Edit) && $emit('action', 'edit')"
       >
         <el-icon><Edit /></el-icon>
         <span>信息</span>
       </div>
       <div
         class="menu-item danger"
-        :class="{ disabled: !hasPermission(TASK_CAPABILITIES.Codebook.Delete) }"
-        @click="hasPermission(TASK_CAPABILITIES.Codebook.Delete) && $emit('action', 'delete')"
+        :class="{ disabled: !hasPermission(capabilities.Codebook.Delete) }"
+        @click="hasPermission(capabilities.Codebook.Delete) && $emit('action', 'delete')"
       >
         <el-icon><Delete /></el-icon>
         <span>删除</span>
@@ -47,6 +47,7 @@ import { usePermission } from "@/common/composables/usePermission"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 
 const { hasPermission } = usePermission()
+const capabilities = TASK_CAPABILITIES
 
 defineProps<{
   visible: boolean

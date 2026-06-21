@@ -33,7 +33,8 @@
                     type="primary"
                     :icon="Plus"
                     class="glass-add-btn"
-                    :capability="TASK_CAPABILITIES.Runner.Add"
+                    :capability="capabilities.Runner.Add"
+                    disableMode
                     @click="handleToCreate"
                     >新增</AuthButton
                   >
@@ -89,14 +90,16 @@
                           link
                           type="primary"
                           :icon="Edit"
-                          :capability="TASK_CAPABILITIES.Runner.Edit"
+                          :capability="capabilities.Runner.Edit"
+                          disableMode
                           @click="handleEdit(item)"
                         />
                         <AuthButton
                           link
                           type="danger"
                           :icon="Delete"
-                          :capability="TASK_CAPABILITIES.Runner.Delete"
+                          :capability="capabilities.Runner.Delete"
+                          disableMode
                           @click="handleDelete(item)"
                         />
                       </div>
@@ -175,7 +178,8 @@
                           plain
                           class="reuse-btn"
                           :icon="DocumentCopy"
-                          :capability="TASK_CAPABILITIES.Runner.Add"
+                          :capability="capabilities.Runner.Add"
+                          disableMode
                           @click="handleFork(item)"
                         >
                           复用
@@ -214,6 +218,8 @@ import { codebook } from "@/api/task/codebook/types/codebook"
 import { runner, Kind } from "@/api/task/runner/types/runner"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
+
+const capabilities = TASK_CAPABILITIES
 
 const visible = ref(false)
 const isCreatingRunner = ref(false)

@@ -14,7 +14,8 @@
       <aside class="version-list-panel">
         <div class="version-toolbar">
           <AuthButton
-            :capability="TASK_CAPABILITIES.Codebook.CreateVersion"
+            :capability="capabilities.Codebook.CreateVersion"
+            disableMode
             type="primary"
             :icon="Plus"
             :disabled="!currentCodebook?.id"
@@ -55,7 +56,8 @@
             </div>
             <div class="preview-actions">
               <AuthButton
-                :capability="TASK_CAPABILITIES.Codebook.UseVersion"
+                :capability="capabilities.Codebook.UseVersion"
+                disableMode
                 type="primary"
                 plain
                 :disabled="selectedVersion.id === currentVersionID"
@@ -111,6 +113,7 @@ import { Clock, Plus, RefreshRight } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
+const capabilities = TASK_CAPABILITIES
 import { find, findIndex, orderBy } from "lodash-es"
 import { Drawer, FormDialog } from "@/common/components/Dialogs"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"

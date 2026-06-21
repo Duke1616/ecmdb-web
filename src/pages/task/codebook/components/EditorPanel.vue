@@ -23,7 +23,8 @@
       <div class="editor-actions">
         <AuthButton
           v-if="activeEditor.id"
-          :capability="TASK_CAPABILITIES.Codebook.ViewVersion"
+          :capability="capabilities.Codebook.ViewVersion"
+          disableMode
           size="small"
           :icon="Clock"
           link
@@ -32,7 +33,8 @@
         >
         <AuthButton
           v-if="activeEditor.id"
-          :capability="TASK_CAPABILITIES.Runner.View"
+          :capability="capabilities.Runner.View"
+          disableMode
           size="small"
           :icon="Setting"
           link
@@ -40,7 +42,8 @@
           >执行单元</AuthButton
         >
         <AuthButton
-          :capability="TASK_CAPABILITIES.Codebook.Edit"
+          :capability="capabilities.Codebook.Edit"
+          disableMode
           size="small"
           :icon="Edit"
           link
@@ -49,7 +52,8 @@
         >
         <AuthButton
           v-if="activeEditor.id"
-          :capability="TASK_CAPABILITIES.Codebook.Delete"
+          :capability="capabilities.Codebook.Delete"
+          disableMode
           size="small"
           type="danger"
           link
@@ -58,7 +62,8 @@
           >删除</AuthButton
         >
         <AuthButton
-          :capability="TASK_CAPABILITIES.Codebook.Edit"
+          :capability="capabilities.Codebook.Edit"
+          disableMode
           size="small"
           type="primary"
           :loading="saving"
@@ -86,6 +91,8 @@ import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { getFileIconName, inferLanguage } from "../composables/useCodebookFile"
 import type { codebook } from "@/api/task/codebook/types/codebook"
+
+const capabilities = TASK_CAPABILITIES
 
 defineProps<{
   activeEditor: codebook
