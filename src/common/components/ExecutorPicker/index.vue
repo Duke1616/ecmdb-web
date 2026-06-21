@@ -26,13 +26,7 @@
     </div>
 
     <Teleport to="body">
-      <div
-        v-if="showDropdown && !disabled"
-        ref="dropdownRef"
-        class="executor-picker-dropdown"
-        :style="dropdownStyle"
-        @click.stop
-      >
+      <div v-if="showDropdown && !disabled" ref="dropdownRef" class="executor-picker-dropdown" @click.stop>
         <div class="search-section">
           <div class="search-input-wrapper">
             <el-icon class="search-icon"><Search /></el-icon>
@@ -98,6 +92,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { ArrowDown, Check, Close, Loading, Search } from "@element-plus/icons-vue"
+import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
 import { listExecutorsApi } from "@/api/task/executor"
 import { listAgentsApi } from "@/api/task/agent"
 import type { Executor, HandlerDetail } from "@/api/task/executor/type"
@@ -155,6 +150,7 @@ const containerRef = ref<HTMLElement>()
 const dropdownRef = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
 const selectingOption = ref(false)
+const popperInstance = ref<PopperInstance | null>(null)
 
 const placeholderText = computed(() => {
   if (!props.handlerPlaceholder) return props.servicePlaceholder
@@ -217,18 +213,6 @@ const selectedOption = computed(() => {
     service: serviceModel.value,
     executor: selectedExecutor.value,
     handler
-  }
-})
-
-const dropdownStyle = computed(() => {
-  if (!containerRef.value || !showDropdown.value) return {}
-  const rect = containerRef.value.getBoundingClientRect()
-  return {
-    position: "fixed" as const,
-    top: `${rect.bottom + 8}px`,
-    left: `${rect.left}px`,
-    width: `${rect.width}px`,
-    zIndex: 9999
   }
 })
 
@@ -320,18 +304,56 @@ const listSourceByKeyword = async (keyword: string) => {
   return (data.executors || []).map(normalizeSource)
 }
 
-const toggleDropdown = () => {
+const createPopperInstance = async () => {
+  await nextTick()
+  if (!containerRef.value || !dropdownRef.value) return
+
+  dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
+  popperInstance.value?.destroy()
+  popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
+    placement: "bottom-start",
+    strategy: "fixed",
+    modifiers: [
+      { name: "offset", options: { offset: [0, 8] } },
+      {
+        name: "flip",
+        options: {
+          fallbackPlacements: ["top-start", "bottom-start"],
+          padding: 12
+        }
+      },
+      {
+        name: "preventOverflow",
+        options: {
+          boundary: "viewport",
+          padding: 12
+        }
+      }
+    ]
+  })
+}
+
+const destroyPopperInstance = () => {
+  popperInstance.value?.destroy()
+  popperInstance.value = null
+}
+
+const toggleDropdown = async () => {
   if (props.disabled) return
   showDropdown.value = !showDropdown.value
   if (showDropdown.value) {
     activeKeyword.value = searchKeyword.value.trim()
+    await createPopperInstance()
     if (executors.value.length === 0) fetchExecutors()
     nextTick(() => searchInputRef.value?.focus())
+  } else {
+    destroyPopperInstance()
   }
 }
 
 const closeDropdown = () => {
   showDropdown.value = false
+  destroyPopperInstance()
 }
 
 const handleSearch = () => {
@@ -416,6 +438,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("click", handleClickOutside)
+  destroyPopperInstance()
 })
 
 defineExpose({
@@ -617,6 +640,7 @@ defineExpose({
 
 <style lang="scss">
 .executor-picker-dropdown {
+  z-index: 9999;
   display: flex;
   max-height: 420px;
   flex-direction: column;

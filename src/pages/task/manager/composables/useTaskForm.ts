@@ -56,9 +56,8 @@ export function useTaskForm(options: {
 
   // --- 表单联动与 UI 事件处理 ---
   const handleServiceSelect = () => {
-    // 切换服务时清空先前绑定的接口
-    form.value.grpc_handler = ""
-    currentHandler.value = null
+    // ExecutorPicker 已经把“执行器 + 方法”合并为一次选择，这里不能再清空 handler。
+    // 手动清空或外部切换时，组件会通过 handler-change 把 currentHandler 同步为 null。
   }
 
   const handleHandlerSelect = (handler: HandlerDetail | null) => {

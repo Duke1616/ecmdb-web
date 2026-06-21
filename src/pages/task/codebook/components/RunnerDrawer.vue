@@ -27,14 +27,13 @@
                   :prefix-icon="Search"
                   clearable
                   class="premium-search"
-                  @change="handleSearchBound"
                 />
                 <div class="header-right">
                   <el-button type="primary" :icon="Plus" class="glass-add-btn" @click="handleToCreate">新增</el-button>
                 </div>
               </div>
               <div class="toolbar-filters">
-                <el-radio-group v-model="boundKind" class="premium-segmented" @change="handleSearchBound">
+                <el-radio-group v-model="boundKind" class="premium-segmented">
                   <el-radio-button :value="undefined">全部</el-radio-button>
                   <el-radio-button :value="Kind.KAFKA">推送模式</el-radio-button>
                   <el-radio-button :value="Kind.GRPC">调度模式</el-radio-button>
@@ -42,16 +41,19 @@
               </div>
             </div>
 
-            <div class="card-list-wrapper" @scroll="handleScrollBound">
+            <div class="card-list-wrapper">
               <div v-if="loading && codebookRunners.length === 0" class="empty-placeholder">
                 <el-skeleton :rows="3" animated />
               </div>
-              <div v-else-if="codebookRunners.length === 0" class="empty-state">
-                <el-empty description="暂无绑定的执行单元" :image-size="100" />
+              <div v-else-if="filteredCodebookRunners.length === 0" class="empty-state">
+                <el-empty
+                  :description="codebookRunners.length === 0 ? '暂无绑定的执行单元' : '没有匹配的执行单元'"
+                  :image-size="100"
+                />
               </div>
               <div v-else class="runner-cards">
                 <div
-                  v-for="item in codebookRunners"
+                  v-for="item in filteredCodebookRunners"
                   :key="item.id"
                   class="premium-card"
                   :class="item.kind.toLowerCase()"
@@ -88,12 +90,7 @@
                 </div>
               </div>
 
-              <!-- 加载更多提示 -->
-              <div v-if="codebookRunners.length < codebookRunnersTotal" class="load-more-indicator">
-                <el-icon v-if="loading" class="is-loading"><Loading /></el-icon>
-                <span v-else>向下滚动加载更多...</span>
-              </div>
-              <div v-else-if="codebookRunners.length > 0" class="no-more-data">没有更多数据了</div>
+              <div v-if="filteredCodebookRunners.length > 0" class="no-more-data">没有更多数据了</div>
             </div>
           </div>
 
@@ -187,17 +184,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from "vue"
-import {
-  Operation,
-  Plus,
-  Edit,
-  Delete,
-  DocumentCopy,
-  Monitor,
-  Cpu,
-  Search,
-  Loading
-} from "@element-plus/icons-vue"
+import { Operation, Plus, Edit, Delete, DocumentCopy, Monitor, Cpu, Search, Loading } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import RunnerForm from "@/pages/task/runner/form.vue"
@@ -223,7 +210,6 @@ const runnerFormRef = ref<InstanceType<typeof RunnerForm>>()
 
 const {
   codebookRunners,
-  codebookRunnersTotal,
   forkableRunners,
   forkableRunnersTotal,
   loading,
@@ -231,11 +217,6 @@ const {
   fetchExcludeCodebookRunners,
   deleteRunner
 } = useRunner()
-
-const boundPageParams = ref({
-  page: 1,
-  limit: 20
-})
 
 const forkPageParams = ref({
   page: 1,
@@ -246,6 +227,19 @@ const boundKeyword = ref("")
 const forkKeyword = ref("")
 const boundKind = ref<Kind>()
 const forkKind = ref<Kind>()
+
+const filteredCodebookRunners = computed(() => {
+  const keyword = boundKeyword.value.trim().toLowerCase()
+
+  return codebookRunners.value.filter((item) => {
+    if (boundKind.value && item.kind !== boundKind.value) return false
+    if (!keyword) return true
+
+    return [item.name, item.target, item.handler, item.desc, item.kind, ...(item.tags ?? [])]
+      .filter(Boolean)
+      .some((field) => String(field).toLowerCase().includes(keyword))
+  })
+})
 
 const drawerTitle = computed(() => {
   if (isCreatingRunner.value) {
@@ -268,8 +262,9 @@ const open = (row: codebook) => {
   isCreatingRunner.value = false
   isEditRunner.value = false
   visible.value = true
-  boundPageParams.value.page = 1
   forkPageParams.value.page = 1
+  boundKeyword.value = ""
+  boundKind.value = undefined
   activeTab.value = "bound"
   // NOTE: 打开时只加载当前激活的 bound tab 数据，fork tab 按需加载
   _fetchBound(row.id)
@@ -277,21 +272,6 @@ const open = (row: codebook) => {
 
 const _fetchBound = (id: number, isAppend: boolean = false) => {
   fetchCodebookRunners(id, isAppend)
-}
-
-const handleSearchBound = () => {
-  boundPageParams.value.page = 1
-  if (currentCodebook.value) _fetchBound(currentCodebook.value.id)
-}
-
-const handleScrollBound = (e: Event) => {
-  const target = e.target as HTMLElement
-  if (target.scrollHeight - target.scrollTop <= target.clientHeight + 10) {
-    if (!loading.value && codebookRunners.value.length < codebookRunnersTotal.value) {
-      boundPageParams.value.page++
-      if (currentCodebook.value) _fetchBound(currentCodebook.value.id, true)
-    }
-  }
 }
 
 /** 切换 tab 时按需加载对应数据 */
@@ -467,7 +447,9 @@ defineExpose({
       background: #ffffff;
       border-radius: 7px;
       padding: 1px 11px;
-      transition: border-color 0.18s ease, background-color 0.18s ease;
+      transition:
+        border-color 0.18s ease,
+        background-color 0.18s ease;
 
       &:hover {
         border-color: #c7d2e3;
@@ -512,7 +494,10 @@ defineExpose({
       border-radius: 5px !important;
       color: #64748b;
       font-weight: 600;
-      transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
+      transition:
+        color 0.18s ease,
+        background-color 0.18s ease,
+        box-shadow 0.18s ease;
       box-shadow: none !important;
 
       &:hover {

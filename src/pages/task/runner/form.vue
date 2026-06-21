@@ -119,8 +119,10 @@
             >
               <template #default="{ data }">
                 <span class="custom-tree-node">
-                  <el-icon v-if="data.kind === 'DIRECTORY'" style="margin-right: 6px; color: #e6a23c;"><Folder /></el-icon>
-                  <SvgIcon v-else :name="getFileIconName(data.name)" size="14px" style="margin-right: 6px;" />
+                  <el-icon v-if="data.kind === 'DIRECTORY'" style="margin-right: 6px; color: #e6a23c"
+                    ><Folder
+                  /></el-icon>
+                  <SvgIcon v-else :name="getFileIconName(data.name)" size="14px" style="margin-right: 6px" />
                   <span>{{ data.name }}</span>
                 </span>
               </template>
