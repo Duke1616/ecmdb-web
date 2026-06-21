@@ -2,7 +2,12 @@
   <div
     class="generic-picker-container"
     ref="containerRef"
-    :class="[`variant-${variant}`, multiple ? 'is-multiple' : 'is-single', disabled ? 'is-disabled' : '', containerClass]"
+    :class="[
+      `variant-${variant}`,
+      multiple ? 'is-multiple' : 'is-single',
+      disabled ? 'is-disabled' : '',
+      containerClass
+    ]"
   >
     <div class="picker-input-box" @click="handleInputClick" :class="{ 'is-focus': showDropdown }">
       <!-- 多选模式下的标签显示区 -->
@@ -328,16 +333,6 @@ onUnmounted(() => {
   background: #ffffff;
   box-shadow: 0 0 0 1px #3b82f6 inset;
   outline: none;
-}
-
-/* 当父级 el-form-item 校验失败时，将边框变红以配合 element plus 整体校验视觉 */
-:global(.is-error) .generic-picker-container.variant-simple .picker-input-box {
-  border-color: #f56c6c;
-}
-
-:global(.is-error) .generic-picker-container.variant-simple .picker-input-box.is-focus {
-  border-color: #f56c6c;
-  box-shadow: 0 0 0 1px #f56c6c inset;
 }
 
 .selected-single {

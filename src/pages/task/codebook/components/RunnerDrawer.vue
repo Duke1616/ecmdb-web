@@ -31,7 +31,6 @@
                 />
                 <div class="header-right">
                   <el-button type="primary" :icon="Plus" class="glass-add-btn" @click="handleToCreate">新增</el-button>
-                  <el-button @click="handleRefresh" :icon="Refresh" circle class="subtle-refresh" />
                 </div>
               </div>
               <div class="toolbar-filters">
@@ -110,11 +109,6 @@
                   class="premium-search"
                   @change="handleSearchFork"
                 />
-                <div class="header-right">
-                  <el-tooltip content="刷新列表" placement="top">
-                    <el-button @click="() => handleRefreshFork()" :icon="Refresh" circle class="subtle-refresh" />
-                  </el-tooltip>
-                </div>
               </div>
               <div class="toolbar-filters">
                 <el-radio-group v-model="forkKind" class="premium-segmented" @change="handleSearchFork">
@@ -196,7 +190,6 @@ import { ref, computed, nextTick } from "vue"
 import {
   Operation,
   Plus,
-  Refresh,
   Edit,
   Delete,
   DocumentCopy,
@@ -445,15 +438,15 @@ defineExpose({
 .filter-header {
   display: flex;
   flex-direction: column;
-  padding: 14px 18px;
-  background: white;
-  border-bottom: 1px solid #f1f5f9;
-  gap: 10px;
+  padding: 12px 18px 14px;
+  background: #ffffff;
+  border-bottom: 1px solid #eef2f7;
+  gap: 8px;
 
   .toolbar-main {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
     min-width: 0;
   }
@@ -468,29 +461,38 @@ defineExpose({
     min-width: 0;
 
     :deep(.el-input__wrapper) {
-      height: 36px;
+      height: 34px;
       box-shadow: none !important;
-      border: 1px solid #dbe3ef;
+      border: 1px solid #d8e0ec;
       background: #ffffff;
-      border-radius: 8px;
-      padding: 1px 12px;
-      transition: all 0.2s;
+      border-radius: 7px;
+      padding: 1px 11px;
+      transition: border-color 0.18s ease, background-color 0.18s ease;
+
+      &:hover {
+        border-color: #c7d2e3;
+      }
 
       &.is-focus {
-        border-color: #94a3b8;
+        border-color: #9fb0c7;
         background: #ffffff;
         box-shadow: none !important;
       }
+    }
+
+    :deep(.el-input__inner) {
+      color: #1f2937;
+      font-size: 13px;
     }
   }
 
   .premium-segmented {
     display: flex;
     width: 100%;
-    padding: 3px;
-    background: #f8fafc;
+    padding: 2px;
+    background: #f6f8fb;
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: 7px;
 
     :deep(.el-radio-button) {
       flex: 1;
@@ -498,19 +500,19 @@ defineExpose({
 
     :deep(.el-radio-button__inner) {
       width: 100%;
-      height: 30px;
+      height: 28px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 0 10px;
-      font-size: 13px;
+      padding: 0 8px;
+      font-size: 12px;
       background: transparent;
       border: none !important;
       margin: 0;
-      border-radius: 6px !important;
+      border-radius: 5px !important;
       color: #64748b;
       font-weight: 600;
-      transition: all 0.2s;
+      transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease;
       box-shadow: none !important;
 
       &:hover {
@@ -520,7 +522,7 @@ defineExpose({
     :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
       background: #ffffff;
       color: #1f2937;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08) !important;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
     }
   }
 
@@ -532,12 +534,13 @@ defineExpose({
   }
 
   .glass-add-btn {
-    height: 36px;
-    padding: 0 14px;
-    border-radius: 8px;
+    height: 34px;
+    padding: 0 13px;
+    border-radius: 7px;
     background: #2563eb;
     border-color: #2563eb;
     font-weight: 600;
+    font-size: 13px;
     box-shadow: none;
     color: white;
     cursor: pointer;
@@ -548,19 +551,6 @@ defineExpose({
     &:hover {
       background: #1d4ed8;
       border-color: #1d4ed8;
-    }
-  }
-
-  .subtle-refresh {
-    width: 36px;
-    height: 36px;
-    border: 1px solid #dbe3ef;
-    background: #ffffff;
-    color: #64748b;
-
-    &:hover {
-      background: #f8fafc;
-      color: #334155;
     }
   }
 }

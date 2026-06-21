@@ -29,11 +29,11 @@ export function useTaskForm(options: {
   // --- 校验规则自适应计算 ---
   const rules = computed<FormRules<TaskFormState>>(() => {
     const r: FormRules<TaskFormState> = {
-      name: [{ required: true, message: "请输入任务标识", trigger: "blur" }]
+      name: [{ required: true, message: "请输入任务标识", trigger: "submit" }]
     }
 
     if (form.value.type === TaskType.RECURRING) {
-      r.cron_expr = [{ required: true, message: "请输入有效的 Cron 表达式", trigger: ["blur", "change"] }]
+      r.cron_expr = [{ required: true, message: "请输入有效的 Cron 表达式", trigger: "submit" }]
     }
 
     if (form.value.protocol === TaskProtocol.GRPC) {
@@ -44,11 +44,11 @@ export function useTaskForm(options: {
             if (!value) return callback(new Error("请选择处理方法"))
             callback()
           },
-          trigger: "change"
+          trigger: "submit"
         }
       ]
     } else {
-      r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "blur" }]
+      r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "submit" }]
     }
 
     return r
@@ -74,7 +74,7 @@ export function useTaskForm(options: {
 
   const handleCronSelect = (val: string) => {
     form.value.cron_expr = val
-    formRef.value?.validateField("cron_expr").catch(() => {})
+    formRef.value?.clearValidate("cron_expr")
   }
 
   const handleProtocolChange = (protocol: TaskProtocol) => {
