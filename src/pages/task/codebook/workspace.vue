@@ -24,6 +24,7 @@
           :active-directory="activeEditor"
           :directory-children="directoryChildren"
           :children-loading="childrenLoading"
+          :readonly="isReadonlyCodebook(activeEditor)"
           @create-directory="createDirectoryDraft"
           @create-file="createFileDraft"
           @delete="handleDelete"
@@ -37,6 +38,7 @@
           :opened-files="openedFiles"
           :saving="saving"
           :detail-loading="detailLoading"
+          :readonly="isReadonlyCodebook(activeEditor)"
           @select="selectCodebook"
           @close-tab="closeTab"
           @open-version="handleOpenVersionDrawer"
@@ -87,6 +89,7 @@
       :x="contextMenuX"
       :y="contextMenuY"
       :target="contextMenuTarget"
+      :readonly="isReadonlyCodebook(contextMenuTarget)"
       @action="handleContextMenuAction"
     />
   </div>
@@ -118,6 +121,7 @@ import {
   buildTree,
   createRootDirectory as createRootCodebook,
   filterCodebookTreeItems,
+  isSystemCodebook,
   treeProps,
   type CodebookTreeNode
 } from "./composables/useCodebookTree"
@@ -209,6 +213,14 @@ const metaRules = computed<FormRules>(() => ({
   owner: metaForm.value.id ? [{ required: true, message: "请选择负责人", trigger: "change" }] : []
 }))
 
+function isReadonlyCodebook(row?: Pick<codebook, "scope"> | null) {
+  return isSystemCodebook(row)
+}
+
+function warnReadonly() {
+  ElMessage.warning("系统资源为只读资源，不能进行变更操作")
+}
+
 function createRootDirectory(): codebook {
   return createRootCodebook(activeProjectId.value)
 }
@@ -244,6 +256,7 @@ function getCurrentScope() {
 }
 
 function handleEditorCodeChange(code: string) {
+  if (isReadonlyCodebook(activeEditor.value)) return
   activeEditor.value = { ...activeEditor.value, code }
 }
 
@@ -287,6 +300,10 @@ function closeTab(file: codebook) {
 }
 
 function createFileDraft() {
+  if (isReadonlyCodebook(currentDirectory.value)) {
+    warnReadonly()
+    return
+  }
   const draft = createDefaultFileDraft()
   const editorDraft = draftToEditor(draft)
 
@@ -304,11 +321,19 @@ function createFileDraft() {
 }
 
 function createDirectoryDraft() {
+  if (isReadonlyCodebook(currentDirectory.value)) {
+    warnReadonly()
+    return
+  }
   metaForm.value = createDefaultDirectoryDraft()
   metaDialogVisible.value = true
 }
 
 function openMetaDialog(row: codebook) {
+  if (isReadonlyCodebook(row)) {
+    warnReadonly()
+    return
+  }
   metaForm.value = codebookToMetaPayload(row, activeProjectId.value)
   metaDialogVisible.value = true
 }
@@ -319,6 +344,10 @@ function buildPayloadFromActive(): createOrUpdateCodebookReq {
 
 async function saveActiveFile() {
   if (activeEditor.value.kind !== "FILE") return
+  if (isReadonlyCodebook(activeEditor.value)) {
+    warnReadonly()
+    return
+  }
   const payload = buildPayloadFromActive()
   if (!payload.name || !payload.owner) {
     metaForm.value = payload
@@ -334,6 +363,19 @@ async function saveActiveFile() {
 
 async function saveMetaDialog() {
   if (!metaFormRef.value) return
+  if (metaForm.value.id) {
+    const editingTarget =
+      find(treeRawData.value, { id: metaForm.value.id }) ||
+      find(openedFiles.value, { id: metaForm.value.id }) ||
+      activeEditor.value
+    if (isReadonlyCodebook(editingTarget)) {
+      warnReadonly()
+      return
+    }
+  } else if (isReadonlyCodebook(currentDirectory.value)) {
+    warnReadonly()
+    return
+  }
   const valid = await metaFormRef.value.validate()
   if (!valid) return
 
@@ -363,6 +405,17 @@ async function saveMetaDialog() {
 }
 
 async function persistCodebook(payload: createOrUpdateCodebookReq) {
+  if (payload.id) {
+    const target =
+      find(treeRawData.value, { id: payload.id }) || find(openedFiles.value, { id: payload.id }) || activeEditor.value
+    if (isReadonlyCodebook(target)) {
+      warnReadonly()
+      return
+    }
+  } else if (payload.scope === "SYSTEM" || isReadonlyCodebook(currentDirectory.value)) {
+    warnReadonly()
+    return
+  }
   saving.value = true
   try {
     const { data } = payload.id ? await updateCodebookApi(payload) : await createCodebookApi(payload)
@@ -431,6 +484,12 @@ async function refreshAll() {
 }
 
 async function handleCodebookSort(id: number, targetPosition: number) {
+  const moved = find(directoryChildren.value, { id })
+  if (isReadonlyCodebook(activeEditor.value) || isReadonlyCodebook(moved)) {
+    warnReadonly()
+    await fetchChildren(activeEditor.value.id)
+    return
+  }
   try {
     await sortCodebookApi({
       id,
@@ -456,6 +515,10 @@ function buildDeleteMessage(row: codebook) {
 }
 
 function handleDelete(row: codebook) {
+  if (isReadonlyCodebook(row)) {
+    warnReadonly()
+    return
+  }
   if (!row.id) {
     // 如果是未保存的草稿，直接关闭 Tab 即可，不用调用 API
     closeTab(row)
@@ -489,11 +552,19 @@ function handleDelete(row: codebook) {
 
 function handleOpenRunnerDrawer(row: codebook) {
   if (row.kind !== "FILE" || !row.id) return
+  if (isReadonlyCodebook(row)) {
+    warnReadonly()
+    return
+  }
   runnerDrawerRef.value?.open(row)
 }
 
 function handleOpenVersionDrawer(row: codebook) {
   if (row.kind !== "FILE" || !row.id) return
+  if (isReadonlyCodebook(row)) {
+    warnReadonly()
+    return
+  }
   versionDrawerRef.value?.open(row)
 }
 

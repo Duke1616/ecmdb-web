@@ -21,7 +21,12 @@
       <template #name="{ row }">
         <div class="project-name-cell" @click="selectProject(row)">
           <el-icon class="folder-icon"><FolderOpened /></el-icon>
-          <span class="project-name-text">{{ row.name }}</span>
+          <span class="project-name-main">
+            <span class="project-name-text">{{ row.name }}</span>
+            <el-tooltip v-if="isSystemProject(row)" content="系统项目，只读" placement="top" :show-after="300">
+              <el-icon class="project-readonly-lock"><Lock /></el-icon>
+            </el-tooltip>
+          </span>
         </div>
       </template>
 
@@ -38,7 +43,7 @@
       </template>
 
       <template #actions="{ row }">
-        <OperateBtn :items="operateItems" :operate-item="row" :max-length="2" @routeEvent="handleOperateEvent" />
+        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @routeEvent="handleOperateEvent" />
       </template>
     </DataTable>
 
@@ -75,7 +80,7 @@
 <script setup lang="ts">
 import { computed, h, ref, watch } from "vue"
 import { useRouter } from "vue-router"
-import { Delete, Edit, FolderOpened } from "@element-plus/icons-vue"
+import { Delete, Edit, FolderOpened, Lock } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
@@ -140,6 +145,19 @@ const operateItems = [
   { name: "删除", code: "delete", type: "danger", icon: Delete, capability: TASK_CAPABILITIES.Codebook.Delete }
 ]
 
+function isSystemProject(row?: Pick<CodebookProject, "scope"> | null) {
+  return row?.scope === "SYSTEM"
+}
+
+function warnSystemProject() {
+  ElMessage.warning("系统项目为只读资源，不能进行变更操作")
+}
+
+function getOperateItems(row: CodebookProject) {
+  if (isSystemProject(row)) return []
+  return operateItems
+}
+
 // ==================== 数据加载 ====================
 async function fetchProjects() {
   projectsLoading.value = true
@@ -171,6 +189,10 @@ function handleCreate() {
 }
 
 function handleEdit(row: CodebookProject) {
+  if (isSystemProject(row)) {
+    warnSystemProject()
+    return
+  }
   projectForm.value = {
     id: row.id,
     name: row.name,
@@ -180,6 +202,10 @@ function handleEdit(row: CodebookProject) {
 }
 
 function handleDeleteProject(row: CodebookProject) {
+  if (isSystemProject(row)) {
+    warnSystemProject()
+    return
+  }
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -204,6 +230,13 @@ function handleOperateEvent(row: CodebookProject, action: string) {
 
 async function saveProject() {
   if (!projectFormRef.value) return
+  const editingProject = projectForm.value.id
+    ? projectsList.value.find((item) => item.id === projectForm.value.id)
+    : null
+  if (isSystemProject(editingProject)) {
+    warnSystemProject()
+    return
+  }
   const valid = await projectFormRef.value.validate()
   if (!valid) return
 
@@ -294,6 +327,14 @@ watch(
   width: 100%;
 }
 
+.project-name-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .project-name-text,
 .project-desc-text {
   display: block;
@@ -302,6 +343,12 @@ watch(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.project-readonly-lock {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .project-desc-text {

@@ -6,13 +6,17 @@
         <div class="directory-title-text">
           <div class="directory-title-row">
             <h3>{{ activeDirectory.name || "全部资源" }}</h3>
+            <el-tooltip v-if="isReadonly" content="系统资源，只读" placement="top" :show-after="300">
+              <el-icon class="readonly-lock"><Lock /></el-icon>
+            </el-tooltip>
             <span class="directory-kind">Directory</span>
           </div>
-          <p>{{ directoryChildren.length }} 个子资源</p>
+          <p>{{ isReadonly ? "系统资源只读，暂不支持变更" : `${directoryChildren.length} 个子资源` }}</p>
         </div>
       </div>
       <div class="panel-actions">
         <AuthButton
+          v-if="!isReadonly"
           :capability="capabilities.Codebook.Add"
           disableMode
           size="small"
@@ -21,6 +25,7 @@
           >目录</AuthButton
         >
         <AuthButton
+          v-if="!isReadonly"
           :capability="capabilities.Codebook.Add"
           disableMode
           size="small"
@@ -30,7 +35,7 @@
           >脚本</AuthButton
         >
         <AuthButton
-          v-if="activeDirectory.id"
+          v-if="activeDirectory.id && !isReadonly"
           :capability="capabilities.Codebook.Delete"
           disableMode
           size="small"
@@ -49,7 +54,7 @@
       item-key="id"
       class="resource-grid"
       v-loading="childrenLoading"
-      :disabled="!hasPermission(capabilities.Codebook.Sort)"
+      :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
       @end="onDragEnd"
     >
       <button
@@ -69,6 +74,9 @@
           <strong>{{ item.name }}</strong>
           <small>{{ item.kind === "DIRECTORY" ? "目录" : inferLanguage(item.name) }}</small>
         </span>
+        <el-tooltip v-if="isSystemCodebook(item)" content="系统资源，只读" placement="top" :show-after="300">
+          <el-icon class="resource-readonly-lock"><Lock /></el-icon>
+        </el-tooltip>
         <el-tag v-if="item.kind === 'FILE'" size="small" effect="plain">{{ getFileExt(item.name) || "file" }}</el-tag>
       </button>
       <template #header>
@@ -81,13 +89,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened } from "@element-plus/icons-vue"
+import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened, Lock } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
+import { isSystemCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
 const { hasPermission } = usePermission()
@@ -97,6 +106,7 @@ const props = defineProps<{
   activeDirectory: codebook
   directoryChildren: codebook[]
   childrenLoading: boolean
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -108,6 +118,7 @@ const emit = defineEmits<{
 }>()
 
 const localChildren = ref<codebook[]>([])
+const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeDirectory))
 
 watch(
   () => props.directoryChildren,
@@ -202,6 +213,13 @@ const onDragEnd = (evt: any) => {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+.readonly-lock,
+.resource-readonly-lock {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 .panel-actions {

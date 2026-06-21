@@ -94,6 +94,10 @@ export function sortCodebookNodes<T extends codebook>(items: T[]) {
   return sortBy(items, [(item) => item.sort_no, (item) => item.id])
 }
 
+export function isSystemCodebook(item?: Pick<codebook, "scope"> | null) {
+  return item?.scope === "SYSTEM"
+}
+
 export function getTreeNodeData(node: TreeNodeLike) {
   return node.data as CodebookTreeNode
 }

@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, ref } from "vue"
+import { reactive, computed, ref, watch } from "vue"
 import Editor from "./editor.vue"
 import * as themes from "./themes"
 import { useTheme, Theme } from "@@/composables/theme"
@@ -55,6 +55,15 @@ const config = reactive({
   autofocus: !props.readOnly,
   theme: useTheme().theme.value === Theme.Dark ? "oneDark" : "default"
 })
+
+watch(
+  () => props.readOnly,
+  (readOnly) => {
+    config.disabled = Boolean(readOnly)
+    config.autofocus = !readOnly
+  },
+  { immediate: true }
+)
 
 const currentTheme = computed(() => {
   if (config.theme !== "default" && themes[config.theme as keyof typeof themes]) {

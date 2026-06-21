@@ -14,6 +14,9 @@
         >
           <SvgIcon :name="getFileIconName(file.name)" size="14px" class="tab-file-icon" />
           <span class="tab-filename" :title="file.name || '未命名脚本'">{{ file.name || "未命名脚本" }}</span>
+          <el-tooltip v-if="isSystemCodebook(file)" content="系统资源，只读" placement="top" :show-after="300">
+            <el-icon class="tab-readonly-lock"><Lock /></el-icon>
+          </el-tooltip>
           <el-icon class="tab-close-icon" @click.stop="$emit('close-tab', file)">
             <Close />
           </el-icon>
@@ -22,7 +25,7 @@
 
       <div class="editor-actions">
         <AuthButton
-          v-if="activeEditor.id"
+          v-if="activeEditor.id && !isReadonly"
           :capability="capabilities.Codebook.ViewVersion"
           disableMode
           size="small"
@@ -32,7 +35,7 @@
           >版本</AuthButton
         >
         <AuthButton
-          v-if="activeEditor.id"
+          v-if="activeEditor.id && !isReadonly"
           :capability="capabilities.Runner.View"
           disableMode
           size="small"
@@ -42,6 +45,7 @@
           >执行单元</AuthButton
         >
         <AuthButton
+          v-if="!isReadonly"
           :capability="capabilities.Codebook.Edit"
           disableMode
           size="small"
@@ -51,7 +55,7 @@
           >信息</AuthButton
         >
         <AuthButton
-          v-if="activeEditor.id"
+          v-if="activeEditor.id && !isReadonly"
           :capability="capabilities.Codebook.Delete"
           disableMode
           size="small"
@@ -62,6 +66,7 @@
           >删除</AuthButton
         >
         <AuthButton
+          v-if="!isReadonly"
           :capability="capabilities.Codebook.Edit"
           disableMode
           size="small"
@@ -71,6 +76,7 @@
           @click="$emit('save')"
           >保存</AuthButton
         >
+        <span v-if="isReadonly" class="readonly-hint">系统资源只读，暂不支持版本与执行单元配置</span>
       </div>
     </div>
 
@@ -78,6 +84,7 @@
       <CodeEditor
         :code="activeEditor.code"
         :language="inferLanguage(activeEditor.name)"
+        :read-only="isReadonly"
         @update:code="$emit('update-code', $event)"
       />
     </div>
@@ -85,21 +92,26 @@
 </template>
 
 <script setup lang="ts">
-import { Check, Clock, Close, Delete, Edit, Setting } from "@element-plus/icons-vue"
+import { computed } from "vue"
+import { Check, Clock, Close, Delete, Edit, Lock, Setting } from "@element-plus/icons-vue"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { getFileIconName, inferLanguage } from "../composables/useCodebookFile"
+import { isSystemCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
 const capabilities = TASK_CAPABILITIES
 
-defineProps<{
+const props = defineProps<{
   activeEditor: codebook
   openedFiles: codebook[]
   saving: boolean
   detailLoading: boolean
+  readonly?: boolean
 }>()
+
+const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeEditor))
 
 defineEmits<{
   (e: "select", row: codebook): void
@@ -251,6 +263,18 @@ defineEmits<{
   flex: 1;
   min-height: 0;
   background: #fff;
+}
+
+.readonly-hint {
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tab-readonly-lock {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 12px;
 }
 
 :deep(.cm-editor) {

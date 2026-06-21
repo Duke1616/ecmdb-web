@@ -1,6 +1,10 @@
 <template>
   <div v-if="visible" class="context-menu" :style="{ top: y + 'px', left: x + 'px' }">
-    <div v-if="target?.kind === 'DIRECTORY'" class="menu-group">
+    <div v-if="readonly" class="menu-readonly">
+      <span class="readonly-dot" />
+      <span>系统资源只读</span>
+    </div>
+    <div v-if="!readonly && target?.kind === 'DIRECTORY'" class="menu-group">
       <div
         class="menu-item"
         :class="{ disabled: !hasPermission(capabilities.Codebook.Add) }"
@@ -18,8 +22,8 @@
         <span>新建目录</span>
       </div>
     </div>
-    <div v-if="target && target.id !== 0" class="menu-divider" />
-    <div v-if="target && target.id !== 0" class="menu-group">
+    <div v-if="showDivider" class="menu-divider" />
+    <div v-if="!readonly && target && target.id !== 0" class="menu-group">
       <div
         class="menu-item"
         :class="{ disabled: !hasPermission(capabilities.Codebook.Edit) }"
@@ -41,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import { Delete, DocumentAdd, Edit, FolderAdd } from "@element-plus/icons-vue"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import { usePermission } from "@/common/composables/usePermission"
@@ -49,12 +54,17 @@ import { TASK_CAPABILITIES } from "@/common/auth/capability"
 const { hasPermission } = usePermission()
 const capabilities = TASK_CAPABILITIES
 
-defineProps<{
+const props = defineProps<{
   visible: boolean
   x: number
   y: number
   target: codebook | null
+  readonly?: boolean
 }>()
+
+const showDivider = computed(() => {
+  return !props.readonly && props.target?.kind === "DIRECTORY" && props.target.id !== 0
+})
 
 defineEmits<{
   (e: "action", action: "createFile" | "createDir" | "edit" | "delete"): void
@@ -138,5 +148,23 @@ defineEmits<{
   height: 1px;
   margin: 4px 2px;
   background: #e2e8f0;
+}
+
+.menu-readonly {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 9px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.readonly-dot {
+  width: 7px;
+  height: 7px;
+  background: #94a3b8;
+  border-radius: 50%;
 }
 </style>

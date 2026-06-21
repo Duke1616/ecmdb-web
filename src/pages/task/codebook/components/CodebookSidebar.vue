@@ -29,8 +29,8 @@
         node-key="treeKey"
         :props="treeProps"
         :current-node-key="selectedTreeKey"
+        :default-expanded-keys="defaultExpandedKeys"
         highlight-current
-        default-expand-all
         draggable
         :allow-drag="allowDrag"
         :allow-drop="allowDrop"
@@ -46,7 +46,12 @@
             <el-icon v-else>
               <FolderOpened v-if="data.id === 0 || data.kind === 'DIRECTORY'" />
             </el-icon>
-            <span class="tree-label">{{ data.name }}</span>
+            <span class="tree-title">
+              <span class="tree-label">{{ data.name }}</span>
+              <el-tooltip v-if="isSystemCodebook(data)" content="系统资源，只读" placement="top" :show-after="300">
+                <el-icon class="readonly-lock"><Lock /></el-icon>
+              </el-tooltip>
+            </span>
           </div>
         </template>
       </el-tree>
@@ -56,9 +61,14 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from "vue"
-import { ArrowLeft, FolderOpened, RefreshRight, Search } from "@element-plus/icons-vue"
+import { ArrowLeft, FolderOpened, Lock, RefreshRight, Search } from "@element-plus/icons-vue"
 import { getFileIconName } from "../composables/useCodebookFile"
-import type { CodebookTreeNode, TreeDropType, TreeNodeLike } from "../composables/useCodebookTree"
+import {
+  isSystemCodebook,
+  type CodebookTreeNode,
+  type TreeDropType,
+  type TreeNodeLike
+} from "../composables/useCodebookTree"
 
 const props = defineProps<{
   activeProjectName: string
@@ -82,6 +92,7 @@ const emit = defineEmits<{
 }>()
 
 const treeRef = ref()
+const defaultExpandedKeys = ["directory-0"]
 const localKeyword = computed({
   get: () => props.keyword,
   set: (value) => emit("update:keyword", value)
@@ -208,14 +219,27 @@ function handleDrop(draggingNode: TreeNodeLike, dropNode: TreeNodeLike, type: Tr
   gap: 8px;
   min-width: 0;
   width: 100%;
+}
+
+.tree-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  max-width: calc(100% - 26px);
 
   .tree-label {
-    flex: 1;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+}
+
+.readonly-lock {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 13px;
 }
 
 :deep(.el-tree-node__content) {

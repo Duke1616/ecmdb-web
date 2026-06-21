@@ -9,6 +9,7 @@ import {
   getTreeNodeData,
   normalizeDropType,
   sortCodebookNodes,
+  isSystemCodebook,
   type CodebookTreeNode,
   type TreeDropType,
   type TreeNodeLike
@@ -27,6 +28,7 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
   function allowTreeDrag(node: TreeNodeLike) {
     if (!hasPermission(TASK_CAPABILITIES.Codebook.Sort)) return false
     const data = getTreeNodeData(node)
+    if (isSystemCodebook(data)) return false
     return Boolean(data.id && !options.keyword.value.trim() && !options.treeLoading.value)
   }
 
@@ -36,12 +38,15 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
     const draggingData = getTreeNodeData(draggingNode)
     const dropData = getTreeNodeData(dropNode)
     if (!draggingData.id || draggingData.id === dropData.id || options.keyword.value.trim()) return false
+    if (isSystemCodebook(draggingData) || isSystemCodebook(dropData)) return false
     if (dropType === "inner") {
       return dropData.kind === "DIRECTORY" && !isAncestorNode(draggingData.id, dropData.id)
     }
 
     if (!dropData.id) return false
     const targetParentID = dropData.parent_id || 0
+    const targetParent = options.treeRawData.value.find((item) => item.id === targetParentID)
+    if (isSystemCodebook(targetParent)) return false
     return targetParentID !== draggingData.id && !isAncestorNode(draggingData.id, targetParentID)
   }
 
@@ -49,12 +54,19 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
     const draggingData = getTreeNodeData(draggingNode)
     const dropData = getTreeNodeData(dropNode)
     if (!draggingData.id) return
+    const targetParentID = resolveDropParentID(dropData, dropType)
+    const targetParent = options.treeRawData.value.find((item) => item.id === targetParentID)
+    if (isSystemCodebook(draggingData) || isSystemCodebook(dropData) || isSystemCodebook(targetParent)) {
+      ElMessage.warning("系统资源为只读资源，不能调整排序")
+      await options.refreshAll()
+      return
+    }
 
     options.treeLoading.value = true
     try {
       await sortCodebookApi({
         id: draggingData.id,
-        target_parent_id: resolveDropParentID(dropData, dropType),
+        target_parent_id: targetParentID,
         target_position: resolveDropPosition(draggingData, dropNode, dropType)
       })
       ElMessage.success("排序成功")
