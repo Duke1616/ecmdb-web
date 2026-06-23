@@ -2,7 +2,6 @@
   <WorkspaceSectionPage
     title="空间配置"
     subtitle="配置工作空间的基本信息、权限和状态"
-    :flush-body="false"
     :primary-action="saveAction"
     @primary-action="handleSaveSettings"
   >
@@ -413,7 +412,7 @@ defineExpose({
   max-width: 100%;
   height: 100%;
   margin: 0;
-  padding: 0;
+  padding: 16px;
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;

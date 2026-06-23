@@ -1,10 +1,7 @@
 <template>
   <aside class="route-tree-panel">
     <div class="panel-header">
-      <div>
-        <h5>路由树</h5>
-        <span>{{ routes.length }} 个路由节点</span>
-      </div>
+      <h5>路由树</h5>
     </div>
 
     <el-tree
@@ -153,25 +150,20 @@ function handleNodeDrop(draggingNode: any, dropNode: any, dropType: string, _ev:
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
+  height: 37px;
+  min-height: 37px;
+  padding: 0 14px;
   border-bottom: 1px solid #e2e8f0;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 0;
+  box-sizing: border-box;
   flex-shrink: 0;
 
   h5 {
     margin: 0;
     color: #0f172a;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 700;
-    line-height: 1.3;
-  }
-
-  span {
-    display: block;
-    margin-top: 2px;
-    color: #64748b;
-    font-size: 11px;
     line-height: 1.3;
   }
 }

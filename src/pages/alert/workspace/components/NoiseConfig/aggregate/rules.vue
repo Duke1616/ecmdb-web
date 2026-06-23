@@ -2,7 +2,6 @@
   <WorkspaceSectionPage
     title="聚合路由"
     subtitle="按路由树匹配告警，不同分支可独立声明分组标签和通知节奏"
-    :flush-body="false"
     :primary-action="primaryAction"
     @primary-action="handleAddChildRoute"
   >
@@ -75,85 +74,87 @@
         />
 
         <main class="route-editor-panel">
-          <div class="editor-title-bar">
-            <h5>{{ form.id ? "编辑聚合路由" : form.parent_id ? "新增子路由" : "创建默认路由" }}</h5>
-            <span v-if="currentParent" class="parent-info">父路由：{{ currentParent.name }}</span>
-            <span v-else class="parent-info">根路由作为当前工作空间的默认聚合策略</span>
-          </div>
-
-          <el-tabs v-model="activeTab" class="editor-tabs">
-            <!-- 路由配置模式 -->
-            <el-tab-pane label="路由配置" name="config" class="tab-pane-content">
-              <!-- 1. 只读查看模式 -->
-              <template v-if="!isEditing && selectedRoute">
-                <div class="route-read-view">
-                  <!-- 匹配条件面板 -->
-                  <section class="read-view-section">
-                    <div class="read-view-section-title">
-                      <el-icon><Filter /></el-icon>
-                      <span>匹配条件</span>
-                    </div>
-                    <div class="read-view-content">
-                      <div class="meta-field">
-                        <span class="field-label">告警级别</span>
-                        <div class="field-value">
-                          <template v-if="selectedRoute.levels && selectedRoute.levels.length > 0">
-                            <el-tag
-                              v-for="lvl in selectedRoute.levels"
-                              :key="lvl"
-                              size="small"
-                              type="info"
-                              class="level-read-tag"
-                            >
-                              {{ getLevelLabel(lvl) }}
-                            </el-tag>
-                          </template>
-                          <span v-else class="empty-field-text">不限级别 (默认匹配所有级别)</span>
+          <div class="editor-tabs-bar">
+            <CustomTabs
+              class="route-editor-tabs"
+              :tabs="editorTabs"
+              :default-active="activeTab"
+              no-margin
+              @tab-change="handleTabChange"
+            >
+              <template #default>
+                <div v-if="activeTab === 'config'" class="tab-pane-content">
+                  <!-- 1. 只读查看模式 -->
+                  <template v-if="!isEditing && selectedRoute">
+                    <div class="route-read-view">
+                      <!-- 匹配条件面板 -->
+                      <section class="read-view-section">
+                        <div class="read-view-section-title">
+                          <el-icon><Filter /></el-icon>
+                          <span>匹配条件</span>
                         </div>
-                      </div>
-
-                      <div class="meta-field">
-                        <span class="field-label">标签匹配器</span>
-                        <div class="field-value">
-                          <template v-if="selectedRoute.matchers && selectedRoute.matchers.length > 0">
-                            <div class="matcher-read-tags">
-                              <el-tag
-                                v-for="(m, i) in selectedRoute.matchers"
-                                :key="i"
-                                size="small"
-                                effect="plain"
-                                class="matcher-read-tag"
-                              >
-                                {{ formatMatcher(m) }}
-                              </el-tag>
+                        <div class="read-view-content">
+                          <div class="meta-field">
+                            <span class="field-label">告警级别</span>
+                            <div class="field-value">
+                              <template v-if="selectedRoute.levels && selectedRoute.levels.length > 0">
+                                <el-tag
+                                  v-for="lvl in selectedRoute.levels"
+                                  :key="lvl"
+                                  size="small"
+                                  type="info"
+                                  class="level-read-tag"
+                                >
+                                  {{ getLevelLabel(lvl) }}
+                                </el-tag>
+                              </template>
+                              <span v-else class="empty-field-text">不限级别 (默认匹配所有级别)</span>
                             </div>
-                          </template>
-                          <span v-else class="empty-field-text">不限条件 (默认匹配所有告警)</span>
+                          </div>
+
+                          <div class="meta-field">
+                            <span class="field-label">标签匹配器</span>
+                            <div class="field-value">
+                              <template v-if="selectedRoute.matchers && selectedRoute.matchers.length > 0">
+                                <div class="matcher-read-tags">
+                                  <el-tag
+                                    v-for="(m, i) in selectedRoute.matchers"
+                                    :key="i"
+                                    size="small"
+                                    effect="plain"
+                                    class="matcher-read-tag"
+                                  >
+                                    {{ formatMatcher(m) }}
+                                  </el-tag>
+                                </div>
+                              </template>
+                              <span v-else class="empty-field-text">不限条件 (默认匹配所有告警)</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
+                      </section>
                     </div>
-                  </section>
+
+                    <!-- 最终生效配置组件 -->
+                    <RouteEffectiveConfig v-if="currentEffective" :effective="currentEffective" :routes="routes" />
+                  </template>
+
+                  <!-- 2. 编辑模式 -->
+                  <RouteConfigForm v-else-if="isEditing" ref="routeFormRef" :form="form" />
                 </div>
 
-                <!-- 最终生效配置组件 -->
-                <RouteEffectiveConfig v-if="currentEffective" :effective="currentEffective" :routes="routes" />
+                <div v-else-if="activeTab === 'sandbox'" class="tab-pane-content">
+                  <!-- 沙箱验证组件 -->
+                  <RoutePreviewSandbox
+                    ref="previewSandboxRef"
+                    :workspace-id="workspaceId"
+                    :routes="routes"
+                    v-model:previewing="sandboxPreviewing"
+                  />
+                </div>
               </template>
-
-              <!-- 2. 编辑模式 -->
-              <RouteConfigForm v-else-if="isEditing" ref="routeFormRef" :form="form" />
-            </el-tab-pane>
-
-            <!-- 沙箱验证模式 -->
-            <el-tab-pane label="沙箱验证" name="sandbox" class="tab-pane-content">
-              <!-- 沙箱验证组件 -->
-              <RoutePreviewSandbox
-                ref="previewSandboxRef"
-                :workspace-id="workspaceId"
-                :routes="routes"
-                v-model:previewing="sandboxPreviewing"
-              />
-            </el-tab-pane>
-          </el-tabs>
+            </CustomTabs>
+          </div>
         </main>
       </div>
     </div>
@@ -175,6 +176,7 @@ import { AggregateType, type AggregateGroupRule, type SaveAggregateGroupRuleReq 
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { MATCH_TYPE_OPTIONS } from "@/common/constants/match-type"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import WorkspaceSectionPage from "../../WorkspaceSectionPage.vue"
 import RouteTree from "./components/RouteTree.vue"
 import RouteConfigForm from "./components/RouteConfigForm.vue"
@@ -197,6 +199,10 @@ const routeFormRef = ref<InstanceType<typeof RouteConfigForm>>()
 const previewSandboxRef = ref<InstanceType<typeof RoutePreviewSandbox>>()
 
 const activeTab = ref("config")
+const editorTabs = [
+  { name: "config", label: "路由配置" },
+  { name: "sandbox", label: "沙箱验证" }
+]
 const sandboxPreviewing = ref(false)
 const isEditing = ref(false)
 
@@ -255,7 +261,6 @@ const createRouteForm = (parentId = 0): SaveAggregateGroupRuleReq => ({
 const form = ref<SaveAggregateGroupRuleReq>(createRouteForm())
 
 const selectedRoute = computed(() => routes.value.find((route) => route.id === selectedRouteId.value))
-const currentParent = computed(() => routes.value.find((route) => route.id === form.value.parent_id))
 const currentEffective = computed(() => selectedRoute.value?.effective)
 const canAddChild = computed(() => !!selectedRoute.value?.id)
 
@@ -265,6 +270,10 @@ const primaryAction = computed(() => ({
   capability: ALERT_CAPABILITIES.Aggregate.Add,
   disabled: !canAddChild.value
 }))
+
+const handleTabChange = (tabName: string) => {
+  activeTab.value = tabName
+}
 
 watch(
   () => props.workspaceId,
@@ -565,7 +574,6 @@ async function handleDeleteRoute() {
   width: 100%;
   min-height: 0;
   grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
-  border: 1px solid #e2e8f0;
   border-radius: 0;
   background: #ffffff;
   box-shadow:
@@ -588,77 +596,65 @@ async function handleDeleteRoute() {
   background: #ffffff;
 }
 
-.editor-title-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
-  flex-shrink: 0;
-
-  h5 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .parent-info {
-    color: #64748b;
-    font-size: 11px;
-  }
-}
-
-.editor-tabs {
+.editor-tabs-bar {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
 
-  :deep(.el-tabs__header) {
-    margin: 0;
-    padding: 0 16px;
+.route-editor-tabs {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+
+  :deep(.tabs-header) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    height: 37px;
+    min-height: 37px;
+    padding-right: 0;
     background: #f8fafc;
     border-bottom: 1px solid #e2e8f0;
+    box-sizing: border-box;
   }
 
-  :deep(.el-tabs__nav-wrap::after) {
-    display: none;
-  }
-
-  :deep(.el-tabs__active-bar) {
-    height: 3px;
-    border-radius: 3px 3px 0 0;
-    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-  }
-
-  :deep(.el-tabs__item) {
-    font-size: 13px;
-    font-weight: 500;
+  :deep(.tab-item) {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 12px;
     color: #64748b;
-    height: 40px;
-    line-height: 40px;
-    transition: all 0.2s ease;
+    font-size: 12px;
+    font-weight: 700;
 
     &:hover {
       color: #3b82f6;
+      background: #f1f5f9;
     }
 
-    &.is-active {
-      font-weight: 700;
+    &.active {
       color: #2563eb;
+      background: #ffffff;
+
+      &::after {
+        width: 32px;
+        height: 2px;
+        background: #3b82f6;
+        border-radius: 2px 2px 0 0;
+      }
     }
   }
 
-  :deep(.el-tabs__content) {
+  :deep(.tabs-content) {
     flex: 1;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
+    background: #ffffff;
   }
 }
 
@@ -677,14 +673,10 @@ async function handleDeleteRoute() {
 }
 
 @media (max-width: 768px) {
-  .editor-header {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .editor-actions {
-    width: 100%;
-    flex-wrap: wrap;
+  .route-editor-tabs {
+    :deep(.tabs-header) {
+      padding-right: 0;
+    }
   }
 }
 

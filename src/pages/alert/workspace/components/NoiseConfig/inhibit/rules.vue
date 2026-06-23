@@ -2,7 +2,6 @@
   <WorkspaceSectionPage
     title="抑制规则"
     subtitle="配置抑制规则，减少不必要的告警通知"
-    :flush-body="false"
     :primary-action="{
       label: '添加规则',
       icon: Filter,
@@ -483,6 +482,7 @@ const formatTime = (timestamp: number): string => {
   min-height: 0;
   overflow-y: auto;
   background: transparent;
+  box-sizing: border-box;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -514,7 +514,9 @@ const formatTime = (timestamp: number): string => {
   text-align: center;
   background: #ffffff;
   border: 1px dashed #cbd5e1;
-  border-radius: 8px;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
 
   .empty-icon {
     color: #94a3b8;
@@ -541,7 +543,7 @@ const formatTime = (timestamp: number): string => {
 .rules-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 0;
 }
 
 .inhibit-rule-card {
@@ -551,15 +553,21 @@ const formatTime = (timestamp: number): string => {
   overflow: hidden;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
+  box-shadow: none;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
 
+  & + .inhibit-rule-card {
+    border-top: 0;
+  }
+
   &:hover {
     border-color: #cbd5e1;
-    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+    box-shadow: none;
   }
 }
 

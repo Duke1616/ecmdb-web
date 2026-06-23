@@ -1,5 +1,5 @@
 <template>
-  <WorkspaceSectionPage title="告警规则" subtitle="查看工作空间告警规则与 PromQL 配置" :flush-body="false">
+  <WorkspaceSectionPage title="告警规则" subtitle="查看工作空间告警规则与 PromQL 配置">
     <div class="rules-content" v-loading="loading">
       <!-- 空状态 -->
       <div v-if="!loading && rules.length === 0" class="empty-state">
@@ -170,6 +170,7 @@ defineExpose({
   flex-direction: column;
   min-height: 0;
   overflow-y: auto;
+  box-sizing: border-box;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -206,7 +207,9 @@ defineExpose({
   color: #64748b;
   background: #f8fafc;
   border: 1px dashed #cbd5e1;
-  border-radius: 8px;
+  border-right: 0;
+  border-left: 0;
+  border-radius: 0;
   text-align: center;
 
   .empty-icon {
@@ -236,6 +239,21 @@ defineExpose({
 .rules-list {
   display: flex;
   flex-direction: column;
+
+  :deep(.collapsible-section) {
+    margin-bottom: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+
+    & + .collapsible-section {
+      border-top: 0;
+    }
+  }
+
+  :deep(.section-header) {
+    border-radius: 0;
+  }
 
   .rule-header {
     padding: 0;
@@ -315,8 +333,7 @@ defineExpose({
   display: flex;
   justify-content: flex-end;
   flex-shrink: 0;
-  padding: 12px 0 0;
-  margin-top: 16px;
+  padding: 12px 16px;
   background: #ffffff;
   border-top: 1px solid #e2e8f0;
 }
