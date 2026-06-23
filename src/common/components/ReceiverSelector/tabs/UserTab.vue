@@ -28,7 +28,7 @@
         v-for="user in displayUsers"
         :key="user.id"
         class="user-item"
-        :class="{ active: isSelected(user.username) }"
+        :class="{ active: isSelected(getUserValue(user)) }"
         @click="toggleUser(user)"
       >
         <div class="user-avatar">
@@ -40,7 +40,7 @@
           <div class="user-name">{{ user.nickname || user.username }}</div>
           <div class="user-meta">{{ user.username }}</div>
         </div>
-        <el-icon v-if="isSelected(user.username)" class="check-icon"><Check /></el-icon>
+        <el-icon v-if="isSelected(getUserValue(user))" class="check-icon"><Check /></el-icon>
       </div>
 
       <div v-if="displayUsers.length === 0 && !loading" class="empty-state">
@@ -52,17 +52,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from "vue"
+import { onMounted, ref, watch } from "vue"
 import { Search, Check, User } from "@element-plus/icons-vue"
 import { useUsers } from "@/common/composables/useUsers"
 import type { IMemberUser } from "@/common/composables/useUsers"
 
 interface Props {
   selectedUsernames: string[]
+  valueKey?: "username" | "id"
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  selectedUsernames: () => []
+  selectedUsernames: () => [],
+  valueKey: "username"
 })
 
 const emit = defineEmits<{
@@ -80,28 +82,57 @@ const {
   handleSearch,
   handlePageChange,
   selectedUsers,
-  loadSelectedUsers
+  loadSelectedUsers,
+  loadSelectedUsersByIds
 } = useUsers({ pageSize: 10 })
 
+const getUserValue = (user: any) => String(props.valueKey === "id" ? user.id : user.username)
+const selectedValues = ref<string[]>([])
+const selectedUserMap = ref(new Map<string, IMemberUser>())
+
+const cacheUser = (user: any) => {
+  const value = getUserValue(user)
+  if (!value) return
+
+  selectedUserMap.value.set(value, {
+    id: Number(user.id) || 0,
+    username: user.username || value,
+    nickname: user.nickname || user.display_name || user.username || value,
+    avatar: user.avatar || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    job_title: user.job_title || ""
+  })
+}
+
+const createFallbackUser = (value: string): IMemberUser => ({
+  id: props.valueKey === "id" ? Number(value) || 0 : 0,
+  username: props.valueKey === "username" ? value : value,
+  nickname: value,
+  avatar: "",
+  email: "",
+  phone: ""
+})
+
+const emitSelectedUsers = () => {
+  const users = selectedValues.value.map((value) => selectedUserMap.value.get(value) || createFallbackUser(value))
+  emit("change", users)
+}
+
 const isSelected = (username: string) => {
-  return selectedUsers.value.some((u) => u.username === username)
+  return selectedValues.value.includes(String(username))
 }
 
 const toggleUser = (user: any) => {
-  const index = selectedUsers.value.findIndex((u) => u.username === user.username)
+  const value = getUserValue(user)
+  const index = selectedValues.value.indexOf(value)
   if (index > -1) {
-    selectedUsers.value.splice(index, 1)
+    selectedValues.value.splice(index, 1)
   } else {
-    selectedUsers.value.push({
-      id: user.id,
-      username: user.username,
-      nickname: user.nickname || user.username,
-      avatar: user.avatar || "",
-      email: user.email || "",
-      phone: user.phone || ""
-    })
+    cacheUser(user)
+    selectedValues.value.push(value)
   }
-  emit("change", selectedUsers.value)
+  emitSelectedUsers()
 }
 
 // 生成头像颜色
@@ -118,7 +149,20 @@ const generateColor = (str: string) => {
 watch(
   () => props.selectedUsernames,
   (usernames) => {
+    selectedValues.value = [...(usernames || []).map(String)]
+    if (props.valueKey === "id") {
+      loadSelectedUsersByIds(usernames)
+      return
+    }
     loadSelectedUsers(usernames)
+  },
+  { immediate: true }
+)
+
+watch(
+  selectedUsers,
+  (users) => {
+    users.forEach(cacheUser)
   },
   { immediate: true }
 )

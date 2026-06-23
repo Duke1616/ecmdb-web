@@ -6,6 +6,7 @@ import { setRouteChange } from "@/common/composables/useRouteListener"
 import { useTitle } from "@/common/composables/useTitle"
 import { getToken } from "@@/utils/cache/cookies"
 import isWhiteList from "@/router/white-list"
+import { clearChunkLoadReloadFlag } from "@/common/utils/chunkLoadRecovery"
 import NProgress from "nprogress"
 import "nprogress/nprogress.css"
 
@@ -68,6 +69,7 @@ export function registerNavigationGuard(router: Router) {
 
   // 全局后置钩子
   router.afterEach((to) => {
+    clearChunkLoadReloadFlag()
     setRouteChange(to)
     setTitle(to.meta.title)
     NProgress.done()

@@ -5,6 +5,15 @@ export type { Matcher, Matchers } from "@@/types/matcher"
 
 import type { Matchers } from "@@/types/matcher"
 
+export type AggregateReceiverType = "user" | "team" | "oncall"
+
+export interface ReceiverRef {
+  id: number
+  type: AggregateReceiverType
+  display_name?: string
+  metadata?: Record<string, any>
+}
+
 export enum AggregateType {
   Disabled = 1,
   Rule = 2,
@@ -23,6 +32,8 @@ export interface AggregateGroupRule {
   labels: string[]
   workspace_id: number
   is_diff_data_source: boolean
+  receivers: ReceiverRef[]
+  template_id: number
   matchers: Matchers
   group_wait: number
   group_interval: number
@@ -38,6 +49,8 @@ export interface EffectiveAggregateRoute {
   route_path: number[]
   group_by: string[]
   is_diff_data_source: boolean
+  receivers: ReceiverRef[]
+  template_id: number
   group_wait: number
   group_interval: number
   repeat_interval: number
@@ -55,6 +68,8 @@ export interface SaveAggregateGroupRuleReq {
   labels: string[]
   workspace_id: number
   is_diff_data_source: boolean
+  receivers: ReceiverRef[]
+  template_id: number
   matchers: Matchers
   group_wait: number
   group_interval: number
@@ -77,6 +92,8 @@ export interface PreviewAggregateRouteResp {
   route_path: number[]
   group_by: string[]
   is_diff_data_source: boolean
+  receivers: ReceiverRef[]
+  template_id: number
   group_fingerprint: number
   group_wait: number
   group_interval: number
@@ -103,6 +120,8 @@ export interface CreateAggregateGroupRuleReq {
   labels: string[]
   workspace_id: number
   is_diff_data_source: boolean
+  receivers?: ReceiverRef[]
+  template_id?: number
   matchers: Matchers
   group_wait?: number
   group_interval?: number
@@ -129,4 +148,3 @@ export interface ReorderAggregateRoutesReq {
   target_parent_id: number
   target_position: number
 }
-

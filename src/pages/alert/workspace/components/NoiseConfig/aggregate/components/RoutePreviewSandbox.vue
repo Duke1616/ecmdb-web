@@ -132,6 +132,29 @@
               </div>
             </div>
           </div>
+
+          <div class="grid-cell double-width">
+            <span class="cell-label">通知策略</span>
+            <div class="cell-content notify-result">
+              <div class="receiver-tags">
+                <template v-if="previewResult.receivers && previewResult.receivers.length > 0">
+                  <el-tag
+                    v-for="receiver in previewResult.receivers"
+                    :key="`${receiver.type}-${receiver.id}`"
+                    size="small"
+                    type="primary"
+                    effect="plain"
+                  >
+                    {{ getReceiverTypeLabel(receiver.type) }} / {{ receiver.display_name || receiver.id }}
+                  </el-tag>
+                </template>
+                <span v-else class="empty-text">继承工作空间默认团队</span>
+              </div>
+              <el-tag size="small" type="info" effect="plain">
+                {{ previewResult.template_id ? `模板 #${previewResult.template_id}` : "继承工作空间默认模板" }}
+              </el-tag>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -267,6 +290,15 @@ function formatRepeatInterval(s: number) {
   const d = Math.floor(h / 24)
   if (h % 24 !== 0) return `${h}h`
   return `${d}d`
+}
+
+function getReceiverTypeLabel(type: string) {
+  const labels: Record<string, string> = {
+    user: "用户",
+    team: "团队",
+    oncall: "排班"
+  }
+  return labels[type] || type
 }
 
 defineExpose({
@@ -651,6 +683,19 @@ defineExpose({
     color: #0f172a;
     margin-left: auto;
   }
+}
+
+.notify-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start !important;
+  gap: 8px;
+}
+
+.receiver-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .sandbox-placeholder {

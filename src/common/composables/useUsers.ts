@@ -1,5 +1,5 @@
 import { ref } from "vue"
-import { listUsersApi } from "@/api/iam/user"
+import { listUsersApi, userDetailApi } from "@/api/iam/user"
 import type { User as IIamUser } from "@/api/iam/user/type"
 import { useUserStore } from "@/pinia/stores/user"
 import { debounce } from "lodash-es"
@@ -64,8 +64,10 @@ export function useUsers(options: { pageSize?: number } = {}) {
 
   // 批量反解用户名到完整用户对象
   const selectedUsers = ref<IMemberUser[]>([])
+  let selectedUsersRequestId = 0
 
   const loadSelectedUsers = async (usernames: string[]) => {
+    const requestId = ++selectedUsersRequestId
     if (!usernames?.length) {
       selectedUsers.value = []
       return
@@ -73,6 +75,7 @@ export function useUsers(options: { pageSize?: number } = {}) {
 
     try {
       const users = await userStore.batchGetUsersByUsername(usernames)
+      if (requestId !== selectedUsersRequestId) return
       selectedUsers.value = users.map((u) => ({
         id: u.id,
         username: u.username,
@@ -83,6 +86,36 @@ export function useUsers(options: { pageSize?: number } = {}) {
         job_title: u.job_title || ""
       }))
     } catch (error) {
+      if (requestId !== selectedUsersRequestId) return
+      console.error("批量解析选中用户失败:", error)
+      selectedUsers.value = []
+    }
+  }
+
+  const loadSelectedUsersByIds = async (ids: string[]) => {
+    const requestId = ++selectedUsersRequestId
+    if (!ids?.length) {
+      selectedUsers.value = []
+      return
+    }
+
+    try {
+      const results = await Promise.allSettled(ids.map((id) => userDetailApi({ id })))
+      if (requestId !== selectedUsersRequestId) return
+      selectedUsers.value = results
+        .map((result) => (result.status === "fulfilled" ? result.value.data.user : null))
+        .filter((u): u is IIamUser => !!u)
+        .map((u) => ({
+          id: u.id,
+          username: u.username,
+          nickname: u.nickname || u.username,
+          avatar: u.avatar || "",
+          email: u.email || "",
+          phone: u.phone || "",
+          job_title: u.job_title || ""
+        }))
+    } catch (error) {
+      if (requestId !== selectedUsersRequestId) return
       console.error("批量解析选中用户失败:", error)
       selectedUsers.value = []
     }
@@ -99,6 +132,7 @@ export function useUsers(options: { pageSize?: number } = {}) {
     handleSearch,
     handlePageChange,
     selectedUsers,
-    loadSelectedUsers
+    loadSelectedUsers,
+    loadSelectedUsersByIds
   }
 }

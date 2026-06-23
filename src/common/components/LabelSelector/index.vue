@@ -223,7 +223,7 @@ function clearAllLabels() {
 
 .suggested-section {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   margin-top: 10px;
   padding: 8px 12px;
@@ -235,11 +235,13 @@ function clearAllLabels() {
 .suggested-title {
   display: inline-flex;
   align-items: center;
+  align-self: center;
   gap: 4px;
+  flex-shrink: 0;
   font-size: 12px;
   color: #64748b;
   font-weight: 600;
-  height: 22px;
+  min-height: 32px;
   user-select: none;
 
   .el-icon {
@@ -251,6 +253,7 @@ function clearAllLabels() {
 .suggested-tags {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
   flex: 1;
 }
@@ -259,7 +262,8 @@ function clearAllLabels() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 8px;
+  min-height: 32px;
+  padding: 0 8px;
   font-size: 11px;
   font-weight: 500;
   color: #475569;

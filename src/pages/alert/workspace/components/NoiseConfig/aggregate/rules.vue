@@ -252,6 +252,8 @@ const createRouteForm = (parentId = 0): SaveAggregateGroupRuleReq => ({
   labels: parentId ? [] : ["alert_name"],
   workspace_id: props.workspaceId,
   is_diff_data_source: false,
+  receivers: [],
+  template_id: 0,
   matchers: [],
   group_wait: parentId ? 0 : 5,
   group_interval: parentId ? 0 : 30,
@@ -324,6 +326,8 @@ function normalizeRoute(route: AggregateGroupRule): AggregateGroupRule {
     priority: route.priority ?? 0,
     levels: route.levels || [],
     labels: route.labels || [],
+    receivers: route.receivers || [],
+    template_id: route.template_id || 0,
     matchers: route.matchers || [],
     group_wait: route.group_wait || 0,
     group_interval: route.group_interval || 0,
@@ -344,6 +348,8 @@ function fillForm(route: AggregateGroupRule) {
     labels: [...route.labels],
     workspace_id: route.workspace_id,
     is_diff_data_source: route.is_diff_data_source,
+    receivers: (route.receivers || []).map((receiver) => ({ ...receiver, metadata: receiver.metadata || {} })),
+    template_id: route.template_id || 0,
     matchers: route.matchers.map((matcher) => ({ ...matcher })),
     group_wait: route.group_wait,
     group_interval: route.group_interval,
@@ -451,6 +457,8 @@ function sanitizePayload(rawForm: SaveAggregateGroupRuleReq): SaveAggregateGroup
     name: (rawForm.name || "").trim(),
     labels: [...(rawForm.labels || [])],
     levels: [...(rawForm.levels || [])],
+    receivers: (rawForm.receivers || []).filter((receiver) => receiver.id && receiver.type),
+    template_id: rawForm.template_id || 0,
     matchers
   }
 }

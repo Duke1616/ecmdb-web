@@ -2,6 +2,7 @@ import { type RouteRecordRaw, createRouter } from "vue-router"
 import { flatMultiLevelRoutes } from "./helper"
 import { registerNavigationGuard } from "@/router/guard"
 import { routerConfig } from "@/router/config"
+import { isChunkLoadError, reloadOnChunkLoadError } from "@/common/utils/chunkLoadRecovery"
 // import { alertRoutes } from "./modules/alert"
 // import { taskRoutes } from "./modules/alert"
 
@@ -147,6 +148,12 @@ export const defaultRoutes: RouteRecordRaw[] = []
 const router = createRouter({
   history: routerConfig.history,
   routes: routerConfig.thirdLevelRouteCache ? flatMultiLevelRoutes(constantRoutes) : constantRoutes
+})
+
+router.onError((error) => {
+  if (isChunkLoadError(error)) {
+    reloadOnChunkLoadError()
+  }
 })
 
 /** 重置路由 */
