@@ -25,11 +25,21 @@
             />
 
             <!-- 拖拽列 -->
-            <el-table-column v-if="enableRowDrag" label="拖拽" width="85" align="center">
+            <el-table-column
+              v-if="enableRowDrag"
+              label="拖拽"
+              width="85"
+              align="center"
+              header-align="center"
+              class-name="drag-column"
+              label-class-name="drag-column-header"
+            >
               <template #default="{}">
-                <el-icon class="drag-handle" style="cursor: move; color: #999">
-                  <Rank />
-                </el-icon>
+                <span class="drag-handle-wrap">
+                  <el-icon class="drag-handle">
+                    <Rank />
+                  </el-icon>
+                </span>
               </template>
             </el-table-column>
 
@@ -653,6 +663,25 @@ defineExpose({
 }
 
 // 行拖拽相关样式
+:deep(.drag-column-header),
+:deep(.drag-column) {
+  text-align: center;
+}
+
+:deep(.drag-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-handle-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
 .drag-handle {
   cursor: move;
   color: #999;

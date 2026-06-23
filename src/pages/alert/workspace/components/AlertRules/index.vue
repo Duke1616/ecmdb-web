@@ -1,5 +1,5 @@
 <template>
-  <div class="alert-rules-page">
+  <WorkspaceSectionPage title="告警规则" subtitle="查看工作空间告警规则与 PromQL 配置" :flush-body="false">
     <div class="rules-content" v-loading="loading">
       <!-- 空状态 -->
       <div v-if="!loading && rules.length === 0" class="empty-state">
@@ -57,6 +57,7 @@
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
+        background
         :page-sizes="[10, 20, 50, 100]"
         :total="total"
         layout="total, sizes, prev, pager, next, jumper"
@@ -64,7 +65,7 @@
         @current-change="handleCurrentChange"
       />
     </div>
-  </div>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
@@ -73,6 +74,7 @@ import { Setting } from "@element-plus/icons-vue"
 import { listRulesByWorkspaceApi } from "@/api/alert/rule"
 import type { ListRulesByWorkspaceReq, Rule } from "@/api/alert/rule/types/rule"
 import CollapsibleSection from "@@/components/CollapsibleSection/index.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 const props = defineProps<{
   workspaceId: number
@@ -154,179 +156,168 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({
+  loadData: loadRules,
+  loadRules
+})
 </script>
 
 <style lang="scss" scoped>
-.alert-rules-page {
-  height: 100%;
+.rules-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+    transition: background 0.2s ease;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+
+  &::-webkit-scrollbar-thumb:active {
+    background: #64748b;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 280px;
+  padding: 40px 20px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  text-align: center;
+
+  .empty-icon {
+    margin-bottom: 12px;
+
+    .el-icon {
+      color: #94a3b8;
+      font-size: 36px;
+    }
+  }
+
+  .empty-title {
+    margin: 0 0 6px;
+    color: #374151;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .empty-description {
+    margin: 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+.rules-list {
   display: flex;
   flex-direction: column;
 
-  .rules-header {
+  .rule-header {
+    padding: 0;
+    background: transparent;
+    border: none;
+
+    .rule-meta {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+
+      .rule-interval {
+        color: #64748b;
+        font-size: 12px;
+      }
+    }
+  }
+
+  .rule-content {
+    padding-top: 16px;
+  }
+}
+
+.rule-expression {
+  margin-bottom: 16px;
+
+  .label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .expression {
+    display: block;
+    padding: 12px 14px;
+    color: #1f2937;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-family: Monaco, Menlo, "Ubuntu Mono", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+}
+
+.rule-labels {
+  .label {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .labels-list {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #e5e7eb;
-    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 6px;
 
-    h3 {
-      margin: 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
+    .el-tag {
+      border-radius: 4px;
+      font-size: 11px;
     }
   }
+}
 
-  .rules-content {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 8px;
-
-    // 自定义滚动条样式
-    &::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 3px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 3px;
-      transition: background 0.2s ease;
-
-      &:hover {
-        background: #94a3b8;
-      }
-    }
-
-    &::-webkit-scrollbar-thumb:active {
-      background: #64748b;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      background: #f8fafc;
-      border: 2px dashed #d1d5db;
-      border-radius: 6px;
-
-      .empty-icon {
-        margin-bottom: 12px;
-
-        .el-icon {
-          font-size: 36px;
-          color: #9ca3af;
-        }
-      }
-
-      .empty-title {
-        margin: 0 0 6px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #374151;
-      }
-
-      .empty-description {
-        margin: 0 0 20px 0;
-        font-size: 13px;
-        color: #6b7280;
-        line-height: 1.4;
-      }
-    }
-
-    .rules-list {
-      .rule-header {
-        padding: 0;
-        background: transparent;
-        border: none;
-
-        .rule-info {
-          .rule-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-
-            .rule-interval {
-              font-size: 12px;
-              color: #6b7280;
-              margin-left: 8px;
-            }
-          }
-        }
-      }
-
-      .rule-content {
-        padding: 16px 0 0 0;
-
-        .rule-expression {
-          margin-bottom: 16px;
-
-          .label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-          }
-
-          .expression {
-            display: block;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
-            font-size: 13px;
-            color: #1f2937;
-            line-height: 1.5;
-            word-break: break-all;
-            white-space: pre-wrap;
-          }
-        }
-
-        .rule-labels {
-          .label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #6b7280;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-          }
-
-          .labels-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-
-            .el-tag {
-              font-size: 11px;
-              padding: 2px 6px;
-              border-radius: 4px;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  .pagination-container {
-    margin-top: 16px;
-    padding: 16px 0;
-    border-top: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: center;
-    background: #ffffff;
-    flex-shrink: 0;
-  }
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding: 12px 0 0;
+  margin-top: 16px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
 }
 </style>

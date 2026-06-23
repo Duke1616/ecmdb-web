@@ -1,12 +1,14 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader title="升级配置" subtitle="管理消息升级配置" @refresh="loadConfigs">
-      <template #actions>
-        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建配置 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <WorkspaceSectionPage
+    title="消息升级"
+    subtitle="管理消息升级配置"
+    :primary-action="{
+      label: '创建配置',
+      icon: Plus,
+      capability: ALERT_CAPABILITIES.EscalationConfig.Add
+    }"
+    @primary-action="handleCreate"
+  >
     <!-- 数据表格 -->
     <DataTable
       :data="configs"
@@ -73,7 +75,7 @@
     >
       <EscalationConfigEditForm ref="formRef" v-model="formData" />
     </CustomDrawer>
-  </PageContainer>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
@@ -92,12 +94,12 @@ import {
   swapConfigPrioritiesApi
 } from "@/api/alert/escalation"
 import { getBusinessTypeLabel } from "@@/utils"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import EscalationConfigEditForm from "@/pages/alert/escalation/components/EscalationConfigEditForm.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 // 路由
 const router = useRouter()
@@ -349,13 +351,6 @@ defineExpose({
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-  padding: 0px !important;
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
-}
-
 // 配置信息样式
 .config-info-cell {
   .config-name {

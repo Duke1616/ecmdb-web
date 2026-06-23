@@ -1,16 +1,15 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader title="告警管理" subtitle="管理工作空间告警信息" @refresh="loadAlerts">
-      <template #actions>
-        <el-select v-model="alertFilter" placeholder="筛选状态" style="width: 120px; margin-right: 12px">
+  <WorkspaceSectionPage title="告警管理" subtitle="管理工作空间告警信息">
+    <template #actions>
+      <div class="alert-actions">
+        <el-select v-model="alertFilter" placeholder="筛选状态" class="status-filter">
           <el-option label="全部" value="all" />
           <el-option label="活跃" value="firing" />
           <el-option label="已解决" value="resolved" />
         </el-select>
-        <el-button type="primary" :icon="Plus" @click="handleCreateAlert"> 新建告警 </el-button>
-      </template>
-    </ManagerHeader>
+        <el-button type="primary" :icon="Plus" @click="handleCreateAlert">新建告警</el-button>
+      </div>
+    </template>
 
     <!-- 数据表格 -->
     <DataTable
@@ -86,7 +85,7 @@
         <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
-  </PageContainer>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
@@ -99,8 +98,7 @@ import { formatTimestamp } from "@/common/utils/day"
 import { usePagination } from "@/common/composables/usePagination"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 import { View, Check, Close } from "@element-plus/icons-vue"
 
 const props = defineProps<{
@@ -148,7 +146,7 @@ const tableColumns: Column[] = [
 // 表格属性
 const tableProps = {
   stripe: true,
-  height: "calc(100vh - 300px)"
+  height: "100%"
 }
 
 // 计算属性：过滤后的告警列表
@@ -323,15 +321,23 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({
+  loadData: loadAlerts,
+  loadAlerts
+})
 </script>
 
 <style lang="scss" scoped>
-// 覆盖 PageContainer 样式
-.page-container {
-  padding: 0px !important;
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
+.alert-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.status-filter {
+  width: 132px;
 }
 
 // 表格单元格样式
@@ -394,6 +400,17 @@ watch(
     font-size: 12px;
     color: #9ca3af;
     font-style: italic;
+  }
+}
+
+@media (max-width: 768px) {
+  .alert-actions {
+    width: 100%;
+  }
+
+  .status-filter {
+    flex: 1;
+    width: auto;
   }
 }
 </style>

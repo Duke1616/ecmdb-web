@@ -3,11 +3,7 @@
     <!-- 头部区域 -->
     <ManagerHeader
       :title="workspace?.name || '工作空间'"
-      :subtitle="
-        workspace
-          ? `${teamName} · ${workspace.enabled ? '已启用' : '已禁用'} · ${workspace.is_public ? '公开' : '私有'}`
-          : '加载中...'
-      "
+      :subtitle="teamName"
       :show-back-button="true"
       :show-add-button="false"
       :show-refresh-button="true"
@@ -46,25 +42,6 @@
             </el-icon>
             <span class="status-text">{{ formatLastUpdate() }}</span>
           </div>
-        </div>
-
-        <!-- 快速操作按钮 -->
-        <div class="quick-actions">
-          <el-tooltip content="告警管理" placement="bottom">
-            <el-button :icon="Warning" circle @click="handleAlerts" />
-          </el-tooltip>
-          <el-tooltip content="告警规则" placement="bottom">
-            <el-button :icon="Setting" circle @click="handleRules" />
-          </el-tooltip>
-          <el-tooltip content="降噪配置" placement="bottom">
-            <el-button :icon="Filter" circle @click="handleNoise" />
-          </el-tooltip>
-          <el-tooltip content="团队成员" placement="bottom">
-            <el-button :icon="User" circle @click="handleMembers" />
-          </el-tooltip>
-          <el-tooltip content="新建告警" placement="bottom">
-            <el-button type="primary" :icon="Plus" circle @click="handleCreateAlert" />
-          </el-tooltip>
         </div>
       </template>
     </ManagerHeader>
@@ -118,7 +95,7 @@
           </el-menu-item>
           <el-menu-item index="settings">
             <el-icon><Setting /></el-icon>
-            <span>空间设置</span>
+            <span>空间配置</span>
           </el-menu-item>
         </el-menu>
       </div>
@@ -136,12 +113,12 @@
         </div>
 
         <!-- 告警规则页面 -->
-        <div v-else-if="activeMenu === 'rules'" class="rules-page">
+        <div v-else-if="activeMenu === 'rules'" class="workspace-section-pane">
           <AlertRules :workspace-id="workspace?.id || 0" ref="alertRulesRef" />
         </div>
 
         <!-- 消息升级页面 -->
-        <div v-else-if="activeMenu === 'escalation'" class="noise-page">
+        <div v-else-if="activeMenu === 'escalation'" class="workspace-section-pane">
           <Escalation :workspace-id="workspace?.id || 0" :workspace-name="workspace?.name" ref="escalationRef" />
         </div>
 
@@ -151,32 +128,32 @@
         </div>
 
         <!-- 聚合规则页面 -->
-        <div v-else-if="activeMenu === 'noise-aggregate'" class="rules-page">
+        <div v-else-if="activeMenu === 'noise-aggregate'" class="workspace-section-pane">
           <AggregateRules :workspace-id="workspace?.id || 0" />
         </div>
 
         <!-- 抑制规则页面 -->
-        <div v-else-if="activeMenu === 'noise-inhibit'" class="rules-page">
+        <div v-else-if="activeMenu === 'noise-inhibit'" class="workspace-section-pane">
           <InhibitRules :workspace-id="workspace?.id || 0" />
         </div>
 
         <!-- 静默规则页面 -->
-        <div v-else-if="activeMenu === 'noise-silence'" class="rules-page">
+        <div v-else-if="activeMenu === 'noise-silence'" class="workspace-section-pane">
           <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
         </div>
 
         <!-- 工单配置页面 -->
-        <div v-else-if="activeMenu === 'ticket-config'" class="rules-page">
+        <div v-else-if="activeMenu === 'ticket-config'" class="workspace-section-pane">
           <TicketConfig :workspace-id="workspace?.id || 0" ref="ticketConfigRef" />
         </div>
 
         <!-- 成员页面 -->
-        <div v-else-if="activeMenu === 'members'" class="members-page">
+        <div v-else-if="activeMenu === 'members'" class="workspace-section-pane">
           <TeamMembers :team-id="workspace?.team_id || 0" ref="teamMembersRef" />
         </div>
 
         <!-- 设置页面 -->
-        <div v-else-if="activeMenu === 'settings'" class="settings-page">
+        <div v-else-if="activeMenu === 'settings'" class="workspace-section-pane">
           <Settings :workspace-id="workspace?.id || 0" ref="settingsRef" @refresh="handleSettingsRefresh" />
         </div>
       </div>
@@ -192,7 +169,6 @@ import { useWorkspaceMenuStore } from "@/pinia/stores/useWorkspaceMenu"
 import {
   Setting,
   User,
-  Plus,
   DataBoard,
   Warning,
   Filter,
@@ -297,38 +273,6 @@ const handleMenuSelect = (key: string) => {
   })
 }
 
-const handleMembers = () => {
-  menuStore.setActiveMenu("members")
-  nextTick(() => {
-    loadCurrentMenuData()
-  })
-}
-
-const handleAlerts = () => {
-  menuStore.setActiveMenu("alerts")
-  nextTick(() => {
-    loadCurrentMenuData()
-  })
-}
-
-const handleRules = () => {
-  menuStore.setActiveMenu("rules")
-  nextTick(() => {
-    loadCurrentMenuData()
-  })
-}
-
-const handleNoise = () => {
-  menuStore.setActiveMenu("noise-aggregate")
-  nextTick(() => {
-    loadCurrentMenuData()
-  })
-}
-
-const handleCreateAlert = () => {
-  ElMessage.info("创建告警功能待实现")
-}
-
 // 加载工作空间数据
 const loadWorkspaceData = async () => {
   const workspaceId = route.params.id
@@ -406,7 +350,7 @@ const loadCurrentMenuData = () => {
       teamMembersRef.value?.loadData?.()
       break
     case "settings":
-      // 空间设置数据加载
+      // 空间配置数据加载
       settingsRef.value?.loadData?.()
       break
   }
@@ -472,50 +416,9 @@ onActivated(() => {
   }
 }
 
-// 快速操作按钮样式
-.quick-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  .el-button {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #3b82f6;
-      background: #eff6ff;
-      color: #3b82f6;
-    }
-
-    &.el-button--primary {
-      background: #3b82f6;
-      border-color: #3b82f6;
-      color: #ffffff;
-
-      &:hover {
-        background: #1d4ed8;
-        border-color: #1d4ed8;
-      }
-    }
-  }
-}
-
-.header-right {
-  .el-button-group {
-    .el-button {
-      border-radius: 6px;
-    }
-  }
-}
-
 .workspace-content {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   min-height: calc(100vh - 200px);
 
   .workspace-sidebar {
@@ -536,7 +439,6 @@ onActivated(() => {
     background: #ffffff;
     border-radius: 8px;
     border: 1px solid #e5e7eb;
-    padding: 24px;
     min-width: 0; // 确保 flex 子元素可以收缩
     overflow: hidden; // 防止内容溢出
   }
@@ -545,12 +447,25 @@ onActivated(() => {
 // 通用页面样式
 .overview-page,
 .rules-page,
-.alerts-page,
 .noise-page,
-.members-page,
-.settings-page {
+.members-page {
   height: 100%;
   display: flex;
   flex-direction: column;
+  padding: 24px;
+}
+
+.alerts-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.workspace-section-pane {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 </style>

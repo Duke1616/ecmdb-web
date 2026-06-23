@@ -1,9 +1,14 @@
 <template>
-  <CollapsibleSection title="静默规则" tip="临时静默特定告警，避免在维护期间产生噪音" :default-collapsed="true">
-    <template #actions>
-      <el-button type="primary" :icon="Plus" @click="handleAddRule"> 添加规则 </el-button>
-    </template>
-
+  <WorkspaceSectionPage
+    title="静默规则"
+    subtitle="临时静默特定告警，避免在维护期间产生噪音"
+    :flush-body="false"
+    :primary-action="{
+      label: '添加规则',
+      icon: Plus
+    }"
+    @primary-action="handleAddRule"
+  >
     <div class="silence-rules-list" v-loading="loading">
       <!-- 空状态 -->
       <div v-if="!loading && rules.length === 0" class="empty-state">
@@ -239,7 +244,7 @@
         </el-form>
       </div>
     </Drawer>
-  </CollapsibleSection>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
@@ -247,7 +252,7 @@ import { ref, onMounted, watch } from "vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { Plus, Bell, Filter, Clock, User, Edit, Delete, Setting } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
-import CollapsibleSection from "@@/components/CollapsibleSection/index.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 // 静默规则接口
 interface SilenceRule {

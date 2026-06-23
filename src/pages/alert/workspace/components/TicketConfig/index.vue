@@ -1,17 +1,14 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="工单配置"
-      subtitle="配置告警转工单规则"
-      :show-back-button="false"
-      :show-add-button="true"
-      :show-refresh-button="true"
-      :add-button-text="'添加配置'"
-      @add="handleAddConfig"
-      @refresh="loadConfigs"
-    />
-
+  <WorkspaceSectionPage
+    title="工单配置"
+    subtitle="配置告警转工单规则"
+    :primary-action="{
+      label: '添加配置',
+      icon: Plus,
+      capability: ALERT_CAPABILITIES.TicketConfig.Add
+    }"
+    @primary-action="handleAddConfig"
+  >
     <!-- 数据表格 -->
     <DataTable
       :data="configs"
@@ -68,17 +65,17 @@
         :is-edit="isEdit"
       />
     </Drawer>
-  </PageContainer>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import { Plus } from "@element-plus/icons-vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import PageContainer from "@@/components/PageContainer/index.vue"
 import { Drawer } from "@@/components/Dialogs"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import type { TicketConfig } from "@/api/alert/ticket_config/types"
 import {
   createTicketConfigApi,
@@ -90,6 +87,7 @@ import {
 } from "@/api/alert/ticket_config/index"
 import { useTicketConfigForm } from "./composables/useTicketConfigForm"
 import TicketConfigForm from "./components/TicketConfigForm.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 // 接收工作空间ID
 const props = defineProps<{
@@ -283,16 +281,14 @@ const handleCancel = () => {
 onMounted(() => {
   loadConfigs()
 })
+
+defineExpose({
+  loadConfigs,
+  loadData: loadConfigs
+})
 </script>
 
 <style lang="scss" scoped>
-.page-container {
-  padding: 0px !important;
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
-}
-
 .name-cell {
   .config-name {
     margin: 0;

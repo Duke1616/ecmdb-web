@@ -1,17 +1,13 @@
 <template>
-  <div class="aggregate-rules-page">
-    <ManagerHeader
-      title="聚合规则"
-      subtitle="每个工作空间只能有一个聚合规则"
-      :show-back-button="false"
-      :show-add-button="true"
-      :show-refresh-button="true"
-      :add-button-text="rule ? '已有规则' : '添加规则'"
-      :add-button-disabled="!!rule"
-      @add="handleAddRule"
-      @refresh="loadRules"
-    />
-
+  <WorkspaceSectionPage
+    title="聚合规则"
+    subtitle="每个工作空间只能有一个聚合规则"
+    :flush-body="false"
+    :primary-action="primaryAction"
+    :secondary-action="secondaryAction"
+    @primary-action="handlePrimaryAction"
+    @secondary-action="handleDeleteRule"
+  >
     <div class="aggregate-rules-content" v-loading="loading">
       <!-- 空状态 -->
       <div v-if="!loading && !rule" class="empty-state">
@@ -20,98 +16,71 @@
         </div>
         <h4 class="empty-title">暂无聚合规则</h4>
         <p class="empty-description">为当前工作空间配置告警聚合规则，减少重复告警</p>
-        <el-button type="primary" :icon="Setting" :disabled="!!rule" @click="handleAddRule">
-          {{ rule ? "已有规则" : "添加聚合规则" }}
-        </el-button>
+        <AuthButton
+          type="primary"
+          :icon="Setting"
+          :disabled="!!rule"
+          :capability="ALERT_CAPABILITIES.Aggregate.Add"
+          disable-mode
+          @click="handleAddRule"
+        >
+          添加聚合规则
+        </AuthButton>
       </div>
 
       <!-- 规则卡片 -->
-      <div v-if="rule" class="aggregate-rule-card">
-        <!-- 卡片头部 -->
-        <div class="card-header">
-          <div class="header-left">
-            <div class="rule-meta">
-              <el-tag :type="rule.type === 0 ? 'primary' : 'warning'" size="small" class="type-tag">
-                {{ rule.type === 0 ? "按标签聚合" : "按时间聚合" }}
-              </el-tag>
-              <el-tag type="success" size="small" class="status-tag"> 运行中 </el-tag>
-            </div>
-          </div>
-          <div class="header-right">
-            <el-button type="primary" :icon="Edit" size="default" @click="handleEditRule"> 编辑 </el-button>
-            <el-button type="danger" :icon="Delete" size="default" @click="handleDeleteRule"> 删除 </el-button>
-          </div>
-        </div>
-
-        <!-- 卡片内容 -->
-        <div class="card-content">
-          <!-- 标签区域 -->
-          <div class="info-section">
-            <div class="section-title">
+      <div v-if="rule" class="aggregate-config-card">
+        <div class="config-card-body">
+          <section class="config-panel dimension-panel">
+            <div class="panel-title">
               <el-icon><PriceTag /></el-icon>
               <span>聚合标签</span>
+              <el-tag :type="rule.type === 0 ? 'primary' : 'warning'" size="small">
+                {{ rule.type === 0 ? "按标签聚合" : "按时间聚合" }}
+              </el-tag>
+              <el-tag type="success" size="small">运行中</el-tag>
             </div>
-            <div class="section-content">
-              <div v-if="rule.labels && rule.labels.length > 0" class="tags-container">
-                <el-tag v-for="label in rule.labels" :key="label" type="info" size="small" class="label-tag">
-                  {{ label }}
-                </el-tag>
-              </div>
-              <div v-else class="empty-state">
-                <el-icon><Warning /></el-icon>
-                <span>未配置聚合标签</span>
-              </div>
+            <div v-if="rule.labels && rule.labels.length > 0" class="tags-container">
+              <el-tag v-for="label in rule.labels" :key="label" type="info" size="small" class="label-tag">
+                {{ label }}
+              </el-tag>
             </div>
-          </div>
+            <div v-else class="inline-empty">未配置聚合标签</div>
+          </section>
 
-          <!-- 时间配置区域 -->
-          <div class="info-section">
-            <div class="section-title">
+          <section class="config-panel timing-panel">
+            <div class="panel-title">
               <el-icon><Clock /></el-icon>
-              <span>时间配置</span>
+              <span>时间策略</span>
             </div>
-            <div class="section-content">
-              <div class="timing-cards">
-                <div class="timing-card">
-                  <div class="timing-value">{{ rule.group_wait }}</div>
-                  <div class="timing-label">等待时间(秒)</div>
-                </div>
-                <div class="timing-card">
-                  <div class="timing-value">{{ rule.group_interval }}</div>
-                  <div class="timing-label">组间隔(秒)</div>
-                </div>
-                <div class="timing-card">
-                  <div class="timing-value">{{ rule.repeat_interval }}</div>
-                  <div class="timing-label">重复间隔(秒)</div>
-                </div>
+            <div class="timing-list">
+              <div class="timing-item">
+                <span>等待时间</span>
+                <strong>{{ rule.group_wait }}s</strong>
+              </div>
+              <div class="timing-item">
+                <span>组间隔</span>
+                <strong>{{ rule.group_interval }}s</strong>
+              </div>
+              <div class="timing-item">
+                <span>重复间隔</span>
+                <strong>{{ rule.repeat_interval }}s</strong>
               </div>
             </div>
-          </div>
+          </section>
 
-          <!-- 其他配置区域 -->
-          <div class="info-section">
-            <div class="section-title">
-              <el-icon><Operation /></el-icon>
+          <section class="config-panel option-panel">
+            <div class="panel-title">
+              <el-icon><DataBoard /></el-icon>
               <span>其他配置</span>
             </div>
-            <div class="section-content">
-              <div class="config-cards">
-                <div class="config-card">
-                  <div class="config-icon">
-                    <el-icon><DataBoard /></el-icon>
-                  </div>
-                  <div class="config-content">
-                    <div class="config-label">区分数据源</div>
-                    <div class="config-value">
-                      <el-tag :type="rule.is_diff_data_source ? 'success' : 'info'" size="small" class="status-tag">
-                        {{ rule.is_diff_data_source ? "是" : "否" }}
-                      </el-tag>
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="option-row">
+              <span>区分数据源</span>
+              <el-tag :type="rule.is_diff_data_source ? 'success' : 'info'" size="small">
+                {{ rule.is_diff_data_source ? "是" : "否" }}
+              </el-tag>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
@@ -125,19 +94,20 @@
       @confirm="handleConfirm"
       @cancel="handleCancel"
     />
-  </div>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from "vue"
+import { computed, ref, reactive, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { Setting, Edit, Delete, PriceTag, Warning, Operation, DataBoard } from "@element-plus/icons-vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import { Setting, Edit, Delete, PriceTag, Clock, DataBoard } from "@element-plus/icons-vue"
 import AggregateDrawer from "./drawer.vue"
 import { getAggregateGroupByWorkspaceApi, deleteAggregateRuleApi, saveAggregateRuleApi } from "@/api/alert/aggregate"
 import type { CreateAggregateGroupRuleReq } from "@/api/alert/aggregate/types"
 import type { RetrieveAggregateGroup } from "@/api/alert/aggregate/types/retrieve"
-import { computed } from "vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import WorkspaceSectionPage from "../../WorkspaceSectionPage.vue"
 const props = defineProps<{ workspaceId: number }>()
 const currentWorkspaceId = computed(() => {
   return props.workspaceId
@@ -171,6 +141,21 @@ const formData = defineModel<CreateAggregateGroupRuleReq>("formData", {
 // 响应式数据
 const loading = ref(false)
 const rule = ref<RetrieveAggregateGroup | null>(null)
+const primaryAction = computed(() => ({
+  label: rule.value ? "编辑配置" : "添加规则",
+  icon: rule.value ? Edit : Setting,
+  capability: rule.value ? ALERT_CAPABILITIES.Aggregate.Edit : ALERT_CAPABILITIES.Aggregate.Add
+}))
+const secondaryAction = computed(() =>
+  rule.value
+    ? {
+        label: "删除配置",
+        icon: Delete,
+        type: "danger" as const,
+        capability: ALERT_CAPABILITIES.Aggregate.Delete
+      }
+    : undefined
+)
 
 // 重置表单
 const resetForm = () => {
@@ -219,6 +204,15 @@ const handleAddRule = () => {
   dialogVisible.value = true
 }
 
+const handlePrimaryAction = () => {
+  if (rule.value) {
+    handleEditRule()
+    return
+  }
+
+  handleAddRule()
+}
+
 // 编辑规则
 const handleEditRule = () => {
   if (!rule.value) return
@@ -255,18 +249,13 @@ const handleDeleteRule = async () => {
 
 // 抽屉确认
 const handleConfirm = async () => {
-  console.log("handleConfirm 被调用", { formData: formData.value, isEdit: isEdit.value })
-
   if (!formData.value) {
-    console.log("formData 为空，返回")
     return
   }
 
   try {
     submitting.value = true
-    console.log("开始调用 saveAggregateRuleApi", formData.value)
     await saveAggregateRuleApi(formData.value)
-    console.log("saveAggregateRuleApi 调用成功")
 
     dialogVisible.value = false
     loadRules()
@@ -286,33 +275,28 @@ const handleCancel = () => {
 </script>
 
 <style lang="scss" scoped>
-.aggregate-rules-page {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
 .aggregate-rules-content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  min-height: 0;
   overflow-y: auto;
 
-  // 自定义滚动条样式
   &::-webkit-scrollbar {
     width: 6px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: #f1f5f9;
     border-radius: 3px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: #cbd5e1;
     border-radius: 3px;
 
     &:hover {
-      background: #a8a8a8;
+      background: #94a3b8;
     }
   }
 }
@@ -322,213 +306,195 @@ const handleCancel = () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  flex: 1;
+  min-height: 360px;
+  padding: 64px 20px;
   text-align: center;
-  background: #f8f9fa;
-  border: 1px dashed #dee2e6;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
   border-radius: 8px;
-  margin: 20px 0;
 
   .empty-icon {
-    font-size: 48px;
-    color: #adb5bd;
+    color: #94a3b8;
+    font-size: 44px;
     margin-bottom: 16px;
   }
 
   .empty-title {
+    margin: 0 0 8px;
+    color: #334155;
     font-size: 16px;
-    font-weight: 500;
-    color: #495057;
-    margin: 0 0 8px 0;
+    font-weight: 700;
   }
 
   .empty-description {
+    max-width: 320px;
+    margin: 0 0 24px;
+    color: #64748b;
     font-size: 14px;
-    color: #6c757d;
-    margin: 0 0 24px 0;
-    max-width: 300px;
+    line-height: 1.5;
   }
 }
 
-.aggregate-rule-card {
-  background: #fff;
-  border: 1px solid #e9ecef;
+.aggregate-config-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
-  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
 
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
+.config-card-body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  grid-template-rows: auto 1fr;
+  gap: 18px;
+  min-width: 0;
+  min-height: 0;
+  padding: 24px;
+  background: #ffffff;
+}
 
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
+.config-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 22px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
 
-      .type-tag {
-        font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 4px;
-      }
+.dimension-panel {
+  grid-row: 1 / span 2;
+}
 
-      .status-tag {
-        font-size: 12px;
-        padding: 4px 8px;
-        border-radius: 4px;
-      }
-    }
+.option-panel {
+  min-height: 180px;
+}
 
-    .header-right {
-      display: flex;
-      gap: 8px;
-    }
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  color: #334155;
+  font-size: 16px;
+  font-weight: 800;
+
+  .el-icon {
+    color: #64748b;
+    font-size: 16px;
+  }
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: flex-start;
+  flex: 1;
+}
+
+.label-tag {
+  height: 30px;
+  padding: 0 10px;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.inline-empty {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 14px 16px;
+  color: #94a3b8;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.timing-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  flex: 1;
+}
+
+.timing-item,
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  min-height: 96px;
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.timing-item {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  span {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 700;
   }
 
-  .card-content {
-    padding: 20px;
+  strong {
+    color: #1e293b;
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1;
+  }
+}
 
-    .info-section {
-      margin-bottom: 24px;
+.option-row {
+  span {
+    color: #64748b;
+    font-size: 14px;
+    font-weight: 700;
+  }
+}
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+@media (max-width: 1200px) {
+  .config-card-body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
 
-      .section-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        font-weight: 500;
-        color: #495057;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #e9ecef;
+  .dimension-panel {
+    grid-row: auto;
+  }
+}
 
-        .el-icon {
-          font-size: 14px;
-          color: #6c757d;
-        }
-      }
+@media (max-width: 768px) {
+  .config-card-body {
+    padding: 16px;
+  }
 
-      .section-content {
-        .tags-container {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
+  .config-panel {
+    padding: 16px;
+  }
 
-          .label-tag {
-            font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-          }
-        }
-
-        .empty-state {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          color: #6c757d;
-          font-size: 13px;
-          padding: 12px;
-          background: #f8f9fa;
-          border-radius: 4px;
-
-          .el-icon {
-            font-size: 14px;
-          }
-        }
-
-        .timing-cards {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
-
-          .timing-card {
-            text-align: center;
-            padding: 16px 12px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-
-            .timing-value {
-              font-size: 24px;
-              font-weight: 600;
-              color: #495057;
-              margin-bottom: 4px;
-            }
-
-            .timing-label {
-              font-size: 12px;
-              color: #6c757d;
-            }
-          }
-        }
-
-        .config-cards {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 16px;
-
-          .config-card {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 6px;
-
-            .config-icon {
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              width: 36px;
-              height: 36px;
-              background: #007bff;
-              border-radius: 6px;
-              margin-right: 12px;
-              flex-shrink: 0;
-
-              .el-icon {
-                font-size: 16px;
-                color: #fff;
-              }
-            }
-
-            .config-content {
-              flex: 1;
-
-              .config-label {
-                font-size: 12px;
-                color: #6c757d;
-                margin-bottom: 4px;
-              }
-
-              .config-value {
-                .status-tag {
-                  font-size: 11px;
-                  padding: 2px 6px;
-                }
-
-                .template-id {
-                  font-size: 13px;
-                  font-weight: 500;
-                  color: #495057;
-                  background: #fff;
-                  padding: 2px 6px;
-                  border-radius: 4px;
-                  border: 1px solid #e9ecef;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  .timing-list {
+    grid-template-columns: 1fr;
   }
 }
 </style>

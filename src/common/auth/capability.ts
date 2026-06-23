@@ -583,5 +583,299 @@ export const TASK_CAPABILITIES = {
   }
 } as const
 
+export const ALERT_CAPABILITIES = {
+  /** 告警规则相关 */
+  Rule: {
+    /** 告警规则列表 */
+    View: "alert:rule:view",
+    /** 创建告警规则 */
+    Add: "alert:rule:add",
+    /** 删除告警规则 */
+    Delete: "alert:rule:delete",
+    /** 修改告警规则 */
+    Edit: "alert:rule:edit",
+    /** 告警规则详情 */
+    Detail: "alert:rule:get",
+    /** 创建规则分组 */
+    GroupAdd: "alert:rule:group_add",
+    /** 更新规则分组 */
+    GroupEdit: "alert:rule:group_edit",
+    /** 规则分组列表 */
+    GroupView: "alert:rule:group_view",
+    /** 按关键字查询告警规则 */
+    ViewByKeyword: "alert:rule:view_by_keyword"
+  },
+
+  /** 协作空间相关 */
+  Workspace: {
+    /** 告警规则列表 */
+    ViewRules: "alert:workspace:view_rules",
+    /** 抑制规则列表 */
+    ViewInhibits: "alert:workspace:view_inhibits",
+    /** 创建空间 */
+    Add: "alert:workspace:add",
+    /** 更新空间 */
+    Edit: "alert:workspace:edit",
+    /** 空间列表 */
+    View: "alert:workspace:view",
+    /** 空间详情 */
+    Detail: "alert:workspace:get",
+    /** 告警列表 */
+    ViewAlerts: "alert:workspace:view_alerts",
+    /** 升级配置列表 */
+    ViewEscalationConfigs: "alert:workspace:view_escalation_configs",
+    /** 工单配置 */
+    ViewTicketConfigs: "alert:workspace:view_ticket_configs",
+    /** 我的团队空间 */
+    ViewMyTeam: "alert:workspace:view_my_team",
+    /** 按团队查询空间 */
+    ViewByTeam: "alert:workspace:view_by_team",
+    /** 按关键字查询空间 */
+    ViewByKeyword: "alert:workspace:view_by_keyword"
+  },
+
+  /** 可观测源相关 */
+  Datasource: {
+    /** 更新数据源 */
+    Edit: "alert:datasource:edit",
+    /** 数据源列表 */
+    View: "alert:datasource:view",
+    /** 创建数据源 */
+    Add: "alert:datasource:add",
+    /** 删除数据源 */
+    Delete: "alert:datasource:delete",
+    /** 按类型查询数据源 */
+    ViewByType: "alert:datasource:view_by_type"
+  },
+
+  /** 抑制规则相关 */
+  Inhibit: {
+    /** 状态切换 */
+    Toggle: "alert:inhibit:toggle",
+    /** 续期时间窗口 */
+    Renewal: "alert:inhibit:renewal",
+    /** 更新抑制规则 */
+    Edit: "alert:inhibit:edit",
+    /** 删除抑制规则 */
+    Delete: "alert:inhibit:delete",
+    /** 创建抑制规则 */
+    Add: "alert:inhibit:add"
+  },
+
+  /** 聚合分组相关 */
+  Aggregate: {
+    /** 聚合分组详情 */
+    Detail: "alert:aggregate:get",
+    /** 更新聚合分组 */
+    Edit: "alert:aggregate:edit",
+    /** 删除聚合分组 */
+    Delete: "alert:aggregate:delete",
+    /** 创建聚合分组 */
+    Add: "alert:aggregate:add"
+  },
+
+  /** 团队管理相关 */
+  Team: {
+    /** 更新群组 */
+    ChatEdit: "alert:team:chat_edit",
+    /** 删除团队 */
+    Delete: "alert:team:delete",
+    /** 团队列表 */
+    View: "alert:team:view",
+    /** 团队详情 */
+    Detail: "alert:team:get",
+    /** 创建团队 */
+    Add: "alert:team:add",
+    /** 群组列表 */
+    ChatView: "alert:team:caht_view",
+    /** 绑定群组 */
+    ChatBind: "alert:team:chat_bind",
+    /** 解绑群组 */
+    ChatDelete: "alert:team:chat_delete",
+    /** 更新团队 */
+    Edit: "alert:team:edit"
+  },
+
+  /** 告警管理相关 */
+  Manager: {
+    /** 历史告警 */
+    ViewHistory: "alert:manager:view_history",
+    /** 当前告警 */
+    ViewCurrent: "alert:manager:view_current"
+  },
+
+  /** 模版集合相关 */
+  TemplateSet: {
+    /** 创建模板集 */
+    Add: "alert:template_set:add",
+    /** 更新模板集 */
+    Edit: "alert:template_set:edit",
+    /** 删除模板集 */
+    Delete: "alert:template_set:delete",
+    /** 模板集列表 */
+    View: "alert:template_set:view",
+    /** 查询模板集条目 */
+    ItemView: "alert:template_set:item_view",
+    /** 清空模板集条目 */
+    ItemDeleteAll: "alert:template_set:item_delete_all",
+    /** 删除模板集条目 */
+    ItemDelete: "alert:template_set:item_delete",
+    /** 批量新增模板集条目 */
+    ItemAddBatch: "alert:template_set:item_add_batch",
+    /** 新增模板集条目 */
+    ItemAdd: "alert:template_set:item_add",
+    /** 获取模板集 */
+    Detail: "alert:template_set:get",
+    /** 按 ID 查询模板集 */
+    ViewByIds: "alert:template_set:view_by_ids"
+  },
+
+  /** 模板管理相关 */
+  Template: {
+    /** 更新模板版本 */
+    VersionEdit: "alert:template:version_edit",
+    /** 发布模板 */
+    Publish: "alert:template:publish",
+    /** 创建模板 */
+    Add: "alert:template:add",
+    /** 查询模板列表 */
+    View: "alert:template:view",
+    /** 查询模板详情 */
+    Detail: "alert:template:get",
+    /** 拷贝模板版本 */
+    VersionFork: "alert:template:version_fork",
+    /** 更新模板 */
+    Edit: "alert:template:edit",
+    /** 按渠道查询模板 */
+    ViewByChannel: "alert:template:view_by_channel"
+  },
+
+  /** 升级配置相关 */
+  EscalationConfig: {
+    /** 升级配置列表 */
+    View: "alert:escalation:config_view",
+    /** 状态切换 */
+    Toggle: "alert:escalation:config_toggle",
+    /** 交换升级配置优先级 */
+    Swap: "alert:escalation:config_swap",
+    /** 升级配置详情 */
+    Detail: "alert:escalation:config_get",
+    /** 修改升级配置 */
+    Edit: "alert:escalation:config_edit",
+    /** 删除升级配置 */
+    Delete: "alert:escalation:config_delete",
+    /** 创建升级配置 */
+    Add: "alert:escalation:config_add"
+  },
+
+  /** 升级步骤相关 */
+  EscalationStep: {
+    /** 交换升级步骤级别 */
+    Swap: "alert:escalation:step_swap",
+    /** 删除升级步骤 */
+    Delete: "alert:escalation:step_delete",
+    /** 升级步骤详情 */
+    Detail: "alert:escalation:step_get",
+    /** 修改升级步骤 */
+    Edit: "alert:escalation:step_edit",
+    /** 创建升级步骤 */
+    Add: "alert:escalation:step_add",
+    /** 升级步骤列表 */
+    View: "alert:escalation:step_view"
+  },
+
+  /** 升级步骤模版相关 */
+  EscalationStepTemplate: {
+    /** 升级步骤模板详情 */
+    Detail: "alert:escalation:step_tmpl_get",
+    /** 修改升级步骤模板 */
+    Edit: "alert:escalation:step_tmpl_edit",
+    /** 删除升级步骤模板 */
+    Delete: "alert:escalation:step_tmpl_delete",
+    /** 创建升级步骤模板 */
+    Add: "alert:escalation:step_tmpl_add",
+    /** 升级步骤模板列表 */
+    View: "alert:escalation:step_tmpl_view",
+    /** 按 ID 查询升级步骤模板 */
+    ViewByIds: "alert:escalation:step_tmpl_view_by_ids"
+  },
+
+  /** 路由规则相关 */
+  RoutingRule: {
+    /** 修改路由规则 */
+    Edit: "alert:routing_rule:edit",
+    /** 路由规则列表 */
+    View: "alert:routing_rule:view",
+    /** 状态切换 */
+    Toggle: "alert:routing_rule:toggle",
+    /** 交换优先级 */
+    SwapPriorities: "alert:routing_rule:swap_priorities",
+    /** 路由规则详情 */
+    Detail: "alert:routing_rule:get",
+    /** 删除路由规则 */
+    Delete: "alert:routing_rule:delete",
+    /** 创建路由规则 */
+    Add: "alert:routing_rule:add"
+  },
+
+  /** 工单转发相关 */
+  TicketConfig: {
+    /** 状态切换 */
+    Toggle: "alert:ticket_config:toggle",
+    /** 工单转发详情 */
+    Detail: "alert:ticket_config:get",
+    /** 交换优先级 */
+    SwapPriorities: "alert:ticket_config:swap_priorities",
+    /** 创建工单转发 */
+    Add: "alert:ticket_config:add",
+    /** 删除工单转发 */
+    Delete: "alert:ticket_config:delete",
+    /** 更新工单转发 */
+    Edit: "alert:ticket_config:edit"
+  },
+
+  /** 即时查询相关 */
+  Explore: {
+    /** 添加查询历史 */
+    HistoryAdd: "alert:explore:history_add",
+    /** 清空查询历史 */
+    HistoryClear: "alert:explore:history_clear",
+    /** 删除查询历史 */
+    HistoryDelete: "alert:explore:history_delete",
+    /** 查询历史列表 */
+    HistoryView: "alert:explore:history_view",
+    /** 指标查询 */
+    Metrics: "alert:explore:metrics"
+  },
+
+  /** 排班管理相关 */
+  Oncall: {
+    /** 更新临时规则 */
+    AdjEdit: "alert:oncall:adj_edit",
+    /** 删除排班 */
+    Delete: "alert:oncall:delete",
+    /** 修改排班 */
+    Edit: "alert:oncall:edit",
+    /** 删除临时规则 */
+    AdjDelete: "alert:oncall:adj_delete",
+    /** 新增临时规则 */
+    AdjAdd: "alert:oncall:adj_add",
+    /** 创建排班 */
+    Add: "alert:oncall:add",
+    /** 排班详情 */
+    Detail: "alert:oncall:get",
+    /** 预览排班 */
+    PreviewView: "alert:oncall:preview_view",
+    /** 新增常规规则 */
+    RuleAdd: "alert:oncall:rule_add",
+    /** 更新常规规则 */
+    RuleEdit: "alert:oncall:rule_edit",
+    /** 查看规则 */
+    RuleView: "alert:oncall:rule_view",
+    /** 排班列表 */
+    View: "alert:oncall:view"
+  }
+} as const
+
 /** 权限常量类型定义 */
 export type AuthType = typeof IAM_CAPABILITIES
