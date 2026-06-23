@@ -26,7 +26,7 @@ const emit = defineEmits<{
   (e: "cancel"): void
 }>()
 
-// 使用 defineModel 简化双向绑定
+// NOTE: 该组件为抽屉 UI 控制器，其状态与表单数据需与父组件进行双向同步管理
 const visible = defineModel<boolean>("visible", { default: false })
 const isEdit = defineModel<boolean>("isEdit", { default: false })
 const submitting = defineModel<boolean>("submitting", { default: false })

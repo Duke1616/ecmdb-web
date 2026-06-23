@@ -1,28 +1,25 @@
-// 聚合组规则相关类型定义
+// 聚合路由相关类型定义
 
-export interface Matcher {
-  type: number
-  name: string
-  value: string
-}
+export { MatchType } from "@@/constants/match-type"
+export type { Matcher, Matchers } from "@@/types/matcher"
 
-export type Matchers = Matcher[]
+import type { Matchers } from "@@/types/matcher"
 
-export interface CreateAggregateGroupRuleReq {
-  id?: number
-  type: number
-  labels: string[]
-  workspace_id: number
-  is_diff_data_source: boolean
-  matchers: Matchers
-  group_wait: number
-  group_interval: number
-  repeat_interval: number
+export enum AggregateType {
+  Disabled = 1,
+  Rule = 2,
+  Intelligent = 3
 }
 
 export interface AggregateGroupRule {
   id: number
-  type: number
+  name: string
+  type: AggregateType
+  parent_id: number
+  enabled: boolean
+  is_default: boolean
+  priority: number
+  levels: number[]
   labels: string[]
   workspace_id: number
   is_diff_data_source: boolean
@@ -30,15 +27,94 @@ export interface AggregateGroupRule {
   group_wait: number
   group_interval: number
   repeat_interval: number
+  effective?: EffectiveAggregateRoute
+  created_at?: string
+  updated_at?: string
+}
+
+export interface EffectiveAggregateRoute {
+  route_id: number
+  route_name: string
+  route_path: number[]
+  group_by: string[]
+  is_diff_data_source: boolean
+  group_wait: number
+  group_interval: number
+  repeat_interval: number
+}
+
+export interface SaveAggregateGroupRuleReq {
+  id?: number
+  name: string
+  type: AggregateType
+  parent_id: number
   enabled: boolean
-  created_at: string
-  updated_at: string
+  is_default: boolean
+  priority: number
+  levels: number[]
+  labels: string[]
+  workspace_id: number
+  is_diff_data_source: boolean
+  matchers: Matchers
+  group_wait: number
+  group_interval: number
+  repeat_interval: number
+}
+
+export interface PreviewAggregateRouteReq {
+  workspace_id: number
+  rule_id?: number
+  rule_name?: string
+  data_source_id?: number
+  cluster?: string
+  level: number
+  labels: Record<string, string>
+}
+
+export interface PreviewAggregateRouteResp {
+  route_id: number
+  route_name: string
+  route_path: number[]
+  group_by: string[]
+  is_diff_data_source: boolean
+  group_fingerprint: number
+  group_wait: number
+  group_interval: number
+  repeat_interval: number
+}
+
+export interface DeleteAggregateRuleResponse {
+  success: boolean
+}
+
+export type ListAggregateRoutesResponse = AggregateGroupRule[]
+export type GetAggregateGroupByWorkspaceResp = AggregateGroupRule | null
+
+// 兼容旧聚合表单文件的类型命名，页面入口已迁移到聚合路由树。
+export interface CreateAggregateGroupRuleReq {
+  id?: number
+  name?: string
+  type: number
+  parent_id?: number
+  enabled?: boolean
+  is_default?: boolean
+  priority?: number
+  levels?: number[]
+  labels: string[]
+  workspace_id: number
+  is_diff_data_source: boolean
+  matchers: Matchers
+  group_wait?: number
+  group_interval?: number
+  repeat_interval?: number
+  time_window?: unknown
+  notification_template?: string
 }
 
 export interface ListAggregateRulesReq {
   workspace_id: number
-  offset: number
-  limit: number
+  offset?: number
+  limit?: number
   keyword?: string
 }
 
@@ -47,10 +123,10 @@ export interface ListAggregateRulesResponse {
   total: number
 }
 
-export interface DeleteAggregateRuleReq {
-  id: number
+export interface ReorderAggregateRoutesReq {
+  workspace_id: number
+  dragged_route_id: number
+  target_parent_id: number
+  target_position: number
 }
 
-export interface DeleteAggregateRuleResponse {
-  success: boolean
-}

@@ -1,60 +1,59 @@
 <template>
   <div class="label-selector">
-    <!-- 标签输入区域 -->
-    <div class="labels-input-wrapper">
-      <el-input
-        v-model="labelInput"
-        :placeholder="placeholder"
-        size="large"
-        class="label-input"
-        @keyup.enter="addLabel"
-        @blur="addLabel"
-      >
-        <template #suffix>
-          <el-button type="primary" size="small" :icon="Plus" @click="addLabel" :disabled="!labelInput.trim()">
-            添加
-          </el-button>
-        </template>
-      </el-input>
-    </div>
-
-    <!-- 标签显示区域 -->
-    <div class="labels-display" v-if="modelValue && modelValue.length > 0">
-      <div class="labels-header">
-        <span class="labels-count">已选择 {{ modelValue.length }} 个标签</span>
-        <el-button type="danger" size="small" :icon="Delete" @click="clearAllLabels" text> 清空 </el-button>
-      </div>
-      <div class="labels-list">
+    <!-- 复合输入与展示框 -->
+    <div
+      class="composite-container"
+      :class="{ 'is-focused': isFocused, 'has-value': modelValue && modelValue.length > 0 }"
+      @click="focusInput"
+    >
+      <div class="tags-wrapper">
         <el-tag
           v-for="(label, index) in modelValue"
           :key="index"
           closable
-          @close="removeLabel(index)"
-          class="label-item"
-          type="info"
+          @close.stop="removeLabel(index)"
+          class="selected-tag"
+          size="default"
+          type="primary"
           effect="light"
         >
           {{ label }}
         </el-tag>
+
+        <input
+          ref="inputRef"
+          v-model="labelInput"
+          type="text"
+          :placeholder="modelValue && modelValue.length > 0 ? '' : placeholder"
+          class="inner-input"
+          @focus="isFocused = true"
+          @blur="handleBlur"
+          @keyup.enter="addLabel"
+        />
+      </div>
+
+      <div class="actions-wrapper" v-if="modelValue && modelValue.length > 0">
+        <el-button link type="danger" class="clear-btn" :icon="Delete" @click.stop="clearAllLabels"> 清空 </el-button>
       </div>
     </div>
 
-    <!-- 推荐标签区域 -->
-    <div class="suggested-labels" v-if="suggestedLabels && suggestedLabels.length > 0">
-      <div class="suggested-header">
+    <!-- 推荐标签（紧凑平铺样式） -->
+    <div class="suggested-section" v-if="suggestedLabels && suggestedLabels.length > 0">
+      <span class="suggested-title">
         <el-icon><Star /></el-icon>
-        <span>推荐标签</span>
-      </div>
-      <div class="suggested-list">
-        <el-tag
+        推荐：
+      </span>
+      <div class="suggested-tags">
+        <span
           v-for="label in suggestedLabels"
           :key="label"
-          @click="addRecommendedLabel(label)"
-          class="suggested-tag"
-          effect="plain"
+          class="suggested-item-tag"
+          :class="{ 'is-active': modelValue.includes(label) }"
+          @click="toggleRecommendedLabel(label)"
+          :title="modelValue.includes(label) ? '点击取消选择' : '点击添加'"
         >
           {{ label }}
-        </el-tag>
+        </span>
       </div>
     </div>
   </div>
@@ -62,7 +61,7 @@
 
 <script setup lang="ts">
 import { ref } from "vue"
-import { Plus, Delete, Star } from "@element-plus/icons-vue"
+import { Delete, Star } from "@element-plus/icons-vue"
 
 // Props 定义
 interface Props {
@@ -83,34 +82,47 @@ const emit = defineEmits<{
 
 // 标签输入
 const labelInput = ref("")
+const isFocused = ref(false)
+const inputRef = ref<HTMLInputElement>()
 
-// 添加标签
-const addLabel = () => {
+function focusInput() {
+  inputRef.value?.focus()
+}
+
+function handleBlur() {
+  isFocused.value = false
+  // 失去焦点时自动把已输入内容加入
+  addLabel()
+}
+
+function addLabel() {
   const label = labelInput.value.trim()
   if (label && !props.modelValue.includes(label)) {
     const newLabels = [...props.modelValue, label]
     emit("update:modelValue", newLabels)
-    labelInput.value = ""
   }
+  labelInput.value = ""
 }
 
-// 添加推荐标签
-const addRecommendedLabel = (label: string) => {
-  if (!props.modelValue.includes(label)) {
+function toggleRecommendedLabel(label: string) {
+  if (props.modelValue.includes(label)) {
+    // 若已选，点击时从列表中移除
+    const newLabels = props.modelValue.filter((item) => item !== label)
+    emit("update:modelValue", newLabels)
+  } else {
+    // 若未选，点击时加入列表
     const newLabels = [...props.modelValue, label]
     emit("update:modelValue", newLabels)
   }
 }
 
-// 移除标签
-const removeLabel = (index: number) => {
+function removeLabel(index: number) {
   const newLabels = [...props.modelValue]
   newLabels.splice(index, 1)
   emit("update:modelValue", newLabels)
 }
 
-// 清空所有标签
-const clearAllLabels = () => {
+function clearAllLabels() {
   emit("update:modelValue", [])
 }
 </script>
@@ -118,135 +130,170 @@ const clearAllLabels = () => {
 <style lang="scss" scoped>
 .label-selector {
   width: 100%;
+}
 
-  .labels-input-wrapper {
-    margin-bottom: 16px;
+.composite-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 4px 12px;
+  background-color: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  cursor: text;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 
-    .label-input {
-      :deep(.el-input__wrapper) {
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
-
-        &:hover {
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-        }
-
-        &.is-focus {
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-      }
-    }
+  &:hover {
+    border-color: #c0c4cc;
   }
 
-  .labels-display {
-    padding: 16px;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-    margin-bottom: 16px;
+  &.is-focused {
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+  }
+}
 
-    .labels-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
+.tags-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+}
 
-      .labels-count {
-        font-size: 14px;
-        color: #6b7280;
-        font-weight: 500;
-      }
-    }
+.selected-tag {
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #bfdbfe;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  height: 24px;
+  line-height: 22px;
+  padding: 0 8px;
+  transition: all 0.15s ease;
 
-    .labels-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      width: 100%;
-      max-width: 100%;
-      overflow: hidden;
-
-      .label-item {
-        border-radius: 6px;
-        background: #eff6ff;
-        border-color: #bfdbfe;
-        color: #1e40af;
-        font-size: 13px;
-        padding: 4px 8px;
-        max-width: 100%;
-        word-break: break-word;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-
-        .el-tag__close {
-          color: #6b7280;
-          margin-left: 4px;
-
-          &:hover {
-            background: #dbeafe;
-            color: #1e40af;
-          }
-        }
-      }
+  :deep(.el-tag__close) {
+    color: #3b82f6;
+    margin-left: 4px;
+    &:hover {
+      background-color: #3b82f6;
+      color: #ffffff;
     }
   }
+}
 
-  .suggested-labels {
-    padding: 16px;
-    background: #fef3c7;
-    border-radius: 8px;
-    border: 1px solid #fbbf24;
+.inner-input {
+  flex: 1;
+  min-width: 120px;
+  height: 26px;
+  padding: 0;
+  font-size: 13px;
+  color: #303133;
+  background: transparent;
+  border: none;
+  outline: none;
 
-    .suggested-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
+  &::placeholder {
+    color: #a8abb2;
+  }
+}
 
-      .el-icon {
-        margin-right: 6px;
-        color: #f59e0b;
-        font-size: 16px;
-      }
+.actions-wrapper {
+  margin-left: 8px;
+  flex-shrink: 0;
+}
 
-      span {
-        font-size: 14px;
-        color: #92400e;
-        font-weight: 500;
-      }
-    }
+.clear-btn {
+  font-size: 12px;
+  color: #f56c6c;
+  height: auto;
+  padding: 2px 4px;
+  border-radius: 4px;
 
-    .suggested-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      width: 100%;
-      max-width: 100%;
-      overflow: hidden;
+  &:hover {
+    color: #f78989;
+    background-color: #fef0f0;
+  }
+}
 
-      .suggested-tag {
-        border-radius: 6px;
-        background: #ffffff;
-        border-color: #fbbf24;
-        color: #92400e;
-        font-size: 13px;
-        padding: 4px 8px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        max-width: 100%;
-        word-break: break-word;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+.suggested-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px dashed #e2e8f0;
+}
 
-        &:hover {
-          background: #fef3c7;
-          border-color: #f59e0b;
-          transform: translateY(-1px);
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-      }
+.suggested-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  height: 22px;
+  user-select: none;
+
+  .el-icon {
+    color: #eab308;
+    font-size: 13px;
+  }
+}
+
+.suggested-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.suggested-item-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #3b82f6;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.08);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &.is-active {
+    color: #94a3b8;
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    cursor: pointer;
+    box-shadow: none;
+
+    &:hover {
+      color: #ef4444;
+      background: #fef2f2;
+      border-color: #fca5a5;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.08);
     }
   }
 }

@@ -107,7 +107,7 @@ interface Props {
 }
 defineProps<Props>()
 
-// 使用 defineModel 简化双向绑定
+// NOTE: 该表单组件用于编辑和新增聚合路由，需要与父组件同步表单状态
 const formData = defineModel<CreateAggregateGroupRuleReq>("formData", { required: true })
 
 // 表单引用
