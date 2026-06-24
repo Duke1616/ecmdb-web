@@ -200,7 +200,7 @@ import { useInhibitUtils } from "./composables/useInhibitUtils"
 import { useMatcher } from "@@/composables/useMatcher"
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
-import WorkspaceSectionPage from "../../WorkspaceSectionPage.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 // 定义事件
 const emit = defineEmits<{

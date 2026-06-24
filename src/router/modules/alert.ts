@@ -17,17 +17,7 @@ export const alertRoutes: RouteRecordRaw[] = [
       hidden: false
     },
     children: [
-      // 路由规则
-      {
-        path: "/alert/routing",
-        component: () => import("@/pages/alert/routing/index.vue"),
-        name: "AlertRouting",
-        meta: {
-          title: "路由规则",
-          svgIcon: "dispatch_rule",
-          platforms: ["alert"]
-        }
-      },
+
       // 即时查询
       {
         path: "/alert/proxy",

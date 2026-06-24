@@ -23,7 +23,7 @@
       <div class="scrollable-content">
         <!-- 表单内容 -->
         <div class="escalation-form-container">
-          <EscalationConfigForm ref="formRef" v-model="formData" :key-display-name="keyDisplayName" />
+          <EscalationConfigForm ref="formRef" v-model="formData" />
         </div>
       </div>
     </PageContainer>
@@ -31,31 +31,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import { useRouter, useRoute } from "vue-router"
+import { ref } from "vue"
+import { useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { Check } from "@element-plus/icons-vue"
 import type { CreateConfigReq } from "@/api/alert/escalation/types"
 import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
-import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import EscalationConfigForm from "./components/EscalationConfigForm.vue"
 import { createConfigApi } from "@/api/alert/escalation"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
 
 const router = useRouter()
-const route = useRoute()
 
 // 保存状态
 const saving = ref(false)
 
-// 业务唯一值名称（用于展示）
-const keyDisplayName = ref<string>("")
-
 // 表单数据
 const formData = ref<CreateConfigReq>({
-  biz_id: BUSINESS_TYPES.WORKSPACE, // 默认选择协作空间业务类型
-  key: "",
   name: "",
   description: "",
   enabled: true,
@@ -72,24 +65,6 @@ const formData = ref<CreateConfigReq>({
 
 // 表单引用
 const formRef = ref()
-
-// 初始化表单数据
-const initFormData = () => {
-  // 从路由查询参数获取 biz_id
-  if (route.query.biz_id) {
-    formData.value.biz_id = Number(route.query.biz_id)
-  }
-
-  // 从路由查询参数获取 key
-  if (route.query.key) {
-    formData.value.key = route.query.key as string
-  }
-
-  // 从路由查询参数获取 key_name（用于展示）
-  if (route.query.key_name) {
-    keyDisplayName.value = route.query.key_name as string
-  }
-}
 
 // 提交表单
 const handleSubmit = async () => {
@@ -127,10 +102,6 @@ const handleCancel = () => {
     })
 }
 
-// 组件挂载时初始化表单数据
-onMounted(() => {
-  initFormData()
-})
 </script>
 
 <style lang="scss" scoped>

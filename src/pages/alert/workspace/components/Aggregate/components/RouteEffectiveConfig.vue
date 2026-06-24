@@ -110,8 +110,50 @@
                 <span v-else class="empty-text">继承工作空间默认团队</span>
               </div>
               <el-tag size="small" type="info" effect="plain">
-                {{ effective.template_id ? `模板 #${effective.template_id}` : "继承工作空间默认模板" }}
+                {{
+                  effective.template_id ? alertTemplateName || `模板 #${effective.template_id}` : "继承工作空间默认模板"
+                }}
               </el-tag>
+            </div>
+          </div>
+
+          <div class="grid-card double-column">
+            <div class="card-label">
+              <el-icon><Tickets /></el-icon>
+              <span>工单动作</span>
+            </div>
+            <div class="card-value ticket-summary">
+              <template v-if="effective.ticket_policy?.enabled">
+                <el-tag size="small" type="success" effect="light">{{
+                  ticketModeLabel(effective.ticket_policy.mode)
+                }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  {{ ticketTemplateName || `模板 #${effective.ticket_policy.template_id}` }}
+                </el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  持续 {{ formatSeconds(effective.ticket_policy.duration) }}
+                </el-tag>
+                <el-tag size="small" type="info" effect="plain">次数 {{ effective.ticket_policy.eval_count }}</el-tag>
+              </template>
+              <el-tag v-else-if="effective.ticket_policy" size="small" type="info" effect="plain">已禁用</el-tag>
+              <span v-else class="empty-text">未启用</span>
+            </div>
+          </div>
+
+          <div class="grid-card double-column">
+            <div class="card-label">
+              <el-icon><Promotion /></el-icon>
+              <span>升级动作</span>
+            </div>
+            <div class="card-value ticket-summary">
+              <template v-if="effective.escalation_policy?.enabled">
+                <el-tag size="small" type="warning" effect="light">已启用</el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  {{ escalationConfigName || `配置 #${effective.escalation_policy.config_id}` }}
+                </el-tag>
+              </template>
+              <el-tag v-else-if="effective.escalation_policy" size="small" type="info" effect="plain">已禁用</el-tag>
+              <span v-else class="empty-text">未启用</span>
             </div>
           </div>
         </div>
@@ -121,14 +163,82 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue"
-import { ArrowRight, Bell, Clock, Compass, Connection, PriceTag, Share } from "@element-plus/icons-vue"
+import { computed, ref, watch } from "vue"
+import {
+  ArrowRight,
+  Bell,
+  Clock,
+  Compass,
+  Connection,
+  PriceTag,
+  Promotion,
+  Share,
+  Tickets
+} from "@element-plus/icons-vue"
 import type { AggregateGroupRule } from "@/api/alert/aggregate/types"
+import { getConfigApi } from "@/api/alert/escalation"
+import { getTemplateDetailApi } from "@/api/alert/template"
+import { detailTemplateApi } from "@/api/ticket/template"
 
 const props = defineProps<{
   effective: NonNullable<AggregateGroupRule["effective"]>
   routes: AggregateGroupRule[]
 }>()
+
+const alertTemplateName = ref("")
+const ticketTemplateName = ref("")
+const escalationConfigName = ref("")
+
+watch(
+  () => props.effective.template_id,
+  async (id) => {
+    if (!id) {
+      alertTemplateName.value = ""
+      return
+    }
+    try {
+      const res = await getTemplateDetailApi(id)
+      alertTemplateName.value = res.data?.name || `模板 #${id}`
+    } catch {
+      alertTemplateName.value = `模板 #${id}`
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.effective.ticket_policy?.template_id,
+  async (id) => {
+    if (!id) {
+      ticketTemplateName.value = ""
+      return
+    }
+    try {
+      const res = await detailTemplateApi(id)
+      ticketTemplateName.value = res.data?.name || `模板 #${id}`
+    } catch {
+      ticketTemplateName.value = `模板 #${id}`
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.effective.escalation_policy?.config_id,
+  async (id) => {
+    if (!id) {
+      escalationConfigName.value = ""
+      return
+    }
+    try {
+      const { data } = await getConfigApi(id)
+      escalationConfigName.value = data?.config?.name || `配置 #${id}`
+    } catch {
+      escalationConfigName.value = `配置 #${id}`
+    }
+  },
+  { immediate: true }
+)
 
 const breadcrumbs = computed(() => {
   const path = props.effective.route_path
@@ -163,6 +273,14 @@ function getReceiverTypeLabel(type: string) {
     oncall: "排班"
   }
   return labels[type] || type
+}
+
+function ticketModeLabel(mode?: string) {
+  const labels: Record<string, string> = {
+    ticket_only: "仅创建工单",
+    ticket_and_notify: "工单并通知"
+  }
+  return labels[mode || "ticket_only"] || mode
 }
 </script>
 
@@ -349,6 +467,13 @@ function getReceiverTypeLabel(type: string) {
   flex-direction: column;
   align-items: flex-start !important;
   gap: 8px;
+}
+
+.ticket-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .receiver-list {

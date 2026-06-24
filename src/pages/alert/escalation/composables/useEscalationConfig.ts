@@ -11,8 +11,7 @@ import {
   createConfigApi,
   updateConfigApi,
   deleteConfigApi,
-  updateConfigStatusApi,
-  swapConfigPrioritiesApi
+  updateConfigStatusApi
 } from "@/api/alert/escalation"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
 import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
@@ -96,21 +95,6 @@ export function useEscalationConfig() {
     router.push(`/alert/escalation/steps/${config.id}`)
   }
 
-  // 交换配置优先级
-  const swapConfigPriorities = async (srcId: number, dstId: number) => {
-    try {
-      await swapConfigPrioritiesApi({
-        src_id: srcId,
-        dst_id: dstId
-      })
-      await loadConfigs()
-      return true
-    } catch (error) {
-      console.error("交换配置优先级失败:", error)
-      throw error
-    }
-  }
-
   return {
     configs,
     loading,
@@ -121,7 +105,6 @@ export function useEscalationConfig() {
     deleteConfig,
     toggleConfigStatus,
     navigateToSteps,
-    swapConfigPriorities,
     handleCurrentChange,
     handleSizeChange
   }

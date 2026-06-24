@@ -133,10 +133,9 @@
                           </div>
                         </div>
                       </section>
+                      <!-- 最终生效配置组件 -->
+                      <RouteEffectiveConfig v-if="currentEffective" :effective="currentEffective" :routes="routes" />
                     </div>
-
-                    <!-- 最终生效配置组件 -->
-                    <RouteEffectiveConfig v-if="currentEffective" :effective="currentEffective" :routes="routes" />
                   </template>
 
                   <!-- 2. 编辑模式 -->
@@ -162,26 +161,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { computed, toRef } from "vue"
 import { Check, Plus, Refresh, Setting, Search, Delete, Edit, Filter } from "@element-plus/icons-vue"
-import {
-  createAggregateRuleApi,
-  listAggregateRoutesByWorkspaceApi,
-  updateAggregateRuleApi,
-  reorderAggregateRoutesApi,
-  deleteAggregateRuleApi
-} from "@/api/alert/aggregate"
-import { AggregateType, type AggregateGroupRule, type SaveAggregateGroupRuleReq } from "@/api/alert/aggregate/types"
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { MATCH_TYPE_OPTIONS } from "@/common/constants/match-type"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
-import WorkspaceSectionPage from "../../WorkspaceSectionPage.vue"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 import RouteTree from "./components/RouteTree.vue"
 import RouteConfigForm from "./components/RouteConfigForm.vue"
 import RouteEffectiveConfig from "./components/RouteEffectiveConfig.vue"
 import RoutePreviewSandbox from "./components/RoutePreviewSandbox.vue"
+import { useAggregateRoutes, getLevelLabel } from "./composables/useAggregateRoutes"
 
 const props = defineProps<{ workspaceId: number }>()
 
@@ -189,23 +180,38 @@ const emit = defineEmits<{
   refresh: []
 }>()
 
-const loading = ref(false)
-const saving = ref(false)
-const routes = ref<AggregateGroupRule[]>([])
-const selectedRouteId = ref<number>()
+// 引入逻辑控制器层
+const {
+  loading,
+  saving,
+  routes,
+  selectedRouteId,
+  isEditing,
+  activeTab,
+  sandboxPreviewing,
+  form,
+  selectedRoute,
+  currentEffective,
+  canAddChild,
+  routeFormRef,
+  previewSandboxRef,
+  handleTabChange,
+  loadRoutes,
+  handleSelectRoute,
+  handleReorderRoute,
+  handleDeleteRoute,
+  handleCreateRootRoute,
+  handleAddChildRoute,
+  handleCancelEdit,
+  handleSaveRoute
+} = useAggregateRoutes(toRef(props, "workspaceId"), emit)
 
-// 子组件引用句柄
-const routeFormRef = ref<InstanceType<typeof RouteConfigForm>>()
-const previewSandboxRef = ref<InstanceType<typeof RoutePreviewSandbox>>()
-
-const activeTab = ref("config")
 const editorTabs = [
   { name: "config", label: "路由配置" },
   { name: "sandbox", label: "沙箱验证" }
 ]
-const sandboxPreviewing = ref(false)
-const isEditing = ref(false)
 
+// 编辑/保存动作按钮配置
 const primaryBtn = computed(() => {
   if (activeTab.value === "sandbox") {
     return {
@@ -225,9 +231,6 @@ const primaryBtn = computed(() => {
       capability: form.value.id ? ALERT_CAPABILITIES.Aggregate.Edit : ALERT_CAPABILITIES.Aggregate.Add,
       click: () => {
         isEditing.value = true
-        if (selectedRoute.value) {
-          fillForm(selectedRoute.value)
-        }
       }
     }
   }
@@ -241,197 +244,12 @@ const primaryBtn = computed(() => {
   }
 })
 
-const createRouteForm = (parentId = 0): SaveAggregateGroupRuleReq => ({
-  name: parentId ? "子聚合路由" : "默认聚合路由",
-  type: AggregateType.Rule,
-  parent_id: parentId,
-  enabled: true,
-  is_default: parentId === 0,
-  priority: parentId ? nextPriority(parentId) : 0,
-  levels: [],
-  labels: parentId ? [] : ["alert_name"],
-  workspace_id: props.workspaceId,
-  is_diff_data_source: false,
-  receivers: [],
-  template_id: 0,
-  matchers: [],
-  group_wait: parentId ? 0 : 5,
-  group_interval: parentId ? 0 : 30,
-  repeat_interval: parentId ? 0 : 43200
-})
-
-const form = ref<SaveAggregateGroupRuleReq>(createRouteForm())
-
-const selectedRoute = computed(() => routes.value.find((route) => route.id === selectedRouteId.value))
-const currentEffective = computed(() => selectedRoute.value?.effective)
-const canAddChild = computed(() => !!selectedRoute.value?.id)
-
 const primaryAction = computed(() => ({
   label: "新增子路由",
   icon: Plus,
   capability: ALERT_CAPABILITIES.Aggregate.Add,
   disabled: !canAddChild.value
 }))
-
-const handleTabChange = (tabName: string) => {
-  activeTab.value = tabName
-}
-
-watch(
-  () => props.workspaceId,
-  () => {
-    resetForm(createRouteForm())
-    selectedRouteId.value = undefined
-    loadRoutes()
-  },
-  { immediate: true }
-)
-
-async function loadRoutes() {
-  if (!props.workspaceId) return
-  loading.value = true
-  try {
-    const { data } = await listAggregateRoutesByWorkspaceApi(props.workspaceId)
-    routes.value = (data || []).map(normalizeRoute)
-
-    const nextSelected =
-      routes.value.find((route) => route.id === selectedRouteId.value) ||
-      routes.value.find((route) => route.is_default && route.parent_id === 0) ||
-      routes.value[0]
-
-    if (nextSelected) {
-      fillForm(nextSelected)
-      selectedRouteId.value = nextSelected.id
-      isEditing.value = false
-    } else {
-      resetForm(createRouteForm())
-      selectedRouteId.value = undefined
-      isEditing.value = true
-    }
-  } catch (error) {
-    console.error("加载聚合路由失败:", error)
-    ElMessage.error("加载聚合路由失败")
-  } finally {
-    loading.value = false
-  }
-}
-
-function normalizeRoute(route: AggregateGroupRule): AggregateGroupRule {
-  return {
-    ...route,
-    type: route.type || AggregateType.Rule,
-    parent_id: route.parent_id || 0,
-    enabled: route.enabled ?? true,
-    is_default: route.is_default ?? false,
-    priority: route.priority ?? 0,
-    levels: route.levels || [],
-    labels: route.labels || [],
-    receivers: route.receivers || [],
-    template_id: route.template_id || 0,
-    matchers: route.matchers || [],
-    group_wait: route.group_wait || 0,
-    group_interval: route.group_interval || 0,
-    repeat_interval: route.repeat_interval || 0
-  }
-}
-
-function fillForm(route: AggregateGroupRule) {
-  form.value = {
-    id: route.id,
-    name: route.name,
-    type: route.type,
-    parent_id: route.parent_id,
-    enabled: route.enabled,
-    is_default: route.is_default,
-    priority: route.priority,
-    levels: [...route.levels],
-    labels: [...route.labels],
-    workspace_id: route.workspace_id,
-    is_diff_data_source: route.is_diff_data_source,
-    receivers: (route.receivers || []).map((receiver) => ({ ...receiver, metadata: receiver.metadata || {} })),
-    template_id: route.template_id || 0,
-    matchers: route.matchers.map((matcher) => ({ ...matcher })),
-    group_wait: route.group_wait,
-    group_interval: route.group_interval,
-    repeat_interval: route.repeat_interval
-  }
-}
-
-function resetForm(nextForm: SaveAggregateGroupRuleReq) {
-  form.value = { ...nextForm }
-  previewSandboxRef.value?.resetSandbox()
-}
-
-function nextPriority(parentId: number) {
-  const children = routes.value.filter((route) => route.parent_id === parentId)
-  if (!children.length) return 100
-  return Math.max(...children.map((route) => route.priority || 0)) + 10
-}
-
-function handleSelectRoute(route: AggregateGroupRule) {
-  selectedRouteId.value = route.id
-  fillForm(normalizeRoute(route))
-  activeTab.value = "config"
-  isEditing.value = false
-  previewSandboxRef.value?.resetSandbox()
-}
-
-async function handleReorderRoute(payload: { draggedRouteId: number; targetParentId: number; targetPosition: number }) {
-  loading.value = true
-  try {
-    await reorderAggregateRoutesApi({
-      workspace_id: props.workspaceId,
-      dragged_route_id: payload.draggedRouteId,
-      target_parent_id: payload.targetParentId,
-      target_position: payload.targetPosition
-    })
-    ElMessage.success("排序已更新")
-    await loadRoutes()
-  } catch (error) {
-    console.error("更新排序失败:", error)
-    ElMessage.error("更新排序失败")
-    await loadRoutes()
-  } finally {
-    loading.value = false
-  }
-}
-
-function handleCreateRootRoute() {
-  selectedRouteId.value = undefined
-  resetForm(createRouteForm())
-  activeTab.value = "config"
-  isEditing.value = true
-}
-
-function handleAddChildRoute() {
-  if (!selectedRoute.value) {
-    ElMessage.warning("请先选择一个已保存的父路由")
-    return
-  }
-  resetForm(createRouteForm(selectedRoute.value.id))
-  activeTab.value = "config"
-  isEditing.value = true
-}
-
-function handleCancelEdit() {
-  isEditing.value = false
-  if (selectedRoute.value) {
-    fillForm(selectedRoute.value)
-  } else {
-    resetForm(createRouteForm())
-  }
-}
-
-const getLevelLabel = (lvl: number) => {
-  const levelOptions = [
-    { label: "P0-紧急", value: 1 },
-    { label: "P1-严重", value: 2 },
-    { label: "P2-错误", value: 3 },
-    { label: "P3-警告", value: 4 },
-    { label: "P4-提示", value: 5 }
-  ]
-  return levelOptions.find((o) => o.value === lvl)?.label || `P${lvl}`
-}
 
 function formatMatcher(matcher: any) {
   const opt = MATCH_TYPE_OPTIONS.find((o) => o.value === matcher.type)
@@ -440,100 +258,6 @@ function formatMatcher(matcher: any) {
     return `${matcher.name} ${opt.operatorText} "${matcher.value}"`
   }
   return `${matcher.name} ${opt.operatorText}`
-}
-
-function sanitizePayload(rawForm: SaveAggregateGroupRuleReq): SaveAggregateGroupRuleReq {
-  const matchers = (rawForm.matchers || [])
-    .map((matcher) => ({
-      ...matcher,
-      name: matcher.name.trim(),
-      value: matcher.value.trim()
-    }))
-    .filter((matcher) => matcher.name || matcher.value)
-
-  return {
-    ...rawForm,
-    workspace_id: props.workspaceId,
-    name: (rawForm.name || "").trim(),
-    labels: [...(rawForm.labels || [])],
-    levels: [...(rawForm.levels || [])],
-    receivers: (rawForm.receivers || []).filter((receiver) => receiver.id && receiver.type),
-    template_id: rawForm.template_id || 0,
-    matchers
-  }
-}
-
-function validateMatchers(payload: SaveAggregateGroupRuleReq) {
-  return payload.matchers.every((matcher) => matcher.name)
-}
-
-async function handleSaveRoute() {
-  if (!routeFormRef.value) return
-  const valid = await routeFormRef.value.validate()
-  if (!valid) return
-
-  const rawFormData = routeFormRef.value.getFormData()
-  const payload = sanitizePayload(rawFormData)
-  if (!validateMatchers(payload)) {
-    ElMessage.warning("匹配器必须填写标签名")
-    return
-  }
-
-  saving.value = true
-  try {
-    let savedRoute: AggregateGroupRule
-    if (payload.id) {
-      const { data } = await updateAggregateRuleApi(payload)
-      savedRoute = data
-      ElMessage.success("聚合路由已更新")
-    } else {
-      const { data } = await createAggregateRuleApi(payload)
-      savedRoute = data
-      ElMessage.success("聚合路由已创建")
-    }
-
-    await loadRoutes()
-    const saved = routes.value.find((route) => route.id === savedRoute.id) || savedRoute
-    if (saved) {
-      selectedRouteId.value = saved.id
-      fillForm(saved)
-    }
-    isEditing.value = false
-    emit("refresh")
-  } catch (error) {
-    console.error("保存聚合路由失败:", error)
-    ElMessage.error("保存聚合路由失败")
-  } finally {
-    saving.value = false
-  }
-}
-
-async function handleDeleteRoute() {
-  if (!form.value.id) return
-
-  try {
-    await ElMessageBox.confirm("此操作将一并删除该路由及其下的所有子路由，是否确认删除？", "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
-  } catch {
-    return
-  }
-
-  loading.value = true
-  try {
-    await deleteAggregateRuleApi(form.value.id)
-    ElMessage.success("删除成功")
-    selectedRouteId.value = undefined
-    await loadRoutes()
-    emit("refresh")
-  } catch (error) {
-    console.error("删除聚合路由失败:", error)
-    ElMessage.error("删除聚合路由失败")
-  } finally {
-    loading.value = false
-  }
 }
 </script>
 
@@ -579,9 +303,9 @@ async function handleDeleteRoute() {
 
 .route-workbench {
   display: grid;
+  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
   width: 100%;
   min-height: 0;
-  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
   border-radius: 0;
   background: #ffffff;
   box-shadow:
@@ -672,20 +396,6 @@ async function handleDeleteRoute() {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-}
-
-@media (max-width: 1024px) {
-  .route-workbench {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .route-editor-tabs {
-    :deep(.tabs-header) {
-      padding-right: 0;
-    }
-  }
 }
 
 .route-read-view {
@@ -784,5 +494,19 @@ async function handleDeleteRoute() {
   font-size: 12px;
   color: #94a3b8;
   font-style: italic;
+}
+
+@media (max-width: 1024px) {
+  .route-workbench {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .route-editor-tabs {
+    :deep(.tabs-header) {
+      padding-right: 0;
+    }
+  }
 }
 </style>

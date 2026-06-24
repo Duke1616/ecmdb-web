@@ -622,10 +622,6 @@ export const ALERT_CAPABILITIES = {
     Detail: "alert:workspace:get",
     /** 告警列表 */
     ViewAlerts: "alert:workspace:view_alerts",
-    /** 升级配置列表 */
-    ViewEscalationConfigs: "alert:workspace:view_escalation_configs",
-    /** 工单配置 */
-    ViewTicketConfigs: "alert:workspace:view_ticket_configs",
     /** 我的团队空间 */
     ViewMyTeam: "alert:workspace:view_my_team",
     /** 按团队查询空间 */
@@ -816,22 +812,6 @@ export const ALERT_CAPABILITIES = {
     Delete: "alert:routing_rule:delete",
     /** 创建路由规则 */
     Add: "alert:routing_rule:add"
-  },
-
-  /** 工单转发相关 */
-  TicketConfig: {
-    /** 状态切换 */
-    Toggle: "alert:ticket_config:toggle",
-    /** 工单转发详情 */
-    Detail: "alert:ticket_config:get",
-    /** 交换优先级 */
-    SwapPriorities: "alert:ticket_config:swap_priorities",
-    /** 创建工单转发 */
-    Add: "alert:ticket_config:add",
-    /** 删除工单转发 */
-    Delete: "alert:ticket_config:delete",
-    /** 更新工单转发 */
-    Edit: "alert:ticket_config:edit"
   },
 
   /** 即时查询相关 */

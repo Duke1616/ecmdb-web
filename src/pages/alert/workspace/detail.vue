@@ -63,31 +63,17 @@
             <el-icon><Setting /></el-icon>
             <span>告警规则</span>
           </el-menu-item>
-          <el-menu-item index="escalation">
-            <el-icon><Setting /></el-icon>
-            <span>消息升级</span>
+          <el-menu-item index="noise-aggregate">
+            <el-icon><DataAnalysis /></el-icon>
+            <span>聚合规则</span>
           </el-menu-item>
-          <el-sub-menu index="noise">
-            <template #title>
-              <el-icon><Filter /></el-icon>
-              <span>降噪配置</span>
-            </template>
-            <el-menu-item index="noise-aggregate">
-              <el-icon><DataAnalysis /></el-icon>
-              <span>聚合规则</span>
-            </el-menu-item>
-            <el-menu-item index="noise-inhibit">
-              <el-icon><CircleClose /></el-icon>
-              <span>抑制规则</span>
-            </el-menu-item>
-            <el-menu-item index="noise-silence">
-              <el-icon><Mute /></el-icon>
-              <span>静默规则</span>
-            </el-menu-item>
-          </el-sub-menu>
-          <el-menu-item index="ticket-config">
-            <el-icon><Document /></el-icon>
-            <span>工单配置</span>
+          <el-menu-item index="noise-silence">
+            <el-icon><Mute /></el-icon>
+            <span>静默规则</span>
+          </el-menu-item>
+          <el-menu-item index="noise-inhibit">
+            <el-icon><CircleClose /></el-icon>
+            <span>抑制规则</span>
           </el-menu-item>
           <el-menu-item index="members">
             <el-icon><User /></el-icon>
@@ -117,16 +103,6 @@
           <AlertRules :workspace-id="workspace?.id || 0" ref="alertRulesRef" />
         </div>
 
-        <!-- 消息升级页面 -->
-        <div v-else-if="activeMenu === 'escalation'" class="workspace-section-pane">
-          <Escalation :workspace-id="workspace?.id || 0" :workspace-name="workspace?.name" ref="escalationRef" />
-        </div>
-
-        <!-- 降噪配置页面 -->
-        <div v-else-if="activeMenu === 'noise'" class="noise-page">
-          <NoiseConfig :workspace-id="workspace?.id || 0" ref="noiseConfigRef" />
-        </div>
-
         <!-- 聚合规则页面 -->
         <div v-else-if="activeMenu === 'noise-aggregate'" class="workspace-section-pane">
           <AggregateRules :workspace-id="workspace?.id || 0" />
@@ -140,11 +116,6 @@
         <!-- 静默规则页面 -->
         <div v-else-if="activeMenu === 'noise-silence'" class="workspace-section-pane">
           <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
-        </div>
-
-        <!-- 工单配置页面 -->
-        <div v-else-if="activeMenu === 'ticket-config'" class="workspace-section-pane">
-          <TicketConfig :workspace-id="workspace?.id || 0" ref="ticketConfigRef" />
         </div>
 
         <!-- 成员页面 -->
@@ -171,7 +142,6 @@ import {
   User,
   DataBoard,
   Warning,
-  Filter,
   CircleCheckFilled,
   CircleCloseFilled,
   Unlock,
@@ -179,24 +149,20 @@ import {
   Clock,
   DataAnalysis,
   CircleClose,
-  Mute,
-  Document
+  Mute
 } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { Workspace } from "@/api/alert/workspace/types"
 import { getWorkspaceDetailApi } from "@/api/alert/workspace"
-import NoiseConfig from "./components/NoiseConfig/index.vue"
 import AlertRules from "./components/AlertRules/index.vue"
 import AlertManager from "./components/AlertManager/index.vue"
 import Settings from "./components/Settings/index.vue"
 import TeamMembers from "./components/TeamMembers/index.vue"
 import Overview from "./components/Overview/index.vue"
-import AggregateRules from "./components/NoiseConfig/aggregate/rules.vue"
-import InhibitRules from "./components/NoiseConfig/inhibit/rules.vue"
-import SilenceRules from "./components/NoiseConfig/silence_rules.vue"
-import Escalation from "./components/Escalation/index.vue"
-import TicketConfig from "./components/TicketConfig/index.vue"
+import AggregateRules from "./components/Aggregate/index.vue"
+import InhibitRules from "./components/Inhibit/index.vue"
+import SilenceRules from "./components/Silence/index.vue"
 
 // 路由
 const route = useRoute()
@@ -216,12 +182,9 @@ const activeMenu = computed(() => menuStore.activeMenu)
 // 组件引用
 const teamMembersRef = ref()
 const workspaceOverviewRef = ref()
-const escalationRef = ref()
 const alertManagerRef = ref()
 const alertRulesRef = ref()
-const noiseConfigRef = ref()
 const settingsRef = ref()
-const ticketConfigRef = ref()
 
 // 格式化最后更新时间
 const formatLastUpdate = () => {
@@ -330,20 +293,11 @@ const loadCurrentMenuData = () => {
       // 告警规则数据加载
       alertRulesRef.value?.loadData?.()
       break
-    case "escalation":
-      // 消息升级数据加载
-      escalationRef.value?.loadConfigs?.()
-      break
     case "noise":
     case "noise-aggregate":
     case "noise-inhibit":
     case "noise-silence":
-      // 降噪配置数据加载
-      noiseConfigRef.value?.loadData?.()
-      break
-    case "ticket-config":
-      // 工单配置数据加载
-      ticketConfigRef.value?.loadConfigs?.()
+      // NOTE: 各降噪规则子组件通过自身 onMounted/watch workspaceId 自行加载数据
       break
     case "members":
       // 团队成员数据加载

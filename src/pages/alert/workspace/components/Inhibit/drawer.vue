@@ -18,7 +18,7 @@ import { ref } from "vue"
 import { Filter } from "@element-plus/icons-vue"
 import { Drawer } from "@@/components/Dialogs"
 import InhibitForm from "./components/InhibitForm.vue"
-import { useInhibitForm } from "./composables/useInhibitForm"
+import { useInhibitForm } from "./composables/useInhibitForm.js"
 import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
 
 const emit = defineEmits<{

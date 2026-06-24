@@ -24,9 +24,7 @@ import type {
   ListStepTemplatesReq,
   ListStepTemplatesByIDsReq,
   ListStepTemplatesResp,
-  ListConfigsByBizIDAndKeyReq,
-  SwapStepLevelsReq,
-  SwapConfigPrioritiesReq
+  SwapStepLevelsReq
 } from "./types"
 
 // 升级配置管理API
@@ -53,13 +51,6 @@ export const getConfigApi = (id: number) => {
 export const listConfigsApi = (data: ListConfigsReq) => {
   return instance.post<ListConfigsResp>({
     url: `${API_SERVICE.ALERT}/escalation/config/list`,
-    data
-  })
-}
-
-export const listConfigsByBizKeyApi = (data: ListConfigsByBizIDAndKeyReq) => {
-  return instance.post<ListConfigsResp>({
-    url: `${API_SERVICE.ALERT}/escalation/config/list/by_biz_key`,
     data
   })
 }
@@ -155,14 +146,6 @@ export const deleteStepTemplateApi = (id: number) => {
 export const swapStepLevelsApi = (data: SwapStepLevelsReq) => {
   return instance.post({
     url: `${API_SERVICE.ALERT}/escalation/step/swap_levels`,
-    data
-  })
-}
-
-// 交换配置优先级API
-export const swapConfigPrioritiesApi = (data: SwapConfigPrioritiesReq) => {
-  return instance.post({
-    url: `${API_SERVICE.ALERT}/escalation/config/swap_priorities`,
     data
   })
 }

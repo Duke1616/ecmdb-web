@@ -101,6 +101,9 @@ export function useGenericPicker<T, K extends string | number>(options: {
 
     // 3. 本地无缓存，发起后端 API 请求远程反解
     try {
+      if (key === undefined || key === null || key === "" || key === 0 || key === "0") {
+        return fallbackBuilder(key)
+      }
       const detail = await resolveApi(key)
       return detail || fallbackBuilder(key)
     } catch (error) {

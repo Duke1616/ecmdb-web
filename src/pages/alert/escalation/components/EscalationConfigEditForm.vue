@@ -19,36 +19,38 @@
         </el-form-item>
       </div>
 
-      <!-- 触发条件 -->
+      <!-- 升级时机 -->
       <div class="form-section">
         <div class="trigger-conditions">
           <h3 class="section-title">
-            触发条件
-            <el-button type="primary" :icon="Plus" size="small" @click="addTrigger">添加触发条件</el-button>
+            升级时机
+            <el-button type="primary" :icon="Plus" size="small" @click="addTrigger">添加时机</el-button>
           </h3>
+          <p class="section-desc">聚合路由命中告警后，满足这里的时机才会创建或推进升级。</p>
           <div v-if="modelValue.triggers.length === 0" class="empty-state">
-            <el-empty description="暂无触发条件" />
+            <el-empty description="暂无升级时机" />
           </div>
           <div v-else>
             <div v-for="(trigger, index) in modelValue.triggers" :key="index" class="trigger-item">
               <el-row :gutter="20" align="middle">
                 <el-col :span="5">
-                  <el-form-item :label="`触发类型 ${index + 1}`" :prop="`triggers.${index}.type`">
+                  <el-form-item :label="`时机类型 ${index + 1}`" :prop="`triggers.${index}.type`">
                     <el-select
                       v-model="trigger.type"
-                      placeholder="选择触发类型"
+                      placeholder="选择时机类型"
                       style="width: 100%"
                       @change="handleTriggerTypeChange(index, $event)"
                     >
-                      <el-option label="时间触发" :value="ESCALATION_TRIGGER_TYPES.TIME" />
-                      <el-option label="级别触发" :value="ESCALATION_TRIGGER_TYPES.LEVEL" />
-                      <el-option label="无响应触发" :value="ESCALATION_TRIGGER_TYPES.NO_RESPONSE" />
+                      <el-option label="持续时间达到" :value="ESCALATION_TRIGGER_TYPES.TIME" />
+                      <el-option label="告警级别达到" :value="ESCALATION_TRIGGER_TYPES.LEVEL" />
+                      <el-option label="连续评估次数达到" :value="ESCALATION_TRIGGER_TYPES.EVAL_COUNT" />
+                      <el-option label="聚合告警数量达到" :value="ESCALATION_TRIGGER_TYPES.ALERT_COUNT" />
                     </el-select>
                   </el-form-item>
                 </el-col>
                 <el-col :span="12">
                   <el-form-item :label="`描述 ${index + 1}`" :prop="`triggers.${index}.description`">
-                    <el-input v-model="trigger.description" placeholder="触发条件描述" />
+                    <el-input v-model="trigger.description" placeholder="描述这个升级时机" />
                   </el-form-item>
                 </el-col>
                 <el-col :span="4">
@@ -64,14 +66,15 @@
           </div>
         </div>
 
-        <!-- 触发逻辑 -->
+        <!-- 组合方式 -->
         <div class="trigger-logic">
-          <h3 class="section-title">触发逻辑</h3>
-          <el-form-item label="逻辑类型" prop="trigger_logic.type">
+          <h3 class="section-title">组合方式</h3>
+          <p class="section-desc">多个升级时机之间如何组合判断。</p>
+          <el-form-item label="组合类型" prop="trigger_logic.type">
             <el-select v-model="modelValue.trigger_logic.type" style="width: 100%">
-              <el-option label="任意条件满足" :value="ESCALATION_LOGIC_TYPES.ANY" />
-              <el-option label="所有条件满足" :value="ESCALATION_LOGIC_TYPES.ALL" />
-              <el-option label="第一个条件满足" :value="ESCALATION_LOGIC_TYPES.FIRST" />
+              <el-option label="任一时机满足" :value="ESCALATION_LOGIC_TYPES.ANY" />
+              <el-option label="所有时机满足" :value="ESCALATION_LOGIC_TYPES.ALL" />
+              <el-option label="第一个时机满足" :value="ESCALATION_LOGIC_TYPES.FIRST" />
               <el-option label="自定义逻辑" :value="ESCALATION_LOGIC_TYPES.CUSTOM" />
             </el-select>
           </el-form-item>
@@ -82,17 +85,22 @@
           >
             <el-input v-model="modelValue.trigger_logic.expression" placeholder="逻辑表达式" />
           </el-form-item>
-          <el-form-item label="逻辑描述" prop="trigger_logic.description">
-            <el-input v-model="modelValue.trigger_logic.description" type="textarea" :rows="3" placeholder="逻辑描述" />
+          <el-form-item label="组合描述" prop="trigger_logic.description">
+            <el-input
+              v-model="modelValue.trigger_logic.description"
+              type="textarea"
+              :rows="3"
+              placeholder="描述这些升级时机的组合方式"
+            />
           </el-form-item>
         </div>
       </div>
     </el-form>
 
-    <!-- 触发条件配置对话框 -->
+    <!-- 升级时机配置对话框 -->
     <FormDialog
       v-model="triggerConfigDialogVisible"
-      title="触发条件配置"
+      title="升级时机配置"
       width="600px"
       :loading="triggerConfigSaving"
       @confirm="saveTriggerConfig"
@@ -215,6 +223,20 @@ const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) 
           check_interval: 30000,
           max_attempts: 3,
           required_acks: 1
+        }
+      }
+      break
+    case ESCALATION_TRIGGER_TYPES.EVAL_COUNT:
+      trigger.config = {
+        eval_count_config: {
+          count: 3
+        }
+      }
+      break
+    case ESCALATION_TRIGGER_TYPES.ALERT_COUNT:
+      trigger.config = {
+        alert_count_config: {
+          count: 5
         }
       }
       break

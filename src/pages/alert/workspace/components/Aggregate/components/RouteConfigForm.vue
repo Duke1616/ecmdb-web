@@ -190,85 +190,39 @@
         <el-icon><Bell /></el-icon>
         <span>通知策略</span>
       </div>
+      <NotifyPolicyForm
+        :route-id="localForm.id"
+        v-model:receivers="localForm.receivers"
+        v-model:templateId="localForm.template_id"
+        :parentId="localForm.parent_id"
+        @openSelector="openReceiverSelector"
+      />
+    </section>
 
-      <div class="notify-policy-card" :class="{ 'is-open': showNotifyDetails }" @click="toggleNotifyDetails">
-        <div class="notify-overview">
-          <div class="notify-summary-item">
-            <span class="summary-label">接收人</span>
-            <strong>{{ receiverSummaryText }}</strong>
-            <span>{{ receiverInheritText }}</span>
-          </div>
-
-          <div class="notify-summary-item">
-            <span class="summary-label">通知模板</span>
-            <strong>{{ templateStatusText }}</strong>
-            <span>{{ templateInheritText }}</span>
-          </div>
-
-          <div class="notify-actions" @click.stop>
-            <el-button size="small" plain :icon="Setting" @click="() => openReceiverSelector()">配置接收人</el-button>
-            <el-button size="small" text @click="toggleNotifyDetails">
-              {{ showNotifyDetails ? "收起" : "展开配置" }}
-            </el-button>
-          </div>
-        </div>
-
-        <el-collapse-transition>
-          <div v-show="showNotifyDetails" class="notify-details" @click.stop>
-            <div class="details-row">
-              <div class="details-label">
-                <span>接收人明细</span>
-                <small>{{ hasReceivers ? `${localForm.receivers?.length || 0} 个接收人` : "当前为继承策略" }}</small>
-              </div>
-
-              <div class="details-content">
-                <div v-if="hasReceivers" class="receiver-shelf">
-                  <div
-                    v-for="receiver in localForm.receivers"
-                    :key="`${receiver.type}-${receiver.id}`"
-                    class="receiver-token"
-                  >
-                    <span class="receiver-type">{{ getReceiverTypeLabel(receiver.type) }}</span>
-                    <span class="receiver-name">{{ receiver.display_name || receiver.id }}</span>
-                    <button type="button" class="receiver-remove" @click="removeReceiver(receiver)">
-                      <el-icon><Close /></el-icon>
-                    </button>
-                  </div>
-                  <el-button size="small" text type="danger" :icon="Delete" @click="clearReceivers">清空</el-button>
-                </div>
-                <span v-else class="empty-policy-text">未配置独立接收人，保存后使用继承策略。</span>
-              </div>
-            </div>
-
-            <div class="details-row">
-              <div class="details-label">
-                <span>通知模板</span>
-                <small>不选择则继承上级模板</small>
-              </div>
-
-              <div class="details-content">
-                <el-select
-                  v-model="localForm.template_id"
-                  clearable
-                  filterable
-                  :loading="templateLoading"
-                  placeholder="继承父路由 / 工作空间默认模板"
-                  @visible-change="handleTemplateVisibleChange"
-                  @clear="localForm.template_id = 0"
-                >
-                  <el-option :value="0" label="继承父路由 / 工作空间默认模板" />
-                  <el-option
-                    v-for="template in templates"
-                    :key="template.id"
-                    :value="template.id"
-                    :label="`${template.name} (${template.channel})`"
-                  />
-                </el-select>
-              </div>
-            </div>
-          </div>
-        </el-collapse-transition>
+    <!-- 工单动作 -->
+    <section class="form-section">
+      <div class="section-title">
+        <el-icon><Tickets /></el-icon>
+        <span>工单动作</span>
       </div>
+      <TicketPolicyForm
+        :policy="localForm.ticket_policy ?? null"
+        :parentId="localForm.parent_id"
+        @change="(val) => (localForm.ticket_policy = val)"
+      />
+    </section>
+
+    <!-- 升级动作 -->
+    <section class="form-section">
+      <div class="section-title">
+        <el-icon><Promotion /></el-icon>
+        <span>升级动作</span>
+      </div>
+      <EscalationPolicyForm
+        :policy="localForm.escalation_policy ?? null"
+        :parentId="localForm.parent_id"
+        @change="(val) => (localForm.escalation_policy = val)"
+      />
     </section>
   </el-form>
 
@@ -290,7 +244,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from "vue"
-import { Bell, Clock, Close, Delete, Filter, InfoFilled, Plus, PriceTag, Setting } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
+import { Bell, Clock, Filter, InfoFilled, Plus, PriceTag, Promotion, Setting, Tickets } from "@element-plus/icons-vue"
 import type { FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import {
@@ -299,13 +254,14 @@ import {
   type ReceiverRef,
   type SaveAggregateGroupRuleReq
 } from "@/api/alert/aggregate/types"
-import { listTemplatesApi } from "@/api/alert/template"
-import type { ChannelTemplate } from "@/api/alert/template/types"
 import type { Assignee } from "@/common/components/ReceiverSelector/composables/useAssignees"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import LabelSelector from "@@/components/LabelSelector/index.vue"
 import MatcherInput from "@@/components/MatcherInput/index.vue"
 import { useMatcher } from "@@/composables/useMatcher"
+import NotifyPolicyForm from "./NotifyPolicyForm.vue"
+import TicketPolicyForm from "./TicketPolicyForm.vue"
+import EscalationPolicyForm from "./EscalationPolicyForm.vue"
 
 const props = defineProps<{
   form: SaveAggregateGroupRuleReq
@@ -327,6 +283,8 @@ const localForm = reactive<SaveAggregateGroupRuleReq>({
   is_diff_data_source: false,
   receivers: [],
   template_id: 0,
+  ticket_policy: null,
+  escalation_policy: null,
   matchers: [],
   group_wait: 0,
   group_interval: 0,
@@ -359,17 +317,7 @@ const suggestedLabels = ["alert_name", "alertname", "cluster", "service", "insta
 
 const isRootRoute = computed(() => localForm.parent_id === 0)
 const timeMin = computed(() => (isRootRoute.value ? 1 : 0))
-const hasReceivers = computed(() => !!localForm.receivers?.length)
-const receiverInheritText = computed(() =>
-  localForm.parent_id > 0 ? "未配置时继承父路由接收人" : "未配置时使用工作空间默认团队"
-)
-const receiverSummaryText = computed(() => (hasReceivers.value ? "使用本路由接收人" : "沿用继承接收人"))
-const templateInheritText = computed(() =>
-  localForm.parent_id > 0 ? "未选择时继承父路由模板" : "未选择时使用工作空间默认模板"
-)
-const showNotifyDetails = ref(false)
-const templates = ref<ChannelTemplate[]>([])
-const templateLoading = ref(false)
+
 const receiverSelectorVisible = ref(false)
 const receiverInitialTab = ref("")
 const receiverAssignees = ref<Assignee[]>([])
@@ -379,15 +327,6 @@ const receiverRuleOptions = [
   { label: "团队", value: "team" },
   { label: "排班", value: "on_call" }
 ]
-const templateStatusText = computed(() => {
-  if (!localForm.template_id) return "继承"
-  const template = templates.value.find((item) => item.id === localForm.template_id)
-  return template ? template.name : `模板 #${localForm.template_id}`
-})
-
-function toggleNotifyDetails() {
-  showNotifyDetails.value = !showNotifyDetails.value
-}
 
 const formRules = computed<FormRules>(() => ({
   name: [{ required: true, message: "请输入路由名称", trigger: "blur" }],
@@ -436,15 +375,6 @@ function addMatcher() {
 
 function removeMatcher(index: number) {
   localForm.matchers.splice(index, 1)
-}
-
-function getReceiverTypeLabel(type: string) {
-  const labels: Record<string, string> = {
-    user: "用户",
-    team: "团队",
-    oncall: "排班"
-  }
-  return labels[type] || type
 }
 
 function receiverTypeToRule(type: AggregateReceiverType) {
@@ -505,41 +435,24 @@ function updateReceiverDisplayNames(map: Record<string, string>) {
   Object.assign(receiverDisplayNames, map)
 }
 
-function removeReceiver(receiver: ReceiverRef) {
-  localForm.receivers = (localForm.receivers || []).filter(
-    (item) => item.id !== receiver.id || item.type !== receiver.type
-  )
-}
-
-function clearReceivers() {
-  localForm.receivers = []
-}
-
-async function loadTemplates() {
-  if (templates.value.length > 0 || templateLoading.value) return
-  templateLoading.value = true
-  try {
-    const { data } = await listTemplatesApi({ offset: 0, limit: 100 })
-    templates.value = data.templates || []
-  } finally {
-    templateLoading.value = false
-  }
-}
-
-function handleTemplateVisibleChange(visible: boolean) {
-  if (visible) {
-    loadTemplates()
-  }
-}
-
 // 暴露 el-form 组件以支持主页面调用校验
-const validate = () => {
-  return formRef.value?.validate().catch(() => false)
+const validate = async () => {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return false
+  if (localForm.ticket_policy?.enabled === true && !localForm.ticket_policy?.template_id) {
+    ElMessage.warning("启用工单动作时必须选择工单模板")
+    return false
+  }
+  if (localForm.escalation_policy?.enabled === true && !localForm.escalation_policy?.config_id) {
+    ElMessage.warning("启用升级动作时必须选择升级配置")
+    return false
+  }
+  return true
 }
 
 // 暴露编辑后的数据接口
 const getFormData = () => {
-  const data = { ...localForm }
+  const data = cloneDeep(localForm)
   if (data.id === undefined) {
     delete data.id
   }
@@ -555,11 +468,12 @@ defineExpose({
 <style lang="scss" scoped>
 .route-form {
   padding: 16px;
+  background-color: transparent;
 }
 
 .form-section {
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
   border-bottom: 1px solid #f1f5f9;
 
   &:last-child {
@@ -588,12 +502,12 @@ defineExpose({
     transform: translateY(-50%);
     width: 3px;
     height: 14px;
-    background: #3b82f6;
+    background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
     border-radius: 2px;
   }
 
   .el-icon {
-    color: #3b82f6;
+    color: #6366f1;
     font-size: 14px;
   }
 }
@@ -615,7 +529,7 @@ defineExpose({
   margin-bottom: 10px;
 
   .el-icon {
-    color: #3b82f6;
+    color: #6366f1;
     font-size: 14px;
   }
 }
@@ -639,14 +553,14 @@ defineExpose({
   border-radius: 8px;
   color: #475569;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease-in-out;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
-    border-color: #3b82f6;
-    color: #2563eb;
-    background: #f0f7ff;
+    border-color: #6366f1;
+    color: #4f46e5;
+    background: #f5f3ff;
   }
 }
 
@@ -655,207 +569,6 @@ defineExpose({
   color: #64748b;
   font-size: 11px;
   line-height: 1.4;
-}
-
-.notify-policy-card {
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
-  cursor: pointer;
-  transition:
-    border-color 0.2s ease,
-    background-color 0.2s ease;
-
-  &:hover,
-  &.is-open {
-    border-color: #cbd5e1;
-  }
-}
-
-.notify-overview {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 18px;
-  padding: 12px 14px;
-}
-
-.notify-summary-item {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 3px;
-
-  strong,
-  span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  strong {
-    color: #1e293b;
-    font-size: 13px;
-    font-weight: 800;
-    line-height: 1.35;
-  }
-
-  span {
-    color: #64748b;
-    font-size: 11px;
-    line-height: 1.4;
-  }
-}
-
-.summary-label {
-  color: #334155 !important;
-  font-weight: 700;
-}
-
-.notify-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-
-  :deep(.el-button) {
-    height: 28px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-}
-
-.notify-details {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px 14px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-  cursor: default;
-}
-
-.details-row {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: 14px;
-  align-items: start;
-}
-
-.details-label {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-
-  span {
-    color: #334155;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1.4;
-  }
-
-  small {
-    color: #94a3b8;
-    font-size: 11px;
-    line-height: 1.4;
-  }
-}
-
-.details-content {
-  min-width: 0;
-
-  :deep(.el-select) {
-    width: min(520px, 100%);
-  }
-}
-
-.empty-policy-text {
-  color: #64748b;
-  font-size: 12px;
-  line-height: 28px;
-}
-
-.receiver-shelf {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.receiver-token {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 240px;
-  height: 28px;
-  padding: 0 6px 0 4px;
-  background: #f8fafc;
-  border: 1px solid #dbeafe;
-  border-radius: 6px;
-  color: #334155;
-  font-size: 12px;
-}
-
-.receiver-type {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  flex-shrink: 0;
-  padding: 0 6px;
-  border-radius: 4px;
-  background: #eff6ff;
-  color: #2563eb;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.receiver-name {
-  min-width: 0;
-  margin-left: 7px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: 500;
-}
-
-.receiver-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  margin-left: 5px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.15s ease;
-
-  &:hover {
-    background: #fee2e2;
-    color: #dc2626;
-  }
-}
-
-@media (max-width: 1200px) {
-  .notify-overview {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .notify-actions {
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 768px) {
-  .details-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
 }
 
 .time-cards-container {
@@ -882,12 +595,12 @@ defineExpose({
 
     .label {
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       color: #475569;
     }
 
     .inherit-tip {
-      font-size: 9px;
+      font-size: 10px;
       color: #94a3b8;
     }
   }
@@ -905,17 +618,18 @@ defineExpose({
   align-items: center;
   width: 100%;
   border: 1px solid #dcdfe6;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
 
   &:hover {
     border-color: #c0c4cc;
   }
 
   &:focus-within {
-    border-color: #409eff;
-    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
   }
 
   .time-input-field {
@@ -934,11 +648,11 @@ defineExpose({
     align-items: center;
     padding: 0 10px;
     background: #f8fafc;
-    border-left: 1px solid #dcdfe6;
+    border-left: 1px solid #e2e8f0;
     color: #64748b;
     font-size: 11px;
-    height: 30px;
-    font-weight: 500;
+    height: 32px;
+    font-weight: 600;
     user-select: none;
   }
 }
@@ -947,24 +661,24 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 6px;
+  padding: 2px 8px;
   font-size: 10px;
-  font-weight: 500;
-  background: #f1f5f9;
+  font-weight: 600;
+  background: #ffffff;
   color: #64748b;
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid #e2e8f0;
 
   &:hover {
-    background: #eff6ff;
-    color: #2563eb;
-    border-color: #bfdbfe;
+    background: #f5f3ff;
+    color: #6366f1;
+    border-color: #c7d2fe;
   }
 
   &:active {
-    background: #cbd5e1;
+    background: #e0e7ff;
   }
 }
 
@@ -987,11 +701,11 @@ defineExpose({
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 10px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
   &:hover {
     border-color: #cbd5e1;
@@ -1006,14 +720,14 @@ defineExpose({
 
     .cell-title {
       font-size: 12px;
-      font-weight: 700;
-      color: #334155;
+      font-weight: 800;
+      color: #1e293b;
     }
 
     .cell-desc {
-      font-size: 10px;
+      font-size: 10.5px;
       color: #64748b;
-      line-height: 1.3;
+      line-height: 1.4;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

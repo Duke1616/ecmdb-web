@@ -4,34 +4,9 @@
     <div class="form-section">
       <h3 class="section-title">基本信息</h3>
       <el-row :gutter="20">
-        <el-col :span="8">
+        <el-col :span="24">
           <el-form-item label="配置名称" prop="name">
             <el-input v-model="modelValue.name" placeholder="请输入配置名称" />
-          </el-form-item>
-        </el-col>
-        <el-col :span="8">
-          <el-form-item label="业务类型" prop="biz_id">
-            <el-select
-              v-model="modelValue.biz_id"
-              placeholder="请选择业务类型"
-              style="width: 100%"
-              :disabled="isFieldReadonly('biz_id')"
-            >
-              <el-option label="工作空间（告警）" :value="BUSINESS_TYPES.WORKSPACE" />
-              <el-option label="工作流（工单）" :value="BUSINESS_TYPES.WORKFLOW" />
-            </el-select>
-          </el-form-item>
-        </el-col>
-        <el-col :span="8">
-          <el-form-item label="业务唯一值" prop="key">
-            <BusinessPicker
-              v-model="modelValue.key"
-              :business-type="getBusinessPickerType()"
-              placeholder="请选择业务唯一值"
-              variant="simple"
-              :disabled="isFieldReadonly('key')"
-              :display-name="props.keyDisplayName"
-            />
           </el-form-item>
         </el-col>
       </el-row>
@@ -40,39 +15,41 @@
       </el-form-item>
     </div>
 
-    <!-- 触发条件和触发逻辑 -->
+    <!-- 升级时机和组合方式 -->
     <div class="form-section">
       <el-row :gutter="24">
-        <!-- 左侧：触发条件 -->
+        <!-- 左侧：升级时机 -->
         <el-col :span="12">
           <div class="trigger-conditions">
             <h3 class="section-title">
-              触发条件
-              <el-button type="primary" :icon="Plus" size="small" @click="addTrigger">添加触发条件</el-button>
+              升级时机
+              <el-button type="primary" :icon="Plus" size="small" @click="addTrigger">添加时机</el-button>
             </h3>
+            <p class="section-desc">聚合路由命中告警后，满足这里的时机才会创建或推进升级。</p>
             <div v-if="modelValue.triggers.length === 0" class="empty-state">
-              <el-empty description="暂无触发条件" />
+              <el-empty description="暂无升级时机" />
             </div>
             <div v-else>
               <div v-for="(trigger, index) in modelValue.triggers" :key="index" class="trigger-item">
                 <el-row :gutter="20" align="middle">
                   <el-col :span="5">
-                    <el-form-item :label="`触发类型 ${index + 1}`" :prop="`triggers.${index}.type`">
+                    <el-form-item :label="`时机类型 ${index + 1}`" :prop="`triggers.${index}.type`">
                       <el-select
                         v-model="trigger.type"
-                        placeholder="选择触发类型"
+                        placeholder="选择时机类型"
                         style="width: 100%"
                         @change="handleTriggerTypeChange(index, $event)"
                       >
-                        <el-option label="时间触发" :value="ESCALATION_TRIGGER_TYPES.TIME" />
-                        <el-option label="级别触发" :value="ESCALATION_TRIGGER_TYPES.LEVEL" />
-                        <el-option label="无响应触发" :value="ESCALATION_TRIGGER_TYPES.NO_RESPONSE" />
+                        <el-option label="持续时间达到" :value="ESCALATION_TRIGGER_TYPES.TIME" />
+                        <el-option label="告警级别达到" :value="ESCALATION_TRIGGER_TYPES.LEVEL" />
+                        <el-option label="连续评估次数达到" :value="ESCALATION_TRIGGER_TYPES.EVAL_COUNT" />
+                        <el-option label="聚合告警数量达到" :value="ESCALATION_TRIGGER_TYPES.ALERT_COUNT" />
                       </el-select>
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
                     <el-form-item :label="`描述 ${index + 1}`" :prop="`triggers.${index}.description`">
-                      <el-input v-model="trigger.description" placeholder="触发条件描述" />
+                      <el-input v-model="trigger.description" placeholder="描述这个升级时机" />
                     </el-form-item>
                   </el-col>
                   <el-col :span="4">
@@ -89,15 +66,16 @@
           </div>
         </el-col>
 
-        <!-- 右侧：触发逻辑 -->
+        <!-- 右侧：组合方式 -->
         <el-col :span="12">
           <div class="trigger-logic">
-            <h3 class="section-title">触发逻辑</h3>
-            <el-form-item label="逻辑类型" prop="trigger_logic.type">
+            <h3 class="section-title">组合方式</h3>
+            <p class="section-desc">多个升级时机之间如何组合判断。</p>
+            <el-form-item label="组合类型" prop="trigger_logic.type">
               <el-select v-model="modelValue.trigger_logic.type" style="width: 100%">
-                <el-option label="任意条件满足" :value="ESCALATION_LOGIC_TYPES.ANY" />
-                <el-option label="所有条件满足" :value="ESCALATION_LOGIC_TYPES.ALL" />
-                <el-option label="第一个条件满足" :value="ESCALATION_LOGIC_TYPES.FIRST" />
+                <el-option label="任一时机满足" :value="ESCALATION_LOGIC_TYPES.ANY" />
+                <el-option label="所有时机满足" :value="ESCALATION_LOGIC_TYPES.ALL" />
+                <el-option label="第一个时机满足" :value="ESCALATION_LOGIC_TYPES.FIRST" />
                 <el-option label="自定义逻辑" :value="ESCALATION_LOGIC_TYPES.CUSTOM" />
               </el-select>
             </el-form-item>
@@ -108,12 +86,12 @@
             >
               <el-input v-model="modelValue.trigger_logic.expression" placeholder="逻辑表达式" />
             </el-form-item>
-            <el-form-item label="逻辑描述" prop="trigger_logic.description">
+            <el-form-item label="组合描述" prop="trigger_logic.description">
               <el-input
                 v-model="modelValue.trigger_logic.description"
                 type="textarea"
                 :rows="3"
-                placeholder="逻辑描述"
+                placeholder="描述这些升级时机的组合方式"
               />
             </el-form-item>
           </div>
@@ -137,11 +115,11 @@
     </div>
   </el-form>
 
-  <!-- 触发条件配置对话框 -->
+  <!-- 升级时机配置对话框 -->
   <FormDialog
     v-model="triggerConfigDialogVisible"
-    title="触发条件配置"
-    subtitle="配置触发条件的详细参数"
+    title="升级时机配置"
+    subtitle="配置命中聚合路由后的升级触发时机"
     width="600px"
     header-icon="Setting"
     confirm-text="保存配置"
@@ -173,7 +151,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { Plus, Delete, Setting } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
@@ -193,29 +171,9 @@ import EscalationStepForm from "./EscalationStepForm.vue"
 import EscalationStepsTable from "./EscalationStepsTable.vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
-import BusinessPicker from "@/common/components/BusinessPicker/index.vue"
-import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import { escalationConfigFormRules, validateEscalationConfig } from "../config/validation"
 
-// Props 定义
-interface Props {
-  keyDisplayName?: string
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  keyDisplayName: ""
-})
-
 const modelValue = defineModel<CreateConfigReq>({ required: true })
-
-// 检查字段是否为只读
-const isFieldReadonly = (fieldName: string) => {
-  // 如果有 keyDisplayName，说明是从工作空间页面跳转过来的，这些字段应该只读
-  if (fieldName === "biz_id" || fieldName === "key") {
-    return !!props.keyDisplayName
-  }
-  return false
-}
 
 const formRef = ref<FormInstance>()
 const stepFormRef = ref<InstanceType<typeof EscalationStepForm>>()
@@ -264,29 +222,6 @@ const validateForm = async (): Promise<boolean> => {
     return false
   }
 }
-
-// 根据业务类型获取 BusinessPicker 类型
-const getBusinessPickerType = () => {
-  switch (modelValue.value.biz_id) {
-    case BUSINESS_TYPES.WORKSPACE:
-      return BUSINESS_TYPES.WORKSPACE
-    case BUSINESS_TYPES.WORKFLOW:
-      return BUSINESS_TYPES.WORKFLOW
-    default:
-      return BUSINESS_TYPES.WORKSPACE
-  }
-}
-
-// 监听业务类型变化，清空业务唯一值
-watch(
-  () => modelValue.value.biz_id,
-  (newBizId, oldBizId) => {
-    // 如果业务类型发生变化，清空业务唯一值
-    if (newBizId !== oldBizId && oldBizId !== undefined) {
-      modelValue.value.key = ""
-    }
-  }
-)
 
 // 暴露验证方法给父组件
 defineExpose({
@@ -343,6 +278,20 @@ const handleTriggerTypeChange = (index: number, newType: EscalationTriggerType) 
           check_interval: 30000,
           max_attempts: 3,
           required_acks: 1
+        }
+      }
+      break
+    case ESCALATION_TRIGGER_TYPES.EVAL_COUNT:
+      trigger.config = {
+        eval_count_config: {
+          count: 3
+        }
+      }
+      break
+    case ESCALATION_TRIGGER_TYPES.ALERT_COUNT:
+      trigger.config = {
+        alert_count_config: {
+          count: 5
         }
       }
       break

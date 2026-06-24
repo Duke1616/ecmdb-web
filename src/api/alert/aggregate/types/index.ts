@@ -6,12 +6,26 @@ export type { Matcher, Matchers } from "@@/types/matcher"
 import type { Matchers } from "@@/types/matcher"
 
 export type AggregateReceiverType = "user" | "team" | "oncall"
+export type TicketMode = "ticket_only" | "ticket_and_notify"
 
 export interface ReceiverRef {
   id: number
   type: AggregateReceiverType
   display_name?: string
   metadata?: Record<string, any>
+}
+
+export interface TicketPolicy {
+  enabled: boolean
+  template_id: number
+  duration: number
+  eval_count: number
+  mode: TicketMode
+}
+
+export interface EscalationPolicy {
+  enabled: boolean
+  config_id: number
 }
 
 export enum AggregateType {
@@ -34,6 +48,8 @@ export interface AggregateGroupRule {
   is_diff_data_source: boolean
   receivers: ReceiverRef[]
   template_id: number
+  ticket_policy?: TicketPolicy | null
+  escalation_policy?: EscalationPolicy | null
   matchers: Matchers
   group_wait: number
   group_interval: number
@@ -51,6 +67,8 @@ export interface EffectiveAggregateRoute {
   is_diff_data_source: boolean
   receivers: ReceiverRef[]
   template_id: number
+  ticket_policy?: TicketPolicy | null
+  escalation_policy?: EscalationPolicy | null
   group_wait: number
   group_interval: number
   repeat_interval: number
@@ -70,6 +88,8 @@ export interface SaveAggregateGroupRuleReq {
   is_diff_data_source: boolean
   receivers: ReceiverRef[]
   template_id: number
+  ticket_policy?: TicketPolicy | null
+  escalation_policy?: EscalationPolicy | null
   matchers: Matchers
   group_wait: number
   group_interval: number
@@ -94,6 +114,8 @@ export interface PreviewAggregateRouteResp {
   is_diff_data_source: boolean
   receivers: ReceiverRef[]
   template_id: number
+  ticket_policy?: TicketPolicy | null
+  escalation_policy?: EscalationPolicy | null
   group_fingerprint: number
   group_wait: number
   group_interval: number
@@ -122,6 +144,8 @@ export interface CreateAggregateGroupRuleReq {
   is_diff_data_source: boolean
   receivers?: ReceiverRef[]
   template_id?: number
+  ticket_policy?: TicketPolicy | null
+  escalation_policy?: EscalationPolicy | null
   matchers: Matchers
   group_wait?: number
   group_interval?: number

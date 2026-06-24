@@ -49,13 +49,6 @@
         </div>
       </template>
 
-      <!-- 所属业务插槽 -->
-      <template #businessInfo="{ row }">
-        <div class="business-cell">
-          <el-tag type="primary" size="small">{{ getBusinessTypeLabel(row.biz_id) }}</el-tag>
-        </div>
-      </template>
-
       <!-- 详情信息插槽 -->
       <template #details="{ row }">
         <div class="details-cell">
@@ -102,7 +95,6 @@ import {
   updateConfigStatusApi
 } from "@/api/alert/escalation"
 import { usePagination } from "@/common/composables/usePagination"
-import { getBusinessTypeLabel } from "@@/utils"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
@@ -122,8 +114,6 @@ const loading = ref(false)
 const drawerVisible = ref(false)
 const submitLoading = ref(false)
 const formData = ref<CreateConfigReq>({
-  biz_id: 1,
-  key: "",
   name: "",
   description: "",
   enabled: true,
@@ -165,12 +155,6 @@ const tableColumns: Column[] = [
     label: "步骤数量",
     minWidth: 140,
     slot: "stepCount"
-  },
-  {
-    prop: "businessInfo",
-    label: "所属业务",
-    minWidth: 140,
-    slot: "businessInfo"
   },
   {
     prop: "details",
@@ -236,8 +220,6 @@ const handleEdit = (config: ConfigVO) => {
   isEdit.value = true
   currentEditId.value = config.id
   formData.value = {
-    biz_id: config.biz_id,
-    key: config.key,
     name: config.name,
     description: config.description,
     enabled: config.enabled,

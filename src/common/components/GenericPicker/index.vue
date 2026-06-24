@@ -41,9 +41,8 @@
       </div>
     </div>
 
-    <!-- Dropdown Panel -->
     <Teleport to="body">
-      <div v-if="showDropdown" class="picker-dropdown-panel" :class="dropdownClass" :style="dropdownStyle" @click.stop>
+      <div v-if="showDropdown" ref="dropdownRef" class="picker-dropdown-panel" :class="dropdownClass" @click.stop>
         <div class="search-section" @click.stop>
           <div class="search-input-wrapper">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -107,7 +106,8 @@
 </template>
 
 <script setup lang="ts" generic="T, K extends string | number">
-import { ref, computed, watch, onMounted, onUnmounted } from "vue"
+import { ref, watch, onMounted, onUnmounted, nextTick } from "vue"
+import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
 import { useGenericPicker } from "../../composables/useGenericPicker"
 
 interface IGenericPickerProps {
@@ -144,6 +144,8 @@ const props = withDefaults(defineProps<IGenericPickerProps>(), {
 const model = defineModel<K | K[]>()
 
 const containerRef = ref<HTMLElement>()
+const dropdownRef = ref<HTMLElement>()
+const popperInstance = ref<PopperInstance | null>(null)
 
 const {
   loading,
@@ -165,20 +167,41 @@ const {
   pageSize: props.pageSize
 })
 
-// 下拉菜单定位样式计算
-const dropdownStyle = computed(() => {
-  if (!containerRef.value || !showDropdown.value) return {}
-  const rect = containerRef.value.getBoundingClientRect()
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-  return {
-    position: "fixed" as const,
-    top: `${rect.bottom + scrollTop + 8}px`,
-    left: `${rect.left + scrollLeft}px`,
-    width: `${rect.width}px`,
-    zIndex: 9999
+watch(
+  () => showDropdown.value,
+  async (visible) => {
+    if (visible) {
+      await nextTick()
+      if (containerRef.value && dropdownRef.value) {
+        dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
+        popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
+          placement: "bottom-start",
+          modifiers: [
+            { name: "offset", options: { offset: [0, 8] } },
+            { name: "preventOverflow", options: { boundary: "viewport", padding: 8 } }
+          ]
+        })
+      }
+    } else {
+      if (popperInstance.value) {
+        popperInstance.value.destroy()
+        popperInstance.value = null
+      }
+    }
   }
-})
+)
+
+// 监听下拉列表数据和双向绑定值的变化，当 DOM 渲染完成后，重新计算并刷新 Popper 位置，避免异步加载或高度撑开导致定位错位
+watch(
+  [() => listData.value, () => model.value],
+  async () => {
+    if (showDropdown.value && popperInstance.value) {
+      await nextTick()
+      popperInstance.value.update()
+    }
+  },
+  { deep: true }
+)
 
 /**
  * 判断列表项是否已被选中
@@ -241,15 +264,17 @@ watch(
       if (Array.isArray(newValue) && newValue.length > 0) {
         const resolved: T[] = []
         for (const key of newValue) {
-          const item = await resolveDetail(key, props.fallbackBuilder)
-          resolved.push(item)
+          if (key !== undefined && key !== null && key !== "" && key !== 0 && key !== "0") {
+            const item = await resolveDetail(key, props.fallbackBuilder)
+            resolved.push(item)
+          }
         }
         selectedItems.value = resolved
       } else {
         selectedItems.value = []
       }
     } else {
-      if (newValue !== undefined && newValue !== null && newValue !== "") {
+      if (newValue !== undefined && newValue !== null && newValue !== "" && newValue !== 0 && newValue !== "0") {
         const item = await resolveDetail(newValue as K, props.fallbackBuilder)
         selectedItem.value = item
       } else {
@@ -261,17 +286,23 @@ watch(
 )
 
 const handleClickOutside = (event: Event) => {
-  if (showDropdown.value && containerRef.value && !containerRef.value.contains(event.target as Node)) {
-    closeDropdown()
+  if (!showDropdown.value) return
+  const target = event.target as HTMLElement
+  if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) {
+    return
   }
+  closeDropdown()
 }
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside)
+  document.addEventListener("mousedown", handleClickOutside, true)
 })
 
 onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside)
+  document.removeEventListener("mousedown", handleClickOutside, true)
+  if (popperInstance.value) {
+    popperInstance.value.destroy()
+  }
 })
 </script>
 

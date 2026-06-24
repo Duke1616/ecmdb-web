@@ -155,6 +155,44 @@
               </el-tag>
             </div>
           </div>
+
+          <div class="grid-cell double-width">
+            <span class="cell-label">工单动作</span>
+            <div class="cell-content ticket-result">
+              <template v-if="previewResult.ticket_policy?.enabled">
+                <el-tag size="small" type="success" effect="light">
+                  {{ ticketModeLabel(previewResult.ticket_policy.mode) }}
+                </el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  模板 #{{ previewResult.ticket_policy.template_id }}
+                </el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  持续 {{ formatRepeatInterval(previewResult.ticket_policy.duration) }}
+                </el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  次数 {{ previewResult.ticket_policy.eval_count }}
+                </el-tag>
+              </template>
+              <el-tag v-else-if="previewResult.ticket_policy" size="small" type="info" effect="plain">已禁用</el-tag>
+              <span v-else class="empty-text">未启用</span>
+            </div>
+          </div>
+
+          <div class="grid-cell double-width">
+            <span class="cell-label">升级动作</span>
+            <div class="cell-content ticket-result">
+              <template v-if="previewResult.escalation_policy?.enabled">
+                <el-tag size="small" type="warning" effect="light">已启用</el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  配置 #{{ previewResult.escalation_policy.config_id }}
+                </el-tag>
+              </template>
+              <el-tag v-else-if="previewResult.escalation_policy" size="small" type="info" effect="plain"
+                >已禁用</el-tag
+              >
+              <span v-else class="empty-text">未启用</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -299,6 +337,14 @@ function getReceiverTypeLabel(type: string) {
     oncall: "排班"
   }
   return labels[type] || type
+}
+
+function ticketModeLabel(mode?: string) {
+  const labels: Record<string, string> = {
+    ticket_only: "仅创建工单",
+    ticket_and_notify: "工单并通知"
+  }
+  return labels[mode || "ticket_only"] || mode
 }
 
 defineExpose({
@@ -695,6 +741,13 @@ defineExpose({
 .receiver-tags {
   display: flex;
   flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ticket-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 6px;
 }
 

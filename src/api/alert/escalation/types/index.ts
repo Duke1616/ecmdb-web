@@ -6,7 +6,9 @@
 export enum ESCALATION_TRIGGER_TYPES {
   TIME = "time", // 时间触发
   LEVEL = "level", // 级别触发
-  NO_RESPONSE = "no_response" // 无响应触发
+  NO_RESPONSE = "no_response", // 无响应触发
+  EVAL_COUNT = "eval_count", // 连续评估次数触发
+  ALERT_COUNT = "alert_count" // 聚合告警数量触发
 }
 
 export type EscalationTriggerType = ESCALATION_TRIGGER_TYPES | ""
@@ -79,11 +81,21 @@ export interface NoResponseTriggerConfig {
   required_acks: number // 需要的确认数
 }
 
+export interface EvalCountTriggerConfig {
+  count: number // 连续命中评估次数
+}
+
+export interface AlertCountTriggerConfig {
+  count: number // 聚合组内告警数量
+}
+
 // 升级触发配置 - 使用泛型接口
 export interface EscalationTriggerConfig<T extends EscalationTriggerType = EscalationTriggerType> {
   time_config?: T extends "time" ? TimeTriggerConfig : never
   level_config?: T extends "level" ? LevelTriggerConfig : never
   no_response_config?: T extends "no_response" ? NoResponseTriggerConfig : never
+  eval_count_config?: T extends "eval_count" ? EvalCountTriggerConfig : never
+  alert_count_config?: T extends "alert_count" ? AlertCountTriggerConfig : never
 }
 
 // 为了向后兼容，提供一个默认的联合类型
@@ -91,6 +103,8 @@ export type AnyEscalationTriggerConfig =
   | { time_config: TimeTriggerConfig }
   | { level_config: LevelTriggerConfig }
   | { no_response_config: NoResponseTriggerConfig }
+  | { eval_count_config: EvalCountTriggerConfig }
+  | { alert_count_config: AlertCountTriggerConfig }
 
 // 升级触发条件
 export interface EscalationTrigger {
@@ -159,8 +173,6 @@ export interface StepVO {
 // 升级配置视图对象
 export interface ConfigVO {
   id: number // 升级配置ID
-  biz_id: number // 业务类型ID（1=告警，2=工单）
-  key: string // 业务ID（告警规则ID或工单模板ID，字符串格式）
   name: string // 配置名称
   description: string // 配置描述
   enabled: boolean // 是否启用升级
@@ -175,8 +187,6 @@ export interface ConfigVO {
 
 // 创建升级配置请求
 export interface CreateConfigReq {
-  biz_id: number // 业务类型ID（1=告警，2=工单）
-  key: string // 业务唯一值（告警规则ID或工单模板ID，字符串格式）
   name: string // 配置名称
   description: string // 配置描述
   enabled: boolean // 是否启用
@@ -218,16 +228,6 @@ export interface ListConfigsReq {
 export interface ListConfigsResp {
   configs: ConfigVO[]
   total: number
-}
-
-// 获取启用的升级配置请求
-export interface ListEnabledConfigsReq {
-  biz_id: number // 业务ID
-}
-
-// 获取启用的升级配置响应
-export interface ListEnabledConfigsResp {
-  configs: ConfigVO[]
 }
 
 // 创建升级步骤请求
@@ -274,11 +274,6 @@ export interface GetStepResp {
 // 根据配置ID获取升级步骤列表请求
 export interface ListStepsByConfigIDReq {
   config_id: number // 配置ID
-}
-
-export interface ListConfigsByBizIDAndKeyReq {
-  biz_id: number // 业务类型ID（1=告警，2=工单）
-  key: string // 业务唯一值（告警规则ID或工单模板ID，字符串格式）
 }
 
 // 根据配置ID获取升级步骤列表响应
@@ -335,10 +330,4 @@ export interface ListStepTemplatesResp {
 export interface SwapStepLevelsReq {
   src_id: number // 源步骤ID
   dst_id: number // 目标步骤ID
-}
-
-// 交换配置优先级请求
-export interface SwapConfigPrioritiesReq {
-  src_id: number // 源配置ID
-  dst_id: number // 目标配置ID
 }
