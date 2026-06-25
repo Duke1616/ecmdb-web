@@ -31,6 +31,8 @@
         <span class="btn-icon">{{ props.showPreview ? "📝" : "👁️" }}</span>
         <span class="btn-text">{{ props.showPreview ? "编辑" : "预览" }}</span>
       </button>
+
+      <slot />
     </div>
   </div>
 </template>

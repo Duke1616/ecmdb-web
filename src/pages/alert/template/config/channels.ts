@@ -1,4 +1,7 @@
 import { type ChannelType, CHANNEL_TYPES } from "@/api/alert/template/types"
+import emailIcon from "@/common/assets/icons/preserve-color/email.svg"
+import larkIcon from "@/common/assets/icons/preserve-color/lark.svg"
+import wecomIcon from "@/common/assets/icons/preserve-color/wecom.svg"
 
 /**
  * 通知渠道配置管理
@@ -9,6 +12,8 @@ export interface ChannelConfig {
   code: ChannelType
   /** 渠道显示名称 */
   label: string
+  /** 渠道图标 */
+  icon: string
   /** 编辑器语言 */
   language: string
   /** 文件扩展名 */
@@ -28,6 +33,7 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
   EMAIL: {
     code: CHANNEL_TYPES.EMAIL,
     label: "邮件",
+    icon: emailIcon,
     language: "html",
     extension: "html",
     previewMode: "fullscreen",
@@ -52,6 +58,7 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
   WECHAT: {
     code: CHANNEL_TYPES.WECHAT,
     label: "企业微信",
+    icon: wecomIcon,
     language: "markdown",
     extension: "md",
     previewMode: "split",
@@ -68,7 +75,8 @@ export const CHANNEL_CONFIGS: Record<string, ChannelConfig> = {
   LARK_CARD: {
     code: CHANNEL_TYPES.LARK_CARD,
     label: "飞书卡片",
-    language: "json",
+    icon: larkIcon,
+    language: "json-template",
     extension: "json",
     previewMode: "split",
     description: "通过飞书卡片发送告警通知",
@@ -131,6 +139,14 @@ export const getChannelLabel = (channelCode: ChannelType): string => {
 }
 
 /**
+ * 获取渠道图标
+ */
+export const getChannelIcon = (channelCode: ChannelType): string => {
+  const config = getChannelConfig(channelCode)
+  return config?.icon || emailIcon
+}
+
+/**
  * 获取编辑器语言
  */
 export const getEditorLanguage = (channelCode: ChannelType): string => {
@@ -171,5 +187,8 @@ export const getChannelType = (channelCode: ChannelType): "primary" | "success" 
  */
 export const isChannelType = (channelCode: ChannelType, type: "html" | "markdown" | "json"): boolean => {
   const config = getChannelConfig(channelCode)
+  if (type === "json" && config?.language === "json-template") {
+    return true
+  }
   return config?.language === type
 }

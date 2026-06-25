@@ -4,7 +4,7 @@
       <div class="card-header">
         <h3>
           {{ channelLabel || "模板内容" }}
-          <span class="language-badge">{{ language.toUpperCase() }}</span>
+          <span class="language-badge">{{ languageLabel }}</span>
         </h3>
         <CodeEditorToolbar
           :language="language"
@@ -14,7 +14,9 @@
           @format="handleFormat"
           @clear="handleClear"
           @theme-change="handleThemeChange"
-        />
+        >
+          <slot name="toolbar-actions" />
+        </CodeEditorToolbar>
       </div>
     </template>
     <div class="editor-container">
@@ -47,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
+import { computed, ref } from "vue"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import CodeEditorToolbar from "@/common/components/CodeEditor/toolbar.vue"
 
@@ -68,10 +70,11 @@ interface Emits {
   (e: "clear"): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const codeEditorRef = ref()
+const languageLabel = computed(() => (props.language === "json-template" ? "JSON" : props.language.toUpperCase()))
 
 const handlePreview = () => {
   emit("preview")

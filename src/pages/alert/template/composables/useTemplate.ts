@@ -15,7 +15,7 @@ import {
 } from "@/api/alert/template_set"
 import type { TemplateSet, CreateTemplateSetReq } from "@/api/alert/template_set/types"
 
-export function useTemplateSet() {
+export function useTemplate() {
   const router = useRouter()
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -65,20 +65,25 @@ export function useTemplateSet() {
       type: "warning"
     })
 
-    await deleteTemplateSetApi({ id: templateSet.id })
+    await deleteTemplateSetApi(templateSet.id)
     await loadTemplateSets()
     return true
   }
 
   // 获取模板集合详情
   const getTemplateSet = async (id: number) => {
-    const response = await getTemplateSetApi({ id })
+    const response = await getTemplateSetApi(id)
     return response.data.template_set
   }
 
   // 导航到条目管理页面
   const navigateToItems = (templateSet: TemplateSet) => {
-    router.push(`/alert/notify/template-set/items/${templateSet.id}`)
+    router.push({
+      name: "TemplateSetItems",
+      query: {
+        id: templateSet.id
+      }
+    })
   }
 
   return {

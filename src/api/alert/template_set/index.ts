@@ -4,19 +4,13 @@ import type {
   CreateTemplateSetReq,
   CreateTemplateSetResp,
   UpdateTemplateSetReq,
-  GetTemplateSetReq,
   GetTemplateSetResp,
-  DeleteTemplateSetReq,
   ListTemplateSetReq,
   RetrieveTemplateSets,
   ListTemplateSetsByIDsReq,
   AddItemReq,
   AddItemResp,
-  AddItemsReq,
-  ListItemsReq,
-  ListItemsResp,
-  DeleteItemsReq,
-  DeleteAllItemsReq
+  ClearTemplatesReq
 } from "./types"
 
 // 创建模板集合
@@ -36,18 +30,15 @@ export const updateTemplateSetApi = (data: UpdateTemplateSetReq) => {
 }
 
 // 获取模板集合
-export const getTemplateSetApi = (data: GetTemplateSetReq) => {
-  return instance.post<GetTemplateSetResp>({
-    url: `${API_SERVICE.ALERT}/template/set/get`,
-    data
+export const getTemplateSetApi = (id: number) => {
+  return instance.get<GetTemplateSetResp>({
+    url: `${API_SERVICE.ALERT}/template/set/detail/${id}`
   })
 }
 
-// 删除模板集合
-export const deleteTemplateSetApi = (data: DeleteTemplateSetReq) => {
-  return instance.post({
-    url: `${API_SERVICE.ALERT}/template/set/delete`,
-    data
+export function deleteTemplateSetApi(id: number) {
+  return instance.delete<void>({
+    url: `${API_SERVICE.ALERT}/template/set/delete/${id}`
   })
 }
 
@@ -75,34 +66,10 @@ export const addItemApi = (data: AddItemReq) => {
   })
 }
 
-// 批量新增条目
-export const addItemsApi = (data: AddItemsReq) => {
+// 清空模板。channel 为空时清空全部渠道
+export const clearTemplatesApi = (data: ClearTemplatesReq) => {
   return instance.post({
-    url: `${API_SERVICE.ALERT}/template/set/items/add-batch`,
-    data
-  })
-}
-
-// 列出条目
-export const listItemsApi = (data: ListItemsReq) => {
-  return instance.post<ListItemsResp>({
-    url: `${API_SERVICE.ALERT}/template/set/items/list`,
-    data
-  })
-}
-
-// 删除指定条目
-export const deleteItemsApi = (data: DeleteItemsReq) => {
-  return instance.post({
-    url: `${API_SERVICE.ALERT}/template/set/items/delete`,
-    data
-  })
-}
-
-// 清空所有条目
-export const deleteAllItemsApi = (data: DeleteAllItemsReq) => {
-  return instance.post({
-    url: `${API_SERVICE.ALERT}/template/set/items/delete-all`,
+    url: `${API_SERVICE.ALERT}/template/set/clear`,
     data
   })
 }

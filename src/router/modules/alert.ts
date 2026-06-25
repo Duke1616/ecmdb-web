@@ -107,51 +107,8 @@ export const alertRoutes: RouteRecordRaw[] = [
       //   }
       // }
       // {
-      //   path: "/alert/template",
-      //   redirect: "/alert/template/list",
-      //   meta: {
-      //     title: "通知模板",
-      //     svgIcon: "notify_template",
-      //     platforms: ["alert"]
-      //   },
-      //   children: [
-      //     {
-      //       path: "/alert/template/list",
-      //       component: () => import("@/pages/alert/template/index.vue"),
-      //       name: "AlertTemplate",
-      //       meta: {
-      //         title: "通知模板",
-      //         svgIcon: "notify_template",
-      //         platforms: ["alert"]
-      //       }
-      //     },
-      //     {
-      //       path: "/alert/template/create",
-      //       component: () => import("@/pages/alert/template/detail.vue"),
-      //       name: "AlertTemplateCreate",
-      //       meta: {
-      //         hidden: true,
-      //         title: "创建模板",
-      //         svgIcon: "component",
-      //         platforms: ["alert"]
-      //       }
-      //     },
-      //     {
-      //       path: "/alert/template/edit/:id",
-      //       component: () => import("@/pages/alert/template/detail.vue"),
-      //       name: "AlertTemplateEdit",
-      //       meta: {
-      //         hidden: true,
-      //         title: "编辑模板",
-      //         svgIcon: "component",
-      //         platforms: ["alert"]
-      //       }
-      //     }
-      //   ]
-      // },
-      // {
-      //   path: "/alert/template-set",
-      //   redirect: "/alert/template-set/list",
+      //   path: "/alert/notify/template-set",
+      //   redirect: "/alert/notify/template-set/list",
       //   meta: {
       //     title: "模板集合",
       //     svgIcon: "template",
@@ -159,8 +116,8 @@ export const alertRoutes: RouteRecordRaw[] = [
       //   },
       //   children: [
       //     {
-      //       path: "/alert/template-set/list",
-      //       component: () => import("@/pages/alert/template_set/index.vue"),
+      //       path: "/alert/notify/template-set/list",
+      //       component: () => import("@/pages/alert/template/index.vue"),
       //       name: "AlertTemplateSet",
       //       meta: {
       //         title: "模板集合",
@@ -169,8 +126,8 @@ export const alertRoutes: RouteRecordRaw[] = [
       //       }
       //     },
       //     {
-      //       path: "/alert/template-set/items/:id",
-      //       component: () => import("@/pages/alert/template_set/items.vue"),
+      //       path: "/alert/notify/template-set/items/:id",
+      //       component: () => import("@/pages/alert/template/items.vue"),
       //       name: "AlertTemplateSetItems",
       //       meta: {
       //         hidden: true,

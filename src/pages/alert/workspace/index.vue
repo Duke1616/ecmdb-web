@@ -419,7 +419,6 @@ const handleWorkspaceClick = (workspace: Workspace) => {
   }
 
   console.log("进入工作空间:", workspace)
-  // 使用命名路由进行跳转，以避免与列表页的 path 产生歧义匹配冲突
   router.push({
     name: "AlertWorkspaceDetail",
     params: { id: workspace.id }

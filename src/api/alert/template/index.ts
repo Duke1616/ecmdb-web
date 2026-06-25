@@ -3,8 +3,6 @@ import { API_SERVICE } from "@@/utils/service"
 import type {
   CreateTemplateReq,
   CreateTemplateResp,
-  UpdateTemplateReq,
-  UpdateTemplateResp,
   ListTemplatesReq,
   ListTemplatesResp,
   DeleteTemplateResp,
@@ -14,8 +12,7 @@ import type {
   PublishTemplateReq,
   PublishTemplateResp,
   UpdateVersionReq,
-  UpdateVersionResp,
-  ListTemplatesByChannelReq
+  UpdateVersionResp
 } from "./types"
 
 // 创建模板
@@ -26,26 +23,10 @@ export const createTemplateApi = (data: CreateTemplateReq) => {
   })
 }
 
-// 更新模板
-export const updateTemplateApi = (data: UpdateTemplateReq) => {
-  return instance.put<UpdateTemplateResp>({
-    url: `${API_SERVICE.ALERT}/template/update`,
-    data
-  })
-}
-
 // 获取模板列表
 export const listTemplatesApi = (data: ListTemplatesReq) => {
   return instance.post<ListTemplatesResp>({
     url: `${API_SERVICE.ALERT}/template/list`,
-    data
-  })
-}
-
-// 获取模板列表
-export const listTemplatesByChannelApi = (data: ListTemplatesByChannelReq) => {
-  return instance.post<ListTemplatesResp>({
-    url: `${API_SERVICE.ALERT}/template/list/by_channel`,
     data
   })
 }

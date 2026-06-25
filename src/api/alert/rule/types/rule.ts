@@ -15,7 +15,8 @@ export interface GroupRule {
 
 // 告警规则列表请求
 export interface ListRulesReq extends Page {
-  group_id: number
+  group_id?: number
+  keyword?: string
 }
 
 // 告警规则响应
@@ -159,12 +160,6 @@ export const EVAL_INTERVAL_OPTIONS = [
 ]
 
 // ==================== 工作空间规则相关类型 ====================
-
-// 分页参数
-export interface Page {
-  offset?: number
-  limit?: number
-}
 
 // 获取工作空间规则请求
 export interface ListRulesByWorkspaceReq extends Page {

@@ -600,6 +600,8 @@ export const ALERT_CAPABILITIES = {
     GroupAdd: "alert:rule:group_add",
     /** 更新规则分组 */
     GroupEdit: "alert:rule:group_edit",
+    /** 删除规则分组 */
+    GroupDelete: "alert:rule:group_delete",
     /** 规则分组列表 */
     GroupView: "alert:rule:group_view",
     /** 按关键字查询告警规则 */
@@ -703,27 +705,21 @@ export const ALERT_CAPABILITIES = {
   /** 模版集合相关 */
   TemplateSet: {
     /** 创建模板集 */
-    Add: "alert:template_set:add",
+    Add: "alert:template:set_add",
     /** 更新模板集 */
-    Edit: "alert:template_set:edit",
+    Edit: "alert:template:set_edit",
     /** 删除模板集 */
-    Delete: "alert:template_set:delete",
+    Delete: "alert:template:set_delete",
     /** 模板集列表 */
-    View: "alert:template_set:view",
+    View: "alert:template:set_view",
     /** 查询模板集条目 */
-    ItemView: "alert:template_set:item_view",
-    /** 清空模板集条目 */
-    ItemDeleteAll: "alert:template_set:item_delete_all",
-    /** 删除模板集条目 */
-    ItemDelete: "alert:template_set:item_delete",
-    /** 批量新增模板集条目 */
-    ItemAddBatch: "alert:template_set:item_add_batch",
+    ItemView: "alert:template:set_item_view",
+    /** 清空模板集模板 */
+    TemplateClear: "alert:template:set_clear",
     /** 新增模板集条目 */
-    ItemAdd: "alert:template_set:item_add",
+    ItemAdd: "alert:template:set_item_add",
     /** 获取模板集 */
-    Detail: "alert:template_set:get",
-    /** 按 ID 查询模板集 */
-    ViewByIds: "alert:template_set:view_by_ids"
+    Detail: "alert:template:set_get"
   },
 
   /** 模板管理相关 */

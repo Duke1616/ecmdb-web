@@ -1,4 +1,4 @@
-import { CHANNEL_TYPES, type ChannelType } from "../../template/types"
+import { CHANNEL_TYPES, type ChannelType } from "@/api/alert/template/types"
 
 // 重新导出渠道类型枚举，方便其他模块使用
 export { CHANNEL_TYPES }
@@ -43,19 +43,9 @@ export interface UpdateTemplateSetReq {
   description: string
 }
 
-// 获取模板集合请求
-export interface GetTemplateSetReq {
-  id: number
-}
-
 // 获取模板集合响应
 export interface GetTemplateSetResp {
   template_set: TemplateSet
-}
-
-// 删除模板集合请求
-export interface DeleteTemplateSetReq {
-  id: number
 }
 
 // 列表模板集合请求
@@ -97,31 +87,10 @@ export interface AddItemResp {
   item: TemplateSetItem
 }
 
-// 批量新增条目请求
-export interface AddItemsReq {
+// 清空指定渠道模板请求
+export interface ClearTemplatesReq {
   set_id: number
-  items: AddItemReq[]
-}
-
-// 列出条目请求
-export interface ListItemsReq {
-  set_id: number
-}
-
-// 列出条目响应
-export interface ListItemsResp {
-  items: TemplateSetItem[]
-}
-
-// 删除条目请求
-export interface DeleteItemsReq {
-  set_id: number
-  item_ids: number[]
-}
-
-// 清空条目请求
-export interface DeleteAllItemsReq {
-  set_id: number
+  channel?: ChannelType
 }
 
 // 解析模板请求

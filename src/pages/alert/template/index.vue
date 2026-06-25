@@ -1,15 +1,14 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader title="消息通知模板" subtitle="管理告警通知模板" @refresh="loadTemplates">
-      <template #actions>
-        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建模板 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="模板集合"
+    subtitle="管理告警通知模板集合"
+    :primary-action="{ capability: ALERT_CAPABILITIES.TemplateSet.Add, label: '创建集合', icon: Plus }"
+    @primary-action="handleCreate"
+    @refresh="loadTemplateSets"
+  >
     <!-- 数据表格 -->
     <DataTable
-      :data="templates"
+      :data="templateSets"
       :columns="tableColumns"
       :show-selection="false"
       :show-pagination="true"
@@ -23,43 +22,30 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
-      <!-- 模板名称插槽 -->
+      <!-- 集合名称插槽 -->
       <template #name="{ row }">
-        <div class="template-name-cell">
+        <div class="template-set-name-cell">
           <h4 class="name-text">{{ row.name }}</h4>
         </div>
       </template>
 
-      <!-- 渠道类型插槽 -->
-      <template #channel="{ row }">
-        <div class="channel-cell">
-          <el-tag :type="getChannelType(row.channel)" size="small">
-            {{ getChannelLabel(row.channel) }}
-          </el-tag>
+      <!-- 条目数量插槽 -->
+      <template #itemCount="{ row }">
+        <div class="item-count-cell">
+          <el-tag type="info" size="small"> {{ row.items?.length || 0 }} 个条目 </el-tag>
         </div>
       </template>
 
-      <!-- 版本信息插槽 -->
-      <template #version="{ row }">
-        <div class="version-cell">
-          <div class="version-name">{{ getCurrentVersion(row)?.name || "暂无版本" }}</div>
+      <!-- 描述信息插槽 -->
+      <template #description="{ row }">
+        <div class="description-cell">
+          <div class="description-text">{{ row.description || "暂无描述" }}</div>
         </div>
       </template>
 
-      <!-- 模板详情插槽 -->
-      <template #details="{ row }">
-        <div class="details-cell">
-          <div class="description-text">
-            {{ row.description || "暂无描述" }}
-          </div>
-        </div>
-      </template>
-
-      <!-- 版本数量插槽 -->
-      <template #versionCount="{ row }">
-        <div class="version-count-cell">
-          <el-tag type="info" size="small"> {{ row.versions?.length || 0 }} 个版本 </el-tag>
-        </div>
+      <!-- 创建时间插槽 -->
+      <template #ctime="{ row }">
+        <div class="time-cell">{{ formatTimestamp(row.ctime) }}</div>
       </template>
 
       <!-- 操作插槽 -->
@@ -67,175 +53,175 @@
         <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
-  </PageContainer>
+
+    <!-- 创建/编辑对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      subtitle="请填写模板集合的基本信息"
+      width="500px"
+      :confirm-loading="submitLoading"
+      confirm-text="确定"
+      header-icon="Collection"
+      @confirm="handleSubmit"
+      @cancel="handleDialogClose"
+      @closed="handleDialogClose"
+    >
+      <TemplateForm ref="formRef" v-model="formData" />
+    </FormDialog>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { useRouter } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
+import { ElMessage } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
-import { listTemplatesApi, deleteTemplateApi } from "@/api/alert/template"
-import type { ChannelTemplate } from "@/api/alert/template/types"
-import { usePagination } from "@/common/composables/usePagination"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import type { CreateTemplateSetReq, TemplateSet } from "@/api/alert/template_set/types"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
-import { getChannelLabel, getChannelType } from "./config/channels"
+import { FormDialog } from "@/common/components/Dialogs"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import { useTemplate } from "./composables/useTemplate"
+import { formatTimestamp } from "./utils"
+import { TABLE_COLUMNS, TABLE_PROPS, OPERATE_ITEMS } from "./config/constants"
+import TemplateForm from "./components/TemplateForm.vue"
 
-// 路由
-const router = useRouter()
+// 使用组合式函数
+const {
+  templateSets,
+  loading,
+  paginationData,
+  loadTemplateSets,
+  createTemplateSet,
+  updateTemplateSet,
+  deleteTemplateSet,
+  navigateToItems,
+  handleCurrentChange,
+  handleSizeChange
+} = useTemplate()
 
-// 分页
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+// 对话框相关
+const dialogVisible = ref(false)
+const submitLoading = ref(false)
+const dialogTitle = ref("")
+const isEdit = ref(false)
+const currentEditId = ref<number | null>(null)
 
-// 响应式数据
-const templates = ref<ChannelTemplate[]>([])
-const loading = ref(false)
+// 表单相关
+const formRef = ref()
+const formData = ref<CreateTemplateSetReq>({
+  name: "",
+  description: "",
+  owner_id: 1 // TODO: 从用户信息获取
+})
 
-// 表格列配置
-const tableColumns = [
-  {
-    prop: "name",
-    label: "模板信息",
-    slot: "name"
-  },
-  {
-    prop: "channel",
-    label: "渠道类型",
-    slot: "channel"
-  },
-  {
-    prop: "version",
-    label: "当前版本",
-    slot: "version"
-  },
-  {
-    prop: "versionCount",
-    label: "版本数量",
-    slot: "versionCount"
-  },
-  {
-    prop: "details",
-    label: "模板详情",
-    slot: "details"
-  }
-]
+import type { Column } from "@@/components/DataTable/types"
 
-// 表格属性
-const tableProps = {
-  height: "calc(100vh - 200px)"
-}
+// 表格配置
+const tableColumns = TABLE_COLUMNS as Column[]
+const tableProps = TABLE_PROPS
 
-// 加载模板数据
-const loadTemplates = async () => {
-  try {
-    loading.value = true
-    const response = await listTemplatesApi({
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
-    })
-
-    templates.value = response.data.templates || []
-    paginationData.total = response.data.total || 0
-  } catch (error) {
-    console.error("加载模板失败:", error)
-    templates.value = []
-    paginationData.total = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-// 获取当前版本（当前使用版本）
-const getCurrentVersion = (template: ChannelTemplate) => {
-  if (!template.versions || template.versions.length === 0) return null
-  return template.versions.find((v) => v.id === template.activeVersionId) || template.versions[0]
-}
+// 使用工具函数
 
 // 获取操作按钮配置
-const getOperateItems = (_template: ChannelTemplate) => {
-  return [
-    { name: "编辑", code: "edit", type: "primary" },
-    { name: "复制", code: "copy", type: "info" },
-    { name: "删除", code: "delete", type: "danger" }
-  ]
-}
+const getOperateItems = (_templateSet: TemplateSet) => OPERATE_ITEMS.templateSet
 
 // 操作事件处理
-const operateEvent = (template: ChannelTemplate, action: string) => {
+const operateEvent = (templateSet: TemplateSet, action: string) => {
   switch (action) {
     case "edit":
-      handleEdit(template)
+      handleEdit(templateSet)
       break
-    case "copy":
-      handleCopy(template)
+    case "manage":
+      handleManageItems(templateSet)
       break
     case "delete":
-      handleDelete(template)
+      handleDelete(templateSet)
       break
     default:
       ElMessage.info(`未知操作: ${action}`)
   }
 }
 
-// 创建模板
+// 创建集合
 const handleCreate = () => {
-  router.push("/alert/notify/template/create")
-}
-
-// 编辑模板
-const handleEdit = (template: ChannelTemplate) => {
-  router.push(`/alert/notify/template/edit/${template.id}`)
-}
-
-// 复制模板
-const handleCopy = (template: ChannelTemplate) => {
-  // 可以通过 query 参数传递复制数据，或者跳转到创建页面并预填充数据
-  router.push({
-    path: "/alert/notify/template/create",
-    query: {
-      copy: template.id
-    }
-  })
-}
-
-// 删除模板
-const handleDelete = async (template: ChannelTemplate) => {
-  try {
-    await ElMessageBox.confirm(`确定要删除模板 "${template.name}" 吗？`, "确认删除", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
-
-    await deleteTemplateApi(template.id)
-
-    ElMessage.success("删除成功")
-    loadTemplates()
-  } catch (error) {
-    if (error !== "cancel") {
-      console.error("删除失败:", error)
-    }
+  dialogTitle.value = "创建模板集合"
+  isEdit.value = false
+  currentEditId.value = null
+  formData.value = {
+    name: "",
+    description: "",
+    owner_id: 1
   }
+  dialogVisible.value = true
+}
+
+// 编辑集合
+const handleEdit = (templateSet: TemplateSet) => {
+  dialogTitle.value = "编辑模板集合"
+  isEdit.value = true
+  currentEditId.value = templateSet.id
+  formData.value = {
+    name: templateSet.name,
+    description: templateSet.description,
+    owner_id: templateSet.owner_id
+  }
+  dialogVisible.value = true
+}
+
+// 管理条目
+const handleManageItems = (templateSet: TemplateSet) => {
+  navigateToItems(templateSet)
+}
+
+// 删除集合
+const handleDelete = async (templateSet: TemplateSet) => {
+  await deleteTemplateSet(templateSet)
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!formRef.value) return
+
+  const isValid = await formRef.value.validate()
+  if (!isValid) return
+
+  submitLoading.value = true
+
+  if (isEdit.value && currentEditId.value) {
+    // 更新
+    await updateTemplateSet(currentEditId.value, formData.value)
+  } else {
+    // 创建
+    await createTemplateSet(formData.value)
+  }
+
+  dialogVisible.value = false
+  submitLoading.value = false
+}
+
+// 关闭对话框
+const handleDialogClose = () => {
+  dialogVisible.value = false
+  formRef.value?.resetFields()
 }
 
 // 监听分页变化
 watch(
   () => [paginationData.currentPage, paginationData.pageSize],
   () => {
-    loadTemplates()
+    loadTemplateSets()
   }
 )
 
 // 初始化加载数据
-loadTemplates()
+loadTemplateSets()
 </script>
 
 <style lang="scss" scoped>
-// 模板名称样式
-.template-name-cell {
+// 集合名称样式
+.template-set-name-cell {
   .name-text {
     margin: 0 0 4px 0;
     font-size: 14px;
@@ -251,55 +237,26 @@ loadTemplates()
   }
 }
 
-// 渠道样式
-.channel-cell {
+// 条目数量样式
+.item-count-cell {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-// 版本样式
-.version-cell {
-  .version-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: #1f2937;
-    margin-bottom: 2px;
-  }
-
-  .version-remark {
-    font-size: 12px;
-    color: #6b7280;
-  }
-}
-
-// 模板详情样式
-.details-cell {
+// 描述信息样式
+.description-cell {
   .description-text {
-    font-size: 13px;
-    color: #374151;
+    font-size: 14px;
+    color: #6b7280;
     line-height: 1.4;
     word-break: break-word;
   }
-}
-
-// 版本数量样式
-.version-count-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 // 时间样式
 .time-cell {
   font-size: 14px;
   color: #1f2937;
-}
-
-// 对话框样式
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
 }
 </style>
