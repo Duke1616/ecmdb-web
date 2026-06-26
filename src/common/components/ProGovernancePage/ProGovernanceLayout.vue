@@ -3,6 +3,16 @@ import { Search, Plus, RefreshRight, Delete } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import type { PermissionMode } from "@/common/composables/usePermission"
+
+type GovernanceAction = {
+  capability?: string | string[]
+  label?: string
+  icon?: any
+  mode?: PermissionMode
+  disabled?: boolean
+  loading?: boolean
+}
 
 withDefaults(
   defineProps<{
@@ -15,11 +25,11 @@ withDefaults(
     /** 当前选中的行数组长度，用于决定显示“新增”还是“批量删除” */
     selectionCount?: number
     /** 主动作配置 (如“新增”或“完善资料”) */
-    primaryAction?: { capability?: string | string[]; label?: string; icon?: any }
+    primaryAction?: GovernanceAction
     /** 次动作配置 (如“新增分组”或“同步”) */
-    secondaryAction?: { capability?: string | string[]; label?: string; icon?: any }
+    secondaryAction?: GovernanceAction
     /** 危险/次要动作配置 (如“批量删除”或“注销主体”) */
-    dangerAction?: { capability?: string | string[]; label?: string; icon?: any }
+    dangerAction?: GovernanceAction
     /** 动作切换模式：true=选中数据时隐藏新增按钮，false=并排显示 */
     swapActions?: boolean
     /** 是否吸顶 */
@@ -98,6 +108,9 @@ const handleSearch = () => {
                   class="u-gov-btn is-danger-btn"
                   :class="{ 'is-detail': isDetail }"
                   :capability="dangerAction.capability"
+                  :mode="dangerAction.mode"
+                  :disabled="dangerAction.disabled"
+                  :loading="dangerAction.loading"
                   disable-mode
                   @click="emit('dangerAction')"
                 >
@@ -115,6 +128,9 @@ const handleSearch = () => {
                   class="u-gov-btn"
                   :class="{ 'is-detail': isDetail }"
                   :capability="secondaryAction.capability"
+                  :mode="secondaryAction.mode"
+                  :disabled="secondaryAction.disabled"
+                  :loading="secondaryAction.loading"
                   disable-mode
                   @click="emit('secondaryAction')"
                 >
@@ -127,6 +143,9 @@ const handleSearch = () => {
                   class="u-gov-btn"
                   :class="{ 'is-detail': isDetail }"
                   :capability="primaryAction.capability"
+                  :mode="primaryAction.mode"
+                  :disabled="primaryAction.disabled"
+                  :loading="primaryAction.loading"
                   disable-mode
                   @click="emit('primaryAction')"
                 >
@@ -143,6 +162,9 @@ const handleSearch = () => {
                 class="u-gov-btn"
                 :class="{ 'is-detail': isDetail }"
                 :capability="secondaryAction.capability"
+                :mode="secondaryAction.mode"
+                :disabled="secondaryAction.disabled"
+                :loading="secondaryAction.loading"
                 disable-mode
                 @click="emit('secondaryAction')"
               >
@@ -155,6 +177,9 @@ const handleSearch = () => {
                 class="u-gov-btn"
                 :class="{ 'is-detail': isDetail }"
                 :capability="primaryAction.capability"
+                :mode="primaryAction.mode"
+                :disabled="primaryAction.disabled"
+                :loading="primaryAction.loading"
                 disable-mode
                 @click="emit('primaryAction')"
               >
@@ -167,7 +192,9 @@ const handleSearch = () => {
                 class="u-gov-btn is-danger-btn"
                 :class="{ 'is-detail': isDetail }"
                 :capability="dangerAction.capability"
-                :disabled="!isDetail && selectionCount === 0"
+                :mode="dangerAction.mode"
+                :disabled="dangerAction.disabled || (!isDetail && selectionCount === 0)"
+                :loading="dangerAction.loading"
                 disable-mode
                 @click="emit('dangerAction')"
               >
@@ -273,6 +300,21 @@ const handleSearch = () => {
       transform: translateY(-1px);
     }
 
+    &.is-disabled,
+    &.is-disabled:hover,
+    &.is-disabled:focus,
+    &:disabled,
+    &:disabled:hover,
+    &:disabled:focus {
+      color: #a8abb2 !important;
+      background: #f5f7fa !important;
+      border-color: #e4e7ed !important;
+      box-shadow: none !important;
+      transform: none;
+      opacity: 1;
+      cursor: not-allowed;
+    }
+
     &.eiam-refresh-btn {
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -297,10 +339,16 @@ const handleSearch = () => {
         border-color: #dc2626 !important;
       }
 
-      &:disabled {
-        background-color: #fca5a5 !important;
-        border-color: #fca5a5 !important;
-        opacity: 0.6;
+      &.is-disabled,
+      &.is-disabled:hover,
+      &.is-disabled:focus,
+      &:disabled,
+      &:disabled:hover,
+      &:disabled:focus {
+        color: #a8abb2 !important;
+        background: #f5f7fa !important;
+        border-color: #e4e7ed !important;
+        opacity: 1;
       }
     }
   }

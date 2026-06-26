@@ -10,7 +10,7 @@
         :columns="stepTableColumns"
         :show-selection="false"
         :show-pagination="false"
-        :enable-row-drag="true"
+        :enable-row-drag="canSwapSteps"
         @row-drag="handleStepRowDrag"
       >
         <!-- 级别列 -->
@@ -113,6 +113,8 @@ import { CHANNEL_CONFIGS } from "../../template/config/channels"
 import { getReceiverTypeLabel, getReceiverTypeTagType, getReceiverTooltipContent } from "../utils"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import { ChannelType } from "@/api/alert/template/types"
 
 // 定义 props 和 emits
@@ -165,10 +167,24 @@ const stepTableColumns = computed<Column[]>(() => [
 ])
 
 const templateSets = ref<TemplateSet[]>([])
+const { hasPermission } = usePermission()
+const canSwapSteps = computed(() => hasPermission(ALERT_CAPABILITIES.EscalationStep.Swap))
 
 const stepOperateItems = [
-  { name: "编辑", code: "edit", type: "primary", icon: Setting },
-  { name: "删除", code: "delete", type: "danger", icon: Delete }
+  {
+    name: "编辑",
+    code: "edit",
+    type: "primary",
+    icon: Setting,
+    capability: ALERT_CAPABILITIES.EscalationStep.Edit
+  },
+  {
+    name: "删除",
+    code: "delete",
+    type: "danger",
+    icon: Delete,
+    capability: ALERT_CAPABILITIES.EscalationStep.Delete
+  }
 ]
 
 // 表格行拖拽处理

@@ -1,18 +1,13 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="升级步骤管理"
-      subtitle="管理升级配置中的步骤"
-      :show-back-button="true"
-      @refresh="loadSteps"
-      @back="handleBack"
-    >
-      <template #actions>
-        <el-button type="primary" :icon="Plus" @click="handleAddStep"> 新增步骤 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="升级步骤管理"
+    subtitle="管理升级配置中的步骤"
+    show-back-button
+    :primary-action="{ capability: ALERT_CAPABILITIES.EscalationStep.Add, label: '新增步骤', icon: Plus }"
+    @refresh="loadSteps"
+    @primary-action="handleAddStep"
+    @back="handleBack"
+  >
     <!-- 升级步骤表格 -->
     <EscalationStepsTable
       v-model="steps"
@@ -38,7 +33,7 @@
     >
       <EscalationStepForm v-if="drawerVisible" v-model="currentStep" ref="formRef" />
     </Drawer>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
@@ -52,8 +47,8 @@ import type { CreateStepReq, StepVO, EscalationStep } from "@/api/alert/escalati
 import { deleteStepApi } from "@/api/alert/escalation"
 import { useEscalationSteps } from "./composables/useEscalationSteps"
 import { getEscalationStepConfigID } from "./utils"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import EscalationStepsTable from "./components/EscalationStepsTable.vue"
 import { Drawer } from "@@/components/Dialogs"
 import EscalationStepForm from "./components/EscalationStepForm.vue"

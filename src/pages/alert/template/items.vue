@@ -1,57 +1,30 @@
 <template>
-  <PageContainer>
-    <ManagerHeader
-      :title="templateSet ? `模板集合 - ${templateSet.name}` : '模板集合'"
-      subtitle="按通知渠道维护模板内容"
-      :show-back-button="true"
-      @refresh="loadTemplateSet"
-      @back="handleBack"
-    >
-      <template #actions>
-        <div class="template-header-actions">
-          <el-tooltip content="清空全部渠道模板" placement="top">
-            <span>
-              <AuthButton
-                type="danger"
-                plain
-                :icon="Delete"
-                class="template-action-btn"
-                :loading="clearingAll"
-                :disabled="isReadonlyTemplateSet"
-                :capability="ALERT_CAPABILITIES.TemplateSet.TemplateClear"
-                disable-mode
-                @click="handleClearAll"
-              >
-                清空
-              </AuthButton>
-            </span>
-          </el-tooltip>
-
-          <el-tooltip content="保存当前渠道模板" placement="top">
-            <span>
-              <AuthButton
-                type="primary"
-                :icon="Check"
-                class="template-action-btn"
-                :loading="activeDraft?.saving"
-                :disabled="isReadonlyTemplateSet"
-                :capability="saveCapability"
-                :mode="savePermissionMode"
-                disable-mode
-                @click="handleSave"
-              >
-                保存
-              </AuthButton>
-            </span>
-          </el-tooltip>
-
-          <el-tooltip content="刷新模板集合" placement="top">
-            <el-button :icon="RefreshRight" class="template-action-btn is-icon-only" @click="loadTemplateSet" />
-          </el-tooltip>
-        </div>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    :title="templateSet ? `模板集合 - ${templateSet.name}` : '模板集合'"
+    subtitle="按通知渠道维护模板内容"
+    show-back-button
+    is-detail
+    :swap-actions="false"
+    :primary-action="{
+      capability: saveCapability,
+      mode: savePermissionMode,
+      label: '保存模版',
+      icon: Check,
+      loading: activeDraft?.saving,
+      disabled: isReadonlyTemplateSet
+    }"
+    :danger-action="{
+      capability: ALERT_CAPABILITIES.TemplateSet.TemplateClear,
+      label: '清空模版',
+      icon: Delete,
+      loading: clearingAll,
+      disabled: isReadonlyTemplateSet
+    }"
+    @refresh="loadTemplateSet"
+    @primary-action="handleSave"
+    @danger-action="handleClearAll"
+    @back="handleBack"
+  >
     <div class="template-workbench" v-loading="loading">
       <CreateVersionDialog
         v-model="createVersionVisible"
@@ -113,18 +86,16 @@
         @publish-version="handlePublishVersion"
       />
     </div>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
-import { Check, Delete, RefreshRight } from "@element-plus/icons-vue"
+import { Check, Delete } from "@element-plus/icons-vue"
 import { useUserStore } from "@/pinia/stores/user"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
-import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { PermissionMode } from "@/common/composables/usePermission"
 import { isReadonlySystemResource, SYSTEM_RESOURCE_READONLY_MESSAGE } from "./utils"
@@ -288,80 +259,6 @@ onMounted(() => {
 
   :deep(.editor-container) {
     padding: 0;
-  }
-}
-
-.template-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-:deep(.template-action-btn) {
-  height: 34px;
-  min-width: 74px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  box-shadow: none;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-
-  &:hover,
-  &:focus {
-    transform: none;
-    box-shadow: none;
-  }
-
-  &.is-icon-only {
-    width: 34px;
-    min-width: 34px;
-    padding: 0;
-    color: #64748b;
-    border-color: #dcdfe6;
-    background: #ffffff;
-
-    &:hover,
-    &:focus {
-      color: #409eff;
-      border-color: #409eff;
-      background: #f5f9ff;
-    }
-  }
-
-  &.el-button--danger.is-plain {
-    background: #ffffff;
-    border-color: #f0c4c4;
-    color: #d03050;
-
-    &:hover,
-    &:focus {
-      background: #fef2f2;
-      border-color: #e08484;
-      color: #c45656;
-    }
-  }
-
-  &.el-button--primary {
-    background: #409eff;
-    border-color: #409eff;
-    color: #ffffff;
-
-    &:hover,
-    &:focus {
-      background: #337ecc;
-      border-color: #337ecc;
-      color: #ffffff;
-    }
-  }
-
-  &.is-disabled,
-  &:disabled {
-    transform: none;
-    box-shadow: none;
   }
 }
 

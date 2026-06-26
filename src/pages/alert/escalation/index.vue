@@ -1,18 +1,11 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="升级配置"
-      subtitle="管理消息升级配置"
-      :show-back-button="true"
-      @refresh="loadConfigs"
-      @back="handleBack"
-    >
-      <template #actions>
-        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建配置 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="升级配置"
+    subtitle="管理消息升级配置"
+    :primary-action="{ capability: ALERT_CAPABILITIES.EscalationConfig.Add, label: '创建配置', icon: Plus }"
+    @refresh="loadConfigs"
+    @primary-action="handleCreate"
+  >
     <!-- 数据表格 -->
     <DataTable
       :data="configs"
@@ -78,26 +71,22 @@
     >
       <EscalationConfigEditForm ref="formRef" v-model="formData" />
     </Drawer>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue"
-import { useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { Delete, Edit, Operation, Plus, Setting, VideoPause, VideoPlay } from "@element-plus/icons-vue"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
 import { createDefaultEscalationConfigData } from "./utils"
 import { useEscalationConfig } from "./composables/useEscalationConfig"
-
-// 路由
-const router = useRouter()
 
 const {
   configs,
@@ -161,15 +150,16 @@ const tableColumns: Column[] = [
 // 获取操作按钮配置
 const getOperateItems = (config: ConfigVO) => {
   return [
-    { name: "编辑", code: "edit", type: "primary", icon: Edit },
-    { name: "管理步骤", code: "steps", type: "success", icon: Operation },
+    { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: ALERT_CAPABILITIES.EscalationConfig.Edit },
+    { name: "管理步骤", code: "steps", type: "success", icon: Operation, capability: ALERT_CAPABILITIES.EscalationStep.View },
     {
       name: config.enabled ? "禁用" : "启用",
       code: "toggle",
       type: config.enabled ? "warning" : "success",
-      icon: config.enabled ? VideoPause : VideoPlay
+      icon: config.enabled ? VideoPause : VideoPlay,
+      capability: ALERT_CAPABILITIES.EscalationConfig.Toggle
     },
-    { name: "删除", code: "delete", type: "danger", icon: Delete }
+    { name: "删除", code: "delete", type: "danger", icon: Delete, capability: ALERT_CAPABILITIES.EscalationConfig.Delete }
   ]
 }
 
@@ -230,11 +220,6 @@ const handleToggleStatus = async (config: ConfigVO) => {
 // 删除配置
 const handleDelete = async (config: ConfigVO) => {
   await deleteConfig(config)
-}
-
-// 返回操作
-const handleBack = () => {
-  router.go(-1)
 }
 
 // 提交表单
