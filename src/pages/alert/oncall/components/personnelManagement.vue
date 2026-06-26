@@ -98,7 +98,7 @@ import { VueDraggable } from "vue-draggable-plus"
 import { User, Close, Grid, Plus, Delete } from "@element-plus/icons-vue"
 import type { OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import type { User as IIamUser } from "@/api/iam/user/type"
-import UserPopoverPicker from "@/common/components/UserPopoverPicker/UserPopoverPicker.vue"
+import UserPopoverPicker from "@@/components/Pickers/UserPopoverPicker/UserPopoverPicker.vue"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 import { useGroupManagement } from "../composables/useGroupManagement"
 

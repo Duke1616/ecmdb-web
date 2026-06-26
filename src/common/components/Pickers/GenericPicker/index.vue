@@ -108,7 +108,7 @@
 <script setup lang="ts" generic="T, K extends string | number">
 import { ref, watch, onMounted, onUnmounted, nextTick } from "vue"
 import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
-import { useGenericPicker } from "../../composables/useGenericPicker"
+import { useGenericPicker } from "@@/composables/useGenericPicker"
 
 interface IGenericPickerProps {
   placeholder?: string
@@ -497,6 +497,7 @@ onUnmounted(() => {
 /* Dropdown Panel 样式 */
 .picker-dropdown-panel {
   position: fixed;
+  z-index: 9999;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;

@@ -72,7 +72,7 @@ import { computed, ref, watch } from "vue"
 import { Close, Delete, Setting } from "@element-plus/icons-vue"
 import type { ReceiverRef } from "@/api/alert/aggregate/types"
 import { getTemplateDetailApi } from "@/api/alert/template"
-import AlertTemplatePicker from "@/common/components/AlertTemplatePicker/index.vue"
+import AlertTemplatePicker from "@@/components/Pickers/AlertTemplatePicker/index.vue"
 
 interface Props {
   receivers: ReceiverRef[]

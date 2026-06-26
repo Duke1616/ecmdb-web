@@ -30,7 +30,7 @@
 <script lang="ts" setup>
 import { getConfigApi, listConfigsApi } from "@/api/alert/escalation"
 import type { ConfigVO as IEscalationConfig } from "@/api/alert/escalation/types"
-import GenericPicker from "@/common/components/GenericPicker/index.vue"
+import GenericPicker from "@@/components/Pickers/GenericPicker/index.vue"
 
 interface IEscalationConfigPickerProps {
   placeholder?: string

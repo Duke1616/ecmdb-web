@@ -114,7 +114,7 @@
 import { watch, ref } from "vue"
 import { ElMessage } from "element-plus"
 import { useFormHandler } from "@/common/composables/useFormHandler"
-import UserPicker from "@/common/components/UserPicker/index.vue"
+import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 import FormActions from "@/common/components/FormActions/index.vue"
 import type { FormInstance, FormRules } from "element-plus"
 

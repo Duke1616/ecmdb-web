@@ -68,7 +68,7 @@ import { ref } from "vue"
 import type { FormInstance, FormRules } from "element-plus"
 import { OfficeBuilding } from "@element-plus/icons-vue"
 import type { IDepartmentNode } from "@/api/iam/department/type"
-import UserPicker from "@/common/components/UserPicker/index.vue"
+import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 
 interface IDepartmentFormState {
   id: number

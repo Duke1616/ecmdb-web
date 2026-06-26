@@ -17,17 +17,7 @@
 
         <div class="form-row">
           <el-form-item prop="template_set_id" label="模板集" class="form-item">
-            <el-select v-model="modelValue.template_set_id" placeholder="请选择模板集" size="large" clearable>
-              <el-option
-                v-for="templateSet in templateSets"
-                :key="templateSet.id"
-                :label="templateSet.name"
-                :value="templateSet.id"
-              >
-                <span>{{ templateSet.name }}</span>
-                <span style="float: right; color: #8492a6; font-size: 13px">{{ templateSet.description }}</span>
-              </el-option>
-            </el-select>
+            <TemplateSetPicker v-model="modelValue.template_set_id" placeholder="请选择模板集" variant="element" />
           </el-form-item>
         </div>
 
@@ -219,27 +209,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref } from "vue"
 import { Setting, Check, Clock, Operation, Filter, Plus, Delete } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { CreateStepReq, ReceiverRef } from "@/api/alert/escalation/types"
 import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
 import type { ChannelType } from "@/api/alert/template/types"
-import { listTemplateSetsApi } from "@/api/alert/template_set"
-import type { TemplateSet } from "@/api/alert/template_set/types"
 import { getChannelOptions } from "../../template/config/channels"
 import { getReceiverTypeLabel, getReceiverTypeTagType } from "../utils"
 import { escalationStepFormRules } from "../config/validation"
 import ReceiverSelector from "./ReceiverSelector.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
+import TemplateSetPicker from "@@/components/Pickers/TemplateSetPicker/index.vue"
 import type { Column } from "@@/components/DataTable/types"
 
 const modelValue = defineModel<CreateStepReq>({ required: true })
 
 const formRef = ref<FormInstance>()
 
-const templateSets = ref<TemplateSet[]>([])
 const channelOptions = getChannelOptions()
 const receiverDialogVisible = ref(false)
 const receiverSubmitLoading = ref(false)
@@ -264,19 +252,6 @@ const receiverColumns: Column[] = [
 
 // 使用导入的验证规则
 const formRules = escalationStepFormRules
-
-// 加载模板集数据
-const loadTemplateSets = async () => {
-  try {
-    const response = await listTemplateSetsApi({
-      offset: 0,
-      limit: 1000 // 获取所有模板集
-    })
-    templateSets.value = response.data.template_sets || []
-  } catch (error) {
-    console.error("加载模板集失败:", error)
-  }
-}
 
 const toggleChannel = (channelValue: ChannelType) => {
   const channels = [...modelValue.value.channels]
@@ -349,12 +324,7 @@ const handleReceiverDialogClose = () => {
   receiverDraft.value = []
 }
 
-// 组件挂载时加载数据
-onMounted(() => {
-  loadTemplateSets()
-})
-
-// 暴露表单验证方法和数据加载方法
+// 暴露表单验证方法
 defineExpose({
   validate: () => formRef.value?.validate(),
   resetFields: () => formRef.value?.resetFields()

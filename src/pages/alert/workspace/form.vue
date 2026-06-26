@@ -27,9 +27,7 @@
         </el-form-item>
 
         <el-form-item prop="team_id" label="所属团队" class="form-item required">
-          <el-select v-model="formData.team_id" placeholder="请选择所属团队" class="form-input" filterable clearable>
-            <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
-          </el-select>
+          <TeamPicker v-model="formData.team_id" placeholder="请选择所属团队" variant="element" class="form-input" />
         </el-form-item>
 
         <el-form-item prop="template_id" label="通知模版" class="form-item">
@@ -147,10 +145,9 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { InfoFilled, Setting, Monitor, User } from "@element-plus/icons-vue"
 import { createWorkspaceApi, updateWorkspaceApi } from "@/api/alert/workspace"
 import { SaveWorkspaceReq } from "@/api/alert/workspace/types"
-import { listTeamsApi } from "@/api/alert/team"
-import { Team as TeamType } from "@/api/alert/team/types"
 import { listTemplatesApi } from "@/api/alert/template"
 import { ChannelTemplate } from "@/api/alert/template/types"
+import TeamPicker from "@@/components/Pickers/TeamPicker/index.vue"
 
 // 接收父组件传递
 const emits = defineEmits(["closed", "callback"])
@@ -171,7 +168,6 @@ const DEFAULT_FORM_DATA: SaveWorkspaceReq = {
 
 const formData = ref<SaveWorkspaceReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
-const teams = ref<TeamType[]>([])
 const templates = ref<ChannelTemplate[]>([])
 
 const formRules: FormRules = {
@@ -181,20 +177,6 @@ const formRules: FormRules = {
     { required: true, message: "请输入工作空间名称", trigger: "blur" },
     { min: 2, max: 50, message: "工作空间名称长度为 2-50 个字符", trigger: "blur" }
   ]
-}
-
-// 加载团队数据
-const loadTeamsData = async () => {
-  try {
-    const { data } = await listTeamsApi({
-      offset: 0,
-      limit: 100
-    })
-    teams.value = data.teams || []
-  } catch (error) {
-    console.error("加载团队数据失败:", error)
-    teams.value = []
-  }
 }
 
 // 加载模版数据
@@ -256,7 +238,6 @@ const onClosed = () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
-  loadTeamsData()
   loadTemplatesData()
   // 如果有传入的团队ID，设置为默认值
   if (props.selectedTeamId) {

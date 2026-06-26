@@ -28,7 +28,7 @@ import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { CreateOrUpdateOnCallReq, OnCall } from "@/api/alert/oncall/types/oncall"
 import { createOnCallApi, updateOnCallApi } from "@/api/alert/oncall"
-import UserPicker from "@/common/components/UserPicker/index.vue"
+import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 
 // 接收父组建传递
 const emits = defineEmits(["closed", "callback"])

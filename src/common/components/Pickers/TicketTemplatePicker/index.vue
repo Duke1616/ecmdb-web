@@ -25,7 +25,7 @@
 <script lang="ts" setup>
 import { listTemplateApi, detailTemplateApi } from "@/api/ticket/template"
 import type { template as ITicketTemplate } from "@/api/ticket/template/types/template"
-import GenericPicker from "@/common/components/GenericPicker/index.vue"
+import GenericPicker from "@@/components/Pickers/GenericPicker/index.vue"
 
 interface ITicketTemplatePickerProps {
   placeholder?: string

@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import GenericPicker from "@/common/components/GenericPicker/index.vue"
+import GenericPicker from "@@/components/Pickers/GenericPicker/index.vue"
 import { getWorkflowDetailApi, listWorkflowsByKeywordApi } from "@/api/ticket/workflow/workflow"
 import type { Workflow } from "@/api/ticket/workflow/types/workflow"
 

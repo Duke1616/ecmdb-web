@@ -64,7 +64,7 @@
 <script setup lang="ts" generic="T, K extends string | number">
 import { ref, nextTick } from "vue"
 import { Check } from "@element-plus/icons-vue"
-import { useGenericPicker } from "../../composables/useGenericPicker"
+import { useGenericPicker } from "@@/composables/useGenericPicker"
 
 interface IUserPopoverPickerProps<T, K extends string | number> {
   searchApi: (params: { keyword: string; offset: number; limit: number }) => Promise<{ total: number; data: T[] }>

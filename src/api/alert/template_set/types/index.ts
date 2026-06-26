@@ -51,6 +51,7 @@ export interface GetTemplateSetResp {
 
 // 列表模板集合请求
 export interface ListTemplateSetReq {
+  keyword?: string
   offset: number
   limit: number
 }

@@ -45,7 +45,7 @@ import { watch } from "vue"
 import { listUsersApi as listIamUsersApi } from "@/api/iam/user"
 import type { User as IIamUser } from "@/api/iam/user/type"
 import { useUserStore } from "@/pinia/stores/user"
-import GenericPicker from "@/common/components/GenericPicker/index.vue"
+import GenericPicker from "@@/components/Pickers/GenericPicker/index.vue"
 
 interface IUserPickerProps {
   placeholder?: string

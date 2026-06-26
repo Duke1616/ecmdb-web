@@ -63,7 +63,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import type { TicketPolicy, TicketMode } from "@/api/alert/aggregate/types"
-import TicketTemplatePicker from "@/common/components/TicketTemplatePicker/index.vue"
+import TicketTemplatePicker from "@@/components/Pickers/TicketTemplatePicker/index.vue"
 
 interface Props {
   policy: TicketPolicy | null

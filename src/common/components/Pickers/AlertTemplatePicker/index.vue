@@ -25,7 +25,7 @@
 <script lang="ts" setup>
 import { listTemplatesApi, getTemplateDetailApi } from "@/api/alert/template"
 import type { ChannelTemplate } from "@/api/alert/template/types"
-import GenericPicker from "@/common/components/GenericPicker/index.vue"
+import GenericPicker from "@@/components/Pickers/GenericPicker/index.vue"
 
 interface IAlertTemplatePickerProps {
   placeholder?: string

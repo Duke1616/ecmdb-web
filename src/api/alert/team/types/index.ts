@@ -87,7 +87,9 @@ export interface Page {
 }
 
 // 获取团队列表请求参数
-export interface ListTeamsReq extends Page {}
+export interface ListTeamsReq extends Page {
+  keyword?: string
+}
 
 // 获取团队列表响应
 export interface RetrieveTeams {

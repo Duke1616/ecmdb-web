@@ -34,7 +34,7 @@
 import { computed, ref, watch } from "vue"
 import type { EscalationPolicy } from "@/api/alert/aggregate/types"
 import { getConfigApi } from "@/api/alert/escalation"
-import EscalationConfigPicker from "@/common/components/EscalationConfigPicker/index.vue"
+import EscalationConfigPicker from "@@/components/Pickers/EscalationConfigPicker/index.vue"
 
 interface Props {
   policy: EscalationPolicy | null
