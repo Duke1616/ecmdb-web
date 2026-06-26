@@ -43,6 +43,12 @@ export const updateWorkspaceApi = (data: SaveWorkspaceReq) => {
   })
 }
 
+export const toggleWorkspaceStatusApi = (id: number) => {
+  return instance.put<Workspace>({
+    url: `${API_SERVICE.ALERT}/workspace/toggle/status/${id}`
+  })
+}
+
 export const deleteWorkspaceApi = (data: { id: number }) => {
   return instance.post<{ success: boolean }>({
     url: `${API_SERVICE.ALERT}/workspace/delete`,

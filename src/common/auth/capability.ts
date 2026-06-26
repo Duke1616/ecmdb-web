@@ -618,6 +618,8 @@ export const ALERT_CAPABILITIES = {
     Add: "alert:workspace:add",
     /** 更新空间 */
     Edit: "alert:workspace:edit",
+    /** 启用/停用空间 */
+    Toggle: "alert:workspace:toggle",
     /** 空间列表 */
     View: "alert:workspace:view",
     /** 空间详情 */

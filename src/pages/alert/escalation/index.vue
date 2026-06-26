@@ -65,20 +65,19 @@
     </DataTable>
 
     <!-- 创建/编辑抽屉 -->
-    <CustomDrawer
+    <Drawer
       v-model="drawerVisible"
       :title="drawerTitle"
       :subtitle="drawerSubtitle"
       size="42%"
-      header-icon="Setting"
+      :header-icon="Setting"
       :confirm-loading="submitLoading"
       :confirm-button-text="isEdit ? '更新配置' : '创建配置'"
       @confirm="handleSubmit"
-      @cancel="handleDrawerClose"
       @closed="handleDrawerClose"
     >
       <EscalationConfigEditForm ref="formRef" v-model="formData" />
-    </CustomDrawer>
+    </Drawer>
   </PageContainer>
 </template>
 
@@ -86,13 +85,13 @@
 import { ref, computed, watch, onMounted } from "vue"
 import { useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
-import { Delete, Edit, Operation, Plus, VideoPause, VideoPlay } from "@element-plus/icons-vue"
+import { Delete, Edit, Operation, Plus, Setting, VideoPause, VideoPlay } from "@element-plus/icons-vue"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
-import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
+import { Drawer } from "@@/components/Dialogs"
 import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
 import { createDefaultEscalationConfigData } from "./utils"
 import { useEscalationConfig } from "./composables/useEscalationConfig"

@@ -140,6 +140,7 @@
       :header-icon="FolderAdd"
       size="700px"
       direction="rtl"
+      class="workspace-create-drawer"
       :before-close="handleDrawerClose"
       @closed="onClosedCreateWorkspace"
       @confirm="handlerSubmitWorkspace"
@@ -499,6 +500,18 @@ onMounted(() => {
   width: 100%;
   justify-content: flex-end;
   gap: clamp(12px, 1.2vw, 20px);
+}
+
+:deep(.workspace-create-drawer .drawer-header .header-left) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+:deep(.workspace-create-drawer .drawer-header .header-right) {
+  flex: 0 0 auto;
+  min-width: auto;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 :deep(.action-group) {

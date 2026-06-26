@@ -89,17 +89,13 @@
         </template>
 
         <!-- 操作列 -->
-        <template #actions="{ index }">
-          <div class="action-buttons">
-            <el-button type="primary" size="small" @click="editStep(index)">
-              <el-icon><Setting /></el-icon>
-              编辑
-            </el-button>
-            <el-button type="danger" size="small" @click="removeStep(index)">
-              <el-icon><Delete /></el-icon>
-              删除
-            </el-button>
-          </div>
+        <template #actions="{ row, index }">
+          <OperateBtn
+            :items="stepOperateItems"
+            :operate-item="{ row, index }"
+            :max-length="2"
+            @route-event="handleOperateEvent"
+          />
         </template>
       </DataTable>
     </div>
@@ -116,6 +112,7 @@ import { getChannelLabel } from "../../template/config/channels"
 import { CHANNEL_CONFIGS } from "../../template/config/channels"
 import { getReceiverTypeLabel, getReceiverTypeTagType, getReceiverTooltipContent } from "../utils"
 import DataTable from "@/common/components/DataTable/index.vue"
+import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import { ChannelType } from "@/api/alert/template/types"
 
 // 定义 props 和 emits
@@ -169,21 +166,25 @@ const stepTableColumns = computed<Column[]>(() => [
 
 const templateSets = ref<TemplateSet[]>([])
 
+const stepOperateItems = [
+  { name: "编辑", code: "edit", type: "primary", icon: Setting },
+  { name: "删除", code: "delete", type: "danger", icon: Delete }
+]
+
 // 表格行拖拽处理
 const handleStepRowDrag = (newSteps: StepVO[] | EscalationStep[]) => {
   emit("row-drag", newSteps)
 }
 
-// 编辑步骤
-const editStep = (index: number) => {
-  const step = modelValue.value[index]
-  emit("edit-step", index, step)
-}
+const handleOperateEvent = (payload: { row: StepVO | EscalationStep; index: number }, action: string) => {
+  if (action === "edit") {
+    emit("edit-step", payload.index, payload.row)
+    return
+  }
 
-// 删除步骤
-const removeStep = (index: number) => {
-  const step = modelValue.value[index]
-  emit("delete-step", index, step)
+  if (action === "delete") {
+    emit("delete-step", payload.index, payload.row)
+  }
 }
 
 // 加载模板集数据
@@ -284,12 +285,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
-
-  .action-buttons {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-  }
 
   .condition-text {
     font-family: "Courier New", monospace;
