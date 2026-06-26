@@ -776,22 +776,6 @@ export const ALERT_CAPABILITIES = {
     View: "alert:escalation:step_view"
   },
 
-  /** 升级步骤模版相关 */
-  EscalationStepTemplate: {
-    /** 升级步骤模板详情 */
-    Detail: "alert:escalation:step_tmpl_get",
-    /** 修改升级步骤模板 */
-    Edit: "alert:escalation:step_tmpl_edit",
-    /** 删除升级步骤模板 */
-    Delete: "alert:escalation:step_tmpl_delete",
-    /** 创建升级步骤模板 */
-    Add: "alert:escalation:step_tmpl_add",
-    /** 升级步骤模板列表 */
-    View: "alert:escalation:step_tmpl_view",
-    /** 按 ID 查询升级步骤模板 */
-    ViewByIds: "alert:escalation:step_tmpl_view_by_ids"
-  },
-
   /** 路由规则相关 */
   RoutingRule: {
     /** 修改路由规则 */

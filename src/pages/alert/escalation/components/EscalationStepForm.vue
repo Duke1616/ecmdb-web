@@ -32,18 +32,78 @@
         </div>
 
         <div class="form-row">
-          <el-form-item prop="step_template_id" label="步骤模板" class="form-item">
-            <el-select v-model="modelValue.step_template_id" placeholder="请选择步骤模板" size="large" clearable>
-              <el-option
-                v-for="template in stepTemplates"
-                :key="template.id"
-                :label="template.name"
-                :value="template.id"
+          <el-form-item prop="channels" label="通知渠道" class="form-item">
+            <div class="channels-grid">
+              <div
+                v-for="option in channelOptions"
+                :key="option.value"
+                class="channel-option-card"
+                :class="{ active: modelValue.channels.includes(option.value) }"
+                @click="toggleChannel(option.value)"
               >
-                <span>{{ template.name }}</span>
-                <span style="float: right; color: #8492a6; font-size: 13px">{{ template.description }}</span>
-              </el-option>
-            </el-select>
+                <el-checkbox
+                  :model-value="modelValue.channels.includes(option.value)"
+                  @change="toggleChannel(option.value)"
+                  @click.stop
+                />
+                <div class="channel-info">
+                  <div class="channel-name">{{ option.label }}</div>
+                  <div class="channel-desc">{{ option.description }}</div>
+                </div>
+              </div>
+            </div>
+          </el-form-item>
+        </div>
+
+        <div class="form-row">
+          <el-form-item prop="receivers" label="接收者" class="form-item">
+            <div class="receivers-section">
+              <div class="receivers-actions">
+                <el-button type="primary" :icon="Plus" @click="addReceiver">添加接收者</el-button>
+                <el-button
+                  type="danger"
+                  :icon="Delete"
+                  :disabled="selectedReceivers.length === 0"
+                  @click="batchDeleteReceivers"
+                >
+                  批量删除 ({{ selectedReceivers.length }})
+                </el-button>
+                <el-button
+                  type="warning"
+                  :icon="Delete"
+                  :disabled="modelValue.receivers.length === 0"
+                  @click="clearAllReceivers"
+                >
+                  清空所有
+                </el-button>
+              </div>
+              <DataTable
+                :data="modelValue.receivers"
+                :columns="receiverColumns"
+                :pagination="false"
+                :selection="true"
+                :show-selection="true"
+                :action-column-width="120"
+                class="receivers-table"
+                @selection-change="handleReceiverSelectionChange"
+              >
+                <template #receiverType="{ row }">
+                  <el-tag :type="getReceiverTypeTagType(row.type)" size="small">
+                    {{ getReceiverTypeLabel(row.type) }}
+                  </el-tag>
+                </template>
+                <template #actions="{ index }">
+                  <el-button
+                    type="danger"
+                    :icon="Delete"
+                    circle
+                    size="small"
+                    title="删除"
+                    @click.stop="removeReceiver(index)"
+                  />
+                </template>
+              </DataTable>
+            </div>
           </el-form-item>
         </div>
       </div>
@@ -138,27 +198,69 @@
         </div>
       </div>
     </el-form>
+
+    <FormDialog
+      v-model="receiverDialogVisible"
+      title="添加接收者"
+      width="60%"
+      :confirm-loading="receiverSubmitLoading"
+      @confirm="saveReceiver"
+      @cancel="handleReceiverDialogClose"
+    >
+      <ReceiverSelector
+        ref="receiverSelectorRef"
+        v-model="receiverDraft"
+        :default-receiver-type="defaultReceiverType"
+        @confirm="handleReceiverConfirm"
+        @cancel="handleReceiverDialogClose"
+      />
+    </FormDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
-import { Setting, Check, Clock, Operation, Filter } from "@element-plus/icons-vue"
+import { Setting, Check, Clock, Operation, Filter, Plus, Delete } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
-import type { CreateStepReq } from "@/api/alert/escalation/types"
+import type { CreateStepReq, ReceiverRef } from "@/api/alert/escalation/types"
+import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
+import type { ChannelType } from "@/api/alert/template/types"
 import { listTemplateSetsApi } from "@/api/alert/template_set"
-import { listStepTemplatesApi, listStepTemplatesByIDsApi } from "@/api/alert/escalation"
 import type { TemplateSet } from "@/api/alert/template_set/types"
-import type { StepTemplateVO } from "@/api/alert/escalation/types"
+import { getChannelOptions } from "../../template/config/channels"
+import { getReceiverTypeLabel, getReceiverTypeTagType } from "../utils"
 import { escalationStepFormRules } from "../config/validation"
+import ReceiverSelector from "./ReceiverSelector.vue"
+import DataTable from "@@/components/DataTable/index.vue"
+import FormDialog from "@@/components/Dialogs/Form/index.vue"
+import type { Column } from "@@/components/DataTable/types"
 
 const modelValue = defineModel<CreateStepReq>({ required: true })
 
 const formRef = ref<FormInstance>()
 
-// 模板集和步骤模板数据
 const templateSets = ref<TemplateSet[]>([])
-const stepTemplates = ref<StepTemplateVO[]>([])
+const channelOptions = getChannelOptions()
+const receiverDialogVisible = ref(false)
+const receiverSubmitLoading = ref(false)
+const receiverSelectorRef = ref<InstanceType<typeof ReceiverSelector>>()
+const defaultReceiverType = ref(RECEIVER_TYPES.USER)
+const receiverDraft = ref<ReceiverRef[]>([])
+const selectedReceivers = ref<ReceiverRef[]>([])
+
+const receiverColumns: Column[] = [
+  {
+    prop: "type",
+    label: "类型",
+    width: 120,
+    slot: "receiverType"
+  },
+  {
+    prop: "display_name",
+    label: "名称",
+    minWidth: 180
+  }
+]
 
 // 使用导入的验证规则
 const formRules = escalationStepFormRules
@@ -176,33 +278,15 @@ const loadTemplateSets = async () => {
   }
 }
 
-// 加载步骤模板数据
-const loadStepTemplates = async () => {
-  try {
-    const response = await listStepTemplatesApi({
-      offset: 0,
-      limit: 1000 // 获取所有步骤模板
-    })
-    stepTemplates.value = response.data.templates || []
-  } catch (error) {
-    console.error("加载步骤模板失败:", error)
+const toggleChannel = (channelValue: ChannelType) => {
+  const channels = [...modelValue.value.channels]
+  const index = channels.indexOf(channelValue)
+  if (index > -1) {
+    channels.splice(index, 1)
+  } else {
+    channels.push(channelValue)
   }
-}
-
-// 根据ID列表加载特定的步骤模板
-const loadStepTemplatesByIDs = async (ids: number[]) => {
-  if (ids.length === 0) return
-
-  try {
-    const response = await listStepTemplatesByIDsApi({ ids })
-    // 将新加载的模板合并到现有列表中，避免重复
-    const newTemplates = response.data.templates || []
-    const existingIds = stepTemplates.value.map((t) => t.id)
-    const uniqueNewTemplates = newTemplates.filter((t) => !existingIds.includes(t.id))
-    stepTemplates.value.push(...uniqueNewTemplates)
-  } catch (error) {
-    console.error("根据ID加载步骤模板失败:", error)
-  }
+  modelValue.value.channels = channels
 }
 
 // 切换函数
@@ -214,17 +298,66 @@ const toggleContinueOnFail = () => {
   modelValue.value.continue_on_fail = !modelValue.value.continue_on_fail
 }
 
+const addReceiver = () => {
+  receiverDraft.value = [...modelValue.value.receivers]
+  defaultReceiverType.value = RECEIVER_TYPES.USER
+  receiverDialogVisible.value = true
+}
+
+const handleReceiverSelectionChange = (selection: ReceiverRef[]) => {
+  selectedReceivers.value = selection
+}
+
+const batchDeleteReceivers = () => {
+  if (selectedReceivers.value.length === 0) return
+
+  modelValue.value.receivers = modelValue.value.receivers.filter(
+    (receiver) =>
+      !selectedReceivers.value.some((selected) => selected.id === receiver.id && selected.type === receiver.type)
+  )
+  selectedReceivers.value = []
+}
+
+const clearAllReceivers = () => {
+  modelValue.value.receivers = []
+  selectedReceivers.value = []
+}
+
+const removeReceiver = (index: number) => {
+  const receivers = [...modelValue.value.receivers]
+  receivers.splice(index, 1)
+  modelValue.value.receivers = receivers
+}
+
+const handleReceiverConfirm = (receivers: ReceiverRef[]) => {
+  receiverDraft.value = receivers
+  saveReceiver()
+}
+
+const saveReceiver = () => {
+  receiverSubmitLoading.value = true
+  try {
+    modelValue.value.receivers = [...receiverDraft.value]
+    receiverDialogVisible.value = false
+  } finally {
+    receiverSubmitLoading.value = false
+  }
+}
+
+const handleReceiverDialogClose = () => {
+  receiverDialogVisible.value = false
+  receiverDraft.value = []
+}
+
 // 组件挂载时加载数据
 onMounted(() => {
   loadTemplateSets()
-  loadStepTemplates()
 })
 
 // 暴露表单验证方法和数据加载方法
 defineExpose({
   validate: () => formRef.value?.validate(),
-  resetFields: () => formRef.value?.resetFields(),
-  loadStepTemplatesByIDs
+  resetFields: () => formRef.value?.resetFields()
 })
 </script>
 
@@ -503,6 +636,62 @@ defineExpose({
         transition: all 0.2s ease;
       }
     }
+  }
+
+  .channels-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+  }
+
+  .channel-option-card {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover,
+    &.active {
+      border-color: #3b82f6;
+      background: #eff6ff;
+    }
+
+    .channel-info {
+      min-width: 0;
+    }
+
+    .channel-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .channel-desc {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+    }
+  }
+
+  .receivers-section {
+    width: 100%;
+  }
+
+  .receivers-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .receivers-table {
+    width: 100%;
   }
 }
 

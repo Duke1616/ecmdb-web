@@ -60,7 +60,7 @@
 
       <!-- 操作插槽 -->
       <template #actions="{ row }">
-        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="3" @route-event="operateEvent" />
+        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
 
@@ -85,46 +85,38 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue"
 import { useRouter } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { Plus } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
+import { Delete, Edit, Operation, Plus, VideoPause, VideoPlay } from "@element-plus/icons-vue"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
-import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
-import {
-  listConfigsApi,
-  createConfigApi,
-  updateConfigApi,
-  deleteConfigApi,
-  updateConfigStatusApi
-} from "@/api/alert/escalation"
-import { usePagination } from "@/common/composables/usePagination"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
+import { createDefaultEscalationConfigData } from "./utils"
+import { useEscalationConfig } from "./composables/useEscalationConfig"
 
 // 路由
 const router = useRouter()
 
-// 分页
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const {
+  configs,
+  loading,
+  paginationData,
+  loadConfigs,
+  createConfig,
+  updateConfig,
+  deleteConfig,
+  toggleConfigStatus,
+  navigateToSteps,
+  handleCurrentChange,
+  handleSizeChange
+} = useEscalationConfig()
 
-// 响应式数据
-const configs = ref<ConfigVO[]>([])
-const loading = ref(false)
 const drawerVisible = ref(false)
 const submitLoading = ref(false)
-const createDefaultFormData = (): CreateConfigReq => ({
-  name: "",
-  description: "",
-  enabled: true,
-  timeout: 300,
-  triggers: [],
-  trigger_logic: { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" },
-  created_by: "admin"
-})
-const formData = ref<CreateConfigReq>(createDefaultFormData())
+const formData = ref<CreateConfigReq>(createDefaultEscalationConfigData())
 
 // 表单引用
 const formRef = ref()
@@ -170,10 +162,15 @@ const tableColumns: Column[] = [
 // 获取操作按钮配置
 const getOperateItems = (config: ConfigVO) => {
   return [
-    { name: "编辑", code: "edit", type: "primary" },
-    { name: "管理步骤", code: "steps", type: "info" },
-    { name: config.enabled ? "禁用" : "启用", code: "toggle", type: config.enabled ? "warning" : "success" },
-    { name: "删除", code: "delete", type: "danger" }
+    { name: "编辑", code: "edit", type: "primary", icon: Edit },
+    { name: "管理步骤", code: "steps", type: "success", icon: Operation },
+    {
+      name: config.enabled ? "禁用" : "启用",
+      code: "toggle",
+      type: config.enabled ? "warning" : "success",
+      icon: config.enabled ? VideoPause : VideoPlay
+    },
+    { name: "删除", code: "delete", type: "danger", icon: Delete }
   ]
 }
 
@@ -197,27 +194,11 @@ const operateEvent = (config: ConfigVO, action: string) => {
   }
 }
 
-// 加载配置数据
-const loadConfigs = async () => {
-  loading.value = true
-  try {
-    const response = await listConfigsApi({
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
-    })
-
-    configs.value = response.data.configs || []
-    paginationData.total = response.data.total || 0
-  } finally {
-    loading.value = false
-  }
-}
-
 // 创建配置
 const handleCreate = () => {
   isEdit.value = false
   currentEditId.value = null
-  formData.value = createDefaultFormData()
+  formData.value = createDefaultEscalationConfigData()
   drawerVisible.value = true
 }
 
@@ -239,33 +220,17 @@ const handleEdit = (config: ConfigVO) => {
 
 // 管理步骤
 const handleManageSteps = (config: ConfigVO) => {
-  router.push(`/alert/notify/escalation/steps/${config.id}`)
+  navigateToSteps(config)
 }
 
 // 切换状态
 const handleToggleStatus = async (config: ConfigVO) => {
-  const action = config.enabled ? "禁用" : "启用"
-  await ElMessageBox.confirm(`确定要${action}配置 "${config.name}" 吗？`, `确认${action}`, {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-
-  await updateConfigStatusApi(config.id)
-
-  await loadConfigs()
+  await toggleConfigStatus(config)
 }
 
 // 删除配置
 const handleDelete = async (config: ConfigVO) => {
-  await ElMessageBox.confirm(`确定要删除配置 "${config.name}" 吗？`, "确认删除", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-
-  await deleteConfigApi(config.id)
-  await loadConfigs()
+  await deleteConfig(config)
 }
 
 // 返回操作
@@ -284,9 +249,7 @@ const handleSubmit = async () => {
 
   try {
     if (isEdit.value && currentEditId.value) {
-      // 更新
-      await updateConfigApi({
-        id: currentEditId.value,
+      await updateConfig(currentEditId.value, {
         name: formData.value.name,
         description: formData.value.description,
         enabled: formData.value.enabled,
@@ -296,16 +259,11 @@ const handleSubmit = async () => {
       })
       ElMessage.success("配置更新成功")
     } else {
-      // 创建
-      await createConfigApi({
-        ...formData.value,
-        steps: []
-      })
+      await createConfig(formData.value)
       ElMessage.success("配置创建成功")
     }
 
     drawerVisible.value = false
-    await loadConfigs()
   } catch (error) {
     console.error("提交配置失败:", error)
   } finally {
@@ -320,7 +278,7 @@ const handleDrawerClose = () => {
   // 重置编辑状态
   isEdit.value = false
   currentEditId.value = null
-  formData.value = createDefaultFormData()
+  formData.value = createDefaultEscalationConfigData()
 }
 
 // 监听分页变化

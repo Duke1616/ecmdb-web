@@ -17,7 +17,6 @@ export const alertRoutes: RouteRecordRaw[] = [
       hidden: false
     },
     children: [
-
       // 即时查询
       {
         path: "/alert/proxy",
@@ -169,9 +168,9 @@ export const alertRoutes: RouteRecordRaw[] = [
       //       }
       //     },
       //     {
-      //       path: "/alert/escalation/steps/:id",
+      //       path: "/alert/notify/escalation/steps/:config_id?",
       //       component: () => import("@/pages/alert/escalation/steps.vue"),
-      //       name: "AlertEscalationSteps",
+      //       name: "EscalationStepGovernance",
       //       meta: {
       //         hidden: true,
       //         title: "升级步骤",
@@ -179,16 +178,6 @@ export const alertRoutes: RouteRecordRaw[] = [
       //         platforms: ["alert"]
       //       }
       //     },
-      //     {
-      //       path: "/alert/escalation/templates",
-      //       component: () => import("@/pages/alert/escalation/templates.vue"),
-      //       name: "AlertEscalationTemplates",
-      //       meta: {
-      //         title: "步骤模板",
-      //         svgIcon: "template",
-      //         platforms: ["alert"]
-      //       }
-      //     }
       //   ]
       // }
       // {

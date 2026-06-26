@@ -17,13 +17,6 @@ import type {
   GetStepResp,
   ListStepsByConfigIDReq,
   ListStepsByConfigIDResp,
-  CreateStepTemplateReq,
-  CreateStepTemplateResp,
-  UpdateStepTemplateReq,
-  GetStepTemplateResp,
-  ListStepTemplatesReq,
-  ListStepTemplatesByIDsReq,
-  ListStepTemplatesResp,
   SwapStepLevelsReq
 } from "./types"
 
@@ -98,47 +91,6 @@ export const listStepsByConfigIDApi = (data: ListStepsByConfigIDReq) => {
 export const deleteStepApi = (id: number) => {
   return instance.delete({
     url: `${API_SERVICE.ALERT}/escalation/step/delete/${id}`
-  })
-}
-
-// 升级步骤模板管理API
-export const createStepTemplateApi = (data: CreateStepTemplateReq) => {
-  return instance.post<CreateStepTemplateResp>({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/create`,
-    data
-  })
-}
-
-export const updateStepTemplateApi = (data: UpdateStepTemplateReq) => {
-  return instance.put<CreateStepTemplateResp>({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/update`,
-    data
-  })
-}
-
-export const getStepTemplateApi = (id: number) => {
-  return instance.get<GetStepTemplateResp>({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/detail/${id}`
-  })
-}
-
-export const listStepTemplatesApi = (data: ListStepTemplatesReq) => {
-  return instance.post<ListStepTemplatesResp>({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/list`,
-    data
-  })
-}
-
-export const listStepTemplatesByIDsApi = (data: ListStepTemplatesByIDsReq) => {
-  return instance.post<ListStepTemplatesResp>({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/list/by_ids`,
-    data
-  })
-}
-
-export const deleteStepTemplateApi = (id: number) => {
-  return instance.delete({
-    url: `${API_SERVICE.ALERT}/escalation/step_template/delete/${id}`
   })
 }
 

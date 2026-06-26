@@ -7,6 +7,14 @@ import type { SvgName } from "~virtual/svg-component"
 const Layouts = import.meta.glob("../layouts/index.vue")
 const Views = import.meta.glob(["../views/**/*.vue", "../pages/**/*.vue"])
 
+const normalizeDynamicPath = (route: Menu): string => {
+  if (route.name === "EscalationStepGovernance" && !route.path.includes(":config_id")) {
+    return `${route.path}/:config_id?`
+  }
+
+  return route.path
+}
+
 /**
  * 转换后端 Meta 为前端路由 Meta
  * @param meta 后端 Meta 数据
@@ -34,7 +42,7 @@ export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordR
     // 处理目录/带有子节点的节点
     if (route.children && route.children.length > 0) {
       return {
-        path: route.path,
+        path: normalizeDynamicPath(route),
         name: route.name,
         redirect: route.redirect,
         // 只有根层级目录才强制使用 Layout 外层组件
@@ -53,7 +61,7 @@ export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordR
     }
 
     return {
-      path: route.path,
+      path: normalizeDynamicPath(route),
       name: route.name,
       component: component,
       meta: transformMeta(route.meta)

@@ -15,6 +15,7 @@ import {
 } from "@/api/alert/escalation"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
 import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
+import { navigateToEscalationSteps } from "../utils"
 
 export function useEscalationConfig() {
   const router = useRouter()
@@ -92,7 +93,7 @@ export function useEscalationConfig() {
 
   // 跳转到步骤管理页面
   const navigateToSteps = (config: ConfigVO) => {
-    router.push(`/alert/escalation/steps/${config.id}`)
+    navigateToEscalationSteps(router, config.id)
   }
 
   return {

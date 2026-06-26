@@ -77,7 +77,14 @@ export const escalationStepFormRules: FormRules = {
     { type: "number", min: 1, max: 10, message: "升级级别必须在 1 到 10 之间", trigger: "blur" }
   ],
   template_set_id: [{ required: true, message: "请选择模板集", trigger: "change" }],
-  step_template_id: [{ required: true, message: "请选择步骤模板", trigger: "change" }],
+  channels: [
+    { required: true, message: "请至少选择一个通知渠道", trigger: "change" },
+    { type: "array", min: 1, message: "请至少选择一个通知渠道", trigger: "change" }
+  ],
+  receivers: [
+    { required: true, message: "请至少选择一个接收者", trigger: "change" },
+    { type: "array", min: 1, message: "请至少选择一个接收者", trigger: "change" }
+  ],
   delay: [
     { required: true, message: "请输入延迟时间", trigger: "blur" },
     { type: "number", min: 0, max: 1440, message: "延迟时间必须在 0 到 1440 分钟之间", trigger: "blur" }
@@ -185,8 +192,12 @@ export const validateEscalationStep = (step: EscalationStep): string[] => {
     errors.push("模板集不能为空")
   }
 
-  if (!step.step_template_id) {
-    errors.push("步骤模板不能为空")
+  if (!step.channels || step.channels.length === 0) {
+    errors.push("通知渠道不能为空")
+  }
+
+  if (!step.receivers || step.receivers.length === 0) {
+    errors.push("接收者不能为空")
   }
 
   if (step.delay < 0) {

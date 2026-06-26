@@ -124,7 +124,8 @@ export interface EscalationLogic {
 export interface EscalationStep {
   level: number // 升级级别（1-N，表示第几次升级）
   template_set_id: number // 模板集ID
-  step_template_id: number // 步骤模板ID
+  channels: string[] // 通知渠道
+  receivers: ReceiverRef[] // 接收者
   delay: number // 延迟时间（分钟）
   max_retries: number // 重试次数
   retry_interval: number // 重试间隔（秒）
@@ -142,24 +143,14 @@ export interface ReceiverRef {
   metadata: Record<string, any> // 附加信息（如电话、邮箱等）
 }
 
-// 升级步骤模版视图对象
-export interface StepTemplateVO {
-  id: number // 步骤模版 ID
-  name: string // 步骤模版 名称
-  description: string // 步骤模版描述
-  channels: string[] // 通知渠道
-  receivers: ReceiverRef[] // 通知人
-  ctime: number // 创建时间
-  utime: number // 更新时间
-}
-
 // 升级步骤视图对象
 export interface StepVO {
   id: number // 步骤ID
   level: number // 升级级别（1-N，表示第几次升级）
   template_set_id: number // 模板集ID
   config_id?: number // 业务配置
-  step_template_id: number // 模板 Step ID
+  channels: string[] // 通知渠道
+  receivers: ReceiverRef[] // 接收者
   delay: number // 延迟时间（分钟）
   max_retries: number // 重试次数
   retry_interval: number // 重试间隔（秒）
@@ -167,7 +158,6 @@ export interface StepVO {
   continue_on_fail: boolean // 前一步失败是否继续
   condition_expr: string // 条件表达式（如 "alert.severity >= 3"）
   urgency_level: number // 紧急程度（1-5，数字越大越紧急）
-  escalation_step_template: StepTemplateVO // 使用模版信息
 }
 
 // 升级配置视图对象
@@ -193,7 +183,7 @@ export interface CreateConfigReq {
   timeout: number // 超时时间（毫秒）
   triggers: EscalationTrigger[] // 触发条件
   trigger_logic: EscalationLogic // 触发逻辑
-  steps?: EscalationStep[] // 升级步骤
+  steps?: EscalationStep[] // 升级步骤，可创建配置后单独维护
   created_by: string // 创建人
 }
 
@@ -235,7 +225,8 @@ export interface CreateStepReq {
   config_id?: number // 配置ID
   level: number // 升级级别
   template_set_id: number // 模板集ID
-  step_template_id?: number // 步骤模板ID
+  channels: string[] // 通知渠道
+  receivers: ReceiverRef[] // 接收者
   delay: number // 延迟时间（分钟）
   max_retries: number // 最大重试次数
   retry_interval: number // 重试间隔（秒）
@@ -256,7 +247,8 @@ export interface UpdateStepReq {
   config_id?: number // 配置ID
   level: number // 升级级别
   template_set_id: number // 模板集ID
-  step_template_id?: number // 步骤模板ID
+  channels: string[] // 通知渠道
+  receivers: ReceiverRef[] // 接收者
   delay: number // 延迟时间（分钟）
   max_retries: number // 最大重试次数
   retry_interval: number // 重试间隔（秒）
@@ -279,50 +271,6 @@ export interface ListStepsByConfigIDReq {
 // 根据配置ID获取升级步骤列表响应
 export interface ListStepsByConfigIDResp {
   steps: StepVO[]
-  total: number
-}
-
-// 创建升级步骤模板请求
-export interface CreateStepTemplateReq {
-  name: string // 模板名称
-  description: string // 模板描述
-  channels: string[] // 通知渠道
-  receivers: ReceiverRef[] // 接收者
-}
-
-// 创建升级步骤模板响应
-export interface CreateStepTemplateResp {
-  template: StepTemplateVO
-}
-
-// 更新升级步骤模板请求
-export interface UpdateStepTemplateReq {
-  id: number // 模板ID
-  name: string // 模板名称
-  description: string // 模板描述
-  channels: string[] // 通知渠道
-  receivers: ReceiverRef[] // 接收者
-}
-
-// 获取升级步骤模板响应
-export interface GetStepTemplateResp {
-  template: StepTemplateVO
-}
-
-// 获取升级步骤模板列表请求
-export interface ListStepTemplatesReq {
-  offset?: number // 偏移量
-  limit?: number // 限制数量
-}
-
-// 根据ID列表获取升级步骤模板请求
-export interface ListStepTemplatesByIDsReq {
-  ids: number[] // 模板ID列表
-}
-
-// 获取升级步骤模板列表响应
-export interface ListStepTemplatesResp {
-  templates: StepTemplateVO[]
   total: number
 }
 

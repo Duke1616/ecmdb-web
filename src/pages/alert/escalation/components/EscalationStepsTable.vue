@@ -23,11 +23,6 @@
           <span>{{ row.template_set_id ? getTemplateSetName(row.template_set_id) : "未设置" }}</span>
         </template>
 
-        <!-- 步骤模板列 -->
-        <template #stepTemplate="{ row }">
-          <span>{{ row.step_template_id ? getStepTemplateName(row.step_template_id) : "未设置" }}</span>
-        </template>
-
         <!-- 延迟时间列 -->
         <template #delay="{ row }">
           <span>{{ formatDelay(row.delay) }}</span>
@@ -47,9 +42,9 @@
         <!-- 通知渠道列 -->
         <template #channels="{ row }">
           <div class="channels-cell">
-            <div v-if="getStepTemplateChannels(row.step_template_id).length > 0" class="channels-container">
+            <div v-if="row.channels?.length > 0" class="channels-container">
               <el-tooltip
-                v-for="channel in getStepTemplateChannels(row.step_template_id)"
+                v-for="channel in row.channels"
                 :key="channel"
                 :content="`通知渠道: ${getChannelLabelSafe(channel)}`"
                 placement="top"
@@ -70,10 +65,10 @@
         <!-- 接收者列 -->
         <template #receivers="{ row }">
           <div class="receivers-cell">
-            <div v-if="getStepTemplateReceivers(row.step_template_id).length > 0" class="receivers-container">
+            <div v-if="row.receivers?.length > 0" class="receivers-container">
               <el-tooltip
-                v-for="receiver in getStepTemplateReceivers(row.step_template_id)"
-                :key="receiver.id"
+                v-for="receiver in row.receivers"
+                :key="`${receiver.type}_${receiver.id}`"
                 :content="getReceiverTooltipContent(receiver)"
                 placement="top"
                 effect="dark"
@@ -114,9 +109,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue"
 import { Delete, Setting, Bell, User } from "@element-plus/icons-vue"
-import type { StepVO, EscalationStep, StepTemplateVO } from "@/api/alert/escalation/types"
+import type { StepVO, EscalationStep } from "@/api/alert/escalation/types"
 import type { TemplateSet } from "@/api/alert/template_set/types"
-import { listStepTemplatesByIDsApi } from "@/api/alert/escalation"
 import { listTemplateSetsByIDsApi } from "@/api/alert/template_set"
 import { getChannelLabel } from "../../template/config/channels"
 import { CHANNEL_CONFIGS } from "../../template/config/channels"
@@ -160,12 +154,6 @@ const stepTableColumns = computed<Column[]>(() => [
     slot: "templateSet"
   },
   {
-    prop: "step_template_name",
-    label: "步骤模板",
-    minWidth: 150,
-    slot: "stepTemplate"
-  },
-  {
     prop: "channels",
     label: "通知渠道",
     minWidth: 200,
@@ -179,9 +167,7 @@ const stepTableColumns = computed<Column[]>(() => [
   }
 ])
 
-// 模板集和步骤模板数据
 const templateSets = ref<TemplateSet[]>([])
-const stepTemplates = ref<StepTemplateVO[]>([])
 
 // 表格行拖拽处理
 const handleStepRowDrag = (newSteps: StepVO[] | EscalationStep[]) => {
@@ -223,59 +209,10 @@ const loadTemplateSets = async () => {
   }
 }
 
-// 加载步骤模板数据
-const loadStepTemplates = async () => {
-  try {
-    // 收集所有步骤中的 step_template_id
-    const stepTemplateIds = modelValue.value
-      .map((step) => step.step_template_id)
-      .filter((id): id is number => id !== undefined && id > 0)
-      .filter((id, index, arr) => arr.indexOf(id) === index) // 去重
-
-    if (stepTemplateIds.length > 0) {
-      const response = await listStepTemplatesByIDsApi({
-        ids: stepTemplateIds
-      })
-      stepTemplates.value = response.data.templates || []
-    } else {
-      stepTemplates.value = []
-    }
-  } catch (error) {
-    console.error("加载步骤模板失败:", error)
-    stepTemplates.value = []
-  }
-}
-
 // 获取模板集名称
 const getTemplateSetName = (id: number) => {
   const templateSet = templateSets.value.find((ts) => ts.id === id)
   return templateSet ? templateSet.name : `模板集 ${id}`
-}
-
-// 获取步骤模板名称
-const getStepTemplateName = (id: number) => {
-  const template = stepTemplates.value.find((st) => st.id === id)
-  return template ? template.name : `步骤模板 ${id}`
-}
-
-// 获取步骤模板内容
-const getStepTemplateContent = (id?: number) => {
-  if (!id) return null
-  return stepTemplates.value.find((st) => st.id === id) || null
-}
-
-// 获取步骤模板的通知渠道
-const getStepTemplateChannels = (id?: number) => {
-  if (!id) return []
-  const template = getStepTemplateContent(id)
-  return template ? template.channels : []
-}
-
-// 获取步骤模板的接收者
-const getStepTemplateReceivers = (id?: number) => {
-  if (!id) return []
-  const template = getStepTemplateContent(id)
-  return template ? template.receivers : []
 }
 
 // 格式化延迟时间
@@ -305,7 +242,6 @@ watch(
   () => modelValue.value,
   () => {
     loadTemplateSets()
-    loadStepTemplates()
   },
   { deep: true }
 )
@@ -313,7 +249,6 @@ watch(
 // 组件挂载时加载模板数据
 onMounted(() => {
   loadTemplateSets()
-  loadStepTemplates()
 })
 </script>
 
