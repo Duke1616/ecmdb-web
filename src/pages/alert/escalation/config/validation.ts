@@ -246,17 +246,5 @@ export const validateEscalationConfig = (config: CreateConfigReq): string[] => {
     })
   }
 
-  // 验证升级步骤
-  if (!config.steps || config.steps.length === 0) {
-    errors.push("至少需要一个升级步骤")
-  } else {
-    config.steps.forEach((step: EscalationStep, index: number) => {
-      const stepErrors = validateEscalationStep(step)
-      if (stepErrors.length > 0) {
-        errors.push(`升级步骤${index + 1}: ${stepErrors.join(", ")}`)
-      }
-    })
-  }
-
   return errors
 }

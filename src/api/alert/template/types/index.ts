@@ -30,6 +30,7 @@ export interface ChannelTemplate {
   description: string
   channel: ChannelType
   businessType: number
+  scope?: number
   activeVersionId: number
   ctime: number
   utime: number

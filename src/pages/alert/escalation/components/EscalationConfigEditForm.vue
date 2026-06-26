@@ -254,8 +254,13 @@ const validateForm = async () => {
   }
 }
 
+const resetFields = () => {
+  formRef.value?.resetFields()
+}
+
 defineExpose({
-  validateForm
+  validateForm,
+  resetFields
 })
 </script>
 

@@ -9,6 +9,7 @@ export interface TemplateSet {
   owner_id: number
   name: string
   description: string
+  scope?: number
   ctime: number
   utime: number
   items: TemplateSetItem[]

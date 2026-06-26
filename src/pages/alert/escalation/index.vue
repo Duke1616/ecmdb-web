@@ -68,11 +68,13 @@
     <CustomDrawer
       v-model="drawerVisible"
       :title="drawerTitle"
-      subtitle="请填写升级配置的基本信息"
-      size="35%"
+      :subtitle="drawerSubtitle"
+      size="42%"
       header-icon="Setting"
-      :before-close="handleDrawerClose"
+      :confirm-loading="submitLoading"
+      :confirm-button-text="isEdit ? '更新配置' : '创建配置'"
       @confirm="handleSubmit"
+      @cancel="handleDrawerClose"
       @closed="handleDrawerClose"
     >
       <EscalationConfigEditForm ref="formRef" v-model="formData" />
@@ -113,16 +115,16 @@ const configs = ref<ConfigVO[]>([])
 const loading = ref(false)
 const drawerVisible = ref(false)
 const submitLoading = ref(false)
-const formData = ref<CreateConfigReq>({
+const createDefaultFormData = (): CreateConfigReq => ({
   name: "",
   description: "",
   enabled: true,
   timeout: 300,
   triggers: [],
   trigger_logic: { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" },
-  steps: [],
   created_by: "admin"
 })
+const formData = ref<CreateConfigReq>(createDefaultFormData())
 
 // 表单引用
 const formRef = ref()
@@ -133,6 +135,7 @@ const currentEditId = ref<number | null>(null)
 
 // 计算属性
 const drawerTitle = computed(() => (isEdit.value ? "编辑配置" : "创建配置"))
+const drawerSubtitle = computed(() => (isEdit.value ? "调整升级配置基础信息和触发时机" : "配置升级规则和触发时机"))
 
 import type { Column } from "@@/components/DataTable/types"
 
@@ -212,7 +215,10 @@ const loadConfigs = async () => {
 
 // 创建配置
 const handleCreate = () => {
-  router.push(`/alert/notify/escalation/config/create`)
+  isEdit.value = false
+  currentEditId.value = null
+  formData.value = createDefaultFormData()
+  drawerVisible.value = true
 }
 
 // 编辑配置
@@ -226,7 +232,6 @@ const handleEdit = (config: ConfigVO) => {
     timeout: config.timeout,
     triggers: config.triggers,
     trigger_logic: config.trigger_logic,
-    steps: config.steps,
     created_by: config.created_by
   }
   drawerVisible.value = true
@@ -292,7 +297,10 @@ const handleSubmit = async () => {
       ElMessage.success("配置更新成功")
     } else {
       // 创建
-      await createConfigApi(formData.value)
+      await createConfigApi({
+        ...formData.value,
+        steps: []
+      })
       ElMessage.success("配置创建成功")
     }
 
@@ -312,6 +320,7 @@ const handleDrawerClose = () => {
   // 重置编辑状态
   isEdit.value = false
   currentEditId.value = null
+  formData.value = createDefaultFormData()
 }
 
 // 监听分页变化

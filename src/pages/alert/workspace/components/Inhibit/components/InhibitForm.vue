@@ -221,8 +221,8 @@ const formRef = ref<FormInstance>()
 // 获取当前工作空间ID
 const route = useRoute()
 const currentWorkspaceId = computed(() => {
-  const workspaceId = route.params.id
-  return workspaceId ? Number(workspaceId) : undefined
+  const workspaceId = Number(route.params.id || route.query.id)
+  return Number.isFinite(workspaceId) && workspaceId > 0 ? workspaceId : undefined
 })
 
 // 时间窗口相关

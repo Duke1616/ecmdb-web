@@ -16,13 +16,15 @@
         </span>
       </button>
       <el-tooltip content="清空渠道模板" placement="top">
-        <el-button
+        <AuthButton
           class="channel-delete"
           :icon="Delete"
           text
           type="danger"
           :loading="deletingChannel === channel.code"
-          :disabled="!canDelete(channel.code)"
+          :disabled="readonly || !canDelete(channel.code)"
+          :capability="ALERT_CAPABILITIES.TemplateSet.TemplateClear"
+          disable-mode
           @click.stop="emit('delete', channel.code)"
         />
       </el-tooltip>
@@ -32,6 +34,8 @@
 
 <script setup lang="ts">
 import { Delete } from "@element-plus/icons-vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import type { EditableChannel, TemplateChannelOption } from "../composables/useTemplateEditor"
 
 const props = withDefaults(
@@ -41,9 +45,11 @@ const props = withDefaults(
     getChannelState: (channel: EditableChannel) => string
     canDeleteChannel?: (channel: EditableChannel) => boolean
     deletingChannel?: EditableChannel | null
+    readonly?: boolean
   }>(),
   {
-    deletingChannel: null
+    deletingChannel: null,
+    readonly: false
   }
 )
 

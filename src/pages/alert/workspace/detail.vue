@@ -178,6 +178,7 @@ const silenceRules = ref<any[]>([])
 
 // 使用 store 中的菜单状态
 const activeMenu = computed(() => menuStore.activeMenu)
+const workspaceId = computed(() => Number(route.params.id || route.query.id))
 
 // 组件引用
 const teamMembersRef = ref()
@@ -238,8 +239,7 @@ const handleMenuSelect = (key: string) => {
 
 // 加载工作空间数据
 const loadWorkspaceData = async () => {
-  const workspaceId = route.params.id
-  if (!workspaceId) {
+  if (!Number.isFinite(workspaceId.value) || workspaceId.value <= 0) {
     ElMessage.error("工作空间ID不存在")
     router.back()
     return
@@ -247,7 +247,7 @@ const loadWorkspaceData = async () => {
 
   try {
     // 调用API获取工作空间详情
-    const response = await getWorkspaceDetailApi(Number(workspaceId))
+    const response = await getWorkspaceDetailApi(workspaceId.value)
     workspace.value = response.data
   } catch (error) {
     console.error("加载工作空间数据失败:", error)

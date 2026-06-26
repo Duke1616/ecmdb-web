@@ -3,6 +3,8 @@
  */
 
 import type { Column } from "@@/components/DataTable/types"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import { Delete, Document, Edit } from "@element-plus/icons-vue"
 
 // 表格列配置
 export const TABLE_COLUMNS: Column[] = [
@@ -39,9 +41,15 @@ export const TABLE_PROPS = {
 // 操作按钮配置
 export const OPERATE_ITEMS = {
   templateSet: [
-    { name: "编辑", code: "edit", type: "primary" },
-    { name: "编辑模板", code: "manage", type: "success" },
-    { name: "删除", code: "delete", type: "danger" }
+    { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: ALERT_CAPABILITIES.TemplateSet.Edit },
+    {
+      name: "编辑模板",
+      code: "manage",
+      type: "success",
+      icon: Document,
+      capability: ALERT_CAPABILITIES.TemplateSet.ItemView
+    },
+    { name: "删除", code: "delete", type: "danger", icon: Delete, capability: ALERT_CAPABILITIES.TemplateSet.Delete }
   ]
 }
 

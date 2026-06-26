@@ -193,7 +193,7 @@ export interface CreateConfigReq {
   timeout: number // 超时时间（毫秒）
   triggers: EscalationTrigger[] // 触发条件
   trigger_logic: EscalationLogic // 触发逻辑
-  steps: EscalationStep[] // 升级步骤
+  steps?: EscalationStep[] // 升级步骤
   created_by: string // 创建人
 }
 

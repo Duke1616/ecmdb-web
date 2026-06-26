@@ -36,15 +36,17 @@
             <el-icon class="section-icon"><Clock /></el-icon>
             <span>版本列表</span>
           </span>
-          <el-button
+          <AuthButton
             size="small"
             type="primary"
             :icon="Plus"
-            :disabled="!draft?.templateId"
+            :disabled="readonly || !draft?.templateId"
+            :capability="ALERT_CAPABILITIES.Template.VersionFork"
+            disable-mode
             @click="emit('create-version')"
           >
             新增版本
-          </el-button>
+          </AuthButton>
         </div>
 
         <div v-if="draft && draft.versions.length > 0" class="version-list">
@@ -72,22 +74,32 @@
             </span>
 
             <span class="version-actions">
-              <el-button
+              <AuthButton
                 v-if="version.id !== draft.activeVersionId"
                 text
                 type="primary"
                 size="small"
-                :disabled="!draft.templateId"
+                :disabled="readonly || !draft.templateId"
+                :capability="ALERT_CAPABILITIES.Template.Publish"
+                disable-mode
                 @click.stop="emit('publish-version', version.id)"
               >
                 设为当前
-              </el-button>
+              </AuthButton>
             </span>
           </button>
         </div>
 
         <el-empty v-else class="version-empty" description="保存当前渠道后会生成 v1.0.0" :image-size="72">
-          <el-button type="primary" :disabled="!draft?.templateId" @click="emit('create-version')"> 新增版本 </el-button>
+          <AuthButton
+            type="primary"
+            :disabled="readonly || !draft?.templateId"
+            :capability="ALERT_CAPABILITIES.Template.VersionFork"
+            disable-mode
+            @click="emit('create-version')"
+          >
+            新增版本
+          </AuthButton>
         </el-empty>
       </section>
     </div>
@@ -98,15 +110,23 @@
 import { computed } from "vue"
 import { Clock, Collection, Plus } from "@element-plus/icons-vue"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import type { TemplateVersion } from "@/api/alert/template/types"
 import type { ChannelDraft } from "../composables/useTemplateEditor"
 
-const props = defineProps<{
-  modelValue: boolean
-  channelLabel: string
-  draft?: ChannelDraft
-  initialVersionName: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    channelLabel: string
+    draft?: ChannelDraft
+    initialVersionName: string
+    readonly?: boolean
+  }>(),
+  {
+    readonly: false
+  }
+)
 
 const emit = defineEmits<{
   "update:modelValue": [value: boolean]

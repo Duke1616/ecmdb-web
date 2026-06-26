@@ -73,9 +73,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue"
+import { computed, ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
+import { useUserStore } from "@/pinia/stores/user"
 import type { CreateTemplateSetReq, TemplateSet } from "@/api/alert/template_set/types"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
@@ -83,7 +84,7 @@ import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { useTemplate } from "./composables/useTemplate"
-import { formatTimestamp } from "./utils"
+import { formatTimestamp, isReadonlySystemResource, SYSTEM_RESOURCE_READONLY_MESSAGE } from "./utils"
 import { TABLE_COLUMNS, TABLE_PROPS, OPERATE_ITEMS } from "./config/constants"
 import TemplateForm from "./components/TemplateForm.vue"
 
@@ -118,14 +119,33 @@ const formData = ref<CreateTemplateSetReq>({
 
 import type { Column } from "@@/components/DataTable/types"
 
+const userStore = useUserStore()
+
 // 表格配置
 const tableColumns = TABLE_COLUMNS as Column[]
 const tableProps = TABLE_PROPS
+const currentTenant = computed(() =>
+  userStore.tenants.find((tenant) => Number(tenant.id) === Number(userStore.currentTenantId))
+)
 
 // 使用工具函数
+const isReadonlyTemplateSet = (templateSet: TemplateSet) =>
+  isReadonlySystemResource(templateSet, userStore.currentTenantId, currentTenant.value)
 
 // 获取操作按钮配置
-const getOperateItems = (_templateSet: TemplateSet) => OPERATE_ITEMS.templateSet
+const getOperateItems = (templateSet: TemplateSet) =>
+  OPERATE_ITEMS.templateSet.map((item) => ({
+    ...item,
+    disabled: isReadonlyTemplateSet(templateSet) && ["edit", "delete"].includes(item.code)
+  }))
+
+const currentEditTemplateSet = computed(() =>
+  currentEditId.value ? templateSets.value.find((item) => item.id === currentEditId.value) : null
+)
+
+const warnReadonlySystemResource = () => {
+  ElMessage.warning(SYSTEM_RESOURCE_READONLY_MESSAGE)
+}
 
 // 操作事件处理
 const operateEvent = (templateSet: TemplateSet, action: string) => {
@@ -159,6 +179,11 @@ const handleCreate = () => {
 
 // 编辑集合
 const handleEdit = (templateSet: TemplateSet) => {
+  if (isReadonlyTemplateSet(templateSet)) {
+    warnReadonlySystemResource()
+    return
+  }
+
   dialogTitle.value = "编辑模板集合"
   isEdit.value = true
   currentEditId.value = templateSet.id
@@ -177,6 +202,11 @@ const handleManageItems = (templateSet: TemplateSet) => {
 
 // 删除集合
 const handleDelete = async (templateSet: TemplateSet) => {
+  if (isReadonlyTemplateSet(templateSet)) {
+    warnReadonlySystemResource()
+    return
+  }
+
   await deleteTemplateSet(templateSet)
 }
 
@@ -190,6 +220,12 @@ const handleSubmit = async () => {
   submitLoading.value = true
 
   if (isEdit.value && currentEditId.value) {
+    if (currentEditTemplateSet.value && isReadonlyTemplateSet(currentEditTemplateSet.value)) {
+      warnReadonlySystemResource()
+      submitLoading.value = false
+      return
+    }
+
     // 更新
     await updateTemplateSet(currentEditId.value, formData.value)
   } else {

@@ -421,7 +421,8 @@ const handleWorkspaceClick = (workspace: Workspace) => {
   console.log("进入工作空间:", workspace)
   router.push({
     name: "AlertWorkspaceDetail",
-    params: { id: workspace.id }
+    params: { id: workspace.id },
+    query: { id: String(workspace.id) }
   })
 }
 

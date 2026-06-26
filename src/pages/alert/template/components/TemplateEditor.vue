@@ -10,6 +10,9 @@
           :language="language"
           :file-name="fileName"
           :show-preview="showPreview"
+          :clear-capability="clearCapability"
+          :format-disabled="readOnly"
+          :clear-disabled="readOnly || clearDisabled"
           @preview="handlePreview"
           @format="handleFormat"
           @clear="handleClear"
@@ -29,6 +32,7 @@
             @update:code="handleUpdateModelValue"
             :language="language"
             :is-create="false"
+            :read-only="readOnly"
             class="template-editor"
             :show-preview="showPreview && previewMode === 'split'"
             :preview-content="previewContent"
@@ -61,6 +65,9 @@ interface Props {
   previewContent: string
   previewMode?: "split" | "fullscreen"
   channelLabel?: string
+  clearCapability?: string | string[]
+  clearDisabled?: boolean
+  readOnly?: boolean
 }
 
 interface Emits {

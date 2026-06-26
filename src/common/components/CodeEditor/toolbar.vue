@@ -17,15 +17,21 @@
       </div>
 
       <!-- 操作按钮 -->
-      <button @click="handleFormat" class="btn btn-format" :disabled="disabled">
+      <button @click="handleFormat" class="btn btn-format" :disabled="disabled || formatDisabled">
         <span class="btn-icon">✏️</span>
         <span class="btn-text">格式化</span>
       </button>
 
-      <button @click="handleClear" class="btn btn-clear" :disabled="disabled">
+      <AuthButton
+        class="btn btn-clear"
+        :disabled="disabled || clearDisabled"
+        :capability="clearCapability"
+        disable-mode
+        @click="handleClear"
+      >
         <span class="btn-icon">🗑️</span>
         <span class="btn-text">清空</span>
-      </button>
+      </AuthButton>
 
       <button @click="handlePreview" class="btn btn-preview" :disabled="disabled">
         <span class="btn-icon">{{ props.showPreview ? "📝" : "👁️" }}</span>
@@ -41,12 +47,16 @@
 import { ref, onMounted, watch } from "vue"
 import * as themes from "../CodeEditor/themes"
 import { useTheme, Theme } from "@@/composables/theme"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
 
 interface Props {
   language?: string
   fileName?: string
   disabled?: boolean
   showPreview?: boolean
+  clearCapability?: string | string[]
+  formatDisabled?: boolean
+  clearDisabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -123,14 +133,14 @@ const handleThemeChange = (theme: string) => {
 
 // 处理格式化
 const handleFormat = () => {
-  if (!props.disabled) {
+  if (!props.disabled && !props.formatDisabled) {
     emit("format")
   }
 }
 
 // 处理清空
 const handleClear = () => {
-  if (!props.disabled) {
+  if (!props.disabled && !props.clearDisabled) {
     emit("clear")
   }
 }
