@@ -1,6 +1,6 @@
 <template>
-  <ProGovernanceLayout :title="pageTitle" :subtitle="pageSubtitle" :show-refresh="false" @refresh="loadAlerts">
-    <template #search>
+  <div class="alert-page">
+    <div class="alert-filter-panel">
       <div class="alert-filter-toolbar" :class="{ 'is-history': isHistory }">
         <div class="filter-control search-control">
           <label class="control-label">
@@ -44,7 +44,7 @@
           />
         </div>
       </div>
-    </template>
+    </div>
 
     <div class="alert-list-shell">
       <DataTable
@@ -189,19 +189,19 @@
         </section>
       </div>
     </Drawer>
-  </ProGovernanceLayout>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from "vue"
 import { Bell, Calendar, DataLine, Search, View } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
 import { debounce } from "lodash-es"
 import { listCurrentAlertsApi, listHistoryAlertsApi } from "@/api/alert"
 import { listDatasourceApi } from "@/api/alert/datasource"
 import type { Alert, ListAlertsReq } from "@/api/alert/types"
 import type { Datasource } from "@/api/alert/datasource/types/datasource"
 import { usePagination } from "@/common/composables/usePagination"
-import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import { Drawer } from "@/common/components/Dialogs"
@@ -222,8 +222,6 @@ const props = defineProps<{
 }>()
 
 const isHistory = computed(() => props.mode === "history")
-const pageTitle = computed(() => (isHistory.value ? "历史告警" : "当前告警"))
-const pageSubtitle = computed(() => (isHistory.value ? "查看已恢复和已归档的告警事件" : "查看当前活跃的告警事件"))
 const emptyText = computed(() => (isHistory.value ? "暂无历史告警" : "暂无当前告警"))
 
 const { paginationData } = usePagination()
@@ -311,8 +309,8 @@ const loadAlerts = async () => {
       : listCurrentAlertsApi(buildListParams()))
     alerts.value = data.alerts || []
     paginationData.total = data.total || 0
-  } catch (error) {
-    console.error(`加载${pageTitle.value}失败:`, error)
+  } catch {
+    ElMessage.error(isHistory.value ? "历史告警加载失败" : "当前告警加载失败")
     alerts.value = []
     paginationData.total = 0
   } finally {
@@ -327,8 +325,8 @@ const loadDatasourceOptions = async () => {
       limit: 1000
     })
     datasources.value = data.data_sources || []
-  } catch (error) {
-    console.error("加载数据源选项失败:", error)
+  } catch {
+    ElMessage.error("数据源选项加载失败")
     datasources.value = []
   }
 }
@@ -433,32 +431,31 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-:deep(.pro-gov-content) {
+.alert-page {
   display: flex;
-  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
   min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+  background: #f5f7fa;
 }
 
-:deep(.manager-header) {
-  align-items: center;
-  gap: clamp(16px, 1.4vw, 24px);
-  padding: clamp(16px, 1.4vw, 22px) clamp(18px, 1.6vw, 24px);
+.alert-filter-panel {
+  flex-shrink: 0;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
 }
 
-:deep(.header-left) {
-  flex: 0 0 auto;
-  min-width: clamp(220px, 18vw, 300px);
-}
-
-:deep(.header-right) {
-  flex: 1;
+.alert-list-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-width: 0;
-}
-
-:deep(.eiam-governance-bar) {
-  width: 100%;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+  min-height: 0;
 }
 
 .alert-filter-toolbar {
@@ -468,7 +465,7 @@ onMounted(() => {
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: var(--alert-filter-gap);
   min-width: 0;
   width: 100%;
@@ -605,29 +602,19 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.alert-list-shell {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-}
-
 :deep(.alert-table.manager-content) {
   flex: 1;
   min-height: 0;
 }
 
 :deep(.alert-table .content-card) {
-  border-radius: 0;
-  border-right: 0;
-  border-bottom: 0;
-  border-left: 0;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   box-shadow: none;
 }
 
 :deep(.alert-table .data-table-container) {
-  border-radius: 0;
+  border-radius: 8px;
 }
 
 :deep(.alert-row) {

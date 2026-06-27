@@ -29,7 +29,6 @@
       <!-- 团队名称插槽 -->
       <template #teamName="{ row }">
         <div class="team-name">
-          <span class="team-avatar">{{ row.name?.charAt(0) || '团' }}</span>
           <span class="team-title">{{ row.name }}</span>
         </div>
       </template>
@@ -285,22 +284,7 @@ watch(dialogVisible, async (newVal) => {
 .team-name {
   display: flex;
   align-items: center;
-  gap: 8px;
   justify-content: center;
-
-  .team-avatar {
-    width: 28px;
-    height: 28px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #2563eb;
-    background: #eff6ff;
-    border-radius: 7px;
-    font-size: 13px;
-    font-weight: 700;
-  }
 
   .team-title {
     max-width: 180px;
