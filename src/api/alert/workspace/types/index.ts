@@ -26,6 +26,8 @@ export interface SaveWorkspaceReq {
   allow_invite: boolean
 }
 
+export type UpdateWorkspaceReq = Omit<SaveWorkspaceReq, "enabled">
+
 export interface ListWorkspacesReq {
   teamId?: number
   offset: number

@@ -4,6 +4,7 @@ import type {
   ListWorkspacesReq,
   ListWorkspacesResponse,
   SaveWorkspaceReq,
+  UpdateWorkspaceReq,
   Workspace,
   GetWorkspaceCategoriesReq,
   GetWorkspaceCategoriesResponse,
@@ -37,9 +38,11 @@ export const createWorkspaceApi = (data: SaveWorkspaceReq) => {
 }
 
 export const updateWorkspaceApi = (data: SaveWorkspaceReq) => {
+  const { enabled: _, ...payload } = data
+
   return instance.put<Workspace>({
     url: `${API_SERVICE.ALERT}/workspace/update`,
-    data
+    data: payload as UpdateWorkspaceReq
   })
 }
 
