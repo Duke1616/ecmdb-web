@@ -15,7 +15,7 @@
       <el-form-item prop="desc" label="值班描述">
         <el-input v-model="formData.desc" placeholder="请输入值班描述" />
       </el-form-item>
-      <el-form-item prop="status" label="是否启用">
+      <el-form-item prop="enabled" label="是否启用">
         <el-switch v-model="formData.enabled" size="default" />
       </el-form-item>
     </el-form>
@@ -25,8 +25,8 @@
 <script setup lang="ts">
 import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
-import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { CreateOrUpdateOnCallReq, OnCall } from "@/api/alert/oncall/types/oncall"
+import { ElMessage, type FormInstance, type FormRules } from "element-plus"
+import type { CreateOrUpdateOnCallReq, OnCall } from "@/api/alert/oncall/types/oncall"
 import { createOnCallApi, updateOnCallApi } from "@/api/alert/oncall"
 import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 
@@ -51,8 +51,8 @@ const formRules: FormRules = {
 }
 
 const submitForm = () => {
-  formRef.value?.validate((valid: boolean, fields: any) => {
-    if (!valid) return console.error("表单校验不通过", fields)
+  formRef.value?.validate((valid: boolean) => {
+    if (!valid) return
     const api = formData.value.id === undefined ? createOnCallApi : updateOnCallApi
     api(formData.value)
       .then(() => {
@@ -60,8 +60,8 @@ const submitForm = () => {
         ElMessage.success("保存成功")
         emits("callback")
       })
-      .catch((error) => {
-        console.log("catch", error)
+      .catch(() => {
+        ElMessage.error("保存失败，请稍后重试")
       })
       .finally(() => {})
   })

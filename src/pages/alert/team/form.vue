@@ -80,10 +80,17 @@ const syncUserData = () => {
 
 const submitForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
-    if (!valid) return console.error("表单校验不通过", fields)
+    if (!valid) {
+      ElMessage.warning(fields?.name ? "请输入团队名称" : "请完善团队信息")
+      return
+    }
 
     // 同步用户选择数据到表单数据
     syncUserData()
+    if (!formData.value.owner) {
+      ElMessage.warning("请选择管理人员")
+      return
+    }
 
     const apiCall = formData.value.id ? updateTeamApi(formData.value) : createTeamApi(formData.value)
     apiCall
@@ -92,8 +99,8 @@ const submitForm = () => {
         ElMessage.success("保存成功")
         emits("callback")
       })
-      .catch((error: any) => {
-        console.log("catch", error)
+      .catch(() => {
+        ElMessage.error("保存团队失败，请稍后重试")
       })
   })
 }

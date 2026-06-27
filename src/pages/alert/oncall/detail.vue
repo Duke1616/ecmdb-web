@@ -1,17 +1,15 @@
 <template>
-  <div class="app-container">
-    <ManagerHeader title="排班详情" subtitle="查看和管理排班规则及日程安排" :show-back-button="true" @back="goBack">
-      <template #actions>
-        <el-button type="primary" :icon="Plus" @click="addShifSchedulingRule" class="action-btn"> 新增规则 </el-button>
-        <el-button type="primary" :icon="Setting" @click="listShifSchedulingRule" class="action-btn">
-          查看规则
-        </el-button>
-        <el-tooltip content="刷新数据">
-          <el-button type="primary" :icon="RefreshRight" circle @click="preview" class="refresh-btn" />
-        </el-tooltip>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="排班详情"
+    subtitle="查看和管理排班规则及日程安排"
+    :show-back-button="true"
+    :primary-action="{ capability: ALERT_CAPABILITIES.Oncall.RuleAdd, label: '新增规则', icon: Plus }"
+    :secondary-action="{ capability: ALERT_CAPABILITIES.Oncall.RuleView, label: '查看规则', icon: Setting }"
+    @back="goBack"
+    @primary-action="addShifSchedulingRule"
+    @secondary-action="listShifSchedulingRule"
+    @refresh="refreshDetail"
+  >
     <div class="detail-content">
       <div class="schedule-cards">
         <!-- 当前值班 -->
@@ -22,6 +20,32 @@
         <div class="schedule-card-wrapper">
           <ScheduleCard title="下期值班" :schedule="nextSchedule" :formatTimestamp="formatTimestamp" />
         </div>
+      </div>
+
+      <div class="active-rule-status" :class="{ empty: !activeRule }">
+        <div class="active-rule-main">
+          <el-icon class="active-rule-icon"><Setting /></el-icon>
+          <div class="active-rule-text">
+            <div class="active-rule-title">
+              <span>当前生效规则</span>
+              <el-tag v-if="activeRule" size="small" type="success" effect="plain">
+                规则 {{ activeRuleIndex + 1 }}
+              </el-tag>
+              <el-tag v-else size="small" type="info" effect="plain">未配置</el-tag>
+            </div>
+            <div class="active-rule-desc">{{ activeRuleDescription }}</div>
+          </div>
+        </div>
+        <AuthButton
+          size="small"
+          text
+          type="primary"
+          :capability="ALERT_CAPABILITIES.Oncall.RuleView"
+          disable-mode
+          @click="listShifSchedulingRule"
+        >
+          查看规则
+        </AuthButton>
       </div>
 
       <el-card class="calendar-card" shadow="hover">
@@ -61,13 +85,15 @@
       title="新增规则"
       subtitle="配置新的排班规则"
       header-icon="Calendar"
+      width="min(1080px, 92vw)"
+      :full-height="true"
       confirm-text="保存"
       cancel-text="取消"
       @confirm="handlerSubmitRotaRule"
       @cancel="onClosed"
       @closed="onClosed"
     >
-      <Rule ref="ruleRef" @closed="onClosed" @callback="preview" />
+      <Rule ref="ruleRef" @closed="onClosed" @callback="refreshDetail" />
     </FormDialog>
 
     <!-- 规则列表对话框 -->
@@ -76,11 +102,13 @@
       title="规则列表"
       subtitle="查看和管理现有规则"
       header-icon="List"
+      width="min(1080px, 92vw)"
+      :full-height="true"
       :show-footer="false"
       @cancel="onRuleListClosed"
       @closed="onRuleListClosed"
     >
-      <ListRule ref="ruleListRef" @closed="onRuleListClosed" @callback="preview" />
+      <ListRule ref="ruleListRef" @closed="onRuleListClosed" @callback="refreshDetail" />
     </FormDialog>
 
     <!-- 临时调班对话框 -->
@@ -99,11 +127,11 @@
     >
       <AdjustmentRule ref="adjustmentRuleRef" @closed="onAdjustmentRuleClosed" @callback="preview" />
     </FormDialog>
-  </div>
+  </ProGovernanceLayout>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, nextTick, createApp, h, watch } from "vue"
+import { ref, reactive, nextTick, createApp, h, watch, computed } from "vue"
 import { CalendarOptions, EventApi, DateSelectArg, EventInput, EventHoveringArg } from "@fullcalendar/core"
 import ScheduleCard from "./schedule-card.vue"
 import zhLocale from "@fullcalendar/core/locales/zh-cn"
@@ -119,7 +147,7 @@ import AdjustmentRule from "./rule/adjustment-rule.vue"
 import { useRoute } from "vue-router"
 import { deleteShiftAdjustmentRuleApi, getOnCallRuleByIdApi, previewScheduleApi } from "@/api/alert/oncall"
 import { OnCallRule, Schedule } from "@/api/alert/oncall/types/oncall"
-import { ElButton, ElDivider, ElMessage, ElTooltip } from "element-plus"
+import { ElDivider, ElMessage, ElTooltip } from "element-plus"
 import { Plus, Setting, RefreshRight, Calendar } from "@element-plus/icons-vue"
 import tippy, { followCursor } from "tippy.js"
 import "tippy.js/dist/tippy.css"
@@ -129,8 +157,10 @@ import { formatDate, formatTimestamp } from "@/common/utils/day"
 import { isEqual } from "lodash-es"
 import { useAppStore } from "@/pinia/stores/app"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import { FormDialog } from "@@/components/Dialogs"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
 const appStore = useAppStore()
 const userToolsStore = useUserToolsStore()
 
@@ -211,7 +241,7 @@ const calendarOptions = reactive<any>({
     visibleStart.value = info.view.activeStart.getTime()
     endStart.value = info.view.activeEnd.getTime()
 
-    preview()
+    refreshDetail()
   },
   select: handleDateSelect,
   eventMouseEnter: handleEventMouseEnter,
@@ -227,18 +257,29 @@ const dialogAdjustmentRuleVisible = ref<boolean>(false)
 const event = ref<EventInput[]>([])
 
 async function addShifSchedulingRule() {
-  await getRuleList()
-
-  if (oncallRuleData.value.length >= 1) {
-    ElMessage.warning("当前最多只能添加 1 个规则")
-    return
-  }
-
   dialogVisible.value = true
 }
 
 // 获取指定排班-规则列表
 const oncallRuleData = ref<OnCallRule[]>([])
+const getRuleId = (rule?: OnCallRule) => rule?.id || rule?.rule_id || 0
+const activeRuleIndex = computed(() => oncallRuleData.value.findIndex((rule) => rule.enabled))
+const activeRule = computed(() => (activeRuleIndex.value >= 0 ? oncallRuleData.value[activeRuleIndex.value] : null))
+const activeRuleDescription = computed(() => {
+  if (!activeRule.value) {
+    return oncallRuleData.value.length > 0 ? "当前没有启用的规则，请在规则列表中设为启用" : "暂无规则，请先新增排班规则"
+  }
+
+  const groupCount = activeRule.value.oncall_groups?.length || 0
+  const memberCount =
+    activeRule.value.oncall_groups?.reduce((total, group) => total + (group.members?.length || 0), 0) || 0
+  const rotate = activeRule.value.rotate
+  const rotateUnit = rotate?.time_unit === 5 ? "小时" : "天"
+  const rotateText = rotate?.time_duration ? `每 ${rotate.time_duration} ${rotateUnit}轮换` : "未设置轮换周期"
+  const ruleId = getRuleId(activeRule.value)
+
+  return `ID ${ruleId}，${groupCount} 个组，${memberCount} 人，${rotateText}`
+})
 const getRuleList = async () => {
   await getOnCallRuleByIdApi(Number(rotaId))
     .then(({ data }) => {
@@ -250,13 +291,16 @@ const getRuleList = async () => {
     .finally(() => {})
 }
 
+const refreshDetail = () => {
+  preview()
+  getRuleList()
+}
+
 function handleEventMouseEnter(info: EventHoveringArg) {
   // 创建 Vue 应用程序
   const memberNames = (info.event.extendedProps.members || [])
     .map((username: string) => userToolsStore.getNickname(username) || username)
     .join("、")
-
-  console.log(info.event.start)
 
   const app = createApp({
     render() {
@@ -267,8 +311,10 @@ function handleEventMouseEnter(info: EventHoveringArg) {
       if (info.event.groupId === "TEMP") {
         buttons.push(
           h(
-            ElButton,
+            AuthButton,
             {
+              capability: ALERT_CAPABILITIES.Oncall.AdjDelete,
+              disableMode: true,
               type: "danger",
               size: "small",
               style: { flex: "1" },
@@ -279,11 +325,13 @@ function handleEventMouseEnter(info: EventHoveringArg) {
                     preview()
                     instance.hide()
                   })
-                  .catch(() => {})
+                  .catch(() => {
+                    ElMessage.error("撤销失败")
+                  })
                   .finally(() => {})
               }
             },
-            "撤销"
+            { default: () => "撤销" }
           )
         )
       }
@@ -291,8 +339,11 @@ function handleEventMouseEnter(info: EventHoveringArg) {
       // 添加“调班”按钮
       buttons.push(
         h(
-          ElButton,
+          AuthButton,
           {
+            capability:
+              info.event.groupId === "TEMP" ? ALERT_CAPABILITIES.Oncall.AdjEdit : ALERT_CAPABILITIES.Oncall.AdjAdd,
+            disableMode: true,
             type: "primary",
             size: "small",
             style: { flex: "1" },
@@ -310,7 +361,7 @@ function handleEventMouseEnter(info: EventHoveringArg) {
               })
             }
           },
-          "调班"
+          { default: () => "调班" }
         )
       )
 
@@ -426,8 +477,8 @@ const preview = () => {
 
       calendarOptions.events = event.value
     })
-    .catch((error) => {
-      console.log(error)
+    .catch(() => {
+      ElMessage.error("获取排班预览失败")
     })
     .finally(() => {})
 }
@@ -460,19 +511,15 @@ watch(
 </script>
 
 <style lang="scss" scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  padding: calc(1rem + 0.4vw);
-}
-
 .detail-content {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   gap: calc(0.9rem + 0.2vw);
+  padding-right: 2px;
 }
 
 .schedule-cards {
@@ -486,13 +533,76 @@ watch(
   min-height: 120px;
 }
 
+.active-rule-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+
+  &.empty {
+    border-color: #e2e8f0;
+    background: #f9fafb;
+
+    .active-rule-icon {
+      color: #94a3b8;
+      background: #f1f5f9;
+    }
+  }
+}
+
+.active-rule-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.active-rule-icon {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #2563eb;
+  background: #eff6ff;
+  border-radius: 8px;
+}
+
+.active-rule-text {
+  min-width: 0;
+}
+
+.active-rule-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.active-rule-desc {
+  font-size: 12px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .calendar-card {
-  flex: 1;
-  min-height: 500px; /* 适中的最小高度 */
+  flex: 0 0 auto;
   border-radius: calc(0.5rem + 0.1vw);
   display: flex;
   flex-direction: column;
   margin-bottom: calc(1rem + 0.1vw);
+  overflow: visible;
 
   :deep(.el-card__header) {
     padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);
@@ -502,8 +612,7 @@ watch(
 
   :deep(.el-card__body) {
     padding: calc(0.75rem + 0.2vw) calc(1rem + 0.4vw);
-    flex: 1;
-    min-height: 0;
+    overflow: visible;
   }
 }
 
@@ -533,16 +642,32 @@ watch(
 }
 
 .calendar-container {
-  height: 100%;
-  min-height: 0;
+  height: auto;
+  min-height: 560px;
   border-radius: calc(0.375rem + 0.05vw);
-  flex: 1;
+  overflow: visible;
 }
 
 .fc {
-  height: 100%;
+  height: auto !important;
   width: 100%;
   border-radius: calc(0.375rem + 0.05vw);
+}
+
+:deep(.fc) {
+  height: auto !important;
+}
+
+:deep(.fc-view-harness),
+:deep(.fc-view-harness-active) {
+  height: auto !important;
+}
+
+:deep(.fc-scroller),
+:deep(.fc-scroller-liquid-absolute) {
+  position: static !important;
+  height: auto !important;
+  overflow: visible !important;
 }
 
 :deep(.fc .fc-icon) {
@@ -595,6 +720,15 @@ watch(
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
+}
+
+:deep(.fc .fc-daygrid-day-frame) {
+  box-sizing: border-box;
+  padding-bottom: 10px;
+}
+
+:deep(.fc .fc-daygrid-event-harness) {
+  margin-bottom: 6px;
 }
 
 .event-content {

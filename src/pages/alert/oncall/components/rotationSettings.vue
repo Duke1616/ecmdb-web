@@ -61,7 +61,7 @@ const time_unit = defineModel<number>("time_unit")
 <style scoped lang="scss">
 /* 设置组样式 */
 .settings-group {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 
   &:last-child {
     margin-bottom: 0;
@@ -73,21 +73,20 @@ const time_unit = defineModel<number>("time_unit")
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  margin-bottom: 14px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
 
   .el-icon {
-    font-size: 14px;
+    font-size: 16px;
     color: #3b82f6;
   }
 
   span {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: #374151;
+    color: #1e293b;
   }
 }
 
@@ -101,17 +100,17 @@ const time_unit = defineModel<number>("time_unit")
 .rotation-period {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  gap: 10px;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .period-label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #334155;
 }
 
 .period-controls {
@@ -131,14 +130,14 @@ const time_unit = defineModel<number>("time_unit")
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 16px;
-  background: #f8fafc;
+  padding: 10px 14px;
+  background: #ffffff;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
 }
 
 .period-number {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #3b82f6;
   min-width: 40px;
@@ -146,12 +145,12 @@ const time_unit = defineModel<number>("time_unit")
 }
 
 .period-unit {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #6b7280;
   padding: 4px 8px;
   background: #e5e7eb;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 .period-slider {
@@ -183,7 +182,7 @@ const time_unit = defineModel<number>("time_unit")
 .period-presets {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
+  gap: 8px;
   width: 100%;
 
   // 去掉 Element Plus 按钮的默认间距
@@ -215,10 +214,10 @@ const time_unit = defineModel<number>("time_unit")
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 16px;
-  background: #f9fafb;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+  padding: 14px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
 .unit-label {
@@ -238,10 +237,10 @@ const time_unit = defineModel<number>("time_unit")
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 9px 12px;
   background: white;
   border: 1px solid #d1d5db;
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 

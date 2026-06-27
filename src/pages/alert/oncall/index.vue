@@ -1,28 +1,25 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader title="排班管理" subtitle="管理系统排班和值班安排" @refresh="handleRefresh">
-      <template #actions>
-        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreate"> 新增排班 </el-button>
-        <el-tooltip content="刷新数据">
-          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
-        </el-tooltip>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="排班管理"
+    subtitle="管理系统排班和值班安排"
+    :primary-action="{ capability: ALERT_CAPABILITIES.Oncall.Add, label: '新增排班', icon: CirclePlus }"
+    :refresh-action="{ capability: ALERT_CAPABILITIES.Oncall.View }"
+    @primary-action="handlerCreate"
+    @refresh="handleRefresh"
+  >
     <!-- 数据表格 -->
     <DataTable
+      :loading="loading"
       :data="oncallsData"
       :columns="tableColumns"
-      :show-selection="true"
+      :show-selection="false"
       :show-pagination="true"
       :total="paginationData.total"
       :page-size="paginationData.pageSize"
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      :table-props="{ loading, stripe: true, height: 'calc(100vh - 12rem)' }"
-      @selection-change="handleSelectionChange"
+      :table-props="{ stripe: true, height: 'calc(100vh - 12rem)' }"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
@@ -60,13 +57,13 @@
         <Form ref="apiRef" @callback="listOnCallsData" @closed="onClosed" />
       </div>
     </FormDialog>
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, computed } from "vue"
+import { ref, watch, nextTick, h, computed, shallowRef } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { CirclePlus, RefreshRight } from "@element-plus/icons-vue"
+import { CirclePlus, Delete, Edit, View } from "@element-plus/icons-vue"
 import { OnCall } from "@/api/alert/oncall/types/oncall"
 import { deleteOnCallApi, listOnCallsApi } from "@/api/alert/oncall"
 import Form from "./form.vue"
@@ -74,10 +71,10 @@ import router from "@/router"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
-import PageContainer from "@/common/components/PageContainer/index.vue"
 const userToolsStore = useUserToolsStore()
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
@@ -118,36 +115,30 @@ const tableColumns: Column[] = [
 ]
 
 // OperateBtn 配置
-const operateBtnStatus = ref([
+const operateBtnStatus = shallowRef([
   {
     name: "详情",
     code: "view",
-    icon: "View"
+    icon: View,
+    capability: ALERT_CAPABILITIES.Oncall.Detail
   },
   {
     name: "修改",
     code: "edit",
-    icon: "Edit"
+    icon: Edit,
+    capability: ALERT_CAPABILITIES.Oncall.Edit
   },
   {
     name: "删除",
     code: "delete",
-    icon: "Delete",
-    type: "danger"
+    icon: Delete,
+    type: "danger",
+    capability: ALERT_CAPABILITIES.Oncall.Delete
   }
 ])
 
-// 选中的行
-const selectedRows = ref<OnCall[]>([])
-
-// 选择变化事件
-const handleSelectionChange = (selection: OnCall[]) => {
-  selectedRows.value = selection
-}
-
 // OperateBtn 操作事件处理
 const operateEvent = (data: OnCall, name: string) => {
-  console.log("OperateBtn action triggered:", name, data)
   switch (name) {
     case "view":
       handleDetailClick(data)

@@ -1,4 +1,5 @@
 import { ref } from "vue"
+import { ElMessage } from "element-plus"
 import { QueryRangeApi } from "@/api/alert/explore"
 
 /**
@@ -48,8 +49,8 @@ export function useAlertQuery() {
       })
 
       return res.data.metrics
-    } catch (error) {
-      console.error("Query failed", error)
+    } catch {
+      ElMessage.error("查询失败，请稍后重试")
       series.value = []
       return []
     } finally {

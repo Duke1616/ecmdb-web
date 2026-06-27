@@ -21,6 +21,11 @@ export interface UpdateOrDeleteRuleReq {
   oncall_rules: OnCallRule[]
 }
 
+export interface ActiveRuleReq {
+  id: number
+  rule_id: number
+}
+
 export interface PreviewScheduleReq {
   id: number
   start_time: number
@@ -40,6 +45,10 @@ export interface OnCall {
 
 // OnCallRule 值班规则
 export interface OnCallRule {
+  id: number // 规则 ID
+  rule_id?: number // 兼容部分接口返回的规则 ID 字段
+  rule_type: number // 规则类型: 1 常规排班
+  enabled: boolean // 是否启用
   start_time: number // 开始时间 (timestamp)
   end_time: number // 结束时间 (timestamp)
   oncall_groups: OnCallGroup[] // 值班组
@@ -55,6 +64,8 @@ export interface AddOrUpdateAdjustmentRuleReq {
 
 // OnCallAdjustmentRule 临时值班规则
 export interface OnCallAdjustmentRule {
+  id: number // 规则 ID
+  rule_type: number // 规则类型: 2 临时调班
   start_time: number // 开始时间 (timestamp)
   end_time: number // 结束时间 (timestamp)
   oncall_group: OnCallGroup // 值班组

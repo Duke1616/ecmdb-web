@@ -30,6 +30,8 @@ withDefaults(
     secondaryAction?: GovernanceAction
     /** 危险/次要动作配置 (如“批量删除”或“注销主体”) */
     dangerAction?: GovernanceAction
+    /** 刷新动作配置 */
+    refreshAction?: GovernanceAction
     /** 动作切换模式：true=选中数据时隐藏新增按钮，false=并排显示 */
     swapActions?: boolean
     /** 是否吸顶 */
@@ -209,11 +211,16 @@ const handleSearch = () => {
             <!-- 优化 3: 增加后置插槽 (例如放"导出"按钮) -->
             <slot name="actions-suffix" />
 
-            <el-button
+            <AuthButton
               v-if="showRefresh"
-              :icon="RefreshRight"
+              :icon="refreshAction?.icon || RefreshRight"
               class="eiam-refresh-btn"
               :class="{ 'is-detail': isDetail }"
+              :capability="refreshAction?.capability"
+              :mode="refreshAction?.mode"
+              :disabled="refreshAction?.disabled"
+              :loading="refreshAction?.loading"
+              disable-mode
               @click="emit('refresh')"
             />
           </div>

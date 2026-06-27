@@ -11,11 +11,11 @@
       <div v-else class="rule-cards">
         <div
           v-for="(rule, ruleIndex) in oncallRuleData"
-          :key="ruleIndex"
+          :key="getRuleId(rule) || ruleIndex"
           class="rule-card"
           :class="{
             active: activeCollapse.includes(ruleIndex),
-            hidden: activeCollapse.length > 0 && !activeCollapse.includes(ruleIndex),
+            'enabled-rule': rule.enabled,
             'single-rule': oncallRuleData.length === 1
           }"
         >
@@ -25,6 +25,7 @@
               <div class="rule-title">
                 <el-icon class="rule-icon"><Setting /></el-icon>
                 <span>规则 {{ ruleIndex + 1 }}</span>
+                <el-tag v-if="rule.enabled" size="small" type="success" effect="plain">当前使用</el-tag>
               </div>
               <div class="rule-summary">
                 <el-tag size="small" type="info">{{ getRuleSummary(rule) }}</el-tag>
@@ -45,12 +46,40 @@
 
             <!-- 操作按钮 -->
             <div class="rule-actions-bottom">
-              <el-button @click="replaceRule(ruleIndex)" type="primary" size="default" :icon="Edit" class="action-btn">
+              <AuthButton
+                v-if="!rule.enabled && getRuleId(rule)"
+                type="success"
+                size="default"
+                :icon="Check"
+                class="action-btn"
+                :capability="ALERT_CAPABILITIES.Oncall.Active"
+                disable-mode
+                @click="activeRule(ruleIndex)"
+              >
+                设为启用
+              </AuthButton>
+              <AuthButton
+                type="primary"
+                size="default"
+                :icon="Edit"
+                class="action-btn"
+                :capability="ALERT_CAPABILITIES.Oncall.RuleEdit"
+                disable-mode
+                @click="replaceRule(ruleIndex)"
+              >
                 修改规则
-              </el-button>
-              <el-button @click="deleteRule(ruleIndex)" type="danger" size="default" :icon="Delete" class="action-btn">
+              </AuthButton>
+              <AuthButton
+                type="danger"
+                size="default"
+                :icon="Delete"
+                class="action-btn"
+                :capability="ALERT_CAPABILITIES.Oncall.RuleEdit"
+                disable-mode
+                @click="deleteRule(ruleIndex)"
+              >
                 删除规则
-              </el-button>
+              </AuthButton>
             </div>
           </div>
         </div>
@@ -60,12 +89,14 @@
 </template>
 
 <script setup lang="ts">
-import { updateShiftSchedulingRuleApi } from "@/api/alert/oncall"
+import { activeShiftSchedulingRuleApi, updateShiftSchedulingRuleApi } from "@/api/alert/oncall"
 import { AddRuleReq, OnCallRule } from "@/api/alert/oncall/types/oncall"
 import { h, nextTick, ref } from "vue"
 import Rule from "./rule.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { DocumentRemove, Setting, ArrowDown, Edit, Delete } from "@element-plus/icons-vue"
+import { DocumentRemove, Setting, ArrowDown, Edit, Delete, Check } from "@element-plus/icons-vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
 
 const ruleRefs = ref<InstanceType<typeof Rule>[]>([])
 const activeCollapse = ref<number[]>([])
@@ -83,7 +114,7 @@ const setRuleRef = (el: any, index: number) => {
 
 const setRules = (id: number, rules: OnCallRule[]) => {
   rotaId.value = id
-  oncallRuleData.value = rules
+  oncallRuleData.value = rules.map(normalizeRule)
 
   // 如果只有一个规则，直接展开
   if (rules.length === 1) {
@@ -94,12 +125,25 @@ const setRules = (id: number, rules: OnCallRule[]) => {
   }
 }
 
+const getRuleId = (rule?: OnCallRule) => rule?.id || rule?.rule_id || 0
+
+const normalizeRule = (rule: OnCallRule): OnCallRule => {
+  const ruleId = getRuleId(rule)
+  return {
+    ...rule,
+    id: ruleId,
+    rule_type: rule.rule_type || 1,
+    enabled: Boolean(rule.enabled)
+  }
+}
+
 const resetRule = () => {
   oncallRuleData.value = []
   activeCollapse.value = []
 }
 
 const deleteRule = (ruleIndex: number) => {
+  const nextRules = oncallRuleData.value.filter((_, index) => index !== ruleIndex)
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -111,11 +155,7 @@ const deleteRule = (ruleIndex: number) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(async () => {
-    oncallRuleData.value.splice(ruleIndex, 1)
-
-    // 重置
-    activeCollapse.value = []
-    deleteShiftSchedulingRule()
+    deleteShiftSchedulingRule(nextRules)
   })
 }
 
@@ -130,8 +170,16 @@ const replaceRule = (ruleIndex: number) => {
       const rota = ruleComponent.getFrom()
       const rule = rota?.value.oncall_rule
       if (rule !== undefined) {
-        // 替换数据
-        oncallRuleData.value[ruleIndex] = rule
+        const originRule = oncallRuleData.value[ruleIndex]
+        const originRuleId = getRuleId(originRule)
+        oncallRuleData.value[ruleIndex] = {
+          ...originRule,
+          ...rule,
+          id: originRuleId,
+          rule_id: originRuleId,
+          rule_type: originRule.rule_type || 1,
+          enabled: originRule.enabled
+        }
 
         // 更新数据库
         updateShiftSchedulingRule()
@@ -156,10 +204,7 @@ const handleCollapseChange = (active: any) => {
       }
     }
 
-    console.log("Setting rule data:", ruleToUpdate)
     ruleComponent.setFrom(ruleToUpdate)
-  } else {
-    console.error("Rule component or rule data not found:", { ruleComponent, rule, active })
   }
 }
 
@@ -174,7 +219,6 @@ const toggleRule = (ruleIndex: number) => {
 
   // 触发数据加载
   if (activeCollapse.value.includes(ruleIndex)) {
-    console.log("Toggling rule:", ruleIndex, "Data:", oncallRuleData.value[ruleIndex])
     // 确保组件已经渲染
     nextTick(() => {
       handleCollapseChange(ruleIndex)
@@ -192,12 +236,39 @@ const getRuleSummary = (rule: OnCallRule) => {
   return `${groups} 个组，${members} 人`
 }
 
-const deleteShiftSchedulingRule = () => {
-  updateShiftSchedulingRuleApi({
+const activeRule = (ruleIndex: number) => {
+  const rule = oncallRuleData.value[ruleIndex]
+  const ruleId = getRuleId(rule)
+  if (!ruleId) {
+    ElMessage.error("规则 ID 为空，无法启用")
+    return
+  }
+
+  activeShiftSchedulingRuleApi({
     id: rotaId.value,
-    oncall_rules: oncallRuleData.value
+    rule_id: ruleId
   })
     .then(() => {
+      oncallRuleData.value = oncallRuleData.value.map((item) => ({
+        ...item,
+        enabled: getRuleId(item) === ruleId
+      }))
+      ElMessage.success("启用成功")
+      emits("callback")
+    })
+    .catch(() => {
+      ElMessage.error("启用失败，请稍后重试")
+    })
+}
+
+const deleteShiftSchedulingRule = (rules: OnCallRule[]) => {
+  updateShiftSchedulingRuleApi({
+    id: rotaId.value,
+    oncall_rules: rules.map(normalizeRule)
+  })
+    .then(() => {
+      oncallRuleData.value = rules.map(normalizeRule)
+      activeCollapse.value = []
       ElMessage.success("删除成功")
 
       if (oncallRuleData.value.length === 0) {
@@ -214,7 +285,7 @@ const deleteShiftSchedulingRule = () => {
 const updateShiftSchedulingRule = () => {
   updateShiftSchedulingRuleApi({
     id: rotaId.value,
-    oncall_rules: oncallRuleData.value
+    oncall_rules: oncallRuleData.value.map(normalizeRule)
   })
     .then(() => {
       ElMessage.success("修改成功")
@@ -234,13 +305,14 @@ defineExpose({ setRules, resetRule })
 
 <style lang="scss" scoped>
 .rule-list-container {
-  height: 65vh;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background: #ffffff;
+  background: #f8fafc;
   overflow: hidden;
   margin: 0;
-  padding: 0;
+  padding: 2px;
 }
 
 /* 规则列表 */
@@ -285,7 +357,8 @@ defineExpose({ setRules, resetRule })
     display: flex;
     flex-direction: column;
     gap: 12px;
-    height: 100%;
+    flex: 1;
+    min-height: 100%;
   }
 }
 
@@ -293,36 +366,25 @@ defineExpose({ setRules, resetRule })
 .rule-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   transition:
-    all 0.3s ease,
-    max-height 0.3s ease,
-    opacity 0.3s ease,
-    transform 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 
   &.active {
+    flex: 1;
+    min-height: 0;
     border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-    flex: 1; // 只有展开时才自适应
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.08);
   }
 
   &:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-  }
-
-  &.hidden {
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    margin: 0;
-    padding: 0;
-    transform: scaleY(0);
-    transform-origin: top;
+    border-color: #bfdbfe;
   }
 
   &.single-rule {
@@ -342,7 +404,7 @@ defineExpose({ setRules, resetRule })
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 20px;
+    padding: 14px 16px;
     cursor: pointer;
     transition: all 0.2s ease;
 
@@ -360,13 +422,17 @@ defineExpose({ setRules, resetRule })
         display: flex;
         align-items: center;
         gap: 8px;
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 600;
         color: #1e293b;
 
         .rule-icon {
           color: #3b82f6;
-          font-size: 18px;
+          font-size: 16px;
+        }
+
+        .el-tag {
+          margin-left: 4px;
         }
       }
 
@@ -394,21 +460,24 @@ defineExpose({ setRules, resetRule })
 
   .rule-card-content {
     border-top: 1px solid #e2e8f0;
-    background: #f8fafc;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
 
     .rule-details {
       flex: 1;
       min-height: 0;
-      overflow-y: auto;
+      padding: 14px;
+      overflow: hidden;
 
       :deep(.rule-form-container) {
-        height: auto;
+        height: 100%;
+        min-height: 0;
         max-height: none;
-        overflow: visible;
+        overflow: hidden;
       }
 
       :deep(.rule-form) {
@@ -420,24 +489,36 @@ defineExpose({ setRules, resetRule })
     .rule-actions-bottom {
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 20px;
-      background: #ffffff;
+      gap: 10px;
+      padding: 12px 16px;
+      background: #f8fafc;
       border-top: 1px solid #e2e8f0;
       flex-shrink: 0;
 
       .action-btn {
-        font-size: 14px;
-        padding: 8px 16px;
+        font-size: 13px;
+        padding: 8px 14px;
         border-radius: 6px;
         font-weight: 500;
         transition: all 0.2s ease;
 
         &:hover {
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+          box-shadow: none;
         }
       }
     }
+  }
+}
+
+.enabled-rule {
+  border-color: var(--el-color-success-light-5);
+
+  .rule-card-header {
+    background: #f0fdf4;
+  }
+
+  .rule-icon {
+    color: var(--el-color-success);
   }
 }
 

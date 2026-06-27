@@ -92,7 +92,7 @@ const handleSwitchChange = () => {
 <style scoped lang="scss">
 /* 设置组样式 */
 .settings-group {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 
   &:last-child {
     margin-bottom: 0;
@@ -104,27 +104,26 @@ const handleSwitchChange = () => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
-  background: #f8fafc;
-  border-radius: 6px;
-  border-left: 3px solid #3b82f6;
+  margin-bottom: 14px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
 
   .el-icon {
-    font-size: 14px;
+    font-size: 16px;
     color: #3b82f6;
   }
 
   span {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: #374151;
+    color: #1e293b;
   }
 }
 
 /* 表单项目样式 */
 .form-item {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 
   &:last-child {
     margin-bottom: 0;
@@ -132,12 +131,11 @@ const handleSwitchChange = () => {
 
   :deep(.el-form-item__label) {
     font-weight: 600;
-    color: #1f2937;
-    font-size: 14px;
-    position: relative;
+    color: #334155;
+    font-size: 13px;
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 
     &::before {
       content: "";
@@ -169,7 +167,7 @@ const handleSwitchChange = () => {
       width: 100%;
       border-radius: 8px;
       border: 1px solid #d1d5db;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      box-shadow: none;
       transition: all 0.2s ease;
 
       &:hover {
@@ -178,7 +176,7 @@ const handleSwitchChange = () => {
 
       &.is-focus {
         border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
     }
 
@@ -197,8 +195,12 @@ const handleSwitchChange = () => {
 .end-time-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
 .end-time-picker {

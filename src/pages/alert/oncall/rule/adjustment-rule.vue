@@ -71,8 +71,8 @@
 </template>
 
 <script setup lang="ts">
-import { AddOrUpdateAdjustmentRuleReq, OnCallGroup } from "@/api/alert/oncall/types/oncall"
-import { ElMessage, FormInstance, FormRules } from "element-plus"
+import type { AddOrUpdateAdjustmentRuleReq, OnCallGroup } from "@/api/alert/oncall/types/oncall"
+import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { VueDraggable } from "vue-draggable-plus"
 import { ref, computed } from "vue"
@@ -110,7 +110,7 @@ const handleUserSelect = (user: IIamUser) => {
   const userExists = existingGroup.members.includes(user.username)
 
   if (userExists) {
-    console.log("用户已存在，跳过添加")
+    ElMessage.warning("该用户已在值班人员中")
     return
   }
 
@@ -152,6 +152,8 @@ const DEFAULT_FORM_DATA: AddOrUpdateAdjustmentRuleReq = {
   id: 0,
   group_id: 0,
   oncall_rule: {
+    id: 0,
+    rule_type: 2,
     start_time: 0,
     end_time: 0,
     oncall_group: oncallGroup.value
@@ -229,8 +231,8 @@ const submitForm = (rotaId: number) => {
       ElMessage.success("操作成功")
       emits("callback")
     })
-    .catch((error: any) => {
-      console.log("catch", error)
+    .catch(() => {
+      ElMessage.error("保存调班失败，请稍后重试")
     })
     .finally(() => {})
 }

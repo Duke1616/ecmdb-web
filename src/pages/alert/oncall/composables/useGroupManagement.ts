@@ -1,7 +1,7 @@
 import { ref, computed } from "vue"
 import type { Ref } from "vue"
 import { ElMessage } from "element-plus"
-import { OnCallGroup } from "@/api/alert/oncall/types/oncall"
+import type { OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import type { User as IIamUser } from "@/api/iam/user/type"
 
 export function useGroupManagement(rotaGroups: Ref<OnCallGroup[]>, renderKey: Ref<number>) {
@@ -101,7 +101,6 @@ export function useGroupManagement(rotaGroups: Ref<OnCallGroup[]>, renderKey: Re
   const updateGroupMembers = (groupId: number, newMembers: string[]) => {
     const groupIndex = rotaGroups.value.findIndex((g: OnCallGroup) => g.id === groupId)
     if (groupIndex === -1) {
-      console.log("组不存在:", groupId)
       return
     }
 

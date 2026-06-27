@@ -50,6 +50,14 @@ export function updateShiftSchedulingRuleApi(data: oncall.UpdateOrDeleteRuleReq)
   })
 }
 
+/** 启用常规值班规则 */
+export function activeShiftSchedulingRuleApi(data: oncall.ActiveRuleReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.ALERT}/oncall/active`,
+    data: data
+  })
+}
+
 // NOTE: 后端并没有提供单独的删除常规规则的接口，若调用是把 rules 列表 update 为空或去掉该项
 /** 删除常规值班规则 */
 export function deleteShiftSchedulingRuleApi(data: oncall.UpdateOrDeleteRuleReq) {

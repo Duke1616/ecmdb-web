@@ -205,14 +205,15 @@ const handleDragChange = (evt: any) => {
 .settings-group {
   display: flex;
   flex-direction: column;
-  min-height: 0; // 确保可以收缩
+  min-height: 0;
+  height: 100%;
 }
 
 .personnel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e5e7eb;
 }
@@ -223,7 +224,7 @@ const handleDragChange = (evt: any) => {
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: #1e293b;
 
   .el-icon {
     font-size: 16px;
@@ -234,21 +235,19 @@ const handleDragChange = (evt: any) => {
 .personnel-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-right: 4px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 0;
 }
 
 .group-container {
   background: #ffffff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #3b82f6;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    border-color: #bfdbfe;
   }
 }
 
@@ -256,17 +255,17 @@ const handleDragChange = (evt: any) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 12px 14px;
   background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
-  min-width: 0; /* 允许内容收缩 */
+  border-bottom: 1px solid #e2e8f0;
+  min-width: 0;
 }
 
 .group-title {
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
-  flex-shrink: 1; /* 允许标题收缩 */
+  color: #334155;
+  flex-shrink: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -300,9 +299,9 @@ const handleDragChange = (evt: any) => {
 
   &.empty-group {
     min-height: 80px;
-    border: 2px dashed #cbd5e1;
+    border: 1px dashed #cbd5e1;
     border-radius: 8px;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f8fafc;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
@@ -310,8 +309,7 @@ const handleDragChange = (evt: any) => {
 
     &:hover {
       border-color: #3b82f6;
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      transform: scale(1.02);
+      background: #eff6ff;
     }
   }
 }
@@ -320,15 +318,15 @@ const handleDragChange = (evt: any) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 9px 12px;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: #3b82f6;
     background: #f8fafc;
+    border-color: #bfdbfe;
   }
 }
 
@@ -346,7 +344,7 @@ const handleDragChange = (evt: any) => {
 
 .member-name {
   font-size: 14px;
-  color: #374151;
+  color: #334155;
   font-weight: 500;
 }
 
@@ -371,27 +369,25 @@ const handleDragChange = (evt: any) => {
 
   &.remove-btn {
     color: #ef4444;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: transparent;
+    border: 1px solid transparent;
 
     &:hover {
       background: #fee2e2;
       color: #dc2626;
       border-color: #fca5a5;
-      transform: scale(1.05);
     }
   }
 
   &.handle-btn {
     color: #6b7280;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: transparent;
+    border: 1px solid transparent;
 
     &:hover {
       background: #e2e8f0;
       color: #3b82f6;
       border-color: #cbd5e1;
-      transform: scale(1.05);
     }
   }
 }
@@ -401,12 +397,13 @@ const handleDragChange = (evt: any) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  min-height: 160px;
+  padding: 28px 20px;
   text-align: center;
   color: #9ca3af;
   background: #f9fafb;
   border: 1px dashed #d1d5db;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .empty-icon {
@@ -451,8 +448,7 @@ const handleDragChange = (evt: any) => {
 }
 
 .member-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 /* 禁用拖拽时的文字选择 */

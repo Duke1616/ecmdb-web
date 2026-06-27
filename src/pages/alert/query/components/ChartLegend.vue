@@ -3,17 +3,17 @@
     <table class="legend-table">
       <thead class="legend-thead">
         <tr>
-          <th class="legend-th">Metric Series</th>
-          <th class="legend-th right">Last Value</th>
+          <th class="legend-th">指标序列</th>
+          <th class="legend-th right">最新值</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-50">
+      <tbody>
         <tr
           v-for="(item, index) in series"
           :key="index"
+          class="legend-row"
+          :class="{ 'is-hidden': !item.visible }"
           @click="$emit('toggle', index)"
-          class="hover:bg-blue-50/50 transition-colors group cursor-pointer"
-          :class="{ 'opacity-40': !item.visible }"
         >
           <td class="legend-td-name">
             <span class="legend-color-dot" :style="{ backgroundColor: item.color }" />
@@ -51,14 +51,13 @@ const formatValue = (val: any) => {
 </script>
 
 <style lang="scss" scoped>
-/* Legend */
 .legend-container {
   height: 12rem;
   margin-top: 0.5rem;
   overflow-y: auto;
-  border: 1px solid #f3f4f6;
-  border-radius: 0.375rem;
-  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: #ffffff;
 }
 
 .legend-table {
@@ -71,6 +70,23 @@ const formatValue = (val: any) => {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+.legend-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  & + .legend-row {
+    border-top: 1px solid #f3f4f6;
+  }
+
+  &:hover {
+    background: #f8fafc;
+  }
+
+  &.is-hidden {
+    opacity: 0.45;
+  }
 }
 
 .legend-th {
@@ -107,7 +123,7 @@ const formatValue = (val: any) => {
   line-height: 1.25;
   transition: color 0.15s;
 
-  tr:hover & {
+  .legend-row:hover & {
     color: #2563eb;
   }
 }
@@ -120,7 +136,6 @@ const formatValue = (val: any) => {
   font-weight: 500;
 }
 
-/* Custom Scrollbar for Legend */
 .custom-scrollbar {
   &::-webkit-scrollbar {
     width: 6px;

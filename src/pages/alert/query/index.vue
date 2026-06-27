@@ -1,34 +1,35 @@
 <template>
-  <div class="page-container">
-    <!-- Query Card -->
-    <div class="query-card">
-      <!-- Toolbar -->
-      <QueryToolbar
-        v-model:datasource-id="datasourceId"
-        v-model:time-range="timeRange"
-        :datasources="datasources"
-        @run-query="handleRunQuery"
-        @apply-history="handleApplyHistory"
+  <div class="query-page">
+    <div class="query-workbench">
+      <div class="query-panel">
+        <QueryToolbar
+          v-model:datasource-id="datasourceId"
+          v-model:time-range="timeRange"
+          :datasources="datasources"
+          @run-query="handleRunQuery"
+          @apply-history="handleApplyHistory"
+        />
+
+        <QueryInput v-model="query" @execute="handleRunQuery" />
+      </div>
+
+      <ChartView
+        ref="chartViewRef"
+        v-model:show-legend="showLegend"
+        :loading="loading"
+        :has-run-query="hasRunQuery"
+        :series="series"
+        @toggle-series="handleToggleSeries"
       />
-
-      <!-- Query Input Area -->
-      <QueryInput v-model="query" @execute="handleRunQuery" />
     </div>
-
-    <!-- Data View Card -->
-    <ChartView
-      ref="chartViewRef"
-      :loading="loading"
-      :has-run-query="hasRunQuery"
-      :series="series"
-      v-model:show-legend="showLegend"
-      @toggle-series="handleToggleSeries"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, watch, unref } from "vue"
+import { ElMessage } from "element-plus"
+import { usePermission } from "@/common/composables/usePermission"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import QueryToolbar from "./components/QueryToolbar.vue"
 import QueryInput from "./components/QueryInput.vue"
 import ChartView from "./components/ChartView.vue"
@@ -44,6 +45,7 @@ const { chartRef, showLegend, initChart, processMetrics, updateChart, toggleSeri
 
 // 使用查询历史
 const { addHistory } = useQueryHistory()
+const { hasPermission } = usePermission()
 
 // ChartView 组件引用
 const chartViewRef = ref<InstanceType<typeof ChartView> | null>(null)
@@ -67,7 +69,25 @@ const ensureChartInitialized = () => {
  * NOTE: 协调查询和图表更新，查询成功后保存到历史记录
  */
 const handleRunQuery = async () => {
-  if (!datasourceId.value || !query.value || !timeRange.value) return
+  if (!hasPermission(ALERT_CAPABILITIES.Explore.Metrics)) {
+    ElMessage.warning("暂无指标查询权限")
+    return
+  }
+
+  if (!datasourceId.value) {
+    ElMessage.warning("请先选择数据源")
+    return
+  }
+
+  if (!timeRange.value) {
+    ElMessage.warning("请选择查询时间范围")
+    return
+  }
+
+  if (!query.value.trim()) {
+    ElMessage.warning("请输入查询语句")
+    return
+  }
 
   const metrics = await runQuery(datasourceId.value, query.value, timeRange.value)
 
@@ -95,6 +115,7 @@ const handleRunQuery = async () => {
  * NOTE: 查询成功后自动保存，包含完整的查询上下文
  */
 const saveQueryHistory = () => {
+  if (!hasPermission(ALERT_CAPABILITIES.Explore.HistoryAdd)) return
   if (!datasourceId.value || !query.value || !timeRange.value) return
 
   addHistory({
@@ -148,25 +169,30 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-/* Page Layout */
-.page-container {
+.query-page {
   height: 100%;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  background-color: #f9fafb;
-  gap: 1rem;
+  min-height: 0;
+  padding: 16px;
   overflow-y: auto;
+  background: #f5f7fa;
 }
 
-/* Query Card */
-.query-card {
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #f3f4f6;
+.query-workbench {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding-bottom: 16px;
+}
+
+.query-panel {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
 }
+
 </style>

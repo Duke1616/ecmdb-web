@@ -1,6 +1,7 @@
 import { ref } from "vue"
+import { ElMessage } from "element-plus"
 import type { User as IIamUser } from "@/api/iam/user/type"
-import { OnCallGroup } from "@/api/alert/oncall/types/oncall"
+import type { OnCallGroup } from "@/api/alert/oncall/types/oncall"
 import { useUserToolsStore } from "@/pinia/stores/user-tools"
 
 export function usePersonnelManagement() {
@@ -13,7 +14,7 @@ export function usePersonnelManagement() {
     const userExists = rotaGroups.some((group) => group.members.includes(user.username))
 
     if (userExists) {
-      console.log("用户已存在，跳过添加")
+      ElMessage.warning("该用户已在排班组中")
       return
     }
 

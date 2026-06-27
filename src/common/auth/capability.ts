@@ -687,7 +687,7 @@ export const ALERT_CAPABILITIES = {
     /** 创建团队 */
     Add: "alert:team:add",
     /** 群组列表 */
-    ChatView: "alert:team:caht_view",
+    ChatView: "alert:team:chat_view",
     /** 绑定群组 */
     ChatBind: "alert:team:chat_bind",
     /** 解绑群组 */
@@ -826,8 +826,8 @@ export const ALERT_CAPABILITIES = {
     Add: "alert:oncall:add",
     /** 排班详情 */
     Detail: "alert:oncall:get",
-    /** 预览排班 */
-    PreviewView: "alert:oncall:preview_view",
+    /** 启用排班规则 */
+    Active: "alert:oncall:active",
     /** 新增常规规则 */
     RuleAdd: "alert:oncall:rule_add",
     /** 更新常规规则 */

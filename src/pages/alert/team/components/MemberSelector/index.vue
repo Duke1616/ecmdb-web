@@ -103,6 +103,7 @@ import { listUsersApi } from "@/api/iam/user"
 import { usePagination } from "@@/composables/usePagination"
 import type { IDepartmentNode as IDepartment } from "@/api/iam/department/type"
 import { useUsers } from "@/common/composables/useUsers"
+import { ElMessage } from "element-plus"
 
 interface IMemberUser {
   id: number
@@ -232,8 +233,8 @@ const loadDepartments = async () => {
       },
       ...(data || [])
     ]
-  } catch (error) {
-    console.error("加载部门列表失败:", error)
+  } catch {
+    ElMessage.error("加载部门列表失败")
   }
 }
 
@@ -266,8 +267,8 @@ const loadUsersByDepartment = async () => {
       users.value = data.members || []
       paginationData.total = data.total || 0
     }
-  } catch (error) {
-    console.error("加载部门用户失败:", error)
+  } catch {
+    ElMessage.error("加载部门用户失败")
     users.value = []
     paginationData.total = 0
   } finally {

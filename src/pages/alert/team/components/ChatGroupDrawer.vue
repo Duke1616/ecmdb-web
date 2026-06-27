@@ -13,9 +13,18 @@
         <div class="stats">
           已绑定 <span class="count">{{ chatGroups.length }}</span> 个群聊
         </div>
-        <el-button v-if="!showAddForm" type="primary" size="small" :icon="Plus" plain @click="showAddForm = true">
+        <AuthButton
+          v-if="!showAddForm"
+          type="primary"
+          size="small"
+          :icon="Plus"
+          plain
+          :capability="ALERT_CAPABILITIES.Team.ChatBind"
+          disable-mode
+          @click="showAddForm = true"
+        >
           新增绑定
-        </el-button>
+        </AuthButton>
       </div>
 
       <!-- 新增窗格 -->
@@ -45,7 +54,15 @@
             <el-form-item label-width="0">
               <div class="form-footer">
                 <el-button @click="cancelAdd">取消</el-button>
-                <el-button type="primary" :loading="committing" @click="submitAdd">确认绑定</el-button>
+                <AuthButton
+                  type="primary"
+                  :loading="committing"
+                  :capability="ALERT_CAPABILITIES.Team.ChatBind"
+                  disable-mode
+                  @click="submitAdd"
+                >
+                  确认绑定
+                </AuthButton>
               </div>
             </el-form-item>
           </el-form>
@@ -75,7 +92,15 @@
           <div class="item-ops">
             <el-popconfirm title="确定解除此群聊绑定吗？" @confirm="handleUnbind(group)">
               <template #reference>
-                <el-button type="danger" link :icon="Delete">删除</el-button>
+                <AuthButton
+                  type="danger"
+                  link
+                  :icon="Delete"
+                  :capability="ALERT_CAPABILITIES.Team.ChatDelete"
+                  disable-mode
+                >
+                  删除
+                </AuthButton>
               </template>
             </el-popconfirm>
           </div>
@@ -101,6 +126,8 @@ import { Drawer } from "@@/components/Dialogs"
 import { Team, ChatGroup, BindChatGroupReq } from "@/api/alert/team/types"
 import { bindChatGroupApi, unbindChatGroupApi, getChatGroupsByTeamIdApi } from "@/api/alert/team"
 import { CHANNEL_TYPES } from "@/api/alert/template/types"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 
 const props = defineProps<{ team: Team | null }>()
 const emits = defineEmits<{ refresh: [] }>()
@@ -168,8 +195,8 @@ const fetchChatGroups = async () => {
   try {
     const { data } = await getChatGroupsByTeamIdApi(props.team.id)
     chatGroups.value = data || []
-  } catch (e) {
-    console.error("[ChatGroupDrawer] fetch error:", e)
+  } catch {
+    ElMessage.error("获取群聊列表失败")
   } finally {
     loading.value = false
   }

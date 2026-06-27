@@ -6,19 +6,13 @@
     size="40%"
     direction="rtl"
     header-icon="Clock"
-    confirm-button-text="清空所有"
-    confirm-button-type="danger"
-    :show-confirm-button="historyList.length > 0"
     :show-footer="true"
     @cancel="visible = false"
-    @confirm="handleClearAll"
   >
-    <!-- 历史记录列表 -->
     <div class="history-container" v-loading="loading">
       <div v-if="historyList.length > 0" class="history-list">
         <div v-for="item in historyList" :key="item.timestamp" class="history-item">
           <div class="history-content">
-            <!-- 查询语句 -->
             <div class="query-text">
               <el-icon class="query-icon"><TrendCharts /></el-icon>
               <el-tooltip placement="top-start" :show-after="200">
@@ -29,7 +23,6 @@
               </el-tooltip>
             </div>
 
-            <!-- 元信息 -->
             <div class="meta-info">
               <span class="meta-item">
                 <el-icon><Clock /></el-icon>
@@ -42,17 +35,37 @@
             </div>
           </div>
 
-          <!-- 操作按钮 -->
           <div class="history-actions">
-            <el-button type="primary" size="small" @click="handleApply(item)"> 应用 </el-button>
-            <el-button type="danger" size="small" plain @click="handleDelete(item.timestamp)"> 删除 </el-button>
+            <AuthButton size="small" @click="handleApply(item)">应用</AuthButton>
+            <AuthButton
+              type="danger"
+              size="small"
+              plain
+              :capability="ALERT_CAPABILITIES.Explore.HistoryDelete"
+              disable-mode
+              @click="handleDelete(item.timestamp)"
+            >
+              删除
+            </AuthButton>
           </div>
         </div>
       </div>
 
-      <!-- 空状态 -->
       <el-empty v-else description="暂无查询历史" :image-size="120" />
     </div>
+
+    <template #footer>
+      <el-button @click="visible = false">取消</el-button>
+      <AuthButton
+        v-if="historyList.length > 0"
+        type="danger"
+        :capability="ALERT_CAPABILITIES.Explore.HistoryClear"
+        disable-mode
+        @click="handleClearAll"
+      >
+        清空所有
+      </AuthButton>
+    </template>
   </CustomDrawer>
 </template>
 
@@ -61,6 +74,8 @@ import { watch } from "vue"
 import { ElMessageBox } from "element-plus"
 import { TrendCharts, Clock, Calendar } from "@element-plus/icons-vue"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { useQueryHistory, type QueryHistoryItem } from "../composables/useQueryHistory"
 
 // NOTE: visible 是 Dialog 的显示状态，使用 defineModel 进行双向绑定
@@ -139,13 +154,7 @@ const formatTimeRange = (timeRange: { start: number; end: number } | null | unde
  * 应用历史记录
  */
 const handleApply = (item: QueryHistoryItem) => {
-  // 转换时间戳为 Date 对象
-  const timeRange: [Date, Date] = [new Date(item.time_range.start), new Date(item.time_range.end)]
-
-  emits("apply", {
-    ...item,
-    timeRange
-  } as any)
+  emits("apply", item)
   visible.value = false
 }
 
@@ -175,7 +184,7 @@ const handleClearAll = async () => {
 
 <style lang="scss" scoped>
 .history-container {
-  padding: 1rem;
+  padding: 16px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -194,23 +203,24 @@ const handleClearAll = async () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem;
-  background: #f9fafb;
+  gap: 12px;
+  padding: 14px;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  transition: all 0.2s ease;
+  border-radius: 8px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
-    background: #f3f4f6;
-    border-color: #3b82f6;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
   }
 }
 
 .history-content {
   flex: 1;
   min-width: 0;
-  margin-right: 1rem;
 }
 
 .query-text {
@@ -221,7 +231,7 @@ const handleClearAll = async () => {
 }
 
 .query-icon {
-  color: #3b82f6;
+  color: #409eff;
   font-size: 16px;
   flex-shrink: 0;
 }
