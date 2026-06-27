@@ -1,4 +1,4 @@
-import { ref, nextTick, shallowRef } from "vue"
+import { ref, nextTick, shallowRef, onBeforeUnmount } from "vue"
 
 /**
  * 通用选择器交互控制与数据缓存管理组合式函数
@@ -8,8 +8,9 @@ export function useGenericPicker<T, K extends string | number>(options: {
   resolveApi: (key: K) => Promise<T | null>
   keyField: keyof T
   pageSize?: number
+  searchDebounce?: number
 }) {
-  const { searchApi, resolveApi, keyField, pageSize = 3 } = options
+  const { searchApi, resolveApi, keyField, pageSize = 3, searchDebounce = 300 } = options
 
   const loading = ref(false)
   const keyword = ref("")
@@ -26,25 +27,47 @@ export function useGenericPicker<T, K extends string | number>(options: {
     pageSize
   })
 
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  let requestSequence = 0
+
+  const clearSearchTimer = () => {
+    if (searchTimer) {
+      clearTimeout(searchTimer)
+      searchTimer = null
+    }
+  }
+
   /**
    * 异步加载搜索数据
    */
   const loadData = async () => {
+    const currentRequest = ++requestSequence
+    const requestKeyword = keyword.value.trim()
+    const requestPage = paginationData.value.currentPage
+    const requestPageSize = paginationData.value.pageSize
+
     loading.value = true
     try {
       const { total, data } = await searchApi({
-        keyword: keyword.value,
-        offset: (paginationData.value.currentPage - 1) * paginationData.value.pageSize,
-        limit: paginationData.value.pageSize
+        keyword: requestKeyword,
+        offset: (requestPage - 1) * requestPageSize,
+        limit: requestPageSize
       })
+
+      if (currentRequest !== requestSequence) return
+
       paginationData.value.total = total
       listData.value = data || []
     } catch (error) {
+      if (currentRequest !== requestSequence) return
+
       console.error("GenericPicker loadData failed:", error)
       listData.value = []
       paginationData.value.total = 0
     } finally {
-      loading.value = false
+      if (currentRequest === requestSequence) {
+        loading.value = false
+      }
     }
   }
 
@@ -52,6 +75,7 @@ export function useGenericPicker<T, K extends string | number>(options: {
    * 关闭下拉面板
    */
   const closeDropdown = () => {
+    clearSearchTimer()
     showDropdown.value = false
   }
 
@@ -61,8 +85,9 @@ export function useGenericPicker<T, K extends string | number>(options: {
   const toggleDropdown = () => {
     showDropdown.value = !showDropdown.value
     if (showDropdown.value) {
+      clearSearchTimer()
       paginationData.value.currentPage = 1
-      keyword.value = searchKeyword.value
+      keyword.value = searchKeyword.value.trim()
       loadData()
       nextTick(() => {
         searchInputRef.value?.focus()
@@ -74,15 +99,19 @@ export function useGenericPicker<T, K extends string | number>(options: {
    * 触发关键词搜索
    */
   const handleSearch = () => {
-    keyword.value = searchKeyword.value
-    paginationData.value.currentPage = 1
-    loadData()
+    clearSearchTimer()
+    searchTimer = setTimeout(() => {
+      keyword.value = searchKeyword.value.trim()
+      paginationData.value.currentPage = 1
+      loadData()
+    }, searchDebounce)
   }
 
   /**
    * 切换分页码
    */
   const handlePageChange = (page: number) => {
+    clearSearchTimer()
     paginationData.value.currentPage = page
     loadData()
   }
@@ -112,6 +141,10 @@ export function useGenericPicker<T, K extends string | number>(options: {
     }
   }
 
+  onBeforeUnmount(() => {
+    clearSearchTimer()
+  })
+
   return {
     loading,
     listData,
@@ -122,6 +155,7 @@ export function useGenericPicker<T, K extends string | number>(options: {
     searchInputRef,
     paginationData,
     loadData,
+    clearSearchTimer,
     toggleDropdown,
     closeDropdown,
     handleSearch,

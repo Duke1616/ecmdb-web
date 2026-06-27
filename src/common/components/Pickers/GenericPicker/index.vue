@@ -127,6 +127,7 @@ interface IGenericPickerProps {
   showPagination?: boolean
   showLoading?: boolean
   disabled?: boolean
+  searchDebounce?: number
 }
 
 const props = withDefaults(defineProps<IGenericPickerProps>(), {
@@ -137,7 +138,8 @@ const props = withDefaults(defineProps<IGenericPickerProps>(), {
   pageSize: 3,
   showPagination: true,
   showLoading: false,
-  disabled: false
+  disabled: false,
+  searchDebounce: 300
 })
 
 // NOTE: 该组件为纯通用 UI 选择控制组件，通过 v-model 将选中的主键绑定同步给外部父组件
@@ -164,7 +166,8 @@ const {
   searchApi: props.searchApi,
   resolveApi: props.resolveApi,
   keyField: props.keyField,
-  pageSize: props.pageSize
+  pageSize: props.pageSize,
+  searchDebounce: props.searchDebounce
 })
 
 watch(

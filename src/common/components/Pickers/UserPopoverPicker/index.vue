@@ -87,13 +87,22 @@ const emit = defineEmits<{
 const visible = ref(false)
 const popoverStyle = ref<Record<string, string>>({})
 
-const { loading, listData, searchKeyword, searchInputRef, paginationData, handleSearch, handlePageChange, loadData } =
-  useGenericPicker<T, K>({
-    searchApi: props.searchApi,
-    resolveApi: props.resolveApi,
-    keyField: props.keyField,
-    pageSize: props.pageSize
-  })
+const {
+  loading,
+  listData,
+  searchKeyword,
+  searchInputRef,
+  paginationData,
+  handleSearch,
+  handlePageChange,
+  loadData,
+  clearSearchTimer
+} = useGenericPicker<T, K>({
+  searchApi: props.searchApi,
+  resolveApi: props.resolveApi,
+  keyField: props.keyField,
+  pageSize: props.pageSize
+})
 
 const isDisabled = (item: T): boolean => {
   return props.disabledKeys.includes(item[props.keyField] as unknown as K)
@@ -130,6 +139,7 @@ const show = async (targetElement?: HTMLElement) => {
 }
 
 const close = () => {
+  clearSearchTimer()
   visible.value = false
   searchKeyword.value = ""
 }
