@@ -323,10 +323,34 @@ const handleSearch = () => {
     }
 
     &.eiam-refresh-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      min-width: 38px;
       background: #ffffff;
       border: 1px solid #e2e8f0;
       color: #64748b;
-      padding: 0 10px;
+      padding: 0;
+
+      &.is-detail {
+        width: 34px;
+        min-width: 34px;
+        padding: 0;
+      }
+
+      :deep(.el-icon) {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin: 0;
+        transform: translate(-50%, -50%);
+      }
+
+      :deep(.el-icon svg) {
+        display: block;
+      }
 
       &:hover {
         color: #3b82f6;

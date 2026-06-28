@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, useAttrs } from "vue"
+import { computed, useAttrs, useSlots } from "vue"
 import { usePermission, PermissionMode } from "@/common/composables/usePermission"
 
 defineOptions({
@@ -23,6 +23,7 @@ const props = withDefaults(
 
 const { hasPermission } = usePermission()
 const attrs = useAttrs()
+const slots = useSlots()
 
 const isAllowed = computed(() => {
   if (!props.capability) return true
@@ -49,12 +50,34 @@ const buttonAttrs = computed(() => {
   const { disabled: _disabled, ...rest } = attrs
   return rest
 })
+
+const isIconOnly = computed(() => Boolean(attrs.icon) && !slots.default)
 </script>
 
 <template>
-  <el-button v-if="isRendered" v-bind="buttonAttrs" :disabled="mergedDisabled">
+  <el-button v-if="isRendered" v-bind="buttonAttrs" :class="{ 'auth-icon-only': isIconOnly }" :disabled="mergedDisabled">
     <template v-if="$slots.default">
       <slot />
     </template>
   </el-button>
 </template>
+
+<style scoped>
+.auth-icon-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.auth-icon-only :deep(.el-icon) {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-icon-only :deep(.el-icon svg) {
+  display: block;
+}
+</style>

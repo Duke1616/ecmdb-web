@@ -224,9 +224,23 @@ defineEmits<{
 }
 
 :deep(.refresh-btn) {
+  position: relative;
   width: 36px;
   height: 36px;
+  padding: 0;
   transition: all 0.3s ease;
+
+  .el-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  .el-icon svg {
+    display: block;
+  }
 
   &:hover {
     transform: rotate(180deg);
