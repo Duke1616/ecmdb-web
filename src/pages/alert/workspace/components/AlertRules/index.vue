@@ -169,6 +169,7 @@ defineExpose({
   flex: 1;
   flex-direction: column;
   min-height: 0;
+  padding: 14px;
   overflow-y: auto;
   box-sizing: border-box;
 
@@ -207,9 +208,7 @@ defineExpose({
   color: #64748b;
   background: #f8fafc;
   border: 1px dashed #cbd5e1;
-  border-right: 0;
-  border-left: 0;
-  border-radius: 0;
+  border-radius: 8px;
   text-align: center;
 
   .empty-icon {
@@ -239,20 +238,17 @@ defineExpose({
 .rules-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
 
   :deep(.collapsible-section) {
     margin-bottom: 0;
-    border-right: 0;
-    border-left: 0;
-    border-radius: 0;
-
-    & + .collapsible-section {
-      border-top: 0;
-    }
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
   }
 
   :deep(.section-header) {
-    border-radius: 0;
+    border-radius: 8px 8px 0 0;
   }
 
   .rule-header {

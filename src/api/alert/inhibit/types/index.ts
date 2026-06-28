@@ -7,12 +7,6 @@ export type { Matcher, Matchers } from "@@/types/matcher"
 // 导入类型用于本文件内使用
 import type { Matcher, Matchers } from "@@/types/matcher"
 
-// 抑制规则生效范围枚举
-export enum InhibitScope {
-  Global = "global", // 全局生效
-  Workspace = "workspace" // 工作空间下生效
-}
-
 export interface TimeRange {
   start: number
   end: number
@@ -28,7 +22,6 @@ export interface InhibitRule {
   equal_labels: string[]
   time_window: TimeRange | null
   enabled: boolean
-  scope: InhibitScope // 生效范围
   workspace_id?: number // 工作空间ID
 }
 
@@ -41,7 +34,6 @@ export interface SaveInhibitRuleReq {
   equal_labels: string[]
   time_window: TimeRange | null
   enabled: boolean
-  scope: InhibitScope // 生效范围
   workspace_id?: number // 工作空间ID
 }
 

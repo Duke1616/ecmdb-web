@@ -662,6 +662,20 @@ export const ALERT_CAPABILITIES = {
     Add: "alert:inhibit:add"
   },
 
+  /** 静默规则相关 */
+  Silence: {
+    /** 状态切换 */
+    Toggle: "alert:silence:toggle",
+    /** 续期时间窗口 */
+    Renewal: "alert:silence:renewal",
+    /** 更新静默规则 */
+    Edit: "alert:silence:edit",
+    /** 删除静默规则 */
+    Delete: "alert:silence:delete",
+    /** 创建静默规则 */
+    Add: "alert:silence:add"
+  },
+
   /** 聚合分组相关 */
   Aggregate: {
     /** 聚合分组详情 */

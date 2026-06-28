@@ -38,9 +38,6 @@
                 <span class="rule-id">#{{ rule.id }}</span>
               </div>
               <div class="summary-tags">
-                <el-tag :type="rule.scope === InhibitScope.Global ? 'primary' : 'warning'" size="small" effect="light">
-                  {{ rule.scope === InhibitScope.Global ? "全局生效" : "所属空间" }}
-                </el-tag>
                 <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" effect="light">
                   {{ rule.enabled ? "运行中" : "已停用" }}
                 </el-tag>
@@ -195,7 +192,6 @@ import {
   toggleInhibitRuleStatusApi
 } from "@/api/alert/inhibit"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
-import { InhibitScope } from "@/api/alert/inhibit/types"
 import { useInhibitUtils } from "./composables/useInhibitUtils"
 import { useMatcher } from "@@/composables/useMatcher"
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
@@ -222,7 +218,6 @@ const formData = defineModel<SaveInhibitRuleReq>("formData", {
       equal_labels: [],
       time_window: null,
       enabled: true,
-      scope: InhibitScope.Global,
       workspace_id: undefined
     })
 })
@@ -266,8 +261,7 @@ const loadRules = async () => {
           source_match: [],
           target_match: [],
           equal_labels: [],
-          enabled: true,
-          scope: InhibitScope.Global
+          enabled: true
         }
       )
     )
@@ -290,7 +284,6 @@ onMounted(() => {
       equal_labels: [],
       time_window: null,
       enabled: true,
-      scope: InhibitScope.Global,
       workspace_id: undefined
     }
   }
@@ -385,10 +378,14 @@ const handleConfirm = async () => {
 
   try {
     submitting.value = true
+    const payload = {
+      ...formData.value,
+      workspace_id: props.workspaceId
+    }
     if (isEdit.value) {
-      await updateInhibitRuleApi(formData.value)
+      await updateInhibitRuleApi(payload)
     } else {
-      await createInhibitRuleApi(formData.value)
+      await createInhibitRuleApi(payload)
     }
     ElMessage.success(isEdit.value ? "规则更新成功" : "规则创建成功")
 
@@ -480,6 +477,7 @@ const formatTime = (timestamp: number): string => {
   flex-direction: column;
   gap: 14px;
   min-height: 0;
+  padding: 14px;
   overflow-y: auto;
   background: transparent;
   box-sizing: border-box;
@@ -514,9 +512,7 @@ const formatTime = (timestamp: number): string => {
   text-align: center;
   background: #ffffff;
   border: 1px dashed #cbd5e1;
-  border-right: 0;
-  border-left: 0;
-  border-radius: 0;
+  border-radius: 8px;
 
   .empty-icon {
     color: #94a3b8;
@@ -543,7 +539,7 @@ const formatTime = (timestamp: number): string => {
 .rules-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0;
+  gap: 12px;
 }
 
 .inhibit-rule-card {
@@ -553,17 +549,11 @@ const formatTime = (timestamp: number): string => {
   overflow: hidden;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-right: 0;
-  border-left: 0;
-  border-radius: 0;
+  border-radius: 8px;
   box-shadow: none;
   transition:
     border-color 0.2s ease,
     box-shadow 0.2s ease;
-
-  & + .inhibit-rule-card {
-    border-top: 0;
-  }
 
   &:hover {
     border-color: #cbd5e1;

@@ -115,7 +115,7 @@
 
         <!-- 静默规则页面 -->
         <div v-else-if="activeMenu === 'noise-silence'" class="workspace-section-pane">
-          <SilenceRules :silence-rules="silenceRules" @refresh="loadSilenceRules" />
+          <SilenceRules :workspace-id="workspace?.id || 0" />
         </div>
 
         <!-- 成员页面 -->
@@ -174,7 +174,6 @@ const menuStore = useWorkspaceMenuStore()
 // 响应式数据
 const workspace = ref<Workspace | null>(null)
 const teamName = ref("")
-const silenceRules = ref<any[]>([])
 
 // 使用 store 中的菜单状态
 const activeMenu = computed(() => menuStore.activeMenu)
@@ -254,29 +253,6 @@ const loadWorkspaceData = async () => {
   }
 }
 
-// 加载静默规则数据
-const loadSilenceRules = async () => {
-  // 这里应该调用静默规则的API
-  // 暂时使用模拟数据
-  silenceRules.value = [
-    {
-      id: 1,
-      name: "维护窗口静默",
-      matchers: [
-        { Type: 1, Name: "severity", Value: "critical" },
-        { Type: 1, Name: "service", Value: "database" }
-      ],
-      start_time: Date.now(),
-      end_time: Date.now() + 2 * 60 * 60 * 1000,
-      enabled: true,
-      is_active: true,
-      created_by: "admin",
-      created_at: Date.now() - 30 * 60 * 1000,
-      comment: "数据库维护期间静默关键告警"
-    }
-  ]
-}
-
 // 根据当前菜单状态加载数据
 const loadCurrentMenuData = () => {
   const currentMenu = menuStore.activeMenu
@@ -313,7 +289,6 @@ const loadCurrentMenuData = () => {
 // 组件挂载时加载基础数据
 onMounted(async () => {
   await loadWorkspaceData()
-  await loadSilenceRules()
   // 加载当前菜单的数据
   nextTick(() => {
     loadCurrentMenuData()

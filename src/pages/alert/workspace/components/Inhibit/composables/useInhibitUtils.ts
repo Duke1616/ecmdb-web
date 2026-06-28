@@ -1,7 +1,6 @@
 import { reactive } from "vue"
 import { map, pick } from "lodash-es"
 import type { SaveInhibitRuleReq, InhibitRule } from "@/api/alert/inhibit/types"
-import { InhibitScope } from "@/api/alert/inhibit/types"
 
 /**
  * 抑制规则工具函数 Composable
@@ -16,7 +15,6 @@ export function useInhibitUtils() {
       equal_labels: [],
       time_window: null,
       enabled: true,
-      scope: InhibitScope.Global,
       workspace_id: undefined,
       ...data
     })
@@ -37,7 +35,6 @@ export function useInhibitUtils() {
       equal_labels: rule.equal_labels || [],
       time_window: rule.time_window,
       enabled: rule.enabled,
-      scope: rule.scope,
       workspace_id: rule.workspace_id
     }
   }
@@ -52,7 +49,6 @@ export function useInhibitUtils() {
       equal_labels: rule.equal_labels || [],
       time_window: rule.time_window,
       enabled: rule.enabled,
-      scope: rule.scope,
       workspace_id: rule.workspace_id
     }
   }

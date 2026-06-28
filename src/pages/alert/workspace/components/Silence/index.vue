@@ -1,875 +1,701 @@
 <template>
   <WorkspaceSectionPage
     title="静默规则"
-    subtitle="临时静默特定告警，避免在维护期间产生噪音"
-    :flush-body="false"
+    subtitle="在维护窗口内按标签匹配告警并停止通知"
     :primary-action="{
       label: '添加规则',
-      icon: Plus
+      icon: MuteNotification,
+      capability: ALERT_CAPABILITIES.Silence.Add
     }"
     @primary-action="handleAddRule"
   >
-    <div class="silence-rules-list" v-loading="loading">
-      <!-- 空状态 -->
+    <div class="silence-rules-content" v-loading="loading">
       <div v-if="!loading && rules.length === 0" class="empty-state">
         <div class="empty-icon">
-          <el-icon><Bell /></el-icon>
+          <el-icon><MuteNotification /></el-icon>
         </div>
-        <h4 class="empty-title">暂无规则</h4>
-        <p class="empty-description">创建静默规则，在维护期间临时停止特定告警通知</p>
-        <el-button type="primary" :icon="Plus" @click="handleAddRule"> 添加静默规则 </el-button>
+        <h4 class="empty-title">暂无静默规则</h4>
+        <p class="empty-description">在维护窗口内暂停匹配告警的通知</p>
+        <AuthButton
+          type="primary"
+          :icon="MuteNotification"
+          :capability="ALERT_CAPABILITIES.Silence.Add"
+          disable-mode
+          @click="handleAddRule"
+        >
+          添加静默规则
+        </AuthButton>
       </div>
 
-      <!-- 规则列表 -->
-      <div v-for="rule in rules" :key="rule.id" class="silence-rule-card">
-        <div class="card-header">
-          <div class="header-left">
-            <div class="rule-title">
-              <h5 class="rule-name">{{ rule.name }}</h5>
-              <div class="rule-meta">
-                <el-tag type="warning" size="small" class="type-tag"> 静默规则 </el-tag>
-                <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" class="status-tag">
+      <div class="rules-grid">
+        <div v-for="rule in rules" :key="rule.id" class="silence-rule-card">
+          <div class="rule-card-header">
+            <div class="rule-heading">
+              <div class="rule-title-line">
+                <h5 class="rule-name">{{ rule.name }}</h5>
+                <span class="rule-id">#{{ rule.id }}</span>
+              </div>
+              <div class="summary-tags">
+                <el-tag :type="rule.enabled ? 'success' : 'info'" size="small" effect="light">
                   {{ rule.enabled ? "运行中" : "已停用" }}
                 </el-tag>
-                <el-tag v-if="rule.is_active" type="danger" size="small" class="active-tag"> 活跃中 </el-tag>
+                <el-tag v-if="isActive(rule)" type="danger" size="small" effect="light">生效中</el-tag>
+                <el-tag v-else-if="isTimeWindowExpired(rule.time_window)" type="info" size="small" effect="light">
+                  已过期
+                </el-tag>
+              </div>
+            </div>
+
+            <div class="rule-toolbar">
+              <el-tooltip :content="rule.enabled ? '停用规则' : '启用规则'" placement="top">
+                <el-switch
+                  v-model="rule.enabled"
+                  size="small"
+                  :disabled="!canToggleRule"
+                  @change="handleToggleRule(rule)"
+                />
+              </el-tooltip>
+              <div class="rule-actions">
+                <AuthButton
+                  type="primary"
+                  :icon="Edit"
+                  size="small"
+                  :capability="ALERT_CAPABILITIES.Silence.Edit"
+                  disable-mode
+                  @click="handleEditRule(rule)"
+                >
+                  编辑
+                </AuthButton>
+                <AuthButton
+                  type="danger"
+                  :icon="Delete"
+                  size="small"
+                  :capability="ALERT_CAPABILITIES.Silence.Delete"
+                  disable-mode
+                  @click="handleDeleteRule(rule.id)"
+                >
+                  删除
+                </AuthButton>
+                <AuthButton
+                  v-if="isTimeWindowExpired(rule.time_window)"
+                  type="warning"
+                  :icon="Clock"
+                  size="small"
+                  :capability="ALERT_CAPABILITIES.Silence.Renewal"
+                  disable-mode
+                  @click="handleRenewTimeWindow(rule)"
+                >
+                  续期
+                </AuthButton>
               </div>
             </div>
           </div>
-          <div class="header-right">
-            <el-switch v-model="rule.enabled" @change="handleToggleRule(rule)" size="large" />
-            <el-button type="primary" :icon="Edit" size="small" @click="handleEditRule(rule)"> 编辑 </el-button>
-            <el-button type="danger" :icon="Delete" size="small" @click="handleDeleteRule(rule.id)"> 删除 </el-button>
-          </div>
-        </div>
 
-        <div class="card-content">
-          <!-- 匹配条件 -->
-          <div class="matchers-section">
-            <div class="section-header">
-              <el-icon class="section-icon"><Filter /></el-icon>
-              <span>匹配条件</span>
-            </div>
-            <div class="section-content">
-              <div v-if="rule.matchers && rule.matchers.length > 0" class="matchers-list">
-                <div v-for="(matcher, index) in rule.matchers" :key="index" class="matcher-item">
-                  <el-tag :type="matcher.Type === 1 ? 'primary' : 'warning'" size="small" class="matcher-type-tag">
-                    {{ matcher.Type === 1 ? "等于" : "正则" }}
+          <div class="rule-card-body">
+            <section class="rule-panel">
+              <div class="section-title">
+                <el-icon><Filter /></el-icon>
+                <span>匹配器</span>
+                <el-tag v-if="rule.matchers.length" size="small" type="info">{{ rule.matchers.length }}</el-tag>
+              </div>
+              <div class="matcher-content">
+                <div v-if="rule.matchers.length === 0" class="empty-matcher">
+                  <el-icon><Warning /></el-icon>
+                  <span>无匹配条件</span>
+                </div>
+                <div v-else class="matcher-tags">
+                  <el-tag v-for="(matcher, index) in rule.matchers" :key="index" size="small" class="matcher-tag">
+                    <span class="matcher-name">{{ matcher.name }}</span>
+                    <span class="matcher-operator">{{ getOperatorText(matcher.type) }}</span>
+                    <span v-if="isValueRequired(matcher.type)" class="matcher-value">{{ matcher.value }}</span>
                   </el-tag>
-                  <span class="matcher-name">{{ matcher.Name }}</span>
-                  <span class="matcher-value">{{ matcher.Value }}</span>
                 </div>
               </div>
-              <div v-else class="empty-matcher">
-                <span class="empty-text">无匹配条件</span>
-              </div>
-            </div>
-          </div>
+            </section>
 
-          <!-- 静默时间 -->
-          <div class="silence-time-section">
-            <div class="section-header">
-              <el-icon class="section-icon"><Clock /></el-icon>
-              <span>静默时间</span>
-            </div>
-            <div class="section-content">
-              <div class="time-info">
-                <div class="time-item">
-                  <span class="time-label">开始时间：</span>
-                  <span class="time-value">{{ formatTime(rule.start_time) }}</span>
-                </div>
-                <div class="time-item">
-                  <span class="time-label">结束时间：</span>
-                  <span class="time-value">{{ formatTime(rule.end_time) }}</span>
-                </div>
-                <div class="time-item">
-                  <span class="time-label">剩余时间：</span>
-                  <span class="time-value" :class="{ 'time-warning': rule.is_active && getRemainingTime(rule) < 3600 }">
-                    {{ getRemainingTimeText(rule) }}
-                  </span>
-                </div>
+            <section class="rule-panel">
+              <div class="section-title">
+                <el-icon><Clock /></el-icon>
+                <span>静默窗口</span>
               </div>
-            </div>
-          </div>
-
-          <!-- 创建信息 -->
-          <div class="create-info-section">
-            <div class="section-header">
-              <el-icon class="section-icon"><User /></el-icon>
-              <span>创建信息</span>
-            </div>
-            <div class="section-content">
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="info-label">创建人：</span>
-                  <span class="info-value">{{ rule.created_by || "系统管理员" }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">创建时间：</span>
-                  <span class="info-value">{{ formatTime(rule.created_at) }}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">备注：</span>
-                  <span class="info-value">{{ rule.comment || "无" }}</span>
-                </div>
+              <div class="time-window-card" :class="{ expired: isTimeWindowExpired(rule.time_window) }">
+                <template v-if="isValidTimeWindow(rule.time_window)">
+                  <strong>{{ formatTime(rule.time_window.start) }}</strong>
+                  <span>至</span>
+                  <strong>{{ formatTime(rule.time_window.end) }}</strong>
+                </template>
+                <span v-else>未配置时间窗口</span>
               </div>
-            </div>
+            </section>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 添加/编辑规则抽屉 -->
-    <Drawer
-      v-model="dialogVisible"
-      :title="isEdit ? '编辑静默规则' : '添加静默规则'"
-      :subtitle="isEdit ? '修改静默规则配置' : '创建新的静默规则，临时停止特定告警通知'"
-      :header-icon="Bell"
-      size="700px"
-      direction="rtl"
-      :before-close="handleDialogClose"
-      @closed="handleDialogClose"
-      @confirm="handleSubmit"
-      :confirm-loading="submitting"
+    <SilenceDrawer
+      v-model:visible="dialogVisible"
+      v-model:is-edit="isEdit"
+      v-model:submitting="submitting"
+      v-model:form-data="formData"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
+    />
+
+    <FormDialog
+      v-model="renewDialogVisible"
+      title="续期静默窗口"
+      width="520px"
+      @confirm="handleRenewConfirm"
+      @cancel="handleRenewCancel"
     >
-      <div class="rule-form-container">
-        <el-form
-          ref="formRef"
-          :model="formData"
-          :rules="formRules"
-          label-position="top"
-          label-width="auto"
-          class="rule-form"
-        >
-          <div class="form-section">
-            <div class="section-title">
-              <el-icon class="section-icon"><Setting /></el-icon>
-              <span>基本信息</span>
-            </div>
-
-            <div class="form-row">
-              <el-form-item prop="name" label="规则名称" class="form-item">
-                <el-input v-model="formData.name" placeholder="请输入静默规则名称" size="large" clearable />
-              </el-form-item>
-            </div>
-
-            <div class="form-row">
-              <el-form-item prop="comment" label="备注说明" class="form-item">
-                <el-input
-                  v-model="formData.comment"
-                  type="textarea"
-                  :rows="3"
-                  placeholder="请输入备注说明（可选）"
-                  size="large"
-                />
-              </el-form-item>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <div class="section-title">
-              <el-icon class="section-icon"><Filter /></el-icon>
-              <span>匹配条件</span>
-            </div>
-
-            <div class="form-row">
-              <el-form-item prop="matchers" label="匹配器" class="form-item">
-                <div class="matchers-container">
-                  <div v-for="(matcher, index) in formData.matchers" :key="index" class="matcher-item">
-                    <el-select v-model="matcher.Type" placeholder="类型" size="large" class="matcher-type">
-                      <el-option label="等于" :value="1" />
-                      <el-option label="正则" :value="2" />
-                    </el-select>
-                    <el-input v-model="matcher.Name" placeholder="标签名" size="large" class="matcher-name" />
-                    <el-input v-model="matcher.Value" placeholder="标签值" size="large" class="matcher-value" />
-                    <el-button type="text" @click="removeMatcher(index)" class="matcher-remove"> 删除 </el-button>
-                  </div>
-                  <el-button type="text" @click="addMatcher" class="add-matcher-btn">
-                    <el-icon><Plus /></el-icon>
-                    添加匹配器
-                  </el-button>
-                </div>
-              </el-form-item>
-            </div>
-          </div>
-
-          <div class="form-section">
-            <div class="section-title">
-              <el-icon class="section-icon"><Clock /></el-icon>
-              <span>静默时间</span>
-            </div>
-
-            <div class="form-row">
-              <el-row :gutter="20">
-                <el-col :span="12">
-                  <el-form-item prop="start_time" label="开始时间" class="form-item">
-                    <el-date-picker
-                      v-model="formData.start_time"
-                      type="datetime"
-                      placeholder="选择开始时间"
-                      format="YYYY-MM-DD HH:mm:ss"
-                      value-format="x"
-                      size="large"
-                      style="width: 100%"
-                    />
-                  </el-form-item>
-                </el-col>
-                <el-col :span="12">
-                  <el-form-item prop="end_time" label="结束时间" class="form-item">
-                    <el-date-picker
-                      v-model="formData.end_time"
-                      type="datetime"
-                      placeholder="选择结束时间"
-                      format="YYYY-MM-DD HH:mm:ss"
-                      value-format="x"
-                      size="large"
-                      style="width: 100%"
-                    />
-                  </el-form-item>
-                </el-col>
-              </el-row>
-            </div>
-
-            <div class="form-row">
-              <el-form-item label="快速选择" class="form-item">
-                <div class="quick-time-buttons">
-                  <el-button size="small" @click="setQuickTime(1)">1小时</el-button>
-                  <el-button size="small" @click="setQuickTime(6)">6小时</el-button>
-                  <el-button size="small" @click="setQuickTime(24)">1天</el-button>
-                  <el-button size="small" @click="setQuickTime(72)">3天</el-button>
-                  <el-button size="small" @click="setQuickTime(168)">1周</el-button>
-                </div>
-              </el-form-item>
-            </div>
-          </div>
-        </el-form>
-      </div>
-    </Drawer>
+      <SilenceTimeWindowRenewDialog ref="renewDialogRef" :rule="currentRule" />
+    </FormDialog>
   </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
-import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { Plus, Bell, Filter, Clock, User, Edit, Delete, Setting } from "@element-plus/icons-vue"
-import { Drawer } from "@@/components/Dialogs"
+import { computed, ref, watch } from "vue"
+import { ElMessage, ElMessageBox } from "element-plus"
+import { Clock, Delete, Edit, Filter, MuteNotification, Warning } from "@element-plus/icons-vue"
+import { MatchType } from "@@/constants/match-type"
+import { FormDialog } from "@@/components/Dialogs"
+import { useMatcher } from "@@/composables/useMatcher"
+import { usePermission } from "@/common/composables/usePermission"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import {
+  createSilenceRuleApi,
+  deleteSilenceRuleApi,
+  listSilenceRulesByWorkspaceApi,
+  toggleSilenceRuleStatusApi,
+  updateSilenceRuleApi
+} from "@/api/alert/silence"
+import type { SaveSilenceRuleReq, SilenceRule, TimeRange } from "@/api/alert/silence/types"
 import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
-
-// 静默规则接口
-interface SilenceRule {
-  id: number
-  name: string
-  matchers: Matcher[]
-  start_time: number
-  end_time: number
-  enabled: boolean
-  is_active: boolean
-  created_by?: string
-  created_at: number
-  comment?: string
-}
-
-interface Matcher {
-  Type: number
-  Name: string
-  Value: string
-}
-
-// 接收静默规则数据
-const props = defineProps<{
-  silenceRules?: SilenceRule[]
-}>()
+import SilenceDrawer from "./drawer.vue"
+import SilenceTimeWindowRenewDialog from "./components/SilenceTimeWindowRenewDialog.vue"
 
 const emit = defineEmits<{
   refresh: []
 }>()
 
-// 数据
+const props = defineProps<{
+  workspaceId: number
+}>()
+
+const { hasPermission } = usePermission()
+const { getOperatorText, isValueRequired } = useMatcher()
+
+const canToggleRule = computed(() => hasPermission(ALERT_CAPABILITIES.Silence.Toggle))
+
 const rules = ref<SilenceRule[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
-const formRef = ref<FormInstance | null>(null)
+const renewDialogVisible = ref(false)
+const currentRule = ref<SilenceRule | null>(null)
+const renewDialogRef = ref<InstanceType<typeof SilenceTimeWindowRenewDialog>>()
 
-// 表单数据
-const formData = ref<SilenceRule>({
-  id: 0,
+const createEmptyFormData = (): SaveSilenceRuleReq => ({
   name: "",
-  matchers: [],
-  start_time: 0,
-  end_time: 0,
+  matchers: [
+    {
+      type: MatchType.Equal,
+      name: "",
+      value: ""
+    }
+  ],
+  time_window: {
+    start: Date.now(),
+    end: Date.now() + 60 * 60 * 1000
+  },
   enabled: true,
-  is_active: false,
-  created_by: "",
-  created_at: 0,
-  comment: ""
+  workspace_id: props.workspaceId || undefined
 })
 
-// 表单验证规则
-const formRules: FormRules = {
-  name: [{ required: true, message: "请输入规则名称", trigger: "blur" }],
-  matchers: [{ required: true, message: "请至少添加一个匹配器", trigger: "change" }],
-  start_time: [{ required: true, message: "请选择开始时间", trigger: "change" }],
-  end_time: [{ required: true, message: "请选择结束时间", trigger: "change" }]
-}
+const formData = ref<SaveSilenceRuleReq>(createEmptyFormData())
 
-// 加载规则
+const normalizeRule = (rule: SilenceRule): SilenceRule => ({
+  ...rule,
+  matchers: rule.matchers || [],
+  time_window: rule.time_window || { start: 0, end: 0 },
+  enabled: rule.enabled ?? true
+})
+
 const loadRules = async () => {
+  if (!props.workspaceId) {
+    rules.value = []
+    return
+  }
+
+  loading.value = true
   try {
-    loading.value = true
-
-    // 如果父组件传入了静默规则数据，直接使用
-    if (props.silenceRules) {
-      rules.value = props.silenceRules
-      return
-    }
-
-    // 否则使用模拟数据
-    rules.value = [
-      {
-        id: 1,
-        name: "维护窗口静默",
-        matchers: [
-          { Type: 1, Name: "severity", Value: "critical" },
-          { Type: 1, Name: "service", Value: "database" }
-        ],
-        start_time: Date.now(),
-        end_time: Date.now() + 2 * 60 * 60 * 1000, // 2小时后
-        enabled: true,
-        is_active: true,
-        created_by: "admin",
-        created_at: Date.now() - 30 * 60 * 1000, // 30分钟前
-        comment: "数据库维护期间静默关键告警"
-      },
-      {
-        id: 2,
-        name: "测试环境静默",
-        matchers: [{ Type: 1, Name: "env", Value: "test" }],
-        start_time: Date.now() + 24 * 60 * 60 * 1000, // 明天
-        end_time: Date.now() + 48 * 60 * 60 * 1000, // 后天
-        enabled: false,
-        is_active: false,
-        created_by: "admin",
-        created_at: Date.now() - 2 * 60 * 60 * 1000, // 2小时前
-        comment: "测试环境告警静默"
-      }
-    ]
-  } catch (error) {
-    console.error("加载静默规则失败:", error)
-    ElMessage.error("加载静默规则失败")
+    const { data } = await listSilenceRulesByWorkspaceApi({ workspace_id: props.workspaceId })
+    rules.value = (data.silence_rules || []).map(normalizeRule)
+  } catch {
+    ElMessage.error("静默规则加载失败")
+    rules.value = []
   } finally {
     loading.value = false
   }
 }
 
-// 格式化时间
-const formatTime = (timestamp: number) => {
-  if (!timestamp) return "未设置"
-  return new Date(timestamp).toLocaleString("zh-CN", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  })
-}
-
-// 获取剩余时间（秒）
-const getRemainingTime = (rule: SilenceRule) => {
-  if (!rule.is_active) return 0
-  const now = Date.now()
-  const remaining = rule.end_time - now
-  return Math.max(0, Math.floor(remaining / 1000))
-}
-
-// 获取剩余时间文本
-const getRemainingTimeText = (rule: SilenceRule) => {
-  if (!rule.is_active) return "未激活"
-  const remaining = getRemainingTime(rule)
-  if (remaining <= 0) return "已过期"
-
-  const hours = Math.floor(remaining / 3600)
-  const minutes = Math.floor((remaining % 3600) / 60)
-  const seconds = remaining % 60
-
-  if (hours > 0) {
-    return `${hours}小时${minutes}分钟`
-  } else if (minutes > 0) {
-    return `${minutes}分钟${seconds}秒`
-  } else {
-    return `${seconds}秒`
-  }
-}
-
-// 添加匹配器
-const addMatcher = () => {
-  formData.value.matchers.push({
-    Type: 1,
-    Name: "",
-    Value: ""
-  })
-}
-
-// 删除匹配器
-const removeMatcher = (index: number) => {
-  formData.value.matchers.splice(index, 1)
-}
-
-// 快速设置时间
-const setQuickTime = (hours: number) => {
-  const now = Date.now()
-  formData.value.start_time = now
-  formData.value.end_time = now + hours * 60 * 60 * 1000
-}
-
-// 添加规则
 const handleAddRule = () => {
   isEdit.value = false
-  formData.value = {
-    id: 0,
-    name: "",
-    matchers: [],
-    start_time: 0,
-    end_time: 0,
-    enabled: true,
-    is_active: false,
-    created_by: "",
-    created_at: 0,
-    comment: ""
-  }
+  formData.value = createEmptyFormData()
   dialogVisible.value = true
 }
 
-// 编辑规则
 const handleEditRule = (rule: SilenceRule) => {
   isEdit.value = true
-  formData.value = { ...rule }
+  formData.value = {
+    id: rule.id,
+    name: rule.name,
+    matchers: rule.matchers.map((matcher) => ({ ...matcher })),
+    time_window: { ...rule.time_window },
+    enabled: rule.enabled,
+    workspace_id: rule.workspace_id || props.workspaceId
+  }
   dialogVisible.value = true
 }
 
-// 切换规则状态
+const handleRenewTimeWindow = (rule: SilenceRule) => {
+  currentRule.value = rule
+  renewDialogVisible.value = true
+}
+
+const handleRenewConfirm = async () => {
+  if (!renewDialogRef.value) return
+
+  try {
+    const renewed = await renewDialogRef.value.handleConfirm()
+    if (!renewed) return
+
+    renewDialogVisible.value = false
+    currentRule.value = null
+    await loadRules()
+    emit("refresh")
+  } catch {
+    ElMessage.error("续期失败，请稍后重试")
+  }
+}
+
+const handleRenewCancel = () => {
+  renewDialogVisible.value = false
+  currentRule.value = null
+}
+
 const handleToggleRule = async (rule: SilenceRule) => {
   try {
-    // 这里应该调用API更新规则状态
-    ElMessage.success(`规则已${rule.enabled ? "启用" : "停用"}`)
+    await toggleSilenceRuleStatusApi(rule.id)
+    ElMessage.success(rule.enabled ? "规则已启用" : "规则已停用")
+    await loadRules()
     emit("refresh")
-  } catch (error) {
-    console.error("切换规则状态失败:", error)
-    ElMessage.error("操作失败")
+  } catch {
+    rule.enabled = !rule.enabled
+    ElMessage.error("状态切换失败")
   }
 }
 
-// 删除规则
 const handleDeleteRule = async (id: number) => {
   try {
-    // 这里应该调用API删除规则
-    rules.value = rules.value.filter((rule) => rule.id !== id)
-    ElMessage.success("规则已删除")
+    await ElMessageBox.confirm("确定要删除这个静默规则吗？", "确认删除", { type: "warning" })
+    await deleteSilenceRuleApi(id)
+    ElMessage.success("删除成功")
+    await loadRules()
     emit("refresh")
   } catch (error) {
-    console.error("删除规则失败:", error)
-    ElMessage.error("删除失败")
+    if (error !== "cancel") {
+      ElMessage.error("删除失败，请稍后重试")
+    }
   }
 }
 
-// 提交表单
-const handleSubmit = async () => {
-  if (!formRef.value) return
-
+const handleConfirm = async () => {
   try {
-    await formRef.value.validate()
     submitting.value = true
-
-    // 这里应该调用API保存规则
-    if (isEdit.value) {
-      // 更新规则
-      const index = rules.value.findIndex((rule) => rule.id === formData.value.id)
-      if (index !== -1) {
-        rules.value[index] = { ...formData.value }
-      }
-      ElMessage.success("规则已更新")
-    } else {
-      // 添加规则
-      const newRule = {
-        ...formData.value,
-        id: Date.now(),
-        created_at: Date.now(),
-        created_by: "当前用户"
-      }
-      rules.value.unshift(newRule)
-      ElMessage.success("规则已创建")
+    const payload: SaveSilenceRuleReq = {
+      ...formData.value,
+      workspace_id: props.workspaceId
     }
 
+    if (isEdit.value) {
+      await updateSilenceRuleApi(payload)
+    } else {
+      await createSilenceRuleApi(payload)
+    }
+
+    ElMessage.success(isEdit.value ? "规则更新成功" : "规则创建成功")
     dialogVisible.value = false
+    await loadRules()
     emit("refresh")
-  } catch (error) {
-    console.error("保存规则失败:", error)
+  } catch {
+    ElMessage.error("保存失败，请稍后重试")
   } finally {
     submitting.value = false
   }
 }
 
-// 关闭对话框
-const handleDialogClose = () => {
+const handleCancel = () => {
   dialogVisible.value = false
-  formRef.value?.resetFields()
+  isEdit.value = false
 }
 
-// 监听父组件传入的数据
+const normalizeTimestamp = (timestamp: number) => {
+  if (!timestamp || timestamp <= 0) return 0
+  return timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
+}
+
+const isValidTimeWindow = (timeWindow?: TimeRange): boolean => {
+  if (!timeWindow?.start || !timeWindow?.end) return false
+  return normalizeTimestamp(timeWindow.start) > 0 && normalizeTimestamp(timeWindow.end) > 0
+}
+
+const isTimeWindowExpired = (timeWindow?: TimeRange): boolean => {
+  if (!isValidTimeWindow(timeWindow)) return false
+  return Date.now() > normalizeTimestamp(timeWindow!.end)
+}
+
+const isActive = (rule: SilenceRule) => {
+  if (!rule.enabled || !isValidTimeWindow(rule.time_window)) return false
+  const now = Date.now()
+  return normalizeTimestamp(rule.time_window.start) <= now && normalizeTimestamp(rule.time_window.end) >= now
+}
+
+const formatTime = (timestamp: number): string => {
+  const actualTimestamp = normalizeTimestamp(timestamp)
+  if (!actualTimestamp) return "无效时间"
+
+  const date = new Date(actualTimestamp)
+  if (Number.isNaN(date.getTime())) return "无效时间"
+
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hours = String(date.getHours()).padStart(2, "0")
+  const minutes = String(date.getMinutes()).padStart(2, "0")
+
+  return `${year}-${month}-${day} ${hours}:${minutes}`
+}
+
 watch(
-  () => props.silenceRules,
-  (newRules) => {
-    if (newRules && Array.isArray(newRules) && newRules.length > 0) {
-      rules.value = newRules
-    } else {
-      rules.value = []
-    }
+  () => props.workspaceId,
+  () => {
+    formData.value = createEmptyFormData()
+    loadRules()
   },
   { immediate: true }
 )
 
-onMounted(() => {
-  loadRules()
+defineExpose({
+  loadRules
 })
 </script>
 
 <style lang="scss" scoped>
-.silence-rules-list {
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    background: #f8fafc;
-    border: 2px dashed #d1d5db;
-    border-radius: 8px;
-
-    .empty-icon {
-      margin-bottom: 16px;
-
-      .el-icon {
-        font-size: 48px;
-        color: #9ca3af;
-      }
-    }
-
-    .empty-title {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #374151;
-    }
-
-    .empty-description {
-      margin: 0 0 24px 0;
-      font-size: 14px;
-      color: #6b7280;
-      line-height: 1.5;
-    }
-  }
-
-  .silence-rule-card {
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    margin-bottom: 12px;
-    overflow: hidden;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
-      background: #f8fafc;
-      border-bottom: 1px solid #e5e7eb;
-
-      .header-left {
-        .rule-title {
-          .rule-name {
-            margin: 0 0 8px 0;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1f2937;
-            line-height: 1.4;
-          }
-
-          .rule-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-
-            .type-tag {
-              font-weight: 500;
-            }
-
-            .status-tag {
-              font-weight: 500;
-            }
-
-            .active-tag {
-              font-weight: 500;
-              animation: pulse 2s infinite;
-            }
-          }
-        }
-      }
-
-      .header-right {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-    }
-
-    .card-content {
-      padding: 20px;
-
-      .matchers-section,
-      .silence-time-section,
-      .create-info-section {
-        margin-bottom: 20px;
-
-        &:last-child {
-          margin-bottom: 0;
-        }
-
-        .section-header {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 12px;
-          font-size: 12px;
-          font-weight: 600;
-          color: #374151;
-
-          .section-icon {
-            font-size: 14px;
-            color: #6b7280;
-          }
-        }
-
-        .section-content {
-          .matchers-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-
-            .matcher-item {
-              display: flex;
-              align-items: center;
-              gap: 4px;
-              padding: 3px 6px;
-              background: #ffffff;
-              border: 1px solid #e5e7eb;
-              border-radius: 4px;
-
-              .matcher-type-tag {
-                font-size: 9px;
-                font-weight: 600;
-                border-radius: 3px;
-                flex-shrink: 0;
-                padding: 1px 4px;
-              }
-
-              .matcher-name {
-                font-size: 10px;
-                font-weight: 600;
-                color: #374151;
-                min-width: 40px;
-                flex-shrink: 0;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-
-              .matcher-value {
-                font-size: 10px;
-                color: #6b7280;
-                flex: 1;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-            }
-          }
-
-          .empty-matcher {
-            text-align: center;
-            padding: 8px 0;
-            color: #9ca3af;
-            font-size: 11px;
-          }
-
-          .time-info {
-            .time-item {
-              display: flex;
-              align-items: center;
-              margin-bottom: 8px;
-
-              &:last-child {
-                margin-bottom: 0;
-              }
-
-              .time-label {
-                font-size: 14px;
-                color: #6b7280;
-                min-width: 80px;
-              }
-
-              .time-value {
-                font-size: 14px;
-                color: #374151;
-                font-weight: 500;
-
-                &.time-warning {
-                  color: #dc2626;
-                  font-weight: 600;
-                }
-              }
-            }
-          }
-
-          .info-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-
-            .info-item {
-              display: flex;
-              align-items: center;
-
-              .info-label {
-                font-size: 14px;
-                color: #6b7280;
-                min-width: 80px;
-              }
-
-              .info-value {
-                font-size: 14px;
-                color: #374151;
-                font-weight: 500;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-.rule-form-container {
-  padding: 20px;
-  background: #ffffff;
-  border-radius: 0;
-  box-shadow: none;
-  height: 100%;
+.silence-rules-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 14px;
   overflow-y: auto;
-}
+  background: transparent;
+  box-sizing: border-box;
 
-.rule-form {
-  .form-section {
-    margin-bottom: 24px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
+  &::-webkit-scrollbar {
+    width: 6px;
   }
 
-  .section-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #94a3b8;
+    }
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 360px;
+  padding: 64px 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+
+  .empty-icon {
+    color: #94a3b8;
+    font-size: 44px;
     margin-bottom: 16px;
+  }
+
+  .empty-title {
+    margin: 0 0 8px;
+    color: #334155;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .empty-description {
+    max-width: 320px;
+    margin: 0 0 24px;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.rules-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.silence-rule-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: none;
+  transition: border-color 0.2s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+}
+
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.rule-heading {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rule-title-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rule-name {
+  margin: 0;
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-id {
+  flex-shrink: 0;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summary-tags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  :deep(.el-tag) {
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 6px;
+    font-weight: 700;
+  }
+}
+
+.rule-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.rule-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  :deep(.el-button) {
+    min-width: 60px;
+    height: 26px;
+    margin-left: 0;
+    padding: 0 10px;
+    border-radius: 6px;
     font-size: 12px;
-    font-weight: 600;
-    color: #374151;
-
-    .section-icon {
-      font-size: 14px;
-      color: #6b7280;
-    }
-  }
-
-  .form-row {
-    margin-bottom: 16px;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  .form-item {
-    margin-bottom: 0;
-  }
-
-  .matchers-container {
-    width: 100%;
-
-    .matcher-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: #f8fafc;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      margin-bottom: 8px;
-
-      &:last-child {
-        margin-bottom: 0;
-      }
-
-      .matcher-type {
-        flex: 0 0 100px;
-        min-width: 100px;
-      }
-
-      .matcher-name {
-        flex: 0 0 150px;
-        min-width: 150px;
-      }
-
-      .matcher-value {
-        flex: 1;
-        min-width: 200px;
-      }
-
-      .matcher-remove {
-        flex: 0 0 auto;
-        margin-left: auto;
-      }
-    }
-
-    .add-matcher-btn {
-      width: 100%;
-      margin-top: 8px;
-      color: #3b82f6;
-      border: 1px dashed #3b82f6;
-      background: #eff6ff;
-
-      &:hover {
-        color: #1d4ed8;
-      }
-    }
-  }
-
-  .quick-time-buttons {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    font-weight: 700;
   }
 }
 
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
+.rule-card-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(340px, 0.65fr);
+  gap: 0;
+  min-width: 0;
+}
+
+.rule-panel {
+  min-width: 0;
+  padding: 12px 14px;
+  border-right: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-right: 0;
   }
-  50% {
-    opacity: 0.5;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 800;
+
+  .el-icon {
+    color: #64748b;
+    font-size: 14px;
+  }
+}
+
+.matcher-content {
+  min-width: 0;
+}
+
+.empty-matcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 10px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.matcher-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.matcher-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px 7px;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #dbe3ef;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+
+  .matcher-name {
+    color: #475569;
+    font-weight: 800;
+  }
+
+  .matcher-operator {
+    color: #64748b;
+  }
+
+  .matcher-value {
+    overflow: hidden;
+    color: #475569;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.time-window-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 36px;
+  padding: 8px 10px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+
+  &.expired {
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  strong {
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+  }
+}
+
+@media (max-width: 900px) {
+  .rule-card-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .rule-toolbar {
+    justify-content: space-between;
+  }
+
+  .rule-card-body {
+    grid-template-columns: 1fr;
+  }
+
+  .rule-panel {
+    border-right: 0;
+    border-bottom: 1px solid #f1f5f9;
+
+    &:last-child {
+      border-bottom: 0;
+    }
   }
 }
 </style>

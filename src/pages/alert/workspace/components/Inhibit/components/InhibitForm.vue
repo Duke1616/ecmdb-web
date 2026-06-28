@@ -9,36 +9,20 @@
       class="inhibit-form"
     >
       <div class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Setting /></el-icon>
-          <span>基本信息</span>
+        <div class="section-title has-right-content">
+          <div class="title-left">
+            <el-icon class="section-icon"><Setting /></el-icon>
+            <span>基本信息</span>
+          </div>
+          <div class="time-window-switch">
+            <el-switch v-model="formData.enabled" size="large" />
+            <span class="form-tip">启用规则</span>
+          </div>
         </div>
 
-        <div class="form-row form-row-inline">
-          <el-form-item prop="name" label="规则名称" class="form-item form-item-flex">
+        <div class="form-row">
+          <el-form-item prop="name" label="规则名称" class="form-item">
             <el-input v-model="formData.name" placeholder="请输入规则名称" />
-          </el-form-item>
-          <el-form-item prop="enabled" label="启用状态" class="form-item form-item-flex">
-            <div class="switch-container">
-              <el-switch v-model="formData.enabled" size="large" />
-              <span class="form-tip">是否启用此抑制规则</span>
-            </div>
-          </el-form-item>
-        </div>
-
-        <div class="form-row form-row-inline">
-          <el-form-item prop="scope" label="生效范围" class="form-item form-item-flex">
-            <el-select v-model="formData.scope" placeholder="请选择生效范围" @change="handleScopeChange">
-              <el-option label="全局生效" :value="InhibitScope.Global" />
-              <el-option label="所属空间内生效" :value="InhibitScope.Workspace" />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            v-if="formData.scope === InhibitScope.Workspace"
-            label="工作空间"
-            class="form-item form-item-flex"
-          >
-            <el-input :value="`当前工作空间 (ID: ${currentWorkspaceId})`" disabled placeholder="自动使用当前工作空间" />
           </el-form-item>
         </div>
       </div>
@@ -202,7 +186,7 @@ import { ref, nextTick, computed, onMounted } from "vue"
 import { useRoute } from "vue-router"
 import { Setting, Filter, Clock, Plus } from "@element-plus/icons-vue"
 import type { SaveInhibitRuleReq } from "@/api/alert/inhibit/types"
-import { MatchType, InhibitScope } from "@/api/alert/inhibit/types"
+import { MatchType } from "@/api/alert/inhibit/types"
 import type { FormInstance } from "element-plus"
 import { clearZeroValues } from "@@/utils"
 import { useMatcher } from "@@/composables/useMatcher"
@@ -238,16 +222,6 @@ const inputRef = ref<InstanceType<typeof import("element-plus").ElInput>>()
 // 使用匹配器工具函数
 const { getMatchTypeOptions, isValueRequired } = useMatcher()
 const matchTypeOptions = computed(() => getMatchTypeOptions())
-
-// 处理生效范围变化
-const handleScopeChange = (scope: InhibitScope) => {
-  if (scope === InhibitScope.Global) {
-    formData.value.workspace_id = undefined
-  } else if (scope === InhibitScope.Workspace) {
-    // 自动设置当前工作空间ID
-    formData.value.workspace_id = currentWorkspaceId.value
-  }
-}
 
 // 切换时间窗口
 const toggleTimeWindow = (val: string | number | boolean) => {
@@ -388,6 +362,7 @@ const syncTimeWindowToDisplay = () => {
 
 // 组件挂载时初始化
 onMounted(() => {
+  formData.value.workspace_id = currentWorkspaceId.value
   syncTimeWindowToDisplay()
 })
 
@@ -503,11 +478,6 @@ defineExpose({
       margin-bottom: 0;
     }
 
-    &.form-row-inline {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
   }
 
   .form-item {
@@ -557,17 +527,6 @@ defineExpose({
         border-color: #3b82f6;
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
       }
-    }
-  }
-
-  .switch-container {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .form-tip {
-      font-size: 12px;
-      color: #6b7280;
     }
   }
 
