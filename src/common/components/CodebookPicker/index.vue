@@ -544,7 +544,6 @@ watch(
 .tree-pane-title {
   display: flex;
   min-width: 0;
-  flex-direction: column;
 
   span {
     font-size: 14px;
@@ -666,7 +665,6 @@ body .base-dialog--custom:has(.codebook-picker-dialog) {
 
   .el-dialog__header {
     margin: 0;
-    padding: 18px 22px;
     border-bottom: 1px solid #e2e8f0;
     background: #ffffff;
   }

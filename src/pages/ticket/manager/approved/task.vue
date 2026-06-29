@@ -33,27 +33,28 @@
               <span class="meta-label">目标</span>
               <span class="meta-value">{{ row.target || "-" }}</span>
             </div>
-            <div class="meta-item">
-              <span class="meta-label">时间</span>
-              <span class="meta-value">
-                {{ row.start_time ? dayjs(row.start_time).format("YYYY-MM-DD HH:mm:ss") : "--" }}
-                <span class="time-arrow">-></span>
-                {{
-                  row.end_time ? dayjs(row.end_time).format("YYYY-MM-DD HH:mm:ss") : row.start_time ? "RUNNING" : "--"
-                }}
-              </span>
+            <div class="meta-item" v-if="row.ctime">
+              <span class="meta-label">创建</span>
+              <span class="meta-value">{{ formatTaskTime(row.ctime) }}</span>
             </div>
             <div class="meta-item" v-if="row.trigger_position">
               <span class="meta-label">触发</span>
               <span class="meta-value">{{ row.trigger_position }}</span>
             </div>
-            <div class="meta-item" v-if="row.start_time && row.end_time">
-              <span class="meta-label">耗时</span>
-              <span class="duration-value">{{ calculateDuration(row.start_time, row.end_time) }}</span>
-            </div>
-            <div class="meta-item" v-if="row.is_timing">
+            <div class="meta-item">
               <span class="meta-label">计划</span>
-              <span class="meta-value">{{ row.scheduled_time }}</span>
+              <span class="meta-value">{{ row.is_timing ? row.scheduled_time || "-" : "立即执行" }}</span>
+            </div>
+            <div class="meta-item meta-item--time" v-if="row.start_time || row.end_time">
+              <span class="meta-label">时间</span>
+              <span class="meta-value time-range-value">
+                <span>{{ row.start_time ? formatTaskTime(row.start_time) : "--" }}</span>
+                <span class="time-arrow">-></span>
+                <span>{{ row.end_time ? formatTaskTime(row.end_time) : row.start_time ? "RUNNING" : "--" }}</span>
+                <span class="duration-value" v-if="row.start_time && row.end_time">
+                  ({{ calculateDuration(row.start_time, row.end_time) }})
+                </span>
+              </span>
             </div>
           </div>
 
@@ -157,6 +158,13 @@ const calculateDuration = (start: string, end: string) => {
   const minutes = Math.floor(diff / 60)
   const seconds = diff % 60
   return `${minutes}m ${seconds}s`
+}
+
+const formatTaskTime = (value?: string | number) => {
+  if (!value) return "--"
+  const normalized = typeof value === "number" && value < 10000000000 ? value * 1000 : value
+  const parsed = dayjs(normalized)
+  return parsed.isValid() ? parsed.format("YYYY-MM-DD HH:mm:ss") : String(value)
 }
 
 type TaskOperation = TaskDialogType | "retry"
@@ -415,6 +423,10 @@ defineExpose({
   line-height: 1.5;
 }
 
+.meta-item--time {
+  grid-column: 1 / -1;
+}
+
 .meta-label {
   flex-shrink: 0;
   width: 36px;
@@ -429,7 +441,14 @@ defineExpose({
 
 .time-arrow {
   color: #b8c2d1;
-  margin: 0 6px;
+}
+
+.time-range-value {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 8px;
+  word-break: normal;
 }
 
 .duration-value {

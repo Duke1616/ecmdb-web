@@ -47,6 +47,7 @@ export interface task {
   start_time: string
   end_time: string
   retry_count: number
+  ctime?: string | number
   code: string
   language: string
   args: string

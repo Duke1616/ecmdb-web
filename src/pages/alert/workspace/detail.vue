@@ -51,46 +51,22 @@
       <!-- 侧边栏 -->
       <div class="workspace-sidebar">
         <el-menu :default-active="activeMenu" class="workspace-menu" @select="handleMenuSelect">
-          <el-menu-item index="overview">
-            <el-icon><DataBoard /></el-icon>
-            <span>工作台</span>
-          </el-menu-item>
-          <el-menu-item index="alerts">
-            <el-icon><Warning /></el-icon>
-            <span>告警管理</span>
-          </el-menu-item>
-          <el-menu-item index="rules">
-            <el-icon><Setting /></el-icon>
-            <span>告警规则</span>
-          </el-menu-item>
-          <el-menu-item index="noise-aggregate">
-            <el-icon><DataAnalysis /></el-icon>
-            <span>聚合规则</span>
-          </el-menu-item>
-          <el-menu-item index="noise-silence">
-            <el-icon><Mute /></el-icon>
-            <span>静默规则</span>
-          </el-menu-item>
-          <el-menu-item index="noise-inhibit">
-            <el-icon><CircleClose /></el-icon>
-            <span>抑制规则</span>
-          </el-menu-item>
-          <el-menu-item index="members">
-            <el-icon><User /></el-icon>
-            <span>团队成员</span>
-          </el-menu-item>
-          <el-menu-item index="settings">
-            <el-icon><Setting /></el-icon>
-            <span>空间配置</span>
-          </el-menu-item>
+          <el-menu-item-group v-for="group in visibleMenuGroups" :key="group.label" class="workspace-menu-group">
+            <template #title>
+              <span class="menu-group-title">{{ group.label }}</span>
+            </template>
+            <el-menu-item v-for="item in group.items" :key="item.key" :index="item.key" class="workspace-menu-item">
+              <el-icon><component :is="item.icon" /></el-icon>
+              <span>{{ item.label }}</span>
+            </el-menu-item>
+          </el-menu-item-group>
         </el-menu>
       </div>
 
       <!-- 主内容区 -->
       <div class="workspace-main">
-        <!-- 概览页面 -->
-        <div v-if="activeMenu === 'overview'" class="overview-page">
-          <Overview :workspace-id="workspace?.id || 0" ref="workspaceOverviewRef" />
+        <div v-if="visibleMenuItems.length === 0" class="workspace-empty-state">
+          <el-empty :image-size="120" description="暂无可访问的工作空间模块" />
         </div>
 
         <!-- 告警管理页面 -->
@@ -133,14 +109,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated, nextTick } from "vue"
+import { ref, computed, onMounted, onActivated, nextTick, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { useWorkspaceMenuStore } from "@/pinia/stores/useWorkspaceMenu"
 import {
   Setting,
   User,
-  DataBoard,
   Warning,
   CircleCheckFilled,
   CircleCloseFilled,
@@ -151,6 +126,8 @@ import {
   CircleClose,
   Mute
 } from "@element-plus/icons-vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { Workspace } from "@/api/alert/workspace/types"
@@ -159,7 +136,6 @@ import AlertRules from "./components/AlertRules/index.vue"
 import AlertManager from "./components/AlertManager/index.vue"
 import Settings from "./components/Settings/index.vue"
 import TeamMembers from "./components/TeamMembers/index.vue"
-import Overview from "./components/Overview/index.vue"
 import AggregateRules from "./components/Aggregate/index.vue"
 import InhibitRules from "./components/Inhibit/index.vue"
 import SilenceRules from "./components/Silence/index.vue"
@@ -167,6 +143,7 @@ import SilenceRules from "./components/Silence/index.vue"
 // 路由
 const route = useRoute()
 const router = useRouter()
+const { hasPermission } = usePermission()
 
 // 菜单状态管理
 const menuStore = useWorkspaceMenuStore()
@@ -181,10 +158,113 @@ const workspaceId = computed(() => Number(route.params.id || route.query.id))
 
 // 组件引用
 const teamMembersRef = ref()
-const workspaceOverviewRef = ref()
 const alertManagerRef = ref()
 const alertRulesRef = ref()
 const settingsRef = ref()
+
+type WorkspaceMenuItem = {
+  key: string
+  label: string
+  icon: any
+  capability?: string | string[]
+}
+
+const workspaceMenuGroups: Array<{ label: string; items: WorkspaceMenuItem[] }> = [
+  {
+    label: "告警",
+    items: [
+      {
+        key: "alerts",
+        label: "告警管理",
+        icon: Warning,
+        capability: ALERT_CAPABILITIES.Workspace.ViewAlerts
+      },
+      {
+        key: "rules",
+        label: "告警规则",
+        icon: Setting,
+        capability: [ALERT_CAPABILITIES.Workspace.ViewRules, ALERT_CAPABILITIES.Rule.View]
+      }
+    ]
+  },
+  {
+    label: "降噪",
+    items: [
+      {
+        key: "noise-aggregate",
+        label: "聚合规则",
+        icon: DataAnalysis,
+        capability: [
+          ALERT_CAPABILITIES.Workspace.ViewRules,
+          ALERT_CAPABILITIES.Aggregate.Detail,
+          ALERT_CAPABILITIES.Aggregate.Add,
+          ALERT_CAPABILITIES.Aggregate.Edit,
+          ALERT_CAPABILITIES.Aggregate.Delete
+        ]
+      },
+      {
+        key: "noise-silence",
+        label: "静默规则",
+        icon: Mute,
+        capability: [
+          ALERT_CAPABILITIES.Silence.Add,
+          ALERT_CAPABILITIES.Silence.Edit,
+          ALERT_CAPABILITIES.Silence.Delete,
+          ALERT_CAPABILITIES.Silence.Toggle,
+          ALERT_CAPABILITIES.Silence.Renewal
+        ]
+      },
+      {
+        key: "noise-inhibit",
+        label: "抑制规则",
+        icon: CircleClose,
+        capability: [
+          ALERT_CAPABILITIES.Workspace.ViewInhibits,
+          ALERT_CAPABILITIES.Inhibit.Add,
+          ALERT_CAPABILITIES.Inhibit.Edit,
+          ALERT_CAPABILITIES.Inhibit.Delete,
+          ALERT_CAPABILITIES.Inhibit.Toggle,
+          ALERT_CAPABILITIES.Inhibit.Renewal
+        ]
+      }
+    ]
+  },
+  {
+    label: "空间",
+    items: [
+      {
+        key: "members",
+        label: "团队成员",
+        icon: User,
+        capability: [ALERT_CAPABILITIES.Team.Detail, ALERT_CAPABILITIES.Team.View, ALERT_CAPABILITIES.Workspace.ViewMyTeam]
+      },
+      {
+        key: "settings",
+        label: "空间配置",
+        icon: Setting,
+        capability: [ALERT_CAPABILITIES.Workspace.Detail, ALERT_CAPABILITIES.Workspace.Edit, ALERT_CAPABILITIES.Workspace.Toggle]
+      }
+    ]
+  }
+]
+
+const visibleMenuGroups = computed(() => {
+  return workspaceMenuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.capability || hasPermission(item.capability))
+    }))
+    .filter((group) => group.items.length > 0)
+})
+
+const visibleMenuItems = computed(() => visibleMenuGroups.value.flatMap((group) => group.items))
+
+const ensureActiveMenu = () => {
+  const hasActiveMenu = visibleMenuItems.value.some((item) => item.key === activeMenu.value)
+  if (!hasActiveMenu && visibleMenuItems.value.length > 0) {
+    menuStore.setActiveMenu(visibleMenuItems.value[0].key)
+  }
+}
 
 // 格式化最后更新时间
 const formatLastUpdate = () => {
@@ -229,6 +309,7 @@ const handleSettingsRefresh = () => {
 
 // 菜单选择
 const handleMenuSelect = (key: string) => {
+  if (!visibleMenuItems.value.some((item) => item.key === key)) return
   menuStore.setActiveMenu(key)
   // 延迟执行数据加载，确保组件已经渲染
   nextTick(() => {
@@ -257,10 +338,6 @@ const loadWorkspaceData = async () => {
 const loadCurrentMenuData = () => {
   const currentMenu = menuStore.activeMenu
   switch (currentMenu) {
-    case "overview":
-      // 工作台数据加载
-      workspaceOverviewRef.value?.loadData?.()
-      break
     case "alerts":
       // 告警管理数据加载
       alertManagerRef.value?.loadData?.()
@@ -288,6 +365,7 @@ const loadCurrentMenuData = () => {
 
 // 组件挂载时加载基础数据
 onMounted(async () => {
+  ensureActiveMenu()
   await loadWorkspaceData()
   // 加载当前菜单的数据
   nextTick(() => {
@@ -297,7 +375,12 @@ onMounted(async () => {
 
 // 页面激活时重新加载数据（用于从其他页面返回时）
 onActivated(() => {
+  ensureActiveMenu()
   loadCurrentMenuData()
+})
+
+watch(visibleMenuItems, () => {
+  ensureActiveMenu()
 })
 </script>
 
@@ -351,15 +434,60 @@ onActivated(() => {
   min-height: calc(100vh - 200px);
 
   .workspace-sidebar {
-    width: 200px;
+    width: 220px;
     flex-shrink: 0;
     height: 100%;
 
     .workspace-menu {
+      padding: 10px;
       border-radius: 8px;
       border: 1px solid #e5e7eb;
       background: #ffffff;
       height: 100%;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+
+      :deep(.el-menu-item-group__title) {
+        height: auto;
+        padding: 12px 10px 6px;
+        line-height: 1;
+      }
+
+      :deep(.el-menu-item) {
+        height: 40px;
+        margin: 3px 0;
+        padding: 0 12px !important;
+        color: #374151;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        transition:
+          background-color 0.2s ease,
+          color 0.2s ease;
+
+        .el-icon {
+          margin-right: 10px;
+          font-size: 16px;
+          color: #64748b;
+        }
+
+        &:hover {
+          color: #2563eb;
+          background: #f1f7ff;
+
+          .el-icon {
+            color: #2563eb;
+          }
+        }
+
+        &.is-active {
+          color: #1d4ed8;
+          background: #eaf2ff;
+
+          .el-icon {
+            color: #2563eb;
+          }
+        }
+      }
     }
   }
 
@@ -374,7 +502,6 @@ onActivated(() => {
 }
 
 // 通用页面样式
-.overview-page,
 .rules-page,
 .noise-page,
 .members-page {
@@ -396,5 +523,21 @@ onActivated(() => {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+.workspace-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.menu-group-title {
+  display: inline-flex;
+  align-items: center;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 </style>
