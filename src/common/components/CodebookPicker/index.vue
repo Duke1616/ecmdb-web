@@ -16,34 +16,30 @@
       </template>
     </el-input>
 
-    <!-- 高端毛玻璃/卡片式 Dialog 弹窗 -->
-    <el-dialog
+    <BaseDialog
       v-model="dialogVisible"
-      title="选择任务模板"
-      width="760px"
+      width="820px"
+      type="custom"
+      :show-close="true"
+      :close-on-click-modal="false"
       destroy-on-close
-      align-center
-      class="premium-codebook-dialog"
+      full-height
     >
-      <div class="picker-panel-body">
-        <!-- 顶部全局搜索 -->
-        <div class="search-section-wrapper">
-          <el-input
-            v-model="searchQuery"
-            placeholder="输入脚本名称 / 负责人 / 扩展名全局搜索..."
-            clearable
-            @input="handleSearch"
-            class="premium-search-input"
-          >
-            <template #prefix>
-              <el-icon class="search-icon"><Search /></el-icon>
-            </template>
-          </el-input>
+      <template #header>
+        <div class="picker-dialog-header">
+          <div class="header-icon">
+            <el-icon><Box /></el-icon>
+          </div>
+          <div class="header-text">
+            <h3>选择任务模板</h3>
+            <p>从项目目录中选择需要绑定的脚本模板</p>
+          </div>
         </div>
+      </template>
 
-        <!-- 主体：普通状态双栏，搜索状态扁平列表 -->
-        <div class="main-content-layout">
-          <template v-if="!searchQuery.trim()">
+      <div class="codebook-picker-dialog">
+        <div class="picker-panel-body">
+          <div class="main-content-layout">
             <!-- 左侧项目列表 -->
             <div class="sidebar-projects-list">
               <el-scrollbar>
@@ -65,12 +61,23 @@
 
             <!-- 右侧脚本树形浏览区 -->
             <div class="tree-explorer-pane" v-loading="treeLoading">
-              <el-scrollbar v-if="codebookTree.length > 0">
+              <div class="tree-pane-header">
+                <div class="tree-pane-title">
+                  <span>目录结构</span>
+                </div>
+                <el-input v-model="searchQuery" placeholder="搜索当前项目脚本" clearable class="tree-search-input">
+                  <template #prefix>
+                    <el-icon class="search-icon"><Search /></el-icon>
+                  </template>
+                </el-input>
+              </div>
+
+              <el-scrollbar v-if="filteredCodebookTree.length > 0" class="tree-scrollbar">
                 <el-tree
-                  :data="codebookTree"
+                  :data="filteredCodebookTree"
                   node-key="id"
                   :props="treeProps"
-                  default-expand-all
+                  :default-expanded-keys="searchExpandedKeys"
                   highlight-current
                   :expand-on-click-node="false"
                   class="explorer-tree"
@@ -81,52 +88,30 @@
                       <el-icon v-if="data.kind === 'DIRECTORY'" class="node-icon dir-icon"><Folder /></el-icon>
                       <img v-else class="node-icon file-icon" :src="getCodebookIcon(data.name)" />
                       <span class="node-name-label">{{ data.name }}</span>
-                      <span class="node-owner-label" v-if="data.kind === 'FILE' && data.owner">
-                        ({{ data.owner }})
-                      </span>
                     </span>
                   </template>
                 </el-tree>
               </el-scrollbar>
               <div class="empty-state-card" v-else>
-                <el-empty description="该项目下无脚本模板" :image-size="60" />
+                <el-empty
+                  :description="searchQuery.trim() ? '未匹配到当前项目脚本' : '该项目下无脚本模板'"
+                  :image-size="60"
+                />
               </div>
             </div>
-          </template>
-
-          <!-- 全局搜索结果面板 -->
-          <template v-else>
-            <div class="search-results-pane" v-loading="searchLoading">
-              <el-scrollbar v-if="searchResults.length > 0">
-                <div class="results-grid">
-                  <div v-for="item in searchResults" :key="item.id" class="search-result-row" @click="selectFile(item)">
-                    <div class="result-details">
-                      <img class="file-icon" :src="getCodebookIcon(item.name)" />
-                      <div class="file-info-block">
-                        <span class="result-file-name">{{ item.name }}</span>
-                        <span class="result-file-owner" v-if="item.owner">负责人: {{ item.owner }}</span>
-                      </div>
-                    </div>
-                    <span class="result-project-badge"># {{ item.projectName }}</span>
-                  </div>
-                </div>
-              </el-scrollbar>
-              <div class="empty-state-card" v-else>
-                <el-empty description="未匹配到任何脚本模板" :image-size="60" />
-              </div>
-            </div>
-          </template>
+          </div>
         </div>
       </div>
-    </el-dialog>
+    </BaseDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { Box, Folder, Search, ArrowRight, ArrowDown } from "@element-plus/icons-vue"
-import { listProjectApi, treeCodebookApi, detailCodebookApi, listCodebookApi } from "@/api/task/codebook"
+import { listProjectApi, treeCodebookApi, detailCodebookApi } from "@/api/task/codebook"
 import { buildTree } from "@/pages/task/codebook/composables/useCodebookTree"
+import { BaseDialog } from "@/common/components/Dialogs"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import fileIcon from "@/common/assets/icons/preserve-color/file.svg"
 import pythonIcon from "@/common/assets/icons/preserve-color/python.svg"
@@ -170,13 +155,11 @@ const searchQuery = ref("")
 const projects = ref<any[]>([])
 const activeProjectId = ref<number | null>(null)
 const codebookTree = ref<any[]>([])
-const searchResults = ref<any[]>([])
 
 const selectedItem = ref<any>(null)
 const selectedItemProjectName = ref("")
 
 const treeLoading = ref(false)
-const searchLoading = ref(false)
 
 const treeProps = {
   label: "name",
@@ -186,6 +169,51 @@ const treeProps = {
 // 仅展示选中的脚本名称
 const displayValue = computed(() => {
   return selectedItem.value?.name || ""
+})
+
+const isMatchedNode = (node: any, keyword: string) => {
+  const name = String(node.name || "").toLowerCase()
+  return name.includes(keyword)
+}
+
+const filterTree = (nodes: any[], keyword: string): any[] => {
+  return nodes.reduce<any[]>((result, node) => {
+    const children = Array.isArray(node.children) ? filterTree(node.children, keyword) : []
+    const matched = isMatchedNode(node, keyword)
+
+    if (matched) {
+      result.push(node)
+      return result
+    }
+
+    if (children.length > 0) {
+      result.push({
+        ...node,
+        children
+      })
+    }
+
+    return result
+  }, [])
+}
+
+const filteredCodebookTree = computed(() => {
+  const keyword = searchQuery.value.trim().toLowerCase()
+  if (!keyword) return codebookTree.value
+  return filterTree(codebookTree.value, keyword)
+})
+
+const getExpandableKeys = (nodes: any[]): number[] => {
+  return nodes.flatMap((node) => {
+    const children = Array.isArray(node.children) ? node.children : []
+    const current = children.length > 0 ? [node.id] : []
+    return current.concat(getExpandableKeys(children))
+  })
+}
+
+const searchExpandedKeys = computed(() => {
+  if (!searchQuery.value.trim()) return []
+  return getExpandableKeys(filteredCodebookTree.value)
 })
 
 // ── 语言与图标推断 ────────────────────────────────────────────────────────
@@ -244,6 +272,7 @@ const loadProjectTree = async (projId: number) => {
 
 const selectProject = async (projId: number) => {
   activeProjectId.value = projId
+  searchQuery.value = ""
   await loadProjectTree(projId)
 }
 
@@ -266,47 +295,10 @@ const selectFile = (item: any) => {
   dialogVisible.value = false
 }
 
-// ── 检索功能 ─────────────────────────────────────────────────────────────
-let searchTimer: any = null
-const handleSearch = () => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(async () => {
-    const query = searchQuery.value.trim().toLowerCase()
-    if (!query) {
-      searchResults.value = []
-      return
-    }
-    searchLoading.value = true
-    try {
-      const { data } = await listCodebookApi({ offset: 0, limit: 200 })
-      const keyword = query.trim().toLowerCase()
-      const matched = (data.codebooks || []).filter(
-        (c) =>
-          c.kind === "FILE" &&
-          (c.name.toLowerCase().includes(keyword) || (c.owner && c.owner.toLowerCase().includes(keyword)))
-      )
-
-      searchResults.value = matched.map((c) => {
-        const proj = projects.value.find((p) => p.id === c.project_id)
-        return {
-          ...c,
-          projectName: proj ? proj.name : `项目 #${c.project_id}`
-        }
-      })
-    } catch (e) {
-      console.error(e)
-      searchResults.value = []
-    } finally {
-      searchLoading.value = false
-    }
-  }, 250)
-}
-
 // 监听弹窗可见性，关闭时清理检索，恢复原始树
 watch(dialogVisible, (visible) => {
   if (!visible) {
     searchQuery.value = ""
-    searchResults.value = []
   }
 })
 
@@ -398,49 +390,70 @@ watch(
   font-size: 14px;
 }
 
-// ── Premium Dialog 样式 ──────────────────────────────────────────────────
+.picker-dialog-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: #ffffff;
+    background: #2563eb;
+    border-radius: 8px;
+    box-shadow: 0 6px 14px rgba(37, 99, 235, 0.22);
+  }
+
+  .header-text {
+    min-width: 0;
+
+    h3 {
+      margin: 0 0 3px;
+      font-size: 16px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #111827;
+    }
+
+    p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #64748b;
+    }
+  }
+}
+
+.codebook-picker-dialog {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  background: #ffffff;
+}
+
 .picker-panel-body {
   display: flex;
   flex-direction: column;
-  height: 480px;
-  margin: -10px -20px -20px -20px;
-}
-
-.search-section-wrapper {
-  padding: 14px 20px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-
-  .premium-search-input :deep(.el-input__wrapper) {
-    border-radius: 8px;
-    padding: 2px 14px;
-    border: 1px solid #cbd5e1 !important;
-    box-shadow: none !important;
-    transition: all 0.25s;
-
-    &:hover,
-    &.is-focus {
-      border-color: #3b82f6 !important;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08) !important;
-    }
-  }
-
-  .search-icon {
-    font-size: 16px;
-    color: #94a3b8;
-  }
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main-content-layout {
   flex: 1;
   display: flex;
   min-height: 0;
+  background: #ffffff;
 }
 
 // 左侧项目列表
 .sidebar-projects-list {
-  width: 240px;
-  background: #fafafa;
+  width: 216px;
+  padding: 10px;
+  background: #f8fafc;
   border-right: 1px solid #e2e8f0;
   flex-shrink: 0;
 
@@ -448,18 +461,20 @@ watch(
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 16px;
+    min-height: 38px;
+    padding: 0 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid #f1f5f9;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+    border-radius: 8px;
 
     &:hover {
-      background: #f1f5f9;
+      background: #eef2f7;
     }
 
     &.is-active {
-      background: #eff6ff;
-      border-right: 3px solid #3b82f6;
+      background: #eaf2ff;
 
       .project-node-icon {
         color: #3b82f6;
@@ -506,28 +521,87 @@ watch(
 
 // 右侧浏览器面板
 .tree-explorer-pane {
+  display: flex;
   flex: 1;
-  padding: 16px;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px 16px;
   background: #ffffff;
   min-width: 0;
+  min-height: 0;
+}
+
+.tree-pane-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.tree-pane-title {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+
+  span {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+}
+
+.tree-search-input {
+  width: 260px;
+  flex-shrink: 0;
+
+  :deep(.el-input__wrapper) {
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #d8e0eb !important;
+    box-shadow: none !important;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+
+    &:hover,
+    &.is-focus {
+      border-color: #3b82f6 !important;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+  }
+}
+
+.search-icon {
+  font-size: 15px;
+  color: #94a3b8;
+}
+
+.tree-scrollbar {
+  flex: 1;
+  min-height: 0;
 }
 
 .explorer-tree {
   background: transparent;
 
   :deep(.el-tree-node__content) {
-    height: 36px;
+    height: 34px;
     border-radius: 6px;
-    margin: 2px 0;
-    padding: 0 4px;
+    margin: 1px 0;
+    padding: 0 8px;
 
     &:hover {
-      background-color: #f1f5f9;
+      background-color: #f8fafc;
     }
   }
 
   :deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background-color: #eff6ff;
+    background-color: #eaf2ff;
     color: #3b82f6;
   }
 }
@@ -538,6 +612,7 @@ watch(
   gap: 8px;
   font-size: 13px;
   width: 100%;
+  min-width: 0;
 
   .node-icon {
     font-size: 15px;
@@ -564,94 +639,12 @@ watch(
     color: #475569;
   }
 
-  .node-owner-label {
-    font-size: 11px;
-    color: #94a3b8;
-    margin-left: auto;
-    padding-right: 8px;
-  }
-
   &.is-file-node {
     cursor: pointer;
     .node-name-label {
       color: #1e293b;
       font-weight: 500;
     }
-  }
-}
-
-// 搜索结果面板
-.search-results-pane {
-  flex: 1;
-  padding: 16px;
-  background: #ffffff;
-  min-width: 0;
-
-  .results-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .search-result-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 1px solid #f1f5f9;
-    cursor: pointer;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-      transform: translateY(-1px);
-    }
-  }
-
-  .result-details {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-
-  .file-icon {
-    width: 20px;
-    height: 20px;
-    object-fit: contain;
-    flex-shrink: 0;
-  }
-
-  .file-info-block {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-
-  .result-file-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1e293b;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .result-file-owner {
-    font-size: 11px;
-    color: #94a3b8;
-  }
-
-  .result-project-badge {
-    font-size: 11px;
-    background: #f1f5f9;
-    color: #475569;
-    border-radius: 4px;
-    padding: 2px 8px;
-    font-weight: 500;
-    white-space: nowrap;
   }
 }
 
@@ -664,29 +657,35 @@ watch(
 </style>
 
 <style lang="scss">
-// 全局弹窗样式修饰
-.premium-codebook-dialog {
-  border-radius: 12px !important;
+body .base-dialog--custom:has(.codebook-picker-dialog) {
   overflow: hidden;
+  border-radius: 12px;
   box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    0 24px 56px rgba(15, 23, 42, 0.18),
+    0 10px 22px rgba(15, 23, 42, 0.08);
 
   .el-dialog__header {
-    margin-right: 0px;
-    padding: 16px 20px;
+    margin: 0;
+    padding: 18px 22px;
     border-bottom: 1px solid #e2e8f0;
     background: #ffffff;
+  }
 
-    .el-dialog__title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0f172a;
+  .el-dialog__headerbtn {
+    top: 16px;
+    right: 18px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+
+    &:hover {
+      background: #f1f5f9;
     }
   }
 
   .el-dialog__body {
-    padding: 20px !important;
+    padding: 0 !important;
+    background: #ffffff;
   }
 }
 </style>

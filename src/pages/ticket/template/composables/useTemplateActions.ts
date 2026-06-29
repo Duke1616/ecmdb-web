@@ -28,8 +28,8 @@ const confirmDelete = (label: string, name: string) =>
 
 export function useTemplateActions(options: {
   refresh: () => void
-  handleUpdateTemplate: (row: template) => void
-  handleCloneTemplate: (row: template) => void
+  handleUpdateTemplate: (row: template) => void | Promise<void>
+  handleCloneTemplate: (row: template) => void | Promise<void>
 }) {
   const router = useRouter()
   const { hasPermission } = usePermission()

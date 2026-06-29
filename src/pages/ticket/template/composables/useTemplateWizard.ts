@@ -1,7 +1,7 @@
 import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { cloneDeep } from "lodash-es"
-import { createTemplateApi, updateTemplateApi } from "@/api/ticket/template"
+import { createTemplateApi, detailTemplateApi, updateTemplateApi } from "@/api/ticket/template"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import type { template } from "@/api/ticket/template/types/template"
@@ -29,6 +29,14 @@ export function useTemplateWizard(options: { refresh: () => void }) {
     templateEditorVisible.value = true
   }
 
+  const getTemplateDetail = async (row: template) => {
+    const { data } = await detailTemplateApi(row.id)
+    return {
+      ...row,
+      ...data
+    }
+  }
+
   const handleCreateTemplate = () => {
     if (!hasPermission(TICKET_CAPABILITIES.Template.Add)) {
       ElMessage.warning("暂无新增模板权限")
@@ -38,22 +46,32 @@ export function useTemplateWizard(options: { refresh: () => void }) {
     openTemplateWizard()
   }
 
-  const handleUpdateTemplate = (row: template) => {
+  const handleUpdateTemplate = async (row: template) => {
     if (!hasPermission(TICKET_CAPABILITIES.Template.Edit)) {
       ElMessage.warning("暂无修改模板权限")
       return
     }
-    templateFormData.value = { ...createDefaultTemplateFormData(), ...row }
-    openTemplateWizard()
+    try {
+      const detail = await getTemplateDetail(row)
+      templateFormData.value = { ...createDefaultTemplateFormData(), ...cloneDeep(detail) }
+      openTemplateWizard()
+    } catch {
+      ElMessage.error("获取模板详情失败")
+    }
   }
 
-  const handleCloneTemplate = (row: template) => {
+  const handleCloneTemplate = async (row: template) => {
     if (!hasPermission(TICKET_CAPABILITIES.Template.Add)) {
       ElMessage.warning("暂无克隆模板权限")
       return
     }
-    templateFormData.value = cloneTemplatePayload(row)
-    openTemplateWizard()
+    try {
+      const detail = await getTemplateDetail(row)
+      templateFormData.value = cloneTemplatePayload(detail)
+      openTemplateWizard()
+    } catch {
+      ElMessage.error("获取模板详情失败")
+    }
   }
 
   const updateTemplateFormData = (data: TemplateFormData) => {

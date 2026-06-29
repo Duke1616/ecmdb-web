@@ -66,6 +66,25 @@ const config = {
   fieldReadonly: false
 }
 
+const hasDesignerValue = (value: unknown) => {
+  return value !== undefined && value !== null && value !== ""
+}
+
+const setDesignerForm = (data: Partial<TemplateFormData>) => {
+  if (!designerRef.value) return
+
+  designerRef.value.clearDragRule()
+  designerRef.value.setOptions({})
+
+  if (hasDesignerValue(data.options)) {
+    designerRef.value.setOptions(data.options)
+  }
+
+  if (hasDesignerValue(data.rules)) {
+    designerRef.value.setRule(data.rules)
+  }
+}
+
 const syncDesignerToFormData = () => {
   if (designerRef.value) {
     localFormData.value.rules = designerRef.value.getJson()
@@ -108,18 +127,12 @@ onBeforeUnmount(() => {
 })
 
 onMounted(() => {
-  if (props.formData?.rules) {
-    designerRef.value?.setRule(props.formData.rules)
-  }
-  if (props.formData?.options) {
-    designerRef.value?.setOptions(props.formData.options)
-  }
+  setDesignerForm(props.formData)
 })
 
 defineExpose({
   setForm: (row: TemplateFormData) => {
-    designerRef.value?.setOptions(row.options)
-    designerRef.value?.setRule(JSON.stringify(row.rules))
+    setDesignerForm(row)
     localFormData.value = { ...localFormData.value, ...row }
   },
   resetForm: () => {
