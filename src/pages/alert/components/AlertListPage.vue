@@ -99,7 +99,6 @@
             />
             <div class="source-meta">
               <span class="source-name">{{ row.data_source?.name || "-" }}</span>
-              <span class="source-type">{{ getDatasourceTypeName(row.data_source?.type) }}</span>
             </div>
           </div>
         </template>
@@ -107,7 +106,6 @@
         <template #duration="{ row }">
           <div class="time-cell">
             <span>{{ formatDuration(row.duration) }}</span>
-            <small>{{ isHistory ? "持续时长" : "已持续" }}</small>
           </div>
         </template>
 
@@ -119,7 +117,6 @@
           </div>
           <div v-else class="time-cell">
             <span>{{ formatDateTime(row.trigger_time || row.first_trigger_time) }}</span>
-            <small>触发时间</small>
           </div>
         </template>
 
@@ -256,7 +253,7 @@ const tableColumns = computed<Column[]>(() => {
   const columns: Column[] = [
     { prop: "level", label: "等级", width: 112, slot: "level" },
     { prop: "rule", label: "规则与标签", minWidth: 420, slot: "rule", align: "left" },
-    { prop: "datasource", label: "数据源", minWidth: 260, slot: "datasource", align: "left" },
+    { prop: "datasource", label: "数据源", minWidth: 260, slot: "datasource" },
     { prop: "duration", label: "持续时间", minWidth: 160, slot: "duration" },
     {
       prop: "triggerTime",
@@ -732,9 +729,11 @@ onMounted(() => {
 
 .source-cell {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
   min-width: 0;
+  width: 100%;
 }
 
 .source-icon {
@@ -749,7 +748,7 @@ onMounted(() => {
 .time-cell {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  align-items: center;
   min-width: 0;
 }
 
@@ -759,6 +758,7 @@ onMounted(() => {
   color: #334155;
   font-size: 13px;
   font-weight: 600;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -783,12 +783,6 @@ onMounted(() => {
     font-style: normal;
     font-weight: 500;
   }
-}
-
-.source-type,
-.time-cell small {
-  color: #94a3b8;
-  font-size: 12px;
 }
 
 .alert-detail {

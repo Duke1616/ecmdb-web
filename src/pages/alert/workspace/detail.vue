@@ -109,7 +109,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onActivated, nextTick, watch } from "vue"
+import { ref, computed, onMounted, onActivated, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { useWorkspaceMenuStore } from "@/pinia/stores/useWorkspaceMenu"
@@ -161,6 +161,7 @@ const teamMembersRef = ref()
 const alertManagerRef = ref()
 const alertRulesRef = ref()
 const settingsRef = ref()
+const hasActivatedOnce = ref(false)
 
 type WorkspaceMenuItem = {
   key: string
@@ -236,13 +237,21 @@ const workspaceMenuGroups: Array<{ label: string; items: WorkspaceMenuItem[] }> 
         key: "members",
         label: "团队成员",
         icon: User,
-        capability: [ALERT_CAPABILITIES.Team.Detail, ALERT_CAPABILITIES.Team.View, ALERT_CAPABILITIES.Workspace.ViewMyTeam]
+        capability: [
+          ALERT_CAPABILITIES.Team.Detail,
+          ALERT_CAPABILITIES.Team.View,
+          ALERT_CAPABILITIES.Workspace.ViewMyTeam
+        ]
       },
       {
         key: "settings",
         label: "空间配置",
         icon: Setting,
-        capability: [ALERT_CAPABILITIES.Workspace.Detail, ALERT_CAPABILITIES.Workspace.Edit, ALERT_CAPABILITIES.Workspace.Toggle]
+        capability: [
+          ALERT_CAPABILITIES.Workspace.Detail,
+          ALERT_CAPABILITIES.Workspace.Edit,
+          ALERT_CAPABILITIES.Workspace.Toggle
+        ]
       }
     ]
   }
@@ -297,8 +306,9 @@ const goBack = () => {
 }
 
 // 刷新数据
-const handleRefresh = () => {
-  loadWorkspaceData()
+const handleRefresh = async () => {
+  await loadWorkspaceData()
+  loadCurrentMenuData()
   ElMessage.success("数据已刷新")
 }
 
@@ -311,10 +321,6 @@ const handleSettingsRefresh = () => {
 const handleMenuSelect = (key: string) => {
   if (!visibleMenuItems.value.some((item) => item.key === key)) return
   menuStore.setActiveMenu(key)
-  // 延迟执行数据加载，确保组件已经渲染
-  nextTick(() => {
-    loadCurrentMenuData()
-  })
 }
 
 // 加载工作空间数据
@@ -367,14 +373,15 @@ const loadCurrentMenuData = () => {
 onMounted(async () => {
   ensureActiveMenu()
   await loadWorkspaceData()
-  // 加载当前菜单的数据
-  nextTick(() => {
-    loadCurrentMenuData()
-  })
 })
 
 // 页面激活时重新加载数据（用于从其他页面返回时）
 onActivated(() => {
+  if (!hasActivatedOnce.value) {
+    hasActivatedOnce.value = true
+    return
+  }
+
   ensureActiveMenu()
   loadCurrentMenuData()
 })
