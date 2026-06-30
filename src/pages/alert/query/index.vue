@@ -170,6 +170,9 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .query-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   height: 100%;
   min-height: 0;
   padding: 16px;
@@ -179,9 +182,11 @@ onMounted(async () => {
 
 .query-workbench {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 14px;
   min-height: 0;
+  height: 100%;
   padding-bottom: 16px;
 }
 

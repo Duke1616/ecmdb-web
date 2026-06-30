@@ -7,7 +7,7 @@
       :config="{
         view: 'list',
         theme: 'valorite',
-        fullScreen: true,
+        fullScreen: false,
         showTreeView: true,
         showHiddenFiles: false,
         compactListView: true,
@@ -109,6 +109,12 @@ interface VueFinderInstance extends ComponentPublicInstance {
   [key: string]: unknown
 }
 
+interface FinderErrorPayload {
+  code?: number
+  msg?: string
+  data?: unknown
+}
+
 const vuefinderRef = ref<VueFinderInstance | null>(null)
 
 // 配置常量
@@ -155,8 +161,60 @@ const overallPercent = computed(() => {
   return Math.max(0, Math.min(100, p))
 })
 
+const lastFinderErrorKey = ref("")
+const lastFinderErrorAt = ref(0)
+
+const getFinderErrorMessage = (error: unknown, fallback = "文件列表加载失败，请稍后重试") => {
+  if (error instanceof Error) {
+    const raw = error.message?.trim()
+    if (!raw) return fallback
+
+    try {
+      const parsed = JSON.parse(raw) as FinderErrorPayload
+      if (parsed?.msg === "permission denied") {
+        return "当前目录无访问权限"
+      }
+      return parsed?.msg || fallback
+    } catch {
+      return raw
+    }
+  }
+
+  if (typeof error === "string" && error.trim()) {
+    return error
+  }
+
+  return fallback
+}
+
+const showFinderError = (message: string, key: string) => {
+  const now = Date.now()
+  if (lastFinderErrorKey.value === key && now - lastFinderErrorAt.value < 1500) {
+    return
+  }
+
+  lastFinderErrorKey.value = key
+  lastFinderErrorAt.value = now
+  ElMessage.error(message)
+}
+
 // 扩展 RemoteDriver 以支持自定义下载（使用原生下载，支持 Range，避免内存聚合）
 class CustomRemoteDriver extends RemoteDriver {
+  private async executeWithError<T>(key: string, action: () => Promise<T>) {
+    try {
+      return await action()
+    } catch (error) {
+      const message = getFinderErrorMessage(error)
+      showFinderError(message, key)
+      throw new Error(message)
+    }
+  }
+
+  async list(params?: { path?: string }) {
+    const path = params?.path || ""
+    return this.executeWithError(`GET:list:${path}`, () => super.list(params))
+  }
+
   async download(filePath: string): Promise<void> {
     try {
       const url = `${BASE_URL.value}/download?path=${encodeURIComponent(filePath)}&id=${encodeURIComponent(String(FINDER_ID.value))}`
@@ -445,13 +503,13 @@ const clearAll = async () => {
 </script>
 
 <style lang="scss" scoped>
-body {
-  margin: 0;
-  background: #eeeeee;
-}
 .wrapper {
-  max-width: 800px;
-  margin: 80px auto;
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
 }
 .btn {
   display: block;
@@ -587,6 +645,17 @@ body {
   color: #333;
   font-size: 12px;
   font-weight: 600;
+}
+
+:deep(#vuefinder) {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+:deep(#vuefinder > *) {
+  min-height: 0;
 }
 </style>
 

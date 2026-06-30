@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onDeactivated, onMounted, ref } from "vue"
+import { nextTick, onBeforeUnmount, onDeactivated, onMounted, ref } from "vue"
 
 import "@xterm/xterm/css/xterm.css"
 import { ITerminalInitOnlyOptions, ITerminalOptions, Terminal } from "@xterm/xterm"
@@ -30,6 +30,8 @@ const xtermRef = ref<HTMLElement>()
 const fitAddon = ref<FitAddon>()
 const xterm = ref<Terminal | null>(null)
 const socket = ref<WebSocket>()
+let resizeObserver: ResizeObserver | undefined
+let resizeHandler: ReturnType<typeof _.debounce> | undefined
 
 const initXterm = () => {
   const options = ref<ITerminalOptions & ITerminalInitOnlyOptions>({
@@ -73,11 +75,10 @@ const initXterm = () => {
     socket.value!.send(JSON.stringify(message))
   })
 
-  // resize
-  const resize = _.debounce(() => {
+  bindResizeEvents()
+  nextTick(() => {
     resizeTerminal()
   })
-  window.addEventListener("resize", resize)
 }
 
 const pingInterval = ref()
@@ -129,27 +130,71 @@ const resizeTerminal = () => {
       cols,
       rows
     }
-    socket.value?.send(JSON.stringify(terminalSize))
+    if (socket.value?.readyState === WebSocket.OPEN) {
+      socket.value.send(JSON.stringify(terminalSize))
+    }
   }
+}
+
+const bindResizeEvents = () => {
+  resizeHandler = _.debounce(() => {
+    resizeTerminal()
+  }, 80)
+
+  window.addEventListener("resize", resizeHandler)
+  document.addEventListener("fullscreenchange", resizeHandler)
+
+  if (window.ResizeObserver && xtermRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      resizeHandler?.()
+    })
+    resizeObserver.observe(xtermRef.value)
+  }
+}
+
+const cleanup = () => {
+  resizeObserver?.disconnect()
+  resizeObserver = undefined
+
+  if (resizeHandler) {
+    window.removeEventListener("resize", resizeHandler)
+    document.removeEventListener("fullscreenchange", resizeHandler)
+    resizeHandler.cancel?.()
+    resizeHandler = undefined
+  }
+
+  if (pingInterval.value) {
+    clearInterval(pingInterval.value)
+    pingInterval.value = undefined
+  }
+
+  socket.value?.close()
+  socket.value = undefined
+  xterm.value?.dispose()
+  xterm.value = null
+  fitAddon.value = undefined
 }
 
 onMounted(() => {
   initXterm()
 })
 
+onBeforeUnmount(() => {
+  cleanup()
+})
+
 onDeactivated(() => {
-  socket.value?.close()
+  cleanup()
 })
 </script>
 
 <style lang="scss" scoped>
 .xterm {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 5px;
   background-color: #000;
+  box-sizing: border-box;
 }
 </style>

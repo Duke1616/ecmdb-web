@@ -53,17 +53,7 @@
             >
               <div class="model-header">
                 <div class="model-icon-wrapper">
-                  <img
-                    v-if="isImageUrl(model.icon)"
-                    :src="model.icon"
-                    :alt="model.name"
-                    class="model-icon"
-                    @error="handleImageError"
-                  />
-                  <i v-else-if="model.icon" :class="getIconClass(model.icon)" class="model-icon-font" />
-                  <el-icon v-else class="model-icon-default">
-                    <Document />
-                  </el-icon>
+                  <AppIcon :name="model.icon" fallback="Document" class="model-app-icon" />
                 </div>
               </div>
 
@@ -100,12 +90,13 @@
 </template>
 
 <script setup lang="ts">
-import { Delete, Document } from "@element-plus/icons-vue"
+import { Delete } from "@element-plus/icons-vue"
 import type { Model } from "@/api/cmdb/model/types/model"
 import type { ModelGroupView } from "@/common/utils/model"
+import AppIcon from "@/common/components/AppIcon/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
-import { getIconClass, getModelStatus, isImageUrl } from "../utils/modelDisplay"
+import { getModelStatus } from "../utils/modelDisplay"
 
 defineProps<{
   groups: ModelGroupView[]
@@ -120,11 +111,6 @@ const emit = defineEmits<{
   "model-click": [model: Model]
 }>()
 
-const handleImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement
-  console.warn("图片加载失败:", target.src)
-  target.style.display = "none"
-}
 </script>
 
 <style lang="scss" scoped>
@@ -416,24 +402,11 @@ const handleImageError = (event: Event) => {
   border-radius: 8px;
 }
 
-.model-icon {
+.model-app-icon {
   width: 22px;
   height: 22px;
-  object-fit: contain;
-}
-
-.model-icon-font {
+  font-size: 22px;
   color: #0284c7;
-  font-family: "iconfont" !important;
-  font-size: 22px;
-  font-style: normal;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.model-icon-default {
-  color: #94a3b8;
-  font-size: 22px;
 }
 
 .model-info {

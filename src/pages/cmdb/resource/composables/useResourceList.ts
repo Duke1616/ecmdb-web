@@ -340,7 +340,14 @@ export const useResourceList = () => {
   const handleOperateEvent = (row: Resource, action: string) => {
     if (action === "terminal") {
       if (!hasPermission(CMDB_CAPABILITIES.Terminal.SSHSession)) return
-      window.open(`/terminal?resource_id=${row.id}&title=${row.name}`, "_blank")
+      const terminalRoute = router.resolve({
+        name: "AssetTerminal",
+        query: {
+          resource_id: String(row.id),
+          title: row.name
+        }
+      })
+      window.open(terminalRoute.href, "_blank")
       return
     }
 

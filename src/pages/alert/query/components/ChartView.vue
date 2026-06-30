@@ -65,12 +65,13 @@ defineExpose({
 <style lang="scss" scoped>
 .data-card {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
   background-color: #ffffff;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 .graph-header {
@@ -109,13 +110,16 @@ defineExpose({
 
 .content-area {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
   padding: 16px;
 }
 
 .empty-state {
-  height: 320px;
   display: flex;
+  flex: 1;
+  min-height: 320px;
   align-items: center;
   justify-content: center;
   background: #ffffff;
@@ -125,7 +129,9 @@ defineExpose({
 
 .chart-section {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
 
   &.chart-hidden {
     display: none;
@@ -133,7 +139,8 @@ defineExpose({
 }
 
 .chart-container {
-  height: 320px;
+  flex: 1;
+  min-height: 320px;
   position: relative;
   width: 100%;
 }

@@ -4,11 +4,35 @@
 
 <script lang="ts" setup>
 import guacamole, { Mouse } from "guacamole-common-js"
-import { onMounted, ref } from "vue"
+import { nextTick, onBeforeUnmount, onMounted, ref } from "vue"
 import _ from "lodash"
 
 const guacamoleRef = ref<HTMLDivElement | null>(null)
 const guacamoleClient = ref()
+let resizeObserver: ResizeObserver | undefined
+let resizeHandler: ReturnType<typeof _.debounce> | undefined
+let focusHandler: (() => void) | undefined
+
+const resizeDisplay = () => {
+  const client = guacamoleClient.value
+  const container = guacamoleRef.value
+  if (!client || !container) return
+
+  const display = client.getDisplay()
+  const width = display.getWidth()
+  const height = display.getHeight()
+
+  if (width && height) {
+    const scale = Math.min(container.clientWidth / width, container.clientHeight / height)
+    if (scale) {
+      display.scale(scale)
+    }
+  }
+
+  if (container.clientWidth && container.clientHeight && typeof client.sendSize === "function") {
+    client.sendSize(container.clientWidth, container.clientHeight)
+  }
+}
 
 const init = async () => {
   const socketLink = `ws://127.0.0.1:8000/api/term/guac/tunnel`
@@ -39,7 +63,7 @@ const init = async () => {
   }
 
   const text = ref()
-  window.addEventListener("focus", async () => {
+  focusHandler = async () => {
     const current_text = await navigator.clipboard.readText()
     if (text.value != current_text) {
       text.value = current_text
@@ -48,7 +72,8 @@ const init = async () => {
       writer.sendText(text.value)
       writer.sendEnd()
     }
-  })
+  }
+  window.addEventListener("focus", focusHandler)
 
   client.onstatechange = (state: number) => {
     console.log("状态变化", state)
@@ -110,33 +135,66 @@ const init = async () => {
 
   const display = client.getDisplay()
   display.onresize = () => {
-    const scale = Math.min(window.innerWidth / display.getWidth(), window.innerHeight / display.getHeight())
-    if (scale) display.scale(scale)
+    resizeHandler?.()
+  }
+
+  bindResizeEvents()
+  nextTick(() => {
+    resizeHandler?.()
+  })
+}
+
+const bindResizeEvents = () => {
+  resizeHandler = _.debounce(() => {
+    resizeDisplay()
+  }, 80)
+
+  window.addEventListener("resize", resizeHandler)
+  document.addEventListener("fullscreenchange", resizeHandler)
+
+  if (window.ResizeObserver && guacamoleRef.value) {
+    resizeObserver = new ResizeObserver(() => {
+      resizeHandler?.()
+    })
+    resizeObserver.observe(guacamoleRef.value)
   }
 }
 
-onMounted(() => {
-  window.addEventListener("resize", () => {
-    const client = guacamoleClient.value
-    if (client) {
-      const width = client.getDisplay().getWidth()
-      const height = client.getDisplay().getHeight()
+const cleanup = () => {
+  resizeObserver?.disconnect()
+  resizeObserver = undefined
 
-      const scale = Math.min(window.innerWidth / width, window.innerHeight / height)
-      if (scale) client.getDisplay().scale(scale)
-    }
-  })
+  if (resizeHandler) {
+    window.removeEventListener("resize", resizeHandler)
+    document.removeEventListener("fullscreenchange", resizeHandler)
+    resizeHandler.cancel?.()
+    resizeHandler = undefined
+  }
+
+  if (focusHandler) {
+    window.removeEventListener("focus", focusHandler)
+    focusHandler = undefined
+  }
+
+  guacamoleClient.value?.disconnect?.()
+  guacamoleClient.value = undefined
+}
+
+onMounted(() => {
   init()
+})
+
+onBeforeUnmount(() => {
+  cleanup()
 })
 </script>
 
 <style lang="scss" scoped>
 .display {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   background-color: black;
+  overflow: hidden;
 }
 </style>

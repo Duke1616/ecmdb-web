@@ -51,7 +51,7 @@
       </template>
 
       <template #mapping="{ row }">
-        <span class="mapping-text">{{ row.mapping }}</span>
+        <span class="mapping-text">{{ getRelationMappingLabel(row.mapping) }}</span>
       </template>
 
       <template #actions="{ row }">
@@ -77,6 +77,7 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import CreateRelation from "./create.vue"
 import { useModelRelations } from "../../composables/useModelRelations"
+import { getRelationMappingLabel } from "@/api/cmdb/relation/types/relation"
 
 const { modelUid } = defineProps<{ modelUid: string }>()
 

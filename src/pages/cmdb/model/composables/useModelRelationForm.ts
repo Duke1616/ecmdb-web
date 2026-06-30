@@ -6,8 +6,10 @@ import type {
   CreateModelRelationReq,
   ListRelationTypeData,
   ModelRelation,
+  RelationMapping,
   UpdateModelRelationReq
 } from "@/api/cmdb/relation/types/relation"
+import { RELATION_MAPPING_OPTIONS } from "@/api/cmdb/relation/types/relation"
 
 interface RelationFormProps {
   modelUid: string
@@ -15,11 +17,7 @@ interface RelationFormProps {
   activeRelation: ModelRelation | null
 }
 
-export const MAPPING_OPTIONS = [
-  { value: "1-1", label: "1-1", description: "一对一关系" },
-  { value: "1-N", label: "1-N", description: "一对多关系" },
-  { value: "N-N", label: "N-N", description: "多对多关系" }
-]
+export const MAPPING_OPTIONS = RELATION_MAPPING_OPTIONS
 
 const validateForm = (form: FormInstance | null) =>
   new Promise<boolean>((resolve) => {
@@ -39,7 +37,7 @@ export const useModelRelationForm = (props: RelationFormProps) => {
     source_model_uid: props.modelUid,
     target_model_uid: "",
     relation_type_uid: "",
-    mapping: "",
+    mapping: "" as RelationMapping | "",
     description: undefined
   })
 

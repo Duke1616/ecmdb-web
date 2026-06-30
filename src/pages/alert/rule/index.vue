@@ -130,7 +130,14 @@
           </template>
 
           <template #datasource_type="{ row }">
-            <el-tag type="info" effect="light">{{ row.datasource_type }}</el-tag>
+            <div class="datasource-type-cell">
+              <img
+                :src="getDatasourceTypeIcon(row.datasource_type)"
+                :alt="getDatasourceTypeName(row.datasource_type)"
+                class="datasource-type-icon"
+              />
+              <span class="datasource-type-name">{{ getDatasourceTypeName(row.datasource_type) }}</span>
+            </div>
           </template>
 
           <template #eval_interval="{ row }">
@@ -188,6 +195,7 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { FormDialog } from "@@/components/Dialogs"
 import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { usePagination } from "@@/composables/usePagination"
+import { getDatasourceTypeIcon, getDatasourceTypeName } from "@/pages/alert/utils/datasourceMeta"
 import {
   createRuleGroupApi,
   deleteRuleApi,
@@ -821,6 +829,29 @@ onMounted(async () => {
   color: #475569;
   font-size: 12px;
   font-weight: 600;
+}
+
+.datasource-type-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.datasource-type-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.datasource-type-name {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {

@@ -13,6 +13,7 @@
       :confirm-disabled="!selectedOption || loading"
       :footer-info-text="selectedOption ? `已选择: ${getCurrentOptionLabel()}` : '请选择一种连接方式'"
       header-icon="Connection"
+      @cancel="handleCancel"
       @confirm="connect"
     >
       <div class="connection-options">
@@ -44,20 +45,18 @@
 
     <!-- 连接状态提示 -->
     <div v-if="isConnected" class="connection-status">
-      <el-alert
-        :title="`已连接到 ${getCurrentOptionLabel()}`"
-        type="success"
-        :closable="false"
-        show-icon
-        class="status-alert"
-      >
-        <template #default>
-          <div class="status-content">
-            <span>资源ID: {{ resourceId }}</span>
-            <el-button type="text" @click="disconnect" class="disconnect-btn"> 断开连接 </el-button>
-          </div>
-        </template>
-      </el-alert>
+      <div class="status-chip">
+        <div class="status-chip__dot" />
+        <span>已连接到 {{ getCurrentOptionLabel() }}</span>
+      </div>
+      <div class="status-meta">资源 ID {{ resourceId }}</div>
+      <el-button link type="danger" @click="disconnect" class="disconnect-btn">断开连接</el-button>
+    </div>
+
+    <div v-else-if="!dialogVisible || !hasResource" class="terminal-empty-state">
+      <el-empty :description="hasResource ? '当前未建立连接' : '请先从左侧选择主机'">
+        <el-button v-if="hasResource" type="primary" @click="reopenDialog">选择连接方式</el-button>
+      </el-empty>
     </div>
 
     <!-- 终端组件容器 -->
@@ -75,7 +74,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue"
-import { connectApi } from "@/api/term"
+import { connectApi } from "@/api/cmdb/terminal"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 
@@ -105,6 +104,7 @@ const router = useRouter()
 const resourceId = computed(() => route.query.resource_id as string)
 const title = computed(() => route.query.title as string)
 const connectionType = computed(() => route.query.connection_type as string)
+const hasResource = computed(() => Boolean(resourceId.value))
 
 // 状态管理
 const dialogVisible = ref<boolean>(true)
@@ -157,6 +157,14 @@ const selectOption = (option: ConnectionOption) => {
   selectedOption.value = option.value
 }
 
+const handleCancel = () => {
+  dialogVisible.value = false
+}
+
+const reopenDialog = () => {
+  dialogVisible.value = true
+}
+
 const connect = async () => {
   if (!selectedOption.value) {
     ElMessage.warning("请选择连接方式")
@@ -191,14 +199,6 @@ const connect = async () => {
     ElMessage.success(`成功连接到 ${getCurrentOptionLabel()}`)
   } catch (error: unknown) {
     console.error("连接失败:", error)
-
-    const errorMessage =
-      (error && typeof error === "object" && ("msg" in error || "message" in error)
-        ? "msg" in error
-          ? error.msg
-          : error.message
-        : null) || "连接失败"
-    ElMessage.error(`连接失败: ${String(errorMessage)}`)
   } finally {
     loading.value = false
   }
@@ -275,8 +275,7 @@ watch(
 onMounted(async () => {
   // 检查必要参数
   if (!resourceId.value) {
-    ElMessage.error("缺少必要的资源ID参数")
-    router.back()
+    dialogVisible.value = false
     return
   }
 
@@ -297,11 +296,6 @@ onMounted(async () => {
 onUnmounted(() => {
   // 移除页面离开事件监听（确保清理）
   window.removeEventListener("beforeunload", handleBeforeUnload)
-
-  // 组件卸载时清理资源
-  if (isConnected.value) {
-    disconnect()
-  }
 })
 </script>
 
@@ -309,8 +303,10 @@ onUnmounted(() => {
 .term-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+  background: transparent;
 }
 
 // 连接选项网格布局
@@ -326,12 +322,15 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 20px;
-  border-radius: 12px;
-  border: 2px solid #e4e7ed;
+  border-radius: 8px;
+  border: 1px solid #dbe3ee;
   background: white;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   position: relative;
   overflow: hidden;
 
@@ -341,16 +340,16 @@ onUnmounted(() => {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    height: 2px;
+    background: #409eff;
     transform: scaleX(0);
     transition: transform 0.3s ease;
   }
 
   &:hover {
-    border-color: #667eea;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    border-color: #bfd7f5;
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 
     &::before {
       transform: scaleX(1);
@@ -358,23 +357,22 @@ onUnmounted(() => {
   }
 
   &.selected {
-    border-color: #67c23a;
-    background: linear-gradient(135deg, #67c23a 0%, #85ce61 100%);
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(103, 194, 58, 0.3);
+    border-color: #409eff;
+    background: #f7fbff;
+    color: #0f172a;
+    box-shadow: 0 12px 24px rgba(64, 158, 255, 0.12);
 
     &::before {
-      background: rgba(255, 255, 255, 0.3);
+      background: #409eff;
       transform: scaleX(1);
     }
 
     .option-title {
-      color: white;
+      color: #0f172a;
     }
 
     .option-description {
-      color: rgba(255, 255, 255, 0.9);
+      color: #475569;
     }
   }
 
@@ -393,12 +391,12 @@ onUnmounted(() => {
 // 选项图标
 .option-icon {
   margin-right: 16px;
-  color: #667eea;
+  color: #409eff;
   transition: color 0.3s ease;
 }
 
 .connection-option.selected .option-icon {
-  color: white;
+  color: #409eff;
 }
 
 // 选项内容
@@ -428,39 +426,65 @@ onUnmounted(() => {
 
 // 连接状态提示
 .connection-status {
-  margin: 16px;
-  animation: slideDown 0.3s ease-out;
-}
-
-.status-alert {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.status-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  gap: 12px;
+  min-height: 36px;
+  padding: 0 4px;
+  color: #334155;
+  animation: slideDown 0.24s ease-out;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #166534;
+  font-size: 13px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.status-chip__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.status-meta {
+  font-size: 13px;
+  color: #64748b;
 }
 
 .disconnect-btn {
-  color: #f56c6c;
-  font-weight: 500;
+  margin-left: auto;
+}
 
-  &:hover {
-    color: #f78989;
-  }
+.terminal-empty-state {
+  flex: 1;
+  min-height: 0;
+  border-radius: 10px;
+  border: 1px dashed #cbd5e1;
+  background: rgba(255, 255, 255, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 // 终端包装器
 .terminal-wrapper {
   flex: 1;
-  margin: 16px;
-  border-radius: 8px;
+  min-height: 0;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid #dbe3ee;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
   background: white;
+  display: flex;
 }
 
 // 动画
@@ -498,10 +522,6 @@ onUnmounted(() => {
 
 // 深色模式支持
 @media (prefers-color-scheme: dark) {
-  .term-container {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  }
-
   .connection-option {
     background: #2c3e50;
     border-color: #34495e;
@@ -522,6 +542,10 @@ onUnmounted(() => {
 
   .option-description {
     color: #bdc3c7;
+  }
+
+  .status-meta {
+    color: #cbd5e1;
   }
 }
 </style>

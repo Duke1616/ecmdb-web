@@ -2,8 +2,9 @@
   <div class="custom-node" :style="{ '--theme-color': node.color || '#3B82F6' }">
     <div class="node-indicator" />
     <div class="node-main">
-      <div class="node-icon" :style="{ 'background-image': node.data?.icon ? `url(${node.data.icon})` : 'none' }">
-        <span v-if="!node.data?.icon" class="node-icon-fallback">{{ displayInitial }}</span>
+      <div class="node-icon">
+        <AppIcon v-if="node.data?.icon" :name="String(node.data.icon)" fallback="Box" class="node-app-icon" />
+        <span v-else class="node-icon-fallback">{{ displayInitial }}</span>
       </div>
       <div class="node-info">
         <span class="node-label" :title="displayText">{{ displayText }}</span>
@@ -15,6 +16,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import type { RGNode } from "relation-graph-vue3"
+import AppIcon from "@/common/components/AppIcon/index.vue"
 
 const props = defineProps<{
   node: RGNode
@@ -71,9 +73,6 @@ const displayInitial = computed(() => displayText.value.charAt(0).toUpperCase())
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   background-color: #f1f5f9;
   color: var(--theme-color);
   display: flex;
@@ -82,6 +81,13 @@ const displayInitial = computed(() => displayText.value.charAt(0).toUpperCase())
   font-weight: 600;
   font-size: 11px;
   flex-shrink: 0;
+}
+
+.node-app-icon {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+  color: var(--theme-color);
 }
 
 .node-icon-fallback {

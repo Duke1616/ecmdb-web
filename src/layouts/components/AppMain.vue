@@ -34,16 +34,21 @@ const settingsStore = useSettingsStore()
 .app-main {
   width: 100%;
   display: flex;
+  height: 100%;
+  min-height: 0;
 }
 
 .app-scrollbar {
   flex-grow: 1;
+  height: 100%;
+  min-height: 0;
   overflow: auto;
   @extend %scrollbar;
   display: flex;
   flex-direction: column;
   .app-container-grow {
     flex-grow: 1;
+    min-height: 0;
   }
 }
 </style>

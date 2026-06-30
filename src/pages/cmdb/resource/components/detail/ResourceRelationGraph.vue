@@ -4,11 +4,9 @@
       <RelationGraph ref="graphRef" :options="graphOptions" @node-expand="onNodeExpand" @node-collapse="onNodeCollapse">
         <template #node="{ node }">
           <div class="graph-node" @dblclick.stop="openNodeDetailDrawer(node)">
-            <div
-              class="graph-node-icon"
-              :style="{ backgroundImage: node.data?.icon ? `url(${node.data.icon})` : 'none' }"
-            >
-              <span v-if="!node.data?.icon">{{ getNodeInitial(node) }}</span>
+            <div class="graph-node-icon">
+              <AppIcon v-if="node.data?.icon" :name="node.data.icon" fallback="Box" class="graph-node-app-icon" />
+              <span v-else>{{ getNodeInitial(node) }}</span>
             </div>
             <div class="graph-node-content">
               <div class="graph-node-name" :title="node.text || ''">
@@ -54,6 +52,7 @@
 import { View } from "@element-plus/icons-vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGNode, RGOptions } from "relation-graph-vue3"
+import AppIcon from "@/common/components/AppIcon/index.vue"
 import { Drawer } from "@/common/components/Dialogs"
 import ResourceDescription from "./ResourceDescription.vue"
 import { useResourceRelationGraph } from "../../composables/detail/useResourceRelationGraph"
@@ -214,11 +213,16 @@ const getNodeInitial = (node: RGNode) => {
   border: 1px solid #e2e8f0;
   border-radius: 7px;
   background-color: #f8fafc;
-  background-position: center;
-  background-size: cover;
   color: #2563eb;
   font-size: 13px;
   font-weight: 700;
+}
+
+.graph-node-app-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  color: #2563eb;
 }
 
 .graph-node-content {

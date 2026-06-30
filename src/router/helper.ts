@@ -4,8 +4,12 @@ import { type Menu, type Meta } from "@/api/iam/permission/type"
 import type { SvgName } from "~virtual/svg-component"
 
 /** 所有组件映射表 */
-const Layouts = import.meta.glob("../layouts/index.vue")
+const Layouts = import.meta.glob(["../layouts/index.vue", "../layouts/term.vue"])
 const Views = import.meta.glob(["../views/**/*.vue", "../pages/**/*.vue"])
+const layoutComponentMap = {
+  Layouts: "../layouts/index.vue",
+  TermLayouts: "../layouts/term.vue"
+} as const
 
 const normalizeDynamicPath = (route: Menu): string => {
   if (route.name === "EscalationStepGovernance" && !route.path.includes(":config_id")) {
@@ -13,6 +17,13 @@ const normalizeDynamicPath = (route: Menu): string => {
   }
 
   return route.path
+}
+
+const resolveLayoutComponent = (component?: string) => {
+  if (!component) return undefined
+
+  const layoutPath = layoutComponentMap[component as keyof typeof layoutComponentMap]
+  return layoutPath ? Layouts[layoutPath] : undefined
 }
 
 /**
@@ -38,6 +49,7 @@ export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordR
   return backendRoutes.map((route): RouteRecordRaw => {
     // 判定是否为顶级根路由
     const isRoot = !route.parent_id || route.parent_id === 0
+    const layoutComponent = resolveLayoutComponent(route.component)
 
     // 处理目录/带有子节点的节点
     if (route.children && route.children.length > 0) {
@@ -46,7 +58,7 @@ export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordR
         name: route.name,
         redirect: route.redirect,
         // 只有根层级目录才强制使用 Layout 外层组件
-        component: isRoot ? Layouts["../layouts/index.vue"] : undefined,
+        component: layoutComponent ?? (isRoot ? Layouts["../layouts/index.vue"] : undefined),
         meta: transformMeta(route.meta),
         children: transformDynamicRoutes(route.children)
       }
@@ -54,7 +66,7 @@ export const transformDynamicRoutes = (backendRoutes: Menu[] = []): RouteRecordR
 
     // 处理叶子节点（具体页面）
     const componentPath = `..${route.component}`
-    const component = Views[componentPath]
+    const component = layoutComponent ?? Views[componentPath]
 
     if (!component) {
       console.warn(`[RouteGuard] 未找到组件: ${componentPath} (节点: ${route.name})`)

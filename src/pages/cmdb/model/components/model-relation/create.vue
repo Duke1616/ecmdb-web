@@ -76,7 +76,7 @@
                 <el-option v-for="item in mappingOptions" :key="item.label" :label="item.label" :value="item.value">
                   <template #default>
                     <div class="mapping-option">
-                      <span class="mapping-value">{{ item.value }}</span>
+                      <span class="mapping-value">{{ item.label }}</span>
                       <span class="mapping-desc">{{ item.description }}</span>
                     </div>
                   </template>
@@ -274,13 +274,14 @@ watch(
 
   .mapping-option {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
 
     .mapping-value {
-      font-weight: 500;
       color: #1f2937;
-      font-family: "Monaco", "Menlo", monospace;
+      font-size: 13px;
+      font-weight: 600;
     }
 
     .mapping-desc {
