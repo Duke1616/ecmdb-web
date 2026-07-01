@@ -1,6 +1,6 @@
 import { computed, h, markRaw, nextTick, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { Delete, Edit, Monitor, View } from "@element-plus/icons-vue"
+import { Delete, Edit, View } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { getModelAttributesWithGroupsApi } from "@/api/cmdb/attribute"
 import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
@@ -12,6 +12,7 @@ import { usePagination } from "@/common/composables/usePagination"
 import { usePermission } from "@/common/composables/usePermission"
 import { createAttributeListView, type AttributeGroupView } from "@/common/utils/attribute"
 import type { Column } from "@@/components/DataTable/types"
+import { useResourcePluginActions } from "./useResourcePluginActions"
 
 type ResourceFormExpose = {
   setForm: (resource: Resource) => void
@@ -27,12 +28,21 @@ type ResourceOperateItem = {
   capability: string
 }
 
+const estimateActionLabelWidth = (label: string) => {
+  const units = Array.from(label || "").reduce((sum, char) => {
+    return sum + (/[\u4e00-\u9fa5]/.test(char) ? 1 : 0.62)
+  }, 0)
+  return units * 12
+}
+
 export const useResourceList = () => {
   const route = useRoute()
   const router = useRouter()
   const { hasPermission } = usePermission()
   const { exporting, exportTemplate } = useDataIO()
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+  const { getPluginOperateItems, loadResourcePluginActions, isPluginActionCode, handlePluginAction } =
+    useResourcePluginActions()
 
   const modelUid = computed(() => String(route.query.uid || ""))
   const modelName = computed(() => String(route.query.name || modelUid.value || "未命名模型"))
@@ -93,8 +103,8 @@ export const useResourceList = () => {
     })
   })
 
-  const operateBtnItems = computed<ResourceOperateItem[]>(() => {
-    const items: ResourceOperateItem[] = [
+  const baseOperateBtnItems = computed<ResourceOperateItem[]>(() => {
+    return [
       {
         name: "详情",
         code: "detail",
@@ -117,18 +127,32 @@ export const useResourceList = () => {
         capability: CMDB_CAPABILITIES.Resource.Delete
       }
     ]
+  })
 
-    if (modelUid.value === "host") {
-      items.unshift({
-        name: "终端",
-        code: "terminal",
-        type: "info",
-        icon: markRaw(Monitor),
-        capability: CMDB_CAPABILITIES.Terminal.SSHSession
-      })
-    }
+  const getOperateBtnItems = (row: Resource): ResourceOperateItem[] => {
+    return [...getPluginOperateItems(row.id), ...baseOperateBtnItems.value]
+  }
 
-    return items
+  const actionColumnWidth = computed(() => {
+    const width = resourcesData.value.reduce((maxWidth, row) => {
+      const visibleItems = getOperateBtnItems(row).slice(0, 2)
+      if (visibleItems.length === 0) return maxWidth
+
+      const buttonsWidth = visibleItems.reduce((sum, item) => {
+        const iconWidth = item.icon ? 16 : 0
+        const labelWidth = estimateActionLabelWidth(item.name)
+        const horizontalPadding = 14
+        return sum + iconWidth + labelWidth + horizontalPadding
+      }, 0)
+
+      const gapWidth = Math.max(visibleItems.length - 1, 0) * 10
+      const moreButtonWidth = getOperateBtnItems(row).length > 2 ? 34 : 0
+      const columnPadding = 24
+
+      return Math.max(maxWidth, Math.ceil(buttonsWidth + gapWidth + moreButtonWidth + columnPadding))
+    }, 180)
+
+    return Math.min(Math.max(width, 180), 280)
   })
 
   const fetchAttributeFields = async () => {
@@ -177,9 +201,10 @@ export const useResourceList = () => {
     attributesLoaded.value = true
   }
 
-  const applyResourceData = (data: Awaited<ReturnType<typeof fetchResourceByModelUid>>) => {
+  const applyResourceData = async (data: Awaited<ReturnType<typeof fetchResourceByModelUid>>) => {
     resourcesData.value = data.resources
     paginationData.total = data.total
+    await loadResourcePluginActions(data.resources)
   }
 
   const refreshPage = async () => {
@@ -191,7 +216,7 @@ export const useResourceList = () => {
     try {
       const [schema, resources] = await Promise.all([fetchAttributeFields(), fetchResourceByModelUid()])
       applyAttributeView(schema)
-      applyResourceData(resources)
+      await applyResourceData(resources)
     } finally {
       tableLoading.value = false
       initializing.value = false
@@ -205,7 +230,7 @@ export const useResourceList = () => {
 
     try {
       const resources = await fetchResourceByModelUid()
-      applyResourceData(resources)
+      await applyResourceData(resources)
     } finally {
       tableLoading.value = false
     }
@@ -338,16 +363,8 @@ export const useResourceList = () => {
   }
 
   const handleOperateEvent = (row: Resource, action: string) => {
-    if (action === "terminal") {
-      if (!hasPermission(CMDB_CAPABILITIES.Terminal.SSHSession)) return
-      const terminalRoute = router.resolve({
-        name: "AssetTerminal",
-        query: {
-          resource_id: String(row.id),
-          title: row.name
-        }
-      })
-      window.open(terminalRoute.href, "_blank")
+    if (isPluginActionCode(action)) {
+      handlePluginAction(row, action)
       return
     }
 
@@ -418,7 +435,8 @@ export const useResourceList = () => {
     currentResourceIds,
     paginationData,
     tableColumns,
-    operateBtnItems,
+    actionColumnWidth,
+    getOperateBtnItems,
     canDeleteResource,
     canEditCustomField,
     handleCurrentChange,

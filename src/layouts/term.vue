@@ -1,22 +1,19 @@
 <script lang="ts" setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
+import { computed, onMounted, ref, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
-import { FullScreen, Monitor, RefreshRight, Search } from "@element-plus/icons-vue"
-import { ElMessage } from "element-plus"
+import { ArrowLeft, ArrowRight, Monitor, Search } from "@element-plus/icons-vue"
 import { listResourceApi } from "@/api/cmdb/resource"
 import type { Resource } from "@/api/cmdb/resource/types/resource"
 import TerminalPage from "@/pages/cmdb/terminal/index.vue"
 
 const route = useRoute()
 const router = useRouter()
-const layoutRef = ref<HTMLElement>()
-const isFullscreen = ref(false)
 const loading = ref(false)
 const keyword = ref("")
 const hostResources = ref<Resource[]>([])
+const sidebarCollapsed = ref(false)
 
 const resourceId = computed(() => String(route.query.resource_id || ""))
-const resourceViewKey = computed(() => `${route.path}:${resourceId.value || "empty"}`)
 const filteredResources = computed(() => {
   const text = keyword.value.trim().toLowerCase()
   if (!text) return hostResources.value
@@ -46,58 +43,26 @@ const fetchHostResources = async () => {
   }
 }
 
-const handleClose = () => {
-  if (window.opener) {
-    window.close()
-    return
-  }
-
-  router.push({
-    path: "/cmdb/resource/list",
-    query: {
-      uid: "host",
-      name: "主机"
-    }
-  })
-}
-
 const handleResourceSelect = (resource: Resource) => {
   if (String(resource.id) === resourceId.value) return
 
+  const nextQuery: Record<string, string> = {
+    resource_id: String(resource.id),
+    title: resource.name
+  }
+
   router.replace({
     path: route.path,
-    query: {
-      resource_id: String(resource.id),
-      title: resource.name
-    }
+    query: nextQuery
   })
 }
 
-const toggleFullscreen = async () => {
-  try {
-    if (!document.fullscreenElement) {
-      await layoutRef.value?.requestFullscreen()
-      return
-    }
-
-    await document.exitFullscreen()
-  } catch (error) {
-    console.error("终端全屏切换失败:", error)
-    ElMessage.warning("浏览器当前不支持全屏")
-  }
-}
-
-const handleFullscreenChange = () => {
-  isFullscreen.value = !!document.fullscreenElement
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value
 }
 
 onMounted(() => {
-  document.addEventListener("fullscreenchange", handleFullscreenChange)
   fetchHostResources()
-})
-
-onBeforeUnmount(() => {
-  document.removeEventListener("fullscreenchange", handleFullscreenChange)
 })
 
 watch(
@@ -124,34 +89,31 @@ watch(
 </script>
 
 <template>
-  <section ref="layoutRef" class="term-layout">
+  <section class="term-layout">
     <section class="term-workspace">
-      <aside class="term-sidebar">
+      <aside class="term-sidebar" :class="{ 'is-collapsed': sidebarCollapsed }">
         <div class="sidebar-toolbar">
-          <div class="sidebar-title">
+          <div v-if="!sidebarCollapsed" class="sidebar-title">
             <el-icon><Monitor /></el-icon>
             <span>主机列表</span>
           </div>
           <div class="sidebar-actions">
             <el-button
-              :icon="FullScreen"
-              :type="isFullscreen ? 'primary' : 'default'"
+              :icon="sidebarCollapsed ? ArrowRight : ArrowLeft"
               circle
               text
-              @click="toggleFullscreen"
+              @click="toggleSidebar"
             />
-            <el-button :icon="RefreshRight" circle text @click="fetchHostResources" />
-            <el-button text @click="handleClose">关闭</el-button>
           </div>
         </div>
 
-        <el-input v-model="keyword" placeholder="搜索主机名或 ID" clearable class="sidebar-search">
+        <el-input v-if="!sidebarCollapsed" v-model="keyword" placeholder="搜索主机名或 ID" clearable class="sidebar-search">
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>
         </el-input>
 
-        <div v-loading="loading" class="sidebar-list">
+        <div v-if="!sidebarCollapsed" v-loading="loading" class="sidebar-list">
           <button
             v-for="item in filteredResources"
             :key="item.id"
@@ -166,12 +128,24 @@ watch(
 
           <el-empty v-if="!loading && filteredResources.length === 0" :image-size="80" description="暂无主机数据" />
         </div>
+
+        <div v-else class="sidebar-collapsed-bar">
+          <button
+            v-for="item in filteredResources.slice(0, 10)"
+            :key="item.id"
+            type="button"
+            class="collapsed-resource-dot"
+            :class="{ active: String(item.id) === resourceId }"
+            :title="item.name || `主机 ${item.id}`"
+            @click="handleResourceSelect(item)"
+          >
+            <span>{{ (item.name || String(item.id)).slice(0, 1).toUpperCase() }}</span>
+          </button>
+        </div>
       </aside>
 
       <main class="term-body">
-        <router-view v-slot="{ Component }">
-          <component :is="Component || TerminalPage" :key="resourceViewKey" class="term-view" />
-        </router-view>
+        <TerminalPage class="term-view" />
       </main>
     </section>
   </section>
@@ -202,6 +176,14 @@ watch(
   display: flex;
   flex-direction: column;
   min-height: 0;
+  transition:
+    width 0.2s ease,
+    min-width 0.2s ease;
+
+  &.is-collapsed {
+    width: 56px;
+    min-width: 56px;
+  }
 }
 
 .sidebar-toolbar {
@@ -226,6 +208,7 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  margin-left: auto;
 }
 
 .sidebar-search {
@@ -263,6 +246,45 @@ watch(
 
   &.active {
     background: #dbeafe;
+  }
+}
+
+.sidebar-collapsed-bar {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.collapsed-resource-dot {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px #dbe3ee;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+
+  &.active {
+    background: #dbeafe;
+    color: #1d4ed8;
+    box-shadow: inset 0 0 0 1px #93c5fd;
   }
 }
 
@@ -307,6 +329,12 @@ watch(
     min-height: 220px;
     border-right: 0;
     border-bottom: 1px solid #dbe3ee;
+
+    &.is-collapsed {
+      width: 100%;
+      min-width: 0;
+      min-height: 56px;
+    }
   }
 
   .sidebar-toolbar {
@@ -320,6 +348,12 @@ watch(
   .sidebar-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .sidebar-collapsed-bar {
+    flex-direction: row;
+    align-items: center;
+    padding: 0 12px 12px;
   }
 
   .term-body {

@@ -131,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots, ref, onMounted, onUnmounted, watch, nextTick } from "vue"
+import { computed, useSlots, ref, onMounted, onUnmounted, watch, nextTick, getCurrentInstance } from "vue"
 import { Rank } from "@element-plus/icons-vue"
 import Sortable from "sortablejs"
 import type { Column, Action } from "./types"
@@ -176,6 +176,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const slots = useSlots()
+const instance = getCurrentInstance()
 
 // 表格引用
 const tableRef = ref()
@@ -306,56 +307,53 @@ const hasActionsSlot = computed(() => {
   return !!slots.actions
 })
 
+const hasCustomActionColumnWidth = computed(() => {
+  const vnodeProps = instance?.vnode.props || {}
+  return "actionColumnWidth" in vnodeProps || "action-column-width" in vnodeProps
+})
+
 // 动态计算操作列宽度
 const dynamicActionColumnWidth = computed(() => {
-  // 如果有自定义操作列插槽，尝试从插槽内容中获取实际按钮信息
+  if (hasCustomActionColumnWidth.value) {
+    return props.actionColumnWidth
+  }
+
   if (hasActionsSlot.value) {
-    // 基于窗口宽度和数据量来动态计算
     const dataLength = props.data?.length || 0
     const isSmallScreen = windowWidth.value < 1400
 
-    // 基础宽度 - 确保能容纳4字按钮
     let baseWidth = 180
 
-    // 根据屏幕大小调整
     if (isSmallScreen) {
-      baseWidth = 200 // 小屏幕也需要足够宽度显示4字按钮
+      baseWidth = 200
     } else if (windowWidth.value > 1920) {
-      baseWidth = 200 // 大屏幕维持稳定操作列，避免过宽
+      baseWidth = 200
     }
 
-    // 根据数据量调整
     if (dataLength > 100) {
-      baseWidth += 40 // 大量数据可能需要更多操作
+      baseWidth += 40
     }
 
-    // 确保最小宽度能容纳2个4字按钮
-    const minWidthForTwoButtons = 170 // 2个4字按钮的最小宽度
+    const minWidthForTwoButtons = 170
     baseWidth = Math.max(baseWidth, minWidthForTwoButtons)
 
     return baseWidth
   }
 
-  // 根据操作按钮数量动态调整宽度
   if (props.actions && props.actions.length > 0) {
-    // 分析按钮文字长度，计算实际需要的宽度
     let maxTextLength = 0
     props.actions.forEach((action) => {
       const textLength = action.label ? action.label.length : 0
       maxTextLength = Math.max(maxTextLength, textLength)
     })
 
-    // 中文字符宽度计算：9px字体
     const chineseCharWidth = 9
-    const buttonPadding = 12 // 按钮内边距
-    const buttonSpacing = 6 // 按钮间距
-    const columnPadding = 16 // 列内边距
-    const iconWidth = 12 // 图标宽度（如果有）
+    const buttonPadding = 12
+    const buttonSpacing = 6
+    const columnPadding = 16
+    const iconWidth = 12
 
-    // 计算单个按钮的宽度
     const singleButtonWidth = maxTextLength * chineseCharWidth + buttonPadding + iconWidth
-
-    // 计算总宽度
     const totalWidth =
       props.actions.length * singleButtonWidth + (props.actions.length - 1) * buttonSpacing + columnPadding
 

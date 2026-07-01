@@ -32,8 +32,13 @@ const xterm = ref<Terminal | null>(null)
 const socket = ref<WebSocket>()
 let resizeObserver: ResizeObserver | undefined
 let resizeHandler: ReturnType<typeof _.debounce> | undefined
+let dataDisposer: { dispose: () => void } | undefined
 
 const initXterm = () => {
+  if (!xtermRef.value || !props.prefix?.wsServer) {
+    return
+  }
+
   const options = ref<ITerminalOptions & ITerminalInitOnlyOptions>({
     fontSize: 14,
     fontFamily: 'monaco, Consolas, "Lucida Console", monospace',
@@ -57,7 +62,7 @@ const initXterm = () => {
   xterm.value.focus()
 
   socket.value = new WebSocket(
-    `${props.prefix?.wsServer}/api/cmdb/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
+    `${props.prefix.wsServer}/api/cmdb/term/ssh/session?resource_id=${props.resource_id}&cols=${xterm.value.cols}&rows=${xterm.value.rows}`
   )
 
   socketOnClose()
@@ -66,13 +71,15 @@ const initXterm = () => {
   socketOnError()
 
   // 发送数据
-  xterm.value?.onData(function (data: string) {
+  dataDisposer = xterm.value?.onData(function (data: string) {
     const message = {
       operation: "stdin",
       data: data
     }
 
-    socket.value!.send(JSON.stringify(message))
+    if (socket.value?.readyState === WebSocket.OPEN) {
+      socket.value.send(JSON.stringify(message))
+    }
   })
 
   bindResizeEvents()
@@ -162,6 +169,9 @@ const cleanup = () => {
     resizeHandler.cancel?.()
     resizeHandler = undefined
   }
+
+  dataDisposer?.dispose()
+  dataDisposer = undefined
 
   if (pingInterval.value) {
     clearInterval(pingInterval.value)

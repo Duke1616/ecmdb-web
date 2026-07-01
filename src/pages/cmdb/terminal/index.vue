@@ -53,20 +53,27 @@
       <el-button link type="danger" @click="disconnect" class="disconnect-btn">断开连接</el-button>
     </div>
 
-    <div v-else-if="!dialogVisible || !hasResource" class="terminal-empty-state">
-      <el-empty :description="hasResource ? '当前未建立连接' : '请先从左侧选择主机'">
-        <el-button v-if="hasResource" type="primary" @click="reopenDialog">选择连接方式</el-button>
-      </el-empty>
-    </div>
+    <div class="terminal-panel">
+      <div v-if="!showTerminalView" class="terminal-empty-state">
+        <el-empty :description="hasResource ? '当前未建立连接' : '请先从左侧选择主机'">
+          <el-button v-if="hasResource" type="primary" @click="reopenDialog">选择连接方式</el-button>
+        </el-empty>
+      </div>
 
-    <!-- 终端组件容器 -->
-    <div v-if="isConnected" class="terminal-wrapper">
-      <finder v-if="selectedOption === 'Web Sftp'" :resource_id="resourceId" :prefix="prefix" />
-      <xterm v-else-if="selectedOption === 'Web Shell'" :resource_id="resourceId" :prefix="prefix" />
-      <guacd v-else-if="selectedOption === 'RDP'" :resource_id="resourceId" :prefix="prefix" />
-      <!-- VNC 组件暂未实现 -->
-      <div v-else-if="selectedOption === 'VNC'" class="vnc-placeholder">
-        <el-empty description="VNC 功能暂未实现" />
+      <!-- 终端组件容器 -->
+      <div v-else class="terminal-wrapper">
+        <finder v-if="selectedOption === 'Web Sftp'" :key="finderViewKey" :resource_id="resourceId" :prefix="prefix" />
+        <xterm
+          v-else-if="selectedOption === 'Web Shell'"
+          :key="xtermViewKey"
+          :resource_id="resourceId"
+          :prefix="prefix"
+        />
+        <guacd v-else-if="selectedOption === 'RDP'" :key="guacdViewKey" :resource_id="resourceId" :prefix="prefix" />
+        <!-- VNC 组件暂未实现 -->
+        <div v-else-if="selectedOption === 'VNC'" class="vnc-placeholder">
+          <el-empty description="VNC 功能暂未实现" />
+        </div>
       </div>
     </div>
   </div>
@@ -75,7 +82,7 @@
 <script lang="ts" setup>
 import { ref, computed, onMounted, onUnmounted, watch } from "vue"
 import { connectApi } from "@/api/cmdb/terminal"
-import { useRoute, useRouter } from "vue-router"
+import { useRoute, useRouter, type LocationQueryRaw } from "vue-router"
 import { ElMessage } from "element-plus"
 
 // 组件导入
@@ -104,7 +111,16 @@ const router = useRouter()
 const resourceId = computed(() => route.query.resource_id as string)
 const title = computed(() => route.query.title as string)
 const connectionType = computed(() => route.query.connection_type as string)
+const autoConnect = computed(() => route.query.auto_connect === "1")
 const hasResource = computed(() => Boolean(resourceId.value))
+const sessionVersion = ref(0)
+const showTerminalView = computed(
+  () => hasResource.value && isConnected.value && Boolean(selectedOption.value) && Boolean(prefix.value?.wsServer)
+)
+const terminalViewKey = computed(() => `${sessionVersion.value}:${selectedOption.value}:${resourceId.value || "empty"}`)
+const finderViewKey = computed(() => `finder:${terminalViewKey.value}`)
+const xtermViewKey = computed(() => `xterm:${terminalViewKey.value}`)
+const guacdViewKey = computed(() => `guacd:${terminalViewKey.value}`)
 
 // 状态管理
 const dialogVisible = ref<boolean>(true)
@@ -185,15 +201,19 @@ const connect = async () => {
     })
 
     prefix.value = getPrefixConfig()
+    sessionVersion.value += 1
     isConnected.value = true
     dialogVisible.value = false
 
     // 更新 URL，保存连接状态
+    const nextQuery: LocationQueryRaw = {
+      ...route.query,
+      connection_type: selectedOption.value
+    }
+    delete nextQuery.auto_connect
+
     router.replace({
-      query: {
-        ...route.query,
-        connection_type: selectedOption.value
-      }
+      query: nextQuery
     })
 
     ElMessage.success(`成功连接到 ${getCurrentOptionLabel()}`)
@@ -220,14 +240,27 @@ const disconnect = () => {
   ElMessage.info("已断开连接")
 }
 
+const resetConnectionState = () => {
+  isConnected.value = false
+  selectedOption.value = ""
+  prefix.value = undefined
+  dialogVisible.value = true
+}
+
 // 恢复连接状态（不重新建立连接，只是恢复 UI 状态）
 const restoreConnection = () => {
   if (connectionType.value && resourceId.value) {
     // 验证连接类型是否有效
     const option = connectionOptions.find((opt) => opt.value === connectionType.value && !opt.disabled)
     if (option) {
+      const shouldRefreshSession =
+        !isConnected.value || selectedOption.value !== connectionType.value || !prefix.value?.wsServer
+
       selectedOption.value = connectionType.value
       prefix.value = getPrefixConfig()
+      if (shouldRefreshSession) {
+        sessionVersion.value += 1
+      }
       isConnected.value = true
       dialogVisible.value = false
       // 不显示成功消息，因为这是恢复状态，不是新连接
@@ -271,6 +304,29 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => resourceId.value,
+  (next, prev) => {
+    if (!next || !prev || next === prev) return
+
+    resetConnectionState()
+  }
+)
+
+watch(
+  () => connectionType.value,
+  (value) => {
+    if (!resourceId.value) return
+
+    if (value) {
+      restoreConnection()
+      return
+    }
+
+    resetConnectionState()
+  }
+)
+
 // 生命周期
 onMounted(async () => {
   // 检查必要参数
@@ -282,6 +338,15 @@ onMounted(async () => {
   // 如果 URL 中有连接类型，恢复连接状态（不重新建立连接）
   // 这样刷新页面时，只是恢复 UI 显示，不会重新调用 connectApi
   // 后端的 WebSocket 连接会由子组件（xterm/guacd/finder）自己管理
+  if (connectionType.value && autoConnect.value) {
+    const option = connectionOptions.find((opt) => opt.value === connectionType.value && !opt.disabled)
+    if (option) {
+      selectedOption.value = option.value
+      await connect()
+      return
+    }
+  }
+
   if (connectionType.value) {
     restoreConnection()
   } else {
@@ -473,6 +538,12 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.terminal-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
 }
 
 // 终端包装器

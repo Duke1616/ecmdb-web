@@ -340,6 +340,30 @@ export const CMDB_CAPABILITIES = {
     SFTPUnarchive: "cmdb:terminal:sftp_unarchive"
   },
 
+  /** 插件能力相关 */
+  Plugin: {
+    /** 插件目录 */
+    View: "cmdb:plugin:view",
+    /** 插件详情 */
+    Detail: "cmdb:plugin:get",
+    /** 注册插件定义 */
+    DefinitionRegister: "cmdb:plugin:definition_register",
+    /** 保存插件定义 */
+    DefinitionUpsert: "cmdb:plugin:definition_upsert",
+    /** 保存插件绑定 */
+    BindingUpsert: "cmdb:plugin:binding_upsert",
+    /** 切换插件状态 */
+    Toggle: "cmdb:plugin:toggle",
+    /** 删除插件 */
+    Delete: "cmdb:plugin:delete",
+    /** 查询资源插件动作 */
+    ResourceActions: "cmdb:plugin:resource_actions",
+    /** 批量查询资源插件动作 */
+    ResourceActionsBatch: "cmdb:plugin:resource_actions_batch",
+    /** 解析插件动作 */
+    ActionResolve: "cmdb:plugin:action_resolve"
+  },
+
   /** 文件与对象存储工具 */
   Tools: {
     /** 文件下载 */

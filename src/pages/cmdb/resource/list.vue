@@ -82,7 +82,7 @@
         :current-page="paginationData.currentPage"
         :page-sizes="paginationData.pageSizes"
         :pagination-layout="paginationData.layout"
-        action-column-width="180"
+        :action-column-width="actionColumnWidth"
         action-column-fixed="right"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
@@ -186,7 +186,12 @@
         </template>
 
         <template #actions="{ row }">
-          <OperateBtn :items="operateBtnItems" :operate-item="row" :max-length="2" @routeEvent="handleOperateEvent" />
+          <OperateBtn
+            :items="getOperateBtnItems(row)"
+            :operate-item="row"
+            :max-length="2"
+            @routeEvent="handleOperateEvent"
+          />
         </template>
       </DataTable>
 
@@ -268,7 +273,8 @@ const {
   currentResourceIds,
   paginationData,
   tableColumns,
-  operateBtnItems,
+  actionColumnWidth,
+  getOperateBtnItems,
   canDeleteResource,
   canEditCustomField,
   handleCurrentChange,
