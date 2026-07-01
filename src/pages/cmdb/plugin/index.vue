@@ -407,6 +407,9 @@ const {
 }
 
 .plugin-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   padding: 0;
   min-width: 0;
@@ -719,7 +722,6 @@ const {
   justify-content: center;
   min-height: 0;
   background: #ffffff;
-  border: 1px dashed #cbd5e1;
   border-radius: 8px;
 }
 
