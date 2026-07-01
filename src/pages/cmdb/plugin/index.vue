@@ -47,7 +47,7 @@
           </div>
 
           <div v-else class="sidebar-empty">
-            <el-empty description="没有匹配的插件" :image-size="110" />
+            <el-empty description="没有匹配的插件" :image-size="60" />
           </div>
         </template>
       </div>
@@ -396,11 +396,14 @@ const {
   border-radius: 999px;
 }
 
-.sidebar-empty,
-.plugin-content {
+.sidebar-empty {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   flex: 1;
   min-height: 0;
+  padding: 24px;
 }
 
 .plugin-content {
