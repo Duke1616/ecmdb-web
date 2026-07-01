@@ -352,8 +352,8 @@ export const CMDB_CAPABILITIES = {
     DefinitionUpsert: "cmdb:plugin:definition_upsert",
     /** 保存插件绑定 */
     BindingUpsert: "cmdb:plugin:binding_upsert",
-    /** 切换插件状态 */
-    Toggle: "cmdb:plugin:toggle",
+    /** 同步默认模型 */
+    SyncDefaultSchema: "cmdb:plugin:sync_default_schema",
     /** 删除插件 */
     Delete: "cmdb:plugin:delete",
     /** 查询资源插件动作 */

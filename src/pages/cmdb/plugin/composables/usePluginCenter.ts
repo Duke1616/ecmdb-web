@@ -5,15 +5,18 @@ import {
   getPluginDetailApi,
   listPluginEnumsApi,
   listPluginsApi,
-  togglePluginApi
+  syncDefaultSchemaApi
 } from "@/api/cmdb/plugin"
 import {
   PLUGIN_DIRECTION,
   PLUGIN_RELATION_TYPE,
+  type Binding,
+  type Definition,
   type PluginDetail,
   type PluginListItem,
   type PluginManagementEnums
 } from "@/api/cmdb/plugin/types/plugin"
+import { createSSHDefinitionTemplate } from "../constants/templates"
 
 const directionLabelMap: Record<string, string> = {
   [PLUGIN_DIRECTION.Source]: "源端关联",
@@ -34,15 +37,21 @@ const cardinalityLabelMap: Record<string, string> = {
 
 const formatJson = (value: unknown) => JSON.stringify(value ?? {}, null, 2)
 
+const defaultDefinitionFactories: Record<string, () => Definition> = {
+  "builtin.ssh": createSSHDefinitionTemplate
+}
+
 export const usePluginCenter = () => {
   const keyword = ref("")
   const pluginsLoading = ref(false)
   const detailLoading = ref(false)
+  const syncingDefaultSchema = ref(false)
 
   const plugins = ref<PluginListItem[]>([])
   const pluginEnums = ref<PluginManagementEnums | null>(null)
   const activePluginUid = ref("")
   const pluginDetail = ref<PluginDetail | null>(null)
+  const pendingDefaultSchemaPluginUid = ref("")
 
   const detailVisible = ref(false)
   const activeBindingUid = ref("")
@@ -62,6 +71,10 @@ export const usePluginCenter = () => {
   const activePluginCard = computed(() => {
     return filteredPlugins.value.find((item) => item.uid === activePluginUid.value) || filteredPlugins.value[0] || null
   })
+
+  const hasDefaultSchemaPreview = computed(
+    () => Boolean(activePluginCard.value?.uid) && pendingDefaultSchemaPluginUid.value === activePluginCard.value?.uid
+  )
 
   const modelNameMap = computed(() => {
     const map = new Map<string, string>()
@@ -130,36 +143,65 @@ export const usePluginCenter = () => {
   }
 
   const selectPlugin = (uid: string) => {
+    if (activePluginUid.value !== uid) {
+      pendingDefaultSchemaPluginUid.value = ""
+    }
     activePluginUid.value = uid
   }
 
-  const openDetailDrawer = async (uid: string) => {
-    detailVisible.value = true
+  const loadDefaultSchemaPreview = (item: PluginListItem) => {
+    const createDefinition = defaultDefinitionFactories[item.uid]
+    if (!createDefinition) {
+      ElMessage.warning("当前插件没有可同步的默认模型模板")
+      return
+    }
+
+    const definition = createDefinition()
+    const toPreviewBinding = (binding: Binding) => {
+      const model = pluginEnums.value?.models.find((item) => item.uid === binding.model_uid)
+      return {
+        id: binding.id || 0,
+        uid: binding.uid,
+        plugin_id: binding.plugin_id,
+        model_uid: binding.model_uid,
+        model_name: model?.name || binding.model_uid,
+        group_name: model?.group_name,
+        model_icon: model?.icon,
+        enabled: binding.enabled,
+        specs: binding.specs,
+        config: binding.config || {}
+      }
+    }
+
+    pluginDetail.value = {
+      plugin: {
+        ...definition.plugin,
+        id: item.id,
+        enabled: item.enabled
+      },
+      bindings: definition.bindings.map(toPreviewBinding)
+    }
+    activeBindingUid.value = pluginDetail.value.bindings[0]?.uid || ""
+    pendingDefaultSchemaPluginUid.value = item.uid
+    ElMessage.success("默认模型已加载到拓扑预览，确认无误后点击保存")
+  }
+
+  const refreshPluginDetail = async (uid: string) => {
     detailLoading.value = true
     try {
       const { data } = await getPluginDetailApi(uid)
       pluginDetail.value = data
       activeBindingUid.value = data.bindings[0]?.uid || ""
     } catch (error) {
-      console.error("[PluginPage] load detail failed", error)
-      pluginDetail.value = null
-      activeBindingUid.value = ""
+      console.error("[PluginPage] refresh detail failed", error)
     } finally {
       detailLoading.value = false
     }
   }
 
-  const handleToggle = async (item: PluginListItem) => {
-    try {
-      await togglePluginApi(item.uid, !item.enabled)
-      ElMessage.success(item.enabled ? "插件已停用" : "插件已启用")
-      await loadPlugins()
-      if (detailVisible.value && pluginDetail.value?.plugin.uid === item.uid) {
-        await openDetailDrawer(item.uid)
-      }
-    } catch (error) {
-      console.error("[PluginPage] toggle failed", error)
-    }
+  const openDetailDrawer = async (uid: string) => {
+    detailVisible.value = true
+    await refreshPluginDetail(uid)
   }
 
   const handleDelete = async (item: PluginListItem) => {
@@ -183,12 +225,39 @@ export const usePluginCenter = () => {
     }
   }
 
+  const handleSyncDefaultSchema = async (item: PluginListItem) => {
+    if (pendingDefaultSchemaPluginUid.value !== item.uid) {
+      loadDefaultSchemaPreview(item)
+      return
+    }
+
+    try {
+      syncingDefaultSchema.value = true
+      await syncDefaultSchemaApi(item.uid)
+      ElMessage.success("默认模型同步成功")
+      pendingDefaultSchemaPluginUid.value = ""
+      await loadPlugins()
+      await refreshPluginDetail(item.uid)
+    } catch (error) {
+      if (error === "cancel") return
+      console.error("[PluginPage] sync default schema failed", error)
+      ElMessage.error("默认模型同步失败")
+    } finally {
+      syncingDefaultSchema.value = false
+    }
+  }
+
   watch(
     activePluginCard,
     async (plugin) => {
       if (!plugin) {
         pluginDetail.value = null
         activeBindingUid.value = ""
+        pendingDefaultSchemaPluginUid.value = ""
+        return
+      }
+
+      if (pendingDefaultSchemaPluginUid.value === plugin.uid) {
         return
       }
 
@@ -238,7 +307,8 @@ export const usePluginCenter = () => {
     formatJson,
     graphViewMode,
     handleDelete,
-    handleToggle,
+    handleSyncDefaultSchema,
+    hasDefaultSchemaPreview,
     keyword,
     loadPlugins,
     openDetailDrawer,
@@ -247,6 +317,7 @@ export const usePluginCenter = () => {
     pluginsLoading,
     relationLabelMap,
     resolveModelName,
-    selectPlugin
+    selectPlugin,
+    syncingDefaultSchema
   }
 }

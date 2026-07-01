@@ -21,17 +21,25 @@
           >
             <el-icon><Edit /></el-icon>
           </AuthButton>
-          <AuthButton
-            link
-            class="action-btn delete-btn"
-            :capability="CMDB_CAPABILITIES.Attribute.Delete"
-            :disabled="field.builtin"
-            disable-mode
-            :title="field.builtin ? '内置属性不可删除' : '删除'"
-            @click.stop="emit('delete', field)"
-          >
-            <el-icon><Delete /></el-icon>
-          </AuthButton>
+
+          <el-tooltip v-if="field.builtin" content="内置属性由系统维护，不支持删除" placement="top" :show-after="300">
+            <span class="builtin-field-lock">
+              <el-icon><Lock /></el-icon>
+            </span>
+          </el-tooltip>
+
+          <template v-else>
+            <AuthButton
+              link
+              class="action-btn delete-btn"
+              :capability="CMDB_CAPABILITIES.Attribute.Delete"
+              disable-mode
+              title="删除"
+              @click.stop="emit('delete', field)"
+            >
+              <el-icon><Delete /></el-icon>
+            </AuthButton>
+          </template>
         </div>
       </div>
 
@@ -158,6 +166,18 @@ const emit = defineEmits<{
   opacity: 0;
   visibility: hidden;
   transition: all 0.2s ease;
+}
+
+.builtin-field-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  color: #94a3b8;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
 }
 
 .action-btn {

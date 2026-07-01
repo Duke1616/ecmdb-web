@@ -48,11 +48,11 @@ export function upsertPluginBindingApi(data: Plugin.Binding) {
   })
 }
 
-/** 切换插件状态 */
-export function togglePluginApi(uid: string, enabled: boolean) {
+/** 同步插件默认模型 */
+export function syncDefaultSchemaApi(plugin_id: string) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/toggle`,
-    data: { uid, enabled }
+    url: `${API_SERVICE.CMDB}/plugin/sync-default-schema`,
+    data: { plugin_id }
   })
 }
 

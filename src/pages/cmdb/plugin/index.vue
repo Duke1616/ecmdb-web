@@ -70,12 +70,13 @@
             <div class="overview-actions">
               <AuthButton
                 class="overview-action-btn"
-                :capability="CMDB_CAPABILITIES.Plugin.Toggle"
+                :capability="CMDB_CAPABILITIES.Plugin.SyncDefaultSchema"
+                :loading="syncingDefaultSchema"
                 disable-mode
-                @click="handleToggle(activePluginCard)"
+                @click="handleSyncDefaultSchema(activePluginCard)"
               >
-                <el-icon><Switch /></el-icon>
-                <span>{{ activePluginCard.enabled ? "停用插件" : "启用插件" }}</span>
+                <el-icon><RefreshRight /></el-icon>
+                <span>{{ hasDefaultSchemaPreview ? "保存" : "同步模型" }}</span>
               </AuthButton>
 
               <AuthButton
@@ -169,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Delete, Switch } from "@element-plus/icons-vue"
+import { ArrowRight, Delete, RefreshRight } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import PluginBindingTopology from "./components/PluginBindingTopology.vue"
@@ -187,14 +188,16 @@ const {
   filteredPlugins,
   graphViewMode,
   handleDelete,
-  handleToggle,
+  handleSyncDefaultSchema,
+  hasDefaultSchemaPreview,
   keyword,
   loadPlugins,
   openDetailDrawer,
   pluginDetail,
   pluginEnums,
   pluginsLoading,
-  selectPlugin
+  selectPlugin,
+  syncingDefaultSchema
 } = usePluginCenter()
 </script>
 

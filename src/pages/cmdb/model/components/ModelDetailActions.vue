@@ -12,10 +12,19 @@
       <span>{{ exporting ? "导出中..." : "导出模板" }}</span>
     </AuthButton>
 
+    <el-tooltip v-if="builtin" content="内置模型由系统维护，不支持删除" placement="top">
+      <span class="builtin-model-lock">
+        <el-button class="u-gov-btn is-locked" disabled>
+          <el-icon><Lock /></el-icon>
+          <span>内置模型</span>
+        </el-button>
+      </span>
+    </el-tooltip>
+
     <AuthButton
+      v-else
       class="u-gov-btn is-danger"
       :capability="CMDB_CAPABILITIES.Model.Delete"
-      :disabled="builtin"
       disable-mode
       @click="emit('delete')"
     >
@@ -26,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { Delete, Download } from "@element-plus/icons-vue"
+import { Delete, Download, Lock } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 
@@ -47,6 +56,17 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.builtin-model-lock {
+  display: inline-flex;
+}
+
+.is-locked {
+  color: #64748b;
+  background: #f8fafc;
+  border-color: #dbe4ee;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
