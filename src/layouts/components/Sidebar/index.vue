@@ -33,10 +33,31 @@ const activeMenu = computed(() => {
   } = route
   return activeMenu ? String(activeMenu) : path
 })
+
+const getVisibleRoutes = (routes: RouteRecordRaw[]): RouteRecordRaw[] => {
+  const result: RouteRecordRaw[] = []
+
+  routes.forEach((routeItem) => {
+    if (routeItem.meta?.hidden) return
+
+    if (!routeItem.children || routeItem.children.length === 0) {
+      result.push(routeItem)
+      return
+    }
+
+    const children = getVisibleRoutes(routeItem.children)
+    if (children.length === 0) return
+
+    result.push({ ...routeItem, children })
+  })
+
+  return result
+}
+
 // 结合权限过滤和平台过滤
 const currentroutes = computed(() => {
   // 首先进行权限过滤
-  const permissionFilteredRoutes = permissionStore.routes.filter((item) => !item.meta?.hidden)
+  const permissionFilteredRoutes = getVisibleRoutes(permissionStore.routes)
 
   // 如果侧边栏存储有平台过滤，则应用平台过滤
   if (sidebarStore.currentPlatform) {

@@ -209,10 +209,14 @@ const submit = async () => {
   }
 }
 
-watch(visible, (val) => {
-  if (val) {
-    if (props.data) {
-      form.value = structuredClone(props.data)
+// 监听 visible 与 props.data 的变动组合，彻底消除由于接口异步返回滞后带来的数据未渲染 Bug
+watch(
+  [visible, () => props.data],
+  ([isOpen, currentData]) => {
+    if (!isOpen) return
+
+    if (currentData) {
+      form.value = JSON.parse(JSON.stringify(currentData))
       selectedProvider.value = getProviderIdFromSource(form.value)
     } else {
       selectedProvider.value = "ad"
@@ -221,8 +225,9 @@ watch(visible, (val) => {
         formRef.value?.clearValidate()
       })
     }
-  }
-})
+  },
+  { immediate: true, deep: true }
+)
 </script>
 
 <style lang="scss" scoped>
