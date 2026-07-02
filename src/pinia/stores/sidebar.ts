@@ -32,7 +32,11 @@ export const useSidebarStore = defineStore("sidebar", () => {
    * @param routes 原始路由数组
    * @param platform 目标平台 ID
    */
-  const filterAndFlattenRoutes = (routes: RouteRecordRaw[], platform: string, flattenFromNavigation: boolean): RouteRecordRaw[] => {
+  const filterAndFlattenRoutes = (
+    routes: RouteRecordRaw[],
+    platform: string,
+    flattenFromNavigation: boolean
+  ): RouteRecordRaw[] => {
     const result: RouteRecordRaw[] = []
 
     routes.forEach((route) => {
