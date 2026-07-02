@@ -37,6 +37,7 @@ export const useSidebarStore = defineStore("sidebar", () => {
 
     routes.forEach((route) => {
       // 1. 基础权限过滤
+      if (route.meta?.hidden) return
       if (!belongsToPlatform(platform, route)) return
 
       // 2. 无子路由情况

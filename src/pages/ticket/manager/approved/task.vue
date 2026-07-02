@@ -299,7 +299,7 @@ const handleRetryConfirm = async () => {
     retryDialogVisible.value = false
     listTasksData()
   } catch (error) {
-    ElMessage.error("重试任务失败")
+    console.log("任务重试失败", error)
   } finally {
     retryLoading.value = false
   }

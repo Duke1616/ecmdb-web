@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue"
 import { useRouter, type RouteRecordRaw } from "vue-router"
+import path from "path-browserify"
 import {
   ArrowRight,
   Check,
@@ -45,6 +46,7 @@ const hasPlatformRoutes = (platformId: string): boolean => {
 
   const checkHasPlatform = (routes: RouteRecordRaw[]): boolean => {
     return routes.some((route) => {
+      if (route.meta?.hidden) return false
       const routePlatforms = route.meta?.platforms as string[] | undefined
       if (routePlatforms?.length && platformMatches(routePlatforms, platformId)) return true
       if (route.children && route.children.length > 0) return checkHasPlatform(route.children)
@@ -55,7 +57,26 @@ const hasPlatformRoutes = (platformId: string): boolean => {
   return checkHasPlatform(allRoutes)
 }
 
-const filteredCards = computed(() => navigationCards.value.filter((card) => hasPlatformRoutes(card.id)))
+const hasAccessibleRoute = (targetPath: string): boolean => {
+  const normalizePath = (value: string) => value.replace(/\/+$/, "") || "/"
+
+  const checkRoute = (routes: RouteRecordRaw[], basePath = ""): boolean => {
+    return routes.some((route) => {
+      if (route.meta?.hidden) return false
+
+      const routePath = route.path.startsWith("/") ? route.path : path.resolve(basePath, route.path)
+      if (normalizePath(routePath) === normalizePath(targetPath)) return true
+
+      return route.children ? checkRoute(route.children, routePath) : false
+    })
+  }
+
+  return checkRoute(permissionStore.routes)
+}
+
+const filteredCards = computed(() =>
+  navigationCards.value.filter((card) => hasPlatformRoutes(card.id) && hasAccessibleRoute(card.route))
+)
 
 const displayCards = computed(() => {
   const order = ["ticket", "cmdb", "iam", "task", "alert"]
