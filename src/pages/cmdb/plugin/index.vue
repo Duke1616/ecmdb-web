@@ -68,7 +68,7 @@
               <AuthButton
                 v-if="hasBindingEditDraft"
                 class="overview-action-btn is-save"
-                :capability="CMDB_CAPABILITIES.Plugin.BindingUpsert"
+                :capability="CMDB_CAPABILITIES.Plugin.Create"
                 :loading="savingBindingEdit"
                 disable-mode
                 @click="saveBindingEdit"
@@ -81,7 +81,7 @@
                 v-else
                 class="overview-action-btn"
                 :class="hasDefaultSchemaPreview ? 'is-save' : 'is-create'"
-                :capability="CMDB_CAPABILITIES.Plugin.BindingUpsert"
+                :capability="CMDB_CAPABILITIES.Plugin.Create"
                 :loading="savingDefaultBindingDraft"
                 disable-mode
                 @click="handleDefaultBindingDraft(activePluginCard)"
@@ -93,7 +93,7 @@
                 <span>{{ hasDefaultSchemaPreview ? "保存" : "新增绑定" }}</span>
               </AuthButton>
 
-              <el-button
+              <AuthButton
                 v-if="hasDefaultSchemaPreview || hasBindingEditDraft"
                 class="overview-action-btn is-cancel"
                 :loading="detailLoading || savingBindingEdit"
@@ -101,16 +101,18 @@
               >
                 <el-icon><Close /></el-icon>
                 <span>取消</span>
-              </el-button>
+              </AuthButton>
 
-              <el-button
+              <AuthButton
                 v-else-if="!hasBindingEditDraft"
                 class="overview-action-btn is-secondary"
+                :capability="CMDB_CAPABILITIES.Plugin.Detail"
+                disable-mode
                 @click="openDetailDrawer(activePluginCard.uid)"
               >
                 <el-icon><ArrowRight /></el-icon>
                 <span>查看详情</span>
-              </el-button>
+              </AuthButton>
             </div>
           </section>
 
@@ -283,7 +285,7 @@ const canStartBindingEdit = computed(
     !hasBindingEditDraft.value &&
     graphViewMode.value === "binding" &&
     !!activeBindingDetail.value &&
-    hasPermission(CMDB_CAPABILITIES.Plugin.BindingUpsert)
+    hasPermission(CMDB_CAPABILITIES.Plugin.Create)
 )
 
 const canToggleBindingEnabled = computed(
@@ -291,7 +293,7 @@ const canToggleBindingEnabled = computed(
     !!activeBindingDetail.value &&
     !hasDefaultSchemaPreview.value &&
     !hasBindingEditDraft.value &&
-    hasPermission(CMDB_CAPABILITIES.Plugin.BindingUpsert)
+    hasPermission(CMDB_CAPABILITIES.Plugin.Switch)
 )
 
 const canDeleteBinding = computed(
@@ -299,7 +301,7 @@ const canDeleteBinding = computed(
     !!activeBindingDetail.value &&
     !hasDefaultSchemaPreview.value &&
     !hasBindingEditDraft.value &&
-    hasPermission(CMDB_CAPABILITIES.Plugin.BindingUpsert)
+    hasPermission(CMDB_CAPABILITIES.Plugin.Delete)
 )
 
 const handleDraftModelChange = (modelUid: unknown) => {

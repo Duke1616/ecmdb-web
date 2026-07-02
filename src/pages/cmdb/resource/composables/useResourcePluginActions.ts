@@ -76,7 +76,7 @@ export const useResourcePluginActions = () => {
       code: toPluginActionCode(action),
       type: "info",
       icon: getPluginIcon(action),
-      capability: CMDB_CAPABILITIES.Plugin.ActionResolve
+      capability: CMDB_CAPABILITIES.Plugin.Resolve
     }))
   }
 

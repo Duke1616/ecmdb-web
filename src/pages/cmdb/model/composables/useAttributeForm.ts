@@ -136,7 +136,23 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
     return cloneDeep(formData.value)
   }
 
+  const validateCreateContext = () => {
+    if (formData.value.id !== undefined) return true
+    if (!props.modelUid) {
+      ElMessage.error("缺少模型标识，无法创建属性")
+      return false
+    }
+    if (!props.groupId) {
+      ElMessage.error("请先选择属性分组后再新增属性")
+      return false
+    }
+    return true
+  }
+
   const handlerCreateOrUpdateAttribute = async () => {
+    if (!validateCreateContext()) {
+      return false
+    }
     if (!(await validateForm(formRef.value))) {
       ElMessage.error("表单校验不通过，请检查必填项")
       return false

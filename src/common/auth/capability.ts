@@ -347,11 +347,13 @@ export const CMDB_CAPABILITIES = {
     /** 插件详情 */
     Detail: "cmdb:plugin:get",
     /** 保存插件绑定 */
-    BindingUpsert: "cmdb:plugin:binding_upsert",
-    /** 批量查询资源插件动作 */
-    ResourceActionsBatch: "cmdb:plugin:resource_actions_batch",
+    Create: "cmdb:plugin:create",
+    /** 切换插件绑定状态 */
+    Switch: "cmdb:plugin:switch",
+    /** 删除插件绑定 */
+    Delete: "cmdb:plugin:delete",
     /** 解析插件动作 */
-    ActionResolve: "cmdb:plugin:action_resolve"
+    Resolve: "cmdb:plugin:resolve"
   },
 
   /** 文件与对象存储工具 */
