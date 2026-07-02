@@ -348,8 +348,6 @@ export const CMDB_CAPABILITIES = {
     Detail: "cmdb:plugin:get",
     /** 保存插件绑定 */
     BindingUpsert: "cmdb:plugin:binding_upsert",
-    /** 查询资源插件动作 */
-    ResourceActions: "cmdb:plugin:resource_actions",
     /** 批量查询资源插件动作 */
     ResourceActionsBatch: "cmdb:plugin:resource_actions_batch",
     /** 解析插件动作 */

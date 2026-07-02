@@ -1,12 +1,13 @@
 import { computed, onMounted, ref, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import {
+  deletePluginBindingApi,
   getDefaultPluginDefinitionApi,
   getPluginDetailApi,
   listPluginEnumsApi,
   listPluginsApi,
   savePluginBindingsApi,
-  updatePluginBindingEnabledApi
+  switchPluginBindingStatusApi
 } from "@/api/cmdb/plugin"
 import {
   PLUGIN_DIRECTION,
@@ -50,6 +51,7 @@ export const usePluginCenter = () => {
   const savingDefaultBindingDraft = ref(false)
   const savingBindingEdit = ref(false)
   const togglingBindingEnabled = ref(false)
+  const deletingBinding = ref(false)
 
   const plugins = ref<PluginListItem[]>([])
   const pluginEnums = ref<PluginManagementEnums | null>(null)
@@ -193,6 +195,29 @@ export const usePluginCenter = () => {
     return `${pluginUid}.${normalized || "binding"}`
   }
 
+  const buildUniqueBindingUid = (
+    pluginUid: string,
+    modelUid: string,
+    existingUids: Set<string>,
+    currentUid?: string
+  ) => {
+    const baseUid = buildBindingUid(pluginUid, modelUid)
+    if ((!currentUid || currentUid === baseUid) && !existingUids.has(baseUid)) {
+      return baseUid
+    }
+    if (currentUid && currentUid === baseUid && existingUids.size === 1 && existingUids.has(baseUid)) {
+      return baseUid
+    }
+
+    let index = 2
+    let nextUid = `${baseUid}.${index}`
+    while (existingUids.has(nextUid) && nextUid !== currentUid) {
+      index += 1
+      nextUid = `${baseUid}.${index}`
+    }
+    return nextUid
+  }
+
   const cloneBinding = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
 
   const getEntryNode = (graph?: BindingGraph) => {
@@ -239,6 +264,11 @@ export const usePluginCenter = () => {
     activePluginUid.value = uid
   }
 
+  const fetchPluginDetail = async (uid: string) => {
+    const { data } = await getPluginDetailApi(uid)
+    return data
+  }
+
   const loadDefaultSchemaPreview = async (item: PluginListItem) => {
     let definition: Definition
     try {
@@ -267,18 +297,41 @@ export const usePluginCenter = () => {
       }
     }
 
-    const detail: PluginDetail = {
-      plugin: {
-        ...definition.plugin,
-        id: item.id
-      },
-      bindings: definition.bindings.map(toPreviewBinding)
+    let currentDetail: PluginDetail
+    try {
+      currentDetail =
+        pluginDetail.value?.plugin.uid === item.uid
+          ? cloneBinding(pluginDetail.value)
+          : await fetchPluginDetail(item.uid)
+    } catch (error) {
+      console.error("[PluginPage] load current detail failed", error)
+      ElMessage.error("加载当前绑定失败，暂时无法新增绑定")
+      return
     }
-    pluginDetail.value = detail
-    activeBindingUid.value = detail.bindings[0]?.uid || ""
+
+    const existingBindingUids = new Set(currentDetail.bindings.map((binding) => binding.uid))
+    const previewBindings = definition.bindings.map(toPreviewBinding)
+    const appendedBindings = previewBindings.map((binding) => {
+      const nextUid = buildUniqueBindingUid(item.uid, binding.model_uid, existingBindingUids)
+      existingBindingUids.add(nextUid)
+      return {
+        ...binding,
+        id: 0,
+        uid: nextUid
+      }
+    })
+
+    pluginDetail.value = {
+      plugin: {
+        ...currentDetail.plugin,
+        id: currentDetail.plugin.id || item.id
+      },
+      bindings: [...currentDetail.bindings, ...appendedBindings]
+    }
+    activeBindingUid.value = appendedBindings[0]?.uid || currentDetail.bindings[0]?.uid || ""
     pendingDefaultSchemaPluginUid.value = item.uid
     detailVisible.value = false
-    ElMessage.success("默认模型已加载为草稿，可调整绑定后保存")
+    ElMessage.success("默认绑定模板已导入，可基于模板继续修改后保存")
   }
 
   const cancelDefaultSchemaPreview = async (uid?: string) => {
@@ -400,17 +453,13 @@ export const usePluginCenter = () => {
     const model = resolveModelOption(modelUid)
     if (!binding || !model) return
 
-    const duplicated = pluginDetail.value.bindings.some(
-      (item) => item.uid !== bindingUid && item.model_uid === model.uid
-    )
-    if (duplicated) {
-      ElMessage.warning("该模型已存在绑定")
-      return
-    }
-
-    if (hasDefaultSchemaPreview.value) {
-      binding.uid = buildBindingUid(binding.plugin_id, model.uid)
-      activeBindingUid.value = binding.uid
+    if (isTopologyEditable.value) {
+      const existingUids = new Set(
+        pluginDetail.value.bindings.filter((item) => item.uid !== bindingUid).map((item) => item.uid)
+      )
+      const nextUid = buildUniqueBindingUid(binding.plugin_id, model.uid, existingUids, binding.uid)
+      binding.uid = nextUid
+      activeBindingUid.value = nextUid
     }
     binding.model_uid = model.uid
     binding.model_name = model.name || model.uid
@@ -441,7 +490,7 @@ export const usePluginCenter = () => {
   const refreshPluginDetail = async (uid: string) => {
     detailLoading.value = true
     try {
-      const { data } = await getPluginDetailApi(uid)
+      const data = await fetchPluginDetail(uid)
       pluginDetail.value = data
       activeBindingUid.value = data.bindings[0]?.uid || ""
     } catch (error) {
@@ -462,19 +511,15 @@ export const usePluginCenter = () => {
       return false
     }
 
-    const nextEnabled = !binding.enabled
     try {
       togglingBindingEnabled.value = true
-      await updatePluginBindingEnabledApi({
-        uid: binding.uid,
-        enabled: nextEnabled
-      })
+      const { data } = await switchPluginBindingStatusApi(binding.uid)
 
       const target = pluginDetail.value?.bindings.find((item) => item.uid === binding.uid)
       if (target) {
-        target.enabled = nextEnabled
+        target.enabled = data.enabled
       }
-      ElMessage.success(nextEnabled ? "绑定已启用" : "绑定已停用")
+      ElMessage.success(data.enabled ? "绑定已启用" : "绑定已停用")
       return true
     } catch (error) {
       console.error("[PluginPage] toggle binding enabled failed", error)
@@ -482,6 +527,53 @@ export const usePluginCenter = () => {
       return false
     } finally {
       togglingBindingEnabled.value = false
+    }
+  }
+
+  const deleteActiveBinding = async () => {
+    const binding = activeBindingDetail.value
+    const pluginUid = activePluginCard.value?.uid || pluginDetail.value?.plugin.uid
+    if (!binding || !pluginUid || hasDefaultSchemaPreview.value || hasBindingEditDraft.value) {
+      return
+    }
+
+    const bindings = pluginDetail.value?.bindings || []
+    const currentIndex = bindings.findIndex((item) => item.uid === binding.uid)
+    const fallbackBindingUid = bindings[currentIndex - 1]?.uid || bindings[currentIndex + 1]?.uid || ""
+
+    try {
+      await ElMessageBox.confirm(
+        `将删除当前绑定「${binding.model_name || binding.model_uid}」，删除后需要重新新增才会恢复。确定继续吗？`,
+        "删除绑定",
+        {
+          confirmButtonText: "删除",
+          cancelButtonText: "取消",
+          type: "warning"
+        }
+      )
+    } catch (error) {
+      if (error === "cancel" || error === "close") return
+      throw error
+    }
+
+    try {
+      deletingBinding.value = true
+      await deletePluginBindingApi(binding.uid)
+      ElMessage.success("绑定已删除")
+      detailVisible.value = false
+      await loadPlugins()
+      await refreshPluginDetail(pluginUid)
+
+      if (fallbackBindingUid && pluginDetail.value?.bindings.some((item) => item.uid === fallbackBindingUid)) {
+        activeBindingUid.value = fallbackBindingUid
+      } else {
+        activeBindingUid.value = pluginDetail.value?.bindings[0]?.uid || ""
+      }
+    } catch (error) {
+      console.error("[PluginPage] delete binding failed", error)
+      ElMessage.error("删除绑定失败")
+    } finally {
+      deletingBinding.value = false
     }
   }
 
@@ -551,7 +643,7 @@ export const usePluginCenter = () => {
 
       detailLoading.value = true
       try {
-        const { data } = await getPluginDetailApi(plugin.uid)
+        const data = await fetchPluginDetail(plugin.uid)
         pluginDetail.value = data
         activeBindingUid.value = data.bindings[0]?.uid || ""
       } catch (error) {
@@ -587,6 +679,8 @@ export const usePluginCenter = () => {
     cardinalityLabelMap,
     detailLoading,
     detailVisible,
+    deleteActiveBinding,
+    deletingBinding,
     directionLabelMap,
     filteredPlugins,
     formatJson,

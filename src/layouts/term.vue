@@ -98,16 +98,17 @@ watch(
             <span>主机列表</span>
           </div>
           <div class="sidebar-actions">
-            <el-button
-              :icon="sidebarCollapsed ? ArrowRight : ArrowLeft"
-              circle
-              text
-              @click="toggleSidebar"
-            />
+            <el-button :icon="sidebarCollapsed ? ArrowRight : ArrowLeft" circle text @click="toggleSidebar" />
           </div>
         </div>
 
-        <el-input v-if="!sidebarCollapsed" v-model="keyword" placeholder="搜索主机名或 ID" clearable class="sidebar-search">
+        <el-input
+          v-if="!sidebarCollapsed"
+          v-model="keyword"
+          placeholder="搜索主机名或 ID"
+          clearable
+          class="sidebar-search"
+        >
           <template #prefix>
             <el-icon><Search /></el-icon>
           </template>

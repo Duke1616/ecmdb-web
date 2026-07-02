@@ -63,7 +63,7 @@ const {
   handleTabChange
 } = useResourceDetail()
 
-const { getPluginOperateItems, loadSingleResourcePluginActions, handlePluginAction } = useResourcePluginActions()
+const { getPluginOperateItems, loadResourcePluginActions, handlePluginAction } = useResourcePluginActions()
 
 const resourceIDNumber = computed(() => Number(resourceId.value) || 0)
 const detailOperateItem = computed(() => ({
@@ -80,7 +80,15 @@ const handlePluginDetailEvent = (row: { id: number; name: string; model_uid: str
 watch(
   () => resourceIDNumber.value,
   (id) => {
-    if (id) loadSingleResourcePluginActions(id)
+    if (id) {
+      void loadResourcePluginActions([
+        {
+          id,
+          name: resourceName.value,
+          model_uid: modelUid.value
+        }
+      ])
+    }
   },
   { immediate: true }
 )

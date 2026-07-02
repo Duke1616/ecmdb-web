@@ -183,6 +183,16 @@
                       size="small"
                     />
                   </div>
+
+                  <el-tooltip v-if="canDeleteBinding" content="删除当前绑定" placement="bottom">
+                    <el-button
+                      class="binding-delete-btn"
+                      text
+                      :icon="Delete"
+                      :loading="deletingBinding"
+                      @click="deleteActiveBinding"
+                    />
+                  </el-tooltip>
                 </div>
 
                 <PluginBindingTopology
@@ -220,7 +230,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { ArrowRight, Check, Close, Plus } from "@element-plus/icons-vue"
+import { ArrowRight, Check, Close, Delete, Plus } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import PluginBindingTopology from "./components/PluginBindingTopology.vue"
@@ -236,6 +246,8 @@ const {
   activePluginUid,
   cancelBindingEdit,
   cancelDefaultSchemaPreview,
+  deleteActiveBinding,
+  deletingBinding,
   detailLoading,
   detailVisible,
   filteredPlugins,
@@ -275,6 +287,14 @@ const canStartBindingEdit = computed(
 )
 
 const canToggleBindingEnabled = computed(
+  () =>
+    !!activeBindingDetail.value &&
+    !hasDefaultSchemaPreview.value &&
+    !hasBindingEditDraft.value &&
+    hasPermission(CMDB_CAPABILITIES.Plugin.BindingUpsert)
+)
+
+const canDeleteBinding = computed(
   () =>
     !!activeBindingDetail.value &&
     !hasDefaultSchemaPreview.value &&
@@ -658,6 +678,10 @@ const handleDraftModelChange = (modelUid: unknown) => {
 }
 
 .stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   align-items: center;
   padding: 0 2px 12px;
 }
@@ -666,6 +690,7 @@ const handleDraftModelChange = (modelUid: unknown) => {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex: 0 0 auto;
   min-width: 0;
 }
 
@@ -704,19 +729,22 @@ const handleDraftModelChange = (modelUid: unknown) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 auto;
+  justify-content: flex-end;
   min-width: 0;
 }
 
 .binding-tabs {
   display: flex;
   align-items: stretch;
+  justify-content: flex-end;
   gap: 8px;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
-  max-width: 100%;
+  max-width: min(100%, 960px);
   overflow-x: auto;
   padding-bottom: 2px;
+  margin-left: auto;
 }
 
 .stage-canvas {
@@ -731,6 +759,7 @@ const handleDraftModelChange = (modelUid: unknown) => {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
+  gap: 8px;
   margin-left: auto;
   white-space: nowrap;
 
@@ -740,6 +769,33 @@ const handleDraftModelChange = (modelUid: unknown) => {
     left: 14px;
     z-index: 6;
     margin-left: 0;
+  }
+}
+
+.binding-delete-btn {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #dbe3ed;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  &:hover {
+    color: #475569;
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: #cbd5e1;
+  }
+
+  :deep(.el-icon) {
+    font-size: 14px;
   }
 }
 
@@ -960,12 +1016,17 @@ const handleDraftModelChange = (modelUid: unknown) => {
   }
 
   .stage-header-main {
-    width: 100%;
-    justify-content: space-between;
+    flex: 0 0 auto;
+  }
+
+  .stage-toolbar {
+    flex: 1 1 auto;
   }
 
   .binding-tabs {
     width: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
   }
 
   .binding-status-panel {

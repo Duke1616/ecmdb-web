@@ -2,10 +2,7 @@ import { computed, markRaw, ref } from "vue"
 import { useRouter } from "vue-router"
 import { Connection, FolderOpened, Monitor, Operation } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
-import {
-  listResourcePluginActionsApi,
-  resolvePluginActionApi
-} from "@/api/cmdb/plugin"
+import { listResourcePluginActionsBatchApi, resolvePluginActionApi } from "@/api/cmdb/plugin"
 import { PLUGIN_UI, type ResourceAction, type ResolveResult } from "@/api/cmdb/plugin/types/plugin"
 import type { Resource } from "@/api/cmdb/resource/types/resource"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
@@ -99,49 +96,24 @@ export const useResourcePluginActions = () => {
 
     pluginActionsLoading.value = true
     try {
-      const results = await Promise.allSettled(
-        resources.map(async (resource) => {
-          const { data } = await listResourcePluginActionsApi(resource.id)
-          return [resource.id, data || []] as const
-        })
-      )
+      const { data } = await listResourcePluginActionsBatchApi({
+        resource_ids: resources.map((resource) => resource.id)
+      })
 
-      pluginActionsByResourceID.value = Object.fromEntries(
-        results.map((result, index) => {
-          const resourceID = resources[index].id
-          if (result.status === "fulfilled") {
-            return result.value
-          }
-          console.error(`查询资源 ${resourceID} 插件动作失败:`, result.reason)
-          return [resourceID, []] as const
-        })
-      )
-    } finally {
-      pluginActionsLoading.value = false
-    }
-  }
+      const actionMap = Object.fromEntries(
+        resources.map((resource) => [resource.id, [] as ResourceAction[]])
+      ) as Record<number, ResourceAction[]>
 
-  const loadSingleResourcePluginActions = async (resourceID: number) => {
-    if (!resourceID) {
-      pluginActionsByResourceID.value = {}
-      return []
-    }
-
-    pluginActionsLoading.value = true
-    try {
-      const { data } = await listResourcePluginActionsApi(resourceID)
-      pluginActionsByResourceID.value = {
-        ...pluginActionsByResourceID.value,
-        [resourceID]: data || []
+      for (const item of data || []) {
+        actionMap[item.resource_id] = item.actions || []
       }
-      return data || []
+
+      pluginActionsByResourceID.value = actionMap
     } catch (error) {
-      console.error("查询资源插件动作失败:", error)
-      pluginActionsByResourceID.value = {
-        ...pluginActionsByResourceID.value,
-        [resourceID]: []
-      }
-      return []
+      console.error("批量查询资源插件动作失败:", error)
+      pluginActionsByResourceID.value = Object.fromEntries(
+        resources.map((resource) => [resource.id, [] as ResourceAction[]])
+      )
     } finally {
       pluginActionsLoading.value = false
     }
@@ -182,7 +154,6 @@ export const useResourcePluginActions = () => {
     getPluginActions,
     getPluginOperateItems,
     loadResourcePluginActions,
-    loadSingleResourcePluginActions,
     isPluginActionCode,
     handlePluginAction,
     toOperateItems

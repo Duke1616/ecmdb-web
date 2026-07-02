@@ -40,27 +40,25 @@ export function savePluginBindingsApi(data: Plugin.SavePluginBindingsRequest) {
   })
 }
 
-/** 更新插件绑定启停状态 */
-export function updatePluginBindingEnabledApi(data: Plugin.UpdatePluginBindingEnabledRequest) {
-  return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/binding/enabled`,
+/** 切换插件绑定启停状态 */
+export function switchPluginBindingStatusApi(uid: string) {
+  return instance.patch<Plugin.SwitchPluginBindingStatusResponse>({
+    url: `${API_SERVICE.CMDB}/plugin/binding/switch/${uid}`
+  })
+}
+
+/** 删除插件绑定 */
+export function deletePluginBindingApi(uid: string) {
+  return instance.delete<number>({
+    url: `${API_SERVICE.CMDB}/plugin/binding/delete/${uid}`
+  })
+}
+
+/** 批量查询资源可用插件动作 */
+export function listResourcePluginActionsBatchApi(data: Plugin.ListResourcePluginActionsBatchRequest) {
+  return instance.post<Plugin.ResourceActions[]>({
+    url: `${API_SERVICE.CMDB}/plugin/resource/actions/batch`,
     data
-  })
-}
-
-/** 查询资源可用插件动作 */
-export function listResourcePluginActionsApi(resource_id: number) {
-  return instance.get<Plugin.ResourceAction[]>({
-    url: `${API_SERVICE.CMDB}/plugin/resource/actions`,
-    params: { resource_id }
-  })
-}
-
-/** 查询模型可用插件动作 */
-export function listModelPluginActionsApi(model_uid: string) {
-  return instance.get<Plugin.ResourceAction[]>({
-    url: `${API_SERVICE.CMDB}/plugin/model/actions`,
-    params: { model_uid }
   })
 }
 

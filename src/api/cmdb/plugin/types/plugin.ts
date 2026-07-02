@@ -165,9 +165,12 @@ export interface SavePluginBindingsRequest {
   bindings: Binding[]
 }
 
-export interface UpdatePluginBindingEnabledRequest {
-  uid: string
+export interface SwitchPluginBindingStatusResponse {
   enabled: boolean
+}
+
+export interface ListResourcePluginActionsBatchRequest {
+  resource_ids: number[]
 }
 
 export interface ResourceAction {

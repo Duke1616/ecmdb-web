@@ -231,12 +231,13 @@ const handleClosed = () => {
   resetForm()
 }
 
-// 声明式监听活动属性行的改变
 watch(
-  () => props.activeAttribute,
-  (newVal) => {
-    if (newVal) {
-      setFrom(newVal)
+  () => visible.value,
+  (opened) => {
+    if (!opened) return
+
+    if (props.activeAttribute) {
+      setFrom(props.activeAttribute)
     } else {
       resetForm()
     }

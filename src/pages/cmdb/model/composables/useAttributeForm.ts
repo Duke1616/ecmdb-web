@@ -129,6 +129,10 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
 
   const buildPayload = () => {
     syncOptionsToForm()
+    if (formData.value.id === undefined) {
+      formData.value.model_uid = props.modelUid
+      formData.value.group_id = props.groupId ?? 0
+    }
     return cloneDeep(formData.value)
   }
 
