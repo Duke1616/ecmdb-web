@@ -1,0 +1,291 @@
+// 治理模块通用表格样式 (Governance Table System)
+// 旨在统一 IAM 模块下所有基于 PremiumList/DataTable 的列表展示风格
+
+// 1. 基础按钮工具 (Premium 风格，支持双规格)
+.el-button.u-gov-btn {
+  height: 34px; // 默认 34px (用于表格治理区)
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid #409eff;
+  background: #409eff;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.15);
+
+  // 大号规格 (用于 ManagerHeader 主动作区)
+  &.is-large {
+    height: 38px;
+    padding: 0 20px;
+    font-size: 14px;
+  }
+
+  &:hover:not(:disabled),
+  &:focus:not(:disabled) {
+    background: #66b1ff;
+    border-color: #66b1ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 177, 255, 0.25);
+    color: #ffffff;
+  }
+
+  // 1.1 品牌主要按钮 (Brand Blue)
+  &.is-primary {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
+      background: #2563eb;
+      border-color: #2563eb;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  // 2. 危险动作按钮 (原生 Element Danger 配色)
+  &.is-danger {
+    background: #f56c6c;
+    border-color: #f56c6c;
+    color: #ffffff;
+    box-shadow: 0 2px 4px rgba(245, 108, 108, 0.15);
+
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
+      background: #f78989;
+      border-color: #f78989;
+      box-shadow: 0 4px 12px rgba(247, 137, 137, 0.25);
+      color: #ffffff;
+    }
+  }
+
+  // 3. 次要/幽灵按钮 (用于取消、返回等)
+  &.is-ghost {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &:hover:not(:disabled),
+    &:focus:not(:disabled) {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: #475569;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  &:disabled,
+  &.is-disabled {
+    background: #94a3b8;
+    border-color: #94a3b8;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    pointer-events: none; // NOTE: 去除禁用状态下的所有鼠标交互（悬浮、点击等）
+  }
+}
+
+// 1.2 刷新/次要动作按钮 (Square Icon Style)
+.el-button.eiam-refresh-btn {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  border-radius: 8px;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    color: #409eff;
+    border-color: #409eff;
+    background: #f0f7ff;
+    transform: translateY(-1px);
+  }
+
+  &:disabled,
+  &.is-disabled {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #cbd5e1;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+  }
+}
+
+// 2. 表头文字工具
+.u-gov-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+// 2.5 基础布局容器 (核心修复)
+.gov-table-grid {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  align-items: center;
+
+  // 默认 4 列布局 (Role, Policy, Tenant 详情页通用)
+  grid-template-columns: 240px 1fr 180px 100px;
+
+  // 6 列：租户成员管理专用比例
+  &.is-member {
+    grid-template-columns: 200px 1.5fr 1fr 100px 1.2fr 100px;
+  }
+
+  // 5 列：邀请凭证列表专用比例
+  &.is-invitation {
+    grid-template-columns: 1.5fr 1.2fr 1.2fr 1.2fr 100px;
+  }
+
+  // 5 列：入驻申请列表专用比例
+  &.is-request {
+    grid-template-columns: 1.5fr 1.2fr 1.2fr 1fr 140px;
+  }
+
+  &.is-header {
+    margin-bottom: 0;
+  }
+
+  &.is-row {
+    min-height: 72px;
+    transition: background 0.2s;
+    &:hover {
+      background: #f8fafc;
+    }
+  }
+
+  .align-center {
+    text-align: center;
+  }
+}
+
+// 3. 通用列表单元格定义
+.cell-desc,
+.cell-email,
+.cell-job,
+.cell-domain,
+.cell-time,
+.cell-identity {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+
+  // 针对描述类文本的颜色和字体
+  .desc-text,
+  .email-text,
+  .job-text,
+  .domain-text,
+  .time-text {
+    font-size: 13px;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+  }
+
+  &.is-bold span {
+    font-weight: 600;
+    color: #1e293b;
+  }
+}
+
+// 4. 时间单元格
+.cell-time {
+  span {
+    font-size: 13px;
+    color: #8a99ad;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    font-weight: 500;
+  }
+}
+
+// 5. 操作列与删除按钮
+.cell-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .delete-btn {
+    font-size: 12px;
+    font-weight: 600;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #ef4444;
+    }
+
+    .el-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
+// 6. 状态单元格
+.cell-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 7. 核心语义化状态样式*/
+.minimal-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .text {
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  &.primary {
+    .dot { background: #3b82f6; }
+    .text { color: #3b82f6; }
+  }
+  &.success {
+    .dot { background: #10b981; }
+    .text { color: #10b981; }
+  }
+  &.warning {
+    .dot { background: #f59e0b; }
+    .text { color: #f59e0b; }
+  }
+  &.danger {
+    .dot { background: #ef4444; }
+    .text { color: #ef4444; }
+  }
+  &.info {
+    .dot { background: #94a3b8; }
+    .text { color: #94a3b8; }
+  }
+}

@@ -47,10 +47,10 @@ import { ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { InfoFilled, Setting } from "@element-plus/icons-vue"
-import UserPicker from "@/common/components/UserPicker/index.vue"
+import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 import MemberSelector from "./components/MemberSelector/index.vue"
 import { SaveTeamReq, Team } from "@/api/alert/team/types"
-import { saveTeamApi } from "@/api/alert/team"
+import { createTeamApi, updateTeamApi } from "@/api/alert/team"
 
 // 接收父组件传递
 const emits = defineEmits(["closed", "callback"])
@@ -80,19 +80,27 @@ const syncUserData = () => {
 
 const submitForm = () => {
   formRef.value?.validate((valid: boolean, fields: any) => {
-    if (!valid) return console.error("表单校验不通过", fields)
+    if (!valid) {
+      ElMessage.warning(fields?.name ? "请输入团队名称" : "请完善团队信息")
+      return
+    }
 
     // 同步用户选择数据到表单数据
     syncUserData()
+    if (!formData.value.owner) {
+      ElMessage.warning("请选择管理人员")
+      return
+    }
 
-    saveTeamApi(formData.value)
+    const apiCall = formData.value.id ? updateTeamApi(formData.value) : createTeamApi(formData.value)
+    apiCall
       .then(() => {
         onClosed()
         ElMessage.success("保存成功")
         emits("callback")
       })
-      .catch((error: any) => {
-        console.log("catch", error)
+      .catch(() => {
+        ElMessage.error("保存团队失败，请稍后重试")
       })
   })
 }

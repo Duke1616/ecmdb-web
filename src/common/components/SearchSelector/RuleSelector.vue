@@ -62,8 +62,8 @@ const loadRules = async (params: any) => {
 }
 
 // 定义获取单个规则详情函数
-const getRuleById = async (id: number) => {
-  return await getRuleApi(id)
+const getRuleById = async (id: string | number) => {
+  return await getRuleApi(id as number)
 }
 
 // 获取告警级别优先级

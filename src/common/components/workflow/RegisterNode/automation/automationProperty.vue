@@ -30,48 +30,46 @@
         <el-icon><Setting /></el-icon>
       </template>
       <div class="settings-stack">
-        <el-form-item label="代码模版" prop="codebook_uid">
-          <el-select
-            v-model="propertyForm.codebook_uid"
-            filterable
+        <el-form-item label="代码模版" prop="codebook_id">
+          <CodebookPicker
+            :model-value="propertyForm.codebook_id || undefined"
             placeholder="请选择代码模版"
-            @change="handlerChangeCodebook()"
+            variant="element"
             class="modern-select"
             :disabled="flowDetail.status == '2'"
-          >
-            <el-option
-              v-for="item in runnerTagsData"
-              :key="item.codebook_uid"
-              :label="item.codebook_name"
-              :value="item.codebook_uid"
-            >
-              <div class="option-item">
-                <el-icon class="mr-2"><Collection /></el-icon>
-                <span>{{ item.codebook_name }}</span>
-              </div>
-            </el-option>
-          </el-select>
+            @update:model-value="handleCodebookUpdate"
+          />
         </el-form-item>
 
-        <el-form-item label="执行标签 (Tag)" prop="tag">
+        <el-form-item label="执行节点" prop="tag">
           <el-select
             ref="tagSelect"
             v-model="propertyForm.tag"
             filterable
-            placeholder="选择模版后选取可用标签"
-            :disabled="!propertyForm.codebook_uid || flowDetail.status == '2'"
+            :loading="runnerTagsLoading"
+            :placeholder="runnerTagsPlaceholder"
+            :disabled="!propertyForm.codebook_id || flowDetail.status == '2'"
             class="modern-select"
+            popper-class="automation-runner-select-dropdown"
           >
-            <el-option v-for="item in availableTags" :key="item.tag" :label="item.tag" :value="item.tag">
-              <div class="tag-option">
-                <div class="tag-option-header">
-                  <span class="tag-name">{{ item.tag }}</span>
+            <el-option
+              v-if="propertyForm.tag === 'auto'"
+              class="hidden-auto-option"
+              label="自动分发模式 (Auto)"
+              value="auto"
+            />
+            <el-option v-for="item in availableTags" :key="item.id" :label="item.name" :value="item.tag">
+              <div class="runner-option">
+                <div class="runner-option-header">
+                  <span class="runner-name">{{ item.name }}</span>
                   <el-tag size="small" :type="item.kind === 'GRPC' ? 'success' : 'warning'" effect="light" round>
                     {{ item.kind }}
                   </el-tag>
                 </div>
-                <div class="tag-option-desc">
-                  {{ item.target }} <span v-if="item.handler">/ {{ item.handler }}</span>
+                <div class="runner-option-desc">
+                  <span>{{ item.tag }}</span>
+                  <span v-if="item.target"> · {{ item.target }}</span>
+                  <span v-if="item.handler"> / {{ item.handler }}</span>
                 </div>
               </div>
             </el-option>
@@ -79,7 +77,7 @@
               <div class="footer-action">
                 <el-button link type="primary" @click="setAutoTag" class="auto-发现-btn">
                   <el-icon class="mr-1"><MagicStick /></el-icon>
-                  自动分发模式 (Auto)
+                  使用自动分发模式
                 </el-button>
               </div>
             </template>
@@ -184,14 +182,20 @@
 </template>
 
 <script setup lang="ts">
-import { listRunnerTagsApi } from "@/api/runner"
-import { runnerTags, TagDetail } from "@/api/runner/types/runner"
+import { listRunnerByCodebookIdApi } from "@/api/task/runner"
+import { TagDetail, runner } from "@/api/task/runner/types/runner"
 import { ElSelect, FormInstance, FormRules } from "element-plus"
-import { Document, Setting, Timer, Bell, MagicStick, Collection } from "@element-plus/icons-vue"
-import { ref, onMounted, reactive } from "vue"
-import { cloneDeep } from "lodash-es"
+import { Document, Setting, Timer, Bell, MagicStick } from "@element-plus/icons-vue"
+import { computed, ref, onMounted, reactive } from "vue"
+import { cloneDeep, uniqBy } from "lodash-es"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { FormSection } from "../../PropertySetting"
+import CodebookPicker from "@/common/components/CodebookPicker/index.vue"
+
+interface RunnerTagOption extends TagDetail {
+  id: string
+  name: string
+}
 
 // ── 属性与事件定义 ──────────────────────────────────────────────────────────
 const props = defineProps({
@@ -211,7 +215,7 @@ const emits = defineEmits(["closed"])
 // ── 状态管理 ────────────────────────────────────────────────────────────
 const DEFAULT_FORM_DATA = {
   name: "自动化-",
-  codebook_uid: "",
+  codebook_id: 0 as number,
   is_notify: false,
   is_timing: false,
   exec_method: "",
@@ -226,8 +230,15 @@ const DEFAULT_FORM_DATA = {
 const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const tagSelect = ref<InstanceType<typeof ElSelect> | null>(null)
-const runnerTagsData = ref<runnerTags[]>([])
-const availableTags = ref<TagDetail[]>([])
+const availableTags = ref<RunnerTagOption[]>([])
+const runnerTagsLoading = ref(false)
+
+const runnerTagsPlaceholder = computed(() => {
+  if (!propertyForm.codebook_id) return "选择模版后选取可用执行节点"
+  if (runnerTagsLoading.value) return "正在加载可用执行节点..."
+  if (availableTags.value.length === 0) return "当前模版暂无可用执行节点"
+  return "请选择执行节点"
+})
 
 // ── 模板与执行逻辑 ──────────────────────────────────────────────────────────
 const { templateRules, getTemplateFieldOptions, fetchTemplates } = useTemplateRules()
@@ -264,23 +275,45 @@ const handleTimingChange = () => {
 }
 
 // ── 标签与运行器逻辑 ────────────────────────────────────────────────────────
-const handlerChangeCodebook = (clearTag = true) => {
+const toRunnerTagDetails = (runners: runner[]): RunnerTagOption[] => {
+  const tags = runners.flatMap((item) =>
+    (item.tags || []).map((tag) => ({
+      id: `${item.id}:${tag}`,
+      name: item.name,
+      tag,
+      kind: item.kind,
+      target: item.target,
+      handler: item.handler
+    }))
+  )
+
+  return uniqBy(tags, (item) => [item.tag, item.kind, item.target, item.handler].join("|"))
+}
+
+const loadRunnerTagsByCodebook = async (clearTag = true) => {
   if (clearTag) {
     propertyForm.tag = ""
   }
-  const matched = runnerTagsData.value.find((item) => item.codebook_uid == propertyForm.codebook_uid)
-  availableTags.value = matched?.tags || []
+  if (!propertyForm.codebook_id) {
+    availableTags.value = []
+    return
+  }
+
+  runnerTagsLoading.value = true
+  try {
+    const { data } = await listRunnerByCodebookIdApi(propertyForm.codebook_id)
+    availableTags.value = toRunnerTagDetails(data.runners || [])
+  } catch (error) {
+    console.log(error)
+    availableTags.value = []
+  } finally {
+    runnerTagsLoading.value = false
+  }
 }
 
-const listRunnerTags = (isInitialLoad = false) => {
-  listRunnerTagsApi()
-    .then((res) => {
-      runnerTagsData.value = res.data.runner_tags || []
-      handlerChangeCodebook(!isInitialLoad)
-    })
-    .catch((error) => {
-      console.log(error)
-    })
+const handleCodebookUpdate = (value: number | number[] | undefined) => {
+  propertyForm.codebook_id = Array.isArray(value) ? value[0] || 0 : value || 0
+  loadRunnerTagsByCodebook(true)
 }
 
 function setAutoTag() {
@@ -292,7 +325,7 @@ function setAutoTag() {
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
-    codebook_uid: propertyForm.codebook_uid,
+    codebook_id: propertyForm.codebook_id,
     is_notify: propertyForm.is_notify,
     template_field: propertyForm.template_field,
     template_id: propertyForm.template_id,
@@ -347,7 +380,7 @@ const formRules: FormRules = {
 // ── 生命周期 ────────────────────────────────────────────────────────────
 onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
-  propertyForm.codebook_uid = props.nodeData?.properties.codebook_uid
+  propertyForm.codebook_id = Number(props.nodeData?.properties.codebook_id) || 0
   propertyForm.is_notify = props.nodeData?.properties.is_notify
   propertyForm.is_timing = props.nodeData?.properties.is_timing
   propertyForm.notify_method = Array.isArray(props.nodeData?.properties.notify_method)
@@ -361,7 +394,7 @@ onMounted(async () => {
   propertyForm.unit = props.nodeData?.properties.unit
   propertyForm.quantity = props.nodeData?.properties.quantity
 
-  listRunnerTags(true)
+  await loadRunnerTagsByCodebook(false)
 
   if (propertyForm.exec_method === "template" && props.id !== undefined) {
     await fetchTemplates(props.id)
@@ -375,58 +408,96 @@ defineExpose({
 
 <style scoped lang="scss">
 .property-form {
+  --automation-control-height: 36px;
+  --automation-control-radius: 6px;
+  --automation-control-border: #cbd5e1;
+  --automation-control-border-hover: #94a3b8;
+  --automation-control-border-focus: #94a3b8;
+  --automation-control-text: #303133;
+  --automation-control-placeholder: #a8abb2;
+
   padding: 4px 12px;
   background: transparent;
   min-height: 100%;
 }
 
-// ── 通用控件（对比度增强版） ──────────────────────────────────────────
+// ── 通用控件：统一 el-input / el-select / CodebookPicker / input-number ─────
 .modern-input,
-.modern-select {
+.modern-select,
+.modern-number {
   width: 100%;
-  :deep(.el-input__wrapper) {
-    background: #ffffff !important; // 强制纯白，解决不可见问题
-    border-radius: 6px;
-    box-shadow: none !important;
-    border: 1px solid #cbd5e1 !important; // 明显的边框线
+}
+
+.modern-input,
+.modern-select,
+.modern-number {
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper),
+  :deep(.picker-input-box) {
+    min-height: var(--automation-control-height);
+    height: var(--automation-control-height);
     padding: 2px 10px;
+    background: #ffffff !important;
+    border: 1px solid var(--automation-control-border) !important;
+    border-radius: var(--automation-control-radius) !important;
+    box-shadow: none !important;
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: #94a3b8 !important;
+      border-color: var(--automation-control-border-hover) !important;
     }
 
-    &.is-focus {
-      border-color: #6366f1 !important;
-      box-shadow: 0 0 0 1px #6366f1 !important;
+    &.is-focus,
+    &.is-focused {
+      border-color: var(--automation-control-border-focus) !important;
+      box-shadow: none !important;
     }
+  }
+
+  :deep(.el-input__inner),
+  :deep(.el-select__placeholder),
+  :deep(.el-select__selected-item),
+  :deep(.single-text),
+  :deep(.placeholder-text),
+  :deep(.codebook-name) {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--automation-control-text);
+  }
+
+  :deep(.el-input__inner::placeholder),
+  :deep(.placeholder-text),
+  :deep(.el-select__placeholder.is-transparent) {
+    color: var(--automation-control-placeholder);
+  }
+
+  :deep(.selected-single) {
+    min-width: 0;
+    gap: 6px;
+  }
+
+  :deep(.picker-arrow),
+  :deep(.el-select__caret) {
+    color: var(--automation-control-placeholder);
   }
 }
 
 .modern-number {
-  width: 100%;
   :deep(.el-input-number__increase),
   :deep(.el-input-number__decrease) {
-    background: #f8fafc;
-    border: none;
-    border-left: 1px solid #cbd5e1;
+    height: calc(var(--automation-control-height) - 2px);
     color: #64748b;
+    background: #f8fafc;
+    border-color: var(--automation-control-border);
+
     &:hover {
-      color: #6366f1;
+      color: var(--automation-control-border-focus);
       background: #eff6ff;
     }
   }
 
   :deep(.el-input-number__decrease) {
-    border-left: none;
-    border-right: 1px solid #cbd5e1;
-  }
-
-  :deep(.el-input__wrapper) {
-    background: #ffffff !important;
-    border-radius: 6px !important;
-    box-shadow: none !important;
-    border: 1px solid #cbd5e1 !important;
+    border-right: 1px solid var(--automation-control-border);
   }
 }
 
@@ -465,7 +536,7 @@ defineExpose({
 .settings-stack {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
 }
 
 .grid-2 {
@@ -507,19 +578,30 @@ defineExpose({
   font-size: 13px;
 }
 
-.tag-option {
+:global(.automation-runner-select-dropdown .hidden-auto-option) {
+  display: none !important;
+}
+
+.runner-option {
   padding: 4px 0;
-  .tag-option-header {
+
+  .runner-option-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2px;
-    .tag-name {
+
+    .runner-name {
+      min-width: 0;
+      overflow: hidden;
       font-weight: 600;
       color: #0f172a;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
-  .tag-option-desc {
+
+  .runner-option-desc {
     font-size: 11px;
     color: #94a3b8;
   }

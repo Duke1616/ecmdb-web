@@ -1,6 +1,7 @@
 /** 数据源类型枚举 */
 export enum DatasourceTypeEnum {
   PROMETHEUS = "PROMETHEUS",
+  VICTORIA_METRICS = "VICTORIA_METRICS",
   LOKI = "LOKI"
 }
 

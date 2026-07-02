@@ -16,6 +16,8 @@
 @import "./view-transition.scss";
 // 确认对话框样式
 @import "./close-dialog.scss";
+// 治理表格样式
+@import "./governance-table.scss";
 
 // 业务页面几乎都应该在根元素上挂载 class="app-container"，以保持页面美观
 .app-container {

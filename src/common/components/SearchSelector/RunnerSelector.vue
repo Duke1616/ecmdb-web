@@ -30,7 +30,7 @@
 
 <script setup lang="ts">
 import SearchSelectorBase from "./Base.vue"
-import { listRunnerApi, listRunnerByIdsApi } from "@/api/runner"
+import { listRunnerApi, listRunnerByIdsApi } from "@/api/task/runner/index.js"
 
 interface Props {
   modelValue?: number
@@ -63,8 +63,8 @@ const loadRunners = async (params: any) => {
 }
 
 // 定义获取单个详情函数
-const getRunnerById = async (id: number) => {
-  const response = await listRunnerByIdsApi([id])
+const getRunnerById = async (id: string | number) => {
+  const response = await listRunnerByIdsApi([id as number])
   if (response.data && response.data.runners && response.data.runners.length > 0) {
     return {
       ...response,

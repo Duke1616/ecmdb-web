@@ -1,12 +1,14 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader title="成员管理" subtitle="管理团队成员信息" @refresh="loadMembersData">
-      <template #actions>
-        <el-button type="primary" :icon="Plus" @click="handleInviteMember"> 邀请成员 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <WorkspaceSectionPage
+    title="团队成员"
+    subtitle="管理团队成员信息"
+    :primary-action="{
+      label: '邀请成员',
+      icon: Plus,
+      capability: ALERT_CAPABILITIES.Team.Edit
+    }"
+    @primary-action="handleInviteMember"
+  >
     <!-- 数据表格 -->
     <DataTable
       :data="members"
@@ -25,7 +27,7 @@
     >
       <!-- 成员姓名插槽 -->
       <template #displayName="{ row }">
-        <div class="member-name">{{ row.display_name || row.username }}</div>
+        <div class="member-name">{{ row.nickname || row.username }}</div>
       </template>
 
       <!-- 用户名插槽 -->
@@ -40,10 +42,10 @@
 
       <!-- 职位插槽 -->
       <template #title="{ row }">
-        <div class="member-title">{{ row.title || "未设置职位" }}</div>
+        <div class="member-title">{{ row.job_title || "未设置职位" }}</div>
       </template>
     </DataTable>
-  </PageContainer>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
@@ -51,13 +53,13 @@ import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import { Plus } from "@element-plus/icons-vue"
 import { getTeamDetailApi } from "@/api/alert/team"
-import { findByUsernamesApi } from "@/api/user"
 import type { Team } from "@/api/alert/team/types"
-import type { user } from "@/api/user/types/user"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
 import { usePagination } from "@/common/composables/usePagination"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
+import { useUsers } from "@/common/composables/useUsers"
+import type { IMemberUser } from "@/common/composables/useUsers"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 interface Props {
   teamId: number
@@ -66,7 +68,8 @@ interface Props {
 const props = defineProps<Props>()
 
 // 成员列表
-const members = ref<user[]>([])
+const members = ref<IMemberUser[]>([])
+const { selectedUsers, loadSelectedUsers } = useUsers()
 const loading = ref(false)
 const teamInfo = ref<Team | null>(null)
 
@@ -97,7 +100,7 @@ const tableColumns: Column[] = [
     slot: "email"
   },
   {
-    prop: "title",
+    prop: "job_title",
     label: "职位",
     minWidth: 150,
     slot: "title"
@@ -106,7 +109,7 @@ const tableColumns: Column[] = [
 
 // 表格属性
 const tableProps = {
-  height: "calc(100vh - 200px)"
+  height: "100%"
 }
 
 // 加载团队成员数据
@@ -118,11 +121,9 @@ const loadMembersData = async () => {
 
     // 1. 获取团队详情
     const teamResponse = await getTeamDetailApi(props.teamId)
-    console.log("团队详情响应:", teamResponse.data)
 
     // 后端可能直接返回团队对象，而不是包装在 team 字段中
     teamInfo.value = teamResponse.data
-    console.log("团队信息:", teamInfo.value)
 
     // 检查团队信息是否存在
     if (!teamInfo.value) {
@@ -138,9 +139,9 @@ const loadMembersData = async () => {
       const endIndex = startIndex + paginationData.pageSize
       const paginatedUsernames = usernames.slice(startIndex, endIndex)
 
-      // 3. 批量获取用户详情
-      const usersResponse = await findByUsernamesApi(paginatedUsernames)
-      members.value = usersResponse.data.users || []
+      // 3. 批量获取用户详情 (由 useUsers Hook 并发接管)
+      await loadSelectedUsers(paginatedUsernames)
+      members.value = selectedUsers.value
 
       // 设置总数
       total.value = usernames.length
@@ -185,16 +186,8 @@ const refresh = () => {
 
 // 暴露方法给父组件
 defineExpose({
-  refresh
+  refresh,
+  loadData: loadMembersData,
+  loadMembersData
 })
 </script>
-
-<style lang="scss" scoped>
-// 覆盖 PageContainer 样式
-.page-container {
-  padding: 0px !important;
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
-}
-</style>

@@ -17,10 +17,18 @@ export function getDatasourceApi(id: number) {
   })
 }
 
-/** 保存数据源 */
-export function saveDatasourceApi(data: datasource.SaveDatasourceReq) {
+/** 创建数据源 */
+export function createDatasourceApi(data: datasource.SaveDatasourceReq) {
   return instance.post<datasource.Datasource>({
-    url: `${API_SERVICE.ALERT}/datasource/save`,
+    url: `${API_SERVICE.ALERT}/datasource/create`,
+    data: data
+  })
+}
+
+/** 更新数据源 */
+export function updateDatasourceApi(data: datasource.SaveDatasourceReq) {
+  return instance.put<datasource.Datasource>({
+    url: `${API_SERVICE.ALERT}/datasource/update`,
     data: data
   })
 }

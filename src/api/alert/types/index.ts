@@ -5,7 +5,13 @@ export interface Page {
 }
 
 // 告警列表请求
-export interface ListAlertsReq extends Page {}
+export interface ListAlertsReq extends Page {
+  keyword?: string
+  data_source_id?: number
+  level?: number
+  start_time?: number
+  end_time?: number
+}
 
 // 按工作空间获取告警列表请求
 export interface ListAlertsByWorkspaceReq extends Page {

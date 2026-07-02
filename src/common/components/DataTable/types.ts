@@ -19,5 +19,7 @@ export interface Action {
   plain?: boolean
   size?: "small" | "default" | "large"
   icon?: any
+  loading?: (row: any) => boolean
   disabled?: (row: any) => boolean
+  capability?: string | string[]
 }

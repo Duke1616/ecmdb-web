@@ -1,40 +1,32 @@
 <template>
   <div class="data-card">
-    <!-- Graph Controls Header -->
     <div class="graph-header">
       <div class="graph-title">
-        <el-icon class="mr-1"><DataLine /></el-icon> Graph
+        <el-icon><DataLine /></el-icon>
+        <span>查询结果</span>
       </div>
 
       <div class="graph-controls">
-        <el-checkbox v-model="showLegend" label="Show Legend" size="small" />
+        <el-checkbox v-model="showLegend" label="显示图例" size="small" />
         <span class="divider">|</span>
-        <span class="text-gray-400">{{ series.length }} Series</span>
+        <span class="series-count">{{ series.length }} 条序列</span>
       </div>
     </div>
 
-    <!-- Content -->
     <div class="content-area" v-loading="loading">
-      <!-- Initial State: No Query Run Yet -->
-      <div v-if="!hasRunQuery" class="h-80 flex items-center justify-center bg-white rounded-lg border border-gray-100">
-        <el-empty description="暂无数据" :image-size="100" />
+      <div v-if="!hasRunQuery" class="empty-state">
+        <el-empty description="输入查询语句后执行查询" :image-size="100" />
       </div>
 
-      <!-- Query Run but No Data -->
-      <div
-        v-else-if="hasRunQuery && series.length === 0 && !loading"
-        class="h-80 flex items-center justify-center bg-white rounded-lg border border-gray-100"
-      >
+      <div v-else-if="hasRunQuery && series.length === 0 && !loading" class="empty-state">
         <el-empty description="查询无结果" :image-size="100" />
       </div>
 
-      <!-- Chart Section - Always rendered for ECharts initialization -->
       <div class="chart-section" :class="{ 'chart-hidden': !hasRunQuery || series.length === 0 }">
         <div class="chart-container">
           <div ref="chartRef" class="chart-canvas" />
         </div>
 
-        <!-- Legend -->
         <ChartLegend v-if="showLegend && series.length > 0" :series="series" @toggle="$emit('toggle-series', $event)" />
       </div>
     </div>
@@ -73,30 +65,30 @@ defineExpose({
 <style lang="scss" scoped>
 .data-card {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  border: 1px solid #f3f4f6;
+  min-height: 0;
+  background-color: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
   overflow: hidden;
-  flex-shrink: 0;
 }
 
-/* Graph Header */
 .graph-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f3f4f6;
-  background-color: rgba(249, 250, 251, 0.5);
+  padding: 12px 16px;
+  border-bottom: 1px solid #edf0f5;
+  background: #ffffff;
 }
 
 .graph-title {
   display: flex;
   align-items: center;
+  gap: 6px;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #111827;
   margin-right: 0.5rem;
 }
@@ -112,16 +104,34 @@ defineExpose({
   color: #9ca3af;
 }
 
-/* Content Area */
+.series-count {
+  color: #6b7280;
+}
+
 .content-area {
   display: flex;
+  flex: 1;
   flex-direction: column;
-  padding: 1rem;
+  min-height: 0;
+  padding: 16px;
+}
+
+.empty-state {
+  display: flex;
+  flex: 1;
+  min-height: 320px;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px dashed #e5e7eb;
+  border-radius: 6px;
 }
 
 .chart-section {
   display: flex;
+  flex: 1;
   flex-direction: column;
+  min-height: 0;
 
   &.chart-hidden {
     display: none;
@@ -129,7 +139,8 @@ defineExpose({
 }
 
 .chart-container {
-  height: 320px;
+  flex: 1;
+  min-height: 320px;
   position: relative;
   width: 100%;
 }

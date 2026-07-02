@@ -1,5 +1,6 @@
 import { ref } from "vue"
-import { QueryRangeApi } from "@/api/alert/proxy"
+import { ElMessage } from "element-plus"
+import { QueryRangeApi } from "@/api/alert/explore"
 
 /**
  * 告警查询逻辑 Composable
@@ -48,8 +49,8 @@ export function useAlertQuery() {
       })
 
       return res.data.metrics
-    } catch (error) {
-      console.error("Query failed", error)
+    } catch {
+      ElMessage.error("查询失败，请稍后重试")
       series.value = []
       return []
     } finally {

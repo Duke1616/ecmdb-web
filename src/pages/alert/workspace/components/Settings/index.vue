@@ -1,207 +1,180 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader title="工作空间设置" subtitle="配置工作空间的基本信息、权限和状态" @refresh="loadWorkspace">
-      <template #actions>
-        <el-button type="primary" @click="handleSaveSettings" :loading="saving" size="large" class="save-button">
-          <el-icon v-if="!saving"><Check /></el-icon>
-          {{ saving ? "保存中..." : "保存设置" }}
-        </el-button>
-      </template>
-    </ManagerHeader>
-
+  <WorkspaceSectionPage
+    title="空间配置"
+    subtitle="配置工作空间的基本信息、权限和状态"
+    :primary-action="saveAction"
+    :secondary-action="toggleAction"
+    @primary-action="handleSaveSettings"
+    @secondary-action="handleToggleStatus"
+  >
     <!-- 设置表单 -->
-    <div class="content-card" v-loading="loading">
-      <div class="card-body">
-        <el-form :model="formData" :rules="formRules" ref="formRef" label-position="top" class="settings-form">
-          <div class="form-section">
-            <h4 class="section-title">基本信息</h4>
-            <el-row :gutter="20">
-              <!-- 工作空间名称 -->
-              <el-col :span="12">
-                <el-form-item label="工作空间名称" prop="name">
-                  <el-input v-model="formData.name" placeholder="请输入工作空间名称" size="large" />
-                </el-form-item>
-              </el-col>
+    <el-form
+      ref="formRef"
+      v-loading="loading"
+      :model="formData"
+      :rules="formRules"
+      label-position="top"
+      class="settings-form"
+    >
+      <div class="form-section">
+        <h4 class="section-title">基本信息</h4>
+        <el-row :gutter="20">
+          <!-- 工作空间名称 -->
+          <el-col :span="12">
+            <el-form-item label="工作空间名称" prop="name">
+              <el-input v-model="formData.name" placeholder="请输入工作空间名称" size="large" class="settings-control" />
+            </el-form-item>
+          </el-col>
 
-              <!-- 工作空间状态 -->
-              <el-col :span="12">
-                <el-form-item label="工作空间状态">
-                  <el-switch
-                    v-model="formData.enabled"
-                    size="large"
-                    active-text="启用"
-                    inactive-text="禁用"
-                    active-color="#10b981"
-                    inactive-color="#ef4444"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
+          <!-- 绑定团队 -->
+          <el-col :span="12">
+            <el-form-item label="绑定团队" prop="team_id">
+              <TeamPicker
+                v-model="formData.team_id"
+                placeholder="请选择绑定团队"
+                variant="element"
+                class="settings-control"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
-            <el-row :gutter="20">
-              <!-- 绑定团队 -->
-              <el-col :span="12">
-                <el-form-item label="绑定团队">
-                  <div class="team-info clickable" @click="handleEditTeam">
-                    <div class="team-avatar">
-                      <el-icon><User /></el-icon>
-                    </div>
-                    <div class="team-details">
-                      <div class="team-name">{{ teamName }}</div>
-                      <div class="team-desc">当前工作空间所属团队</div>
-                    </div>
-                    <div class="team-status">
-                      <el-tag type="success" effect="plain">已绑定</el-tag>
-                    </div>
-                    <div class="edit-icon">
-                      <el-icon><Edit /></el-icon>
-                    </div>
-                  </div>
-                </el-form-item>
-              </el-col>
+        <el-row :gutter="20">
+          <!-- 默认通知渠道 -->
+          <el-col :span="12">
+            <el-form-item label="默认通知渠道" prop="channel">
+              <el-select
+                v-model="formData.channel"
+                placeholder="请选择默认通知渠道"
+                size="large"
+                clearable
+                class="settings-control"
+              >
+                <el-option
+                  v-for="option in channelOptions"
+                  :key="option.value"
+                  :label="option.label"
+                  :value="option.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
 
-              <!-- 绑定消息通知模版 -->
-              <el-col :span="12">
-                <el-form-item label="消息通知模版">
-                  <div class="team-info clickable" @click="handleEditTemplate">
-                    <div class="team-avatar">
-                      <el-icon><Message /></el-icon>
-                    </div>
-                    <div class="team-details">
-                      <div class="team-name">{{ templateName }}</div>
-                      <div class="team-desc">消息通知模版配置</div>
-                    </div>
-                    <div class="team-status">
-                      <el-tag type="info" effect="plain">已配置</el-tag>
-                    </div>
-                    <div class="edit-icon">
-                      <el-icon><Edit /></el-icon>
-                    </div>
-                  </div>
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </div>
+          <!-- 默认通知模板集 -->
+          <el-col :span="12">
+            <el-form-item label="默认通知模板集" prop="template_set_id">
+              <TemplateSetPicker
+                v-model="formData.template_set_id"
+                placeholder="请选择默认通知模板集"
+                variant="element"
+                class="settings-control"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
 
-          <div class="form-section">
-            <h4 class="section-title">权限设置</h4>
-            <div class="config-cards">
-              <!-- 公开设置卡片 -->
-              <div class="config-card">
-                <div class="config-header">
-                  <div class="config-icon public-icon">
-                    <el-icon><Monitor /></el-icon>
-                  </div>
-                  <div class="config-title">
-                    <h4>公开设置</h4>
-                    <p>设置工作空间的可见性</p>
-                  </div>
-                </div>
-                <div class="config-options">
-                  <div class="option-item" :class="{ active: formData.is_public }" @click="formData.is_public = true">
-                    <div class="option-radio">
-                      <el-radio :model-value="formData.is_public" :label="true">
-                        <span style="display: none" />
-                      </el-radio>
-                    </div>
-                    <div class="option-content">
-                      <div class="option-title">公开工作空间</div>
-                      <div class="option-desc">所有团队成员都可以查看和加入</div>
-                    </div>
-                    <div class="option-badge public-badge">公开</div>
-                  </div>
-                  <div class="option-item" :class="{ active: !formData.is_public }" @click="formData.is_public = false">
-                    <div class="option-radio">
-                      <el-radio :model-value="formData.is_public" :label="false">
-                        <span style="display: none" />
-                      </el-radio>
-                    </div>
-                    <div class="option-content">
-                      <div class="option-title">私有工作空间</div>
-                      <div class="option-desc">仅邀请的成员可以访问</div>
-                    </div>
-                    <div class="option-badge private-badge">私有</div>
-                  </div>
-                </div>
+      <div class="form-section">
+        <h4 class="section-title">权限设置</h4>
+        <div class="config-cards">
+          <!-- 公开设置卡片 -->
+          <div class="config-card">
+            <div class="config-header">
+              <div class="config-icon public-icon">
+                <el-icon><Monitor /></el-icon>
               </div>
-
-              <!-- 邀请设置卡片 -->
-              <div class="config-card">
-                <div class="config-header">
-                  <div class="config-icon invite-icon">
-                    <el-icon><User /></el-icon>
-                  </div>
-                  <div class="config-title">
-                    <h4>邀请设置</h4>
-                    <p>控制谁可以邀请新成员</p>
-                  </div>
+              <div class="config-title">
+                <h4>公开设置</h4>
+                <p>设置工作空间的可见性</p>
+              </div>
+            </div>
+            <div class="config-options">
+              <div class="option-item" :class="{ active: formData.is_public }" @click="formData.is_public = true">
+                <div class="option-radio">
+                  <el-radio :model-value="formData.is_public" :label="true">
+                    <span style="display: none" />
+                  </el-radio>
                 </div>
-                <div class="config-options">
-                  <div
-                    class="option-item"
-                    :class="{ active: formData.allow_invite }"
-                    @click="formData.allow_invite = true"
-                  >
-                    <div class="option-radio">
-                      <el-radio :model-value="formData.allow_invite" :label="true">
-                        <span style="display: none" />
-                      </el-radio>
-                    </div>
-                    <div class="option-content">
-                      <div class="option-title">允许成员邀请</div>
-                      <div class="option-desc">团队成员可以邀请其他人加入</div>
-                    </div>
-                    <div class="option-badge open-badge">开放</div>
-                  </div>
-                  <div
-                    class="option-item"
-                    :class="{ active: !formData.allow_invite }"
-                    @click="formData.allow_invite = false"
-                  >
-                    <div class="option-radio">
-                      <el-radio :model-value="formData.allow_invite" :label="false">
-                        <span style="display: none" />
-                      </el-radio>
-                    </div>
-                    <div class="option-content">
-                      <div class="option-title">仅管理员邀请</div>
-                      <div class="option-desc">只有管理员可以邀请成员</div>
-                    </div>
-                    <div class="option-badge restricted-badge">受限</div>
-                  </div>
+                <div class="option-content">
+                  <div class="option-title">公开工作空间</div>
+                  <div class="option-desc">所有团队成员都可以查看和加入</div>
                 </div>
+                <div class="option-badge public-badge">公开</div>
+              </div>
+              <div class="option-item" :class="{ active: !formData.is_public }" @click="formData.is_public = false">
+                <div class="option-radio">
+                  <el-radio :model-value="formData.is_public" :label="false">
+                    <span style="display: none" />
+                  </el-radio>
+                </div>
+                <div class="option-content">
+                  <div class="option-title">私有工作空间</div>
+                  <div class="option-desc">仅邀请的成员可以访问</div>
+                </div>
+                <div class="option-badge private-badge">私有</div>
               </div>
             </div>
           </div>
-        </el-form>
+
+          <!-- 邀请设置卡片 -->
+          <div class="config-card">
+            <div class="config-header">
+              <div class="config-icon invite-icon">
+                <el-icon><User /></el-icon>
+              </div>
+              <div class="config-title">
+                <h4>邀请设置</h4>
+                <p>控制谁可以邀请新成员</p>
+              </div>
+            </div>
+            <div class="config-options">
+              <div class="option-item" :class="{ active: formData.allow_invite }" @click="formData.allow_invite = true">
+                <div class="option-radio">
+                  <el-radio :model-value="formData.allow_invite" :label="true">
+                    <span style="display: none" />
+                  </el-radio>
+                </div>
+                <div class="option-content">
+                  <div class="option-title">允许成员邀请</div>
+                  <div class="option-desc">团队成员可以邀请其他人加入</div>
+                </div>
+                <div class="option-badge open-badge">开放</div>
+              </div>
+              <div
+                class="option-item"
+                :class="{ active: !formData.allow_invite }"
+                @click="formData.allow_invite = false"
+              >
+                <div class="option-radio">
+                  <el-radio :model-value="formData.allow_invite" :label="false">
+                    <span style="display: none" />
+                  </el-radio>
+                </div>
+                <div class="option-content">
+                  <div class="option-title">仅管理员邀请</div>
+                  <div class="option-desc">只有管理员可以邀请成员</div>
+                </div>
+                <div class="option-badge restricted-badge">受限</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-
-    <!-- 团队选择抽屉 -->
-    <TeamSelector v-model="teamDialogVisible" :current-team-id="formData.team_id" @confirm="handleTeamConfirm" />
-
-    <!-- 模版选择抽屉 -->
-    <TemplateSelector
-      v-model="templateDialogVisible"
-      :current-template-id="formData.template_id"
-      @confirm="handleTemplateConfirm"
-    />
-  </PageContainer>
+    </el-form>
+  </WorkspaceSectionPage>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, reactive } from "vue"
+import { computed, ref, watch, reactive } from "vue"
 import { ElMessage } from "element-plus"
-import { Check, Monitor, User } from "@element-plus/icons-vue"
-import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
-import TeamSelector from "./TeamSelector.vue"
-import TemplateSelector from "./TemplateSelector.vue"
-import { getWorkspaceDetailApi, saveWorkspaceApi } from "@/api/alert/workspace"
-import { getTeamDetailApi } from "@/api/alert/team"
-import { getTemplateDetailApi } from "@/api/alert/template"
+import { Check, Monitor, SwitchButton, User } from "@element-plus/icons-vue"
+import { getWorkspaceDetailApi, toggleWorkspaceStatusApi, updateWorkspaceApi } from "@/api/alert/workspace"
+import { DEFAULT_CHANNEL_TYPE } from "@/api/alert/template/types"
 import type { Workspace, SaveWorkspaceReq } from "@/api/alert/workspace/types"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import { TeamPicker, TemplateSetPicker } from "@@/components/Pickers"
+import { getChannelOptions } from "../../../template/config/channels"
+import WorkspaceSectionPage from "../WorkspaceSectionPage.vue"
 
 const props = defineProps<{
   workspaceId: number
@@ -215,17 +188,22 @@ const emit = defineEmits<{
 const workspace = ref<Workspace | null>(null)
 const loading = ref(false)
 const saving = ref(false)
+const toggling = ref(false)
 const formRef = ref()
-
-// 团队和模版信息
-const teamName = ref<string>("")
-const templateName = ref<string>("")
-
-// 团队选择相关
-const teamDialogVisible = ref(false)
-
-// 模版选择相关
-const templateDialogVisible = ref(false)
+const saveAction = computed(() => ({
+  label: saving.value ? "保存中..." : "保存配置",
+  icon: saving.value ? undefined : Check,
+  capability: ALERT_CAPABILITIES.Workspace.Edit,
+  loading: saving.value
+}))
+const toggleAction = computed(() => ({
+  label: formData.enabled ? "停用空间" : "启用空间",
+  icon: SwitchButton,
+  type: formData.enabled ? ("warning" as const) : ("success" as const),
+  capability: ALERT_CAPABILITIES.Workspace.Toggle,
+  loading: toggling.value,
+  disabled: !formData.id
+}))
 
 // 表单数据
 const formData = reactive<SaveWorkspaceReq>({
@@ -235,8 +213,11 @@ const formData = reactive<SaveWorkspaceReq>({
   allow_invite: false,
   enabled: true,
   team_id: 0,
-  template_id: 0
+  channel: DEFAULT_CHANNEL_TYPE,
+  template_set_id: 0
 })
+
+const channelOptions = getChannelOptions()
 
 // 表单验证规则
 const formRules = {
@@ -244,6 +225,9 @@ const formRules = {
     { required: true, message: "请输入工作空间名称", trigger: "blur" },
     { min: 2, max: 50, message: "名称长度在 2 到 50 个字符", trigger: "blur" }
   ],
+  team_id: [{ required: true, message: "请选择绑定团队", trigger: "change" }],
+  channel: [{ required: true, message: "请选择默认通知渠道", trigger: "change" }],
+  template_set_id: [{ required: true, message: "请选择默认通知模板集", trigger: "change" }],
   is_public: [{ required: true, message: "请选择公开设置", trigger: "change" }],
   allow_invite: [{ required: true, message: "请选择邀请设置", trigger: "change" }]
 }
@@ -265,51 +249,14 @@ const loadWorkspace = async () => {
       allow_invite: workspace.value.allow_invite,
       enabled: workspace.value.enabled,
       team_id: workspace.value.team_id,
-      template_id: workspace.value.template_id || 0
+      channel: workspace.value.channel || DEFAULT_CHANNEL_TYPE,
+      template_set_id: workspace.value.template_set_id || 0
     })
-
-    // 通过 ID 获取团队和模版详细信息
-    await loadTeamAndTemplateInfo(workspace.value.team_id, workspace.value.template_id)
   } catch (error) {
     console.error("加载工作空间信息失败:", error)
     ElMessage.error("加载工作空间信息失败")
   } finally {
     loading.value = false
-  }
-}
-
-// 加载团队和模版详细信息
-const loadTeamAndTemplateInfo = async (teamId: number, templateId: number) => {
-  try {
-    // 并行加载团队和模版信息
-    const [teamResponse, templateResponse] = await Promise.allSettled([
-      getTeamDetailApi(teamId),
-      templateId ? getTemplateDetailApi(templateId) : Promise.resolve({ data: null })
-    ])
-
-    // 更新团队信息
-    if (teamResponse.status === "fulfilled") {
-      console.log("团队详情数据:", teamResponse.value.data)
-      teamName.value = teamResponse.value.data.name || "未知团队"
-    } else {
-      teamName.value = "未知团队"
-      console.error("加载团队信息失败:", teamResponse.reason)
-    }
-
-    // 更新模版信息
-    if (templateResponse.status === "fulfilled" && templateResponse.value.data) {
-      console.log("模版详情数据:", templateResponse.value.data)
-      templateName.value = templateResponse.value.data.name || "默认模版"
-    } else {
-      templateName.value = "默认模版"
-      if (templateId && templateResponse.status === "rejected") {
-        console.error("加载模版信息失败:", templateResponse.reason)
-      }
-    }
-  } catch (error) {
-    console.error("加载团队和模版信息失败:", error)
-    teamName.value = "未知团队"
-    templateName.value = "默认模版"
   }
 }
 
@@ -321,7 +268,15 @@ const handleSaveSettings = async () => {
     await formRef.value.validate()
 
     saving.value = true
-    await saveWorkspaceApi(formData)
+    await updateWorkspaceApi({
+      id: formData.id,
+      name: formData.name,
+      team_id: formData.team_id,
+      channel: formData.channel,
+      template_set_id: formData.template_set_id,
+      is_public: formData.is_public,
+      allow_invite: formData.allow_invite
+    })
 
     ElMessage.success("设置保存成功")
 
@@ -332,59 +287,25 @@ const handleSaveSettings = async () => {
     emit("refresh")
   } catch (error) {
     console.error("保存设置失败:", error)
-    ElMessage.error("保存设置失败")
   } finally {
     saving.value = false
   }
 }
 
-// 编辑团队
-const handleEditTeam = () => {
-  teamDialogVisible.value = true
-}
-
-// 编辑模版
-const handleEditTemplate = () => {
-  templateDialogVisible.value = true
-}
-
-// 处理团队选择确认
-const handleTeamConfirm = async (teamId: number, selectedTeamName: string) => {
+const handleToggleStatus = async () => {
+  if (!formData.id) return
   try {
-    // 更新表单数据
-    formData.team_id = teamId
-    teamName.value = selectedTeamName
+    toggling.value = true
+    await toggleWorkspaceStatusApi(formData.id)
+    ElMessage.success(formData.enabled ? "工作空间已停用" : "工作空间已启用")
+    await loadWorkspace()
 
-    // 保存设置
-    await saveWorkspaceApi(formData)
-
-    ElMessage.success("团队修改成功")
-
-    // 通知父组件刷新
     emit("refresh")
   } catch (error) {
-    console.error("修改团队失败:", error)
-    ElMessage.error("修改团队失败")
-  }
-}
-
-// 处理模版选择确认
-const handleTemplateConfirm = async (templateId: number, selectedTemplateName: string) => {
-  try {
-    // 更新表单数据
-    formData.template_id = templateId
-    templateName.value = selectedTemplateName
-
-    // 保存设置
-    await saveWorkspaceApi(formData)
-
-    ElMessage.success("模版修改成功")
-
-    // 通知父组件刷新
-    emit("refresh")
-  } catch (error) {
-    console.error("修改模版失败:", error)
-    ElMessage.error("修改模版失败")
+    console.error("切换工作空间状态失败:", error)
+    ElMessage.error("切换工作空间状态失败")
+  } finally {
+    toggling.value = false
   }
 }
 
@@ -398,37 +319,28 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({
+  loadData: loadWorkspace,
+  loadWorkspace
+})
 </script>
 
 <style lang="scss" scoped>
-// 覆盖 PageContainer 样式
-.page-container {
-  padding: 0px !important;
-  background: transparent !important;
-  width: 100%;
-  height: 100%;
-}
-
-/* 内容卡片 - 参考 DataTable 设计 */
-.content-card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
+.settings-form {
   display: flex;
-  flex-direction: column;
   flex: 1;
+  flex-direction: column;
   min-height: 0;
+  width: 100%;
+  max-width: 100%;
   height: 100%;
-  overflow-y: auto; // 滚动条在边框内侧，贴边显示
+  margin: 0;
+  padding: 16px;
+  overflow-y: auto;
   overflow-x: hidden;
-  padding: 0; // 去掉内边距，滚动条贴边框
   box-sizing: border-box;
 
-  // 自定义滚动条样式
   &::-webkit-scrollbar {
     width: 6px;
   }
@@ -436,7 +348,7 @@ watch(
   &::-webkit-scrollbar-track {
     background: #f1f5f9;
     border-radius: 3px;
-    margin: 4px; // 滚动槽上下预留间距
+    margin: 4px;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -452,20 +364,6 @@ watch(
   &::-webkit-scrollbar-thumb:active {
     background: #64748b;
   }
-}
-
-.card-body {
-  padding: 20px; // 将内容内边距下放到内部，保证滚动条贴边框
-  box-sizing: border-box;
-}
-
-.settings-form {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  box-sizing: border-box;
-  overflow-x: hidden;
-  min-height: 100%;
 
   .form-section {
     margin-bottom: 24px;
@@ -474,59 +372,41 @@ watch(
     border: none;
     border-radius: 0;
 
+    &:last-child {
+      margin-bottom: 0;
+    }
+
     .section-title {
-      margin: 0 0 20px 0;
-      font-size: 16px;
-      font-weight: 600;
-      color: #1f2937;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      position: relative;
       display: flex;
       align-items: center;
       gap: 8px;
-
-      &::before {
-        content: "";
-        width: 4px;
-        height: 20px;
-        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-        border-radius: 2px;
-        flex-shrink: 0;
-      }
-
-      &::after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        left: 16px;
-        right: 16px;
-        height: 1px;
-        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-        border-radius: 1px;
-        opacity: 0.3;
-      }
+      margin: 0 0 14px 0;
+      padding: 8px 12px;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid #3b82f6;
+      border-radius: 6px;
     }
 
     .el-form-item {
-      margin-bottom: 20px;
-      padding-bottom: 20px;
+      margin-bottom: 18px;
+      padding-bottom: 0;
       background: #ffffff;
       border: none;
-      border-radius: 8px;
       box-sizing: border-box;
 
       &:last-child {
         margin-bottom: 0;
       }
 
-      .el-form-item__label {
+      :deep(.el-form-item__label) {
         font-weight: 600;
         color: #374151;
         font-size: 14px;
-        margin-bottom: 12px;
+        margin-bottom: 8px;
         line-height: 1.4;
       }
 
@@ -558,132 +438,32 @@ watch(
         }
       }
 
-      // 团队信息样式
-      .team-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 20px;
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
+    }
+
+    .settings-control {
+      width: 100%;
+
+      :deep(.el-input__wrapper),
+      :deep(.el-select__wrapper),
+      :deep(.picker-input-box) {
+        min-height: 40px;
+        padding: 0 12px;
+        background: #ffffff;
+        border: 1px solid #d1d5db;
         border-radius: 8px;
-        height: 100%;
-        width: 100%;
-        position: relative;
-        box-sizing: border-box;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+        transition:
+          border-color 0.2s ease,
+          box-shadow 0.2s ease;
 
-        &.clickable {
-          cursor: pointer;
-          transition: all 0.2s ease;
-
-          &:hover {
-            border-color: #3b82f6;
-            background: #f0f9ff;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
-          }
+        &:hover {
+          border-color: #9ca3af;
+          box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
         }
 
-        .team-avatar {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 48px;
-          height: 48px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-          border-radius: 10px;
-          color: #ffffff;
-          font-size: 20px;
-          flex-shrink: 0;
-        }
-
-        .team-details {
-          flex: 1;
-
-          .team-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1f2937;
-            margin-bottom: 4px;
-          }
-
-          .team-desc {
-            font-size: 13px;
-            color: #6b7280;
-            line-height: 1.4;
-          }
-        }
-
-        .team-status {
-          flex-shrink: 0;
-        }
-
-        .edit-icon {
-          position: absolute;
-          top: 12px;
-          right: 12px;
-          color: #6b7280;
-          font-size: 16px;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        &.clickable:hover .edit-icon {
-          opacity: 1;
-        }
-      }
-
-      // 状态配置样式
-      .status-config {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px;
-        background: #f8fafc;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        height: 100%;
-
-        .status-info {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex: 1;
-
-          .status-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            font-size: 18px;
-            flex-shrink: 0;
-
-            .el-icon {
-              color: #10b981;
-            }
-          }
-
-          .status-details {
-            flex: 1;
-
-            .status-title {
-              font-size: 14px;
-              font-weight: 600;
-              color: #1f2937;
-              margin-bottom: 2px;
-            }
-
-            .status-desc {
-              font-size: 12px;
-              color: #6b7280;
-              line-height: 1.4;
-            }
-          }
-        }
-
-        .el-switch {
-          flex-shrink: 0;
+        &.is-focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
         }
       }
     }
@@ -878,17 +658,6 @@ watch(
         }
       }
     }
-  }
-}
-
-// 保存按钮样式
-.save-button {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  border: none;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-
-  .el-icon {
-    margin-right: 6px;
   }
 }
 </style>

@@ -3,7 +3,7 @@ import { type RouteRecordRaw } from "vue-router"
 const Layouts = () => import("@/layouts/index.vue")
 
 /**
- * 告警平台路由配置
+ * 任务平台路由配置
  */
 export const alertRoutes: RouteRecordRaw[] = [
   {
@@ -13,7 +13,7 @@ export const alertRoutes: RouteRecordRaw[] = [
     meta: {
       title: "任务调度",
       svgIcon: "task-manager",
-      platforms: ["alert"],
+      platforms: ["task"],
       hidden: false
     },
     children: []

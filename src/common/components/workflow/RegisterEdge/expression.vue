@@ -171,7 +171,7 @@ import {
   EditPen
 } from "@element-plus/icons-vue"
 import Rule from "./rule.vue"
-import { template } from "@/api/template/types/template"
+import { template } from "@/api/ticket/template/types/template.js"
 import { VueDraggable } from "vue-draggable-plus"
 
 interface Props {

@@ -1,154 +1,138 @@
-import { ref, nextTick, onMounted, onUnmounted } from "vue"
-import { listUsersByKeywordApi } from "@/api/user"
-import { usePagination } from "@@/composables/usePagination"
+import { ref } from "vue"
+import { listUsersApi, userDetailApi } from "@/api/iam/user"
+import type { User as IIamUser } from "@/api/iam/user/type"
 import { useUserStore } from "@/pinia/stores/user"
-import type { user } from "@/api/user/types/user"
+import { debounce } from "lodash-es"
 
-export function useUsers() {
-  // State
-  const loading = ref<boolean>(false)
-  const keyword = ref<string>("")
-  const usersData = ref<user[]>([])
-  const showUserPicker = ref(false)
-  const searchKeyword = ref("")
-  const selectedUser = ref<user | null>(null)
-  const searchInputRef = ref<HTMLInputElement>()
+export interface IMemberUser {
+  id: number
+  username: string
+  nickname: string
+  avatar: string
+  email: string
+  phone: string
+  job_title?: string
+}
 
-  // Pagination setup
-  const init = {
-    total: 0,
-    currentPage: 1,
-    pageSize: 3,
-    layout: "prev, pager, next"
-  }
-  const { paginationData, handleCurrentChange: originalHandleCurrentChange, handleSizeChange } = usePagination(init)
-
-  // 重写 handleCurrentChange 以重新加载数据
-  const handleCurrentChange = (page: number) => {
-    originalHandleCurrentChange(page)
-    if (showUserPicker.value) {
-      listUsersData()
-    }
-  }
-
-  // Methods
-  const listUsersData = () => {
-    loading.value = true
-    listUsersByKeywordApi({
-      keyword: keyword.value,
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
-    })
-      .then(({ data }) => {
-        paginationData.total = data.total
-        usersData.value = data.users
-      })
-      .catch(() => {
-        usersData.value = []
-      })
-      .finally(() => {
-        loading.value = false
-      })
-  }
-
+/**
+ * 统一的用户数据与解析 Hook
+ * @param options 配置参数，支持自定义 pageSize
+ */
+export function useUsers(options: { pageSize?: number } = {}) {
   const userStore = useUserStore()
+  const loading = ref(false)
+  const usersList = ref<IIamUser[]>([])
+  const total = ref(0)
+  const currentPage = ref(1)
+  const pageSize = options.pageSize || 10
+  const keyword = ref("")
 
-  const getUserByUsername = async (un: string) => {
-    if (!un) return null
+  // 加载用户列表 (带分页和检索)
+  const loadUsersList = async () => {
     loading.value = true
     try {
-      const data = await userStore.resolveUser(un)
-      selectedUser.value = data
-      return data
+      const { data } = await listUsersApi({
+        offset: (currentPage.value - 1) * pageSize,
+        limit: pageSize,
+        keyword: keyword.value.trim() || undefined
+      })
+      usersList.value = data.users || []
+      total.value = data.total || 0
+    } catch (error) {
+      console.error("加载用户列表失败:", error)
+      usersList.value = []
+      total.value = 0
     } finally {
       loading.value = false
     }
   }
 
-  const toggleUserPicker = () => {
-    showUserPicker.value = !showUserPicker.value
-    if (showUserPicker.value) {
-      // 重置分页到第一页
-      paginationData.currentPage = 1
-      // 加载初始数据（如果有搜索关键词则搜索，否则加载所有用户）
-      if (searchKeyword.value) {
-        keyword.value = searchKeyword.value
-        listUsersData()
-      } else {
-        // 如果没有搜索关键词，可以加载一些默认用户或清空列表
-        usersData.value = []
-        paginationData.total = 0
-      }
-      nextTick(() => {
-        searchInputRef.value?.focus()
-      })
-    }
-  }
-
-  const selectUser = (user: user, callback?: (user: user) => void) => {
-    selectedUser.value = user
-    showUserPicker.value = false
-    if (callback) {
-      callback(user)
-    }
-  }
+  // 暴露防抖的搜索函数
+  const debouncedSearch = debounce(() => {
+    currentPage.value = 1
+    loadUsersList()
+  }, 300)
 
   const handleSearch = () => {
-    if (searchKeyword.value) {
-      keyword.value = searchKeyword.value
-      paginationData.currentPage = 1
-      listUsersData()
-    } else {
-      usersData.value = []
+    debouncedSearch()
+  }
+
+  const handlePageChange = (page: number) => {
+    currentPage.value = page
+    loadUsersList()
+  }
+
+  // 批量反解用户名到完整用户对象
+  const selectedUsers = ref<IMemberUser[]>([])
+  let selectedUsersRequestId = 0
+
+  const loadSelectedUsers = async (usernames: string[]) => {
+    const requestId = ++selectedUsersRequestId
+    if (!usernames?.length) {
+      selectedUsers.value = []
+      return
+    }
+
+    try {
+      const users = await userStore.batchGetUsersByUsername(usernames)
+      if (requestId !== selectedUsersRequestId) return
+      selectedUsers.value = users.map((u) => ({
+        id: u.id,
+        username: u.username,
+        nickname: u.nickname || u.username,
+        avatar: u.avatar || "",
+        email: u.email || "",
+        phone: u.phone || "",
+        job_title: u.job_title || ""
+      }))
+    } catch (error) {
+      if (requestId !== selectedUsersRequestId) return
+      console.error("批量解析选中用户失败:", error)
+      selectedUsers.value = []
     }
   }
 
-  const remoteMethod = (query: string) => {
-    searchKeyword.value = query
-    handleSearch()
-  }
+  const loadSelectedUsersByIds = async (ids: string[]) => {
+    const requestId = ++selectedUsersRequestId
+    if (!ids?.length) {
+      selectedUsers.value = []
+      return
+    }
 
-  const closeUserPicker = () => {
-    showUserPicker.value = false
-  }
-
-  // Click outside handler
-  const handleClickOutside = (e: Event) => {
-    const target = e.target as HTMLElement
-    if (!target.closest(".user-picker-container")) {
-      showUserPicker.value = false
+    try {
+      const results = await Promise.allSettled(ids.map((id) => userDetailApi({ id })))
+      if (requestId !== selectedUsersRequestId) return
+      selectedUsers.value = results
+        .map((result) => (result.status === "fulfilled" ? result.value.data.user : null))
+        .filter((u): u is IIamUser => !!u)
+        .map((u) => ({
+          id: u.id,
+          username: u.username,
+          nickname: u.nickname || u.username,
+          avatar: u.avatar || "",
+          email: u.email || "",
+          phone: u.phone || "",
+          job_title: u.job_title || ""
+        }))
+    } catch (error) {
+      if (requestId !== selectedUsersRequestId) return
+      console.error("批量解析选中用户失败:", error)
+      selectedUsers.value = []
     }
   }
-
-  // Lifecycle
-  onMounted(() => {
-    document.addEventListener("click", handleClickOutside)
-  })
-
-  onUnmounted(() => {
-    document.removeEventListener("click", handleClickOutside)
-  })
 
   return {
-    // State
     loading,
+    usersList,
+    total,
+    currentPage,
+    pageSize,
     keyword,
-    usersData,
-    showUserPicker,
-    searchKeyword,
-    selectedUser,
-    searchInputRef,
-    paginationData,
-
-    // Methods
-    listUsersData,
-    getUserByUsername,
-    toggleUserPicker,
-    selectUser,
+    loadUsersList,
     handleSearch,
-    remoteMethod,
-    closeUserPicker,
-    handleCurrentChange,
-    handleSizeChange
+    handlePageChange,
+    selectedUsers,
+    loadSelectedUsers,
+    loadSelectedUsersByIds
   }
 }

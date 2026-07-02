@@ -1,0 +1,154 @@
+import { ref, computed, nextTick, watch, type Ref } from "vue"
+import type { FormInstance, FormRules } from "element-plus"
+import { ElMessage } from "element-plus"
+import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/task/manager"
+import { TaskType, TaskProtocol, type UpdateTaskReq } from "@/api/task/manager/type"
+import type { HandlerDetail } from "@/api/task/executor/type"
+import { type TaskFormState, createDefaultFormState, mapToFormState, mapToApiPayload } from "./useTaskData"
+
+/**
+ * 任务表单核心交互联动与业务提交流程 Hook
+ * @param options 表单初始化配置，包括任务ID、组件双向绑定可见状态、事件发射器
+ */
+export function useTaskForm(options: {
+  taskId?: () => number | undefined
+  visible: Ref<boolean>
+  emit: (e: "success") => void
+}) {
+  const { taskId, visible, emit } = options
+
+  const currentTaskId = computed(() => taskId?.())
+
+  const formRef = ref<FormInstance>()
+  const saving = ref(false)
+  const resourceLoading = ref(false)
+  const httpConfigTab = ref("headers")
+  const form = ref<TaskFormState>(createDefaultFormState())
+  const currentHandler = ref<HandlerDetail | null>(null)
+
+  // --- 校验规则自适应计算 ---
+  const rules = computed<FormRules<TaskFormState>>(() => {
+    const r: FormRules<TaskFormState> = {
+      name: [{ required: true, message: "请输入任务标识", trigger: "submit" }]
+    }
+
+    if (form.value.type === TaskType.RECURRING) {
+      r.cron_expr = [{ required: true, message: "请输入有效的 Cron 表达式", trigger: "submit" }]
+    }
+
+    if (form.value.protocol === TaskProtocol.GRPC) {
+      r.grpc_handler = [
+        {
+          validator: (_rule, value, callback) => {
+            if (!form.value.grpc_service) return callback(new Error("请选择执行器服务"))
+            if (!value) return callback(new Error("请选择处理方法"))
+            callback()
+          },
+          trigger: "submit"
+        }
+      ]
+    } else {
+      r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "submit" }]
+    }
+
+    return r
+  })
+
+  // --- 表单联动与 UI 事件处理 ---
+  const handleServiceSelect = () => {
+    // ExecutorPicker 已经把“执行器 + 方法”合并为一次选择，这里不能再清空 handler。
+    // 手动清空或外部切换时，组件会通过 handler-change 把 currentHandler 同步为 null。
+  }
+
+  const handleHandlerSelect = (handler: HandlerDetail | null) => {
+    currentHandler.value = handler
+    if (!handler) return
+    const params = form.value.grpc_params
+
+    // 基于元数据自适应初始化参数的默认值
+    for (const meta of handler.metadata ?? []) {
+      params[meta.key] = params[meta.key] || meta.default || ""
+    }
+  }
+
+  const handleCronSelect = (val: string) => {
+    form.value.cron_expr = val
+    formRef.value?.clearValidate("cron_expr")
+  }
+
+  const handleProtocolChange = (protocol: TaskProtocol) => {
+    form.value.protocol = protocol
+    nextTick(() => {
+      formRef.value?.clearValidate()
+    })
+  }
+
+  // --- 数据详情拉取与重置 ---
+  const loadDetail = async () => {
+    const id = currentTaskId.value
+    if (!id) return
+
+    try {
+      const { data } = await getTaskDetailApi(id)
+      form.value = mapToFormState(data)
+    } catch (error) {
+      console.error("加载任务详情失败:", error)
+      ElMessage.error("加载任务详情失败")
+    }
+  }
+
+  // 当抽屉开启状态变化时，决定是拉取详情还是重置状态
+  watch(visible, async (val) => {
+    if (val) {
+      if (currentTaskId.value) {
+        await loadDetail()
+      } else {
+        form.value = createDefaultFormState()
+        currentHandler.value = null
+        nextTick(() => {
+          formRef.value?.clearValidate()
+        })
+      }
+    }
+  })
+
+  // --- 提交流程 ---
+  const submit = async () => {
+    if (!formRef.value) return
+    await formRef.value.validate()
+
+    saving.value = true
+    try {
+      const payload = mapToApiPayload(form.value)
+      const id = currentTaskId.value
+
+      if (id) {
+        await updateTaskApi({ ...payload, id } as UpdateTaskReq)
+        ElMessage.success("更新任务成功")
+      } else {
+        await createTaskApi(payload)
+        ElMessage.success("创建任务成功")
+      }
+
+      visible.value = false
+      emit("success")
+    } finally {
+      saving.value = false
+    }
+  }
+
+  return {
+    formRef,
+    form,
+    saving,
+    httpConfigTab,
+    resourceLoading,
+    currentHandler,
+    rules,
+    handleServiceSelect,
+    handleHandlerSelect,
+    handleCronSelect,
+    handleProtocolChange,
+    submit
+  }
+}

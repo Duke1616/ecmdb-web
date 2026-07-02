@@ -28,108 +28,116 @@
         v-for="user in displayUsers"
         :key="user.id"
         class="user-item"
-        :class="{ active: isSelected(user.username) }"
+        :class="{ active: isSelected(getUserValue(user)) }"
         @click="toggleUser(user)"
       >
         <div class="user-avatar">
           <el-avatar :size="32" :style="{ backgroundColor: generateColor(user.username) }">
-            {{ (user.display_name || user.username).charAt(0).toUpperCase() }}
+            {{ (user.nickname || user.username).charAt(0).toUpperCase() }}
           </el-avatar>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ user.display_name || user.username }}</div>
+          <div class="user-name">{{ user.nickname || user.username }}</div>
           <div class="user-meta">{{ user.username }}</div>
         </div>
-        <el-icon v-if="isSelected(user.username)" class="check-icon"><Check /></el-icon>
+        <el-icon v-if="isSelected(getUserValue(user))" class="check-icon"><Check /></el-icon>
       </div>
 
       <div v-if="displayUsers.length === 0 && !loading" class="empty-state">
         <el-icon><User /></el-icon>
-        <span>{{ searchQuery ? '未找到匹配的用户' : '暂无用户数据' }}</span>
+        <span>{{ searchQuery ? "未找到匹配的用户" : "暂无用户数据" }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue"
+import { onMounted, ref, watch } from "vue"
 import { Search, Check, User } from "@element-plus/icons-vue"
-import { listUsersByKeywordApi } from "@/api/user"
+import { useUsers } from "@/common/composables/useUsers"
+import type { IMemberUser } from "@/common/composables/useUsers"
 
 interface Props {
   selectedUsernames: string[]
+  valueKey?: "username" | "id"
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  selectedUsernames: () => []
+  selectedUsernames: () => [],
+  valueKey: "username"
 })
 
 const emit = defineEmits<{
-  (e: "change", users: any[]): void
+  (e: "change", users: IMemberUser[]): void
 }>()
 
-const searchQuery = ref("")
-const loading = ref(false)
-const currentPage = ref(1)
-const pageSize = 10
-const total = ref(0)
-const displayUsers = ref<any[]>([])
-const selectedUsers = ref<any[]>([])
+const {
+  loading,
+  usersList: displayUsers,
+  total,
+  currentPage,
+  pageSize,
+  keyword: searchQuery,
+  loadUsersList: loadUsers,
+  handleSearch,
+  handlePageChange,
+  selectedUsers,
+  loadSelectedUsers,
+  loadSelectedUsersByIds
+} = useUsers({ pageSize: 10 })
+
+const getUserValue = (user: any) => String(props.valueKey === "id" ? user.id : user.username)
+const selectedValues = ref<string[]>([])
+const selectedUserMap = ref(new Map<string, IMemberUser>())
+
+const cacheUser = (user: any) => {
+  const value = getUserValue(user)
+  if (!value) return
+
+  selectedUserMap.value.set(value, {
+    id: Number(user.id) || 0,
+    username: user.username || value,
+    nickname: user.nickname || user.display_name || user.username || value,
+    avatar: user.avatar || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    job_title: user.job_title || ""
+  })
+}
+
+const createFallbackUser = (value: string): IMemberUser => ({
+  id: props.valueKey === "id" ? Number(value) || 0 : 0,
+  username: props.valueKey === "username" ? value : value,
+  nickname: value,
+  avatar: "",
+  email: "",
+  phone: ""
+})
+
+const emitSelectedUsers = () => {
+  const users = selectedValues.value.map((value) => selectedUserMap.value.get(value) || createFallbackUser(value))
+  emit("change", users)
+}
 
 const isSelected = (username: string) => {
-  return selectedUsers.value.some((u) => u.username === username)
+  return selectedValues.value.includes(String(username))
 }
 
 const toggleUser = (user: any) => {
-  const index = selectedUsers.value.findIndex((u) => u.username === user.username)
+  const value = getUserValue(user)
+  const index = selectedValues.value.indexOf(value)
   if (index > -1) {
-    selectedUsers.value.splice(index, 1)
+    selectedValues.value.splice(index, 1)
   } else {
-    selectedUsers.value.push(user)
+    cacheUser(user)
+    selectedValues.value.push(value)
   }
-  emit("change", selectedUsers.value)
-}
-
-const loadUsers = async () => {
-  loading.value = true
-  try {
-    const { data } = await listUsersByKeywordApi({
-      offset: (currentPage.value - 1) * pageSize,
-      limit: pageSize,
-      keyword: searchQuery.value
-    })
-    displayUsers.value = data.users || []
-    total.value = data.total || 0
-  } catch (e) {
-    console.error(e)
-    displayUsers.value = []
-    total.value = 0
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleSearch = () => {
-  currentPage.value = 1
-  loadUsers()
-}
-
-const handlePageChange = () => {
-  loadUsers()
+  emitSelectedUsers()
 }
 
 // 生成头像颜色
 const generateColor = (str: string) => {
-  const colors = [
-    "#3b82f6",
-    "#8b5cf6",
-    "#ec4899",
-    "#f59e0b",
-    "#10b981",
-    "#06b6d4",
-    "#6366f1",
-    "#f43f5e"
-  ]
+  const colors = ["#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#06b6d4", "#6366f1", "#f43f5e"]
   let hash = 0
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash)
@@ -137,23 +145,24 @@ const generateColor = (str: string) => {
   return colors[Math.abs(hash) % colors.length]
 }
 
-// 初始化已选用户
+// 监控 selectedUsernames 并更新
 watch(
   () => props.selectedUsernames,
-  async (usernames) => {
-    if (usernames.length > 0 && selectedUsers.value.length === 0) {
-      // 如果有初始选中的用户名，需要加载这些用户的完整信息
-      try {
-        const { data } = await listUsersByKeywordApi({
-          offset: 0,
-          limit: 100,
-          keyword: ""
-        })
-        selectedUsers.value = (data.users || []).filter((u: any) => usernames.includes(u.username))
-      } catch (e) {
-        console.error(e)
-      }
+  (usernames) => {
+    selectedValues.value = [...(usernames || []).map(String)]
+    if (props.valueKey === "id") {
+      loadSelectedUsersByIds(usernames)
+      return
     }
+    loadSelectedUsers(usernames)
+  },
+  { immediate: true }
+)
+
+watch(
+  selectedUsers,
+  (users) => {
+    users.forEach(cacheUser)
   },
   { immediate: true }
 )

@@ -30,6 +30,7 @@ export interface ChannelTemplate {
   description: string
   channel: ChannelType
   businessType: number
+  scope?: number
   activeVersionId: number
   ctime: number
   utime: number
@@ -57,25 +58,12 @@ export interface CreateTemplateResp {
 // 获取模板详情响应 - 后端直接返回模板数据
 export type GetTemplateDetailResp = ChannelTemplate
 
-// 更新模板请求
-export interface UpdateTemplateReq extends CreateTemplateReq {
-  id: number
-}
-
-// 更新模板响应
-export interface UpdateTemplateResp {
-  template: ChannelTemplate
-}
-
 // 模板列表请求
 export interface ListTemplatesReq {
   offset: number
   limit: number
 }
 
-export interface ListTemplatesByChannelReq extends ListTemplatesReq {
-  channel: ChannelType
-}
 // 模板列表响应
 export interface ListTemplatesResp {
   templates: ChannelTemplate[]
@@ -116,6 +104,7 @@ export interface UpdateVersionReq {
   name: string
   signature: string
   content: string
+  desc?: string
 }
 
 // 更新版本响应

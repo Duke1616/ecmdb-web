@@ -1,6 +1,6 @@
 import { ref } from "vue"
-import { getTemplateRulesByWorkflowIdApi } from "@/api/template"
-import type { templateRule } from "@/api/template/types/template"
+import { getTemplateRulesByWorkflowIdApi } from "@/api/ticket/template"
+import type { templateRule } from "@/api/ticket/template/types/template"
 import type { Rule as FormRule } from "@form-create/element-ui"
 
 // ── 共享状态 (跨组件实例) ──────────────────────────────────────────────────

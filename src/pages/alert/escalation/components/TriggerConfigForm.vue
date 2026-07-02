@@ -1,9 +1,9 @@
 <template>
   <div class="trigger-config-form">
     <el-form ref="formRef" :model="modelValue" :rules="formRules" label-position="top">
-      <!-- 时间触发配置 -->
+      <!-- 持续时间升级配置 -->
       <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.TIME" class="config-section">
-        <el-form-item label="延迟时间" label-position="top" prop="delay">
+        <el-form-item label="持续时间达到" label-position="top" prop="delay">
           <el-input-number v-model="timeConfig.delay" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="时间单位" label-position="top" prop="unit">
@@ -14,7 +14,7 @@
         </el-form-item>
       </div>
 
-      <!-- 级别触发配置 -->
+      <!-- 告警级别升级配置 -->
       <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.LEVEL" class="config-section">
         <el-form-item label="匹配模式" label-position="top" prop="match_mode">
           <el-select v-model="levelConfig.match_mode" style="width: 100%">
@@ -43,16 +43,30 @@
         </el-form-item>
       </div>
 
-      <!-- 无响应触发配置 -->
+      <!-- 未响应升级配置 -->
       <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.NO_RESPONSE" class="config-section">
-        <el-form-item label="检查间隔（毫秒）" label-position="top">
+        <el-form-item label="未响应检查间隔（毫秒）" label-position="top">
           <el-input-number v-model="noResponseConfig.check_interval" :min="1000" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="最大尝试次数" label-position="top">
+        <el-form-item label="最大检查次数" label-position="top">
           <el-input-number v-model="noResponseConfig.max_attempts" :min="1" :max="10" style="width: 100%" />
         </el-form-item>
         <el-form-item label="需要的确认数" label-position="top">
           <el-input-number v-model="noResponseConfig.required_acks" :min="1" :max="10" style="width: 100%" />
+        </el-form-item>
+      </div>
+
+      <!-- 连续评估次数升级配置 -->
+      <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.EVAL_COUNT" class="config-section">
+        <el-form-item label="连续命中次数" label-position="top" prop="count">
+          <el-input-number v-model="evalCountConfig.count" :min="1" :max="100000" style="width: 100%" />
+        </el-form-item>
+      </div>
+
+      <!-- 聚合告警数量升级配置 -->
+      <div v-if="props.triggerType === ESCALATION_TRIGGER_TYPES.ALERT_COUNT" class="config-section">
+        <el-form-item label="聚合告警数量" label-position="top" prop="count">
+          <el-input-number v-model="alertCountConfig.count" :min="1" :max="100000" style="width: 100%" />
         </el-form-item>
       </div>
     </el-form>
@@ -67,7 +81,9 @@ import type {
   EscalationTriggerConfig,
   TimeTriggerConfig,
   LevelTriggerConfig,
-  NoResponseTriggerConfig
+  NoResponseTriggerConfig,
+  EvalCountTriggerConfig,
+  AlertCountTriggerConfig
 } from "@/api/alert/escalation/types"
 import { ESCALATION_TRIGGER_TYPES, TimeUnit, Level, LevelMatchMode } from "@/api/alert/escalation/types"
 import { getTriggerConfigRules } from "../config/validation"
@@ -100,6 +116,16 @@ const isNoResponseConfig = (
   return "no_response_config" in config && config.no_response_config !== undefined
 }
 
+const isEvalCountConfig = (config: EscalationTriggerConfig): config is { eval_count_config: EvalCountTriggerConfig } => {
+  return "eval_count_config" in config && config.eval_count_config !== undefined
+}
+
+const isAlertCountConfig = (
+  config: EscalationTriggerConfig
+): config is { alert_count_config: AlertCountTriggerConfig } => {
+  return "alert_count_config" in config && config.alert_count_config !== undefined
+}
+
 // 类型安全的配置访问 - 使用计算属性，提供默认值避免 null
 const timeConfig = computed({
   get: () => (isTimeConfig(modelValue.value) ? modelValue.value.time_config : { delay: 5, unit: TimeUnit.MINUTES }),
@@ -130,6 +156,24 @@ const noResponseConfig = computed({
   set: (value: NoResponseTriggerConfig) => {
     if (isNoResponseConfig(modelValue.value)) {
       modelValue.value.no_response_config = value
+    }
+  }
+})
+
+const evalCountConfig = computed({
+  get: () => (isEvalCountConfig(modelValue.value) ? modelValue.value.eval_count_config : { count: 3 }),
+  set: (value: EvalCountTriggerConfig) => {
+    if (isEvalCountConfig(modelValue.value)) {
+      modelValue.value.eval_count_config = value
+    }
+  }
+})
+
+const alertCountConfig = computed({
+  get: () => (isAlertCountConfig(modelValue.value) ? modelValue.value.alert_count_config : { count: 5 }),
+  set: (value: AlertCountTriggerConfig) => {
+    if (isAlertCountConfig(modelValue.value)) {
+      modelValue.value.alert_count_config = value
     }
   }
 })

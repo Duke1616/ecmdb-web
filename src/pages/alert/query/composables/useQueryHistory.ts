@@ -5,8 +5,8 @@ import {
   listQueryHistoryApi,
   deleteQueryHistoryApi,
   clearQueryHistoryApi
-} from "@/api/alert/query_history"
-import type { QueryHistoryItem as ApiQueryHistoryItem, TimeRange } from "@/api/alert/query_history/types"
+} from "@/api/alert/explore"
+import type { QueryHistoryItem as ApiQueryHistoryItem, TimeRange } from "@/api/alert/explore/types"
 
 /**
  * 扩展的查询历史记录项

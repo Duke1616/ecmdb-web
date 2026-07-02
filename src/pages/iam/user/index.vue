@@ -1,0 +1,306 @@
+<template>
+  <ProGovernanceLayout
+    title="用户治理"
+    subtitle="全域身份主体的生命周期管理与属性维度治理"
+    search-placeholder="搜索用户 ID、昵称或邮箱..."
+    v-model:keyword="query.keyword"
+    :selection-count="selectedRows.length"
+    :primary-action="{ capability: IAM_CAPABILITIES.User.Add, label: '新增主体' }"
+    :danger-action="{ capability: IAM_CAPABILITIES.User.BatchDelete, label: '批量注销' }"
+    @search="handleRefresh"
+    @refresh="handleRefresh"
+    @primary-action="handleCreate"
+    @danger-action="handleBatchDelete"
+  >
+    <!-- 治理列表 -->
+    <DataTable ref="tableRef" v-bind="tableProps" :columns="tableColumns">
+      <!-- 用户身份: 使用统一的资产单元组件 -->
+      <template #user="{ row }">
+        <AssetIdentityCell
+          :title="row.nickname || row.username"
+          :sub-title="row.username"
+          :link-to="
+            hasPermission(IAM_CAPABILITIES.User.Detail) ? { name: 'UserDetail', query: { id: row.id } } : undefined
+          "
+          centered
+        />
+      </template>
+
+      <!-- 账号状态 -->
+      <template #status="{ row }">
+        <div class="status-dot-group">
+          <span class="status-dot" :class="row.status === 'active' ? 'active' : 'disabled'" />
+          <span class="status-text">{{ row.status === "active" ? "正常" : "禁用" }}</span>
+        </div>
+      </template>
+
+      <!-- 租户成员标记 -->
+      <template #is_member="{ row }">
+        <el-tag v-if="row.is_member" size="small" effect="light" class="member-badge" type="success"> 已入驻 </el-tag>
+        <el-tag v-else size="small" effect="plain" class="member-badge" type="info"> 未入驻 </el-tag>
+      </template>
+
+      <!-- 身份来源: 基于 Source 枚举 -->
+      <template #source="{ row }">
+        <div class="source-tag-group" v-if="row.source">
+          <el-tag v-if="row.source === 'local'" size="small" effect="plain" type="info" class="source-pill system">
+            本地登录
+          </el-tag>
+          <el-tag v-else-if="row.source === 'ldap'" size="small" effect="light" class="source-pill ldap">
+            LDAP 同步
+          </el-tag>
+          <el-tag v-else-if="row.source === 'feishu'" size="small" effect="light" class="source-pill feishu">
+            飞书同步
+          </el-tag>
+          <el-tag v-else-if="row.source === 'wechat'" size="small" effect="light" class="source-pill wechat">
+            企业微信
+          </el-tag>
+          <el-tag v-else size="small" effect="plain" type="info"> 其它 ({{ row.source }}) </el-tag>
+        </div>
+        <span v-else class="empty-text">-</span>
+      </template>
+
+      <!-- 邮箱 -->
+      <template #email="{ row }">
+        <span class="column-text">{{ row.email || "-" }}</span>
+      </template>
+
+      <!-- 岗位/职称 -->
+      <template #job_title="{ row }">
+        <span class="column-text">{{ row.job_title || "-" }}</span>
+      </template>
+
+      <!-- 操作权限: 重新接入 OperateBtn -->
+      <template #actions="{ row }">
+        <OperateBtn :items="userOperateItems" :operate-item="row" :max-length="2" @route-event="handleOperate" />
+      </template>
+    </DataTable>
+
+    <!-- 用户编辑/创建自治弹窗 -->
+    <UserDialog v-model="formVisible" :user-id="currentEditId!" @success="handleFormSuccess" />
+  </ProGovernanceLayout>
+</template>
+
+<script setup lang="ts">
+import { computed } from "vue"
+import { Edit, Delete } from "@element-plus/icons-vue"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import DataTable from "@@/components/DataTable/index.vue"
+import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
+import UserDialog from "./components/UserDialog.vue"
+import type { Column } from "@@/components/DataTable/types"
+import { useUserList } from "./composables/useUserList"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import type { User } from "@/api/iam/user/type"
+
+const { hasPermission } = usePermission()
+
+const {
+  users,
+  total,
+  currentPage,
+  pageSize,
+  query,
+  loading,
+  formVisible,
+  currentEditId,
+  handleRefresh,
+  handleCreate,
+  handleEdit,
+  handleDelete,
+  handleBatchDelete,
+  selectedRows,
+  handleSelectionChange,
+  handleFormSuccess,
+  handleSizeChange,
+  handleCurrentChange
+} = useUserList()
+
+/**
+ * 打包表格通用属性，实现模板瘦身
+ */
+const tableProps = computed(() => ({
+  loading: loading.value,
+  data: users.value,
+  total: total.value,
+  pageSize: pageSize.value,
+  currentPage: currentPage.value,
+  showPagination: true,
+  showSelection: true,
+  selectable: () => hasPermission(IAM_CAPABILITIES.User.BatchDelete),
+  tableProps: !hasPermission(IAM_CAPABILITIES.User.BatchDelete) ? { class: "selection-disabled" } : {},
+  onSelectionChange: handleSelectionChange,
+  onSizeChange: handleSizeChange,
+  onCurrentChange: handleCurrentChange
+}))
+
+/**
+ * 用户操作配置项
+ */
+const userOperateItems = [
+  { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.User.Edit },
+  { name: "注销", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.User.Delete }
+]
+
+const handleOperate = (row: User, code: string) => {
+  if (code === "edit") handleEdit(row)
+  if (code === "delete") handleDelete(row)
+}
+
+/**
+ * 动态计算表头：只有当数据中包含 is_member 字段时，才展示该列
+ */
+const tableColumns = computed<Column[]>(() => {
+  const baseColumns: Column[] = [
+    { label: "主身份信息", prop: "username", slot: "user", minWidth: 200, align: "center" },
+    { label: "账号状态", prop: "status", slot: "status", width: 120, align: "center" },
+    { label: "电子邮箱", prop: "email", slot: "email", minWidth: 180, align: "center" }
+  ]
+
+  // 判定数据中是否存在 membership 装饰
+  const hasMemberInfo = users.value.some((u) => u.is_member !== undefined)
+  if (hasMemberInfo) {
+    baseColumns.push({ label: "入驻状态", prop: "is_member", slot: "is_member", width: 120, align: "center" })
+  }
+
+  baseColumns.push(
+    { label: "身份来源", prop: "source", slot: "source", width: 140, align: "center" },
+    { label: "岗位职称", prop: "job_title", slot: "job_title", minWidth: 140, align: "center" }
+  )
+
+  return baseColumns
+})
+</script>
+
+<style lang="scss" scoped>
+/* NOTE: 无批量删除权限时，禁用表头全选 Checkbox */
+:deep(.selection-disabled) {
+  .el-table__header-wrapper .el-checkbox {
+    pointer-events: none;
+    opacity: 0.4;
+  }
+}
+
+.dual-line-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 0px;
+  line-height: 1.2;
+
+  .main-link,
+  .main-title-static {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    justify-content: center;
+  }
+
+  .main-link {
+    color: #1e293b;
+    &:hover {
+      color: #3b82f6;
+    }
+  }
+
+  .main-title-static {
+    color: #1e293b;
+    cursor: default;
+  }
+  .sub-detail {
+    font-size: 11px;
+    color: #94a3b8;
+    &.mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+  }
+}
+
+.member-badge {
+  height: 20px;
+  min-width: 52px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  line-height: 18px;
+}
+
+.status-dot-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    &.active {
+      background-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+    &.disabled {
+      background-color: #94a3b8;
+    }
+  }
+  .status-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+  }
+}
+
+.column-text {
+  font-size: 12px;
+  color: #475569;
+}
+
+.source-tag-group {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.source-pill {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  line-height: 18px;
+
+  &.system {
+    color: #64748b;
+    border-color: #e2e8f0;
+  }
+  &.ldap {
+    color: #0ea5e9;
+    background-color: #f0f9ff;
+    border-color: #bae6fd;
+  }
+  &.feishu {
+    color: #2563eb;
+    background-color: #eff6ff;
+    border-color: #dbeafe;
+  }
+  &.wechat {
+    color: #16a34a;
+    background-color: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+}
+
+.empty-text {
+  color: #cbd5e1;
+}
+
+.user-dialog-content {
+  width: 100%;
+  padding-right: 12px;
+}
+</style>

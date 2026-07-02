@@ -11,11 +11,11 @@ import {
   createConfigApi,
   updateConfigApi,
   deleteConfigApi,
-  updateConfigStatusApi,
-  swapConfigPrioritiesApi
+  updateConfigStatusApi
 } from "@/api/alert/escalation"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
 import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
+import { navigateToEscalationSteps } from "../utils"
 
 export function useEscalationConfig() {
   const router = useRouter()
@@ -93,22 +93,7 @@ export function useEscalationConfig() {
 
   // 跳转到步骤管理页面
   const navigateToSteps = (config: ConfigVO) => {
-    router.push(`/alert/escalation/steps/${config.id}`)
-  }
-
-  // 交换配置优先级
-  const swapConfigPriorities = async (srcId: number, dstId: number) => {
-    try {
-      await swapConfigPrioritiesApi({
-        src_id: srcId,
-        dst_id: dstId
-      })
-      await loadConfigs()
-      return true
-    } catch (error) {
-      console.error("交换配置优先级失败:", error)
-      throw error
-    }
+    navigateToEscalationSteps(router, config.id)
   }
 
   return {
@@ -121,7 +106,6 @@ export function useEscalationConfig() {
     deleteConfig,
     toggleConfigStatus,
     navigateToSteps,
-    swapConfigPriorities,
     handleCurrentChange,
     handleSizeChange
   }

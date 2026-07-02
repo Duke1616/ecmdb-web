@@ -1,0 +1,743 @@
+<template>
+  <div
+    class="generic-picker-container"
+    ref="containerRef"
+    :class="[
+      `variant-${variant}`,
+      multiple ? 'is-multiple' : 'is-single',
+      disabled ? 'is-disabled' : '',
+      containerClass
+    ]"
+  >
+    <div class="picker-input-box" @click="handleInputClick" :class="{ 'is-focus': showDropdown }">
+      <!-- 多选模式下的标签显示区 -->
+      <div v-if="multiple && selectedItems.length > 0" class="selected-tags">
+        <div v-for="item in selectedItems" :key="String(item[keyField])" class="picker-tag">
+          <!-- 默认插槽渲染 tag 自定义内容，兜底只渲染 label/key -->
+          <slot name="tag" :item="item">
+            <span class="tag-text">{{ (item[labelField] as string) || (item[keyField] as string) }}</span>
+          </slot>
+          <button @click.stop="removeItem(item)" class="remove-btn" type="button" title="移除" :disabled="disabled">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <!-- 单选模式下的文本显示区 -->
+      <div v-else-if="!multiple && selectedItem" class="selected-single">
+        <slot name="single" :item="selectedItem">
+          <span class="single-text">{{
+            (selectedItem[labelField] as string) || (selectedItem[keyField] as string)
+          }}</span>
+        </slot>
+      </div>
+      <!-- 占位符 -->
+      <div v-else class="placeholder-text">{{ placeholder }}</div>
+      <div class="picker-arrow" :class="{ 'is-open': showDropdown }">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+    </div>
+
+    <Teleport to="body">
+      <div v-if="showDropdown" ref="dropdownRef" class="picker-dropdown-panel" :class="dropdownClass" @click.stop>
+        <div class="search-section" @click.stop>
+          <div class="search-input-wrapper">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              v-model="searchKeyword"
+              @input="handleSearch"
+              @click.stop
+              :placeholder="searchPlaceholder"
+              class="search-input"
+              ref="searchInputRef"
+            />
+          </div>
+        </div>
+
+        <div class="items-list" v-loading="showLoading && loading">
+          <div v-if="listData.length === 0 && !loading" class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>暂无匹配数据</span>
+          </div>
+
+          <div
+            v-for="item in listData"
+            :key="String(item[keyField])"
+            class="list-item"
+            :class="{ 'is-selected': isItemSelected(item) }"
+            @click="handleSelect(item)"
+          >
+            <slot name="item" :item="item" :is-selected="isItemSelected(item)">
+              <div class="default-item-content">
+                <div class="item-label">{{ item[labelField] }}</div>
+                <div class="item-key">{{ item[keyField] }}</div>
+              </div>
+            </slot>
+            <div v-if="isItemSelected(item)" class="selected-indicator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showPagination && paginationData.total > paginationData.pageSize" class="pagination-section">
+          <el-pagination
+            background
+            layout="prev, pager, next"
+            :total="paginationData.total"
+            :page-size="paginationData.pageSize"
+            :current-page="paginationData.currentPage"
+            @current-change="handlePageChange"
+            small
+          />
+        </div>
+      </div>
+    </Teleport>
+  </div>
+</template>
+
+<script setup lang="ts" generic="T, K extends string | number">
+import { ref, watch, onMounted, onUnmounted, nextTick } from "vue"
+import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
+import { useGenericPicker } from "@@/composables/useGenericPicker"
+
+interface IGenericPickerProps {
+  placeholder?: string
+  searchPlaceholder?: string
+  multiple?: boolean
+  variant?: "fancy" | "simple" | "element"
+  // API 属性与辅助函数
+  searchApi: (params: { keyword: string; offset: number; limit: number }) => Promise<{ total: number; data: T[] }>
+  resolveApi: (key: K) => Promise<T | null>
+  keyField: keyof T
+  labelField: keyof T
+  fallbackBuilder: (key: K) => T
+  containerClass?: string
+  dropdownClass?: string
+  dropdownMinWidth?: number
+  pageSize?: number
+  showPagination?: boolean
+  showLoading?: boolean
+  disabled?: boolean
+  searchDebounce?: number
+}
+
+const props = withDefaults(defineProps<IGenericPickerProps>(), {
+  placeholder: "请选择",
+  searchPlaceholder: "搜索...",
+  multiple: false,
+  variant: "fancy",
+  pageSize: 3,
+  dropdownMinWidth: 0,
+  showPagination: true,
+  showLoading: false,
+  disabled: false,
+  searchDebounce: 300
+})
+
+// NOTE: 该组件为纯通用 UI 选择控制组件，通过 v-model 将选中的主键绑定同步给外部父组件
+const model = defineModel<K | K[]>()
+
+const containerRef = ref<HTMLElement>()
+const dropdownRef = ref<HTMLElement>()
+const popperInstance = ref<PopperInstance | null>(null)
+
+const {
+  loading,
+  listData,
+  showDropdown,
+  searchKeyword,
+  selectedItems,
+  selectedItem,
+  paginationData,
+  toggleDropdown,
+  closeDropdown,
+  handleSearch,
+  handlePageChange,
+  resolveDetail
+} = useGenericPicker<T, K>({
+  searchApi: props.searchApi,
+  resolveApi: props.resolveApi,
+  keyField: props.keyField,
+  pageSize: props.pageSize,
+  searchDebounce: props.searchDebounce
+})
+
+const updateDropdownLayout = async () => {
+  await nextTick()
+  if (!containerRef.value || !dropdownRef.value) return
+
+  const inputWidth = containerRef.value.offsetWidth
+  const viewportWidth = typeof window === "undefined" ? inputWidth : window.innerWidth
+  const maxWidth = Math.max(160, viewportWidth - 16)
+  const nextWidth = Math.min(Math.max(inputWidth, props.dropdownMinWidth), maxWidth)
+
+  dropdownRef.value.style.width = `${nextWidth}px`
+  await popperInstance.value?.update()
+}
+
+watch(
+  () => showDropdown.value,
+  async (visible) => {
+    if (visible) {
+      await nextTick()
+      if (containerRef.value && dropdownRef.value) {
+        popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
+          placement: "bottom-start",
+          modifiers: [
+            { name: "offset", options: { offset: [0, 8] } },
+            { name: "preventOverflow", options: { boundary: "viewport", padding: 8 } }
+          ]
+        })
+        await updateDropdownLayout()
+      }
+    } else {
+      if (popperInstance.value) {
+        popperInstance.value.destroy()
+        popperInstance.value = null
+      }
+    }
+  }
+)
+
+// 监听下拉列表数据和双向绑定值的变化，当 DOM 渲染完成后，重新计算并刷新 Popper 位置，避免异步加载或高度撑开导致定位错位
+watch(
+  [() => listData.value, () => model.value],
+  async () => {
+    if (showDropdown.value && popperInstance.value) {
+      await updateDropdownLayout()
+    }
+  },
+  { deep: true }
+)
+
+/**
+ * 判断列表项是否已被选中
+ * @param item 列表项
+ */
+const isItemSelected = (item: T): boolean => {
+  const currentKey = item[props.keyField] as unknown as K
+  if (props.multiple) {
+    if (Array.isArray(model.value)) {
+      return (model.value as K[]).includes(currentKey)
+    }
+    return false
+  }
+  return model.value === currentKey
+}
+
+/**
+ * 从已选中列表移除指定项（仅限多选模式）
+ * @param item 要移除的项
+ */
+const removeItem = (item: T) => {
+  if (props.disabled) return
+  const currentKey = item[props.keyField] as unknown as K
+  if (props.multiple && Array.isArray(model.value)) {
+    model.value = (model.value as K[]).filter((key) => key !== currentKey)
+  }
+}
+
+/**
+ * 选中或取消选中当前项
+ * @param item 当前点击的项
+ */
+const handleSelect = (item: T) => {
+  if (props.disabled) return
+  const currentKey = item[props.keyField] as unknown as K
+  if (props.multiple) {
+    const currentModel = Array.isArray(model.value) ? (model.value as K[]) : []
+    if (currentModel.includes(currentKey)) {
+      model.value = currentModel.filter((key) => key !== currentKey)
+    } else {
+      model.value = [...currentModel, currentKey]
+    }
+  } else {
+    selectedItem.value = item
+    model.value = currentKey
+    closeDropdown()
+  }
+}
+
+const handleInputClick = () => {
+  if (props.disabled) return
+  toggleDropdown()
+}
+
+// 监听绑定的 model 值，通过 resolveDetail 进行增量解析并反写详情对象
+watch(
+  () => model.value,
+  async (newValue) => {
+    if (props.multiple) {
+      if (Array.isArray(newValue) && newValue.length > 0) {
+        const resolved: T[] = []
+        for (const key of newValue) {
+          if (key !== undefined && key !== null && key !== "" && key !== 0 && key !== "0") {
+            const item = await resolveDetail(key, props.fallbackBuilder)
+            resolved.push(item)
+          }
+        }
+        selectedItems.value = resolved
+      } else {
+        selectedItems.value = []
+      }
+    } else {
+      if (newValue !== undefined && newValue !== null && newValue !== "" && newValue !== 0 && newValue !== "0") {
+        const item = await resolveDetail(newValue as K, props.fallbackBuilder)
+        selectedItem.value = item
+      } else {
+        selectedItem.value = null
+      }
+    }
+  },
+  { immediate: true }
+)
+
+const handleClickOutside = (event: Event) => {
+  if (!showDropdown.value) return
+  const target = event.target as HTMLElement
+  if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) {
+    return
+  }
+  closeDropdown()
+}
+
+onMounted(() => {
+  document.addEventListener("mousedown", handleClickOutside, true)
+})
+
+onUnmounted(() => {
+  document.removeEventListener("mousedown", handleClickOutside, true)
+  if (popperInstance.value) {
+    popperInstance.value.destroy()
+  }
+})
+</script>
+
+<style lang="scss" scoped>
+.generic-picker-container {
+  position: relative;
+  width: 100%;
+}
+
+/* 默认 fancy 风格输入框 */
+.picker-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  min-height: 42px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 4px 12px;
+  gap: 12px;
+}
+
+.picker-input-box:hover {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+
+.picker-input-box.is-focus {
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.06);
+}
+
+/* simple 风格输入框（类似 el-select 原生风格） */
+.generic-picker-container.variant-simple .picker-input-box {
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  min-height: 32px;
+  padding: 0 12px;
+  box-shadow: none;
+  gap: 6px;
+  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.generic-picker-container.variant-simple .picker-input-box:hover {
+  border-color: #c0c4cc;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.generic-picker-container.variant-simple .picker-input-box.is-focus {
+  border-color: #3b82f6;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px #3b82f6 inset;
+  outline: none;
+}
+
+.selected-single {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.single-text {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeholder-text {
+  min-width: 0;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 400;
+  flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.picker-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #94a3b8;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.picker-arrow.is-open {
+  transform: rotate(180deg);
+}
+
+.picker-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* simple 变体的文字与占位符样式 */
+.generic-picker-container.variant-simple .selected-single {
+  gap: 6px;
+}
+
+.generic-picker-container.variant-simple .single-text {
+  font-size: 13px;
+  color: #606266;
+  font-weight: normal;
+}
+
+.generic-picker-container.variant-simple .placeholder-text {
+  font-size: 13px;
+  color: #c0c4cc;
+}
+
+.generic-picker-container.variant-simple .picker-arrow {
+  color: #c0c4cc;
+}
+
+.generic-picker-container.variant-simple .picker-arrow svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* element 风格输入框：用于需要和 Element Plus 表单控件完全对齐的场景 */
+.generic-picker-container.variant-element .picker-input-box {
+  min-height: 40px;
+  padding: 0 11px;
+  gap: 8px;
+  background: #ffffff;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  box-shadow: none;
+  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.generic-picker-container.variant-element .picker-input-box:hover {
+  background: #ffffff;
+  border-color: #c0c4cc;
+  box-shadow: none;
+}
+
+.generic-picker-container.variant-element .picker-input-box.is-focus {
+  background: #ffffff;
+  border-color: #dcdfe6;
+  box-shadow: none;
+}
+
+.generic-picker-container.variant-element .selected-single {
+  gap: 0;
+}
+
+.generic-picker-container.variant-element .single-text,
+.generic-picker-container.variant-element .placeholder-text {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.generic-picker-container.variant-element .single-text {
+  color: #606266;
+}
+
+.generic-picker-container.variant-element .placeholder-text {
+  color: #a8abb2;
+}
+
+.generic-picker-container.variant-element .picker-arrow {
+  color: #a8abb2;
+}
+
+.generic-picker-container.variant-element .picker-arrow svg {
+  width: 14px;
+  height: 14px;
+}
+
+.generic-picker-container.is-disabled {
+  cursor: not-allowed;
+}
+
+.generic-picker-container.is-disabled .picker-input-box {
+  cursor: not-allowed;
+  color: #a8abb2;
+  background: #f5f7fa !important;
+  border-color: #e4e7ed !important;
+  box-shadow: none !important;
+}
+
+/* Dropdown Panel 样式 */
+.picker-dropdown-panel {
+  position: fixed;
+  z-index: 9999;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1e293b;
+  background: #ffffff;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.06);
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.items-list {
+  max-height: 240px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  color: #94a3b8;
+  gap: 12px;
+}
+
+.empty-state svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+}
+
+.empty-state span {
+  font-size: 13px;
+}
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.list-item:hover {
+  background: #f8fafc;
+}
+
+.list-item.is-selected {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.default-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.item-key {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.selected-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
+.selected-indicator svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pagination-section {
+  padding: 8px 16px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+  display: flex;
+  justify-content: center;
+}
+
+/* 多选模式的标签容器样式 */
+.selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+  min-height: 24px;
+}
+
+.picker-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 2px 4px 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  max-width: 180px;
+  height: 24px;
+}
+
+.picker-tag .tag-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: transparent;
+  border: none;
+  color: #f56c6c;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  flex-shrink: 0;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.remove-btn:hover {
+  color: #dd2f2f;
+  background: transparent;
+}
+
+.remove-btn svg {
+  width: 10px;
+  height: 10px;
+}
+
+/* simple 变体的标签样式 */
+.generic-picker-container.variant-simple .picker-tag {
+  padding: 0 4px 0 8px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  height: 24px;
+  margin: 1px 0;
+}
+
+.generic-picker-container.variant-simple .remove-btn {
+  background: transparent;
+  color: #f56c6c;
+}
+
+.generic-picker-container.variant-simple .remove-btn:hover {
+  background: transparent;
+  color: #dd2f2f;
+}
+</style>

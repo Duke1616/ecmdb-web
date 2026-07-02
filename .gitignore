@@ -20,6 +20,7 @@ coverage
 
 # Editor directories and files
 .vscode/*
+.cursor/*
 !.vscode/extensions.json
 .idea
 *.suo
@@ -29,6 +30,7 @@ coverage
 *.sw?
 
 # TypeScript compiled files (should not be committed)
+*.tsbuildinfo
 src/**/*.js
 src/**/*.js.map
 !src/**/*.config.js

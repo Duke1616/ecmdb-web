@@ -1,0 +1,244 @@
+<template>
+  <ProGovernanceLayout
+    title="排班管理"
+    subtitle="管理系统排班和值班安排"
+    :primary-action="{ capability: ALERT_CAPABILITIES.Oncall.Add, label: '新增排班', icon: CirclePlus }"
+    :refresh-action="{ capability: ALERT_CAPABILITIES.Oncall.View }"
+    @primary-action="handlerCreate"
+    @refresh="handleRefresh"
+  >
+    <!-- 数据表格 -->
+    <DataTable
+      :loading="loading"
+      :data="oncallsData"
+      :columns="tableColumns"
+      :show-selection="false"
+      :show-pagination="true"
+      :total="paginationData.total"
+      :page-size="paginationData.pageSize"
+      :current-page="paginationData.currentPage"
+      :page-sizes="paginationData.pageSizes"
+      :pagination-layout="paginationData.layout"
+      :table-props="{ stripe: true, height: 'calc(100vh - 12rem)' }"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+      <!-- 状态列自定义插槽 -->
+      <template #status="{ row }">
+        <el-tag v-if="row.enabled === true" effect="plain" type="primary">启用</el-tag>
+        <el-tag v-else type="info" effect="plain">禁用</el-tag>
+      </template>
+
+      <!-- 管理员列自定义插槽 -->
+      <template #owner="{ row }">
+        {{ userToolsStore.getNickname(row.owner) }}
+      </template>
+
+      <!-- 操作列自定义插槽 -->
+      <template #actions="{ row }">
+        <OperateBtn :items="operateBtnStatus" @routeEvent="operateEvent" :operateItem="row" :maxLength="2" />
+      </template>
+    </DataTable>
+
+    <!-- 添加/编辑排班对话框 -->
+    <FormDialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="500px"
+      subtitle="配置排班信息"
+      header-icon="Calendar"
+      confirm-text="保存"
+      cancel-text="取消"
+      @confirm="handlerSubmitRota"
+      @cancel="onClosed"
+      @closed="onClosed"
+    >
+      <div class="form-content">
+        <Form ref="apiRef" @callback="listOnCallsData" @closed="onClosed" />
+      </div>
+    </FormDialog>
+  </ProGovernanceLayout>
+</template>
+
+<script setup lang="ts">
+import { ref, watch, nextTick, h, computed, shallowRef } from "vue"
+import { usePagination } from "@/common/composables/usePagination"
+import { CirclePlus, Delete, Edit, View } from "@element-plus/icons-vue"
+import { OnCall } from "@/api/alert/oncall/types/oncall"
+import { deleteOnCallApi, listOnCallsApi } from "@/api/alert/oncall"
+import Form from "./form.vue"
+import router from "@/router"
+import OperateBtn from "@@/components/OperateBtn/index.vue"
+import { ElMessage, ElMessageBox } from "element-plus"
+import { useUserToolsStore } from "@/pinia/stores/user-tools"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import DataTable from "@/common/components/DataTable/index.vue"
+import { FormDialog } from "@@/components/Dialogs"
+const userToolsStore = useUserToolsStore()
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+
+const dialogVisible = ref<boolean>(false)
+const loading = ref<boolean>(false)
+const isEdit = ref<boolean>(false)
+const apiRef = ref<InstanceType<typeof Form>>()
+
+// 对话框标题
+const dialogTitle = computed(() => (isEdit.value ? "编辑排班" : "添加排班"))
+
+import type { Column } from "@@/components/DataTable/types"
+
+// 表格列配置
+const tableColumns: Column[] = [
+  {
+    prop: "name",
+    label: "名称",
+    align: "center"
+  },
+  {
+    prop: "enabled",
+    label: "状态",
+    align: "center",
+    slot: "status"
+  },
+  {
+    prop: "owner",
+    label: "管理员",
+    align: "center",
+    slot: "owner"
+  },
+  {
+    prop: "desc",
+    label: "描述",
+    align: "center"
+  }
+]
+
+// OperateBtn 配置
+const operateBtnStatus = shallowRef([
+  {
+    name: "详情",
+    code: "view",
+    icon: View,
+    capability: ALERT_CAPABILITIES.Oncall.Detail
+  },
+  {
+    name: "修改",
+    code: "edit",
+    icon: Edit,
+    capability: ALERT_CAPABILITIES.Oncall.Edit
+  },
+  {
+    name: "删除",
+    code: "delete",
+    icon: Delete,
+    type: "danger",
+    capability: ALERT_CAPABILITIES.Oncall.Delete
+  }
+])
+
+// OperateBtn 操作事件处理
+const operateEvent = (data: OnCall, name: string) => {
+  switch (name) {
+    case "view":
+      handleDetailClick(data)
+      break
+    case "edit":
+      handleUpdateClick(data)
+      break
+    case "delete":
+      handleDeleteClick(data)
+      break
+  }
+}
+
+const handleDetailClick = (row: OnCall) => {
+  router.push({
+    path: "/alert/oncall/detail",
+    query: { id: row.id }
+  })
+}
+
+const handleUpdateClick = (row: OnCall) => {
+  isEdit.value = true
+  dialogVisible.value = true
+  nextTick(() => {
+    apiRef.value?.setFrom(row)
+  })
+}
+
+const onClosed = () => {
+  apiRef.value?.resetForm()
+  dialogVisible.value = false
+  isEdit.value = false
+}
+
+const handlerSubmitRota = () => {
+  apiRef.value?.submitForm()
+}
+
+const handlerCreate = () => {
+  isEdit.value = false
+  dialogVisible.value = true
+}
+
+const handleRefresh = () => {
+  listOnCallsData()
+  ElMessage.success("数据已刷新")
+}
+
+/** 查询排班列表 */
+const oncallsData = ref<OnCall[]>([])
+const listOnCallsData = () => {
+  loading.value = true
+  listOnCallsApi({
+    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+    limit: paginationData.pageSize
+  })
+    .then(({ data }) => {
+      paginationData.total = data.total
+      oncallsData.value = data.oncalls
+
+      const usernames = oncallsData.value.map((item) => item.owner)
+      if (usernames.length > 0) {
+        userToolsStore.batchResolveUsers(usernames)
+      }
+    })
+    .catch(() => {
+      oncallsData.value = []
+    })
+    .finally(() => {
+      loading.value = false
+    })
+}
+
+const handleDeleteClick = (row: OnCall) => {
+  ElMessageBox({
+    title: "删除确认",
+    message: h("p", null, [
+      h("span", null, "正在删除排班: "),
+      h("i", { style: "color: red" }, `${row.name}`),
+      h("span", null, " 确认删除？")
+    ]),
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  }).then(() => {
+    deleteOnCallApi(row.id).then(() => {
+      ElMessage.success("删除成功")
+      listOnCallsData()
+    })
+  })
+}
+
+/** 监听分页参数的变化 */
+watch([() => paginationData.currentPage, () => paginationData.pageSize], listOnCallsData, { immediate: true })
+</script>
+
+<style lang="scss" scoped>
+.form-content {
+  overflow-y: auto;
+  padding: 0;
+  margin: 0;
+}
+</style>

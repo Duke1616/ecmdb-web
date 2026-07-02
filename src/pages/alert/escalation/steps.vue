@@ -1,18 +1,13 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="升级步骤管理"
-      subtitle="管理升级配置中的步骤"
-      :show-back-button="true"
-      @refresh="loadSteps"
-      @back="handleBack"
-    >
-      <template #actions>
-        <el-button type="primary" :icon="Plus" @click="handleAddStep"> 新增步骤 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="升级步骤管理"
+    subtitle="管理升级配置中的步骤"
+    show-back-button
+    :primary-action="{ capability: ALERT_CAPABILITIES.EscalationStep.Add, label: '新增步骤', icon: Plus }"
+    @refresh="loadSteps"
+    @primary-action="handleAddStep"
+    @back="handleBack"
+  >
     <!-- 升级步骤表格 -->
     <EscalationStepsTable
       v-model="steps"
@@ -24,42 +19,38 @@
     />
 
     <!-- 编辑抽屉 -->
-    <CustomDrawer
+    <Drawer
       v-model="drawerVisible"
       :title="drawerTitle"
       :subtitle="drawerSubtitle"
       size="35%"
       direction="rtl"
-      :show-footer="true"
+      :header-icon="Operation"
+      :confirm-loading="submitLoading"
+      :confirm-button-text="isEdit ? '更新步骤' : '保存步骤'"
       @closed="handleDrawerClose"
       @confirm="handleSubmit"
     >
-      <template #footer>
-        <el-button @click="handleDrawerClose">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
-          {{ isEdit ? "更新" : "保存" }}
-        </el-button>
-      </template>
-
       <EscalationStepForm v-if="drawerVisible" v-model="currentStep" ref="formRef" />
-    </CustomDrawer>
-  </PageContainer>
+    </Drawer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
-import { Plus } from "@element-plus/icons-vue"
+import { Operation, Plus } from "@element-plus/icons-vue"
 import { cloneDeep } from "lodash-es"
 import { clearZeroValues } from "@@/utils"
 import type { CreateStepReq, StepVO, EscalationStep } from "@/api/alert/escalation/types"
 import { deleteStepApi } from "@/api/alert/escalation"
 import { useEscalationSteps } from "./composables/useEscalationSteps"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { getEscalationStepConfigID } from "./utils"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import EscalationStepsTable from "./components/EscalationStepsTable.vue"
-import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
+import { Drawer } from "@@/components/Dialogs"
 import EscalationStepForm from "./components/EscalationStepForm.vue"
 
 // 路由
@@ -77,7 +68,8 @@ const currentStepIndex = ref(-1)
 const currentStep = ref<CreateStepReq>({
   level: 1,
   template_set_id: 0,
-  step_template_id: 0,
+  channels: [],
+  receivers: [],
   delay: 30,
   max_retries: 3,
   retry_interval: 60,
@@ -90,7 +82,7 @@ const currentStep = ref<CreateStepReq>({
 const formRef = ref()
 
 // 计算属性
-const configId = computed(() => Number(route.params.id))
+const configId = computed(() => getEscalationStepConfigID(route))
 const drawerTitle = computed(() => (isEdit.value ? "编辑升级步骤" : "添加升级步骤"))
 const drawerSubtitle = computed(() => (isEdit.value ? `升级步骤 ${currentStepIndex.value + 1}` : "添加新的升级步骤"))
 
@@ -102,7 +94,8 @@ const handleAddStep = () => {
   const newStepData: CreateStepReq = {
     level: steps.value.length + 1,
     template_set_id: 0,
-    step_template_id: 0,
+    channels: [],
+    receivers: [],
     delay: 30,
     max_retries: 3,
     retry_interval: 60,
@@ -125,7 +118,8 @@ const handleEditStep = (index: number, step: CreateStepReq) => {
   const editStepData: CreateStepReq = {
     level: step.level,
     template_set_id: step.template_set_id,
-    step_template_id: step.step_template_id,
+    channels: step.channels || [],
+    receivers: step.receivers || [],
     delay: step.delay,
     max_retries: step.max_retries,
     retry_interval: step.retry_interval,

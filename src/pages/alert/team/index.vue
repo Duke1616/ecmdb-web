@@ -1,43 +1,42 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="团队管理"
-      subtitle="管理系统团队和成员分配"
-      add-button-text="新增团队"
-      @add="handlerCreateTeam"
-      @refresh="handleRefresh"
-    >
-      <template #actions>
-        <el-button type="primary" :icon="CirclePlus" class="action-btn" @click="handlerCreateTeam">
-          新增团队
-        </el-button>
-        <el-tooltip content="刷新数据">
-          <el-button type="primary" :icon="RefreshRight" circle class="refresh-btn" @click="handleRefresh" />
-        </el-tooltip>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="团队管理"
+    subtitle="管理系统团队和成员分配"
+    search-placeholder="搜索团队名称"
+    v-model:keyword="keyword"
+    :primary-action="{ capability: ALERT_CAPABILITIES.Team.Add, label: '新增团队', icon: CirclePlus }"
+    :refresh-action="{ capability: ALERT_CAPABILITIES.Team.View }"
+    @primary-action="handlerCreateTeam"
+    @refresh="handleRefresh"
+    @search="handleSearch"
+  >
     <!-- 主内容区域 -->
     <DataTable
+      :loading="loading"
       :data="teamsData"
       :columns="tableColumns"
-      :show-selection="true"
+      :show-selection="false"
       :show-pagination="true"
       :total="paginationData.total"
       :page-size="paginationData.pageSize"
       :current-page="paginationData.currentPage"
       :page-sizes="paginationData.pageSizes"
       :pagination-layout="paginationData.layout"
-      :table-props="{}"
-      @selection-change="handleSelectionChange"
+      :table-props="{ stripe: true, height: 'calc(100vh - 12rem)' }"
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     >
+      <!-- 团队名称插槽 -->
+      <template #teamName="{ row }">
+        <div class="team-name">
+          <span class="team-title">{{ row.name }}</span>
+        </div>
+      </template>
+
       <!-- 管理人员插槽 -->
       <template #owner="{ row }">
         <el-tag type="primary" effect="plain" class="owner-tag">
-          {{ row.owner }}
+          {{ userToolsStore.getFullDisplayName(row.owner) }}
         </el-tag>
       </template>
 
@@ -74,29 +73,32 @@
 
     <!-- 群聊管理抽屉 -->
     <ChatGroupDrawer v-model="chatDrawerVisible" :team="currentTeam" @refresh="handleChatGroupRefresh" />
-  </PageContainer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, nextTick, markRaw } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
-import { UserFilled, Edit, Delete, RefreshRight, CirclePlus, ChatDotRound } from "@element-plus/icons-vue"
+import { UserFilled, Edit, Delete, CirclePlus, ChatDotRound } from "@element-plus/icons-vue"
 import { listTeamsApi, deleteTeamApi, getTeamDetailApi } from "@/api/alert/team"
 import { Team } from "@/api/alert/team/types"
-// @ts-ignore
 import TeamForm from "./form.vue"
 import ChatGroupDrawer from "./components/ChatGroupDrawer.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import DataTable from "@@/components/DataTable/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
-import PageContainer from "@/common/components/PageContainer/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import { formatTimestamp } from "@/common/utils/day"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import { useUserToolsStore } from "@/pinia/stores/user-tools"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 const dialogVisible = ref<boolean>(false)
 const isEditMode = ref<boolean>(false)
+const loading = ref<boolean>(false)
+const keyword = ref<string>("")
+const userToolsStore = useUserToolsStore()
 
 const chatDrawerVisible = ref<boolean>(false)
 const currentTeam = ref<Team | null>(null)
@@ -136,12 +138,20 @@ const tableColumns: Column[] = [
 
 // 表格操作配置
 const operateBtnItems = [
-  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit) },
-  { name: "群聊", code: "chat", type: "success", icon: markRaw(ChatDotRound) },
-  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) }
+  { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit), capability: ALERT_CAPABILITIES.Team.Edit },
+  { name: "群聊", code: "chat", type: "success", icon: markRaw(ChatDotRound), capability: ALERT_CAPABILITIES.Team.ChatView },
+  { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete), capability: ALERT_CAPABILITIES.Team.Delete }
 ]
 
 const handleRefresh = () => {
+  listTeamsData()
+}
+
+const handleSearch = () => {
+  if (paginationData.currentPage !== 1) {
+    paginationData.currentPage = 1
+    return
+  }
   listTeamsData()
 }
 
@@ -160,25 +170,29 @@ const handleOperateEvent = (operateItem: Team, actionName: string) => {
   }
 }
 
-// 选择变化处理
-const handleSelectionChange = (selection: Team[]) => {
-  console.log("选中的团队:", selection)
-}
-
 /** 查询团队列表 */
 const teamsData = ref<Team[]>([])
 
 const listTeamsData = () => {
+  loading.value = true
   return listTeamsApi({
     offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-    limit: paginationData.pageSize
+    limit: paginationData.pageSize,
+    keyword: keyword.value.trim() || undefined
   })
     .then(({ data }) => {
       paginationData.total = data.total
       teamsData.value = data.teams
+      const usernames = teamsData.value.flatMap((team) => [team.owner, ...(team.members || [])]).filter(Boolean)
+      if (usernames.length > 0) {
+        userToolsStore.batchResolveUsers([...new Set(usernames)])
+      }
     })
     .catch(() => {
       teamsData.value = []
+    })
+    .finally(() => {
+      loading.value = false
     })
 }
 
@@ -204,8 +218,8 @@ const handleChatGroupRefresh = async () => {
     try {
       const { data } = await getTeamDetailApi(currentTeam.value.id)
       currentTeam.value = data
-    } catch (error) {
-      console.error("刷新团队详情失败", error)
+    } catch {
+      ElMessage.error("刷新团队详情失败")
     }
   }
 }
@@ -224,7 +238,7 @@ const handleDelete = async (row: Team) => {
     listTeamsData()
   } catch (error) {
     if (error !== "cancel") {
-      console.error("团队删除失败:", error)
+      ElMessage.error("团队删除失败，请稍后重试")
     }
   }
 }
@@ -270,10 +284,15 @@ watch(dialogVisible, async (newVal) => {
 .team-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 
-  .team-icon {
-    color: #3b82f6;
+  .team-title {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #1e293b;
+    font-weight: 600;
   }
 }
 
@@ -303,40 +322,4 @@ watch(dialogVisible, async (newVal) => {
   color: #6b7280;
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .team-manager {
-    padding: 16px;
-  }
-
-  .manager-header {
-    padding: 16px 20px;
-    margin-bottom: 16px;
-
-    .header-left {
-      .manager-title {
-        font-size: 16px;
-      }
-
-      .manager-subtitle {
-        font-size: 12px;
-      }
-    }
-
-    .header-right {
-      gap: 8px;
-
-      .action-btn {
-        height: 32px;
-        font-size: 12px;
-        padding: 0 12px;
-      }
-
-      .refresh-btn {
-        width: 32px;
-        height: 32px;
-      }
-    }
-  }
-}
 </style>

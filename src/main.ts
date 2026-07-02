@@ -3,6 +3,7 @@ import { createApp } from "vue"
 import App from "@/App.vue"
 import pinia from "@/pinia"
 import router from "@/router"
+import { isChunkLoadError, reloadOnChunkLoadError } from "@/common/utils/chunkLoadRecovery"
 
 import "@/router/guard"
 // load
@@ -19,6 +20,12 @@ import "element-plus/theme-chalk/dark/css-vars.css"
 import "vxe-table/lib/style.css"
 import "vxe-table-plugin-element/dist/style.css"
 import "@@/assets/styles/index.scss"
+
+window.addEventListener("unhandledrejection", (event) => {
+  if (isChunkLoadError(event.reason) && reloadOnChunkLoadError()) {
+    event.preventDefault()
+  }
+})
 
 const app = createApp(App)
 

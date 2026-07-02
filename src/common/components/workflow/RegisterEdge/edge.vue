@@ -99,8 +99,8 @@
 import { ref, onMounted } from "vue"
 import Expression from "./expression.vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
-import { getTemplateByWorkflowIdApi } from "@/api/template"
-import { template } from "@/api/template/types/template"
+import { getTemplateByWorkflowIdApi } from "@/api/ticket/template/index.js"
+import { template } from "@/api/ticket/template/types/template.js"
 import { FormSection } from "../PropertySetting"
 import { MagicStick, Link, InfoFilled, Operation } from "@element-plus/icons-vue"
 

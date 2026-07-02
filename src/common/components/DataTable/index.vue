@@ -1,30 +1,45 @@
 <template>
   <div class="manager-content">
     <div class="content-card">
-      <div class="data-table-container">
+      <div class="data-table-container" v-loading="loading">
         <div class="table-wrapper">
           <el-table
             ref="tableRef"
-            :data="enableRowDrag ? draggableData : data"
+            :data="enableRowDrag ? draggableData : data || []"
             class="data-table"
-            stripe
+            :stripe="false"
             :height="finalTableHeight"
             v-bind="tableProps"
             @selection-change="handleSelectionChange"
-            :style="{
-              '--fixed-column-bg': '#f8fafc'
-            }"
             row-key="id"
           >
             <!-- 选择列 -->
-            <el-table-column v-if="showSelection" type="selection" width="50" align="center" />
+            <el-table-column
+              v-if="showSelection"
+              type="selection"
+              width="50"
+              align="center"
+              header-align="center"
+              class-name="selection-column"
+              :selectable="selectable"
+            />
 
             <!-- 拖拽列 -->
-            <el-table-column v-if="enableRowDrag" label="拖拽" width="85" align="center">
+            <el-table-column
+              v-if="enableRowDrag"
+              label="拖拽"
+              width="85"
+              align="center"
+              header-align="center"
+              class-name="drag-column"
+              label-class-name="drag-column-header"
+            >
               <template #default="{}">
-                <el-icon class="drag-handle" style="cursor: move; color: #999">
-                  <Rank />
-                </el-icon>
+                <span class="drag-handle-wrap">
+                  <el-icon class="drag-handle">
+                    <Rank />
+                  </el-icon>
+                </span>
               </template>
             </el-table-column>
 
@@ -41,10 +56,16 @@
               :show-overflow-tooltip="column.showOverflowTooltip"
             >
               <template #default="scope">
-                <!-- 自定义插槽 -->
-                <slot v-if="column.slot" :name="column.slot" :row="scope.row" :column="column" :index="scope.$index" />
-                <!-- 默认显示 -->
-                <span v-else>{{ getColumnValue(scope.row, column) }}</span>
+                <div class="data-table-cell-content" :class="`is-${column.align || 'center'}`">
+                  <slot
+                    v-if="column.slot"
+                    :name="column.slot"
+                    :row="scope.row"
+                    :column="column"
+                    :index="scope.$index"
+                  />
+                  <span v-else class="data-table-cell-text">{{ getColumnValue(scope.row, column) }}</span>
+                </div>
               </template>
             </el-table-column>
 
@@ -57,23 +78,12 @@
               align="center"
             >
               <template #default="scope">
-                <div class="action-buttons">
-                  <el-button
-                    v-for="action in actions"
-                    :key="action.key"
-                    :type="action.type || 'primary'"
-                    :plain="action.plain !== false"
-                    :size="action.size || 'small'"
-                    :disabled="action.disabled && action.disabled(scope.row)"
-                    @click="handleAction(action.key, scope.row, scope.$index)"
-                    class="action-btn"
-                  >
-                    <el-icon v-if="action.icon">
-                      <component :is="action.icon" />
-                    </el-icon>
-                    {{ action.label }}
-                  </el-button>
-                </div>
+                <OperateBtn
+                  :items="getOperateItems(scope.row)"
+                  :operate-item="scope.row"
+                  :max-length="2"
+                  @route-event="(row: any, key: string) => handleAction(key, row, scope.$index)"
+                />
               </template>
             </el-table-column>
 
@@ -89,6 +99,14 @@
                 <slot name="actions" :row="scope.row" :column="scope.column" :index="scope.$index" />
               </template>
             </el-table-column>
+
+            <!-- 空状态自定义插槽，统一系统品牌调性 -->
+            <template #empty>
+              <div v-if="loading" class="table-loading-empty" />
+              <slot v-else name="empty">
+                <el-empty :image-size="120" description="暂无数据" />
+              </slot>
+            </template>
           </el-table>
         </div>
 
@@ -101,6 +119,7 @@
             :total="total"
             :page-size="pageSize"
             :current-page="currentPage"
+            small
             @size-change="handleSizeChange"
             @current-change="handleCurrentChange"
             class="pagination"
@@ -112,10 +131,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots, ref, onMounted, onUnmounted, watch, nextTick } from "vue"
+import { computed, useSlots, ref, onMounted, onUnmounted, watch, nextTick, getCurrentInstance } from "vue"
 import { Rank } from "@element-plus/icons-vue"
 import Sortable from "sortablejs"
 import type { Column, Action } from "./types"
+import OperateBtn from "@/common/components/OperateBtn/index.vue"
 
 interface Props {
   data: any[]
@@ -124,8 +144,9 @@ interface Props {
   showSelection?: boolean
   actionColumnLabel?: string
   actionColumnWidth?: string | number
-  actionColumnFixed?: "left" | "right"
+  actionColumnFixed?: "left" | "right" | boolean
   tableProps?: Record<string, any>
+  loading?: boolean
 
   // 分页相关
   showPagination?: boolean
@@ -137,25 +158,31 @@ interface Props {
 
   // 行拖拽相关
   enableRowDrag?: boolean
+  // 选择逻辑控制
+  selectable?: (row: any, index: number) => boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  data: () => [],
   showSelection: false,
   actionColumnLabel: "操作",
   actionColumnWidth: 200,
   enableRowDrag: false,
   actionColumnFixed: "right",
   tableProps: () => ({}),
-  showPagination: false
+  loading: false,
+  showPagination: false,
+  selectable: () => true
 })
 
 const slots = useSlots()
+const instance = getCurrentInstance()
 
 // 表格引用
 const tableRef = ref()
 
 // 可拖拽的数据数组
-const draggableData = ref([...props.data])
+const draggableData = ref(Array.isArray(props.data) ? [...props.data] : [])
 
 // 窗口宽度响应式变量
 const windowWidth = ref(window.innerWidth)
@@ -181,7 +208,8 @@ onUnmounted(() => {
 watch(
   () => props.data,
   (newData) => {
-    draggableData.value = [...newData]
+    // NOTE: 加上防御性判断，防止异步或未定义数据在展开时抛出 is not iterable 异常
+    draggableData.value = Array.isArray(newData) ? [...newData] : []
   },
   { deep: true, immediate: true }
 )
@@ -279,56 +307,53 @@ const hasActionsSlot = computed(() => {
   return !!slots.actions
 })
 
+const hasCustomActionColumnWidth = computed(() => {
+  const vnodeProps = instance?.vnode.props || {}
+  return "actionColumnWidth" in vnodeProps || "action-column-width" in vnodeProps
+})
+
 // 动态计算操作列宽度
 const dynamicActionColumnWidth = computed(() => {
-  // 如果有自定义操作列插槽，尝试从插槽内容中获取实际按钮信息
+  if (hasCustomActionColumnWidth.value) {
+    return props.actionColumnWidth
+  }
+
   if (hasActionsSlot.value) {
-    // 基于窗口宽度和数据量来动态计算
     const dataLength = props.data?.length || 0
     const isSmallScreen = windowWidth.value < 1400
 
-    // 基础宽度 - 确保能容纳4字按钮
-    let baseWidth = 200
+    let baseWidth = 180
 
-    // 根据屏幕大小调整
     if (isSmallScreen) {
-      baseWidth = 220 // 小屏幕也需要足够宽度显示4字按钮
+      baseWidth = 200
     } else if (windowWidth.value > 1920) {
-      baseWidth = 280 // 大屏幕可以使用更宽的列
+      baseWidth = 200
     }
 
-    // 根据数据量调整
     if (dataLength > 100) {
-      baseWidth += 40 // 大量数据可能需要更多操作
+      baseWidth += 40
     }
 
-    // 确保最小宽度能容纳2个4字按钮
-    const minWidthForTwoButtons = 180 // 2个4字按钮的最小宽度
+    const minWidthForTwoButtons = 170
     baseWidth = Math.max(baseWidth, minWidthForTwoButtons)
 
     return baseWidth
   }
 
-  // 根据操作按钮数量动态调整宽度
   if (props.actions && props.actions.length > 0) {
-    // 分析按钮文字长度，计算实际需要的宽度
     let maxTextLength = 0
     props.actions.forEach((action) => {
       const textLength = action.label ? action.label.length : 0
       maxTextLength = Math.max(maxTextLength, textLength)
     })
 
-    // 中文字符宽度计算：9px字体
     const chineseCharWidth = 9
-    const buttonPadding = 12 // 按钮内边距
-    const buttonSpacing = 6 // 按钮间距
-    const columnPadding = 16 // 列内边距
-    const iconWidth = 12 // 图标宽度（如果有）
+    const buttonPadding = 12
+    const buttonSpacing = 6
+    const columnPadding = 16
+    const iconWidth = 12
 
-    // 计算单个按钮的宽度
     const singleButtonWidth = maxTextLength * chineseCharWidth + buttonPadding + iconWidth
-
-    // 计算总宽度
     const totalWidth =
       props.actions.length * singleButtonWidth + (props.actions.length - 1) * buttonSpacing + columnPadding
 
@@ -341,6 +366,17 @@ const dynamicActionColumnWidth = computed(() => {
 // 处理操作按钮点击
 const handleAction = (key: string, row: any, index: number) => {
   emit("action", key, row, index)
+}
+
+const getOperateItems = (row: any) => {
+  return (props.actions || []).map((action) => ({
+    name: action.label,
+    code: action.key,
+    type: action.type,
+    icon: action.icon,
+    disabled: Boolean(action.loading?.(row) || action.disabled?.(row)),
+    capability: action.capability
+  }))
 }
 
 // 处理选择变化
@@ -392,11 +428,9 @@ defineExpose({
 /* 内容卡片 */
 .content-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -409,6 +443,7 @@ defineExpose({
   height: 100%;
   display: flex;
   flex-direction: column;
+  background: #ffffff;
 }
 
 .table-wrapper {
@@ -416,6 +451,10 @@ defineExpose({
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.table-loading-empty {
+  min-height: 220px;
 }
 
 .data-table {
@@ -430,6 +469,8 @@ defineExpose({
     height: 100%;
     display: flex;
     flex-direction: column;
+    color: #334155;
+    font-size: 13px;
   }
 
   :deep(.el-table__body-wrapper) {
@@ -444,99 +485,162 @@ defineExpose({
   :deep(.el-table__header) {
     th {
       background: #f8fafc !important;
-      color: #374151;
-      font-weight: 600;
-      height: calc(2.4rem + 0.4vw);
-      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
-      font-size: calc(0.6rem + 0.2vw);
+      color: #334155;
+      font-weight: 700;
+      height: 48px;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    th .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 12px 14px;
+      box-sizing: border-box;
+      text-align: center;
     }
   }
 
   :deep(.el-table__body) {
     td {
-      font-size: calc(0.7rem + 0.25vw);
-      padding: calc(0.4rem + 0.25vw) calc(0.6rem + 0.35vw);
-      height: calc(2.6rem + 0.4vw);
+      color: #334155;
+      font-size: 13px;
+      padding: 0;
+      height: 56px;
     }
+
+    td .cell {
+      display: flex;
+      align-items: center;
+      min-height: 56px;
+      padding: 12px 14px;
+      box-sizing: border-box;
+    }
+  }
+
+  :deep(.selection-column .cell) {
+    justify-content: center;
+    padding: 0;
+  }
+
+  :deep(.selection-column .el-checkbox) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+    margin: 0;
+  }
+
+  :deep(.selection-column .el-checkbox__input) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :deep(.el-table__cell .cell) {
+    width: 100%;
+  }
+
+  .data-table-cell-content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+
+    &.is-left {
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    &.is-center {
+      justify-content: center;
+      text-align: center;
+    }
+
+    &.is-right {
+      justify-content: flex-end;
+      text-align: right;
+    }
+  }
+
+  .data-table-cell-text {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    line-height: 1.5;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   // 确保所有列都有一致的背景色 - 使用更高优先级的选择器
-  :deep(.el-table__body) {
-    // 重置所有单元格的背景色，让斑马纹效果统一
-    tr {
-      td {
-        background-color: transparent !important;
-      }
-    }
-
-    // 斑马纹样式 - 确保整行包括所有列都有一致背景
-    tr.el-table__row--striped {
-      background-color: #fafafa !important;
-
-      td {
-        background-color: #fafafa !important;
-      }
-    }
-
-    // 斑马纹悬停样式
-    tr.el-table__row--striped:hover {
-      background-color: #f5f7fa !important;
-
-      td {
-        background-color: #f5f7fa !important;
-      }
-    }
-
-    // 普通行悬停样式
-    tr:hover {
-      background-color: #f5f7fa !important;
-
-      td {
-        background-color: #f5f7fa !important;
-      }
-    }
+  :deep(.el-table__body tr) {
+    --el-table-tr-bg-color: #ffffff;
+    background-color: var(--el-table-tr-bg-color);
   }
 
-  // 额外加强操作列的样式特异性
-  :deep(.el-table__body tr td:last-child) {
-    background-color: transparent !important;
+  :deep(.el-table__body tr:hover),
+  :deep(.el-table__body tr.hover-row),
+  :deep(.el-table__body tr.current-row) {
+    --el-table-tr-bg-color: #f8fafc;
+    background-color: var(--el-table-tr-bg-color);
   }
 
-  :deep(.el-table__body tr.el-table__row--striped td:last-child) {
-    background-color: #fafafa !important;
+  :deep(.el-table__body td) {
+    background-color: var(--el-table-tr-bg-color) !important;
   }
 
-  :deep(.el-table__body tr.el-table__row--striped:hover td:last-child) {
-    background-color: #f5f7fa !important;
+  :deep(.el-table__inner-wrapper::before),
+  :deep(.el-table__border-left-patch) {
+    background-color: #e2e8f0;
   }
 
-  :deep(.el-table__body tr:hover td:last-child) {
-    background-color: #f5f7fa !important;
+  :deep(.el-table__cell) {
+    border-color: #e2e8f0;
   }
-}
 
-.action-buttons {
-  display: flex;
-  gap: calc(0.4rem + 0.15vw);
-  justify-content: center;
-  align-items: center;
+  :deep(.el-table--border .el-table__cell) {
+    border-right-color: #eef2f7;
+  }
 
-  .action-btn {
-    display: inline-flex;
+  :deep(.el-table__cell.el-table-fixed-column--left),
+  :deep(.el-table__cell.el-table-fixed-column--right) {
+    position: relative;
+    z-index: 2;
+    background-color: var(--el-table-tr-bg-color) !important;
+  }
+
+  :deep(.el-table__cell.el-table-fixed-column--left .cell),
+  :deep(.el-table__cell.el-table-fixed-column--right .cell) {
+    display: flex;
     align-items: center;
-    gap: calc(0.2rem + 0.08vw);
-    padding: calc(0.15rem + 0.08vw) calc(0.4rem + 0.15vw);
-    border-radius: 4px;
-    font-size: calc(0.6rem + 0.15vw);
-    font-weight: 500;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-    min-height: calc(1.4rem + 0.3vw);
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    background: inherit;
+    width: 100%;
+    box-sizing: border-box;
+  }
 
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    }
+  :deep(th.el-table__cell.el-table-fixed-column--left),
+  :deep(th.el-table__cell.el-table-fixed-column--right) {
+    z-index: 3;
+    background-color: #f8fafc !important;
+  }
+
+  :deep(.el-table-fixed-column--left.is-last-column) {
+    border-right: none;
+  }
+
+  :deep(.el-table-fixed-column--right.is-first-column) {
+    border-left: none;
+  }
+
+  :deep(.el-table-fixed-column--left.is-last-column::before),
+  :deep(.el-table-fixed-column--right.is-first-column::before) {
+    display: none;
   }
 }
 
@@ -544,13 +648,38 @@ defineExpose({
   flex-shrink: 0;
   display: flex;
   justify-content: flex-end;
-  padding: calc(0.6rem + 0.25vw) calc(0.8rem + 0.35vw);
-  background: #f8fafc;
+  padding: 12px 16px;
+  background: #ffffff;
   border-top: 1px solid #e2e8f0;
   margin-top: auto;
 }
 
+:deep(.pagination) {
+  --el-pagination-button-width: 28px;
+  --el-pagination-button-height: 28px;
+  font-weight: 500;
+}
+
 // 行拖拽相关样式
+:deep(.drag-column-header),
+:deep(.drag-column) {
+  text-align: center;
+}
+
+:deep(.drag-column .cell) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drag-handle-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
 .drag-handle {
   cursor: move;
   color: #999;

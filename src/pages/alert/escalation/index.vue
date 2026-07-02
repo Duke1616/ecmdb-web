@@ -1,18 +1,11 @@
 <template>
-  <PageContainer>
-    <!-- 头部区域 -->
-    <ManagerHeader
-      title="升级配置"
-      subtitle="管理消息升级配置"
-      :show-back-button="true"
-      @refresh="loadConfigs"
-      @back="handleBack"
-    >
-      <template #actions>
-        <el-button type="primary" :icon="Plus" class="action-btn" @click="handleCreate"> 创建配置 </el-button>
-      </template>
-    </ManagerHeader>
-
+  <ProGovernanceLayout
+    title="升级配置"
+    subtitle="管理消息升级配置"
+    :primary-action="{ capability: ALERT_CAPABILITIES.EscalationConfig.Add, label: '创建配置', icon: Plus }"
+    @refresh="loadConfigs"
+    @primary-action="handleCreate"
+  >
     <!-- 数据表格 -->
     <DataTable
       :data="configs"
@@ -49,13 +42,6 @@
         </div>
       </template>
 
-      <!-- 所属业务插槽 -->
-      <template #businessInfo="{ row }">
-        <div class="business-cell">
-          <el-tag type="primary" size="small">{{ getBusinessTypeLabel(row.biz_id) }}</el-tag>
-        </div>
-      </template>
-
       <!-- 详情信息插槽 -->
       <template #details="{ row }">
         <div class="details-cell">
@@ -67,72 +53,58 @@
 
       <!-- 操作插槽 -->
       <template #actions="{ row }">
-        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="3" @route-event="operateEvent" />
+        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="operateEvent" />
       </template>
     </DataTable>
 
     <!-- 创建/编辑抽屉 -->
-    <CustomDrawer
+    <Drawer
       v-model="drawerVisible"
       :title="drawerTitle"
-      subtitle="请填写升级配置的基本信息"
-      size="35%"
-      header-icon="Setting"
-      :before-close="handleDrawerClose"
+      :subtitle="drawerSubtitle"
+      size="42%"
+      :header-icon="Setting"
+      :confirm-loading="submitLoading"
+      :confirm-button-text="isEdit ? '更新配置' : '创建配置'"
       @confirm="handleSubmit"
       @closed="handleDrawerClose"
     >
       <EscalationConfigEditForm ref="formRef" v-model="formData" />
-    </CustomDrawer>
-  </PageContainer>
+    </Drawer>
+  </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue"
-import { useRouter } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { Plus } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
+import { Delete, Edit, Operation, Plus, Setting, VideoPause, VideoPlay } from "@element-plus/icons-vue"
 import type { ConfigVO, CreateConfigReq } from "@/api/alert/escalation/types"
-import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
-import {
-  listConfigsApi,
-  createConfigApi,
-  updateConfigApi,
-  deleteConfigApi,
-  updateConfigStatusApi
-} from "@/api/alert/escalation"
-import { usePagination } from "@/common/composables/usePagination"
-import { getBusinessTypeLabel } from "@@/utils"
-import PageContainer from "@/common/components/PageContainer/index.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { ALERT_CAPABILITIES } from "@/common/auth/capability"
+import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
-import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
+import { Drawer } from "@@/components/Dialogs"
 import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
+import { createDefaultEscalationConfigData } from "./utils"
+import { useEscalationConfig } from "./composables/useEscalationConfig"
 
-// 路由
-const router = useRouter()
+const {
+  configs,
+  loading,
+  paginationData,
+  loadConfigs,
+  createConfig,
+  updateConfig,
+  deleteConfig,
+  toggleConfigStatus,
+  navigateToSteps,
+  handleCurrentChange,
+  handleSizeChange
+} = useEscalationConfig()
 
-// 分页
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-
-// 响应式数据
-const configs = ref<ConfigVO[]>([])
-const loading = ref(false)
 const drawerVisible = ref(false)
 const submitLoading = ref(false)
-const formData = ref<CreateConfigReq>({
-  biz_id: 1,
-  key: "",
-  name: "",
-  description: "",
-  enabled: true,
-  timeout: 300,
-  triggers: [],
-  trigger_logic: { type: ESCALATION_LOGIC_TYPES.ALL, expression: "", description: "" },
-  steps: [],
-  created_by: "admin"
-})
+const formData = ref<CreateConfigReq>(createDefaultEscalationConfigData())
 
 // 表单引用
 const formRef = ref()
@@ -143,6 +115,7 @@ const currentEditId = ref<number | null>(null)
 
 // 计算属性
 const drawerTitle = computed(() => (isEdit.value ? "编辑配置" : "创建配置"))
+const drawerSubtitle = computed(() => (isEdit.value ? "调整升级配置基础信息和触发时机" : "配置升级规则和触发时机"))
 
 import type { Column } from "@@/components/DataTable/types"
 
@@ -167,12 +140,6 @@ const tableColumns: Column[] = [
     slot: "stepCount"
   },
   {
-    prop: "businessInfo",
-    label: "所属业务",
-    minWidth: 140,
-    slot: "businessInfo"
-  },
-  {
     prop: "details",
     label: "详情信息",
     minWidth: 200,
@@ -183,10 +150,16 @@ const tableColumns: Column[] = [
 // 获取操作按钮配置
 const getOperateItems = (config: ConfigVO) => {
   return [
-    { name: "编辑", code: "edit", type: "primary" },
-    { name: "管理步骤", code: "steps", type: "info" },
-    { name: config.enabled ? "禁用" : "启用", code: "toggle", type: config.enabled ? "warning" : "success" },
-    { name: "删除", code: "delete", type: "danger" }
+    { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: ALERT_CAPABILITIES.EscalationConfig.Edit },
+    { name: "管理步骤", code: "steps", type: "success", icon: Operation, capability: ALERT_CAPABILITIES.EscalationStep.View },
+    {
+      name: config.enabled ? "禁用" : "启用",
+      code: "toggle",
+      type: config.enabled ? "warning" : "success",
+      icon: config.enabled ? VideoPause : VideoPlay,
+      capability: ALERT_CAPABILITIES.EscalationConfig.Toggle
+    },
+    { name: "删除", code: "delete", type: "danger", icon: Delete, capability: ALERT_CAPABILITIES.EscalationConfig.Delete }
   ]
 }
 
@@ -210,25 +183,12 @@ const operateEvent = (config: ConfigVO, action: string) => {
   }
 }
 
-// 加载配置数据
-const loadConfigs = async () => {
-  loading.value = true
-  try {
-    const response = await listConfigsApi({
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize
-    })
-
-    configs.value = response.data.configs || []
-    paginationData.total = response.data.total || 0
-  } finally {
-    loading.value = false
-  }
-}
-
 // 创建配置
 const handleCreate = () => {
-  router.push(`/alert/notify/escalation/config/create`)
+  isEdit.value = false
+  currentEditId.value = null
+  formData.value = createDefaultEscalationConfigData()
+  drawerVisible.value = true
 }
 
 // 编辑配置
@@ -236,15 +196,12 @@ const handleEdit = (config: ConfigVO) => {
   isEdit.value = true
   currentEditId.value = config.id
   formData.value = {
-    biz_id: config.biz_id,
-    key: config.key,
     name: config.name,
     description: config.description,
     enabled: config.enabled,
     timeout: config.timeout,
     triggers: config.triggers,
     trigger_logic: config.trigger_logic,
-    steps: config.steps,
     created_by: config.created_by
   }
   drawerVisible.value = true
@@ -252,38 +209,17 @@ const handleEdit = (config: ConfigVO) => {
 
 // 管理步骤
 const handleManageSteps = (config: ConfigVO) => {
-  router.push(`/alert/notify/escalation/steps/${config.id}`)
+  navigateToSteps(config)
 }
 
 // 切换状态
 const handleToggleStatus = async (config: ConfigVO) => {
-  const action = config.enabled ? "禁用" : "启用"
-  await ElMessageBox.confirm(`确定要${action}配置 "${config.name}" 吗？`, `确认${action}`, {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-
-  await updateConfigStatusApi(config.id)
-
-  await loadConfigs()
+  await toggleConfigStatus(config)
 }
 
 // 删除配置
 const handleDelete = async (config: ConfigVO) => {
-  await ElMessageBox.confirm(`确定要删除配置 "${config.name}" 吗？`, "确认删除", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-
-  await deleteConfigApi(config.id)
-  await loadConfigs()
-}
-
-// 返回操作
-const handleBack = () => {
-  router.go(-1)
+  await deleteConfig(config)
 }
 
 // 提交表单
@@ -297,9 +233,7 @@ const handleSubmit = async () => {
 
   try {
     if (isEdit.value && currentEditId.value) {
-      // 更新
-      await updateConfigApi({
-        id: currentEditId.value,
+      await updateConfig(currentEditId.value, {
         name: formData.value.name,
         description: formData.value.description,
         enabled: formData.value.enabled,
@@ -309,13 +243,11 @@ const handleSubmit = async () => {
       })
       ElMessage.success("配置更新成功")
     } else {
-      // 创建
-      await createConfigApi(formData.value)
+      await createConfig(formData.value)
       ElMessage.success("配置创建成功")
     }
 
     drawerVisible.value = false
-    await loadConfigs()
   } catch (error) {
     console.error("提交配置失败:", error)
   } finally {
@@ -330,6 +262,7 @@ const handleDrawerClose = () => {
   // 重置编辑状态
   isEdit.value = false
   currentEditId.value = null
+  formData.value = createDefaultEscalationConfigData()
 }
 
 // 监听分页变化

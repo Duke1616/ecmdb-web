@@ -231,7 +231,7 @@ const closeFile = (file: FileNode) => {
     if (props.currentFileId === file.id) {
       if (openFiles.value.length > 0) {
         const nextFile = openFiles.value[0]
-        // 这里应该通知父组件切换文件
+        emit("file-select", nextFile)
       }
     }
   }

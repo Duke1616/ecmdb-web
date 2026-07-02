@@ -1,11 +1,14 @@
 // 工作空间相关类型定义
 
+import type { ChannelType } from "@/api/alert/template/types"
+
 export interface Workspace {
   id: number
   name: string
   enabled: boolean
   team_id: number
-  template_id: number
+  channel: ChannelType
+  template_set_id: number
   is_public: boolean
   allow_invite: boolean
   ctime: string
@@ -15,12 +18,15 @@ export interface Workspace {
 export interface SaveWorkspaceReq {
   id?: number
   name: string
-  enabled: boolean
+  enabled?: boolean
   team_id: number
-  template_id?: number
+  channel: ChannelType
+  template_set_id: number
   is_public: boolean
   allow_invite: boolean
 }
+
+export type UpdateWorkspaceReq = Omit<SaveWorkspaceReq, "enabled">
 
 export interface ListWorkspacesReq {
   teamId?: number

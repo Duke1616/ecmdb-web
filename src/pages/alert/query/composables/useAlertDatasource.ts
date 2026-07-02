@@ -1,4 +1,5 @@
 import { ref } from "vue"
+import { ElMessage } from "element-plus"
 import { listDatasourceApi } from "@/api/alert/datasource"
 import type { Datasource } from "@/api/alert/datasource/types/datasource"
 
@@ -34,8 +35,8 @@ export function useAlertDatasource() {
           datasourceId.value = datasources.value[0].id
         }
       }
-    } catch (error) {
-      console.error("Failed to fetch datasources", error)
+    } catch {
+      ElMessage.error("数据源加载失败，请稍后重试")
     }
   }
 

@@ -2,12 +2,12 @@ import { type RouteRecordRaw, createRouter } from "vue-router"
 import { flatMultiLevelRoutes } from "./helper"
 import { registerNavigationGuard } from "@/router/guard"
 import { routerConfig } from "@/router/config"
+import { isChunkLoadError, reloadOnChunkLoadError } from "@/common/utils/chunkLoadRecovery"
 // import { alertRoutes } from "./modules/alert"
 // import { taskRoutes } from "./modules/alert"
 
 const Layouts = () => import("@/layouts/index.vue")
-const Terminal = () => import("@/views/terminal/index.vue")
-const Logicflow = () => import("@/views/process/preview/logicflow.vue")
+const Logicflow = () => import("@/pages/ticket/preview/logicflow.vue")
 
 /**
  * 常驻路由
@@ -40,6 +40,13 @@ export const constantRoutes: RouteRecordRaw[] = [
     alias: "/:pathMatch(.*)*"
   },
   {
+    path: "/500",
+    component: () => import("@/pages/error/500.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
     path: "/",
     component: Layouts,
     redirect: "/navigation",
@@ -64,6 +71,21 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    path: "/join",
+    component: () => import("@/pages/join/join.vue"),
+    meta: {
+      hidden: true,
+      title: "加入租户"
+    }
+  },
+  {
+    path: "/callback",
+    component: () => import("@/pages/login/callback.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
     path: "/logicflow-preview",
     component: Logicflow,
     meta: {
@@ -71,21 +93,41 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
-    path: "/terminal",
-    component: Terminal,
+    path: "/profile",
+    component: Layouts,
+    redirect: "/profile/index",
     meta: {
       hidden: true
-    }
+    },
+    children: [
+      {
+        path: "index",
+        component: () => import("@/pages/iam/user/profile.vue"),
+        name: "Profile",
+        meta: {
+          title: "个人中心",
+          svgIcon: "user"
+        }
+      }
+    ]
   },
   {
-    path: "/process/template/discovery",
-    component: () => import("@/views/process/discovery/index.vue"),
-    name: "process-template-discovery",
+    path: "/governance",
+    component: Layouts,
+    redirect: "/governance/index",
     meta: {
-      title: "自动发现",
-      svgIcon: "search",
-      hidden: true // 隐藏菜单，只能通过编程式导航访问
-    }
+      hidden: true
+    },
+    children: [
+      {
+        path: "index",
+        component: () => import("@/pages/iam/governance/index.vue"),
+        name: "Governance",
+        meta: {
+          title: "治理工作台"
+        }
+      }
+    ]
   },
   {
     path: "/change",
@@ -101,45 +143,17 @@ export const constantRoutes: RouteRecordRaw[] = [
   // ...taskRoutes
 ]
 
-export const defaultRoutes: RouteRecordRaw[] = [
-  {
-    path: "/cmdb",
-    component: Layouts,
-    redirect: "/cmdb/dashboard",
-    meta: {
-      title: "CMDB",
-      svgIcon: "dashboard",
-      platforms: ["cmdb"]
-    },
-    children: [
-      {
-        path: "/cmdb/dashboard",
-        component: () => import("@/views/search/search.vue"),
-        name: "Dashboard",
-        meta: {
-          title: "全局搜索",
-          svgIcon: "search",
-          affix: true,
-          platforms: ["cmdb"]
-        }
-      },
-      {
-        path: "/cmdb/dashboard/search",
-        component: () => import("@/views/search/tabs-info.vue"),
-        name: "search",
-        meta: {
-          title: "搜索列表",
-          hidden: true,
-          platforms: ["cmdb"]
-        }
-      }
-    ]
-  }
-]
+export const defaultRoutes: RouteRecordRaw[] = []
 
 const router = createRouter({
   history: routerConfig.history,
   routes: routerConfig.thirdLevelRouteCache ? flatMultiLevelRoutes(constantRoutes) : constantRoutes
+})
+
+router.onError((error) => {
+  if (isChunkLoadError(error)) {
+    reloadOnChunkLoadError()
+  }
 })
 
 /** 重置路由 */

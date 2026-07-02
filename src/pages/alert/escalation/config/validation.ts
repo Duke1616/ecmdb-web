@@ -1,19 +1,10 @@
 import type { FormRules } from "element-plus"
 import { ESCALATION_TRIGGER_TYPES, ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
-import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
 import type { CreateConfigReq, EscalationTrigger, EscalationStep } from "@/api/alert/escalation/types"
 
 // 升级配置表单验证规则
 export const escalationConfigFormRules: FormRules = {
   // 基本信息验证
-  biz_id: [
-    { required: true, message: "请选择业务类型", trigger: "change" },
-    { type: "number", min: 1, max: 2, message: "业务类型必须在 1 到 2 之间", trigger: "change" }
-  ],
-  key: [
-    { required: true, message: "请输入业务唯一值", trigger: "blur" },
-    { min: 1, max: 50, message: "业务唯一值长度在 1 到 50 个字符", trigger: "blur" }
-  ],
   name: [
     { required: true, message: "请输入配置名称", trigger: "blur" },
     { min: 1, max: 50, message: "配置名称长度在 1 到 50 个字符", trigger: "blur" }
@@ -25,16 +16,16 @@ export const escalationConfigFormRules: FormRules = {
   ],
   enabled: [{ required: true, message: "请选择是否启用", trigger: "change" }],
 
-  // 触发逻辑验证
-  "trigger_logic.type": [{ required: true, message: "请选择触发逻辑", trigger: "change" }],
-  "trigger_logic.expression": [{ max: 500, message: "触发表达式长度不能超过 500 个字符", trigger: "blur" }],
-  "trigger_logic.description": [{ max: 200, message: "触发逻辑描述长度不能超过 200 个字符", trigger: "blur" }]
+  // 升级时机组合方式验证
+  "trigger_logic.type": [{ required: true, message: "请选择升级时机组合方式", trigger: "change" }],
+  "trigger_logic.expression": [{ max: 500, message: "组合表达式长度不能超过 500 个字符", trigger: "blur" }],
+  "trigger_logic.description": [{ max: 200, message: "组合描述长度不能超过 200 个字符", trigger: "blur" }]
 }
 
-// 触发条件验证规则
+// 升级时机验证规则
 export const triggerFormRules: FormRules = {
-  type: [{ required: true, message: "请选择触发类型", trigger: "change" }],
-  description: [{ max: 200, message: "触发条件描述长度不能超过 200 个字符", trigger: "blur" }]
+  type: [{ required: true, message: "请选择升级时机类型", trigger: "change" }],
+  description: [{ max: 200, message: "升级时机描述长度不能超过 200 个字符", trigger: "blur" }]
 }
 
 // 时间触发配置验证规则
@@ -72,6 +63,13 @@ export const noResponseTriggerConfigRules: FormRules = {
   ]
 }
 
+export const countTriggerConfigRules: FormRules = {
+  count: [
+    { required: true, message: "请输入触发数量", trigger: "blur" },
+    { type: "number", min: 1, max: 100000, message: "触发数量必须在 1 到 100000 之间", trigger: "blur" }
+  ]
+}
+
 // 升级步骤验证规则
 export const escalationStepFormRules: FormRules = {
   level: [
@@ -79,7 +77,14 @@ export const escalationStepFormRules: FormRules = {
     { type: "number", min: 1, max: 10, message: "升级级别必须在 1 到 10 之间", trigger: "blur" }
   ],
   template_set_id: [{ required: true, message: "请选择模板集", trigger: "change" }],
-  step_template_id: [{ required: true, message: "请选择步骤模板", trigger: "change" }],
+  channels: [
+    { required: true, message: "请至少选择一个通知渠道", trigger: "change" },
+    { type: "array", min: 1, message: "请至少选择一个通知渠道", trigger: "change" }
+  ],
+  receivers: [
+    { required: true, message: "请至少选择一个接收者", trigger: "change" },
+    { type: "array", min: 1, message: "请至少选择一个接收者", trigger: "change" }
+  ],
   delay: [
     { required: true, message: "请输入延迟时间", trigger: "blur" },
     { type: "number", min: 0, max: 1440, message: "延迟时间必须在 0 到 1440 分钟之间", trigger: "blur" }
@@ -108,21 +113,24 @@ export const getTriggerConfigRules = (triggerType: string): FormRules => {
       return levelTriggerConfigRules
     case ESCALATION_TRIGGER_TYPES.NO_RESPONSE:
       return noResponseTriggerConfigRules
+    case ESCALATION_TRIGGER_TYPES.EVAL_COUNT:
+    case ESCALATION_TRIGGER_TYPES.ALERT_COUNT:
+      return countTriggerConfigRules
     default:
       return {}
   }
 }
 
-// 验证触发条件是否有效
+// 验证升级时机是否有效
 export const validateTrigger = (trigger: EscalationTrigger): string[] => {
   const errors: string[] = []
 
   if (!trigger.type) {
-    errors.push("触发类型不能为空")
+    errors.push("升级时机类型不能为空")
   }
 
   if (!trigger.description || trigger.description.trim() === "") {
-    errors.push("触发条件描述不能为空")
+    errors.push("升级时机描述不能为空")
   }
 
   // 根据类型验证配置
@@ -157,6 +165,16 @@ export const validateTrigger = (trigger: EscalationTrigger): string[] => {
         errors.push("无响应触发配置的最大尝试次数必须大于0")
       }
       break
+    case ESCALATION_TRIGGER_TYPES.EVAL_COUNT:
+      if (!trigger.config?.eval_count_config?.count || trigger.config.eval_count_config.count <= 0) {
+        errors.push("连续评估次数必须大于0")
+      }
+      break
+    case ESCALATION_TRIGGER_TYPES.ALERT_COUNT:
+      if (!trigger.config?.alert_count_config?.count || trigger.config.alert_count_config.count <= 0) {
+        errors.push("聚合告警数量必须大于0")
+      }
+      break
   }
 
   return errors
@@ -174,8 +192,12 @@ export const validateEscalationStep = (step: EscalationStep): string[] => {
     errors.push("模板集不能为空")
   }
 
-  if (!step.step_template_id) {
-    errors.push("步骤模板不能为空")
+  if (!step.channels || step.channels.length === 0) {
+    errors.push("通知渠道不能为空")
+  }
+
+  if (!step.receivers || step.receivers.length === 0) {
+    errors.push("接收者不能为空")
   }
 
   if (step.delay < 0) {
@@ -202,14 +224,6 @@ export const validateEscalationConfig = (config: CreateConfigReq): string[] => {
   const errors: string[] = []
 
   // 验证基本信息
-  if (!config.biz_id || (config.biz_id !== BUSINESS_TYPES.WORKSPACE && config.biz_id !== BUSINESS_TYPES.WORKFLOW)) {
-    errors.push("业务类型不能为空或无效")
-  }
-
-  if (!config.key || config.key.trim() === "") {
-    errors.push("业务唯一值不能为空")
-  }
-
   if (!config.name || config.name.trim() === "") {
     errors.push("配置名称不能为空")
   }
@@ -220,7 +234,7 @@ export const validateEscalationConfig = (config: CreateConfigReq): string[] => {
 
   // 验证触发逻辑
   if (!config.trigger_logic) {
-    errors.push("触发逻辑不能为空")
+    errors.push("升级时机组合方式不能为空")
   }
 
   // 只有自定义逻辑时才需要表达式
@@ -228,29 +242,17 @@ export const validateEscalationConfig = (config: CreateConfigReq): string[] => {
     config.trigger_logic.type === ESCALATION_LOGIC_TYPES.CUSTOM &&
     (!config.trigger_logic.expression || config.trigger_logic.expression.trim() === "")
   ) {
-    errors.push("自定义逻辑的触发表达式不能为空")
+    errors.push("自定义组合表达式不能为空")
   }
 
-  // 验证触发条件
+  // 验证升级时机
   if (!config.triggers || config.triggers.length === 0) {
-    errors.push("至少需要一个触发条件")
+    errors.push("至少需要一个升级时机")
   } else {
     config.triggers.forEach((trigger: EscalationTrigger, index: number) => {
       const triggerErrors = validateTrigger(trigger)
       if (triggerErrors.length > 0) {
-        errors.push(`触发条件${index + 1}: ${triggerErrors.join(", ")}`)
-      }
-    })
-  }
-
-  // 验证升级步骤
-  if (!config.steps || config.steps.length === 0) {
-    errors.push("至少需要一个升级步骤")
-  } else {
-    config.steps.forEach((step: EscalationStep, index: number) => {
-      const stepErrors = validateEscalationStep(step)
-      if (stepErrors.length > 0) {
-        errors.push(`升级步骤${index + 1}: ${stepErrors.join(", ")}`)
+        errors.push(`升级时机${index + 1}: ${triggerErrors.join(", ")}`)
       }
     })
   }

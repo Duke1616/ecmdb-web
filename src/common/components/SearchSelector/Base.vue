@@ -1,34 +1,55 @@
 <template>
-  <div class="search-selector-container" :class="`variant-${variant}`">
+  <div class="search-selector-container" :class="[`variant-${variant}`, { 'is-multiple': props.multiple }]">
     <div
       class="search-selector-input"
       ref="containerRef"
       @click="!props.disabled && togglePicker()"
-      :class="{ 'is-focus': showPicker, 'is-disabled': props.disabled }"
+      :class="{ 'is-focus': showPicker, 'is-disabled': props.disabled, 'has-value': hasValue }"
     >
-      <!-- 已选择项 -->
-      <div v-if="selectedItem" class="selected-item">
+      <!-- 多选模式：展示标签 -->
+      <div v-if="props.multiple && selectedItems.length > 0" class="selected-items">
+        <div v-for="item in selectedItems" :key="item[idField]" class="item-tag">
+          <div class="item-icon" :style="{ background: generateItemColor(item[itemNameField] || '') }">
+            {{ item[itemNameField]?.charAt(0) }}
+          </div>
+          <span class="item-name">{{ item[itemNameField] }}</span>
+          <button v-if="!props.disabled" @click.stop="removeItem(item)" class="remove-btn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 单选模式：展示选中项 -->
+      <div v-else-if="!props.multiple && selectedItem" class="selected-item">
         <div class="item-icon" :style="{ background: generateItemColor(selectedItem[itemNameField]) }">
           {{ selectedItem[itemNameField]?.charAt(0) }}
         </div>
         <span class="item-name">{{ selectedItem[itemNameField] }}</span>
       </div>
+
       <!-- 占位符 -->
       <div v-else class="placeholder-text">{{ props.placeholder }}</div>
-      <!-- 清除按钮 -->
-      <div v-if="selectedItem && !props.disabled" class="clear-btn" @click.stop="handleClear">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </div>
-      <div class="picker-arrow" :class="{ 'is-open': showPicker }">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-        </svg>
+
+      <!-- 操作区域 -->
+      <div class="input-actions">
+        <!-- 清除按钮 (单选且有值时) -->
+        <div v-if="!props.multiple && selectedItem && !props.disabled" class="clear-btn" @click.stop="handleClear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </div>
+        <!-- 箭头 -->
+        <div class="picker-arrow" :class="{ 'is-open': showPicker }">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
     </div>
 
-    <!-- 使用 Teleport 将下拉菜单渲染到 body 中，避免被任何容器遮挡 -->
+    <!-- 使用 Teleport 将下拉菜单渲染到 body 中 -->
     <Teleport to="body">
       <div v-if="showPicker && !props.disabled" ref="dropdownRef" class="search-selector-dropdown" @click.stop>
         <div class="search-section" @click.stop>
@@ -80,7 +101,6 @@
               <!-- 元数据插槽 -->
               <div class="item-meta">
                 <slot name="meta" :item="item">
-                  <!-- 默认显示可选字段 -->
                   <el-tag v-if="showIdTag" size="small">ID: {{ item[idField] }}</el-tag>
                 </slot>
               </div>
@@ -117,14 +137,15 @@ import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
 import { usePagination } from "@/common/composables/usePagination"
 
 interface Props {
-  modelValue?: number // 选中的ID
+  modelValue?: number | string | (number | string)[]
   placeholder?: string
   disabled?: boolean
+  multiple?: boolean
   variant?: "fancy" | "simple"
   // 数据加载函数
   loadData: (params: any) => Promise<any>
-  // 获取单个项详情函数（可选，用于编辑模式时加载已选中的项）
-  getItemById?: (id: number) => Promise<any>
+  // 获取单个项详情函数 (用于回显)
+  getItemById?: (id: number | string) => Promise<any>
   // 字段配置
   idField?: string
   itemNameField?: string
@@ -142,6 +163,7 @@ const props = withDefaults(defineProps<Props>(), {
   modelValue: undefined,
   placeholder: "请选择",
   disabled: false,
+  multiple: false,
   variant: "fancy",
   idField: "id",
   itemNameField: "name",
@@ -153,10 +175,10 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  "update:modelValue": [value: number]
+  "update:modelValue": [value: any]
 }>()
 
-// 响应式数据
+// 响应式状态
 const showPicker = ref(false)
 const searchKeyword = ref("")
 const itemsData = ref<any[]>([])
@@ -166,25 +188,50 @@ const searchInputRef = ref<HTMLInputElement>()
 const dropdownRef = ref<HTMLElement>()
 const popperInstance = ref<PopperInstance | null>(null)
 
+// 多选缓存：存储已选中的完整对象
+const selectedItemsMap = ref(new Map<string | number, any>())
+
 // 分页配置
-const initPagination = {
+const { paginationData, handleCurrentChange } = usePagination({
   currentPage: 1,
   pageSize: props.pageSize,
   layout: "prev, pager, next"
-}
+})
 
-const { paginationData, handleCurrentChange } = usePagination(initPagination)
+// 计算属性：是否有值
+const hasValue = computed(() => {
+  if (props.multiple) {
+    return Array.isArray(props.modelValue) && props.modelValue.length > 0
+  }
+  return (
+    props.modelValue !== undefined && props.modelValue !== null && props.modelValue !== "" && props.modelValue !== 0
+  )
+})
 
-// 选中的项
+// 计算属性：单选选中的项
 const selectedItem = computed(() => {
+  if (props.multiple) return null
   if (!props.modelValue) return null
-  return itemsData.value.find((item) => item[props.idField] === props.modelValue)
+  // 优先从当前页查找
+  const found = itemsData.value.find((item) => item[props.idField] === props.modelValue)
+  if (found) return found
+  // 如果没找到，返回缓存中的
+  return selectedItemsMap.value.get(props.modelValue as string | number)
+})
+
+// 计算属性：多选选中的项列表
+const selectedItems = computed(() => {
+  if (!props.multiple) return []
+  const values = Array.isArray(props.modelValue) ? props.modelValue : []
+  return values.map((val) => selectedItemsMap.value.get(val) || { [props.idField]: val, [props.itemNameField]: val })
 })
 
 // 生成颜色
 const generateItemColor = (name: string) => {
   const colors = ["#667eea", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"]
-  const hash = name.split("").reduce((acc, char) => char.charCodeAt(0) + acc, 0)
+  const hash = String(name || "")
+    .split("")
+    .reduce((acc, char) => char.charCodeAt(0) + acc, 0)
   return colors[hash % colors.length]
 }
 
@@ -192,19 +239,15 @@ const generateItemColor = (name: string) => {
 const loadItems = async () => {
   try {
     loading.value = true
-    const keyword = searchKeyword.value.trim()
-
     const params = {
-      keyword,
+      keyword: searchKeyword.value.trim(),
       offset: (paginationData.currentPage - 1) * paginationData.pageSize,
       limit: paginationData.pageSize
     }
-
     const response = await props.loadData(params)
-
-    // 处理响应数据
     if (response.data) {
-      itemsData.value =
+      const list =
+        response.data.roles ||
         response.data.items ||
         response.data.templates ||
         response.data.rules ||
@@ -212,80 +255,85 @@ const loadItems = async () => {
         response.data.runners ||
         response.data.list ||
         []
+      itemsData.value = list
       paginationData.total = response.data.total || 0
+
+      // 更新缓存
+      list.forEach((item: any) => {
+        selectedItemsMap.value.set(item[props.idField], item)
+      })
     }
   } catch (error) {
-    console.error("加载数据失败:", error)
+    console.error("SearchSelector load error:", error)
     itemsData.value = []
   } finally {
     loading.value = false
   }
 }
 
-// 切换选择器显示
+// 切换显示
 const togglePicker = async () => {
   showPicker.value = !showPicker.value
   if (showPicker.value) {
     await nextTick()
-    // 创建 Popper 实例
     if (containerRef.value && dropdownRef.value) {
-      // 设置下拉菜单宽度与输入框相同
-      const width = containerRef.value.offsetWidth
-      if (dropdownRef.value) {
-        dropdownRef.value.style.width = `${width}px`
-      }
-
+      dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
       popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
         placement: "bottom-start",
-        modifiers: [
-          {
-            name: "offset",
-            options: {
-              offset: [0, 8]
-            }
-          },
-          {
-            name: "preventOverflow",
-            options: {
-              padding: 8
-            }
-          },
-          {
-            name: "flip",
-            options: {
-              fallbackPlacements: ["top-start", "bottom-start", "top-end", "bottom-end"]
-            }
-          }
-        ]
+        modifiers: [{ name: "offset", options: { offset: [0, 8] } }]
       })
     }
     searchInputRef.value?.focus()
     paginationData.currentPage = 1
     loadItems()
-  } else {
-    // 销毁 Popper 实例
-    if (popperInstance.value) {
-      popperInstance.value.destroy()
-      popperInstance.value = null
-    }
+  } else if (popperInstance.value) {
+    popperInstance.value.destroy()
+    popperInstance.value = null
   }
 }
 
-// 检查项是否被选中
+// 检查是否选中
 const isItemSelected = (item: any) => {
-  return item[props.idField] === props.modelValue
+  const id = item[props.idField]
+  if (props.multiple) {
+    return Array.isArray(props.modelValue) && props.modelValue.includes(id)
+  }
+  return id === props.modelValue
 }
 
 // 处理项选择
 const handleItemSelect = (item: any) => {
-  emit("update:modelValue", item[props.idField])
-  showPicker.value = false
+  const id = item[props.idField]
+  selectedItemsMap.value.set(id, item)
+
+  if (props.multiple) {
+    const values = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const idx = values.indexOf(id)
+    if (idx > -1) {
+      values.splice(idx, 1)
+    } else {
+      values.push(id)
+    }
+    emit("update:modelValue", values)
+  } else {
+    emit("update:modelValue", id)
+    showPicker.value = false
+  }
 }
 
-// 处理清除选择
+// 移除项 (多选)
+const removeItem = (item: any) => {
+  const id = item[props.idField]
+  if (Array.isArray(props.modelValue)) {
+    const values = props.modelValue.filter((v) => v !== id)
+    emit("update:modelValue", values)
+  }
+}
+
+// 清除选择 (单选)
 const handleClear = (e: Event) => {
   e.stopPropagation()
-  emit("update:modelValue", 0)
+  emit("update:modelValue", props.idField === "id" ? 0 : "")
 }
 
 // 搜索
@@ -294,91 +342,29 @@ const handleSearch = () => {
   loadItems()
 }
 
-// 监听分页变化
-watch([() => paginationData.currentPage], () => {
-  if (showPicker.value) {
-    loadItems()
-  }
-})
-
-// 核心修复 - 当数据加载完成后，手动触发 Popper 更新以重新计算位置与翻转
-// 解决首次打开时由于容器高度塌陷导致定位错误的问题
+// 监听分页
 watch(
-  () => itemsData.value,
+  () => paginationData.currentPage,
   () => {
-    if (popperInstance.value) {
-      nextTick(() => {
-        popperInstance.value?.update()
-      })
-    }
-  },
-  { deep: true }
+    if (showPicker.value) loadItems()
+  }
 )
 
-// 监听 modelValue 变化，加载初始数据
-watch(
-  () => props.modelValue,
-  async (newValue) => {
-    // 如果有 modelValue 但 itemsData 中没有找到对应的项，需要加载
-    if (newValue && !itemsData.value.find((item) => item[props.idField] === newValue)) {
-      if (props.getItemById) {
-        // 如果有 getItemById 函数，直接获取单个项
-        try {
-          const result = await props.getItemById(newValue)
-          if (result && result.data) {
-            itemsData.value = [result.data]
-          }
-        } catch (error) {
-          console.error("获取项详情失败:", error)
-        }
-      } else {
-        // 否则加载第一页数据
-        paginationData.currentPage = 1
-        await loadItems()
-      }
-    }
-  },
-  { immediate: true }
-)
-
-// 点击外部关闭: 优化为基于实例引用的精准判断
+// 点击外部关闭
 const handleClickOutside = (e: Event) => {
   if (!showPicker.value) return
   const target = e.target as HTMLElement
-
-  // 1. 如果点击的是触发器容器本身（Input 框），交由 togglePicker 处理，此处跳过
-  if (containerRef.value && containerRef.value.contains(target)) {
-    return
-  }
-
-  // 2. 如果点击的是下拉菜单内部，不关闭（理论上已被 @click.stop 拦截，此处作为冗余保护）
-  if (dropdownRef.value && dropdownRef.value.contains(target)) {
-    return
-  }
-
-  // 3. 点击了当前组件实例之外的任何区域，收回并关闭
+  if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) return
   showPicker.value = false
-}
-
-// 监听窗口大小变化和滚动
-const handleResize = () => {
-  if (popperInstance.value) {
-    popperInstance.value.update()
-  }
 }
 
 onMounted(() => {
   document.addEventListener("mousedown", handleClickOutside, true)
-  window.addEventListener("resize", handleResize)
 })
 
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside, true)
-  window.removeEventListener("resize", handleResize)
-  if (popperInstance.value) {
-    popperInstance.value.destroy()
-    popperInstance.value = null
-  }
+  popperInstance.value?.destroy()
 })
 </script>
 
@@ -386,15 +372,6 @@ onUnmounted(() => {
 .search-selector-container {
   position: relative;
   width: 100%;
-
-  &.variant-simple {
-    .search-selector-input {
-      padding: 8px 12px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-    }
-  }
 }
 
 .search-selector-input {
@@ -402,12 +379,13 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   padding: 0 11px;
-  height: 32px;
+  min-height: 32px;
   background: #ffffff;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
   cursor: pointer;
-  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  transition: all 0.2s ease;
+  gap: 8px;
 
   &:hover:not(.is-disabled) {
     border-color: #c0c4cc;
@@ -415,14 +393,71 @@ onUnmounted(() => {
 
   &.is-focus {
     border-color: #409eff;
-    outline: none;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
   }
 
   &.is-disabled {
     cursor: not-allowed;
-    opacity: 0.6;
     background: #f5f7fa;
-    border-color: #e4e7ed;
+    opacity: 0.7;
+  }
+}
+
+/* 多选标签样式 */
+.selected-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+  flex: 1;
+}
+
+.item-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f2f5;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+  max-width: 150px;
+
+  .item-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .item-name {
+    font-size: 12px;
+    color: #606266;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .remove-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    color: #c0c4cc;
+    display: flex;
+    align-items: center;
+
+    &:hover {
+      color: #f56c6c;
+    }
+
+    svg {
+      width: 12px;
+      height: 12px;
+    }
   }
 }
 
@@ -432,146 +467,171 @@ onUnmounted(() => {
   gap: 8px;
   flex: 1;
   min-width: 0;
-  height: 100%;
-  margin: 0;
 
   .item-icon {
-    flex-shrink: 0;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
-    font-weight: 500;
     font-size: 12px;
-    color: #ffffff;
   }
 
   .item-name {
-    flex: 1;
-    min-width: 0;
     font-size: 14px;
-    font-weight: 400;
     color: #303133;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1.5;
-    display: block;
   }
 }
 
 .placeholder-text {
   font-size: 14px;
   color: #c0c4cc;
-  line-height: 32px;
   flex: 1;
 }
 
-.clear-btn {
+.input-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  color: #909399;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  gap: 4px;
   margin-left: auto;
-
-  &:hover {
-    color: #f56c6c;
-  }
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
 }
 
+.clear-btn,
 .picker-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.3s ease;
-  margin-left: auto;
-
-  &.is-open {
-    transform: rotate(180deg);
-  }
+  color: #c0c4cc;
+  width: 16px;
+  height: 16px;
 
   svg {
     width: 14px;
     height: 14px;
-    color: #c0c4cc;
   }
 }
 
-.search-selector-container.variant-simple .picker-arrow svg {
-  width: 12px;
-  height: 12px;
+.clear-btn:hover {
+  color: #909399;
 }
 
+.picker-arrow {
+  transition: transform 0.3s;
+  &.is-open {
+    transform: rotate(180deg);
+  }
+}
+
+/* 下拉菜单样式 */
 .search-selector-dropdown {
   background: #ffffff;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 274px;
+  max-height: 300px;
   z-index: 9999;
 }
 
 .search-section {
-  padding: 12px;
-  border-bottom: 1px solid #e4e7ed;
-  background: #ffffff;
-  flex-shrink: 0;
+  padding: 10px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .search-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
-}
 
-.search-icon {
-  position: absolute;
-  left: 12px;
-  width: 14px;
-  height: 14px;
-  color: #c0c4cc;
-  z-index: 1;
-}
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    width: 14px;
+    color: #c0c4cc;
+  }
 
-.search-input {
-  width: 100%;
-  padding: 8px 12px 8px 32px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  font-size: 14px;
-  color: #606266;
-  background: #ffffff;
-  transition: all 0.3s ease;
-  outline: none;
-}
+  .search-input {
+    width: 100%;
+    padding: 6px 10px 6px 30px;
+    border: 1px solid #dcdfe6;
+    border-radius: 4px;
+    font-size: 13px;
+    outline: none;
 
-.search-input:focus {
-  border-color: #409eff;
-  outline: none;
-}
-
-.search-input::placeholder {
-  color: #c0c4cc;
+    &:focus {
+      border-color: #409eff;
+    }
+  }
 }
 
 .items-list {
   flex: 1;
   overflow-y: auto;
-  min-height: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+
+  &:hover {
+    background: #f5f7fa;
+  }
+
+  &.is-selected {
+    color: #409eff;
+    background: #f0f7ff;
+  }
+
+  .item-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+  }
+
+  .item-info {
+    flex: 1;
+    min-width: 0;
+
+    .item-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .item-description {
+      font-size: 12px;
+      color: #909399;
+      margin-top: 2px;
+    }
+  }
+
+  .selected-indicator {
+    color: #409eff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
 }
 
 .empty-state {
@@ -579,103 +639,37 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px 24px;
+  padding: 30px 10px;
   color: #909399;
-  gap: 12px;
-}
+  font-size: 13px;
+  gap: 8px;
 
-.empty-state svg {
-  width: 40px;
-  height: 40px;
-  opacity: 0.5;
-}
-
-.empty-state span {
-  font-size: 14px;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.item:hover {
-  background: #f5f7fa;
-}
-
-.item.is-selected {
-  background: #ecf5ff;
-  color: #409eff;
-}
-
-.item:last-child {
-  border-bottom: none;
-}
-
-.item-icon {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  font-weight: 500;
-  font-size: 14px;
-  color: #ffffff;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-info .item-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: #303133;
-  margin-bottom: 2px;
-}
-
-.item-description {
-  font-size: 12px;
-  color: #909399;
-  font-weight: 400;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item-meta {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.selected-indicator {
-  width: 24px;
-  height: 24px;
-  color: #667eea;
-  flex-shrink: 0;
-}
-
-.selected-indicator svg {
-  width: 100%;
-  height: 100%;
+  svg {
+    width: 24px;
+    height: 24px;
+    color: #c0c4cc;
+  }
 }
 
 .pagination-section {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-top: 1px solid #e4e7ed;
-  background: #ffffff;
+  padding: 8px;
+  border-top: 1px solid #f0f0f0;
   display: flex;
   justify-content: center;
+}
+
+/* Variant: Fancy */
+.variant-fancy.is-multiple {
+  .search-selector-input {
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    min-height: 40px;
+
+    &.is-focus {
+      background: #fff;
+      border-color: #3b82f6;
+    }
+  }
 }
 </style>

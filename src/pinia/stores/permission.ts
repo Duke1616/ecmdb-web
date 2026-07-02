@@ -3,56 +3,63 @@ import store from "@/pinia"
 import { defineStore } from "pinia"
 import { type RouteRecordRaw } from "vue-router"
 import { constantRoutes, defaultRoutes } from "@/router"
-import { flatMultiLevelRoutes } from "@/router/helper"
+import { flatMultiLevelRoutes, transformDynamicRoutes } from "@/router/helper"
 import { routerConfig } from "@/router/config"
-import { listUserRolePermissionApi } from "@/api/permission"
-import { transformDynamicRoutes } from "@/router/helper"
+import { getAuthorizedMenusApi } from "@/api/iam/permission"
 
 export const usePermissionStore = defineStore("permission", () => {
+  /** 全部可见路由（常驻 + 动态） */
   const routes = ref<RouteRecordRaw[]>([])
+  /** 当前用户拥有的动态路由 */
   const dynamicRoutes = ref<RouteRecordRaw[]>([])
-  const roles = ref<string[]>([])
 
-  /** 获取路由详情 */
+  /**
+   * 拉取并解析授权菜单
+   * @description 失败时回退至 defaultRoutes 以保证基础 UI 可用
+   */
   const getRoleMenu = async (): Promise<void> => {
     try {
-      const response = await listUserRolePermissionApi()
+      const { data: menus } = await getAuthorizedMenusApi()
 
-      if (!response || !response.data) {
-        throw new Error("无效的菜单数据")
-      }
-
-      const { data } = response
-
-      if (!data.menus || data.menus.length === 0) {
+      if (!menus || menus.length === 0) {
         dynamicRoutes.value = defaultRoutes
       } else {
-        roles.value = data.role_codes
-        dynamicRoutes.value = transformDynamicRoutes(data.menus)
+        dynamicRoutes.value = transformDynamicRoutes(menus)
       }
     } catch (error) {
-      console.error("获取菜单失败", error)
-      // 当获取菜单失败时，使用默认路由，不抛出错误
+      console.error("[PermissionStore] 鉴权菜单解析失败:", error)
       dynamicRoutes.value = defaultRoutes
-      // 不抛出错误，让流程继续
     }
   }
 
-  /** 根据角色生成可访问的 Routes（可访问的路由 = 常驻路由 + 有访问权限的动态路由） */
+  /**
+   * 组装最终路由表
+   * @description 包含常驻路由与过滤后的动态路由，并按配置执行层级平铺
+   */
   const setRoutes = async () => {
     await getRoleMenu()
-    _set(dynamicRoutes.value)
+
+    // 1. 合并静态与动态
+    const accessedRoutes = constantRoutes.concat(dynamicRoutes.value)
+
+    // 2. 注入全局路由表
+    routes.value = accessedRoutes
+
+    // 3. 执行降级处理（可选，通过 config 开启）
+    const isFlat = routerConfig.thirdLevelRouteCache
+    dynamicRoutes.value = isFlat ? flatMultiLevelRoutes(dynamicRoutes.value) : dynamicRoutes.value
   }
 
-  const _set = (accessedRoutes: RouteRecordRaw[]) => {
-    routes.value = constantRoutes.concat(accessedRoutes)
-    dynamicRoutes.value = routerConfig.thirdLevelRouteCache ? flatMultiLevelRoutes(accessedRoutes) : accessedRoutes
+  return {
+    routes,
+    dynamicRoutes,
+    setRoutes
   }
-
-  return { routes, dynamicRoutes, roles, setRoutes }
 })
 
-/** 在 setup 外使用 */
+/**
+ * Setup 外使用的 Hook
+ */
 export function usePermissionStoreHook() {
   return usePermissionStore(store)
 }

@@ -1,110 +1,59 @@
 <template>
-  <div class="escalation-create-page">
-    <PageContainer>
-      <!-- 页面头部 -->
-      <ManagerHeader
-        title="创建升级配置"
-        subtitle="配置消息升级规则和触发条件"
-        :show-back-button="true"
-        :show-add-button="false"
-        :show-refresh-button="false"
-        :sticky="true"
-        @back="handleCancel"
-      >
-        <template #actions>
-          <el-button type="primary" @click="handleSubmit" class="action-btn" :loading="saving">
-            <el-icon><Check /></el-icon>
-            创建配置
-          </el-button>
-        </template>
-      </ManagerHeader>
-
-      <!-- 可滚动内容区域 -->
-      <div class="scrollable-content">
-        <!-- 表单内容 -->
-        <div class="escalation-form-container">
-          <EscalationConfigForm ref="formRef" v-model="formData" :key-display-name="keyDisplayName" />
-        </div>
-      </div>
-    </PageContainer>
-  </div>
+  <PageContainer>
+    <Drawer
+      v-model="drawerVisible"
+      title="创建升级配置"
+      subtitle="配置告警升级的触发时机与组合逻辑"
+      size="35%"
+      direction="rtl"
+      :header-icon="Setting"
+      :confirm-loading="saving"
+      confirm-button-text="创建配置"
+      :close-on-click-modal="false"
+      @confirm="handleSubmit"
+      @cancel="handleCancel"
+      @closed="goBack"
+    >
+      <EscalationConfigEditForm ref="formRef" v-model="formData" />
+    </Drawer>
+  </PageContainer>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
-import { useRouter, useRoute } from "vue-router"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { Check } from "@element-plus/icons-vue"
+import { ref } from "vue"
+import { useRouter } from "vue-router"
+import { ElMessage } from "element-plus"
+import { Setting } from "@element-plus/icons-vue"
 import type { CreateConfigReq } from "@/api/alert/escalation/types"
-import { ESCALATION_LOGIC_TYPES } from "@/api/alert/escalation/types"
-import { BUSINESS_TYPES } from "@@/composables/useBusinessPicker"
-import EscalationConfigForm from "./components/EscalationConfigForm.vue"
 import { createConfigApi } from "@/api/alert/escalation"
 import PageContainer from "@@/components/PageContainer/index.vue"
-import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import { Drawer } from "@@/components/Dialogs"
+import EscalationConfigEditForm from "./components/EscalationConfigEditForm.vue"
+import { createDefaultEscalationConfigData } from "./utils"
 
 const router = useRouter()
-const route = useRoute()
-
-// 保存状态
+const drawerVisible = ref(true)
 const saving = ref(false)
+const hasNavigatedBack = ref(false)
+const formRef = ref<InstanceType<typeof EscalationConfigEditForm>>()
 
-// 业务唯一值名称（用于展示）
-const keyDisplayName = ref<string>("")
+const formData = ref<CreateConfigReq>(createDefaultEscalationConfigData())
 
-// 表单数据
-const formData = ref<CreateConfigReq>({
-  biz_id: BUSINESS_TYPES.WORKSPACE, // 默认选择协作空间业务类型
-  key: "",
-  name: "",
-  description: "",
-  enabled: true,
-  timeout: 300000, // 5分钟，单位毫秒
-  triggers: [],
-  trigger_logic: {
-    type: ESCALATION_LOGIC_TYPES.ALL,
-    expression: "",
-    description: ""
-  },
-  steps: [],
-  created_by: "admin" // 实际应该从用户信息获取
-})
-
-// 表单引用
-const formRef = ref()
-
-// 初始化表单数据
-const initFormData = () => {
-  // 从路由查询参数获取 biz_id
-  if (route.query.biz_id) {
-    formData.value.biz_id = Number(route.query.biz_id)
-  }
-
-  // 从路由查询参数获取 key
-  if (route.query.key) {
-    formData.value.key = route.query.key as string
-  }
-
-  // 从路由查询参数获取 key_name（用于展示）
-  if (route.query.key_name) {
-    keyDisplayName.value = route.query.key_name as string
-  }
+const goBack = () => {
+  if (hasNavigatedBack.value) return
+  hasNavigatedBack.value = true
+  router.go(-1)
 }
 
-// 提交表单
 const handleSubmit = async () => {
+  const isValid = await formRef.value?.validateForm()
+  if (!isValid) return
+
+  saving.value = true
   try {
-    saving.value = true
-
-    // 先进行表单验证
-    const isValid = await formRef.value?.validateForm()
-    if (!isValid) {
-      return
-    }
-
     await createConfigApi(formData.value)
     ElMessage.success("创建成功")
-    router.go(-1)
+    drawerVisible.value = false
   } catch (error) {
     console.error("创建配置失败:", error)
   } finally {
@@ -112,79 +61,7 @@ const handleSubmit = async () => {
   }
 }
 
-// 取消创建
 const handleCancel = () => {
-  ElMessageBox.confirm("确定要离开吗？未保存的数据将丢失。", "确认离开", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning"
-  })
-    .then(() => {
-      router.go(-1)
-    })
-    .catch(() => {
-      // 用户取消
-    })
+  drawerVisible.value = false
 }
-
-// 组件挂载时初始化表单数据
-onMounted(() => {
-  initFormData()
-})
 </script>
-
-<style lang="scss" scoped>
-.escalation-create-page {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  :deep(.page-container) {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 0;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  }
-
-  .scrollable-content {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: calc(1rem + 0.4vw);
-  }
-}
-
-.escalation-form-container {
-  padding: 1.5rem;
-  background: #ffffff;
-  border-radius: 0.5rem;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.1);
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 1.5rem;
-
-  .el-form-item__label {
-    font-weight: 500;
-    color: #374151;
-  }
-
-  .el-input__wrapper {
-    border-radius: 0.5rem;
-  }
-
-  .el-textarea__inner {
-    border-radius: 0.5rem;
-    resize: none;
-  }
-
-  .el-select {
-    .el-input__wrapper {
-      border-radius: 0.5rem;
-    }
-  }
-}
-</style>

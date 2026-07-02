@@ -4,6 +4,7 @@ import type {
   ListWorkspacesReq,
   ListWorkspacesResponse,
   SaveWorkspaceReq,
+  UpdateWorkspaceReq,
   Workspace,
   GetWorkspaceCategoriesReq,
   GetWorkspaceCategoriesResponse,
@@ -29,10 +30,25 @@ export const listMyTeamsApi = () => {
   })
 }
 
-export const saveWorkspaceApi = (data: SaveWorkspaceReq) => {
+export const createWorkspaceApi = (data: SaveWorkspaceReq) => {
   return instance.post<Workspace>({
-    url: `${API_SERVICE.ALERT}/workspace/save`,
+    url: `${API_SERVICE.ALERT}/workspace/create`,
     data
+  })
+}
+
+export const updateWorkspaceApi = (data: SaveWorkspaceReq) => {
+  const { enabled: _, ...payload } = data
+
+  return instance.put<Workspace>({
+    url: `${API_SERVICE.ALERT}/workspace/update`,
+    data: payload as UpdateWorkspaceReq
+  })
+}
+
+export const toggleWorkspaceStatusApi = (id: number) => {
+  return instance.put<Workspace>({
+    url: `${API_SERVICE.ALERT}/workspace/toggle/status/${id}`
   })
 }
 

@@ -77,8 +77,7 @@ export const linearIconList = [
       { label: "CentOS", value: "icon-xianxing-centos" },
       { label: "Ubuntu", value: "icon-xianxing-Ubuntu" },
       { label: "RedHat", value: "icon-xianxing-redhat" },
-      { label: "Mac", value: "icon-xianxing-Mac" },
-      { label: "Unix", value: "icon-xianxing-unix" }
+      { label: "Mac", value: "icon-xianxing-Mac" }
     ]
   },
   {
@@ -158,7 +157,6 @@ export const fillIconList = [
       { label: "Ubuntu", value: "icon-shidi-Ubuntu" },
       { label: "RedHat", value: "icon-shidi-redhat" },
       { label: "Mac", value: "icon-shidi-Mac" },
-      { label: "Unix", value: "icon-shidi-unix" },
       { label: "Windows", value: "icon-shidi-Windows" }
     ]
   },

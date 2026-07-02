@@ -29,6 +29,18 @@
           </div>
 
           <div class="form-row">
+            <el-form-item prop="enabled" class="form-item">
+              <div class="status-row">
+                <div>
+                  <strong>启用数据源</strong>
+                  <span>关闭后该数据源将不参与告警查询</span>
+                </div>
+                <el-switch v-model="formData.enabled" />
+              </div>
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
             <el-form-item prop="name" label="数据源名称" class="form-item">
               <el-input v-model="formData.name" placeholder="请输入数据源名称" size="large" clearable />
             </el-form-item>
@@ -66,17 +78,6 @@
               />
             </el-form-item>
           </div>
-
-          <div class="form-row">
-            <el-form-item prop="enabled" label="状态" class="form-item">
-              <div class="checkbox-switch" @click="toggleEnabled">
-                <div class="checkbox-icon" :class="{ checked: formData.enabled }">
-                  <el-icon v-if="formData.enabled"><Check /></el-icon>
-                </div>
-                <span class="checkbox-label">启用数据源</span>
-              </div>
-            </el-form-item>
-          </div>
         </div>
 
         <!-- HTTP 配置 -->
@@ -110,50 +111,73 @@
           </div>
 
           <div class="form-row">
-            <el-form-item prop="http.tls.skip_tls_verify" class="form-item">
-              <div class="checkbox-switch" @click="toggleTlsVerify">
-                <div class="checkbox-icon" :class="{ checked: formData.http.tls.skip_tls_verify }">
-                  <el-icon v-if="formData.http.tls.skip_tls_verify"><Check /></el-icon>
+            <div class="connection-options-grid">
+              <el-form-item prop="http.tls.skip_tls_verify" class="form-item option-form-item">
+                <div
+                  class="connection-option-card"
+                  :class="{ active: formData.http.tls.skip_tls_verify }"
+                  @click="setTlsVerify(!formData.http.tls.skip_tls_verify)"
+                >
+                  <div class="connection-option-main">
+                    <span class="connection-option-icon">
+                      <el-icon><Lock /></el-icon>
+                    </span>
+                    <div class="connection-option-text">
+                      <strong>跳过 TLS 验证</strong>
+                      <span>证书异常时仍允许连接</span>
+                    </div>
+                  </div>
+                  <el-switch v-model="formData.http.tls.skip_tls_verify" @click.stop />
                 </div>
-                <span class="checkbox-label">跳过 TLS 验证</span>
-              </div>
-            </el-form-item>
+              </el-form-item>
+
+              <el-form-item prop="auth.basic_auth" class="form-item option-form-item">
+                <div
+                  class="connection-option-card"
+                  :class="{ active: formData.auth.basic_auth }"
+                  @click="setBasicAuth(!formData.auth.basic_auth)"
+                >
+                  <div class="connection-option-main">
+                    <span class="connection-option-icon">
+                      <el-icon><Key /></el-icon>
+                    </span>
+                    <div class="connection-option-text">
+                      <strong>基础认证</strong>
+                      <span>使用用户名和密码访问</span>
+                    </div>
+                  </div>
+                  <el-switch v-model="formData.auth.basic_auth" @change="setBasicAuth" @click.stop />
+                </div>
+              </el-form-item>
+            </div>
           </div>
         </div>
 
         <!-- 认证配置 -->
-        <div class="form-section">
+        <div v-if="formData.auth.basic_auth" class="form-section auth-section">
+          <div class="section-title">
+            <el-icon class="section-icon"><Key /></el-icon>
+            <span>认证配置</span>
+          </div>
+
           <div class="form-row">
-            <el-form-item prop="auth.basic_auth" class="form-item">
-              <div class="checkbox-switch" @click="toggleBasicAuth">
-                <div class="checkbox-icon" :class="{ checked: formData.auth.basic_auth }">
-                  <el-icon v-if="formData.auth.basic_auth"><Check /></el-icon>
-                </div>
-                <span class="checkbox-label">启用基础认证</span>
-              </div>
+            <el-form-item prop="auth.basic_auth_user" label="用户名" class="form-item">
+              <el-input v-model="formData.auth.basic_auth_user" placeholder="请输入用户名" size="large" clearable />
             </el-form-item>
           </div>
 
-          <template v-if="formData.auth.basic_auth">
-            <div class="form-row">
-              <el-form-item prop="auth.basic_auth_user" label="用户名" class="form-item">
-                <el-input v-model="formData.auth.basic_auth_user" placeholder="请输入用户名" size="large" clearable />
-              </el-form-item>
-            </div>
-
-            <div class="form-row">
-              <el-form-item prop="auth.basic_auth_password" label="密码" class="form-item">
-                <el-input
-                  v-model="formData.auth.basic_auth_password"
-                  type="password"
-                  placeholder="请输入密码"
-                  show-password
-                  size="large"
-                  clearable
-                />
-              </el-form-item>
-            </div>
-          </template>
+          <div class="form-row">
+            <el-form-item prop="auth.basic_auth_password" label="密码" class="form-item">
+              <el-input
+                v-model="formData.auth.basic_auth_password"
+                type="password"
+                placeholder="请输入密码"
+                show-password
+                size="large"
+                clearable
+              />
+            </el-form-item>
+          </div>
         </div>
       </el-form>
     </div>
@@ -170,15 +194,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from "vue"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
-import { Setting, Monitor, Check } from "@element-plus/icons-vue"
+import { Setting, Monitor, Lock, Key } from "@element-plus/icons-vue"
 import type { Datasource, DatasourceType } from "@/api/alert/datasource/types/datasource"
 import { DatasourceTypeEnum } from "@/api/alert/datasource/types/datasource"
-import { saveDatasourceApi } from "@/api/alert/datasource"
+import { createDatasourceApi, updateDatasourceApi } from "@/api/alert/datasource"
 import CustomDrawer from "@@/components/Dialogs/Drawer/index.vue"
-
-// 引入 Logo 资源，确保 Vite 在生产环境能正确打包
-import prometheusLogo from "../logo/prometheus.svg"
-import lokiLogo from "../logo/loki.png"
+import { getDatasourceTypeIcon } from "@/pages/alert/utils/datasourceMeta"
 
 interface Props {
   modelValue: boolean
@@ -362,6 +383,7 @@ const handleTypeSelect = (type: DatasourceTypeEnum) => {
   // 根据类型设置默认URL
   const defaultUrls = {
     [DatasourceTypeEnum.PROMETHEUS]: "http://localhost:9090",
+    [DatasourceTypeEnum.VICTORIA_METRICS]: "http://localhost:8428",
     [DatasourceTypeEnum.LOKI]: "http://localhost:3100"
   }
 
@@ -372,29 +394,20 @@ const handleTypeSelect = (type: DatasourceTypeEnum) => {
 
 // 获取数据源类型 Logo
 const getTypeLogo = (type: DatasourceTypeEnum) => {
-  const logoMap = {
-    [DatasourceTypeEnum.PROMETHEUS]: prometheusLogo,
-    [DatasourceTypeEnum.LOKI]: lokiLogo
-  }
-  return logoMap[type] || prometheusLogo
+  return getDatasourceTypeIcon(type)
 }
 
-// 切换启用状态
-const toggleEnabled = () => {
-  formData.enabled = !formData.enabled
+const setTlsVerify = (enabled: boolean) => {
+  formData.http.tls.skip_tls_verify = enabled
 }
 
-// 切换 TLS 验证
-const toggleTlsVerify = () => {
-  formData.http.tls.skip_tls_verify = !formData.http.tls.skip_tls_verify
-}
-
-// 切换基础认证
-const toggleBasicAuth = () => {
-  formData.auth.basic_auth = !formData.auth.basic_auth
-  if (!formData.auth.basic_auth) {
+const setBasicAuth = (value: boolean | string | number) => {
+  const enabled = Boolean(value)
+  formData.auth.basic_auth = enabled
+  if (!enabled) {
     formData.auth.basic_auth_user = ""
     formData.auth.basic_auth_password = ""
+    formRef.value?.clearValidate(["auth.basic_auth_user", "auth.basic_auth_password"])
   }
 }
 
@@ -417,7 +430,11 @@ const handleTestAndSave = async () => {
       auth: formData.auth
     }
 
-    await saveDatasourceApi(submitData)
+    if (isEdit.value) {
+      await updateDatasourceApi(submitData)
+    } else {
+      await createDatasourceApi(submitData)
+    }
 
     ElMessage.success(isEdit.value ? "测试连接成功并更新完成" : "测试连接成功并保存完成")
     emit("success")
@@ -598,60 +615,137 @@ const handleClosed = () => {
     }
   }
 
-  .checkbox-switch {
+  .status-row {
     display: flex;
     align-items: center;
-    cursor: pointer;
-    user-select: none;
-    gap: 0.75rem;
+    justify-content: space-between;
+    gap: 1rem;
+    width: 100%;
+    min-height: 3.5rem;
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border: 0.0625rem solid #e2e8f0;
+    border-radius: 0.625rem;
 
-    .checkbox-icon {
-      width: 1.25rem;
-      height: 1.25rem;
-      border: 0.125rem solid #d1d5db;
-      border-radius: 0.25rem;
+    div {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #ffffff;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-
-      &.checked {
-        background: #3b82f6;
-        border-color: #3b82f6;
-        color: #ffffff;
-      }
-
-      .el-icon {
-        font-size: 0.75rem;
-        font-weight: bold;
-      }
+      flex-direction: column;
+      gap: 0.25rem;
+      min-width: 0;
     }
 
-    .checkbox-label {
-      font-size: 0.875rem;
-      color: #374151;
-      font-weight: 500;
+    strong {
+      color: #1e293b;
+      font-size: 0.8125rem;
+      font-weight: 600;
     }
+
+    span {
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+  }
+
+  .connection-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .option-form-item {
+    min-width: 0;
+  }
+
+  .connection-option-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.875rem;
+    width: 100%;
+    min-height: 4.25rem;
+    padding: 0.875rem 1rem;
+    background: #ffffff;
+    border: 0.0625rem solid #e2e8f0;
+    border-radius: 0.625rem;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      background 0.2s ease,
+      box-shadow 0.2s ease;
 
     &:hover {
-      .checkbox-icon {
-        border-color: #9ca3af;
+      background: #f8fbff;
+      border-color: #bfdbfe;
+      box-shadow: 0 0.25rem 0.75rem rgba(15, 23, 42, 0.04);
+    }
 
-        &.checked {
-          background: #2563eb;
-          border-color: #2563eb;
-        }
+    &.active {
+      background: #eff6ff;
+      border-color: #93c5fd;
+
+      .connection-option-icon {
+        color: #2563eb;
+        background: #dbeafe;
+        border-color: #bfdbfe;
       }
     }
   }
 
-  .type-selector {
+  .connection-option-main {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  .connection-option-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2rem;
+    height: 2rem;
+    color: #64748b;
+    background: #f8fafc;
+    border: 0.0625rem solid #e2e8f0;
+    border-radius: 0.5rem;
+    transition:
+      color 0.2s ease,
+      background 0.2s ease,
+      border-color 0.2s ease;
+
+    .el-icon {
+      font-size: 1rem;
+    }
+  }
+
+  .connection-option-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+
+    strong {
+      color: #1e293b;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    span {
+      color: #64748b;
+      font-size: 0.75rem;
+      line-height: 1.35;
+    }
+  }
+
+  .type-selector {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
     margin-top: 0.5rem;
+    width: 100%;
   }
 
   .type-card {
@@ -665,12 +759,10 @@ const handleClosed = () => {
     cursor: pointer;
     transition: all 0.3s ease;
     background: #ffffff;
-    min-height: 4rem;
-    width: calc(12vw + 2rem);
-    min-width: 6rem;
-    max-width: 8rem;
+    min-width: 0;
+    min-height: 5rem;
+    width: 100%;
     justify-content: center;
-    flex-shrink: 0;
 
     &:hover {
       border-color: #3b82f6;
@@ -717,6 +809,15 @@ const handleClosed = () => {
   }
 }
 
+@media (max-width: 640px) {
+  .datasource-form {
+    .form-col-group,
+    .connection-options-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
 // 大屏幕优化
 @media (min-width: 2000px) {
   .datasource-form {
@@ -727,8 +828,6 @@ const handleClosed = () => {
     .type-card {
       padding: 1rem 0.75rem;
       min-height: 5.5rem;
-      width: calc(15vw + 3rem);
-      max-width: 12rem;
 
       .type-icon {
         width: 2.5rem;

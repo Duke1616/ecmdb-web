@@ -74,7 +74,7 @@
 //     children: [
 //       {
 //         path: "index",
-//         component: () => import("@/views/model/index.vue"),
+//         component: () => import("@/pages/cmdb/model/index.vue"),
 //         name: "model-index",
 //         meta: {
 //           title: "模型资产",
@@ -84,7 +84,7 @@
 //       },
 //       {
 //         path: "info",
-//         component: () => import("@/views/model/info/index.vue"),
+//         component: () => import("@/pages/cmdb/model/info/index.vue"),
 //         name: "model-info",
 //         meta: {
 //           hidden: true,
@@ -92,20 +92,44 @@
 //           platforms: ["cmdb"]
 //         }
 //       },
+//     ]
+//   },
+//   {
+//     path: "/cmdb/relation-graph",
+//     component: Layouts,
+//     redirect: "/cmdb/relation-graph/index",
+//     meta: {
+//       title: "关联关系",
+//       svgIcon: "relation-graph",
+//       platforms: ["cmdb"]
+//     },
+//     children: [
 //       {
-//         path: "relation",
-//         component: () => import("@/views/model/relation-graph/index.vue"),
-//         name: "model-relation",
+//         path: "index",
+//         component: () => import("@/pages/cmdb/relation-graph/index.vue"),
+//         name: "cmdb-relation-graph",
 //         meta: {
 //           title: "关联关系",
 //           svgIcon: "relation-graph",
 //           platforms: ["cmdb"]
 //         }
-//       },
+//       }
+//     ]
+//   },
+//   {
+//     path: "/cmdb/relation-type",
+//     component: Layouts,
+//     redirect: "/cmdb/relation-type/index",
+//     meta: {
+//       title: "关联类型",
+//       svgIcon: "relation-type",
+//       platforms: ["cmdb"]
+//     },
+//     children: [
 //       {
-//         path: "relation-type",
-//         component: () => import("@/views/model/relation-type/index.vue"),
-//         name: "model-type",
+//         path: "index",
+//         component: () => import("@/pages/cmdb/relation-type/index.vue"),
+//         name: "cmdb-relation-type",
 //         meta: {
 //           title: "关联类型",
 //           svgIcon: "relation-type",
@@ -126,7 +150,7 @@
 //     children: [
 //       {
 //         path: "index",
-//         component: () => import("@/views/resource/warehouse/index.vue"),
+//         component: () => import("@/pages/cmdb/resource/index.vue"),
 //         name: "resource-warehouse",
 //         meta: {
 //           title: "资产仓库",
@@ -136,64 +160,64 @@
 //       },
 //       {
 //         path: "list",
-//         component: () => import("@/views/resource/warehouse/list/list.vue"),
+//         component: () => import("@/pages/cmdb/resource/list.vue"),
 //         name: "resource-warehouse-list",
 //         meta: {
 //           hidden: true,
 //           title: "资产列表",
-//           platforms: ["task"]
+//           platforms: ["cmdb"]
 //         }
 //       },
 //       {
 //         path: "info",
-//         component: () => import("@/views/resource/warehouse/info/info.vue"),
+//         component: () => import("@/pages/cmdb/resource/detail.vue"),
 //         name: "resource-warehouse-info",
 //         meta: {
 //           hidden: true,
 //           title: "资产详情",
-//           platforms: ["task"]
+//           platforms: ["cmdb"]
 //         }
 //       }
 //     ]
 //   },
 //   {
-//     path: "/cmdb/order",
+//     path: "/ticket",
 //     component: Layouts,
-//     redirect: "/cmdb/order/index",
+//     redirect: "/ticket/start",
 //     meta: {
-//       title: "工单中心",
+//       title: "工单管理",
 //       svgIcon: "order-center",
-//       platforms: ["cmdb"]
+//       platforms: ["ticket"]
 //     },
 //     children: [
 //       {
 //         path: "start",
-//         component: () => import("@/views/order/start/index.vue"),
-//         name: "order-start",
+//         component: () => import("@/pages/ticket/start/index.vue"),
+//         name: "TicketSubmission",
 //         meta: {
 //           title: "提交工单",
 //           svgIcon: "submit-order",
-//           platforms: ["cmdb"]
+//           platforms: ["ticket"]
 //         }
 //       },
 //       {
 //         path: "list",
-//         component: () => import("@/views/order/index.vue"),
-//         name: "order-list",
+//         component: () => import("@/pages/ticket/manager/index.vue"),
+//         name: "TicketManager",
 //         meta: {
-//           title: "工单列表",
+//           title: "工单管理",
 //           svgIcon: "order-list",
-//           platforms: ["cmdb"]
+//           platforms: ["ticket"]
 //         }
 //       },
 //       {
 //         path: "convert",
-//         component: () => import("@/views/order/convert/index.vue"),
-//         name: "order-convert",
+//         component: () => import("@/pages/ticket/manager/convert/index.vue"),
+//         name: "TicketConvert",
 //         meta: {
 //           title: "工单流转",
 //           svgIcon: "order-convert",
-//           platforms: ["cmdb"]
+//           platforms: ["ticket"]
 //         }
 //       }
 //     ]
@@ -210,7 +234,7 @@
 //     children: [
 //       {
 //         path: "template",
-//         component: () => import("@/views/process/template/index.vue"),
+//         component: () => import("@/pages/ticket/template/index.vue"),
 //         name: "process-template",
 //         meta: {
 //           title: "模版管理",
@@ -220,8 +244,8 @@
 //       },
 //       {
 //         path: "workflow",
-//         component: () => import("@/views/process/index.vue"),
-//         name: "process-workflow",
+//         component: () => import("@/pages/ticket/workflow/index.vue"),
+//         name: "ticket-workflow",
 //         meta: {
 //           title: "流程管理",
 //           svgIcon: "process",
@@ -242,7 +266,7 @@
 //     children: [
 //       {
 //         path: "codebook",
-//         component: () => import("@/views/task/codebook/index.vue"),
+//         component: () => import("@/pages/task/codebook/index.vue"),
 //         name: "task-codebook",
 //         meta: {
 //           title: "任务模版",
@@ -251,18 +275,18 @@
 //         }
 //       },
 //       {
-//         path: "worker",
-//         component: () => import("@/views/task/worker/index.vue"),
-//         name: "task-worker",
+//         path: "executor",
+//         component: () => import("@/pages/task/executor/index.vue"),
+//         name: "task-executor",
 //         meta: {
-//           title: "工作节点",
-//           svgIcon: "worker",
+//           title: "执行器管理",
+//           svgIcon: "executor",
 //           platforms: ["cmdb"]
 //         }
 //       },
 //       {
 //         path: "runner",
-//         component: () => import("@/views/task/runner/index.vue"),
+//         component: () => import("@/pages/task/runner/index.vue"),
 //         name: "task-runner",
 //         meta: {
 //           title: "执行单元",
@@ -272,7 +296,7 @@
 //       },
 //       {
 //         path: "history",
-//         component: () => import("@/views/task/history/index.vue"),
+//         component: () => import("@/pages/ticket/task-history/index.vue"),
 //         name: "task-history",
 //         meta: {
 //           title: "历史任务",
@@ -282,107 +306,4 @@
 //       }
 //     ]
 //   },
-//   {
-//     path: "/cmdb/system",
-//     component: Layouts,
-//     redirect: "/cmdb/system/menu",
-//     meta: {
-//       title: "系统管理",
-//       svgIcon: "process-control",
-//       platforms: ["cmdb"]
-//     },
-//     children: [
-//       {
-//         path: "role",
-//         component: () => import("@/views/system/role/index.vue"),
-//         name: "system-role",
-//         meta: {
-//           title: "角色管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       },
-//       {
-//         path: "menu",
-//         component: () => import("@/views/system/menu/index.vue"),
-//         name: "system-menu",
-//         meta: {
-//           title: "菜单管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       },
-//       {
-//         path: "api",
-//         component: () => import("@/views/system/api/index.vue"),
-//         name: "system-api",
-//         meta: {
-//           title: "接口管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       },
-//       {
-//         path: "user",
-//         component: () => import("@/views/system/user/index.vue"),
-//         name: "system-user",
-//         meta: {
-//           title: "用户管理",
-//           svgIcon: "template",
-//           platforms: ["cmdb"]
-//         }
-//       }
-//     ]
-//   },
-//   {
-//     path: "/cmdb/system",
-//     component: Layouts,
-//     redirect: "/cmdb/system/menu",
-//     meta: {
-//       title: "系统管理",
-//       svgIcon: "process-control",
-//       platforms: ["cmdb"]
-//     },
-//     children: []
-//   }
-// ]
-
-/**
- * 动态路由
- * 用来放置有权限 (Roles 属性) 的路由
- * 必须带有 Name 属性
- */
-// export const dynamicRoutes: RouteRecordRaw[] = [
-//   {
-//     path: "/permission",
-//     component: Layouts,
-//     redirect: "/permission/page",
-//     name: "Permission",
-//     meta: {
-//       title: "权限",
-//       svgIcon: "lock",
-//       roles: ["admin", "editor"], // 可以在根路由中设置角色
-//       alwaysShow: true, // 将始终显示根菜单
-//       hidden: true
-//     },
-//     children: [
-//       {
-//         path: "page",
-//         component: () => import("@/views/permission/page.vue"),
-//         name: "PagePermission",
-//         meta: {
-//           title: "页面级",
-//           roles: ["admin"] // 或者在子导航中设置角色
-//         }
-//       },
-//       {
-//         path: "directive",
-//         component: () => import("@/views/permission/directive.vue"),
-//         name: "DirectivePermission",
-//         meta: {
-//           title: "按钮级" // 如果未设置角色，则表示：该页面不需要权限，但会继承根路由的角色
-//         }
-//       }
-//     ]
-//   }
 // ]

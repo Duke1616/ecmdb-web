@@ -1,4 +1,4 @@
-import { getMinioPresignedUrl } from "@/api/tools"
+import { getMinioPresignedUrl } from "@/api/cmdb/tools"
 import { getLocalMinioUrl, decodedUrlPath } from "@/common/utils/url"
 import { downloadByUrl } from "@/common/utils/file"
 import { ElMessage } from "element-plus"

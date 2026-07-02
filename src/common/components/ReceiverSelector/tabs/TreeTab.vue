@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from "vue"
 import { Search, Check, OfficeBuilding } from "@element-plus/icons-vue"
-import { listDepartmentTreeApi } from "@/api/department"
+import { listDepartmentTreeApi } from "@/api/iam/department"
 
 const props = defineProps({
   selectedIds: { type: Array as () => string[], default: () => [] }

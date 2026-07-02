@@ -1,0 +1,290 @@
+<template>
+  <div>
+    <el-form ref="formRef" :model="formData" :rules="formRules" label-width="auto" label-position="top">
+      <el-row :gutter="20">
+        <el-col :span="12">
+          <el-form-item prop="desc" label="开始时间">
+            <el-date-picker
+              disabled
+              v-model="formData.oncall_rule.start_time"
+              type="datetime"
+              placeholder="选择日期和时间"
+              format="YYYY-MM-DD HH:mm"
+              @change="handleStartDateTimeChange"
+            />
+          </el-form-item>
+        </el-col>
+        <el-col :span="12">
+          <el-form-item prop="desc" label="结束时间">
+            <el-date-picker
+              disabled
+              v-model="formData.oncall_rule.end_time"
+              type="datetime"
+              placeholder="选择日期和时间"
+              format="YYYY-MM-DD HH:mm"
+              @change="handleEndDateTimeChange"
+            />
+          </el-form-item>
+        </el-col>
+      </el-row>
+
+      <div>
+        <div class="group-header">
+          <span>班排人员</span>
+          <el-button type="primary" :icon="Plus" @click="addMember" class="add-member-btn"> 添加成员 </el-button>
+        </div>
+        <div>
+          <VueDraggable
+            v-model="formData.oncall_rule.oncall_group.members"
+            :animation="200"
+            group="rotaGroup"
+            ghostClass="ghost"
+            chosenClass="chosen"
+            handle=".handle"
+            itemKey="id"
+            class="flex flex-col gap-4 p-0 rounded"
+          >
+            <div
+              v-for="(member, itemIndex) in formData.oncall_rule.oncall_group.members"
+              :key="member"
+              class="h-40px bg-gray-500/5 px-2 rounded flex items-center"
+            >
+              <div class="flex-1 flex">
+                <el-text truncated class="sort-text">{{ getUserByUsername(member) }}</el-text>
+              </div>
+
+              <div class="flex items-center space-x-2">
+                <el-icon @click="removeAndToLeftList(itemIndex)" class="cursor-pointer">
+                  <Close />
+                </el-icon>
+              </div>
+            </div>
+          </VueDraggable>
+        </div>
+      </div>
+      <el-divider style="margin-bottom: 10px" />
+    </el-form>
+
+    <!-- 用户选择器 -->
+    <UserPopoverPicker ref="userPopoverPickerRef" :disabled-keys="existingUsers" @select="handleUserSelect" />
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { AddOrUpdateAdjustmentRuleReq, OnCallGroup } from "@/api/alert/oncall/types/oncall"
+import { ElMessage, type FormInstance, type FormRules } from "element-plus"
+import { cloneDeep } from "lodash-es"
+import { VueDraggable } from "vue-draggable-plus"
+import { ref, computed } from "vue"
+import type { User as IIamUser } from "@/api/iam/user/type"
+import UserPopoverPicker from "@@/components/Pickers/UserPopoverPicker/UserPopoverPicker.vue"
+import { addShiftAdjustmentRuleApi, updateShiftAdjustmentRuleApi } from "@/api/alert/oncall"
+import { useUserToolsStore } from "@/pinia/stores/user-tools"
+import { Plus, Close } from "@element-plus/icons-vue"
+const userToolsStore = useUserToolsStore()
+
+const emits = defineEmits(["closed", "callback"])
+
+// 用户选择器引用
+const userPopoverPickerRef = ref<{ show: (targetElement?: HTMLElement) => void }>()
+
+// 已存在的用户列表
+const existingUsers = computed(() => {
+  return formData.value.oncall_rule.oncall_group.members
+})
+
+const getUserByUsername = (username: string) => {
+  return userToolsStore.getFullDisplayName(username)
+}
+
+// 添加成员按钮点击事件
+const addMember = (event: Event) => {
+  const buttonElement = event.target as HTMLElement
+  userPopoverPickerRef.value?.show(buttonElement)
+}
+
+// 处理用户选择
+const handleUserSelect = (user: IIamUser) => {
+  // 检查用户是否已经存在
+  const existingGroup = formData.value.oncall_rule.oncall_group
+  const userExists = existingGroup.members.includes(user.username)
+
+  if (userExists) {
+    ElMessage.warning("该用户已在值班人员中")
+    return
+  }
+
+  // 只需要一个组即可
+  existingGroup.members.push(user.username)
+
+  // 更新用户映射
+  userToolsStore.setDisplayName(user.username, `${user.nickname || user.username} [${user.username}]`)
+}
+
+const removeAndToLeftList = (index: number) => {
+  formData.value.oncall_rule.oncall_group.members.splice(index, 1)
+}
+
+const handleStartDateTimeChange = (date: Date | null) => {
+  if (date) {
+    formData.value.oncall_rule.start_time = date.getTime()
+  }
+}
+
+const handleEndDateTimeChange = (date: Date | null) => {
+  if (date) {
+    const endTime = date.getTime()
+    const startTime = formData.value.oncall_rule.start_time
+
+    if (startTime && endTime < startTime) {
+      ElMessage.error("结束时间不能小于开始时间")
+      formData.value.oncall_rule.end_time = 0
+    } else {
+      formData.value.oncall_rule.end_time = endTime
+    }
+  } else {
+    formData.value.oncall_rule.end_time = 0
+  }
+}
+
+const oncallGroup = ref<OnCallGroup>({ id: 0, name: "", members: [] }) // 组列表
+const DEFAULT_FORM_DATA: AddOrUpdateAdjustmentRuleReq = {
+  id: 0,
+  group_id: 0,
+  oncall_rule: {
+    id: 0,
+    rule_type: 2,
+    start_time: 0,
+    end_time: 0,
+    oncall_group: oncallGroup.value
+  }
+}
+
+const formData = ref<AddOrUpdateAdjustmentRuleReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formRef = ref<FormInstance | null>(null)
+const formRules: FormRules = {
+  name: [{ required: true, message: "必须输入值班名称", trigger: "blur" }],
+  owner: [{ required: true, message: "必须输入值班管理人员", trigger: "blur" }]
+}
+
+const getFrom = () => {
+  return formData
+}
+
+const resetForm = () => {
+  formData.value = cloneDeep(DEFAULT_FORM_DATA)
+}
+
+const onClosed = () => {
+  emits("closed")
+}
+
+const setStartDate = (startTime: Date | null) => {
+  if (!startTime) return
+  formData.value.oncall_rule.start_time = startTime.getTime()
+}
+
+const setEndDate = (endTime: Date | null) => {
+  if (!endTime) return
+  formData.value.oncall_rule.end_time = endTime.getTime()
+}
+
+const setGroupId = (groupId: number) => {
+  formData.value.oncall_rule.oncall_group.name = "TEMP"
+  // 修改逻辑处理时需要知道上次生成的 group_id
+  formData.value.group_id = groupId
+
+  if (formData.value.oncall_rule.oncall_group.members.length === 0) {
+    formData.value.oncall_rule.oncall_group.id = Date.now()
+  } else {
+    formData.value.oncall_rule.oncall_group.id = groupId
+  }
+
+  // 根据是否传有传入成员来判断是新增还是编辑
+  memberLen.value = formData.value.oncall_rule.oncall_group.members.length
+}
+
+const setMembers = (members: string[]) => {
+  formData.value.oncall_rule.oncall_group.members = members
+
+  // 获取所有的用户信息
+  userToolsStore.batchResolveUsers(members)
+}
+
+const memberLen = ref<number>(0)
+const submitForm = (rotaId: number) => {
+  if (rotaId === 0) {
+    ElMessage.error("值班不存在，无法保存")
+    return
+  }
+
+  if (formData.value.oncall_rule.oncall_group.members.length === 0) {
+    ElMessage.error("值班人员不能为空")
+    return
+  }
+
+  formData.value.id = rotaId
+  const api = memberLen.value === 0 ? addShiftAdjustmentRuleApi : updateShiftAdjustmentRuleApi
+  api(formData.value)
+    .then(() => {
+      onClosed()
+      ElMessage.success("操作成功")
+      emits("callback")
+    })
+    .catch(() => {
+      ElMessage.error("保存调班失败，请稍后重试")
+    })
+    .finally(() => {})
+}
+
+defineExpose({
+  submitForm,
+  setStartDate,
+  setGroupId,
+  setMembers,
+  setEndDate,
+  getFrom,
+  resetForm
+})
+</script>
+
+<style scoped>
+/* 自定义样式 */
+.sort-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+}
+
+.end-form-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  .el-switch--small {
+    height: 22px;
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  justify-items: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.add-member-btn {
+  height: 32px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.empty-group {
+  padding: 10px;
+  text-align: center;
+}
+</style>

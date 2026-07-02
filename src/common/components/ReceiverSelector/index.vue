@@ -3,7 +3,7 @@
     v-model="dialogVisible"
     :title="title"
     width="900px"
-    top="5vh"
+    :top="top"
     @confirm="handleConfirm"
     @cancel="dialogVisible = false"
     class="receiver-selector-dialog"
@@ -32,7 +32,12 @@
             <SystemTab v-if="currentTab === 'system'" :active-rules="getSystemRuleKeys()" @toggle="toggleSystemRule" />
 
             <!-- 人员选择 -->
-            <UserTab v-else-if="currentTab === 'user'" :selected-usernames="getUserKeys()" @change="onUserSelected" />
+            <UserTab
+              v-else-if="currentTab === 'user'"
+              :selected-usernames="getUserKeys()"
+              :value-key="userValueKey"
+              @change="onUserSelected"
+            />
 
             <!-- 团队选择 -->
             <OptionsTab
@@ -78,7 +83,7 @@
         <div class="pane-result">
           <div class="result-header">
             <span>{{ resultPanelTitle }}</span>
-            <div class="result-badge">{{ assigneesManager.tempAssignees.value.length }}</div>
+            <div class="result-badge">{{ resultCount }}</div>
           </div>
           <div class="result-body">
             <div v-if="assigneesManager.tempAssignees.value.length === 0" class="empty-placeholder">
@@ -142,6 +147,7 @@ const {
 const props = defineProps({
   visible: Boolean,
   title: { type: String, default: "配置/管理接收者策略" },
+  top: { type: String, default: "10vh" },
   resultPanelTitle: { type: String, default: "已选逻辑项" },
   emptyText: { type: String, default: "暂无接收者" },
   initialAssignees: { type: Array, default: () => [] },
@@ -177,6 +183,10 @@ const props = defineProps({
   expandAssignees: {
     type: Boolean,
     default: false
+  },
+  userValueKey: {
+    type: String as PropType<"username" | "id">,
+    default: "username"
   }
 })
 
@@ -201,6 +211,18 @@ const allTabs = [
 
 const tabs = computed(() => {
   return allTabs.filter((t) => (props.modes as string[]).includes(t.id))
+})
+
+const resultCount = computed(() => {
+  if (!props.expandAssignees) {
+    return assigneesManager.tempAssignees.value.length
+  }
+  return assigneesManager.tempAssignees.value.reduce((total, assignee) => {
+    if (assignee.rule !== "template" && assignee.values?.length) {
+      return total + assignee.values.length
+    }
+    return total + 1
+  }, 0)
 })
 
 const currentTab = ref(tabs.value[0]?.id || "system")
@@ -256,13 +278,14 @@ watch(currentTab, (newTab) => {
 
 // 用户选择处理
 const onUserSelected = (users: any[]) => {
-  const usernames = users.map((u) => u.username)
-  assigneesManager.setValues("appoint", usernames)
+  const values = users.map((u) => String(props.userValueKey === "id" ? u.id : u.username))
+  assigneesManager.setValues("appoint", values)
 
   const nameMap: Record<string, string> = {}
   users.forEach((u) => {
-    if (u.username) {
-      nameMap[u.username] = u.display_name || u.username
+    const key = String(props.userValueKey === "id" ? u.id : u.username)
+    if (key) {
+      nameMap[key] = u.display_name || u.nickname || u.username || key
     }
   })
   emit("update-user-names", nameMap)

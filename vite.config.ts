@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from "node:url"
 import vue from "@vitejs/plugin-vue"
 import vueJsx from "@vitejs/plugin-vue-jsx"
 import UnoCSS from "unocss/vite"
+// import postcsspxtoviewport from "postcss-px-to-viewport-8-plugin"
 
 // import path from "path"
 // import { createSvgIconsPlugin } from "vite-plugin-svg-icons"
@@ -81,7 +82,8 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
         iconDir: [resolve(__dirname, "src/common/assets/icons")],
         preserveColor: resolve(__dirname, "src/common/assets/icons/preserve-color"),
         dts: true,
-        dtsDir: resolve(__dirname, "types/auto")
+        dtsDir: resolve(__dirname, "types/auto"),
+        treeShaking: false
       }),
       // 原子化 CSS
       UnoCSS(),
@@ -159,11 +161,23 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/alert/, "/api")
         },
+        "/api/ticket": {
+          target: `http://${viteEnv.VITE_TICKET_API}`,
+          ws: true,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/ticket/, "/api")
+        },
         "/api/task": {
           target: `http://${viteEnv.VITE_TASK_API}`,
           ws: true,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/task/, "/api")
+        },
+        "/api/iam": {
+          target: `http://${viteEnv.VITE_IAM_API}`,
+          ws: true,
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/iam/, "/api")
         },
         "/minio": {
           target: `http://${viteEnv.VITE_MINIO_ENDPOINT}`,

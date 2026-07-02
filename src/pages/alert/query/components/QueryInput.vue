@@ -1,14 +1,11 @@
 <template>
   <div class="query-input-wrapper">
     <div class="query-group-container">
-      <!-- Part 1: Built-in Metrics Button (Addon) -->
-      <div class="metrics-addon" role="button">
+      <div class="metrics-addon">
         <el-icon class="addon-icon"><TrendCharts /></el-icon>
-        <span class="addon-text">内置指标</span>
-        <el-icon class="arrow-icon"><ArrowRight /></el-icon>
+        <span class="addon-text">PromQL</span>
       </div>
 
-      <!-- Part 2: Editor Container (Input) -->
       <div class="editor-container">
         <codemirror
           v-model="modelValue"
@@ -30,7 +27,7 @@
 <script setup lang="ts">
 import { Codemirror } from "vue-codemirror"
 import { markdown } from "@codemirror/lang-markdown"
-import { TrendCharts, ArrowRight } from "@element-plus/icons-vue"
+import { TrendCharts } from "@element-plus/icons-vue"
 
 // NOTE: QueryInput 是纯表单输入组件，使用 defineModel 进行双向绑定
 const modelValue = defineModel<string>({ required: true })
@@ -44,57 +41,45 @@ const extensions = [markdown()]
 </script>
 
 <style lang="scss" scoped>
-/* Ensure full height usage */
 :deep(.cm-editor) {
   height: 100%;
 }
 
 .query-input-wrapper {
-  padding: 1rem 1rem 1.25rem 1rem; // 增加顶部 padding (1rem) 与 Toolbar 隔开一点距离，左右 padding 保持与 Toolbar 一致 (1.5rem)
+  padding: 12px 16px 16px;
 }
 
-// 容器：负责整体边框和 Flex 布局
 .query-group-container {
   display: flex;
-  align-items: stretch; // 关键：让子元素高度一致 stretching
-  min-height: 32px;
-  background: white;
-  border-radius: 4px;
-  // 使用 box-shadow 模拟边框，避免 flex 子元素边框重叠问题，或者父级统一边框
-  // 这里采用父级统一边框方案
+  align-items: stretch;
+  min-height: 38px;
+  background: #ffffff;
+  border-radius: 6px;
   border: 1px solid #e5e7eb;
-  transition: all 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: #cbd5e1;
+  }
+
+  &:focus-within {
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+  }
 }
 
-// Part 1: 左侧 Addon
 .metrics-addon {
   display: flex;
-  align-items: center; // 垂直居中
+  align-items: center;
   justify-content: center;
   padding: 0 0.75rem;
-  background-color: #f9fafb; // 默认灰色背景，区分输入区
-  border-right: 1px solid #e5e7eb; // 分割线
-  border-radius: 3px 0 0 3px; // 左侧圆角
-  cursor: pointer;
+  background-color: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+  border-radius: 5px 0 0 5px;
   user-select: none;
   flex-shrink: 0;
-  transition: all 0.2s ease;
-
-  // 悬停效果
-  &:hover {
-    background-color: #eff6ff;
-    color: #3b82f6;
-
-    .addon-icon,
-    .arrow-icon,
-    .addon-text {
-      color: #3b82f6;
-    }
-  }
-
-  &:active {
-    background-color: #dbeafe;
-  }
 }
 
 .addon-text {
@@ -110,34 +95,25 @@ const extensions = [markdown()]
   color: #9ca3af;
 }
 
-.arrow-icon {
-  font-size: 12px;
-  color: #9ca3af;
-}
-
-// Part 2: 编辑器容器
 .editor-container {
   flex: 1;
   min-width: 0;
   padding: 0 0 0 0.5rem;
-  background: white;
-  border-radius: 0 3px 3px 0; // 右侧圆角
+  background: #ffffff;
+  border-radius: 0 5px 5px 0;
   display: flex;
   flex-direction: column;
-  justify-content: center; // 垂直居中内容（如果只有一行）
+  justify-content: center;
 }
 
-/* Customize codemirror to look cleaner */
-// 修正：移除 .cm-editor-custom 类，因为模板中不再包含此包裹类
 :deep(.cm-editor) {
   height: auto;
-  min-height: 30px;
+  min-height: 36px;
   max-height: 120px;
   width: 100%;
   outline: none !important;
   background-color: transparent !important;
 
-  // 确保聚集状态下也无边框
   &.cm-focused {
     outline: none !important;
   }
@@ -150,14 +126,13 @@ const extensions = [markdown()]
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-all;
-  outline: none !important; // 关键修复：移除输入区焦点的默认虚线框
-  caret-color: #374151 !important; // 强制设置原生光标颜色(深灰色)
+  outline: none !important;
+  caret-color: #374151 !important;
 }
 
-// 强制设置 CodeMirror 模拟光标样式
 :deep(.cm-cursor) {
   border-left-color: #374151 !important;
-  border-left-width: 2px; // 稍微加粗一点点确保可见
+  border-left-width: 2px;
 }
 
 :deep(.cm-line) {
@@ -168,7 +143,7 @@ const extensions = [markdown()]
   overflow-y: auto !important;
   overflow-x: hidden !important;
   width: 100%;
-  outline: none !important; // 双重保险
+  outline: none !important;
 
   &::-webkit-scrollbar {
     width: 6px;

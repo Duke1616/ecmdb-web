@@ -11,45 +11,64 @@
       <!-- 基本信息 -->
       <div class="form-section">
         <div class="section-title">
-          <el-icon><InfoFilled /></el-icon>
-          <span>基本信息</span>
+          <div class="title-left">
+            <el-icon class="section-icon"><InfoFilled /></el-icon>
+            <span>基本信息</span>
+          </div>
         </div>
 
-        <el-form-item prop="name" label="工作空间名称" class="form-item required">
-          <el-input
-            v-model="formData.name"
-            placeholder="请输入工作空间名称"
-            clearable
-            class="form-input"
-            maxlength="50"
-            show-word-limit
-          />
-        </el-form-item>
+        <div class="form-grid">
+          <el-form-item prop="name" label="工作空间名称" class="form-item required">
+            <el-input
+              v-model="formData.name"
+              placeholder="请输入工作空间名称"
+              clearable
+              class="premium-input"
+              maxlength="50"
+              show-word-limit
+              size="large"
+            />
+          </el-form-item>
 
-        <el-form-item prop="team_id" label="所属团队" class="form-item required">
-          <el-select v-model="formData.team_id" placeholder="请选择所属团队" class="form-input" filterable clearable>
-            <el-option v-for="team in teams" :key="team.id" :label="team.name" :value="team.id" />
-          </el-select>
-        </el-form-item>
+          <el-form-item prop="team_id" label="所属团队" class="form-item required">
+            <TeamPicker v-model="formData.team_id" placeholder="请选择所属团队" variant="element" class="form-input" />
+          </el-form-item>
 
-        <el-form-item prop="template_id" label="通知模版" class="form-item">
-          <el-select
-            v-model="formData.template_id"
-            placeholder="请选择通知模版"
-            class="form-input"
-            filterable
-            clearable
-          >
-            <el-option v-for="template in templates" :key="template.id" :label="template.name" :value="template.id" />
-          </el-select>
-        </el-form-item>
+          <el-form-item prop="channel" label="通知渠道" class="form-item required">
+            <el-select
+              v-model="formData.channel"
+              placeholder="请选择通知渠道"
+              class="premium-input"
+              size="large"
+              clearable
+            >
+              <el-option
+                v-for="option in channelOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item prop="template_set_id" label="通知模板集" class="form-item required">
+            <TemplateSetPicker
+              v-model="formData.template_set_id"
+              placeholder="请选择通知模板集"
+              variant="element"
+              class="form-input"
+            />
+          </el-form-item>
+        </div>
       </div>
 
       <!-- 空间配置 -->
       <div class="form-section">
         <div class="section-title">
-          <el-icon><Setting /></el-icon>
-          <span>空间配置</span>
+          <div class="title-left">
+            <el-icon class="section-icon"><Setting /></el-icon>
+            <span>空间配置</span>
+          </div>
         </div>
 
         <div class="config-cards">
@@ -145,12 +164,11 @@ import { ref, onMounted } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { InfoFilled, Setting, Monitor, User } from "@element-plus/icons-vue"
-import { saveWorkspaceApi } from "@/api/alert/workspace"
+import { createWorkspaceApi, updateWorkspaceApi } from "@/api/alert/workspace"
 import { SaveWorkspaceReq } from "@/api/alert/workspace/types"
-import { listTeamsApi } from "@/api/alert/team"
-import { Team as TeamType } from "@/api/alert/team/types"
-import { listTemplatesApi } from "@/api/alert/template"
-import { ChannelTemplate } from "@/api/alert/template/types"
+import { DEFAULT_CHANNEL_TYPE } from "@/api/alert/template/types"
+import { getChannelOptions } from "../template/config/channels"
+import { TeamPicker, TemplateSetPicker } from "@@/components/Pickers"
 
 // 接收父组件传递
 const emits = defineEmits(["closed", "callback"])
@@ -164,51 +182,24 @@ const DEFAULT_FORM_DATA: SaveWorkspaceReq = {
   name: "",
   enabled: true,
   team_id: undefined as any,
-  template_id: undefined as any,
+  channel: DEFAULT_CHANNEL_TYPE,
+  template_set_id: undefined as any,
   is_public: true,
   allow_invite: true
 }
 
 const formData = ref<SaveWorkspaceReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
-const teams = ref<TeamType[]>([])
-const templates = ref<ChannelTemplate[]>([])
+const channelOptions = getChannelOptions()
 
 const formRules: FormRules = {
   team_id: [{ required: true, message: "请选择所属团队", trigger: "change" }],
-  template_id: [{ required: true, message: "请选择通知模版", trigger: "change" }],
+  channel: [{ required: true, message: "请选择通知渠道", trigger: "change" }],
+  template_set_id: [{ required: true, message: "请选择通知模板集", trigger: "change" }],
   name: [
     { required: true, message: "请输入工作空间名称", trigger: "blur" },
     { min: 2, max: 50, message: "工作空间名称长度为 2-50 个字符", trigger: "blur" }
   ]
-}
-
-// 加载团队数据
-const loadTeamsData = async () => {
-  try {
-    const { data } = await listTeamsApi({
-      offset: 0,
-      limit: 100
-    })
-    teams.value = data.teams || []
-  } catch (error) {
-    console.error("加载团队数据失败:", error)
-    teams.value = []
-  }
-}
-
-// 加载模版数据
-const loadTemplatesData = async () => {
-  try {
-    const { data } = await listTemplatesApi({
-      offset: 0,
-      limit: 100
-    })
-    templates.value = data.templates || []
-  } catch (error) {
-    console.error("加载模版数据失败:", error)
-    templates.value = []
-  }
 }
 
 const submitForm = () => {
@@ -219,8 +210,17 @@ const submitForm = () => {
       ElMessage.error("请选择所属团队")
       return
     }
+    if (!formData.value.channel) {
+      ElMessage.error("请选择通知渠道")
+      return
+    }
+    if (!formData.value.template_set_id || formData.value.template_set_id === 0) {
+      ElMessage.error("请选择通知模板集")
+      return
+    }
 
-    saveWorkspaceApi(formData.value)
+    const apiCall = formData.value.id ? updateWorkspaceApi(formData.value) : createWorkspaceApi(formData.value)
+    apiCall
       .then(() => {
         onClosed()
         ElMessage.success("工作空间保存成功")
@@ -255,8 +255,6 @@ const onClosed = () => {
 
 // 组件挂载时加载数据
 onMounted(() => {
-  loadTeamsData()
-  loadTemplatesData()
   // 如果有传入的团队ID，设置为默认值
   if (props.selectedTeamId) {
     formData.value.team_id = props.selectedTeamId
@@ -272,14 +270,14 @@ defineExpose({
 
 <style lang="scss" scoped>
 .workspace-form-container {
-  padding: 24px;
+  padding: 20px;
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 0;
 }
 
 .workspace-form {
   .form-section {
-    margin-bottom: 32px;
+    margin-bottom: 24px;
 
     &:last-child {
       margin-bottom: 0;
@@ -289,22 +287,40 @@ defineExpose({
   .section-title {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #f0f2f5;
-    color: #1f2937;
-    font-size: 16px;
-    font-weight: 600;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #3b82f6;
+    border-radius: 6px;
 
-    .el-icon {
+    .title-left {
+      display: flex;
+      align-items: center;
+    }
+
+    .section-icon {
+      margin-right: 6px;
       color: #3b82f6;
-      font-size: 18px;
+      font-size: 16px;
+    }
+
+    span {
+      color: #374151;
+      font-size: 14px;
+      font-weight: 600;
     }
   }
 
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 20px;
+  }
+
   .form-item {
-    margin-bottom: 20px;
+    margin-bottom: 0;
 
     &:last-child {
       margin-bottom: 0;
@@ -323,6 +339,55 @@ defineExpose({
 
   .form-input {
     width: 100%;
+
+    :deep(.picker-input-box) {
+      min-height: 40px;
+      padding: 0 12px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+      &:hover {
+        border-color: #9ca3af;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+      }
+
+      &.is-focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      }
+    }
+  }
+
+  .premium-input {
+    width: 100%;
+
+    :deep(.el-input__wrapper),
+    :deep(.el-select__wrapper) {
+      min-height: 40px;
+      padding: 0 12px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+      &:hover {
+        border-color: #9ca3af;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.08);
+      }
+
+      &.is-focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      }
+    }
   }
 
   // 配置卡片样式
@@ -334,7 +399,7 @@ defineExpose({
     .config-card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 20px;
       transition: all 0.2s ease;
 
@@ -392,13 +457,13 @@ defineExpose({
         flex-direction: column;
         gap: 8px;
 
-        .option-item {
+          .option-item {
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 12px;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
           position: relative;
@@ -491,6 +556,11 @@ defineExpose({
   }
 
   .workspace-form {
+    .form-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+
     .section-title {
       font-size: 14px;
     }

@@ -34,7 +34,7 @@
           @previous="goToPrevious"
           @close="onClosed"
           @save="save"
-          class="step-content"
+          class="wizard-step-content"
         />
       </el-form>
     </div>
@@ -238,11 +238,14 @@ defineExpose({
 }
 
 .step-content {
+  text-align: center;
+}
+
+.wizard-step-content {
   flex: 1;
   display: flex;
-  text-align: center;
   flex-direction: column;
-  padding: 8px 0px;
+  padding: 0;
   min-height: 0;
 }
 </style>
