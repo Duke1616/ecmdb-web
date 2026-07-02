@@ -24,43 +24,27 @@ export function listPluginEnumsApi() {
   })
 }
 
-/** 注册完整插件定义 */
-export function registerPluginDefinitionApi(data: Plugin.Definition) {
-  return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/definition/register`,
-    data
-  })
-}
-
-/** 保存插件定义 */
-export function upsertPluginApi(data: Plugin.Plugin) {
-  return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/definition/upsert`,
-    data
+/** 查询插件默认定义 */
+export function getDefaultPluginDefinitionApi(plugin_id: string) {
+  return instance.get<Plugin.Definition>({
+    url: `${API_SERVICE.CMDB}/plugin/definition/default`,
+    params: { plugin_id }
   })
 }
 
 /** 保存插件绑定 */
-export function upsertPluginBindingApi(data: Plugin.Binding) {
+export function savePluginBindingsApi(data: Plugin.SavePluginBindingsRequest) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/binding/upsert`,
+    url: `${API_SERVICE.CMDB}/plugin/bindings/save`,
     data
   })
 }
 
-/** 同步插件默认模型 */
-export function syncDefaultSchemaApi(plugin_id: string) {
+/** 更新插件绑定启停状态 */
+export function updatePluginBindingEnabledApi(data: Plugin.UpdatePluginBindingEnabledRequest) {
   return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/sync-default-schema`,
-    data: { plugin_id }
-  })
-}
-
-/** 删除插件 */
-export function deletePluginApi(uid: string) {
-  return instance.post<number>({
-    url: `${API_SERVICE.CMDB}/plugin/delete`,
-    data: { uid }
+    url: `${API_SERVICE.CMDB}/plugin/binding/enabled`,
+    data
   })
 }
 

@@ -41,17 +41,34 @@ export interface Filter {
   value: any
 }
 
-export interface ResourceSpec {
+export interface FieldMapping {
+  input: string
+  resource_field: string
+  required?: boolean
+}
+
+export interface BindingGraphNode {
+  id: string
   name: string
+  kind?: string
   model_uid: string
-  relation_type?: string
-  direction?: string
   cardinality: string
   required: boolean
-  fields: Record<string, string>
-  required_fields?: string[]
+  field_mappings?: FieldMapping[]
   filters?: Filter[]
-  children?: ResourceSpec[]
+}
+
+export interface BindingGraphEdge {
+  from: string
+  to: string
+  relation_type?: string
+  direction?: string
+}
+
+export interface BindingGraph {
+  entry_node_id: string
+  nodes: BindingGraphNode[]
+  edges?: BindingGraphEdge[]
 }
 
 export interface ActionSpec {
@@ -69,9 +86,7 @@ export interface Plugin {
   name: string
   type: string
   version: string
-  enabled: boolean
   actions: ActionSpec[]
-  config?: Record<string, any>
   ctime?: number
   utime?: number
 }
@@ -82,8 +97,7 @@ export interface Binding {
   plugin_id: string
   model_uid: string
   enabled: boolean
-  specs: ResourceSpec[]
-  config?: Record<string, any>
+  graph?: BindingGraph
   ctime?: number
   utime?: number
 }
@@ -146,6 +160,16 @@ export interface Definition {
   bindings: Binding[]
 }
 
+export interface SavePluginBindingsRequest {
+  plugin_id: string
+  bindings: Binding[]
+}
+
+export interface UpdatePluginBindingEnabledRequest {
+  uid: string
+  enabled: boolean
+}
+
 export interface ResourceAction {
   plugin_id: string
   action: string
@@ -206,7 +230,6 @@ export interface PluginListItem {
   name: string
   type: string
   version: string
-  enabled: boolean
   action_count: number
   binding_count: number
   bound_models: PluginBoundModel[]
@@ -228,8 +251,7 @@ export interface PluginBindingDetail {
   group_name?: string
   model_icon?: string
   enabled: boolean
-  specs: ResourceSpec[]
-  config?: Record<string, any>
+  graph?: BindingGraph
 }
 
 export interface PluginDetail {

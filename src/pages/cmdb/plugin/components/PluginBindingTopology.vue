@@ -21,6 +21,7 @@
                 <TopologyNodeCard
                   :node="node"
                   :selected="String(node.id) === selectedNodeId"
+                  :editable="editable"
                   @node-click="handleNodeClick"
                   @command="handleNodeCommand"
                 />
@@ -28,6 +29,17 @@
             </RelationGraph>
 
             <div class="topology-toolbar">
+              <el-tooltip v-if="canEdit" content="编辑绑定" placement="left">
+                <button
+                  class="toolbar-btn"
+                  type="button"
+                  :class="{ 'is-active': editable }"
+                  @click="emit('start-edit')"
+                >
+                  <el-icon><EditPen /></el-icon>
+                </button>
+              </el-tooltip>
+
               <el-tooltip content="节点详情" placement="left">
                 <button
                   class="toolbar-btn"
@@ -60,22 +72,27 @@
               :actions-count="props.actions?.length || 0"
               :binding="binding"
               :compact="isCompactLayout"
+              :editable="editable"
               :field-entries="fieldEntries"
               :is-action-mode="isActionMode"
+              :models="models || []"
               :panel-chip="panelChip"
               :panel-title="panelTitle"
               :root-field-entries="rootFieldEntries"
+              :selected-graph-node="selectedGraphNode"
               :selected-node-data="selectedNodeData"
-              :selected-root-spec="selectedRootSpec"
-              :selected-spec-node="selectedSpecNode"
+              :selected-root-graph-node="selectedRootGraphNode"
               :spec-node-count="specNodeCount"
               @close="detailPanelVisible = false"
+              @update-binding-model="(modelUid) => emit('update-binding-model', modelUid)"
+              @update-node="(node, patch) => emit('update-node', node, patch)"
+              @update-field-mapping="(node, input, nextValue) => emit('update-field-mapping', node, input, nextValue)"
             />
           </transition>
         </div>
 
         <div v-else class="topology-empty">
-          <el-empty description="当前绑定没有配置引用链路" :image-size="110" />
+          <el-empty description="当前绑定没有配置图谱节点" :image-size="110" />
         </div>
       </div>
     </template>
@@ -88,10 +105,15 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue"
-import { Aim, Operation, RefreshRight } from "@element-plus/icons-vue"
+import { Aim, EditPen, Operation, RefreshRight } from "@element-plus/icons-vue"
 import RelationGraph from "relation-graph-vue3"
 import type { RGNode, RGOptions, RelationGraphComponent } from "relation-graph-vue3"
-import type { ActionSpec, PluginBindingDetail, PluginModelOption } from "@/api/cmdb/plugin/types/plugin"
+import type {
+  ActionSpec,
+  BindingGraphNode,
+  PluginBindingDetail,
+  PluginModelOption
+} from "@/api/cmdb/plugin/types/plugin"
 import TopologyDetailPanel from "./topology/TopologyDetailPanel.vue"
 import TopologyNodeCard from "./topology/TopologyNodeCard.vue"
 import type { TopologyMode, TopologyNodeCommand } from "./topology/types"
@@ -103,6 +125,15 @@ const props = defineProps<{
   models?: PluginModelOption[]
   actions?: ActionSpec[]
   mode?: TopologyMode
+  editable?: boolean
+  canEdit?: boolean
+}>()
+
+const emit = defineEmits<{
+  "update-binding-model": [modelUid: string]
+  "update-node": [node: BindingGraphNode, patch: Partial<BindingGraphNode>]
+  "update-field-mapping": [node: BindingGraphNode, input: string, nextValue: string]
+  "start-edit": []
 }>()
 
 const graphRef = ref<RelationGraphComponent>()
@@ -159,9 +190,9 @@ const {
   graphData,
   rootFieldEntries,
   rootNodeId,
+  selectedGraphNode,
   selectedNodeData,
-  selectedRootSpec,
-  selectedSpecNode,
+  selectedRootGraphNode,
   specNodeCount,
   resolveModelName
 } = usePluginTopologyGraph({
@@ -184,8 +215,8 @@ const panelTitle = computed(() => {
   if (selectedNodeData.value?.kind === "action") {
     return selectedNodeData.value.action?.name || "执行动作"
   }
-  if (selectedSpecNode.value) {
-    return selectedSpecNode.value.name
+  if (selectedGraphNode.value) {
+    return selectedGraphNode.value.name
   }
   return "节点详情"
 })
@@ -193,14 +224,38 @@ const panelTitle = computed(() => {
 const panelChip = computed(() => {
   if (selectedNodeData.value?.kind === "binding") return "挂载模型"
   if (selectedNodeData.value?.kind === "action") return "执行动作"
-  if (selectedSpecNode.value) return resolveModelName(selectedSpecNode.value.model_uid)
+  if (selectedGraphNode.value) return resolveModelName(selectedGraphNode.value.model_uid)
   return "图谱节点"
 })
+
+const rebaseSelectedNodeId = (nodeId: string) => {
+  const bindingUid = props.binding?.uid
+  if (!nodeId || !bindingUid) return ""
+
+  if (nodeId.startsWith("binding:")) {
+    return graphData.value.rootId || ""
+  }
+
+  if (nodeId.startsWith("action:")) {
+    const parts = nodeId.split(":")
+    const actionName = parts.slice(2).join(":")
+    return actionName ? `action:${bindingUid}:${actionName}` : ""
+  }
+
+  const firstSeparator = nodeId.indexOf(":")
+  if (firstSeparator < 0) return ""
+  return `${bindingUid}:${nodeId.slice(firstSeparator + 1)}`
+}
 
 const syncSelectedNode = () => {
   const rootId = graphData.value.rootId || ""
   const currentExists = graphBundle.value.nodeMap.has(selectedNodeId.value)
   if (currentExists) return
+  const rebasedNodeId = rebaseSelectedNodeId(selectedNodeId.value)
+  if (rebasedNodeId && graphBundle.value.nodeMap.has(rebasedNodeId)) {
+    selectedNodeId.value = rebasedNodeId
+    return
+  }
   selectedNodeId.value = graphBundle.value.preferredNodeId || rootId
 }
 
@@ -252,10 +307,13 @@ const toggleDetailPanel = () => {
 
 const handleNodeClick = (node: RGNode) => {
   selectedNodeId.value = String(node.id)
+  if (props.editable) {
+    detailPanelVisible.value = true
+  }
 }
 
 const handleNodeCommand = async (command: TopologyNodeCommand, node: RGNode) => {
-  if (command === "detail") {
+  if (command === "detail" || command === "edit") {
     openDetailPanel(String(node.id))
     return
   }

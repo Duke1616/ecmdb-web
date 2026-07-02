@@ -123,6 +123,7 @@ interface IGenericPickerProps {
   fallbackBuilder: (key: K) => T
   containerClass?: string
   dropdownClass?: string
+  dropdownMinWidth?: number
   pageSize?: number
   showPagination?: boolean
   showLoading?: boolean
@@ -136,6 +137,7 @@ const props = withDefaults(defineProps<IGenericPickerProps>(), {
   multiple: false,
   variant: "fancy",
   pageSize: 3,
+  dropdownMinWidth: 0,
   showPagination: true,
   showLoading: false,
   disabled: false,
@@ -170,13 +172,25 @@ const {
   searchDebounce: props.searchDebounce
 })
 
+const updateDropdownLayout = async () => {
+  await nextTick()
+  if (!containerRef.value || !dropdownRef.value) return
+
+  const inputWidth = containerRef.value.offsetWidth
+  const viewportWidth = typeof window === "undefined" ? inputWidth : window.innerWidth
+  const maxWidth = Math.max(160, viewportWidth - 16)
+  const nextWidth = Math.min(Math.max(inputWidth, props.dropdownMinWidth), maxWidth)
+
+  dropdownRef.value.style.width = `${nextWidth}px`
+  await popperInstance.value?.update()
+}
+
 watch(
   () => showDropdown.value,
   async (visible) => {
     if (visible) {
       await nextTick()
       if (containerRef.value && dropdownRef.value) {
-        dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
         popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
           placement: "bottom-start",
           modifiers: [
@@ -184,6 +198,7 @@ watch(
             { name: "preventOverflow", options: { boundary: "viewport", padding: 8 } }
           ]
         })
+        await updateDropdownLayout()
       }
     } else {
       if (popperInstance.value) {
@@ -199,8 +214,7 @@ watch(
   [() => listData.value, () => model.value],
   async () => {
     if (showDropdown.value && popperInstance.value) {
-      await nextTick()
-      popperInstance.value.update()
+      await updateDropdownLayout()
     }
   },
   { deep: true }
@@ -371,22 +385,30 @@ onUnmounted(() => {
 
 .selected-single {
   display: flex;
+  min-width: 0;
   align-items: center;
   gap: 12px;
   flex: 1;
 }
 
 .single-text {
+  overflow: hidden;
   color: #1e293b;
   font-size: 13px;
   font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .placeholder-text {
+  min-width: 0;
+  overflow: hidden;
   color: #94a3b8;
   font-size: 13px;
   font-weight: 400;
   flex: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .picker-arrow {
@@ -501,6 +523,7 @@ onUnmounted(() => {
 .picker-dropdown-panel {
   position: fixed;
   z-index: 9999;
+  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;

@@ -20,7 +20,9 @@
 
       <template #dropdown>
         <el-dropdown-menu>
-          <el-dropdown-item command="detail">查看详情</el-dropdown-item>
+          <el-dropdown-item :command="canEditNode ? 'edit' : 'detail'">{{
+            canEditNode ? "编辑" : "查看详情"
+          }}</el-dropdown-item>
           <el-dropdown-item command="focus-root">查看根节点</el-dropdown-item>
           <el-dropdown-item command="fit">适配视图</el-dropdown-item>
         </el-dropdown-menu>
@@ -51,6 +53,7 @@ import { cardinalityLabelMap } from "./usePluginTopologyGraph"
 import type { TopologyNodeCommand } from "./types"
 
 const props = defineProps<{
+  editable?: boolean
   node: RGNode
   selected: boolean
 }>()
@@ -65,6 +68,8 @@ const badgeText = computed(() => {
   if (props.node.data?.kind === "action") return "动作"
   return cardinalityLabelMap[props.node.data?.cardinality || ""] || "-"
 })
+
+const canEditNode = computed(() => props.editable && props.node.data?.kind !== "action")
 </script>
 
 <style scoped lang="scss">

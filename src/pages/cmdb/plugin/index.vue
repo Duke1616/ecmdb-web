@@ -60,37 +60,54 @@
                 <div class="overview-title-row">
                   <h3>{{ activePluginCard.name }}</h3>
                   <el-tag size="small" effect="plain">{{ activePluginCard.type }}</el-tag>
-                  <el-tag size="small" :type="activePluginCard.enabled ? 'success' : 'info'" effect="light">
-                    {{ activePluginCard.enabled ? "启用中" : "已停用" }}
-                  </el-tag>
                 </div>
               </div>
             </div>
 
             <div class="overview-actions">
               <AuthButton
-                class="overview-action-btn"
-                :capability="CMDB_CAPABILITIES.Plugin.SyncDefaultSchema"
-                :loading="syncingDefaultSchema"
+                v-if="hasBindingEditDraft"
+                class="overview-action-btn is-save"
+                :capability="CMDB_CAPABILITIES.Plugin.BindingUpsert"
+                :loading="savingBindingEdit"
                 disable-mode
-                @click="handleSyncDefaultSchema(activePluginCard)"
+                @click="saveBindingEdit"
               >
-                <el-icon><RefreshRight /></el-icon>
-                <span>{{ hasDefaultSchemaPreview ? "保存" : "同步模型" }}</span>
+                <el-icon><Check /></el-icon>
+                <span>保存</span>
               </AuthButton>
 
               <AuthButton
-                v-if="activePluginCard.type !== 'builtin'"
-                class="overview-action-btn is-danger"
-                :capability="CMDB_CAPABILITIES.Plugin.Delete"
+                v-else
+                class="overview-action-btn"
+                :class="hasDefaultSchemaPreview ? 'is-save' : 'is-create'"
+                :capability="CMDB_CAPABILITIES.Plugin.BindingUpsert"
+                :loading="savingDefaultBindingDraft"
                 disable-mode
-                @click="handleDelete(activePluginCard)"
+                @click="handleDefaultBindingDraft(activePluginCard)"
               >
-                <el-icon><Delete /></el-icon>
-                <span>删除插件</span>
+                <el-icon>
+                  <Check v-if="hasDefaultSchemaPreview" />
+                  <Plus v-else />
+                </el-icon>
+                <span>{{ hasDefaultSchemaPreview ? "保存" : "新增绑定" }}</span>
               </AuthButton>
 
-              <el-button class="overview-action-btn" @click="openDetailDrawer(activePluginCard.uid)">
+              <el-button
+                v-if="hasDefaultSchemaPreview || hasBindingEditDraft"
+                class="overview-action-btn is-cancel"
+                :loading="detailLoading || savingBindingEdit"
+                @click="hasBindingEditDraft ? cancelBindingEdit() : cancelDefaultSchemaPreview(activePluginCard.uid)"
+              >
+                <el-icon><Close /></el-icon>
+                <span>取消</span>
+              </el-button>
+
+              <el-button
+                v-else-if="!hasBindingEditDraft"
+                class="overview-action-btn is-secondary"
+                @click="openDetailDrawer(activePluginCard.uid)"
+              >
                 <el-icon><ArrowRight /></el-icon>
                 <span>查看详情</span>
               </el-button>
@@ -143,13 +160,45 @@
                 </div>
               </div>
 
-              <PluginBindingTopology
-                :binding="activeBindingDetail"
-                :loading="detailLoading"
-                :models="pluginEnums?.models || []"
-                :actions="activePluginCard.actions"
-                :mode="graphViewMode"
-              />
+              <div class="stage-canvas">
+                <div v-if="activeBindingDetail && graphViewMode === 'binding'" class="binding-status-panel is-floating">
+                  <div
+                    class="binding-state-control"
+                    :class="{
+                      'is-enabled': activeBindingDetail.enabled,
+                      'is-disabled': !canToggleBindingEnabled
+                    }"
+                  >
+                    <span class="binding-state-dot" />
+                    <span class="binding-state-text">
+                      {{ activeBindingDetail.enabled ? "启用中" : "已停用" }}
+                    </span>
+                    <span class="binding-state-divider" />
+                    <el-switch
+                      class="binding-state-switch"
+                      :model-value="activeBindingDetail.enabled"
+                      :before-change="toggleActiveBindingEnabled"
+                      :loading="togglingBindingEnabled"
+                      :disabled="!canToggleBindingEnabled"
+                      size="small"
+                    />
+                  </div>
+                </div>
+
+                <PluginBindingTopology
+                  :binding="activeBindingDetail"
+                  :loading="detailLoading"
+                  :models="modelOptions"
+                  :actions="pluginDetail?.plugin.actions || activePluginCard.actions"
+                  :mode="graphViewMode"
+                  :editable="isTopologyEditable"
+                  :can-edit="canStartBindingEdit"
+                  @start-edit="startBindingEdit(activePluginCard.uid)"
+                  @update-binding-model="handleDraftModelChange"
+                  @update-node="updateDraftGraphNode"
+                  @update-field-mapping="updateDraftFieldMapping"
+                />
+              </div>
             </section>
           </div>
         </div>
@@ -170,35 +219,74 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowRight, Delete, RefreshRight } from "@element-plus/icons-vue"
+import { computed } from "vue"
+import { ArrowRight, Check, Close, Plus } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import PluginBindingTopology from "./components/PluginBindingTopology.vue"
 import PluginDetailDrawer from "./components/PluginDetailDrawer.vue"
 import { usePluginCenter } from "./composables/usePluginCenter"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 
 const {
   activeBindingDetail,
   activeBindingUid,
   activePluginCard,
   activePluginUid,
+  cancelBindingEdit,
+  cancelDefaultSchemaPreview,
   detailLoading,
   detailVisible,
   filteredPlugins,
   graphViewMode,
-  handleDelete,
-  handleSyncDefaultSchema,
+  handleDefaultBindingDraft,
+  hasBindingEditDraft,
   hasDefaultSchemaPreview,
+  isTopologyEditable,
   keyword,
   loadPlugins,
+  modelOptions,
   openDetailDrawer,
   pluginDetail,
   pluginEnums,
   pluginsLoading,
   selectPlugin,
-  syncingDefaultSchema
+  saveBindingEdit,
+  savingBindingEdit,
+  startBindingEdit,
+  savingDefaultBindingDraft,
+  toggleActiveBindingEnabled,
+  togglingBindingEnabled,
+  updateDraftBindingModel,
+  updateDraftFieldMapping,
+  updateDraftGraphNode
 } = usePluginCenter()
+
+const { hasPermission } = usePermission()
+
+const canStartBindingEdit = computed(
+  () =>
+    !hasDefaultSchemaPreview.value &&
+    !hasBindingEditDraft.value &&
+    graphViewMode.value === "binding" &&
+    !!activeBindingDetail.value &&
+    hasPermission(CMDB_CAPABILITIES.Plugin.BindingUpsert)
+)
+
+const canToggleBindingEnabled = computed(
+  () =>
+    !!activeBindingDetail.value &&
+    !hasDefaultSchemaPreview.value &&
+    !hasBindingEditDraft.value &&
+    hasPermission(CMDB_CAPABILITIES.Plugin.BindingUpsert)
+)
+
+const handleDraftModelChange = (modelUid: unknown) => {
+  const binding = activeBindingDetail.value
+  if (!binding) return
+  updateDraftBindingModel(binding.uid, String(modelUid))
+}
 </script>
 
 <style lang="scss" scoped>
@@ -481,10 +569,74 @@ const {
   min-width: 0;
   height: 36px;
   margin: 0;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-weight: 700;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+
+  :deep(.el-icon) {
+    font-size: 15px;
+  }
+
+  &.is-create {
+    --el-button-text-color: #2563eb;
+    --el-button-bg-color: #f8fbff;
+    --el-button-border-color: #dbeafe;
+    --el-button-hover-text-color: #1d4ed8;
+    --el-button-hover-bg-color: #eff6ff;
+    --el-button-hover-border-color: #bfdbfe;
+    --el-button-active-text-color: #1d4ed8;
+    --el-button-active-bg-color: #dbeafe;
+    --el-button-active-border-color: #93c5fd;
+  }
+
+  &.is-save {
+    --el-button-text-color: #15803d;
+    --el-button-bg-color: #fbfefc;
+    --el-button-border-color: #dcfce7;
+    --el-button-hover-text-color: #166534;
+    --el-button-hover-bg-color: #f0fdf4;
+    --el-button-hover-border-color: #bbf7d0;
+    --el-button-active-text-color: #166534;
+    --el-button-active-bg-color: #dcfce7;
+    --el-button-active-border-color: #86efac;
+  }
+
+  &.is-secondary {
+    --el-button-text-color: #475569;
+    --el-button-bg-color: #ffffff;
+    --el-button-border-color: #cbd5e1;
+    --el-button-hover-text-color: #334155;
+    --el-button-hover-bg-color: #f8fafc;
+    --el-button-hover-border-color: #94a3b8;
+    --el-button-active-text-color: #334155;
+    --el-button-active-bg-color: #f1f5f9;
+    --el-button-active-border-color: #94a3b8;
+  }
+
+  &.is-cancel {
+    --el-button-text-color: #64748b;
+    --el-button-bg-color: #ffffff;
+    --el-button-border-color: #d7dde5;
+    --el-button-hover-text-color: #475569;
+    --el-button-hover-bg-color: #f8fafc;
+    --el-button-hover-border-color: #cbd5e1;
+    --el-button-active-text-color: #475569;
+    --el-button-active-bg-color: #f1f5f9;
+    --el-button-active-border-color: #cbd5e1;
+  }
 
   &.is-danger {
-    color: #dc2626;
+    --el-button-text-color: #b91c1c;
+    --el-button-bg-color: #ffffff;
+    --el-button-border-color: #fecaca;
+    --el-button-hover-text-color: #991b1b;
+    --el-button-hover-bg-color: #fef2f2;
+    --el-button-hover-border-color: #fca5a5;
+    --el-button-active-text-color: #991b1b;
+    --el-button-active-bg-color: #fee2e2;
+    --el-button-active-border-color: #f87171;
   }
 }
 
@@ -552,16 +704,115 @@ const {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .binding-tabs {
   display: flex;
   align-items: stretch;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
   max-width: 100%;
   overflow-x: auto;
   padding-bottom: 2px;
+}
+
+.stage-canvas {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.binding-status-panel {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: auto;
+  white-space: nowrap;
+
+  &.is-floating {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    z-index: 6;
+    margin-left: 0;
+  }
+}
+
+.binding-state-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 4px 8px 4px 10px;
+  color: #64748b;
+  background: #ffffff;
+  border: 1px solid #dbe3ed;
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition:
+    color 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    opacity 0.18s ease;
+
+  &.is-enabled {
+    color: #15803d;
+    background: #fbfefc;
+    border-color: #bbf7d0;
+
+    .binding-state-dot {
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+    }
+  }
+
+  &.is-disabled {
+    opacity: 0.62;
+  }
+}
+
+.binding-state-dot {
+  flex: 0 0 6px;
+  width: 6px;
+  height: 6px;
+  background: #94a3b8;
+  border-radius: 999px;
+}
+
+.binding-state-text {
+  color: currentColor;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.binding-state-divider {
+  width: 1px;
+  height: 16px;
+  background: #e2e8f0;
+}
+
+.binding-state-switch {
+  :deep(.el-switch__core) {
+    min-width: 32px;
+    height: 18px;
+    border-color: #cbd5e1;
+  }
+
+  :deep(.el-switch__action) {
+    width: 14px;
+    height: 14px;
+  }
+
+  &.is-checked :deep(.el-switch__core) {
+    border-color: #22c55e;
+    background-color: #22c55e;
+  }
 }
 
 .binding-tab {
@@ -715,6 +966,19 @@ const {
 
   .binding-tabs {
     width: 100%;
+  }
+
+  .binding-status-panel {
+    &:not(.is-floating) {
+      width: 100%;
+      justify-content: flex-end;
+      margin-left: 0;
+    }
+  }
+
+  .binding-status-panel.is-floating {
+    top: 12px;
+    left: 12px;
   }
 }
 

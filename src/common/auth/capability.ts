@@ -346,16 +346,8 @@ export const CMDB_CAPABILITIES = {
     View: "cmdb:plugin:view",
     /** 插件详情 */
     Detail: "cmdb:plugin:get",
-    /** 注册插件定义 */
-    DefinitionRegister: "cmdb:plugin:definition_register",
-    /** 保存插件定义 */
-    DefinitionUpsert: "cmdb:plugin:definition_upsert",
     /** 保存插件绑定 */
     BindingUpsert: "cmdb:plugin:binding_upsert",
-    /** 同步默认模型 */
-    SyncDefaultSchema: "cmdb:plugin:sync_default_schema",
-    /** 删除插件 */
-    Delete: "cmdb:plugin:delete",
     /** 查询资源插件动作 */
     ResourceActions: "cmdb:plugin:resource_actions",
     /** 批量查询资源插件动作 */

@@ -2,291 +2,245 @@
   <Drawer
     v-model="visible"
     title="插件详情"
-    subtitle="查看绑定、输入树和高级配置"
+    subtitle="插件定义、绑定模型与动作能力"
     :header-icon="Cpu"
-    size="40%"
+    size="46%"
     :show-footer="false"
   >
-    <div class="plugin-detail-container">
-      <div v-loading="loading" class="detail-drawer">
-        <template v-if="pluginDetail">
-          <!-- 基础信息 -->
-          <div class="detail-section">
-            <div class="section-title">
-              <div class="title-left">
-                <el-icon class="section-icon"><Document /></el-icon>
-                <span>基础信息</span>
-              </div>
-            </div>
-
-            <div class="detail-grid">
-              <div class="detail-card">
-                <div class="card-icon-box is-primary">
-                  <el-icon><Cpu /></el-icon>
-                </div>
-                <div class="card-content">
-                  <span class="detail-label">插件名称</span>
-                  <strong class="detail-value">{{ pluginDetail.plugin.name }}</strong>
-                </div>
-              </div>
-
-              <div class="detail-card">
-                <div class="card-icon-box is-warning">
-                  <el-icon><Key /></el-icon>
-                </div>
-                <div class="card-content">
-                  <span class="detail-label">插件 UID</span>
-                  <div class="value-with-action">
-                    <strong class="detail-value truncate">{{ pluginDetail.plugin.uid }}</strong>
-                    <el-button
-                      type="primary"
-                      link
-                      :icon="CopyDocument"
-                      class="copy-btn"
-                      @click="copyText(pluginDetail.plugin.uid)"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div class="detail-card">
-                <div class="card-icon-box is-success">
-                  <el-icon><Collection /></el-icon>
-                </div>
-                <div class="card-content">
-                  <span class="detail-label">插件类型</span>
-                  <strong class="detail-value">
-                    <el-tag size="small" type="success" effect="light" round>
-                      {{ pluginDetail.plugin.type }}
-                    </el-tag>
-                  </strong>
-                </div>
-              </div>
-
-              <div class="detail-card">
-                <div class="card-icon-box is-info">
-                  <el-icon><Connection /></el-icon>
-                </div>
-                <div class="card-content">
-                  <span class="detail-label">当前版本</span>
-                  <strong class="detail-value">{{ pluginDetail.plugin.version || "-" }}</strong>
-                </div>
-              </div>
+    <div v-loading="loading" class="detail-drawer">
+      <template v-if="pluginDetail">
+        <section class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Setting /></el-icon>
+              <span>插件概览</span>
             </div>
           </div>
 
-          <!-- 插件操作 -->
-          <div class="detail-section">
-            <div class="section-title">
-              <div class="title-left">
-                <el-icon class="section-icon"><Operation /></el-icon>
-                <span>操作列表</span>
+          <div class="overview-panel">
+            <div class="overview-main">
+              <div class="plugin-avatar">
+                <AppIcon name="Cpu" fallback="Box" />
               </div>
-              <div class="title-right">
-                <el-tag effect="plain" type="info" round class="count-tag">
-                  {{ pluginDetail.plugin.actions?.length || 0 }} 个操作
+              <div class="overview-heading">
+                <div class="overview-title-row">
+                  <h3>{{ pluginDetail.plugin.name }}</h3>
+                  <el-tag size="small" effect="plain">{{ pluginDetail.plugin.type }}</el-tag>
+                  <el-tag v-if="pluginDetail.plugin.version" size="small" type="info" effect="plain">
+                    v{{ pluginDetail.plugin.version }}
+                  </el-tag>
+                </div>
+                <p>{{ pluginDetail.plugin.uid }}</p>
+              </div>
+            </div>
+
+            <div class="overview-stats">
+              <div class="stat-item">
+                <span>绑定模型</span>
+                <strong>{{ pluginDetail.bindings.length }}</strong>
+              </div>
+              <div class="stat-item">
+                <span>启用绑定</span>
+                <strong>{{ enabledBindingCount }}</strong>
+              </div>
+              <div class="stat-item">
+                <span>动作能力</span>
+                <strong>{{ pluginDetail.plugin.actions?.length || 0 }}</strong>
+              </div>
+              <div class="stat-item">
+                <span>最近更新</span>
+                <strong>{{ formatTimestamp(pluginDetail.plugin.utime || pluginDetail.plugin.ctime) }}</strong>
+              </div>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-line">
+                <span>插件名称</span>
+                <strong>{{ pluginDetail.plugin.name }}</strong>
+              </div>
+              <div class="info-line">
+                <span>插件 UID</span>
+                <strong>{{ pluginDetail.plugin.uid }}</strong>
+              </div>
+              <div class="info-line">
+                <span>插件类型</span>
+                <strong>{{ pluginDetail.plugin.type }}</strong>
+              </div>
+              <div class="info-line">
+                <span>当前版本</span>
+                <strong>{{ pluginDetail.plugin.version || "-" }}</strong>
+              </div>
+              <div class="info-line">
+                <span>图谱节点</span>
+                <strong>{{ totalNodeCount }}</strong>
+              </div>
+              <div class="info-line">
+                <span>图谱边</span>
+                <strong>{{ totalEdgeCount }}</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Connection /></el-icon>
+              <span>绑定模型</span>
+            </div>
+            <div class="title-right">{{ pluginDetail.bindings.length }} 个绑定</div>
+          </div>
+
+          <div v-if="pluginDetail.bindings.length" class="binding-list">
+            <article v-for="binding in pluginDetail.bindings" :key="binding.uid" class="binding-item">
+              <div class="binding-header">
+                <div class="binding-model">
+                  <AppIcon :name="binding.model_icon" fallback="Box" class="binding-icon" />
+                  <div class="binding-copy">
+                    <strong>{{ binding.model_name || binding.model_uid }}</strong>
+                    <span>{{ binding.model_uid }}</span>
+                  </div>
+                </div>
+                <el-tag :type="binding.enabled ? 'success' : 'info'" effect="light" size="small">
+                  {{ binding.enabled ? "已启用" : "已停用" }}
                 </el-tag>
               </div>
-            </div>
 
-            <div v-if="pluginDetail.plugin.actions?.length" class="action-grid">
-              <div v-for="action in pluginDetail.plugin.actions" :key="action.action" class="action-card">
-                <div class="action-card-left">
-                  <div class="action-icon-box">
-                    <AppIcon :name="resolveActionIcon(action.icon)" fallback="Box" />
-                  </div>
-                  <div class="action-info">
-                    <span class="action-name">{{ action.name }}</span>
-                    <span class="action-code">{{ action.action }}</span>
-                  </div>
-                </div>
-                <div class="action-tags">
-                  <el-tag size="small" type="primary" effect="light">
-                    {{ uiLabelMap[action.ui] || action.ui }}
-                  </el-tag>
-                  <el-tag size="small" type="info" effect="plain">
-                    {{ placementLabelMap[action.placement] || action.placement }}
-                  </el-tag>
-                </div>
+              <div class="binding-meta">
+                <span>{{ binding.group_name || "未分组" }}</span>
+                <span>入口：{{ resolveEntryNodeName(binding) }}</span>
+                <span>{{ binding.graph?.nodes?.length || 0 }} 节点</span>
+                <span>{{ binding.graph?.edges?.length || 0 }} 边</span>
               </div>
+
+              <div v-if="binding.graph?.nodes?.length" class="node-strip">
+                <span v-for="node in resolveBindingNodes(binding)" :key="node.id" class="node-pill">
+                  {{ node.name || resolveModelName(node.model_uid) }}
+                </span>
+                <span v-if="(binding.graph?.nodes?.length || 0) > 6" class="node-more">
+                  +{{ (binding.graph?.nodes?.length || 0) - 6 }}
+                </span>
+              </div>
+            </article>
+          </div>
+          <el-empty v-else description="当前插件还没有绑定记录" :image-size="96" />
+        </section>
+
+        <section class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Operation /></el-icon>
+              <span>动作能力</span>
             </div>
-            <el-empty v-else description="当前插件没有定义操作" :image-size="110" />
+            <div class="title-right">{{ pluginDetail.plugin.actions?.length || 0 }} 个动作</div>
           </div>
 
-          <!-- 输入结构 -->
-          <div class="detail-section">
-            <div class="section-title">
-              <div class="title-left">
-                <el-icon class="section-icon"><Share /></el-icon>
-                <span>输入结构</span>
+          <div v-if="pluginDetail.plugin.actions?.length" class="action-list">
+            <article v-for="action in pluginDetail.plugin.actions" :key="action.action" class="action-item">
+              <div class="action-main">
+                <AppIcon :name="resolveActionIcon(action.icon)" fallback="Box" class="action-icon" />
+                <div class="action-copy">
+                  <strong>{{ action.name }}</strong>
+                  <span>{{ action.action }}</span>
+                </div>
               </div>
-              <div class="title-right">
-                <el-tag effect="plain" type="info" round class="count-tag">
-                  {{ pluginDetail.bindings.length }} 个绑定
+              <div class="action-tags">
+                <el-tag size="small" effect="plain">{{ uiLabelMap[action.ui] || action.ui }}</el-tag>
+                <el-tag size="small" type="info" effect="plain">
+                  {{ placementLabelMap[action.placement] || action.placement }}
                 </el-tag>
               </div>
-            </div>
-
-            <div v-if="pluginDetail.bindings.length" class="binding-list">
-              <div v-for="binding in pluginDetail.bindings" :key="binding.uid" class="binding-card">
-                <div class="binding-card-header">
-                  <div class="binding-header-copy">
-                    <div class="binding-title">
-                      <span class="binding-caption">挂载模型</span>
-                      <div class="model-info">
-                        <AppIcon :name="binding.model_icon" fallback="Box" class="model-icon" />
-                        <span class="model-name">
-                          {{ binding.model_name || binding.model_uid }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="binding-meta">
-                      <span class="meta-item">
-                        <span class="meta-label">分组:</span>
-                        <strong>{{ binding.group_name || "未分组" }}</strong>
-                      </span>
-                      <span class="meta-divider" />
-                      <span class="meta-item">
-                        <span class="meta-label">UID:</span>
-                        <strong class="uid-text">{{ binding.uid }}</strong>
-                      </span>
-                    </div>
-                  </div>
-                  <el-tag :type="binding.enabled ? 'success' : 'info'" effect="light" round>
-                    {{ binding.enabled ? "已启用" : "已停用" }}
-                  </el-tag>
-                </div>
-
-                <!-- 规格树规格节点 -->
-                <div v-if="binding.specs.length" class="spec-tree">
-                  <div v-for="spec in binding.specs" :key="`${binding.uid}-${spec.name}`" class="spec-tree-item">
-                    <div class="spec-node">
-                      <div class="spec-node-top">
-                        <span class="spec-node-dot" />
-                        <span class="spec-node-name">{{ spec.name }}</span>
-                        <el-tag size="small" type="info" effect="plain" round>
-                          {{ resolveModelName(spec.model_uid) }}
-                        </el-tag>
-                      </div>
-                      <div class="spec-node-tags">
-                        <el-tag size="small" :type="spec.direction === 'source' ? 'success' : 'warning'" effect="light">
-                          {{ directionLabelMap[spec.direction || ""] || "中心节点" }}
-                        </el-tag>
-                        <el-tag size="small" type="primary" effect="plain">
-                          {{ relationLabelMap[spec.relation_type || ""] || spec.relation_type || "无关联" }}
-                        </el-tag>
-                        <el-tag size="small" type="info" effect="plain">
-                          {{ cardinalityLabelMap[spec.cardinality] || spec.cardinality }}
-                        </el-tag>
-                      </div>
-                    </div>
-
-                    <!-- 子节点展示 -->
-                    <div v-if="spec.children?.length" class="spec-children">
-                      <div
-                        v-for="child in spec.children"
-                        :key="`${binding.uid}-${spec.name}-${child.name}`"
-                        class="spec-child-item"
-                      >
-                        <div class="child-left">
-                          <span class="child-arrow">└─</span>
-                          <span class="child-name">{{ child.name }}</span>
-                        </div>
-                        <el-tag size="small" type="info" effect="plain" round>
-                          {{ resolveModelName(child.model_uid) }}
-                        </el-tag>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 原始配置折叠 -->
-                <div class="binding-advanced">
-                  <el-collapse>
-                    <el-collapse-item :name="binding.uid">
-                      <template #title>
-                        <span class="collapse-title">查看原始绑定配置</span>
-                      </template>
-                      <div class="json-code-wrapper">
-                        <div class="code-header">
-                          <span>CONFIG JSON</span>
-                          <el-button
-                            type="primary"
-                            link
-                            :icon="CopyDocument"
-                            size="small"
-                            @click="copyText(formatJson(binding))"
-                          >
-                            复制
-                          </el-button>
-                        </div>
-                        <pre class="json-block">{{ formatJson(binding) }}</pre>
-                      </div>
-                    </el-collapse-item>
-                  </el-collapse>
-                </div>
-              </div>
-            </div>
-
-            <el-empty v-else description="当前插件还没有绑定记录" :image-size="110" />
+            </article>
           </div>
-        </template>
-      </div>
+          <el-empty v-else description="当前插件没有定义动作" :image-size="96" />
+        </section>
+
+        <section class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Document /></el-icon>
+              <span>原始数据</span>
+            </div>
+          </div>
+
+          <pre class="json-block">{{ formatJson(pluginDetail) }}</pre>
+        </section>
+      </template>
     </div>
   </Drawer>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { ElMessage } from "element-plus"
-import { Document, Cpu, Key, Collection, Connection, Share, CopyDocument, Operation } from "@element-plus/icons-vue"
+import { Connection, Cpu, Document, Operation, Setting } from "@element-plus/icons-vue"
 import { Drawer } from "@/common/components/Dialogs"
 import AppIcon from "@/common/components/AppIcon/index.vue"
-import { type PluginDetail, type PluginModelOption } from "@/api/cmdb/plugin/types/plugin"
+import { type PluginBindingDetail, type PluginDetail, type PluginModelOption } from "@/api/cmdb/plugin/types/plugin"
 
-// NOTE: 该组件为状态型 UI 组件（Drawer），其显隐状态需通过双向绑定与父组件进行同步，符合平台封装规范
 const visible = defineModel<boolean>({ default: false })
 
-interface Props {
+const props = defineProps<{
   loading: boolean
   pluginDetail: PluginDetail | null
   models: PluginModelOption[]
-}
+}>()
 
-const props = defineProps<Props>()
-
-// 关系标签字典映射
-const directionLabelMap: Record<string, string> = {
-  source: "源端关联",
-  target: "目标端关联"
-}
-
-const relationLabelMap: Record<string, string> = {
-  default: "默认关系",
-  group: "分组关系",
-  belong: "归属关系",
-  run: "运行关系"
-}
-
-const cardinalityLabelMap: Record<string, string> = {
-  one: "单个资源",
-  many: "多个资源"
+const placementLabelMap: Record<string, string> = {
+  "resource.detail.actions": "资源详情动作"
 }
 
 const uiLabelMap: Record<string, string> = {
-  "builtin:terminal": "内置终端",
-  "builtin:sftp": "内置 SFTP",
-  "builtin:web": "网页服务"
+  "builtin:terminal": "在线终端",
+  "builtin:sftp": "文件管理"
 }
 
-const placementLabelMap: Record<string, string> = {
-  "resource.detail.actions": "资源详情操作"
-}
-
-// 格式化 JSON
 const formatJson = (value: unknown) => JSON.stringify(value ?? {}, null, 2)
 
-// 解析操作图标名称，与拓扑图转换保持一致
+const enabledBindingCount = computed(() => props.pluginDetail?.bindings.filter((item) => item.enabled).length || 0)
+
+const totalNodeCount = computed(() =>
+  (props.pluginDetail?.bindings || []).reduce((count, binding) => count + (binding.graph?.nodes?.length || 0), 0)
+)
+
+const totalEdgeCount = computed(() =>
+  (props.pluginDetail?.bindings || []).reduce((count, binding) => count + (binding.graph?.edges?.length || 0), 0)
+)
+
+const modelNameMap = computed(() => {
+  return new Map(props.models.map((item) => [item.uid, item.name || item.uid]))
+})
+
+const normalizeTimestamp = (value: number) => {
+  return value > 0 && value < 1_000_000_000_000 ? value * 1000 : value
+}
+
+const formatTimestamp = (value?: number) => {
+  if (!value) return "-"
+  const date = new Date(normalizeTimestamp(value))
+  if (Number.isNaN(date.getTime())) return "-"
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date)
+}
+
+const resolveEntryNodeName = (binding: PluginBindingDetail) => {
+  const graph = binding.graph
+  if (!graph?.entry_node_id) return "-"
+  return graph.nodes?.find((node) => node.id === graph.entry_node_id)?.name || graph.entry_node_id
+}
+
+const resolveBindingNodes = (binding: PluginBindingDetail) => {
+  return binding.graph?.nodes?.slice(0, 6) || []
+}
+
+const resolveModelName = (modelUid?: string) => {
+  if (!modelUid) return "-"
+  return modelNameMap.value.get(modelUid) || modelUid
+}
+
 const resolveActionIcon = (icon?: string) => {
   const normalized = String(icon || "")
     .trim()
@@ -297,73 +251,31 @@ const resolveActionIcon = (icon?: string) => {
   if (normalized === "connection") return "Connection"
   return icon || "Box"
 }
-
-// 一键复制文本
-const copyText = async (text: string) => {
-  try {
-    await navigator.clipboard.writeText(text)
-    ElMessage.success("复制成功")
-  } catch (err) {
-    ElMessage.error("复制失败")
-  }
-}
-
-// 构建模型 UID -> 模型中文名的映射映射表，以期做到组件的高内聚
-const modelNameMap = computed(() => {
-  const map = new Map<string, string>()
-
-  if (props.models) {
-    for (const model of props.models) {
-      if (model.uid) {
-        map.set(model.uid, model.name || model.uid)
-      }
-    }
-  }
-
-  if (props.pluginDetail?.bindings) {
-    for (const binding of props.pluginDetail.bindings) {
-      if (binding.model_uid) {
-        map.set(binding.model_uid, binding.model_name || binding.model_uid)
-      }
-    }
-  }
-
-  return map
-})
-
-const resolveModelName = (modelUid?: string) => {
-  if (!modelUid) return "-"
-  return modelNameMap.value.get(modelUid) || modelUid
-}
 </script>
 
-<style lang="scss" scoped>
-.plugin-detail-container {
-  padding: 12px 16px;
-  background: #fdfdfe;
-  min-height: 100%;
-}
-
+<style scoped lang="scss">
 .detail-drawer {
   display: flex;
   flex-direction: column;
+  min-height: 100%;
+  padding: 12px 16px;
+  background: #fdfdfe;
 }
 
-.detail-section {
+.form-section {
   margin-bottom: 24px;
 }
 
-// 统一的 Section 标题样式（参照 TaskDrawer.vue 保持全平台一致）
 .section-title {
   display: flex;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  margin-bottom: 12px;
   padding: 8px 12px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 6px;
   border: 1px solid #e2e8f0;
   border-left: 4px solid #3b82f6;
-  justify-content: space-between;
+  border-radius: 6px;
 
   .title-left {
     display: flex;
@@ -372,477 +284,300 @@ const resolveModelName = (modelUid?: string) => {
 
   .section-icon {
     margin-right: 6px;
-    font-size: 16px;
     color: #3b82f6;
+    font-size: 16px;
   }
 
   span {
+    color: #374151;
     font-size: 14px;
     font-weight: 600;
-    color: #374151;
+  }
+
+  .title-right {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
   }
 }
 
-// 基础信息网格
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.detail-card {
+.overview-panel {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 14px;
   padding: 16px;
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  border: 1px solid #e7edf4;
+  border-radius: 8px;
+}
 
-  &:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+.overview-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.plugin-avatar {
+  display: inline-flex;
+  flex: 0 0 38px;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: #2563eb;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+}
+
+.overview-heading {
+  min-width: 0;
+  flex: 1;
+
+  h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.3;
   }
 
-  .card-icon-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    font-size: 18px;
-
-    &.is-primary {
-      background: #eff6ff;
-      color: #3b82f6;
-    }
-
-    &.is-warning {
-      background: #fffbeb;
-      color: #d97706;
-    }
-
-    &.is-success {
-      background: #f0fdf4;
-      color: #16a34a;
-    }
-
-    &.is-info {
-      background: #f1f5f9;
-      color: #475569;
-    }
-  }
-
-  .card-content {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .detail-label {
-    font-size: 11px;
-    font-weight: 600;
+  p {
+    margin: 5px 0 0;
+    overflow: hidden;
     color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-size: 12px;
+    line-height: 1.4;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.overview-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.overview-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px;
+  background: #fbfcfe;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+
+  span {
+    color: #64748b;
+    font-size: 12px;
   }
 
-  .detail-value {
+  strong {
+    overflow: hidden;
+    color: #0f172a;
     font-size: 13px;
     font-weight: 700;
-    color: #1e293b;
-
-    &.truncate {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  .value-with-action {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    min-width: 0;
-
-    .copy-btn {
-      padding: 0;
-      height: auto;
-      font-size: 14px;
-      color: #94a3b8;
-
-      &:hover {
-        color: #6366f1;
-      }
-    }
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
-// 操作网格
-.action-grid {
+.info-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
-.action-card {
+.info-line {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease-in-out;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #fbfcfe;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
 
-  &:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03);
+  span {
+    flex: 0 0 auto;
+    color: #64748b;
+    font-size: 12px;
   }
 
-  .action-card-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  strong {
     min-width: 0;
-    flex: 1;
-  }
-
-  .action-icon-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    background: #eef2ff;
-    color: #6366f1;
-    font-size: 16px;
-  }
-
-  .action-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    flex: 1;
-
-    .action-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1e293b;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .action-code {
-      font-family: Menlo, Monaco, Consolas, monospace;
-      font-size: 11px;
-      color: #94a3b8;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  .action-tags {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 6px;
-    flex-shrink: 0;
-  }
-}
-
-// 绑定模型卡片列表
-.binding-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.binding-card {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 18px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.binding-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px dashed #e2e8f0;
-  padding-bottom: 14px;
-
-  .binding-header-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .binding-title {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .binding-caption {
-    font-size: 10px;
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 13px;
     font-weight: 700;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .model-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .model-icon {
-      font-size: 16px;
-      color: #6366f1;
-    }
-
-    .model-name {
-      font-size: 14px;
-      font-weight: 700;
-      color: #0f172a;
-    }
-  }
-
-  .binding-meta {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-
-    .meta-item {
-      font-size: 12px;
-      color: #64748b;
-
-      .meta-label {
-        margin-right: 4px;
-      }
-
-      strong {
-        color: #334155;
-        font-weight: 600;
-      }
-
-      .uid-text {
-        font-family: Menlo, Monaco, Consolas, monospace;
-        font-size: 11px;
-      }
-    }
-
-    .meta-divider {
-      width: 4px;
-      height: 4px;
-      background: #cbd5e1;
-      border-radius: 50%;
-    }
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 
-// 规格树节点设计
-.spec-tree {
+.binding-list,
+.action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.binding-item,
+.action-item {
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.spec-tree-item {
   padding: 14px;
-  background: #f8fafc;
-  border: 1px solid #f1f5f9;
+  background: #ffffff;
+  border: 1px solid #e7edf4;
   border-radius: 8px;
 }
 
-.spec-node {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-
-  .spec-node-top {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-
-    .spec-node-dot {
-      width: 6px;
-      height: 6px;
-      background: #6366f1;
-      border-radius: 50%;
-    }
-
-    .spec-node-name {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-  }
-
-  .spec-node-tags {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-    padding-left: 14px;
-  }
+.binding-header,
+.action-item {
+  align-items: stretch;
 }
 
-.spec-children {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-  padding-left: 14px;
-  border-left: 2px dashed #cbd5e1;
-}
-
-.spec-child-item {
+.binding-header {
   display: flex;
   justify-content: space-between;
+  gap: 12px;
+}
+
+.binding-model,
+.action-main {
+  display: flex;
   align-items: center;
-  padding: 4px 0 4px 8px;
-
-  .child-left {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    .child-arrow {
-      color: #94a3b8;
-      font-family: monospace;
-    }
-
-    .child-name {
-      font-size: 12px;
-      font-weight: 600;
-      color: #475569;
-    }
-  }
+  gap: 10px;
+  min-width: 0;
 }
 
-// JSON 折叠面板代码框优化
-.binding-advanced {
-  :deep(.el-collapse) {
-    border: none;
-  }
-
-  :deep(.el-collapse-item__header) {
-    border: none;
-    height: 36px;
-    line-height: 36px;
-    background: transparent;
-  }
-
-  :deep(.el-collapse-item__wrap) {
-    border: none;
-    background: transparent;
-  }
-
-  .collapse-title {
-    font-size: 12px;
-    font-weight: 600;
-    color: #6366f1;
-    cursor: pointer;
-
-    &:hover {
-      color: #4f46e5;
-    }
-  }
+.binding-icon,
+.action-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  color: #2563eb;
 }
 
-.json-code-wrapper {
-  margin-top: 8px;
-  border: 1px solid #0f172a;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+.binding-copy,
+.action-copy {
+  min-width: 0;
 
-  .code-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #1e293b;
-    padding: 8px 16px;
-    border-bottom: 1px solid #334155;
-    color: #94a3b8;
-    font-family: Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
+  strong,
+  span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  strong {
+    color: #0f172a;
+    font-size: 13px;
     font-weight: 700;
   }
 
-  .json-block {
-    margin: 0;
-    padding: 16px;
-    max-height: 260px;
-    overflow-y: auto;
-    color: #e2e8f0;
-    background: #0f172a;
-    font-family:
-      Menlo,
-      Monaco,
-      Fira Code,
-      Consolas,
-      monospace;
+  span {
+    margin-top: 3px;
+    color: #64748b;
     font-size: 12px;
-    line-height: 1.6;
-    text-align: left;
   }
 }
 
-@media (max-width: 640px) {
-  .plugin-detail-container {
-    padding: 12px 12px;
-  }
+.binding-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 
-  .detail-grid {
+  span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 0 8px;
+    color: #475569;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    font-size: 12px;
+  }
+}
+
+.node-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.node-pill,
+.node-more {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0 8px;
+  color: #1e3a8a;
+  background: #f8fbff;
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.action-item {
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.action-tags {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.json-block {
+  max-height: 520px;
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+  .overview-stats,
+  .info-grid {
     grid-template-columns: 1fr;
   }
 
-  .action-grid {
-    grid-template-columns: 1fr;
+  .action-item,
+  .binding-header {
+    flex-direction: column;
   }
 
-  .action-card {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-
-    .action-tags {
-      flex-direction: row;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 8px;
-    }
-  }
-
-  .binding-card-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-
-    .el-tag {
-      align-self: flex-start;
-    }
+  .action-tags {
+    justify-content: flex-start;
   }
 }
 </style>

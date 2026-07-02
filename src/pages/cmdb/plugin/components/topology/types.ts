@@ -1,4 +1,4 @@
-import type { ActionSpec, ResourceSpec } from "@/api/cmdb/plugin/types/plugin"
+import type { ActionSpec, BindingGraphEdge, BindingGraphNode } from "@/api/cmdb/plugin/types/plugin"
 
 export type TopologyMode = "binding" | "action"
 
@@ -12,11 +12,11 @@ export type TopologyNodeData = {
   cardinality?: string
   relation_type?: string
   direction?: string
-  path?: string
   subtitle?: string
-  spec?: ResourceSpec
+  graphNode?: BindingGraphNode
+  relationEdge?: BindingGraphEdge
   action?: ActionSpec
-  rootSpec?: ResourceSpec
+  rootGraphNode?: BindingGraphNode
 }
 
-export type TopologyNodeCommand = "detail" | "focus-root" | "fit"
+export type TopologyNodeCommand = "detail" | "edit" | "focus-root" | "fit"

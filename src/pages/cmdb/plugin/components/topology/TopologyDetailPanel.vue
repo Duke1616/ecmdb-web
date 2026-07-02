@@ -13,6 +13,21 @@
     </div>
 
     <template v-if="selectedNodeData.kind === 'binding'">
+      <div v-if="editable" class="panel-section">
+        <div class="panel-section-title">绑定设置</div>
+        <div class="binding-editor">
+          <label class="editor-field">
+            <span>挂载模型</span>
+            <ModelPicker
+              :model-value="binding.model_uid"
+              :models="models"
+              placeholder="选择模型"
+              @change="(modelUid) => emit('update-binding-model', String(modelUid))"
+            />
+          </label>
+        </div>
+      </div>
+
       <div class="panel-summary">
         <div class="summary-line">
           <span>挂载模型</span>
@@ -20,7 +35,7 @@
         </div>
         <div class="summary-line">
           <span>{{ isActionMode ? "当前视图" : "主资源输入" }}</span>
-          <strong>{{ isActionMode ? "动作能力" : selectedRootSpec?.name || "-" }}</strong>
+          <strong>{{ isActionMode ? "动作能力" : selectedRootGraphNode?.name || "-" }}</strong>
         </div>
         <div class="summary-line">
           <span>动作</span>
@@ -32,7 +47,18 @@
         </div>
       </div>
 
-      <div v-if="!isActionMode && rootFieldEntries.length" class="panel-section">
+      <div v-if="editable && !isActionMode && selectedRootGraphNode" class="panel-section">
+        <TopologySpecEditor
+          title="主资源输入"
+          :can-show-relation="false"
+          :models="models"
+          :node="selectedRootGraphNode"
+          @update-field-mapping="(node, input, nextValue) => emit('update-field-mapping', node, input, nextValue)"
+          @update-node="(node, patch) => emit('update-node', node, patch)"
+        />
+      </div>
+
+      <div v-else-if="!isActionMode && rootFieldEntries.length" class="panel-section">
         <div class="panel-section-title">主资源字段映射</div>
         <div class="field-list">
           <div v-for="[field, value] in rootFieldEntries" :key="`root-${field}`" class="field-item">
@@ -63,73 +89,90 @@
       </div>
     </template>
 
-    <template v-else-if="selectedSpecNode">
-      <div class="panel-summary">
-        <div class="summary-line">
-          <span>数量</span>
-          <strong>{{ cardinalityLabelMap[selectedSpecNode.cardinality] || selectedSpecNode.cardinality }}</strong>
-        </div>
-        <div class="summary-line">
-          <span>必需</span>
-          <strong>{{ selectedSpecNode.required ? "是" : "否" }}</strong>
-        </div>
-        <div class="summary-line">
-          <span>关系</span>
-          <strong>{{
-            relationLabelMap[selectedSpecNode.relation_type || ""] || selectedSpecNode.relation_type || "根节点"
-          }}</strong>
-        </div>
-        <div class="summary-line">
-          <span>方向</span>
-          <strong>{{
-            directionLabelMap[selectedSpecNode.direction || ""] ||
-            (selectedSpecNode.direction ? selectedSpecNode.direction : "绑定资源")
-          }}</strong>
-        </div>
-      </div>
+    <template v-else-if="selectedGraphNode">
+      <TopologySpecEditor
+        v-if="editable && selectedGraphNode"
+        title="链路节点"
+        :models="models"
+        :direction="selectedNodeData.direction"
+        :node="selectedGraphNode"
+        :relation-type="selectedNodeData.relation_type"
+        @update-field-mapping="(node, input, nextValue) => emit('update-field-mapping', node, input, nextValue)"
+        @update-node="(node, patch) => emit('update-node', node, patch)"
+      />
 
-      <div class="panel-section">
-        <div class="panel-section-title">字段映射</div>
-        <div v-if="fieldEntries.length" class="field-list">
-          <div v-for="[field, value] in fieldEntries" :key="`${selectedSpecNode.name}-${field}`" class="field-item">
-            <span class="field-name">{{ field }}</span>
-            <span class="field-arrow">-></span>
-            <span class="field-value">{{ value }}</span>
+      <template v-else>
+        <div class="panel-summary">
+          <div class="summary-line">
+            <span>数量</span>
+            <strong>{{ cardinalityLabelMap[selectedGraphNode.cardinality] || selectedGraphNode.cardinality }}</strong>
+          </div>
+          <div class="summary-line">
+            <span>必需</span>
+            <strong>{{ selectedGraphNode.required ? "是" : "否" }}</strong>
+          </div>
+          <div class="summary-line">
+            <span>关系</span>
+            <strong>{{
+              relationLabelMap[selectedNodeData.relation_type || ""] || selectedNodeData.relation_type || "根节点"
+            }}</strong>
+          </div>
+          <div class="summary-line">
+            <span>方向</span>
+            <strong>{{
+              directionLabelMap[selectedNodeData.direction || ""] || selectedNodeData.direction || "绑定资源"
+            }}</strong>
           </div>
         </div>
-        <div v-else class="section-empty">没有字段映射</div>
-      </div>
 
-      <div v-if="selectedSpecNode.required_fields?.length" class="panel-section">
-        <div class="panel-section-title">必填字段</div>
-        <div class="tag-list">
-          <span v-for="field in selectedSpecNode.required_fields" :key="field" class="field-tag is-required">
-            {{ field }}
-          </span>
+        <div class="panel-section">
+          <div class="panel-section-title">字段映射</div>
+          <div v-if="fieldEntries.length" class="field-list">
+            <div v-for="[field, value] in fieldEntries" :key="`${selectedGraphNode.name}-${field}`" class="field-item">
+              <span class="field-name">{{ field }}</span>
+              <span class="field-arrow">-></span>
+              <span class="field-value">{{ value }}</span>
+            </div>
+          </div>
+          <div v-else class="section-empty">没有字段映射</div>
         </div>
-      </div>
 
-      <div v-if="selectedSpecNode.filters?.length" class="panel-section">
-        <div class="panel-section-title">过滤条件</div>
-        <div class="filter-list">
-          <div
-            v-for="filter in selectedSpecNode.filters"
-            :key="`${filter.field}-${filter.operator}-${String(filter.value)}`"
-            class="filter-item"
-          >
-            <span>{{ filter.field }}</span>
-            <span>{{ filter.operator }}</span>
-            <span>{{ String(filter.value) }}</span>
+        <div v-if="selectedGraphNode?.field_mappings?.some((mapping) => mapping.required)" class="panel-section">
+          <div class="panel-section-title">必填字段</div>
+          <div class="tag-list">
+            <span
+              v-for="mapping in selectedGraphNode?.field_mappings?.filter((item) => item.required) || []"
+              :key="mapping.input"
+              class="field-tag is-required"
+            >
+              {{ mapping.input }}
+            </span>
           </div>
         </div>
-      </div>
+
+        <div v-if="selectedGraphNode.filters?.length" class="panel-section">
+          <div class="panel-section-title">过滤条件</div>
+          <div class="filter-list">
+            <div
+              v-for="filter in selectedGraphNode.filters || []"
+              :key="`${filter.field}-${filter.operator}-${String(filter.value)}`"
+              class="filter-item"
+            >
+              <span>{{ filter.field }}</span>
+              <span>{{ filter.operator }}</span>
+              <span>{{ String(filter.value) }}</span>
+            </div>
+          </div>
+        </div>
+      </template>
     </template>
   </aside>
 </template>
 
 <script setup lang="ts">
 import { Close } from "@element-plus/icons-vue"
-import type { PluginBindingDetail, ResourceSpec } from "@/api/cmdb/plugin/types/plugin"
+import type { BindingGraphNode, PluginBindingDetail, PluginModelOption } from "@/api/cmdb/plugin/types/plugin"
+import { ModelPicker } from "@/common/components/Pickers"
 import {
   actionPlacementLabelMap,
   actionUiLabelMap,
@@ -137,6 +180,7 @@ import {
   directionLabelMap,
   relationLabelMap
 } from "./usePluginTopologyGraph"
+import TopologySpecEditor from "./TopologySpecEditor.vue"
 import type { TopologyNodeData } from "./types"
 
 defineProps<{
@@ -144,19 +188,24 @@ defineProps<{
   actionsCount: number
   binding: PluginBindingDetail
   compact: boolean
+  editable?: boolean
   fieldEntries: Array<[string, string]>
   isActionMode: boolean
+  models: PluginModelOption[]
+  selectedGraphNode: BindingGraphNode | null
   panelChip: string
   panelTitle: string
   rootFieldEntries: Array<[string, string]>
   selectedNodeData: TopologyNodeData
-  selectedRootSpec: ResourceSpec | null
-  selectedSpecNode: ResourceSpec | null
+  selectedRootGraphNode: BindingGraphNode | null
   specNodeCount: number
 }>()
 
 const emit = defineEmits<{
   close: []
+  "update-binding-model": [modelUid: string]
+  "update-node": [node: BindingGraphNode, patch: Partial<BindingGraphNode>]
+  "update-field-mapping": [node: BindingGraphNode, input: string, nextValue: string]
 }>()
 </script>
 
@@ -314,6 +363,32 @@ const emit = defineEmits<{
   color: #475569;
   font-size: 12px;
   font-weight: 700;
+}
+
+.binding-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+
+  > span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  &.is-inline {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 32px;
+  }
 }
 
 .section-empty {

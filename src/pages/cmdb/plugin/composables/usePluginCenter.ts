@@ -1,22 +1,26 @@
 import { computed, onMounted, ref, watch } from "vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import {
-  deletePluginApi,
+  getDefaultPluginDefinitionApi,
   getPluginDetailApi,
   listPluginEnumsApi,
   listPluginsApi,
-  syncDefaultSchemaApi
+  savePluginBindingsApi,
+  updatePluginBindingEnabledApi
 } from "@/api/cmdb/plugin"
 import {
   PLUGIN_DIRECTION,
   PLUGIN_RELATION_TYPE,
   type Binding,
+  type BindingGraph,
+  type BindingGraphNode,
+  type FieldMapping,
   type Definition,
   type PluginDetail,
   type PluginListItem,
-  type PluginManagementEnums
+  type PluginManagementEnums,
+  type PluginModelOption
 } from "@/api/cmdb/plugin/types/plugin"
-import { createSSHDefinitionTemplate } from "../constants/templates"
 
 const directionLabelMap: Record<string, string> = {
   [PLUGIN_DIRECTION.Source]: "源端关联",
@@ -37,21 +41,24 @@ const cardinalityLabelMap: Record<string, string> = {
 
 const formatJson = (value: unknown) => JSON.stringify(value ?? {}, null, 2)
 
-const defaultDefinitionFactories: Record<string, () => Definition> = {
-  "builtin.ssh": createSSHDefinitionTemplate
-}
+const TEMPLATE_MODEL_GROUP = "保存后自动创建"
 
 export const usePluginCenter = () => {
   const keyword = ref("")
   const pluginsLoading = ref(false)
   const detailLoading = ref(false)
-  const syncingDefaultSchema = ref(false)
+  const savingDefaultBindingDraft = ref(false)
+  const savingBindingEdit = ref(false)
+  const togglingBindingEnabled = ref(false)
 
   const plugins = ref<PluginListItem[]>([])
   const pluginEnums = ref<PluginManagementEnums | null>(null)
   const activePluginUid = ref("")
   const pluginDetail = ref<PluginDetail | null>(null)
   const pendingDefaultSchemaPluginUid = ref("")
+  const editingBindingPluginUid = ref("")
+  const bindingEditSnapshot = ref<PluginDetail | null>(null)
+  const bindingEditActiveBindingUid = ref("")
 
   const detailVisible = ref(false)
   const activeBindingUid = ref("")
@@ -66,8 +73,6 @@ export const usePluginCenter = () => {
     })
   })
 
-  const enabledCount = computed(() => plugins.value.filter((item) => item.enabled).length)
-
   const activePluginCard = computed(() => {
     return filteredPlugins.value.find((item) => item.uid === activePluginUid.value) || filteredPlugins.value[0] || null
   })
@@ -75,6 +80,12 @@ export const usePluginCenter = () => {
   const hasDefaultSchemaPreview = computed(
     () => Boolean(activePluginCard.value?.uid) && pendingDefaultSchemaPluginUid.value === activePluginCard.value?.uid
   )
+
+  const hasBindingEditDraft = computed(
+    () => Boolean(activePluginCard.value?.uid) && editingBindingPluginUid.value === activePluginCard.value?.uid
+  )
+
+  const isTopologyEditable = computed(() => hasDefaultSchemaPreview.value || hasBindingEditDraft.value)
 
   const modelNameMap = computed(() => {
     const map = new Map<string, string>()
@@ -108,9 +119,85 @@ export const usePluginCenter = () => {
     return bindings.find((item) => item.uid === activeBindingUid.value) || bindings[0]
   })
 
+  const collectGraphModelUids = (graph: BindingGraph | undefined, collector: Set<string>) => {
+    graph?.nodes?.forEach((node) => {
+      if (node.model_uid) {
+        collector.add(node.model_uid)
+      }
+    })
+  }
+
+  const modelOptions = computed<PluginModelOption[]>(() => {
+    const map = new Map<string, PluginModelOption>()
+
+    for (const model of pluginEnums.value?.models || []) {
+      map.set(model.uid, model)
+    }
+
+    const draftModelUids = new Set<string>()
+    for (const binding of pluginDetail.value?.bindings || []) {
+      if (binding.model_uid) {
+        draftModelUids.add(binding.model_uid)
+      }
+      collectGraphModelUids(binding.graph, draftModelUids)
+    }
+
+    for (const uid of draftModelUids) {
+      if (!map.has(uid)) {
+        map.set(uid, {
+          uid,
+          name: uid,
+          group_name: TEMPLATE_MODEL_GROUP,
+          builtin: false
+        })
+      }
+    }
+
+    return Array.from(map.values())
+  })
+
   const resolveModelName = (modelUid?: string) => {
     if (!modelUid) return "-"
     return modelNameMap.value.get(modelUid) || modelUid
+  }
+
+  const resolveModelOption = (modelUid?: string) => {
+    if (!modelUid) return null
+    return modelOptions.value.find((item) => item.uid === modelUid) || null
+  }
+
+  const buildDefinitionModelMap = (definition: Definition) => {
+    const map = new Map<string, PluginModelOption>()
+
+    for (const model of definition.schema?.models || []) {
+      map.set(model.uid, {
+        uid: model.uid,
+        name: model.name || model.uid,
+        group_name: model.group_name,
+        icon: model.icon,
+        builtin: model.builtin ?? false
+      })
+    }
+
+    for (const model of pluginEnums.value?.models || []) {
+      if (!map.has(model.uid)) {
+        map.set(model.uid, model)
+      }
+    }
+
+    return map
+  }
+
+  const buildBindingUid = (pluginUid: string, modelUid: string) => {
+    const normalized = modelUid.trim().replace(/[^a-zA-Z0-9_.-]/g, "-")
+    return `${pluginUid}.${normalized || "binding"}`
+  }
+
+  const cloneBinding = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
+
+  const getEntryNode = (graph?: BindingGraph) => {
+    if (!graph?.entry_node_id) return null
+    return graph.nodes.find((node) => node.id === graph.entry_node_id) || null
   }
 
   const ensureActivePlugin = () => {
@@ -145,20 +232,28 @@ export const usePluginCenter = () => {
   const selectPlugin = (uid: string) => {
     if (activePluginUid.value !== uid) {
       pendingDefaultSchemaPluginUid.value = ""
+      editingBindingPluginUid.value = ""
+      bindingEditSnapshot.value = null
+      bindingEditActiveBindingUid.value = ""
     }
     activePluginUid.value = uid
   }
 
-  const loadDefaultSchemaPreview = (item: PluginListItem) => {
-    const createDefinition = defaultDefinitionFactories[item.uid]
-    if (!createDefinition) {
-      ElMessage.warning("当前插件没有可同步的默认模型模板")
+  const loadDefaultSchemaPreview = async (item: PluginListItem) => {
+    let definition: Definition
+    try {
+      const { data } = await getDefaultPluginDefinitionApi(item.uid)
+      definition = data
+    } catch (error) {
+      console.error("[PluginPage] load default definition failed", error)
+      ElMessage.warning("当前插件没有可加载的默认绑定模板")
       return
     }
 
-    const definition = createDefinition()
+    const definitionModels = buildDefinitionModelMap(definition)
+
     const toPreviewBinding = (binding: Binding) => {
-      const model = pluginEnums.value?.models.find((item) => item.uid === binding.model_uid)
+      const model = definitionModels.get(binding.model_uid)
       return {
         id: binding.id || 0,
         uid: binding.uid,
@@ -168,22 +263,179 @@ export const usePluginCenter = () => {
         group_name: model?.group_name,
         model_icon: model?.icon,
         enabled: binding.enabled,
-        specs: binding.specs,
-        config: binding.config || {}
+        graph: cloneBinding(binding.graph)
       }
     }
 
-    pluginDetail.value = {
+    const detail: PluginDetail = {
       plugin: {
         ...definition.plugin,
-        id: item.id,
-        enabled: item.enabled
+        id: item.id
       },
       bindings: definition.bindings.map(toPreviewBinding)
     }
-    activeBindingUid.value = pluginDetail.value.bindings[0]?.uid || ""
+    pluginDetail.value = detail
+    activeBindingUid.value = detail.bindings[0]?.uid || ""
     pendingDefaultSchemaPluginUid.value = item.uid
-    ElMessage.success("默认模型已加载到拓扑预览，确认无误后点击保存")
+    detailVisible.value = false
+    ElMessage.success("默认模型已加载为草稿，可调整绑定后保存")
+  }
+
+  const cancelDefaultSchemaPreview = async (uid?: string) => {
+    if (!hasDefaultSchemaPreview.value) return
+
+    try {
+      await ElMessageBox.confirm(
+        "将放弃当前未保存的模型草稿，并恢复为数据库中的绑定详情。确定取消吗？",
+        "取消模型草稿",
+        {
+          confirmButtonText: "取消草稿",
+          cancelButtonText: "继续编辑",
+          type: "warning"
+        }
+      )
+    } catch (error) {
+      if (error === "cancel" || error === "close") return
+      throw error
+    }
+
+    const pluginUid = uid || activePluginCard.value?.uid
+    pendingDefaultSchemaPluginUid.value = ""
+    detailVisible.value = false
+
+    if (pluginUid) {
+      await refreshPluginDetail(pluginUid)
+    } else {
+      pluginDetail.value = null
+      activeBindingUid.value = ""
+    }
+    ElMessage.success("已取消模型草稿")
+  }
+
+  const startBindingEdit = async (uid?: string) => {
+    const pluginUid = uid || activePluginCard.value?.uid
+    if (!pluginUid) return
+    if (!pluginDetail.value || pluginDetail.value.plugin.uid !== pluginUid) {
+      await refreshPluginDetail(pluginUid)
+    }
+    if (!pluginDetail.value) return
+
+    bindingEditSnapshot.value = cloneBinding(pluginDetail.value)
+    bindingEditActiveBindingUid.value = activeBindingUid.value
+    editingBindingPluginUid.value = pluginUid
+    detailVisible.value = false
+    ElMessage.success("已进入绑定编辑模式")
+  }
+
+  const cancelBindingEdit = async () => {
+    if (!hasBindingEditDraft.value) return
+    try {
+      await ElMessageBox.confirm("将放弃当前未保存的绑定修改。确定取消吗？", "取消绑定编辑", {
+        confirmButtonText: "取消编辑",
+        cancelButtonText: "继续编辑",
+        type: "warning"
+      })
+    } catch (error) {
+      if (error === "cancel" || error === "close") return
+      throw error
+    }
+
+    if (bindingEditSnapshot.value) {
+      pluginDetail.value = cloneBinding(bindingEditSnapshot.value)
+      activeBindingUid.value = bindingEditActiveBindingUid.value || pluginDetail.value.bindings[0]?.uid || ""
+    }
+    editingBindingPluginUid.value = ""
+    bindingEditSnapshot.value = null
+    bindingEditActiveBindingUid.value = ""
+    detailVisible.value = false
+    ElMessage.success("已取消绑定编辑")
+  }
+
+  const toBindingPayload = (binding: PluginDetail["bindings"][number]): Binding => ({
+    id: binding.id || undefined,
+    uid: binding.uid,
+    plugin_id: binding.plugin_id,
+    model_uid: binding.model_uid,
+    enabled: binding.enabled,
+    graph: cloneBinding(binding.graph)
+  })
+
+  const saveBindingEdit = async () => {
+    if (!hasBindingEditDraft.value || !pluginDetail.value) return
+    const pluginUid = pluginDetail.value.plugin.uid
+    try {
+      savingBindingEdit.value = true
+      await ElMessageBox.confirm("将保存当前插件绑定修改，保存后会立即写入数据库。确定继续吗？", "保存绑定编辑", {
+        confirmButtonText: "保存",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+
+      await savePluginBindingsApi({
+        plugin_id: pluginUid,
+        bindings: pluginDetail.value.bindings.map(toBindingPayload)
+      })
+      ElMessage.success("绑定修改已保存")
+      const nextActiveBindingUid = activeBindingUid.value
+      editingBindingPluginUid.value = ""
+      bindingEditSnapshot.value = null
+      bindingEditActiveBindingUid.value = ""
+      await loadPlugins()
+      await refreshPluginDetail(pluginUid)
+      if (pluginDetail.value?.bindings.some((binding) => binding.uid === nextActiveBindingUid)) {
+        activeBindingUid.value = nextActiveBindingUid
+      }
+    } catch (error) {
+      if (error === "cancel") return
+      console.error("[PluginPage] save binding edit failed", error)
+      ElMessage.error("绑定修改保存失败")
+    } finally {
+      savingBindingEdit.value = false
+    }
+  }
+
+  const updateDraftBindingModel = (bindingUid: string, modelUid: string) => {
+    if (!isTopologyEditable.value || !pluginDetail.value) return
+    const binding = pluginDetail.value.bindings.find((item) => item.uid === bindingUid)
+    const model = resolveModelOption(modelUid)
+    if (!binding || !model) return
+
+    const duplicated = pluginDetail.value.bindings.some(
+      (item) => item.uid !== bindingUid && item.model_uid === model.uid
+    )
+    if (duplicated) {
+      ElMessage.warning("该模型已存在绑定")
+      return
+    }
+
+    if (hasDefaultSchemaPreview.value) {
+      binding.uid = buildBindingUid(binding.plugin_id, model.uid)
+      activeBindingUid.value = binding.uid
+    }
+    binding.model_uid = model.uid
+    binding.model_name = model.name || model.uid
+    binding.group_name = model.group_name
+    binding.model_icon = model.icon
+    const entryNode = getEntryNode(binding.graph)
+    if (entryNode) {
+      entryNode.model_uid = model.uid
+    }
+  }
+
+  const updateDraftGraphNode = (node: BindingGraphNode, patch: Partial<BindingGraphNode>) => {
+    if (!isTopologyEditable.value) return
+    Object.assign(node, patch)
+  }
+
+  const updateDraftFieldMapping = (node: BindingGraphNode, input: string, nextValue: string) => {
+    if (!isTopologyEditable.value) return
+    node.field_mappings = (node.field_mappings || []).map((mapping): FieldMapping => {
+      if (mapping.input !== input) return mapping
+      return {
+        ...mapping,
+        resource_field: nextValue
+      }
+    })
   }
 
   const refreshPluginDetail = async (uid: string) => {
@@ -204,46 +456,75 @@ export const usePluginCenter = () => {
     await refreshPluginDetail(uid)
   }
 
-  const handleDelete = async (item: PluginListItem) => {
+  const toggleActiveBindingEnabled = async () => {
+    const binding = activeBindingDetail.value
+    if (!binding || hasDefaultSchemaPreview.value || hasBindingEditDraft.value) {
+      return false
+    }
+
+    const nextEnabled = !binding.enabled
     try {
-      await ElMessageBox.confirm(`确定删除插件 ${item.name} (${item.uid}) 吗？`, "删除插件", {
-        type: "warning"
+      togglingBindingEnabled.value = true
+      await updatePluginBindingEnabledApi({
+        uid: binding.uid,
+        enabled: nextEnabled
       })
-      await deletePluginApi(item.uid)
-      ElMessage.success("插件已删除")
-      if (activePluginUid.value === item.uid) {
-        activePluginUid.value = ""
+
+      const target = pluginDetail.value?.bindings.find((item) => item.uid === binding.uid)
+      if (target) {
+        target.enabled = nextEnabled
       }
-      if (pluginDetail.value?.plugin.uid === item.uid) {
-        detailVisible.value = false
-        pluginDetail.value = null
-      }
-      await loadPlugins()
+      ElMessage.success(nextEnabled ? "绑定已启用" : "绑定已停用")
+      return true
     } catch (error) {
-      if (error === "cancel") return
-      console.error("[PluginPage] delete failed", error)
+      console.error("[PluginPage] toggle binding enabled failed", error)
+      ElMessage.error("绑定状态更新失败")
+      return false
+    } finally {
+      togglingBindingEnabled.value = false
     }
   }
 
-  const handleSyncDefaultSchema = async (item: PluginListItem) => {
+  const handleDefaultBindingDraft = async (item: PluginListItem) => {
     if (pendingDefaultSchemaPluginUid.value !== item.uid) {
-      loadDefaultSchemaPreview(item)
+      await loadDefaultSchemaPreview(item)
       return
     }
 
     try {
-      syncingDefaultSchema.value = true
-      await syncDefaultSchemaApi(item.uid)
-      ElMessage.success("默认模型同步成功")
+      savingDefaultBindingDraft.value = true
+      if (!pluginDetail.value) {
+        ElMessage.warning("没有可保存的模型草稿")
+        return
+      }
+
+      await ElMessageBox.confirm("将按当前图谱草稿保存插件模型绑定，保存后会写入数据库。确定继续吗？", "保存模型草稿", {
+        confirmButtonText: "保存",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+
+      await savePluginBindingsApi({
+        plugin_id: item.uid,
+        bindings: pluginDetail.value.bindings.map((binding) => ({
+          id: binding.id || undefined,
+          uid: binding.uid,
+          plugin_id: binding.plugin_id,
+          model_uid: binding.model_uid,
+          enabled: binding.enabled,
+          graph: cloneBinding(binding.graph)
+        }))
+      })
+      ElMessage.success("模型绑定草稿已保存")
       pendingDefaultSchemaPluginUid.value = ""
       await loadPlugins()
       await refreshPluginDetail(item.uid)
     } catch (error) {
       if (error === "cancel") return
-      console.error("[PluginPage] sync default schema failed", error)
-      ElMessage.error("默认模型同步失败")
+      console.error("[PluginPage] save default schema draft failed", error)
+      ElMessage.error("模型草稿保存失败")
     } finally {
-      syncingDefaultSchema.value = false
+      savingDefaultBindingDraft.value = false
     }
   }
 
@@ -254,10 +535,13 @@ export const usePluginCenter = () => {
         pluginDetail.value = null
         activeBindingUid.value = ""
         pendingDefaultSchemaPluginUid.value = ""
+        editingBindingPluginUid.value = ""
+        bindingEditSnapshot.value = null
+        bindingEditActiveBindingUid.value = ""
         return
       }
 
-      if (pendingDefaultSchemaPluginUid.value === plugin.uid) {
+      if (pendingDefaultSchemaPluginUid.value === plugin.uid || editingBindingPluginUid.value === plugin.uid) {
         return
       }
 
@@ -298,26 +582,37 @@ export const usePluginCenter = () => {
     activeBindingUid,
     activePluginCard,
     activePluginUid,
+    cancelDefaultSchemaPreview,
+    cancelBindingEdit,
     cardinalityLabelMap,
     detailLoading,
     detailVisible,
     directionLabelMap,
-    enabledCount,
     filteredPlugins,
     formatJson,
     graphViewMode,
-    handleDelete,
-    handleSyncDefaultSchema,
+    handleDefaultBindingDraft,
+    hasBindingEditDraft,
     hasDefaultSchemaPreview,
+    isTopologyEditable,
     keyword,
     loadPlugins,
     openDetailDrawer,
     pluginDetail,
     pluginEnums,
+    modelOptions,
     pluginsLoading,
     relationLabelMap,
     resolveModelName,
     selectPlugin,
-    syncingDefaultSchema
+    saveBindingEdit,
+    savingBindingEdit,
+    startBindingEdit,
+    savingDefaultBindingDraft,
+    toggleActiveBindingEnabled,
+    togglingBindingEnabled,
+    updateDraftBindingModel,
+    updateDraftFieldMapping,
+    updateDraftGraphNode
   }
 }

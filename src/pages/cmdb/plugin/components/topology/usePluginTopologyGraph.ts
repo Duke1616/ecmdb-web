@@ -6,10 +6,11 @@ import {
   PLUGIN_DIRECTION,
   PLUGIN_RELATION_TYPE,
   PLUGIN_UI,
-  type PluginBindingDetail,
-  type PluginModelOption,
   type ActionSpec,
-  type ResourceSpec
+  type BindingGraphEdge,
+  type BindingGraphNode,
+  type PluginBindingDetail,
+  type PluginModelOption
 } from "@/api/cmdb/plugin/types/plugin"
 import type { TopologyMode, TopologyNodeData } from "./types"
 
@@ -57,13 +58,13 @@ const resolveActionIcon = (icon?: string) => {
   return icon || "Box"
 }
 
-const buildLineText = (spec: ResourceSpec, isRoot = false) => {
+const buildNodeLineText = (node: BindingGraphNode, edge?: BindingGraphEdge, isRoot = false) => {
   if (isRoot) {
-    return spec.required ? "主资源输入" : "可选输入"
+    return node.required ? "主资源输入" : "可选输入"
   }
 
-  const relation = relationShortLabelMap[spec.relation_type || ""] || spec.relation_type || "关联"
-  const cardinality = cardinalityLabelMap[spec.cardinality] || spec.cardinality
+  const relation = relationShortLabelMap[edge?.relation_type || ""] || edge?.relation_type || "关联"
+  const cardinality = cardinalityLabelMap[node.cardinality] || node.cardinality
   return [relation, cardinality].filter(Boolean).join(" · ")
 }
 
@@ -133,31 +134,43 @@ export const usePluginTopologyGraph = (source: {
     })
     nodeMap.set(rootId, rootData)
 
-    let firstSpecNodeId = ""
+    let firstResourceNodeId = ""
     let firstActionNodeId = ""
 
-    const walk = (spec: ResourceSpec, parentId: string, path: string, isRoot = false) => {
-      const nodeId = `${binding.uid}:${path}`
-      if (!firstSpecNodeId) {
-        firstSpecNodeId = nodeId
+    const graph = binding.graph
+    const entryNode = graph?.nodes?.find((node) => node.id === graph.entry_node_id)
+    if (entryNode) {
+      rootData.rootGraphNode = entryNode
+      rootData.subtitle = entryNode.required ? "主资源输入" : entryNode.name
+    }
+
+    const walkGraph = (
+      node: BindingGraphNode,
+      edge: BindingGraphEdge | undefined,
+      parentId: string,
+      isRoot = false
+    ) => {
+      const nodeId = `${binding.uid}:${node.id}`
+      if (!firstResourceNodeId) {
+        firstResourceNodeId = nodeId
       }
 
       const nodeData: TopologyNodeData = {
         kind: "spec",
-        spec,
-        path,
-        model_uid: spec.model_uid,
-        model_name: resolveModelName(spec.model_uid),
-        subtitle: resolveModelName(spec.model_uid),
-        icon: resolveModelIcon(spec.model_uid),
-        cardinality: spec.cardinality,
-        relation_type: spec.relation_type,
-        direction: spec.direction
+        graphNode: node,
+        relationEdge: edge,
+        model_uid: node.model_uid,
+        model_name: resolveModelName(node.model_uid),
+        subtitle: resolveModelName(node.model_uid),
+        icon: resolveModelIcon(node.model_uid),
+        cardinality: node.cardinality,
+        relation_type: edge?.relation_type,
+        direction: edge?.direction
       }
 
       nodes.push({
         id: nodeId,
-        text: spec.name,
+        text: node.name,
         data: nodeData
       })
       nodeMap.set(nodeId, nodeData)
@@ -165,28 +178,25 @@ export const usePluginTopologyGraph = (source: {
       lines.push({
         from: parentId,
         to: nodeId,
-        text: buildLineText(spec, isRoot),
+        text: buildNodeLineText(node, edge, isRoot),
         color: isRoot ? "#38bdf8" : "#94a3b8",
         fontColor: isRoot ? "#0369a1" : "#64748b"
       })
 
-      spec.children?.forEach((child) => {
-        walk(child, nodeId, `${path}.${child.name}`)
+      const childEdges = graph?.edges?.filter((item) => item.from === node.id) || []
+      childEdges.forEach((childEdge) => {
+        const childNode = graph?.nodes?.find((item) => item.id === childEdge.to)
+        if (!childNode) return
+        walkGraph(childNode, childEdge, nodeId)
       })
     }
 
     if (mode !== "action") {
-      binding.specs.forEach((spec) => {
-        if (spec.model_uid === binding.model_uid) {
-          rootData.rootSpec = spec
-          rootData.subtitle = spec.required ? "主资源输入" : spec.name
-          spec.children?.forEach((child) => {
-            walk(child, rootId, `${spec.name}.${child.name}`)
-          })
-          return
-        }
-
-        walk(spec, rootId, spec.name, true)
+      const childEdges = graph?.edges?.filter((item) => item.from === entryNode?.id) || []
+      childEdges.forEach((childEdge) => {
+        const childNode = graph?.nodes?.find((item) => item.id === childEdge.to)
+        if (!childNode) return
+        walkGraph(childNode, childEdge, rootId, true)
       })
     }
 
@@ -230,14 +240,14 @@ export const usePluginTopologyGraph = (source: {
         lines
       } as RGJsonData,
       nodeMap,
-      preferredNodeId: mode === "action" ? firstActionNodeId || rootId : firstSpecNodeId || rootId
+      preferredNodeId: mode === "action" ? firstActionNodeId || rootId : firstResourceNodeId || rootId
     }
   })
 
   const graphData = computed(() => graphBundle.value.data)
   const selectedNodeData = computed(() => graphBundle.value.nodeMap.get(toValue(source.selectedNodeId)))
-  const selectedSpecNode = computed(() => selectedNodeData.value?.spec || null)
-  const selectedRootSpec = computed(() => selectedNodeData.value?.rootSpec || null)
+  const selectedGraphNode = computed(() => selectedNodeData.value?.graphNode || null)
+  const selectedRootGraphNode = computed(() => selectedNodeData.value?.rootGraphNode || null)
 
   return {
     actionNodeCount: computed(() => {
@@ -247,14 +257,22 @@ export const usePluginTopologyGraph = (source: {
       })
       return count
     }),
-    fieldEntries: computed(() => Object.entries(selectedSpecNode.value?.fields || {})),
+    fieldEntries: computed(() =>
+      (selectedGraphNode.value?.field_mappings || []).map(
+        (mapping) => [mapping.input, mapping.resource_field] as [string, string]
+      )
+    ),
     graphBundle,
     graphData,
-    rootFieldEntries: computed(() => Object.entries(selectedRootSpec.value?.fields || {})),
+    rootFieldEntries: computed(() =>
+      (selectedRootGraphNode.value?.field_mappings || []).map(
+        (mapping) => [mapping.input, mapping.resource_field] as [string, string]
+      )
+    ),
     rootNodeId: computed(() => graphData.value.rootId || ""),
     selectedNodeData,
-    selectedRootSpec,
-    selectedSpecNode,
+    selectedGraphNode,
+    selectedRootGraphNode,
     specNodeCount: computed(() => Math.max(graphBundle.value.nodeMap.size - 1, 0)),
     resolveModelName
   }
