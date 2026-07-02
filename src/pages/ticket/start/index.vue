@@ -101,7 +101,7 @@ import type { template } from "@/api/ticket/template/types/template"
 const { hasPermission } = usePermission()
 
 const canCreateTicket = computed(() => hasPermission(TICKET_CAPABILITIES.Manager.Submit))
-const canFavoriteTemplate = computed(() => hasPermission(TICKET_CAPABILITIES.Template.View))
+const canFavoriteTemplate = computed(() => hasPermission(TICKET_CAPABILITIES.Manager.Submit))
 
 const { selectedCategory, searchQuery } = useTemplateFilter()
 
