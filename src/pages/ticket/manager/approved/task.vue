@@ -82,9 +82,16 @@
                 </el-tooltip>
               </div>
 
-              <el-button size="small" plain type="warning" class="retry-button" @click="operateEvent(row, 'retry')">
+              <AuthButton
+                :capability="TICKET_CAPABILITIES.Task.Retry"
+                size="small"
+                plain
+                type="warning"
+                class="retry-button"
+                @click="operateEvent(row, 'retry')"
+              >
                 <el-icon><Refresh /></el-icon>重新执行
-              </el-button>
+              </AuthButton>
             </div>
           </div>
         </div>
@@ -127,8 +134,11 @@ import {
 } from "@/api/ticket/task"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import type { TagInfo } from "@/common/components/EnumTag/index.vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import TaskResultDialog from "@/pages/ticket/task-history/components/TaskResultDialog.vue"
 import TaskRetryDialog from "@/pages/ticket/task-history/components/TaskRetryDialog.vue"
+import { TICKET_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import dayjs from "dayjs"
 import type { JsonValue, TaskDialogType } from "./types"
 import { isTaskDialogType } from "./types"
@@ -137,6 +147,7 @@ interface Props {
   processInstId: number | undefined
 }
 const props = defineProps<Props>()
+const { hasPermission } = usePermission()
 
 const tasksData = ref<task[]>([])
 const loading = ref<boolean>(false)
@@ -247,6 +258,10 @@ const operateEvent = async (data: task, name: TaskOperation) => {
       resultVisible.value = true
       break
     case "retry":
+      if (!hasPermission(TICKET_CAPABILITIES.Task.Retry)) {
+        ElMessage.warning("暂无重试任务权限")
+        return
+      }
       retryDialogVisible.value = true
       break
   }
@@ -291,6 +306,12 @@ const handleSaveResult = async (data: { taskId: number; result: unknown; type: s
 }
 
 const handleRetryConfirm = async () => {
+  if (!hasPermission(TICKET_CAPABILITIES.Task.Retry)) {
+    ElMessage.warning("暂无重试任务权限")
+    retryDialogVisible.value = false
+    return
+  }
+
   retryLoading.value = true
 
   try {

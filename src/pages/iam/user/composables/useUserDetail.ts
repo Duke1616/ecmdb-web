@@ -33,16 +33,9 @@ export function useUserDetail() {
 
     loading.value = true
     try {
-      // 这里的 params 会被透传到 instance.get 的 query 中
-      const { data }: any = await userDetailApi(params)
-
-      // 兼容性处理：如果后端返回的是 { user: {...} } 则取 data.user，否则直接取 data
-      rawData.value = data.user ? data.user : data
-
-      // 如果有 tenants 字段也顺便存下来
-      if (data.tenants) {
-        userTenants.value = data.tenants
-      }
+      const { data } = await userDetailApi(params)
+      rawData.value = data.user
+      userTenants.value = data.tenants ?? []
     } catch (err: any) {
       console.error("[useUserDetail] Load failed:", err)
     } finally {

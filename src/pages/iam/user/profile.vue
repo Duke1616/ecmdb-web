@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { onMounted } from "vue"
 import { Edit, User } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
 import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import UserDialog from "./components/UserDialog.vue"
 import { useUserStore } from "@/pinia/stores/user"
-
-// Composables
-import { useUserDetail } from "./composables/useUserDetail"
+import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import { useUserDisplayItems } from "./composables/useUserDisplayItems"
 // Components
 import AuthGovernance from "./components/detail/AuthGovernance.vue"
@@ -15,24 +12,37 @@ import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 
 const userStore = useUserStore()
-
-const {
-  userInfo,
-  loading: detailLoading,
-  editVisible,
-  loadDetail,
-  handleEdit,
-  handleEditSuccess,
-  copyText
-} = useUserDetail()
+const { handleCopy } = useGovernanceActions()
+const editVisible = ref(false)
+const detailLoading = ref(false)
+const userInfo = computed(() => userStore.userInfo ?? undefined)
 
 const { statusItems, infoItems } = useUserDisplayItems(userInfo)
 
-// 初始加载详情
-onMounted(() => {
-  if (userStore.username) {
-    loadDetail(userStore.username)
+const refreshCurrent = async () => {
+  detailLoading.value = true
+  try {
+    await userStore.fetchCurrentUser()
+  } finally {
+    detailLoading.value = false
   }
+}
+
+const handleEdit = () => {
+  editVisible.value = true
+}
+
+const handleEditSuccess = () => {
+  editVisible.value = false
+  refreshCurrent()
+}
+
+const copyText = (text: string) => {
+  handleCopy(text, "标识信息")
+}
+
+onMounted(() => {
+  if (!userInfo.value) refreshCurrent()
 })
 </script>
 
@@ -58,7 +68,7 @@ onMounted(() => {
         <InfoCard title="我的身份实证资料" :icon="User" :items="infoItems" @copy="copyText" />
 
         <!-- 3. 治理内容区 -->
-        <AuthGovernance :user="userInfo" @refresh="() => loadDetail(userStore.username)" />
+        <AuthGovernance :user="userInfo" @refresh="refreshCurrent" />
       </div>
 
       <!-- 编辑自治弹窗 -->
