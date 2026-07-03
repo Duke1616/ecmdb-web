@@ -151,7 +151,13 @@ const tableColumns: Column[] = [
 const getOperateItems = (config: ConfigVO) => {
   return [
     { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: ALERT_CAPABILITIES.EscalationConfig.Edit },
-    { name: "管理步骤", code: "steps", type: "success", icon: Operation, capability: ALERT_CAPABILITIES.EscalationStep.View },
+    {
+      name: "管理步骤",
+      code: "steps",
+      type: "success",
+      icon: Operation,
+      capability: ALERT_CAPABILITIES.EscalationStep.View
+    },
     {
       name: config.enabled ? "禁用" : "启用",
       code: "toggle",
@@ -159,7 +165,13 @@ const getOperateItems = (config: ConfigVO) => {
       icon: config.enabled ? VideoPause : VideoPlay,
       capability: ALERT_CAPABILITIES.EscalationConfig.Toggle
     },
-    { name: "删除", code: "delete", type: "danger", icon: Delete, capability: ALERT_CAPABILITIES.EscalationConfig.Delete }
+    {
+      name: "删除",
+      code: "delete",
+      type: "danger",
+      icon: Delete,
+      capability: ALERT_CAPABILITIES.EscalationConfig.Delete
+    }
   ]
 }
 

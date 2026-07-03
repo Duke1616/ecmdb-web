@@ -154,15 +154,11 @@ watch(
   }
 )
 
-watch(
-  [currentroutes, activeMenu, () => settingsStore.expandSidebarOnPlatformEnter],
-  closeAllSubMenus,
-  {
-    immediate: true,
-    deep: true,
-    flush: "post"
-  }
-)
+watch([currentroutes, activeMenu, () => settingsStore.expandSidebarOnPlatformEnter], closeAllSubMenus, {
+  immediate: true,
+  deep: true,
+  flush: "post"
+})
 </script>
 
 <template>
