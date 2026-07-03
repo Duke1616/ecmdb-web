@@ -33,8 +33,8 @@ export function useUserDetail() {
 
     loading.value = true
     try {
-      const { data } = await userDetailApi(params)
-      rawData.value = data.user
+      const { data }: any = await userDetailApi(params)
+      rawData.value = data.user || data
       userTenants.value = data.tenants ?? []
     } catch (err: any) {
       console.error("[useUserDetail] Load failed:", err)
