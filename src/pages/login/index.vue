@@ -204,7 +204,7 @@
     </div>
 
     <!-- 租户选择弹窗 (用于 Passkey 登录后的多租户情况) -->
-    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
+    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" :username="loginUsername" />
 
     <!-- MFA 二次验证弹窗 -->
     <MfaVerifyModal v-model="showMfaVerify" :mfa-token="mfaToken" @success="handleMfaSuccess" />
@@ -251,6 +251,7 @@ const enabledProviders = ref<string[]>([])
 
 const showTenantSelect = ref(false)
 const tenantList = ref<Tenant[]>([])
+const loginUsername = ref("")
 const inviteInfo = ref<InvitationVO | null>(null)
 const showMfaVerify = ref(false)
 const mfaToken = ref("")
@@ -372,6 +373,7 @@ const handleLoginSuccess = (businessData: any) => {
 
   // 2. 租户选择拦截
   if (businessData.must_select_tenant) {
+    loginUsername.value = businessData.user?.username || ""
     tenantList.value = businessData.tenants
     showTenantSelect.value = true
     return

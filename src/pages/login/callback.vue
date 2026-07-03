@@ -16,7 +16,7 @@
     </div>
 
     <!-- NOTE: 飞书 OAuth2 回调也需要租户选择，与 login.vue 保持一致 -->
-    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
+    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" :username="loginUsername" />
   </div>
 </template>
 
@@ -38,6 +38,7 @@ const error = ref("")
 /** 租户选择相关 */
 const showTenantSelect = ref(false)
 const tenantList = ref<Tenant[]>([])
+const loginUsername = ref("")
 
 const goToLogin = () => {
   router.push("/login")
@@ -69,6 +70,7 @@ onMounted(async () => {
     // 如果后端返回了 must_select_tenant，弹出租户选择弹窗
     if (businessData && businessData.must_select_tenant) {
       loading.value = false
+      loginUsername.value = businessData.user?.username || ""
       tenantList.value = businessData.tenants
       showTenantSelect.value = true
     } else {

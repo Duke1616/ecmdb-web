@@ -44,7 +44,7 @@
     </el-button>
 
     <!-- 租户选择弹窗 -->
-    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" />
+    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" :username="loginFormData.username" />
 
     <!-- MFA 二次验证弹窗 -->
     <MfaVerifyModal v-model="showMfaVerify" :mfa-token="mfaToken" @success="handleLoginSuccess" />

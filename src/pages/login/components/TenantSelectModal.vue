@@ -5,9 +5,11 @@ import type { Tenant } from "@/api/iam/user/type"
 import { switchTenantApi } from "@/api/iam/tenant"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
+import { getTenantDisplayName } from "@/common/utils/tenant-display"
 
-defineProps<{
+const props = defineProps<{
   tenants: Tenant[]
+  username?: string
 }>()
 
 const visible = defineModel<boolean>({ default: false })
@@ -20,7 +22,7 @@ const handleSelect = async (tenant: Tenant) => {
   switching.value = true
   try {
     await switchTenantApi(tenant.id)
-    ElMessage.success(`欢迎进入：${tenant.name}`)
+    ElMessage.success(`欢迎进入：${getTenantDisplayName(tenant, props.username)}`)
     visible.value = false
     router.push("/")
   } finally {
@@ -55,7 +57,7 @@ const handleSelect = async (tenant: Tenant) => {
               <el-icon><OfficeBuilding /></el-icon>
             </div>
             <div class="card-body">
-              <div class="tenant-name">{{ item.name }}</div>
+              <div class="tenant-name">{{ getTenantDisplayName(item, props.username) }}</div>
               <div class="tenant-meta">
                 <span class="code-tag">ID: {{ item.code }}</span>
                 <span v-if="item.domain" class="domain-info">{{ item.domain }}</span>

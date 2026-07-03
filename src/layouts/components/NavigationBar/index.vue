@@ -16,6 +16,7 @@ import { useDevice } from "@/common/composables/useDevice"
 import { useLayoutMode } from "@/common/composables/useLayoutMode"
 import { usePermission } from "@/common/composables/usePermission"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
+import { getTenantDisplayName } from "@/common/utils/tenant-display"
 
 const { isMobile } = useDevice()
 const { isTop } = useLayoutMode()
@@ -30,6 +31,14 @@ const { hasPermission } = usePermission()
 const currentTenant = computed(() => {
   return userStore.tenants.find((t) => t.id === userStore.currentTenantId)
 })
+
+const currentTenantName = computed(() => {
+  return currentTenant.value ? getTenantDisplayName(currentTenant.value, userStore.username) : "默认空间"
+})
+
+const tenantDisplayName = (tenant: { name: string; code: string }) => {
+  return getTenantDisplayName(tenant, userStore.username)
+}
 
 /** 切换侧边栏 */
 const toggleSidebar = () => {
@@ -69,7 +78,7 @@ const logout = () => {
             <div class="space-icon-wrapper">
               <el-icon><OfficeBuilding /></el-icon>
             </div>
-            <span class="space-name">{{ currentTenant?.name || "默认空间" }}</span>
+            <span class="space-name">{{ currentTenantName }}</span>
             <el-icon class="arrow-icon"><ArrowDown /></el-icon>
           </div>
           <template #dropdown>
@@ -85,7 +94,7 @@ const logout = () => {
                   <div class="tenant-item-inner">
                     <div class="item-info">
                       <el-icon class="item-icon"><CollectionTag /></el-icon>
-                      <span class="item-name">{{ item.name }}</span>
+                      <span class="item-name">{{ tenantDisplayName(item) }}</span>
                     </div>
                     <el-icon v-if="item.id === userStore.currentTenantId" class="check-icon"><Select /></el-icon>
                   </div>
@@ -100,7 +109,7 @@ const logout = () => {
           <div class="space-icon-wrapper">
             <el-icon><OfficeBuilding /></el-icon>
           </div>
-          <span class="space-name">{{ currentTenant?.name || "默认空间" }}</span>
+          <span class="space-name">{{ currentTenantName }}</span>
         </div>
       </template>
 
