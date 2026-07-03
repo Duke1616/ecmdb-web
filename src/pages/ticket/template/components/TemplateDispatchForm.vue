@@ -1,24 +1,25 @@
 <template>
   <div class="dispatch-form-layout">
-    <aside class="automation-pane">
+    <aside class="runner-pane">
       <div class="pane-header">
-        <span class="pane-title">自动化节点</span>
-        <span class="pane-count">{{ automationNodes.length }}</span>
+        <span class="pane-title">执行器</span>
+        <span class="pane-count">{{ filteredRunners.length }}</span>
       </div>
-      <el-scrollbar class="node-scrollbar">
+      <el-scrollbar class="runner-scrollbar">
         <button
-          v-for="node in automationNodes"
-          :key="node.name"
-          class="automation-node"
-          :class="{ active: selectedAutomationName === node.name }"
+          v-for="item in filteredRunners"
+          :key="item.id"
+          class="runner-item"
+          :class="{ active: formData.runner_id === item.id }"
           type="button"
-          @click="selectAutomation(node.name)"
+          @click="selectRunner(item)"
         >
-          <span class="node-name">{{ node.name }}</span>
-          <span class="node-codebook">{{ node.codebookId }}</span>
-          <span class="node-runner-count">{{ getNodeRunners(node.codebookId).length }} 个执行器</span>
+          <span class="runner-name">{{ item.name }}</span>
+          <span class="runner-meta">{{ item.target }} / {{ item.handler }}</span>
+          <span class="runner-kind">{{ item.kind }}</span>
         </button>
         <el-empty v-if="automationNodes.length === 0" description="暂无自动化节点" :image-size="88" />
+        <el-empty v-else-if="filteredRunners.length === 0" description="当前节点暂无执行器" :image-size="88" />
       </el-scrollbar>
     </aside>
 
@@ -28,7 +29,10 @@
           <div class="summary-label">当前节点</div>
           <div class="summary-title">{{ selectedAutomationName || "未选择" }}</div>
         </div>
-        <el-tag v-if="selectedCodebookId" type="info" effect="plain">{{ selectedCodebookId }}</el-tag>
+        <div class="summary-tags">
+          <el-tag v-if="selectedCodebookId" type="info" effect="plain">{{ selectedCodebookId }}</el-tag>
+          <el-tag v-if="selectedRunner" type="success" effect="plain">{{ selectedRunner.name }}</el-tag>
+        </div>
       </div>
 
       <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
@@ -44,21 +48,6 @@
         </el-form-item>
         <el-form-item prop="value" label="匹配值">
           <el-input v-model="formData.value" placeholder="请输入匹配值" />
-        </el-form-item>
-        <el-form-item prop="runner_id" label="执行器">
-          <el-select
-            v-model="formData.runner_id"
-            placeholder="请选择执行器"
-            filterable
-            :disabled="filteredRunners.length === 0"
-          >
-            <el-option v-for="item in filteredRunners" :key="item.id" :label="item.name" :value="item.id">
-              <div class="runner-option">
-                <span>{{ item.name }}</span>
-                <small>{{ item.target }} / {{ item.handler }}</small>
-              </div>
-            </el-option>
-          </el-select>
         </el-form-item>
       </el-form>
     </section>
@@ -81,6 +70,7 @@ interface Props {
   fieldsMap: Map<string, string>
   automationCodebooks: Map<string, number>
   runners: runner[]
+  dispatches: dispatch[]
   templateId: number | undefined
 }
 
@@ -117,12 +107,24 @@ const getNodeRunners = (codebookId: number) => props.runners.filter((item) => it
 
 const filteredRunners = computed(() => (selectedCodebookId.value > 0 ? getNodeRunners(selectedCodebookId.value) : []))
 
-const selectAutomation = (name: string) => {
-  selectedAutomationName.value = name
+const selectedRunner = computed(() => filteredRunners.value.find((item) => item.id === formData.value.runner_id))
+
+const getRunnerDispatch = (runnerId: number) => props.dispatches.find((item) => item.runner_id === runnerId)
+
+const selectRunner = (item: runner) => {
+  const existed = getRunnerDispatch(item.id)
+  formData.value = existed
+    ? cloneDeep(existed)
+    : {
+        template_id: props.templateId ?? 0,
+        runner_id: item.id,
+        field: "",
+        value: ""
+      }
+  formRef.value?.clearValidate()
 }
 
 const formRules: FormRules = {
-  runner_id: [{ required: true, message: "必须输入执行器", trigger: "blur" }],
   field: [{ required: true, message: "必须输入字段名称", trigger: "blur" }],
   value: [{ required: true, message: "必须输入匹配值", trigger: "blur" }]
 }
@@ -144,16 +146,24 @@ watch(
 )
 
 watch(selectedCodebookId, () => {
-  if (!formData.value.runner_id) return
-
   const exists = filteredRunners.value.some((item) => item.id === formData.value.runner_id)
   if (!exists) {
-    formData.value.runner_id = 0
+    const firstRunner = filteredRunners.value[0]
+    if (firstRunner) {
+      selectRunner(firstRunner)
+    } else {
+      formData.value = cloneDeep(DEFAULT_FORM_DATA)
+    }
   }
 })
 
 const submitForm = async () => {
   try {
+    if (!formData.value.runner_id) {
+      ElMessage.warning("请选择执行器")
+      return
+    }
+
     await formRef.value?.validate()
     if (!props.templateId) return
     formData.value.template_id = props.templateId
@@ -186,18 +196,21 @@ const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
   formRef.value?.resetFields()
   selectedAutomationName.value = automationNodes.value[0]?.name || ""
-
-  Object.keys(formData.value).forEach((key) => {
-    const typedKey = key as keyof typeof formData.value
-    if (formData.value[typedKey] === 0 || formData.value[typedKey] === null || formData.value[typedKey] === "") {
-      delete formData.value[typedKey]
-    }
-  })
+  const firstRunner = filteredRunners.value[0]
+  if (firstRunner) {
+    selectRunner(firstRunner)
+  }
 }
 
 const selectAutomationByName = (name: string) => {
   const exists = automationNodes.value.some((node) => node.name === name)
   selectedAutomationName.value = exists ? name : automationNodes.value[0]?.name || ""
+  const firstRunner = filteredRunners.value[0]
+  if (firstRunner) {
+    selectRunner(firstRunner)
+  } else {
+    formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  }
 }
 
 defineExpose({
@@ -223,7 +236,7 @@ defineExpose({
   min-height: 420px;
 }
 
-.automation-pane {
+.runner-pane {
   width: 280px;
   flex: 0 0 280px;
   display: flex;
@@ -263,11 +276,11 @@ defineExpose({
   font-weight: 600;
 }
 
-.node-scrollbar {
+.runner-scrollbar {
   height: 356px;
 }
 
-.automation-node {
+.runner-item {
   width: calc(100% - 16px);
   margin: 8px;
   padding: 12px;
@@ -290,7 +303,7 @@ defineExpose({
   }
 }
 
-.node-name {
+.runner-name {
   max-width: 100%;
   color: #0f172a;
   font-size: 14px;
@@ -300,8 +313,8 @@ defineExpose({
   white-space: nowrap;
 }
 
-.node-codebook,
-.node-runner-count {
+.runner-meta,
+.runner-kind {
   max-width: 100%;
   color: #64748b;
   font-size: 12px;
@@ -344,15 +357,12 @@ defineExpose({
   font-weight: 600;
 }
 
-.runner-option {
+.summary-tags {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-
-  small {
-    color: #94a3b8;
-  }
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 :deep(.el-select) {

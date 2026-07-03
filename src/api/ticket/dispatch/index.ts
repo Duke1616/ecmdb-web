@@ -33,3 +33,11 @@ export function syncDispatchApi(data: dispatch.syncDispatchReq) {
     data: data
   })
 }
+
+/** 按模板查询自动派发配置 */
+export function listDispatchByTemplateIdApi(data: dispatch.listDispatchByTemplateIdReq) {
+  return instance.post<dispatch.dispatchListRes>({
+    url: `${API_SERVICE.TICKET}/dispatch/list/by_template_id`,
+    data
+  })
+}

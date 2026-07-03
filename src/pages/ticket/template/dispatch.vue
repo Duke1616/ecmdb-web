@@ -85,6 +85,7 @@
         :template-id="templateData?.id"
         :automation-codebooks="automationCodebookMap"
         :runners="workflowRunners"
+        :dispatches="dispatches"
         @callback="loadAutomationDispatchData"
         @closed="onClosed"
       />
@@ -118,7 +119,8 @@ import type { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
 import type { runner } from "@/api/task/runner/types/runner.js"
 import { listRunnerByCodebookIdApi } from "@/api/task/runner/index.js"
-import { deleteDispatchApi } from "@/api/ticket/dispatch"
+import { deleteDispatchApi, listDispatchByTemplateIdApi } from "@/api/ticket/dispatch"
+import type { dispatch } from "@/api/ticket/dispatch/types/dispatch"
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
 import { getAutomationCodebookUidsApi } from "@/api/ticket/workflow/workflow"
 import type { AutomationCodebookValue } from "@/api/ticket/workflow/types/workflow"
@@ -156,6 +158,7 @@ const runnerMap = ref<Map<number, string>>(new Map())
 const automationCodebookMap = ref<Map<string, number>>(new Map())
 const dispatchIdMap = ref<Map<string, number>>(new Map())
 const workflowRunners = ref<runner[]>([])
+const dispatches = ref<dispatch[]>([])
 const fieldMap = new Map<string, string>()
 
 import type { Column } from "@@/components/DataTable/types"
@@ -172,6 +175,7 @@ interface TemplateRuleNode {
 interface AutomationDispatchRow {
   id: string
   dispatchId?: number
+  dispatch?: dispatch
   nodeName: string
   codebookId: number
   runnerCount: number
@@ -227,7 +231,7 @@ const getOperateBtnItems = (row: AutomationDispatchRow): DispatchOperateItem[] =
     name: "配置",
     type: "primary",
     icon: Setting,
-    capability: TICKET_CAPABILITIES.Dispatch.Add
+    capability: row.dispatchId ? TICKET_CAPABILITIES.Dispatch.Edit : TICKET_CAPABILITIES.Dispatch.Add
   },
   {
     code: DispatchAction.Delete,
@@ -242,9 +246,11 @@ const getOperateBtnItems = (row: AutomationDispatchRow): DispatchOperateItem[] =
 const automationRows = computed<AutomationDispatchRow[]>(() =>
   Array.from(automationCodebookMap.value, ([nodeName, codebookId]) => {
     const runners = workflowRunners.value.filter((item) => item.codebook_id === codebookId)
+    const dispatch = dispatches.value.find((item) => runners.some((runner) => runner.id === item.runner_id))
     return {
       id: `${nodeName}:${codebookId}`,
-      dispatchId: dispatchIdMap.value.get(nodeName),
+      dispatchId: dispatch?.id ?? dispatchIdMap.value.get(nodeName),
+      dispatch,
       nodeName,
       codebookId,
       runnerCount: runners.length,
@@ -346,6 +352,26 @@ const listRunnersByAutomationCodebooks = async (): Promise<boolean> => {
   }
 }
 
+const listDispatchesByTemplate = async (): Promise<boolean> => {
+  if (!templateData.value?.id) {
+    dispatches.value = []
+    return false
+  }
+
+  try {
+    const { data } = await listDispatchByTemplateIdApi({
+      template_id: templateData.value.id,
+      offset: 0,
+      limit: 1000
+    })
+    dispatches.value = data.dispatches || []
+    return dispatches.value.length > 0
+  } catch (error) {
+    dispatches.value = []
+    return false
+  }
+}
+
 // ==================== 数据查询 ====================
 const loadAutomationDispatchData = async () => {
   if (!templateData.value || !canViewDispatch.value) return
@@ -355,12 +381,15 @@ const loadAutomationDispatchData = async () => {
     const hasAutomationCodebooks = await fetchAutomationCodebooks()
     if (hasAutomationCodebooks) {
       await listRunnersByAutomationCodebooks()
+      await listDispatchesByTemplate()
     } else {
       workflowRunners.value = []
+      dispatches.value = []
     }
   } catch (error) {
     automationCodebookMap.value = new Map()
     workflowRunners.value = []
+    dispatches.value = []
   } finally {
     loading.value = false
   }
@@ -389,8 +418,9 @@ const handlerCreate = async () => {
 }
 
 const handlerConfigure = async (row: AutomationDispatchRow) => {
-  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Add)) {
-    ElMessage.warning("暂无新增自动派发权限")
+  const capability = row.dispatchId ? TICKET_CAPABILITIES.Dispatch.Edit : TICKET_CAPABILITIES.Dispatch.Add
+  if (!hasPermission(capability)) {
+    ElMessage.warning(row.dispatchId ? "暂无修改自动派发权限" : "暂无新增自动派发权限")
     return
   }
 
@@ -403,6 +433,9 @@ const handlerConfigure = async (row: AutomationDispatchRow) => {
   nextTick(() => {
     apiRef.value?.resetForm()
     apiRef.value?.selectAutomationByName(row.nodeName)
+    if (row.dispatch) {
+      apiRef.value?.setForm(row.dispatch)
+    }
   })
 }
 

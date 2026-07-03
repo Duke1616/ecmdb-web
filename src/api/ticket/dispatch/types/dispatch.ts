@@ -22,3 +22,14 @@ export interface syncDispatchReq {
   /** 同步模版ID */
   sync_template_id: number | undefined
 }
+
+export interface listDispatchByTemplateIdReq {
+  template_id: number
+  offset?: number
+  limit?: number
+}
+
+export interface dispatchListRes {
+  dispatches: dispatch[]
+  total: number
+}
