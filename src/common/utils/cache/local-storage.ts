@@ -61,8 +61,15 @@ export const setCachedViews = (views: string[]) => {
   localStorage.setItem(CacheKey.CACHED_VIEWS, JSON.stringify(views))
 }
 
+// FormCreate 模板的远程数据脚本会按需读取 localStorage.username 注入请求参数。
+// 例如 beforeFetch(config) 中设置 config.data.username，不能只依赖 Pinia store。
 export const setUsername = (username: string) => {
   localStorage.setItem("username", username)
+}
+
+// 与 setUsername 配套，退出登录或 token 重置时清理，避免模板脚本读到旧用户。
+export const removeUsername = () => {
+  localStorage.removeItem("username")
 }
 
 //#endregion

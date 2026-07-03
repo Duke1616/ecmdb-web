@@ -9,6 +9,7 @@ import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
 import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
 import { switchTenantApi } from "@/api/iam/tenant"
+import { removeUsername, setUsername } from "@/common/utils/cache/local-storage"
 
 // ============================================================
 // 通用工具函数
@@ -122,6 +123,8 @@ export const useUserStore = defineStore(
       const { data } = await getProfileApi()
       userInfo.value = data.user
       username.value = data.user.username
+      // 给 FormCreate 模板脚本提供按需读取的当前登录人标识。
+      setUsername(data.user.username)
       tenants.value = data.tenants ?? []
       currentTenantId.value = data.current_tenant_id
       isAdmin.value = data.is_admin
@@ -199,8 +202,14 @@ export const useUserStore = defineStore(
      */
     const resetToken = () => {
       removeToken()
+      removeUsername()
       token.value = ""
+      username.value = ""
       userInfo.value = null
+      tenants.value = []
+      currentTenantId.value = 0
+      isAdmin.value = false
+      permissions.value = []
     }
 
     /**
