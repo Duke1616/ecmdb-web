@@ -42,8 +42,9 @@
         <div v-loading="loading" class="items-list" :class="{ 'is-loading': loading && options.length === 0 }">
           <div v-if="options.length === 0 && !loading" class="empty-state">暂无匹配的执行节点</div>
 
-          <template v-for="group in groupedOptions" :key="group.executor.name">
-            <div class="executor-group">
+          <template v-for="group in groupedOptions" :key="getGroupKey(group)">
+            <button type="button" class="executor-group" @click="toggleExecutorGroup(group)">
+              <el-icon class="group-arrow" :class="{ 'is-expanded': isGroupExpanded(group) }"><ArrowDown /></el-icon>
               <div class="group-icon">{{ getInitial(group.executor.name) }}</div>
               <div class="group-info">
                 <div class="group-title">
@@ -59,23 +60,25 @@
                 </span>
                 <span class="node-count">{{ group.executor.nodes?.length || 0 }} 节点</span>
               </div>
-            </div>
-
-            <button
-              v-for="option in group.options"
-              :key="`${option.service}/${option.handler.name}`"
-              type="button"
-              class="handler-option"
-              :class="{ 'is-selected': isSelected(option) }"
-              @click="selectOption(option)"
-            >
-              <div class="handler-icon">{{ getInitial(option.handler.name) }}</div>
-              <div class="handler-info">
-                <div class="handler-name">{{ option.handler.name }}</div>
-                <div class="handler-desc">{{ option.handler.desc || "暂无描述" }}</div>
-              </div>
-              <el-icon v-if="isSelected(option)" class="selected-check"><Check /></el-icon>
             </button>
+
+            <template v-if="isGroupExpanded(group)">
+              <button
+                v-for="option in group.options"
+                :key="`${option.service}/${option.handler.name}`"
+                type="button"
+                class="handler-option"
+                :class="{ 'is-selected': isSelected(option) }"
+                @click="selectOption(option)"
+              >
+                <div class="handler-icon">{{ getInitial(option.handler.name) }}</div>
+                <div class="handler-info">
+                  <div class="handler-name">{{ option.handler.name }}</div>
+                  <div class="handler-desc">{{ option.handler.desc || "暂无描述" }}</div>
+                </div>
+                <el-icon v-if="isSelected(option)" class="selected-check"><Check /></el-icon>
+              </button>
+            </template>
           </template>
         </div>
 
@@ -134,6 +137,11 @@ type ExecutorOption = {
   handler: HandlerDetail
 }
 
+type ExecutorGroup = {
+  executor: Executor
+  options: ExecutorOption[]
+}
+
 type CapabilitySource = Executor | Agent
 
 const showDropdown = ref(false)
@@ -150,6 +158,7 @@ const dropdownRef = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
 const selectingOption = ref(false)
 const popperInstance = ref<PopperInstance | null>(null)
+const expandedServices = ref<Set<string>>(new Set())
 
 const placeholderText = computed(() => {
   if (!props.handlerPlaceholder) return props.servicePlaceholder
@@ -191,8 +200,8 @@ const options = computed<ExecutorOption[]>(() => {
   })
 })
 
-const groupedOptions = computed(() => {
-  const groups: { executor: Executor; options: ExecutorOption[] }[] = []
+const groupedOptions = computed<ExecutorGroup[]>(() => {
+  const groups: ExecutorGroup[] = []
   for (const option of options.value) {
     let group = groups.find((item) => item.executor.name === option.executor.name)
     if (!group) {
@@ -205,9 +214,12 @@ const groupedOptions = computed(() => {
 })
 
 const selectedOption = computed(() => {
-  if (!serviceModel.value || !handlerModel.value || !selectedExecutor.value) return null
-  const handler = selectedExecutor.value.handlers?.find((item) => item.name === handlerModel.value)
-  if (!handler) return null
+  if (!serviceModel.value || !handlerModel.value) return null
+  const handler = selectedExecutor.value?.handlers?.find((item) => item.name === handlerModel.value) || {
+    name: handlerModel.value,
+    desc: "",
+    metadata: []
+  }
   return {
     service: serviceModel.value,
     executor: selectedExecutor.value,
@@ -233,6 +245,44 @@ const normalizeSource = (source: CapabilitySource): Executor => ({
 })
 
 const getServiceValue = (executor: Executor) => executor.name
+const getGroupKey = (group: ExecutorGroup) => getServiceValue(group.executor)
+
+const isGroupExpanded = (group: ExecutorGroup) => {
+  const key = getGroupKey(group)
+  return expandedServices.value.has(key) || group.options.some(isSelected)
+}
+
+const setGroupExpanded = (key: string, expanded: boolean) => {
+  const next = new Set(expandedServices.value)
+  if (expanded) next.add(key)
+  else next.delete(key)
+  expandedServices.value = next
+}
+
+const toggleExecutorGroup = (group: ExecutorGroup) => {
+  const key = getGroupKey(group)
+  setGroupExpanded(key, !expandedServices.value.has(key))
+  void syncPopperPosition()
+}
+
+const syncExpandedGroups = () => {
+  const groups = groupedOptions.value
+  if (!groups.length) {
+    expandedServices.value = new Set()
+    return
+  }
+
+  const availableKeys = new Set(groups.map(getGroupKey))
+  const next = new Set([...expandedServices.value].filter((key) => availableKeys.has(key)))
+
+  if (activeKeyword.value.trim()) {
+    groups.forEach((group) => next.add(getGroupKey(group)))
+  } else if (serviceModel.value && availableKeys.has(serviceModel.value)) {
+    next.add(serviceModel.value)
+  }
+
+  expandedServices.value = next
+}
 
 const listSources = async (append = false) => {
   const params = {
@@ -271,6 +321,7 @@ const fetchExecutors = async (append = false) => {
   } finally {
     loading.value = false
     loadingMore.value = false
+    if (showDropdown.value) await syncPopperPosition()
   }
 }
 
@@ -295,16 +346,28 @@ const resolveExecutor = async (service: string) => {
 
 const listSourceByKeyword = async (keyword: string) => {
   if (props.kind === "agent") {
-    const { data } = await listAgentsApi({ limit: 1, keyword })
+    const { data } = await listAgentsApi({ limit: props.limit, keyword })
     return (data.agents || []).map(normalizeSource)
   }
 
-  const { data } = await listExecutorsApi({ limit: 1, keyword })
+  const { data } = await listExecutorsApi({ limit: props.limit, keyword })
   return (data.executors || []).map(normalizeSource)
+}
+
+const waitForNextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+
+const syncPopperPosition = async () => {
+  await nextTick()
+  await waitForNextFrame()
+  if (!containerRef.value || !dropdownRef.value) return
+
+  dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
+  await popperInstance.value?.update()
 }
 
 const createPopperInstance = async () => {
   await nextTick()
+  await waitForNextFrame()
   if (!containerRef.value || !dropdownRef.value) return
 
   dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
@@ -330,6 +393,7 @@ const createPopperInstance = async () => {
       }
     ]
   })
+  await syncPopperPosition()
 }
 
 const destroyPopperInstance = () => {
@@ -355,8 +419,19 @@ const closeDropdown = () => {
   destroyPopperInstance()
 }
 
+const emitSelectedHandler = () => {
+  if (!handlerModel.value) {
+    emit("handlerChange", null)
+    return
+  }
+  const handler = selectedExecutor.value?.handlers?.find((item) => item.name === handlerModel.value) || null
+  emit("handlerChange", handler)
+}
+
 const handleSearch = () => {
-  activeKeyword.value = searchKeyword.value.trim()
+  const nextKeyword = searchKeyword.value.trim()
+  if (activeKeyword.value && !nextKeyword) expandedServices.value = new Set()
+  activeKeyword.value = nextKeyword
   nextCursor.value = ""
   fetchExecutors()
 }
@@ -411,25 +486,21 @@ const handleClickOutside = (event: Event) => {
 watch(
   () => serviceModel.value,
   async (service, previousService) => {
-    if (service !== previousService && previousService !== undefined && !selectingOption.value) {
+    const isExternalChange = service !== previousService && previousService !== undefined && !selectingOption.value
+    if (isExternalChange && !service) {
       handlerModel.value = ""
       emit("handlerChange", null)
     }
     const executor = await resolveExecutor(service)
     emit("serviceChange", executor)
+    if (handlerModel.value) emitSelectedHandler()
   },
   { immediate: true }
 )
 
-watch(
-  () => handlerModel.value,
-  () => {
-    if (!handlerModel.value) return
-    const handler = selectedExecutor.value?.handlers?.find((item) => item.name === handlerModel.value) || null
-    emit("handlerChange", handler)
-  },
-  { immediate: true }
-)
+watch(() => handlerModel.value, emitSelectedHandler, { immediate: true })
+
+watch(groupedOptions, syncExpandedGroups, { immediate: true })
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside)
@@ -741,12 +812,32 @@ defineExpose({
 
 .executor-picker-dropdown .executor-group {
   display: flex;
+  width: 100%;
   align-items: center;
   gap: 10px;
   padding: 10px 16px;
   background: #f8fafc;
+  border: 0;
   border-top: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+}
+
+.executor-picker-dropdown .executor-group:hover {
+  background: #f1f5f9;
+}
+
+.executor-picker-dropdown .group-arrow {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.executor-picker-dropdown .group-arrow.is-expanded {
+  transform: rotate(180deg);
 }
 
 .executor-picker-dropdown .group-info {
