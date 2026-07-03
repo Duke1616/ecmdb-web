@@ -257,7 +257,12 @@ function getCurrentScope() {
 
 function handleEditorCodeChange(code: string) {
   if (isReadonlyCodebook(activeEditor.value)) return
-  activeEditor.value = { ...activeEditor.value, code }
+  const nextEditor = { ...activeEditor.value, code }
+  activeEditor.value = nextEditor
+  const index = findOpenedFileIndex(nextEditor)
+  if (index > -1) {
+    openedFiles.value[index] = nextEditor
+  }
 }
 
 async function selectCodebook(row: codebook) {
