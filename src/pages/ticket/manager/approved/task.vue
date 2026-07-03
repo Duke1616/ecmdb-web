@@ -300,9 +300,7 @@ const handleSaveResult = async (data: { taskId: number; result: unknown; type: s
         ElMessage.success("修改传递变量成功")
         break
     }
-  } catch (error) {
-    ElMessage.error("保存失败，请重试")
-  }
+  } catch {}
 }
 
 const handleRetryConfirm = async () => {

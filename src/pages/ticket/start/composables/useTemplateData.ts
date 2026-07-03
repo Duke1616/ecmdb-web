@@ -170,7 +170,6 @@ export function useTemplateData(options: UseTemplateDataOptions) {
       } else {
         fetchFavoriteList()
       }
-      ElMessage.error("收藏操作失败，请重试")
     }
   }
 

@@ -175,7 +175,6 @@ const handleSubmit = async () => {
     ElMessage.success("工单创建成功")
   } catch (error) {
     console.error("提交失败", error)
-    ElMessage.error("提交失败，请重试")
   } finally {
     isSubmitting.value = false
   }

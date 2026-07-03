@@ -67,9 +67,7 @@ export const useWorkflowWizard = (options: { refresh: () => void }) => {
 
       closeWizard()
       options.refresh()
-    } catch (error) {
-      ElMessage.error("操作失败，请重试")
-    }
+    } catch {}
   }
 
   return {
