@@ -67,7 +67,9 @@ export const useWorkflowWizard = (options: { refresh: () => void }) => {
 
       closeWizard()
       options.refresh()
-    } catch {}
+    } catch (error) {
+      console.error("保存流程失败:", error)
+    }
   }
 
   return {

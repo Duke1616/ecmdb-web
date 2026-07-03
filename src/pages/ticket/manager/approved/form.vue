@@ -200,7 +200,8 @@ const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
     await transferTicketApi({ task_id: props.taskId!, usernames })
     ElMessage.success("转签成功")
     resetForm()
-  } catch {
+  } catch (error) {
+    console.error("转签失败:", error)
   } finally {
     transferLoading.value = false
   }
@@ -319,7 +320,7 @@ const handlePassConfirm = async () => {
       .then(() => {
         handlePassTicket()
       })
-      .catch(() => {})
+      .catch(() => undefined)
   } catch (error) {
     // 表单校验失败时保持当前输入状态
   }
@@ -345,7 +346,7 @@ const handlePass = () => {
 
         handleSubmitChangedTicket(submitData)
       })
-      .catch(() => {})
+      .catch(() => undefined)
   })
 }
 
@@ -354,7 +355,9 @@ const handleSubmitChangedTicket = async (submitData: PassTicketReq) => {
     await passTicketApi(submitData)
     ElMessage.success("工单已提交")
     resetForm()
-  } catch {}
+  } catch (error) {
+    console.error("提交工单失败:", error)
+  }
 }
 
 const handlePassTicket = async () => {
@@ -371,7 +374,9 @@ const handlePassTicket = async () => {
     await passTicketApi(submitData)
     ElMessage.success("工单已同意")
     resetForm()
-  } catch {}
+  } catch (error) {
+    console.error("同意工单失败:", error)
+  }
 }
 
 // 驳回确认弹窗
@@ -403,7 +408,9 @@ const handleReject = async () => {
     await rejectTicketApi(submitData)
     ElMessage.success("工单已驳回")
     resetForm()
-  } catch {}
+  } catch (error) {
+    console.error("驳回工单失败:", error)
+  }
 }
 
 const handleRevoke = async () => {
@@ -420,7 +427,9 @@ const handleRevoke = async () => {
     })
     ElMessage.success("工单已撤回")
     resetForm()
-  } catch {}
+  } catch (error) {
+    console.error("撤回工单失败:", error)
+  }
 }
 
 const resetForm = () => {
