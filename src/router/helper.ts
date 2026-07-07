@@ -4,11 +4,11 @@ import { type Menu, type Meta } from "@/api/iam/permission/type"
 import type { SvgName } from "~virtual/svg-component"
 
 /** 所有组件映射表 */
-const Layouts = import.meta.glob(["../layouts/index.vue", "../layouts/term.vue"])
+const Layouts = import.meta.glob(["../layouts/index.vue", "../layouts/runtime.vue"])
 const Views = import.meta.glob(["../views/**/*.vue", "../pages/**/*.vue"])
 const layoutComponentMap = {
   Layouts: "../layouts/index.vue",
-  TermLayouts: "../layouts/term.vue"
+  RuntimeLayouts: "../layouts/runtime.vue"
 } as const
 
 const normalizeDynamicPath = (route: Menu): string => {

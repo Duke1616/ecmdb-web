@@ -7,9 +7,11 @@ import { loadIconPicker } from "./icon-picker"
 import { loadFinder } from "./finder"
 import { loadCodeMirror } from "./codemirror"
 import { loadIconSvg } from "./icon-svg"
+import { loadCommonComponents } from "./common-components"
 
 export function installPlugins(app: App) {
   loadElementPlus(app)
+  loadCommonComponents(app)
   loadElementPlusIcon(app)
   loadFromCreate(app)
   loadVxeTable(app)

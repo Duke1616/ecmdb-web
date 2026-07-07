@@ -8,6 +8,7 @@ import { isChunkLoadError, reloadOnChunkLoadError } from "@/common/utils/chunkLo
 
 const Layouts = () => import("@/layouts/index.vue")
 const Logicflow = () => import("@/pages/ticket/preview/logicflow.vue")
+const PluginRuntimePage = () => import("@/pages/cmdb/plugin/runtime.vue")
 
 /**
  * 常驻路由
@@ -137,6 +138,15 @@ export const constantRoutes: RouteRecordRaw[] = [
       svgIcon: "component",
       platforms: ["change"],
       hidden: true
+    }
+  },
+  {
+    path: "/cmdb/plugin-runtime",
+    component: PluginRuntimePage,
+    name: "PluginRuntime",
+    meta: {
+      hidden: true,
+      title: "插件运行时"
     }
   }
   // ...alertRoutes

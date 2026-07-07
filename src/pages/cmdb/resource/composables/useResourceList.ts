@@ -25,7 +25,7 @@ type ResourceOperateItem = {
   code: string
   type: "primary" | "warning" | "danger" | "info"
   icon: unknown
-  capability: string
+  capability?: string
 }
 
 const estimateActionLabelWidth = (label: string) => {

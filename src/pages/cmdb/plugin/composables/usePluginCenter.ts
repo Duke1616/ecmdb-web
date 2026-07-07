@@ -225,6 +225,12 @@ export const usePluginCenter = () => {
     return graph.nodes.find((node) => node.id === graph.entry_node_id) || null
   }
 
+  const isUsableTemplateBinding = (binding: Binding) => {
+    if (!binding.model_uid || !binding.graph?.entry_node_id) return false
+    const entryNode = getEntryNode(binding.graph)
+    return Boolean(entryNode?.id && entryNode.name && entryNode.model_uid)
+  }
+
   const ensureActivePlugin = () => {
     const exists = filteredPlugins.value.some((item) => item.uid === activePluginUid.value)
     if (!exists) {
@@ -309,8 +315,14 @@ export const usePluginCenter = () => {
       return
     }
 
+    const templateBindings = definition.bindings.filter(isUsableTemplateBinding)
+    if (!templateBindings.length) {
+      ElMessage.warning("当前插件默认绑定模板不可用，请重新注册插件后再新增绑定")
+      return
+    }
+
     const existingBindingUids = new Set(currentDetail.bindings.map((binding) => binding.uid))
-    const previewBindings = definition.bindings.map(toPreviewBinding)
+    const previewBindings = templateBindings.map(toPreviewBinding)
     const appendedBindings = previewBindings.map((binding) => {
       const nextUid = buildUniqueBindingUid(item.uid, binding.model_uid, existingBindingUids)
       existingBindingUids.add(nextUid)

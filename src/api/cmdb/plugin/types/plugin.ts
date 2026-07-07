@@ -50,7 +50,6 @@ export interface FieldMapping {
 export interface BindingGraphNode {
   id: string
   name: string
-  kind?: string
   model_uid: string
   cardinality: string
   required: boolean
@@ -77,7 +76,34 @@ export interface ActionSpec {
   icon: string
   placement: string
   ui: string
+  binding_uid?: string
+  runtime?: PluginActionRuntimeSpec
   meta?: Record<string, any>
+}
+
+export interface PluginActionRuntimeSidebarResource {
+  model_uid?: string
+  title_field?: string
+  subtitle_field?: string
+  search_fields?: string[]
+  limit?: number
+}
+
+export interface PluginActionRuntimeSidebar {
+  enabled?: boolean
+  mode?: string
+  title?: string
+  search_placeholder?: string
+  empty_text?: string
+  collapsible?: boolean
+  resource?: PluginActionRuntimeSidebarResource
+}
+
+export interface PluginActionRuntimeSpec {
+  layout?: string
+  title?: string
+  props?: Record<string, any>
+  sidebar?: PluginActionRuntimeSidebar
 }
 
 export interface Plugin {
@@ -180,6 +206,8 @@ export interface ResourceAction {
   icon: string
   placement: string
   ui: string
+  binding_uid?: string
+  runtime?: PluginActionRuntimeSpec
   meta?: Record<string, any>
 }
 
@@ -213,10 +241,64 @@ export interface ResolveResult {
   plugin_id: string
   plugin_name: string
   action: string
+  binding_uid?: string
+  model_uid?: string
   resource_id: number
   inputs: Record<string, ResolvedInput>
   params?: Record<string, any>
+  runtime?: PluginActionRuntimeSpec
   meta?: Record<string, any>
+}
+
+export interface PluginRuntimeEntry {
+  format: string
+  js_url: string
+  css_url?: string
+  global_name: string
+  component_name: string
+}
+
+export interface PluginRuntimePayload {
+  api_base: string
+  props: Record<string, any>
+}
+
+export interface PluginRuntimePresentation {
+  layout?: string
+  title?: string
+  sidebar?: PluginRuntimeSidebar
+}
+
+export interface PluginRuntimeSidebarResource {
+  model_uid: string
+  title_field?: string
+  subtitle_field?: string
+  search_fields?: string[]
+  limit?: number
+}
+
+export interface PluginRuntimeSidebar {
+  enabled?: boolean
+  mode?: string
+  title?: string
+  search_placeholder?: string
+  empty_text?: string
+  collapsible?: boolean
+  resource?: PluginRuntimeSidebarResource
+}
+
+export interface PluginRuntimeView {
+  plugin_id: string
+  action: string
+  entry: PluginRuntimeEntry
+  runtime: PluginRuntimePayload
+  presentation: PluginRuntimePresentation
+}
+
+export interface GetPluginRuntimeViewRequest {
+  plugin_id: string
+  action: string
+  resource_id: number
 }
 
 export interface PluginBoundModel {

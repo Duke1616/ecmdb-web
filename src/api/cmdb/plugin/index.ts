@@ -69,3 +69,11 @@ export function resolvePluginActionApi(data: Plugin.ResolveRequest) {
     data
   })
 }
+
+/** 查询插件运行时视图 */
+export function getPluginRuntimeViewApi(params: Plugin.GetPluginRuntimeViewRequest) {
+  return instance.get<Plugin.PluginRuntimeView>({
+    url: `${API_SERVICE.CMDB}/plugin/runtime/view`,
+    params
+  })
+}
