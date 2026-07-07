@@ -239,10 +239,11 @@ import { verifyInvitationApi } from "@/api/iam/invitation"
 import { IdentitySourceType, OIDCProviderType } from "@/api/iam/identity-source/type"
 import type { InvitationVO } from "@/api/iam/invitation/type"
 import type { Tenant } from "@/api/iam/user/type"
+import { isDemoHost } from "./utils/demo-env"
 
 const route = useRoute()
 const router = useRouter()
-const isDemoEnv = window.location.hostname === "82.156.165.98"
+const isDemoEnv = isDemoHost()
 
 const bindToken = computed(() => route.query.bind_token as string)
 const activeName = ref<IdentitySourceType>((route.query.mode as IdentitySourceType) || IdentitySourceType.LOCAL)

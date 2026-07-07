@@ -60,6 +60,7 @@ import { loginLdapApi, loginSystemApi, bindConfirmApi } from "@/api/iam/user"
 import type { LoginLdapRequest, Tenant } from "@/api/iam/user/type"
 import TenantSelectModal from "./components/TenantSelectModal.vue"
 import MfaVerifyModal from "./components/MfaVerifyModal.vue"
+import { isDemoHost } from "./utils/demo-env"
 
 const router = useRouter()
 const route = useRoute()
@@ -84,8 +85,7 @@ const mfaToken = ref("")
 const loginFormData: LoginLdapRequest = reactive({ username: "", password: "" })
 
 onMounted(() => {
-  const isDemoEnv = window.location.hostname === "82.156.165.98"
-  if (isDemoEnv) {
+  if (isDemoHost()) {
     loginFormData.username = "demo"
     loginFormData.password = "123456"
   }

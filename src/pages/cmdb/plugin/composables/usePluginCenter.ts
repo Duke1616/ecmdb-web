@@ -57,6 +57,7 @@ export const usePluginCenter = () => {
   const pluginEnums = ref<PluginManagementEnums | null>(null)
   const activePluginUid = ref("")
   const pluginDetail = ref<PluginDetail | null>(null)
+  const templateModelOptions = ref<PluginModelOption[]>([])
   const pendingDefaultSchemaPluginUid = ref("")
   const editingBindingPluginUid = ref("")
   const bindingEditSnapshot = ref<PluginDetail | null>(null)
@@ -112,6 +113,12 @@ export const usePluginCenter = () => {
       }
     }
 
+    for (const model of templateModelOptions.value) {
+      if (model.uid) {
+        map.set(model.uid, model.name || model.uid)
+      }
+    }
+
     return map
   })
 
@@ -133,6 +140,10 @@ export const usePluginCenter = () => {
     const map = new Map<string, PluginModelOption>()
 
     for (const model of pluginEnums.value?.models || []) {
+      map.set(model.uid, model)
+    }
+
+    for (const model of templateModelOptions.value) {
       map.set(model.uid, model)
     }
 
@@ -171,14 +182,8 @@ export const usePluginCenter = () => {
   const buildDefinitionModelMap = (definition: Definition) => {
     const map = new Map<string, PluginModelOption>()
 
-    for (const model of definition.schema?.models || []) {
-      map.set(model.uid, {
-        uid: model.uid,
-        name: model.name || model.uid,
-        group_name: model.group_name,
-        icon: model.icon,
-        builtin: model.builtin ?? false
-      })
+    for (const model of buildDefinitionModelOptions(definition)) {
+      map.set(model.uid, model)
     }
 
     for (const model of pluginEnums.value?.models || []) {
@@ -189,6 +194,15 @@ export const usePluginCenter = () => {
 
     return map
   }
+
+  const buildDefinitionModelOptions = (definition: Definition): PluginModelOption[] =>
+    (definition.schema?.models || []).map((model) => ({
+      uid: model.uid,
+      name: model.name || model.uid,
+      group_name: model.group_name,
+      icon: model.icon,
+      builtin: model.builtin ?? false
+    }))
 
   const buildBindingUid = (pluginUid: string, modelUid: string) => {
     const normalized = modelUid.trim().replace(/[^a-zA-Z0-9_.-]/g, "-")
@@ -263,6 +277,7 @@ export const usePluginCenter = () => {
   const selectPlugin = (uid: string) => {
     if (activePluginUid.value !== uid) {
       pendingDefaultSchemaPluginUid.value = ""
+      templateModelOptions.value = []
       editingBindingPluginUid.value = ""
       bindingEditSnapshot.value = null
       bindingEditActiveBindingUid.value = ""
@@ -321,6 +336,8 @@ export const usePluginCenter = () => {
       return
     }
 
+    templateModelOptions.value = buildDefinitionModelOptions(definition)
+
     const existingBindingUids = new Set(currentDetail.bindings.map((binding) => binding.uid))
     const previewBindings = templateBindings.map(toPreviewBinding)
     const appendedBindings = previewBindings.map((binding) => {
@@ -366,6 +383,7 @@ export const usePluginCenter = () => {
 
     const pluginUid = uid || activePluginCard.value?.uid
     pendingDefaultSchemaPluginUid.value = ""
+    templateModelOptions.value = []
     detailVisible.value = false
 
     if (pluginUid) {
@@ -386,6 +404,7 @@ export const usePluginCenter = () => {
     if (!pluginDetail.value) return
 
     bindingEditSnapshot.value = cloneBinding(pluginDetail.value)
+    templateModelOptions.value = []
     bindingEditActiveBindingUid.value = activeBindingUid.value
     editingBindingPluginUid.value = pluginUid
     detailVisible.value = false
@@ -621,6 +640,7 @@ export const usePluginCenter = () => {
       })
       ElMessage.success("模型绑定草稿已保存")
       pendingDefaultSchemaPluginUid.value = ""
+      templateModelOptions.value = []
       await loadPlugins()
       await refreshPluginDetail(item.uid)
     } catch (error) {
@@ -637,6 +657,7 @@ export const usePluginCenter = () => {
     async (plugin) => {
       if (!plugin) {
         pluginDetail.value = null
+        templateModelOptions.value = []
         activeBindingUid.value = ""
         pendingDefaultSchemaPluginUid.value = ""
         editingBindingPluginUid.value = ""
