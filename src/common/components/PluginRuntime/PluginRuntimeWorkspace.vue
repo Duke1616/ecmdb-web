@@ -101,7 +101,7 @@ const getCollapsedLabel = (title: string) => {
           />
         </div>
 
-        <div v-if="showPagination" class="plugin-runtime-workspace__sidebar-pagination">
+        <div v-if="!sidebarCollapsed && showPagination" class="plugin-runtime-workspace__sidebar-pagination">
           <el-pagination
             v-model:current-page="currentPage"
             :page-size="sidebarLimit"
@@ -111,7 +111,7 @@ const getCollapsedLabel = (title: string) => {
           />
         </div>
 
-        <div v-else class="plugin-runtime-workspace__sidebar-collapsed-bar">
+        <div v-else-if="sidebarCollapsed" class="plugin-runtime-workspace__sidebar-collapsed-bar">
           <button
             v-for="item in filteredResources"
             :key="item.id"
