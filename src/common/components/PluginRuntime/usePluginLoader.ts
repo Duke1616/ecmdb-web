@@ -5,6 +5,9 @@ import * as ElementPlus from "element-plus"
 
 const loadedScripts = new Set<string>()
 const loadedStyles = new Set<string>()
+const loadedModules = new Map<string, any>()
+
+const moduleCacheKey = (globalName: string, url: string) => `${globalName}@@${url}`
 
 // 挂载公共依赖至全局，供动态加载的 UMD 插件消费
 const ensurePluginSharedGlobals = () => {
@@ -21,11 +24,21 @@ export function usePluginLoader() {
   const resolvedComponent = Vue.shallowRef<any>(null)
 
   // 动态加载 CSS
-  const loadCss = (url: string) => {
+  const loadCss = (url: string, globalName: string) => {
     if (loadedStyles.has(url) || document.querySelector(`link[href="${url}"]`)) return
+
+    const resolvedUrl = new URL(url, window.location.href).href
+    document.querySelectorAll<HTMLLinkElement>(`link[data-plugin-global="${globalName}"]`).forEach((link) => {
+      if (link.href !== resolvedUrl) {
+        loadedStyles.delete(link.getAttribute("href") || "")
+        link.remove()
+      }
+    })
+
     const link = document.createElement("link")
     link.rel = "stylesheet"
     link.href = url
+    link.dataset.pluginGlobal = globalName
     document.head.appendChild(link)
     loadedStyles.add(url)
   }
@@ -35,21 +48,32 @@ export function usePluginLoader() {
     ensurePluginSharedGlobals()
 
     return new Promise((resolve, reject) => {
-      const globalObj = (window as any)[globalName]
-      if (globalObj) {
-        resolve(globalObj)
+      const key = moduleCacheKey(globalName, url)
+      const cachedModule = loadedModules.get(key)
+      if (cachedModule) {
+        resolve(cachedModule)
         return
       }
+
+      const resolvedUrl = new URL(url, window.location.href).href
+      document.querySelectorAll<HTMLScriptElement>(`script[data-plugin-global="${globalName}"]`).forEach((script) => {
+        if (script.src !== resolvedUrl) {
+          loadedScripts.delete(script.getAttribute("src") || "")
+          script.remove()
+        }
+      })
 
       const script = document.createElement("script")
       script.type = "text/javascript"
       script.src = url
       script.async = true
+      script.dataset.pluginGlobal = globalName
 
       script.onload = () => {
         const module = (window as any)[globalName]
         if (module) {
           loadedScripts.add(url)
+          loadedModules.set(key, module)
           resolve(module)
         } else {
           reject(new Error(`JS加载成功，但 window 上未找到全局变量: ${globalName}`))
@@ -69,7 +93,7 @@ export function usePluginLoader() {
     loading.value = true
     error.value = null
     try {
-      if (cssUrl) loadCss(cssUrl)
+      if (cssUrl) loadCss(cssUrl, globalName)
 
       const module = await loadJs(jsUrl, globalName)
       const exports = module.default || module

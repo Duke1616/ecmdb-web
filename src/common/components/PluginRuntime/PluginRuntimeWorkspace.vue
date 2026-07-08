@@ -406,6 +406,8 @@ const getCollapsedLabel = (title: string) => {
   display: flex;
   min-width: 0;
   min-height: 0;
+  box-sizing: border-box;
+  padding: 14px 16px;
   overflow: hidden;
   background: #060b12;
 }
