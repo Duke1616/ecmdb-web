@@ -25,14 +25,13 @@ export function useRuntimeSidebarResources(presentation: Ref<PluginRuntimePresen
   const resourceConfig = computed<PluginRuntimeSidebarResource | null>(() => sidebar.value?.resource || null)
   const sidebarEnabled = computed(() => {
     if (!sidebar.value || !resourceConfig.value?.model_uid) return false
-    if (sidebar.value.enabled === false) return false
-    return sidebar.value.mode !== "none"
+    return sidebar.value.enabled === true
   })
   const sidebarTitle = computed(() => sidebar.value?.title || presentation.value?.title || "资源列表")
-  const sidebarSearchPlaceholder = computed(() => sidebar.value?.search_placeholder || "搜索资源名称或 ID")
-  const sidebarEmptyText = computed(() => sidebar.value?.empty_text || "暂无资源数据")
-  const sidebarCollapsible = computed(() => sidebar.value?.collapsible !== false)
-  const sidebarLimit = computed(() => resourceConfig.value?.limit || 20)
+  const sidebarSearchPlaceholder = computed(() => sidebar.value?.search_placeholder ?? "搜索资源名称或 ID")
+  const sidebarEmptyText = computed(() => sidebar.value?.empty_text ?? "暂无资源数据")
+  const sidebarCollapsible = computed(() => sidebar.value?.collapsible ?? true)
+  const sidebarLimit = computed(() => resourceConfig.value?.limit ?? 20)
   const showPagination = computed(() => !sidebarCollapsed.value && sidebarEnabled.value && total.value > sidebarLimit.value)
 
   const getNestedValue = (value: any, path: string) => {

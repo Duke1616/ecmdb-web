@@ -355,7 +355,6 @@ export interface PluginModelOption {
 export interface PluginManagementEnums {
   types: string[]
   placements: EnumOption[]
-  uis: EnumOption[]
   directions: EnumOption[]
   relation_types: EnumOption[]
   cardinalities: EnumOption[]

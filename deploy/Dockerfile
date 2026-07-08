@@ -6,9 +6,9 @@ RUN npm install -g pnpm@10 \
     && pnpm install && pnpm run build
 FROM peytonyip/nginx-brotli:1.29.2 as deploy
 COPY --from=build /app/dist /usr/share/nginx/html
+COPY deploy/nginx.conf /etc/nginx/nginx.conf
 EXPOSE 80
 CMD [ "nginx", "-g", "daemon off;" ]
-
 
 
 
