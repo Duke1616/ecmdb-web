@@ -107,7 +107,12 @@ import { ElMessage } from "element-plus"
 import { Pointer, FullScreen, Aim } from "@element-plus/icons-vue"
 import SectionPanel from "./SectionPanel.vue"
 import PermissionMatrix from "../PermissionMatrix.vue"
-import type { StatementVO, ManifestService } from "../../../composables/usePolicyData"
+import {
+  getServiceCodesFromActions,
+  serviceHasMatchedAction,
+  type StatementVO,
+  type ManifestService
+} from "../../../composables/usePolicyData"
 import scrollIntoView from "scroll-into-view-if-needed"
 
 const props = defineProps<{
@@ -172,9 +177,9 @@ const managedServiceCodes = ref<string[]>([])
 
 // 实时从 stmt.action 中提取 codes，但要与 managedServiceCodes 保持同步
 watch(
-  () => props.stmt.action,
-  (actions) => {
-    const codesFromActions = actions.map((a) => a.split(":")[0])
+  [() => props.stmt.action, () => props.permissionManifest],
+  ([actions, manifest]) => {
+    const codesFromActions = getServiceCodesFromActions(actions, manifest)
     // 只有当 action 中出现了 managedServiceCodes 不包含的 code 时（比如全选操作），才强制同步
     const missing = codesFromActions.filter((c) => !managedServiceCodes.value.includes(c))
     if (missing.length > 0) {
@@ -193,10 +198,12 @@ const activeServices = computed(() =>
 const handleServiceItemChange = (code: string, checked: boolean) => {
   if (!checked) {
     // NOTE: 校验防错阻断，如果该模块下已经有勾选的具体操作项，则不允许直接取消勾选，引导用户先清空操作项
-    const hasSelectedActions = props.stmt.action.some((a) => a.startsWith(`${code}:`))
+    const service = props.permissionManifest.find((pm) => pm.code === code)
+    const hasSelectedActions = service
+      ? serviceHasMatchedAction(props.stmt.action, service)
+      : props.stmt.action.some((a) => a.startsWith(`${code}:`))
     if (hasSelectedActions) {
-      const s = props.permissionManifest.find((pm) => pm.code === code)
-      const name = s ? s.name : code
+      const name = service ? service.name : code
       ElMessage.warning(`业务模块“${name}”下已有选中的操作项，无法取消勾选。请先清空对应操作项。`)
       return
     }
@@ -262,6 +269,7 @@ const scrollToService = async (code: string) => {
 /** 批量切换全场所有服务的 Actions */
 const toggleAllServices = (checked: boolean) => {
   if (!checked) {
+    managedServiceCodes.value = []
     patchStmt({ action: [] })
     return
   }

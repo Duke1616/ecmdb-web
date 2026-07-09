@@ -47,6 +47,76 @@ export interface PolicyFormVO {
   statement: StatementVO[]
 }
 
+const escapeRegExp = (value: string) => value.replace(/[.+^${}()|[\]\\]/g, "\\$&")
+
+const toActionPatternRegex = (pattern: string) => {
+  const source = `^${escapeRegExp(pattern).replace(/\*/g, ".*").replace(/\?/g, ".")}$`
+  return new RegExp(source, "i")
+}
+
+const visitGroupActions = (group: ManifestGroup, visitor: (action: ManifestAction) => void) => {
+  ;(group.actions || []).forEach(visitor)
+  ;(group.children || []).forEach((child) => visitGroupActions(child, visitor))
+}
+
+export const isActionPatternMatched = (patterns: string[], code: string): boolean => {
+  if (!Array.isArray(patterns) || patterns.length === 0) return false
+  if (patterns.includes(code)) return true
+
+  return patterns.some((pattern) => {
+    try {
+      return toActionPatternRegex(pattern).test(code)
+    } catch {
+      return false
+    }
+  })
+}
+
+export const getMatchedActionPattern = (patterns: string[], code: string): string | null => {
+  if (!Array.isArray(patterns) || patterns.length === 0 || patterns.includes(code)) return null
+
+  for (const pattern of patterns) {
+    try {
+      if (toActionPatternRegex(pattern).test(code)) return pattern
+    } catch {
+      // ignore invalid wildcard pattern
+    }
+  }
+  return null
+}
+
+export const serviceHasMatchedAction = (patterns: string[], service: ManifestService): boolean => {
+  let matched = false
+  ;(service.entries || []).some((entry) => {
+    visitGroupActions(entry, (action) => {
+      if (!matched && isActionPatternMatched(patterns, action.code)) matched = true
+    })
+    return matched
+  })
+  return matched
+}
+
+export const getServiceCodesFromActions = (actions: string[], manifest: ManifestService[]): string[] => {
+  if (!Array.isArray(actions) || actions.length === 0) return []
+  const codes = new Set<string>()
+
+  manifest.forEach((service) => {
+    if (serviceHasMatchedAction(actions, service)) {
+      codes.add(service.code)
+    }
+  })
+
+  // Manifest 尚未加载或脚本里是非标准 action 时，保留可识别的首段服务 code。
+  actions.forEach((action) => {
+    const serviceCode = action.split(":")[0]
+    if (serviceCode && serviceCode !== "*" && manifest.some((service) => service.code === serviceCode)) {
+      codes.add(serviceCode)
+    }
+  })
+
+  return [...codes]
+}
+
 /** 创建默认的空白语句 */
 export const createDefaultStatement = (): StatementVO => ({
   effect: "Allow",
@@ -195,9 +265,7 @@ export const mapResponseToVO = (raw: Policy): PolicyFormVO => ({
 export const getActionSummary = (selectedActions: string[], manifest: ManifestService[]): string => {
   if (!selectedActions || selectedActions.length === 0) return "权限条目配置"
 
-  // 提取唯一服务代码
-  const svcCodes = [...new Set(selectedActions.map((a) => a.split(":")[0]))]
-  // 匹配 manifest 获取服务名称
+  const svcCodes = getServiceCodesFromActions(selectedActions, manifest)
   const activeSvcNames = svcCodes.map((code) => manifest.find((m) => m.code === code)?.name).filter(Boolean) as string[]
 
   if (activeSvcNames.length === 0) return "未选择有效模块"

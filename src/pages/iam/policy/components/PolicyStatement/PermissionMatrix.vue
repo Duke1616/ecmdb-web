@@ -31,7 +31,13 @@ import { computed, inject, ref, provide } from "vue"
 import type { Ref } from "vue"
 import { Monitor } from "@element-plus/icons-vue"
 import MatrixRow from "./components/MatrixRow.vue"
-import type { ManifestService, ManifestGroup, ManifestAction } from "../../composables/usePolicyData"
+import {
+  getMatchedActionPattern,
+  isActionPatternMatched,
+  type ManifestService,
+  type ManifestGroup,
+  type ManifestAction
+} from "../../composables/usePolicyData"
 
 const props = defineProps<{
   activeServices: ManifestService[]
@@ -43,58 +49,8 @@ const emit = defineEmits(["toggleAction", "updateActions"])
 
 const menuDetailsMap = inject<Ref<Record<string, any>>>("menuDetailsMap", ref({}))
 
-/**
- * 校验指定的 code 是否被 pattern 模式数组所通配符匹配
- * @param patterns 策略定义的 actions 模式数组，如 ["iam:*:*view*", "task:*:*view*"]
- * @param code 具体的权限项 code，如 "iam:user:view"
- */
-const isActionMatched = (patterns: string[], code: string): boolean => {
-  if (!patterns || patterns.length === 0) return false
-  if (patterns.includes(code)) return true
-
-  return patterns.some((pattern) => {
-    const regexPattern =
-      "^" +
-      pattern
-        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*/g, ".*")
-        .replace(/\?/g, ".") +
-      "$"
-    try {
-      const re = new RegExp(regexPattern, "i")
-      return re.test(code)
-    } catch {
-      return false
-    }
-  })
-}
-
-const getMatchedWildcard = (patterns: string[], code: string): string | null => {
-  if (!patterns || patterns.length === 0) return null
-  if (patterns.includes(code)) return null
-
-  for (const pattern of patterns) {
-    const regexPattern =
-      "^" +
-      pattern
-        .replace(/[.+^${}()|[\]\\]/g, "\\$&")
-        .replace(/\*/g, ".*")
-        .replace(/\?/g, ".") +
-      "$"
-    try {
-      const re = new RegExp(regexPattern, "i")
-      if (re.test(code)) {
-        return pattern
-      }
-    } catch {
-      // ignore
-    }
-  }
-  return null
-}
-
-provide("isActionMatched", isActionMatched)
-provide("getMatchedWildcard", getMatchedWildcard)
+provide("isActionMatched", isActionPatternMatched)
+provide("getMatchedWildcard", getMatchedActionPattern)
 
 /** 展平一级分组下的子孙分组，并应用搜索过滤 */
 const getFilteredSubGroups = (mainGrp: ManifestGroup, query: string): { name: string; actions: ManifestAction[] }[] => {
@@ -155,7 +111,8 @@ const getSvcCodes = (svc: any): string[] => {
   return (svc.entries || []).flatMap((entry: any) => entry.allActions.map((a: any) => a.code))
 }
 
-const getSelectedCount = (svc: any) => getSvcCodes(svc).filter((c) => isActionMatched(props.selectedActions, c)).length
+const getSelectedCount = (svc: any) =>
+  getSvcCodes(svc).filter((c) => isActionPatternMatched(props.selectedActions, c)).length
 
 const getSvcTotal = (svc: any) => getSvcCodes(svc).length
 
@@ -165,7 +122,7 @@ const toggleSvc = (svc: any, checked: boolean) => {
     ? [...new Set([...props.selectedActions, ...codes])]
     : props.selectedActions.filter((p) => {
         if (p.startsWith(`${svc.code}:`)) return false
-        return !codes.some((c) => isActionMatched([p], c))
+        return !codes.some((c) => isActionPatternMatched([p], c))
       })
   emit("updateActions", next)
 }
