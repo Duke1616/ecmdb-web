@@ -77,8 +77,8 @@
           <strong>{{ selectedNodeData.action.action }}</strong>
         </div>
         <div class="summary-line">
-          <span>界面类型</span>
-          <strong>{{ actionUiLabelMap[selectedNodeData.action.ui] || selectedNodeData.action.ui }}</strong>
+          <span>权限标识</span>
+          <strong>{{ selectedNodeData.action.permission || "-" }}</strong>
         </div>
         <div class="summary-line">
           <span>触发位置</span>
@@ -175,7 +175,6 @@ import type { BindingGraphNode, PluginBindingDetail, PluginModelOption } from "@
 import { ModelPicker } from "@/common/components/Pickers"
 import {
   actionPlacementLabelMap,
-  actionUiLabelMap,
   cardinalityLabelMap,
   directionLabelMap,
   relationLabelMap

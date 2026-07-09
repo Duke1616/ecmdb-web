@@ -5,7 +5,6 @@ import {
   PLUGIN_CARDINALITY,
   PLUGIN_DIRECTION,
   PLUGIN_RELATION_TYPE,
-  PLUGIN_UI,
   type ActionSpec,
   type BindingGraphEdge,
   type BindingGraphNode,
@@ -36,11 +35,6 @@ const relationShortLabelMap: Record<string, string> = {
 export const cardinalityLabelMap: Record<string, string> = {
   [PLUGIN_CARDINALITY.One]: "单个",
   [PLUGIN_CARDINALITY.Many]: "多个"
-}
-
-export const actionUiLabelMap: Record<string, string> = {
-  [PLUGIN_UI.BuiltinTerminal]: "在线终端",
-  [PLUGIN_UI.BuiltinSFTP]: "文件管理"
 }
 
 export const actionPlacementLabelMap: Record<string, string> = {
@@ -212,7 +206,7 @@ export const usePluginTopologyGraph = (source: {
           action,
           model_uid: binding.model_uid,
           model_name: action.name,
-          subtitle: actionUiLabelMap[action.ui] || action.action,
+          subtitle: action.permission || action.action,
           icon: resolveActionIcon(action.icon)
         }
 

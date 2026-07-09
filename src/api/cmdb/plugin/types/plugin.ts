@@ -19,11 +19,6 @@ export const PLUGIN_CARDINALITY = {
   Many: "many"
 } as const
 
-export const PLUGIN_UI = {
-  BuiltinTerminal: "builtin:terminal",
-  BuiltinSFTP: "builtin:sftp"
-} as const
-
 export const PLUGIN_MAPPING = {
   OneToOne: "one_to_one",
   OneToMany: "one_to_many",
@@ -75,7 +70,7 @@ export interface ActionSpec {
   name: string
   icon: string
   placement: string
-  ui: string
+  permission?: string
   binding_uid?: string
   runtime?: PluginActionRuntimeSpec
   meta?: Record<string, any>
@@ -205,7 +200,7 @@ export interface ResourceAction {
   name: string
   icon: string
   placement: string
-  ui: string
+  permission?: string
   binding_uid?: string
   runtime?: PluginActionRuntimeSpec
   meta?: Record<string, any>
@@ -237,10 +232,10 @@ export interface ResolveRequest {
 }
 
 export interface ResolveResult {
-  ui?: string
   plugin_id: string
   plugin_name: string
   action: string
+  permission?: string
   binding_uid?: string
   model_uid?: string
   resource_id: number

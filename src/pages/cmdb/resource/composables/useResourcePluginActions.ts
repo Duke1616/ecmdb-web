@@ -58,7 +58,8 @@ export const useResourcePluginActions = () => {
       name: action.name,
       code: toPluginActionCode(action),
       type: "info",
-      icon: getPluginIcon(action)
+      icon: getPluginIcon(action),
+      capability: action.permission
     }))
   }
 

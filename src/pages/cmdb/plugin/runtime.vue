@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { getPluginRuntimeViewApi } from "@/api/cmdb/plugin"
 import type { PluginRuntimeView } from "@/api/cmdb/plugin/types/plugin"
 import { PluginRuntimeWorkspace, RuntimeContent } from "@/common/components/PluginRuntime"
@@ -35,6 +35,7 @@ interface RuntimePageProps {
 
 const props = defineProps<RuntimePageProps>()
 const route = useRoute()
+const router = useRouter()
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -50,12 +51,26 @@ const resolvedResourceId = computed(() => {
   return Number.isFinite(parsed) ? parsed : 0
 })
 
+const handleRuntimeActionChange = (payload: { action?: string }) => {
+  const action = String(payload.action || "").trim()
+  if (!action || action === resolvedAction.value) return
+
+  router.replace({
+    path: route.path,
+    query: {
+      ...route.query,
+      action
+    }
+  })
+}
+
 const componentProps = computed(() => {
   if (!runtimeView.value) return {}
 
   return {
     apiBase: runtimeView.value.runtime.api_base,
-    ...runtimeView.value.runtime.props
+    ...runtimeView.value.runtime.props,
+    onActionChange: handleRuntimeActionChange
   }
 })
 

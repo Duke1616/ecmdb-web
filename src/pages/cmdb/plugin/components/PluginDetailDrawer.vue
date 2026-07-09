@@ -145,7 +145,7 @@
                 </div>
               </div>
               <div class="action-tags">
-                <el-tag size="small" effect="plain">{{ uiLabelMap[action.ui] || action.ui }}</el-tag>
+                <el-tag size="small" effect="plain">{{ action.permission || "-" }}</el-tag>
                 <el-tag size="small" type="info" effect="plain">
                   {{ placementLabelMap[action.placement] || action.placement }}
                 </el-tag>
@@ -187,11 +187,6 @@ const props = defineProps<{
 
 const placementLabelMap: Record<string, string> = {
   "resource.detail.actions": "资源详情动作"
-}
-
-const uiLabelMap: Record<string, string> = {
-  "builtin:terminal": "在线终端",
-  "builtin:sftp": "文件管理"
 }
 
 const formatJson = (value: unknown) => JSON.stringify(value ?? {}, null, 2)
