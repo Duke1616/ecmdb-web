@@ -14,6 +14,11 @@ export enum ExecutionPoolStatus {
   Disabled = "DISABLED"
 }
 
+export enum ExecutionPoolIsolation {
+  Shared = "SHARED",
+  Dedicated = "DEDICATED"
+}
+
 export enum ExecutionPoolBindingStatus {
   Enabled = "ENABLED",
   Disabled = "DISABLED"
@@ -24,7 +29,7 @@ export interface ExecutionPool {
   name: string
   kind: ExecutionPoolKind
   mode: ExecutionPoolMode
-  isolation_level: string
+  isolation_level: ExecutionPoolIsolation
   desc: string
   status: ExecutionPoolStatus
   metadata: Record<string, string>

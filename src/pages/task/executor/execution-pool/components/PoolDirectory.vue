@@ -65,7 +65,10 @@
       >
         <span class="state-mark" :class="pool.status === ExecutionPoolStatus.Enabled ? 'is-enabled' : 'is-disabled'" />
         <span class="row-body">
-          <span class="row-title">{{ pool.name }}</span>
+          <span class="row-title">
+            {{ pool.name }}
+            <span v-if="pool.isolation_level === ExecutionPoolIsolation.Dedicated" class="isolation-tag">专属</span>
+          </span>
           <span class="row-desc">{{ pool.desc || "暂无描述" }}</span>
         </span>
       </button>
@@ -90,6 +93,7 @@
 import { computed } from "vue"
 import {
   ExecutionPoolKind,
+  ExecutionPoolIsolation,
   ExecutionPoolMode,
   ExecutionPoolStatus,
   type ExecutionPool
@@ -188,6 +192,19 @@ const setMode = (value: ExecutionPoolMode | "") => {
   color: #475569;
   font-size: 12px;
   line-height: 24px;
+}
+
+.isolation-tag {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 1px 5px;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  vertical-align: 1px;
 }
 
 .kind-tabs {

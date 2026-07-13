@@ -10,10 +10,16 @@
             <span class="section-kicker">授权绑定</span>
             <div class="pool-title-row">
               <h2>{{ pool.name }}</h2>
-              <span class="pool-status" :class="pool.status === ExecutionPoolStatus.Enabled ? 'is-enabled' : 'is-disabled'">
+              <span
+                class="pool-status"
+                :class="pool.status === ExecutionPoolStatus.Enabled ? 'is-enabled' : 'is-disabled'"
+              >
                 <span class="status-dot" />
                 {{ pool.status === ExecutionPoolStatus.Enabled ? "启用中" : "已禁用" }}
               </span>
+              <span v-if="pool.isolation_level === ExecutionPoolIsolation.Dedicated" class="pool-isolation"
+                >专属资源池</span
+              >
             </div>
           </div>
         </div>
@@ -107,6 +113,7 @@
 <script setup lang="ts">
 import {
   ExecutionPoolBindingStatus,
+  ExecutionPoolIsolation,
   ExecutionPoolStatus,
   type ExecutionPool,
   type ExecutionPoolBinding
@@ -204,6 +211,19 @@ const handleAction = (row: ExecutionPoolBinding, code: string) => {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.pool-isolation {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 7px;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .pool-icon {

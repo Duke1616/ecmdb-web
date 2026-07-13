@@ -12,6 +12,14 @@
     @cancel="visible = false"
   >
     <el-form ref="formRef" :model="formModel" :rules="rules" label-position="top">
+      <el-alert
+        v-if="isDedicatedOccupied"
+        title="该专属资源池已授权给其他租户，不能再新增授权。"
+        type="warning"
+        :closable="false"
+        show-icon
+        class="dedicated-alert"
+      />
       <el-form-item label="授权租户" prop="tenant_id">
         <TenantPicker
           v-model="tenantId"
@@ -67,6 +75,7 @@ import { isValidTenantId, normalizeTenantId } from "../utils"
 
 const props = defineProps<{
   poolName: string
+  isDedicated: boolean
   handlers: PoolHandler[]
   bindings: ExecutionPoolBinding[]
   bindingLoading: boolean
@@ -101,6 +110,13 @@ const boundHandlers = computed(() => {
 })
 
 const hasAnyTenantBinding = computed(() => boundHandlers.value.size > 0)
+
+const isDedicatedOccupied = computed(
+  () =>
+    props.isDedicated &&
+    !!selectedTenantId.value &&
+    props.bindings.some((binding) => Number(binding.tenant_id) !== Number(selectedTenantId.value))
+)
 
 const rules: FormRules = {
   tenant_id: [
@@ -142,6 +158,7 @@ const handleHandlerChange = (value: string[]) => {
 }
 
 const isHandlerDisabled = (handlerName: string) => {
+  if (isDedicatedOccupied.value) return true
   const normalizedName = handlerName || "*"
   if (!selectedTenantId.value) return false
   if (normalizedName === "*") return hasAnyTenantBinding.value
@@ -164,6 +181,10 @@ const handleConfirm = async () => {
 <style scoped lang="scss">
 .full-width {
   width: 100%;
+}
+
+.dedicated-alert {
+  margin-bottom: 16px;
 }
 
 :deep(.el-textarea__inner) {

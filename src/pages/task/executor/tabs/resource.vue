@@ -32,6 +32,9 @@
                 <span class="status-dot" />
                 KAFKA
               </span>
+              <span v-if="row.isolation_level === ResourceIsolation.Dedicated" class="status-badge is-dedicated">
+                专属
+              </span>
             </div>
           </div>
 
@@ -127,7 +130,7 @@
 import { computed, onMounted, ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listResourcesApi } from "@/api/task/resource"
-import { ResourceKind, ResourceMode, type Resource } from "@/api/task/resource/type"
+import { ResourceIsolation, ResourceKind, ResourceMode, type Resource } from "@/api/task/resource/type"
 
 const props = withDefaults(
   defineProps<{
@@ -340,6 +343,12 @@ defineExpose({
     color: #1d4ed8;
     background: #eff6ff;
     border-color: #bfdbfe;
+  }
+
+  &.is-dedicated {
+    color: #9a3412;
+    background: #fff7ed;
+    border-color: #fdba74;
   }
 
   &.is-empty,

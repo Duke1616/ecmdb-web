@@ -51,6 +51,7 @@
       v-model:handler-names="bindForm.handler_names"
       v-model:desc="bindForm.desc"
       :pool-name="selectedPool?.name || bindForm.pool_name"
+      :is-dedicated="selectedPool?.isolation_level === ExecutionPoolIsolation.Dedicated"
       :handlers="selectedHandlers"
       :bindings="bindDialogBindings"
       :binding-loading="bindDialogBindingLoading"
@@ -63,6 +64,7 @@
 
 <script setup lang="ts">
 import { Connection } from "@element-plus/icons-vue"
+import { ExecutionPoolIsolation } from "@/api/task/pool/type"
 import { Drawer } from "@/common/components/Dialogs"
 import AccessLockedState from "../execution-pool/components/AccessLockedState.vue"
 import BindingDialog from "../execution-pool/components/BindingDialog.vue"

@@ -9,6 +9,11 @@ export enum ResourceMode {
   MQ = "MQ"
 }
 
+export enum ResourceIsolation {
+  Shared = "SHARED",
+  Dedicated = "DEDICATED"
+}
+
 export interface BindingOption {
   component: string
   config: Record<string, string>
@@ -41,6 +46,7 @@ export interface Resource {
   desc: string
   kind: ResourceKind
   mode?: ResourceMode | ""
+  isolation_level: ResourceIsolation
   topic?: string
   handlers: HandlerDetail[]
   nodes: NodeDetail[]

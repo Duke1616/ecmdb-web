@@ -121,8 +121,7 @@ export function useExecutionPoolPage() {
   }
 
   const loadBindDialogBindings = async () => {
-    const tenantId = normalizeTenantId(bindForm.tenant_id)
-    if (!isSystemSpace.value || !bindForm.pool_name || !tenantId) {
+    if (!isSystemSpace.value || !bindForm.pool_name) {
       bindDialogBindings.value = []
       return
     }
@@ -131,7 +130,6 @@ export function useExecutionPoolPage() {
     bindDialogBindingLoading.value = true
     try {
       const { data } = await listExecutionPoolBindingsAdminApi({
-        tenant_id: tenantId,
         pool_name: bindForm.pool_name
       })
       if (requestId === bindDialogBindingRequestId) {
@@ -284,7 +282,7 @@ export function useExecutionPoolPage() {
   })
 
   watch(
-    () => [bindDialogVisible.value, normalizeTenantId(bindForm.tenant_id), bindForm.pool_name] as const,
+    () => [bindDialogVisible.value, bindForm.pool_name] as const,
     ([visible]) => {
       if (visible) {
         void loadBindDialogBindings()
