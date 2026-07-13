@@ -52,7 +52,7 @@ const userStore = useUserStore()
 
 // 标签页配置
 const tabs = [
-  { name: "executor", label: "分布式调度" },
+  { name: "executor", label: "分布式调度模式 🌟" },
   { name: "worker", label: "消息推送" }
 ]
 

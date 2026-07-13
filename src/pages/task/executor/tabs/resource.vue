@@ -28,39 +28,80 @@
                 <span class="status-dot" />
                 {{ formatMode(row.mode) }}
               </span>
-              <span v-else-if="row.topic" class="status-badge">
+              <span v-else class="status-badge is-kafka">
                 <span class="status-dot" />
-                {{ row.topic }}
+                KAFKA
               </span>
-              <span v-else class="status-badge is-empty">未配置 Topic</span>
             </div>
           </div>
 
           <div class="resource-meta">
-            <span class="meta-label">处理能力</span>
-            <div class="meta-value">
-              <div v-if="row.handlers?.length" class="handler-list">
-                <el-tooltip
-                  v-for="handler in row.handlers.slice(0, 5)"
-                  :key="handler.name"
-                  :content="handler.desc || '暂无描述'"
-                  placement="top"
-                  :show-after="300"
-                >
-                  <span class="handler-chip">{{ handler.name }}</span>
-                </el-tooltip>
-                <el-tooltip v-if="row.handlers.length > 5" placement="top">
-                  <template #content>
-                    <div class="handler-more-list">
-                      <div v-for="handler in row.handlers.slice(5)" :key="handler.name">{{ handler.name }}</div>
-                    </div>
-                  </template>
-                  <span class="more-chip">+{{ row.handlers.length - 5 }}</span>
-                </el-tooltip>
+            <div class="meta-item">
+              <span class="meta-label">{{ kind === ResourceKind.Agent ? "消息队列" : "在线节点" }}</span>
+              <div class="meta-value">
+                <div v-if="kind === ResourceKind.Agent && row.topic" class="queue-list">
+                  <span class="queue-chip">
+                    <span class="status-dot" />
+                    <span class="queue-name">{{ row.topic }}</span>
+                  </span>
+                </div>
+                <span v-else-if="kind === ResourceKind.Agent" class="muted-text">暂无队列</span>
+                <div v-else-if="row.nodes?.length" class="node-list">
+                  <span class="node-summary">
+                    <span class="node-dot" />
+                    <span class="node-count">{{ row.nodes.length }}</span>
+                    <span>个节点</span>
+                  </span>
+                  <el-tooltip
+                    v-for="node in row.nodes.slice(0, 3)"
+                    :key="node.id || node.address"
+                    :content="node.id || node.address"
+                    placement="top"
+                    :show-after="300"
+                  >
+                    <span class="node-address">{{ node.address }}</span>
+                  </el-tooltip>
+                  <el-tooltip v-if="row.nodes.length > 3" placement="top">
+                    <template #content>
+                      <div class="handler-more-list">
+                        <div v-for="node in row.nodes.slice(3)" :key="node.id || node.address">
+                          {{ node.address }}
+                        </div>
+                      </div>
+                    </template>
+                    <span class="more-chip">+{{ row.nodes.length - 3 }}</span>
+                  </el-tooltip>
+                </div>
+                <span v-else class="muted-text">暂无在线节点</span>
               </div>
-              <span v-else class="muted-text">{{
-                kind === ResourceKind.Executor ? "暂无处理方法" : "暂无处理器"
-              }}</span>
+            </div>
+
+            <div class="meta-item">
+              <span class="meta-label">处理能力</span>
+              <div class="meta-value">
+                <div v-if="row.handlers?.length" class="handler-list">
+                  <el-tooltip
+                    v-for="handler in row.handlers.slice(0, 5)"
+                    :key="handler.name"
+                    :content="handler.desc || '暂无描述'"
+                    placement="top"
+                    :show-after="300"
+                  >
+                    <span class="handler-chip">{{ handler.name }}</span>
+                  </el-tooltip>
+                  <el-tooltip v-if="row.handlers.length > 5" placement="top">
+                    <template #content>
+                      <div class="handler-more-list">
+                        <div v-for="handler in row.handlers.slice(5)" :key="handler.name">{{ handler.name }}</div>
+                      </div>
+                    </template>
+                    <span class="more-chip">+{{ row.handlers.length - 5 }}</span>
+                  </el-tooltip>
+                </div>
+                <span v-else class="muted-text">{{
+                  kind === ResourceKind.Executor ? "暂无处理方法" : "暂无处理器"
+                }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -295,6 +336,12 @@ defineExpose({
     border-color: #a7f3d0;
   }
 
+  &.is-kafka {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+
   &.is-empty,
   &.is-unknown {
     color: #64748b;
@@ -311,41 +358,143 @@ defineExpose({
 }
 
 .resource-meta {
+  display: grid;
+  grid-template-columns: minmax(380px, 1.08fr) minmax(300px, 0.92fr);
+  align-items: center;
+  gap: 10px 28px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1px solid #e8eef6;
+  border-radius: 8px;
+}
+
+.meta-item {
+  min-width: 0;
   display: flex;
-  gap: 12px;
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid #edf2f7;
+  align-items: center;
+  gap: 16px;
 }
 
 .meta-label {
+  width: 58px;
   flex-shrink: 0;
-  color: #94a3b8;
+  color: #8a98ad;
   font-size: 12px;
+  font-weight: 700;
+  line-height: 22px;
 }
 
 .meta-value {
   min-width: 0;
+  display: flex;
+  align-items: center;
+  min-height: 24px;
 }
 
 .handler-list {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
 
+.queue-list {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.node-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .handler-chip,
 .more-chip {
-  min-height: 24px;
-  padding: 0 8px;
+  min-height: 26px;
+  padding: 0 9px;
   color: #374151;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+  background: #f6f8fb;
+  border: 1px solid #e3e8f0;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.node-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  color: #26364d;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.node-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #22c55e;
+  box-shadow: 0 0 0 3px #dcfce7;
+}
+
+.node-count {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.node-address {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  color: #047857;
+  background: #f0fdf7;
+  border: 1px solid #8ee7b8;
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.queue-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.queue-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .muted-text {
   color: #94a3b8;
   font-size: 12px;
+  line-height: 26px;
 }
 
 .handler-more-list {
@@ -371,5 +520,11 @@ defineExpose({
   --el-pagination-button-width: 28px;
   --el-pagination-button-height: 28px;
   font-weight: 500;
+}
+
+@media (max-width: 1100px) {
+  .resource-meta {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
