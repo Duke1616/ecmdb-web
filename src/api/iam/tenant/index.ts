@@ -33,6 +33,14 @@ export function listTenantsApi(data: tenant.ListTenantReq) {
   })
 }
 
+/** 按租户 ID 批量查询 */
+export function listTenantsByIdsApi(data: tenant.ListTenantsByIdsReq) {
+  return instance.post<tenant.ListTenantsByIdsRes>({
+    url: `${API_SERVICE.IAM}/tenant/list/by-ids`,
+    data
+  })
+}
+
 /** 修改租户信息 */
 export function updateTenantApi(data: tenant.UpdateTenantReq) {
   return instance.post<string>({

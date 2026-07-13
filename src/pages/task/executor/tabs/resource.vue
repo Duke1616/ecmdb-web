@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listResourcesApi } from "@/api/task/resource"
 import { ResourceIsolation, ResourceKind, ResourceMode, type Resource } from "@/api/task/resource/type"
@@ -149,32 +149,46 @@ const emit = defineEmits<{
 const loading = ref(false)
 const resources = ref<Resource[]>([])
 const { paginationData } = usePagination({ pageSize: 10, pageSizes: [10, 20, 50] })
+let requestSequence = 0
+let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 const emptyText = computed(() => (props.kind === ResourceKind.Executor ? "暂无执行器" : "暂无推送节点"))
 const iconFallback = computed(() => (props.kind === ResourceKind.Executor ? "E" : "A"))
 
 const fetchResources = async () => {
+  const currentRequest = ++requestSequence
+  const params = {
+    offset: (paginationData.currentPage - 1) * paginationData.pageSize,
+    limit: paginationData.pageSize,
+    keyword: props.keyword.trim(),
+    kind: props.kind
+  }
   loading.value = true
   try {
-    const { data } = await listResourcesApi({
-      offset: (paginationData.currentPage - 1) * paginationData.pageSize,
-      limit: paginationData.pageSize,
-      keyword: props.keyword.trim(),
-      kind: props.kind
-    })
+    const { data } = await listResourcesApi(params)
+    if (currentRequest !== requestSequence) return
+
     resources.value = data.resources || []
     paginationData.total = data.total || 0
     emit("countChange", resources.value.length)
   } catch {
+    if (currentRequest !== requestSequence) return
+
     resources.value = []
     paginationData.total = 0
     emit("countChange", 0)
   } finally {
-    loading.value = false
+    if (currentRequest === requestSequence) {
+      loading.value = false
+    }
   }
 }
 
 const listResourcesData = () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+    searchTimer = null
+  }
   if (paginationData.currentPage !== 1) {
     paginationData.currentPage = 1
     return Promise.resolve()
@@ -198,13 +212,24 @@ onMounted(listResourcesData)
 
 watch(
   () => props.keyword,
-  () => listResourcesData()
+  () => {
+    if (searchTimer) clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+      searchTimer = null
+      void listResourcesData()
+    }, 300)
+  }
 )
 
 watch(
   () => [paginationData.currentPage, paginationData.pageSize],
   () => fetchResources()
 )
+
+onBeforeUnmount(() => {
+  requestSequence++
+  if (searchTimer) clearTimeout(searchTimer)
+})
 
 defineExpose({
   listResourcesData,

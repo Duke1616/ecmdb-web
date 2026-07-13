@@ -37,6 +37,8 @@
         :bindings="bindings"
         :binding-loading="bindingLoading"
         :tenant-options="tenantOptions"
+        :search-tenants="searchTenants"
+        :resolve-tenant="resolveTenant"
         :get-tenant-name="getTenantName"
         @load-bindings="loadBindings"
         @open-bind="openBindDialog"
@@ -55,8 +57,12 @@
       :handlers="selectedHandlers"
       :bindings="bindDialogBindings"
       :binding-loading="bindDialogBindingLoading"
+      :binding-error="bindDialogBindingError"
       :tenant-options="tenantOptions"
+      :search-tenants="searchTenants"
+      :resolve-tenant="resolveTenant"
       :submit-loading="submitLoading"
+      @retry="loadBindDialogBindings"
       @submit="submitBind"
     />
   </Drawer>
@@ -79,6 +85,7 @@ const {
   bindingLoading,
   submitLoading,
   bindDialogBindingLoading,
+  bindDialogBindingError,
   bindDialogVisible,
   pools,
   bindings,
@@ -94,6 +101,9 @@ const {
   tenantOptions,
   selectedPool,
   selectedHandlers,
+  searchTenants,
+  resolveTenant,
+  loadBindDialogBindings,
   getTenantName,
   loadBindings,
   reloadPools,

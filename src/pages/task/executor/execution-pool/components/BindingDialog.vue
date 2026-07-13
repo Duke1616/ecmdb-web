@@ -7,11 +7,24 @@
     header-icon="Connection"
     confirm-text="保存授权"
     :confirm-loading="submitLoading"
+    :confirm-disabled="bindingLoading || bindingError || isDedicatedOccupied"
     :show-footer-info="false"
     @confirm="handleConfirm"
     @cancel="visible = false"
   >
     <el-form ref="formRef" :model="formModel" :rules="rules" label-position="top">
+      <el-alert
+        v-if="bindingError"
+        title="授权数据加载失败，暂时不能保存。"
+        type="error"
+        :closable="false"
+        show-icon
+        class="binding-error-alert"
+      >
+        <template #default>
+          <el-button link type="primary" @click="emit('retry')">重新加载</el-button>
+        </template>
+      </el-alert>
       <el-alert
         v-if="isDedicatedOccupied"
         title="该专属资源池已授权给其他租户，不能再新增授权。"
@@ -24,7 +37,11 @@
         <TenantPicker
           v-model="tenantId"
           :tenants="tenantOptions"
-          placeholder="选择租户或输入租户 ID"
+          :search-api="searchTenants"
+          :resolve-api="resolveTenant"
+          :allow-create="false"
+          :disabled="bindingLoading || bindingError"
+          placeholder="选择租户或搜索租户 ID"
           variant="element"
           size="default"
         />
@@ -39,7 +56,7 @@
           filterable
           multiple
           class="full-width"
-          :disabled="!selectedTenantId || bindingLoading"
+          :disabled="!selectedTenantId || bindingLoading || bindingError"
           :loading="bindingLoading"
           :placeholder="selectedTenantId ? '* 表示整池授权' : '请先选择租户'"
           size="default"
@@ -79,7 +96,14 @@ const props = defineProps<{
   handlers: PoolHandler[]
   bindings: ExecutionPoolBinding[]
   bindingLoading: boolean
+  bindingError: boolean
   tenantOptions: Tenant[]
+  searchTenants: (params: {
+    keyword: string
+    offset: number
+    limit: number
+  }) => Promise<{ total: number; data: Tenant[] }>
+  resolveTenant: (tenantId: number) => Promise<Tenant | null>
   submitLoading: boolean
 }>()
 
@@ -90,6 +114,7 @@ const desc = defineModel<string>("desc", { required: true })
 
 const emit = defineEmits<{
   submit: []
+  retry: []
 }>()
 
 const formRef = ref<FormInstance>()
@@ -120,14 +145,18 @@ const isDedicatedOccupied = computed(
 
 const rules: FormRules = {
   tenant_id: [
-    { required: true, message: "请选择租户或输入租户 ID", trigger: "change" },
+    { required: true, message: "请选择租户", trigger: "change" },
     {
       validator: (_rule, value, callback) => {
         if (!isValidTenantId(value)) {
           callback(new Error("租户 ID 必须是有效数字"))
           return
         }
-        callback()
+
+        void props
+          .resolveTenant(Number(value))
+          .then((tenant) => callback(tenant ? undefined : new Error("租户不存在或当前账号不可见")))
+          .catch(() => callback(new Error("租户校验失败，请稍后重试")))
       },
       trigger: "change"
     }
@@ -183,7 +212,8 @@ const handleConfirm = async () => {
   width: 100%;
 }
 
-.dedicated-alert {
+.dedicated-alert,
+.binding-error-alert {
   margin-bottom: 16px;
 }
 

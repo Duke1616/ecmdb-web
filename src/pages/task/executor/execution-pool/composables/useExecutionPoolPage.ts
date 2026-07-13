@@ -3,6 +3,7 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { usePagination } from "@/common/composables/usePagination"
 import { useUserStore } from "@/pinia/stores/user"
 import { isSystemTenant } from "@/pages/alert/template/utils"
+import { listTenantsApi, listTenantsByIdsApi } from "@/api/iam/tenant"
 import {
   bindExecutionPoolAdminApi,
   disableExecutionPoolBindingAdminApi,
@@ -18,6 +19,7 @@ import {
   type ExecutionPoolBinding,
   type ListPoolsReq
 } from "@/api/task/pool/type"
+import type { Tenant } from "@/api/iam/user/type"
 import type { BindForm, BindingFilters, PoolFilters, PoolHandler } from "../types"
 import { normalizeTenantId } from "../utils"
 
@@ -33,8 +35,12 @@ export function useExecutionPoolPage() {
   const pools = ref<ExecutionPool[]>([])
   const bindings = ref<ExecutionPoolBinding[]>([])
   const bindDialogBindings = ref<ExecutionPoolBinding[]>([])
+  const bindDialogBindingError = ref(false)
+  const tenantCache = ref(new Map<number, Tenant>())
   const selectedPoolName = ref("")
   const bootstrapped = ref(false)
+  let poolRequestId = 0
+  let bindingRequestId = 0
   let bindDialogBindingRequestId = 0
   const { paginationData: poolPagination } = usePagination()
 
@@ -70,7 +76,12 @@ export function useExecutionPoolPage() {
 
   const systemTenant = computed(() => userStore.tenants.find((tenant) => isSystemTenant(tenant.id, tenant)))
 
-  const tenantOptions = computed(() => userStore.tenants)
+  const tenantOptions = computed(() => {
+    const tenantMap = new Map<number, Tenant>()
+    userStore.tenants.forEach((tenant) => tenantMap.set(Number(tenant.id), tenant))
+    tenantCache.value.forEach((tenant, id) => tenantMap.set(id, tenant))
+    return Array.from(tenantMap.values())
+  })
 
   const pageSubtitle = computed(() =>
     isSystemSpace.value ? "系统租户空间中的任务执行能力目录与租户授权" : "执行资源池是系统空间配置项"
@@ -101,32 +112,83 @@ export function useExecutionPoolPage() {
     }
   }
 
+  const cacheTenants = (tenants: Tenant[]) => {
+    if (!tenants.length) return
+    const nextCache = new Map(tenantCache.value)
+    tenants.forEach((tenant) => nextCache.set(Number(tenant.id), tenant))
+    tenantCache.value = nextCache
+  }
+
+  const resolveTenantsByIDs = async (tenantIds: Array<number | undefined>) => {
+    const ids = Array.from(new Set(tenantIds.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0)))
+    const missingIds = ids.filter(
+      (id) => !tenantCache.value.has(id) && !userStore.tenants.some((tenant) => Number(tenant.id) === Number(id))
+    )
+    if (!missingIds.length) return
+
+    const { data } = await listTenantsByIdsApi({ ids: missingIds })
+    const tenants = data.tenants || []
+    cacheTenants(tenants)
+  }
+
+  const searchTenants = async (params: { keyword: string; offset: number; limit: number }) => {
+    const { data } = await listTenantsApi(params)
+    const tenants = data.tenants || []
+    cacheTenants(tenants)
+    return {
+      total: data.total || 0,
+      data: tenants
+    }
+  }
+
+  const resolveTenant = async (tenantId: number) => {
+    const localTenant = tenantOptions.value.find((tenant) => Number(tenant.id) === Number(tenantId))
+    if (localTenant) return localTenant
+
+    const { data } = await listTenantsByIdsApi({ ids: [tenantId] })
+    const tenant = data.tenants?.[0] || null
+    if (tenant) cacheTenants([tenant])
+    return tenant
+  }
+
   const loadBindings = async () => {
+    const requestId = ++bindingRequestId
     if (!isSystemSpace.value || !selectedPoolName.value) {
       bindings.value = []
+      bindingLoading.value = false
       return
     }
 
+    const params = {
+      tenant_id: normalizeTenantId(bindingFilters.tenant_id),
+      pool_name: selectedPoolName.value,
+      status: bindingFilters.status
+    }
     bindingLoading.value = true
     try {
-      const { data } = await listExecutionPoolBindingsAdminApi({
-        tenant_id: normalizeTenantId(bindingFilters.tenant_id),
-        pool_name: selectedPoolName.value,
-        status: bindingFilters.status
-      })
-      bindings.value = data.bindings || []
+      const { data } = await listExecutionPoolBindingsAdminApi(params)
+      if (requestId !== bindingRequestId || !isSystemSpace.value) return
+
+      const nextBindings = data.bindings || []
+      bindings.value = nextBindings
+      await resolveTenantsByIDs(nextBindings.map((binding) => binding.tenant_id))
     } finally {
-      bindingLoading.value = false
+      if (requestId === bindingRequestId) {
+        bindingLoading.value = false
+      }
     }
   }
 
   const loadBindDialogBindings = async () => {
+    const requestId = ++bindDialogBindingRequestId
     if (!isSystemSpace.value || !bindForm.pool_name) {
       bindDialogBindings.value = []
+      bindDialogBindingError.value = false
+      bindDialogBindingLoading.value = false
       return
     }
 
-    const requestId = ++bindDialogBindingRequestId
+    bindDialogBindingError.value = false
     bindDialogBindingLoading.value = true
     try {
       const { data } = await listExecutionPoolBindingsAdminApi({
@@ -134,10 +196,12 @@ export function useExecutionPoolPage() {
       })
       if (requestId === bindDialogBindingRequestId) {
         bindDialogBindings.value = data.bindings || []
+        await resolveTenantsByIDs(bindDialogBindings.value.map((binding) => binding.tenant_id))
       }
     } catch {
       if (requestId === bindDialogBindingRequestId) {
         bindDialogBindings.value = []
+        bindDialogBindingError.value = true
       }
     } finally {
       if (requestId === bindDialogBindingRequestId) {
@@ -147,11 +211,18 @@ export function useExecutionPoolPage() {
   }
 
   const loadPools = async () => {
-    if (!isSystemSpace.value) return
+    const requestId = ++poolRequestId
+    if (!isSystemSpace.value) {
+      poolLoading.value = false
+      return
+    }
 
+    const params = buildPoolParams()
     poolLoading.value = true
     try {
-      const { data } = await listExecutionPoolsAdminApi(buildPoolParams())
+      const { data } = await listExecutionPoolsAdminApi(params)
+      if (requestId !== poolRequestId || !isSystemSpace.value) return
+
       pools.value = data.pools || []
       poolPagination.total = data.total || 0
 
@@ -161,7 +232,9 @@ export function useExecutionPoolPage() {
 
       await loadBindings()
     } finally {
-      poolLoading.value = false
+      if (requestId === poolRequestId) {
+        poolLoading.value = false
+      }
     }
   }
 
@@ -173,9 +246,9 @@ export function useExecutionPoolPage() {
     poolPagination.currentPage = 1
   }
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     if (!isSystemSpace.value) return
-    loadPools()
+    await loadPools()
   }
 
   const selectPool = (pool: ExecutionPool) => {
@@ -194,6 +267,11 @@ export function useExecutionPoolPage() {
   }
 
   const submitBind = async () => {
+    if (bindDialogBindingError.value) {
+      ElMessage.warning("授权数据加载失败，请重试后再保存")
+      return
+    }
+
     const tenantId = normalizeTenantId(bindForm.tenant_id)
     const handlerNames = normalizeHandlerNames(bindForm.handler_names)
     if (!tenantId || !bindForm.pool_name) {
@@ -270,13 +348,22 @@ export function useExecutionPoolPage() {
     }
   )
 
-  watch(isSystemSpace, (value) => {
+  watch(isSystemSpace, async (value) => {
     if (!bootstrapped.value) return
     if (value) {
-      loadPools()
+      await loadPools()
     } else {
+      poolRequestId++
+      bindingRequestId++
+      bindDialogBindingRequestId++
+      tenantCache.value = new Map()
       pools.value = []
       bindings.value = []
+      bindDialogBindings.value = []
+      bindDialogBindingError.value = false
+      poolLoading.value = false
+      bindingLoading.value = false
+      bindDialogBindingLoading.value = false
       selectedPoolName.value = ""
     }
   })
@@ -287,16 +374,18 @@ export function useExecutionPoolPage() {
       if (visible) {
         void loadBindDialogBindings()
       } else {
+        bindDialogBindingRequestId++
         bindDialogBindings.value = []
+        bindDialogBindingError.value = false
+        bindDialogBindingLoading.value = false
       }
     }
   )
 
   onMounted(async () => {
-    await userStore.fetchCurrentUser()
     bootstrapped.value = true
     if (isSystemSpace.value) {
-      loadPools()
+      await loadPools()
     }
   })
 
@@ -305,6 +394,7 @@ export function useExecutionPoolPage() {
     bindingLoading,
     submitLoading,
     bindDialogBindingLoading,
+    bindDialogBindingError,
     bindDialogVisible,
     pools,
     bindings,
@@ -321,6 +411,9 @@ export function useExecutionPoolPage() {
     pageSubtitle,
     selectedPool,
     selectedHandlers,
+    searchTenants,
+    resolveTenant,
+    loadBindDialogBindings,
     getTenantName,
     getPoolHandlers,
     loadBindings,

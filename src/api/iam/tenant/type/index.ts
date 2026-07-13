@@ -29,9 +29,17 @@ export interface ListTenantReq {
   keyword?: string
 }
 
+export interface ListTenantsByIdsReq {
+  ids: number[]
+}
+
 /** 租户列表响应数据 */
 export interface ListTenantRes {
   total: number
+  tenants: Tenant[]
+}
+
+export interface ListTenantsByIdsRes {
   tenants: Tenant[]
 }
 

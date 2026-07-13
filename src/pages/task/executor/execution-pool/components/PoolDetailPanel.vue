@@ -34,6 +34,8 @@
             v-model="tenantId"
             class="tenant-filter"
             :tenants="tenantOptions"
+            :search-api="searchTenants"
+            :resolve-api="resolveTenant"
             placeholder="租户 ID / 名称"
             variant="element"
             size="default"
@@ -132,6 +134,12 @@ defineProps<{
   bindings: ExecutionPoolBinding[]
   bindingLoading: boolean
   tenantOptions: Tenant[]
+  searchTenants: (params: {
+    keyword: string
+    offset: number
+    limit: number
+  }) => Promise<{ total: number; data: Tenant[] }>
+  resolveTenant: (tenantId: number) => Promise<Tenant | null>
   getTenantName: (tenantId: number) => string
 }>()
 

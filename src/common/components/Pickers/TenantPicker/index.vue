@@ -72,6 +72,12 @@ const props = withDefaults(
     tenants: TenantPickerOption[]
     placeholder?: string
     searchPlaceholder?: string
+    searchApi?: (params: {
+      keyword: string
+      offset: number
+      limit: number
+    }) => Promise<{ total: number; data: TenantPickerOption[] }>
+    resolveApi?: (id: number) => Promise<TenantPickerOption | null>
     variant?: "fancy" | "simple" | "element"
     allowCreate?: boolean
     clearable?: boolean
@@ -130,10 +136,27 @@ const buildTenantEntity = (id: number, source?: TenantPickerOption): TenantPicke
 const fallbackBuilder = (id: number): TenantPickerEntity => buildTenantEntity(id)
 
 const resolveApi = async (id: number) => {
-  return tenantItems.value.find((tenant) => Number(tenant.id) === Number(id)) || fallbackBuilder(id)
+  const localTenant = tenantItems.value.find((tenant) => Number(tenant.id) === Number(id))
+  if (localTenant) return localTenant
+
+  const remoteTenant = props.resolveApi ? await props.resolveApi(id) : null
+  return remoteTenant ? buildTenantEntity(remoteTenant.id, remoteTenant) : fallbackBuilder(id)
 }
 
 const searchApi = async (params: { keyword: string; offset: number; limit: number }) => {
+  if (props.searchApi) {
+    const result = await props.searchApi(params)
+    const data = (result.data || []).map((tenant) => buildTenantEntity(tenant.id, tenant))
+    const keywordTenantId = normalizeTenantId(params.keyword)
+    const shouldAppendManual =
+      props.allowCreate && keywordTenantId && !data.some((tenant) => Number(tenant.id) === keywordTenantId)
+
+    return {
+      total: result.total + (shouldAppendManual ? 1 : 0),
+      data: shouldAppendManual ? [fallbackBuilder(keywordTenantId), ...data] : data
+    }
+  }
+
   const keyword = params.keyword.trim().toLowerCase()
   const matched = keyword
     ? tenantItems.value.filter((tenant) => {
