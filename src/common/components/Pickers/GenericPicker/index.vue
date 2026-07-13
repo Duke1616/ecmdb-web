@@ -4,6 +4,7 @@
     ref="containerRef"
     :class="[
       `variant-${variant}`,
+      size ? `size-${size}` : '',
       multiple ? 'is-multiple' : 'is-single',
       disabled ? 'is-disabled' : '',
       containerClass
@@ -129,6 +130,7 @@ interface IGenericPickerProps {
   showLoading?: boolean
   disabled?: boolean
   searchDebounce?: number
+  size?: "" | "small" | "default" | "large"
 }
 
 const props = withDefaults(defineProps<IGenericPickerProps>(), {
@@ -141,7 +143,8 @@ const props = withDefaults(defineProps<IGenericPickerProps>(), {
   showPagination: true,
   showLoading: false,
   disabled: false,
-  searchDebounce: 300
+  searchDebounce: 300,
+  size: ""
 })
 
 // NOTE: 该组件为纯通用 UI 选择控制组件，通过 v-model 将选中的主键绑定同步给外部父组件
@@ -329,6 +332,19 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.generic-picker-container.size-small {
+  --picker-element-size: var(--el-component-size-small);
+}
+
+.generic-picker-container.size-default,
+.generic-picker-container:not(.size-small):not(.size-large) {
+  --picker-element-size: var(--el-component-size);
+}
+
+.generic-picker-container.size-large {
+  --picker-element-size: var(--el-component-size-large);
+}
+
 /* 默认 fancy 风格输入框 */
 .picker-input-box {
   position: relative;
@@ -458,26 +474,25 @@ onUnmounted(() => {
 
 /* element 风格输入框：用于需要和 Element Plus 表单控件完全对齐的场景 */
 .generic-picker-container.variant-element .picker-input-box {
-  min-height: 40px;
+  min-height: var(--picker-element-size);
+  height: var(--picker-element-size);
   padding: 0 11px;
   gap: 8px;
   background: #ffffff;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  box-shadow: none;
-  transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
+  border: 0;
+  border-radius: var(--el-border-radius-base);
+  box-shadow: 0 0 0 1px var(--el-border-color) inset;
+  transition: box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
 
 .generic-picker-container.variant-element .picker-input-box:hover {
   background: #ffffff;
-  border-color: #c0c4cc;
-  box-shadow: none;
+  box-shadow: 0 0 0 1px var(--el-border-color-hover) inset;
 }
 
 .generic-picker-container.variant-element .picker-input-box.is-focus {
   background: #ffffff;
-  border-color: #dcdfe6;
-  box-shadow: none;
+  box-shadow: 0 0 0 1px var(--el-color-primary) inset;
 }
 
 .generic-picker-container.variant-element .selected-single {

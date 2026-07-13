@@ -3,7 +3,7 @@ import type { FormInstance, FormRules } from "element-plus"
 import { ElMessage } from "element-plus"
 import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/task/manager"
 import { TaskType, TaskProtocol, type UpdateTaskReq } from "@/api/task/manager/type"
-import type { HandlerDetail } from "@/api/task/executor/type"
+import type { HandlerDetail } from "@/api/task/resource/type"
 import { type TaskFormState, createDefaultFormState, mapToFormState, mapToApiPayload } from "./useTaskData"
 
 /**

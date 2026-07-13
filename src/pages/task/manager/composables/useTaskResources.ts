@@ -1,6 +1,6 @@
 import { ref } from "vue"
-import { listAllExecutorsApi } from "@/api/task/executor"
-import type { Executor, HandlerDetail } from "@/api/task/executor/type"
+import { listAllResourcesApi } from "@/api/task/resource"
+import { ResourceKind, ResourceMode, type Executor, type HandlerDetail } from "@/api/task/resource/type"
 
 /**
  * 任务资源管理 Composable
@@ -16,7 +16,14 @@ export function useTaskResources() {
   const fetchResources = async () => {
     loading.value = true
     try {
-      executorList.value = await listAllExecutorsApi()
+      const resources = await listAllResourcesApi({ kind: ResourceKind.Executor })
+      executorList.value = resources.map((resource) => ({
+        name: resource.name,
+        desc: resource.desc,
+        handlers: resource.handlers,
+        nodes: resource.nodes,
+        mode: resource.mode === ResourceMode.Pull || resource.mode === ResourceMode.Push ? resource.mode : undefined
+      }))
     } catch (e) {
       console.error("[TaskManager] Sync context failed", e)
     } finally {

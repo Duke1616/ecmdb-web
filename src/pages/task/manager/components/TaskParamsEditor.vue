@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import { reactive, watch, onMounted, onUnmounted } from "vue"
-import type { Parameter } from "@/api/task/executor/type"
+import type { Parameter } from "@/api/task/resource/type"
 import TaskParamItem from "./TaskParamItem.vue"
 
 /**

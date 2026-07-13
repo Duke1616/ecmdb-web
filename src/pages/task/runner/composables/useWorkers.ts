@@ -1,6 +1,6 @@
 import { ref, computed } from "vue"
-import { listAllAgentsApi } from "@/api/task/agent"
-import type { Agent } from "@/api/task/agent/type"
+import { listAllResourcesApi } from "@/api/task/resource"
+import { ResourceKind, type Resource } from "@/api/task/resource/type"
 
 /**
  * 获取工作节点列表
@@ -8,12 +8,12 @@ import type { Agent } from "@/api/task/agent/type"
  * @returns agents 列表、处理器列表及加载函数
  */
 export function useWorkers(getTargetValue?: () => string | undefined) {
-  const agents = ref<Agent[]>([])
+  const agents = ref<Resource[]>([])
   const loading = ref(false)
 
   const fetchWorkers = () => {
     loading.value = true
-    listAllAgentsApi()
+    listAllResourcesApi({ kind: ResourceKind.Agent })
       .then((data) => {
         agents.value = data
       })
@@ -40,7 +40,7 @@ export function useWorkers(getTargetValue?: () => string | undefined) {
    * 获取工作节点 label 展示文本
    * @param item 工作节点
    */
-  const getWorkerLabel = (item: Agent) => {
+  const getWorkerLabel = (item: Resource) => {
     return `${item.name} -【 topic: ${item.topic} 】`
   }
 

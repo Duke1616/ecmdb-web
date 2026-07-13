@@ -117,7 +117,7 @@ import { FullScreen, Close, Link } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
 import CodebookPicker from "@@/components/CodebookPicker/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
-import type { Parameter } from "@/api/task/executor/type"
+import type { Parameter } from "@/api/task/resource/type"
 import KVEditor from "./KVEditor.vue"
 
 /**

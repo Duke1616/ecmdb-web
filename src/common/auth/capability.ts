@@ -592,10 +592,24 @@ export const TASK_CAPABILITIES = {
     View: "task:variable:view"
   },
 
-  /** 执行节点相关 */
-  Executor: {
-    /** 执行节点列表 */
-    View: "task:executor:view"
+  /** 执行资源相关 */
+  Resource: {
+    /** 执行资源列表 */
+    View: "task:resource:view"
+  },
+
+  /** 执行资源池相关 */
+  ExecutionPool: {
+    /** 资源池列表 */
+    View: "task:execution-pool:admin_view",
+    /** 绑定资源池 */
+    Bind: "task:execution-pool:admin_bind",
+    /** 解绑资源池 */
+    Unbind: "task:execution-pool:admin_unbind",
+    /** 启用资源池绑定 */
+    Enable: "task:execution-pool:admin_enable",
+    /** 禁用资源池绑定 */
+    Disable: "task:execution-pool:admin_disable"
   }
 } as const
 

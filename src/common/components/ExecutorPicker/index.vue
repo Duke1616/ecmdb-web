@@ -83,8 +83,16 @@
         </div>
 
         <div class="dropdown-footer">
-          <el-button v-if="hasMore" text size="small" :loading="loadingMore" @click="loadMore">加载更多</el-button>
-          <span v-else>{{ options.length ? "已加载全部执行节点" : "暂无执行节点" }}</span>
+          <el-pagination
+            v-if="total > props.limit"
+            v-model:current-page="currentPage"
+            background
+            small
+            layout="prev, pager, next"
+            :page-size="props.limit"
+            :total="total"
+          />
+          <span v-else>{{ options.length ? "共找到 " + total + " 个执行节点" : "暂无执行节点" }}</span>
         </div>
       </div>
     </Teleport>
@@ -95,10 +103,8 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { ArrowDown, Check, Close, Loading, Search } from "@element-plus/icons-vue"
 import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
-import { listExecutorsApi } from "@/api/task/executor"
-import { listAgentsApi } from "@/api/task/agent"
-import type { Executor, HandlerDetail } from "@/api/task/executor/type"
-import type { Agent } from "@/api/task/agent/type"
+import { ResourceKind, ResourceMode, type Executor, type HandlerDetail, type Resource } from "@/api/task/resource/type"
+import { listResourcesApi } from "@/api/task/resource"
 
 const serviceModel = defineModel<string>("service", { default: "" })
 const handlerModel = defineModel<string>("handler", { default: "" })
@@ -118,7 +124,7 @@ const props = withDefaults(
     disabled: false,
     inline: true,
     size: "large",
-    limit: 20,
+    limit: 10,
     servicePlaceholder: "请选择执行节点",
     handlerPlaceholder: "",
     variant: "element",
@@ -142,15 +148,14 @@ type ExecutorGroup = {
   options: ExecutorOption[]
 }
 
-type CapabilitySource = Executor | Agent
+type CapabilitySource = Resource
 
 const showDropdown = ref(false)
 const loading = ref(false)
-const loadingMore = ref(false)
 const searchKeyword = ref("")
 const activeKeyword = ref("")
-const nextCursor = ref("")
-const hasMore = ref(false)
+const currentPage = ref(1)
+const total = ref(0)
 const executors = ref<Executor[]>([])
 const selectedExecutor = ref<Executor | null>(null)
 const containerRef = ref<HTMLElement>()
@@ -166,7 +171,7 @@ const placeholderText = computed(() => {
     ? "请选择执行器服务 / 处理器"
     : `${props.servicePlaceholder} / ${props.handlerPlaceholder}`
 })
-const inputLoading = computed(() => loading.value || loadingMore.value)
+const inputLoading = computed(() => loading.value)
 const searchPlaceholder = computed(() => {
   return props.kind === "agent" ? "搜索推送节点、处理器或描述..." : "搜索执行器、处理器或描述..."
 })
@@ -237,11 +242,11 @@ const mergeExecutors = (list: Executor[], append: boolean) => {
 }
 
 const normalizeSource = (source: CapabilitySource): Executor => ({
-  name: props.kind === "agent" ? (source as Agent).topic : source.name,
+  name: props.kind === "agent" ? source.topic || source.name : source.name,
   desc: source.desc,
   handlers: source.handlers,
   nodes: source.nodes || [],
-  mode: props.kind === "agent" ? "PUSH" : (source as Executor).mode
+  mode: source.mode === ResourceMode.Pull || source.mode === ResourceMode.Push ? source.mode : ResourceMode.Push
 })
 
 const getServiceValue = (executor: Executor) => executor.name
@@ -284,43 +289,30 @@ const syncExpandedGroups = () => {
   expandedServices.value = next
 }
 
-const listSources = async (append = false) => {
-  const params = {
+const listSources = async () => {
+  const commonParams = {
     limit: props.limit,
-    cursor: append ? nextCursor.value : "",
-    keyword: activeKeyword.value.trim()
+    keyword: activeKeyword.value.trim(),
+    offset: (currentPage.value - 1) * props.limit,
+    kind: props.kind === "agent" ? ResourceKind.Agent : ResourceKind.Executor
   }
 
-  if (props.kind === "agent") {
-    const { data } = await listAgentsApi(params)
-    return {
-      list: (data.agents || []).map(normalizeSource),
-      nextCursor: data.next_cursor || "",
-      hasMore: data.has_more
-    }
-  }
-
-  const { data } = await listExecutorsApi(params)
+  const { data } = await listResourcesApi(commonParams)
   return {
-    list: (data.executors || []).map(normalizeSource),
-    nextCursor: data.next_cursor || "",
-    hasMore: data.has_more
+    list: (data.resources || []).map(normalizeSource),
+    total: data.total || 0
   }
 }
 
-const fetchExecutors = async (append = false) => {
-  if (append && (!hasMore.value || loadingMore.value)) return
-  if (append) loadingMore.value = true
-  else loading.value = true
+const fetchExecutors = async () => {
+  loading.value = true
 
   try {
-    const data = await listSources(append)
-    mergeExecutors(data.list, append)
-    nextCursor.value = data.nextCursor
-    hasMore.value = data.hasMore && Boolean(nextCursor.value)
+    const data = await listSources()
+    mergeExecutors(data.list, false)
+    total.value = data.total
   } finally {
     loading.value = false
-    loadingMore.value = false
     if (showDropdown.value) await syncPopperPosition()
   }
 }
@@ -345,13 +337,12 @@ const resolveExecutor = async (service: string) => {
 }
 
 const listSourceByKeyword = async (keyword: string) => {
-  if (props.kind === "agent") {
-    const { data } = await listAgentsApi({ limit: props.limit, keyword })
-    return (data.agents || []).map(normalizeSource)
-  }
-
-  const { data } = await listExecutorsApi({ limit: props.limit, keyword })
-  return (data.executors || []).map(normalizeSource)
+  const { data } = await listResourcesApi({
+    limit: props.limit,
+    keyword,
+    kind: props.kind === "agent" ? ResourceKind.Agent : ResourceKind.Executor
+  })
+  return (data.resources || []).map(normalizeSource)
 }
 
 const waitForNextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
@@ -432,11 +423,12 @@ const handleSearch = () => {
   const nextKeyword = searchKeyword.value.trim()
   if (activeKeyword.value && !nextKeyword) expandedServices.value = new Set()
   activeKeyword.value = nextKeyword
-  nextCursor.value = ""
+  if (currentPage.value !== 1) {
+    currentPage.value = 1
+    return
+  }
   fetchExecutors()
 }
-
-const loadMore = () => fetchExecutors(true)
 
 const selectOption = (option: ExecutorOption) => {
   selectingOption.value = true
@@ -466,8 +458,8 @@ const isSelected = (option: ExecutorOption) => {
 const getInitial = (name: string) => name.trim().charAt(0).toUpperCase() || "E"
 const formatMode = (mode?: string) => {
   if (props.kind === "agent") return "消息推送"
-  if (mode === "PULL") return "主动拉取"
-  if (mode === "PUSH") return "调度推送"
+  if (mode === ResourceMode.Pull) return "主动拉取"
+  if (mode === ResourceMode.Push) return "调度推送"
   return "未知模式"
 }
 
@@ -501,6 +493,10 @@ watch(
 watch(() => handlerModel.value, emitSelectedHandler, { immediate: true })
 
 watch(groupedOptions, syncExpandedGroups, { immediate: true })
+
+watch(currentPage, () => {
+  if (showDropdown.value) fetchExecutors()
+})
 
 onMounted(() => {
   document.addEventListener("click", handleClickOutside)

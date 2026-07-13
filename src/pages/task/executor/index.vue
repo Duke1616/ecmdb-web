@@ -1,8 +1,8 @@
 <template>
   <ProGovernanceLayout
     v-model:keyword="keyword"
-    title="执行器管理"
-    subtitle="管理分布式调度执行器与消息推送节点，统一查看可用处理能力和在线节点状态"
+    title="执行资源"
+    subtitle="查看当前空间已授权的执行资源与可用处理能力"
     :show-refresh="true"
     @refresh="handleRefresh"
   >
@@ -10,78 +10,81 @@
       <ExecutorSearchCommand v-model:keyword="keyword" :placeholder="searchPlaceholder" @search="handleRefresh" />
     </template>
 
-    <template #actions-prefix>
-      <div class="executor-summary">
-        <span>{{ activeName === "executor" ? "已加载执行器" : "匹配推送节点" }}</span>
-        <strong>{{ activeLoadedCount }}</strong>
-      </div>
+    <template #actions-suffix>
+      <el-button v-if="isSystemSpace" type="primary" class="pool-manager-btn" @click="poolManagerVisible = true">
+        <el-icon><Setting /></el-icon>
+        管理资源池
+      </el-button>
     </template>
 
     <CustomTabs :tabs="tabs" :default-active="activeName" @tab-change="handleTabChange" class="executor-tabs">
       <template #default="{ activeTab }">
-        <Worker
-          v-if="activeTab === 'worker'"
-          ref="workerRef"
-          :keyword="keyword"
-          @count-change="workerLoadedCount = $event"
-        />
-        <Executor
+        <ResourceTab v-if="activeTab === 'worker'" ref="workerRef" :kind="ResourceKind.Agent" :keyword="keyword" />
+        <ResourceTab
           v-if="activeTab === 'executor'"
           ref="executorRef"
+          :kind="ResourceKind.Executor"
           :keyword="keyword"
-          @count-change="executorLoadedCount = $event"
         />
       </template>
     </CustomTabs>
+
+    <ExecutionPoolManagerDialog v-if="poolManagerVisible" v-model="poolManagerVisible" />
   </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import Worker from "./tabs/worker.vue"
-import Executor from "./tabs/executor.vue"
+import { Setting } from "@element-plus/icons-vue"
+import ResourceTab from "./tabs/resource.vue"
 import ExecutorSearchCommand from "./components/ExecutorSearchCommand.vue"
+import ExecutionPoolManagerDialog from "./components/ExecutionPoolManagerDialog.vue"
 import CustomTabs from "@@/components/Tabs/CustomTabs.vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import { useUserStore } from "@/pinia/stores/user"
+import { isSystemTenant } from "@/pages/alert/template/utils"
+import { ResourceKind } from "@/api/task/resource/type"
 
 const activeName = ref("executor")
 const keyword = ref("")
-const workerLoadedCount = ref(0)
-const executorLoadedCount = ref(0)
+const poolManagerVisible = ref(false)
+const userStore = useUserStore()
 
 // 标签页配置
 const tabs = [
-  { name: "executor", label: "分布式调度模式 🌟" },
+  { name: "executor", label: "分布式调度" },
   { name: "worker", label: "消息推送" }
 ]
 
-const workerRef = ref<InstanceType<typeof Worker>>()
-const executorRef = ref<InstanceType<typeof Executor>>()
-
-const activeLoadedCount = computed(() => {
-  return activeName.value === "worker" ? workerLoadedCount.value : executorLoadedCount.value
-})
+const workerRef = ref<InstanceType<typeof ResourceTab>>()
+const executorRef = ref<InstanceType<typeof ResourceTab>>()
 
 const searchPlaceholder = computed(() => {
-  return activeName.value === "worker" ? "搜索节点名称、Topic 或描述..." : "搜索执行器名称..."
+  return activeName.value === "worker" ? "搜索资源名称、Topic 或描述..." : "搜索执行资源名称..."
 })
+
+const currentTenant = computed(() =>
+  userStore.tenants.find((tenant) => Number(tenant.id) === Number(userStore.currentTenantId))
+)
+
+const isSystemSpace = computed(() => isSystemTenant(userStore.currentTenantId, currentTenant.value))
 
 // 处理标签页切换
 const handleTabChange = (tabName: string) => {
   activeName.value = tabName
   if (tabName === "worker") {
-    workerRef.value?.listWorkersData()
+    workerRef.value?.listResourcesData()
   } else if (tabName === "executor") {
-    executorRef.value?.listExecutorsData()
+    executorRef.value?.listResourcesData()
   }
 }
 
 // 刷新数据
 const handleRefresh = () => {
   if (activeName.value === "worker") {
-    workerRef.value?.listWorkersData()
+    workerRef.value?.listResourcesData()
   } else if (activeName.value === "executor") {
-    executorRef.value?.listExecutorsData()
+    executorRef.value?.listResourcesData()
   }
 }
 </script>
@@ -166,28 +169,10 @@ const handleRefresh = () => {
   }
 }
 
-.executor-summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.pool-manager-btn {
   height: 38px;
-  padding: 0 14px;
-  color: #334155;
-  background: #ffffff;
-  border: 1px solid #dbe3ef;
   border-radius: 8px;
-  font-size: 13px;
   font-weight: 700;
-
-  span {
-    color: #64748b;
-    font-weight: 600;
-  }
-
-  strong {
-    color: #0f172a;
-    font-size: 15px;
-  }
 }
 
 @media (max-width: 1100px) {
@@ -214,11 +199,6 @@ const handleRefresh = () => {
   :deep(.action-group) {
     width: 100%;
     flex-wrap: wrap;
-  }
-
-  .executor-summary {
-    width: 100%;
-    justify-content: space-between;
   }
 }
 </style>
