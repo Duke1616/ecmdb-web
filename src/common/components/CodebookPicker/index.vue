@@ -110,7 +110,7 @@
 import { ref, computed, watch } from "vue"
 import { Box, Folder, Search, ArrowRight, ArrowDown } from "@element-plus/icons-vue"
 import { listProjectApi, treeCodebookApi, detailCodebookApi } from "@/api/task/codebook"
-import { buildTree } from "@/pages/task/codebook/composables/useCodebookTree"
+import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import fileIcon from "@/common/assets/icons/preserve-color/file.svg"
@@ -261,7 +261,8 @@ const loadProjectTree = async (projId: number) => {
   treeLoading.value = true
   try {
     const { data } = await treeCodebookApi(projId)
-    codebookTree.value = buildTree(data.codebooks || [])
+    const projectRoot = data.nodes.find((node) => node.layer === "PROJECT")
+    codebookTree.value = (projectRoot?.children || []).map((node) => workspaceNodeToCodebook(node))
   } catch (e) {
     console.error("加载脚本树失败", e)
     codebookTree.value = []

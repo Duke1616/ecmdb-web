@@ -19,7 +19,7 @@
       <PoolDirectory
         v-model:kind="poolFilters.kind"
         v-model:status="poolFilters.status"
-        v-model:mode="poolFilters.mode"
+        v-model:dispatch-mode="poolFilters.dispatch_mode"
         v-model:current-page="poolPagination.currentPage"
         v-model:page-size="poolPagination.pageSize"
         :loading="poolLoading"

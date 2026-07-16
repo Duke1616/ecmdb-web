@@ -3,10 +3,16 @@ export enum ExecutionPoolKind {
   Agent = "AGENT"
 }
 
-export enum ExecutionPoolMode {
-  Push = "PUSH",
-  Pull = "PULL",
+/** 执行资源池使用的任务传输通道。 */
+export enum ExecutionPoolTransport {
+  GRPC = "GRPC",
   MQ = "MQ"
+}
+
+/** Executor 资源池的任务派发方式。 */
+export enum ExecutionPoolDispatchMode {
+  Push = "PUSH",
+  Pull = "PULL"
 }
 
 export enum ExecutionPoolStatus {
@@ -28,7 +34,8 @@ export interface ExecutionPool {
   id: number
   name: string
   kind: ExecutionPoolKind
-  mode: ExecutionPoolMode
+  transport: ExecutionPoolTransport
+  dispatch_mode: ExecutionPoolDispatchMode
   isolation_level: ExecutionPoolIsolation
   desc: string
   status: ExecutionPoolStatus
@@ -53,7 +60,8 @@ export interface ListPoolsReq {
   limit?: number
   keyword?: string
   kind?: ExecutionPoolKind | ""
-  mode?: ExecutionPoolMode | ""
+  transport?: ExecutionPoolTransport | ""
+  dispatch_mode?: ExecutionPoolDispatchMode | ""
   status?: ExecutionPoolStatus | ""
 }
 

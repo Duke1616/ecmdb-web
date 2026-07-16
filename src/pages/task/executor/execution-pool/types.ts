@@ -1,7 +1,7 @@
 import type {
   ExecutionPoolBindingStatus,
+  ExecutionPoolDispatchMode,
   ExecutionPoolKind,
-  ExecutionPoolMode,
   ExecutionPoolStatus
 } from "@/api/task/pool/type"
 
@@ -14,7 +14,7 @@ export interface PoolHandler {
 
 export interface PoolFilters {
   kind: ExecutionPoolKind
-  mode: ExecutionPoolMode | ""
+  dispatch_mode: ExecutionPoolDispatchMode | ""
   status: ExecutionPoolStatus | ""
 }
 

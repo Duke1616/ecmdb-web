@@ -1,10 +1,9 @@
-import type { codebook } from "@/api/task/codebook/types/codebook"
-import { filter, keyBy, some, sortBy } from "lodash-es"
+import type { codebook, CodebookScope, WorkspaceNode } from "@/api/task/codebook/types/codebook"
+import { some } from "lodash-es"
 import { getFileExt, inferLanguage } from "./useCodebookFile"
 
-export interface CodebookTreeNode extends codebook {
-  treeKey: string
-  children?: CodebookTreeNode[]
+export interface CodebookTreeNode extends WorkspaceNode {
+  children: CodebookTreeNode[]
 }
 
 export type TreeDropType = "before" | "after" | "inner" | "prev" | "next"
@@ -17,16 +16,16 @@ export type TreeNodeLike = {
 
 export const treeProps = { label: "name", children: "children" }
 
-export function createRootDirectory(projectID: number): codebook {
+export function createRootDirectory(projectID: number, scope: CodebookScope = "TENANT"): codebook {
   return {
     id: 0,
     tenant_id: 0,
     project_id: projectID,
-    scope: "TENANT",
+    scope,
     parent_id: 0,
     path_ids: "/",
     depth: 0,
-    name: "全部资源",
+    name: "project",
     owner: "",
     kind: "DIRECTORY",
     sort_no: 0,
@@ -38,65 +37,60 @@ export function createRootDirectory(projectID: number): codebook {
   }
 }
 
-export function buildTree(items: codebook[]): CodebookTreeNode[] {
-  const nodes = items.map<CodebookTreeNode>((item) => ({
-    ...item,
-    treeKey: `${item.kind.toLowerCase()}-${item.id}`,
-    children: []
-  }))
-  const nodeMap = keyBy(nodes, "id")
-  const roots: CodebookTreeNode[] = []
-
-  nodes.forEach((node) => {
-    const parent = node.parent_id ? nodeMap[node.parent_id] : null
-    if (parent) {
-      parent.children?.push(node)
-    } else {
-      roots.push(node)
-    }
-  })
-
-  nodes.forEach((node) => {
-    node.children = sortCodebookNodes(node.children || [])
-  })
-
-  return sortCodebookNodes(roots)
-}
-
-export function filterCodebookTreeItems(items: codebook[], keyword: string) {
+export function filterWorkspaceTree(nodes: CodebookTreeNode[], keyword: string): CodebookTreeNode[] {
   const query = keyword.trim().toLowerCase()
-  if (!query) return items
+  if (!query) return nodes
 
-  const matched = new Set<number>()
-  const byID = keyBy(items, "id")
-  items.forEach((item) => {
-    const hit = some([item.name, item.owner, inferLanguage(item.name), getFileExt(item.name)], (value) =>
-      String(value || "")
-        .toLowerCase()
-        .includes(query)
+  return nodes.flatMap((node) => {
+    const children = filterWorkspaceTree(node.children || [], query)
+    const matched = some(
+      [node.name, node.owner, node.runtime_path, inferLanguage(node.name), getFileExt(node.name)],
+      (value) =>
+        String(value || "")
+          .toLowerCase()
+          .includes(query)
     )
-    if (!hit) return
-
-    matched.add(item.id)
-    let parentID = item.parent_id
-    while (parentID) {
-      const parent = byID[parentID]
-      if (!parent) break
-      matched.add(parent.id)
-      parentID = parent.parent_id
-    }
+    return matched || children.length ? [{ ...node, children }] : []
   })
-
-  return filter(items, (item) => matched.has(item.id))
 }
 
-export function sortCodebookNodes<T extends codebook>(items: T[]) {
-  return sortBy(items, [(item) => item.sort_no, (item) => item.id])
+export function workspaceNodeToCodebook(node: WorkspaceNode, code = ""): codebook {
+  return {
+    id: node.source_id,
+    tenant_id: 0,
+    project_id: node.project_id,
+    scope: node.scope,
+    parent_id: node.parent_id,
+    path_ids: node.runtime_path,
+    depth: 0,
+    name: node.name,
+    owner: node.owner,
+    kind: node.kind,
+    sort_no: node.sort_no,
+    code,
+    secret: "",
+    current_version_id: 0,
+    ctime: 0,
+    utime: 0,
+    readonly: node.readonly,
+    workspace_key: node.key,
+    runtime_path: node.runtime_path,
+    release_id: node.release_id,
+    digest: node.digest,
+    artifact_path: node.artifact_path,
+    children: node.children.map((child) => workspaceNodeToCodebook(child))
+  }
 }
 
-export function isSystemCodebook(item?: Pick<codebook, "scope"> | null) {
-  return item?.scope === "SYSTEM"
+export function flattenWorkspaceTree(nodes: CodebookTreeNode[]): CodebookTreeNode[] {
+  return nodes.flatMap((node) => [node, ...flattenWorkspaceTree(node.children || [])])
 }
+
+export function isReadonlyCodebook(item?: Pick<codebook, "scope" | "readonly"> | null) {
+  return Boolean(item?.readonly || item?.scope === "SYSTEM")
+}
+
+export const isSystemCodebook = isReadonlyCodebook
 
 export function getTreeNodeData(node: TreeNodeLike) {
   return node.data as CodebookTreeNode

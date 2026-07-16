@@ -55,8 +55,8 @@
                 </div>
               </div>
               <div class="group-meta">
-                <span class="mode-badge" :class="`is-${String(group.executor.mode || 'unknown').toLowerCase()}`">
-                  {{ formatMode(group.executor.mode) }}
+                <span class="mode-badge" :class="`is-${String(group.executor.dispatch_mode).toLowerCase()}`">
+                  {{ formatMode(group.executor.dispatch_mode) }}
                 </span>
                 <span class="node-count">{{ group.executor.nodes?.length || 0 }} 节点</span>
               </div>
@@ -103,7 +103,13 @@
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue"
 import { ArrowDown, Check, Close, Loading, Search } from "@element-plus/icons-vue"
 import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
-import { ResourceKind, ResourceMode, type Executor, type HandlerDetail, type Resource } from "@/api/task/resource/type"
+import {
+  ResourceKind,
+  ResourceDispatchMode,
+  type Executor,
+  type HandlerDetail,
+  type Resource
+} from "@/api/task/resource/type"
 import { listResourcesApi } from "@/api/task/resource"
 
 const serviceModel = defineModel<string>("service", { default: "" })
@@ -242,11 +248,12 @@ const mergeExecutors = (list: Executor[], append: boolean) => {
 }
 
 const normalizeSource = (source: CapabilitySource): Executor => ({
-  name: props.kind === "agent" ? source.topic || source.name : source.name,
+  // Runner 始终保存资源池名称；Topic 只属于 Agent 资源池的传输元数据。
+  name: source.name,
   desc: source.desc,
   handlers: source.handlers,
   nodes: source.nodes || [],
-  mode: source.mode === ResourceMode.Pull || source.mode === ResourceMode.Push ? source.mode : ResourceMode.Push
+  dispatch_mode: source.dispatch_mode
 })
 
 const getServiceValue = (executor: Executor) => executor.name
@@ -458,8 +465,8 @@ const isSelected = (option: ExecutorOption) => {
 const getInitial = (name: string) => name.trim().charAt(0).toUpperCase() || "E"
 const formatMode = (mode?: string) => {
   if (props.kind === "agent") return "消息推送"
-  if (mode === ResourceMode.Pull) return "主动拉取"
-  if (mode === ResourceMode.Push) return "调度推送"
+  if (mode === ResourceDispatchMode.Pull) return "主动拉取"
+  if (mode === ResourceDispatchMode.Push) return "调度推送"
   return "未知模式"
 }
 

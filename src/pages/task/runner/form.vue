@@ -17,7 +17,13 @@
 
         <div class="form-row">
           <el-form-item prop="name" label="执行器名称" class="form-item">
-            <el-input v-model="formData.name" disabled placeholder="自动生成：模版名称（目标节点）" size="large" />
+            <el-input
+              v-model="formData.name"
+              placeholder="请输入执行器名称，默认自动生成"
+              size="large"
+              clearable
+              @input="handleNameInput"
+            />
           </el-form-item>
         </div>
 
@@ -176,6 +182,8 @@ const DEFAULT_FORM_DATA: registerOrUpdateReq = {
 const formData = ref<registerOrUpdateReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const codebookNameRef = ref("")
+// NOTE: 标识用户是否手动修改过名称，避免自动生成覆盖用户的手动修改
+const isNameUserModified = ref(false)
 
 // ── 校验规则 ────────────────────────────────────────────────────────────────
 const formRules: FormRules = {
@@ -221,15 +229,36 @@ const runnerSuggestedTags = computed(() => {
   return Array.from(new Set(tags))
 })
 
+// NOTE: 自动生成执行单元名称逻辑
+const generateName = () => {
+  const cName = codebookName.value
+  const target = formData.value.target
+  const handler = formData.value.handler
+  if (cName && target) {
+    const targetStr = handler ? `${target}/${handler}` : target
+    formData.value.name = `${cName} (${targetStr})`
+  } else if (cName) {
+    formData.value.name = cName
+  }
+}
+
+// NOTE: 处理名称输入框输入事件，清空时重置为自动生成模式
+const handleNameInput = (val: string) => {
+  if (!val) {
+    isNameUserModified.value = false
+    generateName()
+  } else {
+    isNameUserModified.value = true
+  }
+}
+
 // ── 自动生成执行单元名称 ──────────────────────────────────────────────────────
 watch(
   () => [codebookName.value, formData.value.target, formData.value.handler] as const,
-  ([cName, target, handler]) => {
-    if (cName && target) {
-      const targetStr = handler ? `${target}/${handler}` : target
-      formData.value.name = `${cName}（${targetStr}）`
-    } else if (cName) {
-      formData.value.name = `${cName}（）`
+  () => {
+    // 只有在新建且用户未手动修改名称时，才进行自动生成
+    if (formData.value.id === undefined && !isNameUserModified.value) {
+      generateName()
     }
   },
   { deep: true, immediate: true }
@@ -280,6 +309,9 @@ const submitForm = () => {
 }
 
 const setFrom = async (row: any) => {
+  // NOTE: 如果是编辑已有记录（row.id 存在），则标记为已手动修改，防止覆盖用户的输入
+  // 如果是新建记录（row.id 为 undefined），说明只是初始化初始数据，应该允许自动生成
+  isNameUserModified.value = row.id !== undefined
   const data = cloneDeep(row)
   // 兼容旧数据的扁平化处理
   if (!data.kind && data.run_mode) {
@@ -295,6 +327,7 @@ const setFrom = async (row: any) => {
 const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
   codebookNameRef.value = ""
+  isNameUserModified.value = false
 }
 
 defineExpose({ submitForm, setFrom, resetForm })

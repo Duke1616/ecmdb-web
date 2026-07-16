@@ -45,6 +45,7 @@
           @open-runner="handleOpenRunnerDrawer"
           @open-meta="openMetaDialog"
           @delete="handleDelete"
+          @run="handleOpenRunDrawer"
           @save="saveActiveFile"
           @update-code="handleEditorCodeChange"
         />
@@ -78,6 +79,7 @@
     </FormDialog>
 
     <RunnerDrawer ref="runnerDrawerRef" />
+    <CodebookRunDrawer ref="runDrawerRef" />
     <VersionDrawer
       ref="versionDrawerRef"
       @version-created="handleVersionChanged"
@@ -106,6 +108,7 @@ import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 import { FormDialog } from "@/common/components/Dialogs"
 import CodebookContextMenu from "./components/CodebookContextMenu.vue"
 import CodebookSidebar from "./components/CodebookSidebar.vue"
+import CodebookRunDrawer from "./components/CodebookRunDrawer.vue"
 import DirectoryPanel from "./components/DirectoryPanel.vue"
 import EditorPanel from "./components/EditorPanel.vue"
 import RunnerDrawer from "./components/RunnerDrawer.vue"
@@ -118,11 +121,12 @@ import {
   draftToCodebook
 } from "./composables/useCodebookDraft"
 import {
-  buildTree,
   createRootDirectory as createRootCodebook,
-  filterCodebookTreeItems,
-  isSystemCodebook,
+  filterWorkspaceTree,
+  flattenWorkspaceTree,
+  isReadonlyCodebook as isReadonlyWorkspaceItem,
   treeProps,
+  workspaceNodeToCodebook,
   type CodebookTreeNode
 } from "./composables/useCodebookTree"
 import { useCodebookTreeDrag } from "./composables/useCodebookTreeDrag"
@@ -132,11 +136,17 @@ import {
   createCodebookApi,
   deleteCodebookApi,
   detailCodebookApi,
+  readWorkspaceFileApi,
   sortCodebookApi,
   treeCodebookApi,
   updateCodebookApi
 } from "@/api/task/codebook"
-import type { codebook, CodebookScope, createOrUpdateCodebookReq } from "@/api/task/codebook/types/codebook"
+import type {
+  codebook,
+  CodebookScope,
+  createOrUpdateCodebookReq,
+  WorkspaceNode
+} from "@/api/task/codebook/types/codebook"
 
 const userStore = useUserStore()
 
@@ -148,19 +158,20 @@ const router = useRouter()
 // 从路由参数中读取项目 ID 和项目名称
 const activeProjectId = computed(() => Number(route.query.id || 0))
 const activeProjectName = computed(() => String(route.query.name || ""))
+const activeProjectScope = computed<CodebookScope>(() => (route.query.scope === "SYSTEM" ? "SYSTEM" : "TENANT"))
 
 const runnerDrawerRef = ref<InstanceType<typeof RunnerDrawer>>()
+const runDrawerRef = ref<InstanceType<typeof CodebookRunDrawer>>()
 const versionDrawerRef = ref<InstanceType<typeof VersionDrawer>>()
 const metaFormRef = ref<FormInstance>()
-const treeScope = ref<CodebookScope>("TENANT")
 const keyword = ref("")
 const treeLoading = ref(false)
 const childrenLoading = ref(false)
 const detailLoading = ref(false)
 const saving = ref(false)
-const treeRawData = ref<codebook[]>([])
+const treeRawData = ref<WorkspaceNode[]>([])
 const directoryChildren = ref<codebook[]>([])
-const selectedTreeKey = ref("directory-0")
+const selectedTreeKey = ref("layer:project")
 const activeEditor = ref<EditorState>(createRootDirectory())
 const metaDialogVisible = ref(false)
 
@@ -177,7 +188,7 @@ const {
 const { allowTreeDrag, allowTreeDrop, handleTreeNodeDrop } = useCodebookTreeDrag({
   keyword,
   treeLoading,
-  treeRawData,
+  treeRawData: computed(() => flattenWorkspaceTree(treeRawData.value)),
   refreshAll
 })
 const { activateCodebook, closeOpenedFile, findOpenedFile, findOpenedFileIndex, isSameOpenedFile, upsertOpenedFile } =
@@ -191,38 +202,40 @@ const { activateCodebook, closeOpenedFile, findOpenedFile, findOpenedFileIndex, 
 const currentDirectory = computed(() => {
   if (activeEditor.value.kind === "DIRECTORY") return activeEditor.value
   const parentID = activeEditor.value.parent_id || 0
-  return parentID ? find(treeRawData.value, { id: parentID }) || createRootDirectory() : createRootDirectory()
+  return parentID ? find(projectSourceItems.value, { id: parentID }) || createRootDirectory() : createRootDirectory()
 })
 const currentDirectoryName = computed(() => currentDirectory.value.name || "全部资源")
 const metaForm = ref<createOrUpdateCodebookReq>(createDefaultFileDraft())
 
-const filteredTreeItems = computed(() => {
-  return filterCodebookTreeItems(treeRawData.value, keyword.value)
-})
-
-const treeData = computed<CodebookTreeNode[]>(() => [
-  {
-    ...createRootDirectory(),
-    treeKey: "directory-0",
-    children: buildTree(filteredTreeItems.value)
-  }
-])
+const flatWorkspaceNodes = computed(() => flattenWorkspaceTree(treeRawData.value as CodebookTreeNode[]))
+const projectSourceItems = computed(() =>
+  flatWorkspaceNodes.value
+    .filter((node) => node.layer === "PROJECT" && node.source_id > 0)
+    .map((node) => workspaceNodeToCodebook(node))
+)
+const treeData = computed<CodebookTreeNode[]>(() =>
+  filterWorkspaceTree(treeRawData.value as CodebookTreeNode[], keyword.value)
+)
 
 const metaRules = computed<FormRules>(() => ({
   name: [{ required: true, message: "请输入名称", trigger: "blur" }],
   owner: metaForm.value.id ? [{ required: true, message: "请选择负责人", trigger: "change" }] : []
 }))
 
-function isReadonlyCodebook(row?: Pick<codebook, "scope"> | null) {
-  return isSystemCodebook(row)
+function isReadonlyCodebook(row?: Pick<codebook, "scope" | "readonly"> | null) {
+  return isReadonlyWorkspaceItem(row)
 }
 
 function warnReadonly() {
-  ElMessage.warning("系统资源为只读资源，不能进行变更操作")
+  ElMessage.warning("制品依赖为只读资源，不能进行变更操作")
 }
 
 function createRootDirectory(): codebook {
-  return createRootCodebook(activeProjectId.value)
+  return {
+    ...createRootCodebook(activeProjectId.value, activeProjectScope.value),
+    workspace_key: "layer:project",
+    runtime_path: ""
+  }
 }
 
 function createDefaultFileDraft(): createOrUpdateCodebookReq {
@@ -252,7 +265,7 @@ function getCurrentParentID() {
 }
 
 function getCurrentScope() {
-  return (currentDirectory.value.scope || treeScope.value || "TENANT") as CodebookScope
+  return (currentDirectory.value.scope || activeProjectScope.value) as CodebookScope
 }
 
 function handleEditorCodeChange(code: string) {
@@ -268,7 +281,7 @@ function handleEditorCodeChange(code: string) {
 async function selectCodebook(row: codebook) {
   if (row.kind === "DIRECTORY") {
     activateCodebook(row)
-    fetchChildren(row.id)
+    fetchChildren(row.id, row.workspace_key)
     return
   }
 
@@ -278,7 +291,7 @@ async function selectCodebook(row: codebook) {
     return
   }
 
-  if (!row.id) {
+  if (!row.id && !row.release_id) {
     openedFiles.value.push(row)
     activateCodebook(row)
     return
@@ -286,8 +299,19 @@ async function selectCodebook(row: codebook) {
 
   detailLoading.value = true
   try {
-    const { data } = await detailCodebookApi(row.id)
-    const fileWithDetail = { ...data, code: data.code || "" }
+    const fileWithDetail = row.release_id
+      ? {
+          ...row,
+          code: (
+            await readWorkspaceFileApi({
+              project_id: activeProjectId.value,
+              release_id: row.release_id,
+              digest: row.digest || "",
+              artifact_path: row.artifact_path || ""
+            })
+          ).data.code
+        }
+      : await detailCodebookApi(row.id).then(({ data }) => ({ ...row, ...data, code: data.code || "" }))
     openedFiles.value.push(fileWithDetail)
     activateCodebook(fileWithDetail)
   } finally {
@@ -296,7 +320,7 @@ async function selectCodebook(row: codebook) {
 }
 
 function handleTreeNodeClick(data: CodebookTreeNode) {
-  selectCodebook(data)
+  selectCodebook(workspaceNodeToCodebook(data))
 }
 
 // NOTE: 关闭指定的标签页。如果关闭的是当前激活的脚本，会遵循 IDE (如 VS Code) 习惯，优先激活右侧顶替的标签，若无则激活左侧标签
@@ -313,7 +337,7 @@ function createFileDraft() {
   const editorDraft = draftToEditor(draft)
 
   // 检查是否已有草稿
-  const hasDraft = some(openedFiles.value, (item) => !item.id && item.kind === "FILE")
+  const hasDraft = some(openedFiles.value, (item) => !item.id && !item.workspace_key && item.kind === "FILE")
   if (!hasDraft) {
     openedFiles.value.push(editorDraft)
   }
@@ -370,7 +394,7 @@ async function saveMetaDialog() {
   if (!metaFormRef.value) return
   if (metaForm.value.id) {
     const editingTarget =
-      find(treeRawData.value, { id: metaForm.value.id }) ||
+      find(projectSourceItems.value, { id: metaForm.value.id }) ||
       find(openedFiles.value, { id: metaForm.value.id }) ||
       activeEditor.value
     if (isReadonlyCodebook(editingTarget)) {
@@ -412,7 +436,9 @@ async function saveMetaDialog() {
 async function persistCodebook(payload: createOrUpdateCodebookReq) {
   if (payload.id) {
     const target =
-      find(treeRawData.value, { id: payload.id }) || find(openedFiles.value, { id: payload.id }) || activeEditor.value
+      find(projectSourceItems.value, { id: payload.id }) ||
+      find(openedFiles.value, { id: payload.id }) ||
+      activeEditor.value
     if (isReadonlyCodebook(target)) {
       warnReadonly()
       return
@@ -438,7 +464,7 @@ async function persistCodebook(payload: createOrUpdateCodebookReq) {
         activateCodebook(normalizedDetail)
       }
     } else if (payload.id) {
-      const current = find(treeRawData.value, { id: payload.id })
+      const current = find(projectSourceItems.value, { id: payload.id })
       if (current) selectCodebook(current)
     }
   } finally {
@@ -451,16 +477,24 @@ async function fetchFileDetail(id: number) {
   detailLoading.value = true
   try {
     const { data } = await detailCodebookApi(id)
-    activeEditor.value = data
-    selectedTreeKey.value = `file-${data.id}`
+    const workspaceNode = find(flatWorkspaceNodes.value, { source_id: id, layer: "PROJECT" })
+    activeEditor.value = workspaceNode ? { ...workspaceNodeToCodebook(workspaceNode), ...data } : data
+    selectedTreeKey.value = workspaceNode?.key || `file-${data.id}`
   } finally {
     detailLoading.value = false
   }
 }
 
-async function fetchChildren(parentID: number) {
+async function fetchChildren(parentID: number, workspaceKey?: string) {
   childrenLoading.value = true
   try {
+    const workspaceNode = workspaceKey
+      ? find(flatWorkspaceNodes.value, { key: workspaceKey })
+      : find(flatWorkspaceNodes.value, { source_id: parentID, layer: "PROJECT" })
+    if (workspaceNode) {
+      directoryChildren.value = workspaceNode.children.map((node) => workspaceNodeToCodebook(node))
+      return
+    }
     const { data } = await childrenCodebookApi({
       parent_id: parentID,
       project_id: activeProjectId.value
@@ -475,7 +509,7 @@ async function fetchTreeData() {
   treeLoading.value = true
   try {
     const { data } = await treeCodebookApi(activeProjectId.value)
-    treeRawData.value = data.codebooks || []
+    treeRawData.value = data.nodes || []
   } finally {
     treeLoading.value = false
   }
@@ -484,7 +518,7 @@ async function fetchTreeData() {
 async function refreshAll() {
   await fetchTreeData()
   if (activeEditor.value.kind === "DIRECTORY") {
-    await fetchChildren(activeEditor.value.id)
+    await fetchChildren(activeEditor.value.id, activeEditor.value.workspace_key)
   }
 }
 
@@ -492,7 +526,7 @@ async function handleCodebookSort(id: number, targetPosition: number) {
   const moved = find(directoryChildren.value, { id })
   if (isReadonlyCodebook(activeEditor.value) || isReadonlyCodebook(moved)) {
     warnReadonly()
-    await fetchChildren(activeEditor.value.id)
+    await fetchChildren(activeEditor.value.id, activeEditor.value.workspace_key)
     return
   }
   try {
@@ -506,7 +540,7 @@ async function handleCodebookSort(id: number, targetPosition: number) {
   } catch (error) {
     ElMessage.error("排序失败，请重试")
     if (activeEditor.value.kind === "DIRECTORY") {
-      await fetchChildren(activeEditor.value.id)
+      await fetchChildren(activeEditor.value.id, activeEditor.value.workspace_key)
     }
   }
 }
@@ -564,6 +598,11 @@ function handleOpenRunnerDrawer(row: codebook) {
   runnerDrawerRef.value?.open(row)
 }
 
+function handleOpenRunDrawer(row: codebook) {
+  if (row.kind !== "FILE" || !row.id) return
+  runDrawerRef.value?.open(row)
+}
+
 function handleOpenVersionDrawer(row: codebook) {
   if (row.kind !== "FILE" || !row.id) return
   if (isReadonlyCodebook(row)) {
@@ -589,7 +628,7 @@ function backToProjects() {
 }
 
 function handleNodeContextMenu(event: MouseEvent, data: CodebookTreeNode) {
-  openContextMenu(event, data)
+  openContextMenu(event, workspaceNodeToCodebook(data))
 }
 
 function handleContextMenuAction(action: "createFile" | "createDir" | "edit" | "delete") {

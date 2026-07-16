@@ -24,8 +24,9 @@
             <p v-if="subtitle">{{ subtitle }}</p>
           </div>
         </div>
-        <div class="header-right" v-if="showClose">
-          <el-button type="text" :icon="Close" class="close-btn" @click="handleClose" />
+        <div class="header-right" v-if="$slots['header-actions'] || showClose">
+          <slot name="header-actions" />
+          <el-button v-if="showClose" type="text" :icon="Close" class="close-btn" @click="handleClose" />
         </div>
       </div>
     </template>
@@ -176,6 +177,7 @@ const handleConfirm = () => {
     .header-right {
       display: flex;
       align-items: center;
+      gap: 6px;
       margin-left: auto;
     }
 

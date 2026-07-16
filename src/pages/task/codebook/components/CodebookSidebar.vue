@@ -41,14 +41,14 @@
         @node-drop="handleDrop"
       >
         <template #default="{ data }">
-          <div class="tree-node" :class="{ 'is-root': data.id === 0, 'is-file': data.kind === 'FILE' }">
+          <div class="tree-node" :class="{ 'is-root': data.key.startsWith('layer:'), 'is-file': data.kind === 'FILE' }">
             <SvgIcon v-if="data.kind === 'FILE'" :name="getFileIconName(data.name)" size="15px" class="file-icon" />
             <el-icon v-else>
-              <FolderOpened v-if="data.id === 0 || data.kind === 'DIRECTORY'" />
+              <FolderOpened v-if="data.kind === 'DIRECTORY'" />
             </el-icon>
             <span class="tree-title">
               <span class="tree-label">{{ data.name }}</span>
-              <el-tooltip v-if="isSystemCodebook(data)" content="系统资源，只读" placement="top" :show-after="300">
+              <el-tooltip v-if="data.readonly" content="已发布制品，只读" placement="top" :show-after="300">
                 <el-icon class="readonly-lock"><Lock /></el-icon>
               </el-tooltip>
             </span>
@@ -63,12 +63,7 @@
 import { computed, nextTick, ref, watch } from "vue"
 import { ArrowLeft, FolderOpened, Lock, RefreshRight, Search } from "@element-plus/icons-vue"
 import { getFileIconName } from "../composables/useCodebookFile"
-import {
-  isSystemCodebook,
-  type CodebookTreeNode,
-  type TreeDropType,
-  type TreeNodeLike
-} from "../composables/useCodebookTree"
+import { type CodebookTreeNode, type TreeDropType, type TreeNodeLike } from "../composables/useCodebookTree"
 
 const props = defineProps<{
   activeProjectName: string
@@ -92,7 +87,7 @@ const emit = defineEmits<{
 }>()
 
 const treeRef = ref()
-const defaultExpandedKeys = ["directory-0"]
+const defaultExpandedKeys = ["layer:project", "layer:system", "layer:dependencies"]
 const localKeyword = computed({
   get: () => props.keyword,
   set: (value) => emit("update:keyword", value)

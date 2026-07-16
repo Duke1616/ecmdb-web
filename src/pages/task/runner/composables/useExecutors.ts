@@ -1,6 +1,6 @@
 import { ref, computed } from "vue"
 import { listAllResourcesApi } from "@/api/task/resource"
-import { ResourceKind, ResourceMode, type Executor } from "@/api/task/resource/type"
+import { ResourceKind, type Executor } from "@/api/task/resource/type"
 
 /**
  * 获取分布式执行器列表，并处理 handler 级联联动逻辑
@@ -19,7 +19,7 @@ export function useExecutors(getTargetValue: () => string | undefined) {
           desc: resource.desc,
           handlers: resource.handlers,
           nodes: resource.nodes,
-          mode: resource.mode === ResourceMode.Pull || resource.mode === ResourceMode.Push ? resource.mode : undefined
+          dispatch_mode: resource.dispatch_mode
         }))
       })
       .catch(() => {

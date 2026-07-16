@@ -359,7 +359,7 @@ const handleToCreate = () => {
     if (currentCodebook.value) {
       runnerFormRef.value?.setFrom({
         id: undefined,
-        name: currentCodebook.value.name + "_执行单元",
+        name: currentCodebook.value.name,
         codebook_id: currentCodebook.value.id,
         codebook_secret: currentCodebook.value.secret,
         kind: Kind.GRPC,

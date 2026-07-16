@@ -556,6 +556,24 @@ export const TASK_CAPABILITIES = {
     DeleteProject: "task:codebook:delete_project"
   },
 
+  /** 制品仓库相关 */
+  Artifact: {
+    /** 发布制品 */
+    Publish: "task:artifact:publish",
+    /** 查看制品状态和发布记录 */
+    View: "task:artifact:view",
+    /** 切换当前制品版本 */
+    Activate: "task:artifact:activate"
+  },
+
+  /** Codebook 试运行相关 */
+  Preview: {
+    /** 执行脚本试运行 */
+    Run: "task:preview:run",
+    /** 查看试运行状态和日志 */
+    View: "task:preview:view"
+  },
+
   /** 执行单元相关 */
   Runner: {
     /** 注册执行单元 */

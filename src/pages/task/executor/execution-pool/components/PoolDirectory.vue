@@ -45,7 +45,7 @@
             :key="item.value"
             type="button"
             class="filter-chip"
-            :class="{ 'is-active': mode === item.value }"
+            :class="{ 'is-active': dispatchMode === item.value }"
             @click="setMode(item.value)"
           >
             {{ item.label }}
@@ -94,7 +94,7 @@ import { computed } from "vue"
 import {
   ExecutionPoolKind,
   ExecutionPoolIsolation,
-  ExecutionPoolMode,
+  ExecutionPoolDispatchMode,
   ExecutionPoolStatus,
   type ExecutionPool
 } from "@/api/task/pool/type"
@@ -113,7 +113,7 @@ const emit = defineEmits<{
 
 const kind = defineModel<ExecutionPoolKind>("kind", { required: true })
 const status = defineModel<ExecutionPoolStatus | "">("status", { required: true })
-const mode = defineModel<ExecutionPoolMode | "">("mode", { required: true })
+const dispatchMode = defineModel<ExecutionPoolDispatchMode | "">("dispatchMode", { required: true })
 const currentPage = defineModel<number>("currentPage", { required: true })
 const pageSize = defineModel<number>("pageSize", { required: true })
 
@@ -121,8 +121,8 @@ const modeOptions = computed(() => {
   if (kind.value === ExecutionPoolKind.Executor) {
     return [
       { label: "全部", value: "" },
-      { label: "主动拉取", value: ExecutionPoolMode.Pull },
-      { label: "调度推送", value: ExecutionPoolMode.Push }
+      { label: "主动拉取", value: ExecutionPoolDispatchMode.Pull },
+      { label: "调度推送", value: ExecutionPoolDispatchMode.Push }
     ] as const
   }
 
@@ -143,7 +143,7 @@ const statusOptions: Array<{ label: string; value: ExecutionPoolStatus | "" }> =
 const handleKindChange = (value: ExecutionPoolKind) => {
   if (kind.value === value) return
   kind.value = value
-  mode.value = ""
+  dispatchMode.value = ""
   emit("reload")
 }
 
@@ -153,9 +153,9 @@ const setStatus = (value: ExecutionPoolStatus | "") => {
   emit("reload")
 }
 
-const setMode = (value: ExecutionPoolMode | "") => {
-  if (mode.value === value) return
-  mode.value = value
+const setMode = (value: ExecutionPoolDispatchMode | "") => {
+  if (dispatchMode.value === value) return
+  dispatchMode.value = value
   emit("reload")
 }
 </script>

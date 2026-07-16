@@ -23,10 +23,10 @@
               <span
                 v-if="kind === ResourceKind.Executor"
                 class="status-badge"
-                :class="`is-${String(row.mode || 'unknown').toLowerCase()}`"
+                :class="`is-${String(row.dispatch_mode).toLowerCase()}`"
               >
                 <span class="status-dot" />
-                {{ formatMode(row.mode) }}
+                {{ formatMode(row.dispatch_mode) }}
               </span>
               <span v-else class="status-badge is-kafka">
                 <span class="status-dot" />
@@ -130,7 +130,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listResourcesApi } from "@/api/task/resource"
-import { ResourceIsolation, ResourceKind, ResourceMode, type Resource } from "@/api/task/resource/type"
+import { ResourceDispatchMode, ResourceIsolation, ResourceKind, type Resource } from "@/api/task/resource/type"
 
 const props = withDefaults(
   defineProps<{
@@ -201,8 +201,8 @@ const handlePageSizeChange = () => {
 }
 
 const formatMode = (mode?: string) => {
-  if (mode === ResourceMode.Pull) return "主动拉取"
-  if (mode === ResourceMode.Push) return "调度推送"
+  if (mode === ResourceDispatchMode.Pull) return "主动拉取"
+  if (mode === ResourceDispatchMode.Push) return "调度推送"
   return "未知"
 }
 

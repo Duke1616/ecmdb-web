@@ -1,4 +1,5 @@
 import type * as codebook from "./types/codebook"
+import type * as preview from "./types/preview"
 import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
@@ -36,8 +37,16 @@ export function childrenCodebookApi(data: codebook.childrenCodebookReq) {
 
 /** 资源树 */
 export function treeCodebookApi(projectId: number) {
-  return instance.get<codebook.codebooks>({
+  return instance.get<codebook.WorkspaceTreeResp>({
     url: `${API_SERVICE.TASK}/codebook/tree/${projectId}`
+  })
+}
+
+/** 读取工作区中的不可变制品文件 */
+export function readWorkspaceFileApi(data: codebook.WorkspaceFileReq) {
+  return instance.post<codebook.WorkspaceFileResp>({
+    url: `${API_SERVICE.TASK}/codebook/workspace/file`,
+    data
   })
 }
 
@@ -115,6 +124,30 @@ export function updateProjectApi(data: codebook.UpdateProjectReq) {
   return instance.post<number>({
     url: `${API_SERVICE.TASK}/codebook/project/update`,
     data: data
+  })
+}
+
+/** 启动 Codebook 试运行 */
+export function runCodebookPreviewApi(data: preview.RunPreviewReq) {
+  return instance.post<preview.PreviewExecution>({
+    url: `${API_SERVICE.TASK}/codebook/preview/run`,
+    data
+  })
+}
+
+/** 查询 Codebook 试运行状态 */
+export function getCodebookPreviewStatusApi(data: preview.PreviewStatusReq) {
+  return instance.post<preview.PreviewExecution>({
+    url: `${API_SERVICE.TASK}/codebook/preview/status`,
+    data
+  })
+}
+
+/** 增量查询 Codebook 试运行日志 */
+export function getCodebookPreviewLogsApi(data: preview.PreviewLogsReq) {
+  return instance.post<preview.PreviewLogsResp>({
+    url: `${API_SERVICE.TASK}/codebook/preview/logs`,
+    data
   })
 }
 

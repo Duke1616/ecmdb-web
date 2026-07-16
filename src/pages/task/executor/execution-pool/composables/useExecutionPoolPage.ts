@@ -46,7 +46,7 @@ export function useExecutionPoolPage() {
 
   const poolFilters = reactive<PoolFilters>({
     kind: ExecutionPoolKind.Executor,
-    mode: "",
+    dispatch_mode: "",
     status: ""
   })
 

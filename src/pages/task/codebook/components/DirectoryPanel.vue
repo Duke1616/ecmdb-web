@@ -6,12 +6,12 @@
         <div class="directory-title-text">
           <div class="directory-title-row">
             <h3>{{ activeDirectory.name || "全部资源" }}</h3>
-            <el-tooltip v-if="isReadonly" content="系统资源，只读" placement="top" :show-after="300">
+            <el-tooltip v-if="isReadonly" content="已发布制品，只读" placement="top" :show-after="300">
               <el-icon class="readonly-lock"><Lock /></el-icon>
             </el-tooltip>
             <span class="directory-kind">Directory</span>
           </div>
-          <p>{{ isReadonly ? "系统资源只读，暂不支持变更" : `${directoryChildren.length} 个子资源` }}</p>
+          <p>{{ activeDirectory.runtime_path || `${directoryChildren.length} 个子资源` }}</p>
         </div>
       </div>
       <div class="panel-actions">
@@ -51,7 +51,7 @@
     <VueDraggable
       v-model="localChildren"
       :animation="200"
-      item-key="id"
+      item-key="workspace_key"
       class="resource-grid"
       v-loading="childrenLoading"
       :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
@@ -59,7 +59,7 @@
     >
       <button
         v-for="item in localChildren"
-        :key="item.id"
+        :key="item.workspace_key || item.id"
         class="resource-item"
         type="button"
         @click="$emit('select', item)"
@@ -74,7 +74,7 @@
           <strong>{{ item.name }}</strong>
           <small>{{ item.kind === "DIRECTORY" ? "目录" : inferLanguage(item.name) }}</small>
         </span>
-        <el-tooltip v-if="isSystemCodebook(item)" content="系统资源，只读" placement="top" :show-after="300">
+        <el-tooltip v-if="isReadonlyCodebook(item)" content="已发布制品，只读" placement="top" :show-after="300">
           <el-icon class="resource-readonly-lock"><Lock /></el-icon>
         </el-tooltip>
         <el-tag v-if="item.kind === 'FILE'" size="small" effect="plain">{{ getFileExt(item.name) || "file" }}</el-tag>
@@ -96,7 +96,7 @@ import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
-import { isSystemCodebook } from "../composables/useCodebookTree"
+import { isReadonlyCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
 const { hasPermission } = usePermission()
@@ -118,7 +118,7 @@ const emit = defineEmits<{
 }>()
 
 const localChildren = ref<codebook[]>([])
-const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeDirectory))
+const isReadonly = computed(() => props.readonly || isReadonlyCodebook(props.activeDirectory))
 
 watch(
   () => props.directoryChildren,

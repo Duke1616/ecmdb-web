@@ -4,17 +4,19 @@
       <div class="editor-tabs-container">
         <div
           v-for="file in openedFiles"
-          :key="file.id || 'draft-file'"
+          :key="file.workspace_key || file.id || 'draft-file'"
           class="editor-tab-item"
           :class="{
-            'is-active':
-              (file.id && activeEditor.id === file.id) || (!file.id && !activeEditor.id && activeEditor.kind === 'FILE')
+            'is-active': file.workspace_key
+              ? file.workspace_key === activeEditor.workspace_key
+              : (file.id && activeEditor.id === file.id) ||
+                (!file.id && !activeEditor.id && !activeEditor.workspace_key && activeEditor.kind === 'FILE')
           }"
           @click="$emit('select', file)"
         >
           <SvgIcon :name="getFileIconName(file.name)" size="14px" class="tab-file-icon" />
           <span class="tab-filename" :title="file.name || '未命名脚本'">{{ file.name || "未命名脚本" }}</span>
-          <el-tooltip v-if="isSystemCodebook(file)" content="系统资源，只读" placement="top" :show-after="300">
+          <el-tooltip v-if="isSystemCodebook(file)" content="已发布制品，只读" placement="top" :show-after="300">
             <el-icon class="tab-readonly-lock"><Lock /></el-icon>
           </el-tooltip>
           <el-icon class="tab-close-icon" @click.stop="$emit('close-tab', file)">
@@ -66,6 +68,17 @@
           >删除</AuthButton
         >
         <AuthButton
+          v-if="activeEditor.id && !isReadonly"
+          :capability="capabilities.Preview.Run"
+          disableMode
+          size="small"
+          type="primary"
+          plain
+          :icon="VideoPlay"
+          @click="$emit('run', activeEditor)"
+          >试运行</AuthButton
+        >
+        <AuthButton
           v-if="!isReadonly"
           :capability="capabilities.Codebook.Edit"
           disableMode
@@ -76,7 +89,7 @@
           @click="$emit('save')"
           >保存</AuthButton
         >
-        <span v-if="isReadonly" class="readonly-hint">系统资源只读，暂不支持版本与执行单元配置</span>
+        <span v-if="isReadonly" class="readonly-hint">已发布制品只读，仅支持查看内容</span>
       </div>
     </div>
 
@@ -93,7 +106,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { Check, Clock, Close, Delete, Edit, Lock, Setting } from "@element-plus/icons-vue"
+import { Check, Clock, Close, Delete, Edit, Lock, Setting, VideoPlay } from "@element-plus/icons-vue"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
@@ -120,6 +133,7 @@ defineEmits<{
   (e: "open-runner", row: codebook): void
   (e: "open-meta", row: codebook): void
   (e: "delete", row: codebook): void
+  (e: "run", row: codebook): void
   (e: "save"): void
   (e: "update-code", code: string): void
 }>()

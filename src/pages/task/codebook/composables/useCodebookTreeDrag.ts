@@ -1,24 +1,16 @@
 import type { Ref } from "vue"
 import { ElMessage } from "element-plus"
-import { filter, findIndex, keyBy } from "lodash-es"
+import { findIndex } from "lodash-es"
 import { sortCodebookApi } from "@/api/task/codebook"
-import type { codebook } from "@/api/task/codebook/types/codebook"
+import type { WorkspaceNode } from "@/api/task/codebook/types/codebook"
 import { usePermission } from "@/common/composables/usePermission"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
-import {
-  getTreeNodeData,
-  normalizeDropType,
-  sortCodebookNodes,
-  isSystemCodebook,
-  type CodebookTreeNode,
-  type TreeDropType,
-  type TreeNodeLike
-} from "./useCodebookTree"
+import { getTreeNodeData, normalizeDropType, type TreeDropType, type TreeNodeLike } from "./useCodebookTree"
 
 type TreeDragOptions = {
   keyword: Ref<string>
   treeLoading: Ref<boolean>
-  treeRawData: Ref<codebook[]>
+  treeRawData: Ref<WorkspaceNode[]>
   refreshAll: () => Promise<void>
 }
 
@@ -26,38 +18,37 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
   const { hasPermission } = usePermission()
 
   function allowTreeDrag(node: TreeNodeLike) {
-    if (!hasPermission(TASK_CAPABILITIES.Codebook.Sort)) return false
     const data = getTreeNodeData(node)
-    if (isSystemCodebook(data)) return false
-    return Boolean(data.id && !options.keyword.value.trim() && !options.treeLoading.value)
+    return Boolean(
+      hasPermission(TASK_CAPABILITIES.Codebook.Sort) &&
+        data.layer === "PROJECT" &&
+        !data.readonly &&
+        data.source_id &&
+        !options.keyword.value.trim() &&
+        !options.treeLoading.value
+    )
   }
 
   function allowTreeDrop(draggingNode: TreeNodeLike, dropNode: TreeNodeLike, type: TreeDropType) {
-    if (!hasPermission(TASK_CAPABILITIES.Codebook.Sort)) return false
-    const dropType = normalizeDropType(type)
-    const draggingData = getTreeNodeData(draggingNode)
-    const dropData = getTreeNodeData(dropNode)
-    if (!draggingData.id || draggingData.id === dropData.id || options.keyword.value.trim()) return false
-    if (isSystemCodebook(draggingData) || isSystemCodebook(dropData)) return false
-    if (dropType === "inner") {
-      return dropData.kind === "DIRECTORY" && !isAncestorNode(draggingData.id, dropData.id)
-    }
+    if (!allowTreeDrag(draggingNode) || options.keyword.value.trim()) return false
+    const dragging = getTreeNodeData(draggingNode)
+    const target = getTreeNodeData(dropNode)
+    if (target.layer !== "PROJECT" || target.readonly || dragging.source_id === target.source_id) return false
 
-    if (!dropData.id) return false
-    const targetParentID = dropData.parent_id || 0
-    const targetParent = options.treeRawData.value.find((item) => item.id === targetParentID)
-    if (isSystemCodebook(targetParent)) return false
-    return targetParentID !== draggingData.id && !isAncestorNode(draggingData.id, targetParentID)
+    const dropType = normalizeDropType(type)
+    if (dropType === "inner") {
+      return target.kind === "DIRECTORY" && !isAncestor(dragging.source_id, target.source_id)
+    }
+    return Boolean(
+      target.source_id && target.parent_id !== dragging.source_id && !isAncestor(dragging.source_id, target.parent_id)
+    )
   }
 
   async function handleTreeNodeDrop(draggingNode: TreeNodeLike, dropNode: TreeNodeLike, dropType: TreeDropType) {
-    const draggingData = getTreeNodeData(draggingNode)
-    const dropData = getTreeNodeData(dropNode)
-    if (!draggingData.id) return
-    const targetParentID = resolveDropParentID(dropData, dropType)
-    const targetParent = options.treeRawData.value.find((item) => item.id === targetParentID)
-    if (isSystemCodebook(draggingData) || isSystemCodebook(dropData) || isSystemCodebook(targetParent)) {
-      ElMessage.warning("系统资源为只读资源，不能调整排序")
+    const dragging = getTreeNodeData(draggingNode)
+    const target = getTreeNodeData(dropNode)
+    if (!allowTreeDrop(draggingNode, dropNode, dropType)) {
+      ElMessage.warning("只允许调整当前项目源码的目录和排序")
       await options.refreshAll()
       return
     }
@@ -65,9 +56,9 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
     options.treeLoading.value = true
     try {
       await sortCodebookApi({
-        id: draggingData.id,
-        target_parent_id: targetParentID,
-        target_position: resolveDropPosition(draggingData, dropNode, dropType)
+        id: dragging.source_id,
+        target_parent_id: normalizeDropType(dropType) === "inner" ? target.source_id : target.parent_id,
+        target_position: resolveDropPosition(dragging.source_id, dropNode, dropType)
       })
       ElMessage.success("排序成功")
     } catch {
@@ -78,43 +69,23 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
     }
   }
 
-  function isAncestorNode(ancestorID: number, targetID: number) {
-    if (!ancestorID || !targetID) return false
-    const byID = keyBy(options.treeRawData.value, "id")
-    let current = byID[targetID]
+  function isAncestor(ancestorID: number, targetID: number) {
+    let current = options.treeRawData.value.find((item) => item.layer === "PROJECT" && item.source_id === targetID)
     while (current?.parent_id) {
       if (current.parent_id === ancestorID) return true
-      current = byID[current.parent_id]
+      current = options.treeRawData.value.find(
+        (item) => item.layer === "PROJECT" && item.source_id === current?.parent_id
+      )
     }
     return false
   }
 
-  function resolveDropParentID(dropData: CodebookTreeNode, dropType: TreeDropType) {
-    return normalizeDropType(dropType) === "inner" ? dropData.id : dropData.parent_id || 0
+  function resolveDropPosition(sourceID: number, dropNode: TreeNodeLike, dropType: TreeDropType) {
+    const parentNode = normalizeDropType(dropType) === "inner" ? dropNode : dropNode.parent
+    const siblings = parentNode?.childNodes || []
+    const currentIndex = findIndex(siblings, (node) => getTreeNodeData(node).source_id === sourceID)
+    return currentIndex >= 0 ? currentIndex : siblings.length
   }
 
-  function resolveDropPosition(draggingData: CodebookTreeNode, dropNode: TreeNodeLike, dropType: TreeDropType) {
-    const normalizedDropType = normalizeDropType(dropType)
-    const parentNode = normalizedDropType === "inner" ? dropNode : dropNode.parent
-    const siblingNodes = parentNode?.childNodes || []
-    const currentIndex = findIndex(siblingNodes, (node) => getTreeNodeData(node).id === draggingData.id)
-    if (currentIndex >= 0) return currentIndex
-
-    const dropData = getTreeNodeData(dropNode)
-    const targetParentID = resolveDropParentID(dropData, normalizedDropType)
-    const siblings = sortCodebookNodes(
-      filter(options.treeRawData.value, (item) => (item.parent_id || 0) === targetParentID)
-    )
-
-    if (normalizedDropType === "inner") return siblings.length
-    const targetIndex = findIndex(siblings, { id: dropData.id })
-    if (targetIndex < 0) return siblings.length
-    return normalizedDropType === "before" ? targetIndex : targetIndex + 1
-  }
-
-  return {
-    allowTreeDrag,
-    allowTreeDrop,
-    handleTreeNodeDrop
-  }
+  return { allowTreeDrag, allowTreeDrop, handleTreeNodeDrop }
 }

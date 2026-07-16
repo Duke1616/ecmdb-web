@@ -67,8 +67,6 @@
           :columns="tableColumns"
           :show-selection="false"
           :show-pagination="false"
-          :action-column-width="152"
-          :action-column-fixed="false"
           :table-props="bindingTableProps"
         >
           <template #tenant="{ row }">
@@ -92,7 +90,7 @@
             <span class="desc-cell" :class="{ 'is-empty': !row.desc }">{{ row.desc || "暂无说明" }}</span>
           </template>
 
-          <template #actions="{ row }">
+          <template #operations="{ row }">
             <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="handleAction" />
           </template>
 
@@ -157,7 +155,8 @@ const tableColumns: Column[] = [
   { prop: "tenant_id", label: "租户", slot: "tenant", width: 280, align: "left", showOverflowTooltip: true },
   { prop: "handler_name", label: "Handler", slot: "handler", width: 150, align: "left" },
   { prop: "status", label: "状态", slot: "status", width: 120, align: "left" },
-  { prop: "desc", label: "说明", slot: "desc", minWidth: 320, align: "left", showOverflowTooltip: true }
+  { prop: "desc", label: "说明", slot: "desc", minWidth: 320, align: "left", showOverflowTooltip: true },
+  { prop: "operations", label: "操作", slot: "operations", width: 152, fixed: "right", align: "center" }
 ]
 
 const bindingTableProps = {
@@ -414,10 +413,6 @@ const handleAction = (row: ExecutionPoolBinding, code: string) => {
   :deep(.data-table .el-table__body td .cell) {
     min-height: 56px;
     padding: 10px 14px;
-  }
-
-  :deep(.el-table__body-wrapper) {
-    overflow-x: hidden;
   }
 
   :deep(.el-table__empty-block) {

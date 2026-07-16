@@ -1,6 +1,6 @@
 import { ref } from "vue"
 import { listAllResourcesApi } from "@/api/task/resource"
-import { ResourceKind, ResourceMode, type Executor, type HandlerDetail } from "@/api/task/resource/type"
+import { ResourceKind, type Executor, type HandlerDetail } from "@/api/task/resource/type"
 
 /**
  * 任务资源管理 Composable
@@ -22,7 +22,7 @@ export function useTaskResources() {
         desc: resource.desc,
         handlers: resource.handlers,
         nodes: resource.nodes,
-        mode: resource.mode === ResourceMode.Pull || resource.mode === ResourceMode.Push ? resource.mode : undefined
+        dispatch_mode: resource.dispatch_mode
       }))
     } catch (e) {
       console.error("[TaskManager] Sync context failed", e)

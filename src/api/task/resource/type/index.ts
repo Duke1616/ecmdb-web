@@ -3,10 +3,16 @@ export enum ResourceKind {
   Agent = "AGENT"
 }
 
-export enum ResourceMode {
-  Pull = "PULL",
-  Push = "PUSH",
+/** 资源池使用的任务传输通道。 */
+export enum ResourceTransport {
+  GRPC = "GRPC",
   MQ = "MQ"
+}
+
+/** Executor 资源池声明的任务派发方式。 */
+export enum ResourceDispatchMode {
+  Pull = "PULL",
+  Push = "PUSH"
 }
 
 export enum ResourceIsolation {
@@ -45,7 +51,8 @@ export interface Resource {
   name: string
   desc: string
   kind: ResourceKind
-  mode?: ResourceMode | ""
+  transport: ResourceTransport
+  dispatch_mode: ResourceDispatchMode
   isolation_level: ResourceIsolation
   topic?: string
   handlers: HandlerDetail[]
@@ -57,7 +64,7 @@ export interface Executor {
   desc: string
   handlers: HandlerDetail[]
   nodes: NodeDetail[]
-  mode?: ResourceMode.Pull | ResourceMode.Push
+  dispatch_mode: ResourceDispatchMode
 }
 
 export interface ListResourcesReq {

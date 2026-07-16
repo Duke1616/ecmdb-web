@@ -32,11 +32,54 @@ export interface codebook {
   ctime: number
   utime: number
   children?: codebook[]
+  readonly?: boolean
+  workspace_key?: string
+  runtime_path?: string
+  release_id?: number
+  digest?: string
+  artifact_path?: string
 }
 
 export interface codebooks {
   codebooks: codebook[]
   total: number
+}
+
+export type WorkspaceLayer = "PROJECT" | "SYSTEM" | "DEPENDENCY"
+
+export interface WorkspaceNode {
+  key: string
+  source_id: number
+  release_id: number
+  digest: string
+  artifact_path: string
+  name: string
+  owner: string
+  kind: CodebookKind
+  scope: CodebookScope
+  layer: WorkspaceLayer
+  runtime_path: string
+  readonly: boolean
+  project_id: number
+  parent_id: number
+  sort_no: number
+  namespace: string
+  children: WorkspaceNode[]
+}
+
+export interface WorkspaceTreeResp {
+  nodes: WorkspaceNode[]
+}
+
+export interface WorkspaceFileReq {
+  project_id: number
+  release_id: number
+  digest: string
+  artifact_path: string
+}
+
+export interface WorkspaceFileResp {
+  code: string
 }
 
 export interface listCodebookReq {
@@ -98,6 +141,8 @@ export interface codebookVersions {
 export interface CreateProjectReq {
   name: string
   desc: string
+  artifact_enabled: boolean
+  artifact_namespace: string
 }
 
 export interface UpdateProjectReq {
@@ -105,16 +150,21 @@ export interface UpdateProjectReq {
   name: string
   desc: string
   sort_no?: number
+  artifact_enabled: boolean
+  artifact_namespace: string
 }
 
 export interface CodebookProject {
   id: number
   tenant_id: number
-  scope: string
+  scope: CodebookScope
   name: string
   desc: string
   sort_no: number
   status: string
+  artifact_enabled: boolean
+  artifact_namespace: string
+  source_revision: number
   ctime: number
   utime: number
 }

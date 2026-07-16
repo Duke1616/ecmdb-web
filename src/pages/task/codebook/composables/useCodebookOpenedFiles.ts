@@ -11,14 +11,19 @@ type OpenedFilesOptions = {
 
 export function useCodebookOpenedFiles(options: OpenedFilesOptions) {
   function getTreeKey(row: codebook) {
-    if (!row.id) return row.kind === "FILE" ? "draft-file" : "directory-0"
+    if (row.workspace_key) return row.workspace_key
+    if (!row.id) return row.kind === "FILE" ? "draft-file" : "layer:project"
     return `${row.kind.toLowerCase()}-${row.id}`
   }
 
   function isSameOpenedFile(left: codebook, right: codebook) {
-    return Boolean(
-      (left.id && left.id === right.id) || (!left.id && !right.id && left.kind === "FILE" && right.kind === "FILE")
-    )
+    if (left.workspace_key || right.workspace_key) {
+      return Boolean(left.workspace_key && left.workspace_key === right.workspace_key)
+    }
+    if (left.id || right.id) {
+      return Boolean(left.id && left.id === right.id)
+    }
+    return left.kind === "FILE" && right.kind === "FILE"
   }
 
   function findOpenedFile(row: codebook) {
