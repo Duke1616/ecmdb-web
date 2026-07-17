@@ -1,19 +1,17 @@
 import { ref, watch } from "vue"
 import { listTasksApi } from "@/api/ticket/task"
 import { usePagination } from "@/common/composables/usePagination"
-import type { task } from "@/api/ticket/task/types/task"
+import type { AutomationTask } from "@/api/ticket/task/types/task"
+import { useAutomationTaskPolling } from "./useAutomationTaskPolling"
 
 export function useTaskHistory() {
   const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
-  const tasksData = ref<task[]>([])
+  const tasksData = ref<AutomationTask[]>([])
   const loading = ref(false)
 
-  // 搜索参数
-  const searchQuery = ref("")
-
   /** 获取任务列表数据 */
-  const fetchTasksData = async () => {
-    loading.value = true
+  const fetchTasksData = async (silent = false) => {
+    if (!silent) loading.value = true
     try {
       const { data } = await listTasksApi({
         offset: (paginationData.currentPage - 1) * paginationData.pageSize,
@@ -26,13 +24,19 @@ export function useTaskHistory() {
       console.error("获取任务列表失败:", error)
       tasksData.value = []
     } finally {
-      loading.value = false
+      if (!silent) loading.value = false
+      schedulePolling()
     }
   }
 
-  // 监听分页和搜索参数变化
+  const { schedule: schedulePolling } = useAutomationTaskPolling(
+    () => tasksData.value,
+    () => fetchTasksData(true)
+  )
+
+  // 分页变化时重新加载任务。
   watch(
-    [() => paginationData.currentPage, () => paginationData.pageSize, searchQuery],
+    [() => paginationData.currentPage, () => paginationData.pageSize],
     () => {
       fetchTasksData()
     },
@@ -42,7 +46,6 @@ export function useTaskHistory() {
   return {
     tasksData,
     loading,
-    searchQuery,
     paginationData,
     fetchTasksData,
     handleCurrentChange,

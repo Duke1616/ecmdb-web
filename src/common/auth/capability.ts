@@ -460,10 +460,6 @@ export const TICKET_CAPABILITIES = {
   Task: {
     /** 任务列表 */
     View: "ticket:task:view",
-    /** 修改任务变量 */
-    UpdateVariables: "ticket:task:update_variables",
-    /** 修改任务参数 */
-    UpdateArgs: "ticket:task:update_args",
     /** 重试任务 */
     Retry: "ticket:task:retry",
     /** 任务日志 */

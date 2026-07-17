@@ -57,15 +57,3 @@ export interface TicketFormDraft {
 export type FormCreateOptions = FormRule & {
   submitBtn?: boolean
 }
-
-export type TaskDialogType = "input" | "output" | "args" | "variables"
-
-export interface TaskResultSavePayload {
-  taskId: number
-  result: JsonValue
-  type: TaskDialogType
-}
-
-export const isTaskDialogType = (value: string): value is TaskDialogType => {
-  return value === "input" || value === "output" || value === "args" || value === "variables"
-}

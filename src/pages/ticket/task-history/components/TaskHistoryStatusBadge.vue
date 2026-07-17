@@ -9,13 +9,23 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { getTaskStatus } from "../composables/useTaskHistoryStatus"
+import { AutomationTaskPhase, AutomationTaskStatus } from "@/api/ticket/task/types/task"
+import { getTaskStatus } from "../config"
 
 const props = defineProps<{
   status: number
+  phase?: AutomationTaskPhase
+  scheduledAt?: number
 }>()
 
-const statusMeta = computed(() => getTaskStatus(props.status))
+const statusMeta = computed(() => {
+  const isScheduled =
+    props.status === AutomationTaskStatus.Waiting &&
+    props.phase === AutomationTaskPhase.Ready &&
+    !!props.scheduledAt &&
+    props.scheduledAt > Date.now()
+  return isScheduled ? { text: "计划中", tone: "warning" } : getTaskStatus(props.status)
+})
 </script>
 
 <style scoped lang="scss">

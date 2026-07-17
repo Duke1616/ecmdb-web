@@ -1,72 +1,88 @@
-export interface startTaskReq {
-  process_id: number
-  business_id: string
-  comment: string
-  variables: variables[]
-}
-
-export interface variables {
-  key: string
-  value: string
-}
-
-export interface page {
-  /** 跳过条数 */
+export interface Page {
   offset: number
-  /** 查询条数 */
   limit: number
 }
 
-export interface listByInstanceId {
+export interface ListByInstanceIDReq extends Page {
   instance_id: number
-  /** 跳过条数 */
-  offset: number
-  /** 查询条数 */
-  limit: number
 }
 
-/** 任务运行模式 (对应后端 Kind) */
-export enum Kind {
-  /** 通过 Kafka 推送到工作节点执行 */
-  KAFKA = "KAFKA",
-  /** 通过分布式任务平台执行节点分发 */
-  GRPC = "GRPC"
+export enum AutomationTaskStatus {
+  Success = 1,
+  Failed = 2,
+  Running = 3,
+  Waiting = 4,
+  Blocked = 5,
+  Submitting = 6
 }
 
-export interface task {
+export enum AutomationAttemptStatus {
+  Submitting = "SUBMITTING",
+  Running = "RUNNING",
+  Success = "SUCCESS",
+  Failed = "FAILED"
+}
+
+export enum AutomationTaskPhase {
+  Ready = "READY",
+  Submitting = "SUBMITTING",
+  Running = "RUNNING",
+  Succeeded = "SUCCEEDED",
+  Failed = "FAILED",
+  Blocked = "BLOCKED",
+  Retrying = "RETRYING"
+}
+
+export interface AutomationTask {
   id: number
   ticket_id: number
-  kind: Kind
-  /** 对应后端 int64 */
-  codebook_id: number
-  target: string
-  handler: string
-  status: number
-  is_timing: boolean
-  scheduled_time: string
-  start_time: string
-  end_time: string
-  retry_count: number
-  ctime?: string | number
-  code: string
-  language: string
-  args: string
-  variables: string
-  result: string
-  trigger_position: string
+  process_instance_id: number
+  node_id: string
+  node_name: string
+  process_version: number
+  status: AutomationTaskStatus
+  phase: AutomationTaskPhase
+  scheduled_at: number
+  current_attempt_id: number
+  advanced_at: number
+  last_error: string
+  ctime: number
+  utime: number
 }
 
-export interface tasks {
-  tasks: task[]
+export interface AutomationAttempt {
+  id: number
+  task_id: number
+  attempt_no: number
+  request_id: string
+  runner_id: number
+  execution_id: number
+  status: AutomationAttemptStatus
+  input: Record<string, unknown>
+  output: string
+  error: string
+  submitted_at: number
+  completed_at: number
+  ctime: number
+  utime: number
+}
+
+export interface ExecutionLog {
+  id: number
+  time: number
+  content: string
+}
+
+export interface TasksResp {
+  tasks: AutomationTask[]
   total: number
 }
 
-export interface args {
-  id: number
-  args: any
+export interface ListAttemptsResp {
+  attempts: AutomationAttempt[]
 }
 
-export interface varibales {
-  id: number
-  variables: string
+export interface LogsResp {
+  logs: ExecutionLog[]
+  max_id: number
 }

@@ -2,57 +2,27 @@ import type * as task from "./types/task"
 import instance from "@/common/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
-/** 创建工单任务 */
-export function startTaskApi(data: task.startTaskReq) {
-  return instance.post<number>({
-    url: `${API_SERVICE.TICKET}/task/start`,
-    data: data
-  })
+const TASK_API = `${API_SERVICE.TICKET}/task`
+
+export function listTasksApi(data: task.Page) {
+  return instance.post<task.TasksResp>({ url: `${TASK_API}/list`, data })
 }
 
-/** 自动化任务列表 */
-export function listTasksApi(data: task.page) {
-  return instance.post<task.tasks>({
-    url: `${API_SERVICE.TICKET}/task/list`,
-    data: data
-  })
+export function listTasksByInstanceIdApi(data: task.ListByInstanceIDReq) {
+  return instance.post<task.TasksResp>({ url: `${TASK_API}/list/by_instance_id`, data })
 }
 
-/** 自动化任务列表 */
-export function listTasksByInstanceIdApi(data: task.listByInstanceId) {
-  return instance.post<task.tasks>({
-    url: `${API_SERVICE.TICKET}/task/list/by_instance_id`,
-    data: data
-  })
-}
-
-/** 修改传入参数 */
-export function updateTaskArgsApi(data: task.args) {
-  return instance.post<number>({
-    url: `${API_SERVICE.TICKET}/task/update/args`,
-    data: data
-  })
-}
-
-/** 修改传入参数 */
-export function updateTaskVariablesApi(data: task.varibales) {
-  return instance.post<number>({
-    url: `${API_SERVICE.TICKET}/task/update/variables`,
-    data: data
-  })
-}
-
-/** 修改传入参数 */
 export function retryTaskApi(id: number) {
-  return instance.post<number>({
-    url: `${API_SERVICE.TICKET}/task/retry`,
-    data: { id: id }
-  })
+  return instance.post<void>({ url: `${TASK_API}/retry`, data: { id } })
 }
 
-/** 获取任务日志 */
-export function getTaskLogsApi(taskId: number) {
-  return instance.get<string>({
-    url: `${API_SERVICE.TICKET}/task/logs/${taskId}`
+export function listTaskAttemptsApi(taskId: number) {
+  return instance.post<task.ListAttemptsResp>({ url: `${TASK_API}/attempt/list`, data: { task_id: taskId } })
+}
+
+export function getTaskAttemptLogsApi(attemptId: number, minId = 0, limit = 1000) {
+  return instance.post<task.LogsResp>({
+    url: `${TASK_API}/attempt/logs`,
+    data: { attempt_id: attemptId, min_id: minId, limit }
   })
 }

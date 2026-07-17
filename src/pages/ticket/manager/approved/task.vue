@@ -1,540 +1,332 @@
 <template>
   <div class="task-list-container" v-loading="loading">
-    <el-empty v-if="tasksData.length === 0" :image-size="200" description="暂无自动化任务" />
-
-    <div class="task-list" v-else>
-      <div v-for="row in tasksData" :key="row.id" class="task-item-card">
-        <div class="task-main">
-          <div class="task-heading">
-            <div class="task-title">
-              <span class="task-icon">
-                <el-icon><Monitor /></el-icon>
-              </span>
-              <div class="task-name-group">
-                <div class="task-name">{{ row.codebook_id || "未命名任务" }}</div>
-                <div class="task-subtitle">
-                  <span>{{ row.kind === Kind.KAFKA ? "消息推送" : "分布式调度" }}</span>
-                  <span class="separator">/</span>
-                  <span>{{ row.handler || "-" }}</span>
+    <el-empty v-if="tasksData.length === 0" :image-size="160" description="暂无自动化任务" />
+    <div v-else class="task-list">
+      <article v-for="row in tasksData" :key="row.id" class="task-card" :class="`is-${statusTone(row.status)}`">
+        <i class="task-card__rail" />
+        <div class="task-card__body">
+          <header class="task-card__head">
+            <div class="task-card__identity">
+              <span class="task-card__icon"
+                ><el-icon><Operation /></el-icon
+              ></span>
+              <div class="task-card__identity-content">
+                <div class="task-card__title">{{ row.node_name || `自动化任务 #${row.id}` }}</div>
+                <div class="task-card__node" :title="row.node_id">
+                  <span>Task #{{ row.id }}</span
+                  >{{ row.node_id }}
+                  <em>流程 v{{ row.process_version || "-" }}</em>
                 </div>
               </div>
             </div>
-
-            <div class="task-status">
-              <span v-if="row.retry_count > 0" class="retry-count">
-                <el-icon><Refresh /></el-icon>{{ row.retry_count }}
-              </span>
-              <EnumTag :value="row.status" :map="statusMap" size="small" />
-            </div>
+            <TaskHistoryStatusBadge :status="row.status" :phase="row.phase" :scheduled-at="row.scheduled_at" />
+          </header>
+          <div class="task-card__meta">
+            <span class="phase-chip"><i />{{ formatAutomationTaskPhase(row.phase) }}</span>
+            <span
+              ><el-icon><Calendar /></el-icon><b>计划执行</b>{{ formatTime(row.scheduled_at) }}</span
+            >
+            <span
+              ><el-icon><Clock /></el-icon><b>最近更新</b>{{ formatTime(row.utime) }}</span
+            >
           </div>
-
-          <div class="task-meta">
-            <div class="meta-item">
-              <span class="meta-label">目标</span>
-              <span class="meta-value">{{ row.target || "-" }}</span>
-            </div>
-            <div class="meta-item" v-if="row.ctime">
-              <span class="meta-label">创建</span>
-              <span class="meta-value">{{ formatTaskTime(row.ctime) }}</span>
-            </div>
-            <div class="meta-item" v-if="row.trigger_position">
-              <span class="meta-label">触发</span>
-              <span class="meta-value">{{ row.trigger_position }}</span>
-            </div>
-            <div class="meta-item">
-              <span class="meta-label">计划</span>
-              <span class="meta-value">{{ row.is_timing ? row.scheduled_time || "-" : "立即执行" }}</span>
-            </div>
-            <div class="meta-item meta-item--time" v-if="row.start_time || row.end_time">
-              <span class="meta-label">时间</span>
-              <span class="meta-value time-range-value">
-                <span>{{ row.start_time ? formatTaskTime(row.start_time) : "--" }}</span>
-                <span class="time-arrow">-></span>
-                <span>{{ row.end_time ? formatTaskTime(row.end_time) : row.start_time ? "RUNNING" : "--" }}</span>
-                <span class="duration-value" v-if="row.start_time && row.end_time">
-                  ({{ calculateDuration(row.start_time, row.end_time) }})
-                </span>
-              </span>
-            </div>
+          <div v-if="row.last_error" class="task-card__error">
+            <el-icon><WarningFilled /></el-icon><span>{{ row.last_error }}</span>
           </div>
-
-          <div class="task-actions">
-            <div class="action-links">
-              <el-button link class="btn-action" @click="operateEvent(row, 'input')">
-                <el-icon><Document /></el-icon>指令详情
-              </el-button>
-              <el-button link class="btn-action" @click="operateEvent(row, 'output')">
-                <el-icon><DataLine /></el-icon>查看日志
-              </el-button>
-            </div>
-
-            <div class="action-tools">
-              <div class="config-group">
-                <el-tooltip content="编辑参数" placement="top">
-                  <button class="config-item" @click="operateEvent(row, 'args')">
-                    <el-icon><Setting /></el-icon>
-                  </button>
-                </el-tooltip>
-                <el-tooltip content="运行变量" placement="top">
-                  <button class="config-item" @click="operateEvent(row, 'variables')">
-                    <el-icon><Box /></el-icon>
-                  </button>
-                </el-tooltip>
-              </div>
-
-              <AuthButton
-                :capability="TICKET_CAPABILITIES.Task.Retry"
-                size="small"
-                plain
-                type="warning"
-                class="retry-button"
-                @click="operateEvent(row, 'retry')"
-              >
-                <el-icon><Refresh /></el-icon>重新执行
-              </AuthButton>
-            </div>
-          </div>
+          <footer class="task-card__actions">
+            <el-button type="primary" plain size="small" @click="openAttempts(row.id)">查看执行详情</el-button>
+            <AuthButton
+              :capability="TICKET_CAPABILITIES.Task.Retry"
+              size="small"
+              plain
+              type="warning"
+              :disabled="row.status !== AutomationTaskStatus.Failed && row.status !== AutomationTaskStatus.Blocked"
+              @click="openRetry(row.id)"
+            >
+              重新执行
+            </AuthButton>
+          </footer>
         </div>
-      </div>
+      </article>
     </div>
 
-    <!-- 任务结果查看对话框 -->
-    <TaskResultDialog
-      v-model="resultVisible"
-      :result="result"
-      :language="language"
-      :type="currentDialogType"
-      :task-id="taskId"
-      @closed="onResultDialogClosed"
-      @save="handleSaveResult"
-    />
-
-    <!-- 任务重试确认对话框 -->
-    <TaskRetryDialog
-      v-model="retryDialogVisible"
-      :task-id="taskId"
-      width="400px"
-      :loading="retryLoading"
-      @confirm="handleRetryConfirm"
-    />
+    <TaskRetryDialog v-model="retryDialogVisible" :task-id="taskId" :loading="retryLoading" @confirm="confirmRetry" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, watch } from "vue"
+import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
-import { Refresh, Monitor, Document, DataLine, Setting, Box } from "@element-plus/icons-vue"
-import { task, Kind } from "@/api/ticket/task/types/task"
-import {
-  listTasksByInstanceIdApi,
-  retryTaskApi,
-  updateTaskArgsApi,
-  updateTaskVariablesApi,
-  getTaskLogsApi
-} from "@/api/ticket/task"
-import EnumTag from "@/common/components/EnumTag/index.vue"
-import type { TagInfo } from "@/common/components/EnumTag/index.vue"
-import AuthButton from "@/common/components/Auth/AuthButton.vue"
-import TaskResultDialog from "@/pages/ticket/task-history/components/TaskResultDialog.vue"
-import TaskRetryDialog from "@/pages/ticket/task-history/components/TaskRetryDialog.vue"
-import { TICKET_CAPABILITIES } from "@/common/auth/capability"
-import { usePermission } from "@/common/composables/usePermission"
 import dayjs from "dayjs"
-import type { JsonValue, TaskDialogType } from "./types"
-import { isTaskDialogType } from "./types"
+import { listTasksByInstanceIdApi, retryTaskApi } from "@/api/ticket/task"
+import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
+import { Calendar, Clock, Operation, WarningFilled } from "@element-plus/icons-vue"
+import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import { TICKET_CAPABILITIES } from "@/common/auth/capability"
+import TaskRetryDialog from "@/pages/ticket/task-history/components/TaskRetryDialog.vue"
+import { formatAutomationTaskPhase } from "@/pages/ticket/task-history/config"
+import TaskHistoryStatusBadge from "@/pages/ticket/task-history/components/TaskHistoryStatusBadge.vue"
+import { useAutomationTaskPolling } from "@/pages/ticket/task-history/composables/useAutomationTaskPolling"
 
-interface Props {
-  processInstId: number | undefined
-}
-const props = defineProps<Props>()
-const { hasPermission } = usePermission()
+const props = defineProps<{ processInstId: number | undefined }>()
+const emit = defineEmits<{ (event: "open-attempts", taskId: number): void }>()
+const tasksData = ref<AutomationTask[]>([])
+const loading = ref(false)
+const taskId = ref(0)
+const retryDialogVisible = ref(false)
+const retryLoading = ref(false)
 
-const tasksData = ref<task[]>([])
-const loading = ref<boolean>(false)
-
-// 任务状态映射 (基于最新后端定义)
-const statusMap: Record<number, TagInfo> = {
-  1: { type: "success", text: "成功" },
-  2: { type: "danger", text: "失败" },
-  3: { type: "primary", text: "运行中" },
-  4: { type: "info", text: "等待中" }, // WAITING 等待/初始化
-  5: { type: "warning", text: "挂起/阻塞" }, // BLOCKED 挂起/阻塞
-  6: { type: "primary", text: "已就绪" } // SCHEDULED 已分配/已就绪
-}
-
-const calculateDuration = (start: string, end: string) => {
-  if (!start || !end) return "-"
-  const diff = dayjs(end).diff(dayjs(start), "second")
-  if (diff < 60) return `${diff}s`
-  const minutes = Math.floor(diff / 60)
-  const seconds = diff % 60
-  return `${minutes}m ${seconds}s`
+const statusTone = (status: AutomationTaskStatus) => {
+  if (status === AutomationTaskStatus.Success) return "success"
+  if (status === AutomationTaskStatus.Failed) return "failed"
+  if ([AutomationTaskStatus.Running, AutomationTaskStatus.Submitting].includes(status)) return "running"
+  if (status === AutomationTaskStatus.Blocked) return "blocked"
+  return "waiting"
 }
 
-const formatTaskTime = (value?: string | number) => {
-  if (!value) return "--"
-  const normalized = typeof value === "number" && value < 10000000000 ? value * 1000 : value
-  const parsed = dayjs(normalized)
-  return parsed.isValid() ? parsed.format("YYYY-MM-DD HH:mm:ss") : String(value)
-}
-
-type TaskOperation = TaskDialogType | "retry"
-
-const currentDialogType = ref<TaskDialogType>("input")
-const retryDialogVisible = ref<boolean>(false)
-const retryLoading = ref<boolean>(false)
-
-const taskId = ref<number>(0)
-const result = shallowRef<JsonValue>("")
-const language = ref<string>("")
-const resultVisible = ref<boolean>(false)
-
-const parseTaskJson = (value: string): JsonValue => {
-  if (!value) return {}
-
-  try {
-    return JSON.parse(value) as JsonValue
-  } catch {
-    ElMessage.warning("任务 JSON 内容格式异常，已使用空对象展示")
-    return {}
-  }
-}
-
-/** 查询任务列表 */
-const listTasksData = async () => {
+const loadTasks = async (silent = false) => {
   if (!props.processInstId) return
-
-  loading.value = true
+  if (!silent) loading.value = true
   try {
     const { data } = await listTasksByInstanceIdApi({
+      instance_id: props.processInstId,
       offset: 0,
-      limit: 1000,
-      instance_id: props.processInstId
+      limit: 1000
     })
-
     tasksData.value = data.tasks || []
   } catch (error) {
-    tasksData.value = []
+    console.error("获取工单自动化任务失败:", error)
   } finally {
-    loading.value = false
+    if (!silent) loading.value = false
+    schedulePolling()
   }
 }
 
-/** 监听分页参数的变化 */
-watch(() => props.processInstId, listTasksData, { immediate: true })
+const { schedule: schedulePolling } = useAutomationTaskPolling(
+  () => tasksData.value,
+  () => loadTasks(true)
+)
 
-// 操作相关
-const operateEvent = async (data: task, name: TaskOperation) => {
-  taskId.value = data.id
-
-  switch (name) {
-    case "input":
-      result.value = data.code
-      language.value = data.language
-      currentDialogType.value = "input"
-      resultVisible.value = true
-      break
-    case "output":
-      try {
-        const { data: logs } = await getTaskLogsApi(data.id)
-        result.value = logs
-        language.value = "text"
-        currentDialogType.value = "output"
-        resultVisible.value = true
-      } catch {
-        ElMessage.error("获取任务日志失败")
-      }
-      break
-    case "args":
-      result.value = parseTaskJson(data.args)
-      currentDialogType.value = "args"
-      language.value = "json"
-      resultVisible.value = true
-      break
-    case "variables":
-      result.value = parseTaskJson(data.variables)
-      currentDialogType.value = "variables"
-      language.value = "json"
-      resultVisible.value = true
-      break
-    case "retry":
-      if (!hasPermission(TICKET_CAPABILITIES.Task.Retry)) {
-        ElMessage.warning("暂无重试任务权限")
-        return
-      }
-      retryDialogVisible.value = true
-      break
-  }
+const openAttempts = (id: number) => {
+  emit("open-attempts", id)
 }
 
-const onResultDialogClosed = () => {
-  result.value = ""
-  language.value = ""
-  resultVisible.value = false
-  taskId.value = 0
+const openRetry = (id: number) => {
+  taskId.value = id
+  retryDialogVisible.value = true
 }
 
-const toJsonValue = (value: unknown): JsonValue => {
-  if (value === null) return null
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") return value
-  if (Array.isArray(value)) return value.map((item) => toJsonValue(item))
-  if (typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, toJsonValue(item)]))
-  }
-  return String(value)
-}
-
-const handleSaveResult = async (data: { taskId: number; result: unknown; type: string }) => {
-  if (!isTaskDialogType(data.type)) return
-
-  try {
-    switch (data.type) {
-      case "args":
-        await updateTaskArgsApi({ id: data.taskId, args: toJsonValue(data.result) })
-        listTasksData()
-        ElMessage.success("修改传递参数成功")
-        break
-      case "variables":
-        await updateTaskVariablesApi({ id: data.taskId, variables: JSON.stringify(toJsonValue(data.result)) })
-        listTasksData()
-        ElMessage.success("修改传递变量成功")
-        break
-    }
-  } catch (error) {
-    console.error("保存任务数据失败:", error)
-  }
-}
-
-const handleRetryConfirm = async () => {
-  if (!hasPermission(TICKET_CAPABILITIES.Task.Retry)) {
-    ElMessage.warning("暂无重试任务权限")
-    retryDialogVisible.value = false
-    return
-  }
-
+const confirmRetry = async () => {
   retryLoading.value = true
-
   try {
     await retryTaskApi(taskId.value)
-    ElMessage.success("重试已提交，请稍后查看结果")
+    ElMessage.success("新的执行尝试已创建")
     retryDialogVisible.value = false
-    listTasksData()
-  } catch (error) {
-    console.log("任务重试失败", error)
+    await loadTasks()
+  } catch {
+    ElMessage.error("重试任务失败")
   } finally {
     retryLoading.value = false
   }
 }
 
-defineExpose({
-  listTasksData
-})
+const formatTime = (value: number) => (value ? dayjs(value).format("YYYY-MM-DD HH:mm:ss") : "-")
+watch(
+  () => props.processInstId,
+  () => loadTasks(),
+  { immediate: true }
+)
+
+defineExpose({ listTasksData: loadTasks })
 </script>
 
 <style scoped lang="scss">
 .task-list-container {
+  box-sizing: border-box;
   height: 100%;
+  min-height: 180px;
+  padding: 18px 20px 24px;
   overflow-y: auto;
-  background: #fff;
-  padding: 16px 20px;
+  background: #f8fafc;
 }
 
 .task-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.task-item-card {
-  border: 1px solid #e5eaf3;
-  border-left: 3px solid #409eff;
-  border-radius: 6px;
-  background: #fbfdff;
-  transition: border-color 0.2s ease;
-
-  &:hover {
-    border-color: #bdd7f5;
-  }
-}
-
-.task-main {
-  padding: 14px 16px;
-}
-
-.task-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.task-title {
-  display: flex;
-  gap: 10px;
-  min-width: 0;
-}
-
-.task-icon {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #409eff;
-  background: #ecf5ff;
-  border-radius: 6px;
-}
-
-.task-name-group {
-  min-width: 0;
-}
-
-.task-name {
-  color: #1f2937;
-  font-size: 15px;
-  font-weight: 700;
-  line-height: 1.3;
-}
-
-.task-subtitle {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 3px;
-  color: #7b8494;
-  font-size: 12px;
-
-  .separator {
-    color: #c0c4cc;
-  }
-}
-
-.task-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.retry-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  color: #e6a23c;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.task-meta {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 8px 18px;
-  margin: 14px 0 12px;
-  padding: 10px 12px;
-  background: #ffffff;
-  border: 1px solid #edf2f7;
-  border-radius: 6px;
-}
-
-.meta-item {
-  display: flex;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.meta-item--time {
-  grid-column: 1 / -1;
-}
-
-.meta-label {
-  flex-shrink: 0;
-  width: 36px;
-  color: #909399;
-}
-
-.meta-value {
-  color: #374151;
-  min-width: 0;
-  word-break: break-all;
-}
-
-.time-arrow {
-  color: #b8c2d1;
-}
-
-.time-range-value {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0 8px;
-  word-break: normal;
-}
-
-.duration-value {
-  color: #409eff;
-  font-weight: 700;
-}
-
-.task-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.action-links,
-.action-tools,
-.config-group {
-  display: flex;
-  align-items: center;
-}
-
-.action-links {
   gap: 14px;
 }
 
-.action-tools {
-  gap: 10px;
-}
-
-.btn-action {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 600;
+.task-card {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e8edf4;
+  border-radius: 10px;
+  transition: 0.2s ease;
 
   &:hover {
-    color: #409eff;
+    border-color: #cbd5e1;
+    box-shadow: 0 5px 16px rgb(15 23 42 / 6%);
+    transform: translateY(-1px);
+  }
+
+  &.is-success .task-card__rail {
+    background: #10b981;
+  }
+  &.is-failed .task-card__rail {
+    background: #ef4444;
+  }
+  &.is-running .task-card__rail {
+    background: #6366f1;
+  }
+  &.is-blocked .task-card__rail {
+    background: #f59e0b;
   }
 }
 
-.config-group {
-  gap: 4px;
-  padding: 2px;
-  border-radius: 6px;
-  background: #f3f6fa;
+.task-card__rail {
+  width: 4px;
+  flex-shrink: 0;
+  background: #94a3b8;
 }
 
-.config-item {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
+.task-card__body {
+  min-width: 0;
+  flex: 1;
+  padding: 18px 20px 16px;
+}
+
+.task-card__head,
+.task-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.task-card__head :deep(.status-cell) {
+  width: auto;
+  flex-shrink: 0;
+}
+
+.task-card__identity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.task-card__icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
   align-items: center;
   justify-content: center;
-  color: #64748b;
-  background: transparent;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 9px;
+  background: #eef5ff;
+  color: #3b82f6;
+  font-size: 17px;
+}
 
-  &:hover {
-    color: #409eff;
-    background: #ffffff;
+.task-card__identity-content {
+  min-width: 0;
+}
+
+.task-card__title {
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.task-card__node {
+  max-width: 430px;
+  margin-top: 5px;
+  overflow: hidden;
+  color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  span {
+    margin-right: 7px;
+    color: #64748b;
+    font-family: inherit;
+  }
+
+  em {
+    margin-left: 8px;
+    color: #64748b;
+    font-family: inherit;
+    font-style: normal;
   }
 }
 
-.retry-button {
-  font-weight: 600;
+.task-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 16px;
+  padding: 10px 12px;
+  border: 1px solid #eef2f7;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 12px;
+
+  > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .el-icon {
+    color: #94a3b8;
+  }
+
+  b {
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .phase-chip {
+    padding-right: 10px;
+    border-right: 1px solid #e2e8f0;
+    border-radius: 999px;
+    color: #64748b;
+    font-weight: 600;
+
+    i {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #64748b;
+    }
+  }
+}
+
+.task-card__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border-radius: 4px;
+  font-size: 12px;
+
+  .el-icon {
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+}
+
+.task-card__actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
 }
 </style>

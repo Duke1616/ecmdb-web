@@ -3,7 +3,7 @@
     v-loading="loading"
     :data="data"
     :columns="columns"
-    :show-selection="true"
+    :show-selection="false"
     :show-pagination="true"
     :total="paginationData.total"
     :page-size="paginationData.pageSize"
@@ -13,28 +13,38 @@
     @size-change="emit('size-change', $event)"
     @current-change="emit('current-change', $event)"
   >
-    <template #execute_target="{ row }">
-      <TaskHistoryExecuteTarget :target="row.target" :handler="row.handler" />
+    <template #node="{ row }">
+      <el-tooltip :content="row.node_id" placement="top" :show-after="400">
+        <span class="node-name">{{ row.node_name || "自动化任务" }}</span>
+      </el-tooltip>
+    </template>
+
+    <template #ticket="{ row }">
+      <span class="ticket-no">#{{ row.ticket_id }}</span>
     </template>
 
     <template #status="{ row }">
-      <TaskHistoryStatusBadge :status="row.status" />
+      <TaskHistoryStatusBadge :status="row.status" :phase="row.phase" :scheduled-at="row.scheduled_at" />
     </template>
 
-    <template #is_timing="{ row }">
-      <span class="type-tag">{{ row.is_timing ? "定时任务" : "即时任务" }}</span>
+    <template #phase="{ row }">
+      <el-tooltip :disabled="!row.last_error" :content="row.last_error" placement="top" :show-after="300">
+        <span class="phase-text" :class="{ 'has-error': row.last_error }">
+          <i />{{ formatAutomationTaskPhase(row.phase) }}
+        </span>
+      </el-tooltip>
     </template>
 
-    <template #run_time="{ row }">
-      <TaskHistoryRunTime
-        :is-timing="row.is_timing"
-        :scheduled-time="row.scheduled_time"
-        :start-time="row.start_time"
-      />
+    <template #scheduled_at="{ row }">
+      <span>{{ formatTime(row.scheduled_at) }}</span>
+    </template>
+
+    <template #utime="{ row }">
+      <span>{{ formatTime(row.utime) }}</span>
     </template>
 
     <template #actions="{ row }">
-      <OperateBtn :items="operateItems" :operateItem="row" :maxLength="2" @routeEvent="emitOperateEvent" />
+      <OperateBtn :items="getOperateItems(row)" :operateItem="row" :maxLength="2" @routeEvent="emitOperateEvent" />
     </template>
   </DataTable>
 </template>
@@ -42,12 +52,12 @@
 <script setup lang="ts">
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
-import TaskHistoryExecuteTarget from "./TaskHistoryExecuteTarget.vue"
 import TaskHistoryStatusBadge from "./TaskHistoryStatusBadge.vue"
-import TaskHistoryRunTime from "./TaskHistoryRunTime.vue"
+import dayjs from "dayjs"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
-import type { task } from "@/api/ticket/task/types/task"
+import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
 import type { TaskHistoryOperateItem } from "../types"
+import { formatAutomationTaskPhase } from "../config"
 
 interface PaginationData {
   total: number
@@ -58,42 +68,76 @@ interface PaginationData {
 }
 
 interface Props {
-  data: task[]
+  data: AutomationTask[]
   columns: DataTableColumn[]
   operateItems: TaskHistoryOperateItem[]
   paginationData: PaginationData
   loading?: boolean
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   loading: false
 })
 
 const emit = defineEmits<{
   (event: "size-change", value: number): void
   (event: "current-change", value: number): void
-  (event: "operate", row: task, action: string): void
+  (event: "operate", row: AutomationTask, action: string): void
 }>()
 
-const emitOperateEvent = (row: task, action: string) => {
+const emitOperateEvent = (row: AutomationTask, action: string) => {
   emit("operate", row, action)
 }
+
+const formatTime = (value: number) => (value ? dayjs(value).format("YYYY-MM-DD HH:mm:ss") : "-")
+
+const getOperateItems = (row: AutomationTask) =>
+  props.operateItems.map((item) =>
+    item.code === "retry"
+      ? {
+          ...item,
+          disabled: ![AutomationTaskStatus.Failed, AutomationTaskStatus.Blocked].includes(row.status)
+        }
+      : item
+  )
 </script>
 
 <style scoped lang="scss">
-.type-tag {
+.node-name {
+  display: block;
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ticket-no {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.phase-text {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: 64px;
-  height: 24px;
-  padding: 0 8px;
+  gap: 7px;
   color: #475569;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 4px;
   font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
+
+  i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+
+  &.has-error {
+    color: #dc2626;
+
+    i {
+      background: #ef4444;
+    }
+  }
 }
 </style>

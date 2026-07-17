@@ -34,11 +34,18 @@
             ref="recordRef"
             :process-inst-id="props.ticketInfo?.process_instance_id"
           />
-          <Task v-if="activeTab === 'task'" ref="taskRef" :process-inst-id="props.ticketInfo?.process_instance_id" />
+          <Task
+            v-if="activeTab === 'task'"
+            ref="taskRef"
+            :process-inst-id="props.ticketInfo?.process_instance_id"
+            @open-attempts="openAttempts"
+          />
         </template>
       </CustomTabs>
     </div>
   </Drawer>
+
+  <TaskAttemptDialog v-model="attemptDialogVisible" :task-id="attemptTaskId" />
 </template>
 <script setup lang="ts">
 import { ref, computed } from "vue"
@@ -50,8 +57,11 @@ import CustomTabs from "@@/components/Tabs/CustomTabs.vue"
 import type { Ticket } from "@/api/ticket/manager/types/manager.js"
 import { Drawer } from "@@/components/Dialogs"
 import { Document } from "@element-plus/icons-vue"
+import TaskAttemptDialog from "@/pages/ticket/task-history/components/TaskAttemptDialog.vue"
 
 const activeName = ref<string>("form")
+const attemptTaskId = ref(0)
+const attemptDialogVisible = ref(false)
 
 // 标签页配置
 const tabs = [
@@ -109,7 +119,13 @@ const dialogVisible = computed({
 
 const onClosed = () => {
   activeName.value = "form"
+  attemptDialogVisible.value = false
   emits("close")
+}
+
+const openAttempts = (taskId: number) => {
+  attemptTaskId.value = taskId
+  attemptDialogVisible.value = true
 }
 
 const refreshData = () => {
