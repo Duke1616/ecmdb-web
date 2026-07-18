@@ -73,7 +73,7 @@ const tabs = computed(() => {
     { name: "flow", label: "流程图" },
     { name: "process", label: "审批记录" }
   ]
-  if (hasPermission(TICKET_CAPABILITIES.Center.ViewTasks)) {
+  if (hasPermission(TICKET_CAPABILITIES.Manager.ViewTasks)) {
     items.push({ name: "task", label: "自动化任务" })
   }
   return items
