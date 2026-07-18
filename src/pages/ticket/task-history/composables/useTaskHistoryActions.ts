@@ -11,7 +11,7 @@ export const taskHistoryOperateItems: TaskHistoryOperateItem[] = [
     code: TaskHistoryAction.Attempts,
     icon: "Document",
     type: "primary",
-    capability: TICKET_CAPABILITIES.Task.View
+    capability: TICKET_CAPABILITIES.Task.ViewAttempts
   },
   {
     name: "重试",

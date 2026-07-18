@@ -58,18 +58,26 @@ import type { Ticket } from "@/api/ticket/manager/types/manager.js"
 import { Drawer } from "@@/components/Dialogs"
 import { Document } from "@element-plus/icons-vue"
 import TaskAttemptDialog from "@/pages/ticket/task-history/components/TaskAttemptDialog.vue"
+import { TICKET_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 
 const activeName = ref<string>("form")
 const attemptTaskId = ref(0)
 const attemptDialogVisible = ref(false)
+const { hasPermission } = usePermission()
 
 // 标签页配置
-const tabs = [
-  { name: "form", label: "表单信息" },
-  { name: "flow", label: "流程图" },
-  { name: "process", label: "审批记录" },
-  { name: "task", label: "自动化任务" }
-]
+const tabs = computed(() => {
+  const items = [
+    { name: "form", label: "表单信息" },
+    { name: "flow", label: "流程图" },
+    { name: "process", label: "审批记录" }
+  ]
+  if (hasPermission(TICKET_CAPABILITIES.Center.ViewTasks)) {
+    items.push({ name: "task", label: "自动化任务" })
+  }
+  return items
+})
 
 const recordRef = ref<InstanceType<typeof Record>>()
 const taskRef = ref<InstanceType<typeof Task>>()
@@ -124,6 +132,7 @@ const onClosed = () => {
 }
 
 const openAttempts = (taskId: number) => {
+  if (!hasPermission(TICKET_CAPABILITIES.Task.ViewAttempts)) return
   attemptTaskId.value = taskId
   attemptDialogVisible.value = true
 }

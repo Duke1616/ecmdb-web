@@ -34,7 +34,15 @@
             <el-icon><WarningFilled /></el-icon><span>{{ row.last_error }}</span>
           </div>
           <footer class="task-card__actions">
-            <el-button type="primary" plain size="small" @click="openAttempts(row.id)">查看执行详情</el-button>
+            <AuthButton
+              :capability="TICKET_CAPABILITIES.Task.ViewAttempts"
+              type="primary"
+              plain
+              size="small"
+              @click="openAttempts(row.id)"
+            >
+              查看执行详情
+            </AuthButton>
             <AuthButton
               :capability="TICKET_CAPABILITIES.Task.Retry"
               size="small"

@@ -382,8 +382,6 @@ export const TICKET_CAPABILITIES = {
   Manager: {
     /** 流程轨迹图 */
     Graph: "ticket:manager:graph",
-    /** 关联自动化任务 */
-    ViewTasks: "ticket:manager:view_tasks",
     /** 所有待办工单 */
     Todo: "ticket:manager:todo",
     /** 我发起的工单 */
@@ -408,6 +406,12 @@ export const TICKET_CAPABILITIES = {
     Record: "ticket:manager:record",
     /** 同意审批 */
     Pass: "ticket:manager:pass"
+  },
+
+  /** 工单中心详情相关 */
+  Center: {
+    /** 查看工单关联的自动化任务 */
+    ViewTasks: "ticket:center:view_tasks"
   },
 
   /** 工单模板相关 */
@@ -460,6 +464,8 @@ export const TICKET_CAPABILITIES = {
   Task: {
     /** 任务列表 */
     View: "ticket:task:view",
+    /** 查看任务执行尝试 */
+    ViewAttempts: "ticket:task:view_attempts",
     /** 重试任务 */
     Retry: "ticket:task:retry",
     /** 任务日志 */
