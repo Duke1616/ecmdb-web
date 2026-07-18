@@ -26,7 +26,7 @@
       <el-tree
         ref="treeRef"
         :data="treeData"
-        node-key="treeKey"
+        node-key="key"
         :props="treeProps"
         :current-node-key="selectedTreeKey"
         :default-expanded-keys="defaultExpandedKeys"
@@ -87,7 +87,7 @@ const emit = defineEmits<{
 }>()
 
 const treeRef = ref()
-const defaultExpandedKeys = ["layer:project", "layer:system", "layer:dependencies"]
+const defaultExpandedKeys = ["layer:project"]
 const localKeyword = computed({
   get: () => props.keyword,
   set: (value) => emit("update:keyword", value)

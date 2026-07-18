@@ -59,18 +59,51 @@
       subtitle="配置资源名称和负责人"
       width="520px"
       :header-icon="metaForm.kind === 'DIRECTORY' ? FolderOpened : DocumentAdd"
-      :confirm-loading="saving"
+      :confirm-loading="metaSubmitting || saving"
       confirm-text="保存"
       @cancel="metaDialogVisible = false"
       @confirm="saveMetaDialog"
+      @opened="clearMetaValidation"
     >
-      <el-form ref="metaFormRef" :model="metaForm" :rules="metaRules" label-position="top">
+      <el-form
+        ref="metaFormRef"
+        :model="metaForm"
+        :rules="metaRules"
+        label-position="top"
+        @submit.prevent="saveMetaDialog"
+      >
         <el-form-item :label="metaForm.kind === 'DIRECTORY' ? '目录名称' : '脚本名称'" prop="name">
           <el-input
+            v-if="metaForm.kind === 'DIRECTORY'"
             v-model="metaForm.name"
             class="meta-name-input"
-            :placeholder="metaForm.kind === 'DIRECTORY' ? '请输入目录名称' : '请输入文件名，如 deploy.sh'"
+            placeholder="请输入目录名称"
+            :validate-event="false"
+            @input="clearMetaNameValidation"
           />
+          <div v-else class="script-name-composer">
+            <el-input
+              v-model="metaForm.name"
+              class="script-base-name-input"
+              :placeholder="scriptNamePlaceholder"
+              :validate-event="false"
+              @input="clearMetaNameValidation"
+            />
+            <el-select
+              v-model="scriptFileType"
+              class="script-type-select"
+              aria-label="脚本文件类型"
+              :validate-event="false"
+              @change="handleScriptTypeChange"
+            >
+              <el-option
+                v-for="option in scriptFileTypeOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </div>
         </el-form-item>
         <el-form-item v-if="metaForm.id" label="负责人" prop="owner">
           <UserPicker v-model="metaForm.owner" placeholder="选择负责人" />
@@ -132,6 +165,13 @@ import {
 import { useCodebookTreeDrag } from "./composables/useCodebookTreeDrag"
 import { useCodebookOpenedFiles } from "./composables/useCodebookOpenedFiles"
 import {
+  buildScriptFileName,
+  parseScriptFileName,
+  scriptFileTypeOptions,
+  type ScriptFileType
+} from "./composables/useCodebookFile"
+import { getDefaultScriptCode, isReplaceableScriptCode } from "./scriptTemplates"
+import {
   childrenCodebookApi,
   createCodebookApi,
   deleteCodebookApi,
@@ -174,6 +214,8 @@ const directoryChildren = ref<codebook[]>([])
 const selectedTreeKey = ref("layer:project")
 const activeEditor = ref<EditorState>(createRootDirectory())
 const metaDialogVisible = ref(false)
+const metaSubmitting = ref(false)
+const scriptFileType = ref<ScriptFileType>("sh")
 
 // NOTE: 存放当前工作区打开的所有脚本文件，实现类似 IDE 的多标签页编辑体验
 const openedFiles = ref<codebook[]>([])
@@ -218,9 +260,12 @@ const treeData = computed<CodebookTreeNode[]>(() =>
 )
 
 const metaRules = computed<FormRules>(() => ({
-  name: [{ required: true, message: "请输入名称", trigger: "blur" }],
+  name: [{ required: true, message: "请输入名称" }],
   owner: metaForm.value.id ? [{ required: true, message: "请选择负责人", trigger: "change" }] : []
 }))
+const scriptNamePlaceholder = computed(() =>
+  scriptFileType.value === "custom" ? "请输入完整文件名，如 deploy.js" : "请输入脚本名称，如 deploy"
+)
 
 function isReadonlyCodebook(row?: Pick<codebook, "scope" | "readonly"> | null) {
   return isReadonlyWorkspaceItem(row)
@@ -228,6 +273,14 @@ function isReadonlyCodebook(row?: Pick<codebook, "scope" | "readonly"> | null) {
 
 function warnReadonly() {
   ElMessage.warning("制品依赖为只读资源，不能进行变更操作")
+}
+
+function clearMetaValidation() {
+  metaFormRef.value?.clearValidate()
+}
+
+function clearMetaNameValidation() {
+  metaFormRef.value?.clearValidate("name")
 }
 
 function createRootDirectory(): codebook {
@@ -239,12 +292,14 @@ function createRootDirectory(): codebook {
 }
 
 function createDefaultFileDraft(): createOrUpdateCodebookReq {
-  return createCodebookDraft({
+  const draft = createCodebookDraft({
     projectID: activeProjectId.value,
     parentID: getCurrentParentID(),
     scope: getCurrentScope(),
     kind: "FILE"
   })
+  draft.code = getDefaultScriptCode("sh")
+  return draft
 }
 
 function createDefaultDirectoryDraft(): createOrUpdateCodebookReq {
@@ -254,6 +309,24 @@ function createDefaultDirectoryDraft(): createOrUpdateCodebookReq {
     scope: getCurrentScope(),
     kind: "DIRECTORY"
   })
+}
+
+function setMetaForm(payload: createOrUpdateCodebookReq) {
+  const next = { ...payload }
+  if (next.kind === "FILE") {
+    const parsed = parseScriptFileName(next.name)
+    next.name = parsed.name
+    scriptFileType.value = parsed.type
+  }
+  metaForm.value = next
+}
+
+function handleScriptTypeChange(type: ScriptFileType) {
+  if (metaForm.value.id || activeEditor.value.id || activeEditor.value.kind !== "FILE") return
+  if (!isReplaceableScriptCode(activeEditor.value.code)) return
+  const code = getDefaultScriptCode(type)
+  metaForm.value.code = code
+  handleEditorCodeChange(code)
 }
 
 function draftToEditor(req: createOrUpdateCodebookReq): codebook {
@@ -343,7 +416,7 @@ function createFileDraft() {
   }
   activateCodebook(editorDraft)
 
-  metaForm.value = { ...draft }
+  setMetaForm(draft)
   nextTick(() => {
     metaDialogVisible.value = true
   })
@@ -354,7 +427,7 @@ function createDirectoryDraft() {
     warnReadonly()
     return
   }
-  metaForm.value = createDefaultDirectoryDraft()
+  setMetaForm(createDefaultDirectoryDraft())
   metaDialogVisible.value = true
 }
 
@@ -363,7 +436,7 @@ function openMetaDialog(row: codebook) {
     warnReadonly()
     return
   }
-  metaForm.value = codebookToMetaPayload(row, activeProjectId.value)
+  setMetaForm(codebookToMetaPayload(row, activeProjectId.value))
   metaDialogVisible.value = true
 }
 
@@ -379,7 +452,7 @@ async function saveActiveFile() {
   }
   const payload = buildPayloadFromActive()
   if (!payload.name || !payload.owner) {
-    metaForm.value = payload
+    setMetaForm(payload)
     metaDialogVisible.value = true
     return
   }
@@ -391,6 +464,16 @@ async function saveActiveFile() {
 }
 
 async function saveMetaDialog() {
+  if (!metaFormRef.value || metaSubmitting.value) return
+  metaSubmitting.value = true
+  try {
+    await submitMetaDialog()
+  } finally {
+    metaSubmitting.value = false
+  }
+}
+
+async function submitMetaDialog() {
   if (!metaFormRef.value) return
   if (metaForm.value.id) {
     const editingTarget =
@@ -405,7 +488,8 @@ async function saveMetaDialog() {
     warnReadonly()
     return
   }
-  const valid = await metaFormRef.value.validate()
+
+  const valid = await metaFormRef.value.validate().catch(() => false)
   if (!valid) return
 
   const payload: createOrUpdateCodebookReq = {
@@ -426,6 +510,7 @@ async function saveMetaDialog() {
   }
 
   if (payload.kind === "FILE") {
+    payload.name = buildScriptFileName(payload.name, scriptFileType.value)
     payload.code = activeEditor.value.kind === "FILE" ? activeEditor.value.code || payload.code : payload.code
     payload.version_no = payload.id ? undefined : payload.version_no || 1
   }
@@ -722,6 +807,63 @@ onBeforeUnmount(() => {
     font-size: 13px;
     font-weight: 500;
   }
+}
+
+.script-name-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px;
+  width: 100%;
+  min-height: 42px;
+  overflow: hidden;
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+  }
+
+  &:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.06);
+  }
+
+  :deep(.script-base-name-input .el-input__wrapper),
+  :deep(.script-type-select .el-select__wrapper) {
+    min-height: 40px;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none !important;
+  }
+
+  :deep(.script-base-name-input .el-input__wrapper) {
+    padding: 4px 14px;
+  }
+
+  .script-type-select {
+    width: 112px;
+    border-left: 1px solid #e2e8f0;
+  }
+
+  :deep(.script-type-select .el-select__wrapper) {
+    padding: 4px 12px 4px 14px;
+    background: #f8fafc;
+  }
+
+  :deep(.script-type-select .el-select__selected-item) {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+  }
+}
+
+:deep(.el-form-item.is-error .script-name-composer) {
+  border-color: var(--el-color-danger);
 }
 
 @media (max-width: 1080px) {
