@@ -1,6 +1,6 @@
 <template>
   <div class="codebook-container">
-    <div class="codebook-shell">
+    <div class="codebook-shell" :class="{ 'assistant-open': assistantVisible }">
       <CodebookSidebar
         v-model:keyword="keyword"
         :active-project-name="activeProjectName"
@@ -38,6 +38,7 @@
           :opened-files="openedFiles"
           :saving="saving"
           :detail-loading="detailLoading"
+          :assistant-open="assistantVisible"
           :readonly="isReadonlyCodebook(activeEditor)"
           @select="selectCodebook"
           @close-tab="closeTab"
@@ -47,9 +48,21 @@
           @delete="handleDelete"
           @run="handleOpenRunDrawer"
           @save="saveActiveFile"
+          @toggle-assistant="toggleAssistant"
           @update-code="handleEditorCodeChange"
         />
       </main>
+
+      <CodeAssistPanel
+        v-if="assistantVisible"
+        class="codebook-assistant"
+        :project-id="activeProjectId"
+        :project-name="activeProjectName"
+        :active-file="activeEditor"
+        :readonly="isReadonlyCodebook(activeEditor)"
+        @apply-code="handleEditorCodeChange"
+        @close="assistantVisible = false"
+      />
     </div>
 
     <!-- 脚本元信息对话框 -->
@@ -142,6 +155,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import CodebookContextMenu from "./components/CodebookContextMenu.vue"
 import CodebookSidebar from "./components/CodebookSidebar.vue"
 import CodebookRunDrawer from "./components/CodebookRunDrawer.vue"
+import CodeAssistPanel from "./components/codeassist/CodeAssistPanel.vue"
 import DirectoryPanel from "./components/DirectoryPanel.vue"
 import EditorPanel from "./components/EditorPanel.vue"
 import RunnerDrawer from "./components/RunnerDrawer.vue"
@@ -216,6 +230,7 @@ const activeEditor = ref<EditorState>(createRootDirectory())
 const metaDialogVisible = ref(false)
 const metaSubmitting = ref(false)
 const scriptFileType = ref<ScriptFileType>("sh")
+const assistantVisible = ref(false)
 
 // NOTE: 存放当前工作区打开的所有脚本文件，实现类似 IDE 的多标签页编辑体验
 const openedFiles = ref<codebook[]>([])
@@ -273,6 +288,14 @@ function isReadonlyCodebook(row?: Pick<codebook, "scope" | "readonly"> | null) {
 
 function warnReadonly() {
   ElMessage.warning("制品依赖为只读资源，不能进行变更操作")
+}
+
+function toggleAssistant() {
+  if (activeProjectId.value <= 0 || activeProjectScope.value === "SYSTEM") {
+    ElMessage.warning("SYSTEM 组件库暂不支持项目级 AI 对话")
+    return
+  }
+  assistantVisible.value = !assistantVisible.value
 }
 
 function clearMetaValidation() {
@@ -763,6 +786,7 @@ onBeforeUnmount(() => {
 }
 
 .codebook-shell {
+  position: relative;
   display: grid;
   grid-template-columns: 320px minmax(0, 1fr);
   flex: 1;
@@ -772,6 +796,10 @@ onBeforeUnmount(() => {
   border-radius: 8px;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
   overflow: hidden;
+
+  &.assistant-open {
+    grid-template-columns: 300px minmax(480px, 1fr) minmax(350px, 400px);
+  }
 }
 
 .codebook-main {
@@ -866,9 +894,25 @@ onBeforeUnmount(() => {
   border-color: var(--el-color-danger);
 }
 
+@media (max-width: 1380px) {
+  .codebook-shell.assistant-open {
+    grid-template-columns: 260px minmax(420px, 1fr) 360px;
+  }
+}
+
 @media (max-width: 1080px) {
   .codebook-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  .codebook-assistant {
+    position: absolute;
+    z-index: 20;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 92%);
+    box-shadow: -12px 0 30px rgba(15, 23, 42, 0.16);
   }
 }
 </style>

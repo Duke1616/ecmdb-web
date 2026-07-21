@@ -1,6 +1,85 @@
 <template>
   <section class="editor-view">
     <div class="editor-header">
+      <div class="editor-toolbar">
+        <div class="editor-primary-actions">
+          <AuthButton
+            :capability="capabilities.CodeAssist.ViewConversation"
+            disableMode
+            size="small"
+            class="secondary-action assistant-button"
+            :type="assistantOpen ? 'primary' : 'default'"
+            :plain="assistantOpen"
+            :icon="MagicStick"
+            @click="$emit('toggle-assistant')"
+            >AI 助手</AuthButton
+          >
+          <AuthButton
+            v-if="activeEditor.id && !isReadonly"
+            :capability="capabilities.Preview.Run"
+            disableMode
+            size="small"
+            class="secondary-action"
+            :icon="VideoPlay"
+            @click="$emit('run', activeEditor)"
+            >试运行</AuthButton
+          >
+          <AuthButton
+            v-if="activeEditor.id && !isReadonly"
+            :capability="capabilities.Runner.View"
+            disableMode
+            size="small"
+            class="secondary-action"
+            :icon="Setting"
+            @click="$emit('open-runner', activeEditor)"
+            >执行单元</AuthButton
+          >
+          <AuthButton
+            v-if="!isReadonly"
+            :capability="capabilities.Codebook.Edit"
+            disableMode
+            size="small"
+            class="save-button"
+            type="primary"
+            :loading="saving"
+            :icon="Check"
+            @click="$emit('save')"
+            >保存</AuthButton
+          >
+        </div>
+
+        <div class="editor-secondary-actions">
+          <el-dropdown
+            v-if="hasMoreActions"
+            trigger="click"
+            placement="bottom-end"
+            popper-class="editor-actions-dropdown"
+          >
+            <el-button class="more-button" text size="small" aria-label="更多操作">
+              <el-icon><MoreFilled /></el-icon>
+              <span>更多</span>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-if="canOpenVersion" @click="$emit('open-version', activeEditor)">
+                  <el-icon><Clock /></el-icon>
+                  <span>版本</span>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="canEditMeta" @click="$emit('open-meta', activeEditor)">
+                  <el-icon><Edit /></el-icon>
+                  <span>信息</span>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="canDelete" class="danger-item" @click="$emit('delete', activeEditor)">
+                  <el-icon><Delete /></el-icon>
+                  <span>删除</span>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <span v-if="isReadonly" class="readonly-hint">已发布制品只读，仅支持查看内容</span>
+        </div>
+      </div>
+
       <div class="editor-tabs-container">
         <div
           v-for="file in openedFiles"
@@ -24,73 +103,6 @@
           </el-icon>
         </div>
       </div>
-
-      <div class="editor-actions">
-        <AuthButton
-          v-if="activeEditor.id && !isReadonly"
-          :capability="capabilities.Codebook.ViewVersion"
-          disableMode
-          size="small"
-          :icon="Clock"
-          link
-          @click="$emit('open-version', activeEditor)"
-          >版本</AuthButton
-        >
-        <AuthButton
-          v-if="activeEditor.id && !isReadonly"
-          :capability="capabilities.Runner.View"
-          disableMode
-          size="small"
-          :icon="Setting"
-          link
-          @click="$emit('open-runner', activeEditor)"
-          >执行单元</AuthButton
-        >
-        <AuthButton
-          v-if="!isReadonly"
-          :capability="capabilities.Codebook.Edit"
-          disableMode
-          size="small"
-          :icon="Edit"
-          link
-          @click="$emit('open-meta', activeEditor)"
-          >信息</AuthButton
-        >
-        <AuthButton
-          v-if="activeEditor.id && !isReadonly"
-          :capability="capabilities.Codebook.Delete"
-          disableMode
-          size="small"
-          type="danger"
-          link
-          :icon="Delete"
-          @click="$emit('delete', activeEditor)"
-          >删除</AuthButton
-        >
-        <AuthButton
-          v-if="activeEditor.id && !isReadonly"
-          :capability="capabilities.Preview.Run"
-          disableMode
-          size="small"
-          type="primary"
-          plain
-          :icon="VideoPlay"
-          @click="$emit('run', activeEditor)"
-          >试运行</AuthButton
-        >
-        <AuthButton
-          v-if="!isReadonly"
-          :capability="capabilities.Codebook.Edit"
-          disableMode
-          size="small"
-          type="primary"
-          :loading="saving"
-          :icon="Check"
-          @click="$emit('save')"
-          >保存</AuthButton
-        >
-        <span v-if="isReadonly" class="readonly-hint">已发布制品只读，仅支持查看内容</span>
-      </div>
     </div>
 
     <div class="editor-body" v-loading="detailLoading">
@@ -106,10 +118,22 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { Check, Clock, Close, Delete, Edit, Lock, Setting, VideoPlay } from "@element-plus/icons-vue"
+import {
+  Check,
+  Clock,
+  Close,
+  Delete,
+  Edit,
+  Lock,
+  MagicStick,
+  MoreFilled,
+  Setting,
+  VideoPlay
+} from "@element-plus/icons-vue"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import { getFileIconName, inferLanguage } from "../composables/useCodebookFile"
 import { isSystemCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
@@ -121,10 +145,21 @@ const props = defineProps<{
   openedFiles: codebook[]
   saving: boolean
   detailLoading: boolean
+  assistantOpen?: boolean
   readonly?: boolean
 }>()
 
 const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeEditor))
+const { hasPermission } = usePermission()
+
+const canOpenVersion = computed(() =>
+  Boolean(props.activeEditor.id && !isReadonly.value && hasPermission(capabilities.Codebook.ViewVersion))
+)
+const canEditMeta = computed(() => !isReadonly.value && hasPermission(capabilities.Codebook.Edit))
+const canDelete = computed(() =>
+  Boolean(props.activeEditor.id && !isReadonly.value && hasPermission(capabilities.Codebook.Delete))
+)
+const hasMoreActions = computed(() => canOpenVersion.value || canEditMeta.value || canDelete.value)
 
 defineEmits<{
   (e: "select", row: codebook): void
@@ -134,6 +169,7 @@ defineEmits<{
   (e: "open-meta", row: codebook): void
   (e: "delete", row: codebook): void
   (e: "run", row: codebook): void
+  (e: "toggle-assistant"): void
   (e: "save"): void
   (e: "update-code", code: string): void
 }>()
@@ -149,21 +185,89 @@ defineEmits<{
 
 .editor-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 38px;
+  flex-direction: column;
+  height: 74px;
   overflow: hidden;
-  padding: 0 12px 0 0;
-  background: #e8edf5;
+  background: #f8fafc;
   border-bottom: 1px solid #cfd8e6;
   user-select: none;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5eaf1;
+}
+
+.editor-primary-actions,
+.editor-secondary-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-primary-actions {
+  :deep(.el-button) {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+    border-radius: 5px;
+  }
+
+  :deep(.secondary-action) {
+    --el-button-text-color: #475569;
+    --el-button-border-color: #d8dee8;
+    --el-button-bg-color: #ffffff;
+    --el-button-hover-text-color: #2563eb;
+    --el-button-hover-border-color: #bfdbfe;
+    --el-button-hover-bg-color: #f3f7ff;
+    --el-button-active-text-color: #1d4ed8;
+    --el-button-active-border-color: #93c5fd;
+    --el-button-active-bg-color: #eff6ff;
+  }
+
+  :deep(.assistant-button.el-button--primary.is-plain) {
+    --el-button-text-color: #1d4ed8;
+    --el-button-border-color: #bfdbfe;
+    --el-button-bg-color: #eff6ff;
+  }
+
+  :deep(.save-button) {
+    --el-button-bg-color: #2563eb;
+    --el-button-border-color: #2563eb;
+    --el-button-hover-bg-color: #1d4ed8;
+    --el-button-hover-border-color: #1d4ed8;
+    --el-button-active-bg-color: #1e40af;
+    --el-button-active-border-color: #1e40af;
+  }
+}
+
+.more-button {
+  height: 26px;
+  padding: 0 7px;
+  color: #475569;
+  font-size: 12px;
+  border-radius: 5px;
+
+  &:hover {
+    color: #1d4ed8;
+    background: #eff6ff;
+  }
 }
 
 .editor-tabs-container {
   display: flex;
   align-items: stretch;
-  flex: 1;
-  height: 100%;
+  flex: 0 0 34px;
+  width: 100%;
+  height: 34px;
   overflow-x: auto;
   overflow-y: hidden;
 
@@ -255,24 +359,6 @@ defineEmits<{
   }
 }
 
-.editor-actions {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  gap: 8px;
-  height: 100%;
-
-  :deep(.el-button) {
-    height: 24px;
-    padding: 0 8px;
-    font-size: 12px;
-
-    &.is-link {
-      padding: 0 4px;
-    }
-  }
-}
-
 .editor-body {
   flex: 1;
   min-height: 0;
@@ -283,6 +369,18 @@ defineEmits<{
   color: #64748b;
   font-size: 12px;
   white-space: nowrap;
+}
+
+:global(.editor-actions-dropdown .el-dropdown-menu__item) {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 112px;
+  font-size: 12px;
+}
+
+:global(.editor-actions-dropdown .danger-item) {
+  color: var(--el-color-danger);
 }
 
 .tab-readonly-lock {

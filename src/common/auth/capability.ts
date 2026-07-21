@@ -554,6 +554,18 @@ export const TASK_CAPABILITIES = {
     DeleteProject: "task:codebook:delete_project"
   },
 
+  /** Codebook AI 助手相关 */
+  CodeAssist: {
+    /** 创建对话 */
+    AddConversation: "task:code_assist:add_conversation",
+    /** 查看对话 */
+    ViewConversation: "task:code_assist:view",
+    /** 发送消息 */
+    Chat: "task:code_assist:chat",
+    /** 保存候选代码版本 */
+    ApplySuggestion: "task:code_assist:apply_suggestion"
+  },
+
   /** 制品仓库相关 */
   Artifact: {
     /** 发布制品 */
