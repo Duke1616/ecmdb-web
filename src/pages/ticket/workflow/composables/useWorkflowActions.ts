@@ -120,9 +120,7 @@ export const useWorkflowActions = (options: {
       ElMessage.success("删除成功")
       options.refresh()
     } catch (error) {
-      if (error !== "cancel") {
-        ElMessage.error("删除失败")
-      }
+      if (error !== "cancel" && error !== "close") console.error("删除流程失败:", error)
     }
   }
 

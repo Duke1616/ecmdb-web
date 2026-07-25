@@ -20,9 +20,8 @@ export function updateWorkflowApi(data: workflow.CreateOrUpdateWorkflowReq) {
 
 /** 删除工作流程 */
 export function deleteWorkflowApi(id: number) {
-  return instance.post<number>({
-    url: `${API_SERVICE.TICKET}/workflow/delete`,
-    data: { id: id }
+  return instance.delete<number>({
+    url: `${API_SERVICE.TICKET}/workflow/delete/${id}`
   })
 }
 
