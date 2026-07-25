@@ -1,8 +1,11 @@
 import { ref, reactive, computed, onMounted, watch, toRef } from "vue"
-import { ElMessage, type FormInstance } from "element-plus"
+import { ElMessage, ElMessageBox, type FormInstance } from "element-plus"
 import { getPermissionManifestApi, listMenusByURNsApi } from "@/api/iam/permission"
 import { createPolicyApi, getPolicyDetailApi, updatePolicyApi } from "@/api/iam/policy"
 import type { UpdatePolicyRequest } from "@/api/iam/policy/type"
+import type { AccessScope } from "@/api/iam/policy/type"
+import { getSelectedAccessScopeActions } from "../utils/accessScope"
+import { clonePolicyJson } from "../utils/clone"
 import {
   createDefaultStatement,
   enrichManifest,
@@ -36,7 +39,10 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
   })
 
   // --- 2. 编辑器同步逻辑 (可视化 <-> JSON 脚本) ---
-  const { editorMode, jsonCode, syncFromVisual, trySyncFromJson } = useDualModeEditor(toRef(formData, "statement"))
+  const { editorMode, jsonCode, syncFromVisual, trySyncFromJson } = useDualModeEditor(
+    toRef(formData, "statement"),
+    permissionManifest
+  )
 
   // --- 3. 校验与提交 ---
   const formRules = {
@@ -55,7 +61,8 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
 
     const message = getStatementValidationMessage(
       formData.statement,
-      isEdit.value ? "请至少保留一条权限语句" : "请至少添加一条权限语句"
+      isEdit.value ? "请至少保留一条权限语句" : "请至少添加一条权限语句",
+      permissionManifest.value
     )
 
     if (message) {
@@ -96,8 +103,58 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
   }
 
   const duplicateStatement = (index: number) => {
-    const copy = normalizeStatements([structuredClone(formData.statement[index])])[0]
+    const copy = normalizeStatements([clonePolicyJson(formData.statement[index])])[0]
+    copy.ui_id = crypto.randomUUID()
     formData.statement.splice(index + 1, 0, copy)
+  }
+
+  const applyAccessScope = async (index: number, accessScope?: AccessScope) => {
+    const statement = formData.statement[index]
+    if (!statement) return
+    if (statement.action.some((action) => action.includes("*") || action.includes("?"))) {
+      ElMessage.warning("请先将通配符 Action 切换为精细化操作")
+      return
+    }
+
+    const scopedActions = getSelectedAccessScopeActions(statement.action, permissionManifest.value)
+    if (scopedActions.length === 0) return
+
+    const remainingActions = statement.action.filter((action) => !scopedActions.includes(action))
+    if (accessScope && remainingActions.length > 0) {
+      try {
+        await ElMessageBox.confirm(
+          `访问范围将应用于 ${scopedActions.length} 项操作，其余 ${remainingActions.length} 项保持现有访问方式。系统会自动拆分为两条权限语句。`,
+          "拆分权限语句",
+          {
+            confirmButtonText: "拆分并应用",
+            cancelButtonText: "取消",
+            type: "info"
+          }
+        )
+      } catch {
+        return
+      }
+
+      const scopedStatement = normalizeStatements([
+        {
+          ...clonePolicyJson(statement),
+          action: scopedActions,
+          access_scope: accessScope,
+          access_scope_configured: true
+        }
+      ])[0]
+      formData.statement[index] = {
+        ...statement,
+        action: remainingActions,
+        access_scope: undefined,
+        access_scope_configured: false
+      }
+      formData.statement.splice(index + 1, 0, scopedStatement)
+      ElMessage.success("已将需要配置可访问数据的操作拆分为独立权限语句")
+      return
+    }
+
+    formData.statement[index] = { ...statement, access_scope: accessScope, access_scope_configured: true }
   }
 
   // --- 5. 生命周期加载 ---
@@ -163,6 +220,7 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
     addStatement,
     removeStatement,
     duplicateStatement,
+    applyAccessScope,
     validateStatements,
     submitForm
   }
@@ -172,17 +230,24 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
  * 内部辅助 Composable：管理可视化与 JSON 模式的平滑同步
  * NOTE: 此 Composable 将模式切换及底层双重同步封装为黑盒，确保双向绑定状态的一致性，防止视图和代码脱节。
  */
-function useDualModeEditor(statement: import("vue").Ref<any[]>) {
+function useDualModeEditor(
+  statement: import("vue").Ref<any[]>,
+  permissionManifest: import("vue").Ref<ManifestService[]>
+) {
   const editorMode = ref<"visual" | "json">("visual")
   const jsonCode = ref("")
 
   const syncFromVisual = () => {
-    jsonCode.value = JSON.stringify(statement.value, null, 2)
+    jsonCode.value = JSON.stringify(
+      statement.value.map(({ ui_id: _uiID, access_scope_configured: _configured, ...item }) => item),
+      null,
+      2
+    )
   }
 
   const trySyncFromJson = () => {
     try {
-      statement.value = parseStatementsJson(jsonCode.value)
+      statement.value = parseStatementsJson(jsonCode.value, permissionManifest.value)
       return true
     } catch (e: any) {
       ElMessage.error(`脚本解析失败: ${e.message}`)

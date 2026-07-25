@@ -57,13 +57,14 @@
           <TransitionGroup name="stmt-list">
             <PolicyStatement
               v-for="(stmt, index) in formData.statement"
-              :key="index"
+              :key="stmt.ui_id"
               :stmt="stmt"
               :index="index"
               :permission-manifest="permissionManifest"
               @update:stmt="(val) => (formData.statement[index] = val)"
               @duplicate="duplicateStatement"
               @remove="removeStatement"
+              @apply-access-scope="applyAccessScope"
             />
           </TransitionGroup>
 
@@ -148,6 +149,7 @@ const {
   addStatement,
   removeStatement,
   duplicateStatement,
+  applyAccessScope,
   validateStatements,
   submitForm
 } = usePolicyForm(props, emit)

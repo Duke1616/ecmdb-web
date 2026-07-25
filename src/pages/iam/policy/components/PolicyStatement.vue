@@ -41,11 +41,17 @@
           @update:stmt="patchStmt"
         />
 
-        <!-- 目标资源 -->
-        <ResourceConfig :stmt="stmt" label="目标资源" required :disabled="isActionEmpty" @update:stmt="patchStmt" />
+        <!-- 由业务查询执行的数据访问范围 -->
+        <AccessScopeConfig
+          :stmt="stmt"
+          :permission-manifest="permissionManifest"
+          label="访问范围"
+          :disabled="isActionEmpty"
+          @apply-scope="(scope) => $emit('apply-access-scope', index, scope)"
+        />
 
-        <!-- 限制条件 -->
-        <ConditionConfig :stmt="stmt" label="限制条件" :disabled="isActionEmpty" @update:stmt="patchStmt" />
+        <!-- EIAM 可立即求值的主体与环境条件 -->
+        <ConditionConfig :stmt="stmt" label="生效条件" :disabled="isActionEmpty" @update:stmt="patchStmt" />
       </main>
     </div>
   </div>
@@ -58,8 +64,8 @@ import { CopyDocument, Delete } from "@element-plus/icons-vue"
 // 引入拆分后的业务拼图组件与通用面板
 import SectionPanel from "./PolicyStatement/sections/SectionPanel.vue"
 import ActionConfig from "./PolicyStatement/sections/ActionConfig.vue"
-import ResourceConfig from "./PolicyStatement/sections/ResourceConfig.vue"
 import ConditionConfig from "./PolicyStatement/sections/ConditionConfig.vue"
+import AccessScopeConfig from "./PolicyStatement/sections/AccessScopeConfig.vue"
 
 import { type StatementVO, type ManifestService, getActionSummary } from "../composables/usePolicyData"
 
@@ -69,13 +75,13 @@ const props = defineProps<{
   permissionManifest: ManifestService[]
 }>()
 
-const emit = defineEmits(["duplicate", "remove", "update:stmt"])
+const emit = defineEmits(["duplicate", "remove", "update:stmt", "apply-access-scope"])
 
 const patchStmt = (patch: Partial<StatementVO>) => {
   emit("update:stmt", { ...props.stmt, ...patch })
 }
 
-// 只有当授权操作不为空时，才允许配置资源和条件
+// 只有授权操作不为空时，才允许配置数据范围和生效条件。
 const isActionEmpty = computed(() => !props.stmt.action || props.stmt.action.length === 0)
 
 // 获取标题栏摘要描述

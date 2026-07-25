@@ -29,6 +29,15 @@ export interface ActionDetail {
   name: string
   has_menu?: boolean
   menu_urns?: string[]
+  access_scope_presets?: AccessScopePreset[]
+}
+
+/** 由业务服务声明、EIAM 透传的数据访问范围模板。 */
+export interface AccessScopePreset {
+  code: string
+  name: string
+  description?: string
+  expression: AccessScope
 }
 
 /** 功能分组 */
@@ -115,3 +124,4 @@ export interface SearchSubjectsResp {
   total: number
   subjects: Subject[]
 }
+import type { AccessScope } from "@/api/iam/policy/type"

@@ -3,9 +3,12 @@ import { ref, computed, onMounted } from "vue"
 import type { Policy, ServiceSummary } from "@/api/iam/policy/type"
 import { getPermissionManifestApi } from "@/api/iam/permission"
 import type { PermissionManifest } from "@/api/iam/permission/type"
+import type { AccessScopePreset } from "@/api/iam/permission/type"
 import PolicyServiceList from "./PolicyServiceList.vue"
 import PolicyActionDetail from "./PolicyActionDetail.vue"
 import PolicySourceView from "./PolicySourceView.vue"
+import { formatCondition } from "../../utils/condition"
+import { formatAccessScope, toAccessScopeTemplateOptions } from "../../utils/accessScope"
 
 interface Props {
   policy: Policy
@@ -52,6 +55,11 @@ const matchAction = (pattern: string, code: string): boolean => {
   }
 }
 
+const getActionStatements = (code: string) =>
+  props.policy.statement.filter(
+    (statement) => statement.action.includes(code) || statement.action.some((pattern) => matchAction(pattern, code))
+  )
+
 /**
  * 核心逻辑：直接基于 policy.statement 模式匹配全量权限清单，生成可视化视图映射
  * 彻底避免了因后端匹配不准确返回空 actions 导致的页面显示空白问题
@@ -62,10 +70,17 @@ const processedServices = computed(() => {
   }
 
   // 1. 建立 code -> action元数据 查表字典
-  const actionMetaMap = new Map<string, { name: string; group?: string }>()
+  const actionMetaMap = new Map<
+    string,
+    { name: string; group?: string; access_scope_presets?: AccessScopePreset[] }
+  >()
   if (Array.isArray(manifest.value.actions)) {
     manifest.value.actions.forEach((act: any) => {
-      actionMetaMap.set(act.code, { name: act.name, group: act.group })
+      actionMetaMap.set(act.code, {
+        name: act.name,
+        group: act.group,
+        access_scope_presets: act.access_scope_presets
+      })
     })
   }
 
@@ -90,25 +105,56 @@ const processedServices = computed(() => {
         .filter((code) => patterns.includes(code) || patterns.some((pat) => matchAction(pat, code)))
         .map((code) => {
           const meta = actionMetaMap.get(code)
+          const statements = getActionStatements(code)
+          const effects = [...new Set(statements.map((statement) => statement.effect))]
+          const resources = [...new Set(statements.flatMap((statement) => statement.resource || ["*"]))]
+          const conditions = [
+            ...new Set(
+              statements.map((statement) => statement.condition && formatCondition(statement.condition)).filter(Boolean)
+            )
+          ]
+          const scopes = [
+            ...new Set(
+              statements
+                .map(
+                  (statement) =>
+                    statement.access_scope &&
+                    formatAccessScope(
+                      statement.access_scope,
+                      toAccessScopeTemplateOptions(meta?.access_scope_presets)
+                    )
+                )
+                .filter(Boolean)
+            )
+          ]
           return {
             action: code,
             name: meta ? meta.name : code,
-            effect: "Allow",
+            effect: effects.length === 1 ? effects[0] : "Mixed",
             group: meta ? meta.group : "",
-            resource: "*",
-            condition: "-"
+            resource: resources.join(", ") || "*",
+            condition: conditions.join("；") || "-",
+            access_scope: scopes.join("；") || "-"
           }
         })
+
+      const conditionSummaries = [
+        ...new Set(matchedActions.map((action) => action.condition).filter((condition) => condition !== "-"))
+      ]
+      const accessScopeSummaries = [
+        ...new Set(matchedActions.map((action) => action.access_scope).filter((scope) => scope !== "-"))
+      ]
 
       return {
         service_code: svc.code,
         service_name: svc.name,
-        effect: "Allow",
+        effect: new Set(matchedActions.map((action) => action.effect)).size === 1 ? matchedActions[0].effect : "Mixed",
         level: matchedActions.length === uniqueActionCodes.length ? "ALL" : "PARTIAL",
         granted_count: matchedActions.length,
         total_count: uniqueActionCodes.length,
         resource_scope: "*",
-        condition: "-",
+        condition: conditionSummaries.length > 0 ? conditionSummaries.join("；") : "-",
+        access_scope: accessScopeSummaries.length > 0 ? accessScopeSummaries.join("；") : "-",
         actions: matchedActions
       }
     })

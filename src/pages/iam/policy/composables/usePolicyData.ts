@@ -1,5 +1,9 @@
-import type { Policy, Statement, Condition as ApiCondition, CreatePolicyRequest } from "@/api/iam/policy/type"
+import type { Policy, Statement, Condition, AccessScope, CreatePolicyRequest } from "@/api/iam/policy/type"
 import type { PermissionManifest } from "@/api/iam/permission/type"
+import type { AccessScopePreset } from "@/api/iam/permission/type"
+import { getConditionValidationMessage } from "../utils/condition"
+import { getAccessScopeValidationMessage, getSelectedAccessScopeActions } from "../utils/accessScope"
+import { clonePolicyJson } from "../utils/clone"
 
 // ---------------------------------------------------------
 // 前端数据模型（UI 层独立定义，与后端解耦）
@@ -11,6 +15,7 @@ export interface ManifestAction {
   name: string
   has_menu?: boolean
   menu_urns?: string[]
+  access_scope_presets?: AccessScopePreset[]
 }
 
 /** 权限分组 */
@@ -29,13 +34,18 @@ export interface ManifestService {
 
 /**
  * 前端 Statement 视图对象
- * 与后端 Statement 的核心区别：condition 使用 Record 结构方便 UI 编辑
+ * Condition 与 AccessScope 直接保留后端 AST，避免可视化与脚本模式切换时发生语义损失。
  */
 export interface StatementVO {
+  /** 仅用于 Vue 列表身份，不会提交给后端。 */
+  ui_id: string
   effect: "Allow" | "Deny"
   action: string[]
   resource: string[]
-  condition: Record<string, string[]>
+  condition?: Condition
+  access_scope?: AccessScope
+  /** 仅用于区分“尚未选择”与明确选择“不限制数据”，不会提交给后端。 */
+  access_scope_configured: boolean
 }
 
 /** 策略表单视图对象 */
@@ -85,6 +95,21 @@ export const getMatchedActionPattern = (patterns: string[], code: string): strin
   return null
 }
 
+/** 计算一组叶子 Action 在当前 Statement 中的全选/半选状态。 */
+export const getActionSelectionState = (selectedActions: string[], actionCodes: string[]) => {
+  const selectedCount = actionCodes.filter((code) => isActionPatternMatched(selectedActions, code)).length
+  return {
+    all: actionCodes.length > 0 && selectedCount === actionCodes.length,
+    some: selectedCount > 0 && selectedCount < actionCodes.length
+  }
+}
+
+/** 批量选中或取消叶子 Action，并移除会覆盖取消项的通配符。 */
+export const updateSelectedActions = (selectedActions: string[], actionCodes: string[], checked: boolean): string[] => {
+  if (checked) return [...new Set([...selectedActions, ...actionCodes])]
+  return selectedActions.filter((pattern) => !actionCodes.some((code) => isActionPatternMatched([pattern], code)))
+}
+
 export const serviceHasMatchedAction = (patterns: string[], service: ManifestService): boolean => {
   let matched = false
   ;(service.entries || []).some((entry) => {
@@ -117,20 +142,45 @@ export const getServiceCodesFromActions = (actions: string[], manifest: Manifest
   return [...codes]
 }
 
+/** 返回 Action 的业务名称；Manifest 中不存在时回退到 code。 */
+export const getActionDisplayNames = (codes: string[], manifest: ManifestService[]): string[] => {
+  const names = new Map<string, string>()
+  manifest.forEach((service) =>
+    service.entries.forEach((entry) =>
+      visitGroupActions(entry, (action) => {
+        names.set(action.code, action.name)
+      })
+    )
+  )
+  return codes.map((code) => names.get(code) || code)
+}
+
 /** 创建默认的空白语句 */
+const createStatementID = () => crypto.randomUUID()
+
 export const createDefaultStatement = (): StatementVO => ({
+  ui_id: createStatementID(),
   effect: "Allow",
   action: [],
   resource: ["*"],
-  condition: {}
+  access_scope_configured: false
 })
 
 /** 规范化单条语句，避免局部数据缺失导致 UI 状态失真 */
 export const normalizeStatement = (stmt?: Partial<StatementVO>): StatementVO => ({
+  ui_id: typeof stmt?.ui_id === "string" && stmt.ui_id ? stmt.ui_id : createStatementID(),
   effect: stmt?.effect === "Deny" ? "Deny" : "Allow",
   action: Array.isArray(stmt?.action) ? stmt.action : [],
   resource: Array.isArray(stmt?.resource) && stmt.resource.length > 0 ? stmt.resource : ["*"],
-  condition: stmt?.condition && typeof stmt.condition === "object" ? stmt.condition : {}
+  condition:
+    stmt?.condition && typeof stmt.condition === "object" && !Array.isArray(stmt.condition)
+      ? clonePolicyJson(stmt.condition)
+      : undefined,
+  access_scope:
+    stmt?.access_scope && typeof stmt.access_scope === "object" && !Array.isArray(stmt.access_scope)
+      ? clonePolicyJson(stmt.access_scope)
+      : undefined,
+  access_scope_configured: stmt?.access_scope_configured === true || stmt?.access_scope !== undefined
 })
 
 /** 规范化语句列表，确保表单里始终至少有一条可编辑语句 */
@@ -142,16 +192,31 @@ export const normalizeStatements = (statements?: Partial<StatementVO>[]): Statem
 }
 
 /** JSON 编辑器文本转语句列表 */
-export const parseStatementsJson = (value: string): StatementVO[] => {
+export const parseStatementsJson = (value: string, manifest: ManifestService[] = []): StatementVO[] => {
   const parsed = JSON.parse(value)
   if (!Array.isArray(parsed)) {
     throw new Error("权限语句必须是一个数组格式")
   }
-  return normalizeStatements(parsed)
+  parsed.forEach((stmt, index) => {
+    if (stmt?.condition !== undefined && stmt.condition !== null) {
+      const message = getConditionValidationMessage(stmt.condition as Condition)
+      if (message) throw new Error(`第 ${index + 1} 条语句：${message}`)
+    }
+    if (stmt?.access_scope !== undefined && stmt.access_scope !== null) {
+      const actions = Array.isArray(stmt.action) ? stmt.action : []
+      const message = getAccessScopeValidationMessage(stmt.access_scope as AccessScope, actions, manifest)
+      if (message) throw new Error(`第 ${index + 1} 条语句：${message}`)
+    }
+  })
+  return normalizeStatements(parsed.map((stmt) => ({ ...stmt, access_scope_configured: true })))
 }
 
 /** 表单提交前的语句校验 */
-export const getStatementValidationMessage = (statements: StatementVO[], emptyText = "请至少添加一条权限语句") => {
+export const getStatementValidationMessage = (
+  statements: StatementVO[],
+  emptyText = "请至少添加一条权限语句",
+  manifest: ManifestService[] = []
+) => {
   if (!Array.isArray(statements) || statements.length === 0) {
     return emptyText
   }
@@ -159,6 +224,21 @@ export const getStatementValidationMessage = (statements: StatementVO[], emptyTe
   const emptyIdx = statements.findIndex((stmt) => !Array.isArray(stmt.action) || stmt.action.length === 0)
   if (emptyIdx !== -1) {
     return `第 ${emptyIdx + 1} 条语句尚未配置任何权限操作`
+  }
+
+  for (let index = 0; index < statements.length; index += 1) {
+    const scopedActions = getSelectedAccessScopeActions(statements[index].action || [], manifest)
+    if (scopedActions.length > 0 && !statements[index].access_scope_configured) {
+      return `第 ${index + 1} 条语句：请为${getActionDisplayNames(scopedActions, manifest).join("、")}选择可访问数据`
+    }
+    const message = getConditionValidationMessage(statements[index].condition)
+    if (message) return `第 ${index + 1} 条语句：${message}`
+    const accessScopeMessage = getAccessScopeValidationMessage(
+      statements[index].access_scope,
+      statements[index].action || [],
+      manifest
+    )
+    if (accessScopeMessage) return `第 ${index + 1} 条语句：${accessScopeMessage}`
   }
 
   return ""
@@ -184,13 +264,17 @@ export const enrichManifest = (raw: PermissionManifest): ManifestService[] => {
   if (!raw || !raw.services) return []
 
   // 构建 code -> action 查表
-  const actionMap = new Map<string, { name: string; has_menu?: boolean; menu_urns?: string[] }>()
+  const actionMap = new Map<
+    string,
+    { name: string; has_menu?: boolean; menu_urns?: string[]; access_scope_presets?: AccessScopePreset[] }
+  >()
   if (Array.isArray(raw.actions)) {
     raw.actions.forEach((a) =>
       actionMap.set(a.code, {
         name: a.name,
         has_menu: a.has_menu,
-        menu_urns: a.menu_urns
+        menu_urns: a.menu_urns,
+        access_scope_presets: a.access_scope_presets
       })
     )
   }
@@ -204,7 +288,8 @@ export const enrichManifest = (raw: PermissionManifest): ManifestService[] => {
           code,
           name: detail ? detail.name : code,
           has_menu: detail?.has_menu,
-          menu_urns: detail?.menu_urns
+          menu_urns: detail?.menu_urns,
+          access_scope_presets: detail?.access_scope_presets
         }
       }),
       children: Array.isArray(grp.children) ? grp.children.map(enrichGroup) : undefined
@@ -226,18 +311,15 @@ export const mapVOToRequest = (vo: PolicyFormVO): CreatePolicyRequest => ({
   code: vo.code,
   desc: vo.desc,
   type: vo.type,
-  statement: normalizeStatements(vo.statement).map((s) => {
-    const conditions: ApiCondition[] = Object.entries(s.condition)
-      .filter(([, values]) => values.length > 0)
-      .map(([key, values]) => ({ operator: "StringEquals", key, value: values }))
-
-    return {
+  statement: normalizeStatements(vo.statement).map(
+    (s): Statement => ({
       effect: s.effect,
       action: s.action,
       resource: s.resource,
-      condition: conditions.length > 0 ? conditions : undefined
-    } as Statement
-  })
+      condition: s.condition ? clonePolicyJson(s.condition) : undefined,
+      access_scope: s.access_scope ? clonePolicyJson(s.access_scope) : undefined
+    })
+  )
 })
 
 /** 将后端响应转换为前端 VO */
@@ -247,17 +329,16 @@ export const mapResponseToVO = (raw: Policy): PolicyFormVO => ({
   desc: raw.desc || "",
   type: raw.type || 2,
   statement: normalizeStatements(
-    (raw.statement || []).map((s): StatementVO => {
-      const condition: Record<string, string[]> = {}
-      if (Array.isArray(s.condition)) {
-        s.condition.forEach((c) => {
-          if (c.key && c.value) {
-            condition[c.key] = Array.isArray(c.value) ? c.value : [c.value]
-          }
-        })
-      }
-      return { effect: s.effect || "Allow", action: s.action || [], resource: s.resource || ["*"], condition }
-    })
+    (raw.statement || []).map(
+      (s): Partial<StatementVO> => ({
+        effect: s.effect || "Allow",
+        action: s.action || [],
+        resource: s.resource || ["*"],
+        condition: s.condition ? clonePolicyJson(s.condition) : undefined,
+        access_scope: s.access_scope ? clonePolicyJson(s.access_scope) : undefined,
+        access_scope_configured: true
+      })
+    )
   )
 })
 

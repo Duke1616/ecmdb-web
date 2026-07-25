@@ -18,8 +18,7 @@
           :grp="grp"
           :selected-actions="selectedActions"
           :menu-details-map="menuDetailsMap"
-          @toggle-action="(code, checked) => $emit('toggleAction', code, checked)"
-          @update-actions="(actions) => $emit('updateActions', actions)"
+          @update:selected-actions="onSelectedActionsUpdate"
         />
       </div>
     </div>
@@ -27,13 +26,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref, provide } from "vue"
+import { computed, inject, ref } from "vue"
 import type { Ref } from "vue"
 import { Monitor } from "@element-plus/icons-vue"
 import MatrixRow from "./components/MatrixRow.vue"
 import {
-  getMatchedActionPattern,
+  getActionSelectionState,
   isActionPatternMatched,
+  updateSelectedActions,
   type ManifestService,
   type ManifestGroup,
   type ManifestAction
@@ -45,12 +45,13 @@ const props = defineProps<{
   searchQuery?: string
 }>()
 
-const emit = defineEmits(["toggleAction", "updateActions"])
+const emit = defineEmits<{
+  (event: "update:selectedActions", actions: string[]): void
+}>()
+
+const onSelectedActionsUpdate = (actions: string[]) => emit("update:selectedActions", actions)
 
 const menuDetailsMap = inject<Ref<Record<string, any>>>("menuDetailsMap", ref({}))
-
-provide("isActionMatched", isActionPatternMatched)
-provide("getMatchedWildcard", getMatchedActionPattern)
 
 /** 展平一级分组下的子孙分组，并应用搜索过滤 */
 const getFilteredSubGroups = (mainGrp: ManifestGroup, query: string): { name: string; actions: ManifestAction[] }[] => {
@@ -111,20 +112,17 @@ const getSvcCodes = (svc: any): string[] => {
   return (svc.entries || []).flatMap((entry: any) => entry.allActions.map((a: any) => a.code))
 }
 
-const getSelectedCount = (svc: any) =>
-  getSvcCodes(svc).filter((c) => isActionPatternMatched(props.selectedActions, c)).length
+const getSelectedCount = (svc: any) => {
+  const codes = getSvcCodes(svc)
+  if (getActionSelectionState(props.selectedActions, codes).all) return codes.length
+  return codes.filter((code) => isActionPatternMatched(props.selectedActions, code)).length
+}
 
 const getSvcTotal = (svc: any) => getSvcCodes(svc).length
 
 const toggleSvc = (svc: any, checked: boolean) => {
   const codes = getSvcCodes(svc)
-  const next = checked
-    ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((p) => {
-        if (p.startsWith(`${svc.code}:`)) return false
-        return !codes.some((c) => isActionPatternMatched([p], c))
-      })
-  emit("updateActions", next)
+  emit("update:selectedActions", updateSelectedActions(props.selectedActions, codes, checked))
 }
 </script>
 

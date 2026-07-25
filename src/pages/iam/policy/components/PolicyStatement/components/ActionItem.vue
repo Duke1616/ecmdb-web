@@ -8,14 +8,16 @@
     <el-checkbox
       :model-value="selected || !!indirectSelectedPattern"
       :disabled="!!indirectSelectedPattern"
-      :label="act.code"
       class="pure-act-item"
       :class="{ 'is-indirect-checked': !!indirectSelectedPattern }"
-      @change="(checked: string | number | boolean) => $emit('toggle', Boolean(checked))"
+      @update:model-value="(checked: string | number | boolean) => $emit('toggle', Boolean(checked))"
     >
       <div class="act-info">
         <div class="act-title-row">
           <span class="act-name">{{ act.name }}</span>
+          <el-tooltip v-if="act.access_scope_presets?.length" content="支持配置可访问数据" placement="top">
+            <span class="scope-capability">数据权限</span>
+          </el-tooltip>
         </div>
 
         <!-- 极致轻量微发光指示点 - 绝对定位至右上角 -->
@@ -168,6 +170,20 @@ const isHoveringMenu = ref(false)
       color: var(--el-text-color-regular);
       line-height: 1.25;
       transition: color 0.15s ease;
+    }
+
+    .scope-capability {
+      display: inline-flex;
+      align-items: center;
+      height: 17px;
+      padding: 0 5px;
+      border: 1px solid #b8d8c5;
+      border-radius: 3px;
+      background: #f0f8f3;
+      color: #397a50;
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 1;
     }
 
     /* 极致微型微发光雷达点菜单指示图标 */

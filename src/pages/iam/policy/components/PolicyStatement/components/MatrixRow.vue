@@ -6,7 +6,7 @@
         :model-value="getMainGrpState().all"
         :indeterminate="getMainGrpState().some"
         size="small"
-        @change="(val) => toggleMainGrp(Boolean(val))"
+        @update:model-value="(val) => toggleMainGrp(Boolean(val))"
       >
         <span class="main-name">{{ grp.name }}</span>
       </el-checkbox>
@@ -21,7 +21,7 @@
             :model-value="getSubGrpState(sub).all"
             :indeterminate="getSubGrpState(sub).some"
             size="small"
-            @change="(val) => toggleSubGrp(sub, Boolean(val))"
+            @update:model-value="(val) => toggleSubGrp(sub, Boolean(val))"
           >
             <span class="sub-name">{{ sub.name || grp.name }}</span>
           </el-checkbox>
@@ -36,7 +36,7 @@
             :selected="selectedActions.includes(act.code)"
             :indirect-selected-pattern="getIndirectPattern(act.code)"
             :menu-details-map="menuDetailsMap"
-            @toggle="(checked) => $emit('toggleAction', act.code, checked)"
+            @toggle="(checked) => toggleActions([act.code], checked)"
           />
         </div>
       </div>
@@ -45,8 +45,12 @@
 </template>
 
 <script setup lang="ts">
-import { inject } from "vue"
 import ActionItem from "./ActionItem.vue"
+import {
+  getActionSelectionState,
+  getMatchedActionPattern,
+  updateSelectedActions
+} from "../../../composables/usePolicyData"
 
 // grp 为半展平后的一级分类，结构：
 // { name: string, subGroups: { name: string, actions: [] }[], allActions: [] }
@@ -56,54 +60,42 @@ const props = defineProps<{
   menuDetailsMap: Record<string, any>
 }>()
 
-const emit = defineEmits(["toggleAction", "updateActions"])
-
-const isActionMatched = inject<(patterns: string[], code: string) => boolean>("isActionMatched", (patterns, code) =>
-  patterns.includes(code)
-)
-
-const getMatchedWildcard = inject<(patterns: string[], code: string) => string | null>("getMatchedWildcard", () => null)
+const emit = defineEmits<{
+  (event: "update:selectedActions", actions: string[]): void
+}>()
 
 // 计算一级分类状态
-const getMainGrpState = () => {
-  const codes = props.grp.allActions.map((a: any) => a.code)
-  const count = codes.filter((c: any) => isActionMatched(props.selectedActions, c)).length
-  return {
-    all: count === codes.length && codes.length > 0,
-    some: count > 0 && count < codes.length
-  }
+const getMainGrpState = () =>
+  getActionSelectionState(
+    props.selectedActions,
+    props.grp.allActions.map((action: any) => action.code)
+  )
+
+const toggleActions = (codes: string[], checked: boolean) => {
+  emit("update:selectedActions", updateSelectedActions(props.selectedActions, codes, checked))
 }
 
 // 切换一级分类下所有操作
 const toggleMainGrp = (checked: boolean) => {
   const codes = props.grp.allActions.map((a: any) => a.code)
-  const next = checked
-    ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((p: any) => !codes.some((c: string) => isActionMatched([p], c)))
-  emit("updateActions", next)
+  toggleActions(codes, checked)
 }
 
 // 计算二级子分类状态
-const getSubGrpState = (sub: any) => {
-  const codes = sub.actions.map((a: any) => a.code)
-  const count = codes.filter((c: any) => isActionMatched(props.selectedActions, c)).length
-  return {
-    all: count === codes.length && codes.length > 0,
-    some: count > 0 && count < codes.length
-  }
-}
+const getSubGrpState = (sub: any) =>
+  getActionSelectionState(
+    props.selectedActions,
+    sub.actions.map((action: any) => action.code)
+  )
 
 // 切换二级子分类下所有操作
 const toggleSubGrp = (sub: any, checked: boolean) => {
   const codes = sub.actions.map((a: any) => a.code)
-  const next = checked
-    ? [...new Set([...props.selectedActions, ...codes])]
-    : props.selectedActions.filter((p: any) => !codes.some((c: string) => isActionMatched([p], c)))
-  emit("updateActions", next)
+  toggleActions(codes, checked)
 }
 
 const getIndirectPattern = (code: string) => {
-  return getMatchedWildcard(props.selectedActions, code)
+  return getMatchedActionPattern(props.selectedActions, code)
 }
 </script>
 

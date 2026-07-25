@@ -21,23 +21,36 @@
           </div>
 
           <div class="designer-wrapper">
-            <fc-designer ref="designerRef" :config="config" class="form-designer" />
+            <fc-designer ref="designerRef" :config="config" class="form-designer" @drag="handleDesignerDrag" />
           </div>
         </div>
       </div>
     </div>
 
     <!-- 操作按钮 -->
-    <FormActions @previous="previous" @save="handleSave" @cancel="close" :show-next="false" :show-save="true" />
+    <FormActions
+      @previous="previous"
+      @next="handleComplete"
+      @save="handleComplete"
+      @cancel="close"
+      :show-next="hasBindingStep"
+      :show-save="!hasBindingStep"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from "vue"
+import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue"
 import FcDesigner from "@form-create/designer"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { createDefaultTemplateFormData } from "../types"
 import type { TemplateFormData } from "../types"
+import {
+  SCHEDULE_DATETIME_COMPONENT_NAME,
+  createScheduleDateTimeDragRule,
+  getNextScheduleGroupIndex,
+  normalizeScheduleDateTimeRules
+} from "../utils/scheduleDateTimeComponent"
 
 interface FormDesignerExpose {
   getJson: () => unknown
@@ -45,14 +58,17 @@ interface FormDesignerExpose {
   setRule: (rules: unknown) => void
   setOptions: (options: unknown) => void
   clearDragRule: () => void
+  addComponent: (rule: ReturnType<typeof createScheduleDateTimeDragRule>) => void
 }
 
 const props = defineProps<{
   formData: TemplateFormData
+  hasBindingStep?: boolean
 }>()
 
 const emit = defineEmits<{
   (event: "previous"): void
+  (event: "next"): void
   (event: "save"): void
   (event: "close"): void
   (event: "update:formData", data: TemplateFormData): void
@@ -60,6 +76,8 @@ const emit = defineEmits<{
 
 const designerRef = ref<FormDesignerExpose>()
 const localFormData = ref<TemplateFormData>(createDefaultTemplateFormData())
+let nextScheduleGroupIndex = 1
+const scheduleDateTimeDragRule = createScheduleDateTimeDragRule(() => nextScheduleGroupIndex++)
 
 const config = {
   showSaveBtn: false,
@@ -73,6 +91,7 @@ const hasDesignerValue = (value: unknown) => {
 const setDesignerForm = (data: Partial<TemplateFormData>) => {
   if (!designerRef.value) return
 
+  nextScheduleGroupIndex = getNextScheduleGroupIndex(data.rules)
   designerRef.value.clearDragRule()
   designerRef.value.setOptions({})
 
@@ -81,7 +100,7 @@ const setDesignerForm = (data: Partial<TemplateFormData>) => {
   }
 
   if (hasDesignerValue(data.rules)) {
-    designerRef.value.setRule(data.rules)
+    designerRef.value.setRule(normalizeScheduleDateTimeRules(data.rules))
   }
 }
 
@@ -100,9 +119,10 @@ const syncFormData = (data: TemplateFormData) => {
   }
 }
 
-const handleSave = () => {
+const handleComplete = () => {
   syncDesignerToFormData()
-  emit("save")
+  if (props.hasBindingStep) emit("next")
+  else emit("save")
 }
 
 const previous = () => {
@@ -112,6 +132,15 @@ const previous = () => {
 
 const close = () => {
   emit("close")
+}
+
+const handleDesignerDrag = (event: { item?: { name?: string } }) => {
+  if (event.item?.name !== SCHEDULE_DATETIME_COMPONENT_NAME) return
+  nextTick(() => {
+    if (!designerRef.value) return
+    // 重新交给 designer 装载，使栅格、列、日期和时间都获得各自的原生拖拽容器。
+    designerRef.value.setRule(designerRef.value.getJson())
+  })
 }
 
 watch(
@@ -127,6 +156,7 @@ onBeforeUnmount(() => {
 })
 
 onMounted(() => {
+  designerRef.value?.addComponent(scheduleDateTimeDragRule)
   setDesignerForm(props.formData)
 })
 
@@ -136,6 +166,7 @@ defineExpose({
     localFormData.value = { ...localFormData.value, ...row }
   },
   resetForm: () => {
+    nextScheduleGroupIndex = 1
     designerRef.value?.clearDragRule()
     designerRef.value?.setOptions({})
   }

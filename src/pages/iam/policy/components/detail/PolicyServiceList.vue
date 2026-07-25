@@ -47,6 +47,7 @@ const formatEffect = (effect: string) => {
   const e = (effect || "").toUpperCase()
   if (e === "ALLOW") return "允许"
   if (e === "DENY") return "拒绝"
+  if (e === "MIXED") return "允许/拒绝"
   return e
 }
 </script>
@@ -62,7 +63,7 @@ const formatEffect = (effect: string) => {
           <span>访问级别</span>
           <span>权限覆盖</span>
           <span>目标资源</span>
-          <span>生效条件</span>
+          <span>策略约束</span>
         </div>
       </template>
 
@@ -119,10 +120,19 @@ const formatEffect = (effect: string) => {
             </div>
           </div>
 
-          <!-- 5. 额外约束条件 -->
-          <div class="cell-condition">
-            <div class="governance-snippet" :class="{ empty: row.condition === '-' }">
-              <code>{{ row.condition === "-" ? "无限制条件" : row.condition }}</code>
+          <!-- 5. 生效条件与数据访问范围 -->
+          <div class="constraint-stack">
+            <div class="constraint-row">
+              <span class="constraint-label">条件</span>
+              <span class="constraint-value" :class="{ empty: row.condition === '-' }">
+                {{ row.condition === "-" ? "无" : row.condition }}
+              </span>
+            </div>
+            <div class="constraint-row">
+              <span class="constraint-label scope">范围</span>
+              <span class="constraint-value" :class="{ empty: !row.access_scope || row.access_scope === '-' }">
+                {{ !row.access_scope || row.access_scope === "-" ? "全部数据" : row.access_scope }}
+              </span>
             </div>
           </div>
         </div>
@@ -141,7 +151,7 @@ const formatEffect = (effect: string) => {
 
 .svc-cols {
   display: grid;
-  grid-template-columns: 220px 100px 120px 1.5fr 1fr 1.5fr;
+  grid-template-columns: 190px 80px 100px minmax(120px, 1fr) minmax(110px, 0.8fr) minmax(240px, 1.8fr);
   gap: 16px;
   width: 100%;
   align-items: center;
@@ -149,7 +159,7 @@ const formatEffect = (effect: string) => {
 
 .svc-grid-row {
   display: grid;
-  grid-template-columns: 220px 100px 120px 1.5fr 1fr 1.5fr;
+  grid-template-columns: 190px 80px 100px minmax(120px, 1fr) minmax(110px, 0.8fr) minmax(240px, 1.8fr);
   align-items: center;
   gap: 16px;
   min-height: 68px;
@@ -285,36 +295,40 @@ const formatEffect = (effect: string) => {
   }
 }
 
-.governance-snippet {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  padding: 6px 10px;
-  display: inline-flex;
-  min-width: 60px;
+.constraint-stack {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-  code {
-    font-family: ui-monospace, SFMono-Regular, monospace;
-    font-size: 12px;
-    color: #475569;
-    white-space: pre-wrap;
-    word-break: break-all;
+.constraint-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.constraint-label {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+
+  &.scope {
+    color: #2563eb;
   }
+}
+
+.constraint-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #334155;
+  font-size: 12px;
 
   &.empty {
-    background: transparent;
-    border: none;
-    padding-left: 0;
-    code {
-      color: #94a3b8;
-      font-style: italic;
-      font-weight: 400;
-      &::before {
-        content: "•";
-        margin-right: 6px;
-        color: #e2e8f0;
-      }
-    }
+    color: #94a3b8;
   }
 }
 </style>

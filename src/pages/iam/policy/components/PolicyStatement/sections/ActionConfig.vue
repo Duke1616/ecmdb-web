@@ -37,7 +37,9 @@
           >
             <el-checkbox
               :model-value="managedServiceCodes.includes(s.code)"
-              @change="(checked: string | number | boolean) => handleServiceItemChange(s.code, Boolean(checked))"
+              @update:model-value="
+                (checked: string | number | boolean) => handleServiceItemChange(s.code, Boolean(checked))
+              "
             >
               <span class="name">{{ s.name }}</span>
               <span class="code">{{ s.code }}</span>
@@ -86,8 +88,7 @@
             :active-services="activeServices"
             :selected-actions="stmt.action"
             :search-query="actionSearchQuery"
-            @toggle-action="onActionToggle"
-            @update-actions="onActionsUpdate"
+            @update:selected-actions="onActionsUpdate"
           />
           <div v-else class="empty-placeholder">
             <el-icon><Pointer /></el-icon>
@@ -168,6 +169,16 @@ const patchStmt = (patch: Partial<StatementVO>) => {
   emit("update:stmt", { ...props.stmt, ...patch })
 }
 
+const patchActions = (actions: string[]) => {
+  if (
+    actions.length === props.stmt.action.length &&
+    actions.every((action, index) => action === props.stmt.action[index])
+  ) {
+    return
+  }
+  patchStmt({ action: actions, access_scope: undefined, access_scope_configured: false })
+}
+
 // --------------------------------------------------------------------------
 // 授权操作（Action）相关内部逻辑，完全自我闭环，向外只派发 update:stmt
 // --------------------------------------------------------------------------
@@ -211,7 +222,7 @@ const handleServiceItemChange = (code: string, checked: boolean) => {
     // 正常取消勾选流程
     managedServiceCodes.value = managedServiceCodes.value.filter((c) => c !== code)
     const nextActions = props.stmt.action.filter((a) => !a.startsWith(`${code}:`))
-    patchStmt({ action: nextActions })
+    patchActions(nextActions)
   } else {
     // 正常勾选流程
     managedServiceCodes.value = [...new Set([...managedServiceCodes.value, code])]
@@ -221,26 +232,19 @@ const handleServiceItemChange = (code: string, checked: boolean) => {
     if (actionMode.value === "all") {
       nextActions = managedServiceCodes.value.map((c) => `${c}:*`)
     }
-    patchStmt({ action: nextActions })
+    patchActions(nextActions)
   }
 }
 
 const onActionModeChange = (val: string | number | boolean | undefined) => {
   if (String(val) === "all") {
-    patchStmt({ action: managedServiceCodes.value.map((c) => `${c}:*`) })
+    patchActions(managedServiceCodes.value.map((c) => `${c}:*`))
   } else {
-    patchStmt({ action: props.stmt.action.filter((a) => !a.endsWith(":*")) })
+    patchActions(props.stmt.action.filter((a) => !a.endsWith(":*")))
   }
 }
 
-const onActionToggle = (actionCode: string, checked: boolean) => {
-  const next = checked
-    ? [...new Set([...props.stmt.action, actionCode])]
-    : props.stmt.action.filter((a) => a !== actionCode)
-  patchStmt({ action: next })
-}
-
-const onActionsUpdate = (actions: string[]) => patchStmt({ action: actions })
+const onActionsUpdate = (actions: string[]) => patchActions(actions)
 
 /** 点击左侧服务直接定位到右侧对应的矩阵模块 */
 const scrollToService = async (code: string) => {

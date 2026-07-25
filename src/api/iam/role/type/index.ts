@@ -1,3 +1,5 @@
+import type { AccessScope, Condition } from "@/api/iam/policy/type"
+
 /** 角色类型枚举 */
 export enum RoleType {
   SYSTEM = 1, // 系统预设全局角色
@@ -9,14 +11,8 @@ export interface Statement {
   effect: string
   action: string[]
   resource: string[]
-  condition?: Condition[]
-}
-
-/** 触发条件 */
-export interface Condition {
-  operator: string
-  key: string
-  value: any
+  condition?: Condition
+  access_scope?: AccessScope
 }
 
 /** 内联策略 */
@@ -37,6 +33,7 @@ export interface ServiceSummary {
   total_count: number
   resource_scope: string
   condition: string
+  access_scope?: string
   actions: ActionDetail[]
 }
 
@@ -48,6 +45,7 @@ export interface ActionDetail {
   group: string
   resource: string
   condition: string
+  access_scope?: string
 }
 
 /** 角色信息主体 */

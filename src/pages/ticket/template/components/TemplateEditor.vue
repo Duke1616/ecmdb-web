@@ -30,6 +30,16 @@
         @close="confirmClose"
       />
       <TemplateDesigner
+        v-else-if="currentStep === TemplateEditorStep.Designer"
+        :form-data="formData"
+        :has-binding-step="hasBindingStep"
+        @update:form-data="emit('update:formData', $event)"
+        @previous="goPrevious"
+        @next="goNext"
+        @save="emit('save')"
+        @close="confirmClose"
+      />
+      <TemplateScheduleOverrides
         v-else
         :form-data="formData"
         @update:form-data="emit('update:formData', $event)"
@@ -42,13 +52,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from "vue"
-import { Check, Document, EditPen } from "@element-plus/icons-vue"
+import { computed, ref, watch } from "vue"
+import { Check, Connection, Document, EditPen } from "@element-plus/icons-vue"
 import { ElMessageBox } from "element-plus"
 import TemplateDesigner from "./TemplateDesigner.vue"
+import TemplateScheduleOverrides from "./TemplateScheduleOverrides.vue"
 import TemplateInfoForm from "./TemplateInfoForm.vue"
 import { TemplateEditorStep } from "../types"
 import type { createOrUpdateTemplateReq } from "@/api/ticket/template/types/template"
+import { getWorkflowDetailApi } from "@/api/ticket/workflow/workflow"
+import { extractScheduleRequirements } from "../utils/scheduleOverrides"
 
 const props = defineProps<{
   modelValue: boolean
@@ -65,28 +78,55 @@ const emit = defineEmits<{
 const currentStep = defineModel<TemplateEditorStep>("step", {
   default: TemplateEditorStep.Info
 })
+const hasBindingStep = ref(true)
 
-const steps = computed(() => [
-  {
-    key: TemplateEditorStep.Info,
-    title: "填写模板信息",
-    description: "名称、分组、流程和图标",
-    icon: Document
-  },
-  {
-    key: TemplateEditorStep.Designer,
-    title: "设计表单结构",
-    description: "可视化配置表单字段",
-    icon: EditPen
+const steps = computed(() => {
+  const result = [
+    {
+      key: TemplateEditorStep.Info,
+      title: "填写模板信息",
+      description: "名称、分组、流程和图标",
+      icon: Document
+    },
+    {
+      key: TemplateEditorStep.Designer,
+      title: "设计表单结构",
+      description: "可视化配置表单字段",
+      icon: EditPen
+    }
+  ]
+  if (hasBindingStep.value) {
+    result.push({
+      key: TemplateEditorStep.Bindings,
+      title: "模板执行策略",
+      description: "覆盖流程的默认执行时间",
+      icon: Connection
+    })
   }
-])
+  return result
+})
+
+const resolveBindingStep = async (workflowId?: number) => {
+  if (!workflowId) {
+    hasBindingStep.value = false
+    return
+  }
+  hasBindingStep.value = true
+  try {
+    const { data } = await getWorkflowDetailApi(workflowId)
+    hasBindingStep.value = extractScheduleRequirements(data.flow_data).length > 0
+  } catch {
+    // 详情加载失败时保留映射步骤，由该步骤展示明确错误并阻止保存。
+    hasBindingStep.value = true
+  }
+}
 
 const goNext = () => {
-  currentStep.value = TemplateEditorStep.Designer
+  currentStep.value += 1
 }
 
 const goPrevious = () => {
-  currentStep.value = TemplateEditorStep.Info
+  currentStep.value -= 1
 }
 
 const emitClose = () => {
@@ -96,14 +136,14 @@ const emitClose = () => {
 
 const confirmClose = async () => {
   try {
-    const isDesignStep = currentStep.value === TemplateEditorStep.Designer
-    const content = isDesignStep
+    const isBasicStep = currentStep.value === TemplateEditorStep.Info
+    const content = !isBasicStep
       ? "确定要取消当前操作吗？已设计的表单将不会保存。"
       : "确定要取消当前操作吗？已填写的基本信息将不会保存。"
 
     await ElMessageBox.confirm(content, "确认取消", {
       confirmButtonText: "确定取消",
-      cancelButtonText: isDesignStep ? "继续设计" : "继续填写",
+      cancelButtonText: isBasicStep ? "继续填写" : "继续配置",
       type: "warning",
       confirmButtonClass: "el-button--danger",
       cancelButtonClass: "el-button--default",
@@ -116,7 +156,7 @@ const confirmClose = async () => {
       dangerouslyUseHTMLString: true,
       message: `
         <div class="custom-confirm-content">
-          <div class="confirm-icon">${isDesignStep ? "🎨" : "📝"}</div>
+          <div class="confirm-icon">${isBasicStep ? "📝" : "🎨"}</div>
           <div class="confirm-text">${content}</div>
         </div>
       `,
@@ -139,6 +179,12 @@ watch(
   (visible) => {
     if (visible) currentStep.value = TemplateEditorStep.Info
   }
+)
+
+watch(
+  () => props.formData.workflow_id,
+  (workflowId) => resolveBindingStep(workflowId),
+  { immediate: true }
 )
 </script>
 

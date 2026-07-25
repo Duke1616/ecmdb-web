@@ -3,61 +3,48 @@ import { getTemplateRulesByWorkflowIdApi } from "@/api/ticket/template"
 import type { templateRule } from "@/api/ticket/template/types/template"
 import type { Rule as FormRule } from "@form-create/element-ui"
 
-// ── 共享状态 (跨组件实例) ──────────────────────────────────────────────────
-// 使用全局变量作为简单的缓存存储，避免同一个 workflowId 在不同节点实例中重复请求
-const templateRulesCache = new Map<number, templateRule[]>()
-const globalLoadingMap = new Map<number, Promise<void>>()
+// 仅合并同一工作流的并发请求，不缓存结果，避免模板绑定变化后继续显示旧数据。
+const pendingRequests = new Map<number, Promise<templateRule[]>>()
 
 /**
  * 工作流模板规则 Composable
- * 抽离通用逻辑，支持缓存与请求去重
+ * 抽离通用逻辑，并合并同一工作流的并发请求
  */
 export function useTemplateRules() {
   const localRules = ref<templateRule[]>([])
   const isLoading = ref(false)
+  const loadError = ref("")
 
   /**
    * 获取指定工作流的模板规则
    * @param workflowId 工作流 ID
    */
   const fetchTemplates = async (workflowId: number | undefined) => {
-    if (!workflowId) return
-
-    // 1. 命中缓存直接同步更新
-    if (templateRulesCache.has(workflowId)) {
-      localRules.value = templateRulesCache.get(workflowId) || []
+    if (!workflowId) {
+      localRules.value = []
+      loadError.value = ""
       return
     }
 
-    // 2. 检查是否有正在进行的同一 workflowId 的请求
-    if (globalLoadingMap.has(workflowId)) {
-      isLoading.value = true
-      await globalLoadingMap.get(workflowId)
-      localRules.value = templateRulesCache.get(workflowId) || []
-      isLoading.value = false
-      return
-    }
-
-    // 3. 发起新请求 (Singleton Promise)
     isLoading.value = true
-    const fetchPromise = (async () => {
-      try {
-        const { data } = await getTemplateRulesByWorkflowIdApi(workflowId)
-        const rules = data.template_rules || []
-        templateRulesCache.set(workflowId, rules)
-      } catch (error) {
-        console.error("[useTemplateRules] 加载模板失败:", error)
-        // 失败后记录空数组，防止短时间内重复触发错误请求
-        templateRulesCache.set(workflowId, [])
-      } finally {
-        globalLoadingMap.delete(workflowId)
+    loadError.value = ""
+    try {
+      let request = pendingRequests.get(workflowId)
+      if (!request) {
+        request = getTemplateRulesByWorkflowIdApi(workflowId)
+          .then(({ data }) => data.template_rules || [])
+          .finally(() => pendingRequests.delete(workflowId))
+        pendingRequests.set(workflowId, request)
       }
-    })()
 
-    globalLoadingMap.set(workflowId, fetchPromise)
-    await fetchPromise
-    localRules.value = templateRulesCache.get(workflowId) || []
-    isLoading.value = false
+      localRules.value = await request
+    } catch (error) {
+      console.error("[useTemplateRules] 加载模板失败:", error)
+      localRules.value = []
+      loadError.value = "模板字段加载失败"
+    } finally {
+      isLoading.value = false
+    }
   }
 
   /**
@@ -82,6 +69,7 @@ export function useTemplateRules() {
   return {
     templateRules: localRules,
     isLoading,
+    loadError,
     fetchTemplates,
     getTemplateFieldOptions
   }

@@ -12,7 +12,8 @@ export const createDefaultTemplateFormData = (): TemplateFormData => ({
   options: undefined,
   icon: "",
   group_id: undefined,
-  workflow_id: undefined
+  workflow_id: undefined,
+  schedule_overrides: {}
 })
 
 export enum TicketTemplateAction {
@@ -25,7 +26,8 @@ export enum TicketTemplateAction {
 
 export enum TemplateEditorStep {
   Info = 0,
-  Designer = 1
+  Designer = 1,
+  Bindings = 2
 }
 
 export type TemplateManageGroupKey = number | "all"
