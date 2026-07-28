@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from "uuid"
 import type { Policy, Statement, Condition, AccessScope, CreatePolicyRequest } from "@/api/iam/policy/type"
 import type { PermissionManifest } from "@/api/iam/permission/type"
 import type { AccessScopePreset } from "@/api/iam/permission/type"
@@ -156,7 +157,7 @@ export const getActionDisplayNames = (codes: string[], manifest: ManifestService
 }
 
 /** 创建默认的空白语句 */
-const createStatementID = () => crypto.randomUUID()
+const createStatementID = () => uuidv4()
 
 export const createDefaultStatement = (): StatementVO => ({
   ui_id: createStatementID(),

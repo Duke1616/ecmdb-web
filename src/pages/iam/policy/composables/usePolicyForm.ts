@@ -1,4 +1,5 @@
 import { ref, reactive, computed, onMounted, watch, toRef } from "vue"
+import { v4 as uuidv4 } from "uuid"
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus"
 import { getPermissionManifestApi, listMenusByURNsApi } from "@/api/iam/permission"
 import { createPolicyApi, getPolicyDetailApi, updatePolicyApi } from "@/api/iam/policy"
@@ -104,7 +105,7 @@ export function usePolicyForm(props: { code?: string }, emit: (e: "success") => 
 
   const duplicateStatement = (index: number) => {
     const copy = normalizeStatements([clonePolicyJson(formData.statement[index])])[0]
-    copy.ui_id = crypto.randomUUID()
+    copy.ui_id = uuidv4()
     formData.statement.splice(index + 1, 0, copy)
   }
 
