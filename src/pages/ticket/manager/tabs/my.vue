@@ -4,7 +4,7 @@
     :columns="myTicketColumns"
     :pagination-data="paginationData"
     :loading="loading"
-    :get-operate-items="() => myTicketOperateItems"
+    :get-operate-items="getMyTicketOperateItems"
     span-method
     @size-change="handleSizeChange"
     @current-change="handleCurrentChange"
@@ -25,7 +25,7 @@ import { listStartedTicketsApi } from "@/api/ticket/manager"
 import Detail from "../approved/detail.vue"
 import TicketTable from "../components/TicketTable.vue"
 import { myTicketColumns } from "../composables/useTicketColumns"
-import { myTicketOperateItems, useTicketActions } from "../composables/useTicketActions"
+import { getMyTicketOperateItems, useTicketActions } from "../composables/useTicketActions"
 import { useTicketDetail } from "../composables/useTicketDetail"
 import { useTicketList } from "../composables/useTicketList"
 

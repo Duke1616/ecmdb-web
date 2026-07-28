@@ -11,7 +11,10 @@
                 ><el-icon><Operation /></el-icon
               ></span>
               <div class="task-card__identity-content">
-                <div class="task-card__title">{{ row.node_name || `自动化任务 #${row.id}` }}</div>
+                <div class="task-card__title-row">
+                  <div class="task-card__title">{{ row.node_name || `自动化任务 #${row.id}` }}</div>
+                  <TaskCompensationBadge v-if="row.is_compensation" />
+                </div>
                 <div class="task-card__node" :title="row.node_id">
                   <span>Task #{{ row.id }}</span
                   >{{ row.node_id }}
@@ -24,7 +27,11 @@
           <div class="task-card__meta">
             <span class="phase-chip"><i />{{ formatAutomationTaskPhase(row.phase) }}</span>
             <span
-              ><el-icon><Calendar /></el-icon><b>计划执行</b>{{ formatTime(row.scheduled_at) }}</span
+              ><el-icon><Calendar /></el-icon><b>{{ hasOriginalSchedule(row) ? "触发执行" : "计划执行" }}</b
+              >{{ formatTime(row.scheduled_at) }}</span
+            >
+            <span v-if="hasOriginalSchedule(row)"
+              ><el-icon><Calendar /></el-icon><b>原计划</b>{{ formatTime(row.original_scheduled_at) }}</span
             >
             <span
               ><el-icon><Clock /></el-icon><b>最近更新</b>{{ formatTime(row.utime) }}</span
@@ -74,6 +81,7 @@ import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import TaskRetryDialog from "@/pages/ticket/task-history/components/TaskRetryDialog.vue"
 import { formatAutomationTaskPhase } from "@/pages/ticket/task-history/config"
 import TaskHistoryStatusBadge from "@/pages/ticket/task-history/components/TaskHistoryStatusBadge.vue"
+import TaskCompensationBadge from "@/pages/ticket/task-history/components/TaskCompensationBadge.vue"
 import { useAutomationTaskPolling } from "@/pages/ticket/task-history/composables/useAutomationTaskPolling"
 
 const props = defineProps<{ processInstId: number | undefined }>()
@@ -89,6 +97,7 @@ const statusTone = (status: AutomationTaskStatus) => {
   if (status === AutomationTaskStatus.Failed) return "failed"
   if ([AutomationTaskStatus.Running, AutomationTaskStatus.Submitting].includes(status)) return "running"
   if (status === AutomationTaskStatus.Blocked) return "blocked"
+  if (status === AutomationTaskStatus.Cancelled) return "cancelled"
   return "waiting"
 }
 
@@ -139,6 +148,8 @@ const confirmRetry = async () => {
 }
 
 const formatTime = (value: number) => (value ? dayjs(value).format("YYYY-MM-DD HH:mm:ss") : "-")
+const hasOriginalSchedule = (task: AutomationTask) =>
+  !!task.original_scheduled_at && task.original_scheduled_at !== task.scheduled_at
 watch(
   () => props.processInstId,
   () => loadTasks(),
@@ -189,6 +200,9 @@ defineExpose({ listTasksData: loadTasks })
   }
   &.is-blocked .task-card__rail {
     background: #f59e0b;
+  }
+  &.is-cancelled .task-card__rail {
+    background: #94a3b8;
   }
 }
 
@@ -241,9 +255,19 @@ defineExpose({ listTasksData: loadTasks })
 }
 
 .task-card__title {
+  overflow: hidden;
   color: #0f172a;
   font-size: 15px;
   font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-card__title-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
 }
 
 .task-card__node {

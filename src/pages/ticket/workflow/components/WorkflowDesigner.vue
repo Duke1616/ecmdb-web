@@ -81,6 +81,7 @@ import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
 import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
+import { findCompensationNodeReferences } from "@@/components/workflow/RegisterNode/automation/compensation"
 import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
@@ -192,6 +193,24 @@ const config = reactive<any>({
     enabled: true,
     step: 1,
     throttle: 16
+  },
+  guards: {
+    beforeDelete: (element: WorkflowGraphNode | WorkflowGraphEdge) => {
+      if (element.type !== "automation" || !element.id) return true
+
+      const references = findCompensationNodeReferences(getCurrentGraphData()?.nodes || [], element.id)
+      if (references.length === 0) return true
+
+      const sourceNames = references.map((reference) => `「${reference.name}」`).join("、")
+      ElNotification({
+        title: "无法删除补偿节点",
+        message: `${sourceNames}已将该节点设为撤回补偿，请先解除绑定`,
+        type: "warning",
+        duration: 3500,
+        position: "top-right"
+      })
+      return false
+    }
   }
 })
 

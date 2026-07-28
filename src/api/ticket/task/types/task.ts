@@ -13,7 +13,8 @@ export enum AutomationTaskStatus {
   Running = 3,
   Waiting = 4,
   Blocked = 5,
-  Submitting = 6
+  Submitting = 6,
+  Cancelled = 7
 }
 
 export enum AutomationAttemptStatus {
@@ -30,7 +31,8 @@ export enum AutomationTaskPhase {
   Succeeded = "SUCCEEDED",
   Failed = "FAILED",
   Blocked = "BLOCKED",
-  Retrying = "RETRYING"
+  Retrying = "RETRYING",
+  Cancelled = "CANCELLED"
 }
 
 export interface AutomationTask {
@@ -43,8 +45,12 @@ export interface AutomationTask {
   status: AutomationTaskStatus
   phase: AutomationTaskPhase
   scheduled_at: number
+  original_scheduled_at: number
+  compensation_node_id: string
+  is_compensation: boolean
   current_attempt_id: number
   advanced_at: number
+  cancelled_at: number
   last_error: string
   ctime: number
   utime: number

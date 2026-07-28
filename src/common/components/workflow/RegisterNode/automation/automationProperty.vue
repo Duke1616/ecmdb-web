@@ -86,6 +86,45 @@
       </div>
     </FormSection>
 
+    <FormSection
+      title="撤回补偿"
+      tooltip="当前节点执行成功后，流程撤回时立即执行所选补偿节点"
+      theme-color="slate"
+      class="compensation-section"
+      :class="{ 'is-enabled': compensationEnabled }"
+    >
+      <template #icon>
+        <el-icon><RefreshLeft /></el-icon>
+      </template>
+      <template #extra>
+        <el-switch
+          v-model="compensationEnabled"
+          active-color="#6366f1"
+          inactive-color="#e2e8f0"
+          :disabled="flowDetail.status == '2'"
+        />
+      </template>
+      <transition name="expand">
+        <el-form-item
+          v-if="compensationEnabled"
+          label="补偿节点"
+          prop="compensation_node_id"
+          class="withdraw-form-item"
+        >
+          <el-select
+            v-model="propertyForm.compensation_node_id"
+            filterable
+            :placeholder="compensationNodeOptions.length ? '请选择补偿节点' : '暂无可用的自动化节点'"
+            :disabled="flowDetail.status == '2'"
+            class="modern-select"
+            @visible-change="handleCompensationSelectVisible"
+          >
+            <el-option v-for="item in compensationNodeOptions" :key="item.id" :label="item.name" :value="item.id" />
+          </el-select>
+        </el-form-item>
+      </transition>
+    </FormSection>
+
     <!-- 执行时间 -->
     <FormSection title="执行时间" tooltip="设置节点到达后的单次执行时间" theme-color="orange">
       <template #icon>
@@ -135,7 +174,7 @@
 import { listRunnerByCodebookIdApi } from "@/api/task/runner"
 import { TagDetail, runner } from "@/api/task/runner/types/runner"
 import { ElSelect, FormInstance, FormRules } from "element-plus"
-import { Document, Setting, Timer, Bell, MagicStick } from "@element-plus/icons-vue"
+import { Bell, Document, MagicStick, RefreshLeft, Setting, Timer } from "@element-plus/icons-vue"
 import { computed, ref, onMounted, reactive, watch } from "vue"
 import { cloneDeep, uniqBy } from "lodash-es"
 import { FormSection } from "../../PropertySetting"
@@ -147,10 +186,21 @@ import {
   resolveFallbackSchedule,
   type ScheduleConfig
 } from "./schedule"
+import { getCompensationNodeOptions, type CompensationNodeOption } from "./compensation"
 
 interface RunnerTagOption extends TagDetail {
   id: string
   name: string
+}
+
+interface AutomationPropertyForm {
+  name: string
+  codebook_id: number
+  is_notify: boolean
+  schedule: ScheduleConfig
+  notify_method: number[]
+  tag: string
+  compensation_node_id: string
 }
 
 // ── 属性与事件定义 ──────────────────────────────────────────────────────────
@@ -169,22 +219,25 @@ const props = defineProps({
 const emits = defineEmits(["closed"])
 
 // ── 状态管理 ────────────────────────────────────────────────────────────
-const DEFAULT_FORM_DATA = {
+const DEFAULT_FORM_DATA: AutomationPropertyForm = {
   name: "自动化-",
   codebook_id: 0 as number,
   is_notify: false,
   schedule: createImmediateSchedule() as ScheduleConfig,
   notify_method: [],
-  tag: ""
+  tag: "",
+  compensation_node_id: ""
 }
 
-const propertyForm = reactive(cloneDeep(DEFAULT_FORM_DATA))
+const propertyForm = reactive<AutomationPropertyForm>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const tagSelect = ref<InstanceType<typeof ElSelect> | null>(null)
 const scheduleEditorRef = ref<InstanceType<typeof ScheduleEditor> | null>(null)
 const availableTags = ref<RunnerTagOption[]>([])
 const runnerTagsLoading = ref(false)
 const activeScheduleDraft = ref<ScheduleConfig>(createFixedDelaySchedule())
+const compensationNodeOptions = ref<CompensationNodeOption[]>([])
+const compensationEnabled = ref(false)
 
 const runnerTagsPlaceholder = computed(() => {
   if (!propertyForm.codebook_id) return "选择模版后选取可用执行节点"
@@ -255,6 +308,24 @@ function setAutoTag() {
   tagSelect.value?.blur?.()
 }
 
+const refreshCompensationNodeOptions = () => {
+  const graphData = props.lf?.getGraphData?.()
+  compensationNodeOptions.value = getCompensationNodeOptions(graphData?.nodes || [], props.nodeData?.id)
+}
+
+const handleCompensationSelectVisible = (visible: boolean) => {
+  if (visible) refreshCompensationNodeOptions()
+}
+
+watch(compensationEnabled, (enabled) => {
+  if (enabled) {
+    refreshCompensationNodeOptions()
+    return
+  }
+  propertyForm.compensation_node_id = ""
+  formRef.value?.clearValidate("compensation_node_id")
+})
+
 // ── 节点属性同步 ────────────────────────────────────────────────────────────
 const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
@@ -263,11 +334,12 @@ const setProperties = () => {
     is_notify: propertyForm.is_notify,
     schedule: cloneDeep(propertyForm.schedule),
     notify_method: propertyForm.notify_method,
-    tag: propertyForm.tag
+    tag: propertyForm.tag,
+    compensation_node_id: propertyForm.compensation_node_id
   })
 
-  const legacyScheduleKeys = ["is_timing", "exec_method", "template_field", "template_id", "unit", "quantity"]
-  legacyScheduleKeys.forEach((key) => props.lf?.deleteProperty?.(props.nodeData?.id, key))
+  const deprecatedKeys = ["is_timing", "exec_method", "template_field", "template_id", "unit", "quantity"]
+  deprecatedKeys.forEach((key) => props.lf?.deleteProperty?.(props.nodeData?.id, key))
 }
 
 const confirmFunc = () => {
@@ -301,6 +373,19 @@ const formRules: FormRules = {
       },
       trigger: "blur"
     }
+  ],
+  compensation_node_id: [
+    {
+      validator: (_rule, value, callback) => {
+        if (!compensationEnabled.value) return callback()
+        if (!value) return callback(new Error("请选择补偿节点"))
+        refreshCompensationNodeOptions()
+        const target = compensationNodeOptions.value.find((item) => item.id === value)
+        if (!target) return callback(new Error("请选择有效的自动化补偿节点"))
+        callback()
+      },
+      trigger: "change"
+    }
   ]
 }
 
@@ -316,6 +401,9 @@ onMounted(async () => {
     : [props.nodeData?.properties.notify_method].filter(Boolean)
 
   propertyForm.tag = props.nodeData?.properties.tag
+  propertyForm.compensation_node_id = String(props.nodeData?.properties.compensation_node_id || "")
+  compensationEnabled.value = !!propertyForm.compensation_node_id
+  refreshCompensationNodeOptions()
 
   await loadRunnerTagsByCodebook(false)
 })
@@ -425,6 +513,20 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.withdraw-form-item {
+  margin-bottom: 0;
+}
+
+.compensation-section:not(.is-enabled) {
+  :deep(.section-header) {
+    margin-bottom: 0;
+  }
+
+  :deep(.section-content) {
+    display: none;
+  }
 }
 
 // ── 局部增强 ────────────────────────────────────────────────────────────

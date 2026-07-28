@@ -37,7 +37,7 @@ import type { Column, TableColumnCtx } from "element-plus"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
-import type { Ticket } from "@/api/ticket/manager/types/manager"
+import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
 import type { TicketAction, TicketOperateItem } from "../composables/types"
 
@@ -116,15 +116,17 @@ const getProvideText = (provide: number) => {
 
 const getStatusText = (status: number) => {
   const statusTextMap: Record<number, string> = {
-    3: "结单",
-    4: "撤单"
+    [TicketStatus.End]: "结单",
+    [TicketStatus.Withdraw]: "撤单",
+    [TicketStatus.Withdrawing]: "撤回处理中"
   }
   return statusTextMap[status] || "未知"
 }
 
 const getStatusClass = (status: number) => {
-  if (status === 3) return "is-success"
-  if (status === 4) return "is-danger"
+  if (status === TicketStatus.End) return "is-success"
+  if (status === TicketStatus.Withdraw) return "is-danger"
+  if (status === TicketStatus.Withdrawing) return "is-warning"
   return ""
 }
 </script>
@@ -155,6 +157,12 @@ const getStatusClass = (status: number) => {
     color: #991b1b;
     background: #fef2f2;
     border-color: #fecaca;
+  }
+
+  &.is-warning {
+    color: #9a6a21;
+    background: #fffaf0;
+    border-color: #ead9ba;
   }
 }
 </style>

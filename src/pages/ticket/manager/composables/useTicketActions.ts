@@ -2,7 +2,7 @@ import { h, markRaw } from "vue"
 import { Bell, Check, Refresh, RefreshLeft, View } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { revokeTicketApi } from "@/api/ticket/manager"
-import type { Ticket } from "@/api/ticket/manager/types/manager"
+import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { TicketAction } from "./types"
 import type { TicketOperateItem } from "./types"
@@ -36,6 +36,17 @@ export const myTicketOperateItems: TicketOperateItem[] = [
     capability: TICKET_CAPABILITIES.Manager.Revoke
   }
 ]
+
+export const getMyTicketOperateItems = (row: Ticket): TicketOperateItem[] =>
+  myTicketOperateItems.map((item) =>
+    item.code === TicketAction.Revoke
+      ? {
+          ...item,
+          name: row.status === TicketStatus.Withdrawing ? "撤回中" : item.name,
+          disabled: row.status === TicketStatus.Withdrawing
+        }
+      : item
+  )
 
 export const userTodoOperateItems: TicketOperateItem[] = [
   {
@@ -95,6 +106,10 @@ export const useTicketActions = (options: {
   }
 
   const handleRevoke = (row: Ticket) => {
+    if (row.status === TicketStatus.Withdrawing) {
+      ElMessage.info("工单正在撤回处理中")
+      return
+    }
     ElMessageBox({
       title: "撤销工单",
       message: h("p", null, [

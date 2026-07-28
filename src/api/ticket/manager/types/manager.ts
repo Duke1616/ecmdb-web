@@ -30,6 +30,14 @@ export interface StartedTicketReq {
   limit: number
 }
 
+export enum TicketStatus {
+  Start = 1,
+  Process = 2,
+  End = 3,
+  Withdraw = 4,
+  Withdrawing = 5
+}
+
 export interface Ticket {
   id: number
   task_id: number
@@ -39,7 +47,7 @@ export interface Ticket {
   workflow_id: number
   template_id: number
   provide: number
-  status: number
+  status: TicketStatus
   ctime: number
   wtime: number
   current_step: string

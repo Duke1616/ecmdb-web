@@ -14,9 +14,12 @@
     @current-change="emit('current-change', $event)"
   >
     <template #node="{ row }">
-      <el-tooltip :content="row.node_id" placement="top" :show-after="400">
-        <span class="node-name">{{ row.node_name || "自动化任务" }}</span>
-      </el-tooltip>
+      <div class="node-identity">
+        <el-tooltip :content="row.node_id" placement="top" :show-after="400">
+          <span class="node-name">{{ row.node_name || "自动化任务" }}</span>
+        </el-tooltip>
+        <TaskCompensationBadge v-if="row.is_compensation" />
+      </div>
     </template>
 
     <template #ticket="{ row }">
@@ -36,7 +39,10 @@
     </template>
 
     <template #scheduled_at="{ row }">
-      <span>{{ formatTime(row.scheduled_at) }}</span>
+      <div class="schedule-time">
+        <span>{{ formatTime(row.scheduled_at) }}</span>
+        <small v-if="hasOriginalSchedule(row)">原计划 {{ formatTime(row.original_scheduled_at) }}</small>
+      </div>
     </template>
 
     <template #utime="{ row }">
@@ -53,6 +59,7 @@
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import TaskHistoryStatusBadge from "./TaskHistoryStatusBadge.vue"
+import TaskCompensationBadge from "./TaskCompensationBadge.vue"
 import dayjs from "dayjs"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
 import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
@@ -90,6 +97,8 @@ const emitOperateEvent = (row: AutomationTask, action: string) => {
 }
 
 const formatTime = (value: number) => (value ? dayjs(value).format("YYYY-MM-DD HH:mm:ss") : "-")
+const hasOriginalSchedule = (task: AutomationTask) =>
+  !!task.original_scheduled_at && task.original_scheduled_at !== task.scheduled_at
 
 const getOperateItems = (row: AutomationTask) =>
   props.operateItems.map((item) =>
@@ -103,14 +112,33 @@ const getOperateItems = (row: AutomationTask) =>
 </script>
 
 <style scoped lang="scss">
+.node-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
 .node-name {
-  display: block;
+  min-width: 0;
   overflow: hidden;
   color: #1e293b;
   font-size: 13px;
   font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.schedule-time {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  small {
+    color: #94a3b8;
+    font-size: 11px;
+  }
 }
 
 .ticket-no {

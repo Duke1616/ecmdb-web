@@ -18,7 +18,8 @@ const statusMeta: Record<number, StatusMeta> = {
   3: { text: "运行中", tone: "running" },
   4: { text: "等待中", tone: "neutral" },
   5: { text: "已挂起", tone: "warning" },
-  6: { text: "提交中", tone: "running" }
+  6: { text: "提交中", tone: "running" },
+  7: { text: "已取消", tone: "neutral" }
 }
 
 const phaseText: Record<AutomationTaskPhase, string> = {
@@ -28,7 +29,8 @@ const phaseText: Record<AutomationTaskPhase, string> = {
   [AutomationTaskPhase.Succeeded]: "执行成功",
   [AutomationTaskPhase.Failed]: "执行失败",
   [AutomationTaskPhase.Blocked]: "已阻塞",
-  [AutomationTaskPhase.Retrying]: "重试中"
+  [AutomationTaskPhase.Retrying]: "重试中",
+  [AutomationTaskPhase.Cancelled]: "已取消"
 }
 
 export const getTaskStatus = (status: number): StatusMeta => statusMeta[status] ?? statusMeta[0]
