@@ -99,7 +99,7 @@ export interface RejectTicketReq {
   comment: string
 }
 
-export interface taskRecordReq {
+export interface taskTimelineReq {
   process_inst_id: number
   offset: number
   limit: number
@@ -123,8 +123,31 @@ export interface FormValue {
   value: any // 字段值
 }
 
-export interface taskRecords {
-  task_records: taskRecord[]
+export interface taskTimelineSummary {
+  total: number
+  passed: number
+  rejected: number
+  system_passed: number
+  system_rejected: number
+  skipped: number
+  linked: number
+  pending: number
+}
+
+export interface taskTimelineEvent {
+  id: string
+  node_id: string
+  node_name: string
+  batch_code?: string
+  is_cosigned: number
+  occurred_at: string
+  actors: string[]
+  summary: taskTimelineSummary
+  members: taskRecord[]
+}
+
+export interface taskTimelineRes {
+  events: taskTimelineEvent[]
   total: number
 }
 

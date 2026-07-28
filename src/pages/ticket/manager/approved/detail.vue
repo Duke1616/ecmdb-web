@@ -88,7 +88,7 @@ const handleTabChange = (tabName: string) => {
   if (tabName === "flow") {
     // 流程图相关逻辑
   } else if (tabName === "process") {
-    recordRef.value?.listTicketTaskRecordsData()
+    recordRef.value?.listTicketTaskTimelineData()
   } else if (tabName === "task") {
     taskRef.value?.listTasksData()
   }

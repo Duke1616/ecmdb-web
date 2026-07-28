@@ -82,10 +82,10 @@ export function rejectTicketApi(data: manager.RejectTicketReq) {
   })
 }
 
-/** 工单历史任务记录 */
-export function listTicketTaskRecordsApi(data: manager.taskRecordReq) {
-  return instance.post<manager.taskRecords>({
-    url: `${API_SERVICE.TICKET}/ticket/task/record`,
+/** 工单流转时间线（按节点执行批次聚合） */
+export function listTicketTaskTimelineApi(data: manager.taskTimelineReq) {
+  return instance.post<manager.taskTimelineRes>({
+    url: `${API_SERVICE.TICKET}/ticket/task/timeline`,
     data: data
   })
 }
