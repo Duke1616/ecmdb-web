@@ -100,7 +100,7 @@ export const getHistoryOperateItems = (row: Ticket): TicketOperateItem[] => {
       code: TicketAction.Rate,
       type: "warning",
       icon: rateIcon,
-      capability: TICKET_CAPABILITIES.Manager.Rate
+      capability: TICKET_CAPABILITIES.Manager.History
     })
   }
   return items
