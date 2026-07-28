@@ -29,7 +29,6 @@ import { useTicketDetail } from "../composables/useTicketDetail"
 import { useTicketList } from "../composables/useTicketList"
 
 const {
-  templateToolsStore,
   paginationData,
   handleCurrentChange,
   handleSizeChange,
@@ -51,7 +50,6 @@ const { dialogVisible, action, ticketInfo, openDetail, closeDetail } = useTicket
 
 const { operateEvent } = useTicketActions({
   refresh: listTicketsData,
-  getTemplateName: templateToolsStore.getTemplateName,
   openDetail
 })
 

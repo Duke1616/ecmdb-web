@@ -26,6 +26,14 @@ export function revokeTicketApi(data: manager.RevokeTicketReq) {
   })
 }
 
+/** 提交工单评价 */
+export function submitTicketRatingApi(data: manager.SubmitTicketRatingReq) {
+  return instance.post<manager.TicketRating>({
+    url: `${API_SERVICE.TICKET}/ticket/rating/submit`,
+    data
+  })
+}
+
 /** 查看我受办待处理工单 */
 export function listMyTodoTicketsApi(data: manager.TodoTicketReq) {
   return instance.post<manager.TicketListRes>({

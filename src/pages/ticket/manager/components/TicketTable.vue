@@ -25,6 +25,12 @@
       <span class="quiet-tag" :class="getStatusClass(row.status)">{{ getStatusText(row.status) }}</span>
     </template>
 
+    <template #rating="{ row }">
+      <span class="rating-summary" :class="{ 'is-rated': !!row.rating, 'can-rate': row.can_rate }">
+        {{ getRatingText(row) }}
+      </span>
+    </template>
+
     <template #actions="{ row }">
       <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="emitOperateEvent" />
     </template>
@@ -129,6 +135,12 @@ const getStatusClass = (status: number) => {
   if (status === TicketStatus.Withdrawing) return "is-warning"
   return ""
 }
+
+const getRatingText = (ticket: Ticket) => {
+  if (ticket.rating) return `★ ${ticket.rating.score}`
+  if (ticket.status === TicketStatus.End) return ticket.can_rate ? "待评价" : "未评价"
+  return "—"
+}
 </script>
 
 <style scoped lang="scss">
@@ -163,6 +175,21 @@ const getStatusClass = (status: number) => {
     color: #9a6a21;
     background: #fffaf0;
     border-color: #ead9ba;
+  }
+}
+
+.rating-summary {
+  color: #94a3b8;
+  font-size: 12px;
+
+  &.is-rated {
+    color: #d97706;
+    font-weight: 700;
+  }
+
+  &.can-rate {
+    color: #7c3aed;
+    font-weight: 600;
   }
 }
 </style>

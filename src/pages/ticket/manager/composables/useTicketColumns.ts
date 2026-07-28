@@ -56,6 +56,7 @@ export const historyTicketColumns: Column[] = [
   provideColumn,
   starterColumn,
   { prop: "status", label: "状态", slot: "status", minWidth: 100, align: "center" },
+  { prop: "rating", label: "评价", slot: "rating", minWidth: 100, align: "center" },
   { prop: "ctime", label: "工单提交时间", minWidth: 170, align: "center" },
   { prop: "wtime", label: "工单结束时间", minWidth: 170, align: "center" }
 ]

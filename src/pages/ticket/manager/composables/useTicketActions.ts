@@ -1,7 +1,6 @@
-import { h, markRaw } from "vue"
-import { Bell, Check, Refresh, RefreshLeft, View } from "@element-plus/icons-vue"
-import { ElMessage, ElMessageBox } from "element-plus"
-import { revokeTicketApi } from "@/api/ticket/manager"
+import { markRaw } from "vue"
+import { Bell, Check, Refresh, RefreshLeft, Star, View } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
 import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { TicketAction } from "./types"
@@ -12,6 +11,7 @@ const bellIcon = markRaw(Bell)
 const revokeIcon = markRaw(RefreshLeft)
 const checkIcon = markRaw(Check)
 const refreshIcon = markRaw(Refresh)
+const rateIcon = markRaw(Star)
 
 export const myTicketOperateItems: TicketOperateItem[] = [
   {
@@ -85,7 +85,7 @@ export const getAllTodoOperateItems = (row: Ticket): TicketOperateItem[] => {
 export const getHistoryOperateItems = (row: Ticket): TicketOperateItem[] => {
   if (row.current_step?.startsWith("自动化-")) return []
 
-  return [
+  const items: TicketOperateItem[] = [
     {
       name: "查看",
       code: TicketAction.View,
@@ -94,12 +94,23 @@ export const getHistoryOperateItems = (row: Ticket): TicketOperateItem[] => {
       capability: TICKET_CAPABILITIES.Manager.Detail
     }
   ]
+  if (row.can_rate || row.rating) {
+    items.push({
+      name: row.rating ? "查看评价" : "评价",
+      code: TicketAction.Rate,
+      type: "warning",
+      icon: rateIcon,
+      capability: TICKET_CAPABILITIES.Manager.Rate
+    })
+  }
+  return items
 }
 
 export const useTicketActions = (options: {
   refresh: () => void
-  getTemplateName: (templateId: number) => string | undefined
   openDetail: (row: Ticket, action?: string) => void
+  openRating?: (row: Ticket) => void
+  openRevoke?: (row: Ticket) => void
 }) => {
   const handleUrging = () => {
     ElMessage.error("暂不支持功能")
@@ -110,23 +121,7 @@ export const useTicketActions = (options: {
       ElMessage.info("工单正在撤回处理中")
       return
     }
-    ElMessageBox({
-      title: "撤销工单",
-      message: h("p", null, [
-        h("span", null, "正在撤销工单: "),
-        h("i", { style: "color: red" }, `${row.approved_by}的${options.getTemplateName(row.template_id) || "-"}`),
-        h("span", null, " 确认？")
-      ]),
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    }).then(async () => {
-      await revokeTicketApi({
-        instance_id: row.process_instance_id,
-        force: true
-      })
-      options.refresh()
-    })
+    options.openRevoke?.(row)
   }
 
   const operateEvent = (data: Ticket, action: TicketAction) => {
@@ -148,6 +143,9 @@ export const useTicketActions = (options: {
         break
       case TicketAction.View:
         options.openDetail(data, "history")
+        break
+      case TicketAction.Rate:
+        options.openRating?.(data)
         break
     }
   }

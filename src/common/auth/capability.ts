@@ -402,6 +402,8 @@ export const TICKET_CAPABILITIES = {
     Submit: "ticket:manager:submit",
     /** 撤销工单 */
     Revoke: "ticket:manager:revoke",
+    /** 评价已办结工单 */
+    Rate: "ticket:manager:rate",
     /** 驳回审批 */
     Reject: "ticket:manager:reject",
     /** 流转记录 */

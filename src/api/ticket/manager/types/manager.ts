@@ -54,6 +54,22 @@ export interface Ticket {
   approved_by: string[]
   steps: TicketStep[]
   data: object
+  can_rate: boolean
+  rating?: TicketRating
+  revoke_reason?: string
+}
+
+export interface TicketRating {
+  score: number
+  comment: string
+  rater: string
+  rated_at: number
+}
+
+export interface SubmitTicketRatingReq {
+  ticket_id: number
+  score: number
+  comment: string
 }
 
 export interface TicketStep {
@@ -64,6 +80,7 @@ export interface TicketStep {
 export interface RevokeTicketReq {
   instance_id: number
   force: boolean
+  reason: string
 }
 
 export interface TicketListRes {

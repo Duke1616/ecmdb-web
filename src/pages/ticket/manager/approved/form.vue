@@ -38,6 +38,20 @@
             </AuthButton>
           </div>
         </div>
+
+        <div v-if="ticketRating" class="ticket-rating-summary">
+          <div class="ticket-rating-summary__head">
+            <span>工单评价</span>
+            <small>{{ dayjs(ticketRating.rated_at).format("YYYY-MM-DD HH:mm") }}</small>
+          </div>
+          <el-rate :model-value="ticketRating.score" disabled />
+          <p>{{ ticketRating.comment || "未填写评价内容" }}</p>
+        </div>
+
+        <div v-if="revokeReason" class="ticket-revoke-reason">
+          <div class="ticket-revoke-reason__head">撤单原因</div>
+          <p>{{ revokeReason }}</p>
+        </div>
       </div>
 
       <div v-if="!/^my-/.test(props.action) && props.action !== 'history'" class="form-section">
@@ -102,20 +116,27 @@
     @update-user-names="handleUpdateUserNames"
     @confirm="handleTransferConfirm"
   />
+
+  <RevokeTicketDialog
+    v-model="revokeVisible"
+    :instance-id="props.processInstId"
+    subject="当前工单"
+    @submitted="handleRevokeSubmitted"
+  />
 </template>
 
 <script setup lang="ts">
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
 import formCreate, { Api, FormRule } from "@form-create/element-ui"
 import { ref, watch } from "vue"
+import dayjs from "dayjs"
 import {
   getTicketByProcessInstIdApi,
   passTicketApi,
   rejectTicketApi,
-  revokeTicketApi,
   transferTicketApi
 } from "@/api/ticket/manager/index.js"
-import type { PassTicketReq } from "@/api/ticket/manager/types/manager.js"
+import type { PassTicketReq, TicketRating } from "@/api/ticket/manager/types/manager.js"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, ElMessageBox, ElMessage } from "element-plus"
 import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch } from "@element-plus/icons-vue"
@@ -124,6 +145,7 @@ import { getTaskFormConfigApi } from "@/api/ticket/manager/index"
 import { removeFetchFromRules } from "@/common/utils/form-create"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
+import RevokeTicketDialog from "../components/RevokeTicketDialog.vue"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import type {
@@ -151,6 +173,8 @@ const { hasPermission } = usePermission()
 const FormCreate = formCreate.$form()
 const fApi = ref<Api>()
 const data = ref<TicketFormData>({})
+const ticketRating = ref<TicketRating>()
+const revokeReason = ref("")
 const rule = ref<FormRule[]>()
 const options = ref<FormCreateOptions>()
 
@@ -167,6 +191,7 @@ const dynamicFormRef = ref<DynamicFormExpose | null>(null)
 // 转签
 const transferVisible = ref(false)
 const transferLoading = ref(false)
+const revokeVisible = ref(false)
 const usernameToDisplayName = ref<Record<string, string>>({})
 
 const handleUpdateUserNames = (map: Record<string, string>) => {
@@ -262,9 +287,13 @@ const handleDetail = async (id: number) => {
 }
 
 const handleGetTicketData = async (processInstId: number) => {
+  ticketRating.value = undefined
+  revokeReason.value = ""
   try {
     const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
     data.value = ticketInfo.data as TicketFormData
+    ticketRating.value = ticketInfo.rating
+    revokeReason.value = ticketInfo.revoke_reason || ""
 
     const taskId = props.taskId || ticketInfo.task_id
     if (taskId && ticketInfo.workflow_id) {
@@ -278,6 +307,8 @@ const handleGetTicketData = async (processInstId: number) => {
     }
   } catch (error) {
     data.value = {}
+    ticketRating.value = undefined
+    revokeReason.value = ""
     taskFormSchema.value = []
     ElMessage.error("获取工单详情失败")
   }
@@ -413,23 +444,13 @@ const handleReject = async () => {
   }
 }
 
-const handleRevoke = async () => {
+const handleRevoke = () => {
   if (!canOperate(TICKET_CAPABILITIES.Manager.Revoke)) return
+  revokeVisible.value = true
+}
 
-  if (!props.processInstId) {
-    return
-  }
-
-  try {
-    await revokeTicketApi({
-      instance_id: props.processInstId,
-      force: true
-    })
-    ElMessage.success("工单已撤回")
-    resetForm()
-  } catch (error) {
-    console.error("撤回工单失败:", error)
-  }
+const handleRevokeSubmitted = () => {
+  resetForm()
 }
 
 const resetForm = () => {
@@ -514,6 +535,60 @@ defineExpose({})
 
 .dynamic-form-section {
   margin-bottom: 4px;
+}
+
+.ticket-rating-summary {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #f1e3b8;
+  border-radius: 8px;
+  background: #fffbeb;
+
+  p {
+    margin: 7px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+}
+
+.ticket-revoke-reason {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+
+  p {
+    margin: 7px 0 0;
+    color: #7f1d1d;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+}
+
+.ticket-revoke-reason__head {
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ticket-rating-summary__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 600;
+
+  small {
+    color: #a8a29e;
+    font-size: 11px;
+    font-weight: 400;
+  }
 }
 
 .form-textarea {
