@@ -1,65 +1,71 @@
 <template>
-  <BaseDialog
+  <FormDialog
     v-model="visible"
-    width="420px"
-    type="custom"
-    show-close
-    top="18vh"
+    :title="readonly ? '评价详情' : '评价工单'"
+    :subtitle="dialogSubtitle"
+    width="520px"
+    :header-icon="StarFilled"
+    confirm-text="提交评价"
+    :confirm-loading="submitting"
+    :confirm-disabled="ratingForm.score === 0"
+    :show-footer="!readonly"
+    :show-footer-info="!readonly"
+    footer-info-text="请选择满意度后提交评价"
+    @confirm="submit"
+    @cancel="visible = false"
   >
-    <template #header>
-      <div class="rating-header">
-        <h2>{{ readonly ? "评价详情" : "评价工单" }}</h2>
-        <p>{{ dialogSubtitle }}</p>
-      </div>
-    </template>
-
-    <div class="rating-content">
-      <div class="rating-field">
-        <div class="field-label">
-          <span>满意度</span>
-          <small v-if="!readonly">必选</small>
-        </div>
-        <div class="rating-control">
-          <el-rate v-model="score" :disabled="readonly" aria-label="工单评分" />
-          <span :class="{ 'is-empty': score === 0 }">{{ score ? ratingTexts[score - 1] : "请选择" }}</span>
-        </div>
+    <div class="rating-dialog">
+      <div v-if="ticket" class="ticket-summary">
+        <span class="ticket-summary__label">评价工单</span>
+        <span class="ticket-summary__title" :title="ticket.title">{{ ticket.title }}</span>
+        <span class="ticket-summary__id">#{{ ticket.id }}</span>
       </div>
 
-      <div class="rating-field">
-        <div class="field-label">
-          <span>补充说明</span>
-          <small>选填</small>
-        </div>
-        <p v-if="readonly" class="rating-comment" :class="{ 'is-empty': !comment }">
-          {{ comment || "未填写补充说明" }}
-        </p>
-        <el-input
-          v-else
-          v-model="comment"
-          type="textarea"
-          :rows="3"
-          maxlength="500"
-          show-word-limit
-          resize="none"
-          placeholder="可以补充本次处理体验（选填）"
-        />
-      </div>
+      <el-form :model="ratingForm" label-position="top" class="rating-form" @submit.prevent="submit">
+        <el-form-item label="本次处理满意度" required>
+          <div class="score-panel" :class="{ 'is-selected': ratingForm.score > 0 }">
+            <div class="score-panel__main">
+              <el-rate
+                v-model="ratingForm.score"
+                :disabled="readonly"
+                :colors="rateColors"
+                void-color="#d8e1ed"
+                aria-label="工单评分"
+              />
+              <span class="score-text" :class="{ 'is-empty': ratingForm.score === 0 }">
+                {{ ratingForm.score ? ratingTexts[ratingForm.score - 1] : "请选择满意度" }}
+              </span>
+            </div>
+            <span v-if="!readonly" class="score-panel__hint">点击星级评分</span>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="补充说明" class="comment-form-item">
+          <p v-if="readonly" class="rating-comment" :class="{ 'is-empty': !ratingForm.comment }">
+            {{ ratingForm.comment || "未填写补充说明" }}
+          </p>
+          <el-input
+            v-else
+            v-model="ratingForm.comment"
+            type="textarea"
+            :rows="4"
+            maxlength="500"
+            show-word-limit
+            resize="none"
+            placeholder="欢迎补充本次工单处理体验（选填）"
+          />
+        </el-form-item>
+      </el-form>
     </div>
-
-    <template v-if="!readonly" #footer>
-      <div class="rating-footer">
-        <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="submitting" :disabled="score === 0" @click="submit">提交评价</el-button>
-      </div>
-    </template>
-  </BaseDialog>
+  </FormDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, reactive, ref, watch } from "vue"
 import dayjs from "dayjs"
+import { StarFilled } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
-import { BaseDialog } from "@@/components/Dialogs"
+import { FormDialog } from "@@/components/Dialogs"
 import { submitTicketRatingApi } from "@/api/ticket/manager"
 import type { Ticket, TicketRating } from "@/api/ticket/manager/types/manager"
 
@@ -73,10 +79,13 @@ const emit = defineEmits<{
   (event: "submitted", rating: TicketRating): void
 }>()
 
-const score = ref(0)
-const comment = ref("")
+const ratingForm = reactive({
+  score: 0,
+  comment: ""
+})
 const submitting = ref(false)
 const ratingTexts = ["很不满意", "不满意", "一般", "满意", "非常满意"]
+const rateColors = ["#f56c6c", "#e6a23c", "#e6a23c", "#67c23a", "#409eff"]
 
 const visible = computed({
   get: () => props.modelValue,
@@ -87,29 +96,27 @@ const readonly = computed(() => !!props.ticket?.rating)
 const dialogSubtitle = computed(() => {
   if (!props.ticket) return ""
   const ratedAt = props.ticket.rating?.rated_at
-  return ratedAt
-    ? `工单 #${props.ticket.id} · ${dayjs(ratedAt).format("YYYY-MM-DD HH:mm")}`
-    : `工单 #${props.ticket.id}`
+  return ratedAt ? `已于 ${dayjs(ratedAt).format("YYYY-MM-DD HH:mm")} 提交评价` : "请为本次工单处理体验评分"
 })
 
 watch(
   () => [props.modelValue, props.ticket] as const,
   ([opened, ticket]) => {
     if (!opened) return
-    score.value = ticket?.rating?.score || 0
-    comment.value = ticket?.rating?.comment || ""
+    ratingForm.score = ticket?.rating?.score || 0
+    ratingForm.comment = ticket?.rating?.comment || ""
   },
   { immediate: true }
 )
 
 const submit = async () => {
-  if (!props.ticket || score.value === 0 || submitting.value) return
+  if (!props.ticket || ratingForm.score === 0 || submitting.value) return
   submitting.value = true
   try {
     const { data } = await submitTicketRatingApi({
       ticket_id: props.ticket.id,
-      score: score.value,
-      comment: comment.value.trim()
+      score: ratingForm.score,
+      comment: ratingForm.comment.trim()
     })
     ElMessage.success("感谢您的评价")
     emit("submitted", data)
@@ -121,136 +128,161 @@ const submit = async () => {
 </script>
 
 <style scoped lang="scss">
-.rating-content {
+.rating-dialog {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  padding: 2px 2px 6px;
 }
 
-.rating-header {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding-right: 40px;
+.ticket-summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #f5f9ff 0%, #f8fbff 100%);
+  border: 1px solid #e3edf9;
+  border-radius: 8px;
 
-  h2 {
-    margin: 0;
-    color: #1f2937;
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 24px;
+  &__label,
+  &__id {
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
   }
 
-  p {
-    margin: 0;
-    color: #8491a5;
-    font-size: 13px;
+  &__label {
+    padding-right: 8px;
+    border-right: 1px solid #dbe7f5;
+  }
+
+  &__title {
+    overflow: hidden;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__id {
+    padding: 2px 7px;
+    color: #3b82f6;
+    background: #eaf3ff;
+    border-radius: 4px;
+  }
+}
+
+.rating-form {
+  :deep(.el-form-item) {
+    margin-bottom: 20px;
+  }
+
+  :deep(.el-form-item__label) {
+    padding-bottom: 8px;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+  }
+
+  .comment-form-item {
+    margin-bottom: 0;
+  }
+}
+
+.score-panel {
+  width: 100%;
+  padding: 15px 16px;
+  background: #fafcff;
+  border: 1px solid #e6edf5;
+  border-radius: 8px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &.is-selected {
+    background: #f8fbff;
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+  }
+
+  &__main {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__hint {
+    display: block;
+    margin-top: 7px;
+    color: #94a3b8;
+    font-size: 12px;
     line-height: 18px;
   }
 }
 
-.rating-field {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.field-label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #374151;
-  font-size: 13px;
+.score-text {
+  color: #1d4ed8;
+  font-size: 14px;
   font-weight: 600;
 
-  small {
-    color: #9ca3af;
-    font-size: 12px;
+  &.is-empty {
+    color: #94a3b8;
     font-weight: 400;
   }
 }
 
-.rating-control {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  span {
-    color: #92400e;
-    font-size: 13px;
-    font-weight: 500;
-
-    &.is-empty {
-      color: #9ca3af;
-      font-weight: 400;
-    }
-  }
-}
-
 .rating-comment {
+  width: 100%;
+  min-height: 88px;
   margin: 0;
-  padding: 10px 12px;
-  color: #4b5563;
-  background: #f9fafb;
-  border-radius: 5px;
-  font-size: 13px;
-  line-height: 1.6;
+  padding: 12px 14px;
+  color: #475569;
+  background: #f8fafc;
+  border: 1px solid #edf1f5;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.65;
   white-space: pre-wrap;
 
   &.is-empty {
-    padding: 0;
-    color: #9ca3af;
-    background: transparent;
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
   }
-}
-
-.rating-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
 }
 
 :deep(.el-rate) {
-  height: 26px;
+  height: 28px;
 }
 
 :deep(.el-rate__icon) {
-  margin-right: 3px;
-  font-size: 21px;
+  margin-right: 5px;
+  font-size: 24px;
 }
 
-:deep(.base-dialog--custom) {
-  max-width: calc(100vw - 32px);
-  padding: 0;
-  overflow: hidden;
+:deep(.el-textarea__inner) {
+  min-height: 112px !important;
+  padding: 11px 13px;
   border-radius: 8px;
+  line-height: 21px;
+}
 
-  .el-dialog__header {
-    margin: 0;
-    padding: 20px 24px 16px;
-    border-bottom: 1px solid #eef0f3;
+@media (max-width: 560px) {
+  .ticket-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+
+    &__id {
+      display: none;
+    }
   }
 
-  .el-dialog__headerbtn {
-    top: 14px;
-    right: 14px;
-    width: 36px;
-    height: 36px;
-  }
-
-  .el-dialog__body {
-    padding: 20px 24px 22px;
-  }
-
-  .el-dialog__footer {
-    padding: 0 24px 20px;
-  }
-
-  .el-textarea__inner {
-    min-height: 86px !important;
-    padding: 10px 12px;
-    border-radius: 6px;
-    line-height: 20px;
+  .score-panel__main {
+    flex-wrap: wrap;
+    gap: 6px 12px;
   }
 }
 </style>
