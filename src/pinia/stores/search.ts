@@ -1,22 +1,27 @@
 import { defineStore } from "pinia"
-import { ref } from "vue"
+import { computed, ref } from "vue"
+import { useUserStore } from "@/pinia/stores/user"
 
 export const useSearchStore = defineStore(
   "search",
   () => {
-    const historySearchData = ref<string[]>([])
+    const userStore = useUserStore()
+    const historySearchDataByTenant = ref<Record<string, string[]>>({})
+    const tenantKey = computed(() => String(userStore.currentTenantId))
+    const historySearchData = computed(() => historySearchDataByTenant.value[tenantKey.value] ?? [])
 
     const addHistorySearch = (data: string) => {
-      if (!historySearchData.value.includes(data)) {
-        historySearchData.value.push(data)
+      const tenantHistory = historySearchDataByTenant.value[tenantKey.value] ?? []
+      if (!tenantHistory.includes(data)) {
+        historySearchDataByTenant.value[tenantKey.value] = [...tenantHistory, data]
       }
     }
 
     const clearHistorySearch = () => {
-      historySearchData.value = []
+      delete historySearchDataByTenant.value[tenantKey.value]
     }
 
-    return { addHistorySearch, historySearchData, clearHistorySearch }
+    return { addHistorySearch, historySearchData, historySearchDataByTenant, clearHistorySearch }
   },
   {
     persist: true
