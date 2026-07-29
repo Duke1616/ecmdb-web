@@ -15,12 +15,6 @@
     @cancel="visible = false"
   >
     <div class="rating-dialog">
-      <div v-if="ticket" class="ticket-summary">
-        <span class="ticket-summary__label">评价工单</span>
-        <span class="ticket-summary__title" :title="ticket.title">{{ ticket.title }}</span>
-        <span class="ticket-summary__id">#{{ ticket.id }}</span>
-      </div>
-
       <el-form :model="ratingForm" label-position="top" class="rating-form" @submit.prevent="submit">
         <el-form-item label="本次处理满意度" required>
           <div class="score-panel" :class="{ 'is-selected': ratingForm.score > 0 }">
@@ -129,50 +123,7 @@ const submit = async () => {
 
 <style scoped lang="scss">
 .rating-dialog {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
   padding: 2px 2px 6px;
-}
-
-.ticket-summary {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #f5f9ff 0%, #f8fbff 100%);
-  border: 1px solid #e3edf9;
-  border-radius: 8px;
-
-  &__label,
-  &__id {
-    color: #64748b;
-    font-size: 12px;
-    white-space: nowrap;
-  }
-
-  &__label {
-    padding-right: 8px;
-    border-right: 1px solid #dbe7f5;
-  }
-
-  &__title {
-    overflow: hidden;
-    color: #334155;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 20px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__id {
-    padding: 2px 7px;
-    color: #3b82f6;
-    background: #eaf3ff;
-    border-radius: 4px;
-  }
 }
 
 .rating-form {
@@ -272,14 +223,6 @@ const submit = async () => {
 }
 
 @media (max-width: 560px) {
-  .ticket-summary {
-    grid-template-columns: auto minmax(0, 1fr);
-
-    &__id {
-      display: none;
-    }
-  }
-
   .score-panel__main {
     flex-wrap: wrap;
     gap: 6px 12px;
