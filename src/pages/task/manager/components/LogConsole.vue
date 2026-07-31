@@ -1,5 +1,5 @@
 <template>
-  <div class="log-console-container" v-loading="state.loading">
+  <div class="log-console-container" v-loading="loading">
     <template v-if="execution">
       <div class="main-header">
         <div class="status-summary">
@@ -13,18 +13,18 @@
         <div class="header-actions">
           <div class="control-unit" v-if="isRunning">
             <span class="label">自动跟踪</span>
-            <el-switch v-model="state.autoRefresh" size="small" />
+            <el-switch v-model="autoRefresh" size="small" />
           </div>
           <div class="action-divider" v-if="isRunning" />
           <div class="btn-cluster">
-            <el-button :icon="Refresh" circle size="default" :disabled="state.loading" @click="resetAndFetch" />
+            <el-button :icon="Refresh" circle size="default" :disabled="loading" @click="resetAndFetch" />
             <el-button
               v-if="execution.task_result"
               :icon="Monitor"
               type="info"
               circle
               plain
-              @click="state.viewResultVisible = true"
+              @click="viewResultVisible = true"
             />
           </div>
         </div>
@@ -34,15 +34,15 @@
         <div class="console-title-bar">
           <span class="prefix">控制台输出 (STDOUT)</span>
           <div class="spacer" />
-          <span class="sync-time" v-if="state.lastRefreshTime">
-            <el-icon><Clock /></el-icon>同步于 {{ state.lastRefreshTime }}
+          <span class="sync-time" v-if="lastRefreshTime">
+            <el-icon><Clock /></el-icon>同步于 {{ lastRefreshTime }}
           </span>
         </div>
         <div class="terminal-view">
           <CodeEditor
-            v-if="state.fullLogs"
+            v-if="fullLogs"
             ref="editorRef"
-            :code="state.fullLogs"
+            :code="fullLogs"
             language="text"
             :read-only="true"
             class="terminal-editor"
@@ -56,7 +56,7 @@
       <h3>请选择监控实例以查看日志</h3>
     </div>
 
-    <el-dialog v-model="state.viewResultVisible" title="运行结果" width="800px" append-to-body center>
+    <el-dialog v-model="viewResultVisible" title="运行结果" width="800px" append-to-body center>
       <CodeEditor :code="execution?.task_result || ''" language="json" :read-only="true" height="500px" />
     </el-dialog>
   </div>
@@ -90,11 +90,11 @@ const STATUS_MAP: Record<string, TagInfo> = {
   PREEMPTED: { type: "warning", text: "已抢占" }
 }
 
-// 托管日志轮询逻辑与聚合状态机，消除零散状态声明，实现逻辑与视图解耦
-const { state, isRunning, resetAndFetch } = useLogConsoleStream(
-  () => props.execution,
-  () => editorRef.value?.scrollToBottom()
-)
+const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRunning, resetAndFetch } =
+  useLogConsoleStream(
+    () => props.execution,
+    () => editorRef.value?.scrollToBottom()
+  )
 </script>
 
 <style scoped lang="scss">

@@ -211,7 +211,7 @@ import { Kind, type runner } from "@/api/task/runner/types/runner"
 import { getCodebookPreviewLogsApi, getCodebookPreviewStatusApi, runCodebookPreviewApi } from "@/api/task/codebook"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import type { PreviewExecution, PreviewVariable } from "@/api/task/codebook/types/preview"
-import { useExecutionLogsSSE } from "@/sse/etask/manager"
+import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
 
 interface RunForm {
   runner_id?: number
@@ -225,13 +225,10 @@ const currentCodebook = ref<codebook>()
 const runners = ref<runner[]>([])
 const loadingRunners = ref(false)
 const starting = ref(false)
-const logsLoading = ref(false)
 const execution = ref<PreviewExecution>()
 const formRef = ref<FormInstance>()
 const configExpanded = ref(true)
 const outputTab = ref("logs")
-const fullLogs = ref("")
-const lastLogID = ref(0)
 const logViewportRef = ref<HTMLElement>()
 const elapsedNow = ref(Date.now())
 let pollTimer: number | undefined
@@ -309,23 +306,28 @@ const formattedResult = computed(() => {
   }
 })
 
-useExecutionLogsSSE({
+const logStream = useExecutionLogStream({
   executionId: () => execution.value?.id,
-  enabled: () => visible.value && Boolean(execution.value?.id) && isRunning.value,
-  onMessage: (event) => {
-    if (event.id <= lastLogID.value) return
-    appendLogs(event.content)
-    lastLogID.value = event.id
+  live: () => visible.value && isRunning.value,
+  fetchPage: async ({ executionId, cursor, limit }) => {
+    const { data } = await getCodebookPreviewLogsApi({ execution_id: executionId, min_id: cursor, limit })
+    return { logs: data.logs || [] }
+  },
+  onUpdated: () => {
+    nextTick(() => {
+      if (logViewportRef.value) logViewportRef.value.scrollTop = logViewportRef.value.scrollHeight
+    })
   }
 })
+const fullLogs = logStream.content
+const logsLoading = logStream.loading
 
 /** 打开试运行抽屉，并加载当前脚本绑定的执行单元。 */
 async function open(row: codebook) {
   stopPolling()
   currentCodebook.value = { ...row }
   execution.value = undefined
-  fullLogs.value = ""
-  lastLogID.value = 0
+  logStream.reset()
   outputTab.value = "logs"
   configExpanded.value = true
   form.runner_id = undefined
@@ -354,8 +356,7 @@ async function run() {
 
   starting.value = true
   stopPolling()
-  fullLogs.value = ""
-  lastLogID.value = 0
+  logStream.reset()
   outputTab.value = "logs"
   try {
     const { data } = await runCodebookPreviewApi({
@@ -380,43 +381,22 @@ async function run() {
 /** 查询执行状态，并在终态前持续轮询。 */
 async function pollStatus() {
   if (!visible.value || !execution.value?.id) return
+  const wasRunning = isRunning.value
   try {
     const { data } = await getCodebookPreviewStatusApi({ execution_id: execution.value.id })
     execution.value = data
     elapsedNow.value = Date.now()
-    await fetchLogs(true)
+    const reachedTerminal = wasRunning && !isRunning.value
+    const needsReconcile = Date.now() - logStream.lastFetchedAt.value >= 10_000
+    if (reachedTerminal || logStream.hasMore.value || needsReconcile) await logStream.sync(true)
   } finally {
     if (visible.value && isRunning.value) schedulePoll(1000)
   }
 }
 
 /** 增量读取日志，SSE 中断时轮询仍可补齐日志。 */
-async function fetchLogs(silent = false) {
-  if (!execution.value?.id) return
-  if (!silent) logsLoading.value = true
-  try {
-    const { data } = await getCodebookPreviewLogsApi({
-      execution_id: execution.value.id,
-      min_id: lastLogID.value,
-      limit: 1000
-    })
-    const logs = data.logs || []
-    for (const log of logs) {
-      if (log.id <= lastLogID.value) continue
-      appendLogs(log.content)
-      lastLogID.value = log.id
-    }
-  } finally {
-    if (!silent) logsLoading.value = false
-  }
-}
-
-function appendLogs(content: string) {
-  if (!content) return
-  fullLogs.value = fullLogs.value ? `${fullLogs.value}\n${content}` : content
-  nextTick(() => {
-    if (logViewportRef.value) logViewportRef.value.scrollTop = logViewportRef.value.scrollHeight
-  })
+function fetchLogs(silent = false) {
+  return logStream.sync(silent)
 }
 
 function schedulePoll(delay: number) {
@@ -436,8 +416,7 @@ function reset() {
   currentCodebook.value = undefined
   execution.value = undefined
   runners.value = []
-  fullLogs.value = ""
-  lastLogID.value = 0
+  logStream.reset()
 }
 
 onBeforeUnmount(stopPolling)

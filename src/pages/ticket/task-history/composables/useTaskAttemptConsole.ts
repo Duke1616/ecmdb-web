@@ -1,27 +1,33 @@
 import { computed, onBeforeUnmount, ref } from "vue"
 import { getTaskAttemptLogsApi, listTaskAttemptsApi } from "@/api/ticket/task"
 import { AutomationAttemptStatus, type AutomationAttempt } from "@/api/ticket/task/types/task"
+import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
 
 const refreshInterval = 2500
-const logPageSize = 1000
-const maxPagesPerSync = 10
+const logReconcileInterval = 10_000
 
 export function useTaskAttemptConsole(taskId: () => number) {
   const attempts = ref<AutomationAttempt[]>([])
   const currentAttempt = ref<AutomationAttempt | null>(null)
   const loading = ref(false)
-  const logLoading = ref(false)
-  const logs = ref("")
-  const lastLogId = ref(0)
-  const lastSyncTime = ref("")
   const autoRefresh = ref(true)
   let timer: number | undefined
   let polling = false
-  let logsPending = false
 
   const isRunning = computed(() => {
     const status = currentAttempt.value?.status
     return status === AutomationAttemptStatus.Submitting || status === AutomationAttemptStatus.Running
+  })
+
+  const logStream = useExecutionLogStream({
+    executionId: () => currentAttempt.value?.execution_id,
+    live: () => autoRefresh.value && isRunning.value,
+    fetchPage: async ({ executionId, cursor, limit }) => {
+      const attempt = currentAttempt.value
+      if (!attempt || attempt.execution_id !== executionId) return { logs: [] }
+      const { data } = await getTaskAttemptLogsApi(attempt.id, cursor, limit)
+      return { logs: data.logs || [], maxId: data.max_id }
+    }
   })
 
   const loadAttempts = async (silent = false) => {
@@ -38,46 +44,15 @@ export function useTaskAttemptConsole(taskId: () => number) {
     }
   }
 
-  const fetchLogs = async (reset = false) => {
-    const attempt = currentAttempt.value
-    if (!attempt?.execution_id) return
-    if (reset) {
-      logs.value = ""
-      lastLogId.value = 0
-      logsPending = false
-    }
-    if (!logs.value) logLoading.value = true
-    try {
-      for (let page = 0; page < maxPagesPerSync; page += 1) {
-        const { data } = await getTaskAttemptLogsApi(attempt.id, lastLogId.value, logPageSize)
-        const newLogs = data.logs || []
-        if (newLogs.length > 0) {
-          const content = newLogs.map((item) => item.content).join("\n")
-          logs.value = logs.value ? `${logs.value}\n${content}` : content
-          lastLogId.value = Math.max(lastLogId.value, data.max_id, ...newLogs.map((item) => item.id))
-        }
-        logsPending = newLogs.length === logPageSize
-        if (!logsPending) break
-      }
-      lastSyncTime.value = new Date().toLocaleTimeString()
-    } finally {
-      logLoading.value = false
-    }
-  }
-
   const selectAttempt = async (attempt: AutomationAttempt) => {
     if (currentAttempt.value?.id === attempt.id) return
     currentAttempt.value = attempt
-    logs.value = ""
-    lastLogId.value = 0
-    lastSyncTime.value = ""
-    logsPending = false
-    await fetchLogs()
+    await logStream.sync()
   }
 
   const refresh = async () => {
     await loadAttempts(true)
-    await fetchLogs(true)
+    await logStream.sync()
   }
 
   const startPolling = () => {
@@ -88,8 +63,11 @@ export function useTaskAttemptConsole(taskId: () => number) {
       try {
         const wasRunning = isRunning.value
         await loadAttempts(true)
-        // 状态刚进入终态时再拉取一次，避免遗漏结束前的最后一批日志。
-        if (wasRunning || isRunning.value || logsPending) await fetchLogs()
+        const reachedTerminal = wasRunning && !isRunning.value
+        const needsReconcile = Date.now() - logStream.lastFetchedAt.value >= logReconcileInterval
+        if (reachedTerminal || logStream.hasMore.value || (isRunning.value && needsReconcile)) {
+          await logStream.sync(true)
+        }
       } catch (error) {
         console.error("同步自动化执行记录失败:", error)
       } finally {
@@ -101,7 +79,7 @@ export function useTaskAttemptConsole(taskId: () => number) {
   const initData = async () => {
     currentAttempt.value = null
     await loadAttempts()
-    await fetchLogs(true)
+    await logStream.sync()
     startPolling()
   }
 
@@ -111,10 +89,7 @@ export function useTaskAttemptConsole(taskId: () => number) {
     polling = false
     attempts.value = []
     currentAttempt.value = null
-    logs.value = ""
-    lastLogId.value = 0
-    lastSyncTime.value = ""
-    logsPending = false
+    logStream.reset()
   }
 
   onBeforeUnmount(reset)
@@ -123,9 +98,9 @@ export function useTaskAttemptConsole(taskId: () => number) {
     attempts,
     currentAttempt,
     loading,
-    logLoading,
-    logs,
-    lastSyncTime,
+    logLoading: logStream.loading,
+    logs: logStream.content,
+    lastSyncTime: logStream.lastSyncTime,
     autoRefresh,
     isRunning,
     initData,
