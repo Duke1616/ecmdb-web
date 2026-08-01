@@ -62,9 +62,10 @@ import TaskHistoryStatusBadge from "./TaskHistoryStatusBadge.vue"
 import TaskCompensationBadge from "./TaskCompensationBadge.vue"
 import dayjs from "dayjs"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
-import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
-import type { TaskHistoryOperateItem } from "../types"
+import type { AutomationTask } from "@/api/ticket/task/types/task"
+import { TaskHistoryAction, type TaskHistoryOperateItem } from "../types"
 import { formatAutomationTaskPhase } from "../config"
+import { canRetryTask, canTerminateTask } from "../composables/useTaskHistoryActions"
 
 interface PaginationData {
   total: number
@@ -101,14 +102,11 @@ const hasOriginalSchedule = (task: AutomationTask) =>
   !!task.original_scheduled_at && task.original_scheduled_at !== task.scheduled_at
 
 const getOperateItems = (row: AutomationTask) =>
-  props.operateItems.map((item) =>
-    item.code === "retry"
-      ? {
-          ...item,
-          disabled: ![AutomationTaskStatus.Failed, AutomationTaskStatus.Blocked].includes(row.status)
-        }
-      : item
-  )
+  props.operateItems.map((item) => {
+    if (item.code === TaskHistoryAction.Retry) return { ...item, disabled: !canRetryTask(row) }
+    if (item.code === TaskHistoryAction.Terminate) return { ...item, disabled: !canTerminateTask(row) }
+    return item
+  })
 </script>
 
 <style scoped lang="scss">

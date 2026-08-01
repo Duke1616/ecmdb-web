@@ -55,10 +55,20 @@
               size="small"
               plain
               type="warning"
-              :disabled="row.status !== AutomationTaskStatus.Failed && row.status !== AutomationTaskStatus.Blocked"
-              @click="openRetry(row.id)"
+              :disabled="!canRetryTask(row)"
+              @click="openRetry(row)"
             >
               重新执行
+            </AuthButton>
+            <AuthButton
+              :capability="TICKET_CAPABILITIES.Task.Terminate"
+              size="small"
+              plain
+              type="danger"
+              :disabled="!canTerminateTask(row)"
+              @click="openTerminate(row)"
+            >
+              强制终止
             </AuthButton>
           </footer>
         </div>
@@ -66,6 +76,12 @@
     </div>
 
     <TaskRetryDialog v-model="retryDialogVisible" :task-id="taskId" :loading="retryLoading" @confirm="confirmRetry" />
+    <TaskTerminateDialog
+      v-model="terminateDialogVisible"
+      :task-id="taskId"
+      :loading="terminateLoading"
+      @confirm="confirmTerminate"
+    />
   </div>
 </template>
 
@@ -73,16 +89,18 @@
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import dayjs from "dayjs"
-import { listTasksByInstanceIdApi, retryTaskApi } from "@/api/ticket/task"
+import { listTasksByInstanceIdApi, retryTaskApi, terminateTaskApi } from "@/api/ticket/task"
 import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
 import { Calendar, Clock, Operation, WarningFilled } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import TaskRetryDialog from "@/pages/ticket/task-history/components/TaskRetryDialog.vue"
+import TaskTerminateDialog from "@/pages/ticket/task-history/components/TaskTerminateDialog.vue"
 import { formatAutomationTaskPhase } from "@/pages/ticket/task-history/config"
 import TaskHistoryStatusBadge from "@/pages/ticket/task-history/components/TaskHistoryStatusBadge.vue"
 import TaskCompensationBadge from "@/pages/ticket/task-history/components/TaskCompensationBadge.vue"
 import { useAutomationTaskPolling } from "@/pages/ticket/task-history/composables/useAutomationTaskPolling"
+import { canRetryTask, canTerminateTask } from "@/pages/ticket/task-history/composables/useTaskHistoryActions"
 
 const props = defineProps<{ processInstId: number | undefined }>()
 const emit = defineEmits<{ (event: "open-attempts", taskId: number): void }>()
@@ -91,6 +109,8 @@ const loading = ref(false)
 const taskId = ref(0)
 const retryDialogVisible = ref(false)
 const retryLoading = ref(false)
+const terminateDialogVisible = ref(false)
+const terminateLoading = ref(false)
 
 const statusTone = (status: AutomationTaskStatus) => {
   if (status === AutomationTaskStatus.Success) return "success"
@@ -128,12 +148,20 @@ const openAttempts = (id: number) => {
   emit("open-attempts", id)
 }
 
-const openRetry = (id: number) => {
-  taskId.value = id
+const openRetry = (task: AutomationTask) => {
+  if (!canRetryTask(task)) return
+  taskId.value = task.id
   retryDialogVisible.value = true
 }
 
+const openTerminate = (task: AutomationTask) => {
+  if (!canTerminateTask(task)) return
+  taskId.value = task.id
+  terminateDialogVisible.value = true
+}
+
 const confirmRetry = async () => {
+  if (retryLoading.value) return
   retryLoading.value = true
   try {
     await retryTaskApi(taskId.value)
@@ -144,6 +172,22 @@ const confirmRetry = async () => {
     ElMessage.error("重试任务失败")
   } finally {
     retryLoading.value = false
+  }
+}
+
+const confirmTerminate = async (reason: string) => {
+  const normalizedReason = reason.trim()
+  if (!normalizedReason || terminateLoading.value) return
+  terminateLoading.value = true
+  try {
+    await terminateTaskApi(taskId.value, normalizedReason)
+    ElMessage.success("任务已终止")
+    terminateDialogVisible.value = false
+    await loadTasks()
+  } catch {
+    ElMessage.error("终止任务失败")
+  } finally {
+    terminateLoading.value = false
   }
 }
 
@@ -355,6 +399,7 @@ defineExpose({ listTasksData: loadTasks })
 }
 
 .task-card__actions {
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 16px;

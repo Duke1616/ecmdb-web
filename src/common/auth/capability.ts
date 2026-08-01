@@ -466,6 +466,8 @@ export const TICKET_CAPABILITIES = {
     ViewAttempts: "ticket:task:view_attempts",
     /** 重试任务 */
     Retry: "ticket:task:retry",
+    /** 强制终止任务 */
+    Terminate: "ticket:task:terminate",
     /** 任务日志 */
     Logs: "ticket:task:logs"
   },

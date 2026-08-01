@@ -16,6 +16,10 @@ export function retryTaskApi(id: number) {
   return instance.post<void>({ url: `${TASK_API}/retry`, data: { id } })
 }
 
+export function terminateTaskApi(id: number, reason: string) {
+  return instance.post<void>({ url: `${TASK_API}/terminate`, data: { id, reason } })
+}
+
 export function listTaskAttemptsApi(taskId: number) {
   return instance.post<task.ListAttemptsResp>({ url: `${TASK_API}/attempt/list`, data: { task_id: taskId } })
 }

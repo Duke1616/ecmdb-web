@@ -202,7 +202,8 @@ const attemptStatusText = (status: AutomationAttemptStatus) =>
     [AutomationAttemptStatus.Submitting]: "提交中",
     [AutomationAttemptStatus.Running]: "运行中",
     [AutomationAttemptStatus.Success]: "成功",
-    [AutomationAttemptStatus.Failed]: "失败"
+    [AutomationAttemptStatus.Failed]: "失败",
+    [AutomationAttemptStatus.Cancelled]: "已取消"
   })[status]
 
 const formatDate = (value: number) =>
@@ -315,6 +316,9 @@ const formatDuration = (attempt: AutomationAttempt) => {
   &.is-running .status-rail,
   &.is-submitting .status-rail {
     background: #6366f1;
+  }
+  &.is-cancelled .status-rail {
+    background: #94a3b8;
   }
 }
 
@@ -454,6 +458,10 @@ const formatDuration = (attempt: AutomationAttempt) => {
   &.is-submitting {
     background: #eef2ff;
     color: #4f46e5;
+  }
+  &.is-cancelled {
+    background: #f1f5f9;
+    color: #64748b;
   }
 }
 

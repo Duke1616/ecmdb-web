@@ -3,7 +3,8 @@ import type { ButtonType } from "element-plus"
 
 export enum TaskHistoryAction {
   Attempts = "attempts",
-  Retry = "retry"
+  Retry = "retry",
+  Terminate = "terminate"
 }
 
 export type StatusTone = "neutral" | "success" | "danger" | "running" | "warning"

@@ -24,6 +24,13 @@
       :loading="retryLoading"
       @confirm="handleRetryConfirm"
     />
+
+    <TaskTerminateDialog
+      v-model="terminateDialogVisible"
+      :task-id="taskId"
+      :loading="terminateLoading"
+      @confirm="handleTerminateConfirm"
+    />
   </ProGovernanceLayout>
 </template>
 
@@ -32,14 +39,22 @@ import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovern
 import TaskHistoryTable from "./components/TaskHistoryTable.vue"
 import TaskAttemptDialog from "./components/TaskAttemptDialog.vue"
 import TaskRetryDialog from "./components/TaskRetryDialog.vue"
+import TaskTerminateDialog from "./components/TaskTerminateDialog.vue"
 import { useTaskHistory } from "./composables/useTaskHistory"
 import { useTaskHistoryActions, taskHistoryOperateItems } from "./composables/useTaskHistoryActions"
 import { taskHistoryColumns } from "./config"
 
 const { tasksData, loading, paginationData, fetchTasksData, handleCurrentChange, handleSizeChange } = useTaskHistory()
 
-const { taskId, attemptDialogVisible, retryDialogVisible, retryLoading, handleOperateEvent, handleRetryConfirm } =
-  useTaskHistoryActions({
-    refresh: fetchTasksData
-  })
+const {
+  taskId,
+  attemptDialogVisible,
+  retryDialogVisible,
+  retryLoading,
+  terminateDialogVisible,
+  terminateLoading,
+  handleOperateEvent,
+  handleRetryConfirm,
+  handleTerminateConfirm
+} = useTaskHistoryActions({ refresh: fetchTasksData })
 </script>

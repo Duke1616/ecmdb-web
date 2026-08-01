@@ -21,7 +21,8 @@ export enum AutomationAttemptStatus {
   Submitting = "SUBMITTING",
   Running = "RUNNING",
   Success = "SUCCESS",
-  Failed = "FAILED"
+  Failed = "FAILED",
+  Cancelled = "CANCELLED"
 }
 
 export enum AutomationTaskPhase {

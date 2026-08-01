@@ -44,7 +44,7 @@
             取消
           </el-button>
           <el-button
-            type="primary"
+            :type="confirmType"
             @click="handleConfirm"
             class="confirm-btn"
             size="large"
@@ -63,6 +63,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { InfoFilled, Close, Check } from "@element-plus/icons-vue"
+import type { ButtonType } from "element-plus"
 import BaseDialog from "../Base/index.vue"
 
 interface Props {
@@ -74,6 +75,7 @@ interface Props {
   closeOnClickModal?: boolean
   headerIcon?: any
   confirmText?: string
+  confirmType?: ButtonType
   confirmLoading?: boolean
   confirmDisabled?: boolean
   showFooter?: boolean
@@ -100,6 +102,7 @@ const props = withDefaults(defineProps<Props>(), {
   closeOnClickModal: false,
   headerIcon: "UserFilled",
   confirmText: "确认",
+  confirmType: "primary",
   confirmLoading: false,
   confirmDisabled: false,
   showFooter: true,
