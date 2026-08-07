@@ -3,8 +3,14 @@ import type { FormInstance, FormRules } from "element-plus"
 import { ElMessage } from "element-plus"
 import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/task/manager"
 import { TaskType, TaskProtocol, type UpdateTaskReq } from "@/api/task/manager/type"
+import { createDefaultProgram, validateProgram } from "@/api/task/program"
 import type { HandlerDetail } from "@/api/task/resource/type"
 import { type TaskFormState, createDefaultFormState, mapToFormState, mapToApiPayload } from "./useTaskData"
+
+const validateProgramField = (_rule: unknown, value: TaskFormState["program"], callback: (error?: Error) => void) => {
+  const message = validateProgram(value)
+  callback(message ? new Error(message) : undefined)
+}
 
 /**
  * 任务表单核心交互联动与业务提交流程 Hook
@@ -47,6 +53,9 @@ export function useTaskForm(options: {
           trigger: "submit"
         }
       ]
+      if (currentHandler.value?.program_kinds?.length) {
+        r.program = [{ validator: validateProgramField, trigger: "submit" }]
+      }
     } else {
       r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "submit" }]
     }
@@ -55,14 +64,18 @@ export function useTaskForm(options: {
   })
 
   // --- 表单联动与 UI 事件处理 ---
-  const handleServiceSelect = () => {
-    // ExecutorPicker 已经把“执行器 + 方法”合并为一次选择，这里不能再清空 handler。
-    // 手动清空或外部切换时，组件会通过 handler-change 把 currentHandler 同步为 null。
-  }
-
   const handleHandlerSelect = (handler: HandlerDetail | null) => {
     currentHandler.value = handler
+    // Picker 初始化时会先发出一次 null；保留详情中的 Program，避免异步恢复 Handler 时丢失程序来源。
     if (!handler) return
+
+    const programKinds = handler.program_kinds ?? []
+    if (programKinds.length === 0) {
+      form.value.program = undefined
+    } else if (!form.value.program || !programKinds.includes(form.value.program.kind)) {
+      form.value.program = createDefaultProgram(programKinds[0])
+    }
+
     const params = form.value.grpc_params
 
     // 基于元数据自适应初始化参数的默认值
@@ -145,7 +158,6 @@ export function useTaskForm(options: {
     resourceLoading,
     currentHandler,
     rules,
-    handleServiceSelect,
     handleHandlerSelect,
     handleCronSelect,
     handleProtocolChange,

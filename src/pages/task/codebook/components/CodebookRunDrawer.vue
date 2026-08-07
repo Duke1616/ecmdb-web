@@ -1,10 +1,9 @@
 <template>
   <Drawer
     v-model="visible"
-    title="脚本试运行"
-    :subtitle="currentCodebook ? `使用当前编辑内容运行【${currentCodebook.name}】` : '验证脚本与制品依赖的执行效果'"
-    :header-icon="VideoPlay"
-    size="min(920px, 100%)"
+    title="程序试运行"
+    :subtitle="previewSubtitle"
+    size="min(840px, 100%)"
     :show-footer="true"
     :close-on-click-modal="false"
     class="codebook-run-drawer"
@@ -34,16 +33,9 @@
 
       <el-collapse-transition>
         <section v-show="!execution || configExpanded" class="config-panel">
-          <div class="section-heading">
-            <div>
-              <h4>运行配置</h4>
-              <p>参数仅用于本次运行，不会保存到脚本或执行单元。</p>
-            </div>
-            <span class="snapshot-badge">临时快照</span>
-          </div>
-
           <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="run-form">
-            <div class="form-grid">
+            <div class="form-section-title">执行设置</div>
+            <div class="form-grid" :class="{ 'is-fixed-source': programOptions.length <= 1 }">
               <el-form-item label="执行单元" prop="runner_id" class="runner-field">
                 <el-select
                   v-model="form.runner_id"
@@ -70,6 +62,15 @@
                 </el-select>
               </el-form-item>
 
+              <el-form-item
+                v-if="programOptions.length > 1"
+                label="程序来源"
+                prop="program_kind"
+                class="program-kind-field"
+              >
+                <el-segmented v-model="form.program_kind" :options="programOptions" size="small" />
+              </el-form-item>
+
               <el-form-item label="超时时间" prop="max_execution_seconds" class="timeout-field">
                 <el-input-number
                   v-model="form.max_execution_seconds"
@@ -83,55 +84,59 @@
               </el-form-item>
             </div>
 
-            <el-alert
-              v-if="!loadingRunners && supportedRunners.length === 0"
-              title="当前脚本没有可试运行的执行单元"
-              description="请先绑定 Python 或 Shell 类型的执行单元。"
-              type="warning"
-              :closable="false"
-              show-icon
-              class="runner-alert"
-            />
+            <div v-if="form.program_kind === ProgramKind.PROJECT" class="context-note">
+              <el-icon><InfoFilled /></el-icon>
+              <span>完整项目使用已保存内容，编辑器中未保存的修改不会进入本次运行。</span>
+            </div>
 
-            <el-form-item prop="args">
-              <template #label>
-                <div class="json-input-header">
-                  <span>运行参数（JSON）</span>
-                  <el-button
-                    type="primary"
-                    link
-                    size="small"
-                    class="format-btn"
-                    :disabled="isRunning"
-                    @click="formatJSON"
-                  >
-                    格式化 JSON
-                  </el-button>
-                </div>
-              </template>
-              <el-input
-                v-model="form.args"
-                type="textarea"
-                :rows="5"
-                resize="none"
-                spellcheck="false"
-                placeholder='例如：{"name":"demo"}'
-                class="json-input"
-                :disabled="isRunning"
-              />
-            </el-form-item>
+            <div v-if="!loadingRunners && supportedRunners.length === 0" class="context-note is-warning">
+              <el-icon><WarningFilled /></el-icon>
+              <span>当前脚本没有可用的执行单元，请先完成绑定。</span>
+            </div>
 
-            <el-form-item label="临时变量" class="variables-field">
-              <KVEditor
-                v-model="form.variables"
-                value-type="array"
-                title-key="变量名"
-                title-value="临时值"
-                add-text="添加临时变量"
-                empty-text="未配置临时变量，将使用执行单元默认变量"
-                :show-secret="true"
-              />
-            </el-form-item>
+            <div class="input-section">
+              <el-form-item prop="args">
+                <template #label>
+                  <div class="json-input-header">
+                    <span>运行参数 <small>JSON</small></span>
+                    <el-button
+                      type="primary"
+                      link
+                      size="small"
+                      class="format-btn"
+                      :disabled="isRunning"
+                      @click="formatJSON"
+                    >
+                      格式化
+                    </el-button>
+                  </div>
+                </template>
+                <el-input
+                  v-model="form.args"
+                  type="textarea"
+                  :rows="5"
+                  resize="none"
+                  spellcheck="false"
+                  placeholder='例如：{"name":"demo"}'
+                  class="json-input"
+                  :disabled="isRunning"
+                />
+              </el-form-item>
+            </div>
+
+            <div class="input-section">
+              <el-form-item label="临时变量" class="variables-field">
+                <KVEditor
+                  v-model="form.variables"
+                  value-type="array"
+                  title-key="变量名"
+                  title-value="临时值"
+                  add-text="添加临时变量"
+                  empty-text="未配置临时变量，将使用执行单元默认变量"
+                  :show-secret="true"
+                />
+              </el-form-item>
+            </div>
           </el-form>
         </section>
       </el-collapse-transition>
@@ -156,7 +161,6 @@
           <el-tab-pane label="运行日志" name="logs">
             <div class="terminal">
               <div class="terminal-bar">
-                <span class="terminal-lights"><i /><i /><i /></span>
                 <span>STDOUT</span>
                 <el-button :icon="RefreshRight" text circle :loading="logsLoading" @click="fetchLogs()" />
               </div>
@@ -201,20 +205,32 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, reactive, ref } from "vue"
-import { ArrowDown, Connection, RefreshRight, Timer, VideoPlay } from "@element-plus/icons-vue"
+import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue"
+import {
+  ArrowDown,
+  Connection,
+  InfoFilled,
+  RefreshRight,
+  Timer,
+  VideoPlay,
+  WarningFilled
+} from "@element-plus/icons-vue"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { Drawer } from "@/common/components/Dialogs"
 import KVEditor from "@/pages/task/manager/components/KVEditor.vue"
 import { listRunnerByCodebookIdApi } from "@/api/task/runner"
 import { Kind, type runner } from "@/api/task/runner/types/runner"
+import { listAllResourcesApi } from "@/api/task/resource"
+import type { Resource } from "@/api/task/resource/type"
 import { getCodebookPreviewLogsApi, getCodebookPreviewStatusApi, runCodebookPreviewApi } from "@/api/task/codebook"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import type { PreviewExecution, PreviewVariable } from "@/api/task/codebook/types/preview"
+import { createProgramKindOptions, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
 import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
 
 interface RunForm {
   runner_id?: number
+  program_kind: ProgramKind
   args: string
   variables: PreviewVariable[]
   max_execution_seconds: number
@@ -223,6 +239,7 @@ interface RunForm {
 const visible = ref(false)
 const currentCodebook = ref<codebook>()
 const runners = ref<runner[]>([])
+const resources = ref<Resource[]>([])
 const loadingRunners = ref(false)
 const starting = ref(false)
 const execution = ref<PreviewExecution>()
@@ -235,6 +252,7 @@ let pollTimer: number | undefined
 
 const form = reactive<RunForm>({
   runner_id: undefined,
+  program_kind: ProgramKind.INLINE,
   args: "{}",
   variables: [],
   max_execution_seconds: 300
@@ -270,13 +288,27 @@ const formatJSON = () => {
   }
 }
 
-const supportedRunners = computed(() =>
-  runners.value.filter(
-    (item) =>
-      [Kind.GRPC, Kind.KAFKA].includes(item.kind) && ["python", "shell"].includes(item.handler?.toLowerCase() || "")
-  )
-)
+const supportedRunners = computed(() => runners.value.filter((item) => [Kind.GRPC, Kind.KAFKA].includes(item.kind)))
 const selectedRunner = computed(() => supportedRunners.value.find((item) => item.id === form.runner_id))
+const selectedHandler = computed(() => {
+  const runner = selectedRunner.value
+  if (!runner) return undefined
+  return resources.value
+    .find((resource) => resource.name === runner.target)
+    ?.handlers.find((handler) => handler.name === runner.handler)
+})
+const availableProgramKinds = computed<ProgramKind[]>(() => {
+  const kinds = resolveCodebookProgramKinds(selectedHandler.value?.program_kinds)
+  if (currentCodebook.value?.scope === "SYSTEM") return kinds.filter((kind) => kind === ProgramKind.INLINE)
+  return kinds
+})
+const programOptions = computed(() => createProgramKindOptions(availableProgramKinds.value))
+const previewSubtitle = computed(() => {
+  if (!currentCodebook.value) return "验证程序与执行单元的运行效果"
+  return form.program_kind === ProgramKind.PROJECT
+    ? `使用已保存项目运行【${currentCodebook.value.name}】`
+    : `使用当前编辑内容运行【${currentCodebook.value.name}】`
+})
 const isRunning = computed(() => ["WAITING_PULL", "PREPARE", "RUNNING"].includes(execution.value?.status || ""))
 const statusText = computed(() => {
   const labels: Record<string, string> = {
@@ -306,6 +338,14 @@ const formattedResult = computed(() => {
   }
 })
 
+watch(
+  availableProgramKinds,
+  (kinds) => {
+    if (!kinds.includes(form.program_kind)) form.program_kind = kinds[0] || ProgramKind.INLINE
+  },
+  { immediate: true }
+)
+
 const logStream = useExecutionLogStream({
   executionId: () => execution.value?.id,
   live: () => visible.value && isRunning.value,
@@ -331,6 +371,7 @@ async function open(row: codebook) {
   outputTab.value = "logs"
   configExpanded.value = true
   form.runner_id = undefined
+  form.program_kind = ProgramKind.INLINE
   form.args = "{}"
   form.variables = []
   form.max_execution_seconds = 300
@@ -338,8 +379,12 @@ async function open(row: codebook) {
 
   loadingRunners.value = true
   try {
-    const { data } = await listRunnerByCodebookIdApi(row.id)
-    runners.value = data.runners || []
+    const [runnerResult, resourceResult] = await Promise.allSettled([
+      listRunnerByCodebookIdApi(row.id),
+      listAllResourcesApi()
+    ])
+    runners.value = runnerResult.status === "fulfilled" ? runnerResult.value.data.runners || [] : []
+    resources.value = resourceResult.status === "fulfilled" ? resourceResult.value : []
     if (supportedRunners.value.length === 1) {
       form.runner_id = supportedRunners.value[0].id
     }
@@ -360,9 +405,11 @@ async function run() {
   outputTab.value = "logs"
   try {
     const { data } = await runCodebookPreviewApi({
-      codebook_id: currentCodebook.value.id,
       runner_id: form.runner_id,
-      code: currentCodebook.value.code || "",
+      program:
+        form.program_kind === ProgramKind.PROJECT
+          ? { kind: ProgramKind.PROJECT, project: { entry_codebook_id: currentCodebook.value.id } }
+          : { kind: ProgramKind.INLINE, inline: { code: currentCodebook.value.code || "" } },
       args: form.args || "{}",
       variables: form.variables,
       max_execution_seconds: form.max_execution_seconds
@@ -416,6 +463,7 @@ function reset() {
   currentCodebook.value = undefined
   execution.value = undefined
   runners.value = []
+  resources.value = []
   logStream.reset()
 }
 
@@ -424,11 +472,85 @@ defineExpose({ open })
 </script>
 
 <style lang="scss" scoped>
+:global(.codebook-run-drawer.custom-drawer) {
+  --el-drawer-bg-color: #fff !important;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-header) {
+  padding: 17px 24px;
+  margin-bottom: 0;
+  background: #fff;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-header .header-left) {
+  gap: 0;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-header .header-text h3) {
+  color: #303133;
+  font-size: 16px;
+  line-height: 22px;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-header .header-text p) {
+  margin-top: 3px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-header .close-btn) {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-content) {
+  height: 100%;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-footer) {
+  padding: 14px 24px;
+  margin: 0;
+  background: #fff;
+  border-radius: 0;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button) {
+  min-width: 72px;
+  height: 32px;
+  font-size: 13px;
+  border-radius: 4px;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button.el-button--primary) {
+  color: #fff;
+  background: #409eff;
+  border: 1px solid #409eff;
+  box-shadow: none;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button.el-button--primary.is-disabled) {
+  background: #a0cfff;
+  border-color: #a0cfff;
+  box-shadow: none;
+}
+
+:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button.el-button--primary:not(.is-disabled):hover) {
+  background: #66b1ff;
+  border-color: #66b1ff;
+  box-shadow: none;
+  transform: none;
+}
+
 .run-content {
   min-height: 100%;
-  padding: 20px;
+  padding: 22px 24px 28px;
   box-sizing: border-box;
-  background: #f8fafc;
+  background: #fff;
 }
 
 .header-status {
@@ -482,59 +604,15 @@ defineExpose({ open })
   }
 }
 
-.config-panel,
-.execution-panel {
-  position: relative;
-  overflow: hidden;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
-  padding-top: 3px;
-
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #3b82f6, #6366f1);
-  }
-}
-
 .config-panel {
-  padding: 20px 22px 8px;
+  background: #fff;
 }
 
-.section-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin-bottom: 18px;
-
-  h4 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 15px;
-    font-weight: 600;
-  }
-
-  p {
-    margin: 5px 0 0;
-    color: #64748b;
-    font-size: 12px;
-  }
-}
-
-.snapshot-badge {
-  padding: 3px 8px;
-  color: #6366f1;
-  font-size: 11px;
+.form-section-title {
+  margin-bottom: 12px;
+  color: #303133;
+  font-size: 13px;
   font-weight: 600;
-  background: rgba(99, 102, 241, 0.08);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  border-radius: 999px;
 }
 
 .json-input-header {
@@ -543,47 +621,74 @@ defineExpose({ open })
   align-items: center;
   width: 100%;
 
-  .format-btn {
+  small {
+    margin-left: 5px;
+    color: #a8abb2;
+    font-size: 10px;
     font-weight: 500;
-    font-size: 12px;
-    padding: 0;
-    color: #3b82f6;
+  }
 
-    &:hover {
-      color: #2563eb;
-    }
+  .format-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 0;
   }
 }
 
 .variables-field :deep(.add-trigger) {
-  border-color: #dbeafe;
-  background: #eff6ff;
-  color: #2563eb;
+  color: #606266;
   font-weight: 500;
+  background: #fafafa;
+  border-color: #dcdfe6;
 
   &:hover {
-    background: #dbeafe;
-    border-color: #bfdbfe;
-    color: #1d4ed8;
+    color: #409eff;
+    background: #f5f9ff;
+    border-color: #a0cfff;
   }
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px;
-  gap: 16px;
+  grid-template-columns: minmax(280px, 1fr) 210px 144px;
+  gap: 14px;
+  padding-bottom: 20px;
+
+  &.is-fixed-source {
+    grid-template-columns: minmax(280px, 1fr) 144px;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+  }
 }
 
 .run-form {
   :deep(.el-form-item__label) {
-    color: #475569;
+    height: 28px;
+    padding: 0 0 7px;
+    color: #606266;
     font-size: 12px;
     font-weight: 600;
+    line-height: 20px;
   }
 
   :deep(.el-select),
   :deep(.el-input-number) {
     width: 100%;
+  }
+}
+
+.program-kind-field {
+  :deep(.el-segmented) {
+    width: 100%;
+    padding: 3px;
+    box-sizing: border-box;
+  }
+
+  :deep(.el-segmented__item) {
+    min-width: 0;
+    height: 26px;
   }
 }
 
@@ -601,7 +706,7 @@ defineExpose({ open })
   z-index: 2;
   right: 34px;
   bottom: 9px;
-  color: #94a3b8;
+  color: #a8abb2;
   font-size: 12px;
   pointer-events: none;
 }
@@ -619,30 +724,72 @@ defineExpose({ open })
   }
 
   small {
-    color: #94a3b8;
+    color: #909399;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
 }
 
-.runner-alert {
-  margin: -2px 0 16px;
+.context-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: -6px 0 18px;
+  padding: 8px 10px;
+  color: #606266;
+  font-size: 12px;
+  line-height: 18px;
+  background: #f4f8ff;
+  border-left: 3px solid #79bbff;
+
+  .el-icon {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: #409eff;
+  }
+
+  &.is-warning {
+    color: #6b5734;
+    background: #fdf6ec;
+    border-color: #e6a23c;
+
+    .el-icon {
+      color: #e6a23c;
+    }
+  }
+}
+
+.context-note + .context-note {
+  margin-top: -10px;
+}
+
+.input-section {
+  padding: 18px 0 20px;
+  border-top: 1px solid #ebeef5;
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+
+  :deep(.el-form-item) {
+    margin-bottom: 0;
+  }
 }
 
 .json-input {
   :deep(textarea) {
-    color: #1e293b;
+    color: #303133;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     font-size: 13px;
     line-height: 1.6;
-    background: #f8fafc;
-    border-color: #e2e8f0;
-    border-radius: 8px;
+    background: #fafafa;
+    border-color: #dcdfe6;
+    border-radius: 6px;
     transition: all 0.2s ease;
 
     &:focus {
       background: #fff;
-      border-color: #3b82f6;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+      border-color: #409eff;
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
     }
   }
 }
@@ -655,25 +802,25 @@ defineExpose({ open })
   display: flex;
   align-items: center;
   width: 100%;
-  margin: 0 0 14px;
-  padding: 12px 16px;
-  color: #475569;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  color: #606266;
   font: inherit;
   text-align: left;
   cursor: pointer;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
   transition: all 0.2s ease;
 
   &:hover {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
+    background: #f5f7fa;
+    border-color: #c0c4cc;
   }
 
   .summary-title {
     margin-right: 16px;
-    color: #0f172a;
+    color: #303133;
     font-size: 12px;
     font-weight: 700;
   }
@@ -685,7 +832,7 @@ defineExpose({ open })
 
   .summary-separator {
     margin: 0 8px;
-    color: #cbd5e1;
+    color: #c0c4cc;
   }
 
   .summary-arrow {
@@ -699,7 +846,11 @@ defineExpose({ open })
 }
 
 .execution-panel {
-  margin-top: 14px;
+  overflow: hidden;
+  margin-top: 16px;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
 }
 
 .execution-overview {
@@ -786,8 +937,7 @@ defineExpose({ open })
   overflow: hidden;
   background: #0d1117;
   border: 1px solid #21262d;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-radius: 6px;
 }
 
 .terminal-bar {
@@ -798,7 +948,7 @@ defineExpose({ open })
   color: #8b949e;
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 10px;
-  letter-spacing: 0.12em;
+  letter-spacing: 0;
   background: #161b22;
   border-bottom: 1px solid #21262d;
 
@@ -808,41 +958,19 @@ defineExpose({ open })
   }
 }
 
-.terminal-lights {
-  display: flex;
-  gap: 5px;
-  margin-right: 12px;
-
-  i {
-    width: 7px;
-    height: 7px;
-    background: #ef4444;
-    border-radius: 50%;
-
-    &:nth-child(2) {
-      background: #f59e0b;
-    }
-
-    &:nth-child(3) {
-      background: #10b981;
-    }
-  }
-}
-
 .terminal-body,
 .result-view {
   min-height: 300px;
   max-height: 420px;
   overflow: auto;
 
-  /* Custom Webkit scrollbar for premium terminal look */
   &::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   &::-webkit-scrollbar-track {
     background: #0d1117;
-    border-radius: 0 0 10px 0;
+    border-radius: 0 0 6px 0;
   }
   &::-webkit-scrollbar-thumb {
     background: #30363d;
@@ -888,7 +1016,7 @@ defineExpose({ open })
   box-sizing: border-box;
   background: #0d1117;
   border: 1px solid #21262d;
-  border-radius: 10px;
+  border-radius: 6px;
 
   pre {
     margin: 0;
@@ -921,8 +1049,16 @@ defineExpose({ open })
 }
 
 @media (max-width: 720px) {
+  .run-content {
+    padding: 18px 16px 24px;
+  }
+
   .form-grid {
     grid-template-columns: 1fr;
+
+    &.is-fixed-source {
+      grid-template-columns: 1fr;
+    }
   }
 
   .execution-overview,

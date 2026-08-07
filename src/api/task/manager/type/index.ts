@@ -1,3 +1,5 @@
+import type { ProgramSpec } from "../../program"
+
 export interface CreateTaskReq {
   name: string
   type: TaskType
@@ -8,6 +10,7 @@ export interface CreateTaskReq {
   max_execution_seconds?: number
   schedule_params?: Record<string, string>
   metadata?: Record<string, string>
+  program?: ProgramSpec
 }
 
 export interface UpdateTaskReq extends CreateTaskReq {

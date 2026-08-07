@@ -127,7 +127,7 @@ export function updateProjectApi(data: codebook.UpdateProjectReq) {
   })
 }
 
-/** 启动 Codebook 试运行 */
+/** 启动程序试运行 */
 export function runCodebookPreviewApi(data: preview.RunPreviewReq) {
   return instance.post<preview.PreviewExecution>({
     url: `${API_SERVICE.TASK}/codebook/preview/run`,

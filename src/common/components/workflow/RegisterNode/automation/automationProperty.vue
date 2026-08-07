@@ -30,10 +30,18 @@
         <el-icon><Setting /></el-icon>
       </template>
       <div class="settings-stack">
-        <el-form-item label="代码模版" prop="codebook_id">
+        <el-form-item label="程序来源" prop="program_kind">
+          <el-segmented
+            v-model="propertyForm.program_kind"
+            :options="programKindOptions"
+            class="program-kind-control"
+          />
+        </el-form-item>
+
+        <el-form-item :label="codebookFieldLabel" prop="codebook_id">
           <CodebookPicker
             :model-value="propertyForm.codebook_id || undefined"
-            placeholder="请选择代码模版"
+            :placeholder="codebookPlaceholder"
             variant="element"
             class="modern-select"
             :disabled="flowDetail.status == '2'"
@@ -173,6 +181,9 @@
 <script setup lang="ts">
 import { listRunnerByCodebookIdApi } from "@/api/task/runner"
 import { TagDetail, runner } from "@/api/task/runner/types/runner"
+import { listAllResourcesApi } from "@/api/task/resource"
+import type { Resource } from "@/api/task/resource/type"
+import { createProgramKindOptions, PROGRAM_KINDS, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
 import { ElSelect, FormInstance, FormRules } from "element-plus"
 import { Bell, Document, MagicStick, RefreshLeft, Setting, Timer } from "@element-plus/icons-vue"
 import { computed, ref, onMounted, reactive, watch } from "vue"
@@ -196,6 +207,7 @@ interface RunnerTagOption extends TagDetail {
 interface AutomationPropertyForm {
   name: string
   codebook_id: number
+  program_kind: ProgramKind
   is_notify: boolean
   schedule: ScheduleConfig
   notify_method: number[]
@@ -222,6 +234,7 @@ const emits = defineEmits(["closed"])
 const DEFAULT_FORM_DATA: AutomationPropertyForm = {
   name: "自动化-",
   codebook_id: 0 as number,
+  program_kind: ProgramKind.INLINE,
   is_notify: false,
   schedule: createImmediateSchedule() as ScheduleConfig,
   notify_method: [],
@@ -234,6 +247,8 @@ const formRef = ref<FormInstance | null>(null)
 const tagSelect = ref<InstanceType<typeof ElSelect> | null>(null)
 const scheduleEditorRef = ref<InstanceType<typeof ScheduleEditor> | null>(null)
 const availableTags = ref<RunnerTagOption[]>([])
+const resources = ref<Resource[]>([])
+const resourceCatalogLoaded = ref(false)
 const runnerTagsLoading = ref(false)
 const activeScheduleDraft = ref<ScheduleConfig>(createFixedDelaySchedule())
 const compensationNodeOptions = ref<CompensationNodeOption[]>([])
@@ -246,6 +261,29 @@ const runnerTagsPlaceholder = computed(() => {
   return "请选择执行节点"
 })
 
+const availableProgramKinds = computed(() => {
+  if (!resourceCatalogLoaded.value || availableTags.value.length === 0) return [...PROGRAM_KINDS]
+  const candidates =
+    propertyForm.tag && propertyForm.tag !== "auto"
+      ? availableTags.value.filter((item) => item.tag === propertyForm.tag)
+      : availableTags.value
+  if (candidates.length === 0) return [...PROGRAM_KINDS]
+  const supported = new Set<ProgramKind>()
+  for (const candidate of candidates) {
+    const handler = resources.value
+      .find((resource) => resource.name === candidate.target)
+      ?.handlers.find((item) => item.name === candidate.handler)
+    const kinds = resolveCodebookProgramKinds(handler?.program_kinds)
+    kinds.forEach((kind) => supported.add(kind))
+  }
+  return PROGRAM_KINDS.filter((kind) => supported.has(kind))
+})
+const programKindOptions = computed(() => createProgramKindOptions(availableProgramKinds.value))
+const codebookFieldLabel = computed(() =>
+  propertyForm.program_kind === ProgramKind.PROJECT ? "项目入口文件" : "脚本文件"
+)
+const codebookPlaceholder = computed(() => `请选择${codebookFieldLabel.value}`)
+
 watch(
   () => propertyForm.schedule,
   (schedule) => {
@@ -253,6 +291,12 @@ watch(
   },
   { deep: true }
 )
+
+watch(availableProgramKinds, (kinds) => {
+  if (!kinds.includes(propertyForm.program_kind) && kinds.length > 0) {
+    propertyForm.program_kind = kinds[0]
+  }
+})
 
 const scheduleEnabled = computed({
   get: () => propertyForm.schedule.type !== "immediate",
@@ -298,6 +342,15 @@ const loadRunnerTagsByCodebook = async (clearTag = true) => {
   }
 }
 
+const loadResourceCatalog = async () => {
+  try {
+    resources.value = await listAllResourcesApi()
+    resourceCatalogLoaded.value = true
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 const handleCodebookUpdate = (value: number | number[] | undefined) => {
   propertyForm.codebook_id = Array.isArray(value) ? value[0] || 0 : value || 0
   loadRunnerTagsByCodebook(true)
@@ -331,6 +384,7 @@ const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
     codebook_id: propertyForm.codebook_id,
+    program_kind: propertyForm.program_kind,
     is_notify: propertyForm.is_notify,
     schedule: cloneDeep(propertyForm.schedule),
     notify_method: propertyForm.notify_method,
@@ -360,6 +414,7 @@ const notify_method_options = [
 ]
 
 const formRules: FormRules = {
+  program_kind: [{ required: true, message: "请选择程序来源", trigger: "change" }],
   name: [
     { required: true, message: "名称不能为空" },
     { max: 50, message: "最大50字符" },
@@ -393,6 +448,7 @@ const formRules: FormRules = {
 onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_id = Number(props.nodeData?.properties.codebook_id) || 0
+  propertyForm.program_kind = props.nodeData?.properties.program_kind || ProgramKind.INLINE
   propertyForm.is_notify = props.nodeData?.properties.is_notify
   propertyForm.schedule = resolveFallbackSchedule(props.nodeData?.properties)
   if (propertyForm.schedule.type !== "immediate") activeScheduleDraft.value = cloneDeep(propertyForm.schedule)
@@ -405,7 +461,7 @@ onMounted(async () => {
   compensationEnabled.value = !!propertyForm.compensation_node_id
   refreshCompensationNodeOptions()
 
-  await loadRunnerTagsByCodebook(false)
+  await Promise.all([loadResourceCatalog(), loadRunnerTagsByCodebook(false)])
 })
 
 defineExpose({
@@ -433,6 +489,14 @@ defineExpose({
 .modern-select,
 .modern-number {
   width: 100%;
+}
+
+.program-kind-control {
+  width: 100%;
+
+  :deep(.el-segmented__item) {
+    flex: 1;
+  }
 }
 
 .modern-input,

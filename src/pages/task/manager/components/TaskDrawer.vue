@@ -112,8 +112,15 @@
                       v-model:handler="form.grpc_handler"
                       service-placeholder="请选择执行节点"
                       handler-placeholder=""
-                      @service-change="handleServiceSelect"
                       @handler-change="handleHandlerSelect"
+                    />
+                  </el-form-item>
+
+                  <el-form-item v-if="currentHandler?.program_kinds?.length" prop="program" class="program-form-item">
+                    <ProgramSourceEditor
+                      v-model="form.program"
+                      :program-kinds="currentHandler.program_kinds"
+                      :language="form.grpc_handler"
                     />
                   </el-form-item>
 
@@ -258,6 +265,7 @@ import { protocols } from "../composables/useTaskData"
 import KVEditor from "./KVEditor.vue"
 import CronHelper from "./CronHelper.vue"
 import TaskParamsEditor from "./TaskParamsEditor.vue"
+import ProgramSourceEditor from "./ProgramSourceEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
 import ExecutorPicker from "@/common/components/ExecutorPicker/index.vue"
 import { Drawer } from "@@/components/Dialogs"
@@ -282,7 +290,6 @@ const {
   resourceLoading,
   currentHandler,
   rules,
-  handleServiceSelect,
   handleHandlerSelect,
   handleCronSelect,
   handleProtocolChange,

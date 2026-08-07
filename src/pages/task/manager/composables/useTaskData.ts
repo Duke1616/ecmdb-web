@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash-es"
 import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem } from "@/api/task/manager/type"
+import type { ProgramSpec } from "@/api/task/program"
 import { Connection, Link } from "@element-plus/icons-vue"
 
 // ---------------------------------------------------------
@@ -18,12 +19,13 @@ export interface TaskFormState {
   // gRPC 关联配置
   grpc_service: string
   grpc_handler: string
-  grpc_params: Record<string, any>
+  grpc_params: Record<string, string>
+  program?: ProgramSpec
 
   // HTTP 关联配置
   http_endpoint: string
   http_headers: Record<string, string>
-  http_params: Record<string, any>
+  http_params: Record<string, string>
 
   // 超时与退避重试
   retry_enabled: boolean
@@ -33,8 +35,8 @@ export interface TaskFormState {
   max_execution_seconds: number
 
   // 分布式调度系统内置扩展属性
-  schedule_params: Record<string, any>
-  metadata: Record<string, any>
+  schedule_params: Record<string, string>
+  metadata: Record<string, string>
 }
 
 // ---------------------------------------------------------
@@ -61,6 +63,7 @@ export const createDefaultFormState = (): TaskFormState => ({
   grpc_service: "",
   grpc_handler: "",
   grpc_params: {},
+  program: undefined,
   http_endpoint: "",
   http_headers: {},
   http_params: {},
@@ -102,6 +105,8 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
     state.grpc_handler = data.grpc_config.handler_name || ""
     state.grpc_params = cloneDeep(data.grpc_config.params) ?? {}
   }
+
+  state.program = cloneDeep(data.program)
 
   if (data.http_config) {
     state.http_endpoint = data.http_config.endpoint || ""
@@ -154,6 +159,10 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
       headers: cloneDeep(state.http_headers),
       params: cloneDeep(state.http_params)
     }
+  }
+
+  if (state.program) {
+    payload.program = cloneDeep(state.program)
   }
 
   if (state.retry_enabled) {

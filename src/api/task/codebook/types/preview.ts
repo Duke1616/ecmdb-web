@@ -1,3 +1,5 @@
+import type { ProgramSpec } from "@/api/task/program"
+
 export interface PreviewVariable {
   key: string
   value: string
@@ -5,9 +7,8 @@ export interface PreviewVariable {
 }
 
 export interface RunPreviewReq {
-  codebook_id: number
   runner_id: number
-  code: string
+  program: ProgramSpec
   args: string
   variables: PreviewVariable[]
   max_execution_seconds: number

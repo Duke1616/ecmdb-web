@@ -1,3 +1,5 @@
+import type { ProgramKind } from "../../program"
+
 export enum ResourceKind {
   Executor = "EXECUTOR",
   Agent = "AGENT"
@@ -40,6 +42,7 @@ export interface HandlerDetail {
   name: string
   desc: string
   metadata?: Parameter[]
+  program_kinds?: ProgramKind[]
 }
 
 export interface NodeDetail {

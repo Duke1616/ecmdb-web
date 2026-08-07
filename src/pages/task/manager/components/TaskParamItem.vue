@@ -29,19 +29,8 @@
           <transition name="morph-fade" mode="out-in">
             <div :key="activeMode" class="w-full">
               <template v-if="currentBinding">
-                <!-- A: 脚本库选择器 (codebook-picker) -->
-                <template v-if="currentBinding.component === 'codebook-picker'">
-                  <CodebookPicker
-                    :model-value="modelValue ? Number(modelValue) : undefined"
-                    variant="element"
-                    class="inspector-select w-full"
-                    :placeholder="currentBinding.placeholder || '从代码库中选择代码'"
-                    @update:model-value="handleValueChange"
-                  />
-                </template>
-
-                <!-- B: 代码编辑器 (code-editor) -->
-                <template v-else-if="currentBinding.component === 'code-editor'">
+                <!-- A: 代码编辑器 (code-editor) -->
+                <template v-if="currentBinding.component === 'code-editor'">
                   <div class="embedded-editor-container" :class="{ 'is-fullscreen': isFullScreen }">
                     <div class="editor-toolbar">
                       <div class="toolbar-left">
@@ -80,13 +69,11 @@
 
                 <!-- X: 执行单元关联 (runner-picker) -->
                 <template v-else-if="currentBinding.component === 'runner-picker'">
-                  <div class="codebook-selector-wrapper">
-                    <RunnerSelector
-                      :model-value="modelValue ? Number(modelValue) : undefined"
-                      @update:model-value="handleValueChange"
-                      :placeholder="currentBinding.placeholder || '请选择执行单元...'"
-                    />
-                  </div>
+                  <RunnerSelector
+                    :model-value="modelValue ? Number(modelValue) : undefined"
+                    @update:model-value="handleValueChange"
+                    :placeholder="currentBinding.placeholder || '请选择执行单元...'"
+                  />
                 </template>
 
                 <!-- E: 通用输入容错回退 (如: text/input/未识别类型) -->
@@ -115,7 +102,6 @@
 import { computed } from "vue"
 import { FullScreen, Close, Link } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
-import CodebookPicker from "@@/components/CodebookPicker/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/task/resource/type"
 import KVEditor from "./KVEditor.vue"
@@ -427,8 +413,7 @@ const mapValue = computed({
   }
 }
 
-.inspector-input,
-.inspector-select {
+.inspector-input {
   :deep(.el-input__wrapper) {
     box-shadow: none !important;
     border: 1px solid #e2e8f0;
@@ -453,10 +438,6 @@ const mapValue = computed({
     font-size: 13px;
     color: #1e293b;
   }
-}
-
-.inspector-select :deep(.el-input__wrapper) {
-  cursor: pointer;
 }
 
 .morph-fade-enter-active,
