@@ -61,7 +61,8 @@
                     <el-icon><Calendar /></el-icon>{{ formatTimestamp(item.start_time).split(" ")[0] }}
                   </div>
                   <div class="meta-item" v-if="item.executor_node_id">
-                    <el-icon><Coordinate /></el-icon>{{ item.executor_node_id }}
+                    <el-icon><Coordinate /></el-icon>
+                    <span class="node-id">{{ item.executor_node_id }}</span>
                   </div>
                 </div>
                 <div class="time-track">
@@ -140,6 +141,8 @@ defineExpose({ initData })
 
   .execution-sidebar {
     width: 320px;
+    flex: 0 0 320px;
+    min-width: 0;
     border-right: 1px solid #f1f5f9;
     background: #f8fafc;
     display: flex;
@@ -222,6 +225,7 @@ defineExpose({ initData })
         }
         .item-content {
           flex: 1;
+          min-width: 0;
           padding: 12px 14px;
           display: flex;
           flex-direction: column;
@@ -255,12 +259,20 @@ defineExpose({ initData })
             display: flex;
             gap: 12px;
             .meta-item {
+              min-width: 0;
               display: flex;
               align-items: center;
               gap: 4px;
               font-size: 11px;
               color: #94a3b8;
               font-weight: 500;
+
+              .node-id {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
             }
           }
           .time-track {

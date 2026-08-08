@@ -149,6 +149,7 @@ defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalTh
 .code-mirror {
   height: 100%;
   width: 100%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -287,7 +288,9 @@ defineExpose({ getCode, setCode, formatCode, handleThemeChange: handleExternalTh
 
   .editor-panel {
     flex: 1;
+    min-width: 0;
     min-height: 0;
+    overflow: hidden;
   }
 }
 </style>

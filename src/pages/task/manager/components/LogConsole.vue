@@ -100,10 +100,12 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
 <style scoped lang="scss">
 .log-console-container {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: #fff;
   min-height: 0;
+  overflow: hidden;
 }
 .main-header {
   padding: 10px 24px;
@@ -146,6 +148,7 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
 }
 .console-body {
   flex: 1;
+  min-width: 0;
   padding: 0 24px 24px 24px;
   display: flex;
   flex-direction: column;
@@ -173,6 +176,8 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
   }
   .terminal-view {
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     background: #020617;
     border-radius: 12px;
     overflow: hidden;
@@ -182,6 +187,7 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
     flex-direction: column;
     .terminal-editor {
       flex: 1;
+      min-width: 0;
       height: 100%;
       :deep(.cm-editor) {
         height: 100%;
