@@ -39,14 +39,7 @@
           </span>
         </div>
         <div class="terminal-view">
-          <CodeEditor
-            v-if="fullLogs"
-            ref="editorRef"
-            :code="fullLogs"
-            language="text"
-            :read-only="true"
-            class="terminal-editor"
-          />
+          <AnsiTerminal v-if="fullLogs" ref="terminalRef" :content="fullLogs" class="terminal-editor" />
           <el-empty v-else description="该实例暂无日志流" />
         </div>
       </div>
@@ -66,7 +59,7 @@
 import { ref } from "vue"
 import { Refresh, Coordinate, Monitor, Clock, Pointer } from "@element-plus/icons-vue"
 import type { TaskExecutionVO } from "@/api/task/manager/type"
-import CodeEditor from "@/common/components/CodeEditor/index.vue"
+import AnsiTerminal from "@/common/components/AnsiTerminal/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import type { TagInfo } from "@/common/components/EnumTag/index.vue"
 import { useLogConsoleStream } from "../composables/useLogConsoleStream"
@@ -80,7 +73,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const editorRef = ref<InstanceType<typeof CodeEditor>>()
+const terminalRef = ref<InstanceType<typeof AnsiTerminal>>()
 
 const STATUS_MAP: Record<string, TagInfo> = {
   RUNNING: { type: "primary", text: "进行中" },
@@ -93,7 +86,7 @@ const STATUS_MAP: Record<string, TagInfo> = {
 const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRunning, resetAndFetch } =
   useLogConsoleStream(
     () => props.execution,
-    () => editorRef.value?.scrollToBottom()
+    () => terminalRef.value?.scrollToBottom()
   )
 </script>
 
@@ -188,12 +181,8 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
     .terminal-editor {
       flex: 1;
       min-width: 0;
+      min-height: 0;
       height: 100%;
-      :deep(.cm-editor) {
-        height: 100%;
-        font-family: "Fira Code", monospace;
-        font-size: 13px;
-      }
     }
     :deep(.el-empty) {
       margin: auto;

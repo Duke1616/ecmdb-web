@@ -7,8 +7,9 @@ export interface ExecutionLogEntry {
 
 /** 创建一个同时支持历史补齐和实时追加的日志累加器。 */
 export function createExecutionLogAccumulator() {
-  const entries = new Map<number, string>()
+  const entries = new Map<number, { raw: string; plain: string }>()
   let content = ""
+  let rawContent = ""
   let visibleCursor = 0
   let fetchedCursor = 0
 
@@ -17,16 +18,19 @@ export function createExecutionLogAccumulator() {
     if (additions.length === 0) return false
 
     const needsRebuild = additions[0].id < visibleCursor
-    for (const log of additions) entries.set(log.id, stripAnsi(log.content))
+    for (const log of additions) {
+      entries.set(log.id, { raw: log.content, plain: stripAnsi(log.content) })
+    }
 
     if (needsRebuild) {
-      content = [...entries.entries()]
-        .sort(([left], [right]) => left - right)
-        .map(([, value]) => value)
-        .join("\n")
+      const ordered = [...entries.entries()].sort(([left], [right]) => left - right)
+      content = ordered.map(([, value]) => value.plain).join("\n")
+      rawContent = ordered.map(([, value]) => value.raw).join("\n")
     } else {
-      const appended = additions.map((log) => entries.get(log.id) || "").join("\n")
-      content = content ? `${content}\n${appended}` : appended
+      const appendedPlain = additions.map((log) => entries.get(log.id)?.plain || "").join("\n")
+      const appendedRaw = additions.map((log) => entries.get(log.id)?.raw || "").join("\n")
+      content = content ? `${content}\n${appendedPlain}` : appendedPlain
+      rawContent = rawContent ? `${rawContent}\n${appendedRaw}` : appendedRaw
     }
     visibleCursor = Math.max(visibleCursor, ...additions.map((log) => log.id))
     return true
@@ -42,11 +46,15 @@ export function createExecutionLogAccumulator() {
     reset() {
       entries.clear()
       content = ""
+      rawContent = ""
       visibleCursor = 0
       fetchedCursor = 0
     },
     get content() {
       return content
+    },
+    get rawContent() {
+      return rawContent
     },
     get fetchedCursor() {
       return fetchedCursor

@@ -45,5 +45,6 @@ describe("执行日志累加器", () => {
     ])
 
     expect(accumulator.content).toBe("Demo 变量校验通过\nPLAY RECAP")
+    expect(accumulator.rawContent).toBe("\u001B[0;32mDemo 变量校验通过\u001B[0m\n\u001B]0;Ansible Demo\u0007PLAY RECAP")
   })
 })

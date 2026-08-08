@@ -36,7 +36,7 @@ export function useLogConsoleStream(execution: () => TaskExecutionVO | null, edi
   }
 
   return {
-    fullLogs: logStream.content,
+    fullLogs: logStream.rawContent,
     loading: logStream.loading,
     lastRefreshTime: logStream.lastSyncTime,
     autoRefresh,

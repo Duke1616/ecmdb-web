@@ -31,6 +31,7 @@ export function useExecutionLogStream(options: UseExecutionLogStreamOptions) {
   const maxPagesPerSync = options.maxPagesPerSync ?? 10
   const accumulator = createExecutionLogAccumulator()
   const content = ref("")
+  const rawContent = ref("")
   const loading = ref(false)
   const hasMore = ref(false)
   const lastSyncTime = ref("")
@@ -41,6 +42,7 @@ export function useExecutionLogStream(options: UseExecutionLogStreamOptions) {
 
   const publish = () => {
     content.value = accumulator.content
+    rawContent.value = accumulator.rawContent
     lastSyncTime.value = new Date().toLocaleTimeString()
     options.onUpdated?.()
   }
@@ -49,6 +51,7 @@ export function useExecutionLogStream(options: UseExecutionLogStreamOptions) {
     generation += 1
     accumulator.reset()
     content.value = ""
+    rawContent.value = ""
     loading.value = false
     hasMore.value = false
     lastSyncTime.value = ""
@@ -109,5 +112,5 @@ export function useExecutionLogStream(options: UseExecutionLogStreamOptions) {
     }
   })
 
-  return { content, loading, hasMore, lastSyncTime, lastFetchedAt, sync, reset }
+  return { content, rawContent, loading, hasMore, lastSyncTime, lastFetchedAt, sync, reset }
 }
