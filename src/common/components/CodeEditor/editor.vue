@@ -25,6 +25,7 @@
 <script setup lang="ts">
 import { reactive, shallowRef, computed, watch } from "vue"
 import { EditorView, ViewUpdate } from "@codemirror/view"
+import type { Extension } from "@codemirror/state"
 import { Codemirror } from "vue-codemirror"
 
 interface Props {
@@ -37,6 +38,7 @@ interface Props {
   theme: any
   language: any
   tabSize: number
+  extraExtensions?: Extension[]
 }
 
 const props = defineProps<Props>()
@@ -77,6 +79,8 @@ const extensions = computed(() => {
       console.error("Error adding theme:", error)
     }
   }
+
+  if (props.extraExtensions?.length) result.push(...props.extraExtensions)
 
   return result
 })

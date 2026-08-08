@@ -39,7 +39,15 @@
           </span>
         </div>
         <div class="terminal-view">
-          <AnsiTerminal v-if="fullLogs" ref="terminalRef" :content="fullLogs" class="terminal-editor" />
+          <CodeEditor
+            v-if="fullLogs"
+            ref="editorRef"
+            :code="fullLogs"
+            language="text"
+            :read-only="true"
+            :ansi="true"
+            class="terminal-editor"
+          />
           <el-empty v-else description="该实例暂无日志流" />
         </div>
       </div>
@@ -59,7 +67,7 @@
 import { ref } from "vue"
 import { Refresh, Coordinate, Monitor, Clock, Pointer } from "@element-plus/icons-vue"
 import type { TaskExecutionVO } from "@/api/task/manager/type"
-import AnsiTerminal from "@/common/components/AnsiTerminal/index.vue"
+import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import type { TagInfo } from "@/common/components/EnumTag/index.vue"
 import { useLogConsoleStream } from "../composables/useLogConsoleStream"
@@ -73,7 +81,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const terminalRef = ref<InstanceType<typeof AnsiTerminal>>()
+const editorRef = ref<InstanceType<typeof CodeEditor>>()
 
 const STATUS_MAP: Record<string, TagInfo> = {
   RUNNING: { type: "primary", text: "进行中" },
@@ -86,7 +94,7 @@ const STATUS_MAP: Record<string, TagInfo> = {
 const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRunning, resetAndFetch } =
   useLogConsoleStream(
     () => props.execution,
-    () => terminalRef.value?.scrollToBottom()
+    () => editorRef.value?.scrollToBottom()
   )
 </script>
 
@@ -183,6 +191,11 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
       min-width: 0;
       min-height: 0;
       height: 100%;
+      :deep(.cm-editor) {
+        height: 100%;
+        font-family: "Fira Code", monospace;
+        font-size: 13px;
+      }
     }
     :deep(.el-empty) {
       margin: auto;

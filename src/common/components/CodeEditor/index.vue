@@ -6,7 +6,8 @@
         :config="config"
         :theme="currentTheme"
         :language="getLanguageFunction()"
-        :code="props.code ?? getDefaultCode()"
+        :code="displayCode"
+        :extra-extensions="ansiExtensions"
         :tabSize="props.language === 'shell' ? 2 : 4"
         @update:code="handleCodeUpdate"
       />
@@ -26,6 +27,7 @@ import Editor from "./editor.vue"
 import * as themes from "./themes"
 import { useTheme, Theme } from "@@/composables/theme"
 import { python } from "@codemirror/lang-python"
+import { createAnsiDecorations, parseAnsiText } from "./ansi"
 
 // 接收父组建传递
 interface Props {
@@ -36,6 +38,7 @@ interface Props {
   showPreview?: boolean // 是否显示预览
   previewContent?: string // 预览内容
   readOnly?: boolean // 是否只读
+  ansi?: boolean
 }
 
 const props = defineProps<Props>()
@@ -47,6 +50,9 @@ const emit = defineEmits<{
 
 // 预览状态 - 使用外部传入的状态
 const showPreview = computed(() => props.showPreview || false)
+const ansiContent = computed(() => (props.ansi ? parseAnsiText(props.code) : undefined))
+const displayCode = computed(() => ansiContent.value?.text ?? props.code ?? getDefaultCode())
+const ansiExtensions = computed(() => (ansiContent.value ? [createAnsiDecorations(ansiContent.value.spans)] : []))
 
 const config = reactive({
   disabled: props.readOnly || false,
