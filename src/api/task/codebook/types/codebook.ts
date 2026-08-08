@@ -98,6 +98,12 @@ export interface listCodebookReq {
   limit: number
 }
 
+export type CodebookProjectStatus = "NORMAL" | "ARCHIVED"
+
+export interface ListProjectsReq extends listCodebookReq {
+  status?: CodebookProjectStatus
+}
+
 export interface childrenCodebookReq {
   project_id: number
   parent_id: number
@@ -170,7 +176,7 @@ export interface CodebookProject {
   name: string
   desc: string
   sort_no: number
-  status: string
+  status: CodebookProjectStatus
   artifact_enabled: boolean
   artifact_namespace: string
   source_revision: number

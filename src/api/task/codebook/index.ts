@@ -130,7 +130,7 @@ export function createProjectApi(data: codebook.CreateProjectReq) {
 }
 
 /** 项目列表 */
-export function listProjectApi(data: codebook.listCodebookReq) {
+export function listProjectApi(data: codebook.ListProjectsReq) {
   return instance.post<codebook.projects>({
     url: `${API_SERVICE.TASK}/codebook/project/list`,
     data: data
@@ -169,9 +169,16 @@ export function getCodebookPreviewLogsApi(data: preview.PreviewLogsReq) {
   })
 }
 
-/** 删除项目 */
-export function deleteProjectApi(id: number) {
-  return instance.delete<number>({
-    url: `${API_SERVICE.TASK}/codebook/project/delete/${id}`
+/** 归档项目 */
+export function archiveProjectApi(id: number) {
+  return instance.post<number>({
+    url: `${API_SERVICE.TASK}/codebook/project/archive/${id}`
+  })
+}
+
+/** 恢复已归档项目 */
+export function restoreProjectApi(id: number) {
+  return instance.post<number>({
+    url: `${API_SERVICE.TASK}/codebook/project/restore/${id}`
   })
 }
