@@ -57,10 +57,10 @@
               <el-scrollbar>
                 <div
                   v-for="p in projects"
-                  :key="p.id"
+                  :key="`${p.scope}:${p.id}`"
                   class="project-sidebar-item"
-                  :class="{ 'is-active': activeProjectId === p.id }"
-                  @click.stop="selectProject(p.id)"
+                  :class="{ 'is-active': activeProjectId === p.id && activeProjectScope === p.scope }"
+                  @click.stop="selectProject(p.id, p.scope)"
                 >
                   <div class="project-item-meta">
                     <el-icon class="project-node-icon"><Box /></el-icon>
@@ -123,7 +123,7 @@ import { Box, Folder, Search, ArrowRight, ArrowDown, Close } from "@element-plus
 import { listProjectApi, treeCodebookApi, detailCodebookApi } from "@/api/task/codebook"
 import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
-import type { codebook } from "@/api/task/codebook/types/codebook"
+import type { codebook, CodebookScope } from "@/api/task/codebook/types/codebook"
 import fileIcon from "@/common/assets/icons/preserve-color/file.svg"
 import pythonIcon from "@/common/assets/icons/preserve-color/python.svg"
 import shellIcon from "@/common/assets/icons/preserve-color/shell.svg"
@@ -137,7 +137,7 @@ interface CodebookPickerProps {
   variant?: "fancy" | "simple" | "element"
   pageSize?: number
   projectId?: number
-  scope?: string
+  scope?: CodebookScope
   includeDirectories?: boolean
   displayPath?: boolean
   clearable?: boolean
@@ -155,7 +155,7 @@ const props = withDefaults(defineProps<CodebookPickerProps>(), {
   variant: "element",
   pageSize: 10,
   projectId: undefined,
-  scope: "",
+  scope: "TENANT",
   includeDirectories: false,
   displayPath: false,
   clearable: false,
@@ -177,6 +177,7 @@ const dialogVisible = ref(false)
 const searchQuery = ref("")
 const projects = ref<any[]>([])
 const activeProjectId = ref<number | null>(null)
+const activeProjectScope = ref<CodebookScope>("TENANT")
 const codebookTree = ref<any[]>([])
 
 const selectedItem = ref<any>(null)
@@ -284,8 +285,10 @@ const loadProjects = async () => {
     const { data } = await listProjectApi({ offset: 0, limit: 1000 })
     projects.value = data.projects || []
     if (projects.value.length > 0 && activeProjectId.value === null) {
-      activeProjectId.value = projects.value[0].id
-      await loadProjectTree(projects.value[0].id)
+      const firstProject = projects.value[0]
+      activeProjectId.value = firstProject.id
+      activeProjectScope.value = firstProject.scope
+      await loadProjectTree(firstProject.id, firstProject.scope)
     }
   } catch (e) {
     console.error("加载项目列表失败", e)
@@ -301,10 +304,10 @@ const findNode = (nodes: any[], id: number): any | null => {
   return null
 }
 
-const loadProjectTree = async (projId: number) => {
+const loadProjectTree = async (projId: number, scope: CodebookScope) => {
   treeLoading.value = true
   try {
-    const { data } = await treeCodebookApi(projId)
+    const { data } = await treeCodebookApi(projId, scope)
     const projectRoot = data.nodes.find((node) => node.layer === "PROJECT")
     codebookTree.value = (projectRoot?.children || []).map((node) => workspaceNodeToCodebook(node))
   } catch (e) {
@@ -315,10 +318,11 @@ const loadProjectTree = async (projId: number) => {
   }
 }
 
-const selectProject = async (projId: number) => {
+const selectProject = async (projId: number, scope: CodebookScope) => {
   activeProjectId.value = projId
+  activeProjectScope.value = scope
   searchQuery.value = ""
-  await loadProjectTree(projId)
+  await loadProjectTree(projId, scope)
 }
 
 // ── 交互选择 ─────────────────────────────────────────────────────────────
@@ -327,7 +331,8 @@ const openDialog = async () => {
   dialogVisible.value = true
   if (props.projectId) {
     activeProjectId.value = props.projectId
-    await loadProjectTree(props.projectId)
+    activeProjectScope.value = props.scope
+    await loadProjectTree(props.projectId, props.scope)
     return
   }
   await loadProjects()
@@ -372,7 +377,8 @@ const resolveSelectedItem = async (codebookId: number) => {
     if (props.projectId) {
       if (activeProjectId.value !== props.projectId || codebookTree.value.length === 0) {
         activeProjectId.value = props.projectId
-        await loadProjectTree(props.projectId)
+        activeProjectScope.value = props.scope
+        await loadProjectTree(props.projectId, props.scope)
       }
       const projectFile = findNode(codebookTree.value, codebookId)
       if (projectFile) {
@@ -387,7 +393,7 @@ const resolveSelectedItem = async (codebookId: number) => {
         const { data: projData } = await listProjectApi({ offset: 0, limit: 1000 })
         projects.value = projData.projects || []
       }
-      const proj = projects.value.find((p) => p.id === data.project_id)
+      const proj = projects.value.find((p) => p.id === data.project_id && p.scope === data.scope)
       selectedItemProjectName.value = proj ? proj.name : `项目 #${data.project_id}`
     }
   } catch (e) {

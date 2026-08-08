@@ -2,6 +2,7 @@
   <CodebookPicker
     :model-value="selectedCodebookId"
     :project-id="projectId"
+    :scope="projectScope"
     :disabled="!projectId || loading"
     display-path
     clearable
@@ -17,7 +18,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue"
 import { detailCodebookApi, treeCodebookApi } from "@/api/task/codebook"
-import type { codebook, WorkspaceNode } from "@/api/task/codebook/types/codebook"
+import type { codebook, CodebookScope, WorkspaceNode } from "@/api/task/codebook/types/codebook"
 import CodebookPicker from "@/common/components/CodebookPicker/index.vue"
 
 const props = defineProps<{
@@ -30,6 +31,7 @@ const emit = defineEmits<{
 
 const files = ref<WorkspaceNode[]>([])
 const projectId = ref<number>()
+const projectScope = ref<CodebookScope>("TENANT")
 const selectedCodebookId = ref<number>()
 const loading = ref(false)
 let requestVersion = 0
@@ -53,9 +55,10 @@ watch(
     loading.value = true
     try {
       const { data: entry } = await detailCodebookApi(entryCodebookId)
-      const { data: workspace } = await treeCodebookApi(entry.project_id)
+      const { data: workspace } = await treeCodebookApi(entry.project_id, entry.scope)
       if (version !== requestVersion) return
       projectId.value = entry.project_id
+      projectScope.value = entry.scope
       const projectRoot = workspace.nodes.find((node) => node.layer === "PROJECT")
       files.value = flattenFiles(projectRoot?.children || [])
       syncSelection()
