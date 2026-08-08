@@ -2,7 +2,6 @@
   <div
     class="generic-picker-container"
     :class="{ 'is-disabled': disabled, 'is-project-scoped': !!projectId }"
-    @click="openDialog"
   >
     <el-input
       :model-value="displayValue"
@@ -11,6 +10,7 @@
       :disabled="disabled"
       :size="size"
       class="premium-codebook-trigger"
+      @click="openDialog"
     >
       <template #prefix v-if="selectedItem">
         <img class="codebook-icon-prefix" :src="getCodebookIcon(selectedItem.name)" alt="" />
@@ -53,14 +53,22 @@
         <div class="picker-panel-body">
           <div class="main-content-layout">
             <!-- 左侧项目列表 -->
-            <div v-if="!projectId" class="sidebar-projects-list">
-              <el-scrollbar>
+            <div v-if="!projectId" v-loading="projectsLoading" class="sidebar-projects-list">
+              <el-input
+                v-model="projectKeyword"
+                :prefix-icon="Search"
+                clearable
+                placeholder="搜索项目，按回车"
+                class="project-search-input"
+                @keyup.enter="handleProjectSearch"
+              />
+              <el-scrollbar class="project-list-scrollbar">
                 <div
                   v-for="p in projects"
-                  :key="`${p.scope}:${p.id}`"
+                  :key="p.id"
                   class="project-sidebar-item"
-                  :class="{ 'is-active': activeProjectId === p.id && activeProjectScope === p.scope }"
-                  @click.stop="selectProject(p.id, p.scope)"
+                  :class="{ 'is-active': activeProjectId === p.id }"
+                  @click.stop="selectProject(p.id)"
                 >
                   <div class="project-item-meta">
                     <el-icon class="project-node-icon"><Box /></el-icon>
@@ -69,7 +77,21 @@
                   </div>
                   <el-icon class="arrow-right-icon"><ArrowRight /></el-icon>
                 </div>
+                <div v-if="projects.length === 0 && !projectsLoading" class="project-empty">暂无匹配项目</div>
               </el-scrollbar>
+              <div class="project-pagination">
+                <span class="project-pagination-total">共 {{ projectsTotal }} 项</span>
+                <el-pagination
+                  small
+                  layout="prev, next"
+                  prev-text="上一页"
+                  next-text="下一页"
+                  :current-page="projectPage"
+                  :page-size="projectPageSize"
+                  :total="projectsTotal"
+                  @current-change="handleProjectPageChange"
+                />
+              </div>
             </div>
 
             <!-- 右侧脚本树形浏览区 -->
@@ -121,7 +143,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { Box, Folder, Search, ArrowRight, ArrowDown, Close } from "@element-plus/icons-vue"
-import { listProjectApi, treeCodebookApi, detailCodebookApi } from "@/api/task/codebook"
+import { detailCodebookApi, listReferenceProjectsApi, treeCodebookApi } from "@/api/task/codebook"
 import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
 import type { CodebookProject, codebook, CodebookScope } from "@/api/task/codebook/types/codebook"
@@ -177,14 +199,19 @@ const model = defineModel<number | number[]>()
 const dialogVisible = ref(false)
 const searchQuery = ref("")
 const projects = ref<CodebookProject[]>([])
+const projectsLoading = ref(false)
+const projectsTotal = ref(0)
+const projectKeyword = ref("")
+const projectOffset = ref(0)
 const activeProjectId = ref<number | null>(null)
-const activeProjectScope = ref<CodebookScope>("TENANT")
 const codebookTree = ref<any[]>([])
 
 const selectedItem = ref<any>(null)
-const selectedItemProjectName = ref("")
 
 const treeLoading = ref(false)
+const projectPageSize = computed(() => Math.min(100, Math.max(1, props.pageSize)))
+const projectPage = computed(() => Math.floor(projectOffset.value / projectPageSize.value) + 1)
+let projectRequestVersion = 0
 
 const treeProps = {
   label: "name",
@@ -281,31 +308,49 @@ const getCodebookIcon = (name: string) => {
 }
 
 // ── 项目/树加载 ───────────────────────────────────────────────────────────
-const loadSelectableProjects = async () => {
-  const [systemResponse, normalResponse, archivedResponse] = await Promise.all([
-    listProjectApi({ offset: 0, limit: 1000, scope: "SYSTEM" }),
-    listProjectApi({ offset: 0, limit: 1000, scope: "TENANT", status: "NORMAL" }),
-    listProjectApi({ offset: 0, limit: 1000, scope: "TENANT", status: "ARCHIVED" })
-  ])
-  return [
-    ...(systemResponse.data.projects || []),
-    ...(normalResponse.data.projects || []),
-    ...(archivedResponse.data.projects || [])
-  ]
-}
-
 const loadProjects = async () => {
+  const requestVersion = ++projectRequestVersion
+  projectsLoading.value = true
   try {
-    projects.value = await loadSelectableProjects()
-    if (projects.value.length > 0 && activeProjectId.value === null) {
+    const { data } = await listReferenceProjectsApi({
+      keyword: projectKeyword.value.trim(),
+      offset: projectOffset.value,
+      limit: projectPageSize.value
+    })
+    if (requestVersion !== projectRequestVersion) return
+    projects.value = data.projects || []
+    projectsTotal.value = data.total || 0
+    const activeProject = projects.value.find((project) => project.id === activeProjectId.value)
+    if (!activeProject) {
       const firstProject = projects.value[0]
+      if (!firstProject) {
+        activeProjectId.value = null
+        codebookTree.value = []
+        return
+      }
       activeProjectId.value = firstProject.id
-      activeProjectScope.value = firstProject.scope
-      await loadProjectTree(firstProject.id, firstProject.scope)
+      await loadProjectTree(firstProject.id)
     }
   } catch (e) {
+    if (requestVersion !== projectRequestVersion) return
     console.error("加载项目列表失败", e)
+    projects.value = []
+    projectsTotal.value = 0
+    activeProjectId.value = null
+    codebookTree.value = []
+  } finally {
+    if (requestVersion === projectRequestVersion) projectsLoading.value = false
   }
+}
+
+const handleProjectSearch = () => {
+  projectOffset.value = 0
+  loadProjects()
+}
+
+const handleProjectPageChange = (page: number) => {
+  projectOffset.value = (page - 1) * projectPageSize.value
+  loadProjects()
 }
 
 const findNode = (nodes: any[], id: number): any | null => {
@@ -317,7 +362,7 @@ const findNode = (nodes: any[], id: number): any | null => {
   return null
 }
 
-const loadProjectTree = async (projId: number, scope: CodebookScope) => {
+const loadProjectTree = async (projId: number, scope?: CodebookScope) => {
   treeLoading.value = true
   try {
     const { data } = await treeCodebookApi(projId, scope)
@@ -331,11 +376,10 @@ const loadProjectTree = async (projId: number, scope: CodebookScope) => {
   }
 }
 
-const selectProject = async (projId: number, scope: CodebookScope) => {
+const selectProject = async (projId: number) => {
   activeProjectId.value = projId
-  activeProjectScope.value = scope
   searchQuery.value = ""
-  await loadProjectTree(projId, scope)
+  await loadProjectTree(projId)
 }
 
 // ── 交互选择 ─────────────────────────────────────────────────────────────
@@ -344,7 +388,6 @@ const openDialog = async () => {
   dialogVisible.value = true
   if (props.projectId) {
     activeProjectId.value = props.projectId
-    activeProjectScope.value = props.scope
     await loadProjectTree(props.projectId, props.scope)
     return
   }
@@ -367,7 +410,6 @@ const selectFile = (item: any) => {
 const clearSelection = () => {
   model.value = undefined
   selectedItem.value = null
-  selectedItemProjectName.value = ""
   emit("change", null)
 }
 
@@ -382,7 +424,6 @@ watch(dialogVisible, (visible) => {
 const resolveSelectedItem = async (codebookId: number) => {
   if (!codebookId || codebookId <= 0) {
     selectedItem.value = null
-    selectedItemProjectName.value = ""
     return
   }
 
@@ -390,7 +431,6 @@ const resolveSelectedItem = async (codebookId: number) => {
     if (props.projectId) {
       if (activeProjectId.value !== props.projectId || codebookTree.value.length === 0) {
         activeProjectId.value = props.projectId
-        activeProjectScope.value = props.scope
         await loadProjectTree(props.projectId, props.scope)
       }
       const projectFile = findNode(codebookTree.value, codebookId)
@@ -401,13 +441,6 @@ const resolveSelectedItem = async (codebookId: number) => {
     }
     const { data } = await detailCodebookApi(codebookId)
     selectedItem.value = data
-    if (data && data.project_id) {
-      if (projects.value.length === 0) {
-        projects.value = await loadSelectableProjects()
-      }
-      const proj = projects.value.find((p) => p.id === data.project_id && p.scope === data.scope)
-      selectedItemProjectName.value = proj ? proj.name : `项目 #${data.project_id}`
-    }
   } catch (e) {
     console.error("解析回显脚本失败", e)
   }
@@ -421,11 +454,11 @@ watch(
       await resolveSelectedItem(id)
     } else {
       selectedItem.value = null
-      selectedItemProjectName.value = ""
     }
   },
   { immediate: true }
 )
+
 </script>
 
 <style scoped lang="scss">
@@ -575,11 +608,59 @@ watch(
 
 // 左侧项目列表
 .sidebar-projects-list {
+  display: flex;
+  flex-direction: column;
   width: 216px;
-  padding: 10px;
+  min-height: 0;
   background: #f8fafc;
   border-right: 1px solid #e2e8f0;
   flex-shrink: 0;
+
+  .project-search-input {
+    flex-shrink: 0;
+    padding: 12px 12px 10px;
+
+    :deep(.el-input__wrapper) {
+      min-height: 34px;
+      padding: 0 10px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+
+      &:hover {
+        border-color: #cbd5e1;
+      }
+
+      &.is-focus {
+        border-color: #93b4f8;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
+      }
+    }
+
+    :deep(.el-input__prefix-inner) {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    :deep(.el-input__inner) {
+      font-size: 13px;
+      color: #334155;
+
+      &::placeholder {
+        color: #94a3b8;
+      }
+    }
+  }
+
+  .project-list-scrollbar {
+    flex: 1;
+    min-height: 0;
+    padding: 0 10px 10px;
+  }
 
   .project-sidebar-item {
     display: flex;
@@ -646,6 +727,56 @@ watch(
     color: #94a3b8;
     opacity: 0;
     transition: opacity 0.2s;
+  }
+
+  .project-empty {
+    padding: 32px 12px;
+    color: #94a3b8;
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .project-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    min-height: 48px;
+    padding: 8px 10px 8px 14px;
+    background: rgba(255, 255, 255, 0.72);
+    border-top: 1px solid #e2e8f0;
+
+    .project-pagination-total {
+      color: #94a3b8;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    :deep(.el-pagination) {
+      --el-pagination-button-bg-color: transparent;
+      --el-pagination-hover-color: #2563eb;
+      padding: 0;
+    }
+
+    :deep(.btn-prev),
+    :deep(.btn-next) {
+      min-width: auto;
+      height: 28px;
+      margin: 0 1px;
+      padding: 0 6px;
+      color: #64748b;
+      font-size: 12px;
+      border-radius: 6px;
+
+      &:not(:disabled):hover {
+        background: #eaf2ff;
+      }
+
+      &:disabled {
+        color: #94a3b8;
+        opacity: 0.72;
+      }
+    }
   }
 }
 

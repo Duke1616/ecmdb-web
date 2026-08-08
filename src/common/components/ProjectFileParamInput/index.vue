@@ -55,7 +55,10 @@ watch(
     loading.value = true
     try {
       const { data: entry } = await detailCodebookApi(entryCodebookId)
-      const { data: workspace } = await treeCodebookApi(entry.project_id, entry.scope)
+      const { data: workspace } = await treeCodebookApi(
+        entry.project_id,
+        entry.scope === "SYSTEM" ? "SYSTEM" : undefined
+      )
       if (version !== requestVersion) return
       projectId.value = entry.project_id
       projectScope.value = entry.scope

@@ -101,8 +101,13 @@ export interface listCodebookReq {
 export type CodebookProjectStatus = "NORMAL" | "ARCHIVED"
 
 export interface ListProjectsReq extends listCodebookReq {
+  keyword?: string
   status?: CodebookProjectStatus
   scope?: CodebookScope
+}
+
+export interface ListReferenceProjectsReq extends listCodebookReq {
+  keyword?: string
 }
 
 export interface childrenCodebookReq {

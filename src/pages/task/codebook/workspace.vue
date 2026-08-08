@@ -657,7 +657,10 @@ async function fetchChildren(parentID: number, workspaceKey?: string) {
 async function fetchTreeData() {
   treeLoading.value = true
   try {
-    const { data } = await treeCodebookApi(activeProjectId.value, activeProjectScope.value)
+    const { data } = await treeCodebookApi(
+      activeProjectId.value,
+      activeProjectScope.value === "SYSTEM" ? "SYSTEM" : undefined
+    )
     treeRawData.value = data.nodes || []
   } finally {
     treeLoading.value = false

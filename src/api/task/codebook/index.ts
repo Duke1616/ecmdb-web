@@ -36,10 +36,10 @@ export function childrenCodebookApi(data: codebook.childrenCodebookReq) {
 }
 
 /** 资源树 */
-export function treeCodebookApi(projectId: number, scope: codebook.CodebookScope) {
+export function treeCodebookApi(projectId: number, scope?: codebook.CodebookScope) {
   return instance.get<codebook.WorkspaceTreeResp>({
     url: `${API_SERVICE.TASK}/codebook/tree/${projectId}`,
-    params: { scope }
+    params: scope === "SYSTEM" ? { scope } : undefined
   })
 }
 
@@ -135,6 +135,14 @@ export function listProjectApi(data: codebook.ListProjectsReq) {
   return instance.post<codebook.projects>({
     url: `${API_SERVICE.TASK}/codebook/project/list`,
     data: data
+  })
+}
+
+/** 可引用项目列表，包含当前租户的正常和归档项目 */
+export function listReferenceProjectsApi(data: codebook.ListReferenceProjectsReq) {
+  return instance.post<codebook.projects>({
+    url: `${API_SERVICE.TASK}/codebook/project/references`,
+    data
   })
 }
 
