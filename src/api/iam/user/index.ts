@@ -162,7 +162,7 @@ export function oidcCallbackApi(data: user.OidcCallbackRequest) {
 
 /** 获取 Passkey 登录选项 (Challenge) */
 export function passkeyLoginStartApi() {
-  return instance.post<user.PasskeyOptionsResponse>({
+  return instance.post<user.PasskeyLoginOptionsResponse>({
     url: `${API_SERVICE.IAM}/user/passkey/login/start`
   })
 }
@@ -180,7 +180,7 @@ export function passkeyLoginFinishApi(data: AuthenticationResponseJSON, headers?
 
 /** 获取 Passkey 注册选项 (Challenge) */
 export function passkeyRegisterStartApi() {
-  return instance.post<user.PasskeyOptionsResponse>({
+  return instance.post<user.PasskeyRegisterOptionsResponse>({
     url: `${API_SERVICE.IAM}/user/passkey/register/start`
   })
 }

@@ -6,9 +6,16 @@ import type {
   AuthenticationResponseJSON
 } from "@simplewebauthn/browser"
 
-export interface PasskeyOptionsResponse {
+export interface PasskeyRegisterOptionsResponse {
   options: {
-    publicKey: PublicKeyCredentialCreationOptionsJSON | PublicKeyCredentialRequestOptionsJSON
+    publicKey: PublicKeyCredentialCreationOptionsJSON
+  }
+  session_token: string
+}
+
+export interface PasskeyLoginOptionsResponse {
+  options: {
+    publicKey: PublicKeyCredentialRequestOptionsJSON
   }
   session_token: string
 }

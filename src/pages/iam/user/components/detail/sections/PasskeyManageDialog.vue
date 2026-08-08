@@ -43,8 +43,7 @@ const handleBindPasskey = async () => {
   loading.value = true
   try {
     const { data } = await passkeyRegisterStartApi()
-    const creationOptions = (data.options.publicKey || data.options) as any
-    const attestationResponse = await startRegistration(creationOptions)
+    const attestationResponse = await startRegistration({ optionsJSON: data.options.publicKey })
     await passkeyRegisterFinishApi(attestationResponse, {
       "X-Passkey-Session": data.session_token
     })

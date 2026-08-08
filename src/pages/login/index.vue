@@ -328,9 +328,7 @@ const handlePasskeyLogin = async () => {
     // 2. 唤起设备生物识别 / 硬件密钥验证
     let asseResp
     try {
-      // 提取真正的 WebAuthn 配置
-      const authOptions = (options.publicKey || options) as any
-      asseResp = await startAuthentication({ optionsJSON: authOptions })
+      asseResp = await startAuthentication({ optionsJSON: options.publicKey })
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "NotAllowedError") {
         ElMessage.warning("用户取消了验证或设备不支持")
