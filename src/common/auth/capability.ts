@@ -557,7 +557,9 @@ export const TASK_CAPABILITIES = {
     /** 归档项目 */
     ArchiveProject: "task:codebook:delete_project",
     /** 恢复项目 */
-    RestoreProject: "task:codebook:restore_project"
+    RestoreProject: "task:codebook:restore_project",
+    /** 删除项目 */
+    DeleteProject: "task:codebook:purge_project"
   },
 
   /** Codebook AI 助手相关 */

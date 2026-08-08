@@ -6,7 +6,7 @@
         <div class="directory-title-text">
           <div class="directory-title-row">
             <h3>{{ activeDirectory.name || "全部资源" }}</h3>
-            <el-tooltip v-if="isReadonly" content="已发布制品，只读" placement="top" :show-after="300">
+            <el-tooltip v-if="isReadonly" content="资源只读" placement="top" :show-after="300">
               <el-icon class="readonly-lock"><Lock /></el-icon>
             </el-tooltip>
             <span class="directory-kind">Directory</span>
@@ -84,7 +84,7 @@
           <strong>{{ item.name }}</strong>
           <small>{{ item.kind === "DIRECTORY" ? "目录" : fileDescription(item) }}</small>
         </span>
-        <el-tooltip v-if="isReadonlyCodebook(item)" content="已发布制品，只读" placement="top" :show-after="300">
+        <el-tooltip v-if="isReadonly || isReadonlyCodebook(item)" content="资源只读" placement="top" :show-after="300">
           <el-icon class="resource-readonly-lock"><Lock /></el-icon>
         </el-tooltip>
         <el-tag v-if="item.kind === 'FILE'" size="small" effect="plain">{{ getFileExt(item.name) || "file" }}</el-tag>

@@ -36,9 +36,10 @@ export function childrenCodebookApi(data: codebook.childrenCodebookReq) {
 }
 
 /** 资源树 */
-export function treeCodebookApi(projectId: number) {
+export function treeCodebookApi(projectId: number, scope?: codebook.CodebookScope) {
   return instance.get<codebook.WorkspaceTreeResp>({
-    url: `${API_SERVICE.TASK}/codebook/tree/${projectId}`
+    url: `${API_SERVICE.TASK}/codebook/tree/${projectId}`,
+    params: { scope }
   })
 }
 
@@ -180,5 +181,20 @@ export function archiveProjectApi(id: number) {
 export function restoreProjectApi(id: number) {
   return instance.post<number>({
     url: `${API_SERVICE.TASK}/codebook/project/restore/${id}`
+  })
+}
+
+/** 查询项目删除影响 */
+export function getProjectDeleteImpactApi(id: number) {
+  return instance.get<codebook.ProjectDeleteImpact>({
+    url: `${API_SERVICE.TASK}/codebook/project/delete-impact/${id}`
+  })
+}
+
+/** 删除项目 */
+export function deleteProjectApi(id: number, projectName: string) {
+  return instance.delete<number>({
+    url: `${API_SERVICE.TASK}/codebook/project/delete/${id}`,
+    data: { project_name: projectName } satisfies codebook.ProjectDeleteReq
   })
 }

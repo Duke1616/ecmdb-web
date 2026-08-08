@@ -2,7 +2,7 @@
   <div v-if="visible" class="context-menu" :style="{ top: y + 'px', left: x + 'px' }">
     <div v-if="readonly" class="menu-readonly">
       <span class="readonly-dot" />
-      <span>系统资源只读</span>
+      <span>资源只读</span>
     </div>
     <div v-if="!readonly && target?.kind === 'DIRECTORY'" class="menu-group">
       <div

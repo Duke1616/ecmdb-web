@@ -6,85 +6,84 @@
     @refresh="fetchProjects"
     @primary-action="handleCreate"
   >
-    <template #search>
-      <el-segmented
-        v-model="projectStatus"
-        :options="projectStatusOptions"
-        class="project-status-filter"
-        @change="handleProjectStatusChange"
-      />
-    </template>
-
-    <DataTable
-      :data="projectsList"
-      :columns="tableColumns"
-      :show-selection="false"
-      :show-pagination="true"
-      :loading="projectsLoading"
-      :total="projectsTotal"
-      :page-size="projectLimit"
-      :current-page="projectPage"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
+    <CustomTabs
+      :tabs="projectTabs"
+      :default-active="projectView"
+      class="project-tabs"
+      @tab-change="handleProjectViewChange"
     >
-      <template #name="{ row }">
-        <div class="project-name-cell" :class="{ 'is-archived': isArchivedProject(row) }" @click="selectProject(row)">
-          <el-icon class="folder-icon"><FolderOpened /></el-icon>
-          <span class="project-name-main">
-            <span class="project-name-text">{{ row.name }}</span>
-            <el-tag v-if="isArchivedProject(row)" type="info" size="small" effect="plain">已归档</el-tag>
-            <el-tooltip v-if="isSystemProject(row)" content="系统项目，只读" placement="top" :show-after="300">
-              <el-icon class="project-readonly-lock"><Lock /></el-icon>
-            </el-tooltip>
-          </span>
-        </div>
-      </template>
-
-      <template #desc="{ row }">
-        <div class="project-desc-cell">
-          <el-tooltip :content="row.desc" placement="top" :show-after="300">
-            <span class="project-desc-text">{{ row.desc || "-" }}</span>
-          </el-tooltip>
-        </div>
-      </template>
-
-      <template #ctime="{ row }">
-        <span class="time-text">{{ formatProjectTime(row.ctime) }}</span>
-      </template>
-
-      <template #artifact="{ row }">
-        <div v-if="isSystemProject(row)" class="minimal-status primary project-type-status">
-          <span class="dot" />
-          <span class="text">SYSTEM 公共库</span>
-        </div>
-        <el-tooltip
-          v-else-if="row.artifact_enabled"
-          :content="`导入命名空间：${row.artifact_namespace}`"
-          placement="top"
-          :show-after="250"
-        >
-          <div class="minimal-status success project-type-status is-artifact">
-            <span class="dot" />
-            <span class="text">制品库</span>
+      <DataTable
+        :data="projectsList"
+        :columns="tableColumns"
+        :show-selection="false"
+        :show-action-column="projectView !== 'public'"
+        :show-pagination="true"
+        :loading="projectsLoading"
+        :total="projectsTotal"
+        :page-size="projectLimit"
+        :current-page="projectPage"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      >
+        <template #name="{ row }">
+          <div class="project-name-cell" :class="{ 'is-archived': isArchivedProject(row) }" @click="selectProject(row)">
+            <el-icon class="folder-icon"><FolderOpened /></el-icon>
+            <span class="project-name-main">
+              <span class="project-name-text">{{ row.name }}</span>
+              <el-tooltip v-if="isPublicProject(row)" content="公共库，只读" placement="top" :show-after="300">
+                <el-icon class="project-readonly-lock"><Lock /></el-icon>
+              </el-tooltip>
+            </span>
           </div>
-        </el-tooltip>
-        <div v-else class="minimal-status info project-type-status">
-          <span class="dot" />
-          <span class="text">普通项目</span>
-        </div>
-      </template>
+        </template>
 
-      <template #actions="{ row }">
-        <OperateBtn
-          :items="getOperateItems(row)"
-          :operate-item="row"
-          :max-length="2"
-          @routeEvent="handleOperateEvent"
-        />
-      </template>
-    </DataTable>
+        <template #desc="{ row }">
+          <div class="project-desc-cell">
+            <el-tooltip :content="row.desc" placement="top" :show-after="300">
+              <span class="project-desc-text">{{ row.desc || "-" }}</span>
+            </el-tooltip>
+          </div>
+        </template>
+
+        <template #ctime="{ row }">
+          <span class="time-text">{{ formatProjectTime(row.ctime) }}</span>
+        </template>
+
+        <template #artifact="{ row }">
+          <div v-if="isPublicProject(row)" class="minimal-status primary project-type-status">
+            <span class="dot" />
+            <span class="text">公共库</span>
+          </div>
+          <el-tooltip
+            v-else-if="row.artifact_enabled"
+            :content="`导入命名空间：${row.artifact_namespace}`"
+            placement="top"
+            :show-after="250"
+          >
+            <div class="minimal-status success project-type-status is-artifact">
+              <span class="dot" />
+              <span class="text">制品库</span>
+            </div>
+          </el-tooltip>
+          <div v-else class="minimal-status info project-type-status">
+            <span class="dot" />
+            <span class="text">普通项目</span>
+          </div>
+        </template>
+
+        <template #actions="{ row }">
+          <OperateBtn
+            :items="getOperateItems(row)"
+            :operate-item="row"
+            :max-length="2"
+            @routeEvent="handleOperateEvent"
+          />
+        </template>
+      </DataTable>
+    </CustomTabs>
 
     <ProjectArtifactManager ref="artifactManagerRef" />
+    <ProjectDeleteDialog ref="deleteDialogRef" @refresh="fetchProjects" />
 
     <FormDialog
       v-model="projectDialogVisible"
@@ -178,6 +177,7 @@ import { useRouter } from "vue-router"
 import {
   Box,
   Clock,
+  Delete,
   Edit,
   Folder,
   FolderDelete,
@@ -189,9 +189,11 @@ import {
 } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "element-plus"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
+import CustomTabs from "@@/components/Tabs/CustomTabs.vue"
 import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@/common/components/OperateBtn/index.vue"
 import ProjectArtifactManager from "@/pages/task/artifact/components/ProjectArtifactManager.vue"
+import ProjectDeleteDialog from "@/pages/task/codebook/components/ProjectDeleteDialog.vue"
 import { FormDialog } from "@/common/components/Dialogs"
 import { usePagination } from "@/common/composables/usePagination"
 import { formatTimestamp } from "@/common/utils/day"
@@ -203,7 +205,12 @@ import {
   restoreProjectApi,
   updateProjectApi
 } from "@/api/task/codebook"
-import type { CodebookProject, CodebookProjectStatus } from "@/api/task/codebook/types/codebook"
+import type {
+  CodebookProject,
+  CodebookProjectStatus,
+  CodebookScope,
+  ListProjectsReq
+} from "@/api/task/codebook/types/codebook"
 import type { Column } from "@@/components/DataTable/types"
 
 const router = useRouter()
@@ -230,16 +237,25 @@ const projectLimit = computed({
 const projectsList = ref<CodebookProject[]>([])
 const projectsTotal = ref(0)
 const projectsLoading = ref(false)
-const projectStatus = ref<CodebookProjectStatus>("NORMAL")
-const projectStatusOptions = [
-  { label: "当前项目", value: "NORMAL" },
-  { label: "归档项目", value: "ARCHIVED" }
+type ProjectView = "current" | "archived" | "public"
+interface ProjectTab {
+  name: ProjectView
+  label: string
+  scope: CodebookScope
+  status?: CodebookProjectStatus
+}
+const projectView = ref<ProjectView>("current")
+const projectTabs: ProjectTab[] = [
+  { label: "当前项目", name: "current", scope: "TENANT", status: "NORMAL" },
+  { label: "已归档", name: "archived", scope: "TENANT", status: "ARCHIVED" },
+  { label: "公共库", name: "public", scope: "SYSTEM" }
 ]
 
 // 项目弹窗相关状态
 const projectDialogVisible = ref(false)
 const projectFormRef = ref<FormInstance>()
 const artifactManagerRef = ref<InstanceType<typeof ProjectArtifactManager>>()
+const deleteDialogRef = ref<InstanceType<typeof ProjectDeleteDialog>>()
 const projectForm = ref({
   id: undefined as number | undefined,
   name: "",
@@ -280,6 +296,13 @@ const projectOperateItems = [
     type: "danger",
     icon: FolderDelete,
     capability: TASK_CAPABILITIES.Codebook.ArchiveProject
+  },
+  {
+    name: "删除",
+    code: "delete",
+    type: "danger",
+    icon: Delete,
+    capability: TASK_CAPABILITIES.Codebook.DeleteProject
   }
 ]
 const archivedProjectOperateItems = [
@@ -289,15 +312,30 @@ const archivedProjectOperateItems = [
     type: "primary",
     icon: RefreshLeft,
     capability: TASK_CAPABILITIES.Codebook.RestoreProject
+  },
+  {
+    name: "删除",
+    code: "delete",
+    type: "danger",
+    icon: Delete,
+    capability: TASK_CAPABILITIES.Codebook.DeleteProject
   }
 ]
+const artifactHistoryOperateItem = {
+  name: "历史",
+  code: "history",
+  type: "primary",
+  icon: Clock,
+  capability: TASK_CAPABILITIES.Artifact.View
+}
 const artifactOperateItems = [
   { name: "发布", code: "publish", type: "primary", icon: Upload, capability: TASK_CAPABILITIES.Artifact.Publish },
-  { name: "历史", code: "history", type: "primary", icon: Clock, capability: TASK_CAPABILITIES.Artifact.View },
+  artifactHistoryOperateItem,
   ...projectOperateItems
 ]
+const archivedArtifactOperateItems = [artifactHistoryOperateItem, ...archivedProjectOperateItems]
 
-function isSystemProject(row?: Pick<CodebookProject, "scope"> | null) {
+function isPublicProject(row?: Pick<CodebookProject, "scope"> | null) {
   return row?.scope === "SYSTEM"
 }
 
@@ -305,13 +343,13 @@ function isArchivedProject(row?: Pick<CodebookProject, "status"> | null) {
   return row?.status === "ARCHIVED"
 }
 
-function warnSystemProject() {
-  ElMessage.warning("系统项目为只读资源，不能进行变更操作")
+function warnPublicProject() {
+  ElMessage.warning("公共库为只读资源，不能进行变更操作")
 }
 
 function getOperateItems(row: CodebookProject) {
-  if (isSystemProject(row)) return []
-  if (isArchivedProject(row)) return archivedProjectOperateItems
+  if (isPublicProject(row)) return []
+  if (isArchivedProject(row)) return row.artifact_enabled ? archivedArtifactOperateItems : archivedProjectOperateItems
   return row.artifact_enabled ? artifactOperateItems : projectOperateItems
 }
 
@@ -319,11 +357,14 @@ function getOperateItems(row: CodebookProject) {
 async function fetchProjects() {
   projectsLoading.value = true
   try {
-    const { data } = await listProjectApi({
+    const view = projectTabs.find((tab) => tab.name === projectView.value) ?? projectTabs[0]
+    const query: ListProjectsReq = {
       offset: (projectPage.value - 1) * projectLimit.value,
       limit: projectLimit.value,
-      status: projectStatus.value
-    })
+      scope: view.scope,
+      status: view.status
+    }
+    const { data } = await listProjectApi(query)
     projectsList.value = data.projects || []
     projectsTotal.value = data.total || 0
     paginationData.total = data.total || 0
@@ -349,8 +390,8 @@ function handleCreate() {
 }
 
 function handleEdit(row: CodebookProject) {
-  if (isSystemProject(row)) {
-    warnSystemProject()
+  if (isPublicProject(row)) {
+    warnPublicProject()
     return
   }
   projectForm.value = {
@@ -364,8 +405,8 @@ function handleEdit(row: CodebookProject) {
 }
 
 function handleArchiveProject(row: CodebookProject) {
-  if (isSystemProject(row)) {
-    warnSystemProject()
+  if (isPublicProject(row)) {
+    warnPublicProject()
     return
   }
   ElMessageBox({
@@ -373,7 +414,7 @@ function handleArchiveProject(row: CodebookProject) {
     message: h("p", null, [
       h("span", null, "确认归档项目 "),
       h("i", { style: "color: #dc2626" }, `“${row.name}”`),
-      h("span", null, "？项目内容会完整保留，引用该项目的任务将停止调度；恢复项目后需手动重新启动任务。")
+      h("span", null, "？归档后项目保持可用，已有任务不受影响，但项目内容将只读，恢复后可继续编辑。")
     ]),
     confirmButtonText: "确认归档",
     cancelButtonText: "取消",
@@ -386,7 +427,7 @@ function handleArchiveProject(row: CodebookProject) {
 }
 
 function handleRestoreProject(row: CodebookProject) {
-  ElMessageBox.confirm(`确认恢复项目“${row.name}”？恢复后原有脚本和目录将重新可用。`, "恢复确认", {
+  ElMessageBox.confirm(`确认恢复项目“${row.name}”？恢复后可继续修改项目内容。`, "恢复确认", {
     confirmButtonText: "确认恢复",
     cancelButtonText: "取消",
     type: "info"
@@ -403,6 +444,7 @@ function handleOperateEvent(row: CodebookProject, action: string) {
   if (action === "edit") handleEdit(row)
   if (action === "archive") handleArchiveProject(row)
   if (action === "restore") handleRestoreProject(row)
+  if (action === "delete") deleteDialogRef.value?.open(row)
 }
 
 async function saveProject() {
@@ -410,8 +452,8 @@ async function saveProject() {
   const editingProject = projectForm.value.id
     ? projectsList.value.find((item) => item.id === projectForm.value.id)
     : null
-  if (isSystemProject(editingProject)) {
-    warnSystemProject()
+  if (isPublicProject(editingProject)) {
+    warnPublicProject()
     return
   }
   const valid = await projectFormRef.value.validate()
@@ -454,21 +496,21 @@ function handleDialogClosed() {
 }
 
 function selectProject(row: CodebookProject) {
-  if (isArchivedProject(row)) {
-    ElMessage.info("请先恢复项目，再进入项目工作区")
-    return
-  }
   router.push({
     name: "ScriptWorkspace",
     query: {
       id: row.id.toString(),
       name: row.name,
-      scope: row.scope
+      scope: row.scope,
+      status: row.status
     }
   })
 }
 
-function handleProjectStatusChange() {
+function handleProjectViewChange(view: string) {
+  const selectedTab = projectTabs.find((tab) => tab.name === view)
+  if (!selectedTab) return
+  projectView.value = selectedTab.name
   projectPage.value = 1
 }
 
@@ -480,7 +522,7 @@ function formatProjectTime(timestamp?: number) {
 
 // 监听分页变更
 watch(
-  [() => paginationData.currentPage, () => paginationData.pageSize, projectStatus],
+  [() => paginationData.currentPage, () => paginationData.pageSize, projectView],
   () => {
     fetchProjects()
   },
@@ -501,14 +543,14 @@ watch(
 
   &.is-archived {
     color: #64748b;
-    cursor: default;
+    cursor: pointer;
 
     .folder-icon {
       color: #94a3b8;
     }
 
     &:hover {
-      color: #64748b;
+      color: #475569;
     }
   }
 
@@ -522,8 +564,12 @@ watch(
   }
 }
 
-.project-status-filter {
-  min-width: 190px;
+.project-tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .project-desc-cell {

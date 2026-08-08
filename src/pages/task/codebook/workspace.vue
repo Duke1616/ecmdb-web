@@ -9,6 +9,7 @@
         :tree-data="treeData"
         :tree-props="treeProps"
         :tree-loading="treeLoading"
+        :readonly="activeProjectArchived"
         :allow-drag="allowTreeDrag"
         :allow-drop="allowTreeDrop"
         @back="backToProjects"
@@ -42,6 +43,7 @@
           :downloading="downloadingFileId === activeEditor.id"
           :assistant-open="assistantVisible"
           :readonly="isReadonlyCodebook(activeEditor)"
+          :allow-run-when-readonly="activeProjectArchived"
           @select="selectCodebook"
           @close-tab="closeTab"
           @open-version="handleOpenVersionDrawer"
@@ -138,6 +140,7 @@
     <CodebookRunDrawer ref="runDrawerRef" />
     <VersionDrawer
       ref="versionDrawerRef"
+      :readonly="isReadonlyCodebook(activeEditor)"
       @version-created="handleVersionChanged"
       @version-used="handleVersionChanged"
     />
@@ -226,6 +229,7 @@ const router = useRouter()
 const activeProjectId = computed(() => Number(route.query.id || 0))
 const activeProjectName = computed(() => String(route.query.name || ""))
 const activeProjectScope = computed<CodebookScope>(() => (route.query.scope === "SYSTEM" ? "SYSTEM" : "TENANT"))
+const activeProjectArchived = computed(() => route.query.status === "ARCHIVED")
 
 const runnerDrawerRef = ref<InstanceType<typeof RunnerDrawer>>()
 const runDrawerRef = ref<InstanceType<typeof CodebookRunDrawer>>()
@@ -260,6 +264,7 @@ const {
 const { allowTreeDrag, allowTreeDrop, handleTreeNodeDrop } = useCodebookTreeDrag({
   keyword,
   treeLoading,
+  readonly: activeProjectArchived,
   treeRawData: computed(() => flattenWorkspaceTree(treeRawData.value)),
   refreshAll
 })
@@ -298,16 +303,22 @@ const scriptNamePlaceholder = computed(() =>
 )
 
 function isReadonlyCodebook(row?: Pick<codebook, "scope" | "readonly"> | null) {
-  return isReadonlyWorkspaceItem(row)
+  return activeProjectArchived.value || isReadonlyWorkspaceItem(row)
 }
 
 function warnReadonly() {
-  ElMessage.warning("制品依赖为只读资源，不能进行变更操作")
+  ElMessage.warning(
+    activeProjectArchived.value
+      ? "项目已归档，只读不可修改"
+      : activeProjectScope.value === "SYSTEM"
+        ? "公共库为只读资源，不能进行变更操作"
+        : "制品依赖为只读资源，不能进行变更操作"
+  )
 }
 
 function toggleAssistant() {
   if (activeProjectId.value <= 0 || activeProjectScope.value === "SYSTEM") {
-    ElMessage.warning("SYSTEM 组件库暂不支持项目级 AI 对话")
+    ElMessage.warning("公共库暂不支持项目级 AI 对话")
     return
   }
   assistantVisible.value = !assistantVisible.value
@@ -634,7 +645,8 @@ async function fetchChildren(parentID: number, workspaceKey?: string) {
     }
     const { data } = await childrenCodebookApi({
       parent_id: parentID,
-      project_id: activeProjectId.value
+      project_id: activeProjectId.value,
+      scope: activeProjectScope.value
     })
     directoryChildren.value = data.codebooks || []
   } finally {
@@ -645,7 +657,7 @@ async function fetchChildren(parentID: number, workspaceKey?: string) {
 async function fetchTreeData() {
   treeLoading.value = true
   try {
-    const { data } = await treeCodebookApi(activeProjectId.value)
+    const { data } = await treeCodebookApi(activeProjectId.value, activeProjectScope.value)
     treeRawData.value = data.nodes || []
   } finally {
     treeLoading.value = false
@@ -742,10 +754,6 @@ function handleOpenRunDrawer(row: codebook) {
 
 function handleOpenVersionDrawer(row: codebook) {
   if (row.kind !== "FILE" || !row.id) return
-  if (isReadonlyCodebook(row)) {
-    warnReadonly()
-    return
-  }
   versionDrawerRef.value?.open(row)
 }
 

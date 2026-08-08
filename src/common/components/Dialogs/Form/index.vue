@@ -263,6 +263,23 @@ const handleCancel = () => {
       &:active {
         transform: translateY(0);
       }
+
+      &.el-button--danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+
+        &:hover {
+          background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+          box-shadow: 0 6px 16px rgba(220, 38, 38, 0.32);
+        }
+
+        &.is-disabled,
+        &.is-disabled:hover {
+          background: #fca5a5;
+          box-shadow: none;
+          transform: none;
+        }
+      }
     }
   }
 

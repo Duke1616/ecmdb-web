@@ -136,6 +136,8 @@ const emit = defineEmits<{
   (e: "version-created"): void
 }>()
 
+const props = defineProps<{ readonly?: boolean }>()
+
 const visible = ref(false)
 const loading = ref(false)
 const detailLoading = ref(false)
@@ -156,7 +158,7 @@ const versionRules: FormRules = {
 
 const currentVersionID = computed(() => currentCodebook.value?.current_version_id || 0)
 const language = computed(() => inferLanguage(currentCodebook.value?.name || ""))
-const isReadonly = computed(() => isSystemCodebook(currentCodebook.value))
+const isReadonly = computed(() => props.readonly || isSystemCodebook(currentCodebook.value))
 
 const open = async (row: codebook) => {
   currentCodebook.value = row
@@ -197,7 +199,7 @@ async function selectVersion(version: CodebookVersion) {
 
 function openCreateDialog() {
   if (isReadonly.value) {
-    ElMessage.warning("系统资源为只读资源，不能创建版本")
+    ElMessage.warning("当前资源只读，不能创建版本")
     return
   }
   versionForm.value = {
@@ -212,7 +214,7 @@ function openCreateDialog() {
 async function handleCreateVersion() {
   if (!currentCodebook.value?.id || !versionFormRef.value) return
   if (isReadonly.value) {
-    ElMessage.warning("系统资源为只读资源，不能创建版本")
+    ElMessage.warning("当前资源只读，不能创建版本")
     return
   }
   const valid = await versionFormRef.value.validate()
@@ -236,7 +238,7 @@ async function handleCreateVersion() {
 async function handleUseVersion(version: CodebookVersion) {
   if (!currentCodebook.value?.id) return
   if (isReadonly.value) {
-    ElMessage.warning("系统资源为只读资源，不能切换版本")
+    ElMessage.warning("当前资源只读，不能切换版本")
     return
   }
   await ElMessageBox.confirm(`确认将脚本切换到 v${version.version_no} 吗？`, "使用版本", {

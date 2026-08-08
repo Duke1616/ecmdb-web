@@ -5,6 +5,9 @@
       <div class="project-title-badge">
         <span class="project-icon-dot" />
         <span class="project-name" :title="activeProjectName">{{ activeProjectName }}</span>
+        <el-tooltip v-if="readonly" content="项目已归档，只读" placement="top">
+          <el-icon class="readonly-lock"><Lock /></el-icon>
+        </el-tooltip>
       </div>
     </div>
 
@@ -48,7 +51,7 @@
             </el-icon>
             <span class="tree-title">
               <span class="tree-label">{{ data.name }}</span>
-              <el-tooltip v-if="data.readonly" content="已发布制品，只读" placement="top" :show-after="300">
+              <el-tooltip v-if="readonly || data.readonly" content="资源只读" placement="top" :show-after="300">
                 <el-icon class="readonly-lock"><Lock /></el-icon>
               </el-tooltip>
             </span>
@@ -73,6 +76,7 @@ const props = defineProps<{
   treeData: CodebookTreeNode[]
   treeProps: Record<string, string>
   treeLoading: boolean
+  readonly?: boolean
   allowDrag: (node: TreeNodeLike) => boolean
   allowDrop: (draggingNode: TreeNodeLike, dropNode: TreeNodeLike, type: TreeDropType) => boolean
 }>()

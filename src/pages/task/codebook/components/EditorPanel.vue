@@ -16,7 +16,7 @@
             >AI 助手</AuthButton
           >
           <AuthButton
-            v-if="activeEditor.id && !isReadonly && !isDownloadOnly"
+            v-if="activeEditor.id && (!isReadonly || allowRunWhenReadonly) && !isDownloadOnly"
             :capability="capabilities.Preview.Run"
             disableMode
             size="small"
@@ -78,7 +78,7 @@
             </template>
           </el-dropdown>
           <span v-if="isDownloadOnly" class="readonly-hint">该文件不支持在线预览，请使用下载按钮</span>
-          <span v-else-if="isReadonly" class="readonly-hint">已发布制品只读，仅支持查看内容</span>
+          <span v-else-if="isReadonly" class="readonly-hint">当前资源只读，仅支持查看内容</span>
         </div>
       </div>
 
@@ -97,7 +97,7 @@
         >
           <SvgIcon :name="getFileIconName(file.name)" size="14px" class="tab-file-icon" />
           <span class="tab-filename" :title="file.name || '未命名脚本'">{{ file.name || "未命名脚本" }}</span>
-          <el-tooltip v-if="isSystemCodebook(file)" content="已发布制品，只读" placement="top" :show-after="300">
+          <el-tooltip v-if="isReadonly || isSystemCodebook(file)" content="资源只读" placement="top" :show-after="300">
             <el-icon class="tab-readonly-lock"><Lock /></el-icon>
           </el-tooltip>
           <el-tooltip v-else-if="file.download_only" content="仅支持下载" placement="top" :show-after="300">
@@ -186,6 +186,7 @@ const props = defineProps<{
   downloading?: boolean
   assistantOpen?: boolean
   readonly?: boolean
+  allowRunWhenReadonly?: boolean
 }>()
 
 const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeEditor))
@@ -195,12 +196,7 @@ const formattedFileSize = computed(() => formatSize(props.activeEditor.size || 0
 const { hasPermission } = usePermission()
 
 const canOpenVersion = computed(() =>
-  Boolean(
-    props.activeEditor.id &&
-      !isReadonly.value &&
-      !isDownloadOnly.value &&
-      hasPermission(capabilities.Codebook.ViewVersion)
-  )
+  Boolean(props.activeEditor.id && !isDownloadOnly.value && hasPermission(capabilities.Codebook.ViewVersion))
 )
 const canEditMeta = computed(
   () => !isReadonly.value && !isDownloadOnly.value && hasPermission(capabilities.Codebook.Edit)

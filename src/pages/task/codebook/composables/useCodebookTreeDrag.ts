@@ -10,6 +10,7 @@ import { getTreeNodeData, normalizeDropType, type TreeDropType, type TreeNodeLik
 type TreeDragOptions = {
   keyword: Ref<string>
   treeLoading: Ref<boolean>
+  readonly: Ref<boolean>
   treeRawData: Ref<WorkspaceNode[]>
   refreshAll: () => Promise<void>
 }
@@ -21,6 +22,7 @@ export function useCodebookTreeDrag(options: TreeDragOptions) {
     const data = getTreeNodeData(node)
     return Boolean(
       hasPermission(TASK_CAPABILITIES.Codebook.Sort) &&
+        !options.readonly.value &&
         data.layer === "PROJECT" &&
         !data.readonly &&
         data.source_id &&

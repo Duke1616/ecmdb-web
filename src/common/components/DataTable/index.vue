@@ -71,7 +71,7 @@
 
             <!-- 默认操作列 -->
             <el-table-column
-              v-if="actions && actions.length > 0 && !hasActionsSlot"
+              v-if="showActionColumn && actions && actions.length > 0 && !hasActionsSlot"
               :label="actionColumnLabel"
               :width="dynamicActionColumnWidth"
               :fixed="actionColumnFixed"
@@ -89,7 +89,7 @@
 
             <!-- 自定义操作列插槽 -->
             <el-table-column
-              v-if="hasActionsSlot"
+              v-if="showActionColumn && hasActionsSlot"
               :label="actionColumnLabel"
               :width="dynamicActionColumnWidth"
               :fixed="actionColumnFixed"
@@ -145,6 +145,7 @@ interface Props {
   actionColumnLabel?: string
   actionColumnWidth?: string | number
   actionColumnFixed?: "left" | "right" | boolean
+  showActionColumn?: boolean
   tableProps?: Record<string, any>
   loading?: boolean
 
@@ -167,6 +168,7 @@ const props = withDefaults(defineProps<Props>(), {
   showSelection: false,
   actionColumnLabel: "操作",
   actionColumnWidth: 200,
+  showActionColumn: true,
   enableRowDrag: false,
   actionColumnFixed: "right",
   tableProps: () => ({}),

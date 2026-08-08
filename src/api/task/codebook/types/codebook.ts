@@ -102,11 +102,13 @@ export type CodebookProjectStatus = "NORMAL" | "ARCHIVED"
 
 export interface ListProjectsReq extends listCodebookReq {
   status?: CodebookProjectStatus
+  scope?: CodebookScope
 }
 
 export interface childrenCodebookReq {
   project_id: number
   parent_id: number
+  scope?: CodebookScope
 }
 
 export interface treeCodebookReq {
@@ -187,4 +189,22 @@ export interface CodebookProject {
 export interface projects {
   projects: CodebookProject[]
   total: number
+}
+
+export interface ProjectDeleteImpact {
+  task_count: number
+  active_task_count: number
+  codebook_node_count: number
+  codebook_version_count: number
+  artifact_release_count: number
+  artifact_release_bytes: number
+  retained_artifact_release_count: number
+  project_source_count: number
+  project_source_bytes: number
+  retained_project_source_count: number
+  ai_conversation_count: number
+}
+
+export interface ProjectDeleteReq {
+  project_name: string
 }
