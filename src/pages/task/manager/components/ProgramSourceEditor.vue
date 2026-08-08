@@ -172,6 +172,9 @@ const setProjectEntry = (id: number | number[] | undefined) =>
   width: 100%;
 
   :deep(.el-radio-button) {
+    --el-radio-button-checked-bg-color: #eff6ff;
+    --el-radio-button-checked-text-color: #1d4ed8;
+    --el-radio-button-checked-border-color: #3b82f6;
     display: block;
     min-width: 0;
   }
@@ -194,16 +197,29 @@ const setProjectEntry = (id: number | number[] | undefined) =>
       background-color 0.16s ease;
   }
 
-  :deep(.el-radio-button__original-radio:checked + .el-radio-button__inner) {
-    color: #2563eb;
+  :deep(.el-radio-button.is-active .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner) {
+    color: #1d4ed8;
     background: #eff6ff;
-    border-color: #60a5fa !important;
+    border-color: #3b82f6 !important;
     box-shadow: inset 3px 0 0 #3b82f6 !important;
+  }
+
+  :deep(.el-radio-button.is-active .source-option-desc) {
+    color: #64748b;
+  }
+
+  :deep(.el-radio-button__original-radio:focus-visible + .el-radio-button__inner) {
+    outline: none;
   }
 
   :deep(.el-radio-button:not(.is-disabled) .el-radio-button__inner:hover) {
     color: #2563eb;
     border-color: #93c5fd !important;
+  }
+
+  :deep(.el-radio-button.is-active:not(.is-disabled) .el-radio-button__inner:hover) {
+    color: #1d4ed8;
+    border-color: #3b82f6 !important;
   }
 }
 
