@@ -35,4 +35,15 @@ describe("执行日志累加器", () => {
     expect(accumulator.content).toBe("")
     expect(accumulator.fetchedCursor).toBe(0)
   })
+
+  it("清除终端 ANSI 控制序列", () => {
+    const accumulator = createExecutionLogAccumulator()
+
+    accumulator.merge([
+      { id: 1, content: "\u001B[0;32mDemo 变量校验通过\u001B[0m" },
+      { id: 2, content: "\u001B]0;Ansible Demo\u0007PLAY RECAP" }
+    ])
+
+    expect(accumulator.content).toBe("Demo 变量校验通过\nPLAY RECAP")
+  })
 })

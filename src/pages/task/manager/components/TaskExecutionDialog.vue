@@ -133,8 +133,8 @@ defineExpose({ initData })
 <style scoped lang="scss">
 .execution-manager-layout {
   display: flex;
-  height: 100%;
-  min-height: 580px;
+  flex: 1;
+  min-height: 0;
   background: #ffffff;
   border-radius: 0 0 12px 12px;
   overflow: hidden;
@@ -172,6 +172,7 @@ defineExpose({ initData })
     }
     .list-scrollbar {
       flex: 1;
+      min-height: 0;
     }
     .execution-list {
       padding: 10px;

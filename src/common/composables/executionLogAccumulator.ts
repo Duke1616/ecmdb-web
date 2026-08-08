@@ -1,3 +1,5 @@
+import stripAnsi from "strip-ansi"
+
 export interface ExecutionLogEntry {
   id: number
   content: string
@@ -15,7 +17,7 @@ export function createExecutionLogAccumulator() {
     if (additions.length === 0) return false
 
     const needsRebuild = additions[0].id < visibleCursor
-    for (const log of additions) entries.set(log.id, log.content)
+    for (const log of additions) entries.set(log.id, stripAnsi(log.content))
 
     if (needsRebuild) {
       content = [...entries.entries()]
@@ -23,7 +25,7 @@ export function createExecutionLogAccumulator() {
         .map(([, value]) => value)
         .join("\n")
     } else {
-      const appended = additions.map((log) => log.content).join("\n")
+      const appended = additions.map((log) => entries.get(log.id) || "").join("\n")
       content = content ? `${content}\n${appended}` : appended
     }
     visibleCursor = Math.max(visibleCursor, ...additions.map((log) => log.id))
