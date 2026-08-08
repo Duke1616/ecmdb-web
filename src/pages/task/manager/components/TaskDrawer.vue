@@ -143,6 +143,7 @@
                         v-model="form.grpc_params"
                         v-model:task-metadata="form.metadata"
                         :metadata="currentHandler.metadata"
+                        :project-entry-codebook-id="form.program?.project?.entry_codebook_id"
                       />
                       <div v-else class="empty-params">
                         <el-empty :image-size="60" description="未识别到元数据，支持自由 Payload 配置" />

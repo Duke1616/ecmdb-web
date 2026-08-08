@@ -7,6 +7,7 @@
       :model-value="modelValue[p.key] || ''"
       v-model:active-mode="paramModes[p.key]"
       :is-full-screen="!!fullScreenStates[p.key]"
+      :project-entry-codebook-id="projectEntryCodebookId"
       @update:model-value="(val) => onParamUpdate(p.key, val)"
       @toggle-full-screen="toggleFullScreen(p.key)"
     />
@@ -24,6 +25,7 @@ import TaskParamItem from "./TaskParamItem.vue"
  */
 interface Props {
   metadata: Parameter[]
+  projectEntryCodebookId?: number
 }
 
 const props = defineProps<Props>()

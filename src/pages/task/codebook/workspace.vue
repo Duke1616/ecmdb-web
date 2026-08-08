@@ -27,6 +27,7 @@
           :readonly="isReadonlyCodebook(activeEditor)"
           @create-directory="createDirectoryDraft"
           @create-file="createFileDraft"
+          @import-resources="importFilesRef?.open()"
           @delete="handleDelete"
           @select="selectCodebook"
           @sort="handleCodebookSort"
@@ -38,6 +39,7 @@
           :opened-files="openedFiles"
           :saving="saving"
           :detail-loading="detailLoading"
+          :downloading="downloadingFileId === activeEditor.id"
           :assistant-open="assistantVisible"
           :readonly="isReadonlyCodebook(activeEditor)"
           @select="selectCodebook"
@@ -46,6 +48,7 @@
           @open-runner="handleOpenRunnerDrawer"
           @open-meta="openMetaDialog"
           @delete="handleDelete"
+          @download="downloadProjectFile"
           @run="handleOpenRunDrawer"
           @save="saveActiveFile"
           @toggle-assistant="toggleAssistant"
@@ -125,6 +128,13 @@
     </FormDialog>
 
     <RunnerDrawer ref="runnerDrawerRef" />
+    <ImportProjectFiles
+      ref="importFilesRef"
+      :project-id="activeProjectId"
+      :parent-id="currentDirectory.id || 0"
+      :target-name="currentDirectory.name || 'project'"
+      @imported="refreshAll"
+    />
     <CodebookRunDrawer ref="runDrawerRef" />
     <VersionDrawer
       ref="versionDrawerRef"
@@ -157,6 +167,7 @@ import CodebookSidebar from "./components/CodebookSidebar.vue"
 import CodebookRunDrawer from "./components/CodebookRunDrawer.vue"
 import CodeAssistPanel from "./components/codeassist/CodeAssistPanel.vue"
 import DirectoryPanel from "./components/DirectoryPanel.vue"
+import ImportProjectFiles from "./components/ImportProjectFiles.vue"
 import EditorPanel from "./components/EditorPanel.vue"
 import RunnerDrawer from "./components/RunnerDrawer.vue"
 import VersionDrawer from "./components/VersionDrawer.vue"
@@ -190,11 +201,13 @@ import {
   createCodebookApi,
   deleteCodebookApi,
   detailCodebookApi,
+  downloadCodebookFileApi,
   readWorkspaceFileApi,
   sortCodebookApi,
   treeCodebookApi,
   updateCodebookApi
 } from "@/api/task/codebook"
+import { downloadBlob } from "@/common/utils/file"
 import type {
   codebook,
   CodebookScope,
@@ -217,11 +230,13 @@ const activeProjectScope = computed<CodebookScope>(() => (route.query.scope === 
 const runnerDrawerRef = ref<InstanceType<typeof RunnerDrawer>>()
 const runDrawerRef = ref<InstanceType<typeof CodebookRunDrawer>>()
 const versionDrawerRef = ref<InstanceType<typeof VersionDrawer>>()
+const importFilesRef = ref<InstanceType<typeof ImportProjectFiles>>()
 const metaFormRef = ref<FormInstance>()
 const keyword = ref("")
 const treeLoading = ref(false)
 const childrenLoading = ref(false)
 const detailLoading = ref(false)
+const downloadingFileId = ref(0)
 const saving = ref(false)
 const treeRawData = ref<WorkspaceNode[]>([])
 const directoryChildren = ref<codebook[]>([])
@@ -395,23 +410,37 @@ async function selectCodebook(row: codebook) {
 
   detailLoading.value = true
   try {
-    const fileWithDetail = row.release_id
-      ? {
-          ...row,
-          code: (
-            await readWorkspaceFileApi({
-              project_id: activeProjectId.value,
-              release_id: row.release_id,
-              digest: row.digest || "",
-              artifact_path: row.artifact_path || ""
-            })
-          ).data.code
-        }
-      : await detailCodebookApi(row.id).then(({ data }) => ({ ...row, ...data, code: data.code || "" }))
+    const fileWithDetail = row.download_only
+      ? { ...row, code: "" }
+      : row.release_id
+        ? {
+            ...row,
+            code: (
+              await readWorkspaceFileApi({
+                project_id: activeProjectId.value,
+                release_id: row.release_id,
+                digest: row.digest || "",
+                artifact_path: row.artifact_path || ""
+              })
+            ).data.code
+          }
+        : await detailCodebookApi(row.id).then(({ data }) => ({ ...row, ...data, code: data.code || "" }))
     openedFiles.value.push(fileWithDetail)
     activateCodebook(fileWithDetail)
   } finally {
     detailLoading.value = false
+  }
+}
+
+async function downloadProjectFile(file: codebook) {
+  if (!file.id || downloadingFileId.value) return
+  downloadingFileId.value = file.id
+  try {
+    const blob = (await downloadCodebookFileApi(file.id)) as unknown as Blob
+    downloadBlob(blob, file.name)
+    ElMessage.success("文件已开始下载")
+  } finally {
+    downloadingFileId.value = 0
   }
 }
 

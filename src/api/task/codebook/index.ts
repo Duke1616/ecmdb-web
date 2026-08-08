@@ -57,6 +57,24 @@ export function detailCodebookApi(id: number) {
   })
 }
 
+/** 批量导入项目文件或文件夹 */
+export function importCodebookApi(data: FormData) {
+  return instance.post<codebook.ImportCodebookResp>({
+    url: `${API_SERVICE.TASK}/codebook/import`,
+    data,
+    timeout: 10 * 60 * 1000
+  })
+}
+
+/** 下载项目文件当前版本 */
+export function downloadCodebookFileApi(id: number) {
+  return instance.get<Blob>({
+    url: `${API_SERVICE.TASK}/codebook/file/${id}/download`,
+    responseType: "blob",
+    timeout: 10 * 60 * 1000
+  })
+}
+
 /** 排序 */
 export function sortCodebookApi(data: codebook.sortCodebookReq) {
   return instance.post<void>({

@@ -76,6 +76,60 @@
                   />
                 </template>
 
+                <!-- 项目文件选择器 -->
+                <template v-else-if="currentBinding.component === 'project-file-picker'">
+                  <ProjectFileParamInput
+                    :model-value="modelValue || ''"
+                    :project-entry-codebook-id="projectEntryCodebookId"
+                    @update:model-value="handleValueChange"
+                  />
+                </template>
+
+                <!-- 布尔开关 -->
+                <template v-else-if="currentBinding.component === 'boolean-switch'">
+                  <button
+                    type="button"
+                    class="boolean-toggle-row"
+                    :class="{ 'is-on': booleanValue }"
+                    role="switch"
+                    :aria-checked="booleanValue"
+                    :aria-label="parameter.desc"
+                    @click="booleanValue = !booleanValue"
+                  >
+                    <span class="toggle-status">
+                      <span class="status-dot" />
+                      <span>{{ booleanValue ? "已开启" : "当前关闭" }}</span>
+                    </span>
+                    <span class="toggle-action">
+                      <span class="action-text">{{ booleanValue ? "点击关闭" : "点击开启" }}</span>
+                      <span class="toggle-track"><span class="toggle-thumb" /></span>
+                    </span>
+                  </button>
+                </template>
+
+                <!-- 数值输入 -->
+                <template v-else-if="currentBinding.component === 'number-input'">
+                  <el-input-number
+                    v-model="numberValue"
+                    :min="numberRange.min"
+                    :max="numberRange.max"
+                    controls-position="right"
+                    class="inspector-input"
+                  />
+                </template>
+
+                <!-- 单选下拉 -->
+                <template v-else-if="currentBinding.component === 'select-input'">
+                  <el-select v-model="selectValue" class="inspector-input">
+                    <el-option
+                      v-for="option in selectOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
+                </template>
+
                 <!-- E: 通用输入容错回退 (如: text/input/未识别类型) -->
                 <template v-else>
                   <el-input
@@ -105,6 +159,7 @@ import CodeEditor from "@@/components/CodeEditor/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/task/resource/type"
 import KVEditor from "./KVEditor.vue"
+import ProjectFileParamInput from "@/common/components/ProjectFileParamInput/index.vue"
 
 /**
  * NOTE: 该组件为 TaskParamsEditor 的子单元，负责单个参数的视察与编辑
@@ -115,6 +170,7 @@ interface Props {
   modelValue: string
   activeMode: string
   isFullScreen: boolean
+  projectEntryCodebookId?: number
 }
 
 const props = defineProps<Props>()
@@ -138,6 +194,40 @@ const handleValueChange = (val: string | number | number[] | undefined) => {
   }
   emit("update:modelValue", val === undefined ? "" : String(val))
 }
+
+const booleanValue = computed<boolean>({
+  get: () => props.modelValue === "true",
+  set: (value) => emit("update:modelValue", String(value))
+})
+
+const numberValue = computed<number>({
+  get: () => Number(props.modelValue) || 0,
+  set: (value) => emit("update:modelValue", String(value ?? 0))
+})
+
+const numberRange = computed(() => ({
+  min: Number(currentBinding.value?.config?.min) || 0,
+  max: Number(currentBinding.value?.config?.max) || Number.MAX_SAFE_INTEGER
+}))
+
+interface SelectOption {
+  label: string
+  value: string
+}
+
+const selectOptions = computed<SelectOption[]>(() => {
+  try {
+    const value = JSON.parse(currentBinding.value?.config?.options || "[]")
+    return Array.isArray(value) ? value : []
+  } catch {
+    return []
+  }
+})
+
+const selectValue = computed<string>({
+  get: () => props.modelValue,
+  set: (value) => emit("update:modelValue", value)
+})
 
 // 缓存最近一次解析成功的合法字典值，规避 TypeScript 自引用类型推导死锁，并防范非法输入抹除数据
 let lastValidValue: any[] = []
@@ -227,6 +317,111 @@ const mapValue = computed({
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.inspector-input {
+  width: 100%;
+}
+
+.boolean-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 42px;
+  padding: 0 13px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #dbe3ed;
+  border-radius: 8px;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover {
+    border-color: #b8c5d6;
+    background: #fbfdff;
+  }
+
+  &.is-on {
+    color: #2563eb;
+    background: #f5f9ff;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.07);
+  }
+}
+
+.toggle-status,
+.toggle-action {
+  display: flex;
+  align-items: center;
+}
+
+.toggle-status {
+  gap: 8px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  background: #cbd5e1;
+  border-radius: 50%;
+  transition:
+    background-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  .is-on & {
+    background: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  }
+}
+
+.toggle-action {
+  gap: 10px;
+}
+
+.action-text {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+
+  .is-on & {
+    color: #60a5fa;
+  }
+}
+
+.toggle-track {
+  position: relative;
+  width: 38px;
+  height: 22px;
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background-color 0.18s ease;
+
+  .is-on & {
+    background: #3b82f6;
+  }
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: #ffffff;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.22);
+  transition: transform 0.18s ease;
+
+  .is-on & {
+    transform: translateX(16px);
+  }
 }
 
 .source-selector {

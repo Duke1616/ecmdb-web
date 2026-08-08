@@ -26,6 +26,8 @@ export interface codebook {
   owner: string
   kind: CodebookKind
   sort_no: number
+  size?: number
+  download_only?: boolean
   code: string
   secret: string
   current_version_id: number
@@ -63,6 +65,8 @@ export interface WorkspaceNode {
   project_id: number
   parent_id: number
   sort_no: number
+  download_only: boolean
+  size: number
   namespace: string
   children: WorkspaceNode[]
 }
@@ -80,6 +84,11 @@ export interface WorkspaceFileReq {
 
 export interface WorkspaceFileResp {
   code: string
+}
+
+export interface ImportCodebookResp {
+  file_count: number
+  directory_count: number
 }
 
 export interface listCodebookReq {

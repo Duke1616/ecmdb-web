@@ -20,6 +20,16 @@
           :capability="capabilities.Codebook.Add"
           disableMode
           size="small"
+          :icon="Upload"
+          @click="$emit('import-resources')"
+        >
+          导入文件/文件夹
+        </AuthButton>
+        <AuthButton
+          v-if="!isReadonly"
+          :capability="capabilities.Codebook.Add"
+          disableMode
+          size="small"
           :icon="FolderAdd"
           @click="$emit('create-directory')"
           >目录</AuthButton
@@ -72,7 +82,7 @@
         </span>
         <span class="resource-meta">
           <strong>{{ item.name }}</strong>
-          <small>{{ item.kind === "DIRECTORY" ? "目录" : inferLanguage(item.name) }}</small>
+          <small>{{ item.kind === "DIRECTORY" ? "目录" : fileDescription(item) }}</small>
         </span>
         <el-tooltip v-if="isReadonlyCodebook(item)" content="已发布制品，只读" placement="top" :show-after="300">
           <el-icon class="resource-readonly-lock"><Lock /></el-icon>
@@ -91,7 +101,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened, Lock } from "@element-plus/icons-vue"
+import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened, Lock, Upload } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
@@ -112,6 +122,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "create-directory"): void
   (e: "create-file"): void
+  (e: "import-resources"): void
   (e: "delete", row: codebook): void
   (e: "select", row: codebook): void
   (e: "sort", id: number, targetPosition: number): void
@@ -119,6 +130,13 @@ const emit = defineEmits<{
 
 const localChildren = ref<codebook[]>([])
 const isReadonly = computed(() => props.readonly || isReadonlyCodebook(props.activeDirectory))
+
+function fileDescription(item: codebook) {
+  if (!item.download_only) return inferLanguage(item.name)
+  const size = item.size || 0
+  const formatted = size < 1024 * 1024 ? `${(size / 1024).toFixed(1)} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`
+  return `${formatted} · 仅支持下载`
+}
 
 watch(
   () => props.directoryChildren,

@@ -4,6 +4,7 @@
       <div class="editor-toolbar">
         <div class="editor-primary-actions">
           <AuthButton
+            v-if="!isDownloadOnly"
             :capability="capabilities.CodeAssist.ViewConversation"
             disableMode
             size="small"
@@ -15,7 +16,7 @@
             >AI 助手</AuthButton
           >
           <AuthButton
-            v-if="activeEditor.id && !isReadonly"
+            v-if="activeEditor.id && !isReadonly && !isDownloadOnly"
             :capability="capabilities.Preview.Run"
             disableMode
             size="small"
@@ -25,7 +26,7 @@
             >试运行</AuthButton
           >
           <AuthButton
-            v-if="activeEditor.id && !isReadonly"
+            v-if="activeEditor.id && !isReadonly && !isDownloadOnly"
             :capability="capabilities.Runner.View"
             disableMode
             size="small"
@@ -35,7 +36,7 @@
             >执行单元</AuthButton
           >
           <AuthButton
-            v-if="!isReadonly"
+            v-if="!isReadonly && !isDownloadOnly"
             :capability="capabilities.Codebook.Edit"
             disableMode
             size="small"
@@ -76,7 +77,8 @@
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <span v-if="isReadonly" class="readonly-hint">已发布制品只读，仅支持查看内容</span>
+          <span v-if="isDownloadOnly" class="readonly-hint">该文件不支持在线预览，请使用下载按钮</span>
+          <span v-else-if="isReadonly" class="readonly-hint">已发布制品只读，仅支持查看内容</span>
         </div>
       </div>
 
@@ -98,6 +100,9 @@
           <el-tooltip v-if="isSystemCodebook(file)" content="已发布制品，只读" placement="top" :show-after="300">
             <el-icon class="tab-readonly-lock"><Lock /></el-icon>
           </el-tooltip>
+          <el-tooltip v-else-if="file.download_only" content="仅支持下载" placement="top" :show-after="300">
+            <el-icon class="tab-readonly-lock"><Download /></el-icon>
+          </el-tooltip>
           <el-icon class="tab-close-icon" @click.stop="$emit('close-tab', file)">
             <Close />
           </el-icon>
@@ -106,7 +111,39 @@
     </div>
 
     <div class="editor-body" v-loading="detailLoading">
+      <div v-if="isDownloadOnly" class="download-file-view">
+        <div class="download-file-card">
+          <div class="download-file-icon">
+            <SvgIcon :name="getFileIconName(activeEditor.name)" size="42px" />
+          </div>
+          <div class="download-file-copy">
+            <h3>{{ activeEditor.name }}</h3>
+            <p>此文件以原始格式存储，不支持在浏览器中直接编辑。</p>
+          </div>
+          <div class="download-file-meta">
+            <div>
+              <span>文件类型</span>
+              <strong>{{ fileType }}</strong>
+            </div>
+            <div>
+              <span>文件大小</span>
+              <strong>{{ formattedFileSize }}</strong>
+            </div>
+          </div>
+          <AuthButton
+            :capability="capabilities.Codebook.Detail"
+            disableMode
+            type="primary"
+            :loading="downloading"
+            :icon="Download"
+            @click="$emit('download', activeEditor)"
+          >
+            下载文件
+          </AuthButton>
+        </div>
+      </div>
       <CodeEditor
+        v-else
         :code="activeEditor.code"
         :language="inferLanguage(activeEditor.name)"
         :read-only="isReadonly"
@@ -123,6 +160,7 @@ import {
   Clock,
   Close,
   Delete,
+  Download,
   Edit,
   Lock,
   MagicStick,
@@ -134,7 +172,7 @@ import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import { getFileIconName, inferLanguage } from "../composables/useCodebookFile"
+import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
 import { isSystemCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
@@ -145,21 +183,39 @@ const props = defineProps<{
   openedFiles: codebook[]
   saving: boolean
   detailLoading: boolean
+  downloading?: boolean
   assistantOpen?: boolean
   readonly?: boolean
 }>()
 
 const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeEditor))
+const isDownloadOnly = computed(() => Boolean(props.activeEditor.download_only))
+const fileType = computed(() => getFileExt(props.activeEditor.name).toUpperCase() || "FILE")
+const formattedFileSize = computed(() => formatSize(props.activeEditor.size || 0))
 const { hasPermission } = usePermission()
 
 const canOpenVersion = computed(() =>
-  Boolean(props.activeEditor.id && !isReadonly.value && hasPermission(capabilities.Codebook.ViewVersion))
+  Boolean(
+    props.activeEditor.id &&
+      !isReadonly.value &&
+      !isDownloadOnly.value &&
+      hasPermission(capabilities.Codebook.ViewVersion)
+  )
 )
-const canEditMeta = computed(() => !isReadonly.value && hasPermission(capabilities.Codebook.Edit))
+const canEditMeta = computed(
+  () => !isReadonly.value && !isDownloadOnly.value && hasPermission(capabilities.Codebook.Edit)
+)
 const canDelete = computed(() =>
   Boolean(props.activeEditor.id && !isReadonly.value && hasPermission(capabilities.Codebook.Delete))
 )
 const hasMoreActions = computed(() => canOpenVersion.value || canEditMeta.value || canDelete.value)
+
+function formatSize(value: number) {
+  if (value < 1024) return `${value} B`
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
+  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`
+  return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`
+}
 
 defineEmits<{
   (e: "select", row: codebook): void
@@ -168,6 +224,7 @@ defineEmits<{
   (e: "open-runner", row: codebook): void
   (e: "open-meta", row: codebook): void
   (e: "delete", row: codebook): void
+  (e: "download", row: codebook): void
   (e: "run", row: codebook): void
   (e: "toggle-assistant"): void
   (e: "save"): void
@@ -363,6 +420,84 @@ defineEmits<{
   flex: 1;
   min-height: 0;
   background: #fff;
+}
+
+.download-file-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 32px;
+  box-sizing: border-box;
+  background: #f8fafc;
+}
+
+.download-file-card {
+  display: flex;
+  align-items: center;
+  width: min(560px, 100%);
+  flex-direction: column;
+  padding: 38px;
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 8%);
+  text-align: center;
+}
+
+.download-file-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 18px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+}
+
+.download-file-copy {
+  h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 8px 0 22px;
+    color: #64748b;
+    font-size: 13px;
+  }
+}
+
+.download-file-meta {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+
+  span {
+    color: #94a3b8;
+    font-size: 11px;
+  }
+
+  strong {
+    color: #334155;
+    font-size: 13px;
+  }
 }
 
 .readonly-hint {

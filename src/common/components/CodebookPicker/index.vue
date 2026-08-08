@@ -1,5 +1,9 @@
 <template>
-  <div class="generic-picker-container" :class="{ 'is-disabled': disabled }" @click="openDialog">
+  <div
+    class="generic-picker-container"
+    :class="{ 'is-disabled': disabled, 'is-project-scoped': !!projectId }"
+    @click="openDialog"
+  >
     <el-input
       :model-value="displayValue"
       readonly
@@ -12,18 +16,22 @@
         <img class="codebook-icon-prefix" :src="getCodebookIcon(selectedItem.name)" alt="" />
       </template>
       <template #suffix>
-        <el-icon class="arrow-icon-suffix"><ArrowDown /></el-icon>
+        <el-icon v-if="clearable && selectedItem" class="clear-icon-suffix" @click.stop="clearSelection">
+          <Close />
+        </el-icon>
+        <el-icon v-else class="arrow-icon-suffix"><ArrowDown /></el-icon>
       </template>
     </el-input>
 
     <BaseDialog
       v-model="dialogVisible"
-      width="820px"
+      :width="projectId ? '680px' : '820px'"
       type="custom"
       :show-close="true"
       :close-on-click-modal="false"
       destroy-on-close
-      full-height
+      :full-height="!projectId"
+      :top="projectId ? '10vh' : '15vh'"
     >
       <template #header>
         <div class="picker-dialog-header">
@@ -31,17 +39,21 @@
             <el-icon><Box /></el-icon>
           </div>
           <div class="header-text">
-            <h3>选择任务模板</h3>
-            <p>从项目目录中选择需要绑定的脚本模板</p>
+            <h3>{{ dialogTitle }}</h3>
+            <p>{{ dialogDescription }}</p>
           </div>
         </div>
       </template>
 
-      <div class="codebook-picker-dialog">
+      <div
+        class="codebook-picker-dialog"
+        :class="{ 'is-compact': !!projectId }"
+        :style="projectId ? { height: compactDialogHeight } : undefined"
+      >
         <div class="picker-panel-body">
           <div class="main-content-layout">
             <!-- 左侧项目列表 -->
-            <div class="sidebar-projects-list">
+            <div v-if="!projectId" class="sidebar-projects-list">
               <el-scrollbar>
                 <div
                   v-for="p in projects"
@@ -63,9 +75,10 @@
             <div class="tree-explorer-pane" v-loading="treeLoading">
               <div class="tree-pane-header">
                 <div class="tree-pane-title">
-                  <span>目录结构</span>
+                  <span>{{ projectId ? "项目文件" : "目录结构" }}</span>
+                  <small v-if="projectId">{{ projectFileCount }} 个文件</small>
                 </div>
-                <el-input v-model="searchQuery" placeholder="搜索当前项目脚本" clearable class="tree-search-input">
+                <el-input v-model="searchQuery" :placeholder="searchPlaceholder" clearable class="tree-search-input">
                   <template #prefix>
                     <el-icon class="search-icon"><Search /></el-icon>
                   </template>
@@ -78,6 +91,7 @@
                   node-key="id"
                   :props="treeProps"
                   :default-expanded-keys="searchExpandedKeys"
+                  :current-node-key="selectedItem?.id"
                   highlight-current
                   :expand-on-click-node="false"
                   class="explorer-tree"
@@ -93,10 +107,7 @@
                 </el-tree>
               </el-scrollbar>
               <div class="empty-state-card" v-else>
-                <el-empty
-                  :description="searchQuery.trim() ? '未匹配到当前项目脚本' : '该项目下无脚本模板'"
-                  :image-size="60"
-                />
+                <el-empty :description="searchQuery.trim() ? '未匹配到项目文件' : emptyDescription" :image-size="60" />
               </div>
             </div>
           </div>
@@ -108,7 +119,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
-import { Box, Folder, Search, ArrowRight, ArrowDown } from "@element-plus/icons-vue"
+import { Box, Folder, Search, ArrowRight, ArrowDown, Close } from "@element-plus/icons-vue"
 import { listProjectApi, treeCodebookApi, detailCodebookApi } from "@/api/task/codebook"
 import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
@@ -128,6 +139,12 @@ interface CodebookPickerProps {
   projectId?: number
   scope?: string
   includeDirectories?: boolean
+  displayPath?: boolean
+  clearable?: boolean
+  dialogTitle?: string
+  dialogDescription?: string
+  searchPlaceholder?: string
+  emptyDescription?: string
 }
 
 const props = withDefaults(defineProps<CodebookPickerProps>(), {
@@ -139,7 +156,13 @@ const props = withDefaults(defineProps<CodebookPickerProps>(), {
   pageSize: 10,
   projectId: undefined,
   scope: "",
-  includeDirectories: false
+  includeDirectories: false,
+  displayPath: false,
+  clearable: false,
+  dialogTitle: "选择任务模板",
+  dialogDescription: "从项目目录中选择需要绑定的脚本模板",
+  searchPlaceholder: "搜索当前项目脚本",
+  emptyDescription: "该项目下无脚本模板"
 })
 
 const emit = defineEmits<{
@@ -168,7 +191,8 @@ const treeProps = {
 
 // 仅展示选中的脚本名称
 const displayValue = computed(() => {
-  return selectedItem.value?.name || ""
+  if (!selectedItem.value) return ""
+  return (props.displayPath && selectedItem.value.runtime_path) || selectedItem.value.name || ""
 })
 
 const isMatchedNode = (node: any, keyword: string) => {
@@ -202,6 +226,17 @@ const filteredCodebookTree = computed(() => {
   if (!keyword) return codebookTree.value
   return filterTree(codebookTree.value, keyword)
 })
+
+const countTreeNodes = (nodes: any[]): number =>
+  nodes.reduce((total, node) => total + 1 + countTreeNodes(node.children || []), 0)
+
+const countFiles = (nodes: any[]): number =>
+  nodes.reduce((total, node) => total + (node.kind === "FILE" ? 1 : 0) + countFiles(node.children || []), 0)
+
+const projectFileCount = computed(() => countFiles(codebookTree.value))
+const compactDialogHeight = computed(
+  () => `${Math.min(520, Math.max(300, 150 + countTreeNodes(codebookTree.value) * 36))}px`
+)
 
 const getExpandableKeys = (nodes: any[]): number[] => {
   return nodes.flatMap((node) => {
@@ -257,6 +292,15 @@ const loadProjects = async () => {
   }
 }
 
+const findNode = (nodes: any[], id: number): any | null => {
+  for (const node of nodes) {
+    if (node.id === id) return node
+    const found = findNode(node.children || [], id)
+    if (found) return found
+  }
+  return null
+}
+
 const loadProjectTree = async (projId: number) => {
   treeLoading.value = true
   try {
@@ -281,6 +325,11 @@ const selectProject = async (projId: number) => {
 const openDialog = async () => {
   if (props.disabled) return
   dialogVisible.value = true
+  if (props.projectId) {
+    activeProjectId.value = props.projectId
+    await loadProjectTree(props.projectId)
+    return
+  }
   await loadProjects()
 }
 
@@ -291,9 +340,17 @@ const handleNodeClick = (data: any) => {
 }
 
 const selectFile = (item: any) => {
+  selectedItem.value = item
   model.value = item.id
   emit("change", item)
   dialogVisible.value = false
+}
+
+const clearSelection = () => {
+  model.value = undefined
+  selectedItem.value = null
+  selectedItemProjectName.value = ""
+  emit("change", null)
 }
 
 // 监听弹窗可见性，关闭时清理检索，恢复原始树
@@ -312,6 +369,17 @@ const resolveSelectedItem = async (codebookId: number) => {
   }
 
   try {
+    if (props.projectId) {
+      if (activeProjectId.value !== props.projectId || codebookTree.value.length === 0) {
+        activeProjectId.value = props.projectId
+        await loadProjectTree(props.projectId)
+      }
+      const projectFile = findNode(codebookTree.value, codebookId)
+      if (projectFile) {
+        selectedItem.value = projectFile
+        return
+      }
+    }
     const { data } = await detailCodebookApi(codebookId)
     selectedItem.value = data
     if (data && data.project_id) {
@@ -391,6 +459,16 @@ watch(
   font-size: 14px;
 }
 
+.clear-icon-suffix {
+  color: #94a3b8;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:hover {
+    color: #475569;
+  }
+}
+
 .picker-dialog-header {
   display: flex;
   align-items: center;
@@ -433,6 +511,33 @@ watch(
   flex: 1;
   min-height: 0;
   background: #ffffff;
+
+  &.is-compact {
+    background: #f8fafc;
+
+    .tree-explorer-pane {
+      padding: 14px 16px 16px;
+      background: #f8fafc;
+    }
+
+    .tree-pane-header {
+      padding: 0 0 12px;
+    }
+
+    .tree-scrollbar {
+      padding: 7px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+    }
+
+    .empty-state-card {
+      background: #ffffff;
+      border: 1px dashed #d8e0eb;
+      border-radius: 10px;
+    }
+  }
 }
 
 .picker-panel-body {
@@ -544,12 +649,20 @@ watch(
 
 .tree-pane-title {
   display: flex;
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
 
   span {
     font-size: 14px;
     font-weight: 700;
     color: #1f2937;
+  }
+
+  small {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 500;
   }
 }
 
