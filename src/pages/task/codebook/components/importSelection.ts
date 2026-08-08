@@ -15,7 +15,14 @@ export interface LocalFileSystemNode {
   path: string
   kind: FileSystemHandleKind
   isLeaf: boolean
-  handle: FileSystemHandle
+  handle?: FileSystemHandle
+  file?: File
+  children?: LocalFileSystemNode[]
+}
+
+export interface LocalSelectionTree {
+  rootName: string
+  nodes: LocalFileSystemNode[]
 }
 
 type DirectoryHandleWithEntries = FileSystemDirectoryHandle & {
@@ -96,9 +103,55 @@ export async function listLocalDirectory(
   })
 }
 
+// buildLocalSelectionTree 将 webkitdirectory 返回的扁平 FileList 还原为网页多选树。
+// 浏览器路径的第一段是用户授权的根目录，只用于标题展示，不进入最终导入路径。
+export function buildLocalSelectionTree(files: Iterable<File>): LocalSelectionTree {
+  const selected = Array.from(files)
+  const firstPath = normalizePath(selected[0]?.webkitRelativePath || selected[0]?.name || "")
+  const rootName = firstPath.includes("/") ? firstPath.split("/")[0] : "所选目录"
+  const roots: LocalFileSystemNode[] = []
+  const directories = new Map<string, LocalFileSystemNode>()
+
+  selected.forEach((file) => {
+    const original = normalizePath(file.webkitRelativePath || file.name)
+    const relative = original.startsWith(`${rootName}/`) ? original.slice(rootName.length + 1) : original
+    const segments = relative.split("/").filter(Boolean)
+    if (!segments.length) return
+
+    let parent = roots
+    let parentPath = ""
+    segments.forEach((name, index) => {
+      const path = normalizePath(parentPath ? `${parentPath}/${name}` : name)
+      const leaf = index === segments.length - 1
+      if (leaf) {
+        parent.push({ key: `file:${path}`, name, path, kind: "file", isLeaf: true, file })
+        return
+      }
+      let directory = directories.get(path)
+      if (!directory) {
+        directory = {
+          key: `directory:${path}`,
+          name,
+          path,
+          kind: "directory",
+          isLeaf: false,
+          children: []
+        }
+        directories.set(path, directory)
+        parent.push(directory)
+      }
+      parent = directory.children!
+      parentPath = path
+    })
+  })
+
+  sortLocalNodes(roots)
+  return { rootName, nodes: roots }
+}
+
 export async function filesFromLocalNodes(nodes: LocalFileSystemNode[]): Promise<SelectedImportFile[]> {
   const compacted = compactLocalSelection(nodes)
-  const groups = await Promise.all(compacted.map((node) => readLocalHandle(node.handle, node.path)))
+  const groups = await Promise.all(compacted.map(readLocalNode))
   return groups.flat().sort((left, right) => left.path.localeCompare(right.path))
 }
 
@@ -118,8 +171,23 @@ async function readLocalHandle(handle: FileSystemHandle, path: string): Promise<
     return [selectedFile(file, path)]
   }
   const children = await listLocalDirectory(handle as FileSystemDirectoryHandle, path)
-  const groups = await Promise.all(children.map((child) => readLocalHandle(child.handle, child.path)))
+  const groups = await Promise.all(children.map(readLocalNode))
   return groups.flat()
+}
+
+async function readLocalNode(node: LocalFileSystemNode): Promise<SelectedImportFile[]> {
+  if (node.file) return [selectedFile(node.file, node.path)]
+  if (node.handle) return readLocalHandle(node.handle, node.path)
+  const groups = await Promise.all((node.children || []).map(readLocalNode))
+  return groups.flat()
+}
+
+function sortLocalNodes(nodes: LocalFileSystemNode[]) {
+  nodes.sort((left, right) => {
+    if (left.kind !== right.kind) return left.kind === "directory" ? -1 : 1
+    return left.name.localeCompare(right.name)
+  })
+  nodes.forEach((node) => sortLocalNodes(node.children || []))
 }
 
 async function readAllEntries(reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {

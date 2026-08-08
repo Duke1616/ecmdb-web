@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest"
 import {
+  buildLocalSelectionTree,
   collectDroppedFiles,
   compactLocalSelection,
   filesFromLocalNodes,
@@ -119,6 +120,19 @@ describe("import selection", () => {
     const result = await filesFromLocalNodes([...nodes])
 
     expect(result.map((item) => item.path)).toEqual(["README.md", "role/tasks.yml"])
+  })
+
+  it("builds an HTTP fallback tree without importing the selected root directory", async () => {
+    const site = file("site.yml")
+    Object.defineProperty(site, "webkitRelativePath", { value: "demo/site.yml" })
+    const roleTask = file("main.yml")
+    Object.defineProperty(roleTask, "webkitRelativePath", { value: "demo/roles/demo/tasks/main.yml" })
+    const tree = buildLocalSelectionTree([site, roleTask])
+
+    expect(tree.rootName).toBe("demo")
+    expect(tree.nodes.map((node) => node.path)).toEqual(["roles", "site.yml"])
+    const selected = await filesFromLocalNodes(tree.nodes)
+    expect(selected.map((item) => item.path).sort()).toEqual(["roles/demo/tasks/main.yml", "site.yml"])
   })
 
   it("does not collect a checked child twice when its parent is checked", () => {

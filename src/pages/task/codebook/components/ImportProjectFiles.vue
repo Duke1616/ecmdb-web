@@ -36,7 +36,7 @@
     <div class="import-layout">
       <section class="import-source-panel">
         <div v-if="localPickerVisible" class="local-picker" v-loading="localPickerLoading || collecting">
-          <template v-if="localRoot">
+          <template v-if="localRootReady">
             <div class="local-picker-header">
               <div>
                 <strong>从 {{ localRootName }} 选择</strong>
@@ -101,13 +101,7 @@
             <span>支持一次拖入多个文件、多个文件夹或二者混合</span>
           </div>
           <div class="picker-actions">
-            <el-button
-              v-if="mixedPickerSupported"
-              :disabled="collecting"
-              type="primary"
-              :icon="FolderOpened"
-              @click="openLocalPicker"
-            >
+            <el-button :disabled="collecting" type="primary" :icon="FolderOpened" @click="openLocalPicker">
               打开混合多选器
             </el-button>
             <div class="fallback-picker-actions">
@@ -186,6 +180,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import { importCodebookApi } from "@/api/task/codebook"
 import {
   collectDroppedFiles,
+  buildLocalSelectionTree,
   filesFromInput,
   filesFromLocalNodes,
   listLocalDirectory,
@@ -223,6 +218,7 @@ const dragging = ref(false)
 const dragDepth = ref(0)
 const files = ref<SelectedImportFile[]>([])
 const localRoot = shallowRef<FileSystemDirectoryHandle>()
+const fallbackRootName = ref("")
 const localTreeData = shallowRef<LocalFileSystemNode[]>([])
 const localPickerVisible = ref(false)
 const localPickerLoading = ref(false)
@@ -232,7 +228,9 @@ const localTreeProps = { label: "name", isLeaf: "isLeaf" }
 const mixedPickerSupported = computed(
   () => window.isSecureContext && typeof (window as PickerWindow).showDirectoryPicker === "function"
 )
-const localRootName = computed(() => localRoot.value?.name || "本地目录")
+const localRootReady = computed(() => Boolean(localRoot.value || fallbackRootName.value))
+const localRootName = computed(() => localRoot.value?.name || fallbackRootName.value || "本地目录")
+const directorySelectionMode = ref<"append" | "browse">("append")
 
 const totalSize = computed(() => files.value.reduce((total, item) => total + item.file.size, 0))
 // 限制一次渲染的行数，避免导入超大目录时清单本身拖慢弹窗。
@@ -264,15 +262,24 @@ function reset() {
   dragDepth.value = 0
   localPickerVisible.value = false
   localCheckedCount.value = 0
+  directorySelectionMode.value = "append"
+  if (fallbackRootName.value) {
+    fallbackRootName.value = ""
+    localTreeData.value = []
+  }
 }
 
 function openLocalPicker() {
+  if (!mixedPickerSupported.value) {
+    selectBrowseDirectory()
+    return
+  }
   localPickerVisible.value = true
 }
 
 async function authorizeLocalRoot() {
   if (!mixedPickerSupported.value) {
-    ElMessage.warning("当前浏览器不支持统一选择，请使用拖拽或兼容选择按钮")
+    selectBrowseDirectory()
     return
   }
   try {
@@ -280,6 +287,7 @@ async function authorizeLocalRoot() {
     if (!root) return
     localPickerLoading.value = true
     localRoot.value = root
+    fallbackRootName.value = ""
     localTreeData.value = await listLocalDirectory(root)
     localCheckedCount.value = 0
     localPickerVisible.value = true
@@ -294,6 +302,14 @@ async function authorizeLocalRoot() {
 const loadLocalChildren: LoadFunction = async (node, resolve) => {
   const data = node.data as LocalFileSystemNode | undefined
   if (!data || data.kind !== "directory") {
+    resolve([])
+    return
+  }
+  if (data.children) {
+    resolve(data.children)
+    return
+  }
+  if (!data.handle) {
     resolve([])
     return
   }
@@ -339,6 +355,12 @@ function selectFiles() {
 }
 
 function selectDirectory() {
+  directorySelectionMode.value = "append"
+  directoryInputRef.value?.click()
+}
+
+function selectBrowseDirectory() {
+  directorySelectionMode.value = "browse"
   directoryInputRef.value?.click()
 }
 
@@ -347,6 +369,17 @@ function handleSelected(directory: boolean, event: Event) {
   const selected = Array.from(input.files || [])
   input.value = ""
   if (!selected.length) return
+  if (directory && directorySelectionMode.value === "browse") {
+    const tree = buildLocalSelectionTree(selected)
+    localRoot.value = undefined
+    fallbackRootName.value = tree.rootName
+    localTreeData.value = tree.nodes
+    localCheckedCount.value = 0
+    localPickerVisible.value = true
+    directorySelectionMode.value = "append"
+    return
+  }
+  directorySelectionMode.value = "append"
   addFiles(filesFromInput(selected, directory))
 }
 
