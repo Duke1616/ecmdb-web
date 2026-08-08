@@ -505,6 +505,7 @@ defineEmits<{
 :global(.editor-actions-dropdown .el-dropdown-menu__item) {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   min-width: 112px;
   font-size: 12px;
