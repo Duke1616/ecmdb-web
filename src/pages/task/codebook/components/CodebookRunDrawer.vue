@@ -3,10 +3,10 @@
     v-model="visible"
     title="程序试运行"
     :subtitle="previewSubtitle"
+    :header-icon="VideoPlay"
     size="min(840px, 100%)"
     :show-footer="true"
     :close-on-click-modal="false"
-    class="codebook-run-drawer"
     @closed="reset"
   >
     <template #header-actions>
@@ -35,7 +35,7 @@
         <section v-show="!execution || configExpanded" class="config-panel">
           <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="run-form">
             <div class="form-section-title">执行设置</div>
-            <div class="form-grid" :class="{ 'is-fixed-source': programOptions.length <= 1 }">
+            <div class="form-grid" :class="{ 'is-fixed-source': programOptions.length === 0 }">
               <el-form-item label="执行单元" prop="runner_id" class="runner-field">
                 <el-select
                   v-model="form.runner_id"
@@ -63,12 +63,17 @@
               </el-form-item>
 
               <el-form-item
-                v-if="programOptions.length > 1"
+                v-if="programOptions.length > 0"
                 label="程序来源"
                 prop="program_kind"
                 class="program-kind-field"
               >
-                <el-segmented v-model="form.program_kind" :options="programOptions" size="small" />
+                <el-segmented
+                  v-model="form.program_kind"
+                  :options="programOptions"
+                  size="small"
+                  :disabled="isRunning || programOptions.length === 1"
+                />
               </el-form-item>
 
               <el-form-item label="超时时间" prop="max_execution_seconds" class="timeout-field">
@@ -92,6 +97,11 @@
             <div v-if="!loadingRunners && supportedRunners.length === 0" class="context-note is-warning">
               <el-icon><WarningFilled /></el-icon>
               <span>当前脚本没有可用的执行单元，请先完成绑定。</span>
+            </div>
+
+            <div v-else-if="selectedRunner && programOptions.length === 0" class="context-note is-warning">
+              <el-icon><WarningFilled /></el-icon>
+              <span>无法读取当前执行单元的程序能力，请检查资源池和 Handler 状态。</span>
             </div>
 
             <div class="input-section">
@@ -194,7 +204,7 @@
           type="primary"
           :icon="VideoPlay"
           :loading="starting"
-          :disabled="isRunning || supportedRunners.length === 0"
+          :disabled="isRunning || supportedRunners.length === 0 || programOptions.length === 0"
           @click="run"
         >
           {{ execution ? "重新运行" : "开始试运行" }}
@@ -227,6 +237,7 @@ import type { codebook } from "@/api/task/codebook/types/codebook"
 import type { PreviewExecution, PreviewVariable } from "@/api/task/codebook/types/preview"
 import { createProgramKindOptions, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
 import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
+import { resolveRunnerHandler } from "../programCapabilities"
 
 interface RunForm {
   runner_id?: number
@@ -290,14 +301,9 @@ const formatJSON = () => {
 
 const supportedRunners = computed(() => runners.value.filter((item) => [Kind.GRPC, Kind.KAFKA].includes(item.kind)))
 const selectedRunner = computed(() => supportedRunners.value.find((item) => item.id === form.runner_id))
-const selectedHandler = computed(() => {
-  const runner = selectedRunner.value
-  if (!runner) return undefined
-  return resources.value
-    .find((resource) => resource.name === runner.target)
-    ?.handlers.find((handler) => handler.name === runner.handler)
-})
+const selectedHandler = computed(() => resolveRunnerHandler(selectedRunner.value, resources.value))
 const availableProgramKinds = computed<ProgramKind[]>(() => {
+  if (!selectedHandler.value) return []
   const kinds = resolveCodebookProgramKinds(selectedHandler.value?.program_kinds)
   if (currentCodebook.value?.scope === "SYSTEM") return kinds.filter((kind) => kind === ProgramKind.INLINE)
   return kinds
@@ -472,80 +478,6 @@ defineExpose({ open })
 </script>
 
 <style lang="scss" scoped>
-:global(.codebook-run-drawer.custom-drawer) {
-  --el-drawer-bg-color: #fff !important;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-header) {
-  padding: 17px 24px;
-  margin-bottom: 0;
-  background: #fff;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-header .header-left) {
-  gap: 0;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-header .header-text h3) {
-  color: #303133;
-  font-size: 16px;
-  line-height: 22px;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-header .header-text p) {
-  margin-top: 3px;
-  color: #909399;
-  font-size: 12px;
-  line-height: 18px;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-header .close-btn) {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-content) {
-  height: 100%;
-  background: #fff;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-footer) {
-  padding: 14px 24px;
-  margin: 0;
-  background: #fff;
-  border-radius: 0;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button) {
-  min-width: 72px;
-  height: 32px;
-  font-size: 13px;
-  border-radius: 4px;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button.el-button--primary) {
-  color: #fff;
-  background: #409eff;
-  border: 1px solid #409eff;
-  box-shadow: none;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button.el-button--primary.is-disabled) {
-  background: #a0cfff;
-  border-color: #a0cfff;
-  box-shadow: none;
-}
-
-:global(.codebook-run-drawer.custom-drawer .drawer-footer .el-button.el-button--primary:not(.is-disabled):hover) {
-  background: #66b1ff;
-  border-color: #66b1ff;
-  box-shadow: none;
-  transform: none;
-}
-
 .run-content {
   min-height: 100%;
   padding: 22px 24px 28px;
