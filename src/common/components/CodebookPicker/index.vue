@@ -65,6 +65,7 @@
                   <div class="project-item-meta">
                     <el-icon class="project-node-icon"><Box /></el-icon>
                     <span class="project-node-name">{{ p.name }}</span>
+                    <el-tag v-if="p.status === 'ARCHIVED'" size="small" type="info" effect="plain">归档</el-tag>
                   </div>
                   <el-icon class="arrow-right-icon"><ArrowRight /></el-icon>
                 </div>
@@ -123,7 +124,7 @@ import { Box, Folder, Search, ArrowRight, ArrowDown, Close } from "@element-plus
 import { listProjectApi, treeCodebookApi, detailCodebookApi } from "@/api/task/codebook"
 import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
-import type { codebook, CodebookScope } from "@/api/task/codebook/types/codebook"
+import type { CodebookProject, codebook, CodebookScope } from "@/api/task/codebook/types/codebook"
 import fileIcon from "@/common/assets/icons/preserve-color/file.svg"
 import pythonIcon from "@/common/assets/icons/preserve-color/python.svg"
 import shellIcon from "@/common/assets/icons/preserve-color/shell.svg"
@@ -175,7 +176,7 @@ const model = defineModel<number | number[]>()
 // ── 状态管理 ────────────────────────────────────────────────────────────
 const dialogVisible = ref(false)
 const searchQuery = ref("")
-const projects = ref<any[]>([])
+const projects = ref<CodebookProject[]>([])
 const activeProjectId = ref<number | null>(null)
 const activeProjectScope = ref<CodebookScope>("TENANT")
 const codebookTree = ref<any[]>([])
@@ -280,10 +281,22 @@ const getCodebookIcon = (name: string) => {
 }
 
 // ── 项目/树加载 ───────────────────────────────────────────────────────────
+const loadSelectableProjects = async () => {
+  const [systemResponse, normalResponse, archivedResponse] = await Promise.all([
+    listProjectApi({ offset: 0, limit: 1000, scope: "SYSTEM" }),
+    listProjectApi({ offset: 0, limit: 1000, scope: "TENANT", status: "NORMAL" }),
+    listProjectApi({ offset: 0, limit: 1000, scope: "TENANT", status: "ARCHIVED" })
+  ])
+  return [
+    ...(systemResponse.data.projects || []),
+    ...(normalResponse.data.projects || []),
+    ...(archivedResponse.data.projects || [])
+  ]
+}
+
 const loadProjects = async () => {
   try {
-    const { data } = await listProjectApi({ offset: 0, limit: 1000 })
-    projects.value = data.projects || []
+    projects.value = await loadSelectableProjects()
     if (projects.value.length > 0 && activeProjectId.value === null) {
       const firstProject = projects.value[0]
       activeProjectId.value = firstProject.id
@@ -390,8 +403,7 @@ const resolveSelectedItem = async (codebookId: number) => {
     selectedItem.value = data
     if (data && data.project_id) {
       if (projects.value.length === 0) {
-        const { data: projData } = await listProjectApi({ offset: 0, limit: 1000 })
-        projects.value = projData.projects || []
+        projects.value = await loadSelectableProjects()
       }
       const proj = projects.value.find((p) => p.id === data.project_id && p.scope === data.scope)
       selectedItemProjectName.value = proj ? proj.name : `项目 #${data.project_id}`
@@ -615,12 +627,18 @@ watch(
   }
 
   .project-node-name {
+    flex: 1;
+    min-width: 0;
     font-size: 13px;
     color: #334155;
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  :deep(.el-tag) {
+    flex-shrink: 0;
   }
 
   .arrow-right-icon {
