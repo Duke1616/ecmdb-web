@@ -138,13 +138,18 @@
                     </div>
 
                     <div class="parameters-grid-wrapper">
-                      <TaskParamsEditor
+                      <el-form-item
                         v-if="currentHandler?.metadata?.length"
-                        v-model="form.grpc_params"
-                        v-model:task-metadata="form.metadata"
-                        :metadata="currentHandler.metadata"
-                        :project-entry-codebook-id="form.program?.project?.entry_codebook_id"
-                      />
+                        prop="grpc_params"
+                        class="dynamic-params-form-item"
+                      >
+                        <TaskParamsEditor
+                          v-model="form.grpc_params"
+                          v-model:task-metadata="form.metadata"
+                          :metadata="currentHandler.metadata"
+                          :project-entry-codebook-id="form.program?.project?.entry_codebook_id"
+                        />
+                      </el-form-item>
                       <div v-else class="empty-params">
                         <el-empty :image-size="60" description="未识别到元数据，支持自由 Payload 配置" />
                         <div class="manual-map-box">
@@ -543,6 +548,14 @@ const {
         background: #10b981;
       }
     }
+  }
+}
+
+:deep(.dynamic-params-form-item) {
+  margin-bottom: 0;
+
+  .el-form-item__content {
+    display: block;
   }
 }
 

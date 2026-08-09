@@ -5,7 +5,13 @@ import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/task/manag
 import { TaskType, TaskProtocol, type UpdateTaskReq } from "@/api/task/manager/type"
 import { createDefaultProgram, validateProgram } from "@/api/task/program"
 import type { HandlerDetail } from "@/api/task/resource/type"
-import { type TaskFormState, createDefaultFormState, mapToFormState, mapToApiPayload } from "./useTaskData"
+import {
+  type TaskFormState,
+  createDefaultFormState,
+  mapToFormState,
+  mapToApiPayload,
+  validateBoundParameters
+} from "./useTaskData"
 
 const validateProgramField = (_rule: unknown, value: TaskFormState["program"], callback: (error?: Error) => void) => {
   const message = validateProgram(value)
@@ -49,6 +55,15 @@ export function useTaskForm(options: {
             if (!form.value.grpc_service) return callback(new Error("请选择执行器服务"))
             if (!value) return callback(new Error("请选择处理方法"))
             callback()
+          },
+          trigger: "submit"
+        }
+      ]
+      r.grpc_params = [
+        {
+          validator: (_rule, _value, callback) => {
+            const message = validateBoundParameters(form.value, currentHandler.value)
+            callback(message ? new Error(message) : undefined)
           },
           trigger: "submit"
         }

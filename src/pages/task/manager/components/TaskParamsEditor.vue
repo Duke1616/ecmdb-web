@@ -5,10 +5,11 @@
       :key="p.key"
       :parameter="p"
       :model-value="modelValue[p.key] || ''"
-      v-model:active-mode="paramModes[p.key]"
+      :active-mode="paramModes[p.key]"
       :is-full-screen="!!fullScreenStates[p.key]"
       :project-entry-codebook-id="projectEntryCodebookId"
       @update:model-value="(val) => onParamUpdate(p.key, val)"
+      @update:active-mode="(mode) => onModeUpdate(p, mode)"
       @toggle-full-screen="toggleFullScreen(p.key)"
     />
   </div>
@@ -17,6 +18,7 @@
 <script setup lang="ts">
 import { reactive, watch, onMounted, onUnmounted } from "vue"
 import type { Parameter } from "@/api/task/resource/type"
+import { defaultParameterBinding } from "../composables/useTaskData"
 import TaskParamItem from "./TaskParamItem.vue"
 
 /**
@@ -50,13 +52,13 @@ const initModes = () => {
   let paramsChanged = false
 
   props.metadata.forEach((p) => {
-    // 1. 初始化切换模式 (取 Bindings 的第一个 Key)
-    const keys = Object.keys(p.bindings || {})
-    if (keys.length > 0) {
+    // 1. 初始化切换模式（优先直接输入类绑定，不依赖后端 map 的返回顺序）
+    const defaultMode = defaultParameterBinding(p)
+    if (defaultMode) {
       // 优先从已有的 taskMetadata (业务数据) 中恢复模式到 UI 状态
-      // 校验保存的模式是否还在当前的 bindings 中，若不在则取第一个 Key (数据安全性标准)
+      // 校验保存的模式是否还在当前的 bindings 中，若不在则使用稳定的默认模式。
       const savedMode = taskMetadata.value[p.key]
-      const targetMode = savedMode && p.bindings[savedMode] ? savedMode : keys[0]
+      const targetMode = savedMode && p.bindings[savedMode] ? savedMode : defaultMode
 
       if (paramModes[p.key] !== targetMode) {
         paramModes[p.key] = targetMode
@@ -80,6 +82,13 @@ const initModes = () => {
  */
 const onParamUpdate = (key: string, val: string) => {
   modelValue.value = { ...modelValue.value, [key]: val }
+}
+
+/** 切换绑定时清除旧模式值，避免 Runner ID 被当作静态 JSON 等不兼容数据继续提交。 */
+const onModeUpdate = (parameter: Parameter, mode: string) => {
+  if (paramModes[parameter.key] === mode) return
+  paramModes[parameter.key] = mode
+  modelValue.value = { ...modelValue.value, [parameter.key]: parameter.default || "" }
 }
 
 /**

@@ -1,5 +1,6 @@
 import { cloneDeep } from "lodash-es"
 import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem } from "@/api/task/manager/type"
+import type { HandlerDetail, Parameter } from "@/api/task/resource/type"
 import type { ProgramSpec } from "@/api/task/program"
 import { Connection, Link } from "@element-plus/icons-vue"
 
@@ -175,4 +176,45 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
   }
 
   return payload
+}
+
+/**
+ * 校验动态参数当前选择的绑定和值是否匹配。
+ * runner-picker 的值会被后端解析为 Runner ID，因此切换到该绑定后必须选择有效执行单元。
+ */
+export const validateBoundParameters = (state: TaskFormState, handler?: HandlerDetail | null): string | undefined => {
+  if (state.protocol !== TaskProtocol.GRPC || !handler?.metadata?.length) return undefined
+
+  for (const parameter of handler.metadata) {
+    const value = state.grpc_params[parameter.key]?.trim() ?? ""
+    const mode = state.metadata[parameter.key]
+    const binding = mode ? parameter.bindings?.[mode] : undefined
+
+    if (binding?.component === "runner-picker") {
+      const runnerID = Number(value)
+      if (!value || !Number.isSafeInteger(runnerID) || runnerID <= 0) {
+        return `请选择${parameter.desc || parameter.key}对应的执行单元`
+      }
+    }
+
+    if (parameter.required && !value) {
+      return `请填写${parameter.desc || parameter.key}`
+    }
+  }
+
+  return undefined
+}
+
+/**
+ * 后端 bindings 是 map，不能依赖其序列化顺序表达默认模式。
+ * 优先选择直接输入类绑定，避免创建任务时误选需要额外引用 ID 的 runner 绑定。
+ */
+export const defaultParameterBinding = (parameter: Parameter): string => {
+  const modes = Object.keys(parameter.bindings ?? {})
+  return (
+    ["static", "manual"].find((mode) => modes.includes(mode)) ??
+    modes.find((mode) => parameter.bindings[mode]?.component !== "runner-picker") ??
+    modes[0] ??
+    ""
+  )
 }
