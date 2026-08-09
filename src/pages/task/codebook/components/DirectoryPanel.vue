@@ -51,17 +51,6 @@
         >
           导入文件/文件夹
         </AuthButton>
-        <AuthButton
-          v-if="activeDirectory.id && !isReadonly"
-          :capability="capabilities.Codebook.Delete"
-          disableMode
-          size="small"
-          type="danger"
-          plain
-          :icon="Delete"
-          @click="$emit('delete', activeDirectory)"
-          >删除</AuthButton
-        >
         <el-button-group class="view-switch" aria-label="资源展示方式">
           <el-button
             :class="{ 'is-active': viewMode === 'grid' }"
@@ -239,7 +228,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "import-resources"): void
-  (e: "delete", row: codebook): void
   (e: "delete-batch", rows: codebook[]): void
   (e: "select", row: codebook): void
   (e: "sort", id: number, targetPosition: number): void

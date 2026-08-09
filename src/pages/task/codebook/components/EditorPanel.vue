@@ -50,35 +50,44 @@
         </div>
 
         <div class="editor-secondary-actions">
-          <el-dropdown
-            v-if="hasMoreActions"
-            trigger="click"
-            placement="bottom-end"
-            popper-class="editor-actions-dropdown"
-          >
-            <el-button class="more-button" text size="small" aria-label="更多操作">
-              <el-icon><MoreFilled /></el-icon>
-              <span>更多</span>
-            </el-button>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item v-if="canOpenVersion" @click="$emit('open-version', activeEditor)">
-                  <el-icon><Clock /></el-icon>
-                  <span>版本</span>
-                </el-dropdown-item>
-                <el-dropdown-item v-if="canEditMeta" @click="$emit('open-meta', activeEditor)">
-                  <el-icon><Edit /></el-icon>
-                  <span>信息</span>
-                </el-dropdown-item>
-                <el-dropdown-item v-if="canDelete" class="danger-item" @click="$emit('delete', activeEditor)">
-                  <el-icon><Delete /></el-icon>
-                  <span>删除</span>
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
           <span v-if="isDownloadOnly" class="readonly-hint">该文件不支持在线预览，请使用下载按钮</span>
           <span v-else-if="isReadonly" class="readonly-hint">当前资源只读，仅支持查看内容</span>
+          <el-button
+            v-if="canOpenVersion"
+            class="single-action-button"
+            text
+            circle
+            size="small"
+            title="查看版本"
+            aria-label="查看版本"
+            @click="$emit('open-version', activeEditor)"
+          >
+            <el-icon><Clock /></el-icon>
+          </el-button>
+          <el-button
+            v-if="canEditMeta"
+            class="single-action-button"
+            text
+            circle
+            size="small"
+            title="文件信息"
+            aria-label="文件信息"
+            @click="$emit('open-meta', activeEditor)"
+          >
+            <el-icon><Edit /></el-icon>
+          </el-button>
+          <el-button
+            v-if="canDelete"
+            class="single-action-button is-danger"
+            text
+            circle
+            size="small"
+            title="删除文件"
+            aria-label="删除文件"
+            @click="$emit('delete', activeEditor)"
+          >
+            <el-icon><Delete /></el-icon>
+          </el-button>
         </div>
       </div>
 
@@ -164,7 +173,6 @@ import {
   Edit,
   Lock,
   MagicStick,
-  MoreFilled,
   Setting,
   VideoPlay
 } from "@element-plus/icons-vue"
@@ -204,7 +212,6 @@ const canEditMeta = computed(
 const canDelete = computed(() =>
   Boolean(props.activeEditor.id && !isReadonly.value && hasPermission(capabilities.Codebook.Delete))
 )
-const hasMoreActions = computed(() => canOpenVersion.value || canEditMeta.value || canDelete.value)
 
 defineEmits<{
   (e: "select", row: codebook): void
@@ -259,6 +266,10 @@ defineEmits<{
   gap: 8px;
 }
 
+.editor-secondary-actions :deep(.el-button + .el-button) {
+  margin-left: 0;
+}
+
 .editor-primary-actions {
   :deep(.el-button) {
     height: 26px;
@@ -295,9 +306,10 @@ defineEmits<{
   }
 }
 
-.more-button {
+.single-action-button {
+  width: 26px;
   height: 26px;
-  padding: 0 7px;
+  padding: 0;
   color: #475569;
   font-size: 12px;
   border-radius: 5px;
@@ -305,6 +317,15 @@ defineEmits<{
   &:hover {
     color: #1d4ed8;
     background: #eff6ff;
+  }
+
+  &.is-danger {
+    color: #ef4444;
+
+    &:hover {
+      color: #dc2626;
+      background: #fef2f2;
+    }
   }
 }
 
@@ -493,19 +514,6 @@ defineEmits<{
   color: #64748b;
   font-size: 12px;
   white-space: nowrap;
-}
-
-:global(.editor-actions-dropdown .el-dropdown-menu__item) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 112px;
-  font-size: 12px;
-}
-
-:global(.editor-actions-dropdown .danger-item) {
-  color: var(--el-color-danger);
 }
 
 .tab-readonly-lock {

@@ -29,7 +29,6 @@
           :readonly="isReadonlyCodebook(activeEditor)"
           :batch-deleting="batchDeleting"
           @import-resources="importFilesRef?.open()"
-          @delete="handleDelete"
           @delete-batch="handleBatchDelete"
           @select="selectCodebook"
           @sort="handleCodebookSort"
