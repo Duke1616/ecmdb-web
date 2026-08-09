@@ -110,6 +110,7 @@ export interface ListProjectsReq extends listCodebookReq {
 
 export interface ListReferenceProjectsReq extends listCodebookReq {
   keyword?: string
+  exclude_project_id?: number
 }
 
 export interface childrenCodebookReq {

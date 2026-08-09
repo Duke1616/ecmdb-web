@@ -138,6 +138,13 @@ export function listProjectApi(data: codebook.ListProjectsReq) {
   })
 }
 
+/** 项目详情 */
+export function detailProjectApi(id: number) {
+  return instance.get<codebook.CodebookProject>({
+    url: `${API_SERVICE.TASK}/codebook/project/detail/${id}`
+  })
+}
+
 /** 可引用项目列表，包含当前租户的正常和归档项目 */
 export function listReferenceProjectsApi(data: codebook.ListReferenceProjectsReq) {
   return instance.post<codebook.projects>({

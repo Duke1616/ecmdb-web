@@ -61,7 +61,7 @@
               />
               <el-scrollbar class="project-list-scrollbar">
                 <div
-                  v-for="p in projects"
+                  v-for="p in visibleProjects"
                   :key="p.id"
                   class="project-sidebar-item"
                   :class="{ 'is-active': activeProjectId === p.id }"
@@ -70,14 +70,17 @@
                   <div class="project-item-meta">
                     <el-icon class="project-node-icon"><Box /></el-icon>
                     <span class="project-node-name">{{ p.name }}</span>
+                    <el-tag v-if="p.id === pinnedProject?.id" size="small" type="primary" effect="plain">当前</el-tag>
                     <el-tag v-if="p.status === 'ARCHIVED'" size="small" type="info" effect="plain">归档</el-tag>
                   </div>
                   <el-icon class="arrow-right-icon"><ArrowRight /></el-icon>
                 </div>
-                <div v-if="projects.length === 0 && !projectsLoading" class="project-empty">暂无匹配项目</div>
+                <div v-if="visibleProjects.length === 0 && !projectsLoading" class="project-empty">暂无匹配项目</div>
               </el-scrollbar>
               <div class="project-pagination">
-                <span class="project-pagination-total">共 {{ projectsTotal }} 项</span>
+                <span class="project-pagination-total"
+                  >{{ pinnedProject ? "其他共" : "共" }} {{ projectsTotal }} 项</span
+                >
                 <el-pagination
                   small
                   layout="prev, next"
@@ -140,7 +143,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue"
 import { Box, Folder, Search, ArrowRight, ArrowDown, Close } from "@element-plus/icons-vue"
-import { detailCodebookApi, listReferenceProjectsApi, treeCodebookApi } from "@/api/task/codebook"
+import { detailCodebookApi, detailProjectApi, listReferenceProjectsApi, treeCodebookApi } from "@/api/task/codebook"
 import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
 import { getFileIconName } from "@/common/utils/file"
@@ -194,6 +197,7 @@ const model = defineModel<number | number[]>()
 const dialogVisible = ref(false)
 const searchQuery = ref("")
 const projects = ref<CodebookProject[]>([])
+const pinnedProject = ref<CodebookProject | null>(null)
 const projectsLoading = ref(false)
 const projectsTotal = ref(0)
 const projectKeyword = ref("")
@@ -206,6 +210,9 @@ const selectedItem = ref<any>(null)
 const treeLoading = ref(false)
 const projectPageSize = computed(() => Math.min(100, Math.max(1, props.pageSize)))
 const projectPage = computed(() => Math.floor(projectOffset.value / projectPageSize.value) + 1)
+const visibleProjects = computed(() =>
+  pinnedProject.value ? [pinnedProject.value, ...projects.value] : projects.value
+)
 let projectRequestVersion = 0
 
 const treeProps = {
@@ -282,13 +289,14 @@ const loadProjects = async () => {
   try {
     const { data } = await listReferenceProjectsApi({
       keyword: projectKeyword.value.trim(),
+      exclude_project_id: pinnedProject.value?.id,
       offset: projectOffset.value,
       limit: projectPageSize.value
     })
     if (requestVersion !== projectRequestVersion) return
     projects.value = data.projects || []
     projectsTotal.value = data.total || 0
-    const activeProject = projects.value.find((project) => project.id === activeProjectId.value)
+    const activeProject = visibleProjects.value.find((project) => project.id === activeProjectId.value)
     if (!activeProject) {
       const firstProject = projects.value[0]
       if (!firstProject) {
@@ -359,6 +367,25 @@ const openDialog = async () => {
     await loadProjectTree(props.projectId, props.scope)
     return
   }
+
+  const selectedID = Array.isArray(model.value) ? model.value[0] : model.value
+  if (selectedID && (!selectedItem.value || selectedItem.value.id !== selectedID)) {
+    await resolveSelectedItem(selectedID)
+  }
+  const selectedProjectID = Number(selectedItem.value?.project_id || 0)
+  if (selectedProjectID > 0) {
+    try {
+      const { data } = await detailProjectApi(selectedProjectID)
+      pinnedProject.value = data
+      activeProjectId.value = data.id
+      await Promise.all([loadProjectTree(data.id), loadProjects()])
+      return
+    } catch (e) {
+      console.error("定位当前脚本项目失败", e)
+    }
+  }
+
+  pinnedProject.value = null
   await loadProjects()
 }
 
