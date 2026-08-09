@@ -30,24 +30,6 @@
             批量删除
           </AuthButton>
         </div>
-        <el-button-group class="view-switch" aria-label="资源展示方式">
-          <el-button
-            :class="{ 'is-active': viewMode === 'grid' }"
-            :icon="Grid"
-            :aria-pressed="viewMode === 'grid'"
-            aria-label="卡片视图"
-            title="卡片视图"
-            @click="setViewMode('grid')"
-          />
-          <el-button
-            :class="{ 'is-active': viewMode === 'list' }"
-            :icon="List"
-            :aria-pressed="viewMode === 'list'"
-            aria-label="列表视图"
-            title="列表视图"
-            @click="setViewMode('list')"
-          />
-        </el-button-group>
         <AuthButton
           :capability="capabilities.CodeAssist.ViewConversation"
           disableMode
@@ -80,6 +62,24 @@
           @click="$emit('delete', activeDirectory)"
           >删除</AuthButton
         >
+        <el-button-group class="view-switch" aria-label="资源展示方式">
+          <el-button
+            :class="{ 'is-active': viewMode === 'grid' }"
+            :icon="Grid"
+            :aria-pressed="viewMode === 'grid'"
+            aria-label="卡片视图"
+            title="卡片视图"
+            @click="setViewMode('grid')"
+          />
+          <el-button
+            :class="{ 'is-active': viewMode === 'list' }"
+            :icon="List"
+            :aria-pressed="viewMode === 'list'"
+            aria-label="列表视图"
+            title="列表视图"
+            @click="setViewMode('list')"
+          />
+        </el-button-group>
       </div>
     </div>
 
