@@ -41,7 +41,7 @@ describe("streamCodeAssistMessage", () => {
       expect(options.headers["X-Active-Tenant-ID"]).toBe("7")
       expect(JSON.parse(options.body)).toMatchObject({
         conversation_id: 1,
-        recipe_id: "codebook.general",
+        profile_id: "default",
         content: "review"
       })
 
@@ -55,7 +55,7 @@ describe("streamCodeAssistMessage", () => {
     await streamCodeAssistMessage(
       {
         conversation_id: 1,
-        recipe_id: "codebook.general",
+        profile_id: "default",
         content: "review",
         context: { node_id: 0, base_version_id: 0, editor_code: "" }
       },
@@ -77,7 +77,7 @@ describe("streamCodeAssistMessage", () => {
       streamCodeAssistMessage(
         {
           conversation_id: 1,
-          recipe_id: "codebook.general",
+          profile_id: "default",
           content: "review",
           context: { node_id: 0, base_version_id: 0, editor_code: "" }
         },

@@ -1,40 +1,31 @@
-export interface CodeAssistRecipe {
+export interface CodeAssistProfile {
   id: string
   label: string
-  prompt: string
-  requiresFileContext?: boolean
+  description: string
 }
 
-export const GENERAL_RECIPE_ID = "codebook.general"
+export const DEFAULT_PROFILE_ID = "default"
 
-export const CODE_ASSIST_RECIPES: CodeAssistRecipe[] = [
+export const CODE_ASSIST_PROFILES: CodeAssistProfile[] = [
   {
-    id: GENERAL_RECIPE_ID,
-    label: "自由对话",
-    prompt: ""
+    id: DEFAULT_PROFILE_ID,
+    label: "智能协作",
+    description: "根据你的表达自动解释、审阅或生成候选变更"
   },
   {
-    id: "codebook.review",
-    label: "审阅代码",
-    prompt: "审阅当前脚本，指出正确性、安全性和可读性问题",
-    requiresFileContext: true
+    id: "review",
+    label: "只审阅",
+    description: "只分析问题和风险，不生成候选变更"
   },
   {
-    id: "codebook.edit",
-    label: "修改代码",
-    prompt: "根据我的要求修改当前脚本，并生成完整候选代码：",
-    requiresFileContext: true
+    id: "legacy-migration",
+    label: "旧协议迁移",
+    description: "按当前 etask 参数、依赖和结果协议迁移脚本"
   },
   {
-    id: "codebook.legacy-migration",
-    label: "迁移旧脚本",
-    prompt: "将当前脚本迁移到最新 etask 运行协议",
-    requiresFileContext: true
-  },
-  {
-    id: "codebook.ansible-project",
-    label: "Ansible 项目",
-    prompt: "分析当前 Ansible 项目；如果需要修改，请先检查相关文件并给出完整变更集"
+    id: "ansible",
+    label: "Ansible 规范",
+    description: "按 Ansible 项目结构和凭据规则处理请求"
   }
 ]
 
@@ -47,5 +38,6 @@ export const FILE_CONTEXT_EXAMPLES = [
 export const PROJECT_CONTEXT_EXAMPLES = [
   { label: "介绍当前项目结构", prompt: "介绍当前项目的目录结构和主要文件" },
   { label: "分析项目中的依赖关系", prompt: "分析当前项目的目录和依赖关系" },
-  { label: "审阅 Ansible 项目", prompt: "审阅当前 Ansible 项目的结构、入口和潜在风险" }
+  { label: "新增一个功能", prompt: "请先了解当前项目，然后帮我新增一个功能" },
+  { label: "审阅项目风险", prompt: "审阅当前项目的结构、入口和潜在风险" }
 ]

@@ -49,20 +49,6 @@
           <span>{{ contextHint }}</span>
         </div>
       </div>
-
-      <div class="recipe-shortcuts" aria-label="AI 协作模式">
-        <button
-          v-for="recipe in recipes"
-          :key="recipe.id"
-          type="button"
-          :class="{ active: activeRecipeID === recipe.id }"
-          :disabled="sending || (recipe.requiresFileContext && !hasFileContext)"
-          :title="recipe.requiresFileContext && !hasFileContext ? '需要先打开项目内文件' : recipe.label"
-          @click="chooseRecipe(recipe)"
-        >
-          {{ recipe.label }}
-        </button>
-      </div>
     </div>
 
     <div ref="messageListRef" class="message-list" v-loading="loadingMessages">
@@ -90,12 +76,13 @@
     <AssistantComposer
       ref="composerRef"
       v-model="prompt"
-      :recipe-name="activeRecipe.label"
+      :profile-id="activeProfileID"
+      :profiles="profiles"
       :can-send="canSend"
       :sending="sending"
       @send="handleSendMessage"
       @cancel="cancelStream"
-      @clear-recipe="clearRecipe"
+      @select-profile="activeProfileID = $event"
     />
   </aside>
 </template>
@@ -115,7 +102,7 @@ import AssistantComposer from "./components/AssistantComposer.vue"
 import AssistantEmptyState from "./components/AssistantEmptyState.vue"
 import ChangeSetCard from "./components/ChangeSetCard.vue"
 import MessageBubble from "./components/MessageBubble.vue"
-import { CODE_ASSIST_RECIPES, GENERAL_RECIPE_ID, type CodeAssistRecipe } from "./constants"
+import { CODE_ASSIST_PROFILES, DEFAULT_PROFILE_ID } from "./constants"
 import { useCodeAssistConversation } from "./composables/useCodeAssistConversation"
 
 const props = defineProps<{
@@ -132,8 +119,8 @@ const emit = defineEmits<{
 }>()
 
 const capabilities = TASK_CAPABILITIES
-const recipes = CODE_ASSIST_RECIPES
-const activeRecipeID = ref(GENERAL_RECIPE_ID)
+const profiles = CODE_ASSIST_PROFILES
+const activeProfileID = ref(DEFAULT_PROFILE_ID)
 const prompt = ref("")
 const applyingChangeSetID = ref(0)
 const messageListRef = ref<HTMLElement>()
@@ -147,11 +134,7 @@ const hasFileContext = computed(
     props.activeFile.project_id === props.projectId &&
     props.activeFile.scope === "TENANT"
 )
-const activeRecipe = computed(() => recipes.find((recipe) => recipe.id === activeRecipeID.value) || recipes[0])
-const canSend = computed(
-  () =>
-    Boolean(prompt.value.trim()) && !sending.value && (!activeRecipe.value.requiresFileContext || hasFileContext.value)
-)
+const canSend = computed(() => Boolean(prompt.value.trim()) && !sending.value)
 const contextHint = computed(() => {
   if (hasFileContext.value && props.readonly) {
     return `只读上下文 · 当前版本 #${props.activeFile.current_version_id}`
@@ -160,7 +143,7 @@ const contextHint = computed(() => {
     return `已附带编辑器内容 · 当前版本 #${props.activeFile.current_version_id}`
   }
   if (props.activeFile.kind === "FILE") return "草稿或外部资源不会作为写入上下文"
-  return "项目级上下文 · 支持跨文件分析"
+  return props.readonly ? "项目级上下文 · 可分析，不可应用变更" : "项目级上下文 · 按需读取并生成候选变更"
 })
 
 const {
@@ -208,26 +191,12 @@ async function handleSendMessage() {
   if (!content || !canSend.value) return
   prompt.value = ""
   await scrollToBottom()
-  await sendMessage(content, activeRecipeID.value)
-  activeRecipeID.value = GENERAL_RECIPE_ID
+  await sendMessage(content, activeProfileID.value)
   await scrollToBottom()
 }
 
-function chooseRecipe(recipe: CodeAssistRecipe) {
-  if (recipe.requiresFileContext && !hasFileContext.value) return
-  activeRecipeID.value = recipe.id
-  if (recipe.prompt) prompt.value = recipe.prompt
-  nextTick(() => composerRef.value?.focus())
-}
-
 function fillPrompt(value: string) {
-  activeRecipeID.value = GENERAL_RECIPE_ID
   prompt.value = value
-  nextTick(() => composerRef.value?.focus())
-}
-
-function clearRecipe() {
-  activeRecipeID.value = GENERAL_RECIPE_ID
   nextTick(() => composerRef.value?.focus())
 }
 
@@ -273,9 +242,6 @@ watch(
   },
   { deep: true }
 )
-watch(hasFileContext, (available) => {
-  if (!available && activeRecipe.value.requiresFileContext) activeRecipeID.value = GENERAL_RECIPE_ID
-})
 </script>
 
 <style scoped lang="scss">
@@ -442,42 +408,6 @@ watch(hasFileContext, (available) => {
     margin-top: 1px;
     color: var(--el-text-color-secondary);
     font-size: 9px;
-  }
-}
-
-.recipe-shortcuts {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-  margin-top: 8px;
-
-  button {
-    width: 100%;
-    min-width: 0;
-    padding: 5px 3px;
-    overflow: hidden;
-    color: #64748b;
-    font-size: 10px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 7px;
-    transition: 0.16s ease;
-
-    &:hover:not(:disabled),
-    &.active {
-      color: #4f46e5;
-      background: #eef2ff;
-      border-color: #c7d2fe;
-    }
-
-    &:disabled {
-      color: #b6c0ce;
-      cursor: not-allowed;
-      background: #f8fafc;
-    }
   }
 }
 

@@ -92,7 +92,7 @@ export function useCodeAssistConversation(options: ConversationOptions) {
     }
   }
 
-  async function sendMessage(content: string, recipeID: string) {
+  async function sendMessage(content: string, profileID: string) {
     if (!content || sending.value) return false
     if (!activeConversationID.value) {
       const conversation = await createConversation(content.slice(0, 28))
@@ -114,7 +114,7 @@ export function useCodeAssistConversation(options: ConversationOptions) {
       await streamCodeAssistMessage(
         {
           conversation_id: activeConversationID.value!,
-          recipe_id: recipeID,
+          profile_id: profileID,
           content,
           context: options.buildContext()
         },

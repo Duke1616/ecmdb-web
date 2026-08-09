@@ -26,7 +26,7 @@ const examples = computed(() => (props.hasFileContext ? FILE_CONTEXT_EXAMPLES : 
 const description = computed(() =>
   props.hasFileContext
     ? "当前编辑器内容会作为上下文。需要修改时，AI 会生成一份可检查的变更集。"
-    : "可以讨论整个项目，或使用 Ansible 项目模式分析跨文件结构。"
+    : "可以直接讨论、审阅或修改整个项目，AI 会按需读取相关文件并生成可检查的变更集。"
 )
 </script>
 

@@ -75,7 +75,7 @@ export interface AIChatContext {
 
 export interface AIChatReq {
   conversation_id: number
-  recipe_id: string
+  profile_id: string
   content: string
   context: AIChatContext
 }
