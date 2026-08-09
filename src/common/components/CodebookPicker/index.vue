@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="generic-picker-container"
-    :class="{ 'is-disabled': disabled, 'is-project-scoped': !!projectId }"
-  >
+  <div class="generic-picker-container" :class="{ 'is-disabled': disabled, 'is-project-scoped': !!projectId }">
     <el-input
       :model-value="displayValue"
       readonly
@@ -13,7 +10,7 @@
       @click="openDialog"
     >
       <template #prefix v-if="selectedItem">
-        <img class="codebook-icon-prefix" :src="getCodebookIcon(selectedItem.name)" alt="" />
+        <SvgIcon class="codebook-icon-prefix" :name="getFileIconName(selectedItem.name)" />
       </template>
       <template #suffix>
         <el-icon v-if="clearable && selectedItem" class="clear-icon-suffix" @click.stop="clearSelection">
@@ -123,7 +120,7 @@
                   <template #default="{ data }">
                     <span class="explorer-tree-node" :class="{ 'is-file-node': data.kind === 'FILE' }">
                       <el-icon v-if="data.kind === 'DIRECTORY'" class="node-icon dir-icon"><Folder /></el-icon>
-                      <img v-else class="node-icon file-icon" :src="getCodebookIcon(data.name)" />
+                      <SvgIcon v-else class="node-icon file-icon" :name="getFileIconName(data.name)" />
                       <span class="node-name-label">{{ data.name }}</span>
                     </span>
                   </template>
@@ -146,10 +143,8 @@ import { Box, Folder, Search, ArrowRight, ArrowDown, Close } from "@element-plus
 import { detailCodebookApi, listReferenceProjectsApi, treeCodebookApi } from "@/api/task/codebook"
 import { workspaceNodeToCodebook } from "@/pages/task/codebook/composables/useCodebookTree"
 import { BaseDialog } from "@/common/components/Dialogs"
+import { getFileIconName } from "@/common/utils/file"
 import type { CodebookProject, codebook, CodebookScope } from "@/api/task/codebook/types/codebook"
-import fileIcon from "@/common/assets/icons/preserve-color/file.svg"
-import pythonIcon from "@/common/assets/icons/preserve-color/python.svg"
-import shellIcon from "@/common/assets/icons/preserve-color/shell.svg"
 
 // ── 属性与事件定义 ──────────────────────────────────────────────────────────
 interface CodebookPickerProps {
@@ -279,33 +274,6 @@ const searchExpandedKeys = computed(() => {
   if (!searchQuery.value.trim()) return []
   return getExpandableKeys(filteredCodebookTree.value)
 })
-
-// ── 语言与图标推断 ────────────────────────────────────────────────────────
-const extLanguageMap: Record<string, string> = {
-  sh: "shell",
-  bash: "shell",
-  zsh: "shell",
-  py: "python",
-  js: "javascript",
-  ts: "typescript",
-  json: "json",
-  yml: "yaml",
-  yaml: "yaml",
-  md: "markdown"
-}
-
-const getFileExt = (name: string) =>
-  String(name || "")
-    .match(/\.([^.]+)$/)?.[1]
-    ?.toLowerCase() || ""
-const inferLanguage = (name: string) => extLanguageMap[getFileExt(name)] || "text"
-
-const getCodebookIcon = (name: string) => {
-  const language = inferLanguage(name)
-  if (language === "python") return pythonIcon
-  if (language === "shell") return shellIcon
-  return fileIcon
-}
 
 // ── 项目/树加载 ───────────────────────────────────────────────────────────
 const loadProjects = async () => {
@@ -458,7 +426,6 @@ watch(
   },
   { immediate: true }
 )
-
 </script>
 
 <style scoped lang="scss">
@@ -499,10 +466,8 @@ watch(
 .codebook-icon-prefix {
   width: 16px;
   height: 16px;
-  object-fit: contain;
+  flex-shrink: 0;
   margin-right: 6px;
-  display: flex;
-  align-items: center;
 }
 
 .arrow-icon-suffix {
@@ -896,7 +861,6 @@ watch(
     &.file-icon {
       width: 15px;
       height: 15px;
-      object-fit: contain;
     }
   }
 

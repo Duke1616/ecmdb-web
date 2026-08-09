@@ -137,7 +137,7 @@
             ><span>目录</span>
           </div>
           <div>
-            <strong>{{ formatSize(totalSize) }}</strong
+            <strong>{{ formatFileSize(totalSize) }}</strong
             ><span>大小</span>
           </div>
         </div>
@@ -146,7 +146,7 @@
           <div v-for="item in listedFiles" :key="item.path" class="file-row">
             <el-icon><Document /></el-icon>
             <span class="file-path" :title="item.path">{{ item.path }}</span>
-            <span>{{ formatSize(item.file.size) }}</span>
+            <span>{{ formatFileSize(item.file.size) }}</span>
             <el-button class="remove-file" text circle :icon="Close" @click="removeFile(item.path)" />
           </div>
           <div v-if="files.length > listedFiles.length" class="file-more">
@@ -177,6 +177,7 @@ import {
 } from "@element-plus/icons-vue"
 import { ElMessage, type LoadFunction } from "element-plus"
 import { FormDialog } from "@/common/components/Dialogs"
+import { formatFileSize } from "@/common/utils/file"
 import { importCodebookApi } from "@/api/task/codebook"
 import {
   collectDroppedFiles,
@@ -444,13 +445,6 @@ async function submit() {
   } finally {
     submitting.value = false
   }
-}
-
-function formatSize(value: number) {
-  if (value < 1024) return `${value} B`
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
-  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`
-  return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`
 }
 
 defineExpose({ open })

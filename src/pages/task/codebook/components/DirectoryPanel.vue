@@ -15,6 +15,24 @@
         </div>
       </div>
       <div class="panel-actions">
+        <el-button-group class="view-switch" aria-label="资源展示方式">
+          <el-button
+            :class="{ 'is-active': viewMode === 'grid' }"
+            :icon="Grid"
+            :aria-pressed="viewMode === 'grid'"
+            aria-label="卡片视图"
+            title="卡片视图"
+            @click="setViewMode('grid')"
+          />
+          <el-button
+            :class="{ 'is-active': viewMode === 'list' }"
+            :icon="List"
+            :aria-pressed="viewMode === 'list'"
+            aria-label="列表视图"
+            title="列表视图"
+            @click="setViewMode('list')"
+          />
+        </el-button-group>
         <AuthButton
           :capability="capabilities.CodeAssist.ViewConversation"
           disableMode
@@ -51,6 +69,7 @@
     </div>
 
     <VueDraggable
+      v-if="viewMode === 'grid'"
       v-model="localChildren"
       :animation="200"
       item-key="workspace_key"
@@ -59,10 +78,15 @@
       :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
       @end="onDragEnd"
     >
+      <template #header>
+        <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
+          <el-empty :image-size="130" description="当前目录暂无资源" />
+        </div>
+      </template>
       <button
         v-for="item in localChildren"
         :key="item.workspace_key || item.id"
-        class="resource-item"
+        class="resource-card"
         type="button"
         @click="$emit('select', item)"
       >
@@ -73,31 +97,81 @@
           </el-icon>
         </span>
         <span class="resource-meta">
-          <strong>{{ item.name }}</strong>
+          <strong :title="item.name">{{ item.name }}</strong>
           <small>{{ item.kind === "DIRECTORY" ? "目录" : fileDescription(item) }}</small>
         </span>
         <el-tooltip v-if="isReadonly || isReadonlyCodebook(item)" content="资源只读" placement="top" :show-after="300">
           <el-icon class="resource-readonly-lock"><Lock /></el-icon>
         </el-tooltip>
-        <el-tag v-if="item.kind === 'FILE'" size="small" effect="plain">{{ getFileExt(item.name) || "file" }}</el-tag>
+        <el-tag v-if="item.kind === 'FILE'" size="small" effect="plain">
+          {{ getFileExt(item.name) || "file" }}
+        </el-tag>
       </button>
-      <template #header>
-        <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
-          <el-empty :image-size="130" description="当前目录暂无资源" />
-        </div>
-      </template>
     </VueDraggable>
+
+    <div v-else class="resource-list-shell" v-loading="childrenLoading">
+      <div v-if="localChildren.length > 0" class="resource-list-header">
+        <span>名称</span>
+        <span>种类</span>
+        <span>大小</span>
+        <span>修改日期</span>
+      </div>
+      <VueDraggable
+        v-model="localChildren"
+        :animation="200"
+        item-key="workspace_key"
+        class="resource-list"
+        :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
+        @end="onDragEnd"
+      >
+        <button
+          v-for="(item, index) in localChildren"
+          :key="item.workspace_key || item.id"
+          class="resource-item"
+          :class="{ 'is-even': index % 2 === 1 }"
+          type="button"
+          @click="$emit('select', item)"
+        >
+          <span class="resource-name-cell">
+            <span class="resource-icon" :class="item.kind.toLowerCase()">
+              <SvgIcon v-if="item.kind === 'FILE'" :name="getFileIconName(item.name)" size="22px" class="file-icon" />
+              <el-icon v-else>
+                <Folder />
+              </el-icon>
+            </span>
+            <strong :title="item.name">{{ item.name }}</strong>
+            <el-tooltip
+              v-if="isReadonly || isReadonlyCodebook(item)"
+              content="资源只读"
+              placement="top"
+              :show-after="300"
+            >
+              <el-icon class="resource-readonly-lock"><Lock /></el-icon>
+            </el-tooltip>
+          </span>
+          <span class="resource-kind-cell">{{ getResourceKind(item) }}</span>
+          <span class="resource-size-cell">
+            {{ item.kind === "FILE" ? formatFileSize(item.size || 0) : "--" }}
+          </span>
+          <span class="resource-date-cell">{{ formatModifiedTime(item.utime) }}</span>
+        </button>
+      </VueDraggable>
+      <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
+        <el-empty :image-size="130" description="当前目录暂无资源" />
+      </div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { Delete, Folder, FolderOpened, Lock, MagicStick, Upload } from "@element-plus/icons-vue"
+import { Delete, Folder, FolderOpened, Grid, List, Lock, MagicStick, Upload } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
+import { formatTimestamp } from "@/common/utils/day"
+import { formatFileSize, getFileExt, getFileIconName, getFileTypeLabel, inferLanguage } from "@/common/utils/file"
 import { isReadonlyCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
@@ -122,12 +196,40 @@ const emit = defineEmits<{
 
 const localChildren = ref<codebook[]>([])
 const isReadonly = computed(() => props.readonly || isReadonlyCodebook(props.activeDirectory))
+type ResourceViewMode = "grid" | "list"
+const viewModeStorageKey = "codebook-resource-view-mode"
+
+function getInitialViewMode(): ResourceViewMode {
+  if (typeof window === "undefined") return "list"
+  try {
+    return window.localStorage.getItem(viewModeStorageKey) === "grid" ? "grid" : "list"
+  } catch {
+    return "list"
+  }
+}
+
+const viewMode = ref<ResourceViewMode>(getInitialViewMode())
+
+function setViewMode(mode: ResourceViewMode) {
+  viewMode.value = mode
+  try {
+    window.localStorage.setItem(viewModeStorageKey, mode)
+  } catch {
+    // 浏览器禁用本地存储时仍允许在当前页面切换视图。
+  }
+}
 
 function fileDescription(item: codebook) {
   if (!item.download_only) return inferLanguage(item.name)
-  const size = item.size || 0
-  const formatted = size < 1024 * 1024 ? `${(size / 1024).toFixed(1)} KB` : `${(size / 1024 / 1024).toFixed(1)} MB`
-  return `${formatted} · 仅支持下载`
+  return `${formatFileSize(item.size || 0)} · 仅支持下载`
+}
+
+function getResourceKind(item: codebook) {
+  return item.kind === "DIRECTORY" ? "文件夹" : getFileTypeLabel(item.name)
+}
+
+function formatModifiedTime(timestamp?: number) {
+  return timestamp ? formatTimestamp(timestamp) : "--"
 }
 
 watch(
@@ -260,6 +362,25 @@ const onDragEnd = (evt: any) => {
   }
 }
 
+.view-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+
+  :deep(.el-button) {
+    width: 31px;
+    padding: 0;
+    color: #64748b;
+    background: #fff;
+  }
+
+  :deep(.el-button.is-active) {
+    z-index: 1;
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #93c5fd;
+  }
+}
+
 .resource-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -271,7 +392,7 @@ const onDragEnd = (evt: any) => {
   padding: 18px;
 }
 
-.resource-item {
+.resource-card {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -295,18 +416,7 @@ const onDragEnd = (evt: any) => {
   }
 }
 
-.resource-empty {
-  display: grid;
-  grid-column: 1 / -1;
-  min-height: 360px;
-  place-items: center;
-}
-
-.resource-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.resource-grid .resource-icon {
   width: 34px;
   height: 34px;
   color: #2563eb;
@@ -342,5 +452,126 @@ const onDragEnd = (evt: any) => {
     color: #64748b;
     font-size: 12px;
   }
+}
+
+.resource-list-shell {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 18px 18px;
+  background: #fff;
+}
+
+.resource-list {
+  min-width: 650px;
+}
+
+.resource-list-header,
+.resource-item {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(110px, 0.34fr) minmax(84px, 0.2fr) minmax(150px, 0.38fr);
+  align-items: center;
+}
+
+.resource-list-header {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  min-width: 650px;
+  height: 34px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f8fafc;
+  border-bottom: 1px solid #dfe5ec;
+
+  span + span {
+    border-left: 1px solid #e2e8f0;
+    padding-left: 14px;
+  }
+}
+
+.resource-item {
+  width: 100%;
+  min-width: 650px;
+  height: 40px;
+  padding: 0 12px;
+  box-sizing: border-box;
+  color: #475569;
+  cursor: pointer;
+  background: #fff;
+  border: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: left;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+
+  &.is-even {
+    background: #f8fafc;
+  }
+
+  &:hover {
+    color: #1d4ed8;
+    background: #eff6ff;
+  }
+
+  > span:not(:first-child) {
+    overflow: hidden;
+    padding-left: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.resource-empty {
+  display: flex;
+  min-height: 360px;
+  align-items: center;
+  justify-content: center;
+}
+
+.resource-grid .resource-empty {
+  grid-column: 1 / -1;
+}
+
+.resource-name-cell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+
+  strong {
+    overflow: hidden;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.resource-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #2563eb;
+
+  &.directory {
+    color: #e0a126;
+    font-size: 21px;
+  }
+}
+
+.resource-size-cell,
+.resource-date-cell {
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
 }
 </style>

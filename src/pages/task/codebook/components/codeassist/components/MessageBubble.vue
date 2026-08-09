@@ -6,7 +6,12 @@
     </div>
 
     <div v-if="showContent" class="message-content">
-      <span v-if="message.content">{{ message.content }}</span>
+      <div
+        v-if="message.content && message.role === AIMessageRole.ASSISTANT"
+        class="markdown-content"
+        v-html="renderedContent"
+      />
+      <span v-else-if="message.content">{{ message.content }}</span>
       <span v-else-if="message.status === AIMessageStatus.STREAMING" class="thinking-text">
         <i /><i /><i /> {{ message.progressText || "正在分析" }}
       </span>
@@ -37,8 +42,11 @@ import { computed } from "vue"
 import dayjs from "dayjs"
 import { AIMessageRole, AIMessageStatus } from "@/api/task/codeassist/ai.enums"
 import type { DisplayMessage } from "../composables/useCodeAssistConversation"
+import { renderMarkdown } from "../utils/renderMarkdown"
 
 const props = defineProps<{ message: DisplayMessage }>()
+
+const renderedContent = computed(() => renderMarkdown(props.message.content))
 
 const showContent = computed(
   () =>
@@ -82,6 +90,7 @@ function formatLatency(value: number) {
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 4px 13px 13px;
     box-shadow: 0 4px 14px rgba(15, 23, 42, 0.025);
+    white-space: normal;
   }
 }
 
@@ -104,6 +113,137 @@ function formatLatency(value: number) {
   line-height: 1.72;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+}
+
+.markdown-content {
+  min-width: 0;
+
+  :deep(> :first-child) {
+    margin-top: 0;
+  }
+
+  :deep(> :last-child) {
+    margin-bottom: 0;
+  }
+
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    margin: 14px 0 7px;
+    color: #172033;
+    font-weight: 700;
+    line-height: 1.35;
+  }
+
+  :deep(h1) {
+    font-size: 17px;
+  }
+
+  :deep(h2) {
+    font-size: 15px;
+  }
+
+  :deep(h3) {
+    font-size: 14px;
+  }
+
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    font-size: 12px;
+  }
+
+  :deep(p) {
+    margin: 0 0 9px;
+  }
+
+  :deep(ul),
+  :deep(ol) {
+    margin: 6px 0 10px;
+    padding-left: 21px;
+  }
+
+  :deep(li) {
+    margin: 3px 0;
+  }
+
+  :deep(blockquote) {
+    margin: 9px 0;
+    padding: 7px 10px;
+    color: #64748b;
+    background: #f8fafc;
+    border-left: 3px solid #93c5fd;
+  }
+
+  :deep(code) {
+    padding: 1px 4px;
+    color: #be185d;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    background: #f1f5f9;
+    border-radius: 4px;
+  }
+
+  :deep(pre) {
+    max-width: 100%;
+    margin: 9px 0 11px;
+    overflow: auto;
+    padding: 10px 11px;
+    color: #dbeafe;
+    background: #172033;
+    border: 1px solid #26354d;
+    border-radius: 7px;
+    line-height: 1.55;
+  }
+
+  :deep(pre code) {
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    border-radius: 0;
+    white-space: pre;
+  }
+
+  :deep(a) {
+    color: #2563eb;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  :deep(hr) {
+    height: 1px;
+    margin: 12px 0;
+    background: #e2e8f0;
+    border: 0;
+  }
+
+  :deep(table) {
+    display: block;
+    max-width: 100%;
+    margin: 9px 0 11px;
+    overflow-x: auto;
+    border-spacing: 0;
+    border-collapse: collapse;
+  }
+
+  :deep(th),
+  :deep(td) {
+    padding: 5px 8px;
+    border: 1px solid #dbe3ed;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  :deep(th) {
+    background: #f8fafc;
+    font-weight: 700;
+  }
 }
 
 .thinking-text {

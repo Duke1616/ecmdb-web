@@ -172,7 +172,7 @@ import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import { getFileExt, getFileIconName, inferLanguage } from "../composables/useCodebookFile"
+import { formatFileSize, getFileExt, getFileIconName, inferLanguage } from "@/common/utils/file"
 import { isSystemCodebook } from "../composables/useCodebookTree"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
@@ -192,7 +192,7 @@ const props = defineProps<{
 const isReadonly = computed(() => props.readonly || isSystemCodebook(props.activeEditor))
 const isDownloadOnly = computed(() => Boolean(props.activeEditor.download_only))
 const fileType = computed(() => getFileExt(props.activeEditor.name).toUpperCase() || "FILE")
-const formattedFileSize = computed(() => formatSize(props.activeEditor.size || 0))
+const formattedFileSize = computed(() => formatFileSize(props.activeEditor.size || 0))
 const { hasPermission } = usePermission()
 
 const canOpenVersion = computed(() =>
@@ -205,13 +205,6 @@ const canDelete = computed(() =>
   Boolean(props.activeEditor.id && !isReadonly.value && hasPermission(capabilities.Codebook.Delete))
 )
 const hasMoreActions = computed(() => canOpenVersion.value || canEditMeta.value || canDelete.value)
-
-function formatSize(value: number) {
-  if (value < 1024) return `${value} B`
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`
-  if (value < 1024 * 1024 * 1024) return `${(value / 1024 / 1024).toFixed(1)} MB`
-  return `${(value / 1024 / 1024 / 1024).toFixed(1)} GB`
-}
 
 defineEmits<{
   (e: "select", row: codebook): void

@@ -30,6 +30,7 @@
 <script setup lang="ts">
 import SearchSelectorBase from "./Base.vue"
 import { listCodebookApi, detailCodebookApi } from "@/api/task/codebook/index.js"
+import { getFileExt, inferLanguage } from "@/common/utils/file"
 
 interface Props {
   modelValue?: number
@@ -54,23 +55,6 @@ const handleUpdate = (value: number) => {
   emit("update:modelValue", value)
 }
 
-const extLanguageMap: Record<string, string> = {
-  sh: "shell",
-  bash: "shell",
-  zsh: "shell",
-  py: "python",
-  js: "javascript",
-  ts: "javascript",
-  json: "json",
-  yml: "yaml",
-  yaml: "yaml",
-  md: "markdown"
-}
-
-const getFileExt = (name: string) => String(name || "").match(/\.([^.]+)$/)?.[1]?.toLowerCase() || ""
-
-const inferLanguage = (name: string) => extLanguageMap[getFileExt(name)] || "text"
-
 // 定义数据加载函数
 const loadCodebooks = async (params: any) => {
   const response = await listCodebookApi({
@@ -78,7 +62,9 @@ const loadCodebooks = async (params: any) => {
     limit: 200
   })
   if (response.data) {
-    const keyword = String(params.keyword || "").trim().toLowerCase()
+    const keyword = String(params.keyword || "")
+      .trim()
+      .toLowerCase()
     const codebooks = (response.data.codebooks || []).filter((item: any) => {
       if (item.kind === "DIRECTORY") return false
       if (!keyword) return true

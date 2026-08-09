@@ -40,12 +40,12 @@
           <div class="delete-impact-item">
             <span>制品发布</span>
             <strong>{{ impact.artifact_release_count }}</strong>
-            <small>{{ formatBytes(impact.artifact_release_bytes) }}</small>
+            <small>{{ formatFileSize(impact.artifact_release_bytes) }}</small>
           </div>
           <div class="delete-impact-item">
             <span>项目快照</span>
             <strong>{{ impact.project_source_count }}</strong>
-            <small>{{ formatBytes(impact.project_source_bytes) }}</small>
+            <small>{{ formatFileSize(impact.project_source_bytes) }}</small>
           </div>
           <div class="delete-impact-item">
             <span>关联数据</span>
@@ -87,6 +87,7 @@ import { computed, ref } from "vue"
 import { Delete } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { FormDialog } from "@/common/components/Dialogs"
+import { formatFileSize } from "@/common/utils/file"
 import { deleteProjectApi, getProjectDeleteImpactApi } from "@/api/task/codebook"
 import type { CodebookProject, ProjectDeleteImpact } from "@/api/task/codebook/types/codebook"
 
@@ -154,14 +155,6 @@ function reset() {
   confirmName.value = ""
   impactLoading.value = false
   submitting.value = false
-}
-
-function formatBytes(bytes: number) {
-  if (!bytes) return "0 B"
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 defineExpose({ open })

@@ -67,6 +67,8 @@ export interface WorkspaceNode {
   sort_no: number
   download_only: boolean
   size: number
+  ctime: number
+  utime: number
   namespace: string
   children: WorkspaceNode[]
 }
