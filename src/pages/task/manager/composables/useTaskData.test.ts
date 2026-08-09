@@ -1,13 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { TaskProtocol, TaskStatus, TaskType, type TaskItem } from "@/api/task/manager/type"
 import { ProgramKind } from "@/api/task/program"
-import {
-  createDefaultFormState,
-  defaultParameterBinding,
-  mapToApiPayload,
-  mapToFormState,
-  validateBoundParameters
-} from "./useTaskData"
+import { createDefaultFormState, mapToApiPayload, mapToFormState, validateBoundParameters } from "./useTaskData"
 
 describe("任务程序来源映射", () => {
   it("详情中的 PROJECT 程序能原样提交", () => {
@@ -83,9 +77,5 @@ describe("任务动态参数校验", () => {
     form.grpc_params = { variables: "" }
 
     expect(validateBoundParameters(form, handler)).toBeUndefined()
-  })
-
-  it("不依赖 bindings 顺序并优先选择静态模式", () => {
-    expect(defaultParameterBinding(handler.metadata[0])).toBe("static")
   })
 })

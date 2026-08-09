@@ -18,7 +18,6 @@
 <script setup lang="ts">
 import { reactive, watch, onMounted, onUnmounted } from "vue"
 import type { Parameter } from "@/api/task/resource/type"
-import { defaultParameterBinding } from "../composables/useTaskData"
 import TaskParamItem from "./TaskParamItem.vue"
 
 /**
@@ -52,13 +51,13 @@ const initModes = () => {
   let paramsChanged = false
 
   props.metadata.forEach((p) => {
-    // 1. 初始化切换模式（优先直接输入类绑定，不依赖后端 map 的返回顺序）
-    const defaultMode = defaultParameterBinding(p)
-    if (defaultMode) {
+    // 1. 初始化切换模式（保持后端返回的绑定顺序）
+    const keys = Object.keys(p.bindings || {})
+    if (keys.length > 0) {
       // 优先从已有的 taskMetadata (业务数据) 中恢复模式到 UI 状态
-      // 校验保存的模式是否还在当前的 bindings 中，若不在则使用稳定的默认模式。
+      // 校验保存的模式是否还在当前的 bindings 中，若不在则取第一个绑定。
       const savedMode = taskMetadata.value[p.key]
-      const targetMode = savedMode && p.bindings[savedMode] ? savedMode : defaultMode
+      const targetMode = savedMode && p.bindings[savedMode] ? savedMode : keys[0]
 
       if (paramModes[p.key] !== targetMode) {
         paramModes[p.key] = targetMode

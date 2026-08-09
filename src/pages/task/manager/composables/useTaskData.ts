@@ -1,6 +1,6 @@
 import { cloneDeep } from "lodash-es"
 import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem } from "@/api/task/manager/type"
-import type { HandlerDetail, Parameter } from "@/api/task/resource/type"
+import type { HandlerDetail } from "@/api/task/resource/type"
 import type { ProgramSpec } from "@/api/task/program"
 import { Connection, Link } from "@element-plus/icons-vue"
 
@@ -203,18 +203,4 @@ export const validateBoundParameters = (state: TaskFormState, handler?: HandlerD
   }
 
   return undefined
-}
-
-/**
- * 后端 bindings 是 map，不能依赖其序列化顺序表达默认模式。
- * 优先选择直接输入类绑定，避免创建任务时误选需要额外引用 ID 的 runner 绑定。
- */
-export const defaultParameterBinding = (parameter: Parameter): string => {
-  const modes = Object.keys(parameter.bindings ?? {})
-  return (
-    ["static", "manual"].find((mode) => modes.includes(mode)) ??
-    modes.find((mode) => parameter.bindings[mode]?.component !== "runner-picker") ??
-    modes[0] ??
-    ""
-  )
 }

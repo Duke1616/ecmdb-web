@@ -59,15 +59,6 @@ export function useTaskForm(options: {
           trigger: "submit"
         }
       ]
-      r.grpc_params = [
-        {
-          validator: (_rule, _value, callback) => {
-            const message = validateBoundParameters(form.value, currentHandler.value)
-            callback(message ? new Error(message) : undefined)
-          },
-          trigger: "submit"
-        }
-      ]
       if (currentHandler.value?.program_kinds?.length) {
         r.program = [{ validator: validateProgramField, trigger: "submit" }]
       }
@@ -144,6 +135,12 @@ export function useTaskForm(options: {
   const submit = async () => {
     if (!formRef.value) return
     await formRef.value.validate()
+
+    const parameterError = validateBoundParameters(form.value, currentHandler.value)
+    if (parameterError) {
+      ElMessage.error(parameterError)
+      return
+    }
 
     saving.value = true
     try {
