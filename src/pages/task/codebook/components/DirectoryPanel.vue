@@ -16,6 +16,17 @@
       </div>
       <div class="panel-actions">
         <AuthButton
+          :capability="capabilities.CodeAssist.ViewConversation"
+          disableMode
+          size="small"
+          class="assistant-button"
+          :type="assistantOpen ? 'primary' : 'default'"
+          :plain="assistantOpen"
+          :icon="MagicStick"
+          @click="$emit('toggle-assistant')"
+          >AI 助手</AuthButton
+        >
+        <AuthButton
           v-if="!isReadonly"
           :capability="capabilities.Codebook.Add"
           disableMode
@@ -25,25 +36,6 @@
         >
           导入文件/文件夹
         </AuthButton>
-        <AuthButton
-          v-if="!isReadonly"
-          :capability="capabilities.Codebook.Add"
-          disableMode
-          size="small"
-          :icon="FolderAdd"
-          @click="$emit('create-directory')"
-          >目录</AuthButton
-        >
-        <AuthButton
-          v-if="!isReadonly"
-          :capability="capabilities.Codebook.Add"
-          disableMode
-          size="small"
-          type="primary"
-          :icon="DocumentAdd"
-          @click="$emit('create-file')"
-          >脚本</AuthButton
-        >
         <AuthButton
           v-if="activeDirectory.id && !isReadonly"
           :capability="capabilities.Codebook.Delete"
@@ -101,7 +93,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { Delete, DocumentAdd, Folder, FolderAdd, FolderOpened, Lock, Upload } from "@element-plus/icons-vue"
+import { Delete, Folder, FolderOpened, Lock, MagicStick, Upload } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
@@ -116,16 +108,16 @@ const props = defineProps<{
   activeDirectory: codebook
   directoryChildren: codebook[]
   childrenLoading: boolean
+  assistantOpen?: boolean
   readonly?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: "create-directory"): void
-  (e: "create-file"): void
   (e: "import-resources"): void
   (e: "delete", row: codebook): void
   (e: "select", row: codebook): void
   (e: "sort", id: number, targetPosition: number): void
+  (e: "toggle-assistant"): void
 }>()
 
 const localChildren = ref<codebook[]>([])
@@ -168,6 +160,7 @@ const onDragEnd = (evt: any) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 16px;
   min-height: 56px;
   padding: 8px 18px;
@@ -178,6 +171,7 @@ const onDragEnd = (evt: any) => {
 
 .directory-title {
   display: flex;
+  flex: 1 1 140px;
   align-items: center;
   min-width: 0;
   gap: 10px;
@@ -242,14 +236,27 @@ const onDragEnd = (evt: any) => {
 
 .panel-actions {
   display: flex;
+  max-width: 100%;
   align-items: center;
   flex-shrink: 0;
   gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   :deep(.el-button) {
     height: 30px;
     padding: 0 12px;
     font-size: 12px;
+  }
+
+  :deep(.assistant-button.el-button--primary.is-plain) {
+    --el-button-text-color: #1d4ed8;
+    --el-button-border-color: #bfdbfe;
+    --el-button-bg-color: #eff6ff;
   }
 }
 

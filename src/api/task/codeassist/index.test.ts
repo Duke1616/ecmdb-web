@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
-  fetchEventSource: vi.fn()
+  fetchEventSource: vi.fn(),
+  post: vi.fn()
 }))
 
 vi.mock("@microsoft/fetch-event-source", () => ({
@@ -9,7 +10,7 @@ vi.mock("@microsoft/fetch-event-source", () => ({
 }))
 
 vi.mock("@/common/utils/service", () => ({
-  default: {},
+  default: { post: mocks.post },
   API_SERVICE: { TASK: "task" },
   activeTenantStack: { value: [] }
 }))
@@ -18,7 +19,18 @@ vi.mock("@/pinia/stores/user", () => ({
   useUserStoreHook: () => ({ currentTenantId: 7 })
 }))
 
-import { streamCodeAssistMessage } from "./index"
+import { applyCodeAssistChangeSetApi, streamCodeAssistMessage } from "./index"
+
+describe("applyCodeAssistChangeSetApi", () => {
+  it("使用统一的 ChangeSet 应用接口", () => {
+    applyCodeAssistChangeSetApi(42)
+
+    expect(mocks.post).toHaveBeenCalledWith({
+      url: "task/code-assist/change-set/apply",
+      data: { id: 42 }
+    })
+  })
+})
 
 describe("streamCodeAssistMessage", () => {
   it("使用租户上下文发送 POST SSE，并关闭自动重试", async () => {

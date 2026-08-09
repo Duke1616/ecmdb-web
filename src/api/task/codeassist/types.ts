@@ -1,7 +1,12 @@
-export type AIMessageRole = "USER" | "ASSISTANT"
-export type AIMessageStatus = "STREAMING" | "COMPLETED" | "FAILED" | "CANCELLED"
-export type AISuggestionStatus = "DRAFT" | "VALIDATED" | "APPLYING" | "APPLIED"
-export type AIDiagnosticSeverity = "ERROR" | "WARNING"
+import type {
+  AIChangeOperation,
+  AIChangeSetStatus,
+  AIDiagnosticSeverity,
+  AIMessageRole,
+  AIMessageStatus
+} from "./ai.enums"
+
+export * from "./ai.enums"
 
 export interface AIConversation {
   id: number
@@ -28,15 +33,25 @@ export interface AIDiagnostic {
   message: string
 }
 
-export interface AISuggestion {
+export interface AIChangeItem {
+  operation: AIChangeOperation
+  path: string
+  node_id: number
+  base_version_id: number
+  base_hash: string
+  language: string
+  code: string
+  diagnostics: AIDiagnostic[]
+  applied_version_id: number
+}
+
+export interface AIChangeSet {
   id: number
   message_id: number
-  node_id: number
-  code: string
+  base_revision: number
   summary: string
-  diagnostics: AIDiagnostic[]
-  status: AISuggestionStatus
-  applied_version_id: number
+  status: AIChangeSetStatus
+  items: AIChangeItem[]
 }
 
 export interface CreateConversationReq {
@@ -73,22 +88,21 @@ export interface StreamEventData {
   error?: string
 }
 
-export type StreamEventName =
-  | "message.started"
-  | "message.delta"
-  | "message.progress"
-  | "message.completed"
-  | "message.failed"
-
 export interface ConversationListResp {
   conversations: AIConversation[]
 }
 
 export interface ConversationDetailResp {
   messages: AIMessage[]
-  suggestions: AISuggestion[]
+  change_sets: AIChangeSet[]
 }
 
-export interface ApplySuggestionResp {
+export interface AppliedChangeItem {
+  path: string
+  node_id: number
   version_id: number
+}
+
+export interface ApplyChangeSetResp {
+  items: AppliedChangeItem[]
 }

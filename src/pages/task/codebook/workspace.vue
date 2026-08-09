@@ -25,13 +25,13 @@
           :active-directory="activeEditor"
           :directory-children="directoryChildren"
           :children-loading="childrenLoading"
+          :assistant-open="assistantVisible"
           :readonly="isReadonlyCodebook(activeEditor)"
-          @create-directory="createDirectoryDraft"
-          @create-file="createFileDraft"
           @import-resources="importFilesRef?.open()"
           @delete="handleDelete"
           @select="selectCodebook"
           @sort="handleCodebookSort"
+          @toggle-assistant="toggleAssistant"
         />
 
         <EditorPanel
@@ -64,8 +64,9 @@
         :project-id="activeProjectId"
         :project-name="activeProjectName"
         :active-file="activeEditor"
-        :readonly="isReadonlyCodebook(activeEditor)"
+        :readonly="activeProjectArchived"
         @apply-code="handleEditorCodeChange"
+        @change-set-applied="handleChangeSetApplied"
         @close="assistantVisible = false"
       />
     </div>
@@ -211,6 +212,7 @@ import {
   updateCodebookApi
 } from "@/api/task/codebook"
 import { downloadBlob } from "@/common/utils/file"
+import type { AppliedChangeItem } from "@/api/task/codeassist/types"
 import type {
   codebook,
   CodebookScope,
@@ -768,6 +770,22 @@ async function handleVersionChanged() {
   const idx = findIndex(openedFiles.value, { id: latest.id })
   if (idx > -1) {
     openedFiles.value[idx] = latest
+  }
+}
+
+async function handleChangeSetApplied(items: AppliedChangeItem[]) {
+  await fetchTreeData()
+
+  if (activeEditor.value.kind === "FILE" && items.some((item) => item.node_id === activeEditor.value.id)) {
+    await fetchFileDetail(activeEditor.value.id)
+    const latest = activeEditor.value
+    const index = findIndex(openedFiles.value, { id: latest.id })
+    if (index > -1) openedFiles.value[index] = latest
+    return
+  }
+
+  if (activeEditor.value.kind === "DIRECTORY") {
+    await fetchChildren(activeEditor.value.id, activeEditor.value.workspace_key)
   }
 }
 

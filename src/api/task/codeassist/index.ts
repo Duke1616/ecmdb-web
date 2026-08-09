@@ -2,17 +2,17 @@ import { fetchEventSource } from "@microsoft/fetch-event-source"
 import instance, { API_SERVICE } from "@@/utils/service"
 import { activeTenantStack } from "@/common/utils/service"
 import { useUserStoreHook } from "@/pinia/stores/user"
+import { StreamEventName } from "./ai.enums"
 import type {
   AIChatReq,
   AIConversation,
-  ApplySuggestionResp,
+  ApplyChangeSetResp,
   ConversationListResp,
   ConversationDetailReq,
   ConversationDetailResp,
   CreateConversationReq,
   ListConversationsReq,
-  StreamEventData,
-  StreamEventName
+  StreamEventData
 } from "./types"
 
 export function createCodeAssistConversationApi(data: CreateConversationReq) {
@@ -36,9 +36,9 @@ export function getCodeAssistConversationDetailApi(data: ConversationDetailReq) 
   })
 }
 
-export function applyCodeAssistSuggestionApi(id: number) {
-  return instance.post<ApplySuggestionResp>({
-    url: `${API_SERVICE.TASK}/code-assist/suggestion/apply`,
+export function applyCodeAssistChangeSetApi(id: number) {
+  return instance.post<ApplyChangeSetResp>({
+    url: `${API_SERVICE.TASK}/code-assist/change-set/apply`,
     data: { id }
   })
 }
@@ -92,7 +92,7 @@ export async function streamCodeAssistMessage(
       if (event.event === "heartbeat" || !event.event) return
       const name = event.event as StreamEventName
       const payload = event.data ? (JSON.parse(event.data) as StreamEventData) : {}
-      terminalEventReceived = name === "message.completed" || name === "message.failed"
+      terminalEventReceived = name === StreamEventName.MESSAGE_COMPLETED || name === StreamEventName.MESSAGE_FAILED
       options.onEvent(name, payload)
     },
     onclose() {

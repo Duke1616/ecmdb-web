@@ -55,10 +55,9 @@ const isIconOnly = computed(() => Boolean(attrs.icon) && !slots.default)
 </script>
 
 <template>
-  <el-button v-if="isRendered" v-bind="buttonAttrs" :class="{ 'auth-icon-only': isIconOnly }" :disabled="mergedDisabled">
-    <template v-if="$slots.default">
-      <slot />
-    </template>
+  <el-button v-if="isRendered && isIconOnly" v-bind="buttonAttrs" class="auth-icon-only" :disabled="mergedDisabled" />
+  <el-button v-else-if="isRendered" v-bind="buttonAttrs" :disabled="mergedDisabled">
+    <slot />
   </el-button>
 </template>
 

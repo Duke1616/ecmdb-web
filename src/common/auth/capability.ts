@@ -570,8 +570,8 @@ export const TASK_CAPABILITIES = {
     ViewConversation: "task:code_assist:view",
     /** 发送消息 */
     Chat: "task:code_assist:chat",
-    /** 保存候选代码版本 */
-    ApplySuggestion: "task:code_assist:apply_suggestion"
+    /** 原子应用 AI 项目变更 */
+    ApplyChangeSet: "task:code_assist:apply_change_set"
   },
 
   /** 制品仓库相关 */
