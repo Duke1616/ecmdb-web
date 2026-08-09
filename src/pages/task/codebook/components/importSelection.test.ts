@@ -5,6 +5,7 @@ import {
   compactLocalSelection,
   filesFromLocalNodes,
   filesFromInput,
+  findImportPathConflicts,
   mergeSelectedFiles,
   readEntry,
   type SelectedImportFile
@@ -154,5 +155,25 @@ describe("import selection", () => {
     } as const
 
     expect(compactLocalSelection([child, parent])).toEqual([parent])
+  })
+
+  it("separates replaceable files from structural path conflicts", () => {
+    const selected = [
+      { file: file("site.yml"), path: "SITE.yml", rootDirectory: "" },
+      { file: file("roles"), path: "roles", rootDirectory: "" },
+      { file: file("main.yml"), path: "config/main.yml", rootDirectory: "config" }
+    ]
+    const result = findImportPathConflicts(selected, [
+      { name: "site.yml", kind: "FILE" },
+      { name: "roles", kind: "DIRECTORY", children: [] },
+      { name: "config", kind: "FILE" }
+    ])
+
+    expect(result.replaceable).toEqual(["SITE.yml"])
+    expect(result.blocking).toEqual({ path: "roles", reason: "DIRECTORY_EXISTS" })
+    expect(findImportPathConflicts([selected[2]], [{ name: "config", kind: "FILE" }]).blocking).toEqual({
+      path: "config/main.yml",
+      reason: "PARENT_IS_FILE"
+    })
   })
 })

@@ -113,7 +113,7 @@
 
         <div class="source-notice">
           <el-icon><InfoFilled /></el-icon>
-          <span>同名文件或目录存在时将停止整批导入，不会覆盖现有内容。</span>
+          <span>检测到同名文件时会提示逐个覆盖、全部覆盖或跳过，不会静默替换现有内容。</span>
         </div>
       </section>
 
@@ -175,7 +175,7 @@ import {
   InfoFilled,
   UploadFilled
 } from "@element-plus/icons-vue"
-import { ElMessage, type LoadFunction } from "element-plus"
+import { ElMessage, ElMessageBox, type LoadFunction } from "element-plus"
 import { FormDialog } from "@/common/components/Dialogs"
 import { formatFileSize } from "@/common/utils/file"
 import { importCodebookApi } from "@/api/task/codebook"
@@ -184,8 +184,10 @@ import {
   buildLocalSelectionTree,
   filesFromInput,
   filesFromLocalNodes,
+  findImportPathConflicts,
   listLocalDirectory,
   mergeSelectedFiles,
+  type ExistingImportNode,
   type LocalFileSystemNode,
   type SelectedImportFile
 } from "./importSelection"
@@ -203,6 +205,7 @@ const props = defineProps<{
   projectId: number
   parentId: number
   targetName: string
+  existingNodes: ExistingImportNode[]
 }>()
 
 const emit = defineEmits<{
@@ -431,15 +434,79 @@ function removeFile(path: string) {
 
 async function submit() {
   if (!files.value.length || submitting.value || collecting.value) return
+  const conflictResult = findImportPathConflicts(files.value, props.existingNodes)
+  if (conflictResult.blocking) {
+    const conflict = conflictResult.blocking
+    const reason =
+      conflict.reason === "DIRECTORY_EXISTS" ? "目标位置已存在同名目录" : "路径中的目录名称已被同名文件占用"
+    ElMessage.error(`无法导入 ${conflict.path}：${reason}`)
+    return
+  }
+  const resolution = await resolveImportConflicts(conflictResult.replaceable)
+  if (!resolution) return
+  if (!resolution.files.length) {
+    ElMessage.info("所有同名文件均已跳过，没有需要导入的内容")
+    return
+  }
+  await performImport(resolution.files, resolution.overwritePaths)
+}
+
+async function resolveImportConflicts(conflictPaths: string[]) {
+  if (!conflictPaths.length) return { files: files.value, overwritePaths: [] as string[] }
+  if (conflictPaths.length > 1) {
+    try {
+      await ElMessageBox.confirm(`发现 ${conflictPaths.length} 个同名文件，是否全部覆盖？`, "上传文件冲突", {
+        confirmButtonText: "全部覆盖",
+        cancelButtonText: "逐个处理",
+        distinguishCancelAndClose: true,
+        closeOnClickModal: false,
+        type: "warning"
+      })
+      return { files: files.value, overwritePaths: conflictPaths }
+    } catch (action) {
+      if (action !== "cancel") return null
+    }
+  }
+
+  const overwriteKeys = new Set<string>()
+  for (const path of conflictPaths) {
+    try {
+      await ElMessageBox.confirm(`目标位置已存在 ${path}，是否使用上传内容创建新版本？`, "同名文件", {
+        confirmButtonText: "覆盖",
+        cancelButtonText: "跳过",
+        distinguishCancelAndClose: true,
+        closeOnClickModal: false,
+        type: "warning"
+      })
+      overwriteKeys.add(path.toLowerCase())
+    } catch (action) {
+      if (action !== "cancel") return null
+    }
+  }
+
+  const conflictKeys = new Set(conflictPaths.map((path) => path.toLowerCase()))
+  return {
+    files: files.value.filter(
+      (item) => !conflictKeys.has(item.path.toLowerCase()) || overwriteKeys.has(item.path.toLowerCase())
+    ),
+    overwritePaths: conflictPaths.filter((path) => overwriteKeys.has(path.toLowerCase()))
+  }
+}
+
+async function performImport(selectedFiles: SelectedImportFile[], confirmedOverwritePaths: string[]) {
   submitting.value = true
   try {
     const form = new FormData()
     form.append("project_id", String(props.projectId))
     form.append("parent_id", String(props.parentId || 0))
-    form.append("paths", JSON.stringify(files.value.map((item) => item.path)))
-    files.value.forEach(({ file }) => form.append("files", file, file.name))
+    form.append("paths", JSON.stringify(selectedFiles.map((item) => item.path)))
+    form.append("overwrite_paths", JSON.stringify(confirmedOverwritePaths))
+    selectedFiles.forEach(({ file }) => form.append("files", file, file.name))
     const { data } = await importCodebookApi(form)
-    ElMessage.success(`已导入 ${data.file_count} 个文件`)
+    const overwritten = confirmedOverwritePaths.length
+    ElMessage.success(
+      overwritten ? `已导入 ${data.file_count} 个文件，其中覆盖 ${overwritten} 个` : `已导入 ${data.file_count} 个文件`
+    )
     close()
     emit("imported")
   } finally {

@@ -15,6 +15,21 @@
         </div>
       </div>
       <div class="panel-actions">
+        <div v-if="viewMode === 'list' && selectedItems.length" class="selection-actions">
+          <span>已选 {{ selectedItems.length }} 项</span>
+          <el-button text :disabled="batchDeleting" @click="clearSelection">取消选择</el-button>
+          <AuthButton
+            :capability="capabilities.Codebook.Delete"
+            disableMode
+            size="small"
+            type="danger"
+            :icon="Delete"
+            :loading="batchDeleting"
+            @click="$emit('delete-batch', selectedItems)"
+          >
+            批量删除
+          </AuthButton>
+        </div>
         <el-button-group class="view-switch" aria-label="资源展示方式">
           <el-button
             :class="{ 'is-active': viewMode === 'grid' }"
@@ -111,6 +126,17 @@
 
     <div v-else class="resource-list-shell" v-loading="childrenLoading">
       <div v-if="localChildren.length > 0" class="resource-list-header">
+        <span class="resource-selection-header">
+          <input
+            type="checkbox"
+            :checked="allSelected"
+            :indeterminate="partiallySelected"
+            :disabled="selectableItems.length === 0 || batchDeleting"
+            aria-label="选择全部可删除资源"
+            title="全选可删除资源"
+            @change="toggleAllSelection"
+          />
+        </span>
         <span>名称</span>
         <span>种类</span>
         <span>大小</span>
@@ -124,14 +150,37 @@
         :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
         @end="onDragEnd"
       >
-        <button
+        <div
           v-for="(item, index) in localChildren"
           :key="item.workspace_key || item.id"
           class="resource-item"
-          :class="{ 'is-even': index % 2 === 1 }"
-          type="button"
+          :class="{ 'is-even': index % 2 === 1, 'is-selected': isItemSelected(item) }"
+          role="button"
+          tabindex="0"
           @click="$emit('select', item)"
+          @keydown.enter.self.prevent="$emit('select', item)"
+          @keydown.space.self.prevent="$emit('select', item)"
         >
+          <span
+            class="resource-selection-cell"
+            role="checkbox"
+            :aria-checked="isItemSelected(item)"
+            :aria-disabled="!canSelectItem(item) || batchDeleting"
+            :tabindex="canSelectItem(item) && !batchDeleting ? 0 : -1"
+            title="按住并上下滑动可连续选择"
+            @click.stop
+            @keydown.space.stop.prevent="toggleItemSelection(item)"
+            @pointerdown.stop.prevent="handleSelectionPointerDown($event, item)"
+            @pointerenter="handleSelectionPointerEnter($event, item)"
+          >
+            <input
+              type="checkbox"
+              tabindex="-1"
+              :checked="isItemSelected(item)"
+              :disabled="!canSelectItem(item) || batchDeleting"
+              aria-hidden="true"
+            />
+          </span>
           <span class="resource-name-cell">
             <span class="resource-icon" :class="item.kind.toLowerCase()">
               <SvgIcon v-if="item.kind === 'FILE'" :name="getFileIconName(item.name)" size="22px" class="file-icon" />
@@ -154,7 +203,7 @@
             {{ item.kind === "FILE" ? formatFileSize(item.size || 0) : "--" }}
           </span>
           <span class="resource-date-cell">{{ formatModifiedTime(item.utime) }}</span>
-        </button>
+        </div>
       </VueDraggable>
       <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
         <el-empty :image-size="130" description="当前目录暂无资源" />
@@ -164,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, onBeforeUnmount, ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
 import { Delete, Folder, FolderOpened, Grid, List, Lock, MagicStick, Upload } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
@@ -173,6 +222,7 @@ import { usePermission } from "@/common/composables/usePermission"
 import { formatTimestamp } from "@/common/utils/day"
 import { formatFileSize, getFileExt, getFileIconName, getFileTypeLabel, inferLanguage } from "@/common/utils/file"
 import { isReadonlyCodebook } from "../composables/useCodebookTree"
+import { useDragSelection } from "../composables/useDragSelection"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 
 const { hasPermission } = usePermission()
@@ -184,11 +234,13 @@ const props = defineProps<{
   childrenLoading: boolean
   assistantOpen?: boolean
   readonly?: boolean
+  batchDeleting?: boolean
 }>()
 
 const emit = defineEmits<{
   (e: "import-resources"): void
   (e: "delete", row: codebook): void
+  (e: "delete-batch", rows: codebook[]): void
   (e: "select", row: codebook): void
   (e: "sort", id: number, targetPosition: number): void
   (e: "toggle-assistant"): void
@@ -196,6 +248,23 @@ const emit = defineEmits<{
 
 const localChildren = ref<codebook[]>([])
 const isReadonly = computed(() => props.readonly || isReadonlyCodebook(props.activeDirectory))
+const canSelectItem = (item: codebook) =>
+  Boolean(item.id && !isReadonly.value && !isReadonlyCodebook(item) && hasPermission(capabilities.Codebook.Delete))
+const selection = useDragSelection({
+  items: localChildren,
+  getKey: (item) => item.workspace_key || `resource:${item.id}`,
+  isSelectable: canSelectItem
+})
+const {
+  allSelected,
+  clear: clearSelection,
+  isSelected: isItemSelected,
+  partiallySelected,
+  selectableItems,
+  selectedItems,
+  toggle: toggleItemSelection,
+  toggleAll: toggleAllSelection
+} = selection
 type ResourceViewMode = "grid" | "list"
 const viewModeStorageKey = "codebook-resource-view-mode"
 
@@ -212,12 +281,33 @@ const viewMode = ref<ResourceViewMode>(getInitialViewMode())
 
 function setViewMode(mode: ResourceViewMode) {
   viewMode.value = mode
+  if (mode !== "list") selection.clear()
   try {
     window.localStorage.setItem(viewModeStorageKey, mode)
   } catch {
     // 浏览器禁用本地存储时仍允许在当前页面切换视图。
   }
 }
+
+function finishSelectionGesture() {
+  selection.finishGesture()
+  window.removeEventListener("pointerup", finishSelectionGesture)
+}
+
+function handleSelectionPointerDown(event: PointerEvent, item: codebook) {
+  if (event.button !== 0 || props.batchDeleting || !selection.beginGesture(item)) return
+  window.addEventListener("pointerup", finishSelectionGesture, { once: true })
+}
+
+function handleSelectionPointerEnter(event: PointerEvent, item: codebook) {
+  if ((event.buttons & 1) === 0) {
+    finishSelectionGesture()
+    return
+  }
+  selection.continueGesture(item)
+}
+
+onBeforeUnmount(finishSelectionGesture)
 
 function fileDescription(item: codebook) {
   if (!item.download_only) return inferLanguage(item.name)
@@ -362,6 +452,19 @@ const onDragEnd = (evt: any) => {
   }
 }
 
+.selection-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 12px;
+  white-space: nowrap;
+
+  :deep(.el-button.is-text) {
+    padding: 0 4px;
+  }
+}
+
 .view-switch {
   display: inline-flex;
   flex-shrink: 0;
@@ -469,7 +572,7 @@ const onDragEnd = (evt: any) => {
 .resource-list-header,
 .resource-item {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(110px, 0.34fr) minmax(84px, 0.2fr) minmax(150px, 0.38fr);
+  grid-template-columns: 34px minmax(220px, 1fr) minmax(110px, 0.34fr) minmax(84px, 0.2fr) minmax(150px, 0.38fr);
   align-items: center;
 }
 
@@ -493,6 +596,40 @@ const onDragEnd = (evt: any) => {
   }
 }
 
+.resource-selection-header,
+.resource-selection-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  input {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #2563eb;
+  }
+}
+
+.resource-selection-cell {
+  align-self: stretch;
+  cursor: default;
+  user-select: none;
+
+  input {
+    pointer-events: none;
+  }
+
+  &[aria-disabled="true"] input {
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: -4px;
+  }
+}
+
 .resource-item {
   width: 100%;
   min-width: 650px;
@@ -512,6 +649,11 @@ const onDragEnd = (evt: any) => {
 
   &.is-even {
     background: #f8fafc;
+  }
+
+  &.is-selected {
+    color: #1d4ed8;
+    background: #eff6ff;
   }
 
   &:hover {

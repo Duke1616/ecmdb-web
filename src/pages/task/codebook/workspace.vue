@@ -27,8 +27,10 @@
           :children-loading="childrenLoading"
           :assistant-open="assistantVisible"
           :readonly="isReadonlyCodebook(activeEditor)"
+          :batch-deleting="batchDeleting"
           @import-resources="importFilesRef?.open()"
           @delete="handleDelete"
+          @delete-batch="handleBatchDelete"
           @select="selectCodebook"
           @sort="handleCodebookSort"
           @toggle-assistant="toggleAssistant"
@@ -136,6 +138,7 @@
       :project-id="activeProjectId"
       :parent-id="currentDirectory.id || 0"
       :target-name="currentDirectory.name || 'project'"
+      :existing-nodes="importExistingNodes"
       @imported="refreshAll"
     />
     <CodebookRunDrawer ref="runDrawerRef" />
@@ -243,6 +246,7 @@ const treeLoading = ref(false)
 const childrenLoading = ref(false)
 const detailLoading = ref(false)
 const downloadingFileId = ref(0)
+const batchDeleting = ref(false)
 const saving = ref(false)
 const treeRawData = ref<WorkspaceNode[]>([])
 const directoryChildren = ref<codebook[]>([])
@@ -287,6 +291,10 @@ const currentDirectoryName = computed(() => currentDirectory.value.name || "全�
 const metaForm = ref<createOrUpdateCodebookReq>(createDefaultFileDraft())
 
 const flatWorkspaceNodes = computed(() => flattenWorkspaceTree(treeRawData.value as CodebookTreeNode[]))
+const importExistingNodes = computed<WorkspaceNode[]>(() => {
+  const directory = find(flatWorkspaceNodes.value, { key: currentDirectory.value.workspace_key || "layer:project" })
+  return directory?.children.filter((node) => node.layer === "PROJECT") || []
+})
 const projectSourceItems = computed(() =>
   flatWorkspaceNodes.value
     .filter((node) => node.layer === "PROJECT" && node.source_id > 0)
@@ -741,6 +749,48 @@ function handleDelete(row: codebook) {
     }
     await refreshAll()
   })
+}
+
+async function handleBatchDelete(rows: codebook[]) {
+  const deletableRows = rows.filter((row) => row.id && !isReadonlyCodebook(row))
+  if (!deletableRows.length || batchDeleting.value) return
+
+  const directoryCount = deletableRows.filter((row) => row.kind === "DIRECTORY").length
+  const fileCount = deletableRows.length - directoryCount
+  const summary = [directoryCount ? `${directoryCount} 个目录` : "", fileCount ? `${fileCount} 个文件` : ""]
+    .filter(Boolean)
+    .join("、")
+
+  try {
+    await ElMessageBox.confirm(`即将删除 ${summary}，目录下的资源也会一并删除，确认继续？`, "批量删除确认", {
+      confirmButtonText: "批量删除",
+      cancelButtonText: "取消",
+      confirmButtonClass: "el-button--danger",
+      type: "warning"
+    })
+  } catch {
+    return
+  }
+
+  batchDeleting.value = true
+  try {
+    const results = await Promise.allSettled(deletableRows.map((row) => deleteCodebookApi(row.id)))
+    const deletedIDs = new Set(
+      deletableRows.filter((_, index) => results[index].status === "fulfilled").map((row) => row.id)
+    )
+    const failedCount = deletableRows.length - deletedIDs.size
+
+    openedFiles.value = openedFiles.value.filter((item) => !deletedIDs.has(item.id))
+    if (deletedIDs.has(activeEditor.value.id)) {
+      activateCodebook(openedFiles.value.at(-1) || createRootDirectory())
+    }
+
+    if (deletedIDs.size) ElMessage.success(`已删除 ${deletedIDs.size} 项资源`)
+    if (failedCount) ElMessage.error(`${failedCount} 项资源删除失败，请重试`)
+    await refreshAll()
+  } finally {
+    batchDeleting.value = false
+  }
 }
 
 function handleOpenRunnerDrawer(row: codebook) {

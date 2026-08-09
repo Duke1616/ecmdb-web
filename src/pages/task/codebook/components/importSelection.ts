@@ -9,6 +9,20 @@ export interface MergeSelectionResult {
   duplicateCount: number
 }
 
+export interface ImportConflictResult {
+  replaceable: string[]
+  blocking?: {
+    path: string
+    reason: "DIRECTORY_EXISTS" | "PARENT_IS_FILE"
+  }
+}
+
+export interface ExistingImportNode {
+  name: string
+  kind: "FILE" | "DIRECTORY"
+  children?: ExistingImportNode[]
+}
+
 export interface LocalFileSystemNode {
   key: string
   name: string
@@ -53,6 +67,34 @@ export function mergeSelectedFiles(
     files.push(item)
   })
   return { files, duplicateCount }
+}
+
+export function findImportPathConflicts(
+  files: SelectedImportFile[],
+  existing: ExistingImportNode[]
+): ImportConflictResult {
+  const result: ImportConflictResult = { replaceable: [] }
+  files.forEach((file) => {
+    const segments = file.path.split("/").filter(Boolean)
+    let children = existing
+    for (let index = 0; index < segments.length; index += 1) {
+      const name = segments[index]
+      const node = children.find((item) => item.name.toLowerCase() === name.toLowerCase())
+      if (!node) break
+      const last = index === segments.length - 1
+      if (last) {
+        if (node.kind === "FILE") result.replaceable.push(file.path)
+        else result.blocking ||= { path: file.path, reason: "DIRECTORY_EXISTS" }
+        break
+      }
+      if (node.kind === "FILE") {
+        result.blocking ||= { path: file.path, reason: "PARENT_IS_FILE" }
+        break
+      }
+      children = node.children || []
+    }
+  })
+  return result
 }
 
 // collectDroppedFiles 支持 Finder 一次拖入多个文件、目录或二者的混合选择。
@@ -192,11 +234,12 @@ function sortLocalNodes(nodes: LocalFileSystemNode[]) {
 
 async function readAllEntries(reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> {
   const result: FileSystemEntry[] = []
-  while (true) {
-    const batch = await new Promise<FileSystemEntry[]>((resolve, reject) => reader.readEntries(resolve, reject))
-    if (!batch.length) return result
+  let batch: FileSystemEntry[]
+  do {
+    batch = await new Promise<FileSystemEntry[]>((resolve, reject) => reader.readEntries(resolve, reject))
     result.push(...batch)
-  }
+  } while (batch.length)
+  return result
 }
 
 function readFile(entry: FileSystemFileEntry): Promise<File> {
