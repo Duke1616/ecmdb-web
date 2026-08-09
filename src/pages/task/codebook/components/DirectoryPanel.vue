@@ -141,69 +141,71 @@
         <span>大小</span>
         <span>修改日期</span>
       </div>
-      <VueDraggable
-        v-model="localChildren"
-        :animation="200"
-        item-key="workspace_key"
-        class="resource-list"
-        :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
-        @end="onDragEnd"
-      >
-        <div
-          v-for="(item, index) in localChildren"
-          :key="item.workspace_key || item.id"
-          class="resource-item"
-          :class="{ 'is-even': index % 2 === 1, 'is-selected': isItemSelected(item) }"
-          role="button"
-          tabindex="0"
-          @click="$emit('select', item)"
-          @keydown.enter.self.prevent="$emit('select', item)"
-          @keydown.space.self.prevent="$emit('select', item)"
+      <div class="resource-list-scroll">
+        <VueDraggable
+          v-model="localChildren"
+          :animation="200"
+          item-key="workspace_key"
+          class="resource-list"
+          :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
+          @end="onDragEnd"
         >
-          <span
-            class="resource-selection-cell"
-            role="checkbox"
-            :aria-checked="isItemSelected(item)"
-            :aria-disabled="!canSelectItem(item) || batchDeleting"
-            :tabindex="canSelectItem(item) && !batchDeleting ? 0 : -1"
-            title="按住并上下滑动可连续选择"
-            @click.stop
-            @keydown.space.stop.prevent="toggleItemSelection(item)"
-            @pointerdown.stop.prevent="handleSelectionPointerDown($event, item)"
-            @pointerenter="handleSelectionPointerEnter($event, item)"
+          <div
+            v-for="(item, index) in localChildren"
+            :key="item.workspace_key || item.id"
+            class="resource-item"
+            :class="{ 'is-even': index % 2 === 1, 'is-selected': isItemSelected(item) }"
+            role="button"
+            tabindex="0"
+            @click="$emit('select', item)"
+            @keydown.enter.self.prevent="$emit('select', item)"
+            @keydown.space.self.prevent="$emit('select', item)"
           >
-            <input
-              type="checkbox"
-              tabindex="-1"
-              :checked="isItemSelected(item)"
-              :disabled="!canSelectItem(item) || batchDeleting"
-              aria-hidden="true"
-            />
-          </span>
-          <span class="resource-name-cell">
-            <span class="resource-icon" :class="item.kind.toLowerCase()">
-              <SvgIcon v-if="item.kind === 'FILE'" :name="getFileIconName(item.name)" size="22px" class="file-icon" />
-              <el-icon v-else>
-                <Folder />
-              </el-icon>
-            </span>
-            <strong :title="item.name">{{ item.name }}</strong>
-            <el-tooltip
-              v-if="isReadonly || isReadonlyCodebook(item)"
-              content="资源只读"
-              placement="top"
-              :show-after="300"
+            <span
+              class="resource-selection-cell"
+              role="checkbox"
+              :aria-checked="isItemSelected(item)"
+              :aria-disabled="!canSelectItem(item) || batchDeleting"
+              :tabindex="canSelectItem(item) && !batchDeleting ? 0 : -1"
+              title="按住并上下滑动可连续选择"
+              @click.stop
+              @keydown.space.stop.prevent="toggleItemSelection(item)"
+              @pointerdown.stop.prevent="handleSelectionPointerDown($event, item)"
+              @pointerenter="handleSelectionPointerEnter($event, item)"
             >
-              <el-icon class="resource-readonly-lock"><Lock /></el-icon>
-            </el-tooltip>
-          </span>
-          <span class="resource-kind-cell">{{ getResourceKind(item) }}</span>
-          <span class="resource-size-cell">
-            {{ item.kind === "FILE" ? formatFileSize(item.size || 0) : "--" }}
-          </span>
-          <span class="resource-date-cell">{{ formatModifiedTime(item.utime) }}</span>
-        </div>
-      </VueDraggable>
+              <input
+                type="checkbox"
+                tabindex="-1"
+                :checked="isItemSelected(item)"
+                :disabled="!canSelectItem(item) || batchDeleting"
+                aria-hidden="true"
+              />
+            </span>
+            <span class="resource-name-cell">
+              <span class="resource-icon" :class="item.kind.toLowerCase()">
+                <SvgIcon v-if="item.kind === 'FILE'" :name="getFileIconName(item.name)" size="22px" class="file-icon" />
+                <el-icon v-else>
+                  <Folder />
+                </el-icon>
+              </span>
+              <strong :title="item.name">{{ item.name }}</strong>
+              <el-tooltip
+                v-if="isReadonly || isReadonlyCodebook(item)"
+                content="资源只读"
+                placement="top"
+                :show-after="300"
+              >
+                <el-icon class="resource-readonly-lock"><Lock /></el-icon>
+              </el-tooltip>
+            </span>
+            <span class="resource-kind-cell">{{ getResourceKind(item) }}</span>
+            <span class="resource-size-cell">
+              {{ item.kind === "FILE" ? formatFileSize(item.size || 0) : "--" }}
+            </span>
+            <span class="resource-date-cell">{{ formatModifiedTime(item.utime) }}</span>
+          </div>
+        </VueDraggable>
+      </div>
     </div>
   </section>
 </template>
@@ -571,12 +573,20 @@ const onDragEnd = (evt: any) => {
   display: flex;
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   flex-direction: column;
   padding: 0;
   background: #fff;
+}
+
+.resource-list-scroll {
+  flex: 1;
+  min-width: 650px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 
 .resource-list {
@@ -592,9 +602,6 @@ const onDragEnd = (evt: any) => {
 }
 
 .resource-list-header {
-  position: sticky;
-  z-index: 2;
-  top: 0;
   flex-shrink: 0;
   min-width: 650px;
   height: 34px;
