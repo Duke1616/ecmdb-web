@@ -72,21 +72,21 @@
       </div>
     </div>
 
+    <div v-if="childrenLoading" class="resource-loading" v-loading="true" />
+
+    <div v-else-if="localChildren.length === 0" class="resource-empty">
+      <el-empty :image-size="130" description="当前目录暂无资源" />
+    </div>
+
     <VueDraggable
-      v-if="viewMode === 'grid'"
+      v-else-if="viewMode === 'grid'"
       v-model="localChildren"
       :animation="200"
       item-key="workspace_key"
       class="resource-grid"
-      v-loading="childrenLoading"
       :disabled="isReadonly || !hasPermission(capabilities.Codebook.Sort)"
       @end="onDragEnd"
     >
-      <template #header>
-        <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
-          <el-empty :image-size="130" description="当前目录暂无资源" />
-        </div>
-      </template>
       <button
         v-for="item in localChildren"
         :key="item.workspace_key || item.id"
@@ -113,8 +113,8 @@
       </button>
     </VueDraggable>
 
-    <div v-else class="resource-list-shell" v-loading="childrenLoading">
-      <div v-if="localChildren.length > 0" class="resource-list-header">
+    <div v-else class="resource-list-shell">
+      <div class="resource-list-header">
         <span class="resource-selection-header">
           <input
             type="checkbox"
@@ -194,9 +194,6 @@
           <span class="resource-date-cell">{{ formatModifiedTime(item.utime) }}</span>
         </div>
       </VueDraggable>
-      <div v-if="!childrenLoading && localChildren.length === 0" class="resource-empty">
-        <el-empty :image-size="130" description="当前目录暂无资源" />
-      </div>
     </div>
   </section>
 </template>
@@ -546,9 +543,11 @@ const onDragEnd = (evt: any) => {
 }
 
 .resource-list-shell {
+  display: flex;
   flex: 1;
   min-height: 0;
   overflow: auto;
+  flex-direction: column;
   padding: 12px 18px 18px;
   background: #fff;
 }
@@ -657,15 +656,14 @@ const onDragEnd = (evt: any) => {
   }
 }
 
+.resource-loading,
 .resource-empty {
   display: flex;
-  min-height: 360px;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
   align-items: center;
   justify-content: center;
-}
-
-.resource-grid .resource-empty {
-  grid-column: 1 / -1;
 }
 
 .resource-name-cell {
