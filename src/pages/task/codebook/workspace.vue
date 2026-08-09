@@ -25,10 +25,12 @@
           :active-directory="activeEditor"
           :directory-children="directoryChildren"
           :children-loading="childrenLoading"
+          :can-go-parent="canGoParent"
           :assistant-open="assistantVisible"
           :readonly="isReadonlyCodebook(activeEditor)"
           :batch-deleting="batchDeleting"
           @import-resources="importFilesRef?.open()"
+          @go-parent="goToParentDirectory"
           @delete-batch="handleBatchDelete"
           @select="selectCodebook"
           @sort="handleCodebookSort"
@@ -302,6 +304,7 @@ const projectSourceItems = computed(() =>
 const treeData = computed<CodebookTreeNode[]>(() =>
   filterWorkspaceTree(treeRawData.value as CodebookTreeNode[], keyword.value)
 )
+const canGoParent = computed(() => activeEditor.value.kind === "DIRECTORY" && Boolean(activeEditor.value.workspace_key))
 
 const metaRules = computed<FormRules>(() => ({
   name: [{ required: true, message: "请输入名称" }],
@@ -466,6 +469,28 @@ async function downloadProjectFile(file: codebook) {
 
 function handleTreeNodeClick(data: CodebookTreeNode) {
   selectCodebook(workspaceNodeToCodebook(data))
+}
+
+function findWorkspaceParent(key: string, nodes = treeRawData.value): WorkspaceNode | undefined {
+  for (const node of nodes) {
+    if (node.children.some((child) => child.key === key)) return node
+    const parent = findWorkspaceParent(key, node.children)
+    if (parent) return parent
+  }
+}
+
+async function goToParentDirectory() {
+  const workspaceKey = activeEditor.value.workspace_key
+  const parent = workspaceKey ? findWorkspaceParent(workspaceKey) : undefined
+
+  if (parent) {
+    await selectCodebook(workspaceNodeToCodebook(parent))
+    return
+  }
+
+  activateCodebook(createRootDirectory())
+  selectedTreeKey.value = "layer:project"
+  await fetchChildren(0)
 }
 
 // NOTE: 关闭指定的标签页。如果关闭的是当前激活的脚本，会遵循 IDE (如 VS Code) 习惯，优先激活右侧顶替的标签，若无则激活左侧标签
@@ -839,7 +864,7 @@ async function handleChangeSetApplied(items: AppliedChangeItem[]) {
 }
 
 function backToProjects() {
-  router.go(-1)
+  router.push("/task/codebook")
 }
 
 function handleNodeContextMenu(event: MouseEvent, data: CodebookTreeNode) {

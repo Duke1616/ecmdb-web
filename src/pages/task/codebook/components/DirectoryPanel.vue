@@ -2,6 +2,16 @@
   <section class="directory-view">
     <div class="panel-heading">
       <div class="directory-title">
+        <el-tooltip v-if="canGoParent" content="返回上级目录" placement="bottom">
+          <el-button
+            class="directory-parent-button"
+            :icon="ArrowLeft"
+            text
+            circle
+            aria-label="返回上级目录"
+            @click="$emit('go-parent')"
+          />
+        </el-tooltip>
         <el-icon class="directory-title-icon"><FolderOpened /></el-icon>
         <div class="directory-title-text">
           <div class="directory-title-row">
@@ -201,7 +211,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from "vue"
 import { VueDraggable } from "vue-draggable-plus"
-import { Delete, Folder, FolderOpened, Grid, List, Lock, MagicStick, Upload } from "@element-plus/icons-vue"
+import { ArrowLeft, Delete, Folder, FolderOpened, Grid, List, Lock, MagicStick, Upload } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
@@ -218,6 +228,7 @@ const props = defineProps<{
   activeDirectory: codebook
   directoryChildren: codebook[]
   childrenLoading: boolean
+  canGoParent?: boolean
   assistantOpen?: boolean
   readonly?: boolean
   batchDeleting?: boolean
@@ -225,6 +236,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "import-resources"): void
+  (e: "go-parent"): void
   (e: "delete-batch", rows: codebook[]): void
   (e: "select", row: codebook): void
   (e: "sort", id: number, targetPosition: number): void
@@ -365,6 +377,19 @@ const onDragEnd = (evt: any) => {
   background: #eff6ff;
   border: 1px solid #dbeafe;
   border-radius: 6px;
+}
+
+.directory-parent-button {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-right: -4px;
+  color: #64748b;
+
+  &:hover {
+    color: #2563eb;
+    background: #eff6ff;
+  }
 }
 
 .directory-title-text {
