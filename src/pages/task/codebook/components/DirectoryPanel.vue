@@ -573,11 +573,14 @@ const onDragEnd = (evt: any) => {
   min-height: 0;
   overflow: auto;
   flex-direction: column;
-  padding: 12px 18px 18px;
+  padding: 0;
   background: #fff;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .resource-list {
+  flex-shrink: 0;
   min-width: 650px;
 }
 
@@ -592,9 +595,10 @@ const onDragEnd = (evt: any) => {
   position: sticky;
   z-index: 2;
   top: 0;
+  flex-shrink: 0;
   min-width: 650px;
   height: 34px;
-  padding: 0 12px;
+  padding: 0 18px;
   box-sizing: border-box;
   color: #64748b;
   font-size: 12px;
@@ -646,13 +650,14 @@ const onDragEnd = (evt: any) => {
   width: 100%;
   min-width: 650px;
   height: 40px;
-  padding: 0 12px;
+  padding: 0 18px;
   box-sizing: border-box;
   color: #475569;
   cursor: pointer;
   background: #fff;
   border: 0;
-  border-radius: 6px;
+  border-bottom: 1px solid #f1f5f9;
+  border-radius: 0;
   font-size: 12px;
   text-align: left;
   transition:
@@ -660,7 +665,7 @@ const onDragEnd = (evt: any) => {
     background-color 0.15s ease;
 
   &.is-even {
-    background: #f8fafc;
+    background: #fafbfc;
   }
 
   &.is-selected {
