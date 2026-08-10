@@ -864,7 +864,7 @@ async function handleChangeSetApplied(items: AppliedChangeItem[]) {
 }
 
 function backToProjects() {
-  router.push("/task/codebook")
+  router.push({ name: "ScriptEngine" })
 }
 
 function handleNodeContextMenu(event: MouseEvent, data: CodebookTreeNode) {
@@ -894,7 +894,7 @@ onMounted(async () => {
   window.addEventListener("click", closeContextMenu)
   if (!activeProjectId.value) {
     ElMessage.error("未找到项目参数")
-    router.push("/task/codebook")
+    router.replace({ name: "ScriptEngine" })
     return
   }
   await refreshAll()
