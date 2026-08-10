@@ -3,7 +3,7 @@
     <!-- 头部区域 -->
     <ManagerHeader
       :title="`执行单元路由 - ${templateData?.name || '未选择模板'}`"
-      :subtitle="`${automationNodes.length} 个自动化节点 · ${dispatches.length} 条条件规则`"
+      :subtitle="dispatchSummary"
       :show-back-button="true"
       :show-refresh-button="false"
       @back="handleBack"
@@ -20,73 +20,82 @@
             新增规则
           </AuthButton>
           <AuthButton
-            type="success"
+            type="default"
             :icon="Connection"
             :capability="TICKET_CAPABILITIES.Dispatch.Sync"
-            class="u-gov-btn is-large"
+            class="u-gov-btn is-large is-ghost"
             @click="handlerSync"
           >
             复制规则
           </AuthButton>
-          <AuthButton
-            type="primary"
-            :icon="RefreshRight"
-            :capability="TICKET_CAPABILITIES.Dispatch.View"
-            class="eiam-refresh-btn dispatch-refresh-btn"
-            circle
-            @click="loadAutomationDispatchData"
-          />
+          <el-tooltip content="刷新规则" placement="bottom">
+            <AuthButton
+              type="default"
+              :icon="RefreshRight"
+              :capability="TICKET_CAPABILITIES.Dispatch.View"
+              class="eiam-refresh-btn dispatch-refresh-btn"
+              circle
+              aria-label="刷新规则"
+              @click="loadAutomationDispatchData"
+            />
+          </el-tooltip>
         </div>
       </template>
     </ManagerHeader>
 
     <!-- 主内容区域 -->
     <el-empty v-if="!canViewDispatch" class="dispatch-empty" description="您没有权限查看执行单元路由" />
-    <DataTable v-else :data="automationRows" :columns="tableColumns" :loading="loading">
-      <template #program="{ row }">
-        <div class="runner-program">
-          <span>脚本 #{{ row.codebookId }}</span>
-          <el-tag type="info" effect="plain" size="small">
-            {{ row.defaultRunner ? getProgramKindLabel(row.defaultRunner.program_kind) : "未设置默认执行单元" }}
-          </el-tag>
-        </div>
-      </template>
-
-      <template #defaultRunner="{ row }">
-        <el-tag v-if="row.defaultRunner" type="info" effect="plain">
-          {{ row.defaultRunner.name }}
-        </el-tag>
-        <span v-else class="muted-text">未配置</span>
+    <DataTable
+      v-else
+      class="dispatch-table"
+      :data="automationRows"
+      :columns="tableColumns"
+      :loading="loading"
+      :action-column-width="150"
+      :table-props="{ spanMethod: getTableSpan }"
+    >
+      <template #node="{ row }">
+        <span class="node-name">{{ row.nodeName }}</span>
       </template>
 
       <template #targetRunner="{ row }">
-        <el-tag v-if="row.runner" type="success" effect="plain">
-          {{ row.runner.name }}
-        </el-tag>
-        <span v-else class="muted-text">
-          {{ row.defaultRunner ? "沿用默认执行单元" : "未设置默认执行单元" }}
-        </span>
+        <span v-if="row.runner" class="target-runner">{{ row.runner.name }}</span>
+        <span v-else class="missing-text">执行单元不可用</span>
       </template>
 
       <template #rule="{ row }">
-        <span v-if="row.dispatch"
-          >{{ fieldMap.get(row.dispatch.field) || row.dispatch.field }} = {{ row.dispatch.value }}</span
-        >
-        <span v-else class="muted-text">未配置条件路由</span>
+        <div class="rule-expression">
+          <span class="rule-field">{{ fieldMap.get(row.dispatch.field) || row.dispatch.field }}</span>
+          <span class="rule-operator">=</span>
+          <span class="rule-value">{{ row.dispatch.value }}</span>
+        </div>
       </template>
 
       <template #priority="{ row }">
-        <span v-if="row.dispatch">{{ row.dispatch.priority }}</span>
-        <span v-else class="muted-text">-</span>
+        <span class="priority-value">{{ row.dispatch.priority }}</span>
       </template>
 
       <template #actions="{ row }">
         <OperateBtn
-          :items="getOperateBtnItems(row)"
+          :items="getOperateBtnItems()"
           :operate-item="row"
           :max-length="2"
           @route-event="(data: AutomationDispatchRow, action: DispatchAction) => operateEvent(action, data)"
         />
+      </template>
+
+      <template #empty>
+        <el-empty :image-size="84" description="暂无路由规则">
+          <AuthButton
+            type="primary"
+            :icon="CirclePlus"
+            :capability="TICKET_CAPABILITIES.Dispatch.Add"
+            class="u-gov-btn"
+            @click="handlerCreate"
+          >
+            新增规则
+          </AuthButton>
+        </el-empty>
       </template>
     </DataTable>
 
@@ -136,7 +145,6 @@ import type { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
 import type { runner } from "@/api/task/runner/types/runner.js"
 import { listRunnerByCodebookIdApi, listRunnerByIdsApi } from "@/api/task/runner/index.js"
-import { getProgramKindLabel } from "@/api/task/program"
 import { deleteDispatchApi, listDispatchByTemplateIdApi } from "@/api/ticket/dispatch"
 import type { dispatch } from "@/api/ticket/dispatch/types/dispatch"
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
@@ -191,11 +199,9 @@ interface TemplateRuleNode {
 interface AutomationDispatchRow {
   id: string
   automationNodeId: string
-  dispatchId?: number
-  dispatch?: dispatch
+  dispatchId: number
+  dispatch: dispatch
   nodeName: string
-  codebookId: number
-  defaultRunner?: runner
   runner?: runner
   runners: runner[]
 }
@@ -220,28 +226,25 @@ const isTemplateRuleNode = (value: unknown): value is TemplateRuleNode => {
 
 // ==================== 表格配置 ====================
 const tableColumns: Column[] = [
-  { prop: "nodeName", label: "自动化节点", align: "center", minWidth: 160 },
-  { prop: "program", label: "执行程序", slot: "program", align: "center", minWidth: 180 },
-  { prop: "defaultRunner", label: "默认执行单元", slot: "defaultRunner", align: "center", minWidth: 150 },
-  { prop: "rule", label: "匹配规则", slot: "rule", align: "center", minWidth: 180 },
-  { prop: "priority", label: "优先级", slot: "priority", align: "center", width: 90 },
-  { prop: "targetRunner", label: "命中后 Runner", slot: "targetRunner", align: "center", minWidth: 160 }
+  { prop: "nodeName", label: "自动化节点", slot: "node", align: "center", minWidth: 220 },
+  { prop: "rule", label: "匹配条件", slot: "rule", align: "center", minWidth: 280 },
+  { prop: "targetRunner", label: "目标执行单元", slot: "targetRunner", align: "center", minWidth: 220 },
+  { prop: "priority", label: "优先级", slot: "priority", align: "center", width: 100 }
 ]
 
-const getOperateBtnItems = (row: AutomationDispatchRow): DispatchOperateItem[] => [
+const getOperateBtnItems = (): DispatchOperateItem[] => [
   {
     code: DispatchAction.Configure,
-    name: "配置",
+    name: "编辑",
     type: "primary",
     icon: Setting,
-    capability: row.dispatchId ? TICKET_CAPABILITIES.Dispatch.Edit : TICKET_CAPABILITIES.Dispatch.Add
+    capability: TICKET_CAPABILITIES.Dispatch.Edit
   },
   {
     code: DispatchAction.Delete,
     name: "删除",
     type: "danger",
     icon: Delete,
-    disabled: !row.dispatchId,
     capability: TICKET_CAPABILITIES.Dispatch.Delete
   }
 ]
@@ -251,26 +254,44 @@ const getCompatibleRunners = (node: AutomationNode) =>
 
 const automationRows = computed<AutomationDispatchRow[]>(() =>
   automationNodes.value.flatMap((node) => {
-    const defaultRunner = workflowRunners.value.find((item) => item.id === node.runner_id)
     const runners = getCompatibleRunners(node)
     const nodeDispatches = dispatches.value
       .filter((item) => item.automation_node_id === node.id)
       .sort((left, right) => right.priority - left.priority || left.id - right.id)
-    const rows = nodeDispatches.length > 0 ? nodeDispatches : [undefined]
-
-    return rows.map((dispatch) => ({
-      id: `${node.id}:${dispatch?.id ?? "default"}`,
+    return nodeDispatches.map((dispatch) => ({
+      id: `${node.id}:${dispatch.id}`,
       automationNodeId: node.id,
-      dispatchId: dispatch?.id,
+      dispatchId: dispatch.id,
       dispatch,
       nodeName: node.name,
-      codebookId: node.codebook_id,
-      defaultRunner,
-      runner: dispatch ? workflowRunners.value.find((item) => item.id === dispatch.runner_id) : undefined,
+      runner: workflowRunners.value.find((item) => item.id === dispatch.runner_id),
       runners
     }))
   })
 )
+
+const unconfiguredNodeCount = computed(() => {
+  const configuredNodeIds = new Set(dispatches.value.map((item) => item.automation_node_id))
+  return automationNodes.value.filter((node) => !configuredNodeIds.has(node.id)).length
+})
+
+const dispatchSummary = computed(() => {
+  const summary = `${automationNodes.value.length} 个自动化节点 · ${dispatches.value.length} 条条件规则`
+  return unconfiguredNodeCount.value > 0 ? `${summary} · ${unconfiguredNodeCount.value} 个节点未配置` : summary
+})
+
+const getTableSpan = ({ rowIndex, columnIndex }: { rowIndex: number; columnIndex: number }) => {
+  if (columnIndex !== 0) return [1, 1]
+
+  const rows = automationRows.value
+  const currentNodeId = rows[rowIndex]?.automationNodeId
+  if (!currentNodeId) return [1, 1]
+  if (rowIndex > 0 && rows[rowIndex - 1]?.automationNodeId === currentNodeId) return [0, 0]
+
+  let rowspan = 1
+  while (rows[rowIndex + rowspan]?.automationNodeId === currentNodeId) rowspan += 1
+  return [rowspan, 1]
+}
 
 // ==================== 模版数据处理 ====================
 const parseTemplateRules = (rules: unknown): TemplateRuleNode[] => {
@@ -409,9 +430,8 @@ const handlerCreate = async () => {
 }
 
 const handlerConfigure = async (row: AutomationDispatchRow) => {
-  const capability = row.dispatchId ? TICKET_CAPABILITIES.Dispatch.Edit : TICKET_CAPABILITIES.Dispatch.Add
-  if (!hasPermission(capability)) {
-    ElMessage.warning(row.dispatchId ? "暂无修改执行单元路由权限" : "暂无新增执行单元路由权限")
+  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Edit)) {
+    ElMessage.warning("暂无修改执行单元路由权限")
     return
   }
 
@@ -424,20 +444,13 @@ const handlerConfigure = async (row: AutomationDispatchRow) => {
   nextTick(() => {
     apiRef.value?.resetForm()
     apiRef.value?.selectAutomationNode(row.automationNodeId)
-    if (row.dispatch) {
-      apiRef.value?.setForm(row.dispatch)
-    }
+    apiRef.value?.setForm(row.dispatch)
   })
 }
 
 const handlerDelete = (row: AutomationDispatchRow) => {
   if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Delete)) {
     ElMessage.warning("暂无删除执行单元路由权限")
-    return
-  }
-
-  if (!row.dispatchId) {
-    ElMessage.warning("当前自动化节点没有可删除的路由规则")
     return
   }
 
@@ -452,7 +465,7 @@ const handlerDelete = (row: AutomationDispatchRow) => {
     cancelButtonText: "取消",
     type: "warning"
   }).then(async () => {
-    await deleteDispatchApi(row.dispatchId!)
+    await deleteDispatchApi(row.dispatchId)
     ElMessage.success("删除成功")
     loadAutomationDispatchData()
   })
@@ -600,15 +613,96 @@ watch(canViewDispatch, (allowed) => {
   }
 }
 
-.runner-program {
+.node-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-expression {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  min-width: 0;
+  color: #334155;
+  font-size: 13px;
 }
 
-.muted-text {
+.rule-field {
+  color: #64748b;
+}
+
+.rule-operator {
+  margin: 0 10px;
   color: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.rule-value {
+  overflow: hidden;
+  color: #334155;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.target-runner {
+  color: #475569;
+  font-weight: 500;
+}
+
+.missing-text {
+  color: #dc2626;
   font-size: 13px;
+}
+
+.priority-value {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+:deep(.dispatch-table .content-card) {
+  border-color: #dfe5ec;
+}
+
+:deep(.dispatch-table .el-table__header th) {
+  height: 44px;
+  background: #fafbfc !important;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:deep(.dispatch-table .el-table__header th .cell) {
+  min-height: 44px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+:deep(.dispatch-table .el-table__body td) {
+  height: 56px;
+}
+
+:deep(.dispatch-table .el-table__body td .cell) {
+  min-height: 56px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+:deep(.dispatch-table .el-table__body tr:hover > td.el-table__cell) {
+  background: #fafcff;
+}
+
+@media (max-width: 900px) {
+  :deep(.action-group .u-gov-btn) {
+    padding: 0 12px;
+  }
 }
 </style>
