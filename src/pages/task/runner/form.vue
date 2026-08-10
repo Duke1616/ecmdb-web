@@ -81,14 +81,14 @@
         />
       </div>
 
-      <!-- 任务模版配置（仅独立使用时展示） -->
-      <div class="form-section" v-if="!hideCodebookConfig">
+      <!-- 任务模板和程序模式配置；独立创建运行器时只保留程序模式。 -->
+      <div class="form-section">
         <div class="section-title">
           <el-icon class="section-icon"><Document /></el-icon>
-          <span>任务模版配置</span>
+          <span>{{ hideCodebookConfig ? "程序配置" : "任务模版配置" }}</span>
         </div>
 
-        <div class="form-row">
+        <div v-if="!hideCodebookConfig" class="form-row">
           <el-form-item prop="codebook_id" label="任务模板" class="form-item">
             <CodebookPicker
               v-model="formData.codebook_id"
@@ -100,31 +100,6 @@
           </el-form-item>
         </div>
 
-        <div class="form-row">
-          <el-form-item prop="program_kind" class="form-item program-kind-form-item">
-            <div class="program-kind-panel">
-              <div class="program-kind-panel__header">
-                <span class="program-kind-panel__title">程序模式</span>
-                <span class="program-kind-panel__hint">选择执行时加载的代码范围</span>
-              </div>
-              <div class="program-kind-panel__selector">
-                <el-radio-group v-model="formData.program_kind" class="program-kind-control">
-                  <el-radio-button v-for="option in programKindOptions" :key="option.value" :value="option.value">
-                    <span class="program-kind-option__title">{{ option.label }}</span>
-                    <span class="program-kind-option__desc">{{ getProgramKindDescription(option.value) }}</span>
-                  </el-radio-button>
-                </el-radio-group>
-              </div>
-            </div>
-          </el-form-item>
-        </div>
-      </div>
-
-      <div v-else class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Document /></el-icon>
-          <span>程序配置</span>
-        </div>
         <div class="form-row">
           <el-form-item prop="program_kind" class="form-item program-kind-form-item">
             <div class="program-kind-panel">

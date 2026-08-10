@@ -35,7 +35,7 @@
         <section v-show="!execution || configExpanded" class="config-panel">
           <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="run-form">
             <div class="form-section-title">执行设置</div>
-            <div class="form-grid" :class="{ 'is-fixed-source': programOptions.length === 0 }">
+            <div class="form-grid">
               <el-form-item label="执行单元" prop="runner_id" class="runner-field">
                 <el-select
                   v-model="form.runner_id"
@@ -62,20 +62,6 @@
                 </el-select>
               </el-form-item>
 
-              <el-form-item
-                v-if="programOptions.length > 0"
-                label="程序来源"
-                prop="program_kind"
-                class="program-kind-field"
-              >
-                <el-segmented
-                  v-model="form.program_kind"
-                  :options="programOptions"
-                  size="small"
-                  :disabled="isRunning || programOptions.length === 1"
-                />
-              </el-form-item>
-
               <el-form-item label="超时时间" prop="max_execution_seconds" class="timeout-field">
                 <el-input-number
                   v-model="form.max_execution_seconds"
@@ -89,19 +75,17 @@
               </el-form-item>
             </div>
 
-            <div v-if="form.program_kind === ProgramKind.PROJECT" class="context-note">
+            <div v-if="selectedRunner" class="context-note">
               <el-icon><InfoFilled /></el-icon>
-              <span>完整项目使用已保存内容，编辑器中未保存的修改不会进入本次运行。</span>
+              <span>
+                试运行使用执行单元绑定的已保存{{ selectedProgramKind === ProgramKind.PROJECT ? "完整项目" : "脚本" }}，
+                编辑器中未保存的修改不会进入本次运行。
+              </span>
             </div>
 
             <div v-if="!loadingRunners && supportedRunners.length === 0" class="context-note is-warning">
               <el-icon><WarningFilled /></el-icon>
               <span>当前脚本没有可用的执行单元，请先完成绑定。</span>
-            </div>
-
-            <div v-else-if="selectedRunner && programOptions.length === 0" class="context-note is-warning">
-              <el-icon><WarningFilled /></el-icon>
-              <span>无法读取当前执行单元的程序能力，请检查资源池和 Handler 状态。</span>
             </div>
 
             <div class="input-section">
@@ -204,7 +188,7 @@
           type="primary"
           :icon="VideoPlay"
           :loading="starting"
-          :disabled="isRunning || supportedRunners.length === 0 || programOptions.length === 0"
+          :disabled="isRunning || supportedRunners.length === 0"
           @click="run"
         >
           {{ execution ? "重新运行" : "开始试运行" }}
@@ -215,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue"
+import { computed, nextTick, onBeforeUnmount, reactive, ref } from "vue"
 import {
   ArrowDown,
   Connection,
@@ -230,18 +214,14 @@ import { Drawer } from "@/common/components/Dialogs"
 import KVEditor from "@/pages/task/manager/components/KVEditor.vue"
 import { listRunnerByCodebookIdApi } from "@/api/task/runner"
 import { Kind, type runner } from "@/api/task/runner/types/runner"
-import { listAllResourcesApi } from "@/api/task/resource"
-import type { Resource } from "@/api/task/resource/type"
 import { getCodebookPreviewLogsApi, getCodebookPreviewStatusApi, runCodebookPreviewApi } from "@/api/task/codebook"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import type { PreviewExecution, PreviewVariable } from "@/api/task/codebook/types/preview"
-import { createProgramKindOptions, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
+import { ProgramKind } from "@/api/task/program"
 import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
-import { resolveRunnerHandler } from "../programCapabilities"
 
 interface RunForm {
   runner_id?: number
-  program_kind: ProgramKind
   args: string
   variables: PreviewVariable[]
   max_execution_seconds: number
@@ -250,7 +230,6 @@ interface RunForm {
 const visible = ref(false)
 const currentCodebook = ref<codebook>()
 const runners = ref<runner[]>([])
-const resources = ref<Resource[]>([])
 const loadingRunners = ref(false)
 const starting = ref(false)
 const execution = ref<PreviewExecution>()
@@ -263,7 +242,6 @@ let pollTimer: number | undefined
 
 const form = reactive<RunForm>({
   runner_id: undefined,
-  program_kind: ProgramKind.INLINE,
   args: "{}",
   variables: [],
   max_execution_seconds: 300
@@ -299,21 +277,20 @@ const formatJSON = () => {
   }
 }
 
-const supportedRunners = computed(() => runners.value.filter((item) => [Kind.GRPC, Kind.KAFKA].includes(item.kind)))
+const supportedRunners = computed(() =>
+  runners.value.filter(
+    (item) =>
+      [Kind.GRPC, Kind.KAFKA].includes(item.kind) &&
+      (currentCodebook.value?.scope !== "SYSTEM" || item.program_kind !== ProgramKind.PROJECT)
+  )
+)
 const selectedRunner = computed(() => supportedRunners.value.find((item) => item.id === form.runner_id))
-const selectedHandler = computed(() => resolveRunnerHandler(selectedRunner.value, resources.value))
-const availableProgramKinds = computed<ProgramKind[]>(() => {
-  if (!selectedHandler.value) return []
-  const kinds = resolveCodebookProgramKinds(selectedHandler.value?.program_kinds)
-  if (currentCodebook.value?.scope === "SYSTEM") return kinds.filter((kind) => kind === ProgramKind.INLINE)
-  return kinds
-})
-const programOptions = computed(() => createProgramKindOptions(availableProgramKinds.value))
+const selectedProgramKind = computed(() => selectedRunner.value?.program_kind || ProgramKind.INLINE)
 const previewSubtitle = computed(() => {
   if (!currentCodebook.value) return "验证程序与执行单元的运行效果"
-  return form.program_kind === ProgramKind.PROJECT
-    ? `使用已保存项目运行【${currentCodebook.value.name}】`
-    : `使用当前编辑内容运行【${currentCodebook.value.name}】`
+  return selectedProgramKind.value === ProgramKind.PROJECT
+    ? `使用执行单元绑定项目运行【${currentCodebook.value.name}】`
+    : `使用执行单元绑定脚本运行【${currentCodebook.value.name}】`
 })
 const isRunning = computed(() => ["WAITING_PULL", "PREPARE", "RUNNING"].includes(execution.value?.status || ""))
 const statusText = computed(() => {
@@ -344,14 +321,6 @@ const formattedResult = computed(() => {
   }
 })
 
-watch(
-  availableProgramKinds,
-  (kinds) => {
-    if (!kinds.includes(form.program_kind)) form.program_kind = kinds[0] || ProgramKind.INLINE
-  },
-  { immediate: true }
-)
-
 const logStream = useExecutionLogStream({
   executionId: () => execution.value?.id,
   live: () => visible.value && isRunning.value,
@@ -377,7 +346,6 @@ async function open(row: codebook) {
   outputTab.value = "logs"
   configExpanded.value = true
   form.runner_id = undefined
-  form.program_kind = ProgramKind.INLINE
   form.args = "{}"
   form.variables = []
   form.max_execution_seconds = 300
@@ -385,12 +353,8 @@ async function open(row: codebook) {
 
   loadingRunners.value = true
   try {
-    const [runnerResult, resourceResult] = await Promise.allSettled([
-      listRunnerByCodebookIdApi(row.id),
-      listAllResourcesApi()
-    ])
+    const [runnerResult] = await Promise.allSettled([listRunnerByCodebookIdApi(row.id)])
     runners.value = runnerResult.status === "fulfilled" ? runnerResult.value.data.runners || [] : []
-    resources.value = resourceResult.status === "fulfilled" ? resourceResult.value : []
     if (supportedRunners.value.length === 1) {
       form.runner_id = supportedRunners.value[0].id
     }
@@ -399,7 +363,7 @@ async function open(row: codebook) {
   }
 }
 
-/** 使用当前编辑器代码创建一次临时执行。 */
+/** 使用所选执行单元绑定的程序创建一次临时执行。 */
 async function run() {
   if (!currentCodebook.value || isRunning.value) return
   const valid = await formRef.value?.validate().catch(() => false)
@@ -412,10 +376,6 @@ async function run() {
   try {
     const { data } = await runCodebookPreviewApi({
       runner_id: form.runner_id,
-      program:
-        form.program_kind === ProgramKind.PROJECT
-          ? { kind: ProgramKind.PROJECT, project: { entry_codebook_id: currentCodebook.value.id } }
-          : { kind: ProgramKind.INLINE, inline: { code: currentCodebook.value.code || "" } },
       args: form.args || "{}",
       variables: form.variables,
       max_execution_seconds: form.max_execution_seconds
@@ -469,7 +429,6 @@ function reset() {
   currentCodebook.value = undefined
   execution.value = undefined
   runners.value = []
-  resources.value = []
   logStream.reset()
 }
 
@@ -582,13 +541,9 @@ defineExpose({ open })
 
 .form-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) 210px 144px;
+  grid-template-columns: minmax(280px, 1fr) 144px;
   gap: 14px;
   padding-bottom: 20px;
-
-  &.is-fixed-source {
-    grid-template-columns: minmax(280px, 1fr) 144px;
-  }
 
   :deep(.el-form-item) {
     margin-bottom: 0;
@@ -611,21 +566,10 @@ defineExpose({ open })
   }
 }
 
-.program-kind-field {
-  :deep(.el-segmented) {
-    width: 100%;
-    padding: 3px;
-    box-sizing: border-box;
-  }
-
-  :deep(.el-segmented__item) {
-    min-width: 0;
-    height: 26px;
-  }
-}
-
 .timeout-field {
-  position: relative;
+  :deep(.el-form-item__content) {
+    position: relative;
+  }
 
   :deep(.el-input-number .el-input__inner) {
     padding-right: 48px;
@@ -635,11 +579,13 @@ defineExpose({ open })
 
 .input-suffix {
   position: absolute;
+  top: 50%;
   z-index: 2;
   right: 34px;
-  bottom: 9px;
+  transform: translateY(-50%);
   color: #a8abb2;
   font-size: 12px;
+  line-height: 1;
   pointer-events: none;
 }
 
@@ -987,10 +933,6 @@ defineExpose({ open })
 
   .form-grid {
     grid-template-columns: 1fr;
-
-    &.is-fixed-source {
-      grid-template-columns: 1fr;
-    }
   }
 
   .execution-overview,
