@@ -70,10 +70,12 @@
                   <div class="project-item-meta">
                     <el-icon class="project-node-icon"><Box /></el-icon>
                     <span class="project-node-name">{{ p.name }}</span>
+                  </div>
+                  <div class="project-item-status">
                     <el-tag v-if="p.id === pinnedProject?.id" size="small" type="primary" effect="plain">当前</el-tag>
                     <el-tag v-if="p.status === 'ARCHIVED'" size="small" type="info" effect="plain">归档</el-tag>
+                    <el-icon class="arrow-right-icon"><ArrowRight /></el-icon>
                   </div>
-                  <el-icon class="arrow-right-icon"><ArrowRight /></el-icon>
                 </div>
                 <div v-if="visibleProjects.length === 0 && !projectsLoading" class="project-empty">暂无匹配项目</div>
               </el-scrollbar>
@@ -689,9 +691,18 @@ watch(
 
   .project-item-meta {
     display: flex;
+    flex: 1;
     align-items: center;
     gap: 10px;
     min-width: 0;
+  }
+
+  .project-item-status {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    margin-left: 8px;
   }
 
   .project-node-icon {

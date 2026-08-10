@@ -62,6 +62,9 @@
             <span class="identity"
               ><el-icon><Cpu /></el-icon>{{ runnerLabel(currentAttempt) }}</span
             >
+            <span class="route-origin">
+              {{ routeOrigin(currentAttempt) }}
+            </span>
             <span class="identity"
               ><el-icon><Monitor /></el-icon>Execution #{{ currentAttempt.execution_id || "-" }}</span
             >
@@ -172,6 +175,9 @@ const prettyJSON = (value: unknown) => JSON.stringify(value ?? {}, null, 2)
 
 const runnerLabel = (attempt: AutomationAttempt) =>
   attempt.runner_id > 0 ? `Runner #${attempt.runner_id}` : "历史执行"
+
+const routeOrigin = (attempt: AutomationAttempt) =>
+  attempt.route_rule_id > 0 ? `路由规则 #${attempt.route_rule_id}` : "节点默认 Runner"
 
 const prettyOutput = (attempt: AutomationAttempt) => {
   const content = attempt.output || attempt.error
@@ -474,6 +480,12 @@ const formatDuration = (attempt: AutomationAttempt) => {
   background: #f8fafc;
   color: #64748b;
   font-size: 11px;
+}
+
+.route-origin {
+  color: #64748b;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .view-tabs {

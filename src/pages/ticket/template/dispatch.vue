@@ -2,8 +2,8 @@
   <PageContainer>
     <!-- 头部区域 -->
     <ManagerHeader
-      :title="`自动派发 - ${templateData?.name || '未选择模版'}`"
-      subtitle="根据模版字段自行匹配执行器"
+      :title="`执行单元路由 - ${templateData?.name || '未选择模板'}`"
+      :subtitle="`${automationNodes.length} 个自动化节点 · ${dispatches.length} 条条件规则`"
       :show-back-button="true"
       :show-refresh-button="false"
       @back="handleBack"
@@ -17,7 +17,7 @@
             class="u-gov-btn is-large"
             @click="handlerCreate"
           >
-            新增派发
+            新增规则
           </AuthButton>
           <AuthButton
             type="success"
@@ -26,7 +26,7 @@
             class="u-gov-btn is-large"
             @click="handlerSync"
           >
-            同步配置
+            复制规则
           </AuthButton>
           <AuthButton
             type="primary"
@@ -41,24 +41,43 @@
     </ManagerHeader>
 
     <!-- 主内容区域 -->
-    <el-empty v-if="!canViewDispatch" class="dispatch-empty" description="您没有权限查看自动派发配置" />
+    <el-empty v-if="!canViewDispatch" class="dispatch-empty" description="您没有权限查看执行单元路由" />
     <DataTable v-else :data="automationRows" :columns="tableColumns" :loading="loading">
-      <template #templateName>
-        {{ templateData?.name }}
-      </template>
-
-      <template #codebookId="{ row }">
-        <el-tag type="info" effect="plain">{{ row.codebookId }}</el-tag>
-      </template>
-
-      <template #runners="{ row }">
-        <div class="runner-tags">
-          <el-tag v-for="item in row.runners.slice(0, 3)" :key="item.id" type="success" effect="plain">
-            {{ item.name }}
+      <template #program="{ row }">
+        <div class="runner-program">
+          <span>脚本 #{{ row.codebookId }}</span>
+          <el-tag type="info" effect="plain" size="small">
+            {{ row.defaultRunner ? getProgramKindLabel(row.defaultRunner.program_kind) : "未设置默认执行单元" }}
           </el-tag>
-          <el-tag v-if="row.runners.length > 3" type="info" effect="plain">+{{ row.runners.length - 3 }}</el-tag>
-          <span v-if="row.runners.length === 0" class="muted-text">暂无执行器</span>
         </div>
+      </template>
+
+      <template #defaultRunner="{ row }">
+        <el-tag v-if="row.defaultRunner" type="info" effect="plain">
+          {{ row.defaultRunner.name }}
+        </el-tag>
+        <span v-else class="muted-text">未配置</span>
+      </template>
+
+      <template #targetRunner="{ row }">
+        <el-tag v-if="row.runner" type="success" effect="plain">
+          {{ row.runner.name }}
+        </el-tag>
+        <span v-else class="muted-text">
+          {{ row.defaultRunner ? "沿用默认执行单元" : "未设置默认执行单元" }}
+        </span>
+      </template>
+
+      <template #rule="{ row }">
+        <span v-if="row.dispatch"
+          >{{ fieldMap.get(row.dispatch.field) || row.dispatch.field }} = {{ row.dispatch.value }}</span
+        >
+        <span v-else class="muted-text">未配置条件路由</span>
+      </template>
+
+      <template #priority="{ row }">
+        <span v-if="row.dispatch">{{ row.dispatch.priority }}</span>
+        <span v-else class="muted-text">-</span>
       </template>
 
       <template #actions="{ row }">
@@ -71,11 +90,11 @@
       </template>
     </DataTable>
 
-    <!-- 自动派发 -->
+    <!-- 执行单元路由规则 -->
     <FormDialog
       v-model="dialogVisible"
-      title="自动派发"
-      width="760px"
+      title="执行单元路由规则"
+      width="560px"
       @confirm="handlerSubmitDispatch"
       @cancel="onClosed"
     >
@@ -83,27 +102,25 @@
         ref="apiRef"
         :fields-map="fieldMap"
         :template-id="templateData?.id"
-        :automation-codebooks="automationCodebookMap"
+        :automation-nodes="automationNodes"
         :runners="workflowRunners"
-        :dispatches="dispatches"
         @callback="loadAutomationDispatchData"
         @closed="onClosed"
       />
     </FormDialog>
 
-    <!-- 同步其他 -->
+    <!-- 从同一工作流的模板复制规则 -->
     <FormDialog
       v-model="syncVisible"
-      title="同步配置"
-      width="min(92vw, 980px)"
-      full-height
-      :show-footer="false"
-      :show-footer-info="false"
+      title="复制路由规则"
+      width="520px"
+      @confirm="handlerSubmitSync"
       @cancel="onSyncClosed"
     >
       <TemplateDispatchSync
         ref="syncRef"
         :template-id="templateData?.id"
+        :workflow-id="templateData?.workflow_id"
         @callback="loadAutomationDispatchData"
         @closed="onSyncClosed"
       />
@@ -118,12 +135,13 @@ import { CirclePlus, Connection, Delete, RefreshRight, Setting } from "@element-
 import type { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
 import type { runner } from "@/api/task/runner/types/runner.js"
-import { listRunnerByCodebookIdApi } from "@/api/task/runner/index.js"
+import { listRunnerByCodebookIdApi, listRunnerByIdsApi } from "@/api/task/runner/index.js"
+import { getProgramKindLabel } from "@/api/task/program"
 import { deleteDispatchApi, listDispatchByTemplateIdApi } from "@/api/ticket/dispatch"
 import type { dispatch } from "@/api/ticket/dispatch/types/dispatch"
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
-import { getAutomationCodebookUidsApi } from "@/api/ticket/workflow/workflow"
-import type { AutomationCodebookValue } from "@/api/ticket/workflow/types/workflow"
+import { getAutomationNodesApi } from "@/api/ticket/workflow/workflow"
+import type { AutomationNode } from "@/api/ticket/workflow/types/workflow"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { usePermission } from "@/common/composables/usePermission"
@@ -154,9 +172,7 @@ const syncVisible = ref<boolean>(false)
 const loading = ref<boolean>(false)
 
 // 数据映射
-const runnerMap = ref<Map<number, string>>(new Map())
-const automationCodebookMap = ref<Map<string, number>>(new Map())
-const dispatchIdMap = ref<Map<string, number>>(new Map())
+const automationNodes = ref<AutomationNode[]>([])
 const workflowRunners = ref<runner[]>([])
 const dispatches = ref<dispatch[]>([])
 const fieldMap = new Map<string, string>()
@@ -174,11 +190,13 @@ interface TemplateRuleNode {
 
 interface AutomationDispatchRow {
   id: string
+  automationNodeId: string
   dispatchId?: number
   dispatch?: dispatch
   nodeName: string
   codebookId: number
-  runnerCount: number
+  defaultRunner?: runner
+  runner?: runner
   runners: runner[]
 }
 
@@ -200,29 +218,14 @@ const isTemplateRuleNode = (value: unknown): value is TemplateRuleNode => {
   return typeof value === "object" && value !== null
 }
 
-const resolveAutomationCodebookId = (value: AutomationCodebookValue): number => {
-  if (typeof value === "number") return value
-
-  if (typeof value === "string") {
-    const id = Number(value)
-    return Number.isFinite(id) ? id : 0
-  }
-
-  return value.codebook_id
-}
-
-const resolveAutomationDispatchId = (value: AutomationCodebookValue): number | undefined => {
-  if (typeof value !== "object" || value === null) return undefined
-  return value.dispatch_id ?? value.id
-}
-
 // ==================== 表格配置 ====================
 const tableColumns: Column[] = [
-  { prop: "template_id", label: "模版名称", slot: "templateName", align: "center" },
   { prop: "nodeName", label: "自动化节点", align: "center", minWidth: 160 },
-  { prop: "codebookId", label: "脚本模板 ID", slot: "codebookId", align: "center", minWidth: 180 },
-  { prop: "runnerCount", label: "可用执行器", align: "center", width: 110 },
-  { prop: "runners", label: "执行器", slot: "runners", align: "center", minWidth: 220 }
+  { prop: "program", label: "执行程序", slot: "program", align: "center", minWidth: 180 },
+  { prop: "defaultRunner", label: "默认执行单元", slot: "defaultRunner", align: "center", minWidth: 150 },
+  { prop: "rule", label: "匹配规则", slot: "rule", align: "center", minWidth: 180 },
+  { prop: "priority", label: "优先级", slot: "priority", align: "center", width: 90 },
+  { prop: "targetRunner", label: "命中后 Runner", slot: "targetRunner", align: "center", minWidth: 160 }
 ]
 
 const getOperateBtnItems = (row: AutomationDispatchRow): DispatchOperateItem[] => [
@@ -243,19 +246,29 @@ const getOperateBtnItems = (row: AutomationDispatchRow): DispatchOperateItem[] =
   }
 ]
 
+const getCompatibleRunners = (node: AutomationNode) =>
+  workflowRunners.value.filter((item) => item.codebook_id === node.codebook_id)
+
 const automationRows = computed<AutomationDispatchRow[]>(() =>
-  Array.from(automationCodebookMap.value, ([nodeName, codebookId]) => {
-    const runners = workflowRunners.value.filter((item) => item.codebook_id === codebookId)
-    const dispatch = dispatches.value.find((item) => runners.some((runner) => runner.id === item.runner_id))
-    return {
-      id: `${nodeName}:${codebookId}`,
-      dispatchId: dispatch?.id ?? dispatchIdMap.value.get(nodeName),
+  automationNodes.value.flatMap((node) => {
+    const defaultRunner = workflowRunners.value.find((item) => item.id === node.runner_id)
+    const runners = getCompatibleRunners(node)
+    const nodeDispatches = dispatches.value
+      .filter((item) => item.automation_node_id === node.id)
+      .sort((left, right) => right.priority - left.priority || left.id - right.id)
+    const rows = nodeDispatches.length > 0 ? nodeDispatches : [undefined]
+
+    return rows.map((dispatch) => ({
+      id: `${node.id}:${dispatch?.id ?? "default"}`,
+      automationNodeId: node.id,
+      dispatchId: dispatch?.id,
       dispatch,
-      nodeName,
-      codebookId,
-      runnerCount: runners.length,
+      nodeName: node.name,
+      codebookId: node.codebook_id,
+      defaultRunner,
+      runner: dispatch ? workflowRunners.value.find((item) => item.id === dispatch.runner_id) : undefined,
       runners
-    }
+    }))
   })
 )
 
@@ -296,55 +309,38 @@ const setForm = (row: template) => {
   loadAutomationDispatchData()
 }
 
-// ==================== 执行器管理 ====================
-const fetchAutomationCodebooks = async (): Promise<boolean> => {
+// ==================== 自动化节点与执行单元 ====================
+const fetchAutomationNodes = async (): Promise<boolean> => {
   if (!templateData.value?.workflow_id) {
     return false
   }
 
   try {
-    const { data } = await getAutomationCodebookUidsApi(templateData.value.workflow_id)
-    const automationCodebooks = data.automation_codebooks || {}
-    const entries = Object.entries(automationCodebooks)
-      .map(([nodeName, value]) => [nodeName, resolveAutomationCodebookId(value)] as [string, number])
-      .filter((entry): entry is [string, number] => Number.isFinite(entry[1]) && entry[1] > 0)
-
-    dispatchIdMap.value = new Map(
-      Object.entries(automationCodebooks)
-        .map(([nodeName, value]) => [nodeName, resolveAutomationDispatchId(value)] as [string, number | undefined])
-        .filter((entry): entry is [string, number] => typeof entry[1] === "number")
-    )
-    automationCodebookMap.value = new Map(entries)
-    return automationCodebookMap.value.size > 0
+    const { data } = await getAutomationNodesApi(templateData.value.workflow_id)
+    automationNodes.value = (data.automation_nodes || []).filter((node) => node.id && node.codebook_id > 0)
+    return automationNodes.value.length > 0
   } catch (error) {
-    automationCodebookMap.value = new Map()
-    dispatchIdMap.value = new Map()
+    automationNodes.value = []
     return false
   }
 }
 
-const listRunnersByAutomationCodebooks = async (): Promise<boolean> => {
-  const codebookIds = Array.from(new Set(Array.from(automationCodebookMap.value.values()).filter((id) => id > 0)))
-
-  if (codebookIds.length === 0) {
-    workflowRunners.value = []
-    return false
-  }
+const listRunnersByAutomationNodes = async (): Promise<boolean> => {
+  const runnerIds = Array.from(new Set(automationNodes.value.map((node) => node.runner_id).filter((id) => id > 0)))
 
   try {
+    const defaultRunners = runnerIds.length > 0 ? (await listRunnerByIdsApi(runnerIds)).data.runners || [] : []
+    const codebookIds = Array.from(
+      new Set(automationNodes.value.map((node) => node.codebook_id).filter((id) => id > 0))
+    )
     const responses = await Promise.all(codebookIds.map((codebookId) => listRunnerByCodebookIdApi(codebookId)))
-
-    const runners = responses.flatMap(({ data }) => data.runners || [])
+    const candidates = responses.flatMap(({ data }) => data.runners || [])
     const uniqueRunners = new Map<number, runner>()
-    const updatedMap = new Map(runnerMap.value)
-
-    runners.forEach((item) => {
+    for (const item of [...defaultRunners, ...candidates]) {
       uniqueRunners.set(item.id, item)
-      updatedMap.set(item.id, item.name)
-    })
+    }
 
     workflowRunners.value = Array.from(uniqueRunners.values())
-    runnerMap.value = updatedMap
     return workflowRunners.value.length > 0
   } catch (error) {
     workflowRunners.value = []
@@ -378,16 +374,16 @@ const loadAutomationDispatchData = async () => {
 
   loading.value = true
   try {
-    const hasAutomationCodebooks = await fetchAutomationCodebooks()
-    if (hasAutomationCodebooks) {
-      await listRunnersByAutomationCodebooks()
+    const hasAutomationNodes = await fetchAutomationNodes()
+    if (hasAutomationNodes) {
+      await listRunnersByAutomationNodes()
       await listDispatchesByTemplate()
     } else {
       workflowRunners.value = []
       dispatches.value = []
     }
   } catch (error) {
-    automationCodebookMap.value = new Map()
+    automationNodes.value = []
     workflowRunners.value = []
     dispatches.value = []
   } finally {
@@ -402,14 +398,9 @@ const handleBack = () => {
 
 const handlerCreate = async () => {
   if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Add)) {
-    ElMessage.warning("暂无新增自动派发权限")
+    ElMessage.warning("暂无新增执行单元路由权限")
     return
   }
-
-  // if (!(await checkRunners())) {
-  //   ElMessage.warning("当前流程暂无可用执行器")
-  //   return
-  // }
 
   dialogVisible.value = true
   nextTick(() => {
@@ -420,19 +411,19 @@ const handlerCreate = async () => {
 const handlerConfigure = async (row: AutomationDispatchRow) => {
   const capability = row.dispatchId ? TICKET_CAPABILITIES.Dispatch.Edit : TICKET_CAPABILITIES.Dispatch.Add
   if (!hasPermission(capability)) {
-    ElMessage.warning(row.dispatchId ? "暂无修改自动派发权限" : "暂无新增自动派发权限")
+    ElMessage.warning(row.dispatchId ? "暂无修改执行单元路由权限" : "暂无新增执行单元路由权限")
     return
   }
 
   if (row.runners.length === 0) {
-    ElMessage.warning("当前自动化节点暂无可用执行器")
+    ElMessage.warning("当前自动化节点暂无兼容 Runner")
     return
   }
 
   dialogVisible.value = true
   nextTick(() => {
     apiRef.value?.resetForm()
-    apiRef.value?.selectAutomationByName(row.nodeName)
+    apiRef.value?.selectAutomationNode(row.automationNodeId)
     if (row.dispatch) {
       apiRef.value?.setForm(row.dispatch)
     }
@@ -441,12 +432,12 @@ const handlerConfigure = async (row: AutomationDispatchRow) => {
 
 const handlerDelete = (row: AutomationDispatchRow) => {
   if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Delete)) {
-    ElMessage.warning("暂无删除自动派发权限")
+    ElMessage.warning("暂无删除执行单元路由权限")
     return
   }
 
   if (!row.dispatchId) {
-    ElMessage.warning("当前自动化节点没有可删除的派发配置")
+    ElMessage.warning("当前自动化节点没有可删除的路由规则")
     return
   }
 
@@ -455,7 +446,7 @@ const handlerDelete = (row: AutomationDispatchRow) => {
     message: h("p", null, [
       h("span", null, "正在删除自动化节点 "),
       h("i", { style: "color: red" }, row.nodeName),
-      h("span", null, " 的派发配置，确认删除？")
+      h("span", null, " 的路由规则，确认删除？")
     ]),
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -469,7 +460,7 @@ const handlerDelete = (row: AutomationDispatchRow) => {
 
 const handlerSync = () => {
   if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Sync)) {
-    ElMessage.warning("暂无同步自动派发权限")
+    ElMessage.warning("暂无复制执行单元路由权限")
     return
   }
 
@@ -478,6 +469,10 @@ const handlerSync = () => {
 
 const handlerSubmitDispatch = () => {
   apiRef.value?.submitForm()
+}
+
+const handlerSubmitSync = () => {
+  syncRef.value?.syncSubmit()
 }
 
 const operateEvent = (action: DispatchAction, row: AutomationDispatchRow) => {
@@ -495,6 +490,7 @@ const onClosed = () => {
 
 const onSyncClosed = () => {
   syncVisible.value = false
+  syncRef.value?.resetForm()
 }
 
 // ==================== 页面初始化 ====================
@@ -604,12 +600,11 @@ watch(canViewDispatch, (allowed) => {
   }
 }
 
-.runner-tags {
+.runner-program {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .muted-text {

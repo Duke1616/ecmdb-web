@@ -59,18 +59,17 @@ export interface FindByIdsReq {
   ids: number[]
 }
 
-export interface AutomationCodebookUidsReq {
+export interface AutomationNodesReq {
   workflow_id: number
 }
 
-export interface RetrieveAutomationCodebookUids {
-  automation_codebooks: Record<string, AutomationCodebookValue>
+export interface AutomationNode {
+  id: string
+  name: string
+  codebook_id: number
+  runner_id: number
 }
 
-export type AutomationCodebookValue = number | string | AutomationCodebookConfig
-
-export interface AutomationCodebookConfig {
-  id?: number
-  dispatch_id?: number
-  codebook_id: number
+export interface RetrieveAutomationNodes {
+  automation_nodes: AutomationNode[]
 }

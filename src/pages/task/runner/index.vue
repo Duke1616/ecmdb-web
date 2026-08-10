@@ -27,6 +27,12 @@
         <el-tag v-else-if="row.kind === Kind.GRPC" type="success" effect="light" round> 分布式调度 </el-tag>
       </template>
 
+      <template #programKind="{ row }">
+        <el-tag type="info" effect="plain">
+          {{ row.program_kind === ProgramKind.PROJECT ? "完整项目" : "当前脚本" }}
+        </el-tag>
+      </template>
+
       <!-- 标签列插槽 -->
       <template #tags="{ row }">
         <el-tag
@@ -80,6 +86,7 @@ import DataTable from "@/common/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { Drawer } from "@@/components/Dialogs"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
+import { ProgramKind } from "@/api/task/program"
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 import type { Column } from "@@/components/DataTable/types"
@@ -88,6 +95,7 @@ import type { Column } from "@@/components/DataTable/types"
 const tableColumns: Column[] = [
   { prop: "name", label: "名称", align: "center", width: 300 },
   { prop: "kind", label: "运行模式", align: "center", slot: "kind" },
+  { prop: "program_kind", label: "程序模式", align: "center", slot: "programKind" },
   { prop: "codebook_id", label: "绑定任务模版", align: "center" },
   { prop: "tags", label: "标签", align: "center", slot: "tags" }
 ]

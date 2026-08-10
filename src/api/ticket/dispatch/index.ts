@@ -2,7 +2,7 @@ import type * as dispatch from "./types/dispatch"
 import instance from "@@/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
-/** 创建自动派发 */
+/** 创建执行单元路由规则 */
 export function createDispatchApi(data: dispatch.createOrUpdateDispatchReq) {
   return instance.post<number>({
     url: `${API_SERVICE.TICKET}/dispatch/create`,
@@ -10,7 +10,7 @@ export function createDispatchApi(data: dispatch.createOrUpdateDispatchReq) {
   })
 }
 
-/** 更新自动派发 */
+/** 更新执行单元路由规则 */
 export function updateDispatchApi(data: dispatch.createOrUpdateDispatchReq) {
   return instance.post<number>({
     url: `${API_SERVICE.TICKET}/dispatch/update`,
@@ -18,7 +18,7 @@ export function updateDispatchApi(data: dispatch.createOrUpdateDispatchReq) {
   })
 }
 
-/** 删除自动派发 */
+/** 删除执行单元路由规则 */
 export function deleteDispatchApi(id: number) {
   return instance.post<number>({
     url: `${API_SERVICE.TICKET}/dispatch/delete`,
@@ -26,7 +26,7 @@ export function deleteDispatchApi(id: number) {
   })
 }
 
-/** 同步自动派发 */
+/** 从同一工作流的模板复制路由规则 */
 export function syncDispatchApi(data: dispatch.syncDispatchReq) {
   return instance.post<number>({
     url: `${API_SERVICE.TICKET}/dispatch/sync`,
@@ -34,7 +34,7 @@ export function syncDispatchApi(data: dispatch.syncDispatchReq) {
   })
 }
 
-/** 按模板查询自动派发配置 */
+/** 按模板查询执行单元路由规则 */
 export function listDispatchByTemplateIdApi(data: dispatch.listDispatchByTemplateIdReq) {
   return instance.post<dispatch.dispatchListRes>({
     url: `${API_SERVICE.TICKET}/dispatch/list/by_template_id`,

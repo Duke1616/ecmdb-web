@@ -14,6 +14,7 @@ const createRunner = (kind: Kind): runner => ({
   id: 1,
   name: "试运行",
   codebook_id: 1,
+  program_kind: ProgramKind.INLINE,
   codebook_secret: "",
   kind,
   target: "runtime",

@@ -99,6 +99,50 @@
             />
           </el-form-item>
         </div>
+
+        <div class="form-row">
+          <el-form-item prop="program_kind" class="form-item program-kind-form-item">
+            <div class="program-kind-panel">
+              <div class="program-kind-panel__header">
+                <span class="program-kind-panel__title">程序模式</span>
+                <span class="program-kind-panel__hint">选择执行时加载的代码范围</span>
+              </div>
+              <div class="program-kind-panel__selector">
+                <el-radio-group v-model="formData.program_kind" class="program-kind-control">
+                  <el-radio-button v-for="option in programKindOptions" :key="option.value" :value="option.value">
+                    <span class="program-kind-option__title">{{ option.label }}</span>
+                    <span class="program-kind-option__desc">{{ getProgramKindDescription(option.value) }}</span>
+                  </el-radio-button>
+                </el-radio-group>
+              </div>
+            </div>
+          </el-form-item>
+        </div>
+      </div>
+
+      <div v-else class="form-section">
+        <div class="section-title">
+          <el-icon class="section-icon"><Document /></el-icon>
+          <span>程序配置</span>
+        </div>
+        <div class="form-row">
+          <el-form-item prop="program_kind" class="form-item program-kind-form-item">
+            <div class="program-kind-panel">
+              <div class="program-kind-panel__header">
+                <span class="program-kind-panel__title">程序模式</span>
+                <span class="program-kind-panel__hint">选择执行时加载的代码范围</span>
+              </div>
+              <div class="program-kind-panel__selector">
+                <el-radio-group v-model="formData.program_kind" class="program-kind-control">
+                  <el-radio-button v-for="option in programKindOptions" :key="option.value" :value="option.value">
+                    <span class="program-kind-option__title">{{ option.label }}</span>
+                    <span class="program-kind-option__desc">{{ getProgramKindDescription(option.value) }}</span>
+                  </el-radio-button>
+                </el-radio-group>
+              </div>
+            </div>
+          </el-form-item>
+        </div>
       </div>
 
       <!-- 标签配置 -->
@@ -106,7 +150,7 @@
         <div class="section-title">
           <el-icon class="section-icon"><PriceTag /></el-icon>
           <span>标签配置</span>
-          <el-tooltip content="自动化任务是根据【标签】 + 【任务模版标识】进行匹配工作节点" placement="right">
+          <el-tooltip content="用于检索和区分执行单元" placement="right">
             <el-icon class="tip-icon"><QuestionFilled /></el-icon>
           </el-tooltip>
         </div>
@@ -153,6 +197,9 @@ import {
 } from "@element-plus/icons-vue"
 import { registerOrUpdateReq, variables, Kind } from "@/api/task/runner/types/runner"
 import { registerRunnerApi, updateRunnerAPi } from "@/api/task/runner"
+import { createProgramKindOptions, PROGRAM_KINDS, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
+import { listAllResourcesApi } from "@/api/task/resource"
+import { ResourceKind, type Resource } from "@/api/task/resource/type"
 import CodebookPicker from "@/common/components/CodebookPicker/index.vue"
 import WorkerSection from "./components/WorkerSection.vue"
 import ExecuteSection from "./components/ExecuteSection.vue"
@@ -170,6 +217,7 @@ const emits = defineEmits(["closed", "callback"])
 const DEFAULT_FORM_DATA: registerOrUpdateReq = {
   name: "",
   codebook_id: undefined,
+  program_kind: ProgramKind.INLINE,
   codebook_secret: "",
   kind: Kind.GRPC,
   desc: "",
@@ -182,6 +230,8 @@ const DEFAULT_FORM_DATA: registerOrUpdateReq = {
 const formData = ref<registerOrUpdateReq>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
 const codebookNameRef = ref("")
+const resources = ref<Resource[]>([])
+const resourcesLoaded = ref(false)
 // NOTE: 标识用户是否手动修改过名称，避免自动生成覆盖用户的手动修改
 const isNameUserModified = ref(false)
 
@@ -202,6 +252,7 @@ const formRules: FormRules = {
     }
   ],
   codebook_id: [{ required: true, message: "必须选择任务模板", trigger: "change" }],
+  program_kind: [{ required: true, message: "必须选择程序模式", trigger: "change" }],
   tags: [{ required: true, message: "必须输入标签", trigger: "blur" }]
 }
 
@@ -228,6 +279,41 @@ const runnerSuggestedTags = computed(() => {
     .filter(Boolean)
   return Array.from(new Set(tags))
 })
+
+const selectedHandler = computed(() => {
+  const resourceKind = formData.value.kind === Kind.KAFKA ? ResourceKind.Agent : ResourceKind.Executor
+  return resources.value
+    .find((resource) => resource.kind === resourceKind && resource.name === formData.value.target)
+    ?.handlers.find((handler) => handler.name === formData.value.handler)
+})
+
+const availableProgramKinds = computed(() => {
+  if (!resourcesLoaded.value) return [...PROGRAM_KINDS]
+  return resolveCodebookProgramKinds(selectedHandler.value?.program_kinds)
+})
+const programKindOptions = computed(() => createProgramKindOptions(availableProgramKinds.value))
+
+const getProgramKindDescription = (kind: ProgramKind) =>
+  kind === ProgramKind.PROJECT ? "加载项目依赖文件" : "仅加载当前脚本"
+
+watch(
+  availableProgramKinds,
+  (kinds) => {
+    if (!kinds.includes(formData.value.program_kind)) {
+      formData.value.program_kind = kinds[0] || ProgramKind.INLINE
+    }
+  },
+  { immediate: true }
+)
+
+listAllResourcesApi()
+  .then((items) => {
+    resources.value = items
+    resourcesLoaded.value = true
+  })
+  .catch(() => {
+    resources.value = []
+  })
 
 // NOTE: 自动生成执行单元名称逻辑
 const generateName = () => {
@@ -320,6 +406,7 @@ const setFrom = async (row: any) => {
   if (!data.target) {
     data.target = data.worker?.topic || ""
   }
+  data.program_kind ||= ProgramKind.INLINE
   formData.value = data
   codebookNameRef.value = row.codebook_name || ""
 }
@@ -468,9 +555,9 @@ defineExpose({ submitForm, setFrom, resetForm })
     margin-bottom: 12px;
     padding: 8px 12px;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border-radius: 6px;
     border: 1px solid #e2e8f0;
     border-left: 4px solid #3b82f6;
+    border-radius: 6px;
 
     .section-icon {
       margin-right: 6px;
@@ -556,6 +643,123 @@ defineExpose({ submitForm, setFrom, resetForm })
     :deep(.el-tree-select) {
       width: 100%;
     }
+  }
+
+  .program-kind-form-item :deep(.el-form-item__content) {
+    width: 100%;
+  }
+
+  .program-kind-panel {
+    width: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+
+  .program-kind-panel__header {
+    display: flex;
+    min-height: 40px;
+    padding: 6px 14px;
+    gap: 12px;
+    align-items: center;
+    background: #fbfcfe;
+  }
+
+  .program-kind-panel__title {
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .program-kind-panel__hint {
+    overflow: hidden;
+    color: #94a3b8;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .program-kind-panel__selector {
+    padding: 6px 10px 8px;
+    background: #fbfcfe;
+  }
+
+  .program-kind-control {
+    display: grid !important;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 6px;
+    width: 100%;
+
+    :deep(.el-radio-button) {
+      --el-radio-button-checked-bg-color: #eff6ff;
+      --el-radio-button-checked-text-color: #1d4ed8;
+      --el-radio-button-checked-border-color: #3b82f6;
+      display: block;
+      min-width: 0;
+    }
+
+    :deep(.el-radio-button__inner) {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      width: 100%;
+      min-height: 38px;
+      padding: 6px 10px;
+      color: #475569;
+      text-align: left;
+      background: #ffffff;
+      border: 1px solid #dce3ec !important;
+      border-radius: 6px !important;
+      box-shadow: none !important;
+      transition:
+        border-color 0.16s ease,
+        background-color 0.16s ease;
+    }
+
+    :deep(.el-radio-button.is-active .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner) {
+      color: #1d4ed8;
+      background: #eff6ff;
+      border-color: #3b82f6 !important;
+      box-shadow: inset 3px 0 0 #3b82f6 !important;
+    }
+
+    :deep(.el-radio-button.is-active .program-kind-option__desc) {
+      color: #64748b;
+    }
+
+    :deep(.el-radio-button__original-radio:focus-visible + .el-radio-button__inner) {
+      outline: none;
+    }
+
+    :deep(.el-radio-button:not(.is-disabled) .el-radio-button__inner:hover) {
+      color: #2563eb;
+      border-color: #93c5fd !important;
+    }
+
+    :deep(.el-radio-button.is-active:not(.is-disabled) .el-radio-button__inner:hover) {
+      color: #1d4ed8;
+      border-color: #3b82f6 !important;
+    }
+  }
+
+  .program-kind-option__title {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 18px;
+    flex: 0 0 auto;
+  }
+
+  .program-kind-option__desc {
+    min-width: 0;
+    overflow: hidden;
+    color: #94a3b8;
+    font-size: 10px;
+    line-height: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

@@ -1,64 +1,44 @@
 <template>
-  <div class="dispatch-form-layout">
-    <aside class="runner-pane">
-      <div class="pane-header">
-        <span class="pane-title">执行器</span>
-        <span class="pane-count">{{ filteredRunners.length }}</span>
-      </div>
-      <el-scrollbar class="runner-scrollbar">
-        <button
-          v-for="item in filteredRunners"
-          :key="item.id"
-          class="runner-item"
-          :class="{ active: formData.runner_id === item.id }"
-          type="button"
-          @click="selectRunner(item)"
-        >
-          <span class="runner-name">{{ item.name }}</span>
-          <span class="runner-meta">{{ item.target }} / {{ item.handler }}</span>
-          <span class="runner-kind">{{ item.kind }}</span>
-        </button>
-        <el-empty v-if="automationNodes.length === 0" description="暂无自动化节点" :image-size="88" />
-        <el-empty v-else-if="filteredRunners.length === 0" description="当前节点暂无执行器" :image-size="88" />
-      </el-scrollbar>
-    </aside>
+  <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top" class="route-form">
+    <el-form-item v-if="!props.fixedAutomationNodeId" label="自动化节点">
+      <el-select v-model="selectedAutomationNodeId" placeholder="请选择自动化节点" @change="selectAutomationNode">
+        <el-option v-for="node in props.automationNodes" :key="node.id" :label="node.name" :value="node.id" />
+      </el-select>
+    </el-form-item>
 
-    <section class="config-pane">
-      <div class="selected-summary">
-        <div>
-          <div class="summary-label">当前节点</div>
-          <div class="summary-title">{{ selectedAutomationName || "未选择" }}</div>
-        </div>
-        <div class="summary-tags">
-          <el-tag v-if="selectedCodebookId" type="info" effect="plain">{{ selectedCodebookId }}</el-tag>
-          <el-tag v-if="selectedRunner" type="success" effect="plain">{{ selectedRunner.name }}</el-tag>
-        </div>
-      </div>
+    <div class="condition-fields">
+      <el-form-item prop="field" label="匹配字段">
+        <el-select v-model="formData.field" placeholder="请选择工单字段" filterable>
+          <el-option v-for="[field, title] in Array.from(props.fieldsMap)" :key="field" :label="title" :value="field" />
+        </el-select>
+      </el-form-item>
+      <el-form-item prop="value" label="匹配值">
+        <el-input v-model="formData.value" placeholder="请输入匹配值" />
+      </el-form-item>
+    </div>
 
-      <el-form ref="formRef" :model="formData" :rules="formRules" label-position="top">
-        <el-form-item prop="field" label="模版字段">
-          <el-select v-model="formData.field" placeholder="请选择模版字段" filterable>
-            <el-option
-              v-for="[field, title] in Array.from(props.fieldsMap)"
-              :key="field"
-              :label="title"
-              :value="field"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item prop="value" label="匹配值">
-          <el-input v-model="formData.value" placeholder="请输入匹配值" />
-        </el-form-item>
-      </el-form>
-    </section>
-  </div>
+    <el-form-item prop="priority" label="优先级">
+      <el-input-number v-model="formData.priority" :min="1" :max="10000" controls-position="right" />
+    </el-form-item>
+
+    <el-form-item prop="runner_id" label="目标执行单元">
+      <el-select v-model="formData.runner_id" placeholder="请选择目标执行单元" filterable>
+        <el-option v-for="item in filteredRunners" :key="item.id" :label="item.name" :value="item.id">
+          <div class="runner-option">
+            <span>{{ item.name }}</span>
+            <span>{{ item.target }} / {{ item.handler }}</span>
+          </div>
+        </el-option>
+      </el-select>
+    </el-form-item>
+  </el-form>
 </template>
 
 <script setup lang="ts">
-import { createOrUpdateDispatchReq, dispatch } from "@/api/ticket/dispatch/types/dispatch"
+import type { createOrUpdateDispatchReq, dispatch } from "@/api/ticket/dispatch/types/dispatch"
 import type { runner } from "@/api/task/runner/types/runner"
+import type { AutomationNode } from "@/api/ticket/workflow/types/workflow"
 import { computed, ref, watch } from "vue"
-
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { cloneDeep } from "lodash-es"
 import { createDispatchApi, updateDispatchApi } from "@/api/ticket/dispatch"
@@ -68,10 +48,10 @@ const emits = defineEmits(["closed", "callback"])
 // 接收父组件传递
 interface Props {
   fieldsMap: Map<string, string>
-  automationCodebooks: Map<string, number>
+  automationNodes: AutomationNode[]
   runners: runner[]
-  dispatches: dispatch[]
   templateId: number | undefined
+  fixedAutomationNodeId?: string
 }
 
 const props = defineProps<Props>()
@@ -83,84 +63,86 @@ const onClosed = () => {
   emits("closed")
 }
 
-const DEFAULT_FORM_DATA: createOrUpdateDispatchReq = {
+type DispatchFormData = Omit<createOrUpdateDispatchReq, "runner_id"> & { runner_id?: number }
+
+const DEFAULT_FORM_DATA: DispatchFormData = {
   template_id: 0,
-  runner_id: 0,
+  automation_node_id: "",
+  runner_id: undefined,
   field: "",
-  value: ""
+  value: "",
+  priority: 100
 }
 
-const formData = ref<createOrUpdateDispatchReq>(cloneDeep(DEFAULT_FORM_DATA))
+const formData = ref<DispatchFormData>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
-const selectedAutomationName = ref("")
+const selectedAutomationNodeId = ref("")
 
-const automationNodes = computed(() =>
-  Array.from(props.automationCodebooks, ([name, codebookId]) => ({
-    name,
-    codebookId
-  }))
-)
-
-const selectedCodebookId = computed(() => props.automationCodebooks.get(selectedAutomationName.value) ?? 0)
-
-const getNodeRunners = (codebookId: number) => props.runners.filter((item) => item.codebook_id === codebookId)
-
-const filteredRunners = computed(() => (selectedCodebookId.value > 0 ? getNodeRunners(selectedCodebookId.value) : []))
-
-const selectedRunner = computed(() => filteredRunners.value.find((item) => item.id === formData.value.runner_id))
-
-const getRunnerDispatch = (runnerId: number) => props.dispatches.find((item) => item.runner_id === runnerId)
+const selectedNode = computed(() => props.automationNodes.find((node) => node.id === selectedAutomationNodeId.value))
+const getNodeRunners = (node?: AutomationNode) => {
+  if (!node) return []
+  return props.runners.filter((item) => item.codebook_id === node.codebook_id)
+}
+const filteredRunners = computed(() => getNodeRunners(selectedNode.value))
 
 const selectRunner = (item: runner) => {
-  const existed = getRunnerDispatch(item.id)
-  formData.value = existed
-    ? cloneDeep(existed)
-    : {
-        template_id: props.templateId ?? 0,
-        runner_id: item.id,
-        field: "",
-        value: ""
-      }
+  formData.value = {
+    ...formData.value,
+    template_id: props.templateId ?? 0,
+    automation_node_id: selectedAutomationNodeId.value,
+    runner_id: item.id
+  }
   formRef.value?.clearValidate()
 }
 
 const formRules: FormRules = {
   field: [{ required: true, message: "必须输入字段名称", trigger: "blur" }],
-  value: [{ required: true, message: "必须输入匹配值", trigger: "blur" }]
+  value: [{ required: true, message: "必须输入匹配值", trigger: "blur" }],
+  priority: [{ required: true, message: "必须设置优先级", trigger: "change" }],
+  runner_id: [{ required: true, message: "请选择目标执行单元", trigger: "change" }]
 }
 
 watch(
-  automationNodes,
-  (nodes) => {
+  [() => props.automationNodes, () => props.fixedAutomationNodeId] as const,
+  ([nodes, fixedAutomationNodeId]) => {
     if (!nodes.length) {
-      selectedAutomationName.value = ""
+      selectedAutomationNodeId.value = ""
       return
     }
 
-    const hasSelected = nodes.some((node) => node.name === selectedAutomationName.value)
-    if (!hasSelected) {
-      selectedAutomationName.value = nodes[0].name
-    }
+    const fixedNodeExists = fixedAutomationNodeId && nodes.some((node) => node.id === fixedAutomationNodeId)
+    selectedAutomationNodeId.value = fixedNodeExists
+      ? fixedAutomationNodeId
+      : nodes.some((node) => node.id === selectedAutomationNodeId.value)
+        ? selectedAutomationNodeId.value
+        : nodes[0].id
   },
   { immediate: true }
 )
 
-watch(selectedCodebookId, () => {
+watch(selectedNode, () => {
   const exists = filteredRunners.value.some((item) => item.id === formData.value.runner_id)
   if (!exists) {
     const firstRunner = filteredRunners.value[0]
     if (firstRunner) {
       selectRunner(firstRunner)
     } else {
-      formData.value = cloneDeep(DEFAULT_FORM_DATA)
+      formData.value.runner_id = undefined
+      formData.value.automation_node_id = selectedAutomationNodeId.value
+      formData.value.template_id = props.templateId ?? 0
     }
   }
 })
 
 const submitForm = async () => {
   try {
-    if (!formData.value.runner_id) {
-      ElMessage.warning("请选择执行器")
+    if (!formData.value.automation_node_id) {
+      ElMessage.warning("请选择自动化节点")
+      return
+    }
+    const runnerID = formData.value.runner_id
+    if (!runnerID) {
+      ElMessage.warning("请选择目标执行单元")
       return
     }
 
@@ -169,7 +151,7 @@ const submitForm = async () => {
     formData.value.template_id = props.templateId
 
     const api = formData.value.id === undefined ? createDispatchApi : updateDispatchApi
-    await api(formData.value)
+    await api({ ...formData.value, runner_id: runnerID })
 
     ElMessage.success("保存成功")
     onClosed()
@@ -184,32 +166,36 @@ const submitForm = async () => {
 
 const setForm = (row: dispatch) => {
   formData.value = cloneDeep(row)
-  const matchedNode = automationNodes.value.find((node) =>
-    getNodeRunners(node.codebookId).some((item) => item.id === row.runner_id)
-  )
-  if (matchedNode) {
-    selectedAutomationName.value = matchedNode.name
-  }
+  selectedAutomationNodeId.value = row.automation_node_id
 }
 
 const resetForm = () => {
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
   formRef.value?.resetFields()
-  selectedAutomationName.value = automationNodes.value[0]?.name || ""
-  const firstRunner = filteredRunners.value[0]
-  if (firstRunner) {
-    selectRunner(firstRunner)
-  }
-}
-
-const selectAutomationByName = (name: string) => {
-  const exists = automationNodes.value.some((node) => node.name === name)
-  selectedAutomationName.value = exists ? name : automationNodes.value[0]?.name || ""
+  selectedAutomationNodeId.value = props.automationNodes[0]?.id || ""
   const firstRunner = filteredRunners.value[0]
   if (firstRunner) {
     selectRunner(firstRunner)
   } else {
-    formData.value = cloneDeep(DEFAULT_FORM_DATA)
+    formData.value.automation_node_id = selectedAutomationNodeId.value
+    formData.value.template_id = props.templateId ?? 0
+  }
+}
+
+const selectAutomationNode = (id?: string) => {
+  const targetId = id || selectedAutomationNodeId.value
+  selectedAutomationNodeId.value = props.automationNodes.some((node) => node.id === targetId)
+    ? targetId
+    : props.automationNodes[0]?.id || ""
+  const firstRunner = filteredRunners.value[0]
+  if (firstRunner) {
+    selectRunner(firstRunner)
+  } else {
+    formData.value = {
+      ...cloneDeep(DEFAULT_FORM_DATA),
+      template_id: props.templateId ?? 0,
+      automation_node_id: selectedAutomationNodeId.value
+    }
   }
 }
 
@@ -217,155 +203,41 @@ defineExpose({
   submitForm,
   setForm,
   resetForm,
-  selectAutomationByName
+  selectAutomationNode
 })
 </script>
 
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
-  }
-}
-</style>
-
 <style lang="scss" scoped>
-.dispatch-form-layout {
-  display: flex;
-  gap: 18px;
-  min-height: 420px;
-}
-
-.runner-pane {
-  width: 280px;
-  flex: 0 0 280px;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  overflow: hidden;
-}
-
-.pane-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid #e2e8f0;
-  background: #ffffff;
-}
-
-.pane-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #0f172a;
-}
-
-.pane-count {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: #e0f2fe;
-  color: #0369a1;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.runner-scrollbar {
-  height: 356px;
-}
-
-.runner-item {
-  width: calc(100% - 16px);
-  margin: 8px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #334155;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.18s ease;
-
-  &:hover,
-  &.active {
-    border-color: #3b82f6;
-    background: #eff6ff;
-  }
-}
-
-.runner-name {
-  max-width: 100%;
-  color: #0f172a;
-  font-size: 14px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.runner-meta,
-.runner-kind {
-  max-width: 100%;
-  color: #64748b;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.config-pane {
-  flex: 1;
-  min-width: 0;
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.selected-summary {
-  min-height: 72px;
-  margin-bottom: 18px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid #dbeafe;
-  border-radius: 8px;
-  background: #f8fbff;
-}
-
-.summary-label {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.summary-title {
-  margin-top: 4px;
-  color: #0f172a;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.summary-tags {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
+.condition-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
 }
 
 :deep(.el-select) {
   width: 100%;
+}
+
+:deep(.el-input-number) {
+  width: 100%;
+}
+
+.runner-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  span:last-child {
+    color: var(--el-text-color-secondary);
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .condition-fields {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
 }
 </style>

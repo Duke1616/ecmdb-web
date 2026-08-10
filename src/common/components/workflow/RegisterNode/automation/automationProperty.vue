@@ -25,23 +25,15 @@
     </FormSection>
 
     <!-- 逻辑执行 -->
-    <FormSection title="逻辑执行" tooltip="配置业务代码模版与目标执行环境" theme-color="purple">
+    <FormSection title="逻辑执行" tooltip="选择该节点执行的脚本文件与执行节点" theme-color="purple">
       <template #icon>
         <el-icon><Setting /></el-icon>
       </template>
       <div class="settings-stack">
-        <el-form-item label="程序来源" prop="program_kind">
-          <el-segmented
-            v-model="propertyForm.program_kind"
-            :options="programKindOptions"
-            class="program-kind-control"
-          />
-        </el-form-item>
-
-        <el-form-item :label="codebookFieldLabel" prop="codebook_id">
+        <el-form-item label="脚本文件" prop="codebook_id">
           <CodebookPicker
             :model-value="propertyForm.codebook_id || undefined"
-            :placeholder="codebookPlaceholder"
+            placeholder="请选择脚本文件"
             variant="element"
             class="modern-select"
             :disabled="flowDetail.status == '2'"
@@ -49,47 +41,42 @@
           />
         </el-form-item>
 
-        <el-form-item label="执行节点" prop="tag">
-          <el-select
-            ref="tagSelect"
-            v-model="propertyForm.tag"
-            filterable
-            :loading="runnerTagsLoading"
-            :placeholder="runnerTagsPlaceholder"
-            :disabled="!propertyForm.codebook_id || flowDetail.status == '2'"
-            class="modern-select"
-            popper-class="automation-runner-select-dropdown"
-          >
-            <el-option
-              v-if="propertyForm.tag === 'auto'"
-              class="hidden-auto-option"
-              label="自动分发模式 (Auto)"
-              value="auto"
-            />
-            <el-option v-for="item in availableTags" :key="item.id" :label="item.name" :value="item.tag">
-              <div class="runner-option">
-                <div class="runner-option-header">
+        <el-form-item label="默认执行单元" prop="runner_id" class="last-form-item">
+          <div class="execution-unit-control">
+            <el-select
+              v-model="propertyForm.runner_id"
+              filterable
+              clearable
+              :loading="runnersLoading"
+              :placeholder="runnerPlaceholder"
+              :disabled="!propertyForm.codebook_id || flowDetail.status == '2'"
+              class="modern-select runner-select"
+              popper-class="automation-runner-select-dropdown"
+            >
+              <el-option v-for="item in runners" :key="item.id" :label="item.name" :value="item.id">
+                <div class="runner-option">
                   <span class="runner-name">{{ item.name }}</span>
-                  <el-tag size="small" :type="item.kind === 'GRPC' ? 'success' : 'warning'" effect="light" round>
-                    {{ item.kind }}
-                  </el-tag>
+                  <span class="runner-meta">
+                    {{ getProgramKindLabel(item.program_kind) }}
+                    <template v-if="item.target || item.handler">
+                      <span class="runner-meta-divider">·</span>
+                      <span class="runner-handler">{{ [item.target, item.handler].filter(Boolean).join(" / ") }}</span>
+                    </template>
+                  </span>
                 </div>
-                <div class="runner-option-desc">
-                  <span>{{ item.tag }}</span>
-                  <span v-if="item.target"> · {{ item.target }}</span>
-                  <span v-if="item.handler"> / {{ item.handler }}</span>
-                </div>
-              </div>
-            </el-option>
-            <template #footer>
-              <div class="footer-action">
-                <el-button link type="primary" @click="setAutoTag" class="auto-发现-btn">
-                  <el-icon class="mr-1"><MagicStick /></el-icon>
-                  使用自动分发模式
-                </el-button>
-              </div>
-            </template>
-          </el-select>
+              </el-option>
+            </el-select>
+
+            <AutomationRouteWorkbench
+              :workflow-id="props.id"
+              :automation-node-id="props.nodeData?.id"
+              :automation-node-name="propertyForm.name"
+              :codebook-id="propertyForm.codebook_id"
+              :default-runner-id="propertyForm.runner_id"
+              :runners="runners"
+              :disabled="flowDetail.status == '2'"
+            />
+          </div>
         </el-form-item>
       </div>
     </FormSection>
@@ -180,17 +167,16 @@
 
 <script setup lang="ts">
 import { listRunnerByCodebookIdApi } from "@/api/task/runner"
-import { TagDetail, runner } from "@/api/task/runner/types/runner"
-import { listAllResourcesApi } from "@/api/task/resource"
-import type { Resource } from "@/api/task/resource/type"
-import { createProgramKindOptions, PROGRAM_KINDS, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
-import { ElSelect, FormInstance, FormRules } from "element-plus"
-import { Bell, Document, MagicStick, RefreshLeft, Setting, Timer } from "@element-plus/icons-vue"
+import type { runner } from "@/api/task/runner/types/runner"
+import { getProgramKindLabel } from "@/api/task/program"
+import { FormInstance, FormRules } from "element-plus"
+import { Bell, Document, RefreshLeft, Setting, Timer } from "@element-plus/icons-vue"
 import { computed, ref, onMounted, reactive, watch } from "vue"
-import { cloneDeep, uniqBy } from "lodash-es"
+import { cloneDeep } from "lodash-es"
 import { FormSection } from "../../PropertySetting"
 import CodebookPicker from "@/common/components/CodebookPicker/index.vue"
 import ScheduleEditor from "./components/ScheduleEditor.vue"
+import AutomationRouteWorkbench from "./components/AutomationRouteWorkbench.vue"
 import {
   createFixedDelaySchedule,
   createImmediateSchedule,
@@ -199,19 +185,13 @@ import {
 } from "./schedule"
 import { getCompensationNodeOptions, type CompensationNodeOption } from "./compensation"
 
-interface RunnerTagOption extends TagDetail {
-  id: string
-  name: string
-}
-
 interface AutomationPropertyForm {
   name: string
   codebook_id: number
-  program_kind: ProgramKind
+  runner_id?: number
   is_notify: boolean
   schedule: ScheduleConfig
   notify_method: number[]
-  tag: string
   compensation_node_id: string
 }
 
@@ -233,56 +213,29 @@ const emits = defineEmits(["closed"])
 // ── 状态管理 ────────────────────────────────────────────────────────────
 const DEFAULT_FORM_DATA: AutomationPropertyForm = {
   name: "自动化-",
-  codebook_id: 0 as number,
-  program_kind: ProgramKind.INLINE,
+  codebook_id: 0,
+  runner_id: undefined,
   is_notify: false,
   schedule: createImmediateSchedule() as ScheduleConfig,
   notify_method: [],
-  tag: "",
   compensation_node_id: ""
 }
 
 const propertyForm = reactive<AutomationPropertyForm>(cloneDeep(DEFAULT_FORM_DATA))
 const formRef = ref<FormInstance | null>(null)
-const tagSelect = ref<InstanceType<typeof ElSelect> | null>(null)
 const scheduleEditorRef = ref<InstanceType<typeof ScheduleEditor> | null>(null)
-const availableTags = ref<RunnerTagOption[]>([])
-const resources = ref<Resource[]>([])
-const resourceCatalogLoaded = ref(false)
-const runnerTagsLoading = ref(false)
+const runners = ref<runner[]>([])
+const runnersLoading = ref(false)
 const activeScheduleDraft = ref<ScheduleConfig>(createFixedDelaySchedule())
 const compensationNodeOptions = ref<CompensationNodeOption[]>([])
 const compensationEnabled = ref(false)
 
-const runnerTagsPlaceholder = computed(() => {
-  if (!propertyForm.codebook_id) return "选择模版后选取可用执行节点"
-  if (runnerTagsLoading.value) return "正在加载可用执行节点..."
-  if (availableTags.value.length === 0) return "当前模版暂无可用执行节点"
-  return "请选择执行节点"
+const runnerPlaceholder = computed(() => {
+  if (!propertyForm.codebook_id) return "请先选择脚本文件"
+  if (runnersLoading.value) return "正在加载执行单元..."
+  if (runners.value.length === 0) return "当前脚本暂无可用执行单元"
+  return "请选择默认执行单元（可选）"
 })
-
-const availableProgramKinds = computed(() => {
-  if (!resourceCatalogLoaded.value || availableTags.value.length === 0) return [...PROGRAM_KINDS]
-  const candidates =
-    propertyForm.tag && propertyForm.tag !== "auto"
-      ? availableTags.value.filter((item) => item.tag === propertyForm.tag)
-      : availableTags.value
-  if (candidates.length === 0) return [...PROGRAM_KINDS]
-  const supported = new Set<ProgramKind>()
-  for (const candidate of candidates) {
-    const handler = resources.value
-      .find((resource) => resource.name === candidate.target)
-      ?.handlers.find((item) => item.name === candidate.handler)
-    const kinds = resolveCodebookProgramKinds(handler?.program_kinds)
-    kinds.forEach((kind) => supported.add(kind))
-  }
-  return PROGRAM_KINDS.filter((kind) => supported.has(kind))
-})
-const programKindOptions = computed(() => createProgramKindOptions(availableProgramKinds.value))
-const codebookFieldLabel = computed(() =>
-  propertyForm.program_kind === ProgramKind.PROJECT ? "项目入口文件" : "脚本文件"
-)
-const codebookPlaceholder = computed(() => `请选择${codebookFieldLabel.value}`)
 
 watch(
   () => propertyForm.schedule,
@@ -292,12 +245,6 @@ watch(
   { deep: true }
 )
 
-watch(availableProgramKinds, (kinds) => {
-  if (!kinds.includes(propertyForm.program_kind) && kinds.length > 0) {
-    propertyForm.program_kind = kinds[0]
-  }
-})
-
 const scheduleEnabled = computed({
   get: () => propertyForm.schedule.type !== "immediate",
   set: (enabled: boolean) => {
@@ -305,60 +252,32 @@ const scheduleEnabled = computed({
   }
 })
 
-// ── 标签与运行器逻辑 ────────────────────────────────────────────────────────
-const toRunnerTagDetails = (runners: runner[]): RunnerTagOption[] => {
-  const tags = runners.flatMap((item) =>
-    (item.tags || []).map((tag) => ({
-      id: `${item.id}:${tag}`,
-      name: item.name,
-      tag,
-      kind: item.kind,
-      target: item.target,
-      handler: item.handler
-    }))
-  )
-
-  return uniqBy(tags, (item) => [item.tag, item.kind, item.target, item.handler].join("|"))
-}
-
-const loadRunnerTagsByCodebook = async (clearTag = true) => {
-  if (clearTag) {
-    propertyForm.tag = ""
-  }
+const loadRunners = async () => {
   if (!propertyForm.codebook_id) {
-    availableTags.value = []
+    runners.value = []
     return
   }
-
-  runnerTagsLoading.value = true
+  runnersLoading.value = true
   try {
     const { data } = await listRunnerByCodebookIdApi(propertyForm.codebook_id)
-    availableTags.value = toRunnerTagDetails(data.runners || [])
+    runners.value = data.runners || []
+    if (!runners.value.some((item) => item.id === propertyForm.runner_id)) {
+      propertyForm.runner_id = undefined
+    }
   } catch (error) {
     console.log(error)
-    availableTags.value = []
+    runners.value = []
   } finally {
-    runnerTagsLoading.value = false
-  }
-}
-
-const loadResourceCatalog = async () => {
-  try {
-    resources.value = await listAllResourcesApi()
-    resourceCatalogLoaded.value = true
-  } catch (error) {
-    console.log(error)
+    runnersLoading.value = false
   }
 }
 
 const handleCodebookUpdate = (value: number | number[] | undefined) => {
-  propertyForm.codebook_id = Array.isArray(value) ? value[0] || 0 : value || 0
-  loadRunnerTagsByCodebook(true)
-}
-
-function setAutoTag() {
-  propertyForm.tag = "auto"
-  tagSelect.value?.blur?.()
+  const codebookID = Array.isArray(value) ? value[0] || 0 : value || 0
+  if (codebookID === propertyForm.codebook_id) return
+  propertyForm.codebook_id = codebookID
+  propertyForm.runner_id = undefined
+  void loadRunners()
 }
 
 const refreshCompensationNodeOptions = () => {
@@ -384,13 +303,15 @@ const setProperties = () => {
   props.lf?.setProperties(props.nodeData?.id, {
     name: propertyForm.name,
     codebook_id: propertyForm.codebook_id,
-    program_kind: propertyForm.program_kind,
+    runner_id: propertyForm.runner_id,
     is_notify: propertyForm.is_notify,
     schedule: cloneDeep(propertyForm.schedule),
     notify_method: propertyForm.notify_method,
-    tag: propertyForm.tag,
     compensation_node_id: propertyForm.compensation_node_id
   })
+  if (!propertyForm.runner_id) {
+    props.lf?.deleteProperty?.(props.nodeData?.id, "runner_id")
+  }
 
   const deprecatedKeys = ["is_timing", "exec_method", "template_field", "template_id", "unit", "quantity"]
   deprecatedKeys.forEach((key) => props.lf?.deleteProperty?.(props.nodeData?.id, key))
@@ -414,7 +335,7 @@ const notify_method_options = [
 ]
 
 const formRules: FormRules = {
-  program_kind: [{ required: true, message: "请选择程序来源", trigger: "change" }],
+  codebook_id: [{ required: true, type: "number", min: 1, message: "请选择脚本文件", trigger: "change" }],
   name: [
     { required: true, message: "名称不能为空" },
     { max: 50, message: "最大50字符" },
@@ -448,7 +369,8 @@ const formRules: FormRules = {
 onMounted(async () => {
   propertyForm.name = props.nodeData?.properties.name || "自动化-"
   propertyForm.codebook_id = Number(props.nodeData?.properties.codebook_id) || 0
-  propertyForm.program_kind = props.nodeData?.properties.program_kind || ProgramKind.INLINE
+  const runnerID = Number(props.nodeData?.properties.runner_id)
+  propertyForm.runner_id = runnerID > 0 ? runnerID : undefined
   propertyForm.is_notify = props.nodeData?.properties.is_notify
   propertyForm.schedule = resolveFallbackSchedule(props.nodeData?.properties)
   if (propertyForm.schedule.type !== "immediate") activeScheduleDraft.value = cloneDeep(propertyForm.schedule)
@@ -456,12 +378,11 @@ onMounted(async () => {
     ? props.nodeData?.properties.notify_method
     : [props.nodeData?.properties.notify_method].filter(Boolean)
 
-  propertyForm.tag = props.nodeData?.properties.tag
   propertyForm.compensation_node_id = String(props.nodeData?.properties.compensation_node_id || "")
   compensationEnabled.value = !!propertyForm.compensation_node_id
   refreshCompensationNodeOptions()
 
-  await Promise.all([loadResourceCatalog(), loadRunnerTagsByCodebook(false)])
+  await loadRunners()
 })
 
 defineExpose({
@@ -484,24 +405,14 @@ defineExpose({
   min-height: 100%;
 }
 
-// ── 通用控件：统一 el-input / el-select / CodebookPicker / input-number ─────
+// ── 通用控件 ───────────────────────────────────────────────────────────────
 .modern-input,
-.modern-select,
-.modern-number {
+.modern-select {
   width: 100%;
 }
 
-.program-kind-control {
-  width: 100%;
-
-  :deep(.el-segmented__item) {
-    flex: 1;
-  }
-}
-
 .modern-input,
-.modern-select,
-.modern-number {
+.modern-select {
   :deep(.el-input__wrapper),
   :deep(.el-select__wrapper),
   :deep(.picker-input-box) {
@@ -528,16 +439,13 @@ defineExpose({
   :deep(.el-input__inner),
   :deep(.el-select__placeholder),
   :deep(.el-select__selected-item),
-  :deep(.single-text),
-  :deep(.placeholder-text),
-  :deep(.codebook-name) {
+  :deep(.single-text) {
     font-size: 14px;
     font-weight: 400;
     color: var(--automation-control-text);
   }
 
   :deep(.el-input__inner::placeholder),
-  :deep(.placeholder-text),
   :deep(.el-select__placeholder.is-transparent) {
     color: var(--automation-control-placeholder);
   }
@@ -553,25 +461,6 @@ defineExpose({
   }
 }
 
-.modern-number {
-  :deep(.el-input-number__increase),
-  :deep(.el-input-number__decrease) {
-    height: calc(var(--automation-control-height) - 2px);
-    color: #64748b;
-    background: #f8fafc;
-    border-color: var(--automation-control-border);
-
-    &:hover {
-      color: var(--automation-control-border-focus);
-      background: #eff6ff;
-    }
-  }
-
-  :deep(.el-input-number__decrease) {
-    border-right: 1px solid var(--automation-control-border);
-  }
-}
-
 // ── 布局结构 ────────────────────────────────────────────────────────────
 .settings-stack {
   display: flex;
@@ -581,6 +470,24 @@ defineExpose({
 
 .withdraw-form-item {
   margin-bottom: 0;
+}
+
+.last-form-item {
+  margin-bottom: 0;
+}
+
+.execution-unit-control {
+  display: flex;
+  width: 100%;
+
+  .runner-select {
+    min-width: 0;
+    flex: 1;
+
+    :deep(.el-select__wrapper) {
+      border-radius: var(--automation-control-radius) 0 0 var(--automation-control-radius) !important;
+    }
+  }
 }
 
 .compensation-section:not(.is-enabled) {
@@ -625,46 +532,40 @@ defineExpose({
   font-size: 13px;
 }
 
-:global(.automation-runner-select-dropdown .hidden-auto-option) {
-  display: none !important;
-}
-
 .runner-option {
-  padding: 4px 0;
-
-  .runner-option-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2px;
-
-    .runner-name {
-      min-width: 0;
-      overflow: hidden;
-      font-weight: 600;
-      color: #0f172a;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-  }
-
-  .runner-option-desc {
-    font-size: 11px;
-    color: #94a3b8;
-  }
-}
-
-.footer-action {
-  padding: 8px;
-  border-top: 1px solid #f1f5f9;
   display: flex;
-  justify-content: center;
-}
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
 
-.auto-发现-btn {
-  font-size: 12px;
-  font-weight: 600;
-  color: #6366f1 !important;
+  .runner-name {
+    min-width: 0;
+    overflow: hidden;
+    color: #303133;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .runner-meta {
+    display: flex;
+    flex: 0 1 auto;
+    align-items: center;
+    min-width: 0;
+    color: #909399;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .runner-meta-divider {
+    margin: 0 6px;
+    color: #c0c4cc;
+  }
+
+  .runner-handler {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 .form-item {

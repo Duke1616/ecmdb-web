@@ -1,3 +1,5 @@
+import type { ProgramKind } from "../../program"
+
 /** 执行单元的运行模式 (对应后端 Kind) */
 export enum Kind {
   /** 通过 Kafka 推送到工作节点执行 */
@@ -10,6 +12,7 @@ export interface runner {
   id: number
   name: string
   codebook_id: number
+  program_kind: ProgramKind
   codebook_name?: string
   codebook_secret: string
   kind: Kind
@@ -24,6 +27,7 @@ export interface registerOrUpdateReq {
   id?: number
   name: string
   codebook_id?: number
+  program_kind: ProgramKind
   codebook_secret: string
   kind: Kind
   target: string

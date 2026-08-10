@@ -62,7 +62,9 @@ export interface AutomationAttempt {
   task_id: number
   attempt_no: number
   request_id: string
+  default_runner_id: number
   runner_id: number
+  route_rule_id: number
   execution_id: number
   status: AutomationAttemptStatus
   input: Record<string, unknown>

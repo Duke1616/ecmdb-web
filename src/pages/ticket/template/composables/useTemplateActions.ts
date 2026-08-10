@@ -156,7 +156,7 @@ export function useTemplateActions(options: {
 
   const handleDispatch = (row: template) => {
     if (!hasPermission(TICKET_CAPABILITIES.Dispatch.View)) {
-      ElMessage.warning("暂无查看自动派发权限")
+      ElMessage.warning("暂无查看执行单元路由权限")
       return
     }
 
