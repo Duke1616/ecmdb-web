@@ -16,7 +16,7 @@
       </div>
     </template>
 
-    <div class="run-content" v-loading="loadingRunners">
+    <div class="run-content" v-loading="loadingRunners || parameterLoading">
       <button
         v-if="execution"
         type="button"
@@ -41,7 +41,8 @@
                   v-model="form.runner_id"
                   placeholder="选择当前脚本绑定的执行单元"
                   filterable
-                  :disabled="isRunning"
+                  :disabled="isRunning || parameterLoading"
+                  @change="handleRunnerChange"
                 >
                   <el-option
                     v-for="runner in supportedRunners"
@@ -63,23 +64,25 @@
               </el-form-item>
 
               <el-form-item label="超时时间" prop="max_execution_seconds" class="timeout-field">
-                <el-input-number
-                  v-model="form.max_execution_seconds"
-                  :min="1"
-                  :max="3600"
-                  :step="30"
-                  controls-position="right"
-                  :disabled="isRunning"
-                />
-                <span class="input-suffix">秒</span>
+                <div class="timeout-control">
+                  <el-input-number
+                    v-model="form.max_execution_seconds"
+                    :min="1"
+                    :max="3600"
+                    :step="30"
+                    :controls="false"
+                    :disabled="isRunning"
+                  />
+                  <span>秒</span>
+                </div>
               </el-form-item>
             </div>
 
             <div v-if="selectedRunner" class="context-note">
               <el-icon><InfoFilled /></el-icon>
               <span>
-                试运行使用执行单元绑定的已保存{{ selectedProgramKind === ProgramKind.PROJECT ? "完整项目" : "脚本" }}，
-                编辑器中未保存的修改不会进入本次运行。
+                试运行使用 Runner 绑定的已保存{{ selectedProgramKind === ProgramKind.PROJECT ? "完整项目" : "脚本" }}，
+                并自动带入私有变量和参数默认值；未保存的编辑器修改不会生效，提交时只发送变化的覆盖值。
               </span>
             </div>
 
@@ -88,49 +91,16 @@
               <span>当前脚本没有可用的执行单元，请先完成绑定。</span>
             </div>
 
-            <div class="input-section">
-              <el-form-item prop="args">
-                <template #label>
-                  <div class="json-input-header">
-                    <span>运行参数覆盖 <small>JSON</small></span>
-                    <el-button
-                      type="primary"
-                      link
-                      size="small"
-                      class="format-btn"
-                      :disabled="isRunning"
-                      @click="formatJSON"
-                    >
-                      格式化
-                    </el-button>
-                  </div>
-                </template>
-                <el-input
-                  v-model="form.args"
-                  type="textarea"
-                  :rows="5"
-                  resize="none"
-                  spellcheck="false"
-                  :placeholder="argsPlaceholder"
-                  class="json-input"
-                  :disabled="isRunning"
-                />
-              </el-form-item>
-            </div>
-
-            <div class="input-section">
-              <el-form-item label="临时变量" class="variables-field">
-                <KVEditor
-                  v-model="form.variables"
-                  value-type="array"
-                  title-key="变量名"
-                  title-value="临时值"
-                  add-text="添加临时变量"
-                  empty-text="未配置临时变量，将使用执行单元默认变量"
-                  :show-secret="true"
-                />
-              </el-form-item>
-            </div>
+            <RunnerCallParametersPanel
+              v-model="runnerParamInputs"
+              :runner-id="form.runner_id"
+              :project-entry-codebook-id="currentRunner?.codebook_id"
+              :parameters="runnerParameters"
+              :override-count="runnerOverrideCount"
+              :disabled="isRunning"
+              :show-tip="false"
+              @reset="clearRunnerOverrides"
+            />
           </el-form>
         </section>
       </el-collapse-transition>
@@ -211,19 +181,19 @@ import {
 } from "@element-plus/icons-vue"
 import { ElMessage, type FormInstance, type FormRules } from "element-plus"
 import { Drawer } from "@/common/components/Dialogs"
-import KVEditor from "@/pages/task/manager/components/KVEditor.vue"
+import RunnerCallParametersPanel from "@/pages/task/shared/RunnerCallParametersPanel.vue"
 import { listRunnerByCodebookIdApi } from "@/api/task/runner"
 import { Kind, type runner } from "@/api/task/runner/types/runner"
 import { getCodebookPreviewLogsApi, getCodebookPreviewStatusApi, runCodebookPreviewApi } from "@/api/task/codebook"
 import type { codebook } from "@/api/task/codebook/types/codebook"
-import type { PreviewExecution, PreviewVariable } from "@/api/task/codebook/types/preview"
+import type { PreviewExecution } from "@/api/task/codebook/types/preview"
 import { ProgramKind } from "@/api/task/program"
 import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
+import { useRunnerCallParameters } from "@/pages/task/shared/useRunnerCallParameters"
+import { buildPreviewOverrides } from "./previewParams"
 
 interface RunForm {
   runner_id?: number
-  args: string
-  variables: PreviewVariable[]
   max_execution_seconds: number
 }
 
@@ -238,43 +208,29 @@ const configExpanded = ref(true)
 const outputTab = ref("logs")
 const logViewportRef = ref<HTMLElement>()
 const elapsedNow = ref(Date.now())
+const runnerOverrides = ref<Record<string, string>>({})
 let pollTimer: number | undefined
+
+const {
+  loading: parameterLoading,
+  currentRunner,
+  parameters: runnerParameters,
+  inputs: runnerParamInputs,
+  loadContext: loadRunnerContext,
+  clearContext: clearRunnerContext,
+  clearOverrides: clearRunnerOverrides
+} = useRunnerCallParameters(runnerOverrides)
 
 const form = reactive<RunForm>({
   runner_id: undefined,
-  args: "",
-  variables: [],
   max_execution_seconds: 300
 })
 
 const rules: FormRules<RunForm> = {
   runner_id: [{ required: true, message: "请选择执行单元", trigger: "submit" }],
-  args: [
-    {
-      trigger: "submit",
-      validator: (_rule, value: string, callback) => {
-        try {
-          JSON.parse(value || "{}")
-          callback()
-        } catch {
-          callback(new Error("请输入合法的 JSON 参数"))
-        }
-      }
-    }
-  ],
   max_execution_seconds: [
     { required: true, type: "number", min: 1, max: 3600, message: "超时时间应为 1 到 3600 秒", trigger: "submit" }
   ]
-}
-
-const formatJSON = () => {
-  try {
-    const rawVal = form.args.trim()
-    const parsed = JSON.parse(rawVal || "{}")
-    form.args = JSON.stringify(parsed, null, 2)
-  } catch {
-    ElMessage.warning("JSON 格式不正确，无法格式化")
-  }
 }
 
 const supportedRunners = computed(() =>
@@ -285,13 +241,8 @@ const supportedRunners = computed(() =>
   )
 )
 const selectedRunner = computed(() => supportedRunners.value.find((item) => item.id === form.runner_id))
+const runnerOverrideCount = computed(() => Object.keys(runnerOverrides.value).length)
 const selectedProgramKind = computed(() => selectedRunner.value?.program_kind || ProgramKind.INLINE)
-const argsPlaceholder = computed(() => {
-  const value = selectedRunner.value?.parameter_defaults?.args
-  if (value === undefined || value === null || value === "") return '留空使用默认值，例如：{"name":"demo"}'
-  const formatted = typeof value === "string" ? value : JSON.stringify(value)
-  return `留空使用 Runner 默认值：${formatted}`
-})
 const previewSubtitle = computed(() => {
   if (!currentCodebook.value) return "验证程序与执行单元的运行效果"
   return selectedProgramKind.value === ProgramKind.PROJECT
@@ -352,9 +303,9 @@ async function open(row: codebook) {
   outputTab.value = "logs"
   configExpanded.value = true
   form.runner_id = undefined
-  form.args = ""
-  form.variables = []
   form.max_execution_seconds = 300
+  runnerOverrides.value = {}
+  clearRunnerContext()
   visible.value = true
 
   loadingRunners.value = true
@@ -363,10 +314,16 @@ async function open(row: codebook) {
     runners.value = runnerResult.status === "fulfilled" ? runnerResult.value.data.runners || [] : []
     if (supportedRunners.value.length === 1) {
       form.runner_id = supportedRunners.value[0].id
+      await loadRunnerContext(form.runner_id)
     }
   } finally {
     loadingRunners.value = false
   }
+}
+
+async function handleRunnerChange(runnerId?: number) {
+  runnerOverrides.value = {}
+  await loadRunnerContext(runnerId)
 }
 
 /** 使用所选执行单元绑定的程序创建一次临时执行。 */
@@ -380,18 +337,19 @@ async function run() {
   logStream.reset()
   outputTab.value = "logs"
   try {
+    const overrides = buildPreviewOverrides(runnerOverrides.value, runnerParameters.value)
     const { data } = await runCodebookPreviewApi({
       runner_id: form.runner_id,
-      args: form.args,
-      variables: form.variables,
+      params: overrides.params,
+      variables: overrides.variables,
       max_execution_seconds: form.max_execution_seconds
     })
     execution.value = data
     elapsedNow.value = Date.now()
     configExpanded.value = false
     schedulePoll(0)
-  } catch {
-    ElMessage.error("启动试运行失败")
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "启动试运行失败")
   } finally {
     starting.value = false
   }
@@ -432,9 +390,11 @@ function stopPolling() {
 
 function reset() {
   stopPolling()
+  clearRunnerContext()
   currentCodebook.value = undefined
   execution.value = undefined
   runners.value = []
+  runnerOverrides.value = {}
   logStream.reset()
 }
 
@@ -512,42 +472,9 @@ defineExpose({ open })
   font-weight: 600;
 }
 
-.json-input-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-
-  small {
-    margin-left: 5px;
-    color: #a8abb2;
-    font-size: 10px;
-    font-weight: 500;
-  }
-
-  .format-btn {
-    font-size: 12px;
-    font-weight: 500;
-    padding: 0;
-  }
-}
-
-.variables-field :deep(.add-trigger) {
-  color: #606266;
-  font-weight: 500;
-  background: #fafafa;
-  border-color: #dcdfe6;
-
-  &:hover {
-    color: #409eff;
-    background: #f5f9ff;
-    border-color: #a0cfff;
-  }
-}
-
 .form-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) 144px;
+  grid-template-columns: minmax(280px, 1fr) 176px;
   gap: 14px;
   padding-bottom: 20px;
 
@@ -574,25 +501,50 @@ defineExpose({ open })
 
 .timeout-field {
   :deep(.el-form-item__content) {
-    position: relative;
-  }
-
-  :deep(.el-input-number .el-input__inner) {
-    padding-right: 48px;
-    text-align: left;
+    display: block;
   }
 }
 
-.input-suffix {
-  position: absolute;
-  top: 50%;
-  z-index: 2;
-  right: 34px;
-  transform: translateY(-50%);
-  color: #a8abb2;
-  font-size: 12px;
-  line-height: 1;
-  pointer-events: none;
+.timeout-control {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  padding-right: 11px;
+  background: #fff;
+  border: 1px solid #dcdfe6;
+  border-radius: 6px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:focus-within {
+    border-color: #409eff;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
+  }
+
+  :deep(.el-input-number) {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+  }
+
+  :deep(.el-input__wrapper) {
+    padding: 0 11px;
+    background: transparent;
+    box-shadow: none !important;
+  }
+
+  :deep(.el-input__inner) {
+    color: #303133;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  > span {
+    flex: 0 0 auto;
+    color: #909399;
+    font-size: 12px;
+  }
 }
 
 .runner-option {
@@ -644,42 +596,6 @@ defineExpose({ open })
 
 .context-note + .context-note {
   margin-top: -10px;
-}
-
-.input-section {
-  padding: 18px 0 20px;
-  border-top: 1px solid #ebeef5;
-
-  &:last-child {
-    padding-bottom: 0;
-  }
-
-  :deep(.el-form-item) {
-    margin-bottom: 0;
-  }
-}
-
-.json-input {
-  :deep(textarea) {
-    color: #303133;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 13px;
-    line-height: 1.6;
-    background: #fafafa;
-    border-color: #dcdfe6;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-
-    &:focus {
-      background: #fff;
-      border-color: #409eff;
-      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
-    }
-  }
-}
-
-.variables-field :deep(.el-form-item__content) {
-  display: block;
 }
 
 .config-summary {

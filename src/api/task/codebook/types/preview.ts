@@ -6,7 +6,7 @@ export interface PreviewVariable {
 
 export interface RunPreviewReq {
   runner_id: number
-  args: string
+  params: Record<string, string>
   variables: PreviewVariable[]
   max_execution_seconds: number
 }

@@ -162,41 +162,14 @@
                   />
                 </el-form-item>
 
-                <div class="runner-context-note">
-                  已自动带入 Runner 私有变量与 Handler 参数默认值；这里仅支持手动调整，提交时只保存真正变化的覆盖值。
-                </div>
-
-                <div class="metadata-container has-metadata animate-in">
-                  <div class="metadata-header">
-                    <div class="metadata-title">
-                      <span class="dot" />
-                      <span>调用参数</span>
-                    </div>
-                    <div v-if="runnerParameters.length" class="runner-override-actions">
-                      <span>{{ runnerOverrideCount ? `已覆盖 ${runnerOverrideCount} 项` : "当前使用默认值" }}</span>
-                      <el-button v-if="runnerOverrideCount" link type="primary" @click="clearRunnerOverrides">
-                        恢复默认
-                      </el-button>
-                    </div>
-                  </div>
-                  <TaskParamsEditor
-                    v-if="runnerParameters.length"
-                    v-model="runnerParamInputs"
-                    :metadata="runnerParameters"
-                    :initialize-defaults="false"
-                    :project-entry-codebook-id="currentRunner?.codebook_id"
-                  />
-                  <div v-else-if="form.runner_id" class="manual-map-box">
-                    <KVEditor
-                      v-model="form.runner_params"
-                      title-key="参数名"
-                      title-value="覆盖值"
-                      add-text="添加覆盖参数..."
-                      empty-text="当前执行单元未声明可配置参数"
-                    />
-                  </div>
-                  <div v-else class="runner-params-placeholder">选择执行单元后自动加载可配置参数和默认值</div>
-                </div>
+                <RunnerCallParametersPanel
+                  v-model="runnerParamInputs"
+                  :runner-id="form.runner_id"
+                  :project-entry-codebook-id="currentRunner?.codebook_id"
+                  :parameters="runnerParameters"
+                  :override-count="runnerOverrideCount"
+                  @reset="clearRunnerOverrides"
+                />
               </div>
 
               <!-- HTTP 模式 -->
@@ -315,6 +288,7 @@ import RetryConfigEditor from "./RetryConfigEditor.vue"
 import ExecutorPicker from "@/common/components/ExecutorPicker/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import { Drawer } from "@@/components/Dialogs"
+import RunnerCallParametersPanel from "@/pages/task/shared/RunnerCallParametersPanel.vue"
 
 // NOTE: 该组件为纯业务抽屉控制器，使用 defineModel 进行开放/折叠的 UI 状态双向绑定
 const visible = defineModel<boolean>({ default: false })
@@ -549,41 +523,6 @@ const runnerOverrideCount = computed(() => Object.keys(form.value.runner_params)
 
 .protocol-content-wrapper {
   margin-top: 12px;
-}
-
-.runner-context-note {
-  margin: -2px 0 14px;
-  padding: 10px 12px;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.6;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.runner-override-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #94a3b8;
-  font-size: 11px;
-
-  :deep(.el-button) {
-    height: auto;
-    padding: 0;
-    font-size: 11px;
-  }
-}
-
-.runner-params-placeholder {
-  padding: 28px 16px;
-  color: #94a3b8;
-  font-size: 12px;
-  text-align: center;
-  background: #ffffff;
-  border: 1px dashed #dbe4ef;
-  border-radius: 8px;
 }
 
 .http-advanced-settings {
