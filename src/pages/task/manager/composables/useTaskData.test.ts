@@ -28,6 +28,7 @@ describe("任务程序来源映射", () => {
     form.runner_id = 18
     form.runner_params = { args: '{"env":"dev"}' }
     form.grpc_params = { direct_only: "kept" }
+    form.metadata = { variables: "runner" }
 
     const payload = mapToApiPayload(form)
     expect(payload.runner_id).toBe(18)
@@ -37,6 +38,7 @@ describe("任务程序来源映射", () => {
       params: { args: '{"env":"dev"}' }
     })
     expect(payload.program).toBeUndefined()
+    expect(payload.metadata).toEqual({})
 
     form.protocol = TaskProtocol.GRPC
     form.grpc_service = "executor"

@@ -5,6 +5,7 @@ import { inputsToParameterDefaults, parameterDefaultsToInputs } from "./paramete
 const parameters: Parameter[] = [
   {
     key: "args",
+    role: ParameterRole.Args,
     desc: "参数",
     required: false,
     default: "{}",

@@ -1,9 +1,7 @@
 import { ParameterRole, type Parameter } from "@/api/task/resource/type"
 import type { JsonValue, ParameterDefaults } from "@/api/task/runner/types/runner"
 
-/** 判断 Handler 参数是否承载统一变量集合，并兼容没有 role 的旧版通用 Handler。 */
-export const isVariablesParameter = (parameter: Parameter) =>
-  parameter.role === ParameterRole.Variables || parameter.key === "variables"
+export const isVariablesParameter = (parameter: Parameter) => parameter.role === ParameterRole.Variables
 
 /** Runner 默认参数在编辑器中统一使用字符串，提交时再恢复为 JSON 值。 */
 export const parameterDefaultsToInputs = (defaults?: ParameterDefaults): Record<string, string> => {

@@ -30,6 +30,7 @@ export interface BindingOption {
 }
 
 export enum ParameterRole {
+  Args = "args",
   Variables = "variables"
 }
 

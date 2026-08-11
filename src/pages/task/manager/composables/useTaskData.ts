@@ -172,7 +172,8 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
     type: state.type,
     cron_expr: state.cron_expr,
     schedule_params: cloneDeep(state.schedule_params),
-    metadata: cloneDeep(state.metadata)
+    // 参数绑定只属于普通 gRPC 模式，避免切换到 Runner 后继续提交旧绑定。
+    metadata: state.protocol === TaskProtocol.GRPC ? cloneDeep(state.metadata) : {}
   }
 
   if (state.protocol === TaskProtocol.RUNNER) {
