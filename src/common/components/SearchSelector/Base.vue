@@ -69,7 +69,7 @@
           </div>
         </div>
 
-        <div class="items-list" v-loading="loading">
+        <div ref="itemsListRef" class="items-list" v-loading="loading">
           <div v-if="itemsData.length === 0 && !loading" class="empty-state">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -141,7 +141,7 @@ interface Props {
   placeholder?: string
   disabled?: boolean
   multiple?: boolean
-  variant?: "fancy" | "simple"
+  variant?: "fancy" | "simple" | "element"
   // 数据加载函数
   loadData: (params: any) => Promise<any>
   // 获取单个项详情函数 (用于回显)
@@ -186,6 +186,7 @@ const loading = ref(false)
 const containerRef = ref<HTMLElement>()
 const searchInputRef = ref<HTMLInputElement>()
 const dropdownRef = ref<HTMLElement>()
+const itemsListRef = ref<HTMLElement>()
 const popperInstance = ref<PopperInstance | null>(null)
 
 // 多选缓存：存储已选中的完整对象
@@ -255,19 +256,117 @@ const loadItems = async () => {
         response.data.runners ||
         response.data.list ||
         []
-      itemsData.value = list
-      paginationData.total = response.data.total || 0
-
       // 更新缓存
       list.forEach((item: any) => {
         selectedItemsMap.value.set(item[props.idField], item)
       })
+
+      // 当前值不在第一页时固定展示在首项，避免打开后找不到已选内容。
+      const currentItem = !props.multiple ? selectedItemsMap.value.get(props.modelValue as string | number) : undefined
+      const shouldPrependCurrent =
+        currentItem &&
+        paginationData.currentPage === 1 &&
+        !searchKeyword.value.trim() &&
+        !list.some((item: any) => item[props.idField] === props.modelValue)
+
+      itemsData.value = shouldPrependCurrent ? [currentItem, ...list] : list
+      paginationData.total = response.data.total || 0
     }
   } catch (error) {
     console.error("SearchSelector load error:", error)
     itemsData.value = []
   } finally {
     loading.value = false
+    if (showPicker.value) await syncPopperPosition()
+  }
+}
+
+const waitForNextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+
+// 数据加载会改变弹层高度，需要重新计算上下展开方向，避免首次打开超出视口。
+const syncPopperPosition = async () => {
+  await nextTick()
+  await waitForNextFrame()
+  if (!containerRef.value || !dropdownRef.value) return
+
+  dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
+  await popperInstance.value?.update()
+}
+
+const createPopperInstance = async () => {
+  await nextTick()
+  if (!containerRef.value || !dropdownRef.value) return
+
+  dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
+  popperInstance.value?.destroy()
+  popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
+    placement: "bottom-start",
+    strategy: "fixed",
+    modifiers: [
+      { name: "offset", options: { offset: [0, 8] } },
+      {
+        name: "flip",
+        options: {
+          fallbackPlacements: ["top-start", "bottom-start"],
+          padding: 12
+        }
+      },
+      {
+        name: "preventOverflow",
+        options: {
+          boundary: "viewport",
+          padding: 12
+        }
+      }
+    ]
+  })
+  await syncPopperPosition()
+}
+
+const destroyPopperInstance = () => {
+  popperInstance.value?.destroy()
+  popperInstance.value = null
+}
+
+// 首次打开时让当前选中项出现在列表中部，只滚动列表本身，不影响抽屉位置。
+const scrollToSelectedItem = async () => {
+  if (props.multiple || !hasValue.value) return
+  await nextTick()
+
+  const list = itemsListRef.value
+  const selected = dropdownRef.value?.querySelector<HTMLElement>(".item.is-selected")
+  if (!list || !selected) return
+
+  const listRect = list.getBoundingClientRect()
+  const selectedRect = selected.getBoundingClientRect()
+  list.scrollTop += selectedRect.top - listRect.top - (list.clientHeight - selectedRect.height) / 2
+}
+
+// 回显值变化时主动加载详情，确保无需先打开下拉框也能展示名称。
+const loadSelectedItem = async (value: Props["modelValue"]) => {
+  if (!props.getItemById || value === undefined || value === null || value === "" || value === 0) return
+
+  const values = Array.isArray(value) ? value : [value]
+  await Promise.all(
+    values.map(async (id) => {
+      if (selectedItemsMap.value.has(id)) return
+      try {
+        const response = await props.getItemById?.(id)
+        const item = response?.data ?? response
+        if (item?.[props.idField] !== undefined) selectedItemsMap.value.set(id, item)
+      } catch (error) {
+        console.error("SearchSelector load selected item error:", error)
+      }
+    })
+  )
+
+  if (!props.multiple && showPicker.value && paginationData.currentPage === 1 && !searchKeyword.value.trim()) {
+    const currentItem = selectedItemsMap.value.get(value as string | number)
+    if (currentItem && !itemsData.value.some((item) => item[props.idField] === value)) {
+      itemsData.value = [currentItem, ...itemsData.value]
+      await scrollToSelectedItem()
+      await syncPopperPosition()
+    }
   }
 }
 
@@ -275,20 +374,13 @@ const loadItems = async () => {
 const togglePicker = async () => {
   showPicker.value = !showPicker.value
   if (showPicker.value) {
-    await nextTick()
-    if (containerRef.value && dropdownRef.value) {
-      dropdownRef.value.style.width = `${containerRef.value.offsetWidth}px`
-      popperInstance.value = createPopper(containerRef.value, dropdownRef.value, {
-        placement: "bottom-start",
-        modifiers: [{ name: "offset", options: { offset: [0, 8] } }]
-      })
-    }
-    searchInputRef.value?.focus()
     paginationData.currentPage = 1
-    loadItems()
-  } else if (popperInstance.value) {
-    popperInstance.value.destroy()
-    popperInstance.value = null
+    await createPopperInstance()
+    searchInputRef.value?.focus()
+    await loadItems()
+    await scrollToSelectedItem()
+  } else {
+    destroyPopperInstance()
   }
 }
 
@@ -318,6 +410,7 @@ const handleItemSelect = (item: any) => {
   } else {
     emit("update:modelValue", id)
     showPicker.value = false
+    destroyPopperInstance()
   }
 }
 
@@ -350,12 +443,19 @@ watch(
   }
 )
 
+watch(
+  () => props.modelValue,
+  (value) => loadSelectedItem(value),
+  { immediate: true }
+)
+
 // 点击外部关闭
 const handleClickOutside = (e: Event) => {
   if (!showPicker.value) return
   const target = e.target as HTMLElement
   if (containerRef.value?.contains(target) || dropdownRef.value?.contains(target)) return
   showPicker.value = false
+  destroyPopperInstance()
 }
 
 onMounted(() => {
@@ -364,7 +464,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener("mousedown", handleClickOutside, true)
-  popperInstance.value?.destroy()
+  destroyPopperInstance()
 })
 </script>
 
@@ -670,6 +770,33 @@ onUnmounted(() => {
       background: #fff;
       border-color: #3b82f6;
     }
+  }
+}
+
+/* 与 Element Plus 大尺寸输入框保持一致，用于表单中的单选选择器。 */
+.variant-element {
+  .search-selector-input {
+    box-sizing: border-box;
+    min-height: 40px;
+    background: #ffffff;
+    border-color: #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+
+    &:hover:not(.is-disabled) {
+      border-color: #9ca3af;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    &.is-focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    }
+  }
+
+  .selected-item .item-name {
+    color: #1f2937;
+    font-weight: 500;
   }
 }
 </style>

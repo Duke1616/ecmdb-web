@@ -120,7 +120,47 @@
         </div>
       </div>
 
-      <!-- 标签配置 -->
+      <!-- Handler 默认参数；variables 语义参数统一在下方变量区域配置。 -->
+      <div class="form-section">
+        <div class="section-title">
+          <el-icon class="section-icon"><Operation /></el-icon>
+          <span>执行默认参数</span>
+          <el-tooltip content="调用时可以覆盖这里的默认值；变量参数统一在变量配置中维护" placement="right">
+            <el-icon class="tip-icon"><QuestionFilled /></el-icon>
+          </el-tooltip>
+        </div>
+
+        <div v-if="configurableParameters.length" class="form-row">
+          <TaskParamsEditor
+            v-model="parameterDefaultInputs"
+            :metadata="configurableParameters"
+            :initialize-defaults="false"
+            :project-entry-codebook-id="formData.codebook_id"
+          />
+        </div>
+        <div v-else class="empty-defaults">
+          {{ selectedHandler ? "当前 Handler 没有可配置的默认参数" : "选择执行节点后配置默认参数" }}
+        </div>
+      </div>
+
+      <!-- 变量配置 -->
+      <div class="form-section">
+        <div class="section-title">
+          <el-icon class="section-icon"><Setting /></el-icon>
+          <span>变量配置</span>
+          <el-tooltip content="全局变量会先加载，同名 Runner 私有变量在执行时覆盖全局值" placement="right">
+            <el-icon class="tip-icon"><QuestionFilled /></el-icon>
+          </el-tooltip>
+        </div>
+
+        <div class="form-row">
+          <el-form-item class="form-item">
+            <variable v-model="formData.variables" @change="handleVariablesChange" />
+          </el-form-item>
+        </div>
+      </div>
+
+      <!-- 标签只用于辅助检索，放在核心执行配置之后。 -->
       <div class="form-section">
         <div class="section-title">
           <el-icon class="section-icon"><PriceTag /></el-icon>
@@ -133,23 +173,6 @@
         <div class="form-row">
           <el-form-item prop="tags" class="form-item">
             <tag v-model="formData.tags" :suggested-tags="runnerSuggestedTags" @change="handleTagsChange" />
-          </el-form-item>
-        </div>
-      </div>
-
-      <!-- 变量配置 -->
-      <div class="form-section">
-        <div class="section-title">
-          <el-icon class="section-icon"><Setting /></el-icon>
-          <span>变量配置</span>
-          <el-tooltip content="配置执行器运行时需要的环境变量和参数" placement="right">
-            <el-icon class="tip-icon"><QuestionFilled /></el-icon>
-          </el-tooltip>
-        </div>
-
-        <div class="form-row">
-          <el-form-item class="form-item">
-            <variable v-model="formData.variables" @change="handleVariablesChange" />
           </el-form-item>
         </div>
       </div>
@@ -168,7 +191,8 @@ import {
   QuestionFilled,
   Connection,
   Monitor,
-  CircleCheckFilled
+  CircleCheckFilled,
+  Operation
 } from "@element-plus/icons-vue"
 import { registerOrUpdateReq, variables, Kind } from "@/api/task/runner/types/runner"
 import { registerRunnerApi, updateRunnerAPi } from "@/api/task/runner"
@@ -180,6 +204,8 @@ import WorkerSection from "./components/WorkerSection.vue"
 import ExecuteSection from "./components/ExecuteSection.vue"
 import variable from "./variable.vue"
 import tag from "./tag.vue"
+import TaskParamsEditor from "@/pages/task/manager/components/TaskParamsEditor.vue"
+import { inputsToParameterDefaults, isVariablesParameter, parameterDefaultsToInputs } from "./parameterDefaults"
 
 const props = defineProps<{
   hideCodebookConfig?: boolean
@@ -198,6 +224,7 @@ const DEFAULT_FORM_DATA: registerOrUpdateReq = {
   desc: "",
   tags: [],
   variables: [],
+  parameter_defaults: {},
   target: "",
   handler: ""
 }
@@ -207,6 +234,8 @@ const formRef = ref<FormInstance | null>(null)
 const codebookNameRef = ref("")
 const resources = ref<Resource[]>([])
 const resourcesLoaded = ref(false)
+const parameterDefaultInputs = ref<Record<string, string>>({})
+let applyingForm = false
 // NOTE: 标识用户是否手动修改过名称，避免自动生成覆盖用户的手动修改
 const isNameUserModified = ref(false)
 
@@ -261,6 +290,21 @@ const selectedHandler = computed(() => {
     .find((resource) => resource.kind === resourceKind && resource.name === formData.value.target)
     ?.handlers.find((handler) => handler.name === formData.value.handler)
 })
+
+const configurableParameters = computed(() =>
+  (selectedHandler.value?.metadata || []).filter((parameter) => !isVariablesParameter(parameter))
+)
+
+/** 用户切换执行通道或 Handler 时，清除不再适用的默认参数。 */
+watch(
+  () => [formData.value.kind, formData.value.target, formData.value.handler],
+  (current, previous) => {
+    if (applyingForm || !previous || current.every((value, index) => value === previous[index])) return
+    parameterDefaultInputs.value = {}
+    formData.value.parameter_defaults = {}
+  },
+  { flush: "sync" }
+)
 
 const availableProgramKinds = computed(() => {
   if (!resourcesLoaded.value) return [...PROGRAM_KINDS]
@@ -330,6 +374,7 @@ const onKindChange = (kind: Kind) => {
   formData.value.kind = kind
   formData.value.target = ""
   formData.value.handler = ""
+  parameterDefaultInputs.value = {}
 }
 
 const handleTagsChange = (tags: string[]) => {
@@ -356,6 +401,9 @@ const submitForm = () => {
 
     const api = formData.value.id === undefined ? registerRunnerApi : updateRunnerAPi
     const submitData = cloneDeep(formData.value)
+    submitData.parameter_defaults = selectedHandler.value
+      ? inputsToParameterDefaults(parameterDefaultInputs.value, configurableParameters.value)
+      : cloneDeep(formData.value.parameter_defaults || {})
 
     api(submitData)
       .then(() => {
@@ -369,7 +417,7 @@ const submitForm = () => {
   })
 }
 
-const setFrom = async (row: any) => {
+const setFrom = (row: any) => {
   // NOTE: 如果是编辑已有记录（row.id 存在），则标记为已手动修改，防止覆盖用户的输入
   // 如果是新建记录（row.id 为 undefined），说明只是初始化初始数据，应该允许自动生成
   isNameUserModified.value = row.id !== undefined
@@ -382,12 +430,20 @@ const setFrom = async (row: any) => {
     data.target = data.worker?.topic || ""
   }
   data.program_kind ||= ProgramKind.INLINE
+  data.variables ||= []
+  data.parameter_defaults ||= {}
+  applyingForm = true
   formData.value = data
+  parameterDefaultInputs.value = parameterDefaultsToInputs(data.parameter_defaults)
+  applyingForm = false
   codebookNameRef.value = row.codebook_name || ""
 }
 
 const resetForm = () => {
+  applyingForm = true
   formData.value = cloneDeep(DEFAULT_FORM_DATA)
+  parameterDefaultInputs.value = {}
+  applyingForm = false
   codebookNameRef.value = ""
   isNameUserModified.value = false
 }
@@ -618,6 +674,16 @@ defineExpose({ submitForm, setFrom, resetForm })
     :deep(.el-tree-select) {
       width: 100%;
     }
+  }
+
+  .empty-defaults {
+    padding: 14px 16px;
+    color: #94a3b8;
+    font-size: 13px;
+    text-align: center;
+    background: #f8fafc;
+    border: 1px dashed #dbe3ee;
+    border-radius: 8px;
   }
 
   .program-kind-form-item :deep(.el-form-item__content) {

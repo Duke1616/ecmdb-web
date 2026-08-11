@@ -82,143 +82,167 @@
             </div>
           </div>
 
-          <div class="mode-selector">
-            <div
+          <div class="protocol-selector" role="radiogroup" aria-label="执行引擎与协议">
+            <button
               v-for="item in protocols"
               :key="item.value"
-              class="mode-card"
+              type="button"
+              class="protocol-option"
               :class="{ 'is-active': form.protocol === item.value }"
+              :aria-checked="form.protocol === item.value"
+              role="radio"
               @click="handleProtocolChange(item.value)"
             >
-              <div class="mode-card__icon">
-                <el-icon><component :is="item.icon" /></el-icon>
-              </div>
-              <div class="mode-card__body">
-                <span class="mode-card__title">{{ item.label }}</span>
-                <span class="mode-card__desc">{{ item.desc }}</span>
-              </div>
-              <el-icon class="mode-card__check"><CircleCheckFilled /></el-icon>
-            </div>
+              <span class="protocol-option-title">{{ item.label }}</span>
+              <span class="protocol-option-desc">{{ item.desc }}</span>
+            </button>
           </div>
 
           <div class="protocol-content-wrapper" v-loading="resourceLoading">
-            <transition name="slide-fade" mode="out-in">
-              <div :key="form.protocol" class="protocol-pane">
-                <!-- gRPC 模式 -->
-                <div v-if="form.protocol === TaskProtocol.GRPC" class="grpc-config-pane">
-                  <el-form-item label="执行节点" prop="grpc_handler">
-                    <ExecutorPicker
-                      v-model:service="form.grpc_service"
-                      v-model:handler="form.grpc_handler"
-                      service-placeholder="请选择执行节点"
-                      handler-placeholder=""
-                      @handler-change="handleHandlerSelect"
-                    />
-                  </el-form-item>
+            <div class="protocol-pane">
+              <!-- gRPC 模式 -->
+              <div v-if="form.protocol === TaskProtocol.GRPC" class="grpc-config-pane">
+                <el-form-item label="执行节点" prop="grpc_handler">
+                  <ExecutorPicker
+                    v-model:service="form.grpc_service"
+                    v-model:handler="form.grpc_handler"
+                    service-placeholder="请选择执行节点"
+                    handler-placeholder=""
+                    @handler-change="handleHandlerSelect"
+                  />
+                </el-form-item>
 
-                  <el-form-item v-if="currentHandler?.program_kinds?.length" prop="program" class="program-form-item">
-                    <ProgramSourceEditor
-                      v-model="form.program"
-                      :program-kinds="currentHandler.program_kinds"
-                      :language="form.grpc_handler"
-                    />
-                  </el-form-item>
+                <el-form-item v-if="currentProgramKinds.length" prop="program" class="program-form-item">
+                  <ProgramSourceEditor
+                    v-model="form.program"
+                    :program-kinds="currentProgramKinds"
+                    :language="form.grpc_handler"
+                  />
+                </el-form-item>
 
-                  <!-- 动态元数据区域 -->
-                  <div
-                    v-if="currentHandler"
-                    class="metadata-container animate-in"
-                    :class="{ 'has-metadata': currentHandler?.metadata?.length }"
-                  >
-                    <div class="metadata-header">
-                      <div class="metadata-title">
-                        <span class="dot" />
-                        <span>调用载荷与参数元数据</span>
-                      </div>
-                    </div>
-
-                    <div class="parameters-grid-wrapper">
-                      <TaskParamsEditor
-                        v-if="currentHandler?.metadata?.length"
-                        v-model="form.grpc_params"
-                        v-model:task-metadata="form.metadata"
-                        :metadata="currentHandler.metadata"
-                        :project-entry-codebook-id="form.program?.project?.entry_codebook_id"
-                      />
-                      <div v-else class="empty-params">
-                        <el-empty :image-size="60" description="未识别到元数据，支持自由 Payload 配置" />
-                        <div class="manual-map-box">
-                          <KVEditor v-model="form.grpc_params" show-secret />
-                        </div>
-                      </div>
+                <!-- 动态元数据区域 -->
+                <div
+                  v-if="currentHandler"
+                  class="metadata-container animate-in"
+                  :class="{ 'has-metadata': currentMetadata.length }"
+                >
+                  <div class="metadata-header">
+                    <div class="metadata-title">
+                      <span class="dot" />
+                      <span>调用载荷与参数元数据</span>
                     </div>
                   </div>
-                </div>
 
-                <!-- HTTP 模式 -->
-                <div v-else-if="form.protocol === TaskProtocol.HTTP" class="http-config-pane animate-in">
-                  <div class="metadata-container has-metadata">
-                    <div class="metadata-header">
-                      <div class="metadata-title">
-                        <span class="dot" />
-                        <span>HTTP 回源与报文配置</span>
-                      </div>
-                    </div>
-
-                    <div class="http-form-content">
-                      <el-form-item prop="http_endpoint" required class="mb-6">
-                        <el-input
-                          v-model="form.http_endpoint"
-                          placeholder="请输入全路径地址 (https://...)"
-                          size="large"
-                          class="code-font premium-input endpoint-input"
-                        >
-                          <template #prefix>
-                            <span class="http-prefix-tag">POST</span>
-                          </template>
-                        </el-input>
-                      </el-form-item>
-
-                      <div class="http-advanced-settings">
-                        <div class="settings-nav">
-                          <div class="nav-left">
-                            <el-icon class="nav-icon"><Operation /></el-icon>
-                            <span>协议扩展参数</span>
-                          </div>
-                          <el-radio-group v-model="httpConfigTab" size="small" class="settings-tabs">
-                            <el-radio-button label="headers">请求头部</el-radio-button>
-                            <el-radio-button label="params">请求主体</el-radio-button>
-                          </el-radio-group>
-                        </div>
-
-                        <div class="settings-content">
-                          <transition name="fade" mode="out-in">
-                            <div :key="httpConfigTab" class="params-editor-box">
-                              <KVEditor
-                                v-if="httpConfigTab === 'headers'"
-                                v-model="form.http_headers"
-                                title-key="头部字段"
-                                title-value="内容值"
-                                add-text="新增请求头..."
-                                empty-text="无需配置自定义请求头部"
-                              />
-                              <KVEditor
-                                v-else
-                                v-model="form.http_params"
-                                title-key="参数名"
-                                title-value="参数值"
-                                add-text="新增 Body 字段..."
-                                empty-text="无需配置请求主体 (Body)"
-                              />
-                            </div>
-                          </transition>
-                        </div>
+                  <div class="parameters-grid-wrapper">
+                    <TaskParamsEditor
+                      v-if="currentMetadata.length"
+                      v-model="form.grpc_params"
+                      v-model:task-metadata="form.metadata"
+                      :metadata="currentMetadata"
+                      :project-entry-codebook-id="form.program?.project?.entry_codebook_id"
+                    />
+                    <div v-else class="empty-params">
+                      <el-empty :image-size="60" description="未识别到元数据，支持自由 Payload 配置" />
+                      <div class="manual-map-box">
+                        <KVEditor v-model="form.grpc_params" show-secret />
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </transition>
+
+              <!-- Runner 模式：后端从执行单元加载程序、路由、默认参数和变量。 -->
+              <div v-else-if="form.protocol === TaskProtocol.RUNNER" class="grpc-config-pane runner-config-pane">
+                <el-form-item label="执行单元" prop="runner_id">
+                  <RunnerSelector v-model="form.runner_id" placeholder="请选择执行单元" variant="element" />
+                </el-form-item>
+
+                <div class="runner-context-note">
+                  任务执行时读取 Runner 的程序、执行节点、默认参数和变量；下面只填写需要覆盖的调用参数。
+                </div>
+
+                <div class="metadata-container has-metadata animate-in">
+                  <div class="metadata-header">
+                    <div class="metadata-title">
+                      <span class="dot" />
+                      <span>调用参数覆盖</span>
+                    </div>
+                  </div>
+                  <div class="manual-map-box">
+                    <KVEditor
+                      v-model="form.runner_params"
+                      title-key="参数名"
+                      title-value="覆盖值"
+                      add-text="添加覆盖参数..."
+                      empty-text="不覆盖参数，使用 Runner 默认配置"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- HTTP 模式 -->
+              <div v-else-if="form.protocol === TaskProtocol.HTTP" class="http-config-pane animate-in">
+                <div class="metadata-container has-metadata">
+                  <div class="metadata-header">
+                    <div class="metadata-title">
+                      <span class="dot" />
+                      <span>HTTP 回源与报文配置</span>
+                    </div>
+                  </div>
+
+                  <div class="http-form-content">
+                    <el-form-item prop="http_endpoint" required class="mb-6">
+                      <el-input
+                        v-model="form.http_endpoint"
+                        placeholder="请输入全路径地址 (https://...)"
+                        size="large"
+                        class="code-font premium-input endpoint-input"
+                      >
+                        <template #prefix>
+                          <span class="http-prefix-tag">POST</span>
+                        </template>
+                      </el-input>
+                    </el-form-item>
+
+                    <div class="http-advanced-settings">
+                      <div class="settings-nav">
+                        <div class="nav-left">
+                          <el-icon class="nav-icon"><Operation /></el-icon>
+                          <span>协议扩展参数</span>
+                        </div>
+                        <el-radio-group v-model="httpConfigTab" size="small" class="settings-tabs">
+                          <el-radio-button label="headers">请求头部</el-radio-button>
+                          <el-radio-button label="params">请求主体</el-radio-button>
+                        </el-radio-group>
+                      </div>
+
+                      <div class="settings-content">
+                        <transition name="fade" mode="out-in">
+                          <div :key="httpConfigTab" class="params-editor-box">
+                            <KVEditor
+                              v-if="httpConfigTab === 'headers'"
+                              v-model="form.http_headers"
+                              title-key="头部字段"
+                              title-value="内容值"
+                              add-text="新增请求头..."
+                              empty-text="无需配置自定义请求头部"
+                            />
+                            <KVEditor
+                              v-else
+                              v-model="form.http_params"
+                              title-key="参数名"
+                              title-value="参数值"
+                              add-text="新增 Body 字段..."
+                              empty-text="无需配置请求主体 (Body)"
+                            />
+                          </div>
+                        </transition>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -250,6 +274,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from "vue"
 import {
   Setting,
   Cpu,
@@ -269,6 +294,7 @@ import TaskParamsEditor from "./TaskParamsEditor.vue"
 import ProgramSourceEditor from "./ProgramSourceEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
 import ExecutorPicker from "@/common/components/ExecutorPicker/index.vue"
+import { RunnerSelector } from "@@/components/SearchSelector"
 import { Drawer } from "@@/components/Dialogs"
 
 // NOTE: 该组件为纯业务抽屉控制器，使用 defineModel 进行开放/折叠的 UI 状态双向绑定
@@ -300,6 +326,9 @@ const {
   visible,
   emit: (e) => emit(e)
 })
+
+const currentProgramKinds = computed(() => currentHandler.value?.program_kinds ?? [])
+const currentMetadata = computed(() => currentHandler.value?.metadata ?? [])
 </script>
 
 <style scoped lang="scss">
@@ -431,6 +460,81 @@ const {
       flex-shrink: 0;
     }
   }
+}
+
+.protocol-selector {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+}
+
+.protocol-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 7px 11px;
+  color: #475569;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #dce3ec;
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    color 0.16s ease,
+    border-color 0.16s ease,
+    background-color 0.16s ease;
+
+  &:hover {
+    color: #2563eb;
+    border-color: #93c5fd;
+  }
+
+  &.is-active {
+    color: #1d4ed8;
+    background: #eff6ff;
+    border-color: #3b82f6;
+    box-shadow: inset 3px 0 0 #3b82f6;
+  }
+}
+
+.protocol-option-title {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.protocol-option-desc {
+  min-width: 0;
+  overflow: hidden;
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.protocol-option.is-active .protocol-option-desc {
+  color: #64748b;
+}
+
+.protocol-content-wrapper {
+  margin-top: 12px;
+}
+
+.runner-context-note {
+  margin: -2px 0 14px;
+  padding: 10px 12px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
 }
 
 .http-advanced-settings {
@@ -591,18 +695,6 @@ const {
 }
 .gap-4 {
   gap: 24px;
-}
-
-.slide-fade-enter-active {
-  transition: all 0.3s ease-out;
-}
-.slide-fade-leave-active {
-  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
-}
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateX(10px);
-  opacity: 0;
 }
 
 .code-font :deep(input) {

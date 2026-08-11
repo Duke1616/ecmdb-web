@@ -2,7 +2,7 @@ import { cloneDeep } from "lodash-es"
 import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem } from "@/api/task/manager/type"
 import type { HandlerDetail } from "@/api/task/resource/type"
 import type { ProgramSpec } from "@/api/task/program"
-import { Connection, Link } from "@element-plus/icons-vue"
+import { Connection, Cpu, Link } from "@element-plus/icons-vue"
 
 // ---------------------------------------------------------
 // 前端数据模型（UI 层独立定义，与后端嵌套结构解耦，保证字段平坦化）
@@ -21,6 +21,8 @@ export interface TaskFormState {
   grpc_service: string
   grpc_handler: string
   grpc_params: Record<string, string>
+  runner_id?: number
+  runner_params: Record<string, string>
   program?: ProgramSpec
 
   // HTTP 关联配置
@@ -48,8 +50,24 @@ export interface TaskFormState {
  * 支持的执行引擎与协议卡片配置
  */
 export const protocols = [
-  { label: "gRPC", value: TaskProtocol.GRPC, icon: Connection, desc: "分布式标准通信协议" },
-  { label: "HTTP", value: TaskProtocol.HTTP, icon: Link, desc: "标准 RESTful 后端回调" }
+  {
+    label: "执行单元",
+    value: TaskProtocol.RUNNER,
+    icon: Cpu,
+    desc: "复用 Runner 配置"
+  },
+  {
+    label: "gRPC",
+    value: TaskProtocol.GRPC,
+    icon: Connection,
+    desc: "直接调用节点"
+  },
+  {
+    label: "HTTP",
+    value: TaskProtocol.HTTP,
+    icon: Link,
+    desc: "标准回调接口"
+  }
 ] as const
 
 /**
@@ -64,6 +82,8 @@ export const createDefaultFormState = (): TaskFormState => ({
   grpc_service: "",
   grpc_handler: "",
   grpc_params: {},
+  runner_id: undefined,
+  runner_params: {},
   program: undefined,
   http_endpoint: "",
   http_headers: {},
@@ -94,8 +114,10 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
   state.type = data.type || TaskType.RECURRING
   state.cron_expr = data.cron_expr || ""
 
-  // 协议推断：若有 HTTP 配置且无 gRPC 配置，视为 HTTP 回源协议
-  if (data.http_config && !data.grpc_config) {
+  // Runner 引用优先；没有 Runner 时再根据具体协议配置恢复表单模式。
+  if (data.runner_id && data.runner_id > 0) {
+    state.protocol = TaskProtocol.RUNNER
+  } else if (data.http_config && !data.grpc_config) {
     state.protocol = TaskProtocol.HTTP
   } else {
     state.protocol = TaskProtocol.GRPC
@@ -104,8 +126,13 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
   if (data.grpc_config) {
     state.grpc_service = data.grpc_config.service_name || ""
     state.grpc_handler = data.grpc_config.handler_name || ""
-    state.grpc_params = cloneDeep(data.grpc_config.params) ?? {}
+    if (state.protocol === TaskProtocol.RUNNER) {
+      state.runner_params = cloneDeep(data.grpc_config.params) ?? {}
+    } else {
+      state.grpc_params = cloneDeep(data.grpc_config.params) ?? {}
+    }
   }
+  state.runner_id = data.runner_id && data.runner_id > 0 ? data.runner_id : undefined
 
   state.program = cloneDeep(data.program)
 
@@ -148,7 +175,14 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
     metadata: cloneDeep(state.metadata)
   }
 
-  if (state.protocol === TaskProtocol.GRPC) {
+  if (state.protocol === TaskProtocol.RUNNER) {
+    payload.runner_id = state.runner_id
+    payload.grpc_config = {
+      service_name: "",
+      handler_name: "",
+      params: cloneDeep(state.runner_params)
+    }
+  } else if (state.protocol === TaskProtocol.GRPC) {
     payload.grpc_config = {
       service_name: state.grpc_service,
       handler_name: state.grpc_handler,
@@ -162,7 +196,7 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
     }
   }
 
-  if (state.program) {
+  if (state.protocol === TaskProtocol.GRPC && state.program) {
     payload.program = cloneDeep(state.program)
   }
 

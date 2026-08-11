@@ -10,6 +10,13 @@ export function listRunnerApi(data: runner.listRunnerReq) {
   })
 }
 
+/** 查询 Runner 详情；详情中的 variables 仅包含 Runner 私有变量。 */
+export function getRunnerDetailApi(id: number) {
+  return instance.get<runner.runner>({
+    url: `${API_SERVICE.TASK}/runner/detail/${id}`
+  })
+}
+
 /** 注册runner */
 export function registerRunnerApi(data: runner.registerOrUpdateReq) {
   return instance.post<number>({

@@ -62,6 +62,8 @@ export function useTaskForm(options: {
       if (currentHandler.value?.program_kinds?.length) {
         r.program = [{ validator: validateProgramField, trigger: "submit" }]
       }
+    } else if (form.value.protocol === TaskProtocol.RUNNER) {
+      r.runner_id = [{ required: true, message: "请选择执行单元", trigger: "submit" }]
     } else {
       r.http_endpoint = [{ required: true, message: "请输入接口地址", trigger: "submit" }]
     }

@@ -212,6 +212,7 @@ import { Operation, Plus, Edit, Delete, DocumentCopy, Monitor, Cpu, Search, Load
 import { Drawer } from "@@/components/Dialogs"
 import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
 import RunnerForm from "@/pages/task/runner/form.vue"
+import { getRunnerDetailApi } from "@/api/task/runner"
 import { useRunner } from "../composables/useRunner"
 import { cloneDeep } from "lodash-es"
 import { codebook } from "@/api/task/codebook/types/codebook"
@@ -373,21 +374,23 @@ const handleToCreate = () => {
   })
 }
 
-const handleEdit = (row: runner) => {
+const handleEdit = async (row: runner) => {
+  const { data } = await getRunnerDetailApi(row.id)
   isCreatingRunner.value = true
   isEditRunner.value = true
   nextTick(() => {
-    runnerFormRef.value?.setFrom(cloneDeep(row))
+    runnerFormRef.value?.setFrom(cloneDeep(data))
   })
 }
 
-const handleFork = (row: runner) => {
+const handleFork = async (row: runner) => {
+  const { data } = await getRunnerDetailApi(row.id)
   isCreatingRunner.value = true
   isEditRunner.value = false
   nextTick(() => {
     runnerFormRef.value?.resetForm()
     if (currentCodebook.value) {
-      const cloned = cloneDeep(row)
+      const cloned = cloneDeep(data)
       delete (cloned as any).id
       // Optional: don't copy name aggressively, let it auto-generate or use a blank state
       cloned.name = ""

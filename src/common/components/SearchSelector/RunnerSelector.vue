@@ -36,7 +36,7 @@ interface Props {
   modelValue?: number
   placeholder?: string
   disabled?: boolean
-  variant?: "fancy" | "simple"
+  variant?: "fancy" | "simple" | "element"
 }
 
 withDefaults(defineProps<Props>(), {

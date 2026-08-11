@@ -78,7 +78,7 @@ import { h, nextTick, ref, watch } from "vue"
 import { Edit, Delete, Setting } from "@element-plus/icons-vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { runner, Kind } from "@/api/task/runner/types/runner.js"
-import { deleteRunnerApi, listRunnerApi } from "@/api/task/runner/index.js"
+import { deleteRunnerApi, getRunnerDetailApi, listRunnerApi } from "@/api/task/runner/index.js"
 import Form from "./form.vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
@@ -155,11 +155,12 @@ const listRunnerData = () => {
     .finally(() => {})
 }
 
-const handleUpdate = (row: runner) => {
+const handleUpdate = async (row: runner) => {
+  const { data } = await getRunnerDetailApi(row.id)
   isEditMode.value = true
   dialogVisible.value = true
   nextTick(() => {
-    runnerApiRef.value?.setFrom(row)
+    runnerApiRef.value?.setFrom(data)
   })
 }
 

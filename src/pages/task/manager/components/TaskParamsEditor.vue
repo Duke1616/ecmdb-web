@@ -27,9 +27,12 @@ import TaskParamItem from "./TaskParamItem.vue"
 interface Props {
   metadata: Parameter[]
   projectEntryCodebookId?: number
+  initializeDefaults?: boolean
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  initializeDefaults: true
+})
 
 // 使用 defineModel 实现双向绑定
 const modelValue = defineModel<Record<string, string>>({ required: true })
@@ -65,7 +68,7 @@ const initModes = () => {
     }
 
     // 2. 补全缺失的参数默认值 (modelValue)
-    if (currentParams[p.key] === undefined) {
+    if (props.initializeDefaults && currentParams[p.key] === undefined) {
       currentParams[p.key] = p.default || ""
       paramsChanged = true
     }

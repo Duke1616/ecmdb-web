@@ -92,7 +92,7 @@
               <el-form-item prop="args">
                 <template #label>
                   <div class="json-input-header">
-                    <span>运行参数 <small>JSON</small></span>
+                    <span>运行参数覆盖 <small>JSON</small></span>
                     <el-button
                       type="primary"
                       link
@@ -111,7 +111,7 @@
                   :rows="5"
                   resize="none"
                   spellcheck="false"
-                  placeholder='例如：{"name":"demo"}'
+                  :placeholder="argsPlaceholder"
                   class="json-input"
                   :disabled="isRunning"
                 />
@@ -242,7 +242,7 @@ let pollTimer: number | undefined
 
 const form = reactive<RunForm>({
   runner_id: undefined,
-  args: "{}",
+  args: "",
   variables: [],
   max_execution_seconds: 300
 })
@@ -286,6 +286,12 @@ const supportedRunners = computed(() =>
 )
 const selectedRunner = computed(() => supportedRunners.value.find((item) => item.id === form.runner_id))
 const selectedProgramKind = computed(() => selectedRunner.value?.program_kind || ProgramKind.INLINE)
+const argsPlaceholder = computed(() => {
+  const value = selectedRunner.value?.parameter_defaults?.args
+  if (value === undefined || value === null || value === "") return '留空使用默认值，例如：{"name":"demo"}'
+  const formatted = typeof value === "string" ? value : JSON.stringify(value)
+  return `留空使用 Runner 默认值：${formatted}`
+})
 const previewSubtitle = computed(() => {
   if (!currentCodebook.value) return "验证程序与执行单元的运行效果"
   return selectedProgramKind.value === ProgramKind.PROJECT
@@ -346,7 +352,7 @@ async function open(row: codebook) {
   outputTab.value = "logs"
   configExpanded.value = true
   form.runner_id = undefined
-  form.args = "{}"
+  form.args = ""
   form.variables = []
   form.max_execution_seconds = 300
   visible.value = true
@@ -376,7 +382,7 @@ async function run() {
   try {
     const { data } = await runCodebookPreviewApi({
       runner_id: form.runner_id,
-      args: form.args || "{}",
+      args: form.args,
       variables: form.variables,
       max_execution_seconds: form.max_execution_seconds
     })

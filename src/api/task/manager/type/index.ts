@@ -2,6 +2,7 @@ import type { ProgramSpec } from "../../program"
 
 export interface CreateTaskReq {
   name: string
+  runner_id?: number
   type: TaskType
   cron_expr?: string
   grpc_config?: GrpcConfig
@@ -35,7 +36,8 @@ export enum TaskStatus {
 
 export enum TaskProtocol {
   GRPC = "grpc",
-  HTTP = "http"
+  HTTP = "http",
+  RUNNER = "runner"
 }
 
 export interface GrpcConfig {

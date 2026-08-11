@@ -1,5 +1,8 @@
 import type { ProgramKind } from "../../program"
 
+export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
+export type ParameterDefaults = Record<string, JsonValue>
+
 /** 执行单元的运行模式 (对应后端 Kind) */
 export enum Kind {
   /** 通过 Kafka 推送到工作节点执行 */
@@ -21,6 +24,7 @@ export interface runner {
   desc: string
   tags: string[]
   variables: variables[]
+  parameter_defaults?: ParameterDefaults
 }
 
 export interface registerOrUpdateReq {
@@ -35,6 +39,7 @@ export interface registerOrUpdateReq {
   desc: string
   tags: string[]
   variables?: variables[]
+  parameter_defaults?: ParameterDefaults
 }
 
 export interface runners {
@@ -44,7 +49,7 @@ export interface runners {
 
 export interface variables {
   key: string
-  value: any
+  value: string
   secret: boolean
 }
 

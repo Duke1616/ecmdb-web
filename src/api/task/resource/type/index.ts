@@ -29,8 +29,13 @@ export interface BindingOption {
   label: string
 }
 
+export enum ParameterRole {
+  Variables = "variables"
+}
+
 export interface Parameter {
   key: string
+  role?: ParameterRole
   desc: string
   secret?: boolean
   required: boolean
