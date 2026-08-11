@@ -198,7 +198,7 @@ import { registerOrUpdateReq, variables, Kind } from "@/api/task/runner/types/ru
 import { registerRunnerApi, updateRunnerAPi } from "@/api/task/runner"
 import { createProgramKindOptions, PROGRAM_KINDS, ProgramKind, resolveCodebookProgramKinds } from "@/api/task/program"
 import { listAllResourcesApi } from "@/api/task/resource"
-import { ResourceKind, type Resource } from "@/api/task/resource/type"
+import type { Resource } from "@/api/task/resource/type"
 import CodebookPicker from "@/common/components/CodebookPicker/index.vue"
 import WorkerSection from "./components/WorkerSection.vue"
 import ExecuteSection from "./components/ExecuteSection.vue"
@@ -206,6 +206,7 @@ import variable from "./variable.vue"
 import tag from "./tag.vue"
 import TaskParamsEditor from "@/pages/task/manager/components/TaskParamsEditor.vue"
 import { inputsToParameterDefaults, isVariablesParameter, parameterDefaultsToInputs } from "./parameterDefaults"
+import { resolveRunnerHandler } from "@/pages/task/shared/runnerResources"
 
 const props = defineProps<{
   hideCodebookConfig?: boolean
@@ -285,10 +286,7 @@ const runnerSuggestedTags = computed(() => {
 })
 
 const selectedHandler = computed(() => {
-  const resourceKind = formData.value.kind === Kind.KAFKA ? ResourceKind.Agent : ResourceKind.Executor
-  return resources.value
-    .find((resource) => resource.kind === resourceKind && resource.name === formData.value.target)
-    ?.handlers.find((handler) => handler.name === formData.value.handler)
+  return resolveRunnerHandler(formData.value, resources.value)
 })
 
 const configurableParameters = computed(() =>

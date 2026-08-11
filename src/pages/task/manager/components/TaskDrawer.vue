@@ -154,29 +154,48 @@
               <!-- Runner 模式：后端从执行单元加载程序、路由、默认参数和变量。 -->
               <div v-else-if="form.protocol === TaskProtocol.RUNNER" class="grpc-config-pane runner-config-pane">
                 <el-form-item label="执行单元" prop="runner_id">
-                  <RunnerSelector v-model="form.runner_id" placeholder="请选择执行单元" variant="element" />
+                  <RunnerSelector
+                    :model-value="form.runner_id"
+                    placeholder="请选择执行单元"
+                    variant="element"
+                    @update:model-value="handleRunnerSelect"
+                  />
                 </el-form-item>
 
                 <div class="runner-context-note">
-                  任务执行时读取 Runner 的程序、执行节点、默认参数和变量；下面只填写需要覆盖的调用参数。
+                  已自动带入 Runner 私有变量与 Handler 参数默认值；这里仅支持手动调整，提交时只保存真正变化的覆盖值。
                 </div>
 
                 <div class="metadata-container has-metadata animate-in">
                   <div class="metadata-header">
                     <div class="metadata-title">
                       <span class="dot" />
-                      <span>调用参数覆盖</span>
+                      <span>调用参数</span>
+                    </div>
+                    <div v-if="runnerParameters.length" class="runner-override-actions">
+                      <span>{{ runnerOverrideCount ? `已覆盖 ${runnerOverrideCount} 项` : "当前使用默认值" }}</span>
+                      <el-button v-if="runnerOverrideCount" link type="primary" @click="clearRunnerOverrides">
+                        恢复默认
+                      </el-button>
                     </div>
                   </div>
-                  <div class="manual-map-box">
+                  <TaskParamsEditor
+                    v-if="runnerParameters.length"
+                    v-model="runnerParamInputs"
+                    :metadata="runnerParameters"
+                    :initialize-defaults="false"
+                    :project-entry-codebook-id="currentRunner?.codebook_id"
+                  />
+                  <div v-else-if="form.runner_id" class="manual-map-box">
                     <KVEditor
                       v-model="form.runner_params"
                       title-key="参数名"
                       title-value="覆盖值"
                       add-text="添加覆盖参数..."
-                      empty-text="不覆盖参数，使用 Runner 默认配置"
+                      empty-text="当前执行单元未声明可配置参数"
                     />
                   </div>
+                  <div v-else class="runner-params-placeholder">选择执行单元后自动加载可配置参数和默认值</div>
                 </div>
               </div>
 
@@ -316,8 +335,13 @@ const {
   httpConfigTab,
   resourceLoading,
   currentHandler,
+  currentRunner,
+  runnerParameters,
+  runnerParamInputs,
   rules,
   handleHandlerSelect,
+  handleRunnerSelect,
+  clearRunnerOverrides,
   handleCronSelect,
   handleProtocolChange,
   submit
@@ -329,6 +353,7 @@ const {
 
 const currentProgramKinds = computed(() => currentHandler.value?.program_kinds ?? [])
 const currentMetadata = computed(() => currentHandler.value?.metadata ?? [])
+const runnerOverrideCount = computed(() => Object.keys(form.value.runner_params).length)
 </script>
 
 <style scoped lang="scss">
@@ -534,6 +559,30 @@ const currentMetadata = computed(() => currentHandler.value?.metadata ?? [])
   line-height: 1.6;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.runner-override-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 11px;
+
+  :deep(.el-button) {
+    height: auto;
+    padding: 0;
+    font-size: 11px;
+  }
+}
+
+.runner-params-placeholder {
+  padding: 28px 16px;
+  color: #94a3b8;
+  font-size: 12px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px dashed #dbe4ef;
   border-radius: 8px;
 }
 

@@ -270,8 +270,8 @@ const mapValue = computed({
 }
 
 .field-info {
-  width: 130px;
-  padding: 12px 10px;
+  width: 104px;
+  padding: 12px 8px;
   background: #fbfbfc;
   border-right: 1px solid #f1f5f9;
   display: flex;

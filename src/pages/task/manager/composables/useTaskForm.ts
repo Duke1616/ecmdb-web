@@ -12,6 +12,7 @@ import {
   mapToApiPayload,
   validateBoundParameters
 } from "./useTaskData"
+import { useRunnerParameterOverrides } from "./useRunnerParameterOverrides"
 
 const validateProgramField = (_rule: unknown, value: TaskFormState["program"], callback: (error?: Error) => void) => {
   const message = validateProgram(value)
@@ -33,10 +34,18 @@ export function useTaskForm(options: {
 
   const formRef = ref<FormInstance>()
   const saving = ref(false)
-  const resourceLoading = ref(false)
   const httpConfigTab = ref("headers")
   const form = ref<TaskFormState>(createDefaultFormState())
   const currentHandler = ref<HandlerDetail | null>(null)
+  const {
+    loading: resourceLoading,
+    currentRunner,
+    parameters: runnerParameters,
+    inputs: runnerParamInputs,
+    loadContext: loadRunnerContext,
+    clearContext: clearRunnerContext,
+    clearOverrides: clearRunnerOverrides
+  } = useRunnerParameterOverrides(form)
 
   // --- 校验规则自适应计算 ---
   const rules = computed<FormRules<TaskFormState>>(() => {
@@ -104,6 +113,16 @@ export function useTaskForm(options: {
     })
   }
 
+  const handleRunnerSelect = (runnerId?: number) => {
+    const normalizedRunnerId = runnerId && runnerId > 0 ? runnerId : undefined
+    if (form.value.runner_id !== normalizedRunnerId) {
+      form.value.runner_params = {}
+      form.value.runner_id = normalizedRunnerId
+    }
+    formRef.value?.clearValidate("runner_id")
+    void loadRunnerContext(normalizedRunnerId)
+  }
+
   // --- 数据详情拉取与重置 ---
   const loadDetail = async () => {
     const id = currentTaskId.value
@@ -112,6 +131,11 @@ export function useTaskForm(options: {
     try {
       const { data } = await getTaskDetailApi(id)
       form.value = mapToFormState(data)
+      if (form.value.protocol === TaskProtocol.RUNNER) {
+        await loadRunnerContext(form.value.runner_id)
+      } else {
+        await loadRunnerContext()
+      }
     } catch (error) {
       console.error("加载任务详情失败:", error)
       ElMessage.error("加载任务详情失败")
@@ -126,10 +150,13 @@ export function useTaskForm(options: {
       } else {
         form.value = createDefaultFormState()
         currentHandler.value = null
+        await loadRunnerContext()
         nextTick(() => {
           formRef.value?.clearValidate()
         })
       }
+    } else {
+      clearRunnerContext()
     }
   })
 
@@ -171,8 +198,13 @@ export function useTaskForm(options: {
     httpConfigTab,
     resourceLoading,
     currentHandler,
+    currentRunner,
+    runnerParameters,
+    runnerParamInputs,
     rules,
     handleHandlerSelect,
+    handleRunnerSelect,
+    clearRunnerOverrides,
     handleCronSelect,
     handleProtocolChange,
     submit

@@ -187,6 +187,8 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .kv-editor-unified {
+  --kv-key-width: 100px;
+
   display: flex;
   flex-direction: column;
 }
@@ -203,7 +205,7 @@ onMounted(() => {
     letter-spacing: 0.05em;
   }
   .label-key {
-    width: 140px;
+    flex: 0 0 var(--kv-key-width);
   }
   .label-value {
     flex: 1;
@@ -269,7 +271,8 @@ onMounted(() => {
   }
 
   &.key-field {
-    width: 140px;
+    flex: 0 0 var(--kv-key-width);
+    width: var(--kv-key-width);
     :deep(input) {
       font-weight: 600;
       color: #475569;
@@ -278,6 +281,7 @@ onMounted(() => {
 
   &.value-field {
     flex: 1;
+    min-width: 0;
   }
 }
 
