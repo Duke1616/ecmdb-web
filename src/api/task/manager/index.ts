@@ -49,6 +49,14 @@ export function listExecutionsApi(data: task.ListExecutionsReq) {
   })
 }
 
+/** 终止指定执行批次 */
+export function terminateExecutionApi(executionId: number, reason: string) {
+  return instance.post<void>({
+    url: `${API_SERVICE.TASK}/manager/executions/${executionId}/terminate`,
+    data: { reason }
+  })
+}
+
 /** 删除任务 */
 export function deleteTaskApi(taskId: number) {
   return instance.delete<void>({

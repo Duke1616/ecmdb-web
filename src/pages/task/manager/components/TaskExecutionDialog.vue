@@ -30,7 +30,8 @@
                 'is-active': currentExecution?.id === item.id,
                 'status-success': item.status === 'SUCCESS',
                 'status-failed': item.status === 'FAILED',
-                'status-running': item.status === 'RUNNING' || item.status === 'PREEMPTED'
+                'status-cancelled': isCancelledExecutionStatus(item.status),
+                'status-running': isActiveExecutionStatus(item.status)
               }"
               @click="handleSelectExecution(item)"
             >
@@ -51,9 +52,15 @@
                           : "已归档"
                     }}</span>
                   </div>
-                  <div class="runtime-badge running" v-else>
+                  <div
+                    class="runtime-badge running"
+                    v-else-if="isActiveExecutionStatus(item.status)"
+                  >
                     <el-icon class="loading-spin"><Loading /></el-icon>
                     <span>运行中</span>
+                  </div>
+                  <div class="runtime-badge" v-else>
+                    <span>{{ isCancelledExecutionStatus(item.status) ? "已停止" : "已结束" }}</span>
                   </div>
                 </div>
                 <div class="meta-row">
@@ -69,7 +76,11 @@
                   <span class="t-val">{{ formatTimestamp(item.start_time).split(" ")[1] }}</span>
                   <div class="t-sep"><div class="line" /></div>
                   <span class="t-val" v-if="item.end_time > 0">{{ formatTimestamp(item.end_time).split(" ")[1] }}</span>
-                  <span class="t-val waiting" v-else-if="item.status === 'RUNNING'">...</span>
+                  <span
+                    class="t-val waiting"
+                    v-else-if="isActiveExecutionStatus(item.status)"
+                    >...</span
+                  >
                   <span class="t-val finish-tag" v-else>DONE</span>
                 </div>
               </div>
@@ -93,7 +104,11 @@
       </div>
 
       <!-- 右侧栏: 日志看板 (通过 key 键绑定实现实例切换时组件自动销毁重构，完全消除子组件内部复杂的 watch 监听) -->
-      <LogConsole :key="currentExecution?.id || 'empty'" :execution="currentExecution" />
+      <LogConsole
+        :key="currentExecution?.id || 'empty'"
+        :execution="currentExecution"
+        @terminated="fetchExecutionList(true)"
+      />
     </div>
   </FormDialog>
 </template>
@@ -104,6 +119,7 @@ import { useTaskExecutions } from "../composables/useTaskExecutions"
 import { FormDialog } from "@/common/components/Dialogs"
 import { formatTimestamp } from "@@/utils/day"
 import LogConsole from "./LogConsole.vue"
+import { isActiveExecutionStatus, isCancelledExecutionStatus } from "../executionStatus"
 
 // NOTE: 该组件为状态型 UI 组件，使用 defineModel 进行可见性（visible）的双向状态同步，由父组件统一调配
 const visible = defineModel<boolean>({ default: false })
@@ -214,6 +230,11 @@ defineExpose({ initData })
         &.status-failed {
           .status-bar {
             background: #ef4444;
+          }
+        }
+        &.status-cancelled {
+          .status-bar {
+            background: #64748b;
           }
         }
         &.status-running {

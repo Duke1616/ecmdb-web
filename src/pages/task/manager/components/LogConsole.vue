@@ -17,6 +17,17 @@
           </div>
           <div class="action-divider" v-if="isRunning" />
           <div class="btn-cluster">
+            <el-tooltip v-if="isRunning && canTerminate" content="停止当前批次" placement="bottom">
+              <el-button
+                :icon="VideoPause"
+                type="danger"
+                circle
+                plain
+                :loading="terminating"
+                :disabled="loading"
+                @click="handleTerminate"
+              />
+            </el-tooltip>
             <el-button :icon="Refresh" circle size="default" :disabled="loading" @click="resetAndFetch" />
             <el-button
               v-if="execution.task_result"
@@ -64,12 +75,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue"
-import { Refresh, Coordinate, Monitor, Clock, Pointer } from "@element-plus/icons-vue"
+import { computed, ref } from "vue"
+import { Refresh, Coordinate, Monitor, Clock, Pointer, VideoPause } from "@element-plus/icons-vue"
+import { ElMessage, ElMessageBox } from "element-plus"
 import type { TaskExecutionVO } from "@/api/task/manager/type"
+import { terminateExecutionApi } from "@/api/task/manager"
 import CodeEditor from "@/common/components/CodeEditor/index.vue"
 import EnumTag from "@/common/components/EnumTag/index.vue"
 import type { TagInfo } from "@/common/components/EnumTag/index.vue"
+import { TASK_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 import { useLogConsoleStream } from "../composables/useLogConsoleStream"
 
 /**
@@ -81,13 +96,22 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const emit = defineEmits<{ terminated: [] }>()
 const editorRef = ref<InstanceType<typeof CodeEditor>>()
+const terminating = ref(false)
+const { hasPermission } = usePermission()
+const canTerminate = computed(() => hasPermission(TASK_CAPABILITIES.Manager.Stop))
 
 const STATUS_MAP: Record<string, TagInfo> = {
+  WAITING_PULL: { type: "warning", text: "等待执行" },
+  PREPARE: { type: "warning", text: "准备中" },
   RUNNING: { type: "primary", text: "进行中" },
   SUCCESS: { type: "success", text: "成功" },
   FAILED: { type: "danger", text: "失败" },
-  TERMINATED: { type: "info", text: "停止" },
+  FAILED_RETRYABLE: { type: "warning", text: "等待重试" },
+  FAILED_RESCHEDULED: { type: "warning", text: "等待重调度" },
+  CANCELLED: { type: "info", text: "已停止" },
+  TERMINATED: { type: "info", text: "已停止" },
   PREEMPTED: { type: "warning", text: "已抢占" }
 }
 
@@ -96,6 +120,38 @@ const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRu
     () => props.execution,
     () => editorRef.value?.scrollToBottom()
   )
+
+const handleTerminate = async () => {
+  if (!props.execution || terminating.value) return
+  try {
+    const { value } = await ElMessageBox.prompt("停止后无法恢复，请填写终止原因。", "停止当前批次", {
+      confirmButtonText: "停止执行",
+      cancelButtonText: "取消",
+      confirmButtonClass: "el-button--danger",
+      inputPlaceholder: "例如：参数配置错误，需要重新执行",
+      inputValue: "管理员手动终止",
+      inputValidator: (value) => {
+        const reason = value.trim()
+        if (!reason) return "请输入终止原因"
+        if ([...reason].length > 500) return "终止原因不能超过 500 字"
+        return true
+      },
+      type: "warning",
+      draggable: true
+    })
+    terminating.value = true
+    await terminateExecutionApi(props.execution.id, value.trim())
+    ElMessage.success("已提交停止请求")
+    emit("terminated")
+  } catch (error) {
+    if (error !== "cancel" && error !== "close") {
+      const message = error instanceof Error ? error.message : "停止执行失败"
+      ElMessage.error(message || "停止执行失败")
+    }
+  } finally {
+    terminating.value = false
+  }
+}
 </script>
 
 <style scoped lang="scss">

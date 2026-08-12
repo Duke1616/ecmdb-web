@@ -2,11 +2,12 @@ import { computed, ref, watch } from "vue"
 import { getTaskLogsApi } from "@/api/task/manager"
 import type { TaskExecutionVO } from "@/api/task/manager/type"
 import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
+import { isActiveExecutionStatus } from "../executionStatus"
 
 /** 管理端执行日志控制台，页面只保留展示偏好和结果弹窗状态。 */
 export function useLogConsoleStream(execution: () => TaskExecutionVO | null, editorScrollCb?: () => void) {
   const currentExecution = computed(() => execution())
-  const isRunning = computed(() => ["RUNNING", "PREEMPTED"].includes(currentExecution.value?.status || ""))
+  const isRunning = computed(() => isActiveExecutionStatus(currentExecution.value?.status))
   const autoRefresh = ref(true)
   const viewResultVisible = ref(false)
 
