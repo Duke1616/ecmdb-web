@@ -19,6 +19,14 @@ export function updateCodebookApi(data: codebook.createOrUpdateCodebookReq) {
   })
 }
 
+/** 重命名文件或目录 */
+export function renameCodebookApi(data: codebook.RenameCodebookReq) {
+  return instance.post<number>({
+    url: `${API_SERVICE.TASK}/codebook/rename`,
+    data
+  })
+}
+
 /** 列表 */
 export function listCodebookApi(data: codebook.listCodebookReq) {
   return instance.post<codebook.codebooks>({

@@ -2,10 +2,10 @@
   <article class="change-file" :class="{ 'has-error': errorCount > 0 }">
     <button class="file-heading" type="button" @click="expanded = !expanded">
       <span class="file-icon" :class="item.operation.toLowerCase()">
-        <el-icon><Document /></el-icon>
+        <el-icon><component :is="operationIcon" /></el-icon>
       </span>
       <span class="file-copy">
-        <strong :title="item.path">{{ item.path }}</strong>
+        <strong :title="displayPath">{{ displayPath }}</strong>
         <small>
           <span class="operation" :class="item.operation.toLowerCase()">{{ operationLabel }}</span>
           <span v-if="item.language">{{ item.language }}</span>
@@ -28,10 +28,11 @@
         </div>
       </div>
 
-      <pre class="code-preview"><code>{{ item.code }}</code></pre>
+      <pre v-if="hasCodePreview" class="code-preview"><code>{{ item.code }}</code></pre>
 
       <div class="file-actions">
-        <span>{{ codeLineCount }} 行</span>
+        <span v-if="hasCodePreview">{{ codeLineCount }} 行</span>
+        <span v-else>{{ operationLabel }}文件</span>
         <el-button v-if="canLoad" text type="primary" size="small" @click.stop="$emit('load', item)">
           载入当前编辑器
         </el-button>
@@ -42,7 +43,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import { ArrowRight, Document, WarningFilled } from "@element-plus/icons-vue"
+import { ArrowRight, Delete, Document, EditPen, WarningFilled } from "@element-plus/icons-vue"
 import { AIChangeOperation, AIDiagnosticSeverity } from "@/api/task/codeassist/ai.enums"
 import type { AIChangeItem } from "@/api/task/codeassist/types"
 
@@ -54,7 +55,26 @@ const props = defineProps<{
 defineEmits<{ (event: "load", item: AIChangeItem): void }>()
 
 const expanded = ref(false)
-const operationLabel = computed(() => (props.item.operation === AIChangeOperation.CREATE ? "新建" : "修改"))
+const operationLabels: Record<AIChangeOperation, string> = {
+  [AIChangeOperation.CREATE]: "新建",
+  [AIChangeOperation.UPDATE]: "修改",
+  [AIChangeOperation.RENAME]: "重命名",
+  [AIChangeOperation.DELETE]: "删除"
+}
+const operationLabel = computed(() => operationLabels[props.item.operation])
+const operationIcon = computed(() => {
+  if (props.item.operation === AIChangeOperation.RENAME) return EditPen
+  if (props.item.operation === AIChangeOperation.DELETE) return Delete
+  return Document
+})
+const displayPath = computed(() =>
+  props.item.operation === AIChangeOperation.RENAME && props.item.source_path
+    ? `${props.item.source_path} -> ${props.item.path}`
+    : props.item.path
+)
+const hasCodePreview = computed(
+  () => props.item.operation === AIChangeOperation.CREATE || props.item.operation === AIChangeOperation.UPDATE
+)
 const errorCount = computed(
   () => props.item.diagnostics?.filter((diagnostic) => diagnostic.severity === AIDiagnosticSeverity.ERROR).length || 0
 )
@@ -104,6 +124,16 @@ const codeLineCount = computed(() => (props.item.code ? props.item.code.split("\
     color: #15803d;
     background: #dcfce7;
   }
+
+  &.rename {
+    color: #7c3aed;
+    background: #ede9fe;
+  }
+
+  &.delete {
+    color: #b91c1c;
+    background: #fee2e2;
+  }
 }
 
 .file-copy {
@@ -137,6 +167,14 @@ const codeLineCount = computed(() => (props.item.code ? props.item.code.split("\
 
   &.create {
     color: #15803d;
+  }
+
+  &.rename {
+    color: #7c3aed;
+  }
+
+  &.delete {
+    color: #b91c1c;
   }
 }
 

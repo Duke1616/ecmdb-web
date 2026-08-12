@@ -209,15 +209,37 @@ function loadChangeIntoEditor(item: AIChangeItem) {
 async function applyChangeSet(changeSet: AIChangeSet) {
   if (applyingChangeSetID.value || props.readonly) return
   applyingChangeSetID.value = changeSet.id
+  const retryingCleanup = changeSet.status === AIChangeSetStatus.CLEANUP_PENDING
   try {
     const { data } = await applyCodeAssistChangeSetApi(changeSet.id)
     changeSet.status = AIChangeSetStatus.APPLIED
     for (const result of data.items || []) {
       const item = changeSet.items.find((candidate) => candidate.path === result.path)
-      if (item) item.applied_version_id = result.version_id
+      if (item) {
+        item.applied_version_id = result.version_id
+        item.node_id = result.node_id
+      }
     }
     emit("change-set-applied", data.items || [])
-    ElMessage.success(`已应用 ${data.items?.length || 0} 个文件，项目当前版本已更新`)
+    ElMessage.success(
+      retryingCleanup ? "对象存储清理已完成" : `已应用 ${data.items?.length || 0} 个文件，项目当前版本已更新`
+    )
+  } catch (error) {
+    await loadConversation(activeConversationID.value)
+    const latest = changeSets.value.find((item) => item.id === changeSet.id)
+    if (!retryingCleanup && latest?.status === AIChangeSetStatus.CLEANUP_PENDING) {
+      emit(
+        "change-set-applied",
+        latest.items.map((item) => ({
+          operation: item.operation,
+          path: item.path,
+          source_path: item.source_path,
+          node_id: item.node_id,
+          version_id: item.applied_version_id
+        }))
+      )
+    }
+    throw error
   } finally {
     applyingChangeSetID.value = 0
   }

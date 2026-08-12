@@ -20,6 +20,7 @@ export const AIChangeSetStatus = {
   DRAFT: "DRAFT",
   VALIDATED: "VALIDATED",
   APPLYING: "APPLYING",
+  CLEANUP_PENDING: "CLEANUP_PENDING",
   APPLIED: "APPLIED"
 } as const
 
@@ -27,7 +28,9 @@ export type AIChangeSetStatus = EnumValue<typeof AIChangeSetStatus>
 
 export const AIChangeOperation = {
   CREATE: "CREATE",
-  UPDATE: "UPDATE"
+  UPDATE: "UPDATE",
+  RENAME: "RENAME",
+  DELETE: "DELETE"
 } as const
 
 export type AIChangeOperation = EnumValue<typeof AIChangeOperation>

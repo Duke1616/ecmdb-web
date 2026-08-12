@@ -33,6 +33,14 @@
         <span>信息</span>
       </div>
       <div
+        class="menu-item"
+        :class="{ disabled: !hasPermission(capabilities.Codebook.Edit) }"
+        @click="hasPermission(capabilities.Codebook.Edit) && $emit('action', 'rename')"
+      >
+        <el-icon><EditPen /></el-icon>
+        <span>重命名</span>
+      </div>
+      <div
         class="menu-item danger"
         :class="{ disabled: !hasPermission(capabilities.Codebook.Delete) }"
         @click="hasPermission(capabilities.Codebook.Delete) && $emit('action', 'delete')"
@@ -46,7 +54,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { Delete, DocumentAdd, Edit, FolderAdd } from "@element-plus/icons-vue"
+import { Delete, DocumentAdd, Edit, EditPen, FolderAdd } from "@element-plus/icons-vue"
 import type { codebook } from "@/api/task/codebook/types/codebook"
 import { usePermission } from "@/common/composables/usePermission"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
@@ -67,7 +75,7 @@ const showDivider = computed(() => {
 })
 
 defineEmits<{
-  (e: "action", action: "createFile" | "createDir" | "edit" | "delete"): void
+  (e: "action", action: "createFile" | "createDir" | "edit" | "rename" | "delete"): void
 }>()
 </script>
 

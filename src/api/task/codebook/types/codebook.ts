@@ -130,6 +130,11 @@ export interface sortCodebookReq {
   target_position: number
 }
 
+export interface RenameCodebookReq {
+  id: number
+  name: string
+}
+
 export interface CreateVersionReq {
   node_id: number
   version_no?: number

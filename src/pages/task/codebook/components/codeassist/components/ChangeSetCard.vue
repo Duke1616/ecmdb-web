@@ -44,7 +44,7 @@
         :disabled="!canApply"
         @click="$emit('apply', changeSet)"
       >
-        {{ changeSet.status === AIChangeSetStatus.APPLIED ? "已应用" : "应用全部变更" }}
+        {{ applyButtonLabel }}
       </AuthButton>
     </footer>
   </section>
@@ -77,6 +77,7 @@ const statusLabels: Record<AIChangeSetStatus, string> = {
   [AIChangeSetStatus.DRAFT]: "需要修正",
   [AIChangeSetStatus.VALIDATED]: "可应用",
   [AIChangeSetStatus.APPLYING]: "应用中",
+  [AIChangeSetStatus.CLEANUP_PENDING]: "待清理",
   [AIChangeSetStatus.APPLIED]: "已应用"
 }
 const createCount = computed(
@@ -85,26 +86,47 @@ const createCount = computed(
 const updateCount = computed(
   () => props.changeSet.items.filter((item) => item.operation === AIChangeOperation.UPDATE).length
 )
+const renameCount = computed(
+  () => props.changeSet.items.filter((item) => item.operation === AIChangeOperation.RENAME).length
+)
+const deleteCount = computed(
+  () => props.changeSet.items.filter((item) => item.operation === AIChangeOperation.DELETE).length
+)
 const hasErrors = computed(() =>
   props.changeSet.items.some((item) =>
     item.diagnostics?.some((diagnostic) => diagnostic.severity === AIDiagnosticSeverity.ERROR)
   )
 )
 const canApply = computed(
-  () => props.changeSet.status === AIChangeSetStatus.VALIDATED && !hasErrors.value && !props.applying && !props.readonly
+  () =>
+    (props.changeSet.status === AIChangeSetStatus.VALIDATED ||
+      props.changeSet.status === AIChangeSetStatus.CLEANUP_PENDING) &&
+    !hasErrors.value &&
+    !props.applying &&
+    !props.readonly
 )
 const changeSummary = computed(() => {
   const parts = [`${props.changeSet.items.length} 个文件`]
   if (createCount.value) parts.push(`${createCount.value} 个新建`)
   if (updateCount.value) parts.push(`${updateCount.value} 个修改`)
+  if (renameCount.value) parts.push(`${renameCount.value} 个重命名`)
+  if (deleteCount.value) parts.push(`${deleteCount.value} 个删除`)
   return parts.join(" · ")
 })
 const statusLabel = computed(() => statusLabels[props.changeSet.status])
+const applyButtonLabel = computed(() => {
+  if (props.changeSet.status === AIChangeSetStatus.APPLIED) return "已应用"
+  if (props.changeSet.status === AIChangeSetStatus.CLEANUP_PENDING) return "重试清理"
+  return "应用全部变更"
+})
 const statusHint = computed(() => {
   if (props.changeSet.status === AIChangeSetStatus.DRAFT) {
     return "变更未通过检查，请根据诊断信息让 AI 重新生成。"
   }
   if (props.changeSet.status === AIChangeSetStatus.APPLYING) return "正在应用整组变更，请稍候。"
+  if (props.changeSet.status === AIChangeSetStatus.CLEANUP_PENDING) {
+    return "文件变更已应用，对象存储清理尚未完成。"
+  }
   if (hasErrors.value) return "存在错误级诊断，当前变更不能应用。"
   if (props.readonly && props.changeSet.status !== AIChangeSetStatus.APPLIED) {
     return "当前项目处于只读状态，无法应用变更。"

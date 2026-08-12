@@ -100,6 +100,7 @@
             v-model="metaForm.name"
             class="meta-name-input"
             placeholder="请输入目录名称"
+            :disabled="Boolean(metaForm.id)"
             :validate-event="false"
             @input="clearMetaNameValidation"
           />
@@ -108,6 +109,7 @@
               v-model="metaForm.name"
               class="script-base-name-input"
               :placeholder="scriptNamePlaceholder"
+              :disabled="Boolean(metaForm.id)"
               :validate-event="false"
               @input="clearMetaNameValidation"
             />
@@ -115,6 +117,7 @@
               v-model="scriptFileType"
               class="script-type-select"
               aria-label="脚本文件类型"
+              :disabled="Boolean(metaForm.id)"
               :validate-event="false"
               @change="handleScriptTypeChange"
             >
@@ -211,6 +214,7 @@ import {
   detailCodebookApi,
   downloadCodebookFileApi,
   readWorkspaceFileApi,
+  renameCodebookApi,
   sortCodebookApi,
   treeCodebookApi,
   updateCodebookApi
@@ -775,6 +779,29 @@ function handleDelete(row: codebook) {
   })
 }
 
+async function handleRename(row: codebook) {
+  if (!row.id || isReadonlyCodebook(row)) {
+    if (isReadonlyCodebook(row)) warnReadonly()
+    return
+  }
+  const { value } = await ElMessageBox.prompt("请输入新名称", "重命名", {
+    inputValue: row.name,
+    inputPattern: /^(?!\.{1,2}$)[^/\\\0]{1,128}$/,
+    inputErrorMessage: "名称不能为空，且不能包含路径分隔符",
+    confirmButtonText: "重命名",
+    cancelButtonText: "取消"
+  }).catch(() => ({ value: "" }))
+  const name = value.trim()
+  if (!name || name === row.name) return
+
+  await renameCodebookApi({ id: row.id, name })
+  const openedIndex = findIndex(openedFiles.value, { id: row.id })
+  if (openedIndex > -1) openedFiles.value[openedIndex] = { ...openedFiles.value[openedIndex], name }
+  if (activeEditor.value.id === row.id) activeEditor.value = { ...activeEditor.value, name }
+  await refreshAll()
+  ElMessage.success("重命名成功")
+}
+
 async function handleBatchDelete(rows: codebook[]) {
   const deletableRows = rows.filter((row) => row.id && !isReadonlyCodebook(row))
   if (!deletableRows.length || batchDeleting.value) return
@@ -850,6 +877,23 @@ async function handleVersionChanged() {
 async function handleChangeSetApplied(items: AppliedChangeItem[]) {
   await fetchTreeData()
 
+  const deletedIDs = new Set(items.filter((item) => item.operation === "DELETE").map((item) => item.node_id))
+  if (deletedIDs.has(activeEditor.value.id)) {
+    const index = findOpenedFileIndex(activeEditor.value)
+    if (index > -1) openedFiles.value.splice(index, 1)
+    activateCodebook(openedFiles.value.at(-1) || createRootDirectory())
+    return
+  }
+
+  const renamed = items.find((item) => item.operation === "RENAME" && item.node_id === activeEditor.value.id)
+  if (renamed) {
+    const renamedName = renamed.path.split("/").at(-1) || activeEditor.value.name
+    activeEditor.value = { ...activeEditor.value, name: renamedName }
+    const index = findIndex(openedFiles.value, { id: renamed.node_id })
+    if (index > -1) openedFiles.value[index] = { ...openedFiles.value[index], name: renamedName }
+    return
+  }
+
   if (activeEditor.value.kind === "FILE" && items.some((item) => item.node_id === activeEditor.value.id)) {
     await fetchFileDetail(activeEditor.value.id)
     const latest = activeEditor.value
@@ -871,7 +915,7 @@ function handleNodeContextMenu(event: MouseEvent, data: CodebookTreeNode) {
   openContextMenu(event, workspaceNodeToCodebook(data))
 }
 
-function handleContextMenuAction(action: "createFile" | "createDir" | "edit" | "delete") {
+function handleContextMenuAction(action: "createFile" | "createDir" | "edit" | "rename" | "delete") {
   closeContextMenu()
   if (!contextMenuTarget.value) return
 
@@ -885,6 +929,8 @@ function handleContextMenuAction(action: "createFile" | "createDir" | "edit" | "
     createDirectoryDraft()
   } else if (action === "edit") {
     openMetaDialog(target)
+  } else if (action === "rename") {
+    void handleRename(target)
   } else if (action === "delete") {
     handleDelete(target)
   }

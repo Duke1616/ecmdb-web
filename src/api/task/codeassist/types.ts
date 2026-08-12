@@ -36,6 +36,7 @@ export interface AIDiagnostic {
 export interface AIChangeItem {
   operation: AIChangeOperation
   path: string
+  source_path?: string
   node_id: number
   base_version_id: number
   base_hash: string
@@ -98,7 +99,9 @@ export interface ConversationDetailResp {
 }
 
 export interface AppliedChangeItem {
+  operation: AIChangeOperation
   path: string
+  source_path?: string
   node_id: number
   version_id: number
 }
