@@ -67,7 +67,12 @@
     </DataTable>
 
     <!-- 任务自治表单抽屉 -->
-    <TaskDrawer v-model="formVisible" :task-id="currentEditId!" @success="handleFormSuccess" />
+    <TaskDrawer
+      v-model="formVisible"
+      :task-id="currentEditId!"
+      :clone-task-id="cloneTaskId!"
+      @success="handleFormSuccess"
+    />
 
     <!-- 运行历史与日志弹窗 -->
     <TaskExecutionDialog v-if="logVisible" v-model="logVisible" :task-id="logTaskId" :task-name="logTaskName" />
@@ -79,7 +84,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue"
-import { Search, VideoPause, VideoPlay, Monitor, Edit, Delete } from "@element-plus/icons-vue"
+import { Search, VideoPause, VideoPlay, Monitor, Edit, Delete, CopyDocument } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
@@ -94,6 +99,7 @@ import { useTaskSSE } from "./composables/useTaskSSE"
 import type { Column } from "@@/components/DataTable/types"
 import { formatTimestamp } from "@@/utils/day"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
+import { usePermission } from "@/common/composables/usePermission"
 
 const {
   tasksData,
@@ -104,6 +110,7 @@ const {
   query,
   formVisible,
   currentEditId,
+  cloneTaskId,
   logVisible,
   logTaskId,
   logTaskName,
@@ -113,6 +120,7 @@ const {
   handleRefresh,
   handleCreate,
   handleEdit,
+  handleClone,
   handleDelete,
   handleLogs,
   handleRunTask,
@@ -122,6 +130,7 @@ const {
   handleSizeChange,
   handleCurrentChange
 } = useTaskManager()
+const { hasPermission } = usePermission()
 
 // 仅接受比当前列表更新的事件，避免 SSE 重连/跨节点转发时旧状态回写。
 const applyTaskStatusEvent = (event: TaskStatusEvent) => {
@@ -194,6 +203,14 @@ const getOperateItems = (row: TaskItem) => {
     },
     { name: "记录", code: "logs", icon: Monitor, type: "info", capability: TASK_CAPABILITIES.Manager.Logs },
     { name: "编辑", code: "edit", icon: Edit, type: "primary", capability: TASK_CAPABILITIES.Manager.Edit },
+    {
+      name: "克隆",
+      code: "clone",
+      icon: CopyDocument,
+      type: "primary",
+      capability: TASK_CAPABILITIES.Manager.Add,
+      disabled: !hasPermission(TASK_CAPABILITIES.Manager.Detail)
+    },
     { name: "删除", code: "delete", icon: Delete, type: "danger", capability: TASK_CAPABILITIES.Manager.Delete }
   ]
 }
@@ -202,6 +219,9 @@ const handleAction = (row: TaskItem, code: string) => {
   switch (code) {
     case "edit":
       handleEdit(row)
+      break
+    case "clone":
+      handleClone(row)
       break
     case "logs":
       handleLogs(row)

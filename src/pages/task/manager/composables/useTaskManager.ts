@@ -34,6 +34,7 @@ export function useTaskManager() {
   // 表单弹窗状态
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
+  const cloneTaskId = ref<number | null>(null)
 
   // 日志弹窗状态
   const logVisible = ref(false)
@@ -44,11 +45,19 @@ export function useTaskManager() {
 
   const handleCreate = () => {
     currentEditId.value = null
+    cloneTaskId.value = null
     formVisible.value = true
   }
 
   const handleEdit = (row: TaskItem) => {
+    cloneTaskId.value = null
     currentEditId.value = row.id
+    formVisible.value = true
+  }
+
+  const handleClone = (row: TaskItem) => {
+    currentEditId.value = null
+    cloneTaskId.value = row.id
     formVisible.value = true
   }
 
@@ -63,6 +72,8 @@ export function useTaskManager() {
 
   const handleFormSuccess = () => {
     formVisible.value = false
+    currentEditId.value = null
+    cloneTaskId.value = null
     loadData()
   }
 
@@ -107,6 +118,7 @@ export function useTaskManager() {
     query,
     formVisible,
     currentEditId,
+    cloneTaskId,
     logVisible,
     logTaskId,
     logTaskName,
@@ -116,6 +128,7 @@ export function useTaskManager() {
     handleRefresh,
     handleCreate,
     handleEdit,
+    handleClone,
     handleDelete,
     handleLogs,
     handleRunTask,

@@ -25,12 +25,14 @@ const validateProgramField = (_rule: unknown, value: TaskFormState["program"], c
  */
 export function useTaskForm(options: {
   taskId?: () => number | undefined
+  cloneTaskId?: () => number | undefined
   visible: Ref<boolean>
   emit: (e: "success") => void
 }) {
-  const { taskId, visible, emit } = options
+  const { taskId, cloneTaskId, visible, emit } = options
 
   const currentTaskId = computed(() => taskId?.())
+  const sourceTaskId = computed(() => currentTaskId.value || cloneTaskId?.())
 
   const formRef = ref<FormInstance>()
   const saving = ref(false)
@@ -133,12 +135,13 @@ export function useTaskForm(options: {
 
   // --- 数据详情拉取与重置 ---
   const loadDetail = async () => {
-    const id = currentTaskId.value
+    const id = sourceTaskId.value
     if (!id) return
 
     try {
       const { data } = await getTaskDetailApi(id)
       form.value = mapToFormState(data)
+      if (!currentTaskId.value) form.value.name = `${form.value.name}-副本`
       if (form.value.protocol === TaskProtocol.RUNNER) {
         await loadRunnerContext(form.value.runner_id)
       } else {
@@ -153,7 +156,7 @@ export function useTaskForm(options: {
   // 当抽屉开启状态变化时，决定是拉取详情还是重置状态
   watch(visible, async (val) => {
     if (val) {
-      if (currentTaskId.value) {
+      if (sourceTaskId.value) {
         await loadDetail()
       } else {
         form.value = createDefaultFormState()

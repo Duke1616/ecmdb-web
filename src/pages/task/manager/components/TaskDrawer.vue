@@ -1,8 +1,14 @@
 <template>
   <Drawer
     v-model="visible"
-    :title="taskId ? '编辑调度任务' : '创建调度任务'"
-    :subtitle="taskId ? '调整当前分布式任务的执行逻辑与资源引用' : '配置基于 gRPC 或 HTTP 协议的自动化调度流程'"
+    :title="taskId ? '编辑调度任务' : cloneTaskId ? '克隆调度任务' : '创建调度任务'"
+    :subtitle="
+      taskId
+        ? '调整当前分布式任务的执行逻辑与资源引用'
+        : cloneTaskId
+          ? '基于已有任务配置创建一个新的调度任务'
+          : '配置基于 gRPC 或 HTTP 协议的自动化调度流程'
+    "
     :header-icon="Calendar"
     size="35%"
     :confirm-loading="saving"
@@ -300,6 +306,7 @@ const visible = defineModel<boolean>({ default: false })
 
 const props = defineProps<{
   taskId?: number
+  cloneTaskId?: number
 }>()
 
 const emit = defineEmits<{
@@ -326,6 +333,7 @@ const {
   submit
 } = useTaskForm({
   taskId: () => props.taskId,
+  cloneTaskId: () => props.cloneTaskId,
   visible,
   emit: (e) => emit(e)
 })
