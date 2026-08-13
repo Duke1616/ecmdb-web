@@ -82,8 +82,9 @@ export function stopTaskApi(taskId: number) {
 /** 任务状态实时推送事件结构定义 */
 export interface TaskStatusEvent {
   task_id: number
-  status: string
-  next_time?: number
+  status: task.TaskStatus
+  next_time: number
+  version: number
 }
 
 /** 任务日志实时推送事件结构定义 */

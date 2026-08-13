@@ -53,6 +53,7 @@
               :multiple="rule.select_config?.multiple"
               filterable
               collapse-tags
+              :max-collapse-tags="3"
               collapse-tags-tooltip
               placeholder="请选择本次覆盖值"
               class="override-select"

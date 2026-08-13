@@ -13,6 +13,7 @@ describe("任务程序来源映射", () => {
       next_time: 0,
       ctime: 0,
       utime: 0,
+      version: 1,
       grpc_config: { service_name: "executor", handler_name: "ansible", params: { args: "{}" } },
       program: { kind: ProgramKind.PROJECT, project: { entry_codebook_id: 12 } }
     } satisfies TaskItem
@@ -56,6 +57,7 @@ describe("任务程序来源映射", () => {
       next_time: 0,
       ctime: 0,
       utime: 0,
+      version: 1,
       grpc_config: { service_name: "executor", handler_name: "ansible", params: { check: "true" } }
     } satisfies TaskItem
 
@@ -89,6 +91,7 @@ describe("任务程序来源映射", () => {
       next_time: 0,
       ctime: 0,
       utime: 0,
+      version: 1,
       param_override_rules: [
         { param_key: "limit", allowed_modes: ["MANUAL"], default_mode: "MANUAL" },
         { param_key: "tags", allowed_modes: ["MANUAL"], default_mode: "MANUAL" }

@@ -136,6 +136,7 @@ export interface TaskItem extends CreateTaskReq {
   next_time: number
   ctime: number
   utime: number
+  version: number
 }
 
 export interface TaskPage {
