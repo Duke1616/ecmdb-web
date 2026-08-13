@@ -91,6 +91,15 @@ const handleOpened = () => {
 <style lang="scss">
 /* --- 链路增强：支持全高弹窗模式 --- */
 body {
+  .base-dialog {
+    overflow: hidden;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow:
+      0 24px 56px rgba(15, 23, 42, 0.18),
+      0 10px 22px rgba(15, 23, 42, 0.08);
+  }
+
   .el-overlay-dialog {
     /* 只有当里面装载了开启全高模式的弹窗时，才禁止外部滚动并开启 Flex 居中 */
     &:has(.base-dialog.is-full-height) {

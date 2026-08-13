@@ -1,6 +1,6 @@
 import { ref, computed } from "vue"
-import { listTasksApi, deleteTaskApi, runTaskApi, stopTaskApi, updateTaskApi } from "@/api/task/manager"
-import type { TaskItem, PageQuery, UpdateTaskReq } from "@/api/task/manager/type"
+import { listTasksApi, deleteTaskApi, runTaskApi, stopTaskApi } from "@/api/task/manager"
+import type { TaskItem, PageQuery } from "@/api/task/manager/type"
 import { ElMessage } from "element-plus"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -78,25 +78,10 @@ export function useTaskManager() {
   }
 
   const submitRunTask = async (payload: TaskRunSubmitPayload) => {
-    if (payload.cron_expr && runTask.value) {
-      const task = runTask.value
-      const updatePayload: UpdateTaskReq = {
-        id: task.id,
-        name: task.name,
-        type: task.type,
-        cron_expr: payload.cron_expr,
-        grpc_config: task.grpc_config,
-        http_config: task.http_config,
-        retry_config: task.retry_config,
-        max_execution_seconds: task.max_execution_seconds,
-        schedule_params: task.schedule_params,
-        metadata: task.metadata
-      }
-
-      await updateTaskApi(updatePayload)
+    await runTaskApi(payload)
+    if (payload.cron_expr) {
       ElMessage.success("任务触发时间已更新，等待调度器自动触发")
     } else {
-      await runTaskApi({ id: payload.id })
       ElMessage.success("指令已下发: 立即执行一次")
     }
 

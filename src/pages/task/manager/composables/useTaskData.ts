@@ -1,5 +1,11 @@
 import { cloneDeep } from "lodash-es"
-import { TaskType, TaskProtocol, type CreateTaskReq, type TaskItem } from "@/api/task/manager/type"
+import {
+  TaskType,
+  TaskProtocol,
+  type CreateTaskReq,
+  type TaskItem,
+  type TaskParamOverrideRule
+} from "@/api/task/manager/type"
 import type { HandlerDetail } from "@/api/task/resource/type"
 import type { ProgramSpec } from "@/api/task/program"
 import { Connection, Cpu, Link } from "@element-plus/icons-vue"
@@ -40,6 +46,7 @@ export interface TaskFormState {
   // 分布式调度系统内置扩展属性
   schedule_params: Record<string, string>
   metadata: Record<string, string>
+  param_override_rules: TaskParamOverrideRule[]
 }
 
 // ---------------------------------------------------------
@@ -94,7 +101,8 @@ export const createDefaultFormState = (): TaskFormState => ({
   max_interval: 5000,
   max_execution_seconds: 360,
   schedule_params: {},
-  metadata: {}
+  metadata: {},
+  param_override_rules: []
 })
 
 // ---------------------------------------------------------
@@ -156,6 +164,7 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
 
   state.schedule_params = cloneDeep(data.schedule_params) ?? {}
   state.metadata = cloneDeep(data.metadata) ?? {}
+  state.param_override_rules = cloneDeep(data.param_override_rules) ?? []
 
   return state
 }
@@ -172,6 +181,7 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
     type: state.type,
     cron_expr: state.cron_expr,
     schedule_params: cloneDeep(state.schedule_params),
+    param_override_rules: cloneDeep(state.param_override_rules),
     // 参数绑定只属于普通 gRPC 模式，避免切换到 Runner 后继续提交旧绑定。
     metadata: state.protocol === TaskProtocol.GRPC ? cloneDeep(state.metadata) : {}
   }

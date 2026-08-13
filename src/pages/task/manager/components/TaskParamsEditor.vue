@@ -4,21 +4,34 @@
       v-for="p in metadata"
       :key="p.key"
       :parameter="p"
-      :model-value="modelValue[p.key] || ''"
+      :model-value="modelValue[p.key] ?? ''"
       :active-mode="paramModes[p.key]"
       :is-full-screen="!!fullScreenStates[p.key]"
       :project-entry-codebook-id="projectEntryCodebookId"
+      :selectable="selectable && !!p.runtime_overridable"
+      :selected="isSelected(p.key)"
+      :selection-label="selectionLabel"
       @update:model-value="(val) => onParamUpdate(p.key, val)"
       @update:active-mode="(mode) => onModeUpdate(p, mode)"
+      @update:selected="(value) => setSelected(p.key, value)"
+      @configure="openRuleDialog(p)"
       @toggle-full-screen="toggleFullScreen(p.key)"
     />
   </div>
+  <TaskParamOverrideRuleDialog
+    v-model="ruleDialogVisible"
+    :parameter="editingParameter"
+    :rule="editingRule"
+    @save="saveRule"
+  />
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, onMounted, onUnmounted } from "vue"
+import { computed, reactive, ref, watch, onMounted, onUnmounted } from "vue"
 import type { Parameter } from "@/api/task/resource/type"
+import type { TaskParamOverrideRule } from "@/api/task/manager/type"
 import TaskParamItem from "./TaskParamItem.vue"
+import TaskParamOverrideRuleDialog from "./TaskParamOverrideRuleDialog.vue"
 
 /**
  * NOTE: 任务参数编辑器 (Inspector 模式)
@@ -28,16 +41,20 @@ interface Props {
   metadata: Parameter[]
   projectEntryCodebookId?: number
   initializeDefaults?: boolean
+  selectable?: boolean
+  selectionLabel?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  initializeDefaults: true
+  initializeDefaults: true,
+  selectionLabel: "允许启动时覆盖"
 })
 
 // 使用 defineModel 实现双向绑定
 const modelValue = defineModel<Record<string, string>>({ required: true })
 // NOTE: 该组件为辅助编辑组件，通过 taskMetadata 双向同步参数的绑定状态与 UI 模式
 const taskMetadata = defineModel<Record<string, string>>("taskMetadata", { default: () => ({}) })
+const overrideRules = defineModel<TaskParamOverrideRule[]>("overrideRules", { default: () => [] })
 
 // UI 状态管理
 const paramModes = reactive<Record<string, string>>({})
@@ -51,6 +68,10 @@ const initModes = () => {
   if (!props.metadata) return
 
   const currentParams = { ...modelValue.value }
+  const overridableKeys = new Set(
+    props.metadata.filter((parameter) => parameter.runtime_overridable).map((parameter) => parameter.key)
+  )
+  overrideRules.value = overrideRules.value.filter((rule) => overridableKeys.has(rule.param_key))
   let paramsChanged = false
 
   props.metadata.forEach((p) => {
@@ -84,6 +105,36 @@ const initModes = () => {
  */
 const onParamUpdate = (key: string, val: string) => {
   modelValue.value = { ...modelValue.value, [key]: val }
+}
+
+const isSelected = (key: string) => overrideRules.value.some((rule) => rule.param_key === key)
+
+const setSelected = (key: string, selected: boolean) => {
+  if (selected && !isSelected(key)) {
+    overrideRules.value = [
+      ...overrideRules.value,
+      {
+        param_key: key,
+        allowed_modes: ["MANUAL"],
+        default_mode: "MANUAL"
+      }
+    ]
+  } else if (!selected) {
+    overrideRules.value = overrideRules.value.filter((rule) => rule.param_key !== key)
+  }
+}
+
+const ruleDialogVisible = ref(false)
+const editingParameter = ref<Parameter>()
+const editingRule = computed(() => overrideRules.value.find((rule) => rule.param_key === editingParameter.value?.key))
+
+const openRuleDialog = (parameter: Parameter) => {
+  editingParameter.value = parameter
+  ruleDialogVisible.value = true
+}
+
+const saveRule = (rule: TaskParamOverrideRule) => {
+  overrideRules.value = overrideRules.value.map((item) => (item.param_key === rule.param_key ? rule : item))
 }
 
 /** 切换绑定时清除旧模式值，避免 Runner ID 被当作静态 JSON 等不兼容数据继续提交。 */

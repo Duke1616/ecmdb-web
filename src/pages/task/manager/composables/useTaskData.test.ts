@@ -79,6 +79,31 @@ describe("任务程序来源映射", () => {
     expect(payload.grpc_config?.params).toEqual({ timeout: "11", args: "{}" })
     expect(payload.metadata).toEqual({ timeout: "static", variables: "runner" })
   })
+
+  it("任务参数覆盖规则能够从详情恢复并提交", () => {
+    const task = {
+      id: 3,
+      name: "overridable-task",
+      type: TaskType.ONE_TIME,
+      status: TaskStatus.ACTIVE,
+      next_time: 0,
+      ctime: 0,
+      utime: 0,
+      param_override_rules: [
+        { param_key: "limit", allowed_modes: ["MANUAL"], default_mode: "MANUAL" },
+        { param_key: "tags", allowed_modes: ["MANUAL"], default_mode: "MANUAL" }
+      ],
+      grpc_config: {
+        service_name: "executor",
+        handler_name: "ansible",
+        params: { limit: "A40-02", tags: "stop" }
+      }
+    } satisfies TaskItem
+
+    const form = mapToFormState(task)
+    expect(form.param_override_rules.map((rule) => rule.param_key)).toEqual(["limit", "tags"])
+    expect(mapToApiPayload(form).param_override_rules).toEqual(task.param_override_rules)
+  })
 })
 
 describe("任务动态参数校验", () => {

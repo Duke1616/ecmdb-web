@@ -35,8 +35,8 @@
           <div class="mode-selector">
             <div
               v-for="type in [
-                { label: '周期间隔', value: TaskType.RECURRING, icon: Timer, desc: '按 Cron 计划持续调度' },
-                { label: '单次触发', value: TaskType.ONE_TIME, icon: Pointer, desc: '立即或指定一次执行' }
+                { label: '周期任务', value: TaskType.RECURRING, icon: Timer, desc: '按 Cron 计划持续调度' },
+                { label: '单次任务', value: TaskType.ONE_TIME, icon: Pointer, desc: '执行一次后自动结束' }
               ]"
               :key="type.value"
               class="mode-card"
@@ -138,7 +138,10 @@
                       v-if="currentMetadata.length"
                       v-model="form.grpc_params"
                       v-model:task-metadata="form.metadata"
+                      v-model:override-rules="form.param_override_rules"
                       :metadata="currentMetadata"
+                      selectable
+                      selection-label="允许启动时覆盖"
                       :project-entry-codebook-id="form.program?.project?.entry_codebook_id"
                     />
                     <div v-else class="empty-params">
@@ -164,10 +167,12 @@
 
                 <RunnerCallParametersPanel
                   v-model="runnerParamInputs"
+                  v-model:override-rules="form.param_override_rules"
                   :runner-id="form.runner_id"
                   :project-entry-codebook-id="currentRunner?.codebook_id"
                   :parameters="runnerParameters"
                   :override-count="runnerOverrideCount"
+                  selectable
                   @reset="clearRunnerOverrides"
                 />
               </div>

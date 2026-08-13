@@ -40,6 +40,7 @@ export interface Parameter {
   desc: string
   secret?: boolean
   required: boolean
+  runtime_overridable?: boolean
   bindings: Record<string, BindingOption>
   default: string
 }

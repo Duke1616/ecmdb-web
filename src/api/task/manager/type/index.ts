@@ -11,6 +11,7 @@ export interface CreateTaskReq {
   max_execution_seconds?: number
   schedule_params?: Record<string, string>
   metadata?: Record<string, string>
+  param_override_rules?: TaskParamOverrideRule[]
   program?: ProgramSpec
 }
 
@@ -20,6 +21,33 @@ export interface UpdateTaskReq extends CreateTaskReq {
 
 export interface RunTaskReq {
   id: number
+  cron_expr?: string
+  param_overrides?: Record<string, RunParamOverride>
+}
+
+export type TaskParamInputMode = "MANUAL" | "SELECT"
+
+export interface TaskParamOption {
+  label: string
+  value: string
+}
+
+export interface TaskParamSelectConfig {
+  multiple: boolean
+  options: TaskParamOption[]
+}
+
+export interface TaskParamOverrideRule {
+  param_key: string
+  allowed_modes: TaskParamInputMode[]
+  default_mode: TaskParamInputMode
+  select_config?: TaskParamSelectConfig
+}
+
+export interface RunParamOverride {
+  mode: TaskParamInputMode
+  value?: string
+  values?: string[]
 }
 
 export enum TaskType {

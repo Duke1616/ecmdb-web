@@ -16,7 +16,7 @@
 
     <div class="cron-helper-content">
       <div class="helper-header">
-        {{ type === TaskType.RECURRING ? "周期性任务预设" : "延时单次触发预设" }}
+        {{ type === TaskType.RECURRING ? "周期任务预设" : "单次任务预设" }}
       </div>
       <div class="helper-grid">
         <div v-for="p in currentPresets" :key="p.label" class="helper-item" @click="selectPreset(p.value)">

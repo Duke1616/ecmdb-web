@@ -94,6 +94,12 @@ export function useTaskForm(options: {
     }
 
     const params = form.value.grpc_params
+    const parameterKeys = new Set(
+      (handler.metadata ?? []).filter((parameter) => parameter.runtime_overridable).map((parameter) => parameter.key)
+    )
+    form.value.param_override_rules = form.value.param_override_rules.filter((rule) =>
+      parameterKeys.has(rule.param_key)
+    )
 
     // 基于元数据自适应初始化参数的默认值
     for (const meta of handler.metadata ?? []) {
@@ -107,6 +113,7 @@ export function useTaskForm(options: {
   }
 
   const handleProtocolChange = (protocol: TaskProtocol) => {
+    if (form.value.protocol !== protocol) form.value.param_override_rules = []
     form.value.protocol = protocol
     nextTick(() => {
       formRef.value?.clearValidate()
@@ -117,6 +124,7 @@ export function useTaskForm(options: {
     const normalizedRunnerId = runnerId && runnerId > 0 ? runnerId : undefined
     if (form.value.runner_id !== normalizedRunnerId) {
       form.value.runner_params = {}
+      form.value.param_override_rules = []
       form.value.runner_id = normalizedRunnerId
     }
     formRef.value?.clearValidate("runner_id")

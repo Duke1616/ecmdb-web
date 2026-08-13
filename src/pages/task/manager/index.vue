@@ -1,7 +1,7 @@
 <template>
   <ProGovernanceLayout
     title="调度任务管理"
-    subtitle="集中化配置与监控分布式的定时/单次触发业务任务"
+    subtitle="集中配置与监控单次任务和周期任务"
     :primary-action="{ capability: TASK_CAPABILITIES.Manager.Add, label: '添加任务' }"
     @refresh="loadData"
     @primary-action="handleCreate"
@@ -24,8 +24,8 @@
         <div class="divider" />
 
         <el-select v-model="typeFilter" placeholder="执行类型" clearable class="command-select">
-          <el-option label="定期执行" :value="TaskType.RECURRING" />
-          <el-option label="单次触发" :value="TaskType.ONE_TIME" />
+          <el-option label="周期任务" :value="TaskType.RECURRING" />
+          <el-option label="单次任务" :value="TaskType.ONE_TIME" />
         </el-select>
       </div>
     </template>
@@ -41,9 +41,10 @@
 
       <!-- 类型 -->
       <template #type="{ row }">
-        <el-tag :type="row.type === TaskType.RECURRING ? 'primary' : 'warning'" size="small">
-          {{ row.type === TaskType.RECURRING ? "周期性任务" : "单次触发任务" }}
-        </el-tag>
+        <span class="task-type" :class="row.type === TaskType.RECURRING ? 'is-recurring' : 'is-one-time'">
+          <i class="task-type-dot" />
+          {{ row.type === TaskType.RECURRING ? "周期任务" : "单次任务" }}
+        </span>
       </template>
 
       <!-- 下次运行 -->
@@ -278,6 +279,30 @@ const handleAction = (row: TaskItem, code: string) => {
     color: #0f172a;
   }
 }
+
+.task-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.task-type-dot {
+  width: 7px;
+  height: 7px;
+  background: #f59e0b;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.task-type.is-recurring .task-type-dot {
+  background: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
 .next-time-text {
   font-size: 12px;
   color: #7c3aed;

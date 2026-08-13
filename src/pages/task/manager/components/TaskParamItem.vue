@@ -1,7 +1,22 @@
 <template>
-  <div class="inspector-field">
+  <div class="inspector-field" :class="{ 'control-only': controlOnly }">
     <!-- 1. 属性元数据 (左侧) -->
-    <div class="field-info">
+    <div v-if="!controlOnly" class="field-info" :class="{ 'has-selection': selectable }">
+      <div v-if="selectable" class="parameter-actions">
+        <el-tooltip v-if="selected" content="配置启动输入约束" placement="top">
+          <el-button link class="parameter-settings" aria-label="配置启动输入约束" @click="emit('configure')">
+            <el-icon><Setting /></el-icon>
+          </el-button>
+        </el-tooltip>
+        <el-tooltip :content="selectionLabel" placement="top">
+          <el-checkbox
+            class="parameter-selection"
+            :model-value="selected"
+            :aria-label="selectionLabel"
+            @change="(value) => emit('update:selected', !!value)"
+          />
+        </el-tooltip>
+      </div>
       <div class="field-label" :class="{ required: parameter.required }">
         {{ parameter.desc || parameter.key }}
       </div>
@@ -9,10 +24,10 @@
     </div>
 
     <!-- 2. 控制输入区 (右侧) -->
-    <div class="field-control">
+    <div class="field-control" :class="{ 'is-disabled': inputDisabled }">
       <div class="input-integrated-box">
         <!-- 模式切换触发器 (仅在有多个选择时展示) -->
-        <div v-if="Object.keys(parameter.bindings).length > 1" class="source-selector">
+        <div v-if="!controlOnly && Object.keys(parameter.bindings).length > 1" class="source-selector">
           <div
             v-for="(opt, mode) in parameter.bindings"
             :key="mode"
@@ -154,7 +169,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { FullScreen, Close, Link } from "@element-plus/icons-vue"
+import { FullScreen, Close, Link, Setting } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/task/resource/type"
@@ -171,12 +186,19 @@ interface Props {
   activeMode: string
   isFullScreen: boolean
   projectEntryCodebookId?: number
+  selectable?: boolean
+  selected?: boolean
+  selectionLabel?: string
+  inputDisabled?: boolean
+  controlOnly?: boolean
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: "update:modelValue", val: string): void
   (e: "update:activeMode", val: string): void
+  (e: "update:selected", val: boolean): void
+  (e: "configure"): void
   (e: "toggleFullScreen"): void
 }>()
 
@@ -267,9 +289,30 @@ const mapValue = computed({
   &:hover {
     background: #fbfbfc;
   }
+
+  &.control-only {
+    width: 100%;
+    min-height: auto;
+    border: 0;
+    background: transparent;
+
+    .field-control {
+      width: 100%;
+      padding: 0;
+    }
+
+    .embedded-editor-container {
+      height: 160px;
+
+      .editor-toolbar {
+        display: none;
+      }
+    }
+  }
 }
 
 .field-info {
+  position: relative;
   width: 104px;
   padding: 12px 8px;
   background: #fbfbfc;
@@ -278,6 +321,10 @@ const mapValue = computed({
   flex-direction: column;
   gap: 4px;
   flex-shrink: 0;
+
+  &.has-selection {
+    padding-right: 46px;
+  }
 
   .field-label {
     font-size: 12px;
@@ -304,12 +351,50 @@ const mapValue = computed({
   }
 }
 
+.parameter-actions {
+  position: absolute;
+  top: 8px;
+  right: 7px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 16px;
+}
+
+.parameter-settings {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.parameter-selection {
+  margin: 0;
+
+  :deep(.el-checkbox__inner) {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+  }
+
+  :deep(.el-checkbox__label) {
+    display: none;
+  }
+}
+
 .field-control {
   flex: 1;
   min-width: 0;
   padding: 10px 12px;
   display: flex;
   align-items: center;
+
+  &.is-disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
 }
 
 .input-integrated-box {
@@ -317,6 +402,12 @@ const mapValue = computed({
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.input-slot,
+.w-full {
+  width: 100%;
+  min-width: 0;
 }
 
 .inspector-input {

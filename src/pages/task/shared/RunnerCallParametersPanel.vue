@@ -20,7 +20,10 @@
     <TaskParamsEditor
       v-if="parameters.length"
       v-model="modelValue"
+      v-model:override-rules="overrideRules"
       :metadata="parameters"
+      :selectable="selectable"
+      :selection-label="selectionLabel"
       :initialize-defaults="false"
       :project-entry-codebook-id="projectEntryCodebookId"
     />
@@ -50,12 +53,17 @@ withDefaults(
     overrideCount: number
     disabled?: boolean
     showTip?: boolean
+    selectable?: boolean
+    selectionLabel?: string
   }>(),
-  { showTip: true }
+  { showTip: true, selectionLabel: "允许启动时覆盖" }
 )
 
 defineEmits<{ reset: [] }>()
 const modelValue = defineModel<Record<string, string>>({ required: true })
+const overrideRules = defineModel<import("@/api/task/manager/type").TaskParamOverrideRule[]>("overrideRules", {
+  default: () => []
+})
 </script>
 
 <style scoped lang="scss">

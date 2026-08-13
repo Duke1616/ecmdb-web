@@ -928,12 +928,6 @@ watch(
 
 <style lang="scss">
 body .base-dialog--custom:has(.codebook-picker-dialog) {
-  overflow: hidden;
-  border-radius: 12px;
-  box-shadow:
-    0 24px 56px rgba(15, 23, 42, 0.18),
-    0 10px 22px rgba(15, 23, 42, 0.08);
-
   .el-dialog__header {
     margin: 0;
     border-bottom: 1px solid #e2e8f0;
