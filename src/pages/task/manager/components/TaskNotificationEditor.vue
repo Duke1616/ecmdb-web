@@ -53,7 +53,7 @@
               placeholder="请选择模板集"
               zero-label="系统默认模板（ETask 内置）"
               variant="element"
-              size="default"
+              size="large"
               border-radius="8px"
             />
           </div>
@@ -410,19 +410,19 @@ const confirmReceivers = (assignees: Assignee[]) => {
 .rule-content {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   padding: 10px 12px 12px;
 }
 
 .config-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 
   > label,
   .field-label > label {
     color: #334155;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
 
     i {
@@ -441,25 +441,31 @@ const confirmReceivers = (assignees: Assignee[]) => {
 .channel-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 10px;
 }
 
 .channel-option {
   display: flex;
-  min-height: var(--el-component-size);
+  height: var(--el-component-size-large);
   align-items: center;
   justify-content: center;
   gap: 8px;
+  padding: 0 14px;
   color: #475569;
   background: #fff;
-  border: 1px solid #dbe3ee;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.16s ease;
 
   img {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
+  }
+
+  span {
+    font-size: 13px;
+    font-weight: 600;
   }
 
   &:hover,
@@ -467,6 +473,10 @@ const confirmReceivers = (assignees: Assignee[]) => {
     color: #1d4ed8;
     background: #eff6ff;
     border-color: #3b82f6;
+  }
+
+  &.active {
+    box-shadow: 0 0 0 2px rgb(59 130 246 / 10%);
   }
 
   &:disabled {
