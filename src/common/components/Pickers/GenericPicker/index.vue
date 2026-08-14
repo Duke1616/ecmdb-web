@@ -2,6 +2,7 @@
   <div
     class="generic-picker-container"
     ref="containerRef"
+    :style="pickerStyle"
     :class="[
       `variant-${variant}`,
       size ? `size-${size}` : '',
@@ -107,7 +108,7 @@
 </template>
 
 <script setup lang="ts" generic="T, K extends string | number">
-import { ref, watch, onMounted, onUnmounted, nextTick } from "vue"
+import { computed, ref, watch, onMounted, onUnmounted, nextTick } from "vue"
 import { createPopper, type Instance as PopperInstance } from "@popperjs/core"
 import { useGenericPicker } from "@@/composables/useGenericPicker"
 
@@ -131,6 +132,8 @@ interface IGenericPickerProps {
   disabled?: boolean
   searchDebounce?: number
   size?: "" | "small" | "default" | "large"
+  /** 触发器圆角 CSS 值；不传时由 variant 决定默认值。 */
+  borderRadius?: string
 }
 
 const props = withDefaults(defineProps<IGenericPickerProps>(), {
@@ -149,6 +152,12 @@ const props = withDefaults(defineProps<IGenericPickerProps>(), {
 
 // NOTE: 该组件为纯通用 UI 选择控制组件，通过 v-model 将选中的主键绑定同步给外部父组件
 const model = defineModel<K | K[]>()
+
+const pickerStyle = computed<Record<string, string>>(() => {
+  const style: Record<string, string> = {}
+  if (props.borderRadius) style["--picker-border-radius"] = props.borderRadius
+  return style
+})
 
 const containerRef = ref<HTMLElement>()
 const dropdownRef = ref<HTMLElement>()
@@ -353,7 +362,7 @@ onUnmounted(() => {
   justify-content: space-between;
   background: #ffffff;
   border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: var(--picker-border-radius, 10px);
   min-height: 42px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -378,7 +387,7 @@ onUnmounted(() => {
 .generic-picker-container.variant-simple .picker-input-box {
   background: #ffffff;
   border: 1px solid #dcdfe6;
-  border-radius: 4px;
+  border-radius: var(--picker-border-radius, 4px);
   min-height: 32px;
   padding: 0 12px;
   box-shadow: none;
@@ -480,7 +489,7 @@ onUnmounted(() => {
   gap: 8px;
   background: #ffffff;
   border: 0;
-  border-radius: var(--el-border-radius-base);
+  border-radius: var(--picker-border-radius, var(--el-border-radius-base));
   box-shadow: 0 0 0 1px var(--el-border-color) inset;
   transition: box-shadow 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 }

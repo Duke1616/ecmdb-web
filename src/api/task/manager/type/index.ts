@@ -13,6 +13,7 @@ export interface CreateTaskReq {
   metadata?: Record<string, string>
   param_override_rules?: TaskParamOverrideRule[]
   program?: ProgramSpec
+  execution_notifications?: ExecutionNotificationRule[]
 }
 
 export interface UpdateTaskReq extends CreateTaskReq {
@@ -66,6 +67,53 @@ export enum TaskProtocol {
   GRPC = "grpc",
   HTTP = "http",
   RUNNER = "runner"
+}
+
+/** 可触发执行通知的任务终态。 */
+export enum NotificationTriggerStatus {
+  FAILED = "FAILED",
+  SUCCESS = "SUCCESS",
+  CANCELLED = "CANCELLED"
+}
+
+/** EAlert 支持的任务通知接收对象类型。 */
+export enum NotificationRecipientType {
+  USER = "RECIPIENT_USER",
+  TEAM = "RECIPIENT_TEAM",
+  DEPARTMENT = "RECIPIENT_DEPARTMENT",
+  ONCALL = "RECIPIENT_ONCALL",
+  DEPARTMENT_LEADER = "RECIPIENT_DEPARTMENT_LEADER",
+  SUPERVISING_LEADER = "RECIPIENT_SUPERVISING_LEADER"
+}
+
+/** EAlert 支持的任务通知渠道。 */
+export enum NotificationChannel {
+  EMAIL = "EMAIL",
+  WECHAT = "WECHAT",
+  LARK_CARD = "LARK_CARD",
+  IN_APP = "IN_APP"
+}
+
+/** 一种接收对象策略及其已标准化数值 ID。 */
+export interface NotificationRecipient {
+  /** 决定 target_ids 所属系统及 EAlert 解析方式。 */
+  type: NotificationRecipientType
+  /** 调用方已转换好的正整数 ID。 */
+  target_ids: number[]
+}
+
+/** 任务在指定执行终态下的通知规则。 */
+export interface ExecutionNotificationRule {
+  /** 触发通知的任务执行终态。 */
+  trigger_status: NotificationTriggerStatus
+  /** 接收对象策略，同类型 ID 聚合为一项。 */
+  recipients: NotificationRecipient[]
+  /** 需要投递的 EAlert 渠道。 */
+  channels: NotificationChannel[]
+  /** 模板集 ID；0 表示使用 ETask 内置默认模板集。 */
+  template_set_id: number
+  /** 是否在命中终态时实际发送通知。 */
+  enabled: boolean
 }
 
 export interface GrpcConfig {

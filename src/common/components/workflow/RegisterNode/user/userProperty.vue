@@ -23,39 +23,14 @@
       <template #icon
         ><el-icon><UserFilled /></el-icon
       ></template>
-      <div class="strategy-workbench">
-        <div class="user-input-wrapper">
-          <el-input
-            :value="propertyForm.assignees.length ? `已配置 ${propertyForm.assignees.length} 条策略` : ''"
-            placeholder="尚未配置审批策略"
-            class="modern-input with-action"
-            readonly
-          />
-          <el-button @click="openSelector()" class="action-btn" :icon="Setting" :disabled="flowDetail.status == '2'">
-            配置策略
-          </el-button>
-        </div>
-
-        <!-- 策略预览架 -->
-        <div class="strategy-shelf scroll-slim" v-if="propertyForm.assignees.length > 0">
-          <div
-            v-for="(rule, index) in propertyForm.assignees"
-            :key="index"
-            class="shelf-item"
-            @click="openSelector(rule.rule)"
-          >
-            <div class="item-tag" :class="rule.rule">{{ getRuleLabel(rule.rule) }}</div>
-            <div class="item-val">{{ getPreviewText(rule) }}</div>
-            <el-button
-              v-if="flowDetail.status != '2'"
-              link
-              :icon="Close"
-              class="item-del"
-              @click.stop="removeAssignee(index)"
-            />
-          </div>
-        </div>
-      </div>
+      <ReceiverStrategyEditor
+        :items="strategyPreviews"
+        :summary="propertyForm.assignees.length ? `已配置 ${propertyForm.assignees.length} 条策略` : ''"
+        placeholder="尚未配置审批策略"
+        :disabled="flowDetail.status == '2'"
+        @edit="openSelector"
+        @remove="removeAssignee"
+      />
     </FormSection>
 
     <!-- 3. 流程设置 -->
@@ -109,14 +84,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from "vue"
+import { ref, reactive, computed, onMounted } from "vue"
 import { FormInstance, FormRules } from "element-plus"
-import { UserFilled, QuestionFilled, Document, Timer, Collection, Setting, Close } from "@element-plus/icons-vue"
+import { UserFilled, QuestionFilled, Document, Timer, Collection } from "@element-plus/icons-vue"
 
 // 组件与 Composable
 import { FormSection } from "../../PropertySetting"
 import FormList from "./FormList.vue"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
+import ReceiverStrategyEditor from "@/common/components/ReceiverStrategyEditor/index.vue"
 import { useTemplateRules } from "@/common/composables/useTemplateRules"
 import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/strategies"
 import type { Assignee } from "@/common/components/ReceiverSelector/composables/useAssignees"
@@ -246,7 +222,19 @@ const resolveDisplayNames = async (assignees: Assignee[]) => {
   }
 }
 
-const removeAssignee = (index: number) => propertyForm.assignees.splice(index, 1)
+const strategyPreviews = computed(() =>
+  propertyForm.assignees.map((assignee, index) => ({
+    key: `${assignee.rule}:${index}`,
+    rule: assignee.rule,
+    label: getRuleLabel(assignee.rule),
+    text: getPreviewText(assignee)
+  }))
+)
+
+const removeAssignee = (key: string) => {
+  const index = strategyPreviews.value.findIndex((item) => item.key === key)
+  if (index >= 0) propertyForm.assignees.splice(index, 1)
+}
 
 const getRuleLabel = (rule: string) => RULE_MAP[rule]?.label || rule
 const getPreviewText = (a: Assignee) => {
@@ -287,109 +275,6 @@ defineExpose({ confirmFunc })
     border: 1px solid #cbd5e1 !important;
     box-shadow: none !important;
     padding: 2px 10px;
-  }
-}
-
-.strategy-workbench {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.user-input-wrapper {
-  display: flex;
-  height: 40px;
-  .modern-input.with-action {
-    flex: 1;
-    :deep(.el-input__wrapper) {
-      border-right: none !important;
-      border-radius: 8px 0 0 8px !important;
-    }
-  }
-  .action-btn {
-    height: 100%;
-    border-radius: 0 8px 8px 0;
-    border: 1px solid #cbd5e1;
-    border-left: none;
-    background: #f8fafc;
-    color: #475569;
-    font-size: 13px;
-    font-weight: 700;
-    &:hover:not(:disabled) {
-      color: #6366f1;
-      background: #f1f5f9;
-    }
-  }
-}
-
-.strategy-shelf {
-  max-height: 220px;
-  overflow-y: auto;
-  padding: 8px;
-  background: #fbfcfe;
-  border: 1px solid #f1f5f9;
-  border-radius: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.shelf-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #fff;
-  border: 1px solid #eef2f6;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    border-color: #cbd5e1;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  }
-  .item-tag {
-    font-size: 10px;
-    font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 4px;
-    &.appoint {
-      background: #eff6ff;
-      color: #2563eb;
-    }
-    &.founder {
-      background: #f0fdf4;
-      color: #16a34a;
-    }
-    &.department {
-      background: #fef2f2;
-      color: #dc2626;
-    }
-    &.team {
-      background: #fff7ed;
-      color: #ea580c;
-    }
-    &.on_call {
-      background: #faf5ff;
-      color: #9333ea;
-    }
-    &.template {
-      background: #f0f9ff;
-      color: #0369a1;
-    }
-  }
-  .item-val {
-    flex: 1;
-    font-size: 13px;
-    font-weight: 600;
-    color: #334155;
-  }
-  .item-del {
-    color: #cbd5e1;
-    &:hover {
-      color: #ef4444;
-    }
   }
 }
 

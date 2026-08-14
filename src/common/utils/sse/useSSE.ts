@@ -5,7 +5,7 @@ import { activeTenantStack } from "@/common/utils/service"
 
 /**
  * SSE 连接配置项
- * @param path       接口路径（相对路径，不含 VITE_BASE_API 前缀，如 `task/manager/task-events/stream`）
+ * @param path       接口路径（相对路径，不含 VITE_BASE_API 前缀，如 `task/streams/manager/task-events`）
  * @param eventName  监听的 SSE 事件名，对应后端 SSEvent 的 event 字段
  * @param onMessage  收到消息时的回调（已反序列化为具体类型 T）
  * @param onError    可选的错误回调
@@ -18,6 +18,8 @@ interface UseSSEOptions<T> {
   onError?: (err: unknown) => void
   enabled?: MaybeRefOrGetter<boolean>
 }
+
+class FatalSSEError extends Error {}
 
 /**
  * 通用 SSE 实时推送 Composable
@@ -50,7 +52,8 @@ export function useSSE<T>(options: UseSSEOptions<T>) {
       return
     }
 
-    controller = new AbortController()
+    const connectionController = new AbortController()
+    controller = connectionController
 
     const baseApi = import.meta.env.VITE_BASE_API ?? "/api"
     const url = `${baseApi}/${currentPath}`
@@ -61,24 +64,31 @@ export function useSSE<T>(options: UseSSEOptions<T>) {
     const tenantId = activeTenantStack.value.at(-1)?.tenantId ?? useUserStoreHook().currentTenantId
 
     const headers: Record<string, string> = {
-      Accept: "text/event-stream"
+      // fetch-event-source 内部按小写键判断是否已设置 Accept；保持小写可避免重复请求头。
+      accept: "text/event-stream"
     }
 
     if (tenantId) {
       headers["X-Active-Tenant-ID"] = String(tenantId)
     }
 
-    fetchEventSource(url, {
+    void fetchEventSource(url, {
       method: "GET",
       headers,
-      signal: controller.signal,
+      signal: connectionController.signal,
       credentials: "include",
 
       // 在 onopen 中校验响应状态，避免将服务端异常误认为是正常的长连接
       async onopen(response) {
-        if (!response.ok || !response.headers.get("content-type")?.includes("text/event-stream")) {
-          throw new Error(`SSE 连接失败: ${response.status} ${response.statusText}`)
+        const isEventStream = response.headers.get("content-type")?.includes("text/event-stream")
+        if (response.ok && isEventStream) return
+
+        const error = new Error(`SSE 连接失败: ${response.status} ${response.statusText}`)
+        // 鉴权、权限、路由或响应类型错误不会通过重试自行恢复，直接终止本次连接。
+        if ((response.status >= 400 && response.status < 500 && response.status !== 429) || response.ok) {
+          throw new FatalSSEError(error.message)
         }
+        throw error
       },
 
       onmessage(event) {
@@ -94,11 +104,17 @@ export function useSSE<T>(options: UseSSEOptions<T>) {
       },
 
       onerror(err) {
-        // HACK: 不抛出错误时 fetchEventSource 会自动重连（指数退避）；
-        //       抛出错误则终止连接，由业务层决定是否重试。
-        //       此处选择打日志后允许自动重连，保持连接韧性。
-        console.error("[useSSE] SSE 连接发生异常，将自动尝试重连:", err)
+        console.error("[useSSE] SSE 连接发生异常:", err)
         onError?.(err)
+
+        if (err instanceof FatalSSEError) throw err
+
+        // 网络错误、限流和 5xx 使用固定退避，避免默认的一秒重试持续冲击服务端。
+        return 5000
+      }
+    }).catch((err) => {
+      if (!connectionController.signal.aborted) {
+        console.error("[useSSE] SSE 连接已终止:", err)
       }
     })
   }

@@ -1,17 +1,19 @@
 <template>
   <GenericPicker
     v-model="model"
-    :placeholder="placeholder"
+    :placeholder="model === 0 && zeroLabel ? zeroLabel : placeholder"
     search-placeholder="搜索模板集..."
     :multiple="multiple"
     :variant="variant"
     :search-api="searchApi"
     :resolve-api="resolveApi"
-    key-field="id"
     label-field="name"
+    key-field="id"
     :fallback-builder="fallbackBuilder"
     :disabled="disabled"
     :page-size="pageSize"
+    :size="size"
+    :border-radius="borderRadius"
   >
     <template #item="{ item }">
       <div class="template-set-item-option">
@@ -36,14 +38,21 @@ interface ITemplateSetPickerProps {
   variant?: "fancy" | "simple" | "element"
   disabled?: boolean
   pageSize?: number
+  size?: "" | "small" | "default" | "large"
+  /** 模板集选择触发器的圆角 CSS 值。 */
+  borderRadius?: string
+  /** 当选择值为 0 时显示的业务默认项文案。 */
+  zeroLabel?: string
 }
 
-withDefaults(defineProps<ITemplateSetPickerProps>(), {
+const props = withDefaults(defineProps<ITemplateSetPickerProps>(), {
   placeholder: "请选择模板集",
   multiple: false,
   variant: "fancy",
   disabled: false,
-  pageSize: 10
+  pageSize: 10,
+  size: "",
+  zeroLabel: ""
 })
 
 const model = defineModel<number | number[]>()
@@ -68,8 +77,10 @@ const resolveApi = async (id: number): Promise<TemplateSet | null> => {
 const fallbackBuilder = (id: number): TemplateSet => {
   return {
     id,
+    key: "",
+    biz_id: 0,
     owner_id: 0,
-    name: `模板集 #${id}`,
+    name: `模板集 ${id}`,
     description: "",
     ctime: 0,
     utime: 0,
@@ -122,4 +133,3 @@ const fallbackBuilder = (id: number): TemplateSet => {
   white-space: nowrap;
 }
 </style>
-

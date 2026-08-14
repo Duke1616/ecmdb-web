@@ -13,7 +13,7 @@ export function useTaskEventsSSE(options: {
   enabled?: MaybeRefOrGetter<boolean>
 }) {
   return useSSE<TaskStatusEvent>({
-    path: `${API_SERVICE.TASK}/manager/task-events/stream`,
+    path: `${API_SERVICE.TASK}/streams/manager/task-events`,
     eventName: "task_status_change",
     onMessage: options.onMessage,
     onError: options.onError,
@@ -32,7 +32,7 @@ export function useExecutionLogsSSE(options: {
   enabled?: MaybeRefOrGetter<boolean>
 }) {
   return useSSE<TaskLogEvent>({
-    path: () => `${API_SERVICE.TASK}/manager/executions/${toValue(options.executionId)}/logs/stream`,
+    path: () => `${API_SERVICE.TASK}/streams/manager/executions/${toValue(options.executionId)}/logs`,
     eventName: "task_log",
     onMessage: options.onMessage,
     onError: options.onError,
@@ -51,7 +51,7 @@ export function useTaskExecutionsSSE(options: {
   enabled?: MaybeRefOrGetter<boolean>
 }) {
   return useSSE<TaskExecutionEvent>({
-    path: () => `${API_SERVICE.TASK}/manager/tasks/${toValue(options.taskId)}/executions/stream`,
+    path: () => `${API_SERVICE.TASK}/streams/manager/tasks/${toValue(options.taskId)}/executions`,
     eventName: "task_execution",
     onMessage: options.onMessage,
     onError: options.onError,

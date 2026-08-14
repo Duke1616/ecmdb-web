@@ -34,9 +34,25 @@
             <!-- 人员选择 -->
             <UserTab
               v-else-if="currentTab === 'user'"
-              :selected-usernames="getUserKeys()"
+              :selected-usernames="getUserKeys('appoint')"
               :value-key="userValueKey"
-              @change="onUserSelected"
+              @change="onUserSelected($event, 'appoint')"
+            />
+
+            <!-- 按指定用户查询其部门领导 -->
+            <UserTab
+              v-else-if="currentTab === 'department_leader'"
+              :selected-usernames="getUserKeys('department_leader')"
+              :value-key="userValueKey"
+              @change="onUserSelected($event, 'department_leader')"
+            />
+
+            <!-- 按指定用户查询其分管领导 -->
+            <UserTab
+              v-else-if="currentTab === 'supervising_leader'"
+              :selected-usernames="getUserKeys('supervising_leader')"
+              :value-key="userValueKey"
+              @change="onUserSelected($event, 'supervising_leader')"
             />
 
             <!-- 团队选择 -->
@@ -127,7 +143,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, PropType, toRef } from "vue"
-import { Setting, User, OfficeBuilding, Document, Files, Close, Clock } from "@element-plus/icons-vue"
+import { Setting, User, UserFilled, OfficeBuilding, Document, Files, Close, Clock } from "@element-plus/icons-vue"
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
 import SystemTab from "./tabs/SystemTab.vue"
 import OptionsTab from "./tabs/OptionsTab.vue"
@@ -167,6 +183,8 @@ const props = defineProps({
     type: Array as PropType<Array<{ label: string; value: string }>>,
     default: () => [
       { label: "指定人员", value: "appoint" },
+      { label: "指定用户的部门领导", value: "department_leader" },
+      { label: "指定用户的分管领导", value: "supervising_leader" },
       { label: "工单创建人", value: "founder" },
       { label: "模板变量", value: "template" },
       { label: "部门领导", value: "leaders" },
@@ -203,6 +221,8 @@ const assigneesManager = useAssignees(toRef(props, "initialAssignees"))
 const allTabs = [
   { id: "system", label: "规则", icon: Setting },
   { id: "user", label: "用户", icon: User },
+  { id: "department_leader", label: "部门领导", icon: UserFilled },
+  { id: "supervising_leader", label: "分管领导", icon: UserFilled },
   { id: "team", label: "团队", icon: OfficeBuilding },
   { id: "department", label: "部门", icon: OfficeBuilding },
   { id: "on_call", label: "值班", icon: Clock },
@@ -246,7 +266,7 @@ watch(
 
 // 简化的 getter 函数
 const getSystemRuleKeys = () => assigneesManager.getSystemRuleKeys()
-const getUserKeys = () => assigneesManager.getKeys("appoint")
+const getUserKeys = (rule: string) => assigneesManager.getKeys(rule)
 const getTeamKeys = () => assigneesManager.getKeys("team")
 const getRotaKeys = () => assigneesManager.getKeys("on_call")
 const getDepartmentKeys = () => assigneesManager.getKeys("department")
@@ -277,9 +297,9 @@ watch(currentTab, (newTab) => {
 })
 
 // 用户选择处理
-const onUserSelected = (users: any[]) => {
+const onUserSelected = (users: any[], rule: string) => {
   const values = users.map((u) => String(props.userValueKey === "id" ? u.id : u.username))
-  assigneesManager.setValues("appoint", values)
+  assigneesManager.setValues(rule, values)
 
   const nameMap: Record<string, string> = {}
   users.forEach((u) => {

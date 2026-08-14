@@ -17,7 +17,13 @@
 
         <div class="form-row">
           <el-form-item prop="template_set_id" label="模板集" class="form-item">
-            <TemplateSetPicker v-model="modelValue.template_set_id" placeholder="请选择模板集" variant="element" />
+            <TemplateSetPicker
+              v-model="modelValue.template_set_id"
+              placeholder="请选择模板集"
+              variant="element"
+              size="large"
+              border-radius="8px"
+            />
           </el-form-item>
         </div>
 
@@ -40,30 +46,13 @@
 
         <div class="form-row">
           <el-form-item prop="receivers" label="接收者" class="form-item">
-            <div class="strategy-workbench">
-              <div class="user-input-wrapper">
-                <el-input
-                  :value="receiverSummary"
-                  placeholder="尚未配置接收者策略"
-                  class="modern-input with-action"
-                  readonly
-                />
-                <el-button :icon="Setting" class="action-btn" @click="openReceiverSelector()"> 配置策略 </el-button>
-              </div>
-
-              <div v-if="receiverStrategyPreview.length > 0" class="strategy-shelf scroll-slim">
-                <div
-                  v-for="strategy in receiverStrategyPreview"
-                  :key="strategy.rule"
-                  class="shelf-item"
-                  @click="openReceiverSelector(strategy.rule)"
-                >
-                  <div class="item-tag" :class="strategy.rule">{{ strategy.label }}</div>
-                  <div class="item-val">{{ strategy.text }}</div>
-                  <el-button link :icon="Close" class="item-del" @click.stop="removeReceiverStrategy(strategy.rule)" />
-                </div>
-              </div>
-            </div>
+            <ReceiverStrategyEditor
+              :items="receiverStrategyPreview"
+              :summary="receiverSummary"
+              placeholder="尚未配置接收者策略"
+              @edit="openReceiverSelector"
+              @remove="removeReceiverStrategy"
+            />
           </el-form-item>
         </div>
       </div>
@@ -244,7 +233,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import { Setting, Clock, Operation, Filter, Close, QuestionFilled, Minus, Plus } from "@element-plus/icons-vue"
+import { Setting, Clock, Operation, Filter, QuestionFilled, Minus, Plus } from "@element-plus/icons-vue"
 import type { FormInstance } from "element-plus"
 import type { CreateStepReq, ReceiverRef } from "@/api/alert/escalation/types"
 import { RECEIVER_TYPES } from "@/api/alert/escalation/types"
@@ -254,6 +243,7 @@ import { getReceiverTypeLabel } from "../utils"
 import { escalationStepFormRules } from "../config/validation"
 import TemplateSetPicker from "@@/components/Pickers/TemplateSetPicker/index.vue"
 import CommonReceiverSelector from "@@/components/ReceiverSelector/index.vue"
+import ReceiverStrategyEditor from "@@/components/ReceiverStrategyEditor/index.vue"
 import type { Assignee } from "@@/components/ReceiverSelector/composables/useAssignees"
 
 const modelValue = defineModel<CreateStepReq>({ required: true })
@@ -301,6 +291,7 @@ const receiverAssignees = computed<Assignee[]>(() => {
 
 const receiverStrategyPreview = computed(() =>
   receiverAssignees.value.map((assignee) => ({
+    key: assignee.rule,
     rule: assignee.rule,
     label: getReceiverRuleLabel(assignee.rule),
     text: assignee.values.map((value) => receiverDisplayNames.value[String(value)] || value).join("、")
@@ -775,133 +766,6 @@ defineExpose({
       padding: 2px 10px;
     }
   }
-
-  .strategy-workbench {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-  }
-
-  .user-input-wrapper {
-    display: flex;
-    height: 40px;
-
-    .modern-input.with-action {
-      flex: 1;
-
-      :deep(.el-input__wrapper) {
-        border-right: none !important;
-        border-radius: 8px 0 0 8px !important;
-      }
-    }
-
-    .action-btn {
-      height: 100%;
-      color: #475569;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
-      border-left: none;
-      border-radius: 0 8px 8px 0;
-      font-size: 13px;
-      font-weight: 700;
-
-      &:hover:not(:disabled) {
-        color: #6366f1;
-        background: #f1f5f9;
-      }
-    }
-  }
-
-  .strategy-shelf {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    max-height: 220px;
-    padding: 8px;
-    overflow-y: auto;
-    background: #fbfcfe;
-    border: 1px solid #f1f5f9;
-    border-radius: 10px;
-  }
-
-  .shelf-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-height: 42px;
-    padding: 10px 14px;
-    background: #ffffff;
-    border: 1px solid #eef2f6;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-
-    &:hover {
-      border-color: #cbd5e1;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-      transform: translateY(-1px);
-    }
-  }
-
-  .item-tag {
-    flex-shrink: 0;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 10px;
-    font-weight: 800;
-
-    &.appoint {
-      color: #2563eb;
-      background: #eff6ff;
-    }
-
-    &.department {
-      color: #dc2626;
-      background: #fef2f2;
-    }
-
-    &.team {
-      color: #ea580c;
-      background: #fff7ed;
-    }
-
-    &.on_call {
-      color: #9333ea;
-      background: #faf5ff;
-    }
-  }
-
-  .item-val {
-    min-width: 0;
-    flex: 1;
-    overflow: hidden;
-    color: #334155;
-    font-size: 13px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .item-del {
-    flex-shrink: 0;
-    color: #cbd5e1;
-
-    &:hover {
-      color: #ef4444;
-    }
-  }
-
-  .scroll-slim {
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 10px;
-    }
-  }
 }
 
 // 按钮样式优化
@@ -970,26 +834,6 @@ defineExpose({
 
     .channel-inline-options {
       grid-template-columns: 1fr;
-    }
-
-    .user-input-wrapper {
-      height: auto;
-      align-items: stretch;
-      flex-direction: column;
-    }
-
-    .user-input-wrapper .modern-input.with-action {
-      :deep(.el-input__wrapper) {
-        border-right: 1px solid #cbd5e1 !important;
-        border-radius: 8px 8px 0 0 !important;
-      }
-    }
-
-    .user-input-wrapper .action-btn {
-      height: 38px;
-      border: 1px solid #cbd5e1;
-      border-top: 1px solid #e2e8f0;
-      border-radius: 0 0 8px 8px;
     }
   }
 }

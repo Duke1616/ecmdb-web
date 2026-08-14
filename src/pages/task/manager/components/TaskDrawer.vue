@@ -254,7 +254,7 @@
           <div class="section-title">
             <div class="title-left">
               <el-icon class="section-icon"><RefreshRight /></el-icon>
-              <span>重试配置与超时</span>
+              <span>超时与失败重试</span>
             </div>
             <div class="title-right">
               <el-switch v-model="form.retry_enabled" inline-prompt active-text="启用" inactive-text="关闭" />
@@ -269,6 +269,29 @@
               v-model:initialInterval="form.initial_interval"
               v-model:maxInterval="form.max_interval"
             />
+          </transition>
+        </div>
+
+        <!-- 4. 执行终态通知 -->
+        <div class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><Bell /></el-icon>
+              <span>执行结果通知</span>
+            </div>
+            <div class="title-right">
+              <el-switch
+                :model-value="form.notification_enabled"
+                inline-prompt
+                active-text="启用"
+                inactive-text="关闭"
+                @change="handleNotificationEnabledChange"
+              />
+            </div>
+          </div>
+
+          <transition name="el-zoom-in-top">
+            <TaskNotificationEditor v-if="form.notification_enabled" v-model="form.notification_groups" />
           </transition>
         </div>
       </el-form>
@@ -286,16 +309,18 @@ import {
   Calendar,
   Timer,
   Pointer,
-  Operation
+  Operation,
+  Bell
 } from "@element-plus/icons-vue"
 import { TaskType, TaskProtocol } from "@/api/task/manager/type"
 import { useTaskForm } from "../composables/useTaskForm"
-import { protocols } from "../composables/useTaskData"
+import { createDefaultExecutionNotificationGroup, protocols } from "../composables/useTaskData"
 import KVEditor from "./KVEditor.vue"
 import CronHelper from "./CronHelper.vue"
 import TaskParamsEditor from "./TaskParamsEditor.vue"
 import ProgramSourceEditor from "./ProgramSourceEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
+import TaskNotificationEditor from "./TaskNotificationEditor.vue"
 import ExecutorPicker from "@/common/components/ExecutorPicker/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import { Drawer } from "@@/components/Dialogs"
@@ -341,6 +366,21 @@ const {
 const currentProgramKinds = computed(() => currentHandler.value?.program_kinds ?? [])
 const currentMetadata = computed(() => currentHandler.value?.metadata ?? [])
 const runnerOverrideCount = computed(() => Object.keys(form.value.runner_params).length)
+
+/** 切换整组执行通知；重新启用时恢复已有规则或创建首条失败通知。 */
+const handleNotificationEnabledChange = (enabled: boolean | string | number) => {
+  const nextEnabled = Boolean(enabled)
+  form.value.notification_enabled = nextEnabled
+  if (!nextEnabled) return
+
+  if (form.value.notification_groups.length === 0) {
+    form.value.notification_groups = [createDefaultExecutionNotificationGroup()]
+    return
+  }
+  form.value.notification_groups.forEach((group) => {
+    group.enabled = true
+  })
+}
 </script>
 
 <style scoped lang="scss">

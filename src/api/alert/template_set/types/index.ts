@@ -6,6 +6,10 @@ export { CHANNEL_TYPES }
 // 模板集合
 export interface TemplateSet {
   id: number
+  /** 模板集稳定业务 key，跨环境引用模板时使用该字段。 */
+  key: string
+  /** 模板集所属 EAlert 业务。 */
+  biz_id: number
   owner_id: number
   name: string
   description: string
@@ -27,6 +31,10 @@ export interface TemplateSetItem {
 
 // 创建模板集合请求
 export interface CreateTemplateSetReq {
+  /** 跨环境稳定标识；任务执行模板必须填写。 */
+  key?: string
+  /** 所属业务，任务执行为 3。 */
+  biz_id?: number
   name: string
   description: string
   owner_id: number
@@ -40,6 +48,8 @@ export interface CreateTemplateSetResp {
 // 更新模板集合请求
 export interface UpdateTemplateSetReq {
   id: number
+  key?: string
+  biz_id?: number
   name: string
   description: string
 }

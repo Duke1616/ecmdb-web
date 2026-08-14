@@ -112,6 +112,8 @@ const currentEditId = ref<number | null>(null)
 // 表单相关
 const formRef = ref()
 const formData = ref<CreateTemplateSetReq>({
+  key: "",
+  biz_id: 0,
   name: "",
   description: "",
   owner_id: 1 // TODO: 从用户信息获取
@@ -170,6 +172,8 @@ const handleCreate = () => {
   isEdit.value = false
   currentEditId.value = null
   formData.value = {
+    key: "",
+    biz_id: 0,
     name: "",
     description: "",
     owner_id: 1
@@ -188,6 +192,8 @@ const handleEdit = (templateSet: TemplateSet) => {
   isEdit.value = true
   currentEditId.value = templateSet.id
   formData.value = {
+    key: templateSet.key,
+    biz_id: templateSet.biz_id,
     name: templateSet.name,
     description: templateSet.description,
     owner_id: templateSet.owner_id

@@ -10,7 +10,8 @@ import {
   createDefaultFormState,
   mapToFormState,
   mapToApiPayload,
-  validateBoundParameters
+  validateBoundParameters,
+  validateExecutionNotificationGroups
 } from "./useTaskData"
 import { useRunnerParameterOverrides } from "./useRunnerParameterOverrides"
 
@@ -179,6 +180,14 @@ export function useTaskForm(options: {
     const parameterError = validateBoundParameters(form.value, currentHandler.value)
     if (parameterError) {
       ElMessage.error(parameterError)
+      return
+    }
+
+    const notificationError = form.value.notification_enabled
+      ? validateExecutionNotificationGroups(form.value.notification_groups)
+      : undefined
+    if (notificationError) {
+      ElMessage.error(notificationError)
       return
     }
 

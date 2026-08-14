@@ -113,30 +113,15 @@
       <template #icon
         ><el-icon><UserFilled /></el-icon
       ></template>
-      <div class="strategy-workbench">
-        <div class="user-input-wrapper">
-          <el-input
-            :value="propertyForm.assignees.length ? `已配置 ${propertyForm.assignees.length} 条策略` : ''"
-            placeholder="尚未配置成员逻辑"
-            class="modern-input with-action"
-            readonly
-          />
-          <el-button @click="masterSelectorVisible = true" class="action-btn" :icon="Setting"> 配置逻辑 </el-button>
-        </div>
-
-        <div class="strategy-shelf scroll-slim" v-if="propertyForm.assignees.length > 0">
-          <div
-            v-for="(rule, index) in propertyForm.assignees"
-            :key="`${rule.rule}-${rule.values?.join(',')}`"
-            class="shelf-item"
-            @click="openSelectorWithTab(rule.rule)"
-          >
-            <div class="item-tag" :class="rule.rule">{{ getRuleShortLabel(rule.rule) }}</div>
-            <div class="item-val">{{ getRuleContentPreview(rule) }}</div>
-            <el-button link :icon="Close" class="item-del" @click.stop="removeAssignee(index)" />
-          </div>
-        </div>
-      </div>
+      <ReceiverStrategyEditor
+        :items="strategyPreviews"
+        :summary="propertyForm.assignees.length ? `已配置 ${propertyForm.assignees.length} 条策略` : ''"
+        placeholder="尚未配置成员逻辑"
+        action-label="配置逻辑"
+        :disabled="flowDetail.status === '2'"
+        @edit="openSelectorWithTab"
+        @remove="removeAssignee"
+      />
     </FormSection>
 
     <!-- 5. 广播选项 -->
@@ -185,8 +170,6 @@ import {
   UserFilled,
   Menu,
   CirclePlus,
-  Setting,
-  Close,
   CircleCheckFilled,
   ChatDotRound,
   Operation,
@@ -196,6 +179,7 @@ import {
 } from "@element-plus/icons-vue"
 import { FormSection } from "../../PropertySetting"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
+import ReceiverStrategyEditor from "@/common/components/ReceiverStrategyEditor/index.vue"
 import GroupSelector from "./components/GroupSelector.vue"
 import VariableInput from "./components/VariableInput.vue"
 import { listTeamsApi } from "@/api/alert/team"
@@ -309,10 +293,22 @@ const selectMode = (m: "existing" | "create") => (propertyForm.mode = m)
 // --- 接收内容显示优化 ---
 const getRuleShortLabel = (r: string) => RULE_SHORT_LABEL_MAP[r] || r.slice(0, 2)
 
-const removeAssignee = (i: number) => propertyForm.assignees.splice(i, 1)
+const strategyPreviews = computed(() =>
+  propertyForm.assignees.map((assignee, index) => ({
+    key: `${assignee.rule}:${index}`,
+    rule: assignee.rule,
+    label: getRuleShortLabel(assignee.rule),
+    text: getRuleContentPreview(assignee)
+  }))
+)
 
-const openSelectorWithTab = (ruleType: string) => {
-  selectedRuleTab.value = RULE_TO_TAB_MAP[ruleType] || ""
+const removeAssignee = (key: string) => {
+  const index = strategyPreviews.value.findIndex((item) => item.key === key)
+  if (index >= 0) propertyForm.assignees.splice(index, 1)
+}
+
+const openSelectorWithTab = (ruleType?: string) => {
+  selectedRuleTab.value = ruleType ? RULE_TO_TAB_MAP[ruleType] || "" : ""
   masterSelectorVisible.value = true
 }
 
@@ -493,123 +489,6 @@ defineExpose({ confirmFunc })
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   flex-shrink: 0;
   margin-left: auto; // 确保推到最右侧
-}
-
-// ── 策略工作台 ──────────────────────────────────────────────────────
-.strategy-workbench {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.user-input-wrapper {
-  display: flex;
-  width: 100%;
-  align-items: stretch;
-  height: 40px;
-
-  .modern-input.with-action {
-    flex: 1;
-    :deep(.el-input__wrapper) {
-      border-right: none !important;
-      border-radius: 8px 0 0 8px !important;
-      height: 100%;
-      background: #fff !important;
-    }
-  }
-
-  .action-btn {
-    height: 100%;
-    border-radius: 0 8px 8px 0;
-    border: 1px solid #cbd5e1;
-    border-left: none;
-    background: #f8fafc;
-    color: #475569;
-    font-size: 13px;
-    font-weight: 700;
-    padding: 0 16px;
-    margin: 0;
-    transition: all 0.2s;
-    &:hover:not(:disabled) {
-      background: #f1f5f9;
-      color: #6366f1;
-      border-color: #cbd5e1;
-    }
-  }
-}
-
-.strategy-shelf {
-  max-height: 200px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px;
-  background: #fbfcfe;
-  border: 1px solid #f1f5f9;
-  border-radius: 10px;
-}
-.shelf-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #eef2f6;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  &:hover {
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-    transform: translateY(-1px);
-  }
-  .item-tag {
-    font-size: 10px;
-    font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: #f1f5f9;
-    color: #64748b;
-    &.appoint {
-      background: #eff6ff;
-      color: #2563eb;
-    }
-    &.founder {
-      background: #f0fdf4;
-      color: #16a34a;
-    }
-    &.department {
-      background: #fef2f2;
-      color: #dc2626;
-    }
-    &.team {
-      background: #fff7ed;
-      color: #ea580c;
-    }
-    &.on_call {
-      background: #faf5ff;
-      color: #9333ea;
-    }
-    &.template {
-      background: #f0f9ff;
-      color: #0369a1;
-    }
-  }
-  .item-val {
-    flex: 1;
-    font-size: 13px;
-    color: #334155;
-    font-weight: 600;
-  }
-  .item-del {
-    font-size: 14px;
-    color: #cbd5e1;
-    transition: color 0.2s;
-    &:hover {
-      color: #ef4444;
-    }
-  }
 }
 
 // ── 广播选项 ────────────────────────────────────────────────────────

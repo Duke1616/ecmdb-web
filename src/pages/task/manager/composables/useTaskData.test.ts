@@ -1,7 +1,23 @@
 import { describe, expect, it } from "vitest"
-import { TaskProtocol, TaskStatus, TaskType, type TaskItem } from "@/api/task/manager/type"
+import {
+  NotificationChannel,
+  NotificationRecipientType,
+  NotificationTriggerStatus,
+  TaskProtocol,
+  TaskStatus,
+  TaskType,
+  type TaskItem
+} from "@/api/task/manager/type"
 import { ProgramKind } from "@/api/task/program"
-import { createDefaultFormState, mapToApiPayload, mapToFormState, validateBoundParameters } from "./useTaskData"
+import {
+  createDefaultFormState,
+  expandExecutionNotificationGroups,
+  groupExecutionNotifications,
+  mapToApiPayload,
+  mapToFormState,
+  validateBoundParameters,
+  validateExecutionNotificationGroups
+} from "./useTaskData"
 
 describe("任务程序来源映射", () => {
   it("详情中的 PROJECT 程序能原样提交", () => {
@@ -149,5 +165,73 @@ describe("任务动态参数校验", () => {
     form.grpc_params = { variables: "" }
 
     expect(validateBoundParameters(form, handler)).toBeUndefined()
+  })
+})
+
+describe("任务执行通知映射", () => {
+  const notification = {
+    trigger_status: NotificationTriggerStatus.FAILED,
+    recipients: [{ type: NotificationRecipientType.USER, target_ids: [101, 102] }],
+    channels: [NotificationChannel.EMAIL, NotificationChannel.LARK_CARD],
+    template_set_id: 42,
+    enabled: true
+  }
+
+  it("详情中的通知规则能原样回显并提交", () => {
+    const successNotification = { ...notification, trigger_status: NotificationTriggerStatus.SUCCESS }
+    const task = {
+      id: 4,
+      name: "notification-task",
+      type: TaskType.ONE_TIME,
+      status: TaskStatus.ACTIVE,
+      next_time: 0,
+      ctime: 0,
+      utime: 0,
+      version: 1,
+      execution_notifications: [notification, successNotification]
+    } satisfies TaskItem
+
+    const form = mapToFormState(task)
+    expect(form.notification_groups).toEqual([
+      {
+        trigger_statuses: [NotificationTriggerStatus.FAILED, NotificationTriggerStatus.SUCCESS],
+        recipients: notification.recipients,
+        channels: notification.channels,
+        template_set_id: notification.template_set_id,
+        enabled: true
+      }
+    ])
+    expect(mapToApiPayload(form).execution_notifications).toEqual([notification, successNotification])
+  })
+
+  it("允许使用 0 表示系统默认模板集", () => {
+    const [group] = groupExecutionNotifications([
+      { ...notification, channels: [NotificationChannel.LARK_CARD], template_set_id: 0 }
+    ])
+    expect(validateExecutionNotificationGroups([group])).toBeUndefined()
+  })
+
+  it("拒绝默认模板集使用不支持的渠道", () => {
+    const [group] = groupExecutionNotifications([
+      {
+        ...notification,
+        channels: [NotificationChannel.EMAIL],
+        template_set_id: 0
+      }
+    ])
+    expect(validateExecutionNotificationGroups([group])).toContain("系统默认模板目前仅支持飞书卡片")
+  })
+
+  it("多终态配置组展开后保持后端的一终态一规则结构", () => {
+    const [group] = groupExecutionNotifications([
+      notification,
+      { ...notification, trigger_status: NotificationTriggerStatus.CANCELLED }
+    ])
+
+    expect(group.trigger_statuses).toEqual([NotificationTriggerStatus.FAILED, NotificationTriggerStatus.CANCELLED])
+    expect(expandExecutionNotificationGroups([group]).map((rule) => rule.trigger_status)).toEqual([
+      NotificationTriggerStatus.FAILED,
+      NotificationTriggerStatus.CANCELLED
+    ])
   })
 })
