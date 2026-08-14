@@ -159,24 +159,20 @@ const channelOptions = getChannelOptions().map((option) => ({
   icon: getChannelIcon(option.value)
 }))
 
-const receiverModes = ["user", "team", "department", "on_call", "department_leader", "supervising_leader"]
+const receiverModes = ["user", "team", "department", "on_call"]
 
 const recipientRuleOptions = [
   { label: "用户", value: "appoint" },
   { label: "团队", value: "team" },
   { label: "部门", value: "department" },
-  { label: "值班", value: "on_call" },
-  { label: "部门领导", value: "department_leader" },
-  { label: "分管领导", value: "supervising_leader" }
+  { label: "值班", value: "on_call" }
 ]
 
 const ruleToRecipientType: Record<string, NotificationRecipientType> = {
   appoint: NotificationRecipientType.USER,
   team: NotificationRecipientType.TEAM,
   department: NotificationRecipientType.DEPARTMENT,
-  on_call: NotificationRecipientType.ONCALL,
-  department_leader: NotificationRecipientType.DEPARTMENT_LEADER,
-  supervising_leader: NotificationRecipientType.SUPERVISING_LEADER
+  on_call: NotificationRecipientType.ONCALL
 }
 
 const recipientTypeToRule = Object.fromEntries(

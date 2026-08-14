@@ -177,6 +177,15 @@ describe("任务执行通知映射", () => {
     enabled: true
   }
 
+  it("仅开放用户、团队、部门和值班接收者", () => {
+    expect(Object.values(NotificationRecipientType)).toEqual([
+      "RECIPIENT_USER",
+      "RECIPIENT_TEAM",
+      "RECIPIENT_DEPARTMENT",
+      "RECIPIENT_ONCALL"
+    ])
+  })
+
   it("详情中的通知规则能原样回显并提交", () => {
     const successNotification = { ...notification, trigger_status: NotificationTriggerStatus.SUCCESS }
     const task = {

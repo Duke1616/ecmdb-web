@@ -76,14 +76,12 @@ export enum NotificationTriggerStatus {
   CANCELLED = "CANCELLED"
 }
 
-/** EAlert 支持的任务通知接收对象类型。 */
+/** ETask 允许配置的任务通知接收对象类型。 */
 export enum NotificationRecipientType {
   USER = "RECIPIENT_USER",
   TEAM = "RECIPIENT_TEAM",
   DEPARTMENT = "RECIPIENT_DEPARTMENT",
-  ONCALL = "RECIPIENT_ONCALL",
-  DEPARTMENT_LEADER = "RECIPIENT_DEPARTMENT_LEADER",
-  SUPERVISING_LEADER = "RECIPIENT_SUPERVISING_LEADER"
+  ONCALL = "RECIPIENT_ONCALL"
 }
 
 /** EAlert 支持的任务通知渠道。 */
