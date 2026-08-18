@@ -4,20 +4,23 @@
  * 职责：渲染高阶分布式监控级别的状态点与文本，取代过宽的药丸 Tag，保持列表界面的轻量化与高可读性
  */
 export type StatusBadgeType = "success" | "primary" | "info" | "warning" | "danger"
+export type StatusBadgeSize = "small" | "default"
 
 interface Props {
   type: StatusBadgeType
   label?: string
+  size?: StatusBadgeSize
 }
 
 withDefaults(defineProps<Props>(), {
   type: "info",
-  label: ""
+  label: "",
+  size: "small"
 })
 </script>
 
 <template>
-  <div class="status-badge" :class="type">
+  <div class="status-badge" :class="[type, `is-${size}`]">
     <span class="dot" />
     <span class="text">
       <slot>{{ label }}</slot>
@@ -45,6 +48,22 @@ withDefaults(defineProps<Props>(), {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  &.is-default {
+    gap: 7px;
+
+    .dot {
+      width: 7px;
+      height: 7px;
+    }
+
+    .text {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: none;
+      letter-spacing: 0;
+    }
   }
 
   &.success {

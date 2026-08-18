@@ -57,7 +57,7 @@
 
       <!-- 状态列: 引入 StatusBadge 增强极致排版视觉效果 -->
       <template #status="{ row }">
-        <StatusBadge :type="getStatusType(row.status)" :label="getStatusLabel(row.status)" />
+        <StatusBadge size="default" :type="getStatusType(row.status)" :label="getStatusLabel(row.status)" />
       </template>
 
       <!-- 操作插槽 -->
