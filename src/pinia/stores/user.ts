@@ -7,7 +7,7 @@ import { resetRouter } from "@/router"
 import { getProfileApi, logoutApi, listUsersApi } from "@/api/iam/user"
 import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
-import { removeToken, setToken as _setToken } from "@@/utils/cache/cookies"
+import { removeToken } from "@@/utils/cache/cookies"
 import { switchTenantApi } from "@/api/iam/tenant"
 import { removeUsername, setUsername } from "@/common/utils/cache/local-storage"
 
@@ -100,7 +100,6 @@ export const useUserStore = defineStore(
   "user",
   () => {
     // -------------------- State --------------------
-    const token = ref("")
     const username = ref("")
     const userInfo = ref<user.User | null>(null)
     const tenants = ref<user.Tenant[]>([])
@@ -190,20 +189,11 @@ export const useUserStore = defineStore(
     }
 
     /**
-     * 设置登录 Token
-     */
-    const setToken = (value: string) => {
-      token.value = value
-      _setToken(value)
-    }
-
-    /**
      * 重置 Token 及相关状态
      */
     const resetToken = () => {
       removeToken()
       removeUsername()
-      token.value = ""
       username.value = ""
       userInfo.value = null
       tenants.value = []
@@ -240,7 +230,6 @@ export const useUserStore = defineStore(
     // -------------------- 返回值 --------------------
     return {
       // State
-      token,
       username,
       userInfo,
       tenants,
@@ -253,7 +242,6 @@ export const useUserStore = defineStore(
       getUserByUsername,
       batchGetUsersByUsername,
       switchTenant,
-      setToken,
       resetToken,
       logout,
       changeRoles

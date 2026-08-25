@@ -39,14 +39,6 @@ const instance = new HyRequest({
       }
 
       return config
-    },
-    responseInterceptor: (response) => {
-      const userStore = useUserStore()
-      const token = response.headers?.["x-access-token"]
-      if (token) {
-        userStore.setToken(token)
-      }
-      return response
     }
   }
 })
