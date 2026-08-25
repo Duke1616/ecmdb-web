@@ -12,6 +12,7 @@ const templateColumn: Column = {
 const provideColumn: Column = { prop: "provide", label: "来源", slot: "provide", minWidth: 100, align: "center" }
 const starterColumn: Column = { prop: "starter", label: "提单人", minWidth: 100, align: "center" }
 const currentStepColumn: Column = { prop: "current_step", label: "当前步骤", minWidth: 120, align: "center" }
+const statusColumn: Column = { prop: "status", label: "状态", slot: "status", minWidth: 120, align: "center" }
 const approvedByColumn: Column = { prop: "approved_by", label: "当前处理人", minWidth: 120, align: "center" }
 const procInstCreateTimeColumn: Column = {
   prop: "proc_inst_create_time",
@@ -24,6 +25,7 @@ export const myTicketColumns: Column[] = [
   idColumn,
   templateColumn,
   provideColumn,
+  statusColumn,
   currentStepColumn,
   approvedByColumn,
   procInstCreateTimeColumn
@@ -34,6 +36,7 @@ export const userTodoTicketColumns: Column[] = [
   taskIdColumn,
   templateColumn,
   provideColumn,
+  statusColumn,
   starterColumn,
   currentStepColumn,
   procInstCreateTimeColumn
@@ -44,6 +47,7 @@ export const allTodoTicketColumns: Column[] = [
   taskIdColumn,
   templateColumn,
   provideColumn,
+  statusColumn,
   starterColumn,
   currentStepColumn,
   approvedByColumn,

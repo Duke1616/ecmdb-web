@@ -400,6 +400,8 @@ export const TICKET_CAPABILITIES = {
     Transfer: "ticket:manager:transfer",
     /** 提交工单 */
     Submit: "ticket:manager:submit",
+    /** 重新启动失败流程 */
+    ProcessRestart: "ticket:manager:process_restart",
     /** 撤销工单 */
     Revoke: "ticket:manager:revoke",
     /** 评价已办结工单 */

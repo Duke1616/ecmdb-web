@@ -22,7 +22,14 @@
     </template>
 
     <template #status="{ row }">
-      <span class="quiet-tag" :class="getStatusClass(row.status)">{{ getStatusText(row.status) }}</span>
+      <el-tooltip
+        v-if="row.status === TicketStatus.StartFailed && row.process_start_error"
+        :content="row.process_start_error"
+        placement="top"
+      >
+        <span class="quiet-tag" :class="getStatusClass(row.status)">{{ getStatusText(row.status) }}</span>
+      </el-tooltip>
+      <span v-else class="quiet-tag" :class="getStatusClass(row.status)">{{ getStatusText(row.status) }}</span>
     </template>
 
     <template #rating="{ row }">
@@ -122,17 +129,22 @@ const getProvideText = (provide: number) => {
 
 const getStatusText = (status: number) => {
   const statusTextMap: Record<number, string> = {
+    [TicketStatus.Start]: "启动中",
+    [TicketStatus.Process]: "处理中",
     [TicketStatus.End]: "结单",
     [TicketStatus.Withdraw]: "撤单",
-    [TicketStatus.Withdrawing]: "撤回处理中"
+    [TicketStatus.Withdrawing]: "撤回处理中",
+    [TicketStatus.StartFailed]: "流程启动失败"
   }
   return statusTextMap[status] || "未知"
 }
 
 const getStatusClass = (status: number) => {
   if (status === TicketStatus.End) return "is-success"
+  if (status === TicketStatus.Start) return "is-warning"
   if (status === TicketStatus.Withdraw) return "is-danger"
   if (status === TicketStatus.Withdrawing) return "is-warning"
+  if (status === TicketStatus.StartFailed) return "is-danger"
   return ""
 }
 

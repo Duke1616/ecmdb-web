@@ -10,6 +10,14 @@ export function submitTicketApi(data: manager.SubmitTicketReq) {
   })
 }
 
+/** 重新启动失败的流程 */
+export function restartProcessApi(data: manager.RestartProcessReq) {
+  return instance.post<void>({
+    url: `${API_SERVICE.TICKET}/ticket/process/restart`,
+    data
+  })
+}
+
 /** 查看待办工单 */
 export function listTodoTicketsApi(data: manager.TodoTicketReq) {
   return instance.post<manager.TicketListRes>({

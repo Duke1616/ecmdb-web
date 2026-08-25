@@ -1,7 +1,8 @@
 import { markRaw } from "vue"
 import { Bell, Check, Refresh, RefreshLeft, Star, View } from "@element-plus/icons-vue"
-import { ElMessage } from "element-plus"
+import { ElMessage, ElMessageBox } from "element-plus"
 import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
+import { restartProcessApi } from "@/api/ticket/manager"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { TicketAction } from "./types"
 import type { TicketOperateItem } from "./types"
@@ -34,11 +35,21 @@ export const myTicketOperateItems: TicketOperateItem[] = [
     type: "danger",
     icon: revokeIcon,
     capability: TICKET_CAPABILITIES.Manager.Revoke
+  },
+  {
+    name: "重新启动",
+    code: TicketAction.Restart,
+    type: "warning",
+    icon: refreshIcon,
+    capability: TICKET_CAPABILITIES.Manager.ProcessRestart
   }
 ]
 
-export const getMyTicketOperateItems = (row: Ticket): TicketOperateItem[] =>
-  myTicketOperateItems.map((item) =>
+export const getMyTicketOperateItems = (row: Ticket): TicketOperateItem[] => {
+  if (row.status === TicketStatus.StartFailed) {
+    return myTicketOperateItems.filter((item) => item.code === TicketAction.Restart)
+  }
+  return myTicketOperateItems.map((item) =>
     item.code === TicketAction.Revoke
       ? {
           ...item,
@@ -47,6 +58,7 @@ export const getMyTicketOperateItems = (row: Ticket): TicketOperateItem[] =>
         }
       : item
   )
+}
 
 export const userTodoOperateItems: TicketOperateItem[] = [
   {
@@ -59,6 +71,20 @@ export const userTodoOperateItems: TicketOperateItem[] = [
 ]
 
 export const getAllTodoOperateItems = (row: Ticket): TicketOperateItem[] => {
+  if (row.status === TicketStatus.Start) return []
+
+  if (row.status === TicketStatus.StartFailed) {
+    return [
+      {
+        name: "重新启动",
+        code: TicketAction.Restart,
+        type: "warning",
+        icon: refreshIcon,
+        capability: TICKET_CAPABILITIES.Manager.ProcessRestart
+      }
+    ]
+  }
+
   const items: TicketOperateItem[] = [
     {
       name: "处理",
@@ -124,6 +150,22 @@ export const useTicketActions = (options: {
     options.openRevoke?.(row)
   }
 
+  const handleRestart = async (row: Ticket) => {
+    try {
+      await ElMessageBox.confirm(`确定重新启动工单 #${row.id} 的流程吗？`, "重新启动流程", {
+        type: "warning",
+        confirmButtonText: "重新启动",
+        cancelButtonText: "取消"
+      })
+      await restartProcessApi({ ticket_id: row.id })
+      ElMessage.success("已提交流程重启请求")
+      options.refresh()
+    } catch (error: any) {
+      if (error === "cancel" || error === "close") return
+      ElMessage.error(error?.message || "流程重启失败")
+    }
+  }
+
   const operateEvent = (data: Ticket, action: TicketAction) => {
     switch (action) {
       case TicketAction.Detail:
@@ -146,6 +188,9 @@ export const useTicketActions = (options: {
         break
       case TicketAction.Rate:
         options.openRating?.(data)
+        break
+      case TicketAction.Restart:
+        void handleRestart(data)
         break
     }
   }

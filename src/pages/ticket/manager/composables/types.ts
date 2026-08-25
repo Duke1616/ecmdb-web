@@ -8,7 +8,8 @@ export enum TicketAction {
   Approve = "approve",
   Refresh = "refresh",
   View = "view",
-  Rate = "rate"
+  Rate = "rate",
+  Restart = "restart"
 }
 
 export interface TicketOperateItem {

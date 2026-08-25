@@ -35,7 +35,8 @@ export enum TicketStatus {
   Process = 2,
   End = 3,
   Withdraw = 4,
-  Withdrawing = 5
+  Withdrawing = 5,
+  StartFailed = 6
 }
 
 export interface Ticket {
@@ -57,6 +58,12 @@ export interface Ticket {
   can_rate: boolean
   rating?: TicketRating
   revoke_reason?: string
+  process_start_error?: string
+  process_start_attempts?: number
+}
+
+export interface RestartProcessReq {
+  ticket_id: number
 }
 
 export interface TicketRating {
