@@ -52,10 +52,7 @@
                           : "已归档"
                     }}</span>
                   </div>
-                  <div
-                    class="runtime-badge running"
-                    v-else-if="isActiveExecutionStatus(item.status)"
-                  >
+                  <div class="runtime-badge running" v-else-if="isActiveExecutionStatus(item.status)">
                     <el-icon class="loading-spin"><Loading /></el-icon>
                     <span>运行中</span>
                   </div>
@@ -76,11 +73,7 @@
                   <span class="t-val">{{ formatTimestamp(item.start_time).split(" ")[1] }}</span>
                   <div class="t-sep"><div class="line" /></div>
                   <span class="t-val" v-if="item.end_time > 0">{{ formatTimestamp(item.end_time).split(" ")[1] }}</span>
-                  <span
-                    class="t-val waiting"
-                    v-else-if="isActiveExecutionStatus(item.status)"
-                    >...</span
-                  >
+                  <span class="t-val waiting" v-else-if="isActiveExecutionStatus(item.status)">...</span>
                   <span class="t-val finish-tag" v-else>DONE</span>
                 </div>
               </div>
