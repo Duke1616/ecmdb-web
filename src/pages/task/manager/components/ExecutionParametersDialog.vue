@@ -37,7 +37,7 @@
         size="default"
         max-height="460"
       >
-        <el-table-column label="参数" min-width="220">
+        <el-table-column label="参数" width="260">
           <template #default="{ row }">
             <div class="parameter-name">
               <span class="parameter-label">{{ getParameterLabel(row.key) }}</span>
@@ -45,12 +45,12 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="最终值" min-width="300" show-overflow-tooltip>
+        <el-table-column label="最终值" min-width="260" show-overflow-tooltip>
           <template #default="{ row }">
             <code class="parameter-value">{{ row.value }}</code>
           </template>
         </el-table-column>
-        <el-table-column label="覆盖来源" width="140" align="right">
+        <el-table-column label="覆盖来源" width="130" align="center">
           <template #default="{ row }">
             <span v-if="row.source === 'TASK_SNAPSHOT'" class="source-default">任务配置</span>
             <el-tooltip v-else :content="getSourceMeta(row.source).description" placement="top">
