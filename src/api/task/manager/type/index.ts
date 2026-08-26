@@ -176,6 +176,23 @@ export interface ListExecutionResp {
   executions: TaskExecutionVO[]
 }
 
+export type ExecutionParameterSource = "TASK_SNAPSHOT" | "SCHEDULE_OVERRIDE" | "MANUAL_OVERRIDE" | "SYSTEM"
+
+export interface ExecutionParameterVO {
+  key: string
+  value: string
+  source: ExecutionParameterSource
+  manual_override: boolean
+  schedule_override: boolean
+}
+
+export interface ExecutionParametersVO {
+  execution_id: number
+  parameters: ExecutionParameterVO[]
+  manual_override_count: number
+  schedule_override_count: number
+}
+
 export interface TaskItem extends CreateTaskReq {
   id: number
   status: TaskStatus

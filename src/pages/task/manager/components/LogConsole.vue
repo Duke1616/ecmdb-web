@@ -28,6 +28,15 @@
                 @click="handleTerminate"
               />
             </el-tooltip>
+            <el-button
+              v-if="canViewParameters"
+              :icon="Operation"
+              circle
+              size="default"
+              :disabled="loading"
+              title="查看执行参数"
+              @click="parametersVisible = true"
+            />
             <el-button :icon="Refresh" circle size="default" :disabled="loading" @click="resetAndFetch" />
             <el-button
               v-if="execution.task_result"
@@ -71,12 +80,17 @@
     <el-dialog v-model="viewResultVisible" title="运行结果" width="800px" append-to-body center>
       <CodeEditor :code="execution?.task_result || ''" language="json" :read-only="true" height="500px" />
     </el-dialog>
+    <ExecutionParametersDialog
+      v-model="parametersVisible"
+      :execution-id="execution?.id || null"
+      :task-id="execution?.task_id || null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import { Refresh, Coordinate, Monitor, Clock, Pointer, VideoPause } from "@element-plus/icons-vue"
+import { Refresh, Coordinate, Monitor, Clock, Pointer, VideoPause, Operation } from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import type { TaskExecutionVO } from "@/api/task/manager/type"
 import { terminateExecutionApi } from "@/api/task/manager"
@@ -86,6 +100,7 @@ import type { TagInfo } from "@/common/components/EnumTag/index.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import { useLogConsoleStream } from "../composables/useLogConsoleStream"
+import ExecutionParametersDialog from "./ExecutionParametersDialog.vue"
 
 /**
  * 任务执行控制台 (LogConsole)
@@ -99,8 +114,13 @@ const props = defineProps<Props>()
 const emit = defineEmits<{ terminated: [] }>()
 const editorRef = ref<InstanceType<typeof CodeEditor>>()
 const terminating = ref(false)
+const parametersVisible = ref(false)
 const { hasPermission } = usePermission()
 const canTerminate = computed(() => hasPermission(TASK_CAPABILITIES.Manager.Stop))
+const canViewParameters = computed(
+  () =>
+    hasPermission(TASK_CAPABILITIES.Manager.ExecutionParameters) && hasPermission(TASK_CAPABILITIES.Manager.Executions)
+)
 
 const STATUS_MAP: Record<string, TagInfo> = {
   WAITING_PULL: { type: "warning", text: "等待执行" },

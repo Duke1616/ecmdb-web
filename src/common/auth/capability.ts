@@ -512,6 +512,8 @@ export const TASK_CAPABILITIES = {
     Detail: "task:manager:get",
     /** 执行记录 */
     Executions: "task:manager:executions",
+    /** 执行参数快照 */
+    ExecutionParameters: "task:manager:execution_parameters",
     /** 更新任务 */
     Edit: "task:manager:edit",
     /** 删除任务 */

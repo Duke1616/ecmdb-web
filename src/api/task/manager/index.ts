@@ -57,6 +57,13 @@ export function terminateExecutionApi(executionId: number, reason: string) {
   })
 }
 
+/** 获取指定执行批次的最终参数快照 */
+export function getExecutionParametersApi(executionId: number) {
+  return instance.get<task.ExecutionParametersVO>({
+    url: `${API_SERVICE.TASK}/manager/executions/${executionId}/parameters`
+  })
+}
+
 /** 删除任务 */
 export function deleteTaskApi(taskId: number) {
   return instance.delete<void>({
