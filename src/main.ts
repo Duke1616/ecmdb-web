@@ -6,6 +6,10 @@ import router from "@/router"
 import { isChunkLoadError, reloadOnChunkLoadError } from "@/common/utils/chunkLoadRecovery"
 
 import "@/router/guard"
+
+// User Store 已改为仅保存在内存，清理旧版本可能包含 Token 的持久化数据。
+localStorage.removeItem("user")
+
 // load
 import { installPlugins } from "@/plugins"
 import { loadDirectives } from "@/directives"

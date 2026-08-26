@@ -247,7 +247,8 @@ export const useUserStore = defineStore(
       changeRoles
     }
   },
-  { persist: true }
+  // 用户资料、租户和权限属于服务端会话状态，刷新页面后由路由守卫重新获取。
+  { persist: false }
 )
 
 /** 在 setup 外使用 */
