@@ -186,7 +186,7 @@
                 :class="{ 'member-entry': invitation.is_member }"
                 @click="handleJoin"
               >
-                <span>{{ invitation.is_member ? "直接进入系统" : getToken() ? "确认加入" : "登录并加入" }}</span>
+                <span>{{ invitation.is_member ? "直接进入系统" : hasCredential() ? "确认加入" : "登录并加入" }}</span>
                 <el-icon class="ml-2"><ArrowRight /></el-icon>
               </el-button>
               <p class="service-hint">点击加入即代表同意《租户空间治理协议》</p>
@@ -238,7 +238,7 @@ import {
 } from "@element-plus/icons-vue"
 import { verifyInvitationApi, acceptInvitationApi } from "@/api/iam/invitation"
 import type { InvitationVO } from "@/api/iam/invitation/type"
-import { getToken } from "@@/utils/cache/cookies"
+import { hasCredential } from "@/common/auth/credential"
 
 const route = useRoute()
 const router = useRouter()
@@ -272,7 +272,7 @@ const handleJoin = async () => {
     return
   }
 
-  if (!getToken()) {
+  if (!hasCredential()) {
     ElMessage.info("请先完成身份认证")
     router.push({
       path: "/login",

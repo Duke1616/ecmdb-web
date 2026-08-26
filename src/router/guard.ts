@@ -4,7 +4,7 @@ import { usePermissionStoreHook } from "@/pinia/stores/permission"
 import { ElMessage } from "element-plus"
 import { setRouteChange } from "@/common/composables/useRouteListener"
 import { useTitle } from "@/common/composables/useTitle"
-import { getToken } from "@@/utils/cache/cookies"
+import { hasCredential } from "@/common/auth/credential"
 import isWhiteList from "@/router/white-list"
 import { clearChunkLoadReloadFlag } from "@/common/utils/chunkLoadRecovery"
 import NProgress from "nprogress"
@@ -23,14 +23,14 @@ export function registerNavigationGuard(router: Router) {
     // 1. 免登录白名单处理
     if (isWhiteList(to)) {
       // 如果已登录且进入登录页，建议重定向到首页
-      if (to.path === LOGIN_PATH && getToken()) {
+      if (to.path === LOGIN_PATH && hasCredential()) {
         return "/"
       }
       return true
     }
 
-    // 2. 检查是否有 Token
-    if (!getToken()) {
+    // 2. 检查认证状态
+    if (!hasCredential()) {
       return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
     }
 

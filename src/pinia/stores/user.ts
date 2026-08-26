@@ -7,7 +7,7 @@ import { resetRouter } from "@/router"
 import { getProfileApi, logoutApi, listUsersApi } from "@/api/iam/user"
 import type * as user from "@/api/iam/user/type"
 import { usePermissionStoreHook } from "./permission"
-import { removeToken } from "@@/utils/cache/cookies"
+import { clearCredential } from "@/common/auth/credential"
 import { switchTenantApi } from "@/api/iam/tenant"
 import { removeUsername, setUsername } from "@/common/utils/cache/local-storage"
 
@@ -189,10 +189,10 @@ export const useUserStore = defineStore(
     }
 
     /**
-     * 重置 Token 及相关状态
+     * 重置认证状态
      */
     const resetToken = () => {
-      removeToken()
+      clearCredential()
       removeUsername()
       username.value = ""
       userInfo.value = null

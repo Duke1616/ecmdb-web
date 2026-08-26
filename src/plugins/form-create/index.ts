@@ -2,7 +2,7 @@ import { type App } from "vue"
 import formCreate from "@form-create/element-ui"
 import FcDesigner from "@form-create/designer"
 import type { FetchOption } from "@form-create/core"
-import { getToken } from "@@/utils/cache/cookies"
+import { getAccessToken, shouldUseBearerCredential } from "@/common/auth/credential"
 
 export function loadFromCreate(app: App) {
   // 在全局设置 fetch，添加 token 头
@@ -16,7 +16,7 @@ export function loadFromCreate(app: App) {
     }
 
     // 获取 token 并设置到 headers
-    const token = getToken()
+    const token = shouldUseBearerCredential() ? getAccessToken() : null
     if (token && option.headers) {
       ;(option.headers as Record<string, string>).Authorization = `Bearer ${token}`
     }
