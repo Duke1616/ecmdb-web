@@ -7,7 +7,8 @@ import {
   type CreateTaskReq,
   type ExecutionNotificationRule,
   type TaskItem,
-  type TaskParamOverrideRule
+  type TaskParamOverrideRule,
+  type VariableItem
 } from "@/api/task/manager/type"
 import type { HandlerDetail } from "@/api/task/resource/type"
 import type { ProgramSpec } from "@/api/task/program"
@@ -30,6 +31,7 @@ export interface TaskFormState {
   grpc_service: string
   grpc_handler: string
   grpc_params: Record<string, string>
+  grpc_variables: VariableItem[]
   runner_id?: number
   runner_params: Record<string, string>
   program?: ProgramSpec
@@ -105,6 +107,7 @@ export const createDefaultFormState = (): TaskFormState => ({
   grpc_service: "",
   grpc_handler: "",
   grpc_params: {},
+  grpc_variables: [],
   runner_id: undefined,
   runner_params: {},
   program: undefined,
@@ -159,6 +162,9 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
       state.runner_params = cloneDeep(data.grpc_config.params) ?? {}
     } else {
       state.grpc_params = cloneDeep(data.grpc_config.params) ?? {}
+      if (data.grpc_config.variables?.length) {
+        state.grpc_variables = cloneDeep(data.grpc_config.variables)
+      }
     }
   }
   state.runner_id = data.runner_id && data.runner_id > 0 ? data.runner_id : undefined
@@ -197,7 +203,7 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
  * @param state 摊平后的表单状态数据
  * @returns 组装后的创建/更新请求载荷
  */
-export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
+export const mapToApiPayload = (state: TaskFormState, handler?: HandlerDetail | null): CreateTaskReq => {
   // NOTE: 后端为强类型嵌套结构，此处负责提取扁平表单中的多套协议配置并精准还原嵌套结构
   const payload: CreateTaskReq = {
     name: state.name,
@@ -220,10 +226,20 @@ export const mapToApiPayload = (state: TaskFormState): CreateTaskReq => {
       params: cloneDeep(state.runner_params)
     }
   } else if (state.protocol === TaskProtocol.GRPC) {
+    const params = cloneDeep(state.grpc_params) ?? {}
+    const variables = cloneDeep(state.grpc_variables)
+    const variableParameter = handler?.metadata?.find((item) => item.role === "variables")
+    const variableKey = variableParameter?.key
+    const variableMode = variableKey ? state.metadata[variableKey] : undefined
+    const variableBinding = variableMode ? variableParameter?.bindings?.[variableMode] : undefined
+    // 只有手动输入绑定使用结构化 variables；执行单元引用必须保留 Runner ID 参数。
+    const usesRunnerReference = variableBinding?.component === "runner-picker" || variableMode === "runner"
+    if (variableKey && !usesRunnerReference) delete params[variableKey]
     payload.grpc_config = {
       service_name: state.grpc_service,
       handler_name: state.grpc_handler,
-      params: cloneDeep(state.grpc_params)
+      params,
+      variables
     }
   } else {
     payload.http_config = {

@@ -1,7 +1,6 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source"
 import instance, { API_SERVICE } from "@@/utils/service"
-import { activeTenantStack } from "@/common/utils/service"
-import { useUserStoreHook } from "@/pinia/stores/user"
+import { activeTenantHeaders, getActiveTenantId } from "@/common/utils/service"
 import { StreamEventName } from "./ai.enums"
 import type {
   AIChatReq,
@@ -56,9 +55,7 @@ function buildStreamHeaders() {
     Accept: "text/event-stream",
     "Content-Type": "application/json"
   }
-  const tenantID = activeTenantStack.value.at(-1)?.tenantId ?? useUserStoreHook().currentTenantId
-  if (tenantID) headers["X-Active-Tenant-ID"] = String(tenantID)
-  return headers
+  return { ...headers, ...activeTenantHeaders(getActiveTenantId()) }
 }
 
 /** 发起一次不可自动重试的 AI 对话，避免网络重连造成重复消息。 */

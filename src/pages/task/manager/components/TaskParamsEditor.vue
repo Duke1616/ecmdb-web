@@ -5,6 +5,7 @@
       :key="p.key"
       :parameter="p"
       :model-value="modelValue[p.key] ?? ''"
+      :structured-variables="p.role === ParameterRole.Variables ? structuredVariables : undefined"
       :active-mode="paramModes[p.key]"
       :is-full-screen="!!fullScreenStates[p.key]"
       :project-entry-codebook-id="projectEntryCodebookId"
@@ -12,6 +13,7 @@
       :selected="isSelected(p.key)"
       :selection-label="selectionLabel"
       @update:model-value="(val) => onParamUpdate(p.key, val)"
+      @update:structured-variables="(val) => (structuredVariables = val)"
       @update:active-mode="(mode) => onModeUpdate(p, mode)"
       @update:selected="(value) => setSelected(p.key, value)"
       @configure="openRuleDialog(p)"
@@ -28,8 +30,8 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch, onMounted, onUnmounted } from "vue"
-import type { Parameter } from "@/api/task/resource/type"
-import type { TaskParamOverrideRule } from "@/api/task/manager/type"
+import { ParameterRole, type Parameter } from "@/api/task/resource/type"
+import type { TaskParamOverrideRule, VariableItem } from "@/api/task/manager/type"
 import TaskParamItem from "./TaskParamItem.vue"
 import TaskParamOverrideRuleDialog from "./TaskParamOverrideRuleDialog.vue"
 
@@ -52,6 +54,8 @@ const props = withDefaults(defineProps<Props>(), {
 
 // 使用 defineModel 实现双向绑定
 const modelValue = defineModel<Record<string, string>>({ required: true })
+// 结构化变量独立于普通参数维护，避免依赖 JSON 字符串和异步 Handler 初始化时序。
+const structuredVariables = defineModel<VariableItem[]>("structuredVariables", { default: () => [] })
 // NOTE: 该组件为辅助编辑组件，通过 taskMetadata 双向同步参数的绑定状态与 UI 模式
 const taskMetadata = defineModel<Record<string, string>>("taskMetadata", { default: () => ({}) })
 const overrideRules = defineModel<TaskParamOverrideRule[]>("overrideRules", { default: () => [] })

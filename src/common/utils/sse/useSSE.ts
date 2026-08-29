@@ -1,7 +1,6 @@
 import { onMounted, onUnmounted, watch, toValue, type MaybeRefOrGetter } from "vue"
 import { fetchEventSource } from "@microsoft/fetch-event-source"
-import { useUserStoreHook } from "@/pinia/stores/user"
-import { activeTenantStack } from "@/common/utils/service"
+import { activeTenantHeaders, getActiveTenantId } from "@/common/utils/service"
 
 /**
  * SSE 连接配置项
@@ -58,19 +57,12 @@ export function useSSE<T>(options: UseSSEOptions<T>) {
     const baseApi = import.meta.env.VITE_BASE_API ?? "/api"
     const url = `${baseApi}/${currentPath}`
 
-    // 对齐 axios 拦截器的租户头注入逻辑：
-    // 1. 优先从声明式上下文栈（useTenantScope）中取栈顶租户
-    // 2. 退回到 Pinia 全局选择的当前租户
-    const tenantId = activeTenantStack.value.at(-1)?.tenantId ?? useUserStoreHook().currentTenantId
-
     const headers: Record<string, string> = {
       // fetch-event-source 内部按小写键判断是否已设置 Accept；保持小写可避免重复请求头。
       accept: "text/event-stream"
     }
 
-    if (tenantId) {
-      headers["X-Active-Tenant-ID"] = String(tenantId)
-    }
+    Object.assign(headers, activeTenantHeaders(getActiveTenantId()))
 
     void fetchEventSource(url, {
       method: "GET",

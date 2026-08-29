@@ -3,7 +3,12 @@
     <div class="variables-container">
       <div class="variable-input-wrapper">
         <div class="input-row">
-          <el-input v-model="variableInput.key" placeholder="变量名" class="variable-input key-input" @keyup.enter="addVariable">
+          <el-input
+            v-model="variableInput.key"
+            placeholder="变量名"
+            class="variable-input key-input"
+            @keyup.enter="addVariable"
+          >
             <template #prefix>
               <span class="input-prefix">KEY</span>
             </template>
@@ -19,8 +24,13 @@
               <span class="input-prefix">VALUE</span>
             </template>
           </el-input>
-          <button type="button" class="secret-toggle" :class="{ active: variableInput.secret }" @click="variableInput.secret = !variableInput.secret">
-            <span class="toggle-dot"></span>
+          <button
+            type="button"
+            class="secret-toggle"
+            :class="{ active: variableInput.secret }"
+            @click="variableInput.secret = !variableInput.secret"
+          >
+            <span class="toggle-dot" />
             {{ variableInput.secret ? "敏感" : "普通" }}
           </button>
           <el-button
@@ -49,35 +59,18 @@
             <span>VALUE</span>
             <span>类型</span>
           </div>
-          <div v-for="(variable, index) in variableList" :key="index" class="variable-item">
-            <div class="variable-content">
-              <div class="variable-key-cell">
-                <el-tooltip :content="variable.key" placement="top" :show-after="300">
-                  <span class="variable-key">{{ variable.key }}</span>
-                </el-tooltip>
-              </div>
-              <div class="variable-value-cell">
-                <el-tooltip :content="variable.secret ? '敏感变量已隐藏' : variable.value" placement="top" :show-after="300">
-                  <span class="variable-value" :class="{ masked: variable.secret }">
-                    {{ variable.secret ? "••••••••" : variable.value }}
-                  </span>
-                </el-tooltip>
-              </div>
-            </div>
-            <div class="variable-actions">
-              <span class="secret-badge" :class="{ sensitive: variable.secret }">
-                {{ variable.secret ? "敏感" : "普通" }}
-              </span>
-              <button type="button" class="row-delete" @click="removeVariable(index)" title="删除变量">
-                <el-icon><Delete /></el-icon>
-              </button>
-            </div>
-          </div>
+          <VariableRow
+            v-for="variable in variableList"
+            :key="variable.key"
+            :variable="variable"
+            @update="updateVariable(variable.key, $event)"
+            @remove="removeVariable(variable.key)"
+          />
         </div>
       </div>
 
       <div class="empty-variables" v-else>
-        <span class="empty-dot"></span>
+        <span class="empty-dot" />
         <span>按需添加执行器运行时变量</span>
       </div>
     </div>
@@ -89,6 +82,7 @@ import { ref, watch } from "vue"
 import { Plus, Delete } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import type { variables } from "@/api/task/runner/types/runner"
+import VariableRow from "./components/VariableRow.vue"
 
 interface Props {
   modelValue?: variables[]
@@ -98,7 +92,7 @@ const props = withDefaults(defineProps<Props>(), {
   modelValue: () => []
 })
 
-const emits = defineEmits<{
+const emit = defineEmits<{
   "update:modelValue": [value: variables[]]
   change: [value: variables[]]
 }>()
@@ -117,7 +111,7 @@ const addVariable = () => {
 
   if (!key || !value) return
 
-  if (variableList.value.some((v: variables) => v.key === key)) {
+  if (variableList.value.some((item) => item.key === key)) {
     ElMessage.warning("变量名已存在，请使用不同的名称")
     return
   }
@@ -137,8 +131,8 @@ const addVariable = () => {
   emitChange()
 }
 
-const removeVariable = (index: number) => {
-  variableList.value.splice(index, 1)
+const removeVariable = (key: string) => {
+  variableList.value = variableList.value.filter((item) => item.key !== key)
   emitChange()
 }
 
@@ -147,17 +141,21 @@ const clearAllVariables = () => {
   emitChange()
 }
 
+const updateVariable = (key: string, next: variables) => {
+  variableList.value = variableList.value.map((item) => (item.key === key ? next : item))
+  emitChange()
+}
+
 const emitChange = () => {
-  emits("update:modelValue", [...variableList.value])
-  emits("change", [...variableList.value])
+  const nextValue = [...variableList.value]
+  emit("update:modelValue", nextValue)
+  emit("change", nextValue)
 }
 
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (newValue) {
-      variableList.value = [...newValue]
-    }
+    variableList.value = [...newValue]
   },
   { immediate: true }
 )
@@ -319,12 +317,13 @@ watch(
       }
 
       .variables-list {
+        --variable-grid-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) 70px 56px;
         display: flex;
         flex-direction: column;
 
         .variables-list-head {
           display: grid;
-          grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) 70px 28px;
+          grid-template-columns: var(--variable-grid-columns);
           gap: 10px;
           min-height: 30px;
           align-items: center;
@@ -340,100 +339,6 @@ watch(
             text-align: center;
           }
         }
-
-        .variable-item {
-          display: grid;
-          grid-template-columns: minmax(0, 1fr) 98px;
-          align-items: center;
-          gap: 8px;
-          min-height: 38px;
-          padding: 5px 8px 5px 10px;
-          background: #ffffff;
-          border-bottom: 1px solid #edf1f6;
-          transition: background 0.15s ease;
-
-          &:last-child {
-            border-bottom: none;
-          }
-
-          &:hover {
-            background: #fbfdff;
-
-            .row-delete {
-              opacity: 1;
-            }
-          }
-
-          .variable-content {
-            display: grid;
-            grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-
-            .variable-key,
-            .variable-value {
-              display: block;
-              max-width: 100%;
-              overflow: hidden;
-              text-overflow: ellipsis;
-              white-space: nowrap;
-            }
-
-            .variable-key-cell,
-            .variable-value-cell {
-              min-width: 0;
-            }
-
-            .variable-key {
-              color: #1f2937;
-              font-family:
-                ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-              font-size: 12px;
-              font-weight: 700;
-            }
-
-            .variable-value {
-              display: block;
-              color: #667085;
-              font-size: 12px;
-
-              &.masked {
-                color: #98a2b3;
-                letter-spacing: 0.08em;
-              }
-            }
-          }
-
-          .variable-actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 6px;
-            min-width: 0;
-
-            .secret-badge {
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              height: 20px;
-              min-width: 38px;
-              padding: 0 7px;
-              color: #16803c;
-              background: #f2fbf5;
-              border: 1px solid #c7efd5;
-              border-radius: 999px;
-              font-size: 11px;
-              font-weight: 600;
-
-              &.sensitive {
-                color: #b42318;
-                background: #fff7f5;
-                border-color: #f4b7ae;
-              }
-            }
-          }
-        }
       }
     }
 
@@ -445,31 +350,6 @@ watch(
 
       &:hover {
         color: #d92d20;
-      }
-    }
-
-    .row-delete {
-      display: inline-flex;
-      flex: 0 0 auto;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      padding: 0;
-      color: #98a2b3;
-      background: transparent;
-      border: 0;
-      border-radius: 5px;
-      cursor: pointer;
-      opacity: 0.45;
-      transition:
-        opacity 0.15s ease,
-        color 0.15s ease,
-        background 0.15s ease;
-
-      &:hover {
-        color: #d92d20;
-        background: #fff1f0;
       }
     }
 
@@ -515,23 +395,10 @@ watch(
 
       .variables-display {
         .variables-list {
+          --variable-grid-columns: 1fr;
+
           .variables-list-head {
             display: none;
-          }
-
-          .variable-item {
-            grid-template-columns: 1fr;
-            gap: 6px;
-            padding: 8px 10px;
-
-            .variable-content {
-              grid-template-columns: 1fr;
-              gap: 4px;
-            }
-
-            .variable-actions {
-              justify-content: space-between;
-            }
           }
         }
       }

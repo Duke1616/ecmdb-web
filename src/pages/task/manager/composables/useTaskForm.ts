@@ -106,6 +106,16 @@ export function useTaskForm(options: {
 
     // 基于元数据自适应初始化参数的默认值
     for (const meta of handler.metadata ?? []) {
+      if (meta.role === "variables") {
+        // 手动输入使用独立变量数组；执行单元引用仍需在 params 中保存 Runner ID。
+        const mode = form.value.metadata[meta.key]
+        const binding = mode ? meta.bindings?.[mode] : undefined
+        if (binding?.component === "runner-picker") {
+          // Runner 绑定的参数是数字 ID，不能使用手动变量的 JSON 默认值。
+          params[meta.key] = params[meta.key] || ""
+        }
+        continue
+      }
       params[meta.key] = params[meta.key] || meta.default || ""
     }
   }
@@ -193,7 +203,7 @@ export function useTaskForm(options: {
 
     saving.value = true
     try {
-      const payload = mapToApiPayload(form.value)
+      const payload = mapToApiPayload(form.value, currentHandler.value)
       const id = currentTaskId.value
 
       if (id) {

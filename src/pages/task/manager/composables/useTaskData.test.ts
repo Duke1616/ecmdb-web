@@ -8,6 +8,7 @@ import {
   TaskType,
   type TaskItem
 } from "@/api/task/manager/type"
+import { ParameterRole } from "@/api/task/resource/type"
 import { ProgramKind } from "@/api/task/program"
 import {
   createDefaultFormState,
@@ -20,6 +21,28 @@ import {
 } from "./useTaskData"
 
 describe("任务程序来源映射", () => {
+  it("普通 gRPC 任务编辑时保留独立变量快照", () => {
+    const task = {
+      id: 10,
+      name: "variable-task",
+      type: TaskType.ONE_TIME,
+      status: TaskStatus.COMPLETED,
+      next_time: 0,
+      ctime: 0,
+      utime: 0,
+      version: 1,
+      grpc_config: {
+        service_name: "executor",
+        handler_name: "shell",
+        params: { args: "{}" },
+        variables: [{ key: "TOKEN", value: "[已脱敏]", secret: true }]
+      }
+    } satisfies TaskItem
+
+    const form = mapToFormState(task)
+    expect(form.grpc_variables).toEqual(task.grpc_config.variables)
+  })
+
   it("详情中的 PROJECT 程序能原样提交", () => {
     const task = {
       id: 1,
@@ -61,6 +84,77 @@ describe("任务程序来源映射", () => {
     form.grpc_service = "executor"
     form.grpc_handler = "shell"
     expect(mapToApiPayload(form).grpc_config?.params).toEqual({ direct_only: "kept" })
+  })
+
+  it("普通 gRPC 任务只从独立字段提交变量", () => {
+    const form = createDefaultFormState()
+    form.protocol = TaskProtocol.GRPC
+    form.grpc_service = "executor"
+    form.grpc_handler = "ansible"
+    form.grpc_params = { args: "{}" }
+    form.grpc_variables = [{ key: "TOKEN", value: "secret", secret: true }]
+
+    const payload = mapToApiPayload(form, {
+      name: "ansible",
+      desc: "Ansible",
+      metadata: [
+        { key: "vars", role: ParameterRole.Variables, desc: "剧本变量", required: false, default: "[]", bindings: {} }
+      ]
+    })
+    expect(payload.grpc_config?.params).toEqual({ args: "{}" })
+    expect(payload.grpc_config?.variables).toEqual([{ key: "TOKEN", value: "secret", secret: true }])
+  })
+
+  it("编辑器中的结构化变量优先于普通参数中的旧 JSON", () => {
+    const form = createDefaultFormState()
+    form.protocol = TaskProtocol.GRPC
+    form.grpc_service = "executor"
+    form.grpc_handler = "ansible"
+    form.grpc_variables = [{ key: "TOKEN", value: "[已脱敏]", secret: true }]
+    form.grpc_params = {
+      args: "{}",
+      vars: '[{"key":"OLD","value":"old","secret":true}]'
+    }
+
+    const payload = mapToApiPayload(form, {
+      name: "ansible",
+      desc: "Ansible",
+      metadata: [
+        { key: "vars", role: ParameterRole.Variables, desc: "剧本变量", required: false, default: "[]", bindings: {} }
+      ]
+    })
+    expect(payload.grpc_config?.params).toEqual({ args: "{}" })
+    expect(payload.grpc_config?.variables).toEqual([{ key: "TOKEN", value: "[已脱敏]", secret: true }])
+  })
+
+  it("执行单元引用模式保留 Runner ID 参数", () => {
+    const form = createDefaultFormState()
+    form.protocol = TaskProtocol.GRPC
+    form.grpc_service = "executor"
+    form.grpc_handler = "ansible"
+    form.metadata = { variables: "runner" }
+    form.grpc_params = { variables: "11" }
+
+    const payload = mapToApiPayload(form, {
+      name: "ansible",
+      desc: "Ansible",
+      metadata: [
+        {
+          key: "variables",
+          role: ParameterRole.Variables,
+          desc: "环境变量",
+          required: false,
+          default: "[]",
+          bindings: {
+            static: { component: "kv-input", config: {}, placeholder: "", label: "手动输入" },
+            runner: { component: "runner-picker", config: {}, placeholder: "", label: "执行单元引用" }
+          }
+        }
+      ]
+    })
+
+    expect(payload.grpc_config?.params).toEqual({ variables: "11" })
+    expect(payload.grpc_config?.variables).toEqual([])
   })
 
   it("详情中的 runner_id 恢复为执行单元模式", () => {

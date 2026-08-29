@@ -22,6 +22,8 @@ export interface HYRequesInterceptorsToOnce {
 
 // 配置接口
 export interface HYRequestConfig extends AxiosRequestConfig {
+  /** 指定本次请求的执行租户，由公共拦截器转换为 X-Active-Tenant-ID。 */
+  activeTenantId?: number
   interceptors?: HYRequesInterceptors
   interceptorsToOnce?: HYRequesInterceptorsToOnce
 }

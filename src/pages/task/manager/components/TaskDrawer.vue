@@ -143,6 +143,7 @@
                     <TaskParamsEditor
                       v-if="currentMetadata.length"
                       v-model="form.grpc_params"
+                      v-model:structured-variables="form.grpc_variables"
                       v-model:task-metadata="form.metadata"
                       v-model:override-rules="form.param_override_rules"
                       :metadata="currentMetadata"

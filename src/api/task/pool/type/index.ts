@@ -71,9 +71,10 @@ export interface ListPoolsResp {
 }
 
 export interface ListBindingsReq {
-  tenant_id?: number
   pool_name?: string
   status?: ExecutionPoolBindingStatus | ""
+  /** 为 true 时查询全部租户；目标租户通过 X-Active-Tenant-ID 请求头传递。 */
+  all_tenants?: boolean
 }
 
 export interface ListBindingsResp {
@@ -81,7 +82,7 @@ export interface ListBindingsResp {
 }
 
 export interface BindPoolReq {
-  tenant_id: number
+  /** 目标租户通过 X-Active-Tenant-ID 请求头传递。 */
   pool_name: string
   handler_name?: string
   handler_names?: string[]
@@ -89,7 +90,6 @@ export interface BindPoolReq {
 }
 
 export interface BindingKeyReq {
-  tenant_id: number
   pool_name: string
   handler_name: string
 }

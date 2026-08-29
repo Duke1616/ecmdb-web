@@ -1,5 +1,5 @@
 import instance from "@@/utils/service"
-import { API_SERVICE } from "@@/utils/service"
+import { API_SERVICE, withActiveTenant } from "@@/utils/service"
 import type * as pool from "./type"
 
 const POOL_API_PREFIX = `${API_SERVICE.TASK}/execution-pool`
@@ -12,37 +12,47 @@ export function listExecutionPoolsAdminApi(data: pool.ListPoolsReq) {
   })
 }
 
-export function listExecutionPoolBindingsAdminApi(data: pool.ListBindingsReq) {
+/** 查询绑定；指定 tenantId 时通过 X-Active-Tenant-ID 选择租户。 */
+export function listExecutionPoolBindingsAdminApi(data: pool.ListBindingsReq, tenantId?: number) {
   return instance.post<pool.ListBindingsResp>({
     url: `${POOL_ADMIN_API_PREFIX}/bindings/list`,
-    data
+    data,
+    ...withActiveTenant(tenantId)
   })
 }
 
-export function bindExecutionPoolAdminApi(data: pool.BindPoolReq) {
+/** 创建资源池绑定，tenantId 会写入 X-Active-Tenant-ID 请求头。 */
+export function bindExecutionPoolAdminApi(data: pool.BindPoolReq, tenantId: number) {
   return instance.post<void>({
     url: `${POOL_ADMIN_API_PREFIX}/bindings/bind`,
-    data
+    data,
+    ...withActiveTenant(tenantId)
   })
 }
 
-export function unbindExecutionPoolAdminApi(data: pool.BindingKeyReq) {
+/** 删除资源池绑定，tenantId 会写入 X-Active-Tenant-ID 请求头。 */
+export function unbindExecutionPoolAdminApi(data: pool.BindingKeyReq, tenantId: number) {
   return instance.delete<void>({
     url: `${POOL_ADMIN_API_PREFIX}/bindings/unbind`,
-    data
+    data,
+    ...withActiveTenant(tenantId)
   })
 }
 
-export function enableExecutionPoolBindingAdminApi(data: pool.BindingKeyReq) {
+/** 启用资源池绑定，tenantId 会写入 X-Active-Tenant-ID 请求头。 */
+export function enableExecutionPoolBindingAdminApi(data: pool.BindingKeyReq, tenantId: number) {
   return instance.post<void>({
     url: `${POOL_ADMIN_API_PREFIX}/bindings/enable`,
-    data
+    data,
+    ...withActiveTenant(tenantId)
   })
 }
 
-export function disableExecutionPoolBindingAdminApi(data: pool.BindingKeyReq) {
+/** 禁用资源池绑定，tenantId 会写入 X-Active-Tenant-ID 请求头。 */
+export function disableExecutionPoolBindingAdminApi(data: pool.BindingKeyReq, tenantId: number) {
   return instance.post<void>({
     url: `${POOL_ADMIN_API_PREFIX}/bindings/disable`,
-    data
+    data,
+    ...withActiveTenant(tenantId)
   })
 }

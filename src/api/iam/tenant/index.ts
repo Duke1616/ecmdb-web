@@ -1,5 +1,5 @@
 import instance from "@@/utils/service"
-import { API_SERVICE } from "@@/utils/service"
+import { API_SERVICE, withActiveTenant } from "@@/utils/service"
 import type * as tenant from "./type"
 
 /** 租户空间创建 */
@@ -21,7 +21,7 @@ export function listMyTenantsApi() {
 export function switchTenantApi(tenantId: number) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/switch`,
-    headers: { "X-Active-Tenant-ID": String(tenantId) }
+    ...withActiveTenant(tenantId)
   })
 }
 
@@ -73,39 +73,27 @@ export function listUserTenantsApi(data: tenant.ListUserTenantsReq) {
 
 /** 租户成员列表 (治理侧) */
 export function listTenantMembersApi(data: tenant.ListMembersReq, tenantId?: number) {
-  const headers: Record<string, string> = {}
-  if (tenantId !== undefined) {
-    headers["X-Active-Tenant-ID"] = String(tenantId)
-  }
   return instance.post<tenant.ListMembersRes>({
     url: `${API_SERVICE.IAM}/tenant/members`,
     data,
-    headers
+    ...withActiveTenant(tenantId)
   })
 }
 
 /** 分配用户到租户 */
 export function assignTenantUserApi(data: tenant.AssignUserReq, tenantId?: number) {
-  const headers: Record<string, string> = {}
-  if (tenantId !== undefined) {
-    headers["X-Active-Tenant-ID"] = String(tenantId)
-  }
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/assign`,
     data,
-    headers
+    ...withActiveTenant(tenantId)
   })
 }
 /** 移除租户成员 */
 export function removeTenantMemberApi(data: tenant.RemoveMemberReq, tenantId?: number) {
-  const headers: Record<string, string> = {}
-  if (tenantId !== undefined) {
-    headers["X-Active-Tenant-ID"] = String(tenantId)
-  }
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/unassign`,
     data,
-    headers
+    ...withActiveTenant(tenantId)
   })
 }
 

@@ -119,6 +119,14 @@ export interface GrpcConfig {
   auth_token?: string
   handler_name: string
   params?: Record<string, string>
+  /** 独立的结构化变量；敏感值仅用于编辑占位，不代表真实值。 */
+  variables?: VariableItem[]
+}
+
+export interface VariableItem {
+  key: string
+  value: string
+  secret: boolean
 }
 
 export interface HTTPConfig {

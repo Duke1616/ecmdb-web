@@ -78,7 +78,13 @@
                 <!-- C: 键值对编辑器 (kv-input) -->
                 <template v-else-if="currentBinding.component === 'kv-input'">
                   <div class="map-editor-wrapper">
-                    <KVEditor v-model="mapValue" value-type="array" show-secret />
+                    <KVEditor
+                      v-if="parameter.role === 'variables' && structuredVariables"
+                      v-model="variableValue"
+                      value-type="array"
+                      show-secret
+                    />
+                    <KVEditor v-else v-model="mapValue" value-type="array" show-secret />
                   </div>
                 </template>
 
@@ -173,6 +179,7 @@ import { FullScreen, Close, Link, Setting } from "@element-plus/icons-vue"
 import CodeEditor from "@@/components/CodeEditor/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import type { Parameter } from "@/api/task/resource/type"
+import type { VariableItem } from "@/api/task/manager/type"
 import KVEditor from "./KVEditor.vue"
 import ProjectFileParamInput from "@/common/components/ProjectFileParamInput/index.vue"
 
@@ -191,11 +198,14 @@ interface Props {
   selectionLabel?: string
   inputDisabled?: boolean
   controlOnly?: boolean
+  /** 变量语义参数使用独立数组绑定，避免通过普通参数 JSON 间接传递。 */
+  structuredVariables?: VariableItem[]
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
   (e: "update:modelValue", val: string): void
+  (e: "update:structuredVariables", val: VariableItem[]): void
   (e: "update:activeMode", val: string): void
   (e: "update:selected", val: boolean): void
   (e: "configure"): void
@@ -249,6 +259,12 @@ const selectOptions = computed<SelectOption[]>(() => {
 const selectValue = computed<string>({
   get: () => props.modelValue,
   set: (value) => emit("update:modelValue", value)
+})
+
+// 变量参数直接读写结构化数组，避免详情回显依赖 Handler 回调把值重新序列化到 params。
+const variableValue = computed<VariableItem[]>({
+  get: () => props.structuredVariables ?? [],
+  set: (value) => emit("update:structuredVariables", value)
 })
 
 // 缓存最近一次解析成功的合法字典值，规避 TypeScript 自引用类型推导死锁，并防范非法输入抹除数据

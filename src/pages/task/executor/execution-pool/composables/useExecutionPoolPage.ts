@@ -159,14 +159,15 @@ export function useExecutionPoolPage() {
       return
     }
 
+    const tenantId = normalizeTenantId(bindingFilters.tenant_id)
     const params = {
-      tenant_id: normalizeTenantId(bindingFilters.tenant_id),
       pool_name: selectedPoolName.value,
-      status: bindingFilters.status
+      status: bindingFilters.status,
+      all_tenants: tenantId === undefined
     }
     bindingLoading.value = true
     try {
-      const { data } = await listExecutionPoolBindingsAdminApi(params)
+      const { data } = await listExecutionPoolBindingsAdminApi(params, tenantId)
       if (requestId !== bindingRequestId || !isSystemSpace.value) return
 
       const nextBindings = data.bindings || []
@@ -192,7 +193,8 @@ export function useExecutionPoolPage() {
     bindDialogBindingLoading.value = true
     try {
       const { data } = await listExecutionPoolBindingsAdminApi({
-        pool_name: bindForm.pool_name
+        pool_name: bindForm.pool_name,
+        all_tenants: true
       })
       if (requestId === bindDialogBindingRequestId) {
         bindDialogBindings.value = data.bindings || []
@@ -285,12 +287,14 @@ export function useExecutionPoolPage() {
 
     submitLoading.value = true
     try {
-      await bindExecutionPoolAdminApi({
-        tenant_id: tenantId,
-        pool_name: bindForm.pool_name,
-        handler_names: handlerNames,
-        desc: bindForm.desc
-      })
+      await bindExecutionPoolAdminApi(
+        {
+          pool_name: bindForm.pool_name,
+          handler_names: handlerNames,
+          desc: bindForm.desc
+        },
+        tenantId
+      )
       ElMessage.success(handlerNames.length > 1 ? `已授权 ${handlerNames.length} 个 Handler` : "授权成功")
       bindDialogVisible.value = false
       loadBindings()
@@ -308,15 +312,14 @@ export function useExecutionPoolPage() {
 
   const toggleBinding = async (row: ExecutionPoolBinding) => {
     const payload = {
-      tenant_id: row.tenant_id,
       pool_name: row.pool_name,
       handler_name: row.handler_name || DEFAULT_HANDLER
     }
 
     if (row.status === ExecutionPoolBindingStatus.Enabled) {
-      await disableExecutionPoolBindingAdminApi(payload)
+      await disableExecutionPoolBindingAdminApi(payload, row.tenant_id)
     } else {
-      await enableExecutionPoolBindingAdminApi(payload)
+      await enableExecutionPoolBindingAdminApi(payload, row.tenant_id)
     }
     ElMessage.success("操作成功")
     loadBindings()
@@ -326,11 +329,13 @@ export function useExecutionPoolPage() {
     await ElMessageBox.confirm(`确认解绑 ${row.pool_name} / ${row.handler_name || DEFAULT_HANDLER}？`, "解绑确认", {
       type: "warning"
     })
-    await unbindExecutionPoolAdminApi({
-      tenant_id: row.tenant_id,
-      pool_name: row.pool_name,
-      handler_name: row.handler_name || DEFAULT_HANDLER
-    })
+    await unbindExecutionPoolAdminApi(
+      {
+        pool_name: row.pool_name,
+        handler_name: row.handler_name || DEFAULT_HANDLER
+      },
+      row.tenant_id
+    )
     ElMessage.success("解绑成功")
     loadBindings()
   }
