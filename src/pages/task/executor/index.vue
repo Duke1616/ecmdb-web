@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, type Ref } from "vue"
 import { Setting } from "@element-plus/icons-vue"
 import ResourceTab from "./tabs/resource.vue"
 import ExecutorSearchCommand from "./components/ExecutorSearchCommand.vue"
@@ -45,19 +45,27 @@ import { useUserStore } from "@/pinia/stores/user"
 import { isSystemTenant } from "@/pages/alert/template/utils"
 import { ResourceKind } from "@/api/task/resource/type"
 
-const activeName = ref("executor")
+type ResourceTabName = "executor" | "worker"
+type ResourceTabInstance = InstanceType<typeof ResourceTab>
+
+const activeName = ref<ResourceTabName>("executor")
 const keyword = ref("")
 const poolManagerVisible = ref(false)
 const userStore = useUserStore()
 
-// 标签页配置
 const tabs = [
   { name: "executor", label: "分布式调度模式 🌟" },
   { name: "worker", label: "消息推送" }
-]
+] satisfies Array<{ name: ResourceTabName; label: string }>
 
-const workerRef = ref<InstanceType<typeof ResourceTab>>()
-const executorRef = ref<InstanceType<typeof ResourceTab>>()
+const workerRef = ref<ResourceTabInstance>()
+const executorRef = ref<ResourceTabInstance>()
+const resourceRefs: Record<ResourceTabName, Ref<ResourceTabInstance | undefined>> = {
+  worker: workerRef,
+  executor: executorRef
+}
+
+const isResourceTabName = (value: string): value is ResourceTabName => tabs.some((tab) => tab.name === value)
 
 const searchPlaceholder = computed(() => {
   return activeName.value === "worker" ? "搜索资源名称、Topic 或描述..." : "搜索执行资源名称..."
@@ -69,24 +77,17 @@ const currentTenant = computed(() =>
 
 const isSystemSpace = computed(() => isSystemTenant(userStore.currentTenantId, currentTenant.value))
 
-// 处理标签页切换
-const handleTabChange = (tabName: string) => {
-  activeName.value = tabName
-  if (tabName === "worker") {
-    workerRef.value?.listResourcesData()
-  } else if (tabName === "executor") {
-    executorRef.value?.listResourcesData()
-  }
+const refreshActiveTab = () => {
+  resourceRefs[activeName.value].value?.listResourcesData()
 }
 
-// 刷新数据
-const handleRefresh = () => {
-  if (activeName.value === "worker") {
-    workerRef.value?.listResourcesData()
-  } else if (activeName.value === "executor") {
-    executorRef.value?.listResourcesData()
-  }
+const handleTabChange = (tabName: string) => {
+  if (!isResourceTabName(tabName)) return
+  activeName.value = tabName
+  refreshActiveTab()
 }
+
+const handleRefresh = refreshActiveTab
 </script>
 
 <style lang="scss">

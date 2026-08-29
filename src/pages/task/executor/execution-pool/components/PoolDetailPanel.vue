@@ -179,15 +179,12 @@ const getOperateItems = (row: ExecutionPoolBinding) => [
   }
 ]
 
-const handleAction = (row: ExecutionPoolBinding, code: string) => {
-  if (code === "toggle") {
-    emit("toggle", row)
-    return
-  }
-  if (code === "unbind") {
-    emit("unbind", row)
-  }
+const actionHandlers: Record<string, (row: ExecutionPoolBinding) => void> = {
+  toggle: (row) => emit("toggle", row),
+  unbind: (row) => emit("unbind", row)
 }
+
+const handleAction = (row: ExecutionPoolBinding, code: string) => actionHandlers[code]?.(row)
 </script>
 
 <style scoped lang="scss">

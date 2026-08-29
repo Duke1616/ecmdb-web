@@ -132,7 +132,7 @@ import {
   createDefaultExecutionNotificationGroup,
   ETASK_DEFAULT_TEMPLATE_SET_ID,
   type ExecutionNotificationGroup
-} from "@/pages/task/manager/composables/useTaskData"
+} from "@/pages/task/manager/composables/taskNotifications"
 import { getChannelIcon, getChannelOptions } from "@/pages/alert/template/config/channels"
 import TemplateSetPicker from "@@/components/Pickers/TemplateSetPicker/index.vue"
 import ReceiverSelector from "@@/components/ReceiverSelector/index.vue"

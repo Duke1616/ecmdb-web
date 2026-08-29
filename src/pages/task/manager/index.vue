@@ -215,27 +215,19 @@ const getOperateItems = (row: TaskItem) => {
   ]
 }
 
+type TaskActionCode = "edit" | "clone" | "logs" | "run" | "stop" | "delete"
+
+const taskActionHandlers: Record<TaskActionCode, (row: TaskItem) => void> = {
+  edit: handleEdit,
+  clone: handleClone,
+  logs: handleLogs,
+  run: handleRunTask,
+  stop: (row) => handleStopTask(row.id),
+  delete: handleDelete
+}
+
 const handleAction = (row: TaskItem, code: string) => {
-  switch (code) {
-    case "edit":
-      handleEdit(row)
-      break
-    case "clone":
-      handleClone(row)
-      break
-    case "logs":
-      handleLogs(row)
-      break
-    case "run":
-      handleRunTask(row)
-      break
-    case "stop":
-      handleStopTask(row.id)
-      break
-    case "delete":
-      handleDelete(row)
-      break
-  }
+  taskActionHandlers[code as TaskActionCode]?.(row)
 }
 </script>
 

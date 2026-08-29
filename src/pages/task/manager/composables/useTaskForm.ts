@@ -10,9 +10,9 @@ import {
   createDefaultFormState,
   mapToFormState,
   mapToApiPayload,
-  validateBoundParameters,
-  validateExecutionNotificationGroups
+  validateBoundParameters
 } from "./useTaskData"
+import { validateExecutionNotificationGroups } from "./taskNotifications"
 import { useRunnerParameterOverrides } from "./useRunnerParameterOverrides"
 
 const validateProgramField = (_rule: unknown, value: TaskFormState["program"], callback: (error?: Error) => void) => {

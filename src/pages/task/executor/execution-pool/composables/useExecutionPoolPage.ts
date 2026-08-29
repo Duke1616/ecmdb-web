@@ -91,6 +91,25 @@ export function useExecutionPoolPage() {
 
   const selectedHandlers = computed(() => (selectedPool.value ? getPoolHandlers(selectedPool.value) : []))
 
+  const resetBindDialogState = () => {
+    bindDialogBindingRequestId++
+    bindDialogBindings.value = []
+    bindDialogBindingError.value = false
+    bindDialogBindingLoading.value = false
+  }
+
+  const resetPageState = () => {
+    poolRequestId++
+    bindingRequestId++
+    resetBindDialogState()
+    tenantCache.value = new Map()
+    pools.value = []
+    bindings.value = []
+    selectedPoolName.value = ""
+    poolLoading.value = false
+    bindingLoading.value = false
+  }
+
   const buildPoolParams = (): ListPoolsReq => ({
     offset: (poolPagination.currentPage - 1) * poolPagination.pageSize,
     limit: poolPagination.pageSize,
@@ -315,12 +334,11 @@ export function useExecutionPoolPage() {
       pool_name: row.pool_name,
       handler_name: row.handler_name || DEFAULT_HANDLER
     }
-
-    if (row.status === ExecutionPoolBindingStatus.Enabled) {
-      await disableExecutionPoolBindingAdminApi(payload, row.tenant_id)
-    } else {
-      await enableExecutionPoolBindingAdminApi(payload, row.tenant_id)
-    }
+    const updateBinding =
+      row.status === ExecutionPoolBindingStatus.Enabled
+        ? disableExecutionPoolBindingAdminApi
+        : enableExecutionPoolBindingAdminApi
+    await updateBinding(payload, row.tenant_id)
     ElMessage.success("操作成功")
     loadBindings()
   }
@@ -358,18 +376,7 @@ export function useExecutionPoolPage() {
     if (value) {
       await loadPools()
     } else {
-      poolRequestId++
-      bindingRequestId++
-      bindDialogBindingRequestId++
-      tenantCache.value = new Map()
-      pools.value = []
-      bindings.value = []
-      bindDialogBindings.value = []
-      bindDialogBindingError.value = false
-      poolLoading.value = false
-      bindingLoading.value = false
-      bindDialogBindingLoading.value = false
-      selectedPoolName.value = ""
+      resetPageState()
     }
   })
 
@@ -379,10 +386,7 @@ export function useExecutionPoolPage() {
       if (visible) {
         void loadBindDialogBindings()
       } else {
-        bindDialogBindingRequestId++
-        bindDialogBindings.value = []
-        bindDialogBindingError.value = false
-        bindDialogBindingLoading.value = false
+        resetBindDialogState()
       }
     }
   )

@@ -6,10 +6,7 @@ import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
 import type { TaskRunSubmitPayload } from "../components/TaskRunDialog.vue"
 
-/**
- * 任务管理核心逻辑 Hook
- * @description 对齐 useRoleList / usePolicyList 标准范式
- */
+/** 任务列表、弹窗状态和任务操作的统一入口。 */
 export function useTaskManager() {
   // 通用列表管理器
   const {
@@ -43,23 +40,23 @@ export function useTaskManager() {
   const runVisible = ref(false)
   const runTask = ref<TaskItem | null>(null)
 
-  const handleCreate = () => {
+  const resetFormTarget = () => {
     currentEditId.value = null
     cloneTaskId.value = null
+  }
+
+  const openForm = (target: { editId?: number; cloneId?: number } = {}) => {
+    resetFormTarget()
+    currentEditId.value = target.editId ?? null
+    cloneTaskId.value = target.cloneId ?? null
     formVisible.value = true
   }
 
-  const handleEdit = (row: TaskItem) => {
-    cloneTaskId.value = null
-    currentEditId.value = row.id
-    formVisible.value = true
-  }
+  const handleCreate = () => openForm()
 
-  const handleClone = (row: TaskItem) => {
-    currentEditId.value = null
-    cloneTaskId.value = row.id
-    formVisible.value = true
-  }
+  const handleEdit = (row: TaskItem) => openForm({ editId: row.id })
+
+  const handleClone = (row: TaskItem) => openForm({ cloneId: row.id })
 
   const handleDelete = (row: TaskItem) => {
     handleConfirmAction({
@@ -72,8 +69,7 @@ export function useTaskManager() {
 
   const handleFormSuccess = () => {
     formVisible.value = false
-    currentEditId.value = null
-    cloneTaskId.value = null
+    resetFormTarget()
     loadData()
   }
 
