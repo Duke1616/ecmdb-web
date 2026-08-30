@@ -84,3 +84,16 @@ export function acceptCredentialResponse(headers: Record<string, unknown> | unde
 export function shouldUseBearerCredential() {
   return getTokenCarrier() === "token" && Boolean(getAccessToken())
 }
+
+/**
+ * 为非 Axios 请求（例如 SSE 长连接、Fetch 流式请求）构造身份认证请求头
+ *
+ * 与全局 Axios 拦截器策略保持严格一致：
+ * 1. 仅在服务端声明为 Token 载体模式，且本地持有有效凭据时生成 `Authorization: Bearer <token>`
+ * 2. 在 Cookie 模式或凭据缺失时返回空对象，交由浏览器 Cookie 处理，避免发送畸变或空 Header
+ */
+export function authHeaders(): Record<string, string> {
+  if (!shouldUseBearerCredential()) return {}
+  const token = getAccessToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}

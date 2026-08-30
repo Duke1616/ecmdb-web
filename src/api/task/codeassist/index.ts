@@ -1,6 +1,6 @@
 import { fetchEventSource } from "@microsoft/fetch-event-source"
 import instance, { API_SERVICE } from "@@/utils/service"
-import { activeTenantHeaders, getActiveTenantId } from "@/common/utils/service"
+import { activeTenantHeaders, authHeaders, getActiveTenantId } from "@/common/utils/service"
 import { StreamEventName } from "./ai.enums"
 import type {
   AIChatReq,
@@ -45,17 +45,18 @@ export function applyCodeAssistChangeSetApi(id: number) {
 class StreamRequestError extends Error {}
 
 function buildStreamURL() {
-  const baseApi = String(import.meta.env.VITE_BASE_API || "/api").replace(/\/$/, "")
-  const taskPrefix = String(API_SERVICE.TASK || "").replace(/^\/+|\/+$/g, "")
+  const baseApi = (import.meta.env.VITE_BASE_API ?? "/api").replace(/\/$/, "")
+  const taskPrefix = (API_SERVICE.TASK ?? "").replace(/^\/|\/$/g, "")
   return `${baseApi}/${taskPrefix}/code-assist/message/stream`
 }
 
 function buildStreamHeaders() {
-  const headers: Record<string, string> = {
+  return {
     Accept: "text/event-stream",
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    ...authHeaders(),
+    ...activeTenantHeaders(getActiveTenantId())
   }
-  return { ...headers, ...activeTenantHeaders(getActiveTenantId()) }
 }
 
 /** 发起一次不可自动重试的 AI 对话，避免网络重连造成重复消息。 */

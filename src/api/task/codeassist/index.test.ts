@@ -12,7 +12,10 @@ vi.mock("@microsoft/fetch-event-source", () => ({
 vi.mock("@/common/utils/service", () => ({
   default: { post: mocks.post },
   API_SERVICE: { TASK: "task" },
-  activeTenantStack: { value: [] }
+  activeTenantStack: { value: [] },
+  activeTenantHeaders: vi.fn((tenantId?: number) => (tenantId ? { "X-Active-Tenant-ID": String(tenantId) } : {})),
+  authHeaders: vi.fn(() => ({ Authorization: "Bearer test-token" })),
+  getActiveTenantId: vi.fn(() => 7)
 }))
 
 vi.mock("@/pinia/stores/user", () => ({
@@ -39,6 +42,7 @@ describe("streamCodeAssistMessage", () => {
       expect(url).toBe("/api/task/code-assist/message/stream")
       expect(options.method).toBe("POST")
       expect(options.headers["X-Active-Tenant-ID"]).toBe("7")
+      expect(options.headers.Authorization).toBe("Bearer test-token")
       expect(JSON.parse(options.body)).toMatchObject({
         conversation_id: 1,
         profile_id: "default",

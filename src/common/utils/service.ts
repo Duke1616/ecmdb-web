@@ -2,7 +2,14 @@ import { ref } from "vue"
 import { useUserStore } from "@/pinia/stores/user"
 import HyRequest from "@@/utils/request"
 import type { HYRequestConfig } from "@/common/utils/request/type"
-import { acceptCredentialResponse, getAccessToken, shouldUseBearerCredential } from "@/common/auth/credential"
+import {
+  acceptCredentialResponse,
+  authHeaders,
+  getAccessToken,
+  shouldUseBearerCredential
+} from "@/common/auth/credential"
+
+export { authHeaders }
 
 export type ApiService = keyof typeof API_SERVICE
 export const API_SERVICE = {

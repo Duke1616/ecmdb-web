@@ -1,6 +1,6 @@
 import { onMounted, onUnmounted, watch, toValue, type MaybeRefOrGetter } from "vue"
 import { fetchEventSource } from "@microsoft/fetch-event-source"
-import { activeTenantHeaders, getActiveTenantId } from "@/common/utils/service"
+import { activeTenantHeaders, authHeaders, getActiveTenantId } from "@/common/utils/service"
 
 /**
  * SSE 连接配置项
@@ -25,6 +25,7 @@ class FatalSSEError extends Error {}
  * @description 基于 @microsoft/fetch-event-source 封装，完整对齐项目的 axios 请求规范：
  *              - 自动补全 VITE_BASE_API 前缀，无需业务层手动拼接
  *              - 自动注入 X-Active-Tenant-ID 请求头，租户隔离与 axios 拦截器保持一致
+ *              - 自动注入 Authorization Bearer Token 请求头，身份认证与 axios 拦截器保持一致
  *              - 支持 enabled 和 path 双向驱动，开启、断连由响应式状态或 Getter 驱动，防止闲置连接占用或僵尸连接
  *              - 使用 AbortController 精准控制连接生命周期，彻底防范连接泄漏
  */
@@ -59,10 +60,10 @@ export function useSSE<T>(options: UseSSEOptions<T>) {
 
     const headers: Record<string, string> = {
       // fetch-event-source 内部按小写键判断是否已设置 Accept；保持小写可避免重复请求头。
-      accept: "text/event-stream"
+      accept: "text/event-stream",
+      ...authHeaders(),
+      ...activeTenantHeaders(getActiveTenantId())
     }
-
-    Object.assign(headers, activeTenantHeaders(getActiveTenantId()))
 
     void fetchEventSource(url, {
       method: "GET",
