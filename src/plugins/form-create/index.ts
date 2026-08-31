@@ -23,18 +23,14 @@ export function loadFromCreate(app: App) {
       option.headers = {}
     }
 
-    // 1. 开启 withCredentials，确保 Cookie 模式或跨域请求能够携带浏览器 Cookie 凭据
-    option.withCredentials = true
-
-    // 2. 注入多租户请求头与全局标准认证头
+    // 1. 注入多租户请求头与全局标准认证头
     Object.assign(option.headers, {
       ...authHeaders(),
       ...activeTenantHeaders(getActiveTenantId())
     })
 
-    // 3. 跨微服务凭据兜底：
-    // 若未注入 Authorization（例如当前为 Cookie 模式），从 Cookie 兜底提取 Token 注入 Header，
-    // 确保调用未共享 Cookie 域的微服务（如 eassist）时依然可以通过 Header 正常鉴权
+    // 2. 跨微服务凭据兜底（通过 Header 传递，避免开启 withCredentials 触发严格 CORS 限制）：
+    // 若未注入 Authorization，优先从 AccessToken 或本地 Cookie 提取 Token 注入 Header
     const headersRecord = option.headers as Record<string, string>
     if (!headersRecord.Authorization) {
       const fallbackToken = getAccessToken() || getCookie("ecmdb-token-key") || getCookie("eiam-token")
