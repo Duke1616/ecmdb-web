@@ -2,12 +2,20 @@ import { type App } from "vue"
 import formCreate from "@form-create/element-ui"
 import FcDesigner from "@form-create/designer"
 import type { FetchOption } from "@form-create/core"
-import { getAccessToken, shouldUseBearerCredential } from "@/common/auth/credential"
+import { getAccessToken } from "@/common/auth/credential"
+import { activeTenantHeaders, authHeaders, getActiveTenantId } from "@/common/utils/service"
+
+/**
+ * 从 document.cookie 读取指定名称的 Cookie 值
+ */
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
 
 export function loadFromCreate(app: App) {
-  // 在全局设置 fetch，添加 token 头
-  // 注意：formCreate.fetch 只在表单规则中使用 effect.fetch 时才会被调用
-  // 如果表单规则中没有使用 fetch（远程数据加载），这个方法不会被调用
+  // NOTE: 全局拦截 formCreate.fetch 远程数据加载，对齐项目的身份认证与多租户请求规范
   const globalFetch = formCreate.fetch
   formCreate.fetch = (option: FetchOption, effectArgs: Object = {}) => {
     // 确保 headers 对象存在
@@ -15,13 +23,27 @@ export function loadFromCreate(app: App) {
       option.headers = {}
     }
 
-    // 获取 token 并设置到 headers
-    const token = shouldUseBearerCredential() ? getAccessToken() : null
-    if (token && option.headers) {
-      ;(option.headers as Record<string, string>).Authorization = `Bearer ${token}`
+    // 1. 开启 withCredentials，确保 Cookie 模式或跨域请求能够携带浏览器 Cookie 凭据
+    option.withCredentials = true
+
+    // 2. 注入多租户请求头与全局标准认证头
+    Object.assign(option.headers, {
+      ...authHeaders(),
+      ...activeTenantHeaders(getActiveTenantId())
+    })
+
+    // 3. 跨微服务凭据兜底：
+    // 若未注入 Authorization（例如当前为 Cookie 模式），从 Cookie 兜底提取 Token 注入 Header，
+    // 确保调用未共享 Cookie 域的微服务（如 eassist）时依然可以通过 Header 正常鉴权
+    const headersRecord = option.headers as Record<string, string>
+    if (!headersRecord.Authorization) {
+      const fallbackToken = getAccessToken() || getCookie("ecmdb-token-key") || getCookie("eiam-token")
+      if (fallbackToken) {
+        headersRecord.Authorization = `Bearer ${fallbackToken}`
+      }
     }
 
-    // 调用原始的 fetch 方法，传递两个参数
+    // 调用原始的 fetch 方法
     return globalFetch(option, effectArgs)
   }
 

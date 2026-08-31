@@ -33,7 +33,7 @@ export function useRoleGovernance(
 
   const tabPermissions = computed(() => ({
     members: hasPermission(IAM_CAPABILITIES.Role.ViewRoleMembers),
-    groups: hasPermission(IAM_CAPABILITIES.Group.ViewRoles),
+    groups: hasPermission(IAM_CAPABILITIES.Role.ViewRoleGroups),
     permissions: hasPermission(IAM_CAPABILITIES.Role.ViewRolePolicies),
     inline: hasPermission(IAM_CAPABILITIES.Role.InlineAnalysis),
     inheritance: hasPermission(IAM_CAPABILITIES.Role.ViewParents)

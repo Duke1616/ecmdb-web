@@ -2,7 +2,7 @@
   <ProGovernanceLayout
     title="认证管理"
     subtitle="多租户身份治理中心，集成 Windows AD、飞书 OIDC 等企业级身份源"
-    :primary-action="{ label: '集成身份源' }"
+    :primary-action="{ capability: IAM_CAPABILITIES.IdentitySource.Save, label: '集成身份源' }"
     @refresh="handleRefresh"
     @primary-action="handleCreate"
   >
@@ -26,7 +26,7 @@
       </template>
 
       <template #sync="{ row }">
-        <template v-if="row.type === IdentitySourceType.LDAP">
+        <template v-if="row.type === IdentitySourceType.LDAP && hasPermission(IAM_CAPABILITIES.User.LdapSync)">
           <el-button type="primary" link class="sync-btn" @click="handleSyncUsers">
             <el-icon class="mr-1"><Refresh /></el-icon>
             同步用户
@@ -62,8 +62,12 @@ import LdapSyncDialog from "./components/LdapSyncDialog.vue"
 import { useIdentitySource } from "./composables/useIdentitySource"
 import { IdentitySourceType, type IdentitySourceVO } from "@/api/iam/identity-source/type"
 import { getProviderInfo } from "./providerRegistry"
+import { usePermission } from "@/common/composables/usePermission"
+import { IAM_CAPABILITIES } from "@/common/auth/capability"
 
 import type { Column } from "@@/components/DataTable/types"
+
+const { hasPermission } = usePermission()
 
 const {
   loading,
@@ -99,15 +103,15 @@ const tableColumns: Column[] = [
 
 const getOperateItems = (row: IdentitySourceVO) => {
   const items = []
-  items.push({ name: "配置", code: "edit", type: "primary", icon: markRaw(Edit) })
+  items.push({ name: "配置", code: "edit", type: "primary", icon: markRaw(Edit), capability: IAM_CAPABILITIES.IdentitySource.Save })
 
   if (row.enabled) {
-    items.push({ name: "禁用", code: "toggle", type: "warning", icon: markRaw(VideoPause) })
+    items.push({ name: "禁用", code: "toggle", type: "warning", icon: markRaw(VideoPause), capability: IAM_CAPABILITIES.IdentitySource.Toggle })
   } else {
-    items.push({ name: "启用", code: "toggle", type: "success", icon: markRaw(VideoPlay) })
+    items.push({ name: "启用", code: "toggle", type: "success", icon: markRaw(VideoPlay), capability: IAM_CAPABILITIES.IdentitySource.Toggle })
   }
 
-  items.push({ name: "删除", code: "delete", type: "danger", icon: markRaw(Delete) })
+  items.push({ name: "删除", code: "delete", type: "danger", icon: markRaw(Delete), capability: IAM_CAPABILITIES.IdentitySource.Delete })
   return items
 }
 

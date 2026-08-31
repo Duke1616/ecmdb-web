@@ -104,6 +104,8 @@ export const IAM_CAPABILITIES = {
     ViewRoleMembers: "iam:role:view_role_members",
     /** 查看角色策略 */
     ViewRolePolicies: "iam:role:view_role_policies",
+    /** 查询角色关联分组 */
+    ViewRoleGroups: "iam:role:view_role_groups",
     /** 删除角色 */
     Delete: "iam:role:delete",
     /** 批量删除角色 */
@@ -134,10 +136,18 @@ export const IAM_CAPABILITIES = {
     ViewUserPolicies: "iam:user:view_user_policies",
     /** 查询用户租户 */
     ViewUserTenants: "iam:user:view_user_tenants",
+    /** 查询用户所属分组 */
+    ViewUserGroups: "iam:user:view_user_groups",
     /** 管理外部身份绑定 */
     ManageIdentity: "iam:user:manage_identity",
     /** 解绑外部身份 */
-    UnbindIdentity: "iam:user:unbind_identity"
+    UnbindIdentity: "iam:user:unbind_identity",
+    /** 同步 LDAP 用户 */
+    LdapSync: "iam:user.ldap:sync",
+    /** 搜索 LDAP 用户 */
+    LdapSearch: "iam:user.ldap:search",
+    /** 刷新 LDAP 缓存 */
+    LdapRefresh: "iam:user.ldap:refresh"
   },
 
   /** 用户组治理相关 */
@@ -155,13 +165,13 @@ export const IAM_CAPABILITIES = {
     /** 批量删除用户组 */
     BatchDelete: "iam:group:batch_delete",
     /** 查看用户组成员 */
-    ViewMembers: "iam:group:view_members",
+    ViewMembers: "iam:group:members",
     /** 分配用户组成员 */
     AssignMembers: "iam:group:assign_members",
     /** 移除用户组成员 */
     RemoveMembers: "iam:group:remove_members",
     /** 查看用户组角色 */
-    ViewRoles: "iam:group:view_roles",
+    ViewRoles: "iam:group:roles",
     /** 绑定用户组角色 */
     AssignRole: "iam:group:assign_role",
     /** 解绑用户组角色 */
@@ -192,8 +202,12 @@ export const IAM_CAPABILITIES = {
   IdentitySource: {
     /** 查看身份源 */
     View: "iam:identity_source:view",
+    /** 身份源详情 */
+    Detail: "iam:identity_source:detail",
     /** 保存/编辑身份源 */
     Save: "iam:identity_source:save",
+    /** 测试身份源连接 */
+    Test: "iam:identity_source:test",
     /** 删除身份源 */
     Delete: "iam:identity_source:delete",
     /** 启用/禁用身份源 */

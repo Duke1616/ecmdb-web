@@ -38,7 +38,7 @@ export function useUserGovernance(user: Ref<User | undefined>) {
   const tabPermissions = computed(() => ({
     sources: hasPermission(IAM_CAPABILITIES.User.Detail),
     roles: hasPermission(IAM_CAPABILITIES.User.ViewUserRoles),
-    groups: hasPermission(IAM_CAPABILITIES.Group.ViewMembers),
+    groups: hasPermission(IAM_CAPABILITIES.User.ViewUserGroups),
     permissions: hasPermission(IAM_CAPABILITIES.User.ViewUserPolicies),
     tenants: hasPermission(IAM_CAPABILITIES.User.ViewUserTenants)
   }))
