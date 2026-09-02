@@ -4,6 +4,7 @@
     :placeholder="placeholder"
     search-placeholder="搜索流程..."
     :variant="variant"
+    :size="size"
     :search-api="searchApi"
     :resolve-api="resolveApi"
     key-field="id"
@@ -36,11 +37,13 @@ import type { Workflow } from "@/api/ticket/workflow/types/workflow"
 interface WorkflowPickerProps {
   placeholder?: string
   variant?: "fancy" | "simple" | "element"
+  size?: "" | "small" | "default" | "large"
 }
 
 withDefaults(defineProps<WorkflowPickerProps>(), {
   placeholder: "请选择流程",
-  variant: "element"
+  variant: "element",
+  size: ""
 })
 
 const model = defineModel<number>()

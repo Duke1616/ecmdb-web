@@ -96,6 +96,7 @@
                     v-model="localFormData.workflow_id"
                     @update:model-value="updateFormData"
                     placeholder="请选择流程"
+                    size="large"
                   />
                 </el-form-item>
               </div>
