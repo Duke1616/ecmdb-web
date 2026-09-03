@@ -179,9 +179,11 @@ const formRules = computed<FormRules>(() => {
   const rules: FormRules = {}
   props.attributeFiledsData.forEach((field) => {
     const dataField = `data.${field.field_uid}`
+    // 编辑模式下敏感加密字段允许留空，表示保留原密码，不强制必填
+    const isRequired = field.required && !(isEditMode.value && field.secure)
     rules[dataField] = [
       {
-        required: field.required,
+        required: isRequired,
         message: `请填写${field.field_name}`,
         trigger: "blur"
       }
@@ -276,8 +278,20 @@ const handleSubmit = () => {
 
     // 确保包含 model_uid 参数
     const submitData = {
-      ...formData.value,
+      ...cloneDeep(formData.value),
       model_uid: props.modelUid
+    }
+
+    // 编辑模式下若敏感字段留空，自动赋值脱敏掩码，由后端智能保留原有密文
+    if (isEdit) {
+      props.attributeFiledsData.forEach((field) => {
+        if (field.secure) {
+          const val = submitData.data[field.field_uid]
+          if (val === "" || val === undefined || val === null) {
+            submitData.data[field.field_uid] = "[已脱敏]"
+          }
+        }
+      })
     }
 
     const api = isEdit ? updateResourceApi : createResourceApi
