@@ -196,7 +196,7 @@ export const usePluginCenter = () => {
   }
 
   const buildDefinitionModelOptions = (definition: Definition): PluginModelOption[] =>
-    (definition.schema?.models || []).map((model) => ({
+    ((definition.schema?.models as any[]) || []).map((model: any) => ({
       uid: model.uid,
       name: model.name || model.uid,
       group_name: model.group_name,

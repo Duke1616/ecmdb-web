@@ -62,14 +62,6 @@ export function listResourcePluginActionsBatchApi(data: Plugin.ListResourcePlugi
   })
 }
 
-/** 解析插件动作 */
-export function resolvePluginActionApi(data: Plugin.ResolveRequest) {
-  return instance.post<Plugin.ResolveResult>({
-    url: `${API_SERVICE.CMDB}/plugin/action/resolve`,
-    data
-  })
-}
-
 /** 查询插件运行时视图 */
 export function getPluginRuntimeViewApi(params: Plugin.GetPluginRuntimeViewRequest) {
   return instance.get<Plugin.PluginRuntimeView>({

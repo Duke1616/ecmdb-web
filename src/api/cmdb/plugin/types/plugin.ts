@@ -123,61 +123,9 @@ export interface Binding {
   utime?: number
 }
 
-export interface SchemaModelGroup {
-  name: string
-}
-
-export interface SchemaAttribute {
-  uid: string
-  name: string
-  type: string
-  option?: any
-  required?: boolean
-  display?: boolean
-  secure?: boolean
-  builtin?: boolean
-  index?: number
-}
-
-export interface SchemaAttributeGroup {
-  name: string
-  index?: number
-  fields?: SchemaAttribute[]
-}
-
-export interface SchemaModel {
-  uid: string
-  name: string
-  icon?: string
-  group_name?: string
-  builtin?: boolean
-  attribute_groups?: SchemaAttributeGroup[]
-}
-
-export interface SchemaRelationType {
-  uid: string
-  name: string
-  source_describe?: string
-  target_describe?: string
-}
-
-export interface SchemaModelRelation {
-  source_model_uid: string
-  target_model_uid: string
-  relation_type_uid: string
-  mapping: string
-}
-
-export interface Schema {
-  model_groups?: SchemaModelGroup[]
-  models?: SchemaModel[]
-  relation_types?: SchemaRelationType[]
-  model_relations?: SchemaModelRelation[]
-}
-
 export interface Definition {
   plugin: Plugin
-  schema?: Schema
+  schema?: Record<string, any>
   bindings: Binding[]
 }
 
@@ -211,39 +159,6 @@ export interface ResourceActions {
   actions: ResourceAction[]
 }
 
-export interface ResolvedResource {
-  resource_id?: number
-  model_uid?: string
-  fields: Record<string, any>
-  children?: Record<string, ResolvedInput>
-}
-
-export interface ResolvedInput {
-  name: string
-  cardinality: string
-  resources: ResolvedResource[]
-}
-
-export interface ResolveRequest {
-  plugin_id: string
-  action: string
-  resource_id: number
-  params?: Record<string, any>
-}
-
-export interface ResolveResult {
-  plugin_id: string
-  plugin_name: string
-  action: string
-  permission?: string
-  binding_uid?: string
-  model_uid?: string
-  resource_id: number
-  inputs: Record<string, ResolvedInput>
-  params?: Record<string, any>
-  runtime?: PluginActionRuntimeSpec
-  meta?: Record<string, any>
-}
 
 export interface PluginRuntimeEntry {
   format: string

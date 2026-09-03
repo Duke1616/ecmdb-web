@@ -153,7 +153,8 @@ export const useResourceRelations = (options: UseResourceRelationsOptions) => {
       )
       if (!relationInfo) return
 
-      const sourceModelUid = model.relation_name.split("_")[0]
+      // NOTE: 优先使用实体模型定义的 source_model_uid，规避下划线切割导致的解析错误
+      const sourceModelUid = model.source_model_uid || model.relation_name.split("_")[0]
       model.display_label =
         sourceModelUid === options.modelUid
           ? `${relationInfo.target_describe}-${model.target_model_uid}`

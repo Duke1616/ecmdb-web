@@ -1,3 +1,4 @@
+import type ModelDeleteDialog from "../components/ModelDeleteDialog.vue"
 import { computed, h, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
@@ -57,8 +58,10 @@ export const useModelDetail = () => {
     ElMessage.success("模型已禁用")
   }
 
-  const handleDeleteModel = async () => {
-    if (!modelUid.value) {
+  const deleteDialogRef = ref<InstanceType<typeof ModelDeleteDialog>>()
+
+  const handleDeleteModel = () => {
+    if (!modelInfo.value) {
       ElMessage.warning("数据加载中，请稍后再试")
       return
     }
@@ -67,21 +70,7 @@ export const useModelDetail = () => {
       return
     }
 
-    await ElMessageBox({
-      title: "删除确认",
-      message: h("p", null, [
-        h("span", null, "正在删除模型: "),
-        h("strong", { style: "color: red" }, `${modelName.value}`),
-        h("span", null, " 确认删除？")
-      ]),
-      confirmButtonText: "确认删除",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
-
-    await deleteModelApi(modelUid.value)
-    ElMessage.success("删除成功")
-    goBack()
+    deleteDialogRef.value?.open(modelInfo.value)
   }
 
   onMounted(fetchModelInfo)
@@ -97,6 +86,7 @@ export const useModelDetail = () => {
     fetchModelInfo,
     handleExportTemplate,
     handleDisableModel,
-    handleDeleteModel
+    handleDeleteModel,
+    deleteDialogRef
   }
 }

@@ -22,6 +22,8 @@
         <ModelRelation v-if="currentTab === 'model-relation'" :model-uid="modelUid" />
       </template>
     </CustomTabs>
+
+    <ModelDeleteDialog ref="deleteDialogRef" @success="goBack" />
   </PageContainer>
 </template>
 
@@ -33,6 +35,7 @@ import ModelDetailActions from "./components/ModelDetailActions.vue"
 import ModelDetailIdentity from "./components/ModelDetailIdentity.vue"
 import ModelField from "./components/model-field/index.vue"
 import ModelRelation from "./components/model-relation/index.vue"
+import ModelDeleteDialog from "./components/ModelDeleteDialog.vue"
 import { useModelDetail } from "./composables/useModelDetail"
 
 const tabs = [
@@ -40,8 +43,17 @@ const tabs = [
   { name: "model-relation", label: "模型关联" }
 ]
 
-const { activeTab, modelUid, modelName, isBuiltin, exporting, goBack, handleExportTemplate, handleDeleteModel } =
-  useModelDetail()
+const {
+  activeTab,
+  modelUid,
+  modelName,
+  isBuiltin,
+  exporting,
+  goBack,
+  handleExportTemplate,
+  handleDeleteModel,
+  deleteDialogRef
+} = useModelDetail()
 </script>
 
 <style lang="scss" scoped>

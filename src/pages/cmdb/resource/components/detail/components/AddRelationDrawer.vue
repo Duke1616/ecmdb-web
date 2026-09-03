@@ -260,7 +260,8 @@ const getModelRelation = (relationName: string) => {
 const getRelationSourceModelUid = (relationName: string) => {
   const relation = getModelRelation(relationName)
   if (relation) return relation.source_model_uid
-  return relationName.split("_")[0]
+  // NOTE: 降级兜底时优先使用当前资源 modelUid 作为安全源端，防止下划线切割异常
+  return props.modelUid || relationName.split("_")[0]
 }
 
 const getRelatedModelUid = (relationName: string) => {

@@ -37,7 +37,7 @@ export const myTicketOperateItems: TicketOperateItem[] = [
     capability: TICKET_CAPABILITIES.Manager.Revoke
   },
   {
-    name: "重新启动",
+    name: "重启",
     code: TicketAction.Restart,
     type: "warning",
     icon: refreshIcon,
@@ -49,15 +49,20 @@ export const getMyTicketOperateItems = (row: Ticket): TicketOperateItem[] => {
   if (row.status === TicketStatus.StartFailed) {
     return myTicketOperateItems.filter((item) => item.code === TicketAction.Restart)
   }
-  return myTicketOperateItems.map((item) =>
-    item.code === TicketAction.Revoke
-      ? {
-          ...item,
-          name: row.status === TicketStatus.Withdrawing ? "撤回中" : item.name,
-          disabled: row.status === TicketStatus.Withdrawing
-        }
-      : item
-  )
+
+  const canRestart = row.status === TicketStatus.Start
+
+  return myTicketOperateItems
+    .filter((item) => (item.code === TicketAction.Restart ? canRestart : true))
+    .map((item) =>
+      item.code === TicketAction.Revoke
+        ? {
+            ...item,
+            name: row.status === TicketStatus.Withdrawing ? "撤回中" : item.name,
+            disabled: row.status === TicketStatus.Withdrawing
+          }
+        : item
+    )
 }
 
 export const userTodoOperateItems: TicketOperateItem[] = [
@@ -76,7 +81,7 @@ export const getAllTodoOperateItems = (row: Ticket): TicketOperateItem[] => {
   if (row.status === TicketStatus.StartFailed) {
     return [
       {
-        name: "重新启动",
+        name: "重启",
         code: TicketAction.Restart,
         type: "warning",
         icon: refreshIcon,
@@ -152,9 +157,9 @@ export const useTicketActions = (options: {
 
   const handleRestart = async (row: Ticket) => {
     try {
-      await ElMessageBox.confirm(`确定重新启动工单 #${row.id} 的流程吗？`, "重新启动流程", {
+      await ElMessageBox.confirm(`确定重启工单 #${row.id} 的流程吗？`, "重启流程", {
         type: "warning",
-        confirmButtonText: "重新启动",
+        confirmButtonText: "重启",
         cancelButtonText: "取消"
       })
       await restartProcessApi({ ticket_id: row.id })
