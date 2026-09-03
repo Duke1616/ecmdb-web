@@ -90,7 +90,7 @@ export const useResourceList = () => {
 
       return {
         prop: `data.${item.field_uid}`,
-        label: item.field_name,
+        label: item.field_name || item.field_uid,
         minWidth: 140,
         align: "center",
         showOverflowTooltip: !useCustomCell,

@@ -274,8 +274,6 @@ const handleSubmit = () => {
     const isEdit = formData.value.id !== undefined
     const actionText = isEdit ? "修改" : "新增"
 
-    ElMessage.info(`正在${actionText}资产，请稍候...`)
-
     // 确保包含 model_uid 参数
     const submitData = {
       ...cloneDeep(formData.value),
