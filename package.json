@@ -79,6 +79,7 @@
     "strip-ansi": "^7.1.0",
     "thememirror": "^2.0.1",
     "tippy.js": "^6.3.7",
+    "ua-parser-js": "^2.0.10",
     "unocss": "66.2.3",
     "unplugin-svg-component": "^0.12.4",
     "uuid": "^9.0.1",

@@ -105,12 +105,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import { usePagination } from "@/common/composables/usePagination"
 import { formatTimestamp } from "@/common/utils/day"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
-import {
-  createVariableApi,
-  deleteVariableApi,
-  listVariablesApi,
-  updateVariableApi
-} from "@/api/task/variable"
+import { createVariableApi, deleteVariableApi, listVariablesApi, updateVariableApi } from "@/api/task/variable"
 import type { CreateVariableReq, VariableVO } from "@/api/task/variable/type"
 import type { Column } from "@@/components/DataTable/types"
 
@@ -276,8 +271,7 @@ watch([() => paginationData.currentPage, () => paginationData.pageSize], loadVar
 
 .key-text {
   color: #1f2937;
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 13px;
   font-weight: 700;
 }

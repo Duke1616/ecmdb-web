@@ -7,6 +7,7 @@
 ## 文件变更
 
 ### 已删除的文件
+
 ```
 src/common/components/workflow/RegisterNode/chat/
 ├── ChatReceiverSelector.vue          ❌ 已删除
@@ -22,6 +23,7 @@ src/common/components/workflow/RegisterNode/chat/
 ```
 
 ### 新增的通用组件
+
 ```
 src/common/components/ReceiverSelector/
 ├── index.vue                          ✅ 通用组件
@@ -41,6 +43,7 @@ src/common/components/ReceiverSelector/
 ```
 
 ### 已更新的文件
+
 ```
 src/common/components/workflow/RegisterNode/chat/
 └── chatProperty.vue                   ✅ 已更新引用
@@ -51,6 +54,7 @@ src/common/components/workflow/RegisterNode/chat/
 ### chatProperty.vue
 
 **变更前:**
+
 ```vue
 <script setup lang="ts">
 import ChatReceiverSelector from "./ChatReceiverSelector.vue"
@@ -71,6 +75,7 @@ import { receiverSelectorRegistry } from "./strategies"
 ```
 
 **变更后:**
+
 ```vue
 <script setup lang="ts">
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
@@ -96,6 +101,7 @@ import { receiverSelectorRegistry } from "@/common/components/ReceiverSelector/s
 ## 如何在其他地方使用
 
 ### 1. 工单场景
+
 ```vue
 <script setup lang="ts">
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
@@ -123,6 +129,7 @@ const handleConfirm = (finalAssignees: any[]) => {
 ```
 
 ### 2. 告警场景
+
 ```vue
 <ReceiverSelector
   v-model:visible="visible"
@@ -136,6 +143,7 @@ const handleConfirm = (finalAssignees: any[]) => {
 ```
 
 ### 3. 自定义规则选项
+
 ```vue
 <ReceiverSelector
   v-model:visible="visible"
@@ -153,26 +161,26 @@ const handleConfirm = (finalAssignees: any[]) => {
 
 ## Props 说明
 
-| Prop | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| visible | Boolean | - | 对话框显示状态 |
-| title | String | "配置/管理接收者策略" | 对话框标题 |
-| resultPanelTitle | String | "已选逻辑项" | 右侧面板标题 |
-| emptyText | String | "暂无接收者" | 空状态文本 |
-| initialAssignees | Array | [] | 初始选中的接收者 |
-| templateRules | Array | [] | 模板规则列表 |
-| getTemplateFieldOptions | Function | - | 获取模板字段选项 |
-| usernameToDisplayName | Object | {} | 用户名到显示名的映射 |
-| modes | Array | ['system', 'user', 'team', 'department', 'on_call', 'template'] | 显示的 tab 模式 |
-| ruleOptions | Array | - | 自定义规则选项 |
+| Prop                    | 类型     | 默认值                                                          | 说明                 |
+| ----------------------- | -------- | --------------------------------------------------------------- | -------------------- |
+| visible                 | Boolean  | -                                                               | 对话框显示状态       |
+| title                   | String   | "配置/管理接收者策略"                                           | 对话框标题           |
+| resultPanelTitle        | String   | "已选逻辑项"                                                    | 右侧面板标题         |
+| emptyText               | String   | "暂无接收者"                                                    | 空状态文本           |
+| initialAssignees        | Array    | []                                                              | 初始选中的接收者     |
+| templateRules           | Array    | []                                                              | 模板规则列表         |
+| getTemplateFieldOptions | Function | -                                                               | 获取模板字段选项     |
+| usernameToDisplayName   | Object   | {}                                                              | 用户名到显示名的映射 |
+| modes                   | Array    | ['system', 'user', 'team', 'department', 'on_call', 'template'] | 显示的 tab 模式      |
+| ruleOptions             | Array    | -                                                               | 自定义规则选项       |
 
 ## Events
 
-| Event | 参数 | 说明 |
-|-------|------|------|
-| update:visible | (visible: boolean) | 对话框显示状态变更 |
-| confirm | (assignees: Assignee[]) | 确认选择 |
-| update-user-names | (map: Record<string, string>) | 更新用户名映射 |
+| Event             | 参数                          | 说明               |
+| ----------------- | ----------------------------- | ------------------ |
+| update:visible    | (visible: boolean)            | 对话框显示状态变更 |
+| confirm           | (assignees: Assignee[])       | 确认选择           |
+| update-user-names | (map: Record<string, string>) | 更新用户名映射     |
 
 ## 扩展新策略
 
@@ -203,16 +211,14 @@ export const ALL_STRATEGIES = [
   RotaStrategy,
   DepartmentStrategy,
   UserAppointStrategy,
-  AlertGroupStrategy  // 新增
+  AlertGroupStrategy // 新增
 ]
 ```
 
 然后在使用时添加对应的 mode：
+
 ```vue
-<ReceiverSelector
-  :modes="['user', 'team', 'alert_group']"
-  ...
-/>
+<ReceiverSelector :modes="['user', 'team', 'alert_group']" ... />
 ```
 
 ## 优势
@@ -234,6 +240,7 @@ export const ALL_STRATEGIES = [
 ## 回滚方案
 
 如果需要回滚到旧版本，可以从 git 历史中恢复：
+
 ```bash
 git checkout <commit-hash> -- src/common/components/workflow/RegisterNode/chat/
 ```

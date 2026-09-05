@@ -22,7 +22,12 @@
           <!-- 工作空间名称 -->
           <el-col :span="12">
             <el-form-item label="工作空间名称" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入工作空间名称" size="large" class="settings-control" />
+              <el-input
+                v-model="formData.name"
+                placeholder="请输入工作空间名称"
+                size="large"
+                class="settings-control"
+              />
             </el-form-item>
           </el-col>
 
@@ -437,7 +442,6 @@ defineExpose({
           color: #4b5563;
         }
       }
-
     }
 
     .settings-control {

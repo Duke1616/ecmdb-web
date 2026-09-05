@@ -4,12 +4,7 @@
 
 import { ref, computed } from "vue"
 import { useRoute } from "vue-router"
-import {
-  listStepsByConfigIDApi,
-  createStepApi,
-  updateStepApi,
-  swapStepLevelsApi
-} from "@/api/alert/escalation"
+import { listStepsByConfigIDApi, createStepApi, updateStepApi, swapStepLevelsApi } from "@/api/alert/escalation"
 import type { StepVO, CreateStepReq } from "@/api/alert/escalation/types"
 import { getEscalationStepConfigID } from "../utils"
 

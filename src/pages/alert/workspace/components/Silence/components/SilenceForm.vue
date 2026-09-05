@@ -38,7 +38,12 @@
             <div class="matcher-config">
               <div v-for="(matcher, index) in formData.matchers" :key="index" class="matcher-item">
                 <el-input v-model="matcher.name" placeholder="标签名" size="default" />
-                <el-select v-model="matcher.type" placeholder="类型" size="default" @change="handleMatcherTypeChange(matcher)">
+                <el-select
+                  v-model="matcher.type"
+                  placeholder="类型"
+                  size="default"
+                  @change="handleMatcherTypeChange(matcher)"
+                >
                   <el-option
                     v-for="option in matchTypeOptions"
                     :key="option.value"
@@ -329,7 +334,6 @@ defineExpose({
     &:last-child {
       margin-bottom: 0;
     }
-
   }
 
   .form-item {

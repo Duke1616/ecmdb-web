@@ -51,12 +51,15 @@ export function registerNavigationGuard(router: Router) {
     } catch (err: any) {
       // 过程中发生任何错误
       NProgress.done()
-      const status = err.code || err.status || err.response?.status
+      const httpStatus = err.response?.status || err.status
+      const businessCode = err.code || err.response?.data?.code
+      const isAuthError =
+        httpStatus === 401 || businessCode === 401 || businessCode === 401001 || businessCode === 401002
 
-      // 仅在明确的认证失败（401）时重置 Token 并跳转登录
-      if (status === 401) {
+      // 认证失败或租户空间未确立时，重置凭据并退回登录页，绝不误跳 500
+      if (isAuthError) {
         userStore.resetToken()
-        ElMessage.error("登录已过期，请重新登录")
+        ElMessage.error(err.response?.data?.msg || "登录已失效或未选择工作空间，请重新登录")
         return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
       }
 

@@ -159,7 +159,6 @@ export interface ResourceActions {
   actions: ResourceAction[]
 }
 
-
 export interface PluginRuntimeEntry {
   format: string
   js_url: string

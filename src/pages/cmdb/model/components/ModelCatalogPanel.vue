@@ -110,7 +110,6 @@ const emit = defineEmits<{
   "delete-group": [group: ModelGroupView]
   "model-click": [model: Model]
 }>()
-
 </script>
 
 <style lang="scss" scoped>

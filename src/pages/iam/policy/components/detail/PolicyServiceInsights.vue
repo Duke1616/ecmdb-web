@@ -70,10 +70,7 @@ const processedServices = computed(() => {
   }
 
   // 1. 建立 code -> action元数据 查表字典
-  const actionMetaMap = new Map<
-    string,
-    { name: string; group?: string; access_scope_presets?: AccessScopePreset[] }
-  >()
+  const actionMetaMap = new Map<string, { name: string; group?: string; access_scope_presets?: AccessScopePreset[] }>()
   if (Array.isArray(manifest.value.actions)) {
     manifest.value.actions.forEach((act: any) => {
       actionMetaMap.set(act.code, {
@@ -119,10 +116,7 @@ const processedServices = computed(() => {
                 .map(
                   (statement) =>
                     statement.access_scope &&
-                    formatAccessScope(
-                      statement.access_scope,
-                      toAccessScopeTemplateOptions(meta?.access_scope_presets)
-                    )
+                    formatAccessScope(statement.access_scope, toAccessScopeTemplateOptions(meta?.access_scope_presets))
                 )
                 .filter(Boolean)
             )

@@ -74,10 +74,10 @@ const goToPrevious = () => {
 
 ```typescript
 interface Step {
-  title: string        // 步骤标题
-  description: string  // 步骤描述
-  icon: any           // 步骤图标组件
-  component: any      // 步骤内容组件
+  title: string // 步骤标题
+  description: string // 步骤描述
+  icon: any // 步骤图标组件
+  component: any // 步骤内容组件
 }
 ```
 
@@ -102,23 +102,23 @@ const formRules = () => {
 
 ## 事件
 
-| 事件名 | 说明 | 参数 |
-|--------|------|------|
+| 事件名            | 说明         | 参数        |
+| ----------------- | ------------ | ----------- |
 | `update:formData` | 表单数据更新 | `data: any` |
-| `next` | 下一步 | - |
-| `previous` | 上一步 | - |
-| `close` | 关闭 | - |
-| `save` | 保存 | - |
+| `next`            | 下一步       | -           |
+| `previous`        | 上一步       | -           |
+| `close`           | 关闭         | -           |
+| `save`            | 保存         | -           |
 
 ## 暴露的方法
 
-| 方法名 | 说明 | 参数 |
-|--------|------|------|
-| `goToNext()` | 跳转到下一步 | - |
-| `goToPrevious()` | 跳转到上一步 | - |
+| 方法名                  | 说明         | 参数           |
+| ----------------------- | ------------ | -------------- |
+| `goToNext()`            | 跳转到下一步 | -              |
+| `goToPrevious()`        | 跳转到上一步 | -              |
 | `setStep(step: number)` | 设置当前步骤 | `step: number` |
-| `currentStep` | 当前步骤索引 | - |
-| `formRef` | 表单引用 | - |
+| `currentStep`           | 当前步骤索引 | -              |
+| `formRef`               | 表单引用     | -              |
 
 ## 样式定制
 

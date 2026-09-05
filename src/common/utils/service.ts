@@ -4,6 +4,7 @@ import HyRequest from "@@/utils/request"
 import type { HYRequestConfig } from "@/common/utils/request/type"
 import {
   acceptCredentialResponse,
+  clearCredential,
   authHeaders,
   getAccessToken,
   shouldUseBearerCredential
@@ -50,7 +51,7 @@ export function withActiveTenant(tenantId?: number): Pick<HYRequestConfig, "acti
 function isSessionEstablishingRequest(url?: string) {
   return Boolean(
     url &&
-      /\/user\/(?:system|ldap)\/login(?:[?#].*)?$|\/user\/login\/mfa\/verify(?:[?#].*)?$|\/user\/bind\/confirm(?:[?#].*)?$|\/user\/passkey\/login\/finish(?:[?#].*)?$|\/user\/oidc\/callback(?:[?#].*)?$/.test(
+      /\/user\/(?:system|ldap)\/login(?:[?#].*)?$|\/user\/login\/mfa\/verify(?:[?#].*)?$|\/user\/bind\/confirm(?:[?#].*)?$|\/user\/passkey\/login\/finish(?:[?#].*)?$|\/user\/oidc\/callback(?:[?#].*)?$|\/tenant\/switch(?:[?#].*)?$/.test(
         url
       )
   )
@@ -89,9 +90,14 @@ const instance = new HyRequest({
       return config
     },
     responseInterceptor: (response) => {
+      const data = response.data?.data
+      // 核心安全防线：无论是 MFA 挑战 还是 待选租户，均属于未决状态，绝不标记会话建立！
+      const isPendingAuth = Boolean(data?.mfa_required || data?.must_select_tenant)
+
+      const isEstablished = isSessionEstablishingRequest(response.config.url) && !isPendingAuth
       acceptCredentialResponse(
         response.headers as Record<string, unknown>,
-        isSessionEstablishingRequest(response.config.url)
+        isEstablished
       )
       return response
     }

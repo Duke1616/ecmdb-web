@@ -60,20 +60,20 @@ const getCollapsedLabel = (title: string) => {
         :class="{ 'is-collapsed': sidebarCollapsed }"
       >
         <div class="plugin-runtime-workspace__sidebar-toolbar">
-        <div v-if="!sidebarCollapsed" class="plugin-runtime-workspace__sidebar-title">
-          <el-icon><Collection /></el-icon>
-          <span>{{ sidebarTitle }}</span>
+          <div v-if="!sidebarCollapsed" class="plugin-runtime-workspace__sidebar-title">
+            <el-icon><Collection /></el-icon>
+            <span>{{ sidebarTitle }}</span>
+          </div>
+          <div v-if="sidebarCollapsible" class="plugin-runtime-workspace__sidebar-actions">
+            <el-button :icon="sidebarCollapsed ? ArrowRight : ArrowLeft" circle text @click="toggleSidebar" />
+          </div>
         </div>
-        <div v-if="sidebarCollapsible" class="plugin-runtime-workspace__sidebar-actions">
-          <el-button :icon="sidebarCollapsed ? ArrowRight : ArrowLeft" circle text @click="toggleSidebar" />
-        </div>
-      </div>
 
-      <el-input
-        v-if="!sidebarCollapsed"
-        v-model="keyword"
-        :placeholder="sidebarSearchPlaceholder"
-        clearable
+        <el-input
+          v-if="!sidebarCollapsed"
+          v-model="keyword"
+          :placeholder="sidebarSearchPlaceholder"
+          clearable
           class="plugin-runtime-workspace__sidebar-search"
         >
           <template #prefix>

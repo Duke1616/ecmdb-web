@@ -21,7 +21,7 @@ export function listMyTenantsApi() {
 export function switchTenantApi(tenantId: number) {
   return instance.post<string>({
     url: `${API_SERVICE.IAM}/tenant/switch`,
-    ...withActiveTenant(tenantId)
+    data: { tenant_id: tenantId }
   })
 }
 

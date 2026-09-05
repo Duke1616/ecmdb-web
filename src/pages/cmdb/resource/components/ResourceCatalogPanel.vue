@@ -91,7 +91,6 @@ const emit = defineEmits<{
   "select-group": [groupId: number]
   "model-click": [model: Model]
 }>()
-
 </script>
 
 <style lang="scss" scoped>

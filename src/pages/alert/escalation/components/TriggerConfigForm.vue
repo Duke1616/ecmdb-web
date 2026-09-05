@@ -116,7 +116,9 @@ const isNoResponseConfig = (
   return "no_response_config" in config && config.no_response_config !== undefined
 }
 
-const isEvalCountConfig = (config: EscalationTriggerConfig): config is { eval_count_config: EvalCountTriggerConfig } => {
+const isEvalCountConfig = (
+  config: EscalationTriggerConfig
+): config is { eval_count_config: EvalCountTriggerConfig } => {
   return "eval_count_config" in config && config.eval_count_config !== undefined
 }
 

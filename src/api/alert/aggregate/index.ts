@@ -89,4 +89,3 @@ export const reorderAggregateRoutesApi = (data: ReorderAggregateRoutesReq) => {
     data
   })
 }
-

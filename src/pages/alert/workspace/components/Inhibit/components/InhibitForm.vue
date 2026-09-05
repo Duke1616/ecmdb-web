@@ -477,7 +477,6 @@ defineExpose({
     &:last-child {
       margin-bottom: 0;
     }
-
   }
 
   .form-item {

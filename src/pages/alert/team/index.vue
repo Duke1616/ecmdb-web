@@ -139,7 +139,13 @@ const tableColumns: Column[] = [
 // 表格操作配置
 const operateBtnItems = [
   { name: "修改", code: "edit", type: "primary", icon: markRaw(Edit), capability: ALERT_CAPABILITIES.Team.Edit },
-  { name: "群聊", code: "chat", type: "success", icon: markRaw(ChatDotRound), capability: ALERT_CAPABILITIES.Team.ChatView },
+  {
+    name: "群聊",
+    code: "chat",
+    type: "success",
+    icon: markRaw(ChatDotRound),
+    capability: ALERT_CAPABILITIES.Team.ChatView
+  },
   { name: "删除", code: "delete", type: "danger", icon: markRaw(Delete), capability: ALERT_CAPABILITIES.Team.Delete }
 ]
 
@@ -321,5 +327,4 @@ watch(dialogVisible, async (newVal) => {
   font-size: 12px;
   color: #6b7280;
 }
-
 </style>

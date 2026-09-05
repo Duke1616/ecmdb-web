@@ -122,4 +122,3 @@ const fallbackBuilder = (id: number): Team => {
   white-space: nowrap;
 }
 </style>
-

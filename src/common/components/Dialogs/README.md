@@ -19,14 +19,16 @@ Dialogs/
 ## 组件说明
 
 ### BaseDialog
+
 - **功能**: 提供基础的 el-dialog 封装
-- **特性**: 
+- **特性**:
   - 支持不同类型的弹窗（standard、form、permission、custom）
   - 统一的头部和底部样式
   - 可配置的宽度、关闭行为等
   - 响应式设计
 
 ### FormDialog
+
 - **功能**: 专门用于表单操作的弹窗
 - **特性**:
   - 统一的表单头部样式（图标 + 标题 + 副标题）
@@ -35,6 +37,7 @@ Dialogs/
   - 底部提示信息区域
 
 ### PermissionDialog
+
 - **功能**: 专门用于权限分配的弹窗
 - **特性**:
   - 统计信息显示（已选择数量、总数量）
@@ -45,11 +48,13 @@ Dialogs/
 ## 使用方法
 
 ### 统一导入
+
 ```typescript
 import { BaseDialog, FormDialog, PermissionDialog } from "@@/components/Dialogs"
 ```
 
 ### 单独导入
+
 ```typescript
 import FormDialog from "@@/components/Dialogs/Form/index.vue"
 import PermissionDialog from "@@/components/Dialogs/Permission/index.vue"

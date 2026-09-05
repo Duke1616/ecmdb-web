@@ -28,10 +28,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import SecureFieldView from '@/common/components/SecureFieldView/index.vue'
+import { ref } from "vue"
+import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
 
-const secureContent = ref('')
+const secureContent = ref("")
 const isDisplaying = ref(false)
 
 const handleViewClick = () => {
@@ -47,7 +47,7 @@ const handleDisplayChange = (displaying) => {
 
 const handleCopy = (content) => {
   // 处理复制事件
-  console.log('复制内容:', content)
+  console.log("复制内容:", content)
 }
 </script>
 ```
@@ -87,32 +87,28 @@ const handleCopy = (content) => {
 
 ```vue
 <template>
-  <SecureFieldView
-    :content="secureContent"
-    :copy-only="true"
-    @copy="handleCopy"
-  />
+  <SecureFieldView :content="secureContent" :copy-only="true" @copy="handleCopy" />
 </template>
 ```
 
 ## Props
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| content | string | '' | 安全内容 |
-| isDisplaying | boolean | false | 是否正在显示内容 |
-| autoCloseTime | number | 3 | 自动关闭时间（秒） |
-| enableAutoClose | boolean | true | 是否启用自动关闭 |
-| showContent | boolean | true | 是否显示敏感内容 |
-| copyOnly | boolean | false | 是否只显示复制按钮 |
+| 参数            | 类型    | 默认值 | 说明               |
+| --------------- | ------- | ------ | ------------------ |
+| content         | string  | ''     | 安全内容           |
+| isDisplaying    | boolean | false  | 是否正在显示内容   |
+| autoCloseTime   | number  | 3      | 自动关闭时间（秒） |
+| enableAutoClose | boolean | true   | 是否启用自动关闭   |
+| showContent     | boolean | true   | 是否显示敏感内容   |
+| copyOnly        | boolean | false  | 是否只显示复制按钮 |
 
 ## Events
 
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| view-click | - | 点击查看按钮时触发 |
+| 事件名         | 参数                  | 说明               |
+| -------------- | --------------------- | ------------------ |
+| view-click     | -                     | 点击查看按钮时触发 |
 | display-change | isDisplaying: boolean | 显示状态变化时触发 |
-| copy | content: string | 复制内容时触发 |
+| copy           | content: string       | 复制内容时触发     |
 
 ## 样式定制
 

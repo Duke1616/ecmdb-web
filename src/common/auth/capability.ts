@@ -212,6 +212,14 @@ export const IAM_CAPABILITIES = {
     Delete: "iam:identity_source:delete",
     /** 启用/禁用身份源 */
     Toggle: "iam:identity_source:toggle"
+  },
+
+  /** 安全审计相关 */
+  Audit: {
+    /** 查看认证审计日志 */
+    ViewAuth: "iam:audit:view_auth",
+    /** 查看操作审计日志 */
+    ViewOperation: "iam:audit:view_operation"
   }
 } as const
 

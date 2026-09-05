@@ -47,50 +47,54 @@
 
         <!-- 多行文本字段 - 独占一行 -->
         <div v-if="getMultilineFields(group.attributes || []).length" class="field-stack">
-          <div v-for="(item, index) of getMultilineFields(group.attributes || [])" :key="index" class="field-row is-wide">
-              <div class="field-label">{{ item.field_name }}</div>
-              <div class="field-content">
-                <div class="multiline-content">
-                  <SecureFieldView
-                    v-if="item.secure"
-                    class="multiline-secure-view"
-                    :content="resourceData.data[item.field_uid]"
-                    :is-displaying="!!resourceData.data[`${item.field_uid}_secure_display`]"
-                    :inline-content="true"
-                    :auto-close-time="8"
-                    @view-click="handleSecureClick(item)"
-                    @display-change="(isDisplaying) => handleSecureDisplayChange(item, isDisplaying)"
-                    @copy="(content) => handleCopySecureContent(content)"
-                  />
-                  <template v-else>{{ resourceData.data[item.field_uid] || "暂无内容" }}</template>
-                </div>
+          <div
+            v-for="(item, index) of getMultilineFields(group.attributes || [])"
+            :key="index"
+            class="field-row is-wide"
+          >
+            <div class="field-label">{{ item.field_name }}</div>
+            <div class="field-content">
+              <div class="multiline-content">
+                <SecureFieldView
+                  v-if="item.secure"
+                  class="multiline-secure-view"
+                  :content="resourceData.data[item.field_uid]"
+                  :is-displaying="!!resourceData.data[`${item.field_uid}_secure_display`]"
+                  :inline-content="true"
+                  :auto-close-time="8"
+                  @view-click="handleSecureClick(item)"
+                  @display-change="(isDisplaying) => handleSecureDisplayChange(item, isDisplaying)"
+                  @copy="(content) => handleCopySecureContent(content)"
+                />
+                <template v-else>{{ resourceData.data[item.field_uid] || "暂无内容" }}</template>
               </div>
             </div>
+          </div>
         </div>
 
         <!-- 文件字段 - 独占一行 -->
         <div v-if="getFileFields(group.attributes || []).length > 0" class="field-stack">
           <div v-for="(item, index) of getFileFields(group.attributes || [])" :key="index" class="field-row is-wide">
-              <div class="field-label">{{ item.field_name }}</div>
-              <div class="file-list">
-                <div
-                  v-for="(file, fileIndex) in resourceData.data[item.field_uid] || []"
-                  :key="fileIndex"
-                  class="file-item"
-                >
-                  <el-icon class="file-icon"><Document /></el-icon>
-                  <span class="file-name">{{ file.name }}</span>
-                  <el-button
-                    size="small"
-                    :icon="Download"
-                    class="file-download-button"
-                    @click="handleDownload(file)"
-                    title="下载文件"
-                  />
-                </div>
-                <el-empty v-if="!resourceData.data[item.field_uid]?.length" description="暂无文件" :image-size="60" />
+            <div class="field-label">{{ item.field_name }}</div>
+            <div class="file-list">
+              <div
+                v-for="(file, fileIndex) in resourceData.data[item.field_uid] || []"
+                :key="fileIndex"
+                class="file-item"
+              >
+                <el-icon class="file-icon"><Document /></el-icon>
+                <span class="file-name">{{ file.name }}</span>
+                <el-button
+                  size="small"
+                  :icon="Download"
+                  class="file-download-button"
+                  @click="handleDownload(file)"
+                  title="下载文件"
+                />
               </div>
+              <el-empty v-if="!resourceData.data[item.field_uid]?.length" description="暂无文件" :image-size="60" />
             </div>
+          </div>
         </div>
       </div>
     </div>

@@ -103,15 +103,39 @@ const tableColumns: Column[] = [
 
 const getOperateItems = (row: IdentitySourceVO) => {
   const items = []
-  items.push({ name: "配置", code: "edit", type: "primary", icon: markRaw(Edit), capability: IAM_CAPABILITIES.IdentitySource.Save })
+  items.push({
+    name: "配置",
+    code: "edit",
+    type: "primary",
+    icon: markRaw(Edit),
+    capability: IAM_CAPABILITIES.IdentitySource.Save
+  })
 
   if (row.enabled) {
-    items.push({ name: "禁用", code: "toggle", type: "warning", icon: markRaw(VideoPause), capability: IAM_CAPABILITIES.IdentitySource.Toggle })
+    items.push({
+      name: "禁用",
+      code: "toggle",
+      type: "warning",
+      icon: markRaw(VideoPause),
+      capability: IAM_CAPABILITIES.IdentitySource.Toggle
+    })
   } else {
-    items.push({ name: "启用", code: "toggle", type: "success", icon: markRaw(VideoPlay), capability: IAM_CAPABILITIES.IdentitySource.Toggle })
+    items.push({
+      name: "启用",
+      code: "toggle",
+      type: "success",
+      icon: markRaw(VideoPlay),
+      capability: IAM_CAPABILITIES.IdentitySource.Toggle
+    })
   }
 
-  items.push({ name: "删除", code: "delete", type: "danger", icon: markRaw(Delete), capability: IAM_CAPABILITIES.IdentitySource.Delete })
+  items.push({
+    name: "删除",
+    code: "delete",
+    type: "danger",
+    icon: markRaw(Delete),
+    capability: IAM_CAPABILITIES.IdentitySource.Delete
+  })
   return items
 }
 

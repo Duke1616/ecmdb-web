@@ -15,7 +15,11 @@
   >
     <div class="revoke-dialog-content">
       <div v-if="subject" class="ticket-subject">{{ subject }}</div>
-      <el-alert title="撤回后，未执行的自动化会被取消；已成功执行且配置了撤回补偿的动作会继续完成补偿。" type="warning" :closable="false" />
+      <el-alert
+        title="撤回后，未执行的自动化会被取消；已成功执行且配置了撤回补偿的动作会继续完成补偿。"
+        type="warning"
+        :closable="false"
+      />
       <el-form label-position="top" @submit.prevent="submit">
         <el-form-item label="撤单原因" required>
           <el-input

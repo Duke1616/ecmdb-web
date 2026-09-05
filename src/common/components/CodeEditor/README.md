@@ -32,18 +32,14 @@ CodeEditor/
 
 ```vue
 <template>
-  <CodeMirror
-    v-model:code="code"
-    v-model:language="language"
-    :is-create="false"
-  />
+  <CodeMirror v-model:code="code" v-model:language="language" :is-create="false" />
 </template>
 
 <script setup>
-import CodeMirror from '@@/components/CodeEditor'
+import CodeMirror from "@@/components/CodeEditor"
 
 const code = ref('console.log("Hello, World!")')
-const language = ref('javascript')
+const language = ref("javascript")
 </script>
 ```
 

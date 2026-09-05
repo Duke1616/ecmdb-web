@@ -32,7 +32,9 @@ export function useRuntimeSidebarResources(presentation: Ref<PluginRuntimePresen
   const sidebarEmptyText = computed(() => sidebar.value?.empty_text ?? "暂无资源数据")
   const sidebarCollapsible = computed(() => sidebar.value?.collapsible ?? true)
   const sidebarLimit = computed(() => resourceConfig.value?.limit ?? 20)
-  const showPagination = computed(() => !sidebarCollapsed.value && sidebarEnabled.value && total.value > sidebarLimit.value)
+  const showPagination = computed(
+    () => !sidebarCollapsed.value && sidebarEnabled.value && total.value > sidebarLimit.value
+  )
 
   const getNestedValue = (value: any, path: string) => {
     return path.split(".").reduce((current, key) => current?.[key], value)

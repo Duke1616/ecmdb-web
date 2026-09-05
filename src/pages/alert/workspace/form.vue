@@ -457,13 +457,13 @@ defineExpose({
         flex-direction: column;
         gap: 8px;
 
-          .option-item {
+        .option-item {
           display: flex;
           align-items: center;
           gap: 12px;
           padding: 12px;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
           position: relative;
