@@ -1,132 +1,124 @@
 <template>
   <PageContainer>
-    <!-- 工业级双层一体化检索控制面板（上层账号与时间，下层维度均分与操作） -->
+    <!-- 工业级一体化检索控制面板（统一 Grid 容器，上下严格对齐） -->
     <div class="audit-query-panel">
-      <!-- 第一行：核心主线（操作账号 + 时间范围） -->
-      <div class="first-row">
-        <!-- 操作账号 -->
-        <div class="control-group">
-          <label class="control-label">
-            <el-icon class="label-icon"><User /></el-icon>
-            <span>操作账号</span>
-          </label>
-          <el-input
-            v-model="query.operator_name"
-            placeholder="输入操作账号名称搜索..."
-            clearable
-            class="group-input"
-            @keyup.enter="handleSearch"
-            @clear="handleSearch"
-          />
-        </div>
-
-        <!-- 操作时间范围 -->
-        <div class="control-group">
-          <label class="control-label">
-            <el-icon class="label-icon"><Calendar /></el-icon>
-            <span>时间范围</span>
-          </label>
-          <el-date-picker
-            v-model="dateRange"
-            type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
-            value-format="x"
-            class="group-date-picker"
-            :shortcuts="dateShortcuts"
-            @change="handleDateRangeChange"
-          />
-        </div>
+      <!-- 第一行第1列：操作账号 -->
+      <div class="control-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><User /></el-icon>
+          <span>操作账号</span>
+        </label>
+        <el-input
+          v-model="query.operator_name"
+          placeholder="输入操作账号名称搜索..."
+          clearable
+          class="group-input"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        />
       </div>
 
-      <!-- 第二行：业务维度均分（服务 + 模块 + 动作 + 状态）与操作按钮 -->
-      <div class="second-row">
-        <div class="filter-groups">
-          <!-- 所属服务 -->
-          <div class="control-group">
-            <label class="control-label">
-              <el-icon class="label-icon"><Platform /></el-icon>
-              <span>所属服务</span>
-            </label>
-            <el-select
-              v-model="query.service"
-              placeholder="全部服务"
-              clearable
-              class="group-select"
-              @change="handleServiceChange"
-              @clear="handleServiceChange"
-            >
-              <el-option
-                v-for="svc in serviceOptions"
-                :key="svc.code"
-                :label="svc.name + ' (' + svc.code + ')'"
-                :value="svc.code"
-              />
-            </el-select>
-          </div>
+      <!-- 第一行第2列：执行状态 -->
+      <div class="control-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><CircleCheck /></el-icon>
+          <span>执行状态</span>
+        </label>
+        <el-select
+          v-model="query.status"
+          placeholder="全部状态"
+          clearable
+          class="group-select"
+          @change="handleSearch"
+          @clear="handleSearch"
+        >
+          <el-option label="执行成功" value="SUCCESS" />
+          <el-option label="执行失败" value="FAIL" />
+        </el-select>
+      </div>
 
-          <!-- 业务模块（与服务联动） -->
-          <div class="control-group">
-            <label class="control-label">
-              <el-icon class="label-icon"><Grid /></el-icon>
-              <span>业务模块</span>
-            </label>
-            <el-select
-              v-model="query.module"
-              placeholder="全部模块"
-              clearable
-              class="group-select"
-              @change="handleSearch"
-              @clear="handleSearch"
-            >
-              <el-option v-for="m in currentModuleOptions" :key="m.name" :label="m.name" :value="m.name" />
-            </el-select>
-          </div>
+      <!-- 第一行第3-4列：时间范围（跨越第3列和按钮列，与下方操作动作及查询按钮严格两侧对齐） -->
+      <div class="control-group span-time">
+        <label class="control-label">
+          <el-icon class="label-icon"><Calendar /></el-icon>
+          <span>时间范围</span>
+        </label>
+        <el-date-picker
+          v-model="dateRange"
+          type="datetimerange"
+          range-separator="至"
+          start-placeholder="开始时间"
+          end-placeholder="结束时间"
+          value-format="x"
+          class="group-date-picker"
+          :shortcuts="dateShortcuts"
+          @change="handleDateRangeChange"
+        />
+      </div>
 
-          <!-- 操作动作 (正则/模糊匹配) -->
-          <div class="control-group">
-            <label class="control-label">
-              <el-icon class="label-icon"><Operation /></el-icon>
-              <span>操作动作</span>
-            </label>
-            <el-input
-              v-model="query.action"
-              placeholder="动作代码/正则 (如 switch, create)"
-              clearable
-              class="group-input"
-              @keyup.enter="handleSearch"
-              @clear="handleSearch"
-            />
-          </div>
+      <!-- 第二行第1列：所属服务 -->
+      <div class="control-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><Platform /></el-icon>
+          <span>所属服务</span>
+        </label>
+        <el-select
+          v-model="query.service"
+          placeholder="全部服务"
+          clearable
+          class="group-select"
+          @change="handleServiceChange"
+          @clear="handleServiceChange"
+        >
+          <el-option
+            v-for="svc in serviceOptions"
+            :key="svc.code"
+            :label="svc.name + ' (' + svc.code + ')'"
+            :value="svc.code"
+          />
+        </el-select>
+      </div>
 
-          <!-- 执行状态 -->
-          <div class="control-group">
-            <label class="control-label">
-              <el-icon class="label-icon"><CircleCheck /></el-icon>
-              <span>执行状态</span>
-            </label>
-            <el-select
-              v-model="query.status"
-              placeholder="全部状态"
-              clearable
-              class="group-select"
-              @change="handleSearch"
-              @clear="handleSearch"
-            >
-              <el-option label="执行成功" value="SUCCESS" />
-              <el-option label="执行失败" value="FAIL" />
-            </el-select>
-          </div>
-        </div>
+      <!-- 第二行第2列：业务模块 -->
+      <div class="control-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><Grid /></el-icon>
+          <span>业务模块</span>
+        </label>
+        <el-select
+          v-model="query.module"
+          placeholder="全部模块"
+          clearable
+          class="group-select"
+          @change="handleSearch"
+          @clear="handleSearch"
+        >
+          <el-option v-for="m in currentModuleOptions" :key="m.name" :label="m.name" :value="m.name" />
+        </el-select>
+      </div>
 
-        <!-- 右侧操作区 -->
-        <div class="action-buttons">
-          <el-button :icon="RefreshRight" :disabled="!hasActiveFilter" class="action-btn" @click="handleResetFilters">
-            重置
-          </el-button>
-          <el-button type="primary" :icon="Search" class="action-btn" @click="handleSearch"> 查询 </el-button>
-        </div>
+      <!-- 第二行第3列：操作动作 -->
+      <div class="control-group">
+        <label class="control-label">
+          <el-icon class="label-icon"><Operation /></el-icon>
+          <span>操作动作</span>
+        </label>
+        <el-input
+          v-model="query.action"
+          placeholder="动作代码/正则 (如 switch, create)"
+          clearable
+          class="group-input"
+          @keyup.enter="handleSearch"
+          @clear="handleSearch"
+        />
+      </div>
+
+      <!-- 第二行第4列：操作按钮 -->
+      <div class="action-buttons">
+        <el-button :icon="RefreshRight" :disabled="!hasActiveFilter" class="action-btn" @click="handleResetFilters">
+          重置
+        </el-button>
+        <el-button type="primary" :icon="Search" class="action-btn" @click="handleSearch"> 查询 </el-button>
       </div>
     </div>
 
@@ -401,10 +393,10 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-/* 工业级一体化双层检索控制面板（第一行账号时间，第二行维度均分与按钮） */
+/* 工业级一体化检索控制面板（统一 4 列 Grid 容器，上下像素级严格对齐） */
 .audit-query-panel {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 12px;
   padding: 14px 16px;
   background: #ffffff;
@@ -413,34 +405,16 @@ onMounted(() => {
   margin-bottom: 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   flex-shrink: 0;
-}
 
-.first-row {
-  display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(360px, 1.4fr);
-  gap: 12px;
-  width: 100%;
-}
-
-.second-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-
-  .filter-groups {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    flex: 1;
-    min-width: 0;
+  .span-time {
+    grid-column: 3 / 5;
   }
 
   .action-buttons {
     display: flex;
     align-items: center;
     gap: 8px;
-    flex-shrink: 0;
+    justify-content: flex-end;
   }
 }
 
