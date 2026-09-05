@@ -26,8 +26,7 @@ import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { Loading } from "@element-plus/icons-vue"
 import { oidcCallbackApi } from "@/api/iam/user"
-import type { Tenant } from "@/api/iam/user/type"
-import TenantSelectModal from "./components/TenantSelectModal.vue"
+import TenantSelectModal, { type SelectableTenant } from "./components/TenantSelectModal.vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -37,7 +36,7 @@ const error = ref("")
 
 /** 租户选择相关 */
 const showTenantSelect = ref(false)
-const tenantList = ref<Tenant[]>([])
+const tenantList = ref<SelectableTenant[]>([])
 const loginUsername = ref("")
 
 const goToLogin = () => {

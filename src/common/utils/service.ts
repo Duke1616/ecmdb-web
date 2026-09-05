@@ -91,8 +91,8 @@ const instance = new HyRequest({
     },
     responseInterceptor: (response) => {
       const data = response.data?.data
-      // 核心安全防线：无论是 MFA 挑战 还是 待选租户，均属于未决状态，绝不标记会话建立！
-      const isPendingAuth = Boolean(data?.mfa_required || data?.must_select_tenant)
+      // 核心安全防线：MFA 挑战属于未完成身份认证阶段，其余登录成功均确立用户身份会话凭证
+      const isPendingAuth = Boolean(data?.mfa_required)
 
       const isEstablished = isSessionEstablishingRequest(response.config.url) && !isPendingAuth
       acceptCredentialResponse(

@@ -57,8 +57,8 @@ import { useRouter, useRoute } from "vue-router"
 import { type FormInstance, type FormRules } from "element-plus"
 import { Message, Lock } from "@element-plus/icons-vue"
 import { loginLdapApi, loginSystemApi, bindConfirmApi } from "@/api/iam/user"
-import type { LoginLdapRequest, Tenant } from "@/api/iam/user/type"
-import TenantSelectModal from "./components/TenantSelectModal.vue"
+import type { LoginLdapRequest } from "@/api/iam/user/type"
+import TenantSelectModal, { type SelectableTenant } from "./components/TenantSelectModal.vue"
 import MfaVerifyModal from "./components/MfaVerifyModal.vue"
 import { isDemoHost } from "./utils/demo-env"
 
@@ -78,7 +78,7 @@ const loading = ref(false)
 
 // 弹窗状态
 const showTenantSelect = ref(false)
-const tenantList = ref<Tenant[]>([])
+const tenantList = ref<SelectableTenant[]>([])
 const showMfaVerify = ref(false)
 const mfaToken = ref("")
 
@@ -140,15 +140,21 @@ function handleLoginSuccess(businessData: any) {
     return
   }
 
-  // 2. 租户选择拦截
+  // 2. 携带邀请码时直接回到 /join 页面完成入驻，不被多租户弹窗打断
+  const redirect = route.query.redirect as string
+  if (redirect && redirect.includes("/join")) {
+    router.push(redirect)
+    return
+  }
+
+  // 3. 租户选择拦截
   if (businessData.must_select_tenant) {
     tenantList.value = businessData.tenants
     showTenantSelect.value = true
     return
   }
 
-  // 3. 正常进入
-  const redirect = route.query.redirect as string
+  // 4. 正常进入
   if (redirect) {
     router.push(redirect)
   } else {

@@ -1,5 +1,6 @@
 export interface InvitationVO {
   code: string
+  tenant_id: number
   tenant_name: string
   inviter_id: number
   role_codes: string[]
@@ -30,6 +31,11 @@ export interface CreateInvitationReq {
 
 export interface AcceptInvitationReq {
   code: string
+}
+
+export interface AcceptInvitationVO {
+  require_approval: boolean
+  tenant_id: number
 }
 
 export interface JoinRequestVO {

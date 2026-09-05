@@ -26,7 +26,7 @@ export function verifyInvitationApi(code: string) {
  * 接受邀请
  */
 export function acceptInvitationApi(data: invitation.AcceptInvitationReq) {
-  return instance.post<{ require_approval: boolean }>({
+  return instance.post<invitation.AcceptInvitationVO>({
     url: `${API_SERVICE.IAM}/invitation/accept`,
     data
   })

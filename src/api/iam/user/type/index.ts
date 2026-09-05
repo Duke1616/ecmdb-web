@@ -109,6 +109,7 @@ export interface Tenant {
   name: string
   code: string
   domain: string
+  status?: number
 }
 
 /** 注册请求 */
