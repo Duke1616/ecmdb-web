@@ -4,7 +4,6 @@ import HyRequest from "@@/utils/request"
 import type { HYRequestConfig } from "@/common/utils/request/type"
 import {
   acceptCredentialResponse,
-  clearCredential,
   authHeaders,
   getAccessToken,
   shouldUseBearerCredential
@@ -95,10 +94,7 @@ const instance = new HyRequest({
       const isPendingAuth = Boolean(data?.mfa_required)
 
       const isEstablished = isSessionEstablishingRequest(response.config.url) && !isPendingAuth
-      acceptCredentialResponse(
-        response.headers as Record<string, unknown>,
-        isEstablished
-      )
+      acceptCredentialResponse(response.headers as Record<string, unknown>, isEstablished)
       return response
     }
   }
