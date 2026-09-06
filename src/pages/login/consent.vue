@@ -102,7 +102,7 @@
       </div>
 
       <!-- 隐藏的表单用于原生 POST 提交以触发服务端的 302 跨域重定向 -->
-      <form ref="consentFormRef" method="POST" action="/oauth/v2/consent" style="display: none">
+      <form ref="consentFormRef" method="POST" action="/api/iam/idp/consent" style="display: none">
         <input type="hidden" name="consent_id" :value="consentInfo?.consent_id || ''" />
         <input type="hidden" name="approved" :value="approvedValue" />
       </form>
