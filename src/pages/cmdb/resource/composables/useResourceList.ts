@@ -13,6 +13,7 @@ import { usePermission } from "@/common/composables/usePermission"
 import { createAttributeListView, type AttributeGroupView } from "@/common/utils/attribute"
 import type { Column } from "@@/components/DataTable/types"
 import { useResourcePluginActions } from "./useResourcePluginActions"
+import { copyToClipboard } from "@@/utils/clipboard"
 
 type ResourceFormExpose = {
   setForm: (resource: Resource) => void
@@ -313,18 +314,13 @@ export const useResourceList = () => {
     row.data[`${item.field_uid}_secure_display`] = isDisplaying
   }
 
-  const copySecureContent = async (content: string) => {
+  const copySecureContent = (content: string) => {
     if (!content) {
       ElMessage.warning("暂无可复制内容")
       return
     }
 
-    try {
-      await navigator.clipboard.writeText(content)
-      ElMessage.success("复制成功")
-    } catch {
-      ElMessage.error("复制失败")
-    }
+    copyToClipboard(content, "复制成功")
   }
 
   const handleUploadSuccess = () => {

@@ -137,7 +137,16 @@ function handleLoginSuccess(businessData: any) {
   // 2. 正常进入系统（若有重定向路径则优先跳转）
   const redirect = route.query.redirect as string
   if (redirect) {
-    router.push(redirect)
+    /**
+     * 当 redirect 参数指向后端 OIDC 授权端点（如 /oauth/v2/authorize?client_id=...）
+     * 或包含外部完整 URL 时，必须使用 window.location.href 做整页真实跳转，绝对不能使用 router.push。
+     * 否则会被 Vue Router 当作前端路由从而误入 404。
+     */
+    if (redirect.startsWith("/oauth/") || redirect.startsWith("http://") || redirect.startsWith("https://")) {
+      window.location.href = redirect
+    } else {
+      router.push(redirect)
+    }
   } else {
     router.push("/")
   }

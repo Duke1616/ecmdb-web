@@ -174,10 +174,10 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import { Document, CopyDocument, WarningFilled } from "@element-plus/icons-vue"
-import { ElMessage } from "element-plus"
 import { Drawer } from "@@/components/Dialogs"
 import type { OperationLog } from "@/api/iam/audit/type"
 import { formatUserAgent } from "../utils/ua"
+import { copyToClipboard } from "@@/utils/clipboard"
 import dayjs from "dayjs"
 
 interface Props {
@@ -208,15 +208,9 @@ const formatTime = (ts?: number) => {
   if (!ts) return "--"
   return dayjs(ts).format("YYYY-MM-DD HH:mm:ss")
 }
-
-const handleCopy = async (text?: string, msg = "复制成功") => {
+const handleCopy = (text?: string, msg = "复制成功") => {
   if (!text) return
-  try {
-    await navigator.clipboard.writeText(text)
-    ElMessage.success(msg)
-  } catch {
-    ElMessage.error("复制失败")
-  }
+  copyToClipboard(text, msg)
 }
 </script>
 

@@ -175,6 +175,7 @@ import { computed, toRaw } from "vue"
 import { ElMessage } from "element-plus"
 import { useRouter } from "vue-router"
 import { Delete, OfficeBuilding, Edit } from "@element-plus/icons-vue"
+import { copyToClipboard } from "@@/utils/clipboard"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import InfoCard from "@/common/components/Governance/InfoCard.vue"
 import StatusStrip from "@/common/components/Governance/StatusStrip.vue"
@@ -274,8 +275,7 @@ const { statusItems, infoItems } = useRoleDisplayItems(roleInfo, memberTotal, po
 // 完善职责 (编辑角色) 逻辑
 
 const handleCopy = (text: string) => {
-  navigator.clipboard.writeText(text)
-  ElMessage.success("已复制到剪贴板")
+  copyToClipboard(text, "已复制到剪贴板")
 }
 
 /**

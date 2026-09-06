@@ -216,6 +216,7 @@ const emit = defineEmits<{
   (e: "update:previewing", val: boolean): void
 }>()
 import { ArrowRight, CircleCheck, CopyDocument, Cpu, Plus, Setting, Share } from "@element-plus/icons-vue"
+import { copyToClipboard } from "@@/utils/clipboard"
 import { previewAggregateRouteApi } from "@/api/alert/aggregate"
 import type { AggregateGroupRule, PreviewAggregateRouteResp } from "@/api/alert/aggregate/types"
 
@@ -307,14 +308,9 @@ const resetSandbox = () => {
   previewResult.value = null
 }
 
-const copyFingerprint = async () => {
+const copyFingerprint = () => {
   if (!previewResult.value?.group_fingerprint) return
-  try {
-    await navigator.clipboard.writeText(String(previewResult.value.group_fingerprint))
-    ElMessage.success("分组指纹已复制")
-  } catch (e) {
-    ElMessage.error("复制失败")
-  }
+  copyToClipboard(String(previewResult.value.group_fingerprint), "分组指纹已复制")
 }
 
 function formatRepeatInterval(s: number) {

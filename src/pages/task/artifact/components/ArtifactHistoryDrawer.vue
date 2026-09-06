@@ -92,6 +92,7 @@ import DataTable from "@/common/components/DataTable/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { TASK_CAPABILITIES } from "@/common/auth/capability"
 import { formatTimestamp } from "@/common/utils/day"
+import { copyToClipboard } from "@@/utils/clipboard"
 import { activateArtifactApi, listArtifactsApi } from "@/api/task/artifact"
 import type { ArtifactRelease } from "@/api/task/artifact/types/artifact"
 import type { Column } from "@/common/components/DataTable/types"
@@ -200,9 +201,8 @@ function versionLabel(release: ArtifactRelease) {
 }
 
 /** 复制完整制品摘要。 */
-async function copyDigest(digest: string) {
-  await navigator.clipboard.writeText(digest)
-  ElMessage.success("制品摘要已复制")
+function copyDigest(digest: string) {
+  copyToClipboard(digest, "制品摘要已复制")
 }
 
 /** 生成便于展示的短摘要。 */

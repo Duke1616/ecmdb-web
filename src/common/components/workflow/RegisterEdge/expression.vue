@@ -159,6 +159,7 @@
 <script lang="ts" setup>
 import { onMounted, ref, watch, computed, nextTick } from "vue"
 import { ElMessage } from "element-plus"
+import { copyToClipboard } from "@@/utils/clipboard"
 import {
   CopyDocument,
   Download,
@@ -280,8 +281,7 @@ const removeAndToLeftList = (itemIndex: number, group: any) => {
 }
 
 const copyExpression = () => {
-  navigator.clipboard.writeText(props.expression)
-  ElMessage.success("复制成功")
+  copyToClipboard(props.expression, "复制成功")
 }
 
 const exportExpression = () => {

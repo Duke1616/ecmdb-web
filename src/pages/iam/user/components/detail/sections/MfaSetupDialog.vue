@@ -5,6 +5,7 @@ import { mfaTotpSetupApi, mfaTotpBindApi } from "@/api/iam/user"
 import { ElMessage } from "element-plus"
 import type { MfaTotpSetupResponse } from "@/api/iam/user/type"
 import { FormDialog } from "@@/components/Dialogs"
+import { copyToClipboard } from "@@/utils/clipboard"
 import QrcodeVue from "qrcode.vue"
 
 const visible = defineModel<boolean>({ default: false })
@@ -74,8 +75,7 @@ const handleKeydown = (index: number, e: KeyboardEvent) => {
  */
 const copySecret = () => {
   if (setupData.value?.secret) {
-    navigator.clipboard.writeText(setupData.value.secret)
-    ElMessage.success("密钥已复制到剪贴板")
+    copyToClipboard(setupData.value.secret, "密钥已复制到剪贴板")
   }
 }
 

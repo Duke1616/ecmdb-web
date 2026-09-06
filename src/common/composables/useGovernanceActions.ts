@@ -1,4 +1,5 @@
-import { ElMessageBox, ElMessage, type ButtonProps } from "element-plus"
+import { ElMessageBox, type ButtonProps } from "element-plus"
+import { copyToClipboard } from "@@/utils/clipboard"
 
 /**
  * 治理平台通用动作管理器
@@ -54,15 +55,10 @@ export function useGovernanceActions() {
   }
 
   /**
-   * 简单的复制文本功能
+   * 跨环境健壮文本复制功能
    */
-  const handleCopy = async (text: string, label: string = "内容") => {
-    try {
-      await navigator.clipboard.writeText(text)
-      ElMessage.success(`${label}已复制到剪贴板`)
-    } catch (err) {
-      ElMessage.error("复制失败，浏览器可能不支持此操作")
-    }
+  const handleCopy = (text: string, label: string = "内容") => {
+    return copyToClipboard(text, `${label}已复制到剪贴板`)
   }
 
   return {

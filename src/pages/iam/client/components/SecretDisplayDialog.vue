@@ -60,9 +60,9 @@
 </template>
 
 <script setup lang="ts">
-import { ElMessage } from "element-plus"
 import { Key, WarningFilled, CopyDocument } from "@element-plus/icons-vue"
 import { FormDialog } from "@@/components/Dialogs"
+import { copyToClipboard } from "@@/utils/clipboard"
 
 // NOTE: 该组件为纯 UI 安全凭据弹窗控制器，由父组件控制显示与关闭
 const visible = defineModel<boolean>({ default: false })
@@ -73,13 +73,8 @@ defineProps<{
   clientSecret: string
 }>()
 
-const copyText = async (text: string, title = "内容") => {
-  try {
-    await navigator.clipboard.writeText(text)
-    ElMessage.success(`已复制 ${title} 到剪贴板`)
-  } catch {
-    ElMessage.error("复制失败，请手动选中文本复制")
-  }
+const copyText = (text: string, title = "内容") => {
+  copyToClipboard(text, `已复制 ${title} 到剪贴板`)
 }
 </script>
 
