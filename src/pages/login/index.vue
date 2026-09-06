@@ -366,7 +366,17 @@ const handleLoginSuccess = (businessData: any) => {
   ElMessage.success("登录成功")
   const redirect = route.query.redirect as string
   if (redirect) {
-    router.push(redirect)
+    /**
+     * 当 redirect 参数指向后端 OIDC 授权端点（如 /oauth/v2/authorize?client_id=...）时，
+     * 必须使用 window.location.href 做整页跳转，而不能用 router.push。
+     * 原因：router.push 是前端路由，不会触发实际的 HTTP 请求，也无法携带 Cookie。
+     * 浏览器整页跳转才能让后端 /oauth/v2/authorize 接口读取到 Session Cookie 并完成授权。
+     */
+    if (redirect.startsWith("/oauth/")) {
+      window.location.href = redirect
+    } else {
+      router.push(redirect)
+    }
   } else {
     router.push("/")
   }

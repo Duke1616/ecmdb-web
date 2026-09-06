@@ -150,6 +150,22 @@ export const IAM_CAPABILITIES = {
     LdapRefresh: "iam:user.ldap:refresh"
   },
 
+  /** 统一身份提供商接入应用 (OAuth2 / OIDC Client) */
+  OAuthClient: {
+    /** 查看接入应用列表 */
+    View: "iam:idp:list",
+    /** 创建接入应用 */
+    Add: "iam:idp:create",
+    /** 编辑接入应用 */
+    Edit: "iam:idp:update",
+    /** 删除接入应用 */
+    Delete: "iam:idp:delete",
+    /** 重置客户端密钥 */
+    ResetSecret: "iam:idp:reset_secret",
+    /** 查询应用详情 */
+    Detail: "iam:idp:detail"
+  },
+
   /** 用户组治理相关 */
   Group: {
     /** 查看用户组列表 */

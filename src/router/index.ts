@@ -87,6 +87,15 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    // EIAM 作为 OIDC RP（SSO 开关开启时），自身接收 IDP 授权码的回调路由
+    // 区别于 /callback（飞书身份源专用），此路由用于 EIAM 控制台 SSO 联动场景
+    path: "/auth/callback",
+    component: () => import("@/pages/login/oidc-callback.vue"),
+    meta: {
+      hidden: true
+    }
+  },
+  {
     path: "/logicflow-preview",
     component: Logicflow,
     meta: {
@@ -130,6 +139,7 @@ export const constantRoutes: RouteRecordRaw[] = [
       }
     ]
   },
+
   {
     path: "/change",
     component: () => import("@/pages/change/index.vue"),

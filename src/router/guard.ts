@@ -9,6 +9,8 @@ import isWhiteList from "@/router/white-list"
 import { clearChunkLoadReloadFlag } from "@/common/utils/chunkLoadRecovery"
 import NProgress from "nprogress"
 import "nprogress/nprogress.css"
+import { checkSessionApi } from "@/api/iam/idp"
+import { acceptCredentialResponse } from "@/common/auth/credential"
 
 const { setTitle } = useTitle()
 NProgress.configure({ showSpinner: false })
@@ -31,7 +33,27 @@ export function registerNavigationGuard(router: Router) {
 
     // 2. 检查认证状态
     if (!hasCredential()) {
-      return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
+      /**
+       * 静默 SSO 探查：当前端无凭据时，尝试请求后端 /api/user/profile。
+       * 若后端返回 200（Cookie 有效），说明用户已通过其他入口（如 GitLab OIDC）登录过，
+       * 标记 SESSION_ESTABLISHED 后直接放行，无需用户重新输入密码。
+       */
+      try {
+        const res = await checkSessionApi()
+        if (res?.data) {
+          // Cookie 有效，标记前端 Session 已建立
+          acceptCredentialResponse(undefined, true)
+          // 继续执行后续路由逻辑（拉取用户信息、权限等）
+        } else {
+          // 后端无有效 Session，跳登录页
+          sessionStorage.setItem("sso_redirect_after_login", to.fullPath)
+          return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
+        }
+      } catch {
+        // 接口 401 或网络异常，统一跳登录页
+        sessionStorage.setItem("sso_redirect_after_login", to.fullPath)
+        return { path: LOGIN_PATH, query: { redirect: to.fullPath } }
+      }
     }
 
     // 如果用户已经获得其权限路由则直接进入
