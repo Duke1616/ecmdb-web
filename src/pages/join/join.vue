@@ -208,16 +208,8 @@
                   }}
                 </p>
                 <div class="success-actions">
-                  <el-button
-                    v-if="invitation?.require_approval"
-                    type="primary"
-                    class="gov-btn"
-                    @click="openTenantSelector"
-                  >
-                    查看工作空间状态
-                  </el-button>
-                  <el-button v-else type="primary" :loading="submitting" class="gov-btn" @click="enterWorkspace()">
-                    进入系统
+                  <el-button type="primary" :loading="submitting" class="gov-btn" @click="enterWorkspace()">
+                    {{ invitation?.require_approval ? "返回工作台" : "进入系统" }}
                   </el-button>
                 </div>
               </div>
@@ -226,15 +218,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 租户选择 / 审批中状态展示弹窗 -->
-    <TenantSelectModal
-      v-model="showTenantModal"
-      :tenants="userTenants"
-      title="工作空间治理列表"
-      description="您的入驻申请正在管理员审批中。您可以选择进入其他已有工作空间，或等待审批核准。"
-      :show-close="true"
-    />
   </div>
 </template>
 
@@ -258,10 +241,9 @@ import {
   User
 } from "@element-plus/icons-vue"
 import { verifyInvitationApi, acceptInvitationApi } from "@/api/iam/invitation"
-import { switchTenantApi, listMyTenantsApi } from "@/api/iam/tenant"
+import { switchTenantApi } from "@/api/iam/tenant"
 import type { InvitationVO } from "@/api/iam/invitation/type"
 import { hasCredential } from "@/common/auth/credential"
-import TenantSelectModal, { type SelectableTenant } from "@/pages/login/components/TenantSelectModal.vue"
 
 const route = useRoute()
 const router = useRouter()
@@ -272,9 +254,6 @@ const submitting = ref(false)
 const invitation = ref<InvitationVO | null>(null)
 const error = ref<string | null>(null)
 const success = ref(false)
-
-const showTenantModal = ref(false)
-const userTenants = ref<SelectableTenant[]>([])
 
 const fetchInvitation = async () => {
   if (!code) {
@@ -293,16 +272,16 @@ const fetchInvitation = async () => {
 }
 
 /**
- * 统一进入工作空间：先确立租户上下文，再平滑进入工作台
+ * 统一进入工作空间：
+ * 若指定了明确的 targetTid，先确立租户上下文；未指定则保持当前已有空间，平滑进入工作台
  */
 const enterWorkspace = async (targetTid?: number) => {
-  const tid = targetTid || invitation.value?.tenant_id
-  if (tid) {
+  if (targetTid) {
     submitting.value = true
     try {
-      await switchTenantApi(tid)
+      await switchTenantApi(targetTid)
     } catch (err: any) {
-      return
+      // 忽略或由全局拦截器提示
     } finally {
       submitting.value = false
     }
@@ -310,51 +289,10 @@ const enterWorkspace = async (targetTid?: number) => {
   router.push("/")
 }
 
-/**
- * 呼出租户选择弹窗并标注当前租户为“审批中”
- */
-const openTenantSelector = async () => {
-  try {
-    const res = await listMyTenantsApi()
-    const list: SelectableTenant[] = (res.data || []).map((t) => ({ ...t, audit_status: "approved" as const }))
-
-    if (invitation.value) {
-      const exists = list.some((t) => t.id === invitation.value!.tenant_id)
-      if (!exists) {
-        list.unshift({
-          id: invitation.value.tenant_id,
-          name: invitation.value.tenant_name,
-          code: invitation.value.tenant_name,
-          domain: "",
-          audit_status: "pending"
-        })
-      } else {
-        const target = list.find((t) => t.id === invitation.value!.tenant_id)
-        if (target) target.audit_status = "pending"
-      }
-    }
-    userTenants.value = list
-    showTenantModal.value = true
-  } catch (err: any) {
-    if (invitation.value) {
-      userTenants.value = [
-        {
-          id: invitation.value.tenant_id,
-          name: invitation.value.tenant_name,
-          code: invitation.value.tenant_name,
-          domain: "",
-          audit_status: "pending"
-        }
-      ]
-      showTenantModal.value = true
-    }
-  }
-}
-
 const handleJoin = async () => {
-  // 1. 若当前用户已是成员，直接确立租户上下文并进入
+  // 1. 若当前用户已是成员，确立目标租户上下文并进入
   if (invitation.value?.is_member) {
-    await enterWorkspace()
+    await enterWorkspace(invitation.value.tenant_id)
     return
   }
 
@@ -373,10 +311,7 @@ const handleJoin = async () => {
   try {
     const res = await acceptInvitationApi({ code })
     success.value = true
-    if (res.data.require_approval) {
-      // 需要审批：自动弹出租户空间治理弹窗，并标注该租户为“审批中”
-      await openTenantSelector()
-    } else {
+    if (!res.data.require_approval) {
       // 无需审批：自动确立目标租户并跳转
       setTimeout(() => enterWorkspace(res.data.tenant_id), 1200)
     }

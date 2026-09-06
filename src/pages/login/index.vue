@@ -203,9 +203,6 @@
       </div>
     </div>
 
-    <!-- 租户选择弹窗 (用于 Passkey 登录后的多租户情况) -->
-    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" :username="loginUsername" />
-
     <!-- MFA 二次验证弹窗 -->
     <MfaVerifyModal v-model="showMfaVerify" :mfa-token="mfaToken" @success="handleMfaSuccess" />
   </div>
@@ -231,7 +228,6 @@ import {
 import { startAuthentication } from "@simplewebauthn/browser"
 import Login from "./login.vue"
 import Owl from "./components/Owl.vue"
-import TenantSelectModal, { type SelectableTenant } from "./components/TenantSelectModal.vue"
 import MfaVerifyModal from "./components/MfaVerifyModal.vue"
 import { getOidcRenderApi, passkeyLoginStartApi, passkeyLoginFinishApi } from "@/api/iam/user"
 import { getEnabledProvidersApi } from "@/api/iam/identity-source"
@@ -249,9 +245,6 @@ const activeName = ref<IdentitySourceType>((route.query.mode as IdentitySourceTy
 const isPasswordFocused = ref(false)
 const enabledProviders = ref<string[]>([])
 
-const showTenantSelect = ref(false)
-const tenantList = ref<SelectableTenant[]>([])
-const loginUsername = ref("")
 const inviteInfo = ref<InvitationVO | null>(null)
 const showMfaVerify = ref(false)
 const mfaToken = ref("")
@@ -369,15 +362,7 @@ const handleLoginSuccess = (businessData: any) => {
     return
   }
 
-  // 2. 租户选择拦截
-  if (businessData.must_select_tenant) {
-    loginUsername.value = businessData.user?.username || ""
-    tenantList.value = businessData.tenants
-    showTenantSelect.value = true
-    return
-  }
-
-  // 3. 正常进入
+  // 2. 正常进入
   ElMessage.success("登录成功")
   const redirect = route.query.redirect as string
   if (redirect) {

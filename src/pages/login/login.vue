@@ -43,9 +43,6 @@
       {{ props.bindToken ? "验证并绑定" : "登 录" }}
     </el-button>
 
-    <!-- 租户选择弹窗 -->
-    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" :username="loginFormData.username" />
-
     <!-- MFA 二次验证弹窗 -->
     <MfaVerifyModal v-model="showMfaVerify" :mfa-token="mfaToken" @success="handleLoginSuccess" />
   </el-form>
@@ -58,7 +55,6 @@ import { type FormInstance, type FormRules } from "element-plus"
 import { Message, Lock } from "@element-plus/icons-vue"
 import { loginLdapApi, loginSystemApi, bindConfirmApi } from "@/api/iam/user"
 import type { LoginLdapRequest } from "@/api/iam/user/type"
-import TenantSelectModal, { type SelectableTenant } from "./components/TenantSelectModal.vue"
 import MfaVerifyModal from "./components/MfaVerifyModal.vue"
 import { isDemoHost } from "./utils/demo-env"
 
@@ -77,8 +73,6 @@ const loginFormRef = ref<FormInstance | null>(null)
 const loading = ref(false)
 
 // 弹窗状态
-const showTenantSelect = ref(false)
-const tenantList = ref<SelectableTenant[]>([])
 const showMfaVerify = ref(false)
 const mfaToken = ref("")
 
@@ -125,7 +119,7 @@ function handleLogin() {
 }
 
 /**
- * 统一处理登录/验证成功后的后续逻辑（租户选择/直接进入）
+ * 统一处理登录/验证成功后的后续逻辑
  */
 function handleLoginSuccess(businessData: any) {
   if (!businessData) {
@@ -140,21 +134,8 @@ function handleLoginSuccess(businessData: any) {
     return
   }
 
-  // 2. 携带邀请码时直接回到 /join 页面完成入驻，不被多租户弹窗打断
+  // 2. 正常进入系统（若有重定向路径则优先跳转）
   const redirect = route.query.redirect as string
-  if (redirect && redirect.includes("/join")) {
-    router.push(redirect)
-    return
-  }
-
-  // 3. 租户选择拦截
-  if (businessData.must_select_tenant) {
-    tenantList.value = businessData.tenants
-    showTenantSelect.value = true
-    return
-  }
-
-  // 4. 正常进入
   if (redirect) {
     router.push(redirect)
   } else {

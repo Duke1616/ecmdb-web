@@ -14,9 +14,6 @@
         </template>
       </el-result>
     </div>
-
-    <!-- NOTE: 飞书 OAuth2 回调也需要租户选择，与 login.vue 保持一致 -->
-    <TenantSelectModal v-model="showTenantSelect" :tenants="tenantList" :username="loginUsername" />
   </div>
 </template>
 
@@ -26,18 +23,12 @@ import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { Loading } from "@element-plus/icons-vue"
 import { oidcCallbackApi } from "@/api/iam/user"
-import TenantSelectModal, { type SelectableTenant } from "./components/TenantSelectModal.vue"
 
 const route = useRoute()
 const router = useRouter()
 
 const loading = ref(true)
 const error = ref("")
-
-/** 租户选择相关 */
-const showTenantSelect = ref(false)
-const tenantList = ref<SelectableTenant[]>([])
-const loginUsername = ref("")
 
 const goToLogin = () => {
   router.push("/login")
@@ -66,16 +57,9 @@ onMounted(async () => {
       return
     }
 
-    // 如果后端返回了 must_select_tenant，弹出租户选择弹窗
-    if (businessData && businessData.must_select_tenant) {
-      loading.value = false
-      loginUsername.value = businessData.user?.username || ""
-      tenantList.value = businessData.tenants
-      showTenantSelect.value = true
-    } else {
-      ElMessage.success("登录成功")
-      router.push({ path: "/" })
-    }
+    ElMessage.success("登录成功")
+    // 优先跳转服务端透传的原始深度路径，否则进入首页
+    router.push(businessData.redirect_url || "/")
   } catch (err: any) {
     error.value = err.message || "飞书登录失败，请重试"
     loading.value = false
