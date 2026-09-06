@@ -143,11 +143,11 @@ export const IAM_CAPABILITIES = {
     /** 解绑外部身份 */
     UnbindIdentity: "iam:user:unbind_identity",
     /** 同步 LDAP 用户 */
-    LdapSync: "iam:user.ldap:sync",
+    LdapSync: "iam:ldap:sync",
     /** 搜索 LDAP 用户 */
-    LdapSearch: "iam:user.ldap:search",
+    LdapSearch: "iam:ldap:search",
     /** 刷新 LDAP 缓存 */
-    LdapRefresh: "iam:user.ldap:refresh"
+    LdapRefresh: "iam:ldap:refresh"
   },
 
   /** 统一身份提供商接入应用 (OAuth2 / OIDC Client) */
