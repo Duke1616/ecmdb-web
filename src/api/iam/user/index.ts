@@ -144,11 +144,18 @@ export function manageIdentitiesApi(data: user.ManageIdentitiesRequest) {
   })
 }
 
-/** 获取 OIDC 授权渲染 URL */
-export function getOidcRenderApi(providerType: string) {
+/**
+ * 获取 OIDC 授权渲染 URL
+ * @param providerType 身份源类型 (如 feishu)
+ * @param redirect 可选的登录成功后重定向路径 (用于维持 SSO 上下文)
+ */
+export function getOidcRenderApi(providerType: string, redirect?: string) {
   return instance.get<user.OidcRenderResponse>({
     url: `${API_SERVICE.IAM}/user/oidc/render`,
-    params: { provider_type: providerType }
+    params: {
+      provider_type: providerType,
+      redirect: redirect || undefined
+    }
   })
 }
 

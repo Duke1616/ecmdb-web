@@ -302,7 +302,9 @@ const handleFieldFocus = (field: string) => {
 const handleFeishuLogin = async () => {
   if (!isEnabled(OIDCProviderType.FEISHU)) return
   try {
-    const res = await getOidcRenderApi("feishu")
+    // 携带当前登录页透传的重定向深度路径 (例如 SSO 回调 /oauth/v2/authorize)
+    const redirect = route.query.redirect as string
+    const res = await getOidcRenderApi("feishu", redirect)
     if (res.data) window.location.href = res.data
   } catch {
     ElMessage.error("获取授权失败")

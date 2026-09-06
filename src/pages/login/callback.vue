@@ -53,7 +53,10 @@ onMounted(async () => {
     if (businessData.bind_token) {
       router.push({
         path: "/login",
-        query: { bind_token: businessData.bind_token }
+        query: {
+          bind_token: businessData.bind_token,
+          redirect: businessData.redirect_url || undefined
+        }
       })
       return
     }
@@ -62,8 +65,17 @@ onMounted(async () => {
     acceptCredentialResponse(undefined, true)
 
     ElMessage.success("登录成功")
-    // 优先跳转服务端透传的原始深度路径，否则进入首页
-    router.push(businessData.redirect_url || "/")
+    const targetUrl = businessData.redirect_url
+    if (targetUrl) {
+      // NOTE: 若 redirect 指向后端 OIDC 端点或外部 URL，必须使用浏览器原生整页跳转以发送 Session Cookie 并完成授权
+      if (targetUrl.startsWith("/oauth/") || targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
+        window.location.href = targetUrl
+      } else {
+        router.push(targetUrl)
+      }
+    } else {
+      router.push("/")
+    }
   } catch (err: any) {
     error.value = err.message || "飞书登录失败，请重试"
     loading.value = false
