@@ -23,6 +23,7 @@ import { useRoute, useRouter } from "vue-router"
 import { ElMessage } from "element-plus"
 import { Loading } from "@element-plus/icons-vue"
 import { oidcCallbackApi } from "@/api/iam/user"
+import { acceptCredentialResponse } from "@/common/auth/credential"
 
 const route = useRoute()
 const router = useRouter()
@@ -56,6 +57,9 @@ onMounted(async () => {
       })
       return
     }
+
+    // 显式确立客户端会话凭据，防止路由守卫因 hasCredential 为 false 触发静默探查
+    acceptCredentialResponse(undefined, true)
 
     ElMessage.success("登录成功")
     // 优先跳转服务端透传的原始深度路径，否则进入首页
