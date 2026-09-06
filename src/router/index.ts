@@ -96,6 +96,15 @@ export const constantRoutes: RouteRecordRaw[] = [
     }
   },
   {
+    // OIDC 用户授权确认页 (Consent Page)
+    path: "/consent",
+    component: () => import("@/pages/login/consent.vue"),
+    meta: {
+      hidden: true,
+      title: "授权确认"
+    }
+  },
+  {
     path: "/logicflow-preview",
     component: Logicflow,
     meta: {

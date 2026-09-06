@@ -1,7 +1,7 @@
 import { type RouteLocationNormalized } from "vue-router"
 
 /** 免登录白名单（匹配路由 path） */
-const whiteListByPath: string[] = ["/login", "/callback", "/auth/callback", "/500", "/join", "/logicflow-preview"]
+const whiteListByPath: string[] = ["/login", "/callback", "/auth/callback", "/consent", "/500", "/join", "/logicflow-preview"]
 
 /** 免登录白名单（匹配路由 name） */
 const whiteListByName: string[] = []

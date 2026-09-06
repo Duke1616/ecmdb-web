@@ -72,3 +72,22 @@ export interface ListOAuthClientResp {
 export interface ResetSecretResp {
   client_secret: string
 }
+
+/** 待确认授权信息详情 */
+export interface ConsentInfo {
+  consent_id: string
+  client_id: string
+  client_name: string
+  client_logo: string
+  user_id: number
+  username: string
+  tenant_id: number
+  redirect_uri: string
+  scopes: string[]
+  scope_descriptions: string[]
+  state: string
+  nonce: string
+  code_challenge?: string
+  code_challenge_method?: string
+  created_at: number
+}

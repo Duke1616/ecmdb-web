@@ -56,3 +56,11 @@ export function getOAuthClientDetailApi(id: number) {
     url: `${API_SERVICE.IAM}/idp/client/detail/${id}`
   })
 }
+
+/** 获取待确认授权详情 */
+export function getConsentInfoApi(consentId: string) {
+  return instance.get<idp.ConsentInfo>({
+    url: `${API_SERVICE.IAM}/oauth/v2/consent`,
+    params: { consent_id: consentId }
+  })
+}
