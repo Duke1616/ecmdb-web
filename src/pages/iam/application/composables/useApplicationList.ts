@@ -34,7 +34,11 @@ export function useApplicationList() {
   const formVisible = ref(false)
   const currentEditId = ref<number | null>(null)
 
-  // 4. 密钥明文展示弹窗状态（新建成功或重置密钥后触发）
+  // 4. SAML 接入指南与证书下载弹窗状态
+  const samlGuideDialogVisible = ref(false)
+  const currentSamlApp = ref<Application | null>(null)
+
+  // 5. 密钥明文展示弹窗状态（新建成功或重置密钥后触发）
   const secretDialogVisible = ref(false)
   const currentSecretInfo = ref<{
     clientName: string
@@ -54,6 +58,11 @@ export function useApplicationList() {
   const handleEdit = (row: Application) => {
     currentEditId.value = row.id
     formVisible.value = true
+  }
+
+  const handleShowSamlGuide = (row: Application) => {
+    currentSamlApp.value = row
+    samlGuideDialogVisible.value = true
   }
 
   const handleDelete = (row: Application) => {
@@ -102,13 +111,17 @@ export function useApplicationList() {
     formVisible.value = false
     loadData()
     // 若创建返回了初始密钥且非 CAS 协议，立即弹窗向管理员呈现明文 (CAS 协议无需客户端密钥)
-    if (createdApp?.client_secret && createdApp.protocol !== "cas") {
+    if (createdApp?.client_secret && createdApp.protocol === "oidc") {
       currentSecretInfo.value = {
         clientName: createdApp.name,
         clientId: createdApp.client_id,
         clientSecret: createdApp.client_secret
       }
       secretDialogVisible.value = true
+    } else if (createdApp?.protocol === "saml") {
+      // SAML 应用创建成功后，主动拉起配置指南与公钥证书下载弹窗
+      currentSamlApp.value = createdApp
+      samlGuideDialogVisible.value = true
     }
   }
 
@@ -124,6 +137,9 @@ export function useApplicationList() {
     currentEditId,
     secretDialogVisible,
     currentSecretInfo,
+    samlGuideDialogVisible,
+    currentSamlApp,
+    handleShowSamlGuide,
     loadData,
     handleRefresh,
     handleCreate,

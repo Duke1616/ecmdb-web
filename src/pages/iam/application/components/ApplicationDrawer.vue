@@ -53,13 +53,16 @@
               </div>
             </div>
 
-            <div class="protocol-card is-disabled" title="SAML 2.0 暂未开放">
+            <div
+              class="protocol-card"
+              :class="{ active: formData.protocol === 'saml' }"
+              @click="formData.protocol = 'saml'"
+            >
               <div class="protocol-icon">
                 <img :src="samlIcon" alt="SAML" class="protocol-logo" />
               </div>
               <div class="protocol-info">
                 <div class="protocol-name">SAML 2.0</div>
-                <div class="protocol-sub">即将支持</div>
               </div>
             </div>
           </div>
@@ -112,15 +115,19 @@
 
           <div class="form-row-grid">
             <el-form-item
-              v-if="formData.protocol === 'oidc'"
-              label="客户端标识"
+              v-if="formData.protocol === 'oidc' || formData.protocol === 'saml'"
+              :label="formData.protocol === 'saml' ? 'SP 实体标识' : '客户端标识'"
               prop="client_id"
               class="flex-1"
             >
               <el-input
                 v-model="formData.client_id"
                 :disabled="!!id"
-                placeholder="留空系统将自动生成"
+                :placeholder="
+                  formData.protocol === 'saml'
+                    ? '例如 urn:alibaba:cloudauth 或 https://sp.example.com'
+                    : '留空系统将自动生成'
+                "
                 size="large"
                 class="mono premium-input"
               >
@@ -131,12 +138,7 @@
             </el-form-item>
 
             <el-form-item label="应用图标" prop="logo" class="flex-1">
-              <el-input
-                v-model="formData.logo"
-                placeholder="https://.../logo.png"
-                size="large"
-                class="premium-input"
-              >
+              <el-input v-model="formData.logo" placeholder="https://.../logo.png" size="large" class="premium-input">
                 <template #prefix>
                   <el-icon><Picture /></el-icon>
                 </template>
@@ -153,7 +155,9 @@
           <div class="section-title">
             <div class="title-left">
               <el-icon class="section-icon"><Position /></el-icon>
-              <span>{{ formData.protocol === 'cas' ? '服务地址' : '回调地址' }}</span>
+              <span>{{
+                formData.protocol === "cas" ? "服务地址" : formData.protocol === "saml" ? "断言消费地址" : "回调地址"
+              }}</span>
             </div>
           </div>
 
@@ -161,7 +165,13 @@
             <div v-for="(uri, index) in formData.redirect_uris" :key="index" class="uri-item">
               <el-input
                 v-model="formData.redirect_uris[index]"
-                :placeholder="formData.protocol === 'cas' ? 'https://example.com' : 'https://gitlab.example.com/oauth/callback'"
+                :placeholder="
+                  formData.protocol === 'cas'
+                    ? 'https://example.com'
+                    : formData.protocol === 'saml'
+                      ? 'https://sp.example.com/saml/acs'
+                      : 'https://gitlab.example.com/oauth/callback'
+                "
                 size="large"
                 class="mono premium-input flex-1"
               >
@@ -186,21 +196,66 @@
               </el-button>
 
               <div class="uri-quick-tags">
-                <span
-                  class="quick-pill"
-                  @click="fillQuickUri(formData.protocol === 'cas' ? 'http://localhost:8080' : 'http://localhost:3000/api/auth/callback')"
-                >
-                  + 示例: 本地调试 ({{ formData.protocol === 'cas' ? 'localhost:8080' : 'localhost:3000' }})
-                </span>
+                <span class="quick-title">快捷填入:</span>
+                <template v-if="formData.protocol === 'saml'">
+                  <el-tooltip content="https://gitlab.example.com/users/auth/saml/callback" placement="top">
+                    <span
+                      class="quick-pill"
+                      @click="fillQuickUri('https://gitlab.example.com/users/auth/saml/callback')"
+                    >
+                      + GitLab 极狐
+                    </span>
+                  </el-tooltip>
+                  <el-tooltip content="http://localhost:8080/saml/acs" placement="top">
+                    <span class="quick-pill" @click="fillQuickUri('http://localhost:8080/saml/acs')"> + 本地调试 </span>
+                  </el-tooltip>
+                </template>
+                <template v-else>
+                  <el-tooltip
+                    :content="
+                      formData.protocol === 'cas' ? 'http://localhost:8080' : 'http://localhost:3000/api/auth/callback'
+                    "
+                    placement="top"
+                  >
+                    <span
+                      class="quick-pill"
+                      @click="
+                        fillQuickUri(
+                          formData.protocol === 'cas'
+                            ? 'http://localhost:8080'
+                            : 'http://localhost:3000/api/auth/callback'
+                        )
+                      "
+                    >
+                      + {{ formData.protocol === "cas" ? "CAS 调试地址" : "OIDC 调试地址" }}
+                    </span>
+                  </el-tooltip>
+                </template>
               </div>
             </div>
 
             <div class="field-sub-tip">
               {{
-                formData.protocol === 'cas'
-                  ? 'CAS 单点登录服务目标地址白名单，支持第三方系统域名与完整回调地址'
-                  : '认证成功后的重定向白名单，支持 http://、https:// 或自定义 Scheme，禁止包含 # 片段'
+                formData.protocol === "cas"
+                  ? "CAS 单点登录服务目标地址白名单，支持第三方系统域名与完整回调地址"
+                  : formData.protocol === "saml"
+                    ? "SAML 断言消费地址白名单，需与目标系统配置保持一致"
+                    : "认证成功后的重定向白名单，支持 http://、https:// 或自定义 Scheme，禁止包含 # 片段"
               }}
+            </div>
+          </div>
+        </div>
+
+        <!-- SAML 2.0 专属说明提示 -->
+        <div v-if="formData.protocol === 'saml'" class="saml-notice-banner">
+          <div class="notice-icon-wrap">
+            <el-icon class="notice-icon"><CircleCheckFilled /></el-icon>
+          </div>
+          <div class="notice-content">
+            <div class="notice-title">SAML 2.0 凭据体系已就绪</div>
+            <div class="notice-desc">
+              创建成功后系统将自动唤起<strong>【SAML 接入中心】</strong>，提供一键下载 X.509 公钥证书 (.crt) 与元数据
+              XML，无需手动自签证书。
             </div>
           </div>
         </div>
@@ -444,14 +499,18 @@ const handleSubmit = async () => {
 }
 
 .form-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 }
 
 .section-title {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
-  padding: 8px 12px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 6px;
   border: 1px solid #e2e8f0;
@@ -481,7 +540,7 @@ const handleSubmit = async () => {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.75rem;
   margin-top: 0.5rem;
-  margin-bottom: 16px;
+  margin-bottom: 0;
   width: 100%;
 
   .protocol-card {
@@ -717,6 +776,8 @@ const handleSubmit = async () => {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
     padding-top: 2px;
   }
 
@@ -728,23 +789,85 @@ const handleSubmit = async () => {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
+
+    .quick-title {
+      font-size: 11px;
+      color: #94a3b8;
+      user-select: none;
+    }
   }
 
   .quick-pill {
     font-size: 11px;
-    color: #3b82f6;
+    color: #2563eb;
     background: #eff6ff;
-    border: 1px solid #dbeafe;
+    border: 1px solid #bfdbfe;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.15s ease;
     user-select: none;
+    line-height: 1.4;
 
     &:hover {
       background: #dbeafe;
       border-color: #93c5fd;
       color: #1d4ed8;
+    }
+  }
+}
+
+.saml-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+  border-radius: 8px;
+  margin-bottom: 20px;
+
+  .notice-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #dcfce7;
+    flex-shrink: 0;
+    margin-top: 1px;
+
+    .notice-icon {
+      font-size: 16px;
+      color: #16a34a;
+    }
+  }
+
+  .notice-content {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+
+    .notice-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #166534;
+      line-height: 1.4;
+    }
+
+    .notice-desc {
+      font-size: 12px;
+      color: #15803d;
+      line-height: 1.5;
+
+      strong {
+        color: #14532d;
+        font-weight: 600;
+      }
     }
   }
 }
@@ -757,6 +880,11 @@ const handleSubmit = async () => {
     flex: 1;
     min-width: 0;
   }
+
+  // 作为基本配置区段的最后一行，消除默认的表单项下边距，交由外层 section 统一控制间距
+  .el-form-item {
+    margin-bottom: 0;
+  }
 }
 
 .logo-preview-avatar {
@@ -768,7 +896,7 @@ const handleSubmit = async () => {
   font-size: 12px;
   color: #64748b;
   line-height: 1.5;
-  margin-bottom: 8px;
+  margin-top: 4px;
 }
 
 .policy-note {

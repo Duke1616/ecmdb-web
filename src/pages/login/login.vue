@@ -145,6 +145,7 @@ function handleLoginSuccess(businessData: any) {
     if (
       redirect.startsWith("/oauth/") ||
       redirect.startsWith("/cas/") ||
+      redirect.startsWith("/saml/") ||
       redirect.startsWith("http://") ||
       redirect.startsWith("https://")
     ) {

@@ -101,3 +101,18 @@ export interface ConsentInfo {
   code_challenge_method?: string
   created_at: number
 }
+
+/** SAML 2.0 IdP 描述符与公钥证书信息 */
+export interface SamlDescriptorResp {
+  entity_id: string
+  sso_url: string
+  metadata_url: string
+  certificate_url: string
+  certificate_pem: string
+  certificate_fingerprint?: string
+  certificate_subject?: string
+  not_before?: string
+  not_after?: string
+  binding_types?: string[]
+  name_id_format?: string
+}

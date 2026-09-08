@@ -70,3 +70,18 @@ export function getConsentInfoApi(consentId: string) {
     params: { consent_id: consentId }
   })
 }
+
+/** 获取 SAML 2.0 IdP 接入描述符与公钥证书 */
+export function getSamlDescriptorApi() {
+  return instance.get<idp.SamlDescriptorResp>({
+    url: `${API_SERVICE.IAM}/idp/saml/descriptor`
+  })
+}
+
+/** 重新生成并轮换 SAML IdP 签名证书 (高危运维操作) */
+export function rotateSamlCertificateApi(data?: { validity_years?: number }) {
+  return instance.post<idp.SamlDescriptorResp>({
+    url: `${API_SERVICE.IAM}/idp/saml/certificate/rotate`,
+    data: data || {}
+  })
+}

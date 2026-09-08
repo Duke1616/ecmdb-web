@@ -20,7 +20,7 @@
       <template #protocol="{ row }">
         <div class="protocol-badge">
           <SvgIcon :name="getProtocolIcon(row.protocol)" class="protocol-icon" />
-          <span class="protocol-text">{{ (row.protocol || 'oidc').toUpperCase() }}</span>
+          <span class="protocol-text">{{ (row.protocol || "oidc").toUpperCase() }}</span>
         </div>
       </template>
 
@@ -50,7 +50,7 @@
 
       <!-- 客户端类型 -->
       <template #client_type="{ row }">
-        <span v-if="row.protocol === 'cas'" class="dim-dash">-</span>
+        <span v-if="row.protocol === 'cas' || row.protocol === 'saml'" class="dim-dash">-</span>
         <el-tag v-else :type="row.is_public ? 'warning' : 'primary'" size="small" effect="light">
           {{ row.is_public ? "公共客户端" : "机密客户端" }}
         </el-tag>
@@ -58,7 +58,7 @@
 
       <!-- 授权策略 -->
       <template #consent_type="{ row }">
-        <span v-if="row.protocol === 'cas'" class="dim-dash">-</span>
+        <span v-if="row.protocol === 'cas' || row.protocol === 'saml'" class="dim-dash">-</span>
         <div v-else class="status-indicator" :class="row.auto_consent ? 'active' : 'info'">
           <span class="dot" />
           {{ row.auto_consent ? "免确认授权" : "需手动授权" }}
@@ -81,18 +81,22 @@
 
     <!-- 密钥一次性安全呈现弹窗 -->
     <SecretDisplayDialog v-model="secretDialogVisible" v-bind="currentSecretInfo" />
+
+    <!-- SAML 2.0 接入配置与证书下载弹窗 -->
+    <SamlGuideDialog v-model="samlGuideDialogVisible" :app="currentSamlApp" />
   </ProGovernanceLayout>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { Edit, Delete, Key } from "@element-plus/icons-vue"
+import { Edit, Delete, Key, Document } from "@element-plus/icons-vue"
 import ProGovernanceLayout from "@/common/components/ProGovernancePage/ProGovernanceLayout.vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import AssetIdentityCell from "@@/components/AssetIdentityCell/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import ApplicationDrawer from "./components/ApplicationDrawer.vue"
 import SecretDisplayDialog from "./components/SecretDisplayDialog.vue"
+import SamlGuideDialog from "./components/SamlGuideDialog.vue"
 import { useApplicationList } from "./composables/useApplicationList"
 import { IAM_CAPABILITIES } from "@/common/auth/capability"
 import type { Column } from "@@/components/DataTable/types"
@@ -109,6 +113,9 @@ const {
   currentEditId,
   secretDialogVisible,
   currentSecretInfo,
+  samlGuideDialogVisible,
+  currentSamlApp,
+  handleShowSamlGuide,
   handleRefresh,
   handleCreate,
   handleEdit,
@@ -138,11 +145,19 @@ const getOperateItems = (row: Application) => {
     type: "primary" | "warning" | "danger" | "info" | "success"
     icon: any
     capability?: string | string[]
-  }> = [
-    { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.Application.Edit }
-  ]
-  // 仅具备客户端密钥的协议 (如 OIDC) 支持重置密钥，CAS 协议无需密钥
-  if (row.protocol !== "cas") {
+  }> = [{ name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.Application.Edit }]
+  // SAML 协议提供接入配置与公钥证书下载引导
+  if (row.protocol === "saml") {
+    items.push({
+      name: "配置",
+      code: "saml_guide",
+      type: "success",
+      icon: Document
+    })
+  }
+
+  // 仅具备客户端密钥的协议 (如 OIDC) 支持重置密钥，CAS 与 SAML 协议无需密钥
+  if (row.protocol === "oidc") {
     items.push({
       name: "重置",
       code: "reset_secret",
@@ -163,6 +178,7 @@ const getOperateItems = (row: Application) => {
 
 const handleOperate = (row: Application, code: string) => {
   if (code === "edit") handleEdit(row)
+  if (code === "saml_guide") handleShowSamlGuide(row)
   if (code === "reset_secret") handleResetSecret(row)
   if (code === "delete") handleDelete(row)
 }
