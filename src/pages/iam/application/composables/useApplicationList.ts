@@ -101,8 +101,8 @@ export function useApplicationList() {
   const handleFormSuccess = (createdApp?: Application) => {
     formVisible.value = false
     loadData()
-    // 若创建返回了初始密钥，立即弹窗向管理员呈现明文
-    if (createdApp?.client_secret) {
+    // 若创建返回了初始密钥且非 CAS 协议，立即弹窗向管理员呈现明文 (CAS 协议无需客户端密钥)
+    if (createdApp?.client_secret && createdApp.protocol !== "cas") {
       currentSecretInfo.value = {
         clientName: createdApp.name,
         clientId: createdApp.client_id,

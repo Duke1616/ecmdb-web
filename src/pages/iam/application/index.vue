@@ -50,14 +50,16 @@
 
       <!-- 客户端类型 -->
       <template #client_type="{ row }">
-        <el-tag :type="row.is_public ? 'warning' : 'primary'" size="small" effect="light">
+        <span v-if="row.protocol === 'cas'" class="dim-dash">-</span>
+        <el-tag v-else :type="row.is_public ? 'warning' : 'primary'" size="small" effect="light">
           {{ row.is_public ? "公共客户端" : "机密客户端" }}
         </el-tag>
       </template>
 
       <!-- 授权策略 -->
       <template #consent_type="{ row }">
-        <div class="status-indicator" :class="row.auto_consent ? 'active' : 'info'">
+        <span v-if="row.protocol === 'cas'" class="dim-dash">-</span>
+        <div v-else class="status-indicator" :class="row.auto_consent ? 'active' : 'info'">
           <span class="dot" />
           {{ row.auto_consent ? "免确认授权" : "需手动授权" }}
         </div>
@@ -70,7 +72,7 @@
 
       <!-- 操作权限 -->
       <template #actions="{ row }">
-        <OperateBtn :items="appOperateItems" :operate-item="row" :max-length="2" @route-event="handleOperate" />
+        <OperateBtn :items="getOperateItems(row)" :operate-item="row" :max-length="2" @route-event="handleOperate" />
       </template>
     </DataTable>
 
@@ -129,17 +131,35 @@ const tableProps = computed(() => ({
   onCurrentChange: handleCurrentChange
 }))
 
-const appOperateItems = [
-  { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.Application.Edit },
-  {
-    name: "重置",
-    code: "reset_secret",
-    type: "warning",
-    icon: Key,
-    capability: IAM_CAPABILITIES.Application.ResetSecret
-  },
-  { name: "注销", code: "delete", type: "danger", icon: Delete, capability: IAM_CAPABILITIES.Application.Delete }
-]
+const getOperateItems = (row: Application) => {
+  const items: Array<{
+    name: string
+    code: string
+    type: "primary" | "warning" | "danger" | "info" | "success"
+    icon: any
+    capability?: string | string[]
+  }> = [
+    { name: "编辑", code: "edit", type: "primary", icon: Edit, capability: IAM_CAPABILITIES.Application.Edit }
+  ]
+  // 仅具备客户端密钥的协议 (如 OIDC) 支持重置密钥，CAS 协议无需密钥
+  if (row.protocol !== "cas") {
+    items.push({
+      name: "重置",
+      code: "reset_secret",
+      type: "warning",
+      icon: Key,
+      capability: IAM_CAPABILITIES.Application.ResetSecret
+    })
+  }
+  items.push({
+    name: "注销",
+    code: "delete",
+    type: "danger",
+    icon: Delete,
+    capability: IAM_CAPABILITIES.Application.Delete
+  })
+  return items
+}
 
 const handleOperate = (row: Application, code: string) => {
   if (code === "edit") handleEdit(row)
@@ -254,6 +274,12 @@ const tableColumns: Column[] = [
 .time-text {
   font-size: 12px;
   color: var(--el-text-color-secondary);
+}
+
+.dim-dash {
+  color: #94a3b8;
+  font-weight: 500;
+  padding-left: 4px;
 }
 
 .status-indicator {

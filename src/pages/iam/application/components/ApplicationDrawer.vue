@@ -111,7 +111,12 @@
           </div>
 
           <div class="form-row-grid">
-            <el-form-item label="客户端标识 (Client ID)" prop="client_id" class="flex-1">
+            <el-form-item
+              v-if="formData.protocol === 'oidc'"
+              label="客户端标识"
+              prop="client_id"
+              class="flex-1"
+            >
               <el-input
                 v-model="formData.client_id"
                 :disabled="!!id"
@@ -125,10 +130,10 @@
               </el-input>
             </el-form-item>
 
-            <el-form-item label="应用图标 (Logo URL)" prop="logo" class="flex-1">
+            <el-form-item label="应用图标" prop="logo" class="flex-1">
               <el-input
                 v-model="formData.logo"
-                placeholder="https://.../logo.png (选填)"
+                placeholder="https://.../logo.png"
                 size="large"
                 class="premium-input"
               >
@@ -143,12 +148,12 @@
           </div>
         </div>
 
-        <!-- 2. 回调地址 -->
+        <!-- 2. 回调地址 / 服务地址 -->
         <div class="form-section">
           <div class="section-title">
             <div class="title-left">
               <el-icon class="section-icon"><Position /></el-icon>
-              <span>回调地址</span>
+              <span>{{ formData.protocol === 'cas' ? '服务地址' : '回调地址' }}</span>
             </div>
           </div>
 
@@ -156,7 +161,7 @@
             <div v-for="(uri, index) in formData.redirect_uris" :key="index" class="uri-item">
               <el-input
                 v-model="formData.redirect_uris[index]"
-                placeholder="https://gitlab.example.com/oauth/callback"
+                :placeholder="formData.protocol === 'cas' ? 'https://example.com' : 'https://gitlab.example.com/oauth/callback'"
                 size="large"
                 class="mono premium-input flex-1"
               >
@@ -181,20 +186,27 @@
               </el-button>
 
               <div class="uri-quick-tags">
-                <span class="quick-pill" @click="fillQuickUri('http://localhost:3000/api/auth/callback')">
-                  + 示例: 本地调试 (localhost:3000)
+                <span
+                  class="quick-pill"
+                  @click="fillQuickUri(formData.protocol === 'cas' ? 'http://localhost:8080' : 'http://localhost:3000/api/auth/callback')"
+                >
+                  + 示例: 本地调试 ({{ formData.protocol === 'cas' ? 'localhost:8080' : 'localhost:3000' }})
                 </span>
               </div>
             </div>
 
             <div class="field-sub-tip">
-              认证成功后的重定向白名单，支持 http://、https:// 或自定义 Scheme，禁止包含 # 片段
+              {{
+                formData.protocol === 'cas'
+                  ? 'CAS 单点登录服务目标地址白名单，支持第三方系统域名与完整回调地址'
+                  : '认证成功后的重定向白名单，支持 http://、https:// 或自定义 Scheme，禁止包含 # 片段'
+              }}
             </div>
           </div>
         </div>
 
-        <!-- 3. 授权策略 -->
-        <div class="form-section">
+        <!-- 3. 授权策略 (仅 OIDC 协议需要) -->
+        <div v-if="formData.protocol === 'oidc'" class="form-section">
           <div class="section-title">
             <div class="title-left">
               <el-icon class="section-icon"><UserFilled /></el-icon>
