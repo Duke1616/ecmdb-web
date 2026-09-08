@@ -11,10 +11,11 @@ export interface SessionCheckResponse {
   current_tenant_id: number
 }
 
-/** 接入应用 (OAuth2 / OIDC Client) 实体 */
-export interface OAuthClient {
+/** 接入应用 (Application / OIDC & CAS Client) 实体 */
+export interface Application {
   id: number
   tenant_id: number
+  protocol?: "oidc" | "cas" | "saml"
   client_id: string
   client_secret?: string
   name: string
@@ -28,10 +29,12 @@ export interface OAuthClient {
   ctime: string
   utime: string
 }
+export type OAuthClient = Application
 
 /** 创建接入应用请求 */
-export interface CreateOAuthClientReq {
+export interface CreateApplicationReq {
   name: string
+  protocol?: string
   client_id?: string
   logo?: string
   redirect_uris: string[]
@@ -41,11 +44,13 @@ export interface CreateOAuthClientReq {
   is_public?: boolean
   auto_consent?: boolean
 }
+export type CreateOAuthClientReq = CreateApplicationReq
 
 /** 更新接入应用请求 */
-export interface UpdateOAuthClientReq {
+export interface UpdateApplicationReq {
   id: number
   name: string
+  protocol?: string
   logo?: string
   redirect_uris: string[]
   response_types?: string[]
@@ -54,19 +59,23 @@ export interface UpdateOAuthClientReq {
   is_public?: boolean
   auto_consent?: boolean
 }
+export type UpdateOAuthClientReq = UpdateApplicationReq
 
 /** 查询应用列表请求 */
-export interface ListOAuthClientReq {
+export interface ListApplicationReq {
   keyword?: string
   offset: number
   limit: number
 }
+export type ListOAuthClientReq = ListApplicationReq
 
 /** 查询应用列表响应 */
-export interface ListOAuthClientResp {
+export interface ListApplicationResp {
   total: number
-  clients: OAuthClient[]
+  applications?: Application[]
+  clients: Application[] // 兼顾新旧响应字段
 }
+export type ListOAuthClientResp = ListApplicationResp
 
 /** 重置密钥响应 */
 export interface ResetSecretResp {
@@ -76,6 +85,7 @@ export interface ResetSecretResp {
 /** 待确认授权信息详情 */
 export interface ConsentInfo {
   consent_id: string
+  protocol?: "oidc" | "cas" | "saml"
   client_id: string
   client_name: string
   client_logo: string

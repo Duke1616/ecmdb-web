@@ -28,7 +28,7 @@
 
       <div v-else class="picker-content">
         <div class="picker-label">
-          <span>{{ sourceKind === "project" ? "项目入口文件" : "脚本文件" }}</span>
+          <span>{{ sourceKind === "project" ? "入口文件" : "脚本文件" }}</span>
           <span class="required-mark">*</span>
         </div>
         <CodebookPicker
@@ -42,7 +42,7 @@
           v-else
           :model-value="program.project?.entry_codebook_id || undefined"
           variant="element"
-          placeholder="请选择项目入口文件"
+          placeholder="请选择入口文件"
           @update:model-value="setProjectEntry"
         />
       </div>
@@ -248,16 +248,16 @@ const setProjectEntry = (id: number | number[] | undefined) =>
 .picker-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  min-height: 72px;
-  padding: 14px;
+  gap: 16px;
+  min-height: 52px;
+  padding: 10px 14px;
 }
 
 .picker-label {
   display: flex;
   align-items: center;
-  gap: 8px;
+  flex-shrink: 0;
+  gap: 4px;
   color: #475569;
   font-size: 12px;
   font-weight: 600;
@@ -271,8 +271,9 @@ const setProjectEntry = (id: number | number[] | undefined) =>
 }
 
 .picker-content :deep(.generic-picker-container) {
-  width: min(420px, 70%);
-  flex: 0 1 420px;
+  flex: 1;
+  min-width: 0;
+  width: 100%;
 }
 
 @media (max-width: 640px) {

@@ -374,7 +374,7 @@ const handleLoginSuccess = (businessData: any) => {
      * 原因：router.push 是前端路由，不会触发实际的 HTTP 请求，也无法携带 Cookie。
      * 浏览器整页跳转才能让后端 /oauth/v2/authorize 接口读取到 Session Cookie 并完成授权。
      */
-    if (redirect.startsWith("/oauth/")) {
+    if (redirect.startsWith("/oauth/") || redirect.startsWith("/cas/")) {
       window.location.href = redirect
     } else {
       router.push(redirect)

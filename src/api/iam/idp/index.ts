@@ -13,49 +13,55 @@ export function checkSessionApi() {
 }
 
 /** 查询接入应用列表 */
-export function listOAuthClientsApi(data: idp.ListOAuthClientReq) {
-  return instance.post<idp.ListOAuthClientResp>({
-    url: `${API_SERVICE.IAM}/idp/client/list`,
+export function listApplicationsApi(data: idp.ListApplicationReq) {
+  return instance.post<idp.ListApplicationResp>({
+    url: `${API_SERVICE.IAM}/idp/application/list`,
     data
   })
 }
+export const listOAuthClientsApi = listApplicationsApi
 
 /** 创建接入应用 */
-export function createOAuthClientApi(data: idp.CreateOAuthClientReq) {
-  return instance.post<idp.OAuthClient>({
-    url: `${API_SERVICE.IAM}/idp/client/create`,
+export function createApplicationApi(data: idp.CreateApplicationReq) {
+  return instance.post<idp.Application>({
+    url: `${API_SERVICE.IAM}/idp/application/create`,
     data
   })
 }
+export const createOAuthClientApi = createApplicationApi
 
 /** 更新接入应用 */
-export function updateOAuthClientApi(data: idp.UpdateOAuthClientReq) {
+export function updateApplicationApi(data: idp.UpdateApplicationReq) {
   return instance.post<{ msg: string }>({
-    url: `${API_SERVICE.IAM}/idp/client/update`,
+    url: `${API_SERVICE.IAM}/idp/application/update`,
     data
   })
 }
+export const updateOAuthClientApi = updateApplicationApi
 
 /** 重置应用密钥 */
-export function resetOAuthClientSecretApi(id: number) {
+export function resetApplicationSecretApi(id: number) {
   return instance.post<idp.ResetSecretResp>({
-    url: `${API_SERVICE.IAM}/idp/client/reset_secret/${id}`
+    url: `${API_SERVICE.IAM}/idp/application/reset_secret/${id}`
   })
 }
+export const resetOAuthClientSecretApi = resetApplicationSecretApi
 
 /** 删除接入应用 */
-export function deleteOAuthClientApi(id: number) {
+export function deleteApplicationApi(id: number) {
   return instance.delete<{ msg: string }>({
-    url: `${API_SERVICE.IAM}/idp/client/delete/${id}`
+    url: `${API_SERVICE.IAM}/idp/application/delete/${id}`
   })
 }
+export const deleteOAuthClientApi = deleteApplicationApi
 
 /** 获取应用详情 */
-export function getOAuthClientDetailApi(id: number) {
-  return instance.get<idp.OAuthClient>({
-    url: `${API_SERVICE.IAM}/idp/client/detail/${id}`
+export function getApplicationDetailApi(id: number) {
+  return instance.get<idp.Application>({
+    url: `${API_SERVICE.IAM}/idp/application/detail/${id}`
   })
 }
+export const getOAuthClientDetailApi = getApplicationDetailApi
 
 /** 获取待确认授权详情 */
 export function getConsentInfoApi(consentId: string) {

@@ -142,7 +142,12 @@ function handleLoginSuccess(businessData: any) {
      * 或包含外部完整 URL 时，必须使用 window.location.href 做整页真实跳转，绝对不能使用 router.push。
      * 否则会被 Vue Router 当作前端路由从而误入 404。
      */
-    if (redirect.startsWith("/oauth/") || redirect.startsWith("http://") || redirect.startsWith("https://")) {
+    if (
+      redirect.startsWith("/oauth/") ||
+      redirect.startsWith("/cas/") ||
+      redirect.startsWith("http://") ||
+      redirect.startsWith("https://")
+    ) {
       window.location.href = redirect
     } else {
       router.push(redirect)
