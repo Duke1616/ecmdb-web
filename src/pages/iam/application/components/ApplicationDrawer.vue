@@ -113,41 +113,40 @@
             </div>
           </div>
 
-          <div class="form-row-grid">
-            <el-form-item
-              v-if="formData.protocol === 'oidc' || formData.protocol === 'saml'"
-              :label="formData.protocol === 'saml' ? 'SP 实体标识' : '客户端标识'"
-              prop="client_id"
-              class="flex-1"
+          <!-- 客户端标识 / SP 实体标识 (单独一行展示) -->
+          <el-form-item
+            v-if="formData.protocol === 'oidc' || formData.protocol === 'saml'"
+            :label="formData.protocol === 'saml' ? 'SP 实体标识' : '客户端标识'"
+            prop="client_id"
+          >
+            <el-input
+              v-model="formData.client_id"
+              :disabled="!!id"
+              :placeholder="
+                formData.protocol === 'saml'
+                  ? '例如 urn:alibaba:cloudauth 或 https://sp.example.com'
+                  : '留空系统将自动生成'
+              "
+              size="large"
+              class="mono premium-input"
             >
-              <el-input
-                v-model="formData.client_id"
-                :disabled="!!id"
-                :placeholder="
-                  formData.protocol === 'saml'
-                    ? '例如 urn:alibaba:cloudauth 或 https://sp.example.com'
-                    : '留空系统将自动生成'
-                "
-                size="large"
-                class="mono premium-input"
-              >
-                <template #prefix>
-                  <el-icon><Key /></el-icon>
-                </template>
-              </el-input>
-            </el-form-item>
+              <template #prefix>
+                <el-icon><Key /></el-icon>
+              </template>
+            </el-input>
+          </el-form-item>
 
-            <el-form-item label="应用图标" prop="logo" class="flex-1">
-              <el-input v-model="formData.logo" placeholder="https://.../logo.png" size="large" class="premium-input">
-                <template #prefix>
-                  <el-icon><Picture /></el-icon>
-                </template>
-                <template #suffix v-if="formData.logo">
-                  <el-avatar :size="22" :src="formData.logo" shape="square" class="logo-preview-avatar" />
-                </template>
-              </el-input>
-            </el-form-item>
-          </div>
+          <!-- 应用图标 (单独一行展示) -->
+          <el-form-item label="应用图标" prop="logo">
+            <el-input v-model="formData.logo" placeholder="https://.../logo.png" size="large" class="premium-input">
+              <template #prefix>
+                <el-icon><Picture /></el-icon>
+              </template>
+              <template #suffix v-if="formData.logo">
+                <el-avatar :size="22" :src="formData.logo" shape="square" class="logo-preview-avatar" />
+              </template>
+            </el-input>
+          </el-form-item>
         </div>
 
         <!-- 2. 回调地址 / 服务地址 -->
@@ -358,9 +357,20 @@ const fillQuickUri = (uri: string) => {
 
 const validateClientId = (_rule: any, value: string, callback: any) => {
   if (!value) return callback()
-  const reg = /^[a-zA-Z0-9_-]{3,64}$/
-  if (!reg.test(value)) {
-    return callback(new Error("Client ID 须为 3-64 位的英文字母、数字、下划线或连字符"))
+
+  if (formData.protocol === "saml") {
+    // SAML 2.0 SP EntityID: 遵循 SAML 规范，支持标准 URN (如 urn:dev:saml:sptest:sp) 或 URL 格式 (如 https://sp.example.com)
+    // 允许英文字母、数字、下划线、连字符、冒号、斜杠、点
+    const samlReg = /^[a-zA-Z0-9_.:/-]{3,64}$/
+    if (!samlReg.test(value)) {
+      return callback(new Error("SP 实体标识须为 3-64 位的合法 URI/URN (支持字母、数字、冒号、点、斜杠及横线)"))
+    }
+  } else {
+    // OIDC / OAuth2: 客户端 ID 为 3-64 位英文字母、数字、下划线或连字符
+    const oidcReg = /^[a-zA-Z0-9_-]{3,64}$/
+    if (!oidcReg.test(value)) {
+      return callback(new Error("客户端标识须为 3-64 位的英文字母、数字、下划线或连字符"))
+    }
   }
   callback()
 }
@@ -381,6 +391,15 @@ const formRules = reactive<FormRules>({
   client_id: [{ validator: validateClientId, trigger: "blur" }],
   logo: [{ validator: validateLogoUrl, trigger: "blur" }]
 })
+
+watch(
+  () => formData.protocol,
+  () => {
+    nextTick(() => {
+      formRef.value?.clearValidate("client_id")
+    })
+  }
+)
 
 watch(
   () => visible.value,
@@ -499,7 +518,7 @@ const handleSubmit = async () => {
 }
 
 .form-section {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 
   &:last-child {
     margin-bottom: 0;
@@ -869,21 +888,6 @@ const handleSubmit = async () => {
         font-weight: 600;
       }
     }
-  }
-}
-
-.form-row-grid {
-  display: flex;
-  gap: 14px;
-
-  .flex-1 {
-    flex: 1;
-    min-width: 0;
-  }
-
-  // 作为基本配置区段的最后一行，消除默认的表单项下边距，交由外层 section 统一控制间距
-  .el-form-item {
-    margin-bottom: 0;
   }
 }
 
