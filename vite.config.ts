@@ -179,6 +179,11 @@ export default ({ mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/iam/, "/api")
         },
+        // 统一身份认证协议公开端点 (OIDC / CAS / SAML / UserInfo)
+        "^/(?:\.well-known|oauth|cas|saml|userinfo)": {
+          target: `http://${viteEnv.VITE_IAM_API}`,
+          changeOrigin: true
+        },
         "/minio": {
           target: `http://${viteEnv.VITE_MINIO_ENDPOINT}`,
           changeOrigin: true,
