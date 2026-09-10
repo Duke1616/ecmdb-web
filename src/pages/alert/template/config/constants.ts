@@ -47,7 +47,7 @@ export const OPERATE_ITEMS = {
       code: "manage",
       type: "success",
       icon: Document,
-      capability: ALERT_CAPABILITIES.TemplateSet.ItemView
+      capability: ALERT_CAPABILITIES.TemplateSet.Detail
     },
     { name: "删除", code: "delete", type: "danger", icon: Delete, capability: ALERT_CAPABILITIES.TemplateSet.Delete }
   ]

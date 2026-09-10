@@ -737,6 +737,8 @@ export const ALERT_CAPABILITIES = {
     ViewRules: "alert:workspace:view_rules",
     /** 抑制规则列表 */
     ViewInhibits: "alert:workspace:view_inhibits",
+    /** 静默规则列表 */
+    ViewSilences: "alert:workspace:view_silences",
     /** 创建空间 */
     Add: "alert:workspace:add",
     /** 更新空间 */

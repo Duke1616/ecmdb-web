@@ -208,6 +208,7 @@ const workspaceMenuGroups: Array<{ label: string; items: WorkspaceMenuItem[] }> 
         label: "静默规则",
         icon: Mute,
         capability: [
+          ALERT_CAPABILITIES.Workspace.ViewSilences,
           ALERT_CAPABILITIES.Silence.Add,
           ALERT_CAPABILITIES.Silence.Edit,
           ALERT_CAPABILITIES.Silence.Delete,
