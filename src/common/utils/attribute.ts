@@ -3,7 +3,6 @@ import type { Attribute, AttributeGroup, listAttributesResponseData } from "@/ap
 const DEFAULT_SORT = 10000
 
 const sortValue = (item: { sort_key?: number; index?: number }) => item.sort_key ?? item.index ?? DEFAULT_SORT
-const displaySortValue = (item: { index?: number }) => item.index ?? DEFAULT_SORT
 
 export type AttributeGroupView = AttributeGroup & {
   expanded: boolean
@@ -21,9 +20,6 @@ export type AttributeListView = {
 const sortAttributes = (fields: Attribute[] = []) => [...fields].sort((a, b) => sortValue(a) - sortValue(b))
 
 const sortGroups = (groups: AttributeGroup[] = []) => [...groups].sort((a, b) => sortValue(a) - sortValue(b))
-
-const getDisplayFields = (fields: Attribute[]) =>
-  fields.filter((field) => field.display === true).sort((a, b) => displaySortValue(a) - displaySortValue(b))
 
 const getGroupAttributes = (
   group: AttributeGroup,
@@ -67,6 +63,6 @@ export const createAttributeListView = (data: listAttributesResponseData): Attri
     model: data.model,
     groups: createAttributeGroups(data.groups || [], fields),
     fields,
-    displayFields: getDisplayFields(fields)
+    displayFields: data.display_fields || []
   }
 }

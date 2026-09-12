@@ -1,13 +1,13 @@
 import type * as attribute from "./types/attribute"
 
-import instance from "@@/utils/service"
-import { API_SERVICE } from "@@/utils/service"
+import instance, { API_SERVICE, withActiveTenant } from "@@/utils/service"
 
 /** 获取模型字段列表（包含分组信息） */
-export function getModelAttributesWithGroupsApi(modelUid: string) {
+export function getModelAttributesWithGroupsApi(modelUid: string, tenantId?: number) {
   return instance.post<attribute.listAttributesResponseData>({
     url: `${API_SERVICE.CMDB}/attribute/list`,
-    data: { model_uid: modelUid }
+    data: { model_uid: modelUid },
+    ...withActiveTenant(tenantId)
   })
 }
 
@@ -39,10 +39,11 @@ export function DeleteAttributeApi(id: number) {
   })
 }
 
-export function ListAttributeFieldApi(modelUid: string) {
+export function ListAttributeFieldApi(modelUid: string, tenantId?: number) {
   return instance.post<attribute.listAttributeFieldData>({
     url: `${API_SERVICE.CMDB}/attribute/list/field`,
-    data: { model_uid: modelUid }
+    data: { model_uid: modelUid },
+    ...withActiveTenant(tenantId)
   })
 }
 

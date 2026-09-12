@@ -219,6 +219,7 @@ const filterForm = ref({
 // 表格数据
 const resourcesData = ref<Resource[]>([])
 const attributeFieldsData = ref<any[]>([])
+const displayFieldsData = ref<any[]>([])
 
 // 已关联的资源ID集合
 const localRelatedResourceIds = ref<Set<number>>(new Set())
@@ -231,9 +232,9 @@ const options = [
   { label: "包含", value: "contains" }
 ]
 
-// 计算可见列
+// 计算可见列（直接消费后端统一提供的 display_fields）
 const visibleColumns = computed(() => {
-  return attributeFieldsData.value.filter((item) => item.visible !== false)
+  return displayFieldsData.value
 })
 
 import type { Column } from "@@/components/DataTable/types"
@@ -314,6 +315,7 @@ const resetForm = () => {
   filterForm.value.inputSearch = ""
   resourcesData.value = []
   attributeFieldsData.value = []
+  displayFieldsData.value = []
   isFiltering.value = false
 }
 
@@ -344,8 +346,9 @@ const handleRelationChange = async (relationName: string) => {
     const modelUid = getRelatedModelUid(relationName)
     if (!modelUid) return
 
-    await ListAttributeFieldApi(modelUid).then((data) => {
-      attributeFieldsData.value = (data.data as any).attribute_fields || []
+    await ListAttributeFieldApi(modelUid).then(({ data }) => {
+      attributeFieldsData.value = data.attribute_fields || []
+      displayFieldsData.value = data.display_fields || []
     })
 
     // 关联类型变化时自动加载数据

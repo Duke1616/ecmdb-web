@@ -1,4 +1,5 @@
 import { computed, h, nextTick, onMounted, reactive, ref, watch } from "vue"
+import { useRoute } from "vue-router"
 import { ElMessage, ElMessageBox } from "element-plus"
 import { ListAttributeFieldApi } from "@/api/cmdb/attribute"
 import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
@@ -14,6 +15,7 @@ import type { Resource } from "@/api/cmdb/resource/types/resource"
 import { CMDB_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 import { useModelStore } from "@/pinia/stores/model"
+import { useUserStore } from "@/pinia/stores/user"
 import type { Column } from "@@/components/DataTable/types"
 
 type UseResourceRelationsOptions = {
@@ -28,28 +30,35 @@ const sameIds = (a: number[], b: number[]) => {
 }
 
 export const useResourceRelations = (options: UseResourceRelationsOptions) => {
+  const route = useRoute()
+  const userStore = useUserStore()
   const modelStore = useModelStore()
   const { hasPermission } = usePermission()
+
+  // 跨空间租户判定：当路由携带目标 tenant_id 且与当前激活空间不同时，判定为跨租户查看
+  const isCrossTenant = computed(() => {
+    const rawTid = route.query.tenant_id
+    if (!rawTid) return false
+    const tid = Number(rawTid)
+    return !Number.isNaN(tid) && tid > 0 && tid !== userStore.currentTenantId
+  })
 
   const dialogVisible = ref(false)
   const relationTypeData = ref<ListRelationTypeData[]>([])
   const modelRelationData = ref<ModelRelation[]>([])
   const assetsData = ref<relatedAssetsData[]>([])
   const activeRelationName = ref("")
-  const attributeFieldsData = ref<Attribute[]>([])
+  const displayFields = ref<Attribute[]>([])
   const deletingRelationIds = ref<Set<number>>(new Set())
   const secureDisplay = reactive(new Map<number, boolean>())
   const displayMap = reactive(new Map<string, string>())
 
-  const canAddRelation = computed(() => hasPermission(CMDB_CAPABILITIES.Resource.RelationAdd))
-  const canDeleteRelation = computed(() => hasPermission(CMDB_CAPABILITIES.Resource.RelationDelete))
+  // 跨空间模式下只读保护：禁止新增和解除关联
+  const canAddRelation = computed(() => !isCrossTenant.value && hasPermission(CMDB_CAPABILITIES.Resource.RelationAdd))
+  const canDeleteRelation = computed(
+    () => !isCrossTenant.value && hasPermission(CMDB_CAPABILITIES.Resource.RelationDelete)
+  )
   const canGetSecure = computed(() => hasPermission(CMDB_CAPABILITIES.Resource.GetSecure))
-
-  const displayFields = computed(() => {
-    return attributeFieldsData.value
-      .filter((field) => field.display === true)
-      .sort((a, b) => (a.index || 100) - (b.index || 100))
-  })
 
   const activeRelationData = computed(() => {
     return assetsData.value?.find((item) => item.relation_name === activeRelationName.value)
@@ -260,10 +269,10 @@ export const useResourceRelations = (options: UseResourceRelationsOptions) => {
   const listAttributeFields = async (modelUid: string) => {
     await ListAttributeFieldApi(modelUid)
       .then(({ data }) => {
-        attributeFieldsData.value = data.attribute_fields
+        displayFields.value = data.display_fields || []
       })
       .catch(() => {
-        attributeFieldsData.value = []
+        displayFields.value = []
       })
   }
 
@@ -400,6 +409,8 @@ export const useResourceRelations = (options: UseResourceRelationsOptions) => {
     activeRelationName,
     assetsData,
     canAddRelation,
+    canDeleteRelation,
+    isCrossTenant,
     dialogVisible,
     displayFields,
     displayMap,

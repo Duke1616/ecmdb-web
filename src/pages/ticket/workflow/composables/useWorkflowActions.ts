@@ -134,7 +134,7 @@ export const useWorkflowActions = (options: {
       options.refresh()
     } catch (error) {
       if (error !== "cancel") {
-        ElMessage.error("部署失败")
+        console.error("部署流程失败:", error)
       }
     }
   }

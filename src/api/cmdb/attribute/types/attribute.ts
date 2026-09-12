@@ -56,6 +56,7 @@ export interface Attribute {
 export type listAttributeFieldData = {
   total: number
   attribute_fields: Attribute[]
+  display_fields?: Attribute[]
 }
 
 export type listAttributesResponseData = {
@@ -65,6 +66,7 @@ export type listAttributesResponseData = {
   }
   groups: AttributeGroup[]
   fields: Attribute[]
+  display_fields?: Attribute[]
 }
 
 export interface DeleteAttributeGroupReq {

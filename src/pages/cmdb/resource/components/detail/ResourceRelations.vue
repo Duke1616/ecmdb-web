@@ -8,6 +8,9 @@
     @refresh="listRelatedAssetsData"
   >
     <template #actions>
+      <el-tag v-if="isCrossTenant" type="warning" effect="plain" round class="cross-tenant-badge">
+        跨空间预览（只读）
+      </el-tag>
       <el-button v-if="canAddRelation" type="primary" :icon="CirclePlus" class="action-btn" @click="openAddDialog">
         新增关联
       </el-button>
@@ -153,6 +156,7 @@ const {
   activeRelationName,
   assetsData,
   canAddRelation,
+  isCrossTenant,
   dialogVisible,
   displayFields,
   displayMap,
@@ -175,6 +179,13 @@ const {
 </script>
 
 <style scoped>
+.cross-tenant-badge {
+  font-weight: 500;
+  padding: 0 10px;
+  height: 28px;
+  line-height: 26px;
+}
+
 .relation-layout {
   display: flex;
   gap: 16px;

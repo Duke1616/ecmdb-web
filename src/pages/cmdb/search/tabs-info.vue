@@ -1,526 +1,365 @@
 <template>
-  <PageContainer class="search-result-page">
+  <PageContainer class="global-search-page">
+    <!-- 顶部统一管理头部 -->
     <ManagerHeader
-      title="搜索结果"
-      :subtitle="`找到 ${getTotalResults()} 条相关数据`"
+      title="全局检索"
+      :subtitle="headerSubtitle"
       :show-back-button="true"
       :show-add-button="false"
-      :show-refresh-button="false"
-      @back="goBack"
+      :show-refresh-button="true"
+      @back="handleGoBack"
+      @refresh="handleRefresh"
     >
       <template #actions>
         <div class="search-header-actions">
           <el-input
-            v-model="inputSearch"
-            placeholder="搜索资源..."
+            v-model="inputKeyword"
+            placeholder="输入资产属性、名称或关键词检索..."
             clearable
             class="search-header-input"
-            @keyup.enter="search"
+            @keyup.enter="handleTriggerSearch"
           >
             <template #prefix>
-              <el-icon><Search /></el-icon>
+              <el-icon class="search-input-icon"><Search /></el-icon>
             </template>
           </el-input>
-          <el-button type="primary" class="search-header-button" :icon="Search" @click="search">搜索</el-button>
+          <el-button
+            type="primary"
+            class="search-header-button"
+            :loading="structureLoading"
+            :icon="Search"
+            @click="handleTriggerSearch"
+          >
+            检索
+          </el-button>
         </div>
       </template>
     </ManagerHeader>
 
-    <div v-if="searchResourcesData.length === 0" class="no-results">
-      <el-empty description="暂无搜索结果" />
-    </div>
+    <!-- 主体区域：加载中 / 空结果 / 结果工作台 -->
+    <div
+      v-if="structureLoading"
+      class="search-loading-container"
+      v-loading="true"
+      element-loading-text="正在全域聚合索引结构..."
+    />
 
-    <div v-else class="search-results-container">
-      <CustomTabs
-        :tabs="tabs"
-        :default-active="activeName || (tabs.length > 0 ? tabs[0].name : '')"
-        :no-margin="false"
-        @tab-change="handleTabClick"
-        class="search-tabs"
-      >
-        <template #default>
-          <DataTable
-            v-if="currentTabData && currentTabData.data && currentTabData.data.length > 0"
-            :data="getPaginatedData(currentTabData.data)"
-            :columns="getTableColumns(currentTabData.model_uid)"
-            :loading="false"
-            :show-pagination="true"
-            :total="currentTabData.data.length"
-            :page-size="paginationData.pageSize"
-            :current-page="paginationData.currentPage"
-            :page-sizes="paginationData.pageSizes"
-            :pagination-layout="paginationData.layout"
-            :table-props="{ stripe: true, border: true }"
-            :actions="tableActions"
-            action-column-width="96"
-            action-column-fixed="right"
-            @action="handleTableAction"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          >
-            <template
-              v-for="field in displayFileds.get(currentTabData?.model_uid) || []"
-              :key="field.field_uid"
-              #[`${field.field_uid}`]="{ row }"
-            >
-              <div class="search-table-cell">
-                <SecureFieldView
-                  v-if="field.secure"
-                  :content="row[field.field_uid]"
-                  :is-displaying="!!row[`${field.field_uid}_secure_display`]"
-                  :copy-only="true"
-                  @view-click="handleSecureClick(row, field)"
-                  @display-change="(isDisplaying: boolean) => handleSecureDisplayChange(row, field, isDisplaying)"
-                  @copy="(content: string) => handleCopySecureContent(content, row.id)"
-                />
+    <!-- 空结果引导 -->
+    <SearchEmptyState v-else-if="isSearchResultEmpty" @reset="handleResetSearch" />
 
-                <ResourceTableFileUpload
-                  v-else-if="field.field_type === 'file'"
-                  :model-value="Array.isArray(row[field.field_uid]) ? row[field.field_uid] : []"
-                  :field-uid="field.field_uid"
-                  :row="normalizeResourceRow(row)"
-                  :limit="5"
-                  disabled
-                  @preview="handlePreview"
-                />
+    <!-- 结果展示工作台 -->
+    <div v-else class="search-workspace" :class="{ 'with-sidebar': showTenantSidebar }">
+      <!-- 左侧多租户空间导航 -->
+      <TenantSidebar
+        v-if="showTenantSidebar"
+        :tenants="filteredTenantList"
+        :active-tenant-id="activeTenantId"
+        :tenant-filter-type="tenantFilterType"
+        :tenant-search-key="tenantSearchKey"
+        :all-count="allTenantsTotalCount"
+        :org-count="orgTenantsTotalCount"
+        :personal-count="personalTenantsTotalCount"
+        :has-organizations="!!adminStructure?.organizations?.length"
+        :has-personals="!!adminStructure?.personals?.length"
+        :get-display-name="getTenantDisplayName"
+        @update:filter-type="(type: TenantFilterType) => (tenantFilterType = type)"
+        @update:search-key="(key: string) => (tenantSearchKey = key)"
+        @select="handleSelectTenant"
+      />
 
-                <span
-                  v-else-if="field.field_type === 'string' || field.field_type === 'list'"
-                  class="field-content"
-                  :style="{ color: textColor(row[field.field_uid]) }"
-                >
-                  {{ row[field.field_uid] }}
-                </span>
+      <!-- 右侧主资产展示区 -->
+      <main class="results-main">
+        <!-- 顶部模型 Tabs 胶囊栏 -->
+        <ModelTabsBar
+          :models="currentDisplayModels"
+          :active-model-uid="activeModelUid"
+          :get-display-name="getModelDisplayName"
+          @select="handleSelectModel"
+        />
 
-                <span v-else class="field-content">{{ row[field.field_uid] || "-" }}</span>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </CustomTabs>
+        <!-- 模型资产物理分页表格 -->
+        <ResourceTable
+          :loading="resourceLoading"
+          :rows="resourceRows"
+          :columns="tableColumns"
+          :display-fields="finalDisplayFields"
+          :pagination="paginationData"
+          :actions="tableActions"
+          :is-value-matched="isValueMatched"
+          @action="handleTableAction"
+          @size-change="handlePageSizeChange"
+          @current-change="handleCurrentPageChange"
+          @secure-click="handleSecureClickProxy"
+          @secure-display-change="handleSecureDisplayChange"
+        />
+      </main>
     </div>
   </PageContainer>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, computed } from "vue"
-import { Search, View } from "@element-plus/icons-vue"
-import CustomTabs from "@/common/components/Tabs/CustomTabs.vue"
-import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
+import { onMounted, ref, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
+import { ElMessage } from "element-plus"
+import { Search } from "@element-plus/icons-vue"
 import PageContainer from "@/common/components/PageContainer/index.vue"
-import DataTable from "@/common/components/DataTable/index.vue"
-import SecureFieldView from "@/common/components/SecureFieldView/index.vue"
-import ResourceTableFileUpload from "@/pages/cmdb/resource/components/ResourceTableFileUpload.vue"
-import { globalSearchData } from "@/api/cmdb/resource/types/resource"
-import { findSecureData, globalSearchApi } from "@/api/cmdb/resource"
-import { useRoute } from "vue-router"
-import { Attribute } from "@/api/cmdb/attribute/types/attribute"
-import { ListAttributeFieldApi } from "@/api/cmdb/attribute"
+import ManagerHeader from "@/common/components/ManagerHeader/index.vue"
 import { useSearchStore } from "@/pinia/stores/search"
-import { useModelStore } from "@/pinia/stores/model"
-import { useRouter } from "vue-router"
-import { usePagination } from "@/common/composables/usePagination"
-import { ElMessage, UploadUserFile } from "element-plus"
-import type { Action, Column } from "@/common/components/DataTable/types"
+import type { TenantFilterType } from "./types"
+import { useSearchStructure } from "./composables/useSearchStructure"
+import { usePagedResources } from "./composables/usePagedResources"
+import TenantSidebar from "./components/TenantSidebar.vue"
+import ModelTabsBar from "./components/ModelTabsBar.vue"
+import ResourceTable from "./components/ResourceTable.vue"
+import SearchEmptyState from "./components/SearchEmptyState.vue"
 
 const router = useRouter()
 const route = useRoute()
-const modelStore = useModelStore()
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
+const searchStore = useSearchStore()
 
-const inputSearch = ref<string>(route.query.text as string)
-let oldSearch = route.query.text as string
+const inputKeyword = ref("")
 
-const search = () => {
-  if (inputSearch.value.trim() === "") {
-    ElMessage.error("搜索内容不成为空")
-    return
-  }
+// 阶段一：全域元数据结构与租户/模型导航状态
+const {
+  isSuperAdmin,
+  structureLoading,
+  currentSearchingKeyword,
+  adminStructure,
+  activeTenantId,
+  activeModelUid,
+  tenantFilterType,
+  tenantSearchKey,
+  filteredTenantList,
+  allTenantsTotalCount,
+  orgTenantsTotalCount,
+  personalTenantsTotalCount,
+  showTenantSidebar,
+  currentDisplayModels,
+  isSearchResultEmpty,
+  headerSubtitle,
+  getTenantDisplayName,
+  getModelDisplayName,
+  executeStructureSearch,
+  selectTenant,
+  selectModel,
+  resetStructure
+} = useSearchStructure()
 
-  if (oldSearch === inputSearch.value) {
-    return
-  }
+// 阶段二：靶向单租户单模型真物理分页资产检索
+const {
+  resourceLoading,
+  resourceRows,
+  paginationData,
+  finalDisplayFields,
+  tableColumns,
+  tableActions,
+  handleCurrentChange,
+  handleSizeChange,
+  fetchPagedResources,
+  handleSecureClick,
+  handleSecureDisplayChange,
+  isValueMatched,
+  resetResources
+} = usePagedResources()
 
-  useSearchStore().addHistorySearch(inputSearch.value.trim())
-  if (inputSearch.value.trim() !== "") {
-    router.push({
-      path: "/cmdb/dashboard/search",
-      query: { text: inputSearch.value }
-    })
-    listGlobalSearchData(inputSearch.value)
-  }
-  oldSearch = inputSearch.value
-}
-
-const goBack = () => {
-  router.push({
-    path: "/cmdb/dashboard"
+/** 执行单模型资产真物理分页加载 */
+const loadPagedResources = () => {
+  const targetTenantId = isSuperAdmin.value && activeTenantId.value ? activeTenantId.value : undefined
+  return fetchPagedResources({
+    modelUid: activeModelUid.value,
+    keyword: currentSearchingKeyword.value,
+    tenantId: targetTenantId
   })
 }
 
-// 分页处理方法
-// 获取分页数据
-const getPaginatedData = (data: any[]) => {
-  if (!data || data.length === 0) return []
-
-  const start = (paginationData.currentPage - 1) * paginationData.pageSize
-  const end = start + paginationData.pageSize
-  return data.slice(start, end)
-}
-
-// 获取当前选中的 tab 数据
-const currentTabData = computed(() => {
-  return searchResourcesData.value.find((tab) => tab.model_uid === activeName.value)
-})
-
-const activeName = ref("")
-const tableActions: Action[] = [
-  {
-    key: "detail",
-    label: "详情",
-    type: "primary",
-    icon: View,
-    plain: false
-  }
-]
-
-// 计算 tabs 数据
-const tabs = computed(() => {
-  return searchResourcesData.value.map((tab) => ({
-    name: tab.model_uid,
-    label: `${modelStore.getModelName(tab.model_uid)} (${tab.total})`
-  }))
-})
-
-const handleTabClick = (tabName: string) => {
-  activeName.value = tabName
-  sortFields(tabName)
-}
-
-// 获取总结果数
-const getTotalResults = () => {
-  return searchResourcesData.value.reduce((total, tab) => total + tab.total, 0)
-}
-
-// 获取表格列配置
-const getTableColumns = (modelUid: string): Column[] => {
-  const fields = displayFileds.value.get(modelUid) || []
-  const columns: Column[] = [
-    {
-      prop: "id",
-      label: "ID",
-      width: 80,
-      align: "center"
-    },
-    ...fields.map((field) => ({
-      prop: field.field_uid,
-      label: field.field_name,
-      align: "center" as const,
-      minWidth: 120,
-      slot: field.field_uid
-    }))
-  ]
-  return columns
-}
-
-const textColor = (fieldValue: string) => {
-  // 为空处理否则会报错
-  if (fieldValue === undefined) {
-    return ""
+/** 触发全域检索入口 */
+const handleTriggerSearch = async () => {
+  const keyword = inputKeyword.value.trim()
+  if (!keyword) {
+    ElMessage.warning("请输入检索内容")
+    return
   }
 
-  if (fieldValue.includes(inputSearch.value)) {
-    return "red"
+  searchStore.addHistorySearch(keyword)
+  router.replace({
+    path: "/cmdb/dashboard/search",
+    query: { text: keyword }
+  })
+
+  // 执行阶段一全域检索，完成后若有匹配模型则直接发起阶段二明细拉取
+  const result = await executeStructureSearch(keyword)
+  if (result?.modelUid) {
+    paginationData.currentPage = 1
+    await loadPagedResources()
   } else {
-    return ""
+    resetResources()
   }
 }
 
-// ** 获取资产列表 */
-const searchResourcesData = ref<globalSearchData[]>([])
-const listGlobalSearchData = (text: string) => {
-  globalSearchApi(text)
-    .then(async ({ data }) => {
-      searchResourcesData.value = data
-      if (searchResourcesData.value.length > 0) {
-        activeName.value = searchResourcesData.value[0].model_uid
-        await sortFields(activeName.value)
-      }
-
-      modelStore.getByModelUids(searchResourcesData.value.map((item) => item.model_uid))
-    })
-    .catch(() => {
-      searchResourcesData.value = []
-    })
-    .finally(() => {})
+/** 切换选中租户 */
+const handleSelectTenant = (tenantId: number) => {
+  selectTenant(tenantId)
+  paginationData.currentPage = 1
+  loadPagedResources()
 }
 
-// ** 过滤展示字段，并排序 */
-const displayFileds = ref<Map<string, Attribute[]>>(new Map())
-const serachHistory = ref<Map<string, string>>(new Map())
-const sortFields = async (modelUid: string) => {
-  if (displayFileds.value.has(modelUid)) {
-    return
-  }
-
-  if (serachHistory.value.get(modelUid) === inputSearch.value) {
-    return
-  }
-
-  // 处理不存在前端列表，但是匹配项存在的情况
-  let hightShowFields: Attribute[] = []
-  const matchingItem = searchResourcesData.value.find((item) => item.model_uid === modelUid)
-  if (matchingItem && matchingItem.data.length > 0) {
-    hightShowFields = matchingItem.data.reduce((acc, obj) => {
-      Object.keys(obj).forEach((key) => {
-        if (obj[key] === inputSearch.value) {
-          acc.push({
-            field_uid: key,
-            field_name: key,
-            display: true,
-            model_uid: matchingItem.model_uid
-          })
-        }
-      })
-      return acc
-    }, [])
-  }
-
-  // 获取展示字段
-  await listAttributeFields(modelUid)
-  const filteredFields = attributeFiledsData.value
-    .filter((item) => item.display === true)
-    .sort((a, b) => {
-      const indexA = a.index ?? 100
-      const indexB = b.index ?? 100
-      return indexA - indexB
-    })
-
-  // 数据组合
-  hightShowFields.forEach((field) => {
-    const exists = filteredFields.some((existingField) => existingField.field_uid === field.field_uid)
-
-    if (!exists) {
-      filteredFields.push(field)
-    }
-  })
-  serachHistory.value.set(modelUid, inputSearch.value)
-  displayFileds.value.set(modelUid, filteredFields)
+/** 切换选中模型 Tab */
+const handleSelectModel = (modelUid: string) => {
+  selectModel(modelUid)
+  paginationData.currentPage = 1
+  loadPagedResources()
 }
 
-// ** 获取资产字段信息 */
-const attributeFiledsData = ref<Attribute[]>([])
-const listAttributeFields = async (modelUid: string) => {
-  await ListAttributeFieldApi(modelUid)
-    .then(({ data }) => {
-      attributeFiledsData.value = data.attribute_fields
-    })
-    .catch((error) => {
-      console.log("报错", error)
-      attributeFiledsData.value = []
-    })
-    .finally(() => {
-      // ...
-    })
+/** 分页事件响应 */
+const handleCurrentPageChange = (page: number) => {
+  handleCurrentChange(page)
+  loadPagedResources()
 }
 
-const handlerDetailClick = (row: any) => {
-  console.log("搜索页面准备跳转到详情页面:", {
-    name: "AssetDetail",
-    query: { model_uid: row.model_uid, name: row.name, id: row.id }
-  })
-
-  router
-    .push({
-      name: "AssetDetail",
-      query: { model_uid: row.model_uid, name: row.name, id: row.id }
-    })
-    .then(() => {
-      console.log("搜索页面路由跳转成功")
-    })
-    .catch((error) => {
-      console.error("搜索页面路由跳转失败:", error)
-    })
+const handlePageSizeChange = (size: number) => {
+  handleSizeChange(size)
+  paginationData.currentPage = 1
+  loadPagedResources()
 }
 
+/** 敏感字段查看解密代理 */
+const handleSecureClickProxy = (row: any, fieldUid: string) => {
+  const targetTenantId = isSuperAdmin.value && activeTenantId.value ? activeTenantId.value : undefined
+  handleSecureClick(row, fieldUid, targetTenantId)
+}
+
+/** 查看资产详情 (携带 tenant_id 实现跨空间详情透明穿透) */
 const handleTableAction = (key: string, row: any) => {
   if (key === "detail") {
-    handlerDetailClick(row)
+    const targetTenantId = isSuperAdmin.value && activeTenantId.value ? activeTenantId.value : undefined
+    router.push({
+      name: "AssetDetail",
+      query: {
+        model_uid: row.model_uid,
+        name: row.name,
+        id: row.id,
+        tenant_id: targetTenantId
+      }
+    })
   }
 }
 
-const handleSecureClick = (row: any, item: Attribute) => {
-  findSecureData({
-    id: row.id,
-    field_uid: item.field_uid
-  })
-    .then((data) => {
-      row[item.field_uid] = data.data
-      // 在 copy-only 模式下不设置显示状态，避免显示内容区域
-      // row[`${item.field_uid}_secure_display`] = true
-    })
-    .catch(() => {
-      ElMessage.error("获取数据失败")
-    })
+/** 返回上一页 */
+const handleGoBack = () => {
+  router.push({ path: "/cmdb/dashboard" })
 }
 
-const handleSecureDisplayChange = (row: any, item: Attribute, isDisplaying: boolean) => {
-  row[`${item.field_uid}_secure_display`] = isDisplaying
+/** 刷新检索 */
+const handleRefresh = () => {
+  if (currentSearchingKeyword.value) {
+    handleTriggerSearch()
+  }
 }
 
-const handleCopySecureContent = (content: string, rowId: number) => {
-  // 复制逻辑已移到 SecureFieldView 组件内部
-  console.log("Content copied:", content, "for row:", rowId)
+/** 清空重置全部状态 */
+const handleResetSearch = () => {
+  inputKeyword.value = ""
+  resetStructure()
+  resetResources()
 }
 
-const normalizeResourceRow = (row: any) => ({ ...row, data: row })
-
-const handlePreview = (_uploadFile: UploadUserFile) => {}
-
+// 监听路由参数与挂载加载
 onMounted(() => {
-  listGlobalSearchData(inputSearch.value)
+  const initialText = (route.query.text as string) || ""
+  if (initialText) {
+    inputKeyword.value = initialText
+    handleTriggerSearch()
+  }
 })
+
+watch(
+  () => route.query.text,
+  (newText) => {
+    if (newText && typeof newText === "string" && newText !== currentSearchingKeyword.value) {
+      inputKeyword.value = newText
+      handleTriggerSearch()
+    }
+  }
+)
 </script>
 
 <style scoped lang="scss">
+.global-search-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// 头部搜索输入框与按钮
 .search-header-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  min-width: min(520px, 42vw);
+  gap: 12px;
+  min-width: min(540px, 45vw);
 }
 
 .search-header-input {
   flex: 1;
 
   :deep(.el-input__wrapper) {
-    height: 36px;
+    height: 38px;
     border-radius: 8px;
-    box-shadow: 0 0 0 1px #d8e0ea inset;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 1px #cbd5e1 inset;
+    transition: all 0.2s ease;
+
+    &.is-focus {
+      box-shadow: 0 0 0 2px #3b82f6 inset;
+    }
+  }
+
+  .search-input-icon {
+    font-size: 16px;
+    color: #94a3b8;
   }
 }
 
 .search-header-button {
-  height: 36px;
-  padding: 0 16px;
+  height: 38px;
+  padding: 0 18px;
   border-radius: 8px;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
-.no-results {
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: white;
+// 加载中状态
+.search-loading-container {
+  flex: 1;
+  min-height: 260px;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  margin: 0;
 }
 
-.search-results-container {
+// 结果工作台布局
+.search-workspace {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  margin: 0;
+  gap: 14px;
+  overflow: hidden;
+
+  &.with-sidebar {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+// 右侧主展示区
+.results-main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-}
-
-.search-tabs {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-  flex-direction: column;
-  flex-shrink: 0;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  margin-bottom: 18px;
-}
-
-.search-result-page {
-  :deep(.custom-tabs) {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-    flex-direction: column;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-  }
-
-  :deep(.tabs-header) {
-    min-height: 36px;
-    overflow-x: auto;
-    background: #f8fafc;
-  }
-
-  :deep(.tab-item) {
-    flex: 1;
-    min-width: 0;
-    min-height: 36px;
-    padding: 0 14px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-
-  :deep(.tabs-content) {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-    flex-direction: column;
-    margin: 0;
-    padding: 12px;
-  }
-
-  :deep(.manager-content) {
-    min-height: 0;
-  }
-
-  :deep(.content-card) {
-    border-radius: 8px;
-    box-shadow: none;
-  }
-
-  :deep(.action-buttons) {
-    justify-content: center;
-  }
-}
-
-.search-table-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   min-width: 0;
-  width: 100%;
-  text-align: center;
-}
-
-// 字段内容样式
-.highlight-text {
-  font-weight: 500;
-
-  &:hover {
-    background: #fff3cd;
-    padding: 2px 4px;
-    border-radius: 4px;
-  }
-}
-
-.field-content {
-  display: block;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  color: #606266;
-  line-height: 1.5;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.no-files-tag {
-  font-style: italic;
-  opacity: 0.8;
+  min-height: 0;
+  gap: 10px;
 }
 </style>

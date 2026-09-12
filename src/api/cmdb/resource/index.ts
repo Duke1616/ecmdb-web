@@ -1,7 +1,6 @@
-import instance from "@@/utils/service"
+import instance, { API_SERVICE, withActiveTenant } from "@@/utils/service"
 import type * as resource from "./types/resource"
 import { RGJsonData } from "relation-graph-vue3"
-import { API_SERVICE } from "@@/utils/service"
 
 /** 获取模型下所有资源 */
 export function listResourceApi(data: resource.ListResourceReq) {
@@ -91,18 +90,38 @@ export function findRightGraphApi(data: resource.findGraphReq) {
   })
 }
 
-/** 全局检索 */
-export function globalSearchApi(text: string) {
-  return instance.post<resource.globalSearchData[]>({
-    url: `${API_SERVICE.CMDB}/resource/search`,
-    data: { text: text }
+/** 查看加密数据字段 */
+export function findSecureData(data: resource.findSecureReq, tenantId?: number) {
+  return instance.post<string>({
+    url: `${API_SERVICE.CMDB}/resource/secure`,
+    data: data,
+    ...withActiveTenant(tenantId)
   })
 }
 
-/** 查看加密数据字段 */
-export function findSecureData(data: resource.findSecureReq) {
-  return instance.post<string>({
-    url: `${API_SERVICE.CMDB}/resource/secure`,
-    data: data
+/** 单租户检索模型 Tabs 概览 (两阶段模式：阶段一) */
+export function searchStructureApi(text: string) {
+  return instance.post<resource.SearchStructureResult>({
+    url: `${API_SERVICE.CMDB}/resource/search/structure`,
+    data: { text }
   })
 }
+
+/** 模型资产物理分页检索 (两阶段模式：阶段二，统一兼容单租户与跨租户大盘指定 tenant_id) */
+export function searchPagedResourcesApi(data: resource.SearchPagedResourcesReq, tenantId?: number) {
+  return instance.post<resource.ResourceData>({
+    url: `${API_SERVICE.CMDB}/resource/search/resources`,
+    data,
+    ...withActiveTenant(tenantId || data.tenant_id)
+  })
+}
+
+/** 跨租户全局大盘结构检索 (两阶段模式：阶段一) */
+export function adminSearchStructureApi(text: string) {
+  return instance.post<resource.AdminSearchStructureResult>({
+    url: `${API_SERVICE.CMDB}/resource/admin/search/structure`,
+    data: { text }
+  })
+}
+
+export const adminSearchPagedResourcesApi = searchPagedResourcesApi
