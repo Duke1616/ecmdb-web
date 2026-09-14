@@ -6,6 +6,96 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## Unreleased
 
+## [v1.9.0](https://github.com/Duke1616/ecmdb-web/releases/tag/v1.9.0) - 2026-09-13
+
+- [`fb62e3c`](https://github.com/Duke1616/ecmdb-web/commit/fb62e3c2d6226f3240cfbf8693c3f75130dc0988) feat(cmdb): 全局搜索重构与跨租户资产详情只读关联支持
+- [`c26ded9`](https://github.com/Duke1616/ecmdb-web/commit/c26ded9a8f3c6c4ab6d9a2b81bc4c0797ecb5393) chore: 优化删除项目的提示
+- [`58aca5b`](https://github.com/Duke1616/ecmdb-web/commit/58aca5b5b893dfbe24237e2d116253ed415fb2dd) fix(proxy): 恢复 Nginx 与 Vite 身份协议公开端点代理
+- [`6804ec7`](https://github.com/Duke1616/ecmdb-web/commit/6804ec70e302fb16e4088a27532d5831920a72ec) chore(proxy): 精简 Vite 与 Nginx 代理规则，统一通过 /api/iam 转发
+- [`ae4d50e`](https://github.com/Duke1616/ecmdb-web/commit/ae4d50e7553f91ad4fea34b7268ff84ed8894b67) fix: 修复 SP 实体标识 校验
+- [`9449108`](https://github.com/Duke1616/ecmdb-web/commit/9449108009aab487bfcc8a49be6b600f21c3d195) feat(iam): 支持 SAML 2.0 身份提供商接入中心、元数据/证书导出及表单布局优化
+- [`6693d7c`](https://github.com/Duke1616/ecmdb-web/commit/6693d7c5b6bafeba5c25620d6f7f74174e3f7de1) fix(iam): CAS 接入协议自适应隐藏客户端标识输入框、免确认授权及密钥弹窗
+- [`9ab4da3`](https://github.com/Duke1616/ecmdb-web/commit/9ab4da33bbc062014c3a54142b6305da660491fe) feat(iam): 新增接入应用管理抽屉与接入协议(OIDC/CAS/SAML)保色卡片组件
+- [`78c3747`](https://github.com/Duke1616/ecmdb-web/commit/78c374754f40aa4a37b30e12c8c91edb6c303751) fix: capability code 与后端不一致
+- [`2de91e3`](https://github.com/Duke1616/ecmdb-web/commit/2de91e3ccae11686dd5c71a05ff8208232045b23) feat(idp): 统一通过 /api/iam/idp/consent 与后端微服务网关标准对齐
+- [`716e6a5`](https://github.com/Duke1616/ecmdb-web/commit/716e6a590cfbcafd6fc138552db4d1d5f73a3c1a) chore(router): 彻底移除无引用的 oidc-callback 死代码与路由
+- [`03fa9e0`](https://github.com/Duke1616/ecmdb-web/commit/03fa9e048ff6a3a68476d8654cf415db81fa3c4d) feat(idp): 实现 OIDC 用户授权确认页 (Consent Page) 交互体系
+- [`b8511cf`](https://github.com/Duke1616/ecmdb-web/commit/b8511cf6aa5498dc5877b225f1723515254f2027) fix(login): 保持飞书授权时的 redirect 上下文并支持后端 OIDC 端点原生跳转
+- [`6ec1393`](https://github.com/Duke1616/ecmdb-web/commit/6ec1393f3ca5249eec14ce31f8d8606c67a90dd9) fix(login): 修复飞书回调后未确立前端会话凭据导致路由守卫拦截的问题
+- [`a3a9d5d`](https://github.com/Duke1616/ecmdb-web/commit/a3a9d5dc638a9928a2c634670af742bd7b118762) fix(login): 修复 OIDC 授权重定向误用 router.push 导致 404 问题，并完善剪贴板与 Nginx 配置
+- [`5ea6010`](https://github.com/Duke1616/ecmdb-web/commit/5ea6010f2b57bde63e8ee2ac8c727be194308fa8) feat: 支持接入应用治理与 OIDC 单点登录回调管理
+- [`b8a91cc`](https://github.com/Duke1616/ecmdb-web/commit/b8a91ccf9f443c681b1154eb08f80248c6275822) chore: 优化去除登陆租户选择页面
+- [`f4ec8be`](https://github.com/Duke1616/ecmdb-web/commit/f4ec8be3e337b3efefc0cc4d9f8f75db3961efde) chore: format service.ts
+- [`7a0cfb8`](https://github.com/Duke1616/ecmdb-web/commit/7a0cfb8ca603463965ad93d8e8e58bdfe467ba86) fix(iam): fix tenant type definition and refine tenant selection in join/login flow
+- [`fdeec6a`](https://github.com/Duke1616/ecmdb-web/commit/fdeec6a6df4f5d450c471af7af2e4ec78e256fd5) chore: 优化 UI 展示
+- [`b346049`](https://github.com/Duke1616/ecmdb-web/commit/b346049a15ecc4a778643a1a717c2133dea6b09b) feat: 新增安全审计管理中心（登录审计与操作审计控制台）
+- [`fcd5fa1`](https://github.com/Duke1616/ecmdb-web/commit/fcd5fa1fec6c6dbcd88ee764da9c5ef1130e7be5) fix: 优化表格列无名称时回退使用标识，移除多余提示
+- [`4985498`](https://github.com/Duke1616/ecmdb-web/commit/498549839c11b1cc8764fc75f84c8b3331fa4a4e) feat: 支持资产编辑时敏感字段留空保留原值，优化表单校验与脱敏回传
+- [`4c8829e`](https://github.com/Duke1616/ecmdb-web/commit/4c8829ece94d3d46feb25b4bbfe99871ade42d4e) feat: 支持模型级联删除安全确认，并优化插件动作接口与类型
+- [`21e287e`](https://github.com/Duke1616/ecmdb-web/commit/21e287e725b584e69f8ed0c1d32dfe7252747c93) fix: 修复模版管理，关联流程样式大小错误
+- [`2e12a09`](https://github.com/Duke1616/ecmdb-web/commit/2e12a094b8a2775ff3ef49fdcefb6ca768bbb601) chore: 跨域解决
+- [`40224de`](https://github.com/Duke1616/ecmdb-web/commit/40224de2b0cf61ad1a40bc8acd974f4f0f7350b9) fix: form create fetcher 错误
+- [`088da3a`](https://github.com/Duke1616/ecmdb-web/commit/088da3a61fc2fbd49864f40d6889fef43bcc7976) fix: 修复 token 模式下 SSE 请求缺少认证请求头导致的鉴权失败
+- [`251e22a`](https://github.com/Duke1616/ecmdb-web/commit/251e22a85f016a175092616f13c96766524a5b62) refactor: 收紧任务执行与管理页面职责
+- [`0d90597`](https://github.com/Duke1616/ecmdb-web/commit/0d90597f82517244c1bcbed5f99591bc1d4f96de) refactor: 优化变量加载
+- [`c8752bf`](https://github.com/Duke1616/ecmdb-web/commit/c8752bfdf2460a7703af6b4c63b8d2903ab5b89d) style: 调整执行参数列布局
+- [`878f74c`](https://github.com/Duke1616/ecmdb-web/commit/878f74ca78bd58c267d04b4c9ed4241e94c99c84) chore: 格式化任务执行弹窗
+- [`c97279e`](https://github.com/Duke1616/ecmdb-web/commit/c97279e89c1527ad6aef1267d86f19b6a1aab0da) feat: 增加执行参数快照查看
+- [`c722e28`](https://github.com/Duke1616/ecmdb-web/commit/c722e2824e138ca6b0bedfbfaee67e9b286a73ae) refactor: 优化删除 localstore 的 user 存储
+- [`3d6eed4`](https://github.com/Duke1616/ecmdb-web/commit/3d6eed44399408c887622e160c505bfe86cb2835) fix: 按后端认证载体选择凭证
+- [`a161fda`](https://github.com/Duke1616/ecmdb-web/commit/a161fdae8a8d5e46138b8d8d550b50c4e3d3e27a) chore: 新增工单流程启动失败状态 ，重启流程能力
+- [`06167c3`](https://github.com/Duke1616/ecmdb-web/commit/06167c30b78560f773fd216ee49f20f403cb3327) fix: avoid duplicate authentication cookies
+- [`576c905`](https://github.com/Duke1616/ecmdb-web/commit/576c905880013bf23d1309c69b7f2158bb074a3a) chore: 统一大小
+- [`3a0c833`](https://github.com/Duke1616/ecmdb-web/commit/3a0c833d566bf4deaae25418603e55f84e5fcf97) docs: AGENTS.md 完善
+- [`86b389d`](https://github.com/Duke1616/ecmdb-web/commit/86b389dd7bfb8ab306c96977ccba5aa131020a98) style: 统一任务通知控件尺寸
+- [`af0763d`](https://github.com/Duke1616/ecmdb-web/commit/af0763d73f394d9e8e9c6e0415057b1d24973ead) fix: 限制任务通知接收者类型
+- [`d7b2b74`](https://github.com/Duke1616/ecmdb-web/commit/d7b2b747912dad3c4c1b547fdcf7961cb8a1f3a5) feat: 支持任务通知和统一接收者策略配置
+- [`fc5b4d7`](https://github.com/Duke1616/ecmdb-web/commit/fc5b4d78163e39f54ad9bd144650ab5bd527bab5) chore: 支持克隆任务
+- [`69965b3`](https://github.com/Duke1616/ecmdb-web/commit/69965b375c942f016bd3b8465e282226f4f2c7e5) chore: 任务状态同步
+- [`7ff826d`](https://github.com/Duke1616/ecmdb-web/commit/7ff826ddccf2b919c804d071947b71075746dc00) feat: 任务执行支持覆盖能力
+- [`0661a59`](https://github.com/Duke1616/ecmdb-web/commit/0661a59a9746fde3a5676f1633199f4fbbbcd2ff) feat: 支持任务执行取消
+- [`8ec9cc2`](https://github.com/Duke1616/ecmdb-web/commit/8ec9cc245bb3f9ddb98b6520c202ff5331aac3c9) feat(codebook): support rename and AI file operations
+- [`d60ac8d`](https://github.com/Duke1616/ecmdb-web/commit/d60ac8d9e596d74f6c0e7cfddd330e29500f631c) refactor: 统一 Runner 试运行调用参数
+- [`d745ac7`](https://github.com/Duke1616/ecmdb-web/commit/d745ac725f4d351dd885d8d4f0833e44a154b0e7) refactor: 完善任务 Runner 参数覆盖
+- [`67d669d`](https://github.com/Duke1616/ecmdb-web/commit/67d669df6e8ac714999611a7f3b14eb1da8d7791) refactor: align runner parameter roles
+- [`719fd1a`](https://github.com/Duke1616/ecmdb-web/commit/719fd1a7b8b16d1e243280eb31d0ab8b850f6893) refactor：简化 Codebook 试运行配置
+- [`ba7299c`](https://github.com/Duke1616/ecmdb-web/commit/ba7299c99816462046ce7016c1dd21295a221802) 优化：统一程序试运行绑定逻辑
+- [`0d4f556`](https://github.com/Duke1616/ecmdb-web/commit/0d4f55618196cb9c8df640c29d507db943ece585) 优化：精简执行单元路由列表展示
+- [`4abfb21`](https://github.com/Duke1616/ecmdb-web/commit/4abfb211a234823a9d5f81e76e42f3a0df2c6e6e) refactor: 优化程序模式绑定关系
+- [`5cb7ccb`](https://github.com/Duke1616/ecmdb-web/commit/5cb7ccbbac9ebde02cc3f1e1dd032e408df689f0) fix: 修正 Codebook 返回项目路由
+- [`baff595`](https://github.com/Duke1616/ecmdb-web/commit/baff5954b8450af350f6378379dc0a1b17d7e820) fix: 定位 Codebook 当前项目
+- [`8647526`](https://github.com/Duke1616/ecmdb-web/commit/864752674f78465361c8d07197f59e1a827af029) fix: 固定 Codebook 列表表头
+- [`01c0947`](https://github.com/Duke1616/ecmdb-web/commit/01c09477d5745b1e1dd062335585e969f9b8f35e) style: 优化 Codebook 列表滚动布局
+- [`dac024b`](https://github.com/Duke1616/ecmdb-web/commit/dac024bc4f7287efbaf1d4ac8023a8aea2371b8c) refactor(codeassist): simplify AI collaboration flow
+- [`8cc21c5`](https://github.com/Duke1616/ecmdb-web/commit/8cc21c52c0c8f290473bf469609c3266294b2b57) fix: 补充 Codebook 目录返回导航
+- [`ef9b796`](https://github.com/Duke1616/ecmdb-web/commit/ef9b796c7a005e9a4e03f2386c4601340e3e4247) fix: 统一 Codebook 空目录居中状态
+- [`dcf50d7`](https://github.com/Duke1616/ecmdb-web/commit/dcf50d719acc5e96ba9eb4877a1d26ed93530dd1) refactor: 简化 Codebook 文件操作入口
+- [`f09c240`](https://github.com/Duke1616/ecmdb-web/commit/f09c240da5e3a6b8a21397963bfe01534c5f7939) fix: 调整 Codebook 视图切换位置
+- [`926295b`](https://github.com/Duke1616/ecmdb-web/commit/926295bb42b8067cb205c90fa150f3acc5ad4dbc) feat: 支持批量删除，上传覆盖能力
+- [`fdc02ed`](https://github.com/Duke1616/ecmdb-web/commit/fdc02edf7d371a78f786bd3b4889d142236eddb8) fix: preserve compact task parameter layout
+- [`10b4d4b`](https://github.com/Duke1616/ecmdb-web/commit/10b4d4b1063ce99c297f65b695d2a2fe848f91f0) fix: validate task runner bindings
+- [`57e089c`](https://github.com/Duke1616/ecmdb-web/commit/57e089c9ae74bcc01f38e65a8ddc0ade6c0cce05) feat: 完善 Codebook 文件展示与 AI 消息渲染
+- [`313c871`](https://github.com/Duke1616/ecmdb-web/commit/313c871a46341edc03debde92a504637a5531338) refactor: codebook AI 能力增强
+- [`7f6e6f5`](https://github.com/Duke1616/ecmdb-web/commit/7f6e6f592881276d10875fc62fa41ad8545ac2c4) fix: 更新 Passkey 浏览器调用结构
+- [`29131d1`](https://github.com/Duke1616/ecmdb-web/commit/29131d19ba1acb61e9fd3bea767377bba7f6c081) fix: 统一程序来源选中态样式
+- [`5713030`](https://github.com/Duke1616/ecmdb-web/commit/571303030d4e472a827cbe22de5d1893f1ffa64c) feat: 优化任务模板项目选择器
+- [`b873513`](https://github.com/Duke1616/ecmdb-web/commit/b873513d56f5af744e98effd7d040db5836c2d19) fix: 在脚本选择器展示归档项目
+- [`f33ecd8`](https://github.com/Duke1616/ecmdb-web/commit/f33ecd882436bb374cc57f4321d41d6d07b7af84) fix: 补齐脚本树作用域参数
+- [`94df161`](https://github.com/Duke1616/ecmdb-web/commit/94df1617f336958ea66888319265e9168b601869) style: 居中脚本编辑器更多菜单
+- [`0be2df6`](https://github.com/Duke1616/ecmdb-web/commit/0be2df6b7dfccbc832c75064b984c6f222d727a0) feat: 完善脚本项目归档与删除管理
+- [`b301456`](https://github.com/Duke1616/ecmdb-web/commit/b301456c223133d337b1c08a7b6eb23f0f92636e) fix: 按执行通道解析程序能力
+- [`000e248`](https://github.com/Duke1616/ecmdb-web/commit/000e2483b2bed59b4791a652285276a15f527cce) feat: 支持脚本项目归档与恢复
+- [`2e5938c`](https://github.com/Duke1616/ecmdb-web/commit/2e5938c9a3c5010b5f64747c48c45f7169eb660a) fix: 使用 CodeMirror 渲染 ANSI 日志
+- [`93ce84f`](https://github.com/Duke1616/ecmdb-web/commit/93ce84f853afd193c416f983832656404ecfe499) fix: 恢复任务日志 ANSI 高亮
+- [`106e360`](https://github.com/Duke1616/ecmdb-web/commit/106e3600709dc187db1d90d4c88f98e3fafa4371) fix: 修复任务日志显示异常
+- [`08e9a09`](https://github.com/Duke1616/ecmdb-web/commit/08e9a0989628f8d45fb6486bec27f12815d4d6e6) feat: 支持 HTTP 环境混合选择项目文件
+- [`110382d`](https://github.com/Duke1616/ecmdb-web/commit/110382d41b2ae20332cff61e1c1dd70df3c02c1d) fix: 修复任务日志弹窗侧栏挤压
+- [`b31735a`](https://github.com/Duke1616/ecmdb-web/commit/b31735a28b38b3da49578f615a0920bb14ad5c94) fix: 修复任务日志弹窗侧栏挤压
+- [`d1ef812`](https://github.com/Duke1616/ecmdb-web/commit/d1ef812e31151cae4443685467990e170abd7bcc) feat: 支持多种程序来源
+- [`0ebb71b`](https://github.com/Duke1616/ecmdb-web/commit/0ebb71b8df3e4ff1ffeeeee36eb1aec570242375) chore: 支持强制停止能力
+- [`bec5953`](https://github.com/Duke1616/ecmdb-web/commit/bec5953c09ee2b4c3033e1ff49664e1130b05882) refactor: 重构 task log 加载
+- [`3a3cf4a`](https://github.com/Duke1616/ecmdb-web/commit/3a3cf4a1c6b4738b9be42f7d038358687964d48c) fix: 全局搜索历史，租户隔离
+
 ## [v1.8.1](https://github.com/Duke1616/ecmdb-web/releases/tag/v1.8.1) - 2026-07-29
 
 - [`dda4690`](https://github.com/Duke1616/ecmdb-web/commit/dda469019c49978d2a18ff73ca60d279bb3491f4) chore: 删除多余样式
