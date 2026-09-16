@@ -52,7 +52,9 @@ import {
   normalizeScheduleDateTimeRules
 } from "../utils/scheduleDateTimeComponent"
 import {
+  NOTIFY_HIDDEN_STYLE_FIELD,
   createNotifyDisplayBaseRule,
+  isRuleNotifyHidden,
   normalizeNotifyDisplayRules,
   syncNotifyHiddenToRules
 } from "../utils/notifyDisplayComponent"
@@ -87,7 +89,10 @@ const scheduleDateTimeDragRule = createScheduleDateTimeDragRule(() => nextSchedu
 const config = {
   showSaveBtn: false,
   fieldReadonly: false,
-  baseRule: createNotifyDisplayBaseRule()
+  baseRule: createNotifyDisplayBaseRule(),
+  appendConfigData: (rule: any) => ({
+    [NOTIFY_HIDDEN_STYLE_FIELD]: isRuleNotifyHidden(rule)
+  })
 }
 
 const hasDesignerValue = (value: unknown) => {
