@@ -5,7 +5,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from "elem
 import { CreateAttributeApi, UpdateAttributeApi } from "@/api/cmdb/attribute"
 import type { Attribute, createOrUpdateAttributeReq } from "@/api/cmdb/attribute/types/attribute"
 
-type FieldType = "string" | "multiline" | "list" | "file"
+type FieldType = "string" | "multiline" | "list" | "file" | "number" | "boolean" | "datetime"
 type SettingKey = "required" | "secure" | "link"
 
 interface OptionRow {
@@ -23,15 +23,72 @@ export const FIELD_TYPE_OPTIONS: Array<{
   label: string
   description: string
   icon: string
+  color: string
+  bgColor: string
 }> = [
-  { value: "string", label: "字符串", description: "单行文本输入", icon: "Document" },
-  { value: "multiline", label: "多行文本", description: "多行文本输入", icon: "Edit" },
-  { value: "list", label: "列表", description: "下拉选择列表", icon: "List" },
-  { value: "file", label: "文件", description: "文件上传", icon: "Folder" }
+  {
+    value: "string",
+    label: "字符串",
+    description: "单行短文本输入",
+    icon: "Document",
+    color: "#2563eb",
+    bgColor: "#eff6ff"
+  },
+  {
+    value: "multiline",
+    label: "多行文本",
+    description: "多行长文本输入",
+    icon: "Edit",
+    color: "#4f46e5",
+    bgColor: "#eef2ff"
+  },
+  {
+    value: "number",
+    label: "数值",
+    description: "整数或浮点数字",
+    icon: "Odometer",
+    color: "#059669",
+    bgColor: "#ecfdf5"
+  },
+  {
+    value: "boolean",
+    label: "布尔",
+    description: "二元状态开关 (是/否)",
+    icon: "Switch",
+    color: "#7c3aed",
+    bgColor: "#f5f3ff"
+  },
+  {
+    value: "datetime",
+    label: "日期时间",
+    description: "日期与时间选择",
+    icon: "Calendar",
+    color: "#d97706",
+    bgColor: "#fffbeb"
+  },
+  {
+    value: "list",
+    label: "列表",
+    description: "预设枚举下拉选择",
+    icon: "List",
+    color: "#db2777",
+    bgColor: "#fdf2f8"
+  },
+  {
+    value: "file",
+    label: "文件",
+    description: "附件与文件上传",
+    icon: "Folder",
+    color: "#0d9488",
+    bgColor: "#f0fdfa"
+  }
 ]
 
 const FIELD_TYPE_SETTINGS: Record<FieldType, SettingKey[]> = {
   string: ["required", "secure", "link"],
+  number: ["required"],
+  boolean: ["required"],
+  datetime: ["required"],
   multiline: ["required", "secure"],
   list: ["required"],
   file: ["required"]
@@ -99,9 +156,15 @@ export const useAttributeForm = (props: AttributeFormProps, emitRefresh: () => v
     syncOptionsToForm()
   }
 
-  const addOption = () => {
-    optionRows.value.push(createOptionRow())
+  const addOption = (insertIndex?: number) => {
+    const newRow = createOptionRow()
+    if (typeof insertIndex === "number" && insertIndex >= 0 && insertIndex < optionRows.value.length) {
+      optionRows.value.splice(insertIndex + 1, 0, newRow)
+    } else {
+      optionRows.value.push(newRow)
+    }
     syncOptionsToForm()
+    return newRow.id
   }
 
   const removeOption = (index: number) => {

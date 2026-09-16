@@ -44,7 +44,7 @@
       </div>
 
       <div class="field-details">
-        <el-tag size="small" type="primary">{{ field.field_type }}</el-tag>
+        <el-tag size="small" type="primary">{{ getFieldTypeLabel(field.field_type) }}</el-tag>
         <el-tag v-if="field.builtin" size="small" type="warning" effect="light">内置</el-tag>
         <el-tooltip :content="field.field_uid" placement="top" :show-after="400">
           <code class="field-uid">{{ field.field_uid }}</code>
@@ -68,6 +68,18 @@ const emit = defineEmits<{
   edit: [field: Attribute]
   delete: [field: Attribute]
 }>()
+
+const FIELD_TYPE_LABEL_MAP: Record<string, string> = {
+  string: "字符串",
+  number: "数值",
+  boolean: "布尔",
+  datetime: "日期时间",
+  multiline: "多行文本",
+  list: "列表",
+  file: "文件"
+}
+
+const getFieldTypeLabel = (type: string) => FIELD_TYPE_LABEL_MAP[type] || type
 </script>
 
 <style lang="scss" scoped>

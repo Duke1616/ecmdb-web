@@ -38,8 +38,15 @@
               >
                 {{ resourceData.data[item.field_uid] }}
               </el-button>
+              <el-tag
+                v-else-if="item.field_type === 'boolean'"
+                size="small"
+                :type="resourceData.data[item.field_uid] ? 'success' : 'info'"
+              >
+                {{ resourceData.data[item.field_uid] ? "是" : "否" }}
+              </el-tag>
               <span v-else class="field-text">
-                {{ resourceData.data[item.field_uid] || "暂无数据" }}
+                {{ formatFieldValue(item, resourceData.data[item.field_uid]) }}
               </span>
             </div>
           </div>
@@ -122,6 +129,18 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   plain: false
 })
+import type { Attribute } from "@/api/cmdb/attribute/types/attribute"
+
+const formatFieldValue = (field: Attribute, value: any) => {
+  if (value === undefined || value === null || value === "") {
+    return "暂无数据"
+  }
+  if (field.field_type === "boolean") {
+    return value === true || value === "true" ? "是" : "否"
+  }
+  return String(value)
+}
+
 const {
   attributeGroups,
   loading,

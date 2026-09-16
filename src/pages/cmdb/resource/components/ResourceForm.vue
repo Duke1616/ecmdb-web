@@ -42,7 +42,46 @@
                     class="secure-input"
                   />
                 </template>
-                <template v-if="item.field_type === 'list'">
+                <template v-else-if="item.field_type === 'number'">
+                  <el-input-number
+                    v-model="formData.data[item.field_uid]"
+                    :placeholder="handlerPlaceholder(item.field_name)"
+                    controls-position="right"
+                    style="width: 100%"
+                  />
+                </template>
+                <template v-else-if="item.field_type === 'boolean'">
+                  <div
+                    class="boolean-switch-wrapper"
+                    :class="{ 'is-active': Boolean(formData.data[item.field_uid]) }"
+                    @click="formData.data[item.field_uid] = !Boolean(formData.data[item.field_uid])"
+                  >
+                    <div class="switch-status-label">
+                      <span class="status-dot" />
+                      <span class="status-text">{{ Boolean(formData.data[item.field_uid]) ? "是" : "否" }}</span>
+                    </div>
+                    <el-switch
+                      :model-value="Boolean(formData.data[item.field_uid])"
+                      inline-prompt
+                      active-text="是"
+                      inactive-text="否"
+                      @update:model-value="(val) => (formData.data[item.field_uid] = val)"
+                      @click.stop
+                    />
+                  </div>
+                </template>
+                <template v-else-if="item.field_type === 'datetime'">
+                  <el-date-picker
+                    v-model="formData.data[item.field_uid]"
+                    type="datetime"
+                    placeholder="选择日期时间"
+                    format="YYYY-MM-DD HH:mm:ss"
+                    value-format="YYYY-MM-DD HH:mm:ss"
+                    clearable
+                    style="width: 100%"
+                  />
+                </template>
+                <template v-else-if="item.field_type === 'list'">
                   <el-select v-model="formData.data[item.field_uid]" placeholder="请选择" clearable>
                     <el-option v-for="option in item.option" :key="option" :label="option" :value="option" />
                   </el-select>
@@ -300,7 +339,8 @@ const handleSubmit = () => {
         emits("list")
       })
       .catch((error) => {
-        ElMessage.error(`${actionText}资产失败：${error.message || "未知错误"}`)
+        // 全局响应拦截器已统一弹出后端错误提示，此处仅记录日志，避免重复弹窗
+        console.error(`${actionText}资产失败:`, error)
       })
       .finally(() => {})
   })
@@ -424,6 +464,68 @@ defineExpose({
               border-color: #3b82f6;
               box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             }
+          }
+        }
+
+        .boolean-switch-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          height: 32px;
+          padding: 0 10px;
+          background: #ffffff;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+          cursor: pointer;
+          user-select: none;
+          transition: all 0.2s ease;
+
+          &:hover {
+            border-color: #9ca3af;
+            background: #fcfcfd;
+          }
+
+          &.is-active {
+            border-color: #93c5fd;
+            background: #f8fafc;
+
+            .status-dot {
+              background: #10b981;
+              box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+            }
+
+            .status-text {
+              color: #1e293b;
+              font-weight: 500;
+            }
+          }
+
+          .switch-status-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            .status-dot {
+              width: 7px;
+              height: 7px;
+              border-radius: 50%;
+              background: #94a3b8;
+              transition: all 0.2s ease;
+            }
+
+            .status-text {
+              font-size: 13px;
+              color: #64748b;
+              transition: all 0.2s ease;
+            }
+          }
+
+          :deep(.el-switch) {
+            --el-switch-on-color: #2563eb;
+            --el-switch-off-color: #cbd5e1;
+            height: 22px;
           }
         }
 

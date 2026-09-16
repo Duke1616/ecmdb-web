@@ -98,6 +98,9 @@ export const useResourceList = () => {
         slot: useCustomCell ? `data.${item.field_uid}` : undefined,
         formatter: (_row, _column, value) => {
           if (value === undefined || value === null || value === "") return "-"
+          if (item.field_type === "boolean") {
+            return value === true || value === "true" ? "是" : "否"
+          }
           return String(value)
         }
       }
