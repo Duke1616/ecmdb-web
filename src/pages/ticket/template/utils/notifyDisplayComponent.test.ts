@@ -153,10 +153,10 @@ describe("notifyDisplayComponent", () => {
 
       const synced = syncNotifyHiddenToRules(rules) as any[]
 
-      // field_1 应该保存通知隐藏
+      // field_1 应该保存通知隐藏，notify_display 不再写入（新标准仅用 notify_hidden）
       expect(synced[0].notify_hidden).toBe(true)
       expect(synced[0].style.notify_hidden).toBe(true)
-      expect(synced[0].style.notify_display).toBe("false")
+      expect(synced[0].style.notify_display).toBeUndefined()
 
       // field_2 用户主动取消，应当被彻底清理
       expect(synced[1].notify_hidden).toBeUndefined()

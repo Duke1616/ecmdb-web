@@ -41,18 +41,20 @@ const withParsedRules = (value: unknown, walk: (rules: DesignerRuleItem[]) => vo
 }
 
 /**
- * 将隐藏通知状态写入 / 清除 item，
- * 同时维护 style.notify_hidden 与兼容老版本的 style.notify_display。
+ * 将隐藏通知状态写入 / 清除 item。
+ * - 写入时仅使用 style.notify_hidden（新标准），不再写 notify_display；
+ * - 清除时同时清理 notify_display，完成旧数据的自动迁移。
  */
 const applyNotifyHidden = (item: DesignerRuleItem, hidden: boolean): void => {
   if (hidden) {
     item.notify_hidden = true
-    item.style = { ...(getItemStyle(item) ?? {}), notify_hidden: true, notify_display: "false" }
+    item.style = { ...(getItemStyle(item) ?? {}), notify_hidden: true }
   } else {
     delete item.notify_hidden
     const style = getItemStyle(item)
     if (style) {
       delete style.notify_hidden
+      // 清理历史遗留的 notify_display，完成一次性自动迁移
       delete style.notify_display
     }
   }
@@ -124,8 +126,8 @@ export const normalizeNotifyDisplayRules = (value: unknown): unknown =>
 /**
  * 保存模板前同步 rules：
  * 1. 根级写入 `notify_hidden: true`，供 Go 后端 `Rule.NotifyHidden` 直接映射；
- * 2. `style.notify_display` 保持 `"false"`，实现对老版本的无缝兼容；
- * 3. 未勾选时彻底清理相关属性，避免脏字段留存。
+ * 2. 未勾选时彻底清理相关属性，避免脏字段留存；
+ * 3. 顺带清除旧版 `style.notify_display`，完成存量数据的自动迁移。
  */
 export const syncNotifyHiddenToRules = (value: unknown): unknown =>
   withParsedRules(value, function walk(items) {
