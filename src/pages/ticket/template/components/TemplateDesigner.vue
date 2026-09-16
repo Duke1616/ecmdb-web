@@ -51,6 +51,11 @@ import {
   getNextScheduleGroupIndex,
   normalizeScheduleDateTimeRules
 } from "../utils/scheduleDateTimeComponent"
+import {
+  createNotifyDisplayBaseRule,
+  normalizeNotifyDisplayRules,
+  syncNotifyHiddenToRules
+} from "../utils/notifyDisplayComponent"
 
 interface FormDesignerExpose {
   getJson: () => unknown
@@ -81,7 +86,8 @@ const scheduleDateTimeDragRule = createScheduleDateTimeDragRule(() => nextSchedu
 
 const config = {
   showSaveBtn: false,
-  fieldReadonly: false
+  fieldReadonly: false,
+  baseRule: createNotifyDisplayBaseRule()
 }
 
 const hasDesignerValue = (value: unknown) => {
@@ -100,13 +106,14 @@ const setDesignerForm = (data: Partial<TemplateFormData>) => {
   }
 
   if (hasDesignerValue(data.rules)) {
-    designerRef.value.setRule(normalizeScheduleDateTimeRules(data.rules))
+    const normalizedRules = normalizeNotifyDisplayRules(normalizeScheduleDateTimeRules(data.rules))
+    designerRef.value.setRule(normalizedRules)
   }
 }
 
 const syncDesignerToFormData = () => {
   if (designerRef.value) {
-    localFormData.value.rules = designerRef.value.getJson()
+    localFormData.value.rules = syncNotifyHiddenToRules(designerRef.value.getJson())
     localFormData.value.options = designerRef.value.getOptionsJson()
     emit("update:formData", localFormData.value)
   }
@@ -256,6 +263,49 @@ defineExpose({
     overflow: hidden;
     background: #fafafa;
     min-height: 0;
+
+    // 禁用通知推送配置项 - 现代卡片式排版
+    :deep(.notify-display-card-item) {
+      margin-top: 14px !important;
+      margin-bottom: 8px !important;
+      padding: 10px 12px !important;
+      background-color: #f8fafc !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      transition: all 0.2s ease !important;
+
+      &:hover {
+        background-color: #f1f5f9 !important;
+        border-color: #cbd5e1 !important;
+      }
+
+      .el-form-item__label {
+        flex: 1 !important;
+        margin-bottom: 0 !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        color: #1e293b !important;
+        line-height: 1.4 !important;
+        padding-right: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      .el-form-item__content {
+        display: flex !important;
+        justify-content: flex-end !important;
+        line-height: normal !important;
+        margin-left: 0 !important;
+        flex-shrink: 0 !important;
+      }
+
+      .el-switch {
+        --el-switch-on-color: #3b82f6 !important;
+      }
+    }
   }
 }
 </style>
