@@ -154,7 +154,12 @@
                       <div class="setting-title">是否必填</div>
                       <div class="setting-desc">资源录入时必须填写</div>
                     </div>
-                    <el-switch v-model="formData.required" active-color="#ef4444" inactive-color="var(--border)" />
+                    <el-switch
+                      v-model="formData.required"
+                      size="default"
+                      active-color="#ef4444"
+                      inactive-color="var(--border)"
+                    />
                   </div>
                 </el-form-item>
               </div>
@@ -169,7 +174,12 @@
                       <div class="setting-title">加密属性</div>
                       <div class="setting-desc">敏感内容需授权查看</div>
                     </div>
-                    <el-switch v-model="formData.secure" active-color="#f97316" inactive-color="var(--border)" />
+                    <el-switch
+                      v-model="formData.secure"
+                      size="default"
+                      active-color="#f97316"
+                      inactive-color="var(--border)"
+                    />
                   </div>
                 </el-form-item>
               </div>
@@ -184,7 +194,12 @@
                       <div class="setting-title">是否外链</div>
                       <div class="setting-desc">展示为可跳转链接</div>
                     </div>
-                    <el-switch v-model="formData.link" active-color="#2563eb" inactive-color="var(--border)" />
+                    <el-switch
+                      v-model="formData.link"
+                      size="default"
+                      active-color="#2563eb"
+                      inactive-color="var(--border)"
+                    />
                   </div>
                 </el-form-item>
               </div>
@@ -518,8 +533,8 @@ watch(
         align-items: center;
         gap: 12px;
         width: 100%;
-        min-height: 88px;
-        padding: 14px 16px;
+        min-height: 52px;
+        padding: 8px 14px;
         background: #ffffff;
         border: 1px solid #e5e7eb;
         border-radius: 8px;
@@ -529,7 +544,7 @@ watch(
           box-shadow 0.2s ease;
 
         &.active {
-          box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
         }
 
         &.is-required {
@@ -573,10 +588,10 @@ watch(
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 8px;
-        font-size: 18px;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        font-size: 16px;
         flex-shrink: 0;
       }
 
@@ -587,16 +602,16 @@ watch(
 
       .setting-title {
         color: #111827;
-        font-size: 14px;
-        font-weight: 700;
-        line-height: 1.35;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.3;
       }
 
       .setting-desc {
-        margin-top: 3px;
+        margin-top: 2px;
         color: #64748b;
         font-size: 12px;
-        line-height: 1.4;
+        line-height: 1.35;
       }
     }
   }
