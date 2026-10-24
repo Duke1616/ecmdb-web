@@ -60,4 +60,43 @@ describe("useCodebookOpenedFiles", () => {
 
     expect(files.isSameOpenedFile(artifact, draft)).toBe(false)
   })
+
+  it("当单侧缺少 workspace_key 时，具有相同 id 的文件判定为同一文件并就地更新", () => {
+    const opened = file({ id: 10, workspace_key: "project:10", name: "main.yml", code: "old code" })
+    const saved = file({ id: 10, name: "main.yml", code: "new code" }) // 接口返回无 workspace_key
+    const openedFiles = ref<codebook[]>([opened])
+    const activeEditor = ref(opened)
+    const selectedTreeKey = ref("project:10")
+    const files = useCodebookOpenedFiles({
+      activeEditor,
+      openedFiles,
+      selectedTreeKey,
+      createRootDirectory: () => file({ kind: "DIRECTORY" })
+    })
+
+    expect(files.isSameOpenedFile(opened, saved)).toBe(true)
+    files.upsertOpenedFile(saved)
+    expect(openedFiles.value).toHaveLength(1)
+    expect(openedFiles.value[0].code).toBe("new code")
+  })
+
+  it("草稿保存后传入 previous 参数能就地替换草稿 Tab，不产生重复 Tab", () => {
+    const draft = file({ id: 0, name: "main.yml", code: "draft code" })
+    const saved = file({ id: 99, workspace_key: "project:99", name: "main.yml", code: "draft code" })
+    const openedFiles = ref<codebook[]>([draft])
+    const activeEditor = ref(draft)
+    const selectedTreeKey = ref("draft-file")
+    const files = useCodebookOpenedFiles({
+      activeEditor,
+      openedFiles,
+      selectedTreeKey,
+      createRootDirectory: () => file({ kind: "DIRECTORY" })
+    })
+
+    expect(files.isSameOpenedFile(draft, saved)).toBe(false)
+    files.upsertOpenedFile(saved, draft)
+    expect(openedFiles.value).toHaveLength(1)
+    expect(openedFiles.value[0].id).toBe(99)
+    expect(openedFiles.value[0].workspace_key).toBe("project:99")
+  })
 })

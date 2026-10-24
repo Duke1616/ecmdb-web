@@ -17,13 +17,16 @@ export function useCodebookOpenedFiles(options: OpenedFilesOptions) {
   }
 
   function isSameOpenedFile(left: codebook, right: codebook) {
-    if (left.workspace_key || right.workspace_key) {
-      return Boolean(left.workspace_key && left.workspace_key === right.workspace_key)
+    if (left.workspace_key && right.workspace_key) {
+      return left.workspace_key === right.workspace_key
     }
-    if (left.id || right.id) {
-      return Boolean(left.id && left.id === right.id)
+    if (left.id && right.id) {
+      return left.id === right.id
     }
-    return left.kind === "FILE" && right.kind === "FILE"
+    if (!left.id && !right.id && !left.workspace_key && !right.workspace_key) {
+      return left.kind === "FILE" && right.kind === "FILE"
+    }
+    return false
   }
 
   function findOpenedFile(row: codebook) {
@@ -39,8 +42,11 @@ export function useCodebookOpenedFiles(options: OpenedFilesOptions) {
     options.selectedTreeKey.value = getTreeKey(row)
   }
 
-  function upsertOpenedFile(row: codebook) {
-    const index = findOpenedFileIndex(row)
+  function upsertOpenedFile(row: codebook, previous?: codebook) {
+    let index = findOpenedFileIndex(row)
+    if (index === -1 && previous) {
+      index = findOpenedFileIndex(previous)
+    }
     if (index > -1) {
       options.openedFiles.value[index] = row
     } else {

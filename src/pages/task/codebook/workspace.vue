@@ -633,6 +633,7 @@ async function persistCodebook(payload: createOrUpdateCodebookReq) {
     warnReadonly()
     return
   }
+  const currentEditing = activeEditor.value
   saving.value = true
   try {
     const { data } = payload.id ? await updateCodebookApi(payload) : await createCodebookApi(payload)
@@ -645,8 +646,15 @@ async function persistCodebook(payload: createOrUpdateCodebookReq) {
         // 获取最新详情
         detailLoading.value = true
         const { data: latestDetail } = await detailCodebookApi(id)
-        const normalizedDetail = { ...latestDetail, code: latestDetail.code || "" }
-        upsertOpenedFile(normalizedDetail)
+        const workspaceNode = find(flatWorkspaceNodes.value, { source_id: id, layer: "PROJECT" })
+        const normalizedDetail: codebook = workspaceNode
+          ? { ...workspaceNodeToCodebook(workspaceNode), ...latestDetail }
+          : {
+              ...(currentEditing.id === id ? currentEditing : {}),
+              ...latestDetail,
+              code: latestDetail.code || ""
+            }
+        upsertOpenedFile(normalizedDetail, currentEditing)
         activateCodebook(normalizedDetail)
       }
     } else if (payload.id) {
