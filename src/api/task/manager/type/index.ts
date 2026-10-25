@@ -5,6 +5,7 @@ export interface CreateTaskReq {
   runner_id?: number
   type: TaskType
   cron_expr?: string
+  skip_holiday?: boolean
   grpc_config?: GrpcConfig
   http_config?: HTTPConfig
   retry_config?: RetryConfig

@@ -67,6 +67,7 @@ export interface TaskFormState {
   name: string
   type: TaskType
   cron_expr: string
+  skip_holiday: boolean
   protocol: TaskProtocol
 
   // gRPC 关联配置
@@ -135,6 +136,7 @@ export const createDefaultFormState = (): TaskFormState => ({
   name: "",
   type: TaskType.RECURRING,
   cron_expr: "",
+  skip_holiday: false,
   protocol: TaskProtocol.GRPC,
   grpc_service: "",
   grpc_handler: "",
@@ -175,6 +177,7 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
   state.name = data.name || ""
   state.type = data.type || TaskType.RECURRING
   state.cron_expr = data.cron_expr || ""
+  state.skip_holiday = data.skip_holiday ?? false
 
   // Runner 引用优先；没有 Runner 时再根据具体协议配置恢复表单模式。
   if (data.runner_id && data.runner_id > 0) {
@@ -250,6 +253,7 @@ export const mapToApiPayload = (state: TaskFormState, handler?: HandlerDetail | 
     name: state.name,
     type: state.type,
     cron_expr: state.cron_expr,
+    skip_holiday: state.skip_holiday,
     schedule_params: cloneDeep(state.schedule_params),
     param_override_rules: cloneDeep(state.param_override_rules),
     execution_notifications: state.notification_enabled

@@ -12,13 +12,7 @@ import {
 } from "@/api/task/manager/type"
 import { ParameterRole } from "@/api/task/resource/type"
 import { ProgramKind } from "@/api/task/program"
-import {
-  createDefaultFormState,
-  mapToApiPayload,
-  mapToFormState,
-  validateBoundParameters,
-  validateBusinessNotification
-} from "./useTaskData"
+import { createDefaultFormState, mapToApiPayload, mapToFormState, validateBoundParameters } from "./useTaskData"
 import {
   expandExecutionNotificationGroups,
   groupExecutionNotifications,
@@ -411,5 +405,26 @@ describe("任务执行通知映射", () => {
     expect(payload.business_notification?.recipients).toEqual([
       { type: NotificationRecipientType.TEAM, target_ids: [999] }
     ])
+  })
+
+  it("应正确映射并提交 skip_holiday 状态", () => {
+    const raw: TaskItem = {
+      id: 101,
+      name: "holiday-skipped-task",
+      type: TaskType.RECURRING,
+      cron_expr: "0 9 * * 1-5",
+      skip_holiday: true,
+      status: TaskStatus.ACTIVE,
+      next_time: 0,
+      ctime: 0,
+      utime: 0,
+      version: 1
+    }
+
+    const state = mapToFormState(raw)
+    expect(state.skip_holiday).toBe(true)
+
+    const payload = mapToApiPayload(state)
+    expect(payload.skip_holiday).toBe(true)
   })
 })

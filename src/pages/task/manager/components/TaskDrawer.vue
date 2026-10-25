@@ -72,7 +72,21 @@
                   <el-icon><Calendar /></el-icon>
                 </template>
                 <template #suffix>
-                  <CronHelper :type="form.type" @select="handleCronSelect" />
+                  <div class="cron-input-suffix">
+                    <el-tooltip content="遇法定节假日自动顺延至工作日执行" placement="top">
+                      <button
+                        type="button"
+                        class="holiday-toggle-btn"
+                        :class="{ 'is-active': form.skip_holiday }"
+                        @click.stop="form.skip_holiday = !form.skip_holiday"
+                      >
+                        <span class="status-dot" />
+                        <span>跳过节假日</span>
+                      </button>
+                    </el-tooltip>
+                    <div class="suffix-divider" />
+                    <CronHelper :type="form.type" @select="handleCronSelect" />
+                  </div>
                 </template>
               </el-input>
             </el-form-item>
@@ -774,5 +788,58 @@ const handleNotificationEnabledChange = (enabled: boolean | string | number) => 
 .code-font :deep(input) {
   font-family: "Fira Code", "Cascadia Code", monospace;
   font-size: 13px;
+}
+
+.cron-input-suffix {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .holiday-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.2;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #cbd5e1;
+      transition: all 0.2s ease;
+    }
+
+    &:hover {
+      border-color: #cbd5e1;
+      color: #334155;
+      background: #f1f5f9;
+    }
+
+    &.is-active {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #065f46;
+      font-weight: 500;
+
+      .status-dot {
+        background: #10b981;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+      }
+    }
+  }
+
+  .suffix-divider {
+    width: 1px;
+    height: 14px;
+    background: #e2e8f0;
+  }
 }
 </style>
