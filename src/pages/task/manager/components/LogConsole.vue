@@ -37,38 +37,90 @@
               title="查看执行参数"
               @click="parametersVisible = true"
             />
-            <el-button :icon="Refresh" circle size="default" :disabled="loading" @click="resetAndFetch" />
             <el-button
-              v-if="execution.task_result"
-              :icon="Monitor"
-              type="info"
+              :icon="Refresh"
               circle
-              plain
-              @click="viewResultVisible = true"
+              size="default"
+              :disabled="loading"
+              title="刷新日志"
+              @click="resetAndFetch"
             />
+            <el-tooltip v-if="execution.task_result" content="切换至结构化输出 (FD3)" placement="bottom">
+              <el-button
+                :icon="Monitor"
+                :type="activeTab === 'result' ? 'primary' : 'info'"
+                circle
+                :plain="activeTab !== 'result'"
+                @click="activeTab = 'result'"
+              />
+            </el-tooltip>
           </div>
         </div>
       </div>
 
       <div class="console-body">
         <div class="console-title-bar">
-          <span class="prefix">控制台输出 (STDOUT)</span>
+          <div class="tab-nav">
+            <button
+              type="button"
+              class="tab-item"
+              :class="{ 'is-active': activeTab === 'stdout' }"
+              @click="activeTab = 'stdout'"
+            >
+              <el-icon><Document /></el-icon>
+              <span>控制台输出 (STDOUT)</span>
+            </button>
+            <button
+              type="button"
+              class="tab-item"
+              :class="{ 'is-active': activeTab === 'result' }"
+              @click="activeTab = 'result'"
+            >
+              <el-icon><DataAnalysis /></el-icon>
+              <span>结构化输出 (FD3)</span>
+              <span v-if="parsedResult" class="tab-badge">JSON</span>
+            </button>
+          </div>
           <div class="spacer" />
-          <span class="sync-time" v-if="lastRefreshTime">
+          <span class="sync-time" v-if="activeTab === 'stdout' && lastRefreshTime">
             <el-icon><Clock /></el-icon>同步于 {{ lastRefreshTime }}
           </span>
+          <div class="tab-actions" v-if="activeTab === 'result' && parsedResult">
+            <el-button size="small" type="primary" link :icon="CopyDocument" @click="handleCopyResult">
+              复制结果
+            </el-button>
+          </div>
         </div>
+
         <div class="terminal-view">
-          <CodeEditor
-            v-if="fullLogs"
-            ref="editorRef"
-            :code="fullLogs"
-            language="text"
-            :read-only="true"
-            :ansi="true"
-            class="terminal-editor"
-          />
-          <el-empty v-else description="该实例暂无日志流" />
+          <template v-if="activeTab === 'stdout'">
+            <CodeEditor
+              v-if="fullLogs"
+              ref="editorRef"
+              :code="fullLogs"
+              language="text"
+              :read-only="true"
+              :ansi="true"
+              class="terminal-editor"
+            />
+            <el-empty v-else description="该实例暂无日志流" />
+          </template>
+
+          <template v-else-if="activeTab === 'result'">
+            <div v-if="parsedResult" class="result-container">
+              <div v-if="parsedResult.summary" class="result-summary-bar">
+                <el-icon class="summary-icon"><InfoFilled /></el-icon>
+                <span class="summary-text">{{ parsedResult.summary }}</span>
+              </div>
+              <CodeEditor
+                :code="parsedResult.formatted"
+                :language="parsedResult.isJson ? 'json' : 'text'"
+                :read-only="true"
+                class="terminal-editor"
+              />
+            </div>
+            <el-empty v-else description="该实例暂无结构化输出 (FD3 未回传数据)" />
+          </template>
         </div>
       </div>
     </template>
@@ -77,9 +129,6 @@
       <h3>请选择监控实例以查看日志</h3>
     </div>
 
-    <el-dialog v-model="viewResultVisible" title="运行结果" width="800px" append-to-body center>
-      <CodeEditor :code="execution?.task_result || ''" language="json" :read-only="true" height="500px" />
-    </el-dialog>
     <ExecutionParametersDialog
       v-model="parametersVisible"
       :execution-id="execution?.id || null"
@@ -90,7 +139,19 @@
 
 <script setup lang="ts">
 import { computed, ref } from "vue"
-import { Refresh, Coordinate, Monitor, Clock, Pointer, VideoPause, Operation } from "@element-plus/icons-vue"
+import {
+  Refresh,
+  Coordinate,
+  Monitor,
+  Clock,
+  Pointer,
+  VideoPause,
+  Operation,
+  Document,
+  DataAnalysis,
+  CopyDocument,
+  InfoFilled
+} from "@element-plus/icons-vue"
 import { ElMessage, ElMessageBox } from "element-plus"
 import type { TaskExecutionVO } from "@/api/task/manager/type"
 import { terminateExecutionApi } from "@/api/task/manager"
@@ -104,7 +165,7 @@ import ExecutionParametersDialog from "./ExecutionParametersDialog.vue"
 
 /**
  * 任务执行控制台 (LogConsole)
- * 职责：实时/增量拉取任务执行日志、展示节点状态
+ * 职责：实时/增量拉取任务执行日志、展示节点状态、双 Tab 呈现 STDOUT 日志与 FD3 结构化产物
  */
 interface Props {
   execution: TaskExecutionVO | null
@@ -115,6 +176,8 @@ const emit = defineEmits<{ terminated: [] }>()
 const editorRef = ref<InstanceType<typeof CodeEditor>>()
 const terminating = ref(false)
 const parametersVisible = ref(false)
+const activeTab = ref<"stdout" | "result">("stdout")
+
 const { hasPermission } = usePermission()
 const canTerminate = computed(() => hasPermission(TASK_CAPABILITIES.Manager.Stop))
 const canViewParameters = computed(
@@ -135,11 +198,55 @@ const STATUS_MAP: Record<string, TagInfo> = {
   PREEMPTED: { type: "warning", text: "已抢占" }
 }
 
-const { fullLogs, loading, lastRefreshTime, autoRefresh, viewResultVisible, isRunning, resetAndFetch } =
-  useLogConsoleStream(
-    () => props.execution,
-    () => editorRef.value?.scrollToBottom()
-  )
+const { fullLogs, loading, lastRefreshTime, autoRefresh, isRunning, resetAndFetch } = useLogConsoleStream(
+  () => props.execution,
+  () => editorRef.value?.scrollToBottom()
+)
+
+/**
+ * 解析并格式化 FD3 回传的结构化任务结果
+ */
+const parsedResult = computed(() => {
+  const raw = props.execution?.task_result?.trim()
+  if (!raw) return null
+  try {
+    const data = JSON.parse(raw)
+    return {
+      isJson: true,
+      formatted: JSON.stringify(data, null, 2),
+      summary: typeof data === "object" && data !== null && "summary" in data ? String(data.summary) : null,
+      raw
+    }
+  } catch {
+    return {
+      isJson: false,
+      formatted: raw,
+      summary: null,
+      raw
+    }
+  }
+})
+
+/**
+ * 复制结构化结果内容至剪贴板
+ */
+const handleCopyResult = async () => {
+  if (!parsedResult.value?.formatted) return
+  try {
+    await navigator.clipboard.writeText(parsedResult.value.formatted)
+    ElMessage.success("结果已复制到剪贴板")
+  } catch {
+    const textarea = document.createElement("textarea")
+    textarea.value = parsedResult.value.formatted
+    textarea.style.position = "fixed"
+    textarea.style.opacity = "0"
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand("copy")
+    document.body.removeChild(textarea)
+    ElMessage.success("结果已复制到剪贴板")
+  }
+}
 
 const handleTerminate = async () => {
   if (!props.execution || terminating.value) return
@@ -233,22 +340,67 @@ const handleTerminate = async () => {
   .console-title-bar {
     display: flex;
     align-items: center;
-    padding: 12px 0;
-    .prefix {
-      font-size: 11px;
-      font-weight: 900;
-      color: #94a3b8;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
+    padding: 10px 0;
+    gap: 12px;
+
+    .tab-nav {
+      display: inline-flex;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 8px;
+      gap: 2px;
+
+      .tab-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+          color: #1e293b;
+        }
+
+        &.is-active {
+          background: #ffffff;
+          color: #2563eb;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .tab-badge {
+          font-size: 10px;
+          line-height: 1;
+          padding: 2px 5px;
+          border-radius: 10px;
+          background: #dbeafe;
+          color: #1d4ed8;
+          font-weight: 700;
+        }
+      }
     }
+
     .sync-time {
       margin-left: auto;
       font-size: 11px;
-      color: #cbd5e1;
+      color: #94a3b8;
       font-family: monospace;
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    .tab-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
     }
   }
   .terminal-view {
@@ -262,6 +414,38 @@ const handleTerminate = async () => {
     box-shadow: inset 0 2px 14px rgba(0, 0, 0, 0.4);
     display: flex;
     flex-direction: column;
+
+    .result-container {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+
+      .result-summary-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: rgba(16, 185, 129, 0.12);
+        border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+        color: #34d399;
+        font-size: 12px;
+        line-height: 1.5;
+
+        .summary-icon {
+          font-size: 15px;
+          flex-shrink: 0;
+        }
+
+        .summary-text {
+          font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+          word-break: break-all;
+        }
+      }
+    }
+
     .terminal-editor {
       flex: 1;
       min-width: 0;
