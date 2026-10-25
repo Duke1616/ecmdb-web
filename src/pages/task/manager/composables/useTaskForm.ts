@@ -2,7 +2,7 @@ import { ref, computed, nextTick, watch, type Ref } from "vue"
 import type { FormInstance, FormRules } from "element-plus"
 import { ElMessage } from "element-plus"
 import { createTaskApi, updateTaskApi, getTaskDetailApi } from "@/api/task/manager"
-import { TaskType, TaskProtocol, type UpdateTaskReq } from "@/api/task/manager/type"
+import { TaskType, TaskProtocol, BusinessRecipientMode, type UpdateTaskReq } from "@/api/task/manager/type"
 import { createDefaultProgram, validateProgram } from "@/api/task/program"
 import type { HandlerDetail } from "@/api/task/resource/type"
 import {
@@ -10,7 +10,8 @@ import {
   createDefaultFormState,
   mapToFormState,
   mapToApiPayload,
-  validateBoundParameters
+  validateBoundParameters,
+  validateBusinessNotification
 } from "./useTaskData"
 import { validateExecutionNotificationGroups } from "./taskNotifications"
 import { useRunnerParameterOverrides } from "./useRunnerParameterOverrides"
@@ -198,6 +199,12 @@ export function useTaskForm(options: {
       : undefined
     if (notificationError) {
       ElMessage.error(notificationError)
+      return
+    }
+
+    const businessNotificationError = validateBusinessNotification(form.value.business_notification)
+    if (businessNotificationError) {
+      ElMessage.error(businessNotificationError)
       return
     }
 

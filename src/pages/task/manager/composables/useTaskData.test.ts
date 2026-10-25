@@ -6,11 +6,19 @@ import {
   TaskProtocol,
   TaskStatus,
   TaskType,
+  RecipientIdentifierType,
+  BusinessRecipientMode,
   type TaskItem
 } from "@/api/task/manager/type"
 import { ParameterRole } from "@/api/task/resource/type"
 import { ProgramKind } from "@/api/task/program"
-import { createDefaultFormState, mapToApiPayload, mapToFormState, validateBoundParameters } from "./useTaskData"
+import {
+  createDefaultFormState,
+  mapToApiPayload,
+  mapToFormState,
+  validateBoundParameters,
+  validateBusinessNotification
+} from "./useTaskData"
 import {
   expandExecutionNotificationGroups,
   groupExecutionNotifications,
@@ -332,6 +340,76 @@ describe("任务执行通知映射", () => {
     expect(expandExecutionNotificationGroups([group]).map((rule) => rule.trigger_status)).toEqual([
       NotificationTriggerStatus.FAILED,
       NotificationTriggerStatus.CANCELLED
+    ])
+  })
+
+  it("应正确映射并序列化 business_notification 业务通知配置", () => {
+    const raw: TaskItem = {
+      id: 99,
+      name: "cert-expire-checker",
+      type: TaskType.RECURRING,
+      cron_expr: "0 0 * * *",
+      status: TaskStatus.ACTIVE,
+      next_time: 0,
+      ctime: 0,
+      utime: 0,
+      version: 1,
+      business_notification: {
+        enabled: true,
+        channels: [NotificationChannel.LARK_CARD, NotificationChannel.WECHAT],
+        template_set_id: 123,
+        identifier_type: RecipientIdentifierType.USERNAME
+      }
+    }
+
+    const state = mapToFormState(raw)
+    expect(state.business_notification.enabled).toBe(true)
+    expect(state.business_notification.channels).toEqual([NotificationChannel.LARK_CARD, NotificationChannel.WECHAT])
+    expect(state.business_notification.template_set_id).toBe(123)
+    expect(state.business_notification.identifier_type).toBe(RecipientIdentifierType.USERNAME)
+
+    const payload = mapToApiPayload(state)
+    expect(payload.business_notification).toEqual({
+      enabled: true,
+      mode: BusinessRecipientMode.DYNAMIC,
+      channels: [NotificationChannel.LARK_CARD, NotificationChannel.WECHAT],
+      template_set_id: 123,
+      identifier_type: RecipientIdentifierType.USERNAME,
+      recipients: []
+    })
+  })
+
+  it("应正确映射并序列化 business_notification STATIC 固定指定模式", () => {
+    const raw: TaskItem = {
+      id: 100,
+      name: "security-audit-scanner",
+      type: TaskType.RECURRING,
+      cron_expr: "0 0 * * *",
+      status: TaskStatus.ACTIVE,
+      next_time: 0,
+      ctime: 0,
+      utime: 0,
+      version: 1,
+      business_notification: {
+        enabled: true,
+        mode: BusinessRecipientMode.STATIC,
+        channels: [NotificationChannel.LARK_CARD],
+        template_set_id: 88,
+        identifier_type: RecipientIdentifierType.USERNAME,
+        recipients: [{ type: NotificationRecipientType.TEAM, target_ids: [999] }]
+      }
+    }
+
+    const state = mapToFormState(raw)
+    expect(state.business_notification.mode).toBe(BusinessRecipientMode.STATIC)
+    expect(state.business_notification.recipients).toEqual([
+      { type: NotificationRecipientType.TEAM, target_ids: [999] }
+    ])
+
+    const payload = mapToApiPayload(state)
+    expect(payload.business_notification?.mode).toBe(BusinessRecipientMode.STATIC)
+    expect(payload.business_notification?.recipients).toEqual([
+      { type: NotificationRecipientType.TEAM, target_ids: [999] }
     ])
   })
 })

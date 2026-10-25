@@ -2,6 +2,10 @@ import { cloneDeep } from "lodash-es"
 import {
   TaskType,
   TaskProtocol,
+  NotificationChannel,
+  RecipientIdentifierType,
+  BusinessRecipientMode,
+  type NotificationRecipient,
   type CreateTaskReq,
   type TaskItem,
   type TaskParamOverrideRule,
@@ -23,6 +27,42 @@ import {
 /**
  * 扁平化的任务表单 UI 状态接口
  */
+
+/** 业务通知表单聚合状态 */
+export interface BusinessNotificationFormState {
+  enabled: boolean
+  mode: BusinessRecipientMode
+  channels: NotificationChannel[]
+  template_set_id: number
+  identifier_type: RecipientIdentifierType
+  recipients: NotificationRecipient[]
+}
+
+/** 业务通知默认初始状态 */
+export const createDefaultBusinessNotificationState = (): BusinessNotificationFormState => ({
+  enabled: false,
+  mode: BusinessRecipientMode.DYNAMIC,
+  channels: [NotificationChannel.LARK_CARD],
+  template_set_id: 0,
+  identifier_type: RecipientIdentifierType.USERNAME,
+  recipients: []
+})
+
+/**
+ * 校验业务通知表单有效性
+ * @param state 业务通知配置
+ * @returns 错误信息，若合法则返回 undefined
+ */
+export const validateBusinessNotification = (state: BusinessNotificationFormState): string | undefined => {
+  if (!state.enabled) return undefined
+  if (!state.channels.length) return "业务消息通知请至少选择一个通知渠道"
+  if (!state.template_set_id || state.template_set_id <= 0) return "业务消息通知请选择有效的消息模板集"
+  if (state.mode === BusinessRecipientMode.STATIC && !state.recipients.length) {
+    return "业务消息通知固定指定模式下请配置接收者"
+  }
+  return undefined
+}
+
 export interface TaskFormState {
   name: string
   type: TaskType
@@ -56,6 +96,7 @@ export interface TaskFormState {
   param_override_rules: TaskParamOverrideRule[]
   notification_enabled: boolean
   notification_groups: ExecutionNotificationGroup[]
+  business_notification: BusinessNotificationFormState
 }
 
 // ---------------------------------------------------------
@@ -114,7 +155,8 @@ export const createDefaultFormState = (): TaskFormState => ({
   metadata: {},
   param_override_rules: [],
   notification_enabled: false,
-  notification_groups: []
+  notification_groups: [],
+  business_notification: createDefaultBusinessNotificationState()
 })
 
 // ---------------------------------------------------------
@@ -183,6 +225,17 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
   state.notification_groups = groupExecutionNotifications(data.execution_notifications ?? [])
   state.notification_enabled = state.notification_groups.some((group) => group.enabled)
 
+  if (data.business_notification) {
+    state.business_notification = {
+      enabled: data.business_notification.enabled ?? false,
+      mode: data.business_notification.mode ?? BusinessRecipientMode.DYNAMIC,
+      channels: cloneDeep(data.business_notification.channels) ?? [NotificationChannel.LARK_CARD],
+      template_set_id: data.business_notification.template_set_id ?? 0,
+      identifier_type: data.business_notification.identifier_type ?? RecipientIdentifierType.USERNAME,
+      recipients: cloneDeep(data.business_notification.recipients) ?? []
+    }
+  }
+
   return state
 }
 
@@ -202,6 +255,19 @@ export const mapToApiPayload = (state: TaskFormState, handler?: HandlerDetail | 
     execution_notifications: state.notification_enabled
       ? expandExecutionNotificationGroups(state.notification_groups)
       : [],
+    business_notification: state.business_notification.enabled
+      ? {
+          enabled: true,
+          mode: state.business_notification.mode,
+          channels: cloneDeep(state.business_notification.channels),
+          template_set_id: state.business_notification.template_set_id,
+          identifier_type: state.business_notification.identifier_type,
+          recipients:
+            state.business_notification.mode === BusinessRecipientMode.STATIC
+              ? cloneDeep(state.business_notification.recipients)
+              : []
+        }
+      : undefined,
     // 参数绑定只属于普通 gRPC 模式，避免切换到 Runner 后继续提交旧绑定。
     metadata: state.protocol === TaskProtocol.GRPC ? cloneDeep(state.metadata) : {}
   }

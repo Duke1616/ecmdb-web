@@ -14,6 +14,7 @@ export interface CreateTaskReq {
   param_override_rules?: TaskParamOverrideRule[]
   program?: ProgramSpec
   execution_notifications?: ExecutionNotificationRule[]
+  business_notification?: BusinessNotificationConfig
 }
 
 export interface UpdateTaskReq extends CreateTaskReq {
@@ -112,6 +113,34 @@ export interface ExecutionNotificationRule {
   template_set_id: number
   /** 是否在命中终态时实际发送通知。 */
   enabled: boolean
+}
+
+/** 业务通知接收人决策模式。 */
+export enum BusinessRecipientMode {
+  DYNAMIC = "DYNAMIC",
+  STATIC = "STATIC"
+}
+
+/** 业务通知目标接收人的标识空间维度。 */
+export enum RecipientIdentifierType {
+  USERNAME = "USERNAME",
+  USER_ID = "USER_ID"
+}
+
+/** 任务执行产出消息的独立推送配置（业务通知）。 */
+export interface BusinessNotificationConfig {
+  /** 是否启用业务消息推送。 */
+  enabled: boolean
+  /** 接收模式：DYNAMIC-动态识别（默认），STATIC-固定指定。 */
+  mode?: BusinessRecipientMode
+  /** 投递渠道（如 EMAIL, WECHAT, LARK_CARD）。 */
+  channels: NotificationChannel[]
+  /** 绑定的 EAlert 模板集 ID。 */
+  template_set_id: number
+  /** 接收人目标标识维度（USERNAME 或 USER_ID）。 */
+  identifier_type: RecipientIdentifierType
+  /** 固定模式使用：预设的业务接收对象列表。 */
+  recipients?: NotificationRecipient[]
 }
 
 export interface GrpcConfig {

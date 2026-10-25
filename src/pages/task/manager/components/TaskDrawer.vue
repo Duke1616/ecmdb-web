@@ -278,7 +278,7 @@
           <div class="section-title">
             <div class="title-left">
               <el-icon class="section-icon"><Bell /></el-icon>
-              <span>执行结果通知</span>
+              <span>任务执行状态通知</span>
             </div>
             <div class="title-right">
               <el-switch
@@ -293,6 +293,34 @@
 
           <transition name="el-zoom-in-top">
             <TaskNotificationEditor v-if="form.notification_enabled" v-model="form.notification_groups" />
+          </transition>
+        </div>
+
+        <!-- 5. 业务消息推送通知 -->
+        <div class="form-section">
+          <div class="section-title">
+            <div class="title-left">
+              <el-icon class="section-icon"><ChatDotRound /></el-icon>
+              <span>业务消息产出通知</span>
+              <el-tooltip content="任务产出业务消息时自动推送给对应人员" placement="top">
+                <el-icon class="ml-1 text-gray-400 cursor-pointer"><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </div>
+            <div class="title-right">
+              <el-switch
+                v-model="form.business_notification.enabled"
+                inline-prompt
+                active-text="启用"
+                inactive-text="关闭"
+              />
+            </div>
+          </div>
+
+          <transition name="el-zoom-in-top">
+            <TaskBusinessNotificationEditor
+              v-if="form.business_notification.enabled"
+              v-model="form.business_notification"
+            />
           </transition>
         </div>
       </el-form>
@@ -311,7 +339,9 @@ import {
   Timer,
   Pointer,
   Operation,
-  Bell
+  Bell,
+  ChatDotRound,
+  QuestionFilled
 } from "@element-plus/icons-vue"
 import { TaskType, TaskProtocol } from "@/api/task/manager/type"
 import { useTaskForm } from "../composables/useTaskForm"
@@ -323,6 +353,7 @@ import TaskParamsEditor from "./TaskParamsEditor.vue"
 import ProgramSourceEditor from "./ProgramSourceEditor.vue"
 import RetryConfigEditor from "./RetryConfigEditor.vue"
 import TaskNotificationEditor from "./TaskNotificationEditor.vue"
+import TaskBusinessNotificationEditor from "./TaskBusinessNotificationEditor.vue"
 import ExecutorPicker from "@/common/components/ExecutorPicker/index.vue"
 import { RunnerSelector } from "@@/components/SearchSelector"
 import { Drawer } from "@@/components/Dialogs"
