@@ -45,7 +45,16 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="最终值" min-width="260" show-overflow-tooltip>
+        <el-table-column
+          label="最终值"
+          min-width="260"
+          show-overflow-tooltip
+          :tooltip-options="{
+            popperClass: 'parameter-value-tooltip',
+            enterable: true,
+            placement: 'top'
+          }"
+        >
           <template #default="{ row }">
             <code class="parameter-value">{{ row.value }}</code>
           </template>
@@ -321,5 +330,16 @@ watch([visible, () => props.executionId], ([value]) => {
   :deep(.parameters-summary > .el-tooltip) {
     padding: 0 14px;
   }
+}
+
+:global(.parameter-value-tooltip) {
+  max-width: min(600px, calc(100vw - 48px)) !important;
+  max-height: 280px;
+  overflow-y: auto;
+  word-break: break-all;
+  white-space: pre-wrap;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.6;
 }
 </style>

@@ -27,3 +27,9 @@
     border: none;
   }
 }
+
+// 防止 Tooltip 因不可折行的长字符串（如无空格 JSON、Token、长链接）撑破屏幕
+.el-popper.is-dark {
+  max-width: min(600px, 90vw);
+  word-break: break-all;
+}
