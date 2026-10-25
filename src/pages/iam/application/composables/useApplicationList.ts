@@ -1,10 +1,6 @@
 import { ref, computed } from "vue"
 import { ElMessageBox, ElMessage } from "element-plus"
-import {
-  listApplicationsApi,
-  deleteApplicationApi,
-  resetApplicationSecretApi
-} from "@/api/iam/idp"
+import { listApplicationsApi, deleteApplicationApi, resetApplicationSecretApi } from "@/api/iam/idp"
 import type { Application, ListApplicationReq } from "@/api/iam/idp/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -88,20 +84,22 @@ export function useApplicationList() {
         type: "warning",
         confirmButtonClass: "el-button--danger"
       }
-    ).then(async () => {
-      try {
-        const res = await resetApplicationSecretApi(row.id)
-        currentSecretInfo.value = {
-          clientName: row.name,
-          clientId: row.client_id,
-          clientSecret: res.data.client_secret
+    )
+      .then(async () => {
+        try {
+          const res = await resetApplicationSecretApi(row.id)
+          currentSecretInfo.value = {
+            clientName: row.name,
+            clientId: row.client_id,
+            clientSecret: res.data.client_secret
+          }
+          secretDialogVisible.value = true
+          ElMessage.success("密钥重置成功")
+        } catch (err: any) {
+          ElMessage.error(err.message || "重置密钥失败")
         }
-        secretDialogVisible.value = true
-        ElMessage.success("密钥重置成功")
-      } catch (err: any) {
-        ElMessage.error(err.message || "重置密钥失败")
-      }
-    }).catch(() => {})
+      })
+      .catch(() => {})
   }
 
   /**

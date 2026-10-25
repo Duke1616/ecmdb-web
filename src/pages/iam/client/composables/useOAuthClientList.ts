@@ -1,10 +1,6 @@
 import { ref, computed } from "vue"
 import { ElMessageBox, ElMessage } from "element-plus"
-import {
-  listOAuthClientsApi,
-  deleteOAuthClientApi,
-  resetOAuthClientSecretApi
-} from "@/api/iam/idp"
+import { listOAuthClientsApi, deleteOAuthClientApi, resetOAuthClientSecretApi } from "@/api/iam/idp"
 import type { OAuthClient, ListOAuthClientReq } from "@/api/iam/idp/type"
 import { useListManager } from "@/common/composables/useListManager"
 import { useGovernanceActions } from "@/common/composables/useGovernanceActions"
@@ -79,20 +75,22 @@ export function useOAuthClientList() {
         type: "warning",
         confirmButtonClass: "el-button--danger"
       }
-    ).then(async () => {
-      try {
-        const res = await resetOAuthClientSecretApi(row.id)
-        currentSecretInfo.value = {
-          clientName: row.name,
-          clientId: row.client_id,
-          clientSecret: res.data.client_secret
+    )
+      .then(async () => {
+        try {
+          const res = await resetOAuthClientSecretApi(row.id)
+          currentSecretInfo.value = {
+            clientName: row.name,
+            clientId: row.client_id,
+            clientSecret: res.data.client_secret
+          }
+          secretDialogVisible.value = true
+          ElMessage.success("密钥重置成功")
+        } catch (err: any) {
+          ElMessage.error(err.message || "重置密钥失败")
         }
-        secretDialogVisible.value = true
-        ElMessage.success("密钥重置成功")
-      } catch (err: any) {
-        ElMessage.error(err.message || "重置密钥失败")
-      }
-    }).catch(() => {})
+      })
+      .catch(() => {})
   }
 
   /**
