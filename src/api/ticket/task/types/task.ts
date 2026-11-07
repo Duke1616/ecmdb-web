@@ -1,10 +1,14 @@
+import type { TaskID, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
+
+export type { TaskID, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
+
 export interface Page {
   offset: number
   limit: number
 }
 
 export interface ListByInstanceIDReq extends Page {
-  instance_id: number
+  instance_id: ProcessInstanceID
 }
 
 export enum AutomationTaskStatus {
@@ -37,9 +41,9 @@ export enum AutomationTaskPhase {
 }
 
 export interface AutomationTask {
-  id: number
+  id: TaskID
   ticket_id: number
-  process_instance_id: number
+  process_instance_id: ProcessInstanceID
   node_id: string
   node_name: string
   process_version: number
@@ -59,7 +63,7 @@ export interface AutomationTask {
 
 export interface AutomationAttempt {
   id: number
-  task_id: number
+  task_id: TaskID
   attempt_no: number
   request_id: string
   default_runner_id: number

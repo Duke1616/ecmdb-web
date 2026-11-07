@@ -78,11 +78,11 @@
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listTicketTaskTimelineApi } from "@/api/ticket/manager"
-import { taskRecord, taskTimelineEvent } from "@/api/ticket/manager/types/manager"
+import type { taskRecord, taskTimelineEvent, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
 
 const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 interface Props {
-  processInstId: number | undefined
+  processInstId: ProcessInstanceID | undefined
 }
 const props = defineProps<Props>()
 

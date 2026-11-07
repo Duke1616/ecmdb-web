@@ -131,7 +131,9 @@ import { useTaskAttemptConsole } from "../composables/useTaskAttemptConsole"
 
 type ViewType = "logs" | "input" | "output"
 
-const props = defineProps<{ modelValue: boolean; taskId: number }>()
+import type { TaskID } from "@/api/ticket/manager/types/manager"
+
+const props = defineProps<{ modelValue: boolean; taskId: TaskID }>()
 const emit = defineEmits<{ (event: "update:modelValue", value: boolean): void }>()
 const activeView = ref<ViewType>("logs")
 

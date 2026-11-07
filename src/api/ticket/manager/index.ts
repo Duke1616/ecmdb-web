@@ -59,7 +59,7 @@ export function listStartedTicketsApi(data: manager.StartedTicketReq) {
 }
 
 /** 查看我的工单 */
-export function getTicketByProcessInstIdApi(processInstId: number) {
+export function getTicketByProcessInstIdApi(processInstId: manager.ProcessInstanceID) {
   return instance.post<manager.Ticket>({
     url: `${API_SERVICE.TICKET}/ticket/detail/process_inst_id`,
     data: { process_instance_id: processInstId }

@@ -1,12 +1,12 @@
 import { computed, onBeforeUnmount, ref } from "vue"
 import { getTaskAttemptLogsApi, listTaskAttemptsApi } from "@/api/ticket/task"
-import { AutomationAttemptStatus, type AutomationAttempt } from "@/api/ticket/task/types/task"
+import { AutomationAttemptStatus, type AutomationAttempt, type TaskID } from "@/api/ticket/task/types/task"
 import { useExecutionLogStream } from "@/common/composables/useExecutionLogStream"
 
 const refreshInterval = 2500
 const logReconcileInterval = 10_000
 
-export function useTaskAttemptConsole(taskId: () => number) {
+export function useTaskAttemptConsole(taskId: () => TaskID) {
   const attempts = ref<AutomationAttempt[]>([])
   const currentAttempt = ref<AutomationAttempt | null>(null)
   const loading = ref(false)

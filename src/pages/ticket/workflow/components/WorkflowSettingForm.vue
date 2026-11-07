@@ -70,6 +70,41 @@
             <span v-else>当前已禁用：在该模式下，工作流执行时将不会发送任何外部通知消息</span>
           </div>
         </div>
+
+        <!-- 流程引擎设置 -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <el-icon><Cpu /></el-icon>
+            </div>
+            <div class="section-title">
+              <h3>流程引擎</h3>
+              <p>选择驱动该工作流编排执行的底层引擎内核</p>
+            </div>
+          </div>
+
+          <!-- 轻量引擎单选卡片 -->
+          <div class="compact-engine-grid">
+            <div
+              v-for="item in engineMapping"
+              :key="item.value"
+              class="compact-engine-card"
+              :class="{ 'is-active': isCurrentEngine(item.value) }"
+              @click="handleSelectEngine(item.value)"
+            >
+              <div class="compact-radio">
+                <span class="radio-dot" />
+              </div>
+              <div class="compact-content">
+                <div class="title-row">
+                  <span class="title">{{ item.label }}</span>
+                  <span v-if="item.recommended" class="badge">推荐</span>
+                </div>
+                <div class="desc">{{ item.desc }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -79,16 +114,37 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from "vue"
-import { InfoFilled, Connection } from "@element-plus/icons-vue"
+import { onMounted, watch } from "vue"
+import { InfoFilled, Connection, Cpu } from "@element-plus/icons-vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import FormActions from "@/common/components/FormActions/index.vue"
+import type { EngineType } from "@/api/ticket/workflow/types/workflow"
 
 const notifyMapping = [
   {
     value: 1,
     label: "飞书",
     recommended: true
+  }
+]
+
+const engineMapping: {
+  value: EngineType
+  label: string
+  recommended?: boolean
+  desc: string
+}[] = [
+  {
+    value: "flowx",
+    label: "FlowX 流程引擎",
+    recommended: true,
+    desc: "自研现代事件驱动架构，支持高并发异步流转与自适应任务标识"
+  },
+  {
+    value: "easy-workflow",
+    label: "EasyFlow 流程引擎",
+    recommended: false,
+    desc: "传统图驱动执行引擎，兼容历史存量工单流程与老旧节点规范"
   }
 ]
 
@@ -111,6 +167,31 @@ const getNotifyMethodLabel = () => {
   const method = notifyMapping.find((item) => item.value === localFormData.value.notify_method)
   return method ? method.label : "未选择"
 }
+
+/**
+ * 判断指定引擎是否当前选中
+ * @param val 引擎类型
+ */
+const isCurrentEngine = (val: EngineType) => {
+  return (localFormData.value.engine_type || "easy-workflow") === val
+}
+
+/**
+ * 切换流程引擎
+ * @param val 目标引擎类型
+ */
+const handleSelectEngine = (val: EngineType) => {
+  if (localFormData.value.engine_type === val) return
+  localFormData.value.engine_type = val
+  updateFormData()
+}
+
+onMounted(() => {
+  if (!localFormData.value.engine_type) {
+    localFormData.value.engine_type = "easy-workflow"
+    updateFormData()
+  }
+})
 
 /** 监听消息是否变更 */
 watch(
@@ -324,6 +405,112 @@ watch(
     height: 6px;
     background: #667eea;
     border-radius: 50%;
+  }
+}
+
+// 轻量引擎单选卡片
+.compact-engine-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.compact-engine-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+
+  &:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
+  &.is-active {
+    border-color: #409eff;
+    background: #f0f7ff;
+
+    .compact-radio {
+      border-color: #409eff;
+
+      .radio-dot {
+        background: #409eff;
+        transform: scale(1);
+      }
+    }
+
+    .compact-content .title-row .title {
+      color: #1e293b;
+      font-weight: 600;
+    }
+  }
+
+  .compact-radio {
+    margin-top: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    background: #ffffff;
+
+    .radio-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transform: scale(0);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+  }
+
+  .compact-content {
+    flex: 1;
+    min-width: 0;
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+
+      .title {
+        font-size: 13.5px;
+        font-weight: 500;
+        color: #334155;
+        line-height: 1.3;
+      }
+
+      .badge {
+        font-size: 11px;
+        line-height: 1;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 500;
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #d1fae5;
+      }
+    }
+
+    .desc {
+      font-size: 12px;
+      color: #64748b;
+      line-height: 1.45;
+    }
   }
 }
 

@@ -1,5 +1,7 @@
 import type LogicFlow from "@logicflow/core"
 
+export type EngineType = "easy-workflow" | "flowx"
+
 export interface CreateOrUpdateWorkflowReq {
   id?: number
   name: string
@@ -8,6 +10,7 @@ export interface CreateOrUpdateWorkflowReq {
   owner: string
   is_notify: boolean
   notify_method: number
+  engine_type?: EngineType
   flow_data: WorkflowGraphData
 }
 
@@ -29,6 +32,7 @@ export interface Workflow {
   icon: string
   is_notify: boolean
   notify_method: number
+  engine_type?: EngineType
   flow_data?: WorkflowGraphData
 }
 
@@ -39,7 +43,7 @@ export interface WorkflowListRes {
 
 export interface WorkflowGraphReq {
   id: number
-  process_instance_id: number
+  process_instance_id: string | number
   status: number
 }
 

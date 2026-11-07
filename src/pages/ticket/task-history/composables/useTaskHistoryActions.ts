@@ -1,7 +1,7 @@
 import { ref } from "vue"
 import { ElMessage } from "element-plus"
 import { retryTaskApi, terminateTaskApi } from "@/api/ticket/task"
-import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
+import { AutomationTaskStatus, type AutomationTask, type TaskID } from "@/api/ticket/task/types/task"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { TaskHistoryAction, type TaskHistoryOperateItem } from "../types"
 
@@ -46,7 +46,7 @@ export const canTerminateTask = (task: Pick<AutomationTask, "status" | "is_compe
   !task.is_compensation && terminableStatuses.has(task.status)
 
 export const useTaskHistoryActions = (options: { refresh: () => void | Promise<void> }) => {
-  const taskId = ref(0)
+  const taskId = ref<TaskID>("")
   const attemptDialogVisible = ref(false)
   const retryDialogVisible = ref(false)
   const retryLoading = ref(false)

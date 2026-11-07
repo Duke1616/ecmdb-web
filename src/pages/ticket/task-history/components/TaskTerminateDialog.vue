@@ -42,10 +42,11 @@
 import { computed, ref } from "vue"
 import { CircleCloseFilled } from "@element-plus/icons-vue"
 import { FormDialog } from "@@/components/Dialogs"
+import type { TaskID } from "@/api/ticket/task/types/task"
 
 const props = defineProps<{
   modelValue: boolean
-  taskId: number
+  taskId: TaskID
   loading?: boolean
 }>()
 

@@ -1,9 +1,18 @@
 import axios from "axios"
-import type { AxiosInstance } from "axios"
+import type { AxiosInstance, InternalAxiosRequestConfig } from "axios"
 import type { HYRequesInterceptors, HYRequestConfig } from "./type"
 import { ElMessage } from "element-plus"
 import { get } from "lodash-es"
 import { useUserStoreHook } from "@/pinia/stores/user"
+
+/** 记录正在处理中的写操作，防止弱网下重复点击触发多次提交 */
+const pendingWrites = new Set<string>()
+
+const getWriteKey = (config?: InternalAxiosRequestConfig) => {
+  const method = (config?.method || "").toLowerCase()
+  if (!["post", "put", "delete", "patch"].includes(method)) return null
+  return `${method}:${config?.url}:${JSON.stringify(config?.params)}:${JSON.stringify(config?.data)}`
+}
 
 // 退出登录并重定向到登录页
 let isLoggingOut = false
@@ -41,6 +50,17 @@ class HyRequest {
     // 所有实例的请求拦截
     this.instance.interceptors.request.use(
       (config) => {
+        const key = getWriteKey(config)
+        if (key) {
+          if (pendingWrites.has(key)) {
+            ElMessage({ message: "操作正在处理中，请勿重复点击", type: "warning", grouping: true })
+            const controller = new AbortController()
+            controller.abort("DUPLICATE_SUBMIT")
+            config.signal = controller.signal
+            return config
+          }
+          pendingWrites.add(key)
+        }
         return config
       },
       (error) => {
@@ -50,6 +70,9 @@ class HyRequest {
     // 所有实例的响应拦截
     this.instance.interceptors.response.use(
       (response) => {
+        const key = getWriteKey(response.config)
+        if (key) pendingWrites.delete(key)
+
         const apiData = response.data
         const responseType = response.request?.responseType
         if (responseType === "blob" || responseType === "arraybuffer") return apiData
@@ -69,6 +92,14 @@ class HyRequest {
         }
       },
       (error) => {
+        const key = getWriteKey(error?.config)
+        if (key) pendingWrites.delete(key)
+
+        // 重复提交拦截静默抛出，不弹系统错误
+        if (axios.isCancel(error)) {
+          return Promise.reject(error)
+        }
+
         if (!error.response) {
           ElMessage.error("网络连接失败，请检查网络设置")
           return Promise.reject(error)

@@ -25,10 +25,11 @@
 import { computed } from "vue"
 import { FormDialog } from "@@/components/Dialogs"
 import { WarningFilled } from "@element-plus/icons-vue"
+import type { TaskID } from "@/api/ticket/task/types/task"
 
 interface Props {
   modelValue: boolean
-  taskId: number
+  taskId: TaskID
   loading?: boolean
 }
 

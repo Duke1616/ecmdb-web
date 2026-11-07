@@ -19,6 +19,8 @@
         type="primary"
         class="action-button next-button"
         size="large"
+        :loading="props.loading"
+        :disabled="props.loading"
       >
         <div class="button-content">
           <span class="button-text">{{ props.nextText }}</span>
@@ -36,6 +38,8 @@
         type="primary"
         class="action-button save-button"
         size="large"
+        :loading="props.loading"
+        :disabled="props.loading"
       >
         <div class="button-content">
           <svg class="button-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -67,6 +71,7 @@ interface Props {
   showNext?: boolean
   showSave?: boolean
   showCancel?: boolean
+  loading?: boolean
 
   // 按钮文本
   previousText?: string
@@ -83,6 +88,7 @@ const props = withDefaults(defineProps<Props>(), {
   showNext: true,
   showSave: false,
   showCancel: true,
+  loading: false,
   previousText: "上一步",
   nextText: "下一步",
   saveText: "保存",
@@ -98,18 +104,22 @@ const emits = defineEmits<{
 }>()
 
 const handlePrevious = () => {
+  if (props.loading) return
   emits("previous")
 }
 
 const handleNext = () => {
+  if (props.loading) return
   emits("next")
 }
 
 const handleSave = () => {
+  if (props.loading) return
   emits("save")
 }
 
 const handleCancel = () => {
+  if (props.loading) return
   emits("cancel")
 }
 </script>

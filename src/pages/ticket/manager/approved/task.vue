@@ -101,12 +101,13 @@ import TaskHistoryStatusBadge from "@/pages/ticket/task-history/components/TaskH
 import TaskCompensationBadge from "@/pages/ticket/task-history/components/TaskCompensationBadge.vue"
 import { useAutomationTaskPolling } from "@/pages/ticket/task-history/composables/useAutomationTaskPolling"
 import { canRetryTask, canTerminateTask } from "@/pages/ticket/task-history/composables/useTaskHistoryActions"
+import type { ProcessInstanceID, TaskID } from "@/api/ticket/manager/types/manager"
 
-const props = defineProps<{ processInstId: number | undefined }>()
-const emit = defineEmits<{ (event: "open-attempts", taskId: number): void }>()
+const props = defineProps<{ processInstId: ProcessInstanceID | undefined }>()
+const emit = defineEmits<{ (event: "open-attempts", taskId: TaskID): void }>()
 const tasksData = ref<AutomationTask[]>([])
 const loading = ref(false)
-const taskId = ref(0)
+const taskId = ref<TaskID>("")
 const retryDialogVisible = ref(false)
 const retryLoading = ref(false)
 const terminateDialogVisible = ref(false)
@@ -144,7 +145,7 @@ const { schedule: schedulePolling } = useAutomationTaskPolling(
   () => loadTasks(true)
 )
 
-const openAttempts = (id: number) => {
+const openAttempts = (id: TaskID) => {
   emit("open-attempts", id)
 }
 

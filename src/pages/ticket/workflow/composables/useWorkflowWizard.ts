@@ -25,9 +25,17 @@ export const useWorkflowWizard = (options: { refresh: () => void }) => {
 
     nextTick(() => {
       workflowWizardRef.value?.setStep(0)
-      workflowFormData.value = data
-        ? { ...createDefaultWorkflowFormData(uuidv4), ...data }
-        : createDefaultWorkflowFormData(uuidv4)
+      if (data) {
+        // NOTE: 对齐后端 ResolveEngineType 领域规范，未记录引擎类型的存量历史数据一律兜底为 easy-workflow
+        const engineType = data.engine_type || "easy-workflow"
+        workflowFormData.value = {
+          ...createDefaultWorkflowFormData(uuidv4),
+          ...data,
+          engine_type: engineType
+        }
+      } else {
+        workflowFormData.value = createDefaultWorkflowFormData(uuidv4)
+      }
     })
   }
 

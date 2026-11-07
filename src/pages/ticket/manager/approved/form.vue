@@ -148,6 +148,7 @@ import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import RevokeTicketDialog from "../components/RevokeTicketDialog.vue"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
+import type { TaskID, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
 import type {
   DynamicFormExpose,
   DynamicFormField,
@@ -160,8 +161,8 @@ import type {
 
 interface Props {
   templateId: number | undefined
-  processInstId: number | undefined
-  taskId: number | undefined
+  processInstId: ProcessInstanceID | undefined
+  taskId: TaskID | undefined
   action: string
 }
 
@@ -177,9 +178,10 @@ const ticketRating = ref<TicketRating>()
 const revokeReason = ref("")
 const rule = ref<FormRule[]>()
 const options = ref<FormCreateOptions>()
+const currentEngineType = ref("")
 
 const DEFAULT_FORM_DATA: PassTicketReq = {
-  task_id: 0,
+  task_id: "",
   comment: ""
 }
 const formData = ref<PassTicketReq>(cloneDeep(DEFAULT_FORM_DATA))
@@ -222,7 +224,7 @@ const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
 
   transferLoading.value = true
   try {
-    await transferTicketApi({ task_id: props.taskId!, usernames })
+    await transferTicketApi({ engine_type: currentEngineType.value, task_id: props.taskId!, usernames })
     ElMessage.success("转签成功")
     resetForm()
   } catch (error) {
@@ -233,9 +235,9 @@ const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
 }
 
 // 用于缓存每个工单的操作信息（草稿），key 为 processInstId
-const formDrafts = ref(new Map<number, TicketFormDraft>())
+const formDrafts = ref(new Map<ProcessInstanceID, TicketFormDraft>())
 
-const saveDraft = (processInstId?: number) => {
+const saveDraft = (processInstId?: ProcessInstanceID) => {
   if (!processInstId) return
 
   formDrafts.value.set(processInstId, {
@@ -244,7 +246,7 @@ const saveDraft = (processInstId?: number) => {
   })
 }
 
-const restoreDraft = (processInstId?: number) => {
+const restoreDraft = (processInstId?: ProcessInstanceID) => {
   if (!processInstId) return
 
   const draft = formDrafts.value.get(processInstId)
@@ -286,11 +288,12 @@ const handleDetail = async (id: number) => {
   }
 }
 
-const handleGetTicketData = async (processInstId: number) => {
+const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
   ticketRating.value = undefined
   revokeReason.value = ""
   try {
     const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
+    currentEngineType.value = ticketInfo.engine_type || ""
     data.value = ticketInfo.data as TicketFormData
     ticketRating.value = ticketInfo.rating
     revokeReason.value = ticketInfo.revoke_reason || ""
@@ -315,7 +318,7 @@ const handleGetTicketData = async (processInstId: number) => {
 }
 
 // 获取任务表单配置
-const handleGetTaskFormConfig = async (taskId: number, workflowId: number) => {
+const handleGetTaskFormConfig = async (taskId: TaskID, workflowId: number) => {
   try {
     const { data } = await getTaskFormConfigApi({
       task_id: taskId,
@@ -370,6 +373,7 @@ const handlePass = () => {
     })
       .then(() => {
         const submitData = {
+          engine_type: currentEngineType.value,
           task_id: props.taskId || formData.value.task_id,
           comment: "修改并提交",
           ...data.value
@@ -398,6 +402,7 @@ const handlePassTicket = async () => {
 
   // 同意审批
   const submitData = {
+    engine_type: currentEngineType.value,
     ...formData.value,
     extra_data: taskFormData.value
   }
@@ -434,7 +439,11 @@ const handleReject = async () => {
   }
 
   // 驳回审批
-  const submitData = { ...formData.value, ...taskFormData.value }
+  const submitData = {
+    engine_type: currentEngineType.value,
+    ...formData.value,
+    ...taskFormData.value
+  }
   try {
     await rejectTicketApi(submitData)
     ElMessage.success("工单已驳回")

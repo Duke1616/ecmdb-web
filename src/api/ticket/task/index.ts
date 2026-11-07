@@ -1,4 +1,5 @@
 import type * as task from "./types/task"
+import type { TaskID } from "@/api/ticket/manager/types/manager"
 import instance from "@/common/utils/service"
 import { API_SERVICE } from "@@/utils/service"
 
@@ -12,15 +13,15 @@ export function listTasksByInstanceIdApi(data: task.ListByInstanceIDReq) {
   return instance.post<task.TasksResp>({ url: `${TASK_API}/list/by_instance_id`, data })
 }
 
-export function retryTaskApi(id: number) {
+export function retryTaskApi(id: TaskID) {
   return instance.post<void>({ url: `${TASK_API}/retry`, data: { id } })
 }
 
-export function terminateTaskApi(id: number, reason: string) {
+export function terminateTaskApi(id: TaskID, reason: string) {
   return instance.post<void>({ url: `${TASK_API}/terminate`, data: { id, reason } })
 }
 
-export function listTaskAttemptsApi(taskId: number) {
+export function listTaskAttemptsApi(taskId: TaskID) {
   return instance.post<task.ListAttemptsResp>({ url: `${TASK_API}/attempt/list`, data: { task_id: taskId } })
 }
 

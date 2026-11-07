@@ -1,5 +1,6 @@
 import type { FormRule } from "@form-create/element-ui"
 import type { Assignee } from "@/common/components/ReceiverSelector/composables/useAssignees"
+import type { TaskID } from "@/api/ticket/manager/types/manager"
 
 export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
@@ -48,7 +49,7 @@ export type TransferAssignee = Assignee
 
 export interface TicketFormDraft {
   formData: {
-    task_id: number
+    task_id: TaskID
     comment: string
   }
   taskFormData: DynamicFormData

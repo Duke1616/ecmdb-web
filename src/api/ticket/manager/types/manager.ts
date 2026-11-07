@@ -1,3 +1,7 @@
+/** 跨引擎任务与流程实例通用标识（兼顾数字与字符串形态） */
+export type TaskID = string | number
+export type ProcessInstanceID = string | number
+
 export interface SubmitTicketReq {
   template_id: number
   workflow_id: number
@@ -5,7 +9,8 @@ export interface SubmitTicketReq {
 }
 
 export interface TransferTicketReq {
-  task_id: number
+  engine_type?: string
+  task_id: TaskID
   usernames: string[]
 }
 
@@ -41,8 +46,9 @@ export enum TicketStatus {
 
 export interface Ticket {
   id: number
-  task_id: number
-  process_instance_id: number
+  engine_type?: string
+  task_id: TaskID
+  process_instance_id: ProcessInstanceID
   title: string
   proc_inst_create_time: string
   workflow_id: number
@@ -85,7 +91,7 @@ export interface TicketStep {
 }
 
 export interface RevokeTicketReq {
-  instance_id: number
+  instance_id: ProcessInstanceID
   force: boolean
   reason: string
 }
@@ -96,18 +102,20 @@ export interface TicketListRes {
 }
 
 export interface PassTicketReq {
-  task_id: number
+  engine_type?: string
+  task_id: TaskID
   comment: string
   extra_data?: Record<string, unknown>
 }
 
 export interface RejectTicketReq {
-  task_id: number
+  engine_type?: string
+  task_id: TaskID
   comment: string
 }
 
 export interface taskTimelineReq {
-  process_inst_id: number
+  process_inst_id: ProcessInstanceID
   offset: number
   limit: number
 }
@@ -164,6 +172,6 @@ export interface TicketsRes {
 }
 
 export interface TaskFormConfigReq {
-  task_id: number
+  task_id: TaskID
   workflow_id: number
 }

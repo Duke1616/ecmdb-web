@@ -12,10 +12,11 @@ import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
 import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 import { getWorkflowGraphApi } from "@/api/ticket/workflow/workflow"
+import type { ProcessInstanceID } from "@/api/ticket/manager/types/manager"
 
 interface Props {
   workflowId: number | undefined
-  processInstId: number | undefined
+  processInstId: ProcessInstanceID | undefined
   status: number | undefined
 }
 const props = defineProps<Props>()
@@ -110,7 +111,7 @@ const render = (graphData?: LogicFlow.GraphConfigData) => {
   lf.value.fitView(300, 300)
 }
 
-const getGraphData = async (id: number, processInstanceId: number, status: number) => {
+const getGraphData = async (id: number, processInstanceId: ProcessInstanceID, status: number) => {
   const res = await getWorkflowGraphApi({
     id,
     process_instance_id: processInstanceId,
@@ -124,7 +125,7 @@ onMounted(() => {
 })
 
 watchEffect(async (onInvalidate) => {
-  if (!lf.value || !props.workflowId || props.processInstId === undefined || props.status === undefined) return
+  if (!lf.value || !props.workflowId || !props.processInstId || props.status === undefined) return
 
   let expired = false
   onInvalidate(() => {

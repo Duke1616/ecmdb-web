@@ -44,10 +44,11 @@ import { WarningFilled } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
 import { revokeTicketApi } from "@/api/ticket/manager"
+import type { ProcessInstanceID } from "@/api/ticket/manager/types/manager"
 
 const props = defineProps<{
   modelValue: boolean
-  instanceId?: number
+  instanceId?: ProcessInstanceID
   subject?: string
 }>()
 

@@ -50,6 +50,7 @@ export const createDefaultWorkflowFormData = (createId: () => string): WorkflowF
   id: undefined,
   is_notify: false,
   notify_method: 1,
+  engine_type: "flowx",
   name: "",
   desc: "",
   icon: "",

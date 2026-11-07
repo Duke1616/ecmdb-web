@@ -54,7 +54,7 @@ import Flow from "./flow.vue"
 import Record from "./record.vue"
 import Task from "./task.vue"
 import CustomTabs from "@@/components/Tabs/CustomTabs.vue"
-import type { Ticket } from "@/api/ticket/manager/types/manager.js"
+import type { Ticket, TaskID } from "@/api/ticket/manager/types/manager.js"
 import { Drawer } from "@@/components/Dialogs"
 import { Document } from "@element-plus/icons-vue"
 import TaskAttemptDialog from "@/pages/ticket/task-history/components/TaskAttemptDialog.vue"
@@ -62,7 +62,7 @@ import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
 
 const activeName = ref<string>("form")
-const attemptTaskId = ref(0)
+const attemptTaskId = ref<TaskID>("")
 const attemptDialogVisible = ref(false)
 const { hasPermission } = usePermission()
 
@@ -131,7 +131,7 @@ const onClosed = () => {
   emits("close")
 }
 
-const openAttempts = (taskId: number) => {
+const openAttempts = (taskId: TaskID) => {
   if (!hasPermission(TICKET_CAPABILITIES.Task.ViewAttempts)) return
   attemptTaskId.value = taskId
   attemptDialogVisible.value = true
