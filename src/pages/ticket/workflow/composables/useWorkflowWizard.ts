@@ -57,13 +57,16 @@ export const useWorkflowWizard = (options: { refresh: () => void }) => {
     workflowFormData.value = { ...workflowFormData.value, ...data }
   }
 
+  const isSaving = ref(false)
   const saveWorkflow = async () => {
+    if (isSaving.value) return
     const capability = workflowFormData.value.id ? TICKET_CAPABILITIES.Workflow.Edit : TICKET_CAPABILITIES.Workflow.Add
     if (!hasPermission(capability)) {
       ElMessage.warning(workflowFormData.value.id ? "暂无修改流程权限" : "暂无新增流程权限")
       return
     }
 
+    isSaving.value = true
     try {
       if (workflowFormData.value.id) {
         await updateWorkflowApi(workflowFormData.value)
@@ -77,6 +80,8 @@ export const useWorkflowWizard = (options: { refresh: () => void }) => {
       options.refresh()
     } catch (error) {
       console.error("保存流程失败:", error)
+    } finally {
+      isSaving.value = false
     }
   }
 

@@ -8,8 +8,10 @@ import { loadFinder } from "./finder"
 import { loadCodeMirror } from "./codemirror"
 import { loadIconSvg } from "./icon-svg"
 import { loadCommonComponents } from "./common-components"
+import { loadPreventReClick } from "./prevent-reclick"
 
 export function installPlugins(app: App) {
+  loadPreventReClick(app)
   loadElementPlus(app)
   loadCommonComponents(app)
   loadElementPlusIcon(app)
