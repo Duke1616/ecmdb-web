@@ -15,6 +15,7 @@
           <Form
             v-if="activeTab === 'form'"
             ref="formRef"
+            :ticket-id="props.ticketInfo?.id"
             :template-id="props.ticketInfo?.template_id"
             :process-inst-id="props.ticketInfo?.process_instance_id"
             :task-id="props.ticketInfo?.task_id"

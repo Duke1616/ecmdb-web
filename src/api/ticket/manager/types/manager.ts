@@ -9,7 +9,7 @@ export interface SubmitTicketReq {
 }
 
 export interface TransferTicketReq {
-  engine_type?: string
+  ticket_id: number
   task_id: TaskID
   usernames: string[]
 }
@@ -102,14 +102,14 @@ export interface TicketListRes {
 }
 
 export interface PassTicketReq {
-  engine_type?: string
+  ticket_id?: number
   task_id: TaskID
   comment: string
   extra_data?: Record<string, unknown>
 }
 
 export interface RejectTicketReq {
-  engine_type?: string
+  ticket_id?: number
   task_id: TaskID
   comment: string
 }
@@ -172,6 +172,7 @@ export interface TicketsRes {
 }
 
 export interface TaskFormConfigReq {
+  ticket_id?: number
   task_id: TaskID
   workflow_id: number
 }

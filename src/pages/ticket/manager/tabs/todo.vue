@@ -5,6 +5,7 @@
     :pagination-data="paginationData"
     :loading="loading"
     :get-operate-items="getAllTodoOperateItems"
+    span-method
     @size-change="handleSizeChange"
     @current-change="handleCurrentChange"
     @operate="operateEvent"
@@ -43,7 +44,8 @@ const {
       sort_by_asc: true,
       process_name: "",
       user_id: ""
-    })
+    }),
+  mergeFields: ["id", "template_name", "provide", "status", "starter", "proc_inst_create_time"]
 })
 
 const { dialogVisible, action, ticketInfo, openDetail, closeDetail } = useTicketDetail("todo")

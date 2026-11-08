@@ -160,6 +160,7 @@ import type {
 } from "./types"
 
 interface Props {
+  ticketId?: number
   templateId: number | undefined
   processInstId: ProcessInstanceID | undefined
   taskId: TaskID | undefined
@@ -170,6 +171,15 @@ const props = defineProps<Props>()
 const emits = defineEmits(["close", "refresh-data"])
 const { hasPermission } = usePermission()
 
+// 当前工单 ID（优先取 props.ticketId，也可由流程实例反查补充）
+const currentTicketId = ref<number>(props.ticketId || 0)
+watch(
+  () => props.ticketId,
+  (val) => {
+    if (val) currentTicketId.value = val
+  }
+)
+
 //获取 formCreate 组件
 const FormCreate = formCreate.$form()
 const fApi = ref<Api>()
@@ -178,7 +188,6 @@ const ticketRating = ref<TicketRating>()
 const revokeReason = ref("")
 const rule = ref<FormRule[]>()
 const options = ref<FormCreateOptions>()
-const currentEngineType = ref("")
 
 const DEFAULT_FORM_DATA: PassTicketReq = {
   task_id: "",
@@ -224,7 +233,7 @@ const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
 
   transferLoading.value = true
   try {
-    await transferTicketApi({ engine_type: currentEngineType.value, task_id: props.taskId!, usernames })
+    await transferTicketApi({ ticket_id: currentTicketId.value, task_id: props.taskId!, usernames })
     ElMessage.success("转签成功")
     resetForm()
   } catch (error) {
@@ -293,7 +302,9 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
   revokeReason.value = ""
   try {
     const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
-    currentEngineType.value = ticketInfo.engine_type || ""
+    if (ticketInfo.id) {
+      currentTicketId.value = ticketInfo.id
+    }
     data.value = ticketInfo.data as TicketFormData
     ticketRating.value = ticketInfo.rating
     revokeReason.value = ticketInfo.revoke_reason || ""
@@ -321,6 +332,7 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
 const handleGetTaskFormConfig = async (taskId: TaskID, workflowId: number) => {
   try {
     const { data } = await getTaskFormConfigApi({
+      ticket_id: currentTicketId.value,
       task_id: taskId,
       workflow_id: workflowId
     })
@@ -373,7 +385,6 @@ const handlePass = () => {
     })
       .then(() => {
         const submitData = {
-          engine_type: currentEngineType.value,
           task_id: props.taskId || formData.value.task_id,
           comment: "修改并提交",
           ...data.value
@@ -387,7 +398,10 @@ const handlePass = () => {
 
 const handleSubmitChangedTicket = async (submitData: PassTicketReq) => {
   try {
-    await passTicketApi(submitData)
+    await passTicketApi({
+      ...submitData,
+      ticket_id: currentTicketId.value
+    })
     ElMessage.success("工单已提交")
     resetForm()
   } catch (error) {
@@ -402,8 +416,8 @@ const handlePassTicket = async () => {
 
   // 同意审批
   const submitData = {
-    engine_type: currentEngineType.value,
     ...formData.value,
+    ticket_id: currentTicketId.value,
     extra_data: taskFormData.value
   }
   try {
@@ -440,8 +454,8 @@ const handleReject = async () => {
 
   // 驳回审批
   const submitData = {
-    engine_type: currentEngineType.value,
     ...formData.value,
+    ticket_id: currentTicketId.value,
     ...taskFormData.value
   }
   try {
