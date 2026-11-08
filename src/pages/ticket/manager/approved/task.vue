@@ -89,7 +89,7 @@
 import { ref, watch } from "vue"
 import { ElMessage } from "element-plus"
 import dayjs from "dayjs"
-import { listTasksByInstanceIdApi, retryTaskApi, terminateTaskApi } from "@/api/ticket/task"
+import { listTasksByTicketIdApi, retryTaskApi, terminateTaskApi } from "@/api/ticket/task"
 import { AutomationTaskStatus, type AutomationTask } from "@/api/ticket/task/types/task"
 import { Calendar, Clock, Operation, WarningFilled } from "@element-plus/icons-vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
@@ -101,9 +101,11 @@ import TaskHistoryStatusBadge from "@/pages/ticket/task-history/components/TaskH
 import TaskCompensationBadge from "@/pages/ticket/task-history/components/TaskCompensationBadge.vue"
 import { useAutomationTaskPolling } from "@/pages/ticket/task-history/composables/useAutomationTaskPolling"
 import { canRetryTask, canTerminateTask } from "@/pages/ticket/task-history/composables/useTaskHistoryActions"
-import type { ProcessInstanceID, TaskID } from "@/api/ticket/manager/types/manager"
+import type { TaskID } from "@/api/ticket/manager/types/manager"
 
-const props = defineProps<{ processInstId: ProcessInstanceID | undefined }>()
+const props = defineProps<{
+  ticketId?: number
+}>()
 const emit = defineEmits<{ (event: "open-attempts", taskId: TaskID): void }>()
 const tasksData = ref<AutomationTask[]>([])
 const loading = ref(false)
@@ -123,11 +125,11 @@ const statusTone = (status: AutomationTaskStatus) => {
 }
 
 const loadTasks = async (silent = false) => {
-  if (!props.processInstId) return
+  if (!props.ticketId) return
   if (!silent) loading.value = true
   try {
-    const { data } = await listTasksByInstanceIdApi({
-      instance_id: props.processInstId,
+    const { data } = await listTasksByTicketIdApi({
+      ticket_id: props.ticketId,
       offset: 0,
       limit: 1000
     })
@@ -196,7 +198,7 @@ const formatTime = (value: number) => (value ? dayjs(value).format("YYYY-MM-DD H
 const hasOriginalSchedule = (task: AutomationTask) =>
   !!task.original_scheduled_at && task.original_scheduled_at !== task.scheduled_at
 watch(
-  () => props.processInstId,
+  () => props.ticketId,
   () => loadTasks(),
   { immediate: true }
 )

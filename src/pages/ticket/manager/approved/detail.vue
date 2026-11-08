@@ -38,7 +38,7 @@
           <Task
             v-if="activeTab === 'task'"
             ref="taskRef"
-            :process-inst-id="props.ticketInfo?.process_instance_id"
+            :ticket-id="props.ticketInfo?.id"
             @open-attempts="openAttempts"
           />
         </template>

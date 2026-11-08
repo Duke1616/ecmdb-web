@@ -9,8 +9,8 @@ export function listTasksApi(data: task.Page) {
   return instance.post<task.TasksResp>({ url: `${TASK_API}/list`, data })
 }
 
-export function listTasksByInstanceIdApi(data: task.ListByInstanceIDReq) {
-  return instance.post<task.TasksResp>({ url: `${TASK_API}/list/by_instance_id`, data })
+export function listTasksByTicketIdApi(data: task.ListByTicketIDReq) {
+  return instance.post<task.TasksResp>({ url: `${TASK_API}/list/by_ticket_id`, data })
 }
 
 export function retryTaskApi(id: TaskID) {

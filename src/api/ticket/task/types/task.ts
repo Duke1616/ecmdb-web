@@ -7,8 +7,8 @@ export interface Page {
   limit: number
 }
 
-export interface ListByInstanceIDReq extends Page {
-  instance_id: ProcessInstanceID
+export interface ListByTicketIDReq extends Page {
+  ticket_id: number
 }
 
 export enum AutomationTaskStatus {
