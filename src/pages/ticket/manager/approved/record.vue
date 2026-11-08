@@ -15,7 +15,7 @@
             <div class="record-heading">
               <div class="heading-main">
                 <span class="node-name">{{ activity.node_name }}</span>
-                <span class="operator">{{ activity.actors.length > 0 ? activity.actors.join("、") : "系统" }}</span>
+                <span class="operator">{{ activity.actors.length > 0 ? activity.actors.map(formatOperator).join("、") : "系统" }}</span>
               </div>
               <el-tag :type="getTimelineTagType(activity)" effect="light" size="small" round>
                 {{ getTimelineTagLabel(activity) }}
@@ -30,7 +30,7 @@
                 <div v-for="(member, index) in activity.members" :key="index" class="member-record">
                   <div class="record-heading">
                     <div class="heading-main">
-                      <span class="operator">{{ member.approved_by || "-" }}</span>
+                      <span class="operator">{{ formatOperator(member.approved_by) }}</span>
                     </div>
                     <el-tag :type="getTaskTagType(member)" effect="light" size="small" round>
                       {{ getTaskTagLabel(member) }}
@@ -88,6 +88,15 @@ const props = defineProps<Props>()
 
 const timelineEvents = ref<taskTimelineEvent[]>([])
 const loading = ref<boolean>(false)
+
+const formatOperator = (name?: string) => {
+  if (!name) return "-"
+  const lower = name.trim().toLowerCase()
+  if (lower === "system" || lower === "automation" || lower === "sys_skipped") {
+    return "系统"
+  }
+  return name
+}
 
 const getTaskTagType = (row: taskRecord) => {
   if (row.status === 1 && row.is_finished === 1) return "success"

@@ -1,7 +1,7 @@
 import type { Column } from "@@/components/DataTable/types"
 
 const idColumn: Column = { prop: "id", label: "工单号", minWidth: 120, align: "center" }
-const taskIdColumn: Column = { prop: "task_id", label: "流程任务号", minWidth: 120, align: "center" }
+const taskIdColumn: Column = { prop: "task_id", label: "流程任务号", slot: "taskId", minWidth: 120, align: "center" }
 const templateColumn: Column = {
   prop: "template_name",
   label: "工单名称",
@@ -11,9 +11,9 @@ const templateColumn: Column = {
 }
 const provideColumn: Column = { prop: "provide", label: "来源", slot: "provide", minWidth: 100, align: "center" }
 const starterColumn: Column = { prop: "starter", label: "提单人", minWidth: 100, align: "center" }
-const currentStepColumn: Column = { prop: "current_step", label: "当前步骤", minWidth: 120, align: "center" }
+const currentStepColumn: Column = { prop: "current_step", label: "当前步骤", slot: "currentStep", minWidth: 120, align: "center" }
 const statusColumn: Column = { prop: "status", label: "状态", slot: "status", minWidth: 120, align: "center" }
-const approvedByColumn: Column = { prop: "approved_by", label: "当前处理人", minWidth: 120, align: "center" }
+const approvedByColumn: Column = { prop: "approved_by", label: "当前处理人", slot: "approvedBy", minWidth: 120, align: "center" }
 const procInstCreateTimeColumn: Column = {
   prop: "proc_inst_create_time",
   label: "流程提交时间",

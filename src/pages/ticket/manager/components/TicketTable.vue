@@ -17,6 +17,32 @@
       {{ templateToolsStore.getTemplateName(row.template_id) }}
     </template>
 
+    <template #taskId="{ row }">
+      <span v-if="row.task_id" class="task-id-text">{{ row.task_id }}</span>
+      <span v-else class="empty-placeholder">-</span>
+    </template>
+
+    <template #currentStep="{ row }">
+      <span v-if="row.current_step" :class="{ 'is-auto-step': isAutomationStep(row.current_step) }">
+        {{ row.current_step }}
+      </span>
+      <span v-else class="empty-placeholder">-</span>
+    </template>
+
+    <template #approvedBy="{ row }">
+      <el-tag
+        v-if="isSystemApprover(row.approved_by)"
+        size="small"
+        type="info"
+        effect="plain"
+        class="system-approver-tag"
+      >
+        系统执行
+      </el-tag>
+      <span v-else-if="row.approved_by">{{ row.approved_by }}</span>
+      <span v-else class="empty-placeholder">-</span>
+    </template>
+
     <template #provide="{ row }">
       <span class="quiet-tag">{{ getProvideText(row.provide) }}</span>
     </template>
@@ -153,9 +179,41 @@ const getRatingText = (ticket: Ticket) => {
   if (ticket.status === TicketStatus.End) return ticket.can_rate ? "待评价" : "未评价"
   return "—"
 }
+
+const isSystemApprover = (approver?: string) => {
+  if (!approver) return false
+  const lower = approver.trim().toLowerCase()
+  return lower === "system" || lower === "automation" || lower === "sys_skipped"
+}
+
+const isAutomationStep = (stepName?: string) => {
+  if (!stepName) return false
+  return stepName.includes("自动化") || stepName.includes("系统")
+}
 </script>
 
 <style scoped lang="scss">
+.task-id-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.empty-placeholder {
+  color: #94a3b8;
+}
+
+.is-auto-step {
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.system-approver-tag {
+  font-weight: 500;
+  border-radius: 4px;
+}
+
 .quiet-tag {
   display: inline-flex;
   align-items: center;
