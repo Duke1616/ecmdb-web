@@ -18,7 +18,17 @@
     </template>
 
     <template #taskId="{ row }">
-      <span v-if="row.task_id" class="task-id-text">{{ row.task_id }}</span>
+      <el-tooltip
+        v-if="row.task_id"
+        :content="`点击复制任务号: ${row.task_id}`"
+        placement="top"
+        :show-after="200"
+      >
+        <div class="task-id-badge" @click.stop="handleCopyTaskId(String(row.task_id))">
+          <span class="task-id-text">{{ row.task_id }}</span>
+          <el-icon class="copy-icon"><CopyDocument /></el-icon>
+        </div>
+      </el-tooltip>
       <span v-else class="empty-placeholder">-</span>
     </template>
 
@@ -73,12 +83,14 @@
 <script lang="ts" setup>
 import { computed } from "vue"
 import type { Column, TableColumnCtx } from "element-plus"
+import { CopyDocument } from "@element-plus/icons-vue"
 import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
 import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
 import type { TicketAction, TicketOperateItem } from "../composables/types"
+import { copyToClipboard } from "@@/utils/clipboard"
 
 interface RowWithSpan {
   mergeCell?: string[]
@@ -190,14 +202,73 @@ const isAutomationStep = (stepName?: string) => {
   if (!stepName) return false
   return stepName.includes("自动化") || stepName.includes("系统")
 }
+
+const handleCopyTaskId = async (taskId: string) => {
+  await copyToClipboard(taskId, "流程任务号已复制到剪贴板")
+}
 </script>
 
 <style scoped lang="scss">
-.task-id-text {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 13px;
+.task-id-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 3px 8px;
   color: #334155;
-  font-weight: 500;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: all;
+
+  &:hover {
+    color: #2563eb;
+    background: #eff6ff;
+    border-color: #bfdbfe;
+
+    .copy-icon {
+      color: #3b82f6;
+    }
+  }
+
+  .task-id-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+  }
+
+  .copy-icon {
+    font-size: 12px;
+    color: #94a3b8;
+    transition: color 0.15s ease;
+    flex-shrink: 0;
+  }
+}
+
+html.dark {
+  .task-id-badge {
+    color: #cbd5e1;
+    background: #1e293b;
+    border-color: #334155;
+
+    &:hover {
+      color: #60a5fa;
+      background: #1e3a5f;
+      border-color: #3b82f6;
+
+      .copy-icon {
+        color: #60a5fa;
+      }
+    }
+
+    .copy-icon {
+      color: #64748b;
+    }
+  }
 }
 
 .empty-placeholder {
