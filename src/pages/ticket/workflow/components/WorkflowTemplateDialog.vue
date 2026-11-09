@@ -2,8 +2,8 @@
   <FormDialog
     v-model="visible"
     title="工作流示范模板库"
-    :subtitle="`仅展示适配当前【${engineLabel}】引擎的标准拓扑模板，支持一键载入画布并智能排版`"
-    width="960px"
+    :subtitle="`精选适用于【${engineLabel}】引擎的标准拓扑模板，支持一键载入画布并智能排版`"
+    width="920px"
     :header-icon="Collection"
     :show-footer="true"
     :show-footer-info="true"
@@ -14,69 +14,63 @@
     @cancel="visible = false"
   >
     <div class="template-dialog-content">
-      <!-- 模板卡片网格（仅展示当前选中引擎适用的模板） -->
+      <!-- 模板卡片网格 -->
       <div class="template-grid">
         <div
           v-for="tpl in currentEngineTemplates"
           :key="tpl.id"
           class="template-card"
-          :class="{
-            'is-selected': selectedTemplateId === tpl.id,
-            'is-recommended': isRecommended(tpl),
-            [`theme-${tpl.badgeColor || 'blue'}`]: true
-          }"
+          :class="{ 'is-selected': selectedTemplateId === tpl.id }"
           @click="selectedTemplateId = tpl.id"
           @dblclick="handleDirectApply(tpl)"
         >
-          <!-- 选中状态右上角角标 -->
-          <div v-if="selectedTemplateId === tpl.id" class="selected-corner-badge">
-            <el-icon><Check /></el-icon>
-          </div>
-
-          <div class="card-top">
-            <div class="card-badges">
-              <span class="tpl-tag" :class="`tag-${tpl.badgeColor || 'blue'}`">
-                {{ tpl.tag }}
-              </span>
-              <span v-if="isRecommended(tpl)" class="rec-tag">
-                🔥 引擎推荐
-              </span>
-            </div>
-            <div class="node-count-badge">
-              <span class="count-number">{{ tpl.nodeCount }}</span> 个节点
+          <!-- 卡片头部：左侧场景特性标签，右侧节点统计与单选指示器 -->
+          <div class="card-header">
+            <span class="scene-tag" :class="`scene-${tpl.badgeColor || 'slate'}`">
+              {{ tpl.tag }}
+            </span>
+            <div class="header-right">
+              <span class="node-count">{{ tpl.nodeCount }} 节点</span>
+              <div class="radio-indicator">
+                <span class="radio-dot" />
+              </div>
             </div>
           </div>
 
-          <h4 class="card-name">{{ tpl.name }}</h4>
+          <!-- 卡片主标题与描述 -->
+          <h4 class="card-title">{{ tpl.name }}</h4>
           <p class="card-desc">{{ tpl.description }}</p>
 
-          <div class="steps-flow">
-            <div class="steps-label">拓扑脉络：</div>
-            <div class="steps-chain">
+          <!-- 拓扑脉络步骤条 -->
+          <div class="flow-track">
+            <div class="track-label">拓扑脉络</div>
+            <div class="track-nodes">
               <span
                 v-for="(step, sIdx) in tpl.summary"
                 :key="sIdx"
-                class="step-badge"
+                class="node-pill"
               >
                 {{ step }}
-                <el-icon v-if="sIdx < tpl.summary.length - 1" class="step-arrow"><ArrowRight /></el-icon>
+                <el-icon v-if="sIdx < tpl.summary.length - 1" class="pill-arrow">
+                  <ArrowRight />
+                </el-icon>
               </span>
             </div>
           </div>
 
-          <div class="card-action-bar">
-            <span class="select-indicator">
-              <span v-if="selectedTemplateId === tpl.id" class="text-active">已选中</span>
-              <span v-else class="text-inactive">点击选中 · 双击直接注入</span>
+          <!-- 卡片底部轻量操作提示 -->
+          <div class="card-footer">
+            <span class="status-hint">
+              <span v-if="selectedTemplateId === tpl.id" class="hint-active">已选中当前模板</span>
+              <span v-else class="hint-normal">点击选择 · 双击立即注入</span>
             </span>
-            <el-button
-              size="small"
-              :type="selectedTemplateId === tpl.id ? 'primary' : 'default'"
-              class="quick-apply-btn"
+            <button
+              type="button"
+              class="quick-apply-link"
               @click.stop="handleDirectApply(tpl)"
             >
               一键注入
-            </el-button>
+            </button>
           </div>
         </div>
       </div>
@@ -86,7 +80,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import { Collection, ArrowRight, Check } from "@element-plus/icons-vue"
+import { Collection, ArrowRight } from "@element-plus/icons-vue"
 import { FormDialog } from "@/common/components/Dialogs"
 import { WORKFLOW_TEMPLATES, type WorkflowTemplateItem } from "../templates"
 
@@ -115,24 +109,13 @@ const selectedTemplateId = ref<string>("")
 const isFlowX = computed(() => props.currentEngineType === "flowx")
 const engineLabel = computed(() => (isFlowX.value ? "FlowX (BPMN 2.0)" : "EasyFlow"))
 
-const isRecommended = (tpl: WorkflowTemplateItem) => {
-  if (isFlowX.value && tpl.engineType === "flowx") return true
-  if (!isFlowX.value && tpl.engineType === "easyflow") return true
-  return false
-}
-
-// 仅展示适配当前选定引擎的示范模板（专属最佳实践 + 通用模板）
+// 仅展示适配当前选定引擎的示范模板（当前引擎专属模板 + 通用模板）
 const currentEngineTemplates = computed(() => {
   return WORKFLOW_TEMPLATES.filter((tpl) => {
     if (isFlowX.value) {
       return tpl.engineType === "flowx" || tpl.engineType === "all"
     }
     return tpl.engineType === "easyflow" || tpl.engineType === "all"
-  }).sort((a, b) => {
-    // 专属最佳实践排在首位
-    const aRec = isRecommended(a) ? 1 : 0
-    const bRec = isRecommended(b) ? 1 : 0
-    return bRec - aRec
   })
 })
 
@@ -144,10 +127,10 @@ const currentFooterInfo = computed(() => {
   if (selectedTemplate.value) {
     return `当前选中：「${selectedTemplate.value.name}」（共 ${selectedTemplate.value.nodeCount} 个节点）`
   }
-  return `适配当前引擎共 ${currentEngineTemplates.value.length} 个模板，请选择要注入的示范模板`
+  return `当前共 ${currentEngineTemplates.value.length} 个模板，点击卡片选择后载入`
 })
 
-// 弹窗打开或引擎切换时，默认选定当前引擎的最佳推荐模板
+// 弹窗打开或引擎切换时，默认选中第一项
 watch(
   () => [props.modelValue, props.currentEngineType],
   ([val]) => {
@@ -176,134 +159,117 @@ const handleConfirmApply = () => {
 
 <style scoped lang="scss">
 .template-dialog-content {
-  padding: 4px 6px 12px;
+  padding: 4px 4px 10px;
 }
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(410px, 1fr));
+  gap: 14px;
 }
 
 .template-card {
-  position: relative;
   background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 15px 16px;
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 
   &:hover {
-    border-color: #3b82f6;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    border-color: #94a3b8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
   }
 
   &.is-selected {
     border-color: #2563eb;
-    background: #f8faff;
-    box-shadow: 0 0 0 1.5px #2563eb, 0 10px 25px -5px rgba(37, 99, 235, 0.12);
-  }
+    background: #fafcff;
+    box-shadow: 0 0 0 1px #2563eb, 0 6px 20px rgba(37, 99, 235, 0.09);
 
-  &.is-recommended:not(.is-selected) {
-    border-color: #cbd5e1;
-    background: linear-gradient(180deg, #fcfaff 0%, #ffffff 45%);
+    .radio-indicator {
+      border-color: #2563eb;
 
-    &::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+      .radio-dot {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
   }
 
-  .selected-corner-badge {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 28px;
-    height: 28px;
-    background: #2563eb;
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-bottom-left-radius: 10px;
-    font-size: 13px;
-    box-shadow: -1px 1px 4px rgba(37, 99, 235, 0.3);
-  }
-
-  .card-top {
+  .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 10px;
-    padding-right: 18px;
+    margin-bottom: 8px;
 
-    .card-badges {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .tpl-tag {
+    .scene-tag {
       font-size: 11px;
       font-weight: 600;
       padding: 2px 7px;
       border-radius: 4px;
 
-      &.tag-purple {
-        background: #f3e8ff;
-        color: #7e22ce;
-        border: 1px solid #e9d5ff;
+      &.scene-purple {
+        background: #f5f3ff;
+        color: #7c3aed;
+        border: 1px solid #ede9fe;
       }
-      &.tag-blue {
+      &.scene-blue {
         background: #eff6ff;
-        color: #1d4ed8;
+        color: #2563eb;
         border: 1px solid #dbeafe;
       }
-      &.tag-green {
+      &.scene-green {
         background: #f0fdf4;
-        color: #15803d;
+        color: #16a34a;
         border: 1px solid #dcfce7;
       }
-      &.tag-slate {
-        background: #f1f5f9;
+      &.scene-slate {
+        background: #f8fafc;
         color: #475569;
         border: 1px solid #e2e8f0;
       }
     }
 
-    .rec-tag {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 4px;
-      background: #fef2f2;
-      color: #dc2626;
-      border: 1px solid #fee2e2;
-    }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
 
-    .node-count-badge {
-      font-size: 12px;
-      color: #64748b;
+      .node-count {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+      }
 
-      .count-number {
-        font-weight: 700;
-        color: #0f172a;
+      .radio-indicator {
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        border: 1.5px solid #cbd5e1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+
+        .radio-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: #2563eb;
+          opacity: 0;
+          transform: scale(0.5);
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
       }
     }
   }
 
-  .card-name {
-    font-size: 15px;
+  .card-title {
+    font-size: 14.5px;
     font-weight: 700;
     color: #0f172a;
     margin: 0 0 6px 0;
@@ -313,73 +279,84 @@ const handleConfirmApply = () => {
   .card-desc {
     font-size: 12px;
     color: #64748b;
-    line-height: 1.6;
-    margin: 0 0 12px 0;
+    line-height: 1.55;
+    margin: 0 0 10px 0;
     flex: 1;
   }
 
-  .steps-flow {
+  .flow-track {
     background: #f8fafc;
-    border-radius: 8px;
-    padding: 9px 12px;
-    margin-bottom: 12px;
-    border: 1px solid #edf2f7;
+    border: 1px solid #f1f5f9;
+    border-radius: 7px;
+    padding: 8px 10px;
+    margin-bottom: 10px;
 
-    .steps-label {
-      font-size: 11px;
+    .track-label {
+      font-size: 10.5px;
       color: #94a3b8;
       font-weight: 600;
       margin-bottom: 5px;
     }
 
-    .steps-chain {
+    .track-nodes {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 4px;
     }
 
-    .step-badge {
+    .node-pill {
       display: inline-flex;
       align-items: center;
       font-size: 11px;
       color: #334155;
       background: #ffffff;
-      padding: 2px 6px;
+      padding: 1.5px 6px;
       border-radius: 4px;
       border: 1px solid #e2e8f0;
 
-      .step-arrow {
+      .pill-arrow {
         margin-left: 4px;
-        font-size: 10px;
+        font-size: 9px;
         color: #94a3b8;
       }
     }
   }
 
-  .card-action-bar {
+  .card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: 8px;
-    border-top: 1px dashed #e2e8f0;
+    padding-top: 6px;
+    border-top: 1px dashed #f1f5f9;
 
-    .select-indicator {
+    .status-hint {
       font-size: 11px;
 
-      .text-active {
+      .hint-active {
         color: #2563eb;
         font-weight: 600;
       }
 
-      .text-inactive {
+      .hint-normal {
         color: #94a3b8;
       }
     }
 
-    .quick-apply-btn {
-      font-weight: 500;
-      border-radius: 6px;
+    .quick-apply-link {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 11.5px;
+      color: #3b82f6;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s;
+
+      &:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+      }
     }
   }
 }
