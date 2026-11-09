@@ -14,6 +14,9 @@ export default function registerPolyline(lf: any) {
           properties: { is_pass, is_skipped }
         } = this
 
+        style.strokeLinecap = "round"
+        style.strokeLinejoin = "round"
+
         // 如果线条被跳过（系统自动跳过），显示为灰色
         if (is_skipped) {
           style.stroke = "#9ca3af" // 灰色
@@ -27,6 +30,41 @@ export default function registerPolyline(lf: any) {
         }
 
         return style
+      }
+
+      getTextPosition() {
+        // 在有双击定位但文本为空的情况下直接使用
+        if (this.dbClickPosition && !this.text?.value) {
+          return this.dbClickPosition
+        }
+
+        const pts = this.pointsList || []
+        if (pts.length >= 2) {
+          let longestHoriz = null
+          let maxLen = 0
+
+          // 寻找最长水平线段，优先将标签水平居中，避免压在转折角或垂直线下
+          for (let i = 0; i < pts.length - 1; i++) {
+            const p1 = pts[i]
+            const p2 = pts[i + 1]
+            if (Math.abs(p1.y - p2.y) <= 2) {
+              const len = Math.abs(p2.x - p1.x)
+              if (len > maxLen) {
+                maxLen = len
+                longestHoriz = { p1, p2, len }
+              }
+            }
+          }
+
+          if (longestHoriz && longestHoriz.len >= 30) {
+            return {
+              x: Math.round((longestHoriz.p1.x + longestHoriz.p2.x) / 2),
+              y: Math.round(longestHoriz.p1.y)
+            }
+          }
+        }
+
+        return super.getTextPosition()
       }
 
       getTextStyle() {

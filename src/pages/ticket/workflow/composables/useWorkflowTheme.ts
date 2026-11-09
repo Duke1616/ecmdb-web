@@ -30,27 +30,29 @@ export const applyWorkflowTheme = (lf: any) => {
     },
     polyline: {
       stroke: "#94a3b8",
-      strokeWidth: 2
+      strokeWidth: 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round"
     },
     nodeText: {
       color: "#1e293b",
       fontSize: 14,
       fontWeight: 500,
       background: {
-        fill: "rgba(255, 255, 255, 0.9)",
+        fill: "rgba(255, 255, 255, 0.92)",
         stroke: "#e2e8f0",
         strokeWidth: 1,
         radius: 4
       }
     },
     edgeText: {
-      color: "#475569",
+      color: "#334155",
       fontSize: 12,
       fontWeight: 500,
       textWidth: 120,
       background: {
-        fill: "rgba(255, 255, 255, 0.95)",
-        stroke: "#e2e8f0",
+        fill: "rgba(255, 255, 255, 0.96)",
+        stroke: "#cbd5e1",
         strokeWidth: 1,
         radius: 6
       }

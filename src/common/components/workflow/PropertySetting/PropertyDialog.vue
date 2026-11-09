@@ -10,22 +10,11 @@
     <template #header-icon>
       <div class="icon-circle">
         <!-- 网关专属 SVG 图标 -->
-        <svg
-          v-if="isGatewayType(props.nodeData?.type)"
-          viewBox="0 0 1126 1024"
-          class="header-svg-icon"
-        >
-          <path
-            d="M563.2 0l563.2 512-563.2 512L0 512 563.2 0z"
-            fill="currentColor"
-          />
+        <svg v-if="isGatewayType(props.nodeData?.type)" viewBox="0 0 1126 1024" class="header-svg-icon">
+          <path d="M563.2 0l563.2 512-563.2 512L0 512 563.2 0z" fill="currentColor" />
         </svg>
         <!-- 业务节点 SVG 图标 -->
-        <svg
-          v-else-if="currentNodeConfig?.iconSVG"
-          viewBox="0 0 1024 1024"
-          class="header-svg-icon"
-        >
+        <svg v-else-if="currentNodeConfig?.iconSVG" viewBox="0 0 1024 1024" class="header-svg-icon">
           <path :d="currentNodeConfig.iconSVG" fill="currentColor" />
         </svg>
         <!-- 基础节点回退文字/图标 -->

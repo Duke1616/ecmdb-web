@@ -172,6 +172,56 @@ export const enhanceDagrePointsList = (dagre: any) => {
 }
 
 /**
+ * 对分流分支节点执行严格水平中轴对称平衡
+ * 解决 Dagre 算法在偶数分支时“一侧走平、一侧折下”的视觉失衡
+ */
+export const balanceSymmetricalBranches = (nodes: any[], edges: any[]) => {
+  const outgoingMap = new Map<string, string[]>()
+  edges.forEach((e) => {
+    if (!outgoingMap.has(e.sourceNodeId)) {
+      outgoingMap.set(e.sourceNodeId, [])
+    }
+    outgoingMap.get(e.sourceNodeId)!.push(e.targetNodeId)
+  })
+
+  const nodeMap = new Map<string, any>(nodes.map((n) => [n.id, n]))
+
+  outgoingMap.forEach((targetIds, sourceId) => {
+    const sourceNode = nodeMap.get(sourceId)
+    if (!sourceNode) return
+
+    // 筛选同层下游正向节点
+    const uniqueTargetNodes = Array.from(new Set(targetIds))
+      .map((id) => nodeMap.get(id))
+      .filter((n) => n && n.x > sourceNode.x)
+
+    // 2条分支（如领导、产品）
+    if (uniqueTargetNodes.length === 2) {
+      const [n1, n2] = uniqueTargetNodes
+      if (Math.abs(n1.x - n2.x) < 40) {
+        uniqueTargetNodes.sort((a, b) => a.y - b.y)
+        const currentDist = Math.max(75, Math.abs(uniqueTargetNodes[1].y - uniqueTargetNodes[0].y) / 2)
+        uniqueTargetNodes[0].y = Math.round(sourceNode.y - currentDist)
+        uniqueTargetNodes[1].y = Math.round(sourceNode.y + currentDist)
+      }
+    } else if (uniqueTargetNodes.length === 3) {
+      const xs = uniqueTargetNodes.map((n) => n.x)
+      const minX = Math.min(...xs)
+      const maxX = Math.max(...xs)
+      if (maxX - minX < 40) {
+        uniqueTargetNodes.sort((a, b) => a.y - b.y)
+        const dist = Math.max(85, (uniqueTargetNodes[2].y - uniqueTargetNodes[0].y) / 2)
+        uniqueTargetNodes[0].y = Math.round(sourceNode.y - dist)
+        uniqueTargetNodes[1].y = Math.round(sourceNode.y)
+        uniqueTargetNodes[2].y = Math.round(sourceNode.y + dist)
+      }
+    }
+  })
+
+  return nodes
+}
+
+/**
  * 工作流画布自动排版与自适应缩放 Composable
  * 基于 LogicFlow 官方深度集成的 @logicflow/layout (Dagre 拓扑分层算法)
  * 并深度增强 BPMN 四向网关拓扑与多轨汇聚，消除分支合流处的连线打结共线与斜坡插线
@@ -220,9 +270,9 @@ export const useWorkflowLayout = (
     lf.translateCenter()
   }
 
-  /**
-   * 执行 LogicFlow 原生 Dagre 拓扑分层排版（含智能汇聚防撞车）
-   */
+/**
+ * 执行 LogicFlow 原生 Dagre 拓扑分层排版（含智能汇聚防撞车与中轴镜像对称）
+ */
   const runDagreLayout = (options: WorkflowLayoutOptions = {}): boolean => {
     const lf = lfRef.value
     if (!lf) return false
@@ -252,6 +302,24 @@ export const useWorkflowLayout = (
         ranksep,
         isDefaultAnchor: true
       })
+
+      // 中轴镜像对称平衡矫正与连线折点重算
+      const currentData = lf.getGraphData() as any
+      if (currentData?.nodes?.length && currentData?.edges?.length) {
+        const balancedNodes = balanceSymmetricalBranches(currentData.nodes, currentData.edges)
+        currentData.edges.forEach((edge: any) => {
+          const model = lf.getEdgeModelById(edge.id)
+          if (model && typeof dagre.calcPointsList === "function") {
+            const pts = dagre.calcPointsList(model, balancedNodes)
+            if (pts && pts.length >= 2) {
+              edge.pointsList = pts
+              edge.startPoint = { x: pts[0].x, y: pts[0].y }
+              edge.endPoint = { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y }
+            }
+          }
+        })
+        lf.renderRawData({ nodes: balancedNodes, edges: currentData.edges })
+      }
 
       smartCenterAndZoom()
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import { ref } from "vue"
-import { useWorkflowLayout, enhanceDagrePointsList } from "./useWorkflowLayout"
+import { useWorkflowLayout, enhanceDagrePointsList, balanceSymmetricalBranches } from "./useWorkflowLayout"
 
 describe("useWorkflowLayout", () => {
   it("当 Dagre 插件挂载正常时应正确调用 layout 并触发回调", () => {
@@ -180,5 +180,29 @@ describe("useWorkflowLayout", () => {
     expect(algoPts[algoPts.length - 1]).toEqual({ x: 570, y: 250 })
     // 前端扎入南顶点 (600, 280)
     expect(frontendPts[frontendPts.length - 1]).toEqual({ x: 600, y: 280 })
+  })
+
+  it("balanceSymmetricalBranches 应使偶数分支关于源节点中心严格镜像对称", () => {
+    const nodes = [
+      { id: "gw1", x: 300, y: 250 },
+      { id: "leader", x: 450, y: 210 },
+      { id: "product", x: 450, y: 330 }
+    ]
+    const edges = [
+      { sourceNodeId: "gw1", targetNodeId: "leader" },
+      { sourceNodeId: "gw1", targetNodeId: "product" }
+    ]
+
+    const balanced = balanceSymmetricalBranches(nodes, edges)
+
+    const leader = balanced.find((n) => n.id === "leader")!
+    const product = balanced.find((n) => n.id === "product")!
+    const gw = balanced.find((n) => n.id === "gw1")!
+
+    // 两分支距网关中心的距离应绝对一致
+    const distLeader = gw.y - leader.y
+    const distProduct = product.y - gw.y
+    expect(distLeader).toBe(distProduct)
+    expect(distLeader).toBeGreaterThanOrEqual(75)
   })
 })
