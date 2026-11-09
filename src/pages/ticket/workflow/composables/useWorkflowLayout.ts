@@ -1,5 +1,6 @@
 import { type Ref } from "vue"
 import { ElNotification, ElMessage } from "element-plus"
+import { isGatewayType } from "@@/components/workflow/RegisterNode/gateway/constants"
 
 export interface WorkflowLayoutOptions {
   nodesep?: number
@@ -11,9 +12,13 @@ export interface WorkflowLayoutOptions {
 
 /**
  * 增强 Dagre 插件的折线路径计算能力
- * 解决原生 Dagre 在多路分支汇聚到同一目标节点时（如多个并行任务汇入结束节点），
- * 转折点 X 与入靶点 Y 坐标完全相同导致的“迎面相撞、共线打结”缺陷。
- * 通过为多路汇聚边分配独立错开的转折横坐标与垂直入靶高度，实现规整平行的双轨/多轨汇聚。
+ * 解决原生 Dagre 在多路分支汇聚时（如多个并行分支汇入网关或结束节点），
+ * 传统折线算法导致的“迎面相撞合流”或“插在菱形斜边”的严重美学缺陷。
+ *
+ * 核心优化策略：
+ * 1. 【BPMN 国际规范网关四向顶点汇聚】：当汇流目标是菱形网关时，上方分支直角扎入【北顶点(上)】，
+ *    下方分支直角扎入【南顶点(下)】，中间分支平直扎入【西顶点(左)】，四向受力对称工整；
+ * 2. 【多轨平行避让】：当目标为任务或结束节点时，分配独立垂直入靶高度与错峰转折横坐标，绝不共线打结。
  */
 export const enhanceDagrePointsList = (dagre: any) => {
   if (!dagre || typeof dagre.calcPointsList !== "function" || (dagre as any).__converge_enhanced) return
@@ -67,25 +72,92 @@ export const enhanceDagrePointsList = (dagre: any) => {
     }
 
     const N = incomingEdges.length
-    const targetH = targetNodeModel.height || 50
-    const targetW = targetNodeModel.width || 50
-    const sourceW = sourceNodeModel.width || 100
+    const targetH = targetNodeModel.height || 60
+    const targetW = targetNodeModel.width || 60
+    const sourceW = sourceNodeModel.width || 120
+    const startX = newSourceNodeData.x + sourceW / 2
+    const startY = newSourceNodeData.y
 
-    // 计算该汇入分支专属的垂直入靶高度，避免共同挤在水平中轴线上
+    const isTargetGateway = isGatewayType(targetNodeModel.type)
+
+    // ==========================================
+    // 方案 1：目标为菱形网关节点（BPMN 四向顶点智能吸附）
+    // ==========================================
+    if (isTargetGateway) {
+      // 2条分支汇聚网关（如：领导、产品 -> 并行网关）
+      if (N === 2) {
+        if (index === 0) {
+          // 上方分支 -> 垂直扎入网关【北(上)顶点】
+          const endX = newTargetNodeData.x
+          const endY = newTargetNodeData.y - targetH / 2
+          const pointsList = [
+            { x: startX, y: startY },
+            { x: endX, y: startY },
+            { x: endX, y: endY }
+          ]
+          return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
+        } else {
+          // 下方分支 -> 垂直扎入网关【南(下)顶点】
+          const endX = newTargetNodeData.x
+          const endY = newTargetNodeData.y + targetH / 2
+          const pointsList = [
+            { x: startX, y: startY },
+            { x: endX, y: startY },
+            { x: endX, y: endY }
+          ]
+          return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
+        }
+      }
+
+      // 3条分支汇聚网关（如：后端、算法、前端 -> 包容/并行网关）
+      if (N === 3) {
+        if (index === 0) {
+          // 上方分支 -> 垂直扎入网关【北(上)顶点】
+          const endX = newTargetNodeData.x
+          const endY = newTargetNodeData.y - targetH / 2
+          const pointsList = [
+            { x: startX, y: startY },
+            { x: endX, y: startY },
+            { x: endX, y: endY }
+          ]
+          return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
+        } else if (index === 1) {
+          // 中间分支 -> 笔直平射直入网关【西(左)顶点】
+          const endX = newTargetNodeData.x - targetW / 2
+          const endY = newTargetNodeData.y
+          const pointsList = [
+            { x: startX, y: startY },
+            { x: endX, y: endY }
+          ]
+          return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
+        } else {
+          // 下方分支 -> 垂直扎入网关【南(下)顶点】
+          const endX = newTargetNodeData.x
+          const endY = newTargetNodeData.y + targetH / 2
+          const pointsList = [
+            { x: startX, y: startY },
+            { x: endX, y: startY },
+            { x: endX, y: endY }
+          ]
+          return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
+        }
+      }
+    }
+
+    // ==========================================
+    // 方案 2：目标为普通节点（如结束节点、任务节点）—— 多轨平行分流入靶
+    // ==========================================
     let edgeTargetY = newTargetNodeData.y
     if (N === 2) {
-      // 双路汇入时，上下各错开 14px，视觉平行且紧贴目标节点左边缘
       edgeTargetY = index === 0 ? newTargetNodeData.y - 14 : newTargetNodeData.y + 14
     } else {
       const step = Math.min(18, (targetH - 16) / (N - 1))
       edgeTargetY = newTargetNodeData.y - ((N - 1) / 2) * step + index * step
     }
 
-    // 计算专属的转折横坐标偏移量，避免两条垂直线在空中相撞
+    // 转折横坐标错峰避让
     const offset = 38 + index * 22
     const turnX = newSourceNodeData.x + sourceW / 2 + offset
-    const startX = newSourceNodeData.x + sourceW / 2
-    const startY = newSourceNodeData.y
     const endX = newTargetNodeData.x - targetW / 2
 
     const pointsList = [
@@ -102,7 +174,7 @@ export const enhanceDagrePointsList = (dagre: any) => {
 /**
  * 工作流画布自动排版与自适应缩放 Composable
  * 基于 LogicFlow 官方深度集成的 @logicflow/layout (Dagre 拓扑分层算法)
- * 并深度增强多路汇聚多轨路由，彻底消除分支合流处的连线打结共线
+ * 并深度增强 BPMN 四向网关拓扑与多轨汇聚，消除分支合流处的连线打结共线与斜坡插线
  * @param lfRef LogicFlow 实例引用
  * @param containerRef 画布 DOM 容器引用
  * @param onCanvasChange 布局变更后数据同步回调
