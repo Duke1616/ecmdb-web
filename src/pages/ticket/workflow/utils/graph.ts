@@ -138,9 +138,15 @@ export const validateWorkflowGraph = (graphData?: any): WorkflowValidationResult
       warnings.push(`节点「${nodeName}」缺少后续流转出口`)
     }
 
-    // 网关节点输出分支检查
-    if (isGatewayType(node.type) && outCount < 2) {
-      warnings.push(`网关「${nodeName}」输出分支少于 2 条，建议补齐分支走向`)
+    // 网关节点分支合理性检查
+    if (isGatewayType(node.type)) {
+      const isMergeGateway = inCount >= 2 // 汇聚网关 (多进一出或多进多出)
+      const isForkGateway = outCount >= 2 // 分流网关 (一进多出)
+
+      // 仅当网关既非多路汇聚，又非多路分流时提示检查
+      if (!isMergeGateway && !isForkGateway) {
+        warnings.push(`网关「${nodeName}」既未聚合多路输入，也未分流多个输出，建议检查分支走向`)
+      }
     }
   })
 
