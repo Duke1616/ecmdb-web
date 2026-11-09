@@ -2,7 +2,7 @@
   <FormDialog
     v-model="visible"
     title="工作流示范模板库"
-    :subtitle="`预设符合流程引擎规范的标准拓扑模板（当前引擎：${engineLabel}），支持一键载入画布并智能排版`"
+    :subtitle="`仅展示适配当前【${engineLabel}】引擎的标准拓扑模板，支持一键载入画布并智能排版`"
     width="960px"
     :header-icon="Collection"
     :show-footer="true"
@@ -14,28 +14,10 @@
     @cancel="visible = false"
   >
     <div class="template-dialog-content">
-      <!-- 顶部引擎与分类快速筛选 -->
-      <div class="filter-header">
-        <el-radio-group v-model="filterType" size="default" class="filter-group">
-          <el-radio-button value="recommended">
-            ✨ 当前引擎推荐 ({{ recommendedCount }})
-          </el-radio-button>
-          <el-radio-button value="all">
-            全部模板 ({{ WORKFLOW_TEMPLATES.length }})
-          </el-radio-button>
-          <el-radio-button value="flowx">
-            FlowX 专区 (BPMN)
-          </el-radio-button>
-          <el-radio-button value="easyflow">
-            EasyFlow 专区
-          </el-radio-button>
-        </el-radio-group>
-      </div>
-
-      <!-- 模板卡片网格 -->
+      <!-- 模板卡片网格（仅展示当前选中引擎适用的模板） -->
       <div class="template-grid">
         <div
-          v-for="tpl in filteredTemplates"
+          v-for="tpl in currentEngineTemplates"
           :key="tpl.id"
           class="template-card"
           :class="{
@@ -128,7 +110,6 @@ const visible = computed({
   set: (val: boolean) => emits("update:modelValue", val)
 })
 
-const filterType = ref<"recommended" | "all" | "flowx" | "easyflow">("recommended")
 const selectedTemplateId = ref<string>("")
 
 const isFlowX = computed(() => props.currentEngineType === "flowx")
@@ -140,50 +121,38 @@ const isRecommended = (tpl: WorkflowTemplateItem) => {
   return false
 }
 
-const recommendedCount = computed(() => {
-  return WORKFLOW_TEMPLATES.filter((tpl) => isRecommended(tpl) || tpl.engineType === "all").length
-})
-
-const filteredTemplates = computed(() => {
-  if (filterType.value === "recommended") {
-    return [...WORKFLOW_TEMPLATES]
-      .sort((a, b) => {
-        const aRec = isRecommended(a) ? 1 : 0
-        const bRec = isRecommended(b) ? 1 : 0
-        return bRec - aRec
-      })
-      .filter((tpl) => isRecommended(tpl) || tpl.engineType === "all")
-  }
-
-  if (filterType.value === "flowx") {
-    return WORKFLOW_TEMPLATES.filter((tpl) => tpl.engineType === "flowx" || tpl.engineType === "all")
-  }
-
-  if (filterType.value === "easyflow") {
-    return WORKFLOW_TEMPLATES.filter((tpl) => tpl.engineType === "easyflow" || tpl.engineType === "all")
-  }
-
-  return WORKFLOW_TEMPLATES
+// 仅展示适配当前选定引擎的示范模板（专属最佳实践 + 通用模板）
+const currentEngineTemplates = computed(() => {
+  return WORKFLOW_TEMPLATES.filter((tpl) => {
+    if (isFlowX.value) {
+      return tpl.engineType === "flowx" || tpl.engineType === "all"
+    }
+    return tpl.engineType === "easyflow" || tpl.engineType === "all"
+  }).sort((a, b) => {
+    // 专属最佳实践排在首位
+    const aRec = isRecommended(a) ? 1 : 0
+    const bRec = isRecommended(b) ? 1 : 0
+    return bRec - aRec
+  })
 })
 
 const selectedTemplate = computed(() => {
-  return WORKFLOW_TEMPLATES.find((t) => t.id === selectedTemplateId.value)
+  return currentEngineTemplates.value.find((t) => t.id === selectedTemplateId.value)
 })
 
 const currentFooterInfo = computed(() => {
   if (selectedTemplate.value) {
     return `当前选中：「${selectedTemplate.value.name}」（共 ${selectedTemplate.value.nodeCount} 个节点）`
   }
-  return "请选择要注入的示范模板"
+  return `适配当前引擎共 ${currentEngineTemplates.value.length} 个模板，请选择要注入的示范模板`
 })
 
-// 弹窗打开时，默认选定当前引擎的最佳推荐模板
+// 弹窗打开或引擎切换时，默认选定当前引擎的最佳推荐模板
 watch(
-  () => props.modelValue,
-  (val) => {
+  () => [props.modelValue, props.currentEngineType],
+  ([val]) => {
     if (val) {
-      filterType.value = "recommended"
-      const defaultTpl = WORKFLOW_TEMPLATES.find((t) => isRecommended(t)) || WORKFLOW_TEMPLATES[0]
+      const defaultTpl = currentEngineTemplates.value[0]
       if (defaultTpl) {
         selectedTemplateId.value = defaultTpl.id
       }
@@ -208,18 +177,6 @@ const handleConfirmApply = () => {
 <style scoped lang="scss">
 .template-dialog-content {
   padding: 4px 6px 12px;
-}
-
-.filter-header {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-
-  :deep(.el-radio-button__inner) {
-    padding: 8px 18px;
-    font-size: 13px;
-    font-weight: 500;
-  }
 }
 
 .template-grid {
