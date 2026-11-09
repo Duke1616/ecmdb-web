@@ -787,15 +787,269 @@ export const createLinearApprovalGraph = (createId: () => string): WorkflowGraph
 }
 
 /**
+ * 模板：FlowX 双分支竞争或签流 (包容分流 + 排他汇聚)
+ * 拓扑：开始 -> 包容网关 (分流) -> 审批人 A / 审批人 B -> 排他网关 (汇聚，任一人审批通过即往下走) -> 结束
+ */
+export const createFlowXOrBranchGraph = (createId: () => string): WorkflowGraphData => {
+  const startId = createId()
+  const forkInclusionId = createId()
+  const approverAId = createId()
+  const approverBId = createId()
+  const joinConditionId = createId()
+  const endId = createId()
+
+  return {
+    nodes: [
+      {
+        id: startId,
+        type: "start",
+        x: 120,
+        y: 200,
+        text: { x: 120, y: 200, value: "" },
+        properties: { id: startId, name: "开始" }
+      },
+      {
+        id: forkInclusionId,
+        type: "inclusion",
+        x: 280,
+        y: 200,
+        text: { x: 280, y: 200, value: "" },
+        properties: { id: forkInclusionId, name: "包容分流网关" }
+      },
+      {
+        id: approverAId,
+        type: "user",
+        x: 460,
+        y: 120,
+        text: { x: 460, y: 120, value: "" },
+        properties: { id: approverAId, name: "审批人 A", user_type: "assignee" }
+      },
+      {
+        id: approverBId,
+        type: "user",
+        x: 460,
+        y: 280,
+        text: { x: 460, y: 280, value: "" },
+        properties: { id: approverBId, name: "审批人 B", user_type: "assignee" }
+      },
+      {
+        id: joinConditionId,
+        type: "condition",
+        x: 640,
+        y: 200,
+        text: { x: 640, y: 200, value: "" },
+        properties: { id: joinConditionId, name: "排他汇聚网关" }
+      },
+      {
+        id: endId,
+        type: "end",
+        x: 800,
+        y: 200,
+        text: { x: 800, y: 200, value: "" },
+        properties: { id: endId, name: "结束" }
+      }
+    ],
+    edges: [
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: startId,
+        targetNodeId: forkInclusionId,
+        text: { x: 200, y: 200, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: forkInclusionId,
+        targetNodeId: approverAId,
+        text: { x: 370, y: 150, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: forkInclusionId,
+        targetNodeId: approverBId,
+        text: { x: 370, y: 250, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: approverAId,
+        targetNodeId: joinConditionId,
+        text: { x: 550, y: 150, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: approverBId,
+        targetNodeId: joinConditionId,
+        text: { x: 550, y: 250, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: joinConditionId,
+        targetNodeId: endId,
+        text: { x: 720, y: 200, value: "" },
+        properties: {}
+      }
+    ]
+  }
+}
+
+/**
+ * 模板：EasyFlow 双分支或签流 (包容分流 + 包容汇聚)
+ * 拓扑：开始 -> 包容网关 (分流) -> 审批人 A / 审批人 B -> 包容网关 (汇聚，任一人审批通过即往下走) -> 结束
+ */
+export const createEasyFlowOrBranchGraph = (createId: () => string): WorkflowGraphData => {
+  const startId = createId()
+  const forkInclusionId = createId()
+  const approverAId = createId()
+  const approverBId = createId()
+  const joinInclusionId = createId()
+  const endId = createId()
+
+  return {
+    nodes: [
+      {
+        id: startId,
+        type: "start",
+        x: 120,
+        y: 200,
+        text: { x: 120, y: 200, value: "" },
+        properties: { id: startId, name: "开始" }
+      },
+      {
+        id: forkInclusionId,
+        type: "inclusion",
+        x: 280,
+        y: 200,
+        text: { x: 280, y: 200, value: "" },
+        properties: { id: forkInclusionId, name: "包容分流网关" }
+      },
+      {
+        id: approverAId,
+        type: "user",
+        x: 460,
+        y: 120,
+        text: { x: 460, y: 120, value: "" },
+        properties: { id: approverAId, name: "审批人 A", user_type: "assignee" }
+      },
+      {
+        id: approverBId,
+        type: "user",
+        x: 460,
+        y: 280,
+        text: { x: 460, y: 280, value: "" },
+        properties: { id: approverBId, name: "审批人 B", user_type: "assignee" }
+      },
+      {
+        id: joinInclusionId,
+        type: "inclusion",
+        x: 640,
+        y: 200,
+        text: { x: 640, y: 200, value: "" },
+        properties: { id: joinInclusionId, name: "包容汇聚网关" }
+      },
+      {
+        id: endId,
+        type: "end",
+        x: 800,
+        y: 200,
+        text: { x: 800, y: 200, value: "" },
+        properties: { id: endId, name: "结束" }
+      }
+    ],
+    edges: [
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: startId,
+        targetNodeId: forkInclusionId,
+        text: { x: 200, y: 200, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: forkInclusionId,
+        targetNodeId: approverAId,
+        text: { x: 370, y: 150, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: forkInclusionId,
+        targetNodeId: approverBId,
+        text: { x: 370, y: 250, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: approverAId,
+        targetNodeId: joinInclusionId,
+        text: { x: 550, y: 150, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: approverBId,
+        targetNodeId: joinInclusionId,
+        text: { x: 550, y: 250, value: "" },
+        properties: {}
+      },
+      {
+        id: createId(),
+        type: "polyline",
+        sourceNodeId: joinInclusionId,
+        targetNodeId: endId,
+        text: { x: 720, y: 200, value: "" },
+        properties: {}
+      }
+    ]
+  }
+}
+
+/**
  * 全部可用模板定义列表
  */
 export const WORKFLOW_TEMPLATES: WorkflowTemplateItem[] = [
+  {
+    id: "flowx-or-branch",
+    name: "FlowX · 双分支竞争或签流 (排他汇聚)",
+    description: "FlowX BPMN 规范：包容网关分发至两路审批分支，汇聚至排他网关（X）。任一人审批通过即触发排他汇聚并流向后置环节。",
+    engineType: "flowx",
+    tag: "FlowX 推荐",
+    badgeColor: "purple",
+    nodeCount: 6,
+    summary: ["开始", "包容分流网关", "审批人 A / B (分支)", "排他汇聚网关 (任一通过)", "结束"],
+    createGraph: createFlowXOrBranchGraph
+  },
+  {
+    id: "easyflow-or-branch",
+    name: "EasyFlow · 双分支或签审批流 (包容汇聚)",
+    description: "EasyFlow 模式：包容网关并发派发至两路审批分支，并在后置包容网关汇聚。哪个节点审批通过都流向后续环节。",
+    engineType: "easyflow",
+    tag: "EasyFlow 推荐",
+    badgeColor: "blue",
+    nodeCount: 6,
+    summary: ["开始", "包容分流网关", "审批人 A / B (分支)", "包容汇聚网关 (任一通过)", "结束"],
+    createGraph: createEasyFlowOrBranchGraph
+  },
   {
     id: "flowx-comprehensive",
     name: "FlowX · 研发多分支包容与并行发布流",
     description: "遵循 BPMN 2.0 规范，包含包容网关多技术线（后端/算法/前端）并发汇聚、管理层双人并行会签及自动部署与群通知闭环。",
     engineType: "flowx",
-    tag: "FlowX 推荐",
+    tag: "FlowX 综合",
     badgeColor: "purple",
     nodeCount: 14,
     summary: ["开始", "抄送提交人", "包容网关分流 (3分支)", "包容汇聚", "并行会签 (2分支)", "自动化部署", "群通知", "结束"],
@@ -806,7 +1060,7 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplateItem[] = [
     name: "EasyFlow · 条件分流与并行会签发布流",
     description: "专为 EasyFlow 引擎设计，基于条件网关与排他网关阵列分流，配合并行网关会签、自动化部署及群通知。",
     engineType: "easyflow",
-    tag: "EasyFlow 推荐",
+    tag: "EasyFlow 综合",
     badgeColor: "blue",
     nodeCount: 16,
     summary: ["开始", "抄送提交人", "条件网关分流", "排他分支阵列 (后端/前端/算法)", "并行会签", "自动化部署", "群通知", "结束"],
@@ -846,7 +1100,7 @@ export const getEngineDefaultTemplateGraph = (
   engineType: string = "flowx"
 ): WorkflowGraphData => {
   if (engineType === "easyflow" || engineType === "easy-workflow") {
-    return createEasyFlowComprehensiveGraph(createId)
+    return createEasyFlowOrBranchGraph(createId)
   }
-  return createFlowXComprehensiveGraph(createId)
+  return createFlowXOrBranchGraph(createId)
 }

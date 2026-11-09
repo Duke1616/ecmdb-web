@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
   WORKFLOW_TEMPLATES,
+  createFlowXOrBranchGraph,
+  createEasyFlowOrBranchGraph,
   createFlowXComprehensiveGraph,
   createEasyFlowComprehensiveGraph,
   createStandardBranchGraph,
@@ -25,6 +27,27 @@ describe("Workflow Templates", () => {
       expect(nodeIds.has(edge.targetNodeId)).toBe(true)
     })
   }
+
+  it("FlowX 双分支竞争或签流拓扑正确(包容分流 + 排他汇聚)", () => {
+    const graph = createFlowXOrBranchGraph(mockCreateId)
+    expect(graph.nodes!.length).toBe(6)
+    expect(graph.edges!.length).toBe(6)
+    validateGraphIntegrity(graph)
+
+    const nodeTypes = graph.nodes!.map((n: any) => n.type)
+    expect(nodeTypes).toContain("inclusion")
+    expect(nodeTypes).toContain("condition")
+  })
+
+  it("EasyFlow 双分支或签协同流拓扑正确(包容分流 + 包容汇聚)", () => {
+    const graph = createEasyFlowOrBranchGraph(mockCreateId)
+    expect(graph.nodes!.length).toBe(6)
+    expect(graph.edges!.length).toBe(6)
+    validateGraphIntegrity(graph)
+
+    const inclusionNodes = graph.nodes!.filter((n: any) => n.type === "inclusion")
+    expect(inclusionNodes.length).toBe(2)
+  })
 
   it("FlowX 综合发布模板拓扑结构完整无悬空边", () => {
     const graph = createFlowXComprehensiveGraph(mockCreateId)
@@ -70,8 +93,8 @@ describe("Workflow Templates", () => {
     const flowxGraph = getEngineDefaultTemplateGraph(mockCreateId, "flowx")
     const easyflowGraph = getEngineDefaultTemplateGraph(mockCreateId, "easyflow")
 
-    expect(flowxGraph.nodes!.some((n: any) => n.type === "inclusion")).toBe(true)
-    expect(easyflowGraph.nodes!.some((n: any) => n.type === "selective")).toBe(true)
+    expect(flowxGraph.nodes!.some((n: any) => n.type === "condition")).toBe(true)
+    expect(easyflowGraph.nodes!.filter((n: any) => n.type === "inclusion").length).toBe(2)
   })
 
   it("WORKFLOW_TEMPLATES 导出列表完备且每项均可成功执行 createGraph", () => {
