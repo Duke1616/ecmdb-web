@@ -267,7 +267,7 @@ const handleToggleDebug = (val: boolean) => {
  * 自动排版触发
  */
 const handleCalibrate = () => {
-  autoLayoutAndCenter({ nodesep: 80, ranksep: 100, showNotification: true })
+  autoLayoutAndCenter({ showNotification: true })
 }
 
 /**
@@ -284,7 +284,7 @@ const handleLoadDemo = () => {
       flow_data: cleanGraphData(demoData)
     })
     nextTick(() => {
-      autoLayoutAndCenter({ nodesep: 80, ranksep: 100, showNotification: false })
+      autoLayoutAndCenter({ showNotification: false })
       updateCounts()
       ElMessage.success("已成功载入标准工作流 Demo 示例！")
     })

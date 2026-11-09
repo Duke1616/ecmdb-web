@@ -78,16 +78,16 @@ export const enhanceDagrePointsList = (dagre: any) => {
     const startX = newSourceNodeData.x + sourceW / 2
     const startY = newSourceNodeData.y
 
-    const isTargetGateway = isGatewayType(targetNodeModel.type)
+    const isTargetSpecial = isGatewayType(targetNodeModel.type) || targetNodeModel.type === "end"
 
     // ==========================================
-    // 方案 1：目标为菱形网关节点（BPMN 四向顶点智能吸附）
+    // 方案 1：目标为菱形网关或圆形结束节点（BPMN 四向极点智能吸附，绝不悬空扎偏）
     // ==========================================
-    if (isTargetGateway) {
-      // 2条分支汇聚网关（如：领导、产品 -> 并行网关）
+    if (isTargetSpecial) {
+      // 2条分支汇聚（如：领导、产品 -> 并行网关，或多任务汇入结束圆圈）
       if (N === 2) {
         if (index === 0) {
-          // 上方分支 -> 垂直扎入网关【北(上)顶点】
+          // 上方分支 -> 垂直向下 90° 直角扎入【北(上)顶点/极点锚点】
           const endX = newTargetNodeData.x
           const endY = newTargetNodeData.y - targetH / 2
           const pointsList = [
@@ -97,7 +97,7 @@ export const enhanceDagrePointsList = (dagre: any) => {
           ]
           return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
         } else {
-          // 下方分支 -> 垂直扎入网关【南(下)顶点】
+          // 下方分支 -> 垂直向上 90° 直角扎入【南(下)顶点/极点锚点】
           const endX = newTargetNodeData.x
           const endY = newTargetNodeData.y + targetH / 2
           const pointsList = [
@@ -109,10 +109,10 @@ export const enhanceDagrePointsList = (dagre: any) => {
         }
       }
 
-      // 3条分支汇聚网关（如：后端、算法、前端 -> 包容/并行网关）
+      // 3条分支汇聚（如：后端、算法、前端 -> 网关或结束圆圈）
       if (N === 3) {
         if (index === 0) {
-          // 上方分支 -> 垂直扎入网关【北(上)顶点】
+          // 上方分支 -> 垂直扎入【北(上)极点】
           const endX = newTargetNodeData.x
           const endY = newTargetNodeData.y - targetH / 2
           const pointsList = [
@@ -122,7 +122,7 @@ export const enhanceDagrePointsList = (dagre: any) => {
           ]
           return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
         } else if (index === 1) {
-          // 中间分支 -> 笔直平射直入网关【西(左)顶点】
+          // 中间分支 -> 笔直平射直入【西(左)极点】
           const endX = newTargetNodeData.x - targetW / 2
           const endY = newTargetNodeData.y
           const pointsList = [
@@ -131,7 +131,7 @@ export const enhanceDagrePointsList = (dagre: any) => {
           ]
           return typeof this.pointFilter === "function" ? this.pointFilter(pointsList) : pointsList
         } else {
-          // 下方分支 -> 垂直扎入网关【南(下)顶点】
+          // 下方分支 -> 垂直扎入【南(下)极点】
           const endX = newTargetNodeData.x
           const endY = newTargetNodeData.y + targetH / 2
           const pointsList = [
@@ -145,7 +145,7 @@ export const enhanceDagrePointsList = (dagre: any) => {
     }
 
     // ==========================================
-    // 方案 2：目标为普通节点（如结束节点、任务节点）—— 多轨平行分流入靶
+    // 方案 2：目标为普通矩形任务节点 —— 多轨平行分流入靶
     // ==========================================
     let edgeTargetY = newTargetNodeData.y
     if (N === 2) {
@@ -286,11 +286,17 @@ export const useWorkflowLayout = (
     // 动态增强汇聚连线计算，错开转折点与入靶高度
     enhanceDagrePointsList(dagre)
 
+    const graphData = lf.getGraphData() as any
+    const nodeCount = graphData?.nodes?.length || 0
+    // 节点较少时给予更加舒展大气的呼吸间距，彻底消除拥挤窒息感
+    const defaultRanksep = nodeCount <= 8 ? 170 : 140
+    const defaultNodesep = nodeCount <= 8 ? 110 : 90
+
     const {
       rankdir = "LR",
       align = undefined,
-      nodesep = 80,
-      ranksep = 100
+      nodesep = defaultNodesep,
+      ranksep = defaultRanksep
     } = options
 
     try {

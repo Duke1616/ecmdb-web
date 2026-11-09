@@ -61,16 +61,15 @@ describe("useWorkflowLayout", () => {
     expect(result).toBe(false)
   })
 
-  it("多路汇入普通节点时应智能错开折点与入靶高度", () => {
+  it("多路汇入普通任务节点时应智能错开折点与入靶高度", () => {
     const mockLf = {
       graphModel: {
         edges: [
-          { id: "e1", sourceNodeId: "user", targetNodeId: "end", modelType: "polyline-edge" },
-          { id: "e2", sourceNodeId: "auto", targetNodeId: "end", modelType: "polyline-edge" }
+          { id: "e1", sourceNodeId: "user", targetNodeId: "common-task", modelType: "polyline-edge" },
+          { id: "e2", sourceNodeId: "auto", targetNodeId: "common-task", modelType: "polyline-edge" }
         ]
       },
       getNodeModelById(id: string) {
-        if (id === "end") return { type: "end", width: 60, height: 60 }
         return { type: "user", width: 120, height: 64 }
       }
     }
@@ -87,7 +86,7 @@ describe("useWorkflowLayout", () => {
     const nodes = [
       { id: "user", x: 450, y: 150 },
       { id: "auto", x: 450, y: 350 },
-      { id: "end", x: 650, y: 250 }
+      { id: "common-task", x: 650, y: 250 }
     ]
 
     const pts1 = dagre.calcPointsList(mockLf.graphModel.edges[0], nodes)
@@ -99,6 +98,44 @@ describe("useWorkflowLayout", () => {
     expect(pts1[pts1.length - 1].y).toBe(236)
     expect(pts2[pts2.length - 1].y).toBe(264)
     expect(pts1[1].x).not.toBe(pts2[1].x)
+  })
+
+  it("多分支汇入结束圆圈节点时应垂直直角扎入正北正南极点锚点，绝不偏航悬空", () => {
+    const mockLf = {
+      graphModel: {
+        edges: [
+          { id: "e1", sourceNodeId: "user", targetNodeId: "end-circle", modelType: "polyline-edge" },
+          { id: "e2", sourceNodeId: "auto", targetNodeId: "end-circle", modelType: "polyline-edge" }
+        ]
+      },
+      getNodeModelById(id: string) {
+        if (id === "end-circle") return { type: "end", width: 60, height: 60 }
+        return { type: "user", width: 120, height: 64 }
+      }
+    }
+
+    const dagre: any = {
+      lf: mockLf,
+      option: { rankdir: "LR" },
+      calcPointsList: vi.fn(),
+      pointFilter: (pts: any) => pts
+    }
+
+    enhanceDagrePointsList(dagre)
+
+    const nodes = [
+      { id: "user", x: 450, y: 150 },
+      { id: "auto", x: 450, y: 350 },
+      { id: "end-circle", x: 650, y: 250 }
+    ]
+
+    const pts1 = dagre.calcPointsList(mockLf.graphModel.edges[0], nodes)
+    const pts2 = dagre.calcPointsList(mockLf.graphModel.edges[1], nodes)
+
+    // 上方任务垂直扎入圆圈正北极点 (650, 250 - 30 = 220)
+    expect(pts1[pts1.length - 1]).toEqual({ x: 650, y: 220 })
+    // 下方任务垂直扎入圆圈正南极点 (650, 250 + 30 = 280)
+    expect(pts2[pts2.length - 1]).toEqual({ x: 650, y: 280 })
   })
 
   it("2条分支汇入网关节点时应采用 BPMN 上下顶点汇聚", () => {
