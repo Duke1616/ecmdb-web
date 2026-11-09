@@ -19,6 +19,7 @@
         <Control
           v-if="lf"
           :lf="lf"
+          :debug="isDebugMode"
           @getData="getData"
           @download="download"
           @toggleDebug="handleToggleDebug"
@@ -118,7 +119,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
-import { createDemoWorkflowGraph, type WorkflowTemplateItem } from "../types"
+import { type WorkflowTemplateItem } from "../types"
 import { cleanGraphData, validateWorkflowGraph } from "../utils/graph"
 
 // 引入拆分的领域 Composables
@@ -186,12 +187,11 @@ const syncFormData = () => {
 }
 
 // 组合网关管理 Composable
-const {
-  selectedGatewayNode,
-  handleSelectGateway,
-  clearSelectedGateway,
-  changeGatewayType
-} = useGatewayManager(lf, syncFormData, isDebugMode)
+const { selectedGatewayNode, handleSelectGateway, clearSelectedGateway, changeGatewayType } = useGatewayManager(
+  lf,
+  syncFormData,
+  isDebugMode
+)
 
 // 组合画布布局与居中 Composable
 const { smartCenterAndZoom, autoLayoutAndCenter } = useWorkflowLayout(lf, container, syncFormData)
@@ -295,6 +295,10 @@ const handleSelectTemplate = (tpl: WorkflowTemplateItem) => {
   if (!lf.value) return
 
   const doLoad = () => {
+    // 重新载入模板时，自动关闭并重置调试模式
+    if (isDebugMode.value) {
+      isDebugMode.value = false
+    }
     const templateData = tpl.createGraph(uuidv4)
     lf.value?.render(templateData)
     emits("update:formData", {
@@ -310,15 +314,11 @@ const handleSelectTemplate = (tpl: WorkflowTemplateItem) => {
 
   // 画布已有复杂拓扑时，弹出确认提示
   if (nodeCount.value > 2 || edgeCount.value > 0) {
-    ElMessageBox.confirm(
-      `加载「${tpl.name}」将重置并覆盖当前画布已有内容，是否继续？`,
-      "载入示例模板",
-      {
-        confirmButtonText: "确认注入",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
-    )
+    ElMessageBox.confirm(`加载「${tpl.name}」将重置并覆盖当前画布已有内容，是否继续？`, "载入示例模板", {
+      confirmButtonText: "确认注入",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
       .then(() => doLoad())
       .catch(() => {})
   } else {
@@ -453,7 +453,7 @@ const initLf = () => {
 
   // 禁用节点拖拽时的渐进连线
   if ((lfInstance.extension as any)?.proximityConnect) {
-    (lfInstance.extension as any).proximityConnect.handleNodeDrag = () => {}
+    ;(lfInstance.extension as any).proximityConnect.handleNodeDrag = () => {}
   }
 }
 

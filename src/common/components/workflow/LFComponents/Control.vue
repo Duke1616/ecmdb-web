@@ -112,14 +112,25 @@ interface Props {
     nodeCount: number
     edgeCount: number
   }
+  debug?: boolean // 外部同步的调试模式状态
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits(["getData", "download", "toggleDebug", "calibrate", "loadDemo"])
+const props = withDefaults(defineProps<Props>(), {
+  debug: false
+})
+const emit = defineEmits(["getData", "download", "toggleDebug", "calibrate", "loadDemo", "update:debug"])
 
 const undoDisable = ref(true)
 const redoDisable = ref(true)
-const isDebug = ref(false)
+const isDebug = ref(props.debug)
+
+// 响应外部 debug 属性变化（如重新载入模板时自动退出调试模式）
+watch(
+  () => props.debug,
+  (val) => {
+    isDebug.value = !!val
+  }
+)
 
 const updateButtonStates = () => {
   if (props.lf && props.lf.history) {
@@ -166,8 +177,17 @@ const getData = () => {
 
 const toggleDebug = () => {
   isDebug.value = !isDebug.value
+  emit("update:debug", isDebug.value)
   emit("toggleDebug", isDebug.value)
 }
+
+const resetDebug = () => {
+  isDebug.value = false
+  emit("update:debug", false)
+  emit("toggleDebug", false)
+}
+
+defineExpose({ resetDebug })
 
 const calibrate = () => {
   emit("calibrate")

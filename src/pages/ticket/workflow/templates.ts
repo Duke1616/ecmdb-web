@@ -805,7 +805,7 @@ export const createFlowXOrBranchGraph = (createId: () => string): WorkflowGraphD
         type: "start",
         x: 120,
         y: 200,
-        text: { x: 120, y: 200, value: "" },
+        text: { x: 120, y: 200, value: "开始" },
         properties: { id: startId, name: "开始" }
       },
       {
@@ -821,7 +821,7 @@ export const createFlowXOrBranchGraph = (createId: () => string): WorkflowGraphD
         type: "user",
         x: 460,
         y: 120,
-        text: { x: 460, y: 120, value: "" },
+        text: { x: 460, y: 120, value: "审批人 A" },
         properties: { id: approverAId, name: "审批人 A", user_type: "assignee" }
       },
       {
@@ -829,7 +829,7 @@ export const createFlowXOrBranchGraph = (createId: () => string): WorkflowGraphD
         type: "user",
         x: 460,
         y: 280,
-        text: { x: 460, y: 280, value: "" },
+        text: { x: 460, y: 280, value: "审批人 B" },
         properties: { id: approverBId, name: "审批人 B", user_type: "assignee" }
       },
       {
@@ -845,7 +845,7 @@ export const createFlowXOrBranchGraph = (createId: () => string): WorkflowGraphD
         type: "end",
         x: 800,
         y: 200,
-        text: { x: 800, y: 200, value: "" },
+        text: { x: 800, y: 200, value: "结束" },
         properties: { id: endId, name: "结束" }
       }
     ],
@@ -921,7 +921,7 @@ export const createEasyFlowOrBranchGraph = (createId: () => string): WorkflowGra
         type: "start",
         x: 120,
         y: 200,
-        text: { x: 120, y: 200, value: "" },
+        text: { x: 120, y: 200, value: "开始" },
         properties: { id: startId, name: "开始" }
       },
       {
@@ -937,7 +937,7 @@ export const createEasyFlowOrBranchGraph = (createId: () => string): WorkflowGra
         type: "user",
         x: 460,
         y: 120,
-        text: { x: 460, y: 120, value: "" },
+        text: { x: 460, y: 120, value: "审批人 A" },
         properties: { id: approverAId, name: "审批人 A", user_type: "assignee" }
       },
       {
@@ -945,7 +945,7 @@ export const createEasyFlowOrBranchGraph = (createId: () => string): WorkflowGra
         type: "user",
         x: 460,
         y: 280,
-        text: { x: 460, y: 280, value: "" },
+        text: { x: 460, y: 280, value: "审批人 B" },
         properties: { id: approverBId, name: "审批人 B", user_type: "assignee" }
       },
       {
@@ -961,7 +961,7 @@ export const createEasyFlowOrBranchGraph = (createId: () => string): WorkflowGra
         type: "end",
         x: 800,
         y: 200,
-        text: { x: 800, y: 200, value: "" },
+        text: { x: 800, y: 200, value: "结束" },
         properties: { id: endId, name: "结束" }
       }
     ],
