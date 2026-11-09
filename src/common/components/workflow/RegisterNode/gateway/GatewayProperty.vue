@@ -34,7 +34,7 @@
         <el-icon><Switch /></el-icon>
       </template>
 
-      <div class="gateway-switch-grid" :class="{ 'is-three-col': displayGatewayTypes.length === 3 }">
+      <div class="gateway-switch-grid">
         <div
           v-for="item in displayGatewayTypes"
           :key="item.type"
@@ -43,7 +43,7 @@
             `theme-${item.themeColor}`,
             {
               active: currentGatewayType === item.type,
-              disabled: isReadonly
+              disabled: isCardDisabled(item.type)
             }
           ]"
           @click="handleSelectGatewayType(item.type)"
@@ -64,6 +64,12 @@
               <div class="type-name">
                 {{ item.name }}
                 <span v-if="currentGatewayType === item.type" class="active-badge">当前</span>
+                <span
+                  v-else-if="props.engineType === 'flowx' && item.type === 'selective'"
+                  class="unsupported-badge"
+                >
+                  仅 EasyFlow
+                </span>
               </div>
               <div class="type-subtitle">{{ item.subTitle }}</div>
             </div>
@@ -129,13 +135,22 @@ const emits = defineEmits<{
   (e: "changeType", newType: string): void
 }>()
 
-// 根据工作流引擎过滤网关选项（FlowX 遵循 BPMN 2.0，不展示传统条件网关）
+// 全量展示网关类型列表（含条件网关，供历史网关识别与转换）
 const displayGatewayTypes = computed(() => {
-  if (props.engineType === "flowx") {
-    return GATEWAY_TYPE_LIST.filter((item) => item.type !== "selective")
-  }
   return GATEWAY_TYPE_LIST
 })
+
+/**
+ * 判断网关卡片是否禁用
+ * FlowX 遵循 BPMN 2.0 规范，不支持将其他网关转换为条件网关
+ */
+const isCardDisabled = (type: GatewayType) => {
+  if (isReadonly.value) return true
+  if (props.engineType === "flowx" && type === "selective" && currentGatewayType.value !== "selective") {
+    return true
+  }
+  return false
+}
 
 const formRef = ref<FormInstance | null>(null)
 const propertyForm = reactive({
@@ -186,6 +201,7 @@ watch(
  */
 const handleSelectGatewayType = (targetType: GatewayType) => {
   if (isReadonly.value) return
+  if (isCardDisabled(targetType)) return
   if (targetType === currentGatewayType.value) return
 
   const oldConfig = currentConfig.value
@@ -349,6 +365,16 @@ defineExpose({
       color: #1e40af;
       border-radius: 4px;
       font-weight: 600;
+    }
+
+    .unsupported-badge {
+      font-size: 10px;
+      padding: 1px 5px;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-radius: 4px;
+      font-weight: 500;
+      border: 1px solid #e2e8f0;
     }
 
     .type-subtitle {

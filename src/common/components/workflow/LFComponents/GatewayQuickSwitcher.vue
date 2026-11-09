@@ -20,7 +20,7 @@
         <el-tooltip
           v-for="item in displayGatewayTypes"
           :key="item.type"
-          :content="`${item.name} (${item.badgeText}) - ${item.subTitle}`"
+          :content="getOptionTooltip(item)"
           placement="top"
           :show-after="200"
         >
@@ -31,10 +31,10 @@
               `theme-${item.themeColor}`,
               {
                 active: currentType === item.type,
-                disabled: disabled
+                disabled: isOptionDisabled(item.type)
               }
             ]"
-            :disabled="disabled"
+            :disabled="isOptionDisabled(item.type)"
             @click.stop="handleSwitch(item.type)"
           >
             <svg :viewBox="item.viewBox" class="gateway-btn-icon">
@@ -78,12 +78,26 @@ const emits = defineEmits<{
   (e: "openDetail"): void
 }>()
 
+// 展示全部网关类型，支持存量条件网关平滑识别与切换
 const displayGatewayTypes = computed(() => {
-  if (props.engineType === "flowx") {
-    return GATEWAY_TYPE_LIST.filter((item) => item.type !== "selective")
-  }
   return GATEWAY_TYPE_LIST
 })
+
+const isOptionDisabled = (targetType: GatewayType) => {
+  if (props.disabled) return true
+  // FlowX 引擎下，不支持切回传统条件网关，除非当前节点本身就是条件网关（允许展示自身选中状态）
+  if (props.engineType === "flowx" && targetType === "selective" && currentType.value !== "selective") {
+    return true
+  }
+  return false
+}
+
+const getOptionTooltip = (item: any) => {
+  if (props.engineType === "flowx" && item.type === "selective" && currentType.value !== "selective") {
+    return `${item.name} - FlowX 引擎遵循 BPMN 规范，不支持切换为传统条件网关`
+  }
+  return `${item.name} (${item.badgeText}) - ${item.subTitle}`
+}
 
 const position = ref<{ x: number; y: number } | null>(null)
 const flipped = ref(false)
@@ -144,7 +158,7 @@ watch(
 )
 
 const handleSwitch = (targetType: GatewayType) => {
-  if (props.disabled) return
+  if (isOptionDisabled(targetType)) return
   if (targetType === currentType.value) return
   emits("changeType", targetType)
 }

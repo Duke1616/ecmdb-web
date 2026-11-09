@@ -14,15 +14,28 @@
           网关节点
         </h4>
         <div class="node-grid">
-          <div v-for="item in gatewayNodes" :key="item.text" class="node-card" @mousedown="$_dragNode(item)">
-            <div class="node-icon" :class="item.class">
-              <svg v-if="item.iconSVG" viewBox="0 0 1024 1024" style="width: 20px; height: 20px">
-                <path :d="item.iconSVG" fill="currentColor" />
-              </svg>
+          <el-tooltip
+            v-for="item in gatewayNodes"
+            :key="item.text"
+            :disabled="!isNodeDisabled(item)"
+            :content="getNodeDisabledTip(item)"
+            placement="right"
+          >
+            <div
+              class="node-card"
+              :class="{ 'is-disabled': isNodeDisabled(item) }"
+              @mousedown="$_dragNode(item)"
+            >
+              <div v-if="isNodeDisabled(item)" class="disabled-tag">不可用</div>
+              <div class="node-icon" :class="item.class">
+                <svg v-if="item.iconSVG" viewBox="0 0 1024 1024" style="width: 20px; height: 20px">
+                  <path :d="item.iconSVG" fill="currentColor" />
+                </svg>
+              </div>
+              <span class="node-label font-body">{{ item.text }}</span>
+              <div class="node-description font-body">{{ item.description }}</div>
             </div>
-            <span class="node-label font-body">{{ item.text }}</span>
-            <div class="node-description font-body">{{ item.description }}</div>
-          </div>
+          </el-tooltip>
         </div>
       </div>
 
@@ -81,13 +94,24 @@ const props = withDefaults(defineProps<Props>(), {
 // 过滤掉边连线配置，只显示节点
 const availableNodes = computed(() => WORKFLOW_NODES.filter((n) => n.type !== "polyline"))
 
-const gatewayNodes = computed(() => {
-  const nodes = availableNodes.value.filter((item) => item.category === "gateway")
-  // NOTE: FlowX 采用标准 BPMN 2.0 规范，网关由连线条件驱动，不暴露传统条件网关（selective）
-  if (props.engineType === "flowx") {
-    return nodes.filter((item) => item.type !== "selective")
+const isNodeDisabled = (item: any) => {
+  // NOTE: FlowX 引擎遵循 BPMN 2.0 规范，网关由连线条件驱动，不支持直接新建/拖拽传统条件网关
+  if (props.engineType === "flowx" && item.type === "selective") {
+    return true
   }
-  return nodes
+  return false
+}
+
+const getNodeDisabledTip = (item: any) => {
+  if (props.engineType === "flowx" && item.type === "selective") {
+    return "FlowX 引擎遵循 BPMN 规范，不支持新建条件网关（推荐使用排他或包容网关）"
+  }
+  return ""
+}
+
+const gatewayNodes = computed(() => {
+  // 展示所有网关节点，便于识别存量网关与切换
+  return availableNodes.value.filter((item) => item.category === "gateway")
 })
 
 const businessNodes = computed(() => availableNodes.value.filter((item) => item.category === "business"))
@@ -95,6 +119,10 @@ const businessNodes = computed(() => availableNodes.value.filter((item) => item.
 const controlNodes = computed(() => availableNodes.value.filter((item) => item.category === "control"))
 
 const $_dragNode = (item: any) => {
+  // 禁用状态拦截拖拽
+  if (isNodeDisabled(item)) {
+    return
+  }
   console.log("[v0] Starting drag for node:", item.type)
   if (props.lf && props.lf.dnd) {
     props.lf.dnd.startDrag({
@@ -214,6 +242,36 @@ const $_dragNode = (item: any) => {
   &:active {
     cursor: grabbing;
     transform: translateY(0);
+  }
+
+  &.is-disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #cbd5e1;
+
+    &:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: #cbd5e1;
+
+      &::before {
+        transform: scaleX(0);
+      }
+    }
+
+    .disabled-tag {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 9px;
+      line-height: 1;
+      padding: 2px 4px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #64748b;
+      font-weight: 600;
+    }
   }
 }
 
