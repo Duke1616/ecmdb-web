@@ -434,21 +434,17 @@ const handleRejectConfirm = async () => {
   if (!canOperate(TICKET_CAPABILITIES.Manager.Reject)) return
 
   try {
-    const { value: comment } = await ElMessageBox.prompt(
-      "请输入驳回原因，方便提单人了解修改建议：",
-      "确认驳回工单",
-      {
-        confirmButtonText: "确定驳回",
-        cancelButtonText: "取消",
-        inputPlaceholder: "请详细填写驳回理由（必填）",
-        inputType: "textarea",
-        inputPattern: /\S+/,
-        inputErrorMessage: "驳回原因不能为空",
-        type: "warning",
-        confirmButtonClass: "el-button--danger",
-        cancelButtonClass: "el-button--default"
-      }
-    )
+    const { value: comment } = await ElMessageBox.prompt("请输入驳回原因，方便提单人了解修改建议：", "确认驳回工单", {
+      confirmButtonText: "确定驳回",
+      cancelButtonText: "取消",
+      inputPlaceholder: "请详细填写驳回理由（必填）",
+      inputType: "textarea",
+      inputPattern: /\S+/,
+      inputErrorMessage: "驳回原因不能为空",
+      type: "warning",
+      confirmButtonClass: "el-button--danger",
+      cancelButtonClass: "el-button--default"
+    })
     handleReject(comment)
   } catch (error) {
     // 用户取消操作

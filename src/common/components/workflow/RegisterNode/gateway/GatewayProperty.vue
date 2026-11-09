@@ -64,10 +64,7 @@
               <div class="type-name">
                 {{ item.name }}
                 <span v-if="currentGatewayType === item.type" class="active-badge">当前</span>
-                <span
-                  v-else-if="props.engineType === 'flowx' && item.type === 'selective'"
-                  class="unsupported-badge"
-                >
+                <span v-else-if="props.engineType === 'flowx' && item.type === 'selective'" class="unsupported-badge">
                   仅 EasyFlow
                 </span>
               </div>

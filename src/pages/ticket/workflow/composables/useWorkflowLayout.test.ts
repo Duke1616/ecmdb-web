@@ -69,7 +69,7 @@ describe("useWorkflowLayout", () => {
           { id: "e2", sourceNodeId: "auto", targetNodeId: "common-task", modelType: "polyline-edge" }
         ]
       },
-      getNodeModelById(id: string) {
+      getNodeModelById() {
         return { type: "user", width: 120, height: 64 }
       }
     }
