@@ -464,7 +464,7 @@ export const createEasyFlowComprehensiveGraph = (createId: () => string): Workfl
         sourceNodeId: gwBackendId,
         targetNodeId: backendId,
         text: { x: 545, y: 140, value: "后端" },
-        properties: { name: "后端", expression: "$type == 'backend'" }
+        properties: { name: "后端", expression: "$type in ('backend')" }
       },
       {
         id: createId(),
@@ -480,7 +480,7 @@ export const createEasyFlowComprehensiveGraph = (createId: () => string): Workfl
         sourceNodeId: gwFrontendId,
         targetNodeId: frontendId,
         text: { x: 545, y: 260, value: "前端" },
-        properties: { name: "前端", expression: "$type == 'frontend'" }
+        properties: { name: "前端", expression: "$type in ('frontend')" }
       },
       {
         id: createId(),
@@ -496,7 +496,7 @@ export const createEasyFlowComprehensiveGraph = (createId: () => string): Workfl
         sourceNodeId: gwAlgoId,
         targetNodeId: algoId,
         text: { x: 545, y: 380, value: "算法" },
-        properties: { name: "算法", expression: "$type == 'algo'" }
+        properties: { name: "算法", expression: "$type in ('algo')" }
       },
       {
         id: createId(),
@@ -661,7 +661,7 @@ export const createStandardBranchGraph = (createId: () => string): WorkflowGraph
         text: { x: 440, y: 155, value: "高风险/变更" },
         properties: {
           name: "高风险/变更",
-          expression: "$level == 'high' || $risk >= 3"
+          expression: "$level in ('high') || $risk >= 3"
         }
       },
       {
@@ -672,7 +672,7 @@ export const createStandardBranchGraph = (createId: () => string): WorkflowGraph
         text: { x: 440, y: 285, value: "常规放行" },
         properties: {
           name: "常规放行",
-          expression: "$level != 'high'"
+          expression: "$level not in ('high')"
         }
       },
       {
