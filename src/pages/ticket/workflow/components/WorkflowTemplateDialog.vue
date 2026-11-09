@@ -107,7 +107,7 @@ const visible = computed({
 const selectedTemplateId = ref<string>("")
 
 const isFlowX = computed(() => props.currentEngineType === "flowx")
-const engineLabel = computed(() => (isFlowX.value ? "FlowX (BPMN 2.0)" : "EasyFlow"))
+const engineLabel = computed(() => (isFlowX.value ? "FlowX 流程引擎" : "EasyFlow 流程引擎"))
 
 // 仅展示适配当前选定引擎的示范模板（当前引擎专属模板 + 通用模板）
 const currentEngineTemplates = computed(() => {

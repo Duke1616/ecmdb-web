@@ -1021,72 +1021,82 @@ export const createEasyFlowOrBranchGraph = (createId: () => string): WorkflowGra
 /**
  * 全部可用模板定义列表
  */
+/**
+ * 全部可用模板定义列表
+ * 排序原则：由简入繁，越通用简单越靠前，复杂进阶放最后
+ */
 export const WORKFLOW_TEMPLATES: WorkflowTemplateItem[] = [
-  {
-    id: "flowx-or-branch",
-    name: "双分支竞争或签流 (排他汇聚)",
-    description: "BPMN 规范：包容网关并发分发至两路审批分支，汇聚至排他网关（X）。任一人审批通过即直接触发汇聚向下流转。",
-    engineType: "flowx",
-    tag: "竞争或签",
-    badgeColor: "purple",
-    nodeCount: 6,
-    summary: ["开始", "包容分流网关", "审批人 A / B (分支)", "排他汇聚网关 (任一通过)", "结束"],
-    createGraph: createFlowXOrBranchGraph
-  },
-  {
-    id: "easyflow-or-branch",
-    name: "双分支或签审批流 (包容汇聚)",
-    description: "EasyFlow 模式：包容网关并发派发至两路审批分支并在后置包容网关汇聚。任一节点处理完成即可流向后续环节。",
-    engineType: "easyflow",
-    tag: "多路或签",
-    badgeColor: "blue",
-    nodeCount: 6,
-    summary: ["开始", "包容分流网关", "审批人 A / B (分支)", "包容汇聚网关 (任一通过)", "结束"],
-    createGraph: createEasyFlowOrBranchGraph
-  },
-  {
-    id: "flowx-comprehensive",
-    name: "研发多技术线协同与并行发布流",
-    description: "遵循 BPMN 2.0 规范，包含包容网关多技术线（后端/算法/前端）并发汇聚、管理层双人并行会签及自动部署与群通知闭环。",
-    engineType: "flowx",
-    tag: "综合发布",
-    badgeColor: "purple",
-    nodeCount: 14,
-    summary: ["开始", "抄送提交人", "包容网关分流 (3分支)", "包容汇聚", "并行会签 (2分支)", "自动化部署", "群通知", "结束"],
-    createGraph: createFlowXComprehensiveGraph
-  },
-  {
-    id: "easyflow-comprehensive",
-    name: "条件多路分流与并行会签发布流",
-    description: "基于条件网关与排他网关阵列分流，配合并行网关会签、自动化部署及群通知闭环。",
-    engineType: "easyflow",
-    tag: "条件会签",
-    badgeColor: "blue",
-    nodeCount: 16,
-    summary: ["开始", "抄送提交人", "条件网关分流", "排他分支阵列 (后端/前端/算法)", "并行会签", "自动化部署", "群通知", "结束"],
-    createGraph: createEasyFlowComprehensiveGraph
-  },
-  {
-    id: "standard-branch",
-    name: "标准排他分支审批流",
-    description: "经典双分支审批流转模型，根据业务条件自动流转至高风险人工主管审批或常规自动化配置同步。",
-    engineType: "all",
-    tag: "条件路由",
-    badgeColor: "green",
-    nodeCount: 5,
-    summary: ["开始", "排他网关", "技术主管审批 / 自动化配置同步", "结束"],
-    createGraph: createStandardBranchGraph
-  },
+  // 1. 最通用、最简单的直通审批（5 节点）
   {
     id: "linear-approval",
-    name: "轻量串行直通审批流",
-    description: "单线极简流转，适用于小额申请、日常权限开通等无需网关分支的标准直通场景。",
+    name: "基础串行审批流",
+    description: "最常见标准的单线审批流程：员工提交申请后由部门主管审批，通过后系统自动执行任务并发送群通知，无需网关分支。",
     engineType: "all",
-    tag: "直通串行",
+    tag: "简单直通",
     badgeColor: "slate",
     nodeCount: 5,
     summary: ["开始", "部门主管审批", "自动化任务执行", "结果群通知", "结束"],
     createGraph: createLinearApprovalGraph
+  },
+  // 2. 常用条件二选一分支审批（5 节点）
+  {
+    id: "standard-branch",
+    name: "条件分支审批流",
+    description: "根据申请信息自动判断风险等级：高风险/重大变更流转至人工主管审批，常规低风险申请直接自动放行并同步配置。",
+    engineType: "all",
+    tag: "条件分流",
+    badgeColor: "green",
+    nodeCount: 5,
+    summary: ["开始", "条件判断", "人工主管审批 / 自动放行", "结束"],
+    createGraph: createStandardBranchGraph
+  },
+  // 3. 多人竞争/或签审批（FlowX 引擎：任一人通过即可向下流转，6 节点）
+  {
+    id: "flowx-or-branch",
+    name: "多人竞争审批流 (任一人通过即可)",
+    description: "任务同时并发派发给审批人 A 和审批人 B，采用先到先得竞争机制。只要任意一人审批通过，工单即可直接流转完成。",
+    engineType: "flowx",
+    tag: "或签协同",
+    badgeColor: "purple",
+    nodeCount: 6,
+    summary: ["开始", "并发派发", "审批人 A / B (任一审批)", "任一通过即向下", "结束"],
+    createGraph: createFlowXOrBranchGraph
+  },
+  // 3. 多人竞争/或签审批（EasyFlow 引擎：任一人通过即可向下流转，6 节点）
+  {
+    id: "easyflow-or-branch",
+    name: "多人竞争审批流 (任一人通过即可)",
+    description: "任务同时并发派发给审批人 A 和审批人 B，只要其中任意一人审批通过，即可流向下一环节完成流转。",
+    engineType: "easyflow",
+    tag: "或签协同",
+    badgeColor: "blue",
+    nodeCount: 6,
+    summary: ["开始", "并发派发", "审批人 A / B (任一审批)", "任一通过即向下", "结束"],
+    createGraph: createEasyFlowOrBranchGraph
+  },
+  // 4. 大型综合业务流程（FlowX 引擎：多部门协同审批与全员会签，14 节点）
+  {
+    id: "flowx-comprehensive",
+    name: "多技术线协同与并行发布流",
+    description: "多技术线（后端/算法/前端）根据需求同时审批，汇聚后进入管理层双人会签（必须全员同意），完成后自动部署并发送群通知。",
+    engineType: "flowx",
+    tag: "多线会签",
+    badgeColor: "purple",
+    nodeCount: 14,
+    summary: ["开始", "抄送提交人", "技术线审批 (后端/算法/前端)", "管理层双人会签", "自动部署", "群通知", "结束"],
+    createGraph: createFlowXComprehensiveGraph
+  },
+  // 4. 大型综合业务流程（EasyFlow 引擎：多职能分流与并行会签，16 节点）
+  {
+    id: "easyflow-comprehensive",
+    name: "多职能分流与并行发布流",
+    description: "根据业务角色分别分流给专属审批人（后端/前端/算法），汇聚后由管理层全员会签确认，最后自动执行部署并发送群通知。",
+    engineType: "easyflow",
+    tag: "多线会签",
+    badgeColor: "blue",
+    nodeCount: 16,
+    summary: ["开始", "抄送提交人", "按职能分流审批", "管理层双人会签", "自动部署", "群通知", "结束"],
+    createGraph: createEasyFlowComprehensiveGraph
   }
 ]
 
