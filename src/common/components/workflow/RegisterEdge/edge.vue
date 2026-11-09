@@ -55,11 +55,18 @@
             <span>通过 SQL 式表达式实现动态流程的分离控制</span>
           </div>
         </div>
-        <div class="tip-card">
+        <div v-if="isEasyFlow" class="tip-card">
           <div class="tip-dot amber" />
           <div class="tip-text">
-            <strong>EasyFlow 规范</strong>
-            <span>多选字段（复选框）必须使用 <code>$field in ('值')</code> 语法，切勿使用 <code>=</code> 或 <code>==</code></span>
+            <strong>EasyFlow 表达式要求</strong>
+            <span>底层依赖 SQL 评估，多选字段必须使用 <code>$field in ('值')</code>，不可写 <code>=</code></span>
+          </div>
+        </div>
+        <div v-else class="tip-card">
+          <div class="tip-dot indigo" />
+          <div class="tip-text">
+            <strong>FlowX 表达式特性</strong>
+            <span>支持最直观的 <code>$field == '值'</code> 简单表达式，单选/多选自动适配集合匹配</span>
           </div>
         </div>
       </div>
@@ -86,7 +93,7 @@
   </FormDialog>
 </template>
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, computed, onMounted } from "vue"
 import Expression from "./expression.vue"
 import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { getTemplateByWorkflowIdApi } from "@/api/ticket/template/index.js"
@@ -98,8 +105,14 @@ import { MagicStick, Link, InfoFilled, Operation, Connection } from "@element-pl
 const props = defineProps({
   nodeData: Object,
   lf: Object,
-  id: Number
+  id: Number,
+  flowDetail: { type: Object, default: () => ({}) },
+  engineType: { type: String, default: "flowx" }
 })
+
+const isEasyFlow = computed(
+  () => props.engineType === "easyflow" || props.flowDetail?.engine_type === "easyflow"
+)
 
 const emits = defineEmits(["closed"])
 
@@ -125,9 +138,10 @@ const propertyForm = ref({
 
 //更新节点属性
 const setProperties = () => {
-  // 安全容错：规避用户写 JS 式的 "==" 导致底层 MySQL 发生 SQL 语法错误
   let cleanExpression = (propertyForm.value.expression || "").trim()
-  if (cleanExpression.includes("==")) {
+
+  // 仅在 EasyFlow 引擎下清洗 "==" 为 "="，避免 MySQL 语法报错；FlowX 纯内存引擎原生支持 "=="
+  if (isEasyFlow.value && cleanExpression.includes("==")) {
     cleanExpression = cleanExpression.replace(/==/g, "=")
     propertyForm.value.expression = cleanExpression
   }
@@ -328,6 +342,10 @@ defineExpose({
     &.amber {
       background: #f59e0b;
       box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+    }
+    &.indigo {
+      background: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
   }
 

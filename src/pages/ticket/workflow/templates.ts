@@ -170,7 +170,7 @@ export const createFlowXComprehensiveGraph = (createId: () => string): WorkflowG
         sourceNodeId: forkInclusiveId,
         targetNodeId: backendId,
         text: { x: 425, y: 200, value: "" },
-        properties: { expression: "$scope.indexOf('backend') !== -1" }
+        properties: { expression: "$scope == 'backend'" }
       },
       {
         id: createId(),
@@ -178,7 +178,7 @@ export const createFlowXComprehensiveGraph = (createId: () => string): WorkflowG
         sourceNodeId: forkInclusiveId,
         targetNodeId: algoId,
         text: { x: 425, y: 260, value: "" },
-        properties: { expression: "$scope.indexOf('algo') !== -1" }
+        properties: { expression: "$scope == 'algo'" }
       },
       {
         id: createId(),
@@ -186,7 +186,7 @@ export const createFlowXComprehensiveGraph = (createId: () => string): WorkflowG
         sourceNodeId: forkInclusiveId,
         targetNodeId: frontendId,
         text: { x: 425, y: 320, value: "" },
-        properties: { expression: "$scope.indexOf('frontend') !== -1" }
+        properties: { expression: "$scope == 'frontend'" }
       },
       {
         id: createId(),
