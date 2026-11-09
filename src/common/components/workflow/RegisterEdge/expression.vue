@@ -369,12 +369,15 @@ defineExpose({
 .expression-builder {
   font-family: "Fira Sans", sans-serif;
   display: flex;
-  height: 580px;
-  gap: 24px;
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  gap: 20px;
   background: #f8fafc;
-  padding: 12px;
-  border-radius: 20px;
+  padding: 16px;
+  border-radius: 12px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 // ── 工作台 ────────────────────────────────────────────────────────────
@@ -386,6 +389,8 @@ defineExpose({
   border: 1px solid #f1f5f9;
   border-radius: 16px;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
 }
 
 .workbench-header {
@@ -424,6 +429,7 @@ defineExpose({
   flex: 1;
   padding: 20px;
   overflow-y: auto;
+  min-height: 0;
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -650,6 +656,8 @@ defineExpose({
   background: #0f172a;
   border-radius: 16px;
   overflow: hidden;
+  min-height: 0;
+  height: 100%;
 }
 
 .terminal-header {
@@ -680,6 +688,8 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .preview-tile {
@@ -691,6 +701,8 @@ defineExpose({
   display: flex;
   flex-direction: column;
   position: relative;
+  min-height: 0;
+  overflow: hidden;
 
   .tile-bg {
     position: absolute;
@@ -704,6 +716,8 @@ defineExpose({
   .tile-content {
     flex: 1;
     display: flex;
+    min-height: 0;
+    overflow-y: auto;
     &.is-empty {
       align-items: center;
       justify-content: center;

@@ -269,7 +269,7 @@ const $_dragNode = (item: any) => {
 }
 
 .node-condition {
-  background: url("../background/condition.png") no-repeat center;
+  background: url("../background/gatewhy.png") no-repeat center;
   background-size: cover;
   background-color: rgba(234, 88, 12, 0.1);
 }
@@ -286,16 +286,16 @@ const $_dragNode = (item: any) => {
   background-color: rgba(59, 130, 246, 0.1);
 }
 
+.node-selective {
+  background: url("../background/condition.png") no-repeat center;
+  background-size: cover;
+  background-color: rgba(147, 51, 234, 0.1);
+}
+
 .node-inclusion {
   background: url("../background/inclusion.png") no-repeat center;
   background-size: cover;
   background-color: rgba(16, 185, 129, 0.1);
-}
-
-.node-selective {
-  background: url("../background/selective.png") no-repeat center;
-  background-size: cover;
-  background-color: rgba(245, 158, 11, 0.1);
 }
 
 .node-chat {

@@ -13,7 +13,7 @@ import registerPolyline from "../RegisterEdge/edge"
 // 属性组件使用异步加载，优化首屏
 const startProperty = defineAsyncComponent(() => import("./start/startProperty.vue"))
 const userProperty = defineAsyncComponent(() => import("./user/userProperty.vue"))
-const conditionProperty = defineAsyncComponent(() => import("./condition/conditionProperty.vue"))
+const gatewayProperty = defineAsyncComponent(() => import("./gateway/GatewayProperty.vue"))
 const automationProperty = defineAsyncComponent(() => import("./automation/automationProperty.vue"))
 const chatProperty = defineAsyncComponent(() => import("./chat/chatProperty.vue"))
 const edgeProperty = defineAsyncComponent(() => import("../RegisterEdge/edge.vue"))
@@ -82,36 +82,39 @@ export const WORKFLOW_NODES: NodeConfig[] = [
   // 网关节点
   {
     type: "condition",
-    text: "条件",
-    description: "根据条件进行分支选择",
+    text: "排他",
+    description: "单分支互斥执行",
     category: "gateway",
     class: "node-condition",
     register: registerCondition,
-    property: markRaw(conditionProperty)
+    property: markRaw(gatewayProperty)
   },
   {
     type: "parallel",
     text: "并行",
-    description: "流程分支同时执行",
+    description: "所有分支并发执行",
     category: "gateway",
     class: "node-parallel",
-    register: registerParallel
+    register: registerParallel,
+    property: markRaw(gatewayProperty)
   },
   {
     type: "selective",
-    text: "则并",
-    description: "根据条件并行的网关",
+    text: "条件",
+    description: "根据条件分流执行",
     category: "gateway",
     class: "node-selective",
-    register: registerSelective
+    register: registerSelective,
+    property: markRaw(gatewayProperty)
   },
   {
     type: "inclusion",
     text: "包容",
-    description: "包含网关",
+    description: "满足条件并发执行",
     category: "gateway",
     class: "node-inclusion",
-    register: registerInclusion
+    register: registerInclusion,
+    property: markRaw(gatewayProperty)
   },
   // 边连线（特殊处理）
   {

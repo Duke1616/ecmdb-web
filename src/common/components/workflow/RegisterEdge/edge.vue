@@ -60,40 +60,23 @@
   </el-form>
 
   <!-- 表达式编辑器弹窗 -->
-  <el-dialog
+  <FormDialog
     v-model="dialogVisible"
-    :fullscreen="false"
-    :modal="true"
-    :lock-scroll="true"
-    :close-on-click-modal="false"
-    :close-on-press-escape="true"
-    :show-close="false"
+    title="配置连线执行条件"
+    subtitle="通过表达式编辑器设置连线的执行条件，支持模板字段和自定义逻辑"
+    width="1180px"
+    :header-icon="Connection"
+    confirm-text="确认"
+    :show-footer-info="false"
+    :full-height="true"
     :before-close="handleExpressionClose"
-    :width="'70%'"
-    align-center
-    destroy-on-close
-    class="expression-dialog"
+    @confirm="saveExpression"
+    @cancel="dialogVisible = false"
   >
-    <div class="expression-content">
-      <div class="expression-header">
-        <div class="header-info">
-          <h3 class="content-title">配置连线执行条件</h3>
-          <p class="content-subtitle">通过表达式编辑器设置连线的执行条件，支持模板字段和自定义逻辑</p>
-        </div>
-      </div>
-
-      <div class="expression-body">
-        <Expression ref="expressionRef" :templates="templates" v-model:expression="propertyForm.expression" />
-      </div>
+    <div class="expression-dialog-container">
+      <Expression ref="expressionRef" :templates="templates" v-model:expression="propertyForm.expression" />
     </div>
-
-    <template #footer>
-      <div class="expression-footer">
-        <el-button @click="dialogVisible = false" class="footer-btn footer-btn-cancel">取消</el-button>
-        <el-button type="primary" @click="saveExpression()" class="footer-btn footer-btn-confirm">确认</el-button>
-      </div>
-    </template>
-  </el-dialog>
+  </FormDialog>
 </template>
 <script setup lang="ts">
 import { ref, onMounted } from "vue"
@@ -102,7 +85,8 @@ import { ElMessage, FormInstance, FormRules } from "element-plus"
 import { getTemplateByWorkflowIdApi } from "@/api/ticket/template/index.js"
 import { template } from "@/api/ticket/template/types/template.js"
 import { FormSection } from "../PropertySetting"
-import { MagicStick, Link, InfoFilled, Operation } from "@element-plus/icons-vue"
+import { FormDialog } from "@/common/components/Dialogs"
+import { MagicStick, Link, InfoFilled, Operation, Connection } from "@element-plus/icons-vue"
 
 const props = defineProps({
   nodeData: Object,
@@ -119,8 +103,11 @@ const formRules: FormRules = {
 }
 
 const dialogVisible = ref<boolean>(false)
-const handleExpressionClose = () => {
+const handleExpressionClose = (done?: () => void) => {
   dialogVisible.value = false
+  if (typeof done === "function") {
+    done()
+  }
 }
 
 const propertyForm = ref({
@@ -344,70 +331,13 @@ defineExpose({
   }
 }
 
-// ── 弹窗样式补全 ────────────────────────────────────────────────────────
-:deep(.el-dialog) {
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  border: none;
-
-  .el-dialog__header {
-    display: none;
-  }
-
-  .el-dialog__body {
-    padding: 0;
-    background: transparent;
-    overflow: hidden;
-  }
-
-  .el-dialog__footer {
-    padding: 16px 24px;
-    border-top: 1px solid #f1f5f9;
-    background: #ffffff;
-  }
-}
-
-.expression-content {
-  height: 100%;
+.expression-dialog-container {
+  flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-.expression-header {
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
-
-  .content-title {
-    margin: 0 0 4px 0;
-    font-size: 16px;
-    font-weight: 700;
-    color: #0f172a;
-  }
-
-  .content-subtitle {
-    margin: 0;
-    font-size: 12px;
-    color: #64748b;
-  }
-}
-
-.expression-body {
-  flex: 1;
-  overflow: hidden;
-  padding: 0;
-}
-
-.expression-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-
-  .footer-btn {
-    border-radius: 6px;
-    padding: 8px 20px;
-    font-weight: 600;
-  }
+  min-height: 0;
+  height: 100%;
+  padding: 0 20px 4px;
+  box-sizing: border-box;
 }
 </style>

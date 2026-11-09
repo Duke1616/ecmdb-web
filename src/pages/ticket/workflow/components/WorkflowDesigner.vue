@@ -39,6 +39,15 @@
       <div class="canvas-container">
         <!-- 画布 -->
         <div id="LF-view" ref="container" />
+        <!-- 网关节点就地快速切换工具条 -->
+        <GatewayQuickSwitcher
+          v-if="lf"
+          :lf="lf"
+          :nodeData="selectedGatewayNode"
+          :disabled="isWorkflowReadonly"
+          @change-type="handleChangeGatewayType"
+          @open-detail="handleOpenGatewayDetail"
+        />
         <!-- 空状态提示 -->
         <div v-if="getNodeCount() === 0" class="empty-state">
           <div class="empty-icon">📋</div>
@@ -63,6 +72,7 @@
       :lf="lf"
       :id="formData.id"
       @closed="showAttribute = false"
+      @change-type="handleChangeGatewayType"
     />
   </div>
   <!-- 数据查看面板 -->
@@ -80,7 +90,9 @@ import NodePanel from "@@/components/workflow/LFComponents/NodePanel.vue"
 import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
-import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
+import GatewayQuickSwitcher from "@@/components/workflow/LFComponents/GatewayQuickSwitcher.vue"
+import { WORKFLOW_NODES, registerAllNodes, getNodeConfig } from "@@/components/workflow/RegisterNode/index"
+import { isGatewayType } from "@@/components/workflow/RegisterNode/gateway/constants"
 import { findCompensationNodeReferences } from "@@/components/workflow/RegisterNode/automation/compensation"
 import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
 import FormActions from "@/common/components/FormActions/index.vue"
@@ -151,9 +163,14 @@ const { next, previous, close, setFormData } = useFormHandler(props.formData, em
 const flowDetail = reactive<Object>({})
 const lf = ref<WorkflowLogicFlow>()
 const nodeData = ref()
+const selectedGatewayNode = ref<any>(null)
 const showAttribute = ref(false)
 const container = ref<HTMLElement>()
 const isSyncingFromCanvas = ref(false)
+
+const isWorkflowReadonly = computed(() => {
+  return (flowDetail as any)?.status === "2" || (flowDetail as any)?.status === 2
+})
 const config = reactive<any>({
   background: {
     backgroundColor: "#f8fafc"
@@ -409,14 +426,34 @@ const LfEvent = () => {
 
   lfInstance.on("node:click", ({ data }: any) => {
     nodeData.value = data
-    if (["start", "user", "condition", "automation", "chat"].includes(data.type)) {
+    if (isGatewayType(data.type)) {
+      selectedGatewayNode.value = data
+      // 单击网关节点仅唤起就地快速替换条，不遮挡打开 Drawer；需要配置属性可点击工具条齿轮或双击节点
+      showAttribute.value = false
+    } else {
+      selectedGatewayNode.value = null
+      if (["start", "user", "automation", "chat"].includes(data.type)) {
+        showAttribute.value = true
+      }
+    }
+  })
+
+  // 双击网关节点打开属性抽屉
+  lfInstance.on("node:dbclick", ({ data }: any) => {
+    nodeData.value = data
+    if (isGatewayType(data.type)) {
       showAttribute.value = true
     }
   })
 
   lfInstance.on("edge:click", ({ data }: any) => {
+    selectedGatewayNode.value = null
     nodeData.value = data
     showAttribute.value = true
+  })
+
+  lfInstance.on("blank:click", () => {
+    selectedGatewayNode.value = null
   })
 
   // 监听节点和连线的变化，实时更新计数并同步调试状态
@@ -450,26 +487,92 @@ const LfEvent = () => {
     syncFormData()
   })
 
-  const syncFormData = () => {
-    if (lf.value) {
-      const graphData = getCurrentGraphData()
-      if (!graphData) return
-
-      isSyncingFromCanvas.value = true
-      emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
-      nextTick(() => {
-        isSyncingFromCanvas.value = false
-      })
-    }
-
-    // 变更数量
-    updateCounts()
-  }
-
   // 监听节点和连线的变化，实时更新计数
-  lfInstance.on("node:delete", syncFormData)
+  lfInstance.on("node:delete", (args: any) => {
+    if (selectedGatewayNode.value?.id === args?.data?.id) {
+      selectedGatewayNode.value = null
+    }
+    syncFormData()
+  })
   lfInstance.on("edge:delete", syncFormData)
   lfInstance.on("history:change", syncFormData)
+}
+
+const syncFormData = () => {
+  if (lf.value) {
+    const graphData = getCurrentGraphData()
+    if (!graphData) return
+
+    isSyncingFromCanvas.value = true
+    emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
+    nextTick(() => {
+      isSyncingFromCanvas.value = false
+    })
+  }
+
+  // 变更数量
+  updateCounts()
+}
+
+/**
+ * 切换网关节点类型
+ * 原地替换网关节点，保留所有出入连线与坐标位置
+ * @param targetType 目标网关类型
+ */
+const handleChangeGatewayType = (targetType: string) => {
+  const lfInstance = lf.value
+  const currentNode = selectedGatewayNode.value || nodeData.value
+  if (!lfInstance || !currentNode || !currentNode.id) return
+  if (currentNode.type === targetType) return
+
+  const nodeId = currentNode.id
+  const oldConfig = getNodeConfig(currentNode.type)
+  const newConfig = getNodeConfig(targetType)
+
+  // 1. 调用 LogicFlow 原生切换类型能力（保持连接关系并自适应微调连线锚点）
+  lfInstance.changeNodeType(nodeId, targetType)
+
+  // 2. 智能更新默认文本与 properties.name
+  const currentText = typeof currentNode.text === "object" ? currentNode.text?.value : currentNode.text
+  const isDefaultName =
+    !currentText ||
+    currentText === oldConfig?.text ||
+    currentText === `${oldConfig?.text}网关` ||
+    currentText === "网关"
+
+  if (isDefaultName && newConfig?.text) {
+    lfInstance.updateText(nodeId, newConfig.text)
+    lfInstance.setProperties(nodeId, { name: newConfig.text })
+  }
+
+  // 3. 刷新响应式数据引用
+  const updatedNode = lfInstance.getNodeDataById(nodeId)
+  if (updatedNode) {
+    nodeData.value = updatedNode
+    selectedGatewayNode.value = updatedNode
+  }
+
+  // 4. 保持节点在画布上的选中状态
+  try {
+    lfInstance.selectElementById(nodeId)
+  } catch (err) {
+    console.warn("Failed to select element after type change", err)
+  }
+
+  // 5. 若处于调试模式，保留 isDebug 属性
+  if (isDebugMode.value) {
+    lfInstance.setProperties(nodeId, { isDebug: true })
+  }
+
+  // 6. 同步保存到流程图数据中
+  syncFormData()
+}
+
+const handleOpenGatewayDetail = () => {
+  if (selectedGatewayNode.value) {
+    nodeData.value = selectedGatewayNode.value
+    showAttribute.value = true
+  }
 }
 
 const graph = ref<DataDialogGraph>()

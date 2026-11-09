@@ -10,7 +10,12 @@
   >
     <template #header-icon>
       <div class="icon-circle">
-        <svg v-if="currentNodeConfig?.iconSVG" viewBox="0 0 1024 1024" style="width: 28px; height: 28px; color: #fff">
+        <img v-if="isGatewayType(props.nodeData?.type)" :src="getIconPath()" alt="gateway" class="icon-image" />
+        <svg
+          v-else-if="currentNodeConfig?.iconSVG"
+          viewBox="0 0 1024 1024"
+          style="width: 28px; height: 28px; color: #fff"
+        >
           <path :d="currentNodeConfig.iconSVG" fill="currentColor" />
         </svg>
         <img v-else :src="getIconPath()" :alt="props.nodeData?.type" class="icon-image" />
@@ -25,6 +30,7 @@
         ref="propertyComponentRef"
         v-bind="componentProps"
         @closed="closed"
+        @change-type="(newType: string) => emits('changeType', newType)"
       />
       <div v-else class="no-property-hint">该节点无需详细配置</div>
     </div>
@@ -34,6 +40,7 @@
 import { ref, computed } from "vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import { getNodeConfig } from "../RegisterNode/index"
+import { isGatewayType } from "../RegisterNode/gateway/constants"
 
 const props = defineProps({
   //标题
@@ -51,7 +58,7 @@ const props = defineProps({
   id: Number
 })
 
-const emits = defineEmits(["closed"])
+const emits = defineEmits(["closed", "changeType"])
 
 const showNodeAttribute = ref(true)
 const propertyComponentRef = ref()
@@ -64,13 +71,16 @@ const componentProps = computed(() => ({
   nodeData: props.nodeData,
   lf: props.lf,
   flowDetail: props.flowDetail,
-  id: props.id
+  id: props.id,
+  onChangeType: (newType: string) => emits("changeType", newType)
 }))
 
 // 获取图标路径
 const getIconPath = () => {
   let iconName = props.nodeData?.type || "start"
-  if (iconName === "chat") {
+  if (isGatewayType(iconName)) {
+    iconName = "gatewhy" // 统一使用网关图标
+  } else if (iconName === "chat") {
     iconName = "automation" // 暂时使用自动化图标作为回退
   }
   return new URL(`../background/${iconName}.png`, import.meta.url).href
@@ -78,11 +88,17 @@ const getIconPath = () => {
 
 // 获取节点标题
 const getNodeTitle = () => {
+  if (isGatewayType(props.nodeData?.type)) {
+    return "网关属性"
+  }
   return currentNodeConfig.value?.text ? `${currentNodeConfig.value.text}属性` : "节点属性"
 }
 
 // 获取节点副标题
 const getNodeSubtitle = () => {
+  if (isGatewayType(props.nodeData?.type)) {
+    return "配置网关类型与路由规则"
+  }
   return currentNodeConfig.value?.description || "配置节点属性"
 }
 
