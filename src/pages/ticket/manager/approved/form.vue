@@ -434,20 +434,28 @@ const handleRejectConfirm = async () => {
   if (!canOperate(TICKET_CAPABILITIES.Manager.Reject)) return
 
   try {
-    await ElMessageBox.confirm("确定要驳回此工单吗？此操作不可撤销。", "确认驳回", {
-      confirmButtonText: "确定驳回",
-      cancelButtonText: "取消",
-      type: "error",
-      confirmButtonClass: "el-button--danger",
-      cancelButtonClass: "el-button--default"
-    })
-    handleReject()
+    const { value: comment } = await ElMessageBox.prompt(
+      "请输入驳回原因，方便提单人了解修改建议：",
+      "确认驳回工单",
+      {
+        confirmButtonText: "确定驳回",
+        cancelButtonText: "取消",
+        inputPlaceholder: "请详细填写驳回理由（必填）",
+        inputType: "textarea",
+        inputPattern: /\S+/,
+        inputErrorMessage: "驳回原因不能为空",
+        type: "warning",
+        confirmButtonClass: "el-button--danger",
+        cancelButtonClass: "el-button--default"
+      }
+    )
+    handleReject(comment)
   } catch (error) {
     // 用户取消操作
   }
 }
 
-const handleReject = async () => {
+const handleReject = async (comment?: string) => {
   if (props.taskId) {
     formData.value.task_id = props.taskId
   }
@@ -455,6 +463,7 @@ const handleReject = async () => {
   // 驳回审批
   const submitData = {
     ...formData.value,
+    comment: comment ?? formData.value.comment,
     ticket_id: currentTicketId.value,
     ...taskFormData.value
   }
