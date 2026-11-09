@@ -71,14 +71,24 @@ import { WORKFLOW_NODES } from "../RegisterNode/index"
 
 interface Props {
   lf: any
+  engineType?: string
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  engineType: "flowx"
+})
 
 // 过滤掉边连线配置，只显示节点
 const availableNodes = computed(() => WORKFLOW_NODES.filter((n) => n.type !== "polyline"))
 
-const gatewayNodes = computed(() => availableNodes.value.filter((item) => item.category === "gateway"))
+const gatewayNodes = computed(() => {
+  const nodes = availableNodes.value.filter((item) => item.category === "gateway")
+  // NOTE: FlowX 采用标准 BPMN 2.0 规范，网关由连线条件驱动，不暴露传统条件网关（selective）
+  if (props.engineType === "flowx") {
+    return nodes.filter((item) => item.type !== "selective")
+  }
+  return nodes
+})
 
 const businessNodes = computed(() => availableNodes.value.filter((item) => item.category === "business"))
 

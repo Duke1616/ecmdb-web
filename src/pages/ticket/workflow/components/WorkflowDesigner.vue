@@ -1,22 +1,21 @@
 <template>
   <div class="workflow-editor">
-    <!-- 简化的头部 -->
+    <!-- 头部工具栏 -->
     <div class="editor-header">
       <div class="header-left">
         <h3 class="editor-title">工作流设计器</h3>
-        <div class="workflow-stats" v-if="lf">
+        <div v-if="lf" class="workflow-stats">
           <div class="stat-badge">
             <span class="stat-label">节点</span>
-            <span class="stat-value">{{ getNodeCount() }}</span>
+            <span class="stat-value">{{ nodeCount }}</span>
           </div>
           <div class="stat-badge">
             <span class="stat-label">连线</span>
-            <span class="stat-value">{{ getEdgeCount() }}</span>
+            <span class="stat-value">{{ edgeCount }}</span>
           </div>
         </div>
       </div>
       <div class="header-right">
-        <!-- 辅助工具栏 -->
         <Control
           v-if="lf"
           :lf="lf"
@@ -24,454 +23,351 @@
           @download="download"
           @toggleDebug="handleToggleDebug"
           @calibrate="handleCalibrate"
+          @loadDemo="handleLoadDemo"
         />
       </div>
     </div>
 
-    <!-- 主要内容区域 -->
+    <!-- 画布主要内容区域 -->
     <div class="logic-flow-view">
       <!-- 节点面板 - 左侧 -->
       <div class="node-sidebar">
-        <NodePanel v-if="lf" :lf="lf" />
+        <NodePanel v-if="lf" :lf="lf" :engine-type="formData.engine_type" />
       </div>
 
-      <!-- 画布区域 - 右侧 -->
+      <!-- 画布与就地悬浮工具 - 右侧 -->
       <div class="canvas-container">
-        <!-- 画布 -->
         <div id="LF-view" ref="container" />
+
         <!-- 网关节点就地快速切换工具条 -->
         <GatewayQuickSwitcher
           v-if="lf"
           :lf="lf"
           :nodeData="selectedGatewayNode"
           :disabled="isWorkflowReadonly"
+          :engine-type="formData.engine_type"
           @change-type="handleChangeGatewayType"
           @open-detail="handleOpenGatewayDetail"
         />
-        <!-- 空状态提示 -->
-        <div v-if="getNodeCount() === 0" class="empty-state">
+
+        <!-- 空状态智能引导 -->
+        <div v-if="nodeCount <= 2 && edgeCount === 0" class="empty-state">
           <div class="empty-icon">📋</div>
           <h4 class="empty-title">开始设计您的工作流</h4>
-          <p class="empty-description">从左侧节点库拖拽节点到画布中开始创建工作流程</p>
+          <p class="empty-description">从左侧节点库拖拽节点到画布，或一键载入标准审批流程模板</p>
+          <div style="margin-top: 14px">
+            <el-button type="primary" :icon="FolderAdd" round @click="handleLoadDemo">
+              一键注入审批流 Demo
+            </el-button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 底部按钮 -->
+    <!-- 底部步骤条按钮 -->
     <FormActions @previous="previous" @next="handleNext" @cancel="close" />
 
-    <!-- 属性面板 -->
-    <el-dialog v-model="dataVisible">
-      <DataDialog v-if="graph" :graph="graph" />
-    </el-dialog>
+    <!-- 工作流数据与拓扑分析弹窗（统一采用封装的 FormDialog） -->
+    <FormDialog
+      v-model="dataVisible"
+      title="工作流拓扑与图数据"
+      subtitle="直观分析工作流节点拓扑关系、连线分支脉络及底层 JSON 结构"
+      width="1020px"
+      :header-icon="DataAnalysis"
+      confirm-text="复制完整 JSON"
+      :show-footer="true"
+      :show-footer-info="true"
+      :footer-info-text="`当前包含 ${graph?.nodes?.length || 0} 个节点，${graph?.edges?.length || 0} 条分支连线`"
+      :full-height="true"
+      @confirm="handleCopyDataJson"
+      @cancel="dataVisible = false"
+    >
+      <DataDialog v-if="graph" ref="dataDialogRef" :graph="graph" />
+    </FormDialog>
 
+    <!-- 节点属性抽屉 -->
     <PropertyDialog
       v-if="showAttribute && lf"
       :nodeData="nodeData"
       :flowDetail="flowDetail"
       :lf="lf"
       :id="formData.id"
+      :engine-type="formData.engine_type"
       @closed="showAttribute = false"
       @change-type="handleChangeGatewayType"
     />
   </div>
-  <!-- 数据查看面板 -->
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, nextTick, onMounted, onUnmounted, watch } from "vue"
-import { ElNotification } from "element-plus"
+import { reactive, ref, nextTick, onMounted, onUnmounted, watch, computed } from "vue"
+import { ElNotification, ElMessageBox, ElMessage } from "element-plus"
+import { FolderAdd, DataAnalysis } from "@element-plus/icons-vue"
+import { v4 as uuidv4 } from "uuid"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap, SelectionSelect, ProximityConnect } from "@logicflow/extension"
 import { Dagre } from "@logicflow/layout"
 import "@logicflow/core/dist/index.css"
 import "@logicflow/extension/lib/style/index.css"
+
 import NodePanel from "@@/components/workflow/LFComponents/NodePanel.vue"
 import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
 import GatewayQuickSwitcher from "@@/components/workflow/LFComponents/GatewayQuickSwitcher.vue"
-import { WORKFLOW_NODES, registerAllNodes, getNodeConfig } from "@@/components/workflow/RegisterNode/index"
+import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 import { isGatewayType } from "@@/components/workflow/RegisterNode/gateway/constants"
 import { findCompensationNodeReferences } from "@@/components/workflow/RegisterNode/automation/compensation"
-import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
+import { FormDialog } from "@/common/components/Dialogs"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
+import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
+import { createDemoWorkflowGraph } from "../types"
+import { cleanGraphData, validateWorkflowGraph } from "../utils/graph"
 
-type RawWorkflowGraphData = CreateOrUpdateWorkflowReq["flow_data"]
-type WorkflowGraphNode = {
-  id?: string
-  type?: string
-  x?: number
-  y?: number
-  properties?: Record<string, unknown>
-  [key: string]: unknown
-}
-
-type WorkflowGraphEdge = {
-  id?: string
-  type?: string
-  sourceNodeId?: string
-  targetNodeId?: string
-  properties?: Record<string, unknown>
-  [key: string]: unknown
-}
-
-type WorkflowGraphData = RawWorkflowGraphData & {
-  nodes?: WorkflowGraphNode[]
-  edges?: WorkflowGraphEdge[]
-}
-
-type WorkflowLogicFlow = Omit<InstanceType<typeof LogicFlow>, "extension" | "getGraphData"> & {
-  getGraphData: () => WorkflowGraphData
-  extension?: {
-    proximityConnect?: {
-      handleNodeDrag?: () => void
-    }
-    dagre?: {
-      layout: (options: Record<string, unknown>) => void
-    }
-  }
-}
-
-type DataDialogGraph = {
-  nodes: Array<{
-    id: string
-    type: string
-    x: number
-    y: number
-    text?: string
-    properties?: Record<string, unknown>
-  }>
-  edges: Array<{
-    id: string
-    type?: string
-    sourceNodeId: string
-    targetNodeId: string
-    text?: string
-  }>
-}
+// 引入拆分的领域 Composables
+import { applyWorkflowTheme } from "../composables/useWorkflowTheme"
+import { useWorkflowLayout } from "../composables/useWorkflowLayout"
+import { useGatewayManager } from "../composables/useGatewayManager"
+import { provideWorkflowContext } from "../composables/useWorkflowContext"
 
 interface Props {
   formData: CreateOrUpdateWorkflowReq
 }
+
 const props = defineProps<Props>()
 const emits = defineEmits(["previous", "next", "close", "update:formData"])
 
 const { next, previous, close, setFormData } = useFormHandler(props.formData, emits, "lf")
 
-const flowDetail = reactive<Object>({})
-const lf = ref<WorkflowLogicFlow>()
-const nodeData = ref()
-const selectedGatewayNode = ref<any>(null)
-const showAttribute = ref(false)
+// 画布与数据状态
 const container = ref<HTMLElement>()
+const lf = ref<any>()
+const nodeData = ref<any>()
+const showAttribute = ref(false)
+const flowDetail = reactive<Record<string, any>>({})
 const isSyncingFromCanvas = ref(false)
+const isDebugMode = ref(false)
+const nodeCount = ref(0)
+const edgeCount = ref(0)
+
+// 数据分析弹窗状态
+const graph = ref<any>()
+const dataDialogRef = ref<InstanceType<typeof DataDialog>>()
+const dataVisible = ref<boolean>(false)
 
 const isWorkflowReadonly = computed(() => {
-  return (flowDetail as any)?.status === "2" || (flowDetail as any)?.status === 2
-})
-const config = reactive<any>({
-  background: {
-    backgroundColor: "#f8fafc"
-  },
-  grid: {
-    size: 20,
-    visible: true,
-    type: "dot",
-    color: "#e2e8f0",
-    thickness: 1,
-    snapToGrid: true
-  },
-  keyboard: {
-    enabled: true
-  },
-  edgeTextDraggable: true,
-  hoverOutline: true,
-  moveData: {},
-  nodeList: WORKFLOW_NODES,
-  style: {
-    rect: {
-      radius: 8
-    },
-    circle: {
-      radius: 20
-    }
-  },
-  // 触摸板滚动优化
-  wheel: {
-    enabled: true,
-    step: 0.5,
-    wheelZoom: 0.1,
-    touchpadZoom: 0.05
-  },
-  // 拖拽优化
-  drag: {
-    enabled: true,
-    step: 1,
-    throttle: 16
-  },
-  guards: {
-    beforeDelete: (element: WorkflowGraphNode | WorkflowGraphEdge) => {
-      if (element.type !== "automation" || !element.id) return true
-
-      const references = findCompensationNodeReferences(getCurrentGraphData()?.nodes || [], element.id)
-      if (references.length === 0) return true
-
-      const sourceNames = references.map((reference) => `「${reference.name}」`).join("、")
-      ElNotification({
-        title: "无法删除补偿节点",
-        message: `${sourceNames}已将该节点设为撤回补偿，请先解除绑定`,
-        type: "warning",
-        duration: 3500,
-        position: "top-right"
-      })
-      return false
-    }
-  }
+  return flowDetail.status === "2" || flowDetail.status === 2
 })
 
-const toWorkflowGraphData = (graphData?: RawWorkflowGraphData) => graphData as WorkflowGraphData | undefined
+/**
+ * 更新节点与连线数量统计
+ */
+const updateCounts = () => {
+  if (!lf.value) return
+  const graphData = lf.value.getGraphData() as any
+  nodeCount.value = Array.isArray(graphData?.nodes) ? graphData.nodes.length : 0
+  edgeCount.value = Array.isArray(graphData?.edges) ? graphData.edges.length : 0
+}
 
-const getGraphSnapshot = (graphData?: RawWorkflowGraphData) => {
-  const normalizedGraphData = toWorkflowGraphData(graphData)
-  if (!normalizedGraphData) return ""
+// 画布数据同步到向导表单
+const syncFormData = () => {
+  if (!lf.value) return
+  const graphData = lf.value.getGraphData() as any
+  if (!graphData) return
 
-  try {
-    return JSON.stringify(stripDebugProps(normalizedGraphData))
-  } catch (error) {
-    return ""
+  isSyncingFromCanvas.value = true
+  emits("update:formData", {
+    ...props.formData,
+    flow_data: cleanGraphData(graphData)
+  })
+  nextTick(() => {
+    isSyncingFromCanvas.value = false
+  })
+  updateCounts()
+}
+
+// 组合网关管理 Composable
+const {
+  selectedGatewayNode,
+  handleSelectGateway,
+  clearSelectedGateway,
+  changeGatewayType
+} = useGatewayManager(lf, syncFormData, isDebugMode)
+
+// 组合画布布局与居中 Composable
+const { smartCenterAndZoom, autoLayoutAndCenter } = useWorkflowLayout(lf, container, syncFormData)
+
+// 提供全局工作流依赖注入上下文
+provideWorkflowContext({
+  lf,
+  engineType: computed(() => props.formData.engine_type || "flowx"),
+  isReadonly: isWorkflowReadonly,
+  updateNodeProperties: (nodeId, properties) => {
+    lf.value?.setProperties(nodeId, properties)
+    syncFormData()
+  },
+  updateNodeText: (nodeId, text) => {
+    lf.value?.updateText(nodeId, text)
+    lf.value?.setProperties(nodeId, { name: text })
+    syncFormData()
+  },
+  syncCanvasData: syncFormData
+})
+
+/**
+ * 切换网关类型包装器
+ */
+const handleChangeGatewayType = (targetType: string) => {
+  const updated = changeGatewayType(targetType, nodeData.value)
+  if (updated) {
+    nodeData.value = updated
   }
 }
 
-const getCurrentGraphData = () => lf.value?.getGraphData()
+const handleOpenGatewayDetail = () => {
+  if (selectedGatewayNode.value) {
+    nodeData.value = selectedGatewayNode.value
+    showAttribute.value = true
+  }
+}
 
-const renderGraphData = (graphData?: RawWorkflowGraphData) => {
-  const normalizedGraphData = toWorkflowGraphData(graphData)
-  if (!lf.value || !normalizedGraphData?.nodes) {
+/**
+ * 渲染图数据到画布
+ */
+const renderGraphData = (graphData?: any) => {
+  if (!lf.value || !graphData?.nodes) {
     updateCounts()
     return
   }
 
-  const currentSnapshot = getGraphSnapshot(lf.value.getGraphData())
-  const nextSnapshot = getGraphSnapshot(normalizedGraphData)
+  const currentSnapshot = JSON.stringify(cleanGraphData(lf.value.getGraphData()))
+  const nextSnapshot = JSON.stringify(cleanGraphData(graphData))
   if (currentSnapshot === nextSnapshot) {
     updateCounts()
     return
   }
 
-  lf.value.render(normalizedGraphData)
+  lf.value.render(graphData)
   nextTick(() => {
     updateCounts()
     smartCenterAndZoom()
   })
 }
 
-const initLf = () => {
-  if (!container.value) return
+/**
+ * 切换调试模式
+ */
+const handleToggleDebug = (val: boolean) => {
+  isDebugMode.value = val
+  if (!lf.value) return
 
-  const lfInstance = new LogicFlow({
-    ...config,
-    plugins: [Menu, MiniMap, Snapshot, SelectionSelect, Dagre, ProximityConnect],
-    container: container.value
-  }) as WorkflowLogicFlow
-  lf.value = lfInstance
+  const graphData = lf.value.getGraphData() as any
+  if (!graphData) return
 
-  // 设置主题
-  setThemem()
+  graphData.nodes?.forEach((node: any) => {
+    node.properties = { ...node.properties, isDebug: val }
+  })
+  graphData.edges?.forEach((edge: any) => {
+    edge.properties = { ...edge.properties, isDebug: val }
+  })
 
-  // 注册节点
-  registerNode()
+  lf.value.render(graphData)
+}
 
-  // 设置事件监听
-  LfEvent()
+/**
+ * 自动排版触发
+ */
+const handleCalibrate = () => {
+  autoLayoutAndCenter({ nodesep: 80, ranksep: 100, showNotification: true })
+}
 
-  renderGraphData(props.formData.flow_data)
+/**
+ * 一键载入标准审批流 Demo 示例模板
+ */
+const handleLoadDemo = () => {
+  if (!lf.value) return
 
-  // 禁用节点拖拽时的渐进连线，只保留锚点（线条端点）拖拽时的渐进连线
-  if (lf.value.extension?.proximityConnect) {
-    lf.value.extension.proximityConnect.handleNodeDrag = () => {}
+  const doLoad = () => {
+    const demoData = createDemoWorkflowGraph(uuidv4, props.formData.engine_type)
+    lf.value?.render(demoData)
+    emits("update:formData", {
+      ...props.formData,
+      flow_data: cleanGraphData(demoData)
+    })
+    nextTick(() => {
+      autoLayoutAndCenter({ nodesep: 80, ranksep: 100, showNotification: false })
+      updateCounts()
+      ElMessage.success("已成功载入标准工作流 Demo 示例！")
+    })
+  }
+
+  // 画布已有复杂拓扑时，弹出确认提示
+  if (nodeCount.value > 2 || edgeCount.value > 0) {
+    ElMessageBox.confirm(
+      "加载示例模板将重置并覆盖当前画布内容，是否继续？",
+      "载入标准 Demo",
+      {
+        confirmButtonText: "确认注入",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    )
+      .then(() => doLoad())
+      .catch(() => {})
+  } else {
+    doLoad()
   }
 }
 
 /**
- * 智能居中和缩放
- * @param lfInstance LogicFlow 实例
- * @param container 容器 ref
+ * 绑定 LogicFlow 原生画布交互事件
  */
-const smartCenterAndZoom = () => {
-  if (!lf.value || !container.value) return
-
-  const graphData = getCurrentGraphData()
-  if (!graphData) return
-
-  const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
-
-  if (nodes.length === 0) return
-
-  // 节点少 → 只居中，不缩放
-  if (nodes.length <= 2) {
-    lf.value.translateCenter()
-    return
-  }
-
-  // 节点多 → 计算范围，自适应缩放并居中
-  const minX = Math.min(...nodes.map((node) => Number(node.x || 0)))
-  const maxX = Math.max(...nodes.map((node) => Number(node.x || 0)))
-  const minY = Math.min(...nodes.map((node) => Number(node.y || 0)))
-  const maxY = Math.max(...nodes.map((node) => Number(node.y || 0)))
-
-  const nodesWidth = maxX - minX
-  const nodesHeight = maxY - minY
-
-  const canvasWidth = container.value.clientWidth
-  const canvasHeight = container.value.clientHeight
-
-  // 缩放比例，留边距
-  let scale = Math.min(canvasWidth / (nodesWidth * 1.2), canvasHeight / (nodesHeight * 1.2))
-  scale = Math.min(scale, 1)
-
-  lf.value.zoom(scale)
-  lf.value.translateCenter()
-}
-
-const setThemem = () => {
-  if (!lf.value) return
-
-  lf.value.setTheme({
-    circle: {
-      stroke: "#667eea",
-      strokeWidth: 2,
-      outlineColor: "#667eea",
-      outlineWidth: 1,
-      fill: "#ffffff"
-    },
-    rect: {
-      outlineColor: "#667eea",
-      outlineWidth: 1,
-      stroke: "#667eea",
-      strokeWidth: 2,
-      fill: "#ffffff",
-      radius: 8
-    },
-    polygon: {
-      strokeWidth: 2,
-      stroke: "#667eea",
-      fill: "#ffffff",
-      outlineColor: "#667eea"
-    },
-    // 简化边线样式，使用默认配置
-    polyline: {
-      stroke: "#94a3b8",
-      strokeWidth: 2
-    },
-    nodeText: {
-      color: "#1e293b",
-      fontSize: 14,
-      fontWeight: 500,
-      background: {
-        fill: "rgba(255, 255, 255, 0.9)",
-        stroke: "#e2e8f0",
-        strokeWidth: 1,
-        radius: 4
-      }
-    },
-    edgeText: {
-      color: "#475569",
-      fontSize: 12,
-      fontWeight: 500,
-      textWidth: 120,
-      background: {
-        fill: "rgba(255, 255, 255, 0.95)",
-        stroke: "#e2e8f0",
-        strokeWidth: 1,
-        radius: 6
-      }
-    },
-    anchor: {
-      stroke: "#667eea",
-      fill: "#ffffff",
-      strokeWidth: 2,
-      r: 4
-    },
-    anchorHover: {
-      stroke: "#667eea",
-      fill: "#667eea",
-      strokeWidth: 2,
-      r: 6
-    },
-    anchorActive: {
-      stroke: "#667eea",
-      fill: "#667eea",
-      strokeWidth: 2,
-      r: 6
-    },
-    outline: {
-      stroke: "#667eea",
-      strokeWidth: 2,
-      strokeDasharray: "5,5"
-    }
-  } as Parameters<WorkflowLogicFlow["setTheme"]>[0])
-}
-
-const registerNode = () => {
-  if (!lf.value) return
-
-  registerAllNodes(lf.value)
-}
-
-const LfEvent = () => {
-  const lfInstance = lf.value
-  if (!lfInstance) return
-
-  lfInstance.on("node:click", ({ data }: any) => {
+const bindLogicFlowEvents = (instance: LogicFlow) => {
+  instance.on("node:click", ({ data }: any) => {
     nodeData.value = data
     if (isGatewayType(data.type)) {
-      selectedGatewayNode.value = data
-      // 单击网关节点仅唤起就地快速替换条，不遮挡打开 Drawer；需要配置属性可点击工具条齿轮或双击节点
+      handleSelectGateway(data)
       showAttribute.value = false
     } else {
-      selectedGatewayNode.value = null
+      clearSelectedGateway()
       if (["start", "user", "automation", "chat"].includes(data.type)) {
         showAttribute.value = true
       }
     }
   })
 
-  // 双击网关节点打开属性抽屉
-  lfInstance.on("node:dbclick", ({ data }: any) => {
+  // 双击网关节点直接唤起属性抽屉
+  instance.on("node:dbclick", ({ data }: any) => {
     nodeData.value = data
     if (isGatewayType(data.type)) {
       showAttribute.value = true
     }
   })
 
-  lfInstance.on("edge:click", ({ data }: any) => {
-    selectedGatewayNode.value = null
+  instance.on("edge:click", ({ data }: any) => {
+    clearSelectedGateway()
     nodeData.value = data
     showAttribute.value = true
   })
 
-  lfInstance.on("blank:click", () => {
-    selectedGatewayNode.value = null
+  instance.on("blank:click", () => {
+    clearSelectedGateway()
   })
 
-  // 监听节点和连线的变化，实时更新计数并同步调试状态
-  lfInstance.on("node:add", (args: any) => {
+  instance.on("node:add", (args: any) => {
     if (isDebugMode.value) {
-      lfInstance.setProperties(args.data.id, { isDebug: true })
+      instance.setProperties(args.data.id, { isDebug: true })
     }
     syncFormData()
   })
 
-  lfInstance.on("edge:add", (args: any) => {
+  instance.on("edge:add", (args: any) => {
     const { data } = args
-    // 禁止自连线（起点和终点是同一节点），检测到后立即删除并提示
+    // 拦截自连线（防死环）
     if (data.sourceNodeId === data.targetNodeId) {
-      // 虚拟边只是拖拽时的视觉提示，不是真实连线，跳过不处理
       if (data.properties?.style) return
-
-      lfInstance.deleteEdge(data.id)
+      instance.deleteEdge(data.id)
       ElNotification({
         title: "不允许自连线",
         message: "节点不能连接自身",
@@ -482,209 +378,119 @@ const LfEvent = () => {
       return
     }
     if (isDebugMode.value) {
-      lfInstance.setProperties(data.id, { isDebug: true })
+      instance.setProperties(data.id, { isDebug: true })
     }
     syncFormData()
   })
 
-  // 监听节点和连线的变化，实时更新计数
-  lfInstance.on("node:delete", (args: any) => {
+  instance.on("node:delete", (args: any) => {
     if (selectedGatewayNode.value?.id === args?.data?.id) {
-      selectedGatewayNode.value = null
+      clearSelectedGateway()
     }
     syncFormData()
   })
-  lfInstance.on("edge:delete", syncFormData)
-  lfInstance.on("history:change", syncFormData)
-}
 
-const syncFormData = () => {
-  if (lf.value) {
-    const graphData = getCurrentGraphData()
-    if (!graphData) return
-
-    isSyncingFromCanvas.value = true
-    emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
-    nextTick(() => {
-      isSyncingFromCanvas.value = false
-    })
-  }
-
-  // 变更数量
-  updateCounts()
+  instance.on("edge:delete", syncFormData)
+  instance.on("history:change", syncFormData)
 }
 
 /**
- * 切换网关节点类型
- * 原地替换网关节点，保留所有出入连线与坐标位置
- * @param targetType 目标网关类型
+ * 初始化 LogicFlow 实例
  */
-const handleChangeGatewayType = (targetType: string) => {
-  const lfInstance = lf.value
-  const currentNode = selectedGatewayNode.value || nodeData.value
-  if (!lfInstance || !currentNode || !currentNode.id) return
-  if (currentNode.type === targetType) return
+const initLf = () => {
+  if (!container.value) return
 
-  const nodeId = currentNode.id
-  const oldConfig = getNodeConfig(currentNode.type)
-  const newConfig = getNodeConfig(targetType)
+  const lfInstance = new LogicFlow({
+    background: { backgroundColor: "#f8fafc" },
+    grid: { size: 20, visible: true, type: "dot", color: "#e2e8f0", thickness: 1, snapToGrid: true },
+    keyboard: { enabled: true },
+    edgeTextDraggable: true,
+    hoverOutline: true,
+    moveData: {},
+    nodeList: WORKFLOW_NODES,
+    style: { rect: { radius: 8 }, circle: { radius: 20 } },
+    wheel: { enabled: true, step: 0.5, wheelZoom: 0.1, touchpadZoom: 0.05 },
+    drag: { enabled: true, step: 1, throttle: 16 },
+    guards: {
+      beforeDelete: (element: any) => {
+        if (element.type !== "automation" || !element.id) return true
+        const references = findCompensationNodeReferences((lf.value?.getGraphData() as any)?.nodes || [], element.id)
+        if (references.length === 0) return true
+        const sourceNames = references.map((reference) => `「${reference.name}」`).join("、")
+        ElNotification({
+          title: "无法删除补偿节点",
+          message: `${sourceNames}已将该节点设为撤回补偿，请先解除绑定`,
+          type: "warning",
+          duration: 3500,
+          position: "top-right"
+        })
+        return false
+      }
+    },
+    plugins: [Menu, MiniMap, Snapshot, SelectionSelect, Dagre, ProximityConnect],
+    container: container.value
+  } as any)
 
-  // 1. 调用 LogicFlow 原生切换类型能力（保持连接关系并自适应微调连线锚点）
-  lfInstance.changeNodeType(nodeId, targetType)
+  lf.value = lfInstance
 
-  // 2. 智能更新默认文本与 properties.name
-  const currentText = typeof currentNode.text === "object" ? currentNode.text?.value : currentNode.text
-  const isDefaultName =
-    !currentText ||
-    currentText === oldConfig?.text ||
-    currentText === `${oldConfig?.text}网关` ||
-    currentText === "网关"
+  // 应用主题样式
+  applyWorkflowTheme(lfInstance)
 
-  if (isDefaultName && newConfig?.text) {
-    lfInstance.updateText(nodeId, newConfig.text)
-    lfInstance.setProperties(nodeId, { name: newConfig.text })
-  }
+  // 注册节点扩展
+  registerAllNodes(lfInstance)
 
-  // 3. 刷新响应式数据引用
-  const updatedNode = lfInstance.getNodeDataById(nodeId)
-  if (updatedNode) {
-    nodeData.value = updatedNode
-    selectedGatewayNode.value = updatedNode
-  }
+  // 绑定交互事件
+  bindLogicFlowEvents(lfInstance)
 
-  // 4. 保持节点在画布上的选中状态
-  try {
-    lfInstance.selectElementById(nodeId)
-  } catch (err) {
-    console.warn("Failed to select element after type change", err)
-  }
+  // 初始图数据渲染
+  renderGraphData(props.formData.flow_data)
 
-  // 5. 若处于调试模式，保留 isDebug 属性
-  if (isDebugMode.value) {
-    lfInstance.setProperties(nodeId, { isDebug: true })
-  }
-
-  // 6. 同步保存到流程图数据中
-  syncFormData()
-}
-
-const handleOpenGatewayDetail = () => {
-  if (selectedGatewayNode.value) {
-    nodeData.value = selectedGatewayNode.value
-    showAttribute.value = true
+  // 禁用节点拖拽时的渐进连线
+  if ((lfInstance.extension as any)?.proximityConnect) {
+    (lfInstance.extension as any).proximityConnect.handleNodeDrag = () => {}
   }
 }
 
-const graph = ref<DataDialogGraph>()
-const dataVisible = ref<boolean>(false)
-const nodeCount = ref(0)
-const edgeCount = ref(0)
-const isDebugMode = ref(false)
-
-/**
- * 剥离图数据中的 isDebug 属性
- * isDebug 仅用于画布预览，不应持久化到 formData，
- * 否则下次打开时会残留调试状态
- */
-const stripDebugProps = (graphData: WorkflowGraphData) => {
-  const data = JSON.parse(JSON.stringify(graphData)) as WorkflowGraphData
-  data.nodes?.forEach((node) => {
-    if (node.properties) delete node.properties.isDebug
-  })
-  data.edges?.forEach((edge) => {
-    if (edge.properties) delete edge.properties.isDebug
-  })
-  return data as WorkflowGraphData
-}
-
-const handleToggleDebug = (val: boolean) => {
-  isDebugMode.value = val
-  if (!lf.value) return
-
-  // 使用 render 全量更新比循环 setProperties 更稳定，避免 VDOM 渲染冲突 (insertBefore error)
-  const graphData = getCurrentGraphData()
-  if (!graphData) return
-
-  graphData.nodes?.forEach((node) => {
-    node.properties = { ...node.properties, isDebug: val }
-  })
-  graphData.edges?.forEach((edge) => {
-    edge.properties = { ...edge.properties, isDebug: val }
-  })
-
-  lf.value.render(graphData)
-}
-
-const handleCalibrate = () => {
-  if (!lf.value) return
-
-  lf.value.extension?.dagre?.layout({
-    rankdir: "LR",
-    align: undefined,
-    ranker: "network-simplex",
-    nodesep: 120, // 增加同级节点间的上下间距
-    ranksep: 120, // 同步增加层级间左右间距，保持美观
-    isDefaultAnchor: true
-  })
-
-  smartCenterAndZoom()
-
-  ElNotification({
-    title: "自动布局已完成",
-    message: "点击「下一步」保存布局，点击「上一步」可回滚",
-    type: "info",
-    duration: 3000,
-    position: "top-right",
-    showClose: true
-  })
-}
-
-// 点击下一步前，先截断同步一次画布最新坐标数据到表单状态
-// 这样无论用户是否手动工作过，自动布局结果都不会丢失
+// 导航与查看数据
 const handleNext = () => {
   if (lf.value) {
-    const graphData = getCurrentGraphData()
+    const graphData = lf.value.getGraphData()
     if (graphData) {
-      emits("update:formData", { ...props.formData, flow_data: stripDebugProps(graphData) })
+      // 校验工作流合法性（拦截致命错误）
+      const validation = validateWorkflowGraph(graphData)
+      if (!validation.valid) {
+        ElMessage.error(validation.errors[0])
+        return
+      }
+
+      // 如果有警告项，弹出提示但不阻断
+      if (validation.warnings.length > 0) {
+        ElNotification({
+          title: "流程设计建议",
+          message: validation.warnings[0],
+          type: "warning",
+          duration: 3500,
+          position: "top-right"
+        })
+      }
+
+      emits("update:formData", { ...props.formData, flow_data: cleanGraphData(graphData) })
     }
   }
   next()
 }
 
-const getData = async () => {
-  graph.value = getCurrentGraphData() as DataDialogGraph
-  dataVisible.value = true
-}
-
-const updateCounts = () => {
-  try {
-    if (!lf.value) return
-
-    const graphData = getCurrentGraphData()
-    if (!graphData) return
-
-    // 确保 nodes 和 edges 是数组
-    const nodes = Array.isArray(graphData.nodes) ? graphData.nodes : []
-    const edges = Array.isArray(graphData.edges) ? graphData.edges : []
-
-    nodeCount.value = nodes.length
-    edgeCount.value = edges.length
-  } catch (error) {
-    nodeCount.value = 0
-    edgeCount.value = 0
+const getData = () => {
+  if (lf.value) {
+    graph.value = lf.value.getGraphData()
+    dataVisible.value = true
   }
 }
 
-const getNodeCount = () => {
-  return nodeCount.value
-}
-
-const getEdgeCount = () => {
-  return edgeCount.value
-}
-
-const getGraphData = () => {
-  return getCurrentGraphData()
+const handleCopyDataJson = () => {
+  if (dataDialogRef.value?.copyJson) {
+    dataDialogRef.value.copyJson()
+  }
 }
 
 const download = () => {
@@ -692,7 +498,6 @@ const download = () => {
 }
 
 onMounted(() => {
-  // 初始化 LogicFlow
   initLf()
 })
 
@@ -720,7 +525,7 @@ watch(
 )
 
 defineExpose({
-  getGraphData
+  getGraphData: () => lf.value?.getGraphData()
 })
 </script>
 
@@ -738,19 +543,19 @@ defineExpose({
 .editor-header {
   background: white;
   border-bottom: 1px solid #f1f5f9;
-  padding: 20px 24px;
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
-  min-height: 70px;
+  min-height: 64px;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .header-right {
@@ -759,234 +564,95 @@ defineExpose({
   gap: 10px;
 }
 
-/* 工具栏在头部右侧的样式 */
-.header-right .control {
-  position: static;
-  z-index: auto;
-}
-
 .editor-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .workflow-stats {
   display: flex;
-  gap: 16px;
-}
-
-.stat-badge {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  transition: all 0.3s ease;
 
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    font-size: 12px;
+
+    .stat-label {
+      color: #64748b;
+    }
+    .stat-value {
+      font-weight: 700;
+      color: #0f172a;
+    }
   }
 }
 
-.stat-label {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.9;
-}
-
-.stat-value {
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1;
-}
-
 .logic-flow-view {
+  display: flex;
   flex: 1;
   position: relative;
-  min-height: 0;
-  display: flex;
-  /* 触摸板滚动优化 */
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
 }
 
 .node-sidebar {
   width: 220px;
-  background: white;
-  border-right: 1px solid #f1f5f9;
+  background: #ffffff;
+  border-right: 1px solid #e2e8f0;
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-  /* 触摸板滚动优化 */
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
+  z-index: 10;
 }
 
 .canvas-container {
   flex: 1;
-  display: flex;
-  flex-direction: column;
   position: relative;
-  /* 触摸板滚动优化 */
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
+  background: #f8fafc;
+  overflow: hidden;
 
-#LF-view {
-  width: 100%;
-  height: 100%;
-  outline: none;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(102, 126, 234, 0.08) 1px, transparent 0),
-    linear-gradient(45deg, rgba(102, 126, 234, 0.03) 25%, transparent 25%),
-    linear-gradient(-45deg, rgba(102, 126, 234, 0.03) 25%, transparent 25%);
-  background-size:
-    20px 20px,
-    40px 40px,
-    40px 40px;
-  position: relative;
-  transition: all 0.3s ease;
-  /* 触摸板滚动优化 */
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  /* 滚动条样式优化 */
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
-}
-
-/* Webkit 滚动条样式 */
-#LF-view::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-#LF-view::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-#LF-view::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-#LF-view::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-.empty-state {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: #64748b;
-  max-width: 400px;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-  filter: grayscale(0.3);
-}
-
-.empty-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 12px 0;
-  color: #475569;
-}
-
-.empty-description {
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 0;
-  color: #94a3b8;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .editor-header {
-    padding: 16px 20px;
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-
-    .header-left {
-      justify-content: center;
-    }
-
-    .workflow-stats {
-      justify-content: center;
-    }
-
-    .header-right {
-      justify-content: center;
-    }
-  }
-
-  .node-sidebar {
-    width: 180px;
-  }
-}
-
-@media (max-width: 480px) {
-  .editor-header {
-    padding: 12px 16px;
-
-    .header-left {
-      flex-direction: column;
-      gap: 12px;
-      text-align: center;
-    }
-
-    .workflow-stats {
-      gap: 12px;
-
-      .stat-badge {
-        padding: 6px 10px;
-
-        .stat-label {
-          font-size: 10px;
-        }
-
-        .stat-value {
-          font-size: 14px;
-        }
-      }
-    }
-  }
-
-  .node-sidebar {
-    width: 160px;
+  #LF-view {
+    width: 100%;
+    height: 100%;
   }
 
   .empty-state {
-    max-width: 320px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid #e2e8f0;
+    padding: 24px 32px;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 
     .empty-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
+      font-size: 32px;
+      margin-bottom: 8px;
     }
 
     .empty-title {
-      font-size: 16px;
-      margin-bottom: 10px;
+      margin: 0 0 6px 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e293b;
     }
 
     .empty-description {
-      font-size: 13px;
+      margin: 0;
+      font-size: 12.5px;
+      color: #64748b;
     }
   }
 }

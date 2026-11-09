@@ -8,6 +8,22 @@
     :disabled="isReadonly"
     class="property-form gateway-property-form"
   >
+    <!-- 节点基础属性 -->
+    <FormSection title="基本信息" tooltip="设置该网关在流程图中的显示名称" theme-color="slate">
+      <template #icon>
+        <el-icon><Document /></el-icon>
+      </template>
+      <el-form-item label="节点名称" prop="name" class="form-item">
+        <el-input
+          v-model="propertyForm.name"
+          placeholder="请输入网关节点名称"
+          class="modern-input"
+          :disabled="isReadonly"
+          clearable
+        />
+      </el-form-item>
+    </FormSection>
+
     <!-- 网关类型快速转换 -->
     <FormSection
       title="网关类型"
@@ -18,9 +34,9 @@
         <el-icon><Switch /></el-icon>
       </template>
 
-      <div class="gateway-switch-grid">
+      <div class="gateway-switch-grid" :class="{ 'is-three-col': displayGatewayTypes.length === 3 }">
         <div
-          v-for="item in GATEWAY_TYPE_LIST"
+          v-for="item in displayGatewayTypes"
           :key="item.type"
           class="gateway-type-card"
           :class="[
@@ -57,22 +73,6 @@
           </div>
         </div>
       </div>
-    </FormSection>
-
-    <!-- 节点基础属性 -->
-    <FormSection title="基本信息" tooltip="设置该网关在流程图中的显示名称" theme-color="slate">
-      <template #icon>
-        <el-icon><Document /></el-icon>
-      </template>
-      <el-form-item label="节点名称" prop="name" class="form-item">
-        <el-input
-          v-model="propertyForm.name"
-          placeholder="请输入网关节点名称"
-          class="modern-input"
-          :disabled="isReadonly"
-          clearable
-        />
-      </el-form-item>
     </FormSection>
 
     <!-- 路由分支说明 -->
@@ -114,18 +114,28 @@ interface Props {
   }
   id?: number
   onChangeType?: (newType: string) => void
+  engineType?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   nodeData: () => ({}),
   lf: null,
-  flowDetail: () => ({})
+  flowDetail: () => ({}),
+  engineType: "flowx"
 })
 
 const emits = defineEmits<{
   (e: "closed"): void
   (e: "changeType", newType: string): void
 }>()
+
+// 根据工作流引擎过滤网关选项（FlowX 遵循 BPMN 2.0，不展示传统条件网关）
+const displayGatewayTypes = computed(() => {
+  if (props.engineType === "flowx") {
+    return GATEWAY_TYPE_LIST.filter((item) => item.type !== "selective")
+  }
+  return GATEWAY_TYPE_LIST
+})
 
 const formRef = ref<FormInstance | null>(null)
 const propertyForm = reactive({
@@ -234,17 +244,36 @@ defineExpose({
   padding-bottom: 24px;
 }
 
+.form-item {
+  margin-bottom: 0 !important;
+
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+}
+
 .gateway-switch-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+
+  &.is-three-col {
+    grid-template-columns: repeat(3, 1fr);
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
 }
 
 .gateway-type-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 10px 12px;
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
   border-radius: 8px;
@@ -277,16 +306,16 @@ defineExpose({
   .card-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
+    gap: 8px;
+    margin-bottom: 6px;
   }
 
   .gateway-icon-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     background: #f1f5f9;
     border-radius: 6px;
     color: #475569;
@@ -294,8 +323,8 @@ defineExpose({
     transition: all 0.2s;
 
     .gateway-svg-icon {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
     }
   }
 
@@ -308,9 +337,9 @@ defineExpose({
       align-items: center;
       gap: 6px;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       color: #1e293b;
-      line-height: 1.3;
+      line-height: 1.2;
     }
 
     .active-badge {
@@ -324,18 +353,19 @@ defineExpose({
 
     .type-subtitle {
       font-size: 11px;
-      color: #64748b;
+      color: #94a3b8;
       line-height: 1.3;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      margin-top: 1px;
     }
   }
 
   .card-description {
     font-size: 11px;
     color: #64748b;
-    line-height: 1.45;
+    line-height: 1.4;
   }
 
   // 主题配色变体

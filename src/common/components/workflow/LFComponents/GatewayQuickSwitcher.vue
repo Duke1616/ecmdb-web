@@ -18,7 +18,7 @@
 
       <div class="gateway-options">
         <el-tooltip
-          v-for="item in GATEWAY_TYPE_LIST"
+          v-for="item in displayGatewayTypes"
           :key="item.type"
           :content="`${item.name} (${item.badgeText}) - ${item.subTitle}`"
           placement="top"
@@ -65,16 +65,25 @@ interface Props {
   lf: any
   nodeData: any
   disabled?: boolean
+  engineType?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  disabled: false
+  disabled: false,
+  engineType: "flowx"
 })
 
 const emits = defineEmits<{
   (e: "changeType", newType: GatewayType): void
   (e: "openDetail"): void
 }>()
+
+const displayGatewayTypes = computed(() => {
+  if (props.engineType === "flowx") {
+    return GATEWAY_TYPE_LIST.filter((item) => item.type !== "selective")
+  }
+  return GATEWAY_TYPE_LIST
+})
 
 const position = ref<{ x: number; y: number } | null>(null)
 const flipped = ref(false)

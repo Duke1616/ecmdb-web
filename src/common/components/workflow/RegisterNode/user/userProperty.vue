@@ -267,6 +267,15 @@ defineExpose({ confirmFunc })
   min-height: 100%;
 }
 
+.form-item {
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+}
+
 .modern-input {
   width: 100%;
   :deep(.el-input__wrapper) {

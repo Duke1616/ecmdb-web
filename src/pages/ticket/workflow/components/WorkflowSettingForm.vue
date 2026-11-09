@@ -70,41 +70,6 @@
             <span v-else>当前已禁用：在该模式下，工作流执行时将不会发送任何外部通知消息</span>
           </div>
         </div>
-
-        <!-- 流程引擎设置 -->
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <el-icon><Cpu /></el-icon>
-            </div>
-            <div class="section-title">
-              <h3>流程引擎</h3>
-              <p>选择驱动该工作流编排执行的底层引擎内核</p>
-            </div>
-          </div>
-
-          <!-- 轻量引擎单选卡片 -->
-          <div class="compact-engine-grid">
-            <div
-              v-for="item in engineMapping"
-              :key="item.value"
-              class="compact-engine-card"
-              :class="{ 'is-active': isCurrentEngine(item.value) }"
-              @click="handleSelectEngine(item.value)"
-            >
-              <div class="compact-radio">
-                <span class="radio-dot" />
-              </div>
-              <div class="compact-content">
-                <div class="title-row">
-                  <span class="title">{{ item.label }}</span>
-                  <span v-if="item.recommended" class="badge">推荐</span>
-                </div>
-                <div class="desc">{{ item.desc }}</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -114,37 +79,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch } from "vue"
-import { InfoFilled, Connection, Cpu } from "@element-plus/icons-vue"
+import { watch } from "vue"
+import { InfoFilled, Connection } from "@element-plus/icons-vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import FormActions from "@/common/components/FormActions/index.vue"
-import type { EngineType } from "@/api/ticket/workflow/types/workflow"
 
 const notifyMapping = [
   {
     value: 1,
     label: "飞书",
     recommended: true
-  }
-]
-
-const engineMapping: {
-  value: EngineType
-  label: string
-  recommended?: boolean
-  desc: string
-}[] = [
-  {
-    value: "flowx",
-    label: "FlowX 流程引擎",
-    recommended: true,
-    desc: "自研现代事件驱动架构，支持高并发异步流转与自适应任务标识"
-  },
-  {
-    value: "easy-workflow",
-    label: "EasyFlow 流程引擎",
-    recommended: false,
-    desc: "传统图驱动执行引擎，兼容历史存量工单流程与老旧节点规范"
   }
 ]
 
@@ -167,31 +111,6 @@ const getNotifyMethodLabel = () => {
   const method = notifyMapping.find((item) => item.value === localFormData.value.notify_method)
   return method ? method.label : "未选择"
 }
-
-/**
- * 判断指定引擎是否当前选中
- * @param val 引擎类型
- */
-const isCurrentEngine = (val: EngineType) => {
-  return (localFormData.value.engine_type || "easy-workflow") === val
-}
-
-/**
- * 切换流程引擎
- * @param val 目标引擎类型
- */
-const handleSelectEngine = (val: EngineType) => {
-  if (localFormData.value.engine_type === val) return
-  localFormData.value.engine_type = val
-  updateFormData()
-}
-
-onMounted(() => {
-  if (!localFormData.value.engine_type) {
-    localFormData.value.engine_type = "easy-workflow"
-    updateFormData()
-  }
-})
 
 /** 监听消息是否变更 */
 watch(

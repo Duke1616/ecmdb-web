@@ -59,6 +59,16 @@
           自动布局
         </button>
 
+        <button
+          type="button"
+          @click="$emit('loadDemo')"
+          class="control-btn control-btn-template"
+          title="一键载入标准审批流 Demo 示例"
+        >
+          <FolderAdd class="btn-icon" />
+          注入示例
+        </button>
+
         <button type="button" @click="getData" class="control-btn control-btn-primary" title="查看当前流程数据">
           <View class="btn-icon" />
           查看数据
@@ -85,7 +95,16 @@
 
 <script setup lang="ts">
 import { ref, watch } from "vue"
-import { View, Download, RefreshLeft, RefreshRight, Location, Cpu, MagicStick } from "@element-plus/icons-vue"
+import {
+  View,
+  Download,
+  RefreshLeft,
+  RefreshRight,
+  Location,
+  Cpu,
+  MagicStick,
+  FolderAdd
+} from "@element-plus/icons-vue"
 
 interface Props {
   lf?: any // LogicFlow instance
@@ -96,7 +115,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits(["getData", "download", "toggleDebug", "calibrate"])
+const emit = defineEmits(["getData", "download", "toggleDebug", "calibrate", "loadDemo"])
 
 const undoDisable = ref(true)
 const redoDisable = ref(true)
@@ -369,6 +388,19 @@ const reposition = () => {
   border-color: #047857;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.control-btn-template {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  color: white;
+  border-color: #0284c7;
+  box-shadow: 0 4px 16px rgba(14, 165, 233, 0.3);
+}
+
+.control-btn-template:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
 }
 
 .control-btn-debug {

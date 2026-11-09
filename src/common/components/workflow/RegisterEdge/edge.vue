@@ -26,9 +26,9 @@
         <div class="expression-input-wrapper">
           <el-input
             v-model="propertyForm.expression"
-            placeholder="请输入表达式或点击右侧生成按钮"
+            placeholder="支持直接编辑/粘贴表达式，或点击右侧生成"
             class="modern-input with-action"
-            readonly
+            clearable
           />
           <el-button @click="handleOpenExpression" class="action-btn" :icon="Operation"> 生成表达式 </el-button>
         </div>
@@ -64,7 +64,7 @@
     v-model="dialogVisible"
     title="配置连线执行条件"
     subtitle="通过表达式编辑器设置连线的执行条件，支持模板字段和自定义逻辑"
-    width="1180px"
+    width="960px"
     :header-icon="Connection"
     confirm-text="确认"
     :show-footer-info="false"

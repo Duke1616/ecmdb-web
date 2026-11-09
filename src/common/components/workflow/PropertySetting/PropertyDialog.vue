@@ -3,26 +3,37 @@
     v-model="showNodeAttribute"
     :title="getNodeTitle()"
     :subtitle="getNodeSubtitle()"
-    :before-close="handleBeforeClose"
     size="35%"
     @closed="closed"
-    @confirm="handleDrawerConfirm"
+    @confirm="handleConfirm"
   >
     <template #header-icon>
       <div class="icon-circle">
-        <img v-if="isGatewayType(props.nodeData?.type)" :src="getIconPath()" alt="gateway" class="icon-image" />
+        <!-- 网关专属 SVG 图标 -->
+        <svg
+          v-if="isGatewayType(props.nodeData?.type)"
+          viewBox="0 0 1126 1024"
+          class="header-svg-icon"
+        >
+          <path
+            d="M563.2 0l563.2 512-563.2 512L0 512 563.2 0z"
+            fill="currentColor"
+          />
+        </svg>
+        <!-- 业务节点 SVG 图标 -->
         <svg
           v-else-if="currentNodeConfig?.iconSVG"
           viewBox="0 0 1024 1024"
-          style="width: 28px; height: 28px; color: #fff"
+          class="header-svg-icon"
         >
           <path :d="currentNodeConfig.iconSVG" fill="currentColor" />
         </svg>
-        <img v-else :src="getIconPath()" :alt="props.nodeData?.type" class="icon-image" />
+        <!-- 基础节点回退文字/图标 -->
+        <el-icon v-else class="header-fallback-icon"><Operation /></el-icon>
       </div>
     </template>
 
-    <!-- 直接渲染属性组件内容 -->
+    <!-- 动态渲染属性组件内容 -->
     <div class="property-content">
       <component
         v-if="currentNodeConfig?.property"
@@ -36,26 +47,30 @@
     </div>
   </CustomDrawer>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from "vue"
+import { Operation } from "@element-plus/icons-vue"
 import CustomDrawer from "@/common/components/Dialogs/Drawer/index.vue"
 import { getNodeConfig } from "../RegisterNode/index"
 import { isGatewayType } from "../RegisterNode/gateway/constants"
+import { getNodeTypeLabel } from "@/pages/ticket/workflow/utils/graph"
 
-const props = defineProps({
-  //标题
-  title: {
-    type: String,
-    default: ""
-  },
-  nodeData: Object,
-  lf: Object,
-  //详情
-  flowDetail: {
-    type: Object,
-    default: () => ({})
-  },
-  id: Number
+interface Props {
+  title?: string
+  nodeData?: any
+  lf?: any
+  flowDetail?: Record<string, any>
+  id?: number
+  engineType?: string
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  title: "",
+  nodeData: () => ({}),
+  lf: null,
+  flowDetail: () => ({}),
+  engineType: "flowx"
 })
 
 const emits = defineEmits(["closed", "changeType"])
@@ -72,81 +87,76 @@ const componentProps = computed(() => ({
   lf: props.lf,
   flowDetail: props.flowDetail,
   id: props.id,
+  engineType: props.engineType,
   onChangeType: (newType: string) => emits("changeType", newType)
 }))
 
-// 获取图标路径
-const getIconPath = () => {
-  let iconName = props.nodeData?.type || "start"
-  if (isGatewayType(iconName)) {
-    iconName = "gatewhy" // 统一使用网关图标
-  } else if (iconName === "chat") {
-    iconName = "automation" // 暂时使用自动化图标作为回退
-  }
-  return new URL(`../background/${iconName}.png`, import.meta.url).href
-}
-
-// 获取节点标题
+// 获取节点抽屉主标题
 const getNodeTitle = () => {
   if (isGatewayType(props.nodeData?.type)) {
     return "网关属性"
   }
-  return currentNodeConfig.value?.text ? `${currentNodeConfig.value.text}属性` : "节点属性"
+  const typeLabel = getNodeTypeLabel(props.nodeData?.type || "")
+  return `${typeLabel}属性`
 }
 
-// 获取节点副标题
+// 获取节点抽屉副标题
 const getNodeSubtitle = () => {
   if (isGatewayType(props.nodeData?.type)) {
     return "配置网关类型与路由规则"
   }
-  return currentNodeConfig.value?.description || "配置节点属性"
+  return currentNodeConfig.value?.description || "配置节点运行参数与流转规则"
 }
 
-// 关闭前处理
-const handleBeforeClose = (done: () => void) => {
-  done()
-}
-
-//弹窗关闭
+// 弹窗关闭通知
 const closed = () => {
   emits("closed", true)
 }
 
-// 处理确认
+// 处理抽屉确认保存
 const handleConfirm = () => {
   if (propertyComponentRef.value?.confirmFunc) {
     propertyComponentRef.value.confirmFunc()
   } else {
-    // 如果没有 confirmFunc，可能是不需要保存的节点，直接关闭
     closed()
   }
-}
-
-// 处理 Drawer 的确认事件
-const handleDrawerConfirm = () => {
-  handleConfirm()
 }
 </script>
 
 <style lang="scss" scoped>
+.icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+
+  .header-svg-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .header-fallback-icon {
+    font-size: 20px;
+  }
+}
+
 .property-content {
   height: 100%;
   overflow-y: auto;
   padding: calc(0.5rem + 0.2vw);
 }
 
-.icon-circle {
-  border-radius: 8px;
+.no-property-hint {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-
-  .icon-image {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    filter: brightness(0) invert(1); // 将图标变为白色
-  }
+  height: 200px;
+  color: #94a3b8;
+  font-size: 13px;
 }
 </style>
