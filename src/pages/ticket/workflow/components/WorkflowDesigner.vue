@@ -84,6 +84,13 @@
       @closed="showAttribute = false"
       @change-type="handleChangeGatewayType"
     />
+
+    <!-- 工作流示范模板库弹窗 -->
+    <WorkflowTemplateDialog
+      v-model="templateVisible"
+      :current-engine-type="formData.engine_type"
+      @select="handleSelectTemplate"
+    />
   </div>
 </template>
 
@@ -103,6 +110,7 @@ import Control from "@@/components/workflow/LFComponents/Control.vue"
 import DataDialog from "@@/components/workflow/LFComponents/DataDialog.vue"
 import PropertyDialog from "@@/components/workflow/PropertySetting/PropertyDialog.vue"
 import GatewayQuickSwitcher from "@@/components/workflow/LFComponents/GatewayQuickSwitcher.vue"
+import WorkflowTemplateDialog from "./WorkflowTemplateDialog.vue"
 import { WORKFLOW_NODES, registerAllNodes } from "@@/components/workflow/RegisterNode/index"
 import { isGatewayType } from "@@/components/workflow/RegisterNode/gateway/constants"
 import { findCompensationNodeReferences } from "@@/components/workflow/RegisterNode/automation/compensation"
@@ -110,7 +118,7 @@ import { FormDialog } from "@/common/components/Dialogs"
 import FormActions from "@/common/components/FormActions/index.vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import type { CreateOrUpdateWorkflowReq } from "@/api/ticket/workflow/types/workflow"
-import { createDemoWorkflowGraph } from "../types"
+import { createDemoWorkflowGraph, type WorkflowTemplateItem } from "../types"
 import { cleanGraphData, validateWorkflowGraph } from "../utils/graph"
 
 // 引入拆分的领域 Composables
@@ -143,6 +151,8 @@ const edgeCount = ref(0)
 const graph = ref<any>()
 const dataDialogRef = ref<InstanceType<typeof DataDialog>>()
 const dataVisible = ref<boolean>(false)
+// 示范模板库弹窗状态
+const templateVisible = ref<boolean>(false)
 
 const isWorkflowReadonly = computed(() => {
   return flowDetail.status === "2" || flowDetail.status === 2
@@ -271,30 +281,38 @@ const handleCalibrate = () => {
 }
 
 /**
- * 一键载入标准审批流 Demo 示例模板
+ * 打开工作流示范模板选择弹窗
  */
 const handleLoadDemo = () => {
   if (!lf.value) return
+  templateVisible.value = true
+}
+
+/**
+ * 载入所选工作流示范模板
+ */
+const handleSelectTemplate = (tpl: WorkflowTemplateItem) => {
+  if (!lf.value) return
 
   const doLoad = () => {
-    const demoData = createDemoWorkflowGraph(uuidv4, props.formData.engine_type)
-    lf.value?.render(demoData)
+    const templateData = tpl.createGraph(uuidv4)
+    lf.value?.render(templateData)
     emits("update:formData", {
       ...props.formData,
-      flow_data: cleanGraphData(demoData)
+      flow_data: cleanGraphData(templateData)
     })
     nextTick(() => {
       autoLayoutAndCenter({ showNotification: false })
       updateCounts()
-      ElMessage.success("已成功载入标准工作流 Demo 示例！")
+      ElMessage.success(`已成功载入「${tpl.name}」模板！`)
     })
   }
 
   // 画布已有复杂拓扑时，弹出确认提示
   if (nodeCount.value > 2 || edgeCount.value > 0) {
     ElMessageBox.confirm(
-      "加载示例模板将重置并覆盖当前画布内容，是否继续？",
-      "载入标准 Demo",
+      `加载「${tpl.name}」将重置并覆盖当前画布已有内容，是否继续？`,
+      "载入示例模板",
       {
         confirmButtonText: "确认注入",
         cancelButtonText: "取消",
