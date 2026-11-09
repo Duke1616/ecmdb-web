@@ -160,18 +160,41 @@ const formRules: FormRules = {
 }
 
 // ── 数据标准化逻辑 (Normalize) ──────────────────────────────────────────
-const normalizeAssignees = (p: any): Assignee[] => {
-  if (p.assignees?.length > 0) return JSON.parse(JSON.stringify(p.assignees))
-
-  const rule = p.rule || "appoint"
-
-  // 根据不同规则转换为统一的 Assignee 结构
-  const strategyMap: Record<string, () => Assignee[]> = {
-    template: () => [{ rule: "template", values: [String(p.template_id || 0), p.template_field || ""] }],
-    founder: () => [{ rule: "founder", values: [] }],
-    default: () => [{ rule, values: Array.isArray(p.approved) ? p.approved : [] }]
+/**
+ * 校验策略项是否包含有效配置
+ * 避免未指定人员的空项（如 { rule: "appoint", values: [] }）以空白卡片形式展示
+ */
+const isValidAssignee = (a: Assignee): boolean => {
+  if (!a || !a.rule) return false
+  // 系统计算类规则，无需手动选择具体 values
+  if (["founder", "leaders", "main_leader"].includes(a.rule)) {
+    return true
   }
-  return (strategyMap[rule] || strategyMap.default)()
+  // 模板字段规则，需包含有效的模板 ID
+  if (a.rule === "template") {
+    return Array.isArray(a.values) && a.values.some((v) => !!v && v !== "0")
+  }
+  // 人员、团队、部门、值班等规则，必须选择具体实体
+  return Array.isArray(a.values) && a.values.length > 0
+}
+
+const normalizeAssignees = (p: any): Assignee[] => {
+  let list: Assignee[] = []
+
+  // 1. 若已显式配置了 assignees 数组，进行深拷贝
+  if (Array.isArray(p.assignees)) {
+    list = JSON.parse(JSON.stringify(p.assignees))
+  } else if (p.rule === "template" && (p.template_id || p.template_field)) {
+    // 2. 兼容历史旧单规则结构
+    list = [{ rule: "template", values: [String(p.template_id || 0), p.template_field || ""] }]
+  } else if (p.rule === "founder") {
+    list = [{ rule: "founder", values: [] }]
+  } else if (Array.isArray(p.approved) && p.approved.length > 0) {
+    list = [{ rule: p.rule || "appoint", values: p.approved }]
+  }
+
+  // 3. 过滤掉无意义的空策略，空配置时返回空数组，不虚构空卡片
+  return list.filter(isValidAssignee)
 }
 
 // ── 初始化 ─────────────────────────────────────────────────────────────
