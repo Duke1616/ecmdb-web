@@ -49,18 +49,6 @@
           @change-type="handleChangeGatewayType"
           @open-detail="handleOpenGatewayDetail"
         />
-
-        <!-- 空状态智能引导 -->
-        <div v-if="nodeCount <= 2 && edgeCount === 0" class="empty-state">
-          <div class="empty-icon">📋</div>
-          <h4 class="empty-title">开始设计您的工作流</h4>
-          <p class="empty-description">从左侧节点库拖拽节点到画布，或一键载入标准审批流程模板</p>
-          <div style="margin-top: 14px">
-            <el-button type="primary" :icon="FolderAdd" round @click="handleLoadDemo">
-              一键注入审批流 Demo
-            </el-button>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -102,7 +90,7 @@
 <script setup lang="ts">
 import { reactive, ref, nextTick, onMounted, onUnmounted, watch, computed } from "vue"
 import { ElNotification, ElMessageBox, ElMessage } from "element-plus"
-import { FolderAdd, DataAnalysis } from "@element-plus/icons-vue"
+import { DataAnalysis } from "@element-plus/icons-vue"
 import { v4 as uuidv4 } from "uuid"
 import LogicFlow from "@logicflow/core"
 import { Menu, Snapshot, MiniMap, SelectionSelect, ProximityConnect } from "@logicflow/extension"
@@ -618,42 +606,6 @@ defineExpose({
   #LF-view {
     width: 100%;
     height: 100%;
-  }
-
-  .empty-state {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    pointer-events: auto;
-    z-index: 5;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(8px);
-    border: 1px solid #e2e8f0;
-    padding: 24px 32px;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-
-    .empty-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-
-    .empty-title {
-      margin: 0 0 6px 0;
-      font-size: 15px;
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .empty-description {
-      margin: 0;
-      font-size: 12.5px;
-      color: #64748b;
-    }
   }
 }
 </style>
