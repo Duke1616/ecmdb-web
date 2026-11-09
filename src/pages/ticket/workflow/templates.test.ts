@@ -34,7 +34,7 @@ describe("Workflow Templates", () => {
 
     // 验证包含包容网关与并行网关
     const nodeTypes = graph.nodes!.map((n: any) => n.type)
-    expect(nodeTypes).toContain("inclusive")
+    expect(nodeTypes).toContain("inclusion")
     expect(nodeTypes).toContain("parallel")
     expect(nodeTypes).toContain("automation")
     expect(nodeTypes).toContain("chat")
@@ -70,7 +70,7 @@ describe("Workflow Templates", () => {
     const flowxGraph = getEngineDefaultTemplateGraph(mockCreateId, "flowx")
     const easyflowGraph = getEngineDefaultTemplateGraph(mockCreateId, "easyflow")
 
-    expect(flowxGraph.nodes!.some((n: any) => n.type === "inclusive")).toBe(true)
+    expect(flowxGraph.nodes!.some((n: any) => n.type === "inclusion")).toBe(true)
     expect(easyflowGraph.nodes!.some((n: any) => n.type === "selective")).toBe(true)
   })
 

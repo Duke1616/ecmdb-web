@@ -1,35 +1,22 @@
 <template>
-  <el-dialog
+  <FormDialog
     v-model="visible"
     title="工作流示范模板库"
-    width="860px"
-    class="workflow-template-dialog"
-    destroy-on-close
-    align-center
+    :subtitle="`预设符合流程引擎规范的标准拓扑模板（当前引擎：${engineLabel}），支持一键载入画布并智能排版`"
+    width="960px"
+    :header-icon="Collection"
+    :show-footer="true"
+    :show-footer-info="true"
+    :footer-info-text="currentFooterInfo"
+    confirm-text="确认载入此模板"
+    :confirm-disabled="!selectedTemplate"
+    @confirm="handleConfirmApply"
+    @cancel="visible = false"
   >
-    <template #header>
-      <div class="dialog-header-custom">
-        <div class="header-icon-box">
-          <el-icon><Collection /></el-icon>
-        </div>
-        <div class="header-titles">
-          <div class="main-title">
-            工作流示范模板库
-            <span class="engine-badge" :class="`engine-${currentEngineType}`">
-              当前引擎: {{ engineLabel }}
-            </span>
-          </div>
-          <div class="sub-title">
-            预设符合 BPMN 2.0 与 EasyFlow 规范的标准拓扑模板，支持一键载入画布并智能排版
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <div class="template-dialog-body">
-      <!-- 引擎与类别筛选工具栏 -->
-      <div class="filter-bar">
-        <el-radio-group v-model="filterType" size="default">
+    <div class="template-dialog-content">
+      <!-- 顶部引擎与分类快速筛选 -->
+      <div class="filter-header">
+        <el-radio-group v-model="filterType" size="default" class="filter-group">
           <el-radio-button value="recommended">
             ✨ 当前引擎推荐 ({{ recommendedCount }})
           </el-radio-button>
@@ -52,21 +39,29 @@
           :key="tpl.id"
           class="template-card"
           :class="{
+            'is-selected': selectedTemplateId === tpl.id,
             'is-recommended': isRecommended(tpl),
             [`theme-${tpl.badgeColor || 'blue'}`]: true
           }"
+          @click="selectedTemplateId = tpl.id"
+          @dblclick="handleDirectApply(tpl)"
         >
+          <!-- 选中状态右上角角标 -->
+          <div v-if="selectedTemplateId === tpl.id" class="selected-corner-badge">
+            <el-icon><Check /></el-icon>
+          </div>
+
           <div class="card-top">
             <div class="card-badges">
               <span class="tpl-tag" :class="`tag-${tpl.badgeColor || 'blue'}`">
                 {{ tpl.tag }}
               </span>
               <span v-if="isRecommended(tpl)" class="rec-tag">
-                🔥 最佳实践
+                🔥 引擎推荐
               </span>
             </div>
             <div class="node-count-badge">
-              {{ tpl.nodeCount }} 节点
+              <span class="count-number">{{ tpl.nodeCount }}</span> 个节点
             </div>
           </div>
 
@@ -87,25 +82,30 @@
             </div>
           </div>
 
-          <div class="card-footer">
+          <div class="card-action-bar">
+            <span class="select-indicator">
+              <span v-if="selectedTemplateId === tpl.id" class="text-active">已选中</span>
+              <span v-else class="text-inactive">点击选中 · 双击直接注入</span>
+            </span>
             <el-button
-              type="primary"
-              class="apply-btn"
-              @click="handleApply(tpl)"
+              size="small"
+              :type="selectedTemplateId === tpl.id ? 'primary' : 'default'"
+              class="quick-apply-btn"
+              @click.stop="handleDirectApply(tpl)"
             >
-              <el-icon><Check /></el-icon>
-              载入此模板
+              一键注入
             </el-button>
           </div>
         </div>
       </div>
     </div>
-  </el-dialog>
+  </FormDialog>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue"
+import { computed, ref, watch } from "vue"
 import { Collection, ArrowRight, Check } from "@element-plus/icons-vue"
+import { FormDialog } from "@/common/components/Dialogs"
 import { WORKFLOW_TEMPLATES, type WorkflowTemplateItem } from "../templates"
 
 interface Props {
@@ -129,6 +129,7 @@ const visible = computed({
 })
 
 const filterType = ref<"recommended" | "all" | "flowx" | "easyflow">("recommended")
+const selectedTemplateId = ref<string>("")
 
 const isFlowX = computed(() => props.currentEngineType === "flowx")
 const engineLabel = computed(() => (isFlowX.value ? "FlowX (BPMN 2.0)" : "EasyFlow"))
@@ -145,12 +146,13 @@ const recommendedCount = computed(() => {
 
 const filteredTemplates = computed(() => {
   if (filterType.value === "recommended") {
-    // 置顶推荐模板，之后是通用模板
-    return [...WORKFLOW_TEMPLATES].sort((a, b) => {
-      const aRec = isRecommended(a) ? 1 : 0
-      const bRec = isRecommended(b) ? 1 : 0
-      return bRec - aRec
-    }).filter((tpl) => isRecommended(tpl) || tpl.engineType === "all")
+    return [...WORKFLOW_TEMPLATES]
+      .sort((a, b) => {
+        const aRec = isRecommended(a) ? 1 : 0
+        const bRec = isRecommended(b) ? 1 : 0
+        return bRec - aRec
+      })
+      .filter((tpl) => isRecommended(tpl) || tpl.engineType === "all")
   }
 
   if (filterType.value === "flowx") {
@@ -164,116 +166,95 @@ const filteredTemplates = computed(() => {
   return WORKFLOW_TEMPLATES
 })
 
-const handleApply = (tpl: WorkflowTemplateItem) => {
+const selectedTemplate = computed(() => {
+  return WORKFLOW_TEMPLATES.find((t) => t.id === selectedTemplateId.value)
+})
+
+const currentFooterInfo = computed(() => {
+  if (selectedTemplate.value) {
+    return `当前选中：「${selectedTemplate.value.name}」（共 ${selectedTemplate.value.nodeCount} 个节点）`
+  }
+  return "请选择要注入的示范模板"
+})
+
+// 弹窗打开时，默认选定当前引擎的最佳推荐模板
+watch(
+  () => props.modelValue,
+  (val) => {
+    if (val) {
+      filterType.value = "recommended"
+      const defaultTpl = WORKFLOW_TEMPLATES.find((t) => isRecommended(t)) || WORKFLOW_TEMPLATES[0]
+      if (defaultTpl) {
+        selectedTemplateId.value = defaultTpl.id
+      }
+    }
+  },
+  { immediate: true }
+)
+
+const handleDirectApply = (tpl: WorkflowTemplateItem) => {
+  selectedTemplateId.value = tpl.id
   emits("select", tpl)
+  visible.value = false
+}
+
+const handleConfirmApply = () => {
+  if (!selectedTemplate.value) return
+  emits("select", selectedTemplate.value)
   visible.value = false
 }
 </script>
 
 <style scoped lang="scss">
-.workflow-template-dialog {
-  :deep(.el-dialog__header) {
-    padding: 16px 20px;
-    margin: 0;
-    border-bottom: 1px solid #f1f5f9;
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 20px;
-    max-height: 70vh;
-    overflow-y: auto;
-    background: #f8fafc;
-  }
+.template-dialog-content {
+  padding: 4px 6px 12px;
 }
 
-.dialog-header-custom {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .header-icon-box {
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-  }
-
-  .header-titles {
-    .main-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 16px;
-      font-weight: 700;
-      color: #0f172a;
-      line-height: 1.3;
-    }
-
-    .engine-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 12px;
-
-      &.engine-flowx {
-        background: #f3e8ff;
-        color: #7e22ce;
-        border: 1px solid #e9d5ff;
-      }
-
-      &.engine-easyflow {
-        background: #dbeafe;
-        color: #1e40af;
-        border: 1px solid #bfdbfe;
-      }
-    }
-
-    .sub-title {
-      font-size: 12px;
-      color: #64748b;
-      margin-top: 3px;
-    }
-  }
-}
-
-.filter-bar {
+.filter-header {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+
+  :deep(.el-radio-button__inner) {
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+  }
 }
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(370px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   gap: 16px;
 }
 
 .template-card {
+  position: relative;
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
     border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
   }
 
-  &.is-recommended {
-    border-color: #6366f1;
-    background: linear-gradient(180deg, #faf5ff 0%, #ffffff 40%);
+  &.is-selected {
+    border-color: #2563eb;
+    background: #f8faff;
+    box-shadow: 0 0 0 1.5px #2563eb, 0 10px 25px -5px rgba(37, 99, 235, 0.12);
+  }
+
+  &.is-recommended:not(.is-selected) {
+    border-color: #cbd5e1;
+    background: linear-gradient(180deg, #fcfaff 0%, #ffffff 45%);
 
     &::before {
       content: "";
@@ -282,8 +263,24 @@ const handleApply = (tpl: WorkflowTemplateItem) => {
       left: 0;
       right: 0;
       height: 3px;
-      background: linear-gradient(90deg, #8b5cf6, #ec4899);
+      background: linear-gradient(90deg, #8b5cf6, #3b82f6);
     }
+  }
+
+  .selected-corner-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 28px;
+    height: 28px;
+    background: #2563eb;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom-left-radius: 10px;
+    font-size: 13px;
+    box-shadow: -1px 1px 4px rgba(37, 99, 235, 0.3);
   }
 
   .card-top {
@@ -291,6 +288,7 @@ const handleApply = (tpl: WorkflowTemplateItem) => {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 10px;
+    padding-right: 18px;
 
     .card-badges {
       display: flex;
@@ -307,18 +305,22 @@ const handleApply = (tpl: WorkflowTemplateItem) => {
       &.tag-purple {
         background: #f3e8ff;
         color: #7e22ce;
+        border: 1px solid #e9d5ff;
       }
       &.tag-blue {
         background: #eff6ff;
         color: #1d4ed8;
+        border: 1px solid #dbeafe;
       }
       &.tag-green {
         background: #f0fdf4;
         color: #15803d;
+        border: 1px solid #dcfce7;
       }
       &.tag-slate {
         background: #f1f5f9;
         color: #475569;
+        border: 1px solid #e2e8f0;
       }
     }
 
@@ -333,17 +335,21 @@ const handleApply = (tpl: WorkflowTemplateItem) => {
     }
 
     .node-count-badge {
-      font-size: 11px;
-      color: #94a3b8;
-      font-weight: 500;
+      font-size: 12px;
+      color: #64748b;
+
+      .count-number {
+        font-weight: 700;
+        color: #0f172a;
+      }
     }
   }
 
   .card-name {
     font-size: 15px;
     font-weight: 700;
-    color: #1e293b;
-    margin: 0 0 8px 0;
+    color: #0f172a;
+    margin: 0 0 6px 0;
     line-height: 1.4;
   }
 
@@ -351,21 +357,22 @@ const handleApply = (tpl: WorkflowTemplateItem) => {
     font-size: 12px;
     color: #64748b;
     line-height: 1.6;
-    margin: 0 0 14px 0;
+    margin: 0 0 12px 0;
     flex: 1;
   }
 
   .steps-flow {
     background: #f8fafc;
     border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 14px;
+    padding: 9px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #edf2f7;
 
     .steps-label {
       font-size: 11px;
       color: #94a3b8;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
 
     .steps-chain {
@@ -393,14 +400,29 @@ const handleApply = (tpl: WorkflowTemplateItem) => {
     }
   }
 
-  .card-footer {
+  .card-action-bar {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 8px;
+    border-top: 1px dashed #e2e8f0;
 
-    .apply-btn {
-      width: 100%;
-      border-radius: 8px;
-      font-weight: 600;
+    .select-indicator {
+      font-size: 11px;
+
+      .text-active {
+        color: #2563eb;
+        font-weight: 600;
+      }
+
+      .text-inactive {
+        color: #94a3b8;
+      }
+    }
+
+    .quick-apply-btn {
+      font-weight: 500;
+      border-radius: 6px;
     }
   }
 }

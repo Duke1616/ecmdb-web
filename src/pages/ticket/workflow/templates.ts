@@ -52,7 +52,7 @@ export const createFlowXComprehensiveGraph = (createId: () => string): WorkflowG
       },
       {
         id: forkInclusiveId,
-        type: "inclusive",
+        type: "inclusion",
         x: 360,
         y: 260,
         text: { x: 360, y: 260, value: "包容网关" },
@@ -84,7 +84,7 @@ export const createFlowXComprehensiveGraph = (createId: () => string): WorkflowG
       },
       {
         id: joinInclusiveId,
-        type: "inclusive",
+        type: "inclusion",
         x: 620,
         y: 260,
         text: { x: 620, y: 260, value: "包容网关" },
