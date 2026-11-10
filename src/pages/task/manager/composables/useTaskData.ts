@@ -35,6 +35,10 @@ export interface BusinessNotificationFormState {
   channels: NotificationChannel[]
   template_set_id: number
   identifier_type: RecipientIdentifierType
+  result_path?: string
+  target_field?: string
+  drill_enabled?: boolean
+  test_redirect_target?: string
   recipients: NotificationRecipient[]
 }
 
@@ -45,6 +49,10 @@ export const createDefaultBusinessNotificationState = (): BusinessNotificationFo
   channels: [NotificationChannel.LARK_CARD],
   template_set_id: 0,
   identifier_type: RecipientIdentifierType.USERNAME,
+  result_path: "",
+  target_field: "",
+  drill_enabled: false,
+  test_redirect_target: "",
   recipients: []
 })
 
@@ -59,6 +67,9 @@ export const validateBusinessNotification = (state: BusinessNotificationFormStat
   if (!state.template_set_id || state.template_set_id <= 0) return "业务消息通知请选择有效的消息模板集"
   if (state.mode === BusinessRecipientMode.STATIC && !state.recipients.length) {
     return "业务消息通知固定指定模式下请配置接收者"
+  }
+  if (state.mode === BusinessRecipientMode.DYNAMIC && state.drill_enabled && !state.test_redirect_target?.trim()) {
+    return "开启安全演练模式时，请填写测试接收账号"
   }
   return undefined
 }
@@ -229,12 +240,17 @@ export const mapToFormState = (data?: TaskItem): TaskFormState => {
   state.notification_enabled = state.notification_groups.some((group) => group.enabled)
 
   if (data.business_notification) {
+    const redirectTarget = data.business_notification.test_redirect_target ?? ""
     state.business_notification = {
       enabled: data.business_notification.enabled ?? false,
       mode: data.business_notification.mode ?? BusinessRecipientMode.DYNAMIC,
       channels: cloneDeep(data.business_notification.channels) ?? [NotificationChannel.LARK_CARD],
       template_set_id: data.business_notification.template_set_id ?? 0,
       identifier_type: data.business_notification.identifier_type ?? RecipientIdentifierType.USERNAME,
+      result_path: data.business_notification.result_path ?? "",
+      target_field: data.business_notification.target_field ?? "",
+      drill_enabled: !!redirectTarget.trim(),
+      test_redirect_target: redirectTarget,
       recipients: cloneDeep(data.business_notification.recipients) ?? []
     }
   }
@@ -266,6 +282,12 @@ export const mapToApiPayload = (state: TaskFormState, handler?: HandlerDetail | 
           channels: cloneDeep(state.business_notification.channels),
           template_set_id: state.business_notification.template_set_id,
           identifier_type: state.business_notification.identifier_type,
+          result_path: state.business_notification.result_path?.trim() || undefined,
+          target_field: state.business_notification.target_field?.trim() || undefined,
+          test_redirect_target:
+            state.business_notification.drill_enabled && state.business_notification.test_redirect_target?.trim()
+              ? state.business_notification.test_redirect_target.trim()
+              : undefined,
           recipients:
             state.business_notification.mode === BusinessRecipientMode.STATIC
               ? cloneDeep(state.business_notification.recipients)

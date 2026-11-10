@@ -142,6 +142,12 @@ export interface BusinessNotificationConfig {
   identifier_type: RecipientIdentifierType
   /** 固定模式使用：预设的业务接收对象列表。 */
   recipients?: NotificationRecipient[]
+  /** 产物待投递列表提取路径（默认为空，表示提取 notifications）。 */
+  result_path?: string
+  /** 接收人提取字段名（默认为空，按 target/username 自动识别）。 */
+  target_field?: string
+  /** 安全演练模式：所有动态通知强制重定向至此目标。 */
+  test_redirect_target?: string
 }
 
 export interface GrpcConfig {

@@ -12,7 +12,14 @@ import {
 } from "@/api/task/manager/type"
 import { ParameterRole } from "@/api/task/resource/type"
 import { ProgramKind } from "@/api/task/program"
-import { createDefaultFormState, mapToApiPayload, mapToFormState, validateBoundParameters } from "./useTaskData"
+import {
+  createDefaultFormState,
+  createDefaultBusinessNotificationState,
+  mapToApiPayload,
+  mapToFormState,
+  validateBoundParameters,
+  validateBusinessNotification
+} from "./useTaskData"
 import {
   expandExecutionNotificationGroups,
   groupExecutionNotifications,
@@ -352,7 +359,10 @@ describe("任务执行通知映射", () => {
         enabled: true,
         channels: [NotificationChannel.LARK_CARD, NotificationChannel.WECHAT],
         template_set_id: 123,
-        identifier_type: RecipientIdentifierType.USERNAME
+        identifier_type: RecipientIdentifierType.USERNAME,
+        result_path: "expiring_users",
+        target_field: "user_name",
+        test_redirect_target: "luankz"
       }
     }
 
@@ -361,6 +371,9 @@ describe("任务执行通知映射", () => {
     expect(state.business_notification.channels).toEqual([NotificationChannel.LARK_CARD, NotificationChannel.WECHAT])
     expect(state.business_notification.template_set_id).toBe(123)
     expect(state.business_notification.identifier_type).toBe(RecipientIdentifierType.USERNAME)
+    expect(state.business_notification.result_path).toBe("expiring_users")
+    expect(state.business_notification.target_field).toBe("user_name")
+    expect(state.business_notification.test_redirect_target).toBe("luankz")
 
     const payload = mapToApiPayload(state)
     expect(payload.business_notification).toEqual({
@@ -369,8 +382,31 @@ describe("任务执行通知映射", () => {
       channels: [NotificationChannel.LARK_CARD, NotificationChannel.WECHAT],
       template_set_id: 123,
       identifier_type: RecipientIdentifierType.USERNAME,
+      result_path: "expiring_users",
+      target_field: "user_name",
+      test_redirect_target: "luankz",
       recipients: []
     })
+
+    // 关闭演练开关后，无论旧值是否存在，序列化时均自动去除 test_redirect_target
+    state.business_notification.drill_enabled = false
+    const disabledPayload = mapToApiPayload(state)
+    expect(disabledPayload.business_notification?.test_redirect_target).toBeUndefined()
+  })
+
+  it("开启安全演练时必须填写测试账号", () => {
+    const form = createDefaultBusinessNotificationState()
+    form.enabled = true
+    form.channels = [NotificationChannel.LARK_CARD]
+    form.template_set_id = 10
+    form.mode = BusinessRecipientMode.DYNAMIC
+    form.drill_enabled = true
+    form.test_redirect_target = ""
+
+    expect(validateBusinessNotification(form)).toBe("开启安全演练模式时，请填写测试接收账号")
+
+    form.test_redirect_target = "luankz"
+    expect(validateBusinessNotification(form)).toBeUndefined()
   })
 
   it("应正确映射并序列化 business_notification STATIC 固定指定模式", () => {

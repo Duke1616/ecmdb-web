@@ -76,6 +76,100 @@
         <div class="field-hint">
           {{ activeDimensionHint }}
         </div>
+
+        <!-- 产物契约与测试演练卡片 -->
+        <div class="contract-card">
+          <div class="contract-header">
+            <div class="contract-title">
+              <el-icon class="header-icon"><Operation /></el-icon>
+              <span>产物契约与演练</span>
+              <el-tooltip
+                content="配置脚本产物的提取规则，或开启演练重定向测试"
+                placement="top"
+              >
+                <el-icon class="help-icon"><QuestionFilled /></el-icon>
+              </el-tooltip>
+            </div>
+            <div class="contract-badge">
+              <span v-if="model.drill_enabled" class="badge-drill">演练模式已激活</span>
+              <span v-else class="badge-live">生产分发</span>
+            </div>
+          </div>
+
+          <div class="contract-body">
+            <!-- 契约路径配置（双列） -->
+            <div class="contract-grid">
+              <div class="contract-item">
+                <div class="item-label">
+                  <span>提取字段路径</span>
+                  <el-tooltip
+                    content="脚本产物中通知列表的键名，默认 notifications"
+                    placement="top"
+                  >
+                    <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+                <el-input
+                  v-model="model.result_path"
+                  placeholder="默认: notifications"
+                  clearable
+                />
+              </div>
+
+              <div class="contract-item">
+                <div class="item-label">
+                  <span>接收人属性名</span>
+                  <el-tooltip
+                    :content="targetFieldTooltip"
+                    placement="top"
+                  >
+                    <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+                <el-input
+                  v-model="model.target_field"
+                  :placeholder="targetFieldPlaceholder"
+                  clearable
+                />
+              </div>
+            </div>
+
+            <!-- 安全演练开关区 -->
+            <div class="drill-section" :class="{ 'is-active': model.drill_enabled }">
+              <div class="drill-toggle-bar">
+                <div class="drill-label">
+                  <el-icon class="drill-icon"><Aim /></el-icon>
+                  <span>安全演练测试</span>
+                  <el-tooltip
+                    content="开启后所有通知强制重定向至该用户，防止误发真实人员"
+                    placement="top"
+                  >
+                    <el-icon class="help-icon"><QuestionFilled /></el-icon>
+                  </el-tooltip>
+                </div>
+                <el-switch
+                  v-model="model.drill_enabled"
+                  inline-prompt
+                  active-text="开"
+                  inactive-text="关"
+                  @change="handleDrillToggle"
+                />
+              </div>
+
+              <div v-if="model.drill_enabled" class="drill-input-wrapper">
+                <el-input
+                  v-model="model.test_redirect_target"
+                  placeholder="请输入测试接收人用户名（如当前登录人账号）"
+                  clearable
+                >
+                  <template #prefix>
+                    <el-icon class="input-user-icon"><User /></el-icon>
+                  </template>
+                </el-input>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- 3B. 固定指定模式：接收者策略 -->
@@ -112,7 +206,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue"
-import { User, Key } from "@element-plus/icons-vue"
+import { User, Key, Aim, Operation, QuestionFilled } from "@element-plus/icons-vue"
 import {
   NotificationChannel,
   NotificationRecipientType,
@@ -166,6 +260,20 @@ const activeDimensionHint = computed(() => {
   return "按用户数值 ID 直接路由推送"
 })
 
+const targetFieldTooltip = computed(() => {
+  if (model.value.identifier_type === RecipientIdentifierType.USER_ID) {
+    return "留空时默认按顺序匹配: target → recipient → user_id"
+  }
+  return "留空时默认按顺序匹配: target → recipient → username"
+})
+
+const targetFieldPlaceholder = computed(() => {
+  if (model.value.identifier_type === RecipientIdentifierType.USER_ID) {
+    return "默认匹配: target / recipient / user_id"
+  }
+  return "默认匹配: target / recipient / username"
+})
+
 const handleModeChange = (mode: BusinessRecipientMode) => {
   model.value.mode = mode
 }
@@ -189,6 +297,12 @@ const toggleChannel = (channel: NotificationChannel) => {
 const handleTemplateSetChange = (val: number | number[] | undefined) => {
   const templateSetID = Array.isArray(val) ? Number(val[0]) || 0 : Number(val) || 0
   model.value.template_set_id = templateSetID
+}
+
+const handleDrillToggle = (val: boolean | string | number) => {
+  if (!val) {
+    model.value.test_redirect_target = ""
+  }
 }
 
 // 统一复用 ReceiverStrategy Composable
@@ -394,6 +508,166 @@ const {
 
   &.active {
     box-shadow: 0 0 0 2px rgb(59 130 246 / 10%);
+  }
+}
+
+.contract-card {
+  margin-top: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: border-color 0.16s ease;
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+}
+
+.contract-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+
+  .contract-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+
+    .header-icon {
+      font-size: 14px;
+      color: #3b82f6;
+    }
+
+    .help-icon {
+      font-size: 13px;
+      color: #94a3b8;
+      cursor: help;
+      transition: color 0.15s ease;
+
+      &:hover {
+        color: #3b82f6;
+      }
+    }
+  }
+
+  .contract-badge {
+    display: inline-flex;
+    align-items: center;
+
+    .badge-drill {
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #b45309;
+      background: #fef3c7;
+      border: 1px solid #fde68a;
+      border-radius: 4px;
+    }
+
+    .badge-live {
+      padding: 2px 8px;
+      font-size: 11px;
+      color: #64748b;
+      background: #e2e8f0;
+      border-radius: 4px;
+    }
+  }
+}
+
+.contract-body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contract-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.contract-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  .item-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+
+    .help-icon {
+      font-size: 12px;
+      color: #94a3b8;
+      cursor: help;
+
+      &:hover {
+        color: #3b82f6;
+      }
+    }
+  }
+}
+
+.drill-section {
+  padding: 8px 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  transition: all 0.16s ease;
+
+  &.is-active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+
+  .drill-toggle-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .drill-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+
+      .drill-icon {
+        font-size: 13px;
+        color: #3b82f6;
+      }
+
+      .help-icon {
+        font-size: 12px;
+        color: #94a3b8;
+        cursor: help;
+
+        &:hover {
+          color: #3b82f6;
+        }
+      }
+    }
+  }
+
+  .drill-input-wrapper {
+    margin-top: 8px;
+
+    .input-user-icon {
+      font-size: 14px;
+      color: #64748b;
+    }
   }
 }
 </style>
