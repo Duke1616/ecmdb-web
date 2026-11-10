@@ -74,9 +74,6 @@ importers:
       '@fullcalendar/vue3':
         specifier: ^6.1.15
         version: 6.1.19(@fullcalendar/core@6.1.19)(vue@3.5.21(typescript@5.8.3))
-      '@jinming6/merge-helper':
-        specifier: ^1.2.10
-        version: 1.2.21
       '@logicflow/core':
         specifier: 2.1.2
         version: 2.1.2
@@ -894,9 +891,6 @@ packages:
   '@isaacs/cliui@8.0.2':
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
-
-  '@jinming6/merge-helper@1.2.21':
-    resolution: {integrity: sha512-vGChbaxTbAs33aRl2MZ1PlFgjO6pQLk5fQ7cir48BiChJd0zyaf0vQAM2eekwfTDWJIV057O66kMaKD0k0llAw==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -5879,8 +5873,6 @@ snapshots:
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
-
-  '@jinming6/merge-helper@1.2.21': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

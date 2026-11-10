@@ -35,7 +35,6 @@
     "@fullcalendar/rrule": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
     "@fullcalendar/vue3": "^6.1.15",
-    "@jinming6/merge-helper": "^1.2.10",
     "@logicflow/core": "2.1.2",
     "@logicflow/extension": "2.1.3",
     "@logicflow/layout": "^2.0.11",
