@@ -8,11 +8,33 @@
     :disabled="flowDetail.status === '2'"
     class="property-form"
   >
-    <!-- 1. 顶部模式切换 -->
-    <FormSection title="执行模式" tooltip="选择使用现有群组还是根据规则自动创建临时群组" theme-color="slate">
-      <template #icon
-        ><el-icon><Operation /></el-icon
-      ></template>
+    <!-- 1. 基本信息 -->
+    <FormSection title="基本信息" tooltip="设置节点的显示名称及通知卡片的标题" theme-color="slate">
+      <template #icon>
+        <el-icon><Document /></el-icon>
+      </template>
+      <el-form-item label="节点名称" prop="name" class="form-item">
+        <el-input v-model="propertyForm.name" placeholder="请输入节点名称" class="modern-input" />
+      </el-form-item>
+      <el-form-item label="卡片标题" prop="title" class="form-item last-form-item">
+        <VariableInput
+          v-model="propertyForm.title"
+          placeholder="默认：{{creator}}发起的{{template}}执行结果"
+          :variables="[
+            { key: 'ticket_id', label: '工单ID' },
+            { key: 'template', label: '模板名' },
+            { key: 'creator', label: '发起人' },
+            { key: 'field.xxx', label: '字段' }
+          ]"
+        />
+      </el-form-item>
+    </FormSection>
+
+    <!-- 2. 执行模式 -->
+    <FormSection title="执行模式" tooltip="选择使用现有群组还是根据规则自动创建临时群组" theme-color="blue">
+      <template #icon>
+        <el-icon><Operation /></el-icon>
+      </template>
       <div class="mode-grid">
         <div
           v-for="m in [
@@ -37,71 +59,44 @@
       </div>
     </FormSection>
 
-    <!-- 2. 基础配置 -->
-    <FormSection title="基础配置" tooltip="设置节点的显示名称及通知卡片的标题" theme-color="slate">
-      <template #icon
-        ><el-icon><Document /></el-icon
-      ></template>
-      <div class="settings-stack">
-        <el-form-item label="节点名称" prop="name" class="form-item">
-          <el-input v-model="propertyForm.name" placeholder="请输入节点名称" class="modern-input" />
-        </el-form-item>
-        <el-form-item prop="title" class="form-item">
-          <VariableInput
-            v-model="propertyForm.title"
-            label="卡片标题规则"
-            placeholder="默认：{{creator}}发起的{{template}}执行结果"
-            :variables="[
-              { key: 'ticket_id', label: '工单ID' },
-              { key: 'template', label: '模板名' },
-              { key: 'creator', label: '发起人' },
-              { key: 'field.xxx', label: '字段' }
-            ]"
-          />
-        </el-form-item>
-      </div>
-    </FormSection>
-
     <!-- 3. 模式特定配置 -->
     <FormSection
       v-if="propertyForm.mode === 'existing'"
       title="群组配置"
       tooltip="选择需要发送通知的目标群组（基于所属团队）"
-      theme-color="blue"
+      theme-color="purple"
     >
-      <template #icon
-        ><el-icon><Menu /></el-icon
-      ></template>
-      <!-- NOTE: 使用简化后的 GroupSelector 直连 ID 数组 -->
-      <GroupSelector v-model="propertyForm.chat_group_ids" :teams="teams" />
+      <template #icon>
+        <el-icon><Menu /></el-icon>
+      </template>
+      <el-form-item label="目标群组" class="form-item last-form-item">
+        <GroupSelector v-model="propertyForm.chat_group_ids" :teams="teams" />
+      </el-form-item>
     </FormSection>
 
-    <FormSection v-else title="建群规则" tooltip="定义新群组的名称生成规则与通知渠道" theme-color="blue">
-      <template #icon
-        ><el-icon><CirclePlus /></el-icon
-      ></template>
-      <div class="settings-stack">
-        <el-form-item class="form-item" prop="create.name">
-          <VariableInput
-            v-model="propertyForm.create.name"
-            label="群组名称规则"
-            placeholder="默认：【ECMDB】- {{template}}"
-            :variables="[
-              { key: 'ticket_id', label: '工单ID' },
-              { key: 'template', label: '模板名' },
-              { key: 'creator', label: '发起人' },
-              { key: 'field.xxx', label: '字段' }
-            ]"
-          />
-        </el-form-item>
-        <el-form-item label="通知渠道" class="form-item">
-          <el-select v-model="propertyForm.create.channel" class="modern-select">
-            <el-option label="飞书卡片" :value="CHANNEL_TYPES.LARK_CARD">📱 飞书卡片</el-option>
-            <el-option label="企业微信" :value="CHANNEL_TYPES.WECHAT">💬 企业微信</el-option>
-            <el-option label="邮件" :value="CHANNEL_TYPES.EMAIL">📧 邮件</el-option>
-          </el-select>
-        </el-form-item>
-      </div>
+    <FormSection v-else title="建群规则" tooltip="定义新群组的名称生成规则与通知渠道" theme-color="purple">
+      <template #icon>
+        <el-icon><CirclePlus /></el-icon>
+      </template>
+      <el-form-item label="群组名称" class="form-item" prop="create.name">
+        <VariableInput
+          v-model="propertyForm.create.name"
+          placeholder="默认：【ECMDB】- {{template}}"
+          :variables="[
+            { key: 'ticket_id', label: '工单ID' },
+            { key: 'template', label: '模板名' },
+            { key: 'creator', label: '发起人' },
+            { key: 'field.xxx', label: '字段' }
+          ]"
+        />
+      </el-form-item>
+      <el-form-item label="通知渠道" class="form-item last-form-item">
+        <el-select v-model="propertyForm.create.channel" class="modern-select">
+          <el-option label="📱 飞书卡片" :value="CHANNEL_TYPES.LARK_CARD">📱 飞书卡片</el-option>
+          <el-option label="💬 企业微信" :value="CHANNEL_TYPES.WECHAT">💬 企业微信</el-option>
+          <el-option label="📧 邮件" :value="CHANNEL_TYPES.EMAIL">📧 邮件</el-option>
+        </el-select>
+      </el-form-item>
     </FormSection>
 
     <!-- 4. 成员策略配置 -->
@@ -368,20 +363,38 @@ defineExpose({ confirmFunc })
 .modern-input,
 .modern-select {
   width: 100%;
-  :deep(.el-input__wrapper) {
+  :deep(.el-input__wrapper),
+  :deep(.el-select__wrapper) {
+    min-height: 36px;
+    height: 36px;
     background: #ffffff !important;
-    border-radius: 6px;
+    border-radius: 6px !important;
     box-shadow: none !important;
     border: 1px solid #cbd5e1 !important;
     padding: 2px 10px;
     transition: all 0.2s ease;
+    box-sizing: border-box;
+
     &:hover {
       border-color: #94a3b8 !important;
     }
-    &.is-focus {
+
+    &.is-focus,
+    &.is-focused {
       border-color: #6366f1 !important;
       box-shadow: 0 0 0 1px #6366f1 !important;
     }
+  }
+
+  :deep(.el-select__selected-item) {
+    font-size: 13px;
+    color: #1e293b;
+    font-weight: 500;
+  }
+
+  :deep(.el-select__placeholder) {
+    font-size: 13px;
+    color: #94a3b8;
   }
 }
 
@@ -393,12 +406,13 @@ defineExpose({ confirmFunc })
     font-weight: 500;
     margin-bottom: 6px;
   }
+  :deep(.el-form-item__content) {
+    width: 100%;
+  }
 }
 
-.settings-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.last-form-item {
+  margin-bottom: 0 !important;
 }
 
 // ── 模式切换卡片 ──────────────────────────────────────────────────────

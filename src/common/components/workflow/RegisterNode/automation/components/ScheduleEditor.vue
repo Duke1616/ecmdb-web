@@ -33,9 +33,14 @@
       </div>
     </div>
 
-    <div v-else class="schedule-summary immediate">
-      <el-icon><VideoPlay /></el-icon>
-      <span>节点到达后立即执行，不读取模板调度配置</span>
+    <div v-else class="schedule-immediate-card">
+      <div class="immediate-icon-box">
+        <el-icon><VideoPlay /></el-icon>
+      </div>
+      <div class="immediate-info">
+        <span class="immediate-title">即时触发执行</span>
+        <span class="immediate-desc">流程流转至当前节点时立即启动自动化任务，无需等待延迟。如需等待指定时长，请开启右上角开关。</span>
+      </div>
     </div>
   </div>
 </template>
@@ -174,7 +179,46 @@ defineExpose({ validate, enabled })
   border-left: 3px solid #f59e0b;
 }
 
-.schedule-summary.immediate {
-  border-left-color: #94a3b8;
+.schedule-immediate-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+
+  .immediate-icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    background: #e0f2fe;
+    color: #0284c7;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .immediate-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .immediate-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+  }
+
+  .immediate-desc {
+    font-size: 12px;
+    color: #64748b;
+    line-height: 1.45;
+  }
 }
 </style>

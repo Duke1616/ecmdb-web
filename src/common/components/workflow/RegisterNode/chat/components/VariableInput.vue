@@ -1,6 +1,6 @@
 <template>
   <div class="variable-input-container">
-    <div class="input-header">
+    <div v-if="label" class="input-header">
       <div class="label-box">
         <span class="label-text">{{ label }}</span>
       </div>
@@ -53,7 +53,7 @@ interface VariableDefinition {
 }
 
 defineProps<{
-  label: string
+  label?: string
   placeholder?: string
   variables: VariableDefinition[]
 }>()
@@ -111,19 +111,22 @@ const handleInsert = (key: string) => {
     --el-input-focus-border-color: #6366f1;
 
     .el-input__wrapper {
-      padding: 4px 12px;
-      border-radius: 8px;
-      background: #ffffff;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-      border: 1px solid #e2e8f0;
+      min-height: 36px;
+      height: 36px;
+      padding: 2px 10px;
+      border-radius: 6px;
+      background: #ffffff !important;
+      box-shadow: none !important;
+      border: 1px solid #cbd5e1 !important;
+      transition: all 0.2s ease;
 
       &:hover {
-        border-color: #cbd5e1;
+        border-color: #94a3b8 !important;
       }
 
       &.is-focus {
-        border-color: #6366f1;
-        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        border-color: #6366f1 !important;
+        box-shadow: 0 0 0 1px #6366f1 !important;
       }
     }
 

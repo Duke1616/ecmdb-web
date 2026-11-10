@@ -13,7 +13,7 @@
       <template #icon>
         <el-icon><Document /></el-icon>
       </template>
-      <el-form-item label="节点名称" prop="name" class="form-item">
+      <el-form-item label="节点名称" prop="name" class="form-item last-form-item">
         <el-input
           v-model="propertyForm.name"
           clearable
@@ -29,58 +29,88 @@
       <template #icon>
         <el-icon><Setting /></el-icon>
       </template>
-      <div class="settings-stack">
-        <el-form-item label="脚本文件" prop="codebook_id">
-          <CodebookPicker
-            :model-value="propertyForm.codebook_id || undefined"
-            placeholder="请选择脚本文件"
-            variant="element"
-            class="modern-select"
+      <el-form-item label="脚本文件" prop="codebook_id" class="form-item">
+        <CodebookPicker
+          :model-value="propertyForm.codebook_id || undefined"
+          placeholder="请选择脚本文件"
+          variant="element"
+          class="modern-select"
+          :disabled="flowDetail.status == '2'"
+          @update:model-value="handleCodebookUpdate"
+        />
+      </el-form-item>
+
+      <el-form-item label="默认执行单元" prop="runner_id" class="form-item">
+        <div class="execution-unit-control">
+          <el-select
+            v-model="propertyForm.runner_id"
+            filterable
+            clearable
+            :loading="runnersLoading"
+            :placeholder="runnerPlaceholder"
+            :disabled="!propertyForm.codebook_id || flowDetail.status == '2'"
+            class="modern-select runner-select"
+            popper-class="automation-runner-select-dropdown"
+          >
+            <el-option v-for="item in runners" :key="item.id" :label="item.name" :value="item.id">
+              <div class="runner-option">
+                <span class="runner-name">{{ item.name }}</span>
+                <span class="runner-meta">
+                  {{ getProgramKindLabel(item.program_kind) }}
+                  <template v-if="item.target || item.handler">
+                    <span class="runner-meta-divider">·</span>
+                    <span class="runner-handler">{{ [item.target, item.handler].filter(Boolean).join(" / ") }}</span>
+                  </template>
+                </span>
+              </div>
+            </el-option>
+          </el-select>
+
+          <AutomationRouteWorkbench
+            :workflow-id="props.id"
+            :automation-node-id="props.nodeData?.id"
+            :automation-node-name="propertyForm.name"
+            :codebook-id="propertyForm.codebook_id"
+            :default-runner-id="propertyForm.runner_id"
+            :runners="runners"
             :disabled="flowDetail.status == '2'"
-            @update:model-value="handleCodebookUpdate"
           />
-        </el-form-item>
+        </div>
+      </el-form-item>
 
-        <el-form-item label="默认执行单元" prop="runner_id" class="last-form-item">
-          <div class="execution-unit-control">
-            <el-select
-              v-model="propertyForm.runner_id"
-              filterable
-              clearable
-              :loading="runnersLoading"
-              :placeholder="runnerPlaceholder"
-              :disabled="!propertyForm.codebook_id || flowDetail.status == '2'"
-              class="modern-select runner-select"
-              popper-class="automation-runner-select-dropdown"
-            >
-              <el-option v-for="item in runners" :key="item.id" :label="item.name" :value="item.id">
-                <div class="runner-option">
-                  <span class="runner-name">{{ item.name }}</span>
-                  <span class="runner-meta">
-                    {{ getProgramKindLabel(item.program_kind) }}
-                    <template v-if="item.target || item.handler">
-                      <span class="runner-meta-divider">·</span>
-                      <span class="runner-handler">{{ [item.target, item.handler].filter(Boolean).join(" / ") }}</span>
-                    </template>
-                  </span>
-                </div>
-              </el-option>
-            </el-select>
-
-            <AutomationRouteWorkbench
-              :workflow-id="props.id"
-              :automation-node-id="props.nodeData?.id"
-              :automation-node-name="propertyForm.name"
-              :codebook-id="propertyForm.codebook_id"
-              :default-runner-id="propertyForm.runner_id"
-              :runners="runners"
-              :disabled="flowDetail.status == '2'"
-            />
-          </div>
-        </el-form-item>
-      </div>
+      <el-form-item label="任务执行超时" prop="max_execution_seconds" class="form-item last-form-item">
+        <TimeoutEditor
+          v-model="propertyForm.max_execution_seconds"
+          :disabled="flowDetail.status == '2'"
+        />
+      </el-form-item>
     </FormSection>
 
+    <!-- 执行时间（核心调度能力） -->
+    <FormSection
+      title="执行时间"
+      tooltip="设置节点到达后的单次执行时间与调度策略"
+      theme-color="orange"
+    >
+      <template #icon>
+        <el-icon><Timer /></el-icon>
+      </template>
+      <template #extra>
+        <el-switch
+          v-model="scheduleEnabled"
+          active-color="#6366f1"
+          inactive-color="#e2e8f0"
+          :disabled="flowDetail.status == '2'"
+        />
+      </template>
+      <ScheduleEditor
+        ref="scheduleEditorRef"
+        v-model="propertyForm.schedule"
+        :disabled="flowDetail.status == '2'"
+      />
+    </FormSection>
+
+    <!-- 撤回补偿 -->
     <FormSection
       title="撤回补偿"
       tooltip="当前节点执行成功后，流程撤回时立即执行所选补偿节点"
@@ -104,7 +134,7 @@
           v-if="compensationEnabled"
           label="补偿节点"
           prop="compensation_node_id"
-          class="withdraw-form-item"
+          class="form-item last-form-item"
         >
           <el-select
             v-model="propertyForm.compensation_node_id"
@@ -120,24 +150,12 @@
       </transition>
     </FormSection>
 
-    <!-- 执行时间 -->
-    <FormSection title="执行时间" tooltip="设置节点到达后的单次执行时间" theme-color="orange">
-      <template #icon>
-        <el-icon><Timer /></el-icon>
-      </template>
-      <template #extra>
-        <el-switch
-          v-model="scheduleEnabled"
-          active-color="#6366f1"
-          inactive-color="#e2e8f0"
-          :disabled="flowDetail.status == '2'"
-        />
-      </template>
-      <ScheduleEditor ref="scheduleEditorRef" v-model="propertyForm.schedule" :disabled="flowDetail.status == '2'" />
-    </FormSection>
-
-    <!-- 结果通知 -->
-    <FormSection title="状态通知" tooltip="执行完成后发送即时通知给相关人员" theme-color="green">
+    <!-- 状态通知 -->
+    <FormSection
+      title="状态通知"
+      tooltip="执行完成后发送即时通知给相关人员"
+      theme-color="green"
+    >
       <template #icon>
         <el-icon><Bell /></el-icon>
       </template>
@@ -152,12 +170,27 @@
 
       <transition name="expand">
         <div v-if="propertyForm.is_notify" class="notify-config-box">
-          <el-form-item label="通知策略" prop="notify_method">
-            <el-checkbox-group v-model="propertyForm.notify_method" class="modern-checkbox-group">
-              <el-checkbox v-for="item in notify_method_options" :key="item.value" :label="item.value" border>
-                {{ item.label }}
-              </el-checkbox>
-            </el-checkbox-group>
+          <el-form-item label="通知时机" prop="notify_method" class="form-item last-form-item">
+            <div class="notify-card-stack">
+              <div
+                v-for="opt in notify_method_options"
+                :key="opt.value"
+                class="notify-timing-card"
+                :class="{
+                  'is-active': propertyForm.notify_method.includes(opt.value),
+                  'is-disabled': flowDetail.status == '2'
+                }"
+                @click="toggleNotifyMethod(opt.value)"
+              >
+                <div class="card-checkbox">
+                  <el-icon v-if="propertyForm.notify_method.includes(opt.value)"><Check /></el-icon>
+                </div>
+                <div class="card-info">
+                  <div class="card-title">{{ opt.title }}</div>
+                  <div class="card-desc">{{ opt.desc }}</div>
+                </div>
+              </div>
+            </div>
           </el-form-item>
         </div>
       </transition>
@@ -170,13 +203,14 @@ import { listRunnerByCodebookIdApi } from "@/api/task/runner"
 import type { runner } from "@/api/task/runner/types/runner"
 import { getProgramKindLabel } from "@/api/task/program"
 import { FormInstance, FormRules } from "element-plus"
-import { Bell, Document, RefreshLeft, Setting, Timer } from "@element-plus/icons-vue"
+import { Bell, Check, Document, QuestionFilled, RefreshLeft, Setting, Timer } from "@element-plus/icons-vue"
 import { computed, ref, onMounted, reactive, watch } from "vue"
 import { cloneDeep } from "lodash-es"
 import { FormSection } from "../../PropertySetting"
 import CodebookPicker from "@/common/components/CodebookPicker/index.vue"
 import ScheduleEditor from "./components/ScheduleEditor.vue"
 import AutomationRouteWorkbench from "./components/AutomationRouteWorkbench.vue"
+import TimeoutEditor from "./components/TimeoutEditor.vue"
 import {
   createFixedDelaySchedule,
   createImmediateSchedule,
@@ -189,6 +223,7 @@ interface AutomationPropertyForm {
   name: string
   codebook_id: number
   runner_id?: number
+  max_execution_seconds?: number
   is_notify: boolean
   schedule: ScheduleConfig
   notify_method: number[]
@@ -215,6 +250,7 @@ const DEFAULT_FORM_DATA: AutomationPropertyForm = {
   name: "自动化-",
   codebook_id: 0,
   runner_id: undefined,
+  max_execution_seconds: undefined,
   is_notify: false,
   schedule: createImmediateSchedule() as ScheduleConfig,
   notify_method: [],
@@ -304,6 +340,7 @@ const setProperties = () => {
     name: propertyForm.name,
     codebook_id: propertyForm.codebook_id,
     runner_id: propertyForm.runner_id,
+    max_execution_seconds: propertyForm.max_execution_seconds ? Number(propertyForm.max_execution_seconds) : 0,
     is_notify: propertyForm.is_notify,
     schedule: cloneDeep(propertyForm.schedule),
     notify_method: propertyForm.notify_method,
@@ -311,6 +348,9 @@ const setProperties = () => {
   })
   if (!propertyForm.runner_id) {
     props.lf?.deleteProperty?.(props.nodeData?.id, "runner_id")
+  }
+  if (!propertyForm.max_execution_seconds) {
+    props.lf?.deleteProperty?.(props.nodeData?.id, "max_execution_seconds")
   }
 
   const deprecatedKeys = ["is_timing", "exec_method", "template_field", "template_id", "unit", "quantity"]
@@ -330,9 +370,27 @@ const confirmFunc = () => {
 
 // ── UI 配置项 ──────────────────────────────────────────────────────────────
 const notify_method_options = [
-  { value: 2, label: "实时发送：自动化任务结束后立即发送" },
-  { value: 1, label: "合并发送：工单结束后统一合并发送" }
+  {
+    value: 2,
+    title: "任务即时通知",
+    desc: "当前自动化节点执行完毕后立即向相关人发送结果"
+  },
+  {
+    value: 1,
+    title: "工单归档汇总",
+    desc: "待工单全流程流转完毕归档后，统一合并汇总推送"
+  }
 ]
+
+const toggleNotifyMethod = (val: number) => {
+  if (props.flowDetail?.status === "2") return
+  const idx = propertyForm.notify_method.indexOf(val)
+  if (idx > -1) {
+    propertyForm.notify_method.splice(idx, 1)
+  } else {
+    propertyForm.notify_method.push(val)
+  }
+}
 
 const formRules: FormRules = {
   codebook_id: [{ required: true, type: "number", min: 1, message: "请选择脚本文件", trigger: "change" }],
@@ -371,6 +429,8 @@ onMounted(async () => {
   propertyForm.codebook_id = Number(props.nodeData?.properties.codebook_id) || 0
   const runnerID = Number(props.nodeData?.properties.runner_id)
   propertyForm.runner_id = runnerID > 0 ? runnerID : undefined
+  const maxTimeout = Number(props.nodeData?.properties.max_execution_seconds)
+  propertyForm.max_execution_seconds = maxTimeout > 0 ? maxTimeout : undefined
   propertyForm.is_notify = props.nodeData?.properties.is_notify
   propertyForm.schedule = resolveFallbackSchedule(props.nodeData?.properties)
   if (propertyForm.schedule.type !== "immediate") activeScheduleDraft.value = cloneDeep(propertyForm.schedule)
@@ -405,14 +465,32 @@ defineExpose({
   min-height: 100%;
 }
 
+.form-item {
+  margin-bottom: 14px;
+
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+    color: #475569;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+}
+
+
+.last-form-item {
+  margin-bottom: 0 !important;
+}
+
 // ── 通用控件 ───────────────────────────────────────────────────────────────
 .modern-input,
-.modern-select {
+.modern-select,
+.modern-input-number {
   width: 100%;
 }
 
 .modern-input,
-.modern-select {
+.modern-select,
+.modern-input-number {
   :deep(.el-input__wrapper),
   :deep(.el-select__wrapper),
   :deep(.picker-input-box) {
@@ -462,12 +540,6 @@ defineExpose({
 }
 
 // ── 布局结构 ────────────────────────────────────────────────────────────
-.settings-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .withdraw-form-item {
   margin-bottom: 0;
 }
@@ -500,28 +572,101 @@ defineExpose({
   }
 }
 
-// ── 局部增强 ────────────────────────────────────────────────────────────
+// ── 状态通知卡片组件 ──────────────────────────────────────────────────
 .notify-config-box {
   margin-top: 10px;
-  padding: 16px;
+  padding: 12px;
   background: #f8fafc;
   border-radius: 8px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid #e2e8f0;
 }
 
-.modern-checkbox-group {
+.notify-card-stack {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 8px;
-  :deep(.el-checkbox) {
-    margin: 0;
-    height: 36px;
+  width: 100%;
+}
+
+.notify-timing-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+
+  &:hover:not(.is-disabled) {
+    background: #fcfdfd;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+  }
+
+  &.is-active {
+    background: #f0fdf4;
+    border-color: #86efac;
+
+    .card-checkbox {
+      background: #10b981;
+      border-color: #10b981;
+      color: #ffffff;
+    }
+
+    .card-title {
+      color: #166534;
+      font-weight: 600;
+    }
+
+    .card-desc {
+      color: #15803d;
+    }
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .card-checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #cbd5e1;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #ffffff;
     background: #ffffff;
-    border-radius: 8px;
-    border-color: #e2e8f0;
-    &.is-checked {
-      border-color: #6366f1;
-      background: #f5f3ff;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+  }
+
+  .card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+      line-height: 1.3;
+      transition: color 0.2s ease;
+    }
+
+    .card-desc {
+      font-size: 11.5px;
+      color: #94a3b8;
+      line-height: 1.3;
+      transition: color 0.2s ease;
     }
   }
 }
@@ -568,15 +713,6 @@ defineExpose({
   }
 }
 
-.form-item {
-  margin-bottom: 0px;
-  :deep(.el-form-item__label) {
-    font-size: 13px;
-    color: #475569;
-    font-weight: 500;
-    margin-bottom: 6px;
-  }
-}
 
 // ── 动画 ────────────────────────────────────────────────────────────
 .expand-enter-active,

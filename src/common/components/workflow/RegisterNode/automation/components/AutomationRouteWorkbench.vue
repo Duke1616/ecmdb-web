@@ -377,11 +377,13 @@ onMounted(loadWorkbench)
 <style scoped lang="scss">
 .route-trigger {
   flex: none;
+  width: 108px;
   margin-left: -1px;
 
   .el-button {
+    width: 100%;
     height: 36px;
-    padding: 0 16px;
+    padding: 0 10px;
     border-radius: 0 6px 6px 0;
   }
 
