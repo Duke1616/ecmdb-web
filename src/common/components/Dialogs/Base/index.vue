@@ -8,6 +8,7 @@
     :close-on-click-modal="closeOnClickModal"
     :before-close="handleBeforeClose"
     :top="top"
+    :append-to-body="appendToBody"
     @closed="handleClosed"
     @opened="handleOpened"
   >
@@ -41,6 +42,7 @@ interface Props {
   beforeClose?: (done: () => void) => void
   top?: string
   fullHeight?: boolean
+  appendToBody?: boolean
 }
 
 interface Emits {
@@ -55,7 +57,8 @@ const props = withDefaults(defineProps<Props>(), {
   showClose: false,
   closeOnClickModal: false,
   type: "standard",
-  top: "15vh"
+  top: "15vh",
+  appendToBody: true
 })
 
 const emits = defineEmits<Emits>()

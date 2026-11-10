@@ -7,6 +7,7 @@
     label-position="top"
     :disabled="flowDetail.status == '2'"
     class="property-form"
+    @submit.prevent
   >
     <!-- 1. 基本信息 -->
     <FormSection title="基本信息" tooltip="设置节点的显示名称以区分流程环节" theme-color="slate">
@@ -134,6 +135,7 @@ const props = defineProps<{
   lf: any
   id?: number
   flowDetail: any
+  engineType?: string
 }>()
 
 const emits = defineEmits(["closed"])

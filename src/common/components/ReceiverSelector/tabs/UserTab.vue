@@ -8,6 +8,7 @@
           clearable
           :prefix-icon="Search"
           @input="handleSearch"
+          @keydown.enter.stop.prevent="handleSearch"
         />
       </div>
       <div class="pagination-wrapper" v-if="total > pageSize">

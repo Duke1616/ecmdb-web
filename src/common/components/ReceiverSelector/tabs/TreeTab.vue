@@ -2,7 +2,13 @@
   <div class="tree-tab-container" v-loading="loading">
     <div class="header-wrapper">
       <div class="search-wrapper">
-        <el-input v-model="filterText" placeholder="搜索部门名称..." clearable :prefix-icon="Search" />
+        <el-input
+          v-model="filterText"
+          placeholder="搜索部门名称..."
+          clearable
+          :prefix-icon="Search"
+          @keydown.enter.stop.prevent
+        />
       </div>
       <div class="pagination-wrapper" v-if="filteredDepts.length > pageSize">
         <el-pagination

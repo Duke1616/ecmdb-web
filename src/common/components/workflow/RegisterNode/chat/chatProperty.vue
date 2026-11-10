@@ -7,6 +7,7 @@
     label-position="top"
     :disabled="flowDetail.status === '2'"
     class="property-form"
+    @submit.prevent
   >
     <!-- 1. 基本信息 -->
     <FormSection title="基本信息" tooltip="设置节点的显示名称及通知卡片的标题" theme-color="slate">
@@ -189,7 +190,8 @@ const props = defineProps({
   nodeData: Object,
   lf: Object,
   id: Number,
-  flowDetail: { type: Object, default: () => ({}) }
+  flowDetail: { type: Object, default: () => ({}) },
+  engineType: String
 })
 
 const emits = defineEmits(["closed"])

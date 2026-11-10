@@ -30,7 +30,7 @@
         ref="propertyComponentRef"
         v-bind="componentProps"
         @closed="closed"
-        @change-type="(newType: string) => emits('changeType', newType)"
+        v-on="isGateway ? { changeType: handleGatewayChangeType } : {}"
       />
       <div v-else class="no-property-hint">该节点无需详细配置</div>
     </div>
@@ -70,14 +70,21 @@ const propertyComponentRef = ref()
 // 当前节点的配置信息
 const currentNodeConfig = computed(() => getNodeConfig(props.nodeData?.type || ""))
 
+// 是否为网关节点（仅网关节点需要处理类型切换事件）
+const isGateway = computed(() => isGatewayType(props.nodeData?.type))
+
+// 处理网关类型变更
+const handleGatewayChangeType = (newType: string) => {
+  emits("changeType", newType)
+}
+
 // 传递给子组件的 Props
 const componentProps = computed(() => ({
   nodeData: props.nodeData,
   lf: props.lf,
   flowDetail: props.flowDetail,
   id: props.id,
-  engineType: props.engineType,
-  onChangeType: (newType: string) => emits("changeType", newType)
+  engineType: props.engineType
 }))
 
 // 获取节点抽屉主标题

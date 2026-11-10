@@ -24,7 +24,14 @@
       </div>
     </div>
     <div class="wizard-body">
-      <el-form ref="formRef" :model="formData" :rules="computedFormRules" label-width="auto" class="wizard-form">
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="computedFormRules"
+        label-width="auto"
+        class="wizard-form"
+        @submit.prevent
+      >
         <component
           :is="currentStepComponent"
           :key="currentStep"

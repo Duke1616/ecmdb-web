@@ -240,7 +240,8 @@ const props = defineProps({
     default: () => {
       return {}
     }
-  }
+  },
+  engineType: String
 })
 
 const emits = defineEmits(["closed"])

@@ -2,7 +2,13 @@
   <div class="options-tab-container">
     <div class="header-wrapper" v-if="showSearch || totalCount > pageSize">
       <div class="search-wrapper" v-if="showSearch">
-        <el-input v-model="searchQuery" placeholder="输入关键字进行搜索..." clearable :prefix-icon="Search" />
+        <el-input
+          v-model="searchQuery"
+          placeholder="输入关键字进行搜索..."
+          clearable
+          :prefix-icon="Search"
+          @keydown.enter.stop.prevent
+        />
       </div>
       <div class="pagination-wrapper" v-if="totalCount > pageSize">
         <el-pagination

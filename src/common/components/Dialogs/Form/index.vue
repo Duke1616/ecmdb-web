@@ -9,6 +9,7 @@
     :type="dialogType"
     :top="top"
     :full-height="fullHeight"
+    :append-to-body="appendToBody"
     @closed="handleClosed"
     @opened="handleOpened"
   >
@@ -85,6 +86,7 @@ interface Props {
   beforeClose?: (done: () => void) => void
   top?: string
   fullHeight?: boolean
+  appendToBody?: boolean
 }
 
 interface Emits {
@@ -108,7 +110,8 @@ const props = withDefaults(defineProps<Props>(), {
   showFooter: true,
   showFooterInfo: true,
   footerInfoText: "请填写完整信息后点击确认",
-  dialogType: "form"
+  dialogType: "form",
+  appendToBody: true
 })
 
 const emits = defineEmits<Emits>()
