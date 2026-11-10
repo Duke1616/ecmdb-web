@@ -137,6 +137,9 @@ importers:
       element-plus:
         specifier: ^2.10.7
         version: 2.10.7(vue@3.5.21(typescript@5.8.3))
+      elkjs:
+        specifier: ^0.12.1
+        version: 0.12.1
       font-awesome:
         specifier: ^4.7.0
         version: 4.7.0
@@ -2513,6 +2516,9 @@ packages:
     resolution: {integrity: sha512-bL4yhepL8/0NEQA5+N2Q6ZVKLipIDkiQjK2mqtSmGh6CxJk1yaBMdG5HXfYkbk1htNcT3ULk9g23lzT323JGcA==}
     peerDependencies:
       vue: ^3.2.0
+
+  elkjs@0.12.1:
+    resolution: {integrity: sha512-IhMYKHE4S2vtx0QrhBP3lYOIKDeIiJXBrdq9MGYkuB8ZHqhrBnHNfSUndjXFewrX1CPK8chwq+2NA0K0hliYuw==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -7687,6 +7693,8 @@ snapshots:
       vue: 3.5.21(typescript@5.8.3)
     transitivePeerDependencies:
       - '@vue/composition-api'
+
+  elkjs@0.12.1: {}
 
   emoji-regex@8.0.0: {}
 
