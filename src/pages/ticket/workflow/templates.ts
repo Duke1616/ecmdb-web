@@ -13,7 +13,7 @@ export interface WorkflowTemplateItem {
 }
 
 /**
- * 模板 1：FlowX 综合审批与自动化发布模板 (BPMN 2.0 规范)
+ * 模板 1：FlowX 综合审批与自动化发布模板 (标准语义网关)
  * 拓扑：开始 -> 抄送提交人 -> 包容网关分流 (后端/算法/前端) -> 包容网关汇聚 -> 并行网关会签 (领导/产品) -> 并行汇聚 -> 自动化部署 -> 群通知 -> 结束
  */
 export const createFlowXComprehensiveGraph = (createId: () => string): WorkflowGraphData => {

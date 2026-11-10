@@ -95,7 +95,7 @@ const props = withDefaults(defineProps<Props>(), {
 const availableNodes = computed(() => WORKFLOW_NODES.filter((n) => n.type !== "polyline"))
 
 const isNodeDisabled = (item: any) => {
-  // NOTE: FlowX 引擎遵循 BPMN 2.0 规范，网关由连线条件驱动，不支持直接新建/拖拽传统条件网关
+  // NOTE: FlowX 引擎网关由连线条件驱动，不支持直接新建/拖拽传统条件网关
   if (props.engineType === "flowx" && item.type === "selective") {
     return true
   }
@@ -104,14 +104,17 @@ const isNodeDisabled = (item: any) => {
 
 const getNodeDisabledTip = (item: any) => {
   if (props.engineType === "flowx" && item.type === "selective") {
-    return "FlowX 引擎遵循 BPMN 规范，不支持新建条件网关（推荐使用排他或包容网关）"
+    return "FlowX 引擎不支持新建条件网关（推荐使用排他或包容网关）"
   }
   return ""
 }
 
 const gatewayNodes = computed(() => {
-  // 展示所有网关节点，便于识别存量网关与切换
-  return availableNodes.value.filter((item) => item.category === "gateway")
+  // 仅展示当前引擎下可用的网关节点，过滤禁用节点以避免视觉遮挡与干扰
+  return availableNodes.value.filter((item) => {
+    if (item.category !== "gateway") return false
+    return !isNodeDisabled(item)
+  })
 })
 
 const businessNodes = computed(() => availableNodes.value.filter((item) => item.category === "business"))

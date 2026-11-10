@@ -165,7 +165,7 @@ const engineMapping: {
     value: "flowx",
     label: "FlowX 流程引擎",
     recommended: true,
-    desc: "自研现代事件驱动架构，支持高并发异步流转与标准 BPMN 语义网关"
+    desc: "自研现代事件驱动架构，支持高并发异步流转与标准语义网关"
   },
   {
     value: "easy-workflow",

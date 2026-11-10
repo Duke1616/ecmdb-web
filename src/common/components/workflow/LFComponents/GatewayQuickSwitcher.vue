@@ -94,7 +94,7 @@ const isOptionDisabled = (targetType: GatewayType) => {
 
 const getOptionTooltip = (item: any) => {
   if (props.engineType === "flowx" && item.type === "selective" && currentType.value !== "selective") {
-    return `${item.name} - FlowX 引擎遵循 BPMN 规范，不支持切换为传统条件网关`
+    return `${item.name} - FlowX 引擎由连线条件驱动，不支持切换为传统条件网关`
   }
   return `${item.name} (${item.badgeText}) - ${item.subTitle}`
 }

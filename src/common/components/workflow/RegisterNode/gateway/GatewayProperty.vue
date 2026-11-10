@@ -139,7 +139,7 @@ const displayGatewayTypes = computed(() => {
 
 /**
  * 判断网关卡片是否禁用
- * FlowX 遵循 BPMN 2.0 规范，不支持将其他网关转换为条件网关
+ * FlowX 网关由连线条件驱动，不支持将其他网关转换为条件网关
  */
 const isCardDisabled = (type: GatewayType) => {
   if (isReadonly.value) return true
