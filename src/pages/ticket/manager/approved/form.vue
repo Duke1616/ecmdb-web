@@ -339,6 +339,7 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
   revokeReason.value = ""
   latestReject.value = undefined
   currentFlowPolicy.value = undefined
+  taskFormData.value = {}
   try {
     const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
     if (ticketInfo.id) {
@@ -387,7 +388,13 @@ const handleGetTaskFormConfig = async (taskId: TaskID, workflowId: number) => {
       taskFormSchema.value = configRes.fields || []
       // 历史数据自动回填回显 (Prefill)
       if (configRes.values && typeof configRes.values === "object") {
-        taskFormData.value = { ...configRes.values, ...taskFormData.value }
+        const mergedValues: Record<string, any> = { ...configRes.values }
+        for (const [k, v] of Object.entries(taskFormData.value)) {
+          if (v !== undefined && v !== "" && v !== null) {
+            mergedValues[k] = v
+          }
+        }
+        taskFormData.value = mergedValues
       }
     } else {
       taskFormSchema.value = []
