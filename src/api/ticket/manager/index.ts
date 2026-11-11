@@ -100,8 +100,16 @@ export function listTicketTaskTimelineApi(data: manager.taskTimelineReq) {
 
 /** 获取任务表单配置 */
 export function getTaskFormConfigApi(data: manager.TaskFormConfigReq) {
-  return instance.post<any[]>({
+  return instance.post<manager.TaskFormConfigRes | any[]>({
     url: `${API_SERVICE.TICKET}/ticket/task/form_config`,
+    data: data
+  })
+}
+
+/** 获取可驳回目标节点列表 */
+export function getRejectTargetsApi(data: manager.RejectTargetsReq) {
+  return instance.post<manager.RejectTarget[]>({
+    url: `${API_SERVICE.TICKET}/ticket/task/reject_targets`,
     data: data
   })
 }

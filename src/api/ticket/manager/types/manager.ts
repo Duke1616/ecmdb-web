@@ -66,6 +66,23 @@ export interface Ticket {
   revoke_reason?: string
   process_start_error?: string
   process_start_attempts?: number
+  latest_reject?: LatestReject
+  flow_policy?: FlowPolicy
+}
+
+export interface FlowPolicy {
+  allow_transfer: boolean
+  allow_reject: boolean
+  reject_modes: ("starter" | "history" | "terminate")[]
+}
+
+export interface LatestReject {
+  rejected_by: string
+  rejected_by_name: string
+  node_id: string
+  node_name: string
+  reason: string
+  rejected_at: string
 }
 
 export interface RestartProcessReq {
@@ -112,6 +129,25 @@ export interface RejectTicketReq {
   ticket_id?: number
   task_id: TaskID
   comment: string
+  target_node_id?: string
+  terminate?: boolean
+}
+
+export interface RejectTarget {
+  node_id: string
+  node_name: string
+  node_type: string
+  is_starter: boolean
+}
+
+export interface RejectTargetsReq {
+  ticket_id?: number
+  task_id: TaskID
+}
+
+export interface TaskFormConfigRes {
+  fields: any[]
+  values: Record<string, any>
 }
 
 export interface taskTimelineReq {

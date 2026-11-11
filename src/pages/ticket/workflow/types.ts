@@ -58,6 +58,11 @@ export const createDefaultWorkflowFormData = (createId: () => string): WorkflowF
   desc: "",
   icon: "",
   owner: "",
+  flow_policy: {
+    allow_transfer: false,
+    allow_reject: true,
+    reject_modes: ["history"]
+  },
   flow_data: createDefaultWorkflowGraph(createId)
 })
 

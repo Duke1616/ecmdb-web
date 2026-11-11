@@ -2,6 +2,14 @@ import type LogicFlow from "@logicflow/core"
 
 export type EngineType = "easy-workflow" | "flowx"
 
+export type RejectMode = "starter" | "history" | "terminate"
+
+export interface FlowPolicy {
+  allow_transfer: boolean
+  allow_reject: boolean
+  reject_modes: RejectMode[]
+}
+
 export interface CreateOrUpdateWorkflowReq {
   id?: number
   name: string
@@ -11,6 +19,7 @@ export interface CreateOrUpdateWorkflowReq {
   is_notify: boolean
   notify_method: number
   engine_type?: EngineType
+  flow_policy?: FlowPolicy
   flow_data: WorkflowGraphData
 }
 
@@ -33,6 +42,7 @@ export interface Workflow {
   is_notify: boolean
   notify_method: number
   engine_type?: EngineType
+  flow_policy?: FlowPolicy
   flow_data?: WorkflowGraphData
 }
 

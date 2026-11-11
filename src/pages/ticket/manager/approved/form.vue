@@ -52,6 +52,17 @@
           <div class="ticket-revoke-reason__head">撤单原因</div>
           <p>{{ revokeReason }}</p>
         </div>
+
+        <div v-if="latestReject" class="ticket-reject-reason">
+          <div class="ticket-reject-reason__head">
+            <span>⚠️ 审批驳回说明</span>
+            <small>{{ formatRejectTime(latestReject.rejected_at) }}</small>
+          </div>
+          <p class="reject-meta">
+            由 <strong>{{ latestReject.rejected_by_name || latestReject.rejected_by }}</strong> 在 [{{ latestReject.node_name }}] 环节驳回
+          </p>
+          <p class="reject-desc">修改意见：{{ latestReject.reason }}</p>
+        </div>
       </div>
 
       <div v-if="!/^my-/.test(props.action) && props.action !== 'history'" class="form-section">
@@ -88,6 +99,7 @@
             同意
           </AuthButton>
           <AuthButton
+            v-if="allowReject"
             type="danger"
             :icon="Close"
             :capability="TICKET_CAPABILITIES.Manager.Reject"
@@ -95,7 +107,12 @@
           >
             驳回
           </AuthButton>
-          <AuthButton :icon="Switch" :capability="TICKET_CAPABILITIES.Manager.Transfer" @click="openTransfer">
+          <AuthButton
+            v-if="allowTransfer"
+            :icon="Switch"
+            :capability="TICKET_CAPABILITIES.Manager.Transfer"
+            @click="openTransfer"
+          >
             转签
           </AuthButton>
         </div>
@@ -123,6 +140,14 @@
     subject="当前工单"
     @submitted="handleRevokeSubmitted"
   />
+
+  <RejectTicketDialog
+    v-model="rejectVisible"
+    :ticket-id="currentTicketId"
+    :task-id="props.taskId"
+    :policy="currentFlowPolicy"
+    @submitted="handleRejectSubmitted"
+  />
 </template>
 
 <script setup lang="ts">
@@ -146,9 +171,10 @@ import { removeFetchFromRules } from "@/common/utils/form-create"
 import ReceiverSelector from "@/common/components/ReceiverSelector/index.vue"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import RevokeTicketDialog from "../components/RevokeTicketDialog.vue"
+import RejectTicketDialog from "../components/RejectTicketDialog.vue"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import type { TaskID, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
+import type { TaskID, ProcessInstanceID, LatestReject, FlowPolicy } from "@/api/ticket/manager/types/manager"
 import type {
   DynamicFormExpose,
   DynamicFormField,
@@ -186,6 +212,10 @@ const fApi = ref<Api>()
 const data = ref<TicketFormData>({})
 const ticketRating = ref<TicketRating>()
 const revokeReason = ref("")
+const latestReject = ref<LatestReject>()
+const currentFlowPolicy = ref<FlowPolicy>()
+const allowTransfer = computed(() => currentFlowPolicy.value?.allow_transfer ?? false)
+const allowReject = computed(() => currentFlowPolicy.value?.allow_reject ?? true)
 const rule = ref<FormRule[]>()
 const options = ref<FormCreateOptions>()
 
@@ -199,11 +229,18 @@ const taskFormData = ref<DynamicFormData>({})
 const formRef = ref<FormInstance | null>(null)
 const dynamicFormRef = ref<DynamicFormExpose | null>(null)
 
-// 转签
+// 转签与操作对话框
 const transferVisible = ref(false)
 const transferLoading = ref(false)
 const revokeVisible = ref(false)
+const rejectVisible = ref(false)
 const usernameToDisplayName = ref<Record<string, string>>({})
+
+const formatRejectTime = (timeStr?: string) => {
+  if (!timeStr) return ""
+  const d = dayjs(timeStr)
+  return d.isValid() ? d.format("YYYY-MM-DD HH:mm:ss") : timeStr
+}
 
 const handleUpdateUserNames = (map: Record<string, string>) => {
   usernameToDisplayName.value = { ...usernameToDisplayName.value, ...map }
@@ -300,6 +337,8 @@ const handleDetail = async (id: number) => {
 const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
   ticketRating.value = undefined
   revokeReason.value = ""
+  latestReject.value = undefined
+  currentFlowPolicy.value = undefined
   try {
     const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
     if (ticketInfo.id) {
@@ -308,6 +347,8 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     data.value = ticketInfo.data as TicketFormData
     ticketRating.value = ticketInfo.rating
     revokeReason.value = ticketInfo.revoke_reason || ""
+    latestReject.value = ticketInfo.latest_reject
+    currentFlowPolicy.value = ticketInfo.flow_policy
 
     const taskId = props.taskId || ticketInfo.task_id
     if (taskId && ticketInfo.workflow_id) {
@@ -323,6 +364,8 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     data.value = {}
     ticketRating.value = undefined
     revokeReason.value = ""
+    latestReject.value = undefined
+    currentFlowPolicy.value = undefined
     taskFormSchema.value = []
     ElMessage.error("获取工单详情失败")
   }
@@ -337,7 +380,18 @@ const handleGetTaskFormConfig = async (taskId: TaskID, workflowId: number) => {
       workflow_id: workflowId
     })
 
-    taskFormSchema.value = Array.isArray(data) ? (data as DynamicFormField[]) : []
+    if (Array.isArray(data)) {
+      taskFormSchema.value = data as DynamicFormField[]
+    } else if (data && typeof data === "object") {
+      const configRes = data as { fields: DynamicFormField[]; values?: Record<string, any> }
+      taskFormSchema.value = configRes.fields || []
+      // 历史数据自动回填回显 (Prefill)
+      if (configRes.values && typeof configRes.values === "object") {
+        taskFormData.value = { ...configRes.values, ...taskFormData.value }
+      }
+    } else {
+      taskFormSchema.value = []
+    }
   } catch (error) {
     taskFormSchema.value = []
     ElMessage.error("获取节点表单配置失败")
@@ -430,46 +484,13 @@ const handlePassTicket = async () => {
 }
 
 // 驳回确认弹窗
-const handleRejectConfirm = async () => {
+const handleRejectConfirm = () => {
   if (!canOperate(TICKET_CAPABILITIES.Manager.Reject)) return
-
-  try {
-    const { value: comment } = await ElMessageBox.prompt("请输入驳回原因，方便提单人了解修改建议：", "确认驳回工单", {
-      confirmButtonText: "确定驳回",
-      cancelButtonText: "取消",
-      inputPlaceholder: "请详细填写驳回理由（必填）",
-      inputType: "textarea",
-      inputPattern: /\S+/,
-      inputErrorMessage: "驳回原因不能为空",
-      type: "warning",
-      confirmButtonClass: "el-button--danger",
-      cancelButtonClass: "el-button--default"
-    })
-    handleReject(comment)
-  } catch (error) {
-    // 用户取消操作
-  }
+  rejectVisible.value = true
 }
 
-const handleReject = async (comment?: string) => {
-  if (props.taskId) {
-    formData.value.task_id = props.taskId
-  }
-
-  // 驳回审批
-  const submitData = {
-    ...formData.value,
-    comment: comment ?? formData.value.comment,
-    ticket_id: currentTicketId.value,
-    ...taskFormData.value
-  }
-  try {
-    await rejectTicketApi(submitData)
-    ElMessage.success("工单已驳回")
-    resetForm()
-  } catch (error) {
-    console.error("驳回工单失败:", error)
-  }
+const handleRejectSubmitted = () => {
+  resetForm()
 }
 
 const handleRevoke = () => {
@@ -601,6 +622,46 @@ defineExpose({})
   color: #991b1b;
   font-size: 13px;
   font-weight: 600;
+}
+
+.ticket-reject-reason {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  background: #fff7ed;
+
+  .reject-meta {
+    margin: 6px 0 2px;
+    font-size: 13px;
+    color: #9a3412;
+  }
+
+  .reject-desc {
+    margin: 4px 0 0;
+    color: #c2410c;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    background: #ffedd5;
+    padding: 8px 12px;
+    border-radius: 6px;
+  }
+}
+
+.ticket-reject-reason__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #ea580c;
+  font-size: 13px;
+  font-weight: 600;
+
+  small {
+    color: #9a3412;
+    font-size: 11px;
+    font-weight: 400;
+  }
 }
 
 .ticket-rating-summary__head {

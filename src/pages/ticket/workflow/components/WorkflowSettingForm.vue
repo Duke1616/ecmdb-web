@@ -2,7 +2,7 @@
   <div class="setting-container">
     <div class="setting-content">
       <div class="form-card">
-        <!-- 核心区块：保持与 info.vue 一致 -->
+        <!-- 区块 1: 通知设置 -->
         <div class="form-section">
           <div class="section-header">
             <div class="section-icon">
@@ -70,6 +70,153 @@
             <span v-else>当前已禁用：在该模式下，工作流执行时将不会发送任何外部通知消息</span>
           </div>
         </div>
+
+        <!-- 区块 2: 流转与审批策略配置 -->
+        <div class="form-section">
+          <div class="section-header">
+            <div class="section-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                />
+              </svg>
+            </div>
+            <div class="section-title">
+              <h3>流转与审批策略</h3>
+              <p>配置工单运行时的操作权限与驳回规则</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <!-- 允许转签 -->
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">允许工单转签</span>
+              </div>
+              <el-tooltip
+                :disabled="!isEasyFlow"
+                content="当前引擎不支持转签功能"
+                placement="top"
+              >
+                <div
+                  class="setting-row-card"
+                  :class="{
+                    'is-active': localFormData.flow_policy?.allow_transfer && !isEasyFlow,
+                    'is-disabled': isEasyFlow
+                  }"
+                >
+                  <span class="row-desc">审批人可转签给他人处理</span>
+                  <el-switch
+                    v-model="localFormData.flow_policy.allow_transfer"
+                    :disabled="isEasyFlow"
+                    @change="updateFormData"
+                  />
+                </div>
+              </el-tooltip>
+            </div>
+
+            <!-- 允许驳回 -->
+            <div class="form-field">
+              <div class="field-label">
+                <span class="label-text">允许审批驳回</span>
+              </div>
+              <div class="setting-row-card" :class="{ 'is-active': localFormData.flow_policy?.allow_reject }">
+                <span class="row-desc">审批人可驳回当前工单</span>
+                <el-switch v-model="localFormData.flow_policy.allow_reject" @change="handleRejectSwitchChange" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 驳回模式选择（仅当开启驳回时展示） -->
+          <div v-if="localFormData.flow_policy?.allow_reject" class="policy-sub-section">
+            <div class="field-label">
+              <span class="label-text">支持的驳回方式</span>
+              <span class="field-hint">（至少选择一项）</span>
+            </div>
+
+            <div class="reject-modes-grid">
+              <!-- 模式 1: 退回上一环节 (顺序驳回) -->
+              <el-tooltip
+                :disabled="!isEasyFlow"
+                content="当前引擎不支持退回上一环节"
+                placement="top"
+              >
+                <div
+                  class="reject-mode-card"
+                  :class="{
+                    'is-selected': isModeSelected('history'),
+                    'is-disabled': isEasyFlow
+                  }"
+                  @click="toggleRejectMode('history')"
+                >
+                  <div class="mode-header">
+                    <el-checkbox
+                      :model-value="isModeSelected('history')"
+                      :disabled="isEasyFlow"
+                      @click.stop
+                      @change="toggleRejectMode('history')"
+                    />
+                    <span class="mode-title">退回上一环节（顺序驳回）</span>
+                  </div>
+                  <div class="mode-desc">
+                    按流转路径回退至紧邻的上一审批环节，默认推荐
+                  </div>
+                </div>
+              </el-tooltip>
+
+              <!-- 模式 2: 退回发起人 -->
+              <el-tooltip
+                :disabled="!isEasyFlow"
+                content="当前引擎不支持退回发起人"
+                placement="top"
+              >
+                <div
+                  class="reject-mode-card"
+                  :class="{
+                    'is-selected': isModeSelected('starter'),
+                    'is-disabled': isEasyFlow
+                  }"
+                  @click="toggleRejectMode('starter')"
+                >
+                  <div class="mode-header">
+                    <el-checkbox
+                      :model-value="isModeSelected('starter')"
+                      :disabled="isEasyFlow"
+                      @click.stop
+                      @change="toggleRejectMode('starter')"
+                    />
+                    <span class="mode-title">退回发起人</span>
+                  </div>
+                  <div class="mode-desc">
+                    退回给发起人修改并重新提审，表单数据自动回填
+                  </div>
+                </div>
+              </el-tooltip>
+
+              <!-- 模式 3: 直接否决终止 -->
+              <div
+                class="reject-mode-card reject-mode-card--danger"
+                :class="{ 'is-selected': isModeSelected('terminate') }"
+                @click="toggleRejectMode('terminate')"
+              >
+                <div class="mode-header">
+                  <el-checkbox
+                    :model-value="isModeSelected('terminate')"
+                    @click.stop
+                    @change="toggleRejectMode('terminate')"
+                  />
+                  <span class="mode-title">直接否决</span>
+                </div>
+                <div class="mode-desc">
+                  一票否决并办结归档，工单不再继续流转
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -79,10 +226,12 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from "vue"
+import { computed, watch } from "vue"
 import { InfoFilled, Connection } from "@element-plus/icons-vue"
+import { ElMessage } from "element-plus"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import FormActions from "@/common/components/FormActions/index.vue"
+import type { RejectMode } from "@/api/ticket/workflow/types/workflow"
 
 const notifyMapping = [
   {
@@ -107,6 +256,60 @@ const { localFormData, updateFormData, setFormData, close, previous, save } = us
   "setting"
 )
 
+const isEasyFlow = computed(() => {
+  return localFormData.value.engine_type === "easy-workflow"
+})
+
+const initPolicy = () => {
+  if (!localFormData.value.flow_policy) {
+    localFormData.value.flow_policy = {
+      allow_transfer: false,
+      allow_reject: true,
+      reject_modes: isEasyFlow.value ? ["terminate"] : ["history"]
+    }
+  } else {
+    if (isEasyFlow.value) {
+      localFormData.value.flow_policy.allow_transfer = false
+      localFormData.value.flow_policy.reject_modes = ["terminate"]
+    }
+  }
+}
+
+const isModeSelected = (mode: RejectMode) => {
+  return localFormData.value.flow_policy?.reject_modes?.includes(mode) || false
+}
+
+const toggleRejectMode = (mode: RejectMode) => {
+  if (isEasyFlow.value && mode !== "terminate") return
+  if (!localFormData.value.flow_policy) return
+
+  const modes: RejectMode[] = [...(localFormData.value.flow_policy.reject_modes || [])]
+  const idx = modes.indexOf(mode)
+  if (idx > -1) {
+    if (modes.length <= 1) {
+      ElMessage.warning("至少需要保留一种驳回方式")
+      return
+    }
+    modes.splice(idx, 1)
+  } else {
+    modes.push(mode)
+  }
+  localFormData.value.flow_policy.reject_modes = modes
+  updateFormData()
+}
+
+const handleRejectSwitchChange = (val: string | number | boolean) => {
+  if (Boolean(val)) {
+    const modes = localFormData.value.flow_policy.reject_modes
+    if (!modes || modes.length === 0) {
+      localFormData.value.flow_policy.reject_modes = isEasyFlow.value
+        ? ["terminate"]
+        : ["history"]
+    }
+  }
+  updateFormData()
+}
+
 const getNotifyMethodLabel = () => {
   const method = notifyMapping.find((item) => item.value === localFormData.value.notify_method)
   return method ? method.label : "未选择"
@@ -117,8 +320,17 @@ watch(
   () => props.formData,
   (newFormData) => {
     setFormData(newFormData)
+    initPolicy()
   },
   { deep: true, immediate: true }
+)
+
+watch(
+  () => localFormData.value.engine_type,
+  () => {
+    initPolicy()
+    updateFormData()
+  }
 )
 </script>
 
@@ -133,7 +345,7 @@ watch(
 
 .setting-content {
   flex: 1;
-  padding: 0px 32px;
+  padding: 0px 32px 32px;
   overflow-y: auto;
 
   .form-card {
@@ -171,11 +383,11 @@ watch(
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      color: white;
 
       svg {
         width: 16px;
         height: 16px;
-        color: white;
       }
     }
 
@@ -225,7 +437,6 @@ watch(
   &.is-disabled {
     opacity: 0.6;
     filter: grayscale(0.2);
-    pointer-events: none;
   }
 }
 
@@ -240,21 +451,34 @@ watch(
   justify-content: space-between;
   align-items: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 
-  &:hover {
+  &:hover:not(.is-disabled) {
     border-color: #cbd5e1;
     background: #ffffff;
   }
 
+  &:focus-within:not(.is-disabled) {
+    border-color: #764ba2;
+    box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.15);
+  }
+
   &.is-active {
-    border-color: #409eff;
+    border-color: #764ba2;
     background: white;
-    box-shadow: none;
+    box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.15);
 
     .row-desc {
       color: #1e293b;
       font-weight: 500;
     }
+  }
+
+  &.is-disabled {
+    cursor: not-allowed;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    opacity: 0.7;
   }
 
   &.select-card {
@@ -268,26 +492,54 @@ watch(
   }
 }
 
-// 嵌入式选择器：彻底移除 Select 自身样式
+// 嵌入式选择器：彻底移除 Select 自身边框与阴影，无缝融合进卡片
 :deep(.embedded-select) {
   flex: 1;
+  width: 100%;
+
+  .el-select__wrapper {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 4px !important;
+    height: 100% !important;
+    min-height: 38px !important;
+    line-height: 38px !important;
+
+    &.is-focused,
+    &:hover {
+      box-shadow: none !important;
+    }
+  }
+
   .el-input__wrapper {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
-    padding: 0 !important;
+    padding: 0 4px !important;
     height: 100% !important;
+    min-height: 38px !important;
+    line-height: 38px !important;
+
+    &.is-focus,
+    &:hover {
+      box-shadow: none !important;
+    }
   }
+
+  .el-select__placeholder,
+  .el-select__selected-item,
   .el-input__inner {
     text-align: right;
     font-size: 13px;
     color: #1e293b;
-    font-weight: 600;
-    padding-right: 4px;
+    font-weight: 500;
+    justify-content: flex-end;
   }
-  // 调整箭头位置
+
+  .el-select__suffix,
   .el-input__suffix {
-    margin-left: 2px;
+    margin-left: 4px;
   }
 }
 
@@ -297,7 +549,7 @@ watch(
   align-items: center;
   gap: 8px;
   padding-right: 12px;
-  margin-right: 12px;
+  margin-right: 8px;
   border-right: 1px solid #e2e8f0;
   height: 20px;
 
@@ -324,112 +576,6 @@ watch(
     height: 6px;
     background: #667eea;
     border-radius: 50%;
-  }
-}
-
-// 轻量引擎单选卡片
-.compact-engine-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.compact-engine-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-
-  &:hover {
-    border-color: #cbd5e1;
-    background: #f8fafc;
-  }
-
-  &.is-active {
-    border-color: #409eff;
-    background: #f0f7ff;
-
-    .compact-radio {
-      border-color: #409eff;
-
-      .radio-dot {
-        background: #409eff;
-        transform: scale(1);
-      }
-    }
-
-    .compact-content .title-row .title {
-      color: #1e293b;
-      font-weight: 600;
-    }
-  }
-
-  .compact-radio {
-    margin-top: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1.5px solid #d1d5db;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-    background: #ffffff;
-
-    .radio-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      transform: scale(0);
-      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-  }
-
-  .compact-content {
-    flex: 1;
-    min-width: 0;
-
-    .title-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-
-      .title {
-        font-size: 13.5px;
-        font-weight: 500;
-        color: #334155;
-        line-height: 1.3;
-      }
-
-      .badge {
-        font-size: 11px;
-        line-height: 1;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: 500;
-        background: #ecfdf5;
-        color: #059669;
-        border: 1px solid #d1fae5;
-      }
-    }
-
-    .desc {
-      font-size: 12px;
-      color: #64748b;
-      line-height: 1.45;
-    }
   }
 }
 
@@ -474,12 +620,98 @@ watch(
   }
 }
 
-@media (max-width: 480px) {
-  .setting-content {
-    padding: 16px;
+.policy-sub-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e8f0;
+
+  .field-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+
+    .label-text {
+      font-size: 13px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: #94a3b8;
+    }
   }
-  .form-section {
-    padding: 24px 20px;
+}
+
+.reject-modes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.reject-mode-card {
+  padding: 12px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  min-height: 82px;
+
+  &:hover:not(.is-disabled) {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+
+  &.is-selected {
+    border-color: #764ba2;
+    background: #faf8fd;
+    box-shadow: 0 0 0 1px rgba(118, 75, 162, 0.1);
+
+    .mode-title {
+      color: #633991;
+      font-weight: 600;
+    }
+  }
+
+  &.reject-mode-card--danger.is-selected {
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+
+    .mode-title {
+      color: #b91c1c;
+      font-weight: 600;
+    }
+  }
+
+  &.is-disabled {
+    opacity: 0.6;
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
+  }
+
+  .mode-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+
+    .mode-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: #334155;
+    }
+  }
+
+  .mode-desc {
+    font-size: 11px;
+    color: #64748b;
+    line-height: 1.5;
   }
 }
 </style>
