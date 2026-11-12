@@ -1,6 +1,27 @@
 <template>
   <div class="form-container">
     <div class="form-scroll-area">
+      <!-- 审批驳回说明：置于顶部高亮警示，确保用户第一时间掌握驳回背景与修改要求 -->
+      <div v-if="latestReject" class="ticket-reject-reason ticket-reject-reason--top">
+        <div class="ticket-reject-reason__head">
+          <span class="reject-title">
+            <el-icon class="warning-icon"><WarningFilled /></el-icon>
+            审批驳回说明
+          </span>
+          <small class="reject-time">{{ formatRejectTime(latestReject.rejected_at) }}</small>
+        </div>
+        <p class="reject-meta">
+          由 <strong>{{ latestReject.rejected_by_name || latestReject.rejected_by }}</strong> 在 [{{ latestReject.node_name }}] 环节驳回
+        </p>
+        <p class="reject-desc">修改意见：{{ latestReject.reason }}</p>
+      </div>
+
+      <!-- 撤单原因全局警示 -->
+      <div v-if="revokeReason" class="ticket-revoke-reason ticket-revoke-reason--top">
+        <div class="ticket-revoke-reason__head">撤单原因</div>
+        <p>{{ revokeReason }}</p>
+      </div>
+
       <div class="form-section">
         <div class="section-title">
           <el-icon><Document /></el-icon>
@@ -46,22 +67,6 @@
           </div>
           <el-rate :model-value="ticketRating.score" disabled />
           <p>{{ ticketRating.comment || "未填写评价内容" }}</p>
-        </div>
-
-        <div v-if="revokeReason" class="ticket-revoke-reason">
-          <div class="ticket-revoke-reason__head">撤单原因</div>
-          <p>{{ revokeReason }}</p>
-        </div>
-
-        <div v-if="latestReject" class="ticket-reject-reason">
-          <div class="ticket-reject-reason__head">
-            <span>⚠️ 审批驳回说明</span>
-            <small>{{ formatRejectTime(latestReject.rejected_at) }}</small>
-          </div>
-          <p class="reject-meta">
-            由 <strong>{{ latestReject.rejected_by_name || latestReject.rejected_by }}</strong> 在 [{{ latestReject.node_name }}] 环节驳回
-          </p>
-          <p class="reject-desc">修改意见：{{ latestReject.reason }}</p>
         </div>
       </div>
 
@@ -164,7 +169,7 @@ import {
 import type { PassTicketReq, TicketRating } from "@/api/ticket/manager/types/manager.js"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, ElMessageBox, ElMessage } from "element-plus"
-import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch } from "@element-plus/icons-vue"
+import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch, WarningFilled } from "@element-plus/icons-vue"
 import DynamicForm from "./components/DynamicForm.vue"
 import { getTaskFormConfigApi } from "@/api/ticket/manager/index"
 import { removeFetchFromRules } from "@/common/utils/form-create"
@@ -388,13 +393,7 @@ const handleGetTaskFormConfig = async (taskId: TaskID, workflowId: number) => {
       taskFormSchema.value = configRes.fields || []
       // 历史数据自动回填回显 (Prefill)
       if (configRes.values && typeof configRes.values === "object") {
-        const mergedValues: Record<string, any> = { ...configRes.values }
-        for (const [k, v] of Object.entries(taskFormData.value)) {
-          if (v !== undefined && v !== "" && v !== null) {
-            mergedValues[k] = v
-          }
-        }
-        taskFormData.value = mergedValues
+        taskFormData.value = { ...configRes.values, ...taskFormData.value }
       }
     } else {
       taskFormSchema.value = []
@@ -633,10 +632,30 @@ defineExpose({})
 
 .ticket-reject-reason {
   margin-top: 16px;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 1px solid #fed7aa;
+  border-left: 4px solid #ea580c;
   border-radius: 8px;
   background: #fff7ed;
+  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.05);
+
+  &.ticket-reject-reason--top {
+    margin-top: 0;
+    margin-bottom: 18px;
+  }
+
+  .reject-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ea580c;
+
+    .warning-icon {
+      font-size: 15px;
+    }
+  }
 
   .reject-meta {
     margin: 6px 0 2px;
@@ -645,7 +664,7 @@ defineExpose({})
   }
 
   .reject-desc {
-    margin: 4px 0 0;
+    margin: 6px 0 0;
     color: #c2410c;
     font-size: 13px;
     line-height: 1.6;
@@ -660,14 +679,25 @@ defineExpose({})
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #ea580c;
-  font-size: 13px;
-  font-weight: 600;
 
   small {
     color: #9a3412;
     font-size: 11px;
     font-weight: 400;
+  }
+}
+
+.ticket-revoke-reason {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #9ca3af;
+  border-radius: 8px;
+  background: #f9fafb;
+
+  &.ticket-revoke-reason--top {
+    margin-top: 0;
+    margin-bottom: 18px;
   }
 }
 

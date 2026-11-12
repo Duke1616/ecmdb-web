@@ -7,7 +7,7 @@
     :confirm-text="rejectType === 'TERMINATE' ? '确认否决' : '确认退回'"
     :confirm-type="rejectType === 'TERMINATE' ? 'danger' : 'primary'"
     :confirm-loading="submitting"
-    :confirm-disabled="!comment.trim() || (rejectType === 'RETURN' && !targetNodeId)"
+    :confirm-disabled="isConfirmDisabled"
     :show-footer-info="false"
     @confirm="submit"
     @cancel="visible = false"
@@ -23,32 +23,49 @@
           </el-radio-group>
         </el-form-item>
 
-        <!-- 退回目标环节 (仅在选择退回修改时展示) -->
-        <el-form-item v-if="rejectType === 'RETURN'" label="退回环节" required>
-          <el-select
-            v-model="targetNodeId"
-            placeholder="请选择退回环节"
-            style="width: 100%"
-            :loading="loadingTargets"
-          >
-            <el-option
-              v-for="target in filteredTargets"
-              :key="target.node_id"
-              :label="target.node_name"
-              :value="target.node_id"
+        <!-- 退回修改模式下的目标模式选择 -->
+        <template v-if="rejectType === 'RETURN'">
+          <!-- 若有多个上游候选环节，支持在自动回退与自主选择特定环节间切换 -->
+          <el-form-item v-if="hasMultipleTargets" label="退回目标">
+            <el-radio-group v-model="targetMode" class="intent-radio-group">
+              <el-radio-button value="AUTO">自动回退（默认）</el-radio-button>
+              <el-radio-button value="CUSTOM">指定环节</el-radio-button>
+            </el-radio-group>
+          </el-form-item>
+
+          <!-- 自动回退提示说明 -->
+          <div v-if="targetMode === 'AUTO'" class="auto-return-hint">
+            <el-icon class="hint-icon"><InfoFilled /></el-icon>
+            <span>由流程引擎按实际执行路径自动回溯至紧邻上游审批环节或发起人</span>
+          </div>
+
+          <!-- 自主指定环节选择器 -->
+          <el-form-item v-if="targetMode === 'CUSTOM'" label="退回环节" required>
+            <el-select
+              v-model="targetNodeId"
+              placeholder="请自主选择退回环节"
+              style="width: 100%"
+              :loading="loadingTargets"
             >
-              <div class="target-option-row">
-                <span>{{ target.node_name }}</span>
-                <el-tag v-if="target.is_starter" size="small" type="warning" effect="plain" round>
-                  提单人
-                </el-tag>
-                <el-tag v-else size="small" type="info" effect="plain" round>
-                  上一环节
-                </el-tag>
-              </div>
-            </el-option>
-          </el-select>
-        </el-form-item>
+              <el-option
+                v-for="target in filteredTargets"
+                :key="target.node_id"
+                :label="target.node_name"
+                :value="target.node_id"
+              >
+                <div class="target-option-row">
+                  <span>{{ target.node_name }}</span>
+                  <el-tag v-if="target.is_starter" size="small" type="warning" effect="plain" round>
+                    提单人
+                  </el-tag>
+                  <el-tag v-else size="small" type="info" effect="plain" round>
+                    上一环节
+                  </el-tag>
+                </div>
+              </el-option>
+            </el-select>
+          </el-form-item>
+        </template>
 
         <!-- 否决终止警示 (仅在选择直接否决时展示) -->
         <el-alert
@@ -80,7 +97,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import { WarningFilled } from "@element-plus/icons-vue"
+import { WarningFilled, InfoFilled } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
 import { getRejectTargetsApi, rejectTicketApi } from "@/api/ticket/manager"
@@ -123,6 +140,7 @@ const isSingleMode = computed(() => {
 
 const comment = ref("")
 const rejectType = ref<"RETURN" | "TERMINATE">("RETURN")
+const targetMode = ref<"AUTO" | "CUSTOM">("AUTO")
 const targetNodeId = ref("")
 const submitting = ref(false)
 const loadingTargets = ref(false)
@@ -141,6 +159,16 @@ const filteredTargets = computed(() => {
     }
     return allowHistory
   })
+})
+
+const hasMultipleTargets = computed(() => filteredTargets.value.length > 1)
+
+const isConfirmDisabled = computed(() => {
+  if (!comment.value.trim() || submitting.value) return true
+  if (rejectType.value === "RETURN" && targetMode.value === "CUSTOM" && !targetNodeId.value) {
+    return true
+  }
+  return false
 })
 
 const syncDefaultType = () => {
@@ -184,6 +212,7 @@ watch(
   (val) => {
     if (val) {
       syncDefaultType()
+      targetMode.value = "AUTO"
       if (props.taskId && canReturn.value) {
         fetchTargets()
       }
@@ -211,7 +240,7 @@ const submit = async () => {
       ElMessage.warning("当前工作流配置不支持退回修改操作")
       return
     }
-    if (!targetNodeId.value) {
+    if (targetMode.value === "CUSTOM" && !targetNodeId.value) {
       ElMessage.warning("请选择退回环节")
       return
     }
@@ -219,11 +248,13 @@ const submit = async () => {
 
   submitting.value = true
   try {
+    const targetId = rejectType.value === "RETURN" && targetMode.value === "CUSTOM" ? targetNodeId.value : undefined
+
     await rejectTicketApi({
       ticket_id: props.ticketId,
       task_id: props.taskId,
       comment: comment.value.trim(),
-      target_node_id: rejectType.value === "RETURN" ? targetNodeId.value : undefined,
+      target_node_id: targetId,
       terminate: rejectType.value === "TERMINATE"
     })
 
@@ -240,6 +271,7 @@ const submit = async () => {
 const reset = () => {
   comment.value = ""
   rejectType.value = "RETURN"
+  targetMode.value = "AUTO"
   targetNodeId.value = ""
   submitting.value = false
 }
@@ -290,5 +322,24 @@ const reset = () => {
 .terminate-alert {
   margin-bottom: 18px;
   border-radius: 6px;
+}
+
+.auto-return-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+
+  .hint-icon {
+    font-size: 14px;
+    color: #3b82f6;
+    flex-shrink: 0;
+  }
 }
 </style>
