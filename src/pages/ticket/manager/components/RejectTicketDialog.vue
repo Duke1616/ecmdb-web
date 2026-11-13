@@ -2,10 +2,10 @@
   <FormDialog
     v-model="visible"
     title="审批驳回"
-    width="480px"
+    width="520px"
     :header-icon="WarningFilled"
-    :confirm-text="rejectType === 'TERMINATE' ? '确认否决' : '确认退回'"
-    :confirm-type="rejectType === 'TERMINATE' ? 'danger' : 'primary'"
+    :confirm-text="actionType === 'TERMINATE' ? '确认直接否决' : '确认退回'"
+    :confirm-type="actionType === 'TERMINATE' ? 'danger' : 'primary'"
     :confirm-loading="submitting"
     :confirm-disabled="isConfirmDisabled"
     :show-footer-info="false"
@@ -15,82 +15,119 @@
   >
     <div class="reject-dialog-content">
       <el-form label-position="top" @submit.prevent="submit">
-        <!-- 驳回处理方式 (若策略仅允许单模式，则自动隐藏单选栏，收敛为单一操作) -->
-        <el-form-item v-if="!isSingleMode" label="处理方式" required>
-          <el-radio-group v-model="rejectType" class="intent-radio-group">
-            <el-radio-button v-if="canReturn" value="RETURN">退回修改</el-radio-button>
-            <el-radio-button v-if="canTerminate" value="TERMINATE">直接否决</el-radio-button>
-          </el-radio-group>
+        <!-- 驳回处理方式：高级 Bento 交互决策卡片组 -->
+        <el-form-item v-if="availableActions.length > 1" label="处理方式" required class="action-tiles-item">
+          <div class="action-tiles" :class="`grid-${availableActions.length}`">
+            <!-- 卡片 1: 自动回退 -->
+            <div
+              v-if="canReturn"
+              class="action-tile"
+              :class="{ 'is-selected': actionType === 'AUTO' }"
+              @click="actionType = 'AUTO'"
+            >
+              <div class="tile-icon-wrap is-blue">
+                <el-icon><RefreshLeft /></el-icon>
+              </div>
+              <div class="tile-info">
+                <div class="tile-title">自动回退</div>
+                <div class="tile-desc">回溯至上一审批人</div>
+              </div>
+              <div class="tile-check">
+                <el-icon><Select /></el-icon>
+              </div>
+            </div>
+
+            <!-- 卡片 2: 指定环节 -->
+            <div
+              v-if="canReturn && hasMultipleTargets"
+              class="action-tile"
+              :class="{ 'is-selected': actionType === 'CUSTOM' }"
+              @click="actionType = 'CUSTOM'"
+            >
+              <div class="tile-icon-wrap is-indigo">
+                <el-icon><Operation /></el-icon>
+              </div>
+              <div class="tile-info">
+                <div class="tile-title">指定环节</div>
+                <div class="tile-desc">精准自选回退节点</div>
+              </div>
+              <div class="tile-check">
+                <el-icon><Select /></el-icon>
+              </div>
+            </div>
+
+            <!-- 卡片 3: 直接否决 -->
+            <div
+              v-if="canTerminate"
+              class="action-tile is-danger-tile"
+              :class="{ 'is-selected': actionType === 'TERMINATE' }"
+              @click="actionType = 'TERMINATE'"
+            >
+              <div class="tile-icon-wrap is-red">
+                <el-icon><CircleClose /></el-icon>
+              </div>
+              <div class="tile-info">
+                <div class="tile-title">直接否决</div>
+                <div class="tile-desc">一票否决终止流程</div>
+              </div>
+              <div class="tile-check">
+                <el-icon><Select /></el-icon>
+              </div>
+            </div>
+          </div>
         </el-form-item>
 
-        <!-- 退回修改模式下的目标模式选择 -->
-        <template v-if="rejectType === 'RETURN'">
-          <!-- 若有多个上游候选环节，支持在自动回退与自主选择特定环节间切换 -->
-          <el-form-item v-if="hasMultipleTargets" label="退回目标">
-            <el-radio-group v-model="targetMode" class="intent-radio-group">
-              <el-radio-button value="AUTO">自动回退（默认）</el-radio-button>
-              <el-radio-button value="CUSTOM">指定环节</el-radio-button>
-            </el-radio-group>
-          </el-form-item>
+        <!-- 模式对应的辅助区域 -->
+        <!-- 1. 自动回退说明 -->
+        <div v-if="actionType === 'AUTO'" class="auto-hint-banner">
+          <el-icon class="banner-icon"><InfoFilled /></el-icon>
+          <span v-if="filteredTargets.length === 1">
+            工单将退回至唯一上游环节：<strong>{{ filteredTargets[0].node_name }}</strong>
+          </span>
+          <span v-else>由流程引擎自动按执行轨迹回溯至紧邻上游审批环节或发起人</span>
+        </div>
 
-          <!-- 自动回退提示（多候选时由引擎在许可类别内决策） -->
-          <div v-if="targetMode === 'AUTO' && filteredTargets.length > 1" class="auto-return-hint">
-            <el-icon class="hint-icon"><InfoFilled /></el-icon>
-            <span>由流程引擎按实际执行路径自动回溯至紧邻上游审批环节或发起人</span>
-          </div>
-
-          <!-- 单一许可目标：显式退回，无需选择 -->
-          <div v-if="filteredTargets.length === 1" class="auto-return-hint">
-            <el-icon class="hint-icon"><InfoFilled /></el-icon>
-            <span>将退回至唯一许可环节：{{ filteredTargets[0].node_name }}</span>
-          </div>
-
-          <!-- 无合法退回目标 -->
-          <el-alert
-            v-if="filteredTargets.length === 0 && !loadingTargets"
-            title="当前策略下无可退回的目标环节，无法执行退回修改。"
-            type="warning"
-            :closable="false"
-            show-icon
-            class="terminate-alert"
-          />
-
-          <!-- 自主指定环节选择器 -->
-          <el-form-item v-if="targetMode === 'CUSTOM'" label="退回环节" required>
-            <el-select
-              v-model="targetNodeId"
-              placeholder="请自主选择退回环节"
-              style="width: 100%"
-              :loading="loadingTargets"
+        <!-- 2. 自主指定环节选择器 -->
+        <el-form-item v-if="actionType === 'CUSTOM'" label="退回环节" required class="target-select-item">
+          <el-select
+            v-model="targetNodeId"
+            placeholder="请选择退回环节"
+            style="width: 100%"
+            :loading="loadingTargets"
+          >
+            <el-option
+              v-for="target in filteredTargets"
+              :key="target.node_id"
+              :label="target.node_name"
+              :value="target.node_id"
             >
-              <el-option
-                v-for="target in filteredTargets"
-                :key="target.node_id"
-                :label="target.node_name"
-                :value="target.node_id"
-              >
-                <div class="target-option-row">
-                  <span>{{ target.node_name }}</span>
-                  <el-tag v-if="target.is_starter" size="small" type="warning" effect="plain" round>
-                    提单人
-                  </el-tag>
-                  <el-tag v-else size="small" type="info" effect="plain" round>
-                    上一环节
-                  </el-tag>
-                </div>
-              </el-option>
-            </el-select>
-          </el-form-item>
-        </template>
+              <div class="target-option-row">
+                <span class="target-name">{{ target.node_name }}</span>
+                <el-tag v-if="target.is_starter" size="small" type="warning" effect="light" round>
+                  提单人
+                </el-tag>
+                <el-tag v-else size="small" type="info" effect="light" round>
+                  上一环节
+                </el-tag>
+              </div>
+            </el-option>
+          </el-select>
+        </el-form-item>
 
-        <!-- 否决终止警示 (仅在选择直接否决时展示) -->
+        <!-- 3. 直接否决终止警示 -->
+        <div v-if="actionType === 'TERMINATE'" class="terminate-banner">
+          <el-icon class="banner-icon"><WarningFilled /></el-icon>
+          <span>否决后流程将直接终止并作废归档，工单无法再次修改或提审。</span>
+        </div>
+
+        <!-- 4. 无合法退回目标提示 -->
         <el-alert
-          v-if="rejectType === 'TERMINATE'"
-          title="否决后流程将直接终止并作废，工单无法再次修改或提审。"
-          type="error"
+          v-if="actionType !== 'TERMINATE' && filteredTargets.length === 0 && !loadingTargets"
+          title="当前策略下无可退回的目标环节，无法执行退回修改。"
+          type="warning"
           :closable="false"
           show-icon
-          class="terminate-alert"
+          class="no-target-alert"
         />
 
         <!-- 驳回说明 / 修改意见 -->
@@ -102,7 +139,7 @@
             maxlength="500"
             show-word-limit
             resize="none"
-            placeholder="请说明驳回原因或修改要求..."
+            placeholder="请详细说明驳回原因或修改要求，以便相关人员知晓并调整..."
             autofocus
           />
         </el-form-item>
@@ -113,7 +150,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from "vue"
-import { WarningFilled, InfoFilled } from "@element-plus/icons-vue"
+import { WarningFilled, InfoFilled, RefreshLeft, Operation, CircleClose, Select } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
 import { getRejectTargetsApi, rejectTicketApi } from "@/api/ticket/manager"
@@ -150,13 +187,10 @@ const canTerminate = computed(() => {
   return modes.includes("terminate")
 })
 
-const isSingleMode = computed(() => {
-  return (canReturn.value && !canTerminate.value) || (!canReturn.value && canTerminate.value)
-})
+type RejectActionType = "AUTO" | "CUSTOM" | "TERMINATE"
 
 const comment = ref("")
-const rejectType = ref<"RETURN" | "TERMINATE">("RETURN")
-const targetMode = ref<"AUTO" | "CUSTOM">("AUTO")
+const actionType = ref<RejectActionType>("AUTO")
 const targetNodeId = ref("")
 const submitting = ref(false)
 const loadingTargets = ref(false)
@@ -179,21 +213,37 @@ const filteredTargets = computed(() => {
 
 const hasMultipleTargets = computed(() => filteredTargets.value.length > 1)
 
+// 可用的处理方式选项列表（并列展示）
+const availableActions = computed<RejectActionType[]>(() => {
+  const actions: RejectActionType[] = []
+  if (canReturn.value) {
+    actions.push("AUTO")
+    if (hasMultipleTargets.value) {
+      actions.push("CUSTOM")
+    }
+  }
+  if (canTerminate.value) {
+    actions.push("TERMINATE")
+  }
+  return actions
+})
+
 const isConfirmDisabled = computed(() => {
   if (!comment.value.trim() || submitting.value) return true
-  if (rejectType.value === "RETURN") {
-    if (targetMode.value === "CUSTOM" && !targetNodeId.value) return true
-    // 无合法退回目标时禁用，避免提交后才被引擎拒绝
+  if (actionType.value === "CUSTOM") {
+    if (!targetNodeId.value) return true
+  }
+  if (actionType.value === "AUTO") {
     if (!loadingTargets.value && filteredTargets.value.length === 0) return true
   }
   return false
 })
 
-const syncDefaultType = () => {
+const syncDefaultAction = () => {
   if (!canReturn.value && canTerminate.value) {
-    rejectType.value = "TERMINATE"
+    actionType.value = "TERMINATE"
   } else {
-    rejectType.value = "RETURN"
+    actionType.value = "AUTO"
   }
 }
 
@@ -229,8 +279,7 @@ watch(
   () => props.modelValue,
   (val) => {
     if (val) {
-      syncDefaultType()
-      targetMode.value = "AUTO"
+      syncDefaultAction()
       if (props.taskId && canReturn.value) {
         fetchTargets()
       }
@@ -242,23 +291,35 @@ watch(
   () => filteredTargets.value,
   () => {
     syncDefaultTarget()
+    if (actionType.value === "CUSTOM" && !hasMultipleTargets.value) {
+      actionType.value = "AUTO"
+    }
+  }
+)
+
+watch(
+  availableActions,
+  (actions) => {
+    if (actions.length > 0 && !actions.includes(actionType.value)) {
+      actionType.value = actions[0]
+    }
   }
 )
 
 const submit = async () => {
   if (!props.taskId || !comment.value.trim() || submitting.value) return
 
-  if (rejectType.value === "TERMINATE" && !canTerminate.value) {
+  if (actionType.value === "TERMINATE" && !canTerminate.value) {
     ElMessage.warning("当前工作流配置不支持直接否决操作")
     return
   }
 
-  if (rejectType.value === "RETURN") {
+  if (actionType.value !== "TERMINATE") {
     if (!canReturn.value) {
       ElMessage.warning("当前工作流配置不支持退回修改操作")
       return
     }
-    if (targetMode.value === "CUSTOM" && !targetNodeId.value) {
+    if (actionType.value === "CUSTOM" && !targetNodeId.value) {
       ElMessage.warning("请选择退回环节")
       return
     }
@@ -267,13 +328,10 @@ const submit = async () => {
   submitting.value = true
   try {
     let targetId: string | undefined
-    if (rejectType.value === "RETURN") {
-      if (targetMode.value === "CUSTOM") {
-        targetId = targetNodeId.value
-      } else if (filteredTargets.value.length === 1) {
-        // 单一许可目标显式下推，避免 AUTO 在收窄策略下落到非许可类别
-        targetId = filteredTargets.value[0].node_id
-      }
+    if (actionType.value === "CUSTOM") {
+      targetId = targetNodeId.value
+    } else if (actionType.value === "AUTO" && filteredTargets.value.length === 1) {
+      targetId = filteredTargets.value[0].node_id
     }
 
     await rejectTicketApi({
@@ -281,10 +339,10 @@ const submit = async () => {
       task_id: props.taskId,
       comment: comment.value.trim(),
       target_node_id: targetId,
-      terminate: rejectType.value === "TERMINATE"
+      terminate: actionType.value === "TERMINATE"
     })
 
-    ElMessage.success(rejectType.value === "TERMINATE" ? "工单已直接否决" : "工单已退回修改")
+    ElMessage.success(actionType.value === "TERMINATE" ? "工单已直接否决" : "工单已退回修改")
     visible.value = false
     emit("submitted")
   } catch (error) {
@@ -296,8 +354,7 @@ const submit = async () => {
 
 const reset = () => {
   comment.value = ""
-  rejectType.value = "RETURN"
-  targetMode.value = "AUTO"
+  actionType.value = canReturn.value ? "AUTO" : "TERMINATE"
   targetNodeId.value = ""
   submitting.value = false
 }
@@ -305,10 +362,10 @@ const reset = () => {
 
 <style scoped lang="scss">
 .reject-dialog-content {
-  padding: 4px 0 0;
+  padding: 4px 4px 0;
 
   :deep(.el-form-item) {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
 
     &:last-child {
       margin-bottom: 0;
@@ -316,26 +373,175 @@ const reset = () => {
 
     .el-form-item__label {
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       color: #334155;
-      padding-bottom: 6px;
+      padding-bottom: 8px;
+    }
+  }
+
+  :deep(.el-textarea__inner) {
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    padding: 10px 12px;
+    background: #fbfdff;
+    border-color: #cbd5e1;
+    transition: all 0.2s ease;
+
+    &:focus {
+      background: #ffffff;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
   }
 }
 
-.intent-radio-group {
+// 决策卡片网格
+.action-tiles {
+  display: grid;
+  gap: 10px;
   width: 100%;
+
+  &.grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  &.grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  &.grid-1 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.action-tile {
+  position: relative;
   display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+  box-sizing: border-box;
 
-  :deep(.el-radio-button) {
-    flex: 1;
+  &:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
+  }
 
-    .el-radio-button__inner {
-      width: 100%;
-      padding: 9px 15px;
-      font-size: 13px;
+  &.is-selected {
+    border-color: #3b82f6;
+    background: #f0f7ff;
+    box-shadow: 0 0 0 1px #3b82f6, 0 3px 10px rgba(59, 130, 246, 0.12);
+
+    .tile-title {
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .tile-check {
+      opacity: 1;
+      transform: scale(1);
+      background: #3b82f6;
+      color: #ffffff;
     }
   }
+
+  &.is-danger-tile.is-selected {
+    border-color: #ef4444;
+    background: #fef2f2;
+    box-shadow: 0 0 0 1px #ef4444, 0 3px 10px rgba(239, 68, 68, 0.12);
+
+    .tile-title {
+      color: #b91c1c;
+      font-weight: 600;
+    }
+
+    .tile-check {
+      opacity: 1;
+      transform: scale(1);
+      background: #ef4444;
+      color: #ffffff;
+    }
+  }
+}
+
+.tile-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &.is-blue {
+    background: #eff6ff;
+    color: #2563eb;
+  }
+
+  &.is-indigo {
+    background: #eef2ff;
+    color: #4f46e5;
+  }
+
+  &.is-red {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+}
+
+.tile-info {
+  flex: 1;
+  min-width: 0;
+
+  .tile-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    line-height: 1.3;
+    margin-bottom: 2px;
+    transition: color 0.15s ease;
+  }
+
+  .tile-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.tile-check {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.target-select-item {
+  margin-top: 4px;
 }
 
 .target-option-row {
@@ -345,27 +551,50 @@ const reset = () => {
   width: 100%;
 }
 
-.terminate-alert {
-  margin-bottom: 18px;
-  border-radius: 6px;
-}
-
-.auto-return-hint {
+.auto-hint-banner {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
+  margin-top: -4px;
   margin-bottom: 16px;
   font-size: 12px;
-  color: #64748b;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
+  line-height: 1.5;
+  color: #0369a1;
+  background: #f0f9ff;
+  border: 1px solid #e0f2fe;
   border-radius: 6px;
 
-  .hint-icon {
+  .banner-icon {
     font-size: 14px;
-    color: #3b82f6;
+    color: #0284c7;
     flex-shrink: 0;
   }
+}
+
+.terminate-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-top: -4px;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #991b1b;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 6px;
+
+  .banner-icon {
+    font-size: 14px;
+    color: #ef4444;
+    flex-shrink: 0;
+  }
+}
+
+.no-target-alert {
+  margin-bottom: 16px;
+  border-radius: 6px;
 }
 </style>

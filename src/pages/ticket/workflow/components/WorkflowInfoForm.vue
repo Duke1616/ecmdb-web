@@ -205,6 +205,21 @@ const isCurrentEngine = (val: EngineType) => {
 const handleSelectEngine = (val: EngineType) => {
   if (localFormData.value.engine_type === val) return
   localFormData.value.engine_type = val
+
+  // 针对 EasyFlow 引擎自动适配其支持的流转与驳回策略（不支持转签，仅支持办结终止驳回）
+  if (val === "easy-workflow") {
+    localFormData.value.flow_policy = {
+      allow_transfer: false,
+      allow_reject: true,
+      reject_modes: ["terminate"]
+    }
+  } else {
+    localFormData.value.flow_policy = {
+      allow_transfer: false,
+      allow_reject: true,
+      reject_modes: ["history"]
+    }
+  }
   updateFormData()
 }
 

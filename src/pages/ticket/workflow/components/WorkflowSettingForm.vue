@@ -315,7 +315,7 @@ const getNotifyMethodLabel = () => {
   return method ? method.label : "未选择"
 }
 
-/** 监听消息是否变更 */
+/** 监听外部 props.formData 变更，同步本地数据 */
 watch(
   () => props.formData,
   (newFormData) => {
@@ -323,14 +323,6 @@ watch(
     initPolicy()
   },
   { deep: true, immediate: true }
-)
-
-watch(
-  () => localFormData.value.engine_type,
-  () => {
-    initPolicy()
-    updateFormData()
-  }
 )
 </script>
 

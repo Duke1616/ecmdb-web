@@ -121,6 +121,80 @@ const getTaskTagLabel = (row: taskRecord) => {
 }
 
 // Timeline helpers
+/**
+ * 根据批次成员实际记录（members）校准批次统计 summary
+ * 解决后端批次聚合时可能把系统驳回（status: 4）混算入 rejected 的问题，确保卡片外层与内层处理标签完全一致
+ */
+const resolveTimelineSummary = (event: taskTimelineEvent) => {
+  const isSystemNode =
+    event.actors.length === 0 ||
+    event.actors.every((a) => {
+      const lower = a.trim().toLowerCase()
+      return lower === "system" || lower === "automation" || lower === "sys_skipped"
+    })
+
+  if (!event.members || event.members.length === 0) {
+    if (isSystemNode && event.summary?.rejected > 0) {
+      return {
+        ...event.summary,
+        system_rejected: (event.summary.system_rejected || 0) + event.summary.rejected,
+        rejected: 0
+      }
+    }
+    return event.summary
+  }
+
+  let passed = 0
+  let rejected = 0
+  let system_passed = 0
+  let system_rejected = 0
+  let skipped = 0
+  let linked = 0
+  let pending = 0
+
+  for (const m of event.members) {
+    if (m.is_finished !== 1) {
+      pending++
+      continue
+    }
+
+    const isAutomation = m.node_name?.startsWith("自动化-") ?? false
+    if (m.status === 1) {
+      if (isAutomation) {
+        system_passed++
+      } else {
+        passed++
+      }
+    } else if (m.status === 2) {
+      rejected++
+    } else if (m.status === 3) {
+      system_passed++
+    } else if (m.status === 4) {
+      system_rejected++
+    } else if (m.status === 5) {
+      skipped++
+    } else if (m.status === 0) {
+      linked++
+    }
+  }
+
+  if (isSystemNode && rejected > 0) {
+    system_rejected += rejected
+    rejected = 0
+  }
+
+  return {
+    total: event.members.length,
+    passed,
+    rejected,
+    system_passed,
+    system_rejected,
+    skipped,
+    linked,
+    pending
+  }
+}
+
 const getTimelineTagType = (event: taskTimelineEvent) => {
   const summary = event.summary
   if (summary.pending > 0) return "warning"
@@ -177,7 +251,10 @@ const listTicketTaskTimelineData = async () => {
     })
 
     paginationData.total = data.total
-    timelineEvents.value = data.events
+    timelineEvents.value = (data.events || []).map((event) => ({
+      ...event,
+      summary: resolveTimelineSummary(event)
+    }))
   } catch (error) {
     timelineEvents.value = []
   } finally {
