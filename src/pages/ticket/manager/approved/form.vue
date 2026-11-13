@@ -1,69 +1,104 @@
 <template>
   <div class="form-container">
     <div class="form-scroll-area">
-      <!-- 审批驳回说明：置于顶部高亮警示，确保用户第一时间掌握驳回背景与修改要求 -->
-      <div v-if="latestReject" ref="rejectBannerRef" class="ticket-reject-reason ticket-reject-reason--top">
-        <div class="ticket-reject-reason__head">
-          <span class="reject-title">
-            <el-icon class="warning-icon"><WarningFilled /></el-icon>
-            审批驳回说明
-          </span>
-          <small class="reject-time">{{ formatRejectTime(latestReject.rejected_at) }}</small>
+      <!-- 审批反馈与前序意见融合栏：默认单行紧凑展示，首屏优先呈现表单信息，可一键展开完整审批历史 -->
+      <div
+        v-if="hasFeedbackBanner"
+        class="feedback-banner"
+        :class="{
+          'is-reject': !!latestReject,
+          'is-expanded': feedbackExpanded
+        }"
+      >
+        <div class="feedback-banner__bar" @click="feedbackExpanded = !feedbackExpanded">
+          <div class="feedback-banner__left">
+            <span class="feedback-banner__icon">
+              <el-icon v-if="latestReject"><WarningFilled /></el-icon>
+              <el-icon v-else><ChatDotRound /></el-icon>
+            </span>
+
+            <el-tag
+              :type="latestReject ? 'warning' : 'info'"
+              size="small"
+              effect="light"
+              round
+              class="feedback-banner__tag"
+            >
+              {{ latestReject ? "驳回修改" : (isHistoryMode ? "审批留言" : "审批意见") }}
+            </el-tag>
+
+            <span class="feedback-banner__summary" :title="feedbackSummaryText">
+              {{ feedbackSummaryText }}
+            </span>
+          </div>
+
+          <div class="feedback-banner__right">
+            <span v-if="historyCountText" class="feedback-banner__count">
+              {{ historyCountText }}
+            </span>
+            <span class="feedback-banner__toggle">
+              <span>{{ feedbackExpanded ? "收起" : "展开详情" }}</span>
+              <el-icon class="toggle-icon" :class="{ 'is-expanded': feedbackExpanded }">
+                <ArrowRight />
+              </el-icon>
+            </span>
+          </div>
         </div>
-        <p class="reject-meta">
-          由 <strong>{{ latestReject.rejected_by_name || latestReject.rejected_by }}</strong> 在 [{{ latestReject.node_name }}] 环节驳回
-        </p>
-        <p class="reject-desc">修改意见：{{ latestReject.reason }}</p>
+
+        <!-- 折叠展开详情区 -->
+        <el-collapse-transition>
+          <div v-show="feedbackExpanded" class="feedback-banner__content">
+            <!-- 详细驳回修改意见卡片 (存在驳回时醒目呈现) -->
+            <div v-if="latestReject" class="reject-detail-card">
+              <div class="reject-detail-card__header">
+                <div class="node-meta">
+                  <span class="node-tag">[{{ latestReject.node_name }}] 环节驳回</span>
+                  <span class="user-info">
+                    处理人：<strong>{{ latestReject.rejected_by_name || latestReject.rejected_by }}</strong>
+                  </span>
+                </div>
+                <span class="time">{{ formatRejectTime(latestReject.rejected_at) }}</span>
+              </div>
+              <div class="reject-detail-card__body">
+                <span class="label">修改意见：</span>
+                <span class="text">{{ latestReject.reason }}</span>
+              </div>
+            </div>
+
+            <!-- 前序历史审批意见时间线 -->
+            <div v-if="visiblePriorComments.length > 0" class="flow-history">
+              <div v-if="latestReject || isHistoryMode" class="flow-history__title">
+                {{ isHistoryMode ? "流转留言记录" : "前序流转记录" }}
+              </div>
+              <div class="flow-history__timeline">
+                <div
+                  v-for="(item, index) in visiblePriorComments"
+                  :key="`${item.node_id}-${item.approved_by}-${item.occurred_at}-${index}`"
+                  class="flow-history__item"
+                >
+                  <div class="flow-history__dot" :class="`is-${priorCommentVerdict(item.status).type}`" />
+                  <div class="flow-history__main">
+                    <div class="flow-history__meta">
+                      <span class="node-name">{{ item.node_name }}</span>
+                      <el-tag :type="priorCommentVerdict(item.status).type" size="small" effect="plain" class="verdict-tag">
+                        {{ priorCommentVerdict(item.status).label }}
+                      </el-tag>
+                      <span class="user-name">{{ item.approved_by_name }}</span>
+                      <span class="time-stamp">{{ item.occurred_at }}</span>
+                    </div>
+                    <p v-if="item.comment" class="flow-history__comment">{{ item.comment }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-collapse-transition>
       </div>
 
       <!-- 撤单原因全局警示 -->
       <div v-if="revokeReason" class="ticket-revoke-reason ticket-revoke-reason--top">
         <div class="ticket-revoke-reason__head">撤单原因</div>
         <p>{{ revokeReason }}</p>
-      </div>
-
-      <!-- 前序审批意见：只读上下文置于顶部、驳回横幅之下，阅读顺序即决策顺序。
-           默认折叠成一行摘要，避免把表单推下首屏；被驳回工单自动展开（此时历史是决策关键）。
-           门禁与「操作信息」段一致：发起人视图与历史视图不展示 -->
-      <div v-if="showPriorComments" class="prior-comments">
-        <button
-          type="button"
-          class="prior-comments__head"
-          :aria-expanded="priorCommentsExpanded"
-          @click="priorCommentsExpanded = !priorCommentsExpanded"
-        >
-          <span class="prior-comments__title">
-            <el-icon class="prior-comments__caret" :class="{ 'is-expanded': priorCommentsExpanded }">
-              <ArrowRight />
-            </el-icon>
-            前序审批意见
-            <!-- 计数必须等于展开后实际渲染的行数：后端 total 含被顶部横幅剔除的那条驳回，
-                 直接用 total 会出现「3 条」却只列 2 行的错位；横幅那条已在横幅展示，不重复计 -->
-            <small>（{{ visiblePriorComments.length }} 条）</small>
-          </span>
-          <small v-if="hiddenPriorCommentCount > 0">
-            另有 {{ hiddenPriorCommentCount }} 条更早意见，完整链路见「审批记录」
-          </small>
-        </button>
-        <el-collapse-transition>
-          <ul v-show="priorCommentsExpanded" class="prior-comments__list">
-            <li
-              v-for="(item, index) in visiblePriorComments"
-              :key="`${item.node_id}-${item.approved_by}-${item.occurred_at}-${index}`"
-              class="prior-comments__item"
-            >
-              <div class="prior-comments__meta">
-                <span class="prior-comments__node">{{ item.node_name }}</span>
-                <el-tag :type="priorCommentVerdict(item.status).type" size="small" effect="light">
-                  {{ priorCommentVerdict(item.status).label }}
-                </el-tag>
-                <span>{{ item.approved_by_name }}</span>
-                <small class="prior-comments__time">{{ item.occurred_at }}</small>
-              </div>
-              <p class="prior-comments__text">{{ item.comment }}</p>
-            </li>
-          </ul>
-        </el-collapse-transition>
       </div>
 
       <div class="form-section">
@@ -123,14 +158,6 @@
         <el-form ref="formRef" :model="formData" label-position="top" class="operation-form">
           <div v-if="taskFormSchema && taskFormSchema.length > 0" class="dynamic-form-section">
             <DynamicForm ref="dynamicFormRef" :schema="taskFormSchema" v-model="taskFormData" :compact="false" />
-          </div>
-
-          <!-- 驳回回声：顶部横幅与评论框之间隔整张表单，落笔处再给一行修改意见，避免来回滚动；
-               单行截断保持紧凑，完整上下文点链接跳回顶部横幅 -->
-          <div v-if="latestReject" class="reject-echo">
-            <span class="reject-echo__label">驳回修改意见</span>
-            <span class="reject-echo__text" :title="latestReject.reason">{{ latestReject.reason }}</span>
-            <button type="button" class="reject-echo__link" @click="scrollToRejectBanner">查看完整说明</button>
           </div>
 
           <el-form-item prop="comment" label="评论" class="form-item required">
@@ -221,7 +248,18 @@ import {
 import type { PassTicketReq, TicketRating } from "@/api/ticket/manager/types/manager.js"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, ElMessageBox, ElMessage } from "element-plus"
-import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch, WarningFilled, ArrowRight } from "@element-plus/icons-vue"
+import {
+  Document,
+  Setting,
+  EditPen,
+  RefreshLeft,
+  Check,
+  Close,
+  Switch,
+  WarningFilled,
+  ArrowRight,
+  ChatDotRound
+} from "@element-plus/icons-vue"
 import DynamicForm from "./components/DynamicForm.vue"
 import { getTaskFormConfigApi } from "@/api/ticket/manager/index"
 import { removeFetchFromRules } from "@/common/utils/form-create"
@@ -277,34 +315,85 @@ const ticketRating = ref<TicketRating>()
 const revokeReason = ref("")
 const latestReject = ref<LatestReject>()
 const priorComments = ref<PriorComment[]>([])
-const priorCommentTotal = ref(0)
-// 默认折叠成一行摘要；加载到被驳回工单时自动展开，见 handleGetTicketData
-const priorCommentsExpanded = ref(false)
+// 审批反馈与前序意见融合栏：默认折叠，保持单行紧凑展示，保障用户首屏快速查看表单信息
+const feedbackExpanded = ref(false)
 const currentFlowPolicy = ref<FlowPolicy>()
 const allowTransfer = computed(() => currentFlowPolicy.value?.allow_transfer ?? false)
 const allowReject = computed(() => currentFlowPolicy.value?.allow_reject ?? true)
 
-// 顶部驳回横幅已完整展示最近一次驳回，面板剔除同一条，避免审批人读到重复意见；
-// 会签可能同节点同秒多人驳回，故账号也参与比对，只精确命中横幅那一条
+// 是否为历史或发起人只读查看模式（该模式下重点聚焦于审批留言与意见，全量流程事件由「审批记录」Tab 承载）
+const isHistoryMode = computed(() => props.action === "history" || /^my-/.test(props.action))
+
+// 辅助方法：判断是否存在实质性留言内容
+const hasSubstantiveComment = (text?: string) => Boolean(text && text.trim().length > 0)
+
+// 顶部驳回信息与流转留言统一在融合栏展示；
+// 1. 当存在驳回时，自动过滤同一次驳回记录，避免同屏重复；
+// 2. 针对历史模式（及只读工单），严格只筛选真正填有留言/意见的审批记录（comment 非空），
+//    不含留言的常规流转事件保留在【审批记录】Tab 中查看，确保首屏横幅纯粹聚焦在“留言与修改建议”
 const visiblePriorComments = computed(() => {
   const banner = latestReject.value
-  if (!banner) return priorComments.value
-  return priorComments.value.filter(
-    (item) =>
-      !(
-        item.status === 2 &&
-        item.node_id === banner.node_id &&
-        item.approved_by === banner.rejected_by &&
-        item.occurred_at === banner.rejected_at
-      )
-  )
+  return priorComments.value.filter((item) => {
+    // 剔除与顶部 latestReject 重复的那条驳回记录
+    if (
+      banner &&
+      item.status === 2 &&
+      item.node_id === banner.node_id &&
+      item.approved_by === banner.rejected_by &&
+      item.occurred_at === banner.rejected_at
+    ) {
+      return false
+    }
+
+    // 历史及发起人模式：只提取有实际留言内容的审批条目
+    if (isHistoryMode.value) {
+      return hasSubstantiveComment(item.comment)
+    }
+
+    // 待办模式：保留前序流转（包含驳回与普通前序审批）
+    return true
+  })
 })
-// 折叠数按后端返回页大小算，而非去重后的展示数：被剔除的那条已在顶部横幅展示，不算遗漏
-const hiddenPriorCommentCount = computed(() => Math.max(priorCommentTotal.value - priorComments.value.length, 0))
-// 与「操作信息」段同一门禁：发起人视图与历史视图不展示前序意见
-const showPriorComments = computed(
-  () => visiblePriorComments.value.length > 0 && !/^my-/.test(props.action) && props.action !== "history"
-)
+
+// 是否展示前序留言或前序流转
+const showPriorComments = computed(() => visiblePriorComments.value.length > 0)
+
+// 是否展示审批反馈融合栏（存在驳回或存在有效留言/前序意见时展示）
+const hasFeedbackBanner = computed(() => {
+  return !!latestReject.value || showPriorComments.value
+})
+
+// 单行横幅的摘要说明文字（超出单行时通过省略号截断并支持 title 提示）
+const feedbackSummaryText = computed(() => {
+  if (latestReject.value) {
+    const operator = latestReject.value.rejected_by_name || latestReject.value.rejected_by || "处理人"
+    const node = latestReject.value.node_name ? `在 [${latestReject.value.node_name}] 环节` : ""
+    const reason = latestReject.value.reason ? ` · 修改意见：${latestReject.value.reason}` : ""
+    return `由 ${operator} ${node}驳回${reason}`
+  }
+  if (visiblePriorComments.value.length > 0) {
+    const latest = visiblePriorComments.value[0]
+    const user = latest.approved_by_name || latest.approved_by
+    const reason = latest.comment ? ` · ${latest.comment}` : " · 无附加意见"
+
+    if (isHistoryMode.value) {
+      return `审批留言：${user} (${latest.node_name})${reason}`
+    }
+
+    const action = latest.status === 2 ? "驳回" : "通过"
+    return `前序审批：[${action}] ${user} (${latest.node_name})${reason}`
+  }
+  return ""
+})
+
+// 历史留言/记录条数描述
+const historyCountText = computed(() => {
+  const count = visiblePriorComments.value.length
+  if (count > 0) {
+    return isHistoryMode.value ? `共 ${count} 条留言` : `共 ${count} 条记录`
+  }
+  return ""
+})
 const priorCommentVerdict = (status: number): { label: string; type: "success" | "danger" } =>
   status === 2 ? { label: "驳回", type: "danger" } : { label: "通过", type: "success" }
 const rule = ref<FormRule[]>()
@@ -326,11 +415,6 @@ const transferLoading = ref(false)
 const revokeVisible = ref(false)
 const rejectVisible = ref(false)
 const usernameToDisplayName = ref<Record<string, string>>({})
-
-const rejectBannerRef = ref<HTMLElement | null>(null)
-const scrollToRejectBanner = () => {
-  rejectBannerRef.value?.scrollIntoView({ behavior: "smooth", block: "start" })
-}
 
 const formatRejectTime = (timeStr?: string) => {
   if (!timeStr) return ""
@@ -435,8 +519,7 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
   revokeReason.value = ""
   latestReject.value = undefined
   priorComments.value = []
-  priorCommentTotal.value = 0
-  priorCommentsExpanded.value = false
+  feedbackExpanded.value = false
   currentFlowPolicy.value = undefined
   taskFormData.value = {}
   try {
@@ -448,10 +531,9 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     ticketRating.value = ticketInfo.rating
     revokeReason.value = ticketInfo.revoke_reason || ""
     latestReject.value = ticketInfo.latest_reject
-    // 被驳回工单的历史意见是决策关键，默认展开；其余工单保持折叠以免把表单推下首屏
-    priorCommentsExpanded.value = !!ticketInfo.latest_reject
+    // 审批反馈融合栏默认保持单行紧凑展示，首屏优先呈现表单业务信息；用户可按需点击展开
+    feedbackExpanded.value = false
     priorComments.value = ticketInfo.prior_comments?.items ?? []
-    priorCommentTotal.value = ticketInfo.prior_comments?.total ?? 0
     currentFlowPolicy.value = ticketInfo.flow_policy
 
     const taskId = props.taskId || ticketInfo.task_id
@@ -470,8 +552,7 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     revokeReason.value = ""
     latestReject.value = undefined
     priorComments.value = []
-    priorCommentTotal.value = 0
-    priorCommentsExpanded.value = false
+    feedbackExpanded.value = false
     currentFlowPolicy.value = undefined
     taskFormSchema.value = []
     ElMessage.error("获取工单详情失败")
@@ -693,227 +774,298 @@ defineExpose({})
   margin-bottom: 4px;
 }
 
-.reject-echo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 8px 10px;
-  border: 1px solid #fed7aa;
-  border-radius: 6px;
-  background: #fff7ed;
-  font-size: 12px;
-  color: #9a3412;
-}
-
-.reject-echo__label {
-  flex-shrink: 0;
-  font-weight: 600;
-  color: #ea580c;
-}
-
-.reject-echo__text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.reject-echo__link {
-  flex-shrink: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 12px;
-  color: #b45309;
-  text-decoration: underline;
-}
-
-.prior-comments {
+// 审批反馈与前序意见融合栏（单行轻量展示，支持展开折叠）
+.feedback-banner {
   max-width: 960px;
   margin-bottom: 16px;
-  padding: 12px 14px;
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
   background: #f8fafc;
-}
+  transition: all 0.2s ease;
+  overflow: hidden;
 
-.prior-comments__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  padding: 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-  color: #334155;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
+  &.is-reject {
+    border-color: #fde68a;
+    border-left-color: #f59e0b;
+    background: #fffbeb;
 
-  small {
-    color: #94a3b8;
-    font-size: 11px;
-    font-weight: 400;
-  }
-}
-
-.prior-comments__title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.prior-comments__caret {
-  transition: transform 0.2s;
-
-  &.is-expanded {
-    transform: rotate(90deg);
-  }
-}
-
-.prior-comments__list {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.prior-comments__item {
-  padding: 8px 0;
-  border-top: 1px dashed #e2e8f0;
-
-  &:first-child {
-    padding-top: 0;
-    border-top: none;
-  }
-}
-
-.prior-comments__meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  font-size: 12px;
-  color: #475569;
-}
-
-.prior-comments__node {
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.prior-comments__time {
-  margin-left: auto;
-  color: #94a3b8;
-  font-size: 11px;
-}
-
-.prior-comments__text {
-  margin: 6px 0 0;
-  color: #64748b;
-  font-size: 12px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.ticket-rating-summary {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border: 1px solid #f1e3b8;
-  border-radius: 8px;
-  background: #fffbeb;
-
-  p {
-    margin: 7px 0 0;
-    color: #64748b;
-    font-size: 12px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-  }
-}
-
-.ticket-revoke-reason {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-
-  p {
-    margin: 7px 0 0;
-    color: #7f1d1d;
-    font-size: 12px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-  }
-}
-
-.ticket-revoke-reason__head {
-  color: #991b1b;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.ticket-reject-reason {
-  margin-top: 16px;
-  padding: 12px 16px;
-  border: 1px solid #fed7aa;
-  border-left: 4px solid #ea580c;
-  border-radius: 8px;
-  background: #fff7ed;
-  box-shadow: 0 1px 2px rgba(234, 88, 12, 0.05);
-
-  &.ticket-reject-reason--top {
-    margin-top: 0;
-    margin-bottom: 18px;
-  }
-
-  .reject-title {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #ea580c;
-
-    .warning-icon {
-      font-size: 15px;
+    &:hover {
+      background: #fef3c7;
     }
   }
 
-  .reject-meta {
-    margin: 6px 0 2px;
-    font-size: 13px;
-    color: #9a3412;
+  &:not(.is-reject):hover {
+    background: #f1f5f9;
   }
 
-  .reject-desc {
-    margin: 6px 0 0;
-    color: #c2410c;
+  &__bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 38px;
+    padding: 5px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  &__left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    color: #3b82f6;
+  }
+
+  &.is-reject &__icon {
+    color: #d97706;
+  }
+
+  &__tag {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  &__summary {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 13px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    background: #ffedd5;
-    padding: 8px 12px;
-    border-radius: 6px;
+    color: #374151;
+    line-height: 20px;
+  }
+
+  &.is-reject &__summary {
+    color: #92400e;
+    font-weight: 500;
+  }
+
+  &__right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  &__count {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  &__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    transition: color 0.15s ease;
+
+    &:hover {
+      color: #2563eb;
+    }
+
+    .toggle-icon {
+      font-size: 12px;
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+      &.is-expanded {
+        transform: rotate(90deg);
+      }
+    }
+  }
+
+  &.is-reject &__toggle {
+    color: #b45309;
+
+    &:hover {
+      color: #d97706;
+    }
+  }
+
+  &__content {
+    padding: 12px 14px 14px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    background: #ffffff;
   }
 }
 
-.ticket-reject-reason__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+// 驳回修改卡片
+.reject-detail-card {
+  padding: 10px 12px;
+  background: #fffdfa;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  margin-bottom: 12px;
 
-  small {
-    color: #9a3412;
-    font-size: 11px;
-    font-weight: 400;
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+
+    .node-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+
+      .node-tag {
+        font-weight: 600;
+        color: #c2410c;
+      }
+
+      .user-info {
+        color: #9a3412;
+
+        strong {
+          font-weight: 600;
+          color: #7c2d12;
+        }
+      }
+    }
+
+    .time {
+      font-size: 11px;
+      color: #a8a29e;
+    }
+  }
+
+  &__body {
+    font-size: 12px;
+    line-height: 1.6;
+
+    .label {
+      font-weight: 600;
+      color: #ea580c;
+    }
+
+    .text {
+      color: #374151;
+      white-space: pre-wrap;
+    }
+  }
+}
+
+// 前序流转记录时间线
+.flow-history {
+  &__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin: 8px 0 10px;
+  }
+
+  &__timeline {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__item {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    padding-bottom: 12px;
+
+    &:last-child {
+      padding-bottom: 0;
+
+      &::before {
+        display: none;
+      }
+    }
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 14px;
+      bottom: 0;
+      width: 1px;
+      background: #e2e8f0;
+    }
+  }
+
+  &__dot {
+    position: relative;
+    top: 5px;
+    flex-shrink: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #94a3b8;
+
+    &.is-success {
+      background: #10b981;
+    }
+
+    &.is-danger {
+      background: #ef4444;
+    }
+
+    &.is-info {
+      background: #3b82f6;
+    }
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    margin-bottom: 4px;
+
+    .node-name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .verdict-tag {
+      padding: 0 6px;
+      height: 20px;
+      font-size: 11px;
+    }
+
+    .user-name {
+      color: #475569;
+    }
+
+    .time-stamp {
+      margin-left: auto;
+      color: #94a3b8;
+      font-size: 11px;
+    }
+  }
+
+  &__comment {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 4px;
+    padding: 6px 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
 }
 
