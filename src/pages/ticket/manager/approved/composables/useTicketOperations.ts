@@ -1,6 +1,7 @@
 import { ref, watch, type Ref } from "vue"
 import { cloneDeep } from "lodash-es"
 import { ElMessage, ElMessageBox, type FormInstance } from "element-plus"
+import type { Api } from "@form-create/element-ui"
 import { passTicketApi, transferTicketApi, getTaskFormConfigApi } from "@/api/ticket/manager/index.js"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
@@ -19,7 +20,7 @@ interface UseTicketOperationsOptions {
   taskId: Ref<TaskID | undefined>
   processInstId: Ref<ProcessInstanceID | undefined>
   mainFormData: Ref<TicketFormData>
-  fApi: Ref<any>
+  fApi: Ref<Api | undefined>
   onSuccess: () => void
 }
 
@@ -27,6 +28,12 @@ const DEFAULT_FORM_DATA: PassTicketReq = {
   task_id: "",
   comment: ""
 }
+
+const CONFIRM_OPTIONS = {
+  confirmButtonText: "确定",
+  cancelButtonText: "取消",
+  type: "warning"
+} as const
 
 /**
  * 工单审批、修改、转签、驳回及撤回操作 Composable
@@ -128,89 +135,57 @@ export function useTicketOperations(options: UseTicketOperationsOptions) {
     options.onSuccess()
   }
 
-  // 1. 同意操作
-  const handlePassTicket = async () => {
-    if (options.taskId.value) {
-      formData.value.task_id = options.taskId.value
-    }
-
-    const submitData = {
-      ...formData.value,
-      ticket_id: options.ticketId.value,
-      extra_data: taskFormData.value
-    }
-
+  const submitPassTicket = async (submitData: PassTicketReq, successMessage: string) => {
     try {
-      await passTicketApi(submitData)
-      ElMessage.success("工单已同意")
-      resetForm()
-    } catch (error) {
-      console.error("同意工单失败:", error)
-    }
-  }
-
-  const handlePassConfirm = async () => {
-    if (!canOperate(TICKET_CAPABILITIES.Manager.Pass)) return
-    if (!formRef.value) return
-
-    try {
-      // 验证基本表单 (评论)
-      await formRef.value.validate()
-
-      // 验证节点动态表单 (如果存在)
-      if (dynamicFormRef.value) {
-        await dynamicFormRef.value.validate()
-      }
-
-      ElMessageBox.confirm("是否确认同意该工单？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
-        .then(() => {
-          handlePassTicket()
-        })
-        .catch(() => undefined)
-    } catch (error) {
-      // 表单校验失败时保持当前输入状态
-    }
-  }
-
-  // 2. 发起人修改后提交
-  const handleSubmitChangedTicket = async (submitData: PassTicketReq) => {
-    try {
-      await passTicketApi({
-        ...submitData,
-        ticket_id: options.ticketId.value
-      })
-      ElMessage.success("工单已提交")
+      await passTicketApi({ ...submitData, ticket_id: options.ticketId.value })
+      ElMessage.success(successMessage)
       resetForm()
     } catch (error) {
       console.error("提交工单失败:", error)
     }
   }
 
-  const handlePass = () => {
+  // 同意操作
+  const handlePassConfirm = async () => {
+    if (!canOperate(TICKET_CAPABILITIES.Manager.Pass)) return
+    if (!formRef.value) return
+
+    try {
+      await formRef.value.validate()
+      if (dynamicFormRef.value) {
+        await dynamicFormRef.value.validate()
+      }
+      await ElMessageBox.confirm("是否确认同意该工单？", "提示", CONFIRM_OPTIONS)
+    } catch {
+      // 校验失败或取消：保持当前输入
+      return
+    }
+
+    if (options.taskId.value) {
+      formData.value.task_id = options.taskId.value
+    }
+    await submitPassTicket({ ...formData.value, extra_data: taskFormData.value }, "工单已同意")
+  }
+
+  // 发起人修改后提交
+  const handlePass = async () => {
     if (!canOperate(TICKET_CAPABILITIES.Manager.Pass)) return
 
-    options.fApi.value?.validate((valid: boolean) => {
+    try {
+      const valid = await options.fApi.value?.validate()
       if (!valid) return
-
-      ElMessageBox.confirm("确认修改并提交工单？", "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning"
-      })
-        .then(() => {
-          const submitData = {
-            task_id: options.taskId.value || formData.value.task_id,
-            comment: "修改并提交",
-            ...options.mainFormData.value
-          }
-          handleSubmitChangedTicket(submitData)
-        })
-        .catch(() => undefined)
-    })
+      await ElMessageBox.confirm("确认修改并提交工单？", "提示", CONFIRM_OPTIONS)
+      await submitPassTicket(
+        {
+          task_id: options.taskId.value || formData.value.task_id,
+          comment: "修改并提交",
+          ...options.mainFormData.value
+        },
+        "工单已提交"
+      )
+    } catch {
+      // 校验失败或取消：保持当前输入
+    }
   }
 
   // 3. 转签操作
@@ -220,6 +195,7 @@ export function useTicketOperations(options: UseTicketOperationsOptions) {
   }
 
   const handleTransferConfirm = async (assignees: TransferAssignee[]) => {
+    if (transferLoading.value) return
     if (!canOperate(TICKET_CAPABILITIES.Manager.Transfer)) return
 
     const usernames = assignees.filter((a) => a.rule === "appoint").flatMap((a) => a.values)
@@ -240,24 +216,16 @@ export function useTicketOperations(options: UseTicketOperationsOptions) {
     }
   }
 
-  // 4. 驳回操作
+  // 驳回操作
   const handleRejectConfirm = () => {
     if (!canOperate(TICKET_CAPABILITIES.Manager.Reject)) return
     rejectVisible.value = true
   }
 
-  const handleRejectSubmitted = () => {
-    resetForm()
-  }
-
-  // 5. 撤单操作
+  // 撤单操作
   const handleRevoke = () => {
     if (!canOperate(TICKET_CAPABILITIES.Manager.Revoke)) return
     revokeVisible.value = true
-  }
-
-  const handleRevokeSubmitted = () => {
-    resetForm()
   }
 
   return {
@@ -267,7 +235,6 @@ export function useTicketOperations(options: UseTicketOperationsOptions) {
     formRef,
     dynamicFormRef,
     transferVisible,
-    transferLoading,
     revokeVisible,
     rejectVisible,
     usernameToDisplayName,
@@ -278,9 +245,7 @@ export function useTicketOperations(options: UseTicketOperationsOptions) {
     openTransfer,
     handleTransferConfirm,
     handleRejectConfirm,
-    handleRejectSubmitted,
     handleRevoke,
-    handleRevokeSubmitted,
     resetForm
   }
 }

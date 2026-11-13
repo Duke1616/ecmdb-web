@@ -41,7 +41,7 @@
 
     <template #approvedBy="{ row }">
       <el-tag
-        v-if="isSystemApprover(row.approved_by)"
+        v-if="isSystemActor(row.approved_by)"
         size="small"
         type="info"
         effect="plain"
@@ -89,13 +89,9 @@ import OperateBtn from "@@/components/OperateBtn/index.vue"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
 import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
 import type { Column as DataTableColumn } from "@@/components/DataTable/types"
-import type { TicketAction, TicketOperateItem } from "../composables/types"
+import type { TicketAction, TicketOperateItem, TicketSpanRow } from "../composables/types"
+import { isSystemActor } from "../utils"
 import { copyToClipboard } from "@@/utils/clipboard"
-
-interface RowWithSpan {
-  mergeCell?: string[]
-  [key: `rowspan_${string}`]: number | undefined
-}
 
 const props = withDefaults(
   defineProps<{
@@ -132,7 +128,7 @@ const defaultTableProps = {
   "header-cell-style": { background: "#F6F6F6", height: "10px", "text-align": "center" }
 }
 
-const objectSpanMethod = ({ row, column }: { row: RowWithSpan; column: TableColumnCtx<Column> }) => {
+const objectSpanMethod = ({ row, column }: { row: TicketSpanRow; column: TableColumnCtx<Column> }) => {
   if (!row.mergeCell?.includes(column.property)) return
 
   const rowspan = row[`rowspan_${column.property}`]
@@ -156,46 +152,39 @@ const emitOperateEvent = (row: Ticket, action: TicketAction) => {
   emit("operate", row, action)
 }
 
-const getProvideText = (provide: number) => {
-  const provideTextMap: Record<number, string> = {
-    1: "本系统",
-    2: "企业微信",
-    3: "告警平台"
-  }
-  return provideTextMap[provide] || "未知类型"
+const PROVIDE_TEXT_MAP: Record<number, string> = {
+  1: "本系统",
+  2: "企业微信",
+  3: "告警平台"
 }
 
-const getStatusText = (status: number) => {
-  const statusTextMap: Record<number, string> = {
-    [TicketStatus.Start]: "启动中",
-    [TicketStatus.Process]: "处理中",
-    [TicketStatus.End]: "结单",
-    [TicketStatus.Withdraw]: "撤单",
-    [TicketStatus.Withdrawing]: "撤回处理中",
-    [TicketStatus.StartFailed]: "流程启动失败"
-  }
-  return statusTextMap[status] || "未知"
+const STATUS_TEXT_MAP: Record<number, string> = {
+  [TicketStatus.Start]: "启动中",
+  [TicketStatus.Process]: "处理中",
+  [TicketStatus.End]: "结单",
+  [TicketStatus.Withdraw]: "撤单",
+  [TicketStatus.Withdrawing]: "撤回处理中",
+  [TicketStatus.StartFailed]: "流程启动失败"
 }
 
-const getStatusClass = (status: number) => {
-  if (status === TicketStatus.End) return "is-success"
-  if (status === TicketStatus.Start) return "is-warning"
-  if (status === TicketStatus.Withdraw) return "is-danger"
-  if (status === TicketStatus.Withdrawing) return "is-warning"
-  if (status === TicketStatus.StartFailed) return "is-danger"
-  return ""
+const STATUS_CLASS_MAP: Record<number, string> = {
+  [TicketStatus.End]: "is-success",
+  [TicketStatus.Start]: "is-warning",
+  [TicketStatus.Withdraw]: "is-danger",
+  [TicketStatus.Withdrawing]: "is-warning",
+  [TicketStatus.StartFailed]: "is-danger"
 }
+
+const getProvideText = (provide: number) => PROVIDE_TEXT_MAP[provide] || "未知类型"
+
+const getStatusText = (status: number) => STATUS_TEXT_MAP[status] || "未知"
+
+const getStatusClass = (status: number) => STATUS_CLASS_MAP[status] || ""
 
 const getRatingText = (ticket: Ticket) => {
   if (ticket.rating) return `★ ${ticket.rating.score}`
   if (ticket.status === TicketStatus.End) return ticket.can_rate ? "待评价" : "未评价"
   return "—"
-}
-
-const isSystemApprover = (approver?: string) => {
-  if (!approver) return false
-  const lower = approver.trim().toLowerCase()
-  return lower === "system" || lower === "automation" || lower === "sys_skipped"
 }
 
 const isAutomationStep = (stepName?: string) => {

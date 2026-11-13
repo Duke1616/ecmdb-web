@@ -86,8 +86,8 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listTicketTaskTimelineApi } from "@/api/ticket/manager"
 import type { taskTimelineEvent, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
+import { formatOperator } from "../utils"
 import {
-  formatOperator,
   getTaskTagType,
   getTaskTagLabel,
   resolveTimelineSummary,
@@ -138,12 +138,15 @@ const listTicketTaskTimelineData = async () => {
   }
 }
 
-// 监听工单实例 ID 切换时重置分页并刷新
+// 监听工单实例 ID 切换时重置分页并刷新（页码变化会触发下方分页 watch，避免重复请求）
 watch(
   () => props.processInstId,
   () => {
-    paginationData.currentPage = 1
-    listTicketTaskTimelineData()
+    if (paginationData.currentPage !== 1) {
+      paginationData.currentPage = 1
+    } else {
+      listTicketTaskTimelineData()
+    }
   }
 )
 

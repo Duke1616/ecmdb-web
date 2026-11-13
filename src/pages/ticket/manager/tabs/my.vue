@@ -77,6 +77,6 @@ const { operateEvent } = useTicketActions({
 })
 
 defineExpose({
-  listStartedTickets
+  refresh: listStartedTickets
 })
 </script>

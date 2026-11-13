@@ -8,17 +8,14 @@
       @tab-change="handleTabChange"
     >
       <template #default="{ activeTab }">
-        <My v-if="activeTab === 'my'" ref="myRef" />
-        <TodoUser v-if="activeTab === 'todo'" ref="todoUserRef" />
-        <Todo v-if="activeTab === 'todo-all'" ref="todoRef" />
-        <History v-if="activeTab === 'history'" ref="historyRef" />
+        <component :is="tabComponents[activeTab]" ref="activeTabRef" />
       </template>
     </CustomTabs>
     <el-result v-else icon="warning" title="暂无工单列表权限" />
   </ProGovernanceLayout>
 </template>
 <script lang="ts" setup>
-import { computed, ref, watch } from "vue"
+import { computed, ref, watch, type Component } from "vue"
 import Todo from "./tabs/todo.vue"
 import TodoUser from "./tabs/todo-user.vue"
 import My from "./tabs/my.vue"
@@ -49,25 +46,20 @@ watch(
   { immediate: true }
 )
 
-const myRef = ref<InstanceType<typeof My>>()
-const todoRef = ref<InstanceType<typeof Todo>>()
-const todoUserRef = ref<InstanceType<typeof TodoUser>>()
-const historyRef = ref<InstanceType<typeof History>>()
+const tabComponents: Record<string, Component> = {
+  my: My,
+  todo: TodoUser,
+  "todo-all": Todo,
+  history: History
+}
+const activeTabRef = ref<{ refresh: () => void }>()
 
 const refreshActiveTab = () => {
-  const refreshMap: Record<string, () => void> = {
-    my: () => myRef.value?.listStartedTickets(),
-    "todo-all": () => todoRef.value?.listTicketsData(),
-    todo: () => todoUserRef.value?.listTicketsData(),
-    history: () => historyRef.value?.listTicketsData()
-  }
-
-  refreshMap[activeName.value]?.()
+  activeTabRef.value?.refresh()
 }
 
 const handleTabChange = (tabName: string) => {
   activeName.value = tabName
-  refreshActiveTab()
 }
 </script>
 

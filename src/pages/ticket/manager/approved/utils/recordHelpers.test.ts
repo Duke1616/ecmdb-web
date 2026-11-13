@@ -2,8 +2,6 @@ import { describe, it, expect } from "vitest"
 import {
   TaskRecordStatus,
   TaskFinishStatus,
-  formatOperator,
-  isSystemActor,
   getTaskTagType,
   getTaskTagLabel,
   resolveTimelineSummary,
@@ -15,22 +13,6 @@ import {
 import type { taskTimelineEvent, taskRecord } from "@/api/ticket/manager/types/manager"
 
 describe("recordHelpers", () => {
-  describe("formatOperator & isSystemActor", () => {
-    it("正确识别并格式化系统角色", () => {
-      expect(formatOperator("system")).toBe("系统")
-      expect(formatOperator("automation")).toBe("系统")
-      expect(formatOperator("sys_skipped")).toBe("系统")
-      expect(formatOperator("  SYSTEM  ")).toBe("系统")
-      expect(formatOperator("张三")).toBe("张三")
-      expect(formatOperator("")).toBe("-")
-      expect(formatOperator(undefined)).toBe("-")
-
-      expect(isSystemActor("system")).toBe(true)
-      expect(isSystemActor("张三")).toBe(false)
-      expect(isSystemActor("")).toBe(false)
-    })
-  })
-
   describe("getTaskTagType & getTaskTagLabel", () => {
     it("未完成时返回等待处理 warning", () => {
       const row = { status: TaskRecordStatus.Passed, is_finished: TaskFinishStatus.Unfinished } as taskRecord

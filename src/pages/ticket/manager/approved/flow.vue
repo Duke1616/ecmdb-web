@@ -49,15 +49,12 @@ const initLf = () => {
     container: container.value
   })
   lf.value = lfInstance
-  // 设置主题
-  setThemem()
-  // 注册节点
-  registerNode()
-  // 加载数据、事件监听
+  applyTheme()
+  registerAllNodes(lfInstance)
   render()
 }
 
-const setThemem = () => {
+const applyTheme = () => {
   lf.value?.setTheme({
     circle: {
       stroke: "#000000",
@@ -93,31 +90,12 @@ const setThemem = () => {
   })
 }
 
-const registerNode = () => {
-  if (lf.value) {
-    registerAllNodes(lf.value)
-  }
-}
-
 const render = (graphData?: LogicFlow.GraphConfigData) => {
   if (!lf.value) return
 
-  if (graphData) {
-    lf.value.render(graphData)
-  } else {
-    lf.value.render({ nodes: [], edges: [] })
-  }
+  lf.value.render(graphData ?? { nodes: [], edges: [] })
   lf.value.translateCenter()
   lf.value.fitView(300, 300)
-}
-
-const getGraphData = async (id: number, processInstanceId: ProcessInstanceID, status: number) => {
-  const res = await getWorkflowGraphApi({
-    id,
-    process_instance_id: processInstanceId,
-    status
-  })
-  return res.data
 }
 
 onMounted(() => {
@@ -132,7 +110,11 @@ watchEffect(async (onInvalidate) => {
     expired = true
   })
 
-  const workflowGraph = await getGraphData(props.workflowId, props.processInstId, props.status)
+  const { data: workflowGraph } = await getWorkflowGraphApi({
+    id: props.workflowId,
+    process_instance_id: props.processInstId,
+    status: props.status
+  })
   if (expired) return
 
   render(workflowGraph?.workflow?.flow_data)

@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { TicketStatus, type Ticket } from "@/api/ticket/manager/types/manager"
 import { restartProcessApi } from "@/api/ticket/manager"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
+import { buildInitiatorAction } from "../utils"
 import { TicketAction } from "./types"
 import type { TicketOperateItem } from "./types"
 
@@ -174,7 +175,7 @@ export const useTicketActions = (options: {
   const operateEvent = (data: Ticket, action: TicketAction) => {
     switch (action) {
       case TicketAction.Detail:
-        options.openDetail(data, `my-${data.current_step}`)
+        options.openDetail(data, buildInitiatorAction(data.current_step))
         break
       case TicketAction.Urge:
         handleUrging()

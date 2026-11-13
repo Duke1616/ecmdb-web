@@ -115,14 +115,17 @@ const retryLoading = ref(false)
 const terminateDialogVisible = ref(false)
 const terminateLoading = ref(false)
 
-const statusTone = (status: AutomationTaskStatus) => {
-  if (status === AutomationTaskStatus.Success) return "success"
-  if (status === AutomationTaskStatus.Failed) return "failed"
-  if ([AutomationTaskStatus.Running, AutomationTaskStatus.Submitting].includes(status)) return "running"
-  if (status === AutomationTaskStatus.Blocked) return "blocked"
-  if (status === AutomationTaskStatus.Cancelled) return "cancelled"
-  return "waiting"
+const STATUS_TONE: Record<AutomationTaskStatus, string> = {
+  [AutomationTaskStatus.Success]: "success",
+  [AutomationTaskStatus.Failed]: "failed",
+  [AutomationTaskStatus.Running]: "running",
+  [AutomationTaskStatus.Submitting]: "running",
+  [AutomationTaskStatus.Waiting]: "waiting",
+  [AutomationTaskStatus.Blocked]: "blocked",
+  [AutomationTaskStatus.Cancelled]: "cancelled"
 }
+
+const statusTone = (status: AutomationTaskStatus) => STATUS_TONE[status] ?? "waiting"
 
 const loadTasks = async (silent = false) => {
   if (!props.ticketId) return

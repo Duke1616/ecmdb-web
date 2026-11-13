@@ -2,7 +2,7 @@
   <div class="dynamic-form">
     <el-form ref="formRef" :model="localModel" label-position="top" :disabled="disabled">
       <el-row :gutter="24">
-        <el-col v-for="field in schema" :key="field.key" v-show="!field.hidden" :span="getFieldSpan(field.type)">
+        <el-col v-for="field in schema" :key="field.key" v-show="!field.hidden" :span="24">
           <div v-if="field.type === DynamicFormFieldType.Tips" class="tips-container">
             <el-alert
               :title="field.name"
@@ -115,10 +115,6 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
-  },
-  compact: {
-    type: Boolean,
-    default: true
   }
 })
 
@@ -156,15 +152,6 @@ const getDisplayValue = (key: string, fallback?: DynamicFormModelValue) => {
 
 const getTipDescription = (field: DynamicFormField) => {
   return String(field.value || field.props?.placeholder || "")
-}
-
-const isFullWidthField = (type: string) => {
-  return type === DynamicFormFieldType.Textarea || type === DynamicFormFieldType.Tips
-}
-
-const getFieldSpan = (type: string) => {
-  if (!props.compact || isFullWidthField(type)) return 24
-  return 12
 }
 
 const getTextValue = (key: string) => {

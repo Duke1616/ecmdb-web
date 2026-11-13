@@ -34,24 +34,6 @@
 
         <div v-if="props.action === 'my-Start'">
           <FormCreate :rule="rule" :option="options" v-model="data" v-model:api="fApi" />
-          <div class="form-actions">
-            <AuthButton
-              type="primary"
-              :icon="EditPen"
-              :capability="TICKET_CAPABILITIES.Manager.Pass"
-              @click="handlePass"
-            >
-              修改
-            </AuthButton>
-            <AuthButton
-              type="danger"
-              :icon="RefreshLeft"
-              :capability="TICKET_CAPABILITIES.Manager.Revoke"
-              @click="handleRevoke"
-            >
-              撤回
-            </AuthButton>
-          </div>
         </div>
 
         <!-- 工单评价卡片 -->
@@ -66,7 +48,7 @@
       </div>
 
       <!-- 操作与审批信息区 -->
-      <div v-if="!/^my-/.test(props.action) && props.action !== 'history'" class="form-section">
+      <div v-if="!isHistoryModeAction(props.action)" class="form-section">
         <div class="section-title">
           <el-icon><Setting /></el-icon>
           <span>操作信息</span>
@@ -74,7 +56,7 @@
 
         <el-form ref="formRef" :model="formData" label-position="top" class="operation-form">
           <div v-if="taskFormSchema && taskFormSchema.length > 0" class="dynamic-form-section">
-            <DynamicForm ref="dynamicFormRef" :schema="taskFormSchema" v-model="taskFormData" :compact="false" />
+            <DynamicForm ref="dynamicFormRef" :schema="taskFormSchema" v-model="taskFormData" />
           </div>
 
           <el-form-item prop="comment" label="评论" class="form-item required">
@@ -89,35 +71,55 @@
             />
           </el-form-item>
         </el-form>
-
-        <div class="form-actions">
-          <AuthButton
-            type="primary"
-            :icon="Check"
-            :capability="TICKET_CAPABILITIES.Manager.Pass"
-            @click="handlePassConfirm"
-          >
-            同意
-          </AuthButton>
-          <AuthButton
-            v-if="allowReject"
-            type="danger"
-            :icon="Close"
-            :capability="TICKET_CAPABILITIES.Manager.Reject"
-            @click="handleRejectConfirm"
-          >
-            驳回
-          </AuthButton>
-          <AuthButton
-            v-if="allowTransfer"
-            :icon="Switch"
-            :capability="TICKET_CAPABILITIES.Manager.Transfer"
-            @click="openTransfer"
-          >
-            转签
-          </AuthButton>
-        </div>
       </div>
+    </div>
+
+    <div v-if="showActionFooter" class="form-footer">
+      <template v-if="props.action === 'my-Start'">
+        <AuthButton
+          type="primary"
+          :icon="EditPen"
+          :capability="TICKET_CAPABILITIES.Manager.Pass"
+          @click="handlePass"
+        >
+          修改
+        </AuthButton>
+        <AuthButton
+          type="danger"
+          :icon="RefreshLeft"
+          :capability="TICKET_CAPABILITIES.Manager.Revoke"
+          @click="handleRevoke"
+        >
+          撤回
+        </AuthButton>
+      </template>
+      <template v-else>
+        <AuthButton
+          type="primary"
+          :icon="Check"
+          :capability="TICKET_CAPABILITIES.Manager.Pass"
+          @click="handlePassConfirm"
+        >
+          同意
+        </AuthButton>
+        <AuthButton
+          v-if="allowReject"
+          type="danger"
+          :icon="Close"
+          :capability="TICKET_CAPABILITIES.Manager.Reject"
+          @click="handleRejectConfirm"
+        >
+          驳回
+        </AuthButton>
+        <AuthButton
+          v-if="allowTransfer"
+          :icon="Switch"
+          :capability="TICKET_CAPABILITIES.Manager.Transfer"
+          @click="openTransfer"
+        >
+          转签
+        </AuthButton>
+      </template>
     </div>
   </div>
 
@@ -141,7 +143,7 @@
     v-model="revokeVisible"
     :instance-id="props.processInstId"
     subject="当前工单"
-    @submitted="handleRevokeSubmitted"
+    @submitted="resetForm"
   />
 
   <!-- 驳回决策弹窗 -->
@@ -150,7 +152,7 @@
     :ticket-id="currentTicketId"
     :task-id="props.taskId"
     :policy="currentFlowPolicy"
-    @submitted="handleRejectSubmitted"
+    @submitted="resetForm"
   />
 </template>
 
@@ -179,6 +181,7 @@ import FeedbackBanner from "./components/FeedbackBanner.vue"
 import DynamicForm from "./components/DynamicForm.vue"
 import { useTicketTemplate } from "./composables/useTicketTemplate"
 import { useTicketOperations } from "./composables/useTicketOperations"
+import { isHistoryModeAction } from "../utils"
 import type { TicketFormData } from "./types"
 
 interface Props {
@@ -222,7 +225,10 @@ const allowTransfer = computed(() => currentFlowPolicy.value?.allow_transfer ?? 
 const allowReject = computed(() => currentFlowPolicy.value?.allow_reject ?? true)
 
 // 是否为历史或发起人只读查看模式
-const isHistoryMode = computed(() => props.action === "history" || /^my-/.test(props.action))
+const isHistoryMode = computed(() => isHistoryModeAction(props.action))
+
+// 底部操作栏仅在可操作模式显示（审批 / 发起人修改撤回）
+const showActionFooter = computed(() => props.action === "my-Start" || !isHistoryModeAction(props.action))
 
 // 1. 抽离的工单模板加载逻辑
 const { rule, options, handleDetail, resetTemplate } = useTicketTemplate({
@@ -247,9 +253,8 @@ const {
   openTransfer,
   handleTransferConfirm,
   handleRejectConfirm,
-  handleRejectSubmitted,
   handleRevoke,
-  handleRevokeSubmitted
+  resetForm
 } = useTicketOperations({
   ticketId: currentTicketId,
   taskId: toRef(props, "taskId"),
@@ -263,13 +268,17 @@ const {
 })
 
 // 加载工单详情数据
-const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
+const resetTicketFeedback = () => {
   ticketRating.value = undefined
   revokeReason.value = ""
   ticketStatus.value = undefined
   latestReject.value = undefined
   priorComments.value = []
   currentFlowPolicy.value = undefined
+}
+
+const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
+  resetTicketFeedback()
 
   try {
     const { data: ticketInfo } = await getTicketByProcessInstIdApi(processInstId)
@@ -294,12 +303,7 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     }
   } catch (error) {
     data.value = {}
-    ticketRating.value = undefined
-    revokeReason.value = ""
-    ticketStatus.value = undefined
-    latestReject.value = undefined
-    priorComments.value = []
-    currentFlowPolicy.value = undefined
+    resetTicketFeedback()
     ElMessage.error("获取工单详情失败")
   }
 }
@@ -318,8 +322,6 @@ const syncTicketContext = async () => {
 }
 
 watch([() => props.templateId, () => props.processInstId], syncTicketContext, { immediate: true })
-
-defineExpose({})
 </script>
 
 <style lang="scss" scoped>
@@ -333,9 +335,10 @@ defineExpose({})
 }
 
 .form-scroll-area {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 18px 24px 84px;
+  padding: 18px 24px;
 }
 
 .form-section {
@@ -377,12 +380,15 @@ defineExpose({})
   margin-bottom: 4px;
 }
 
-.form-actions {
+.form-footer {
+  flex-shrink: 0;
   display: flex;
+  justify-content: flex-end;
   gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px dashed #e2e8f0;
+  padding: 12px 24px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .form-item {

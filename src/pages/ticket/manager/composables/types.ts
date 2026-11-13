@@ -27,3 +27,9 @@ export type TicketFetcher = (params: { offset: number; limit: number }) => Promi
     total?: number
   }
 }>
+
+export interface TicketSpanRow {
+  mergeCell?: string[]
+  [key: `rowspan_${string}`]: number | undefined
+  [key: string]: unknown
+}

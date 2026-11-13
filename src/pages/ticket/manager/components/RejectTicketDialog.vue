@@ -18,57 +18,19 @@
         <!-- 驳回处理方式：高级 Bento 交互决策卡片组 -->
         <el-form-item v-if="availableActions.length > 1" label="处理方式" required class="action-tiles-item">
           <div class="action-tiles" :class="`grid-${availableActions.length}`">
-            <!-- 卡片 1: 自动回退 -->
             <div
-              v-if="canReturn"
+              v-for="tile in actionTiles"
+              :key="tile.type"
               class="action-tile"
-              :class="{ 'is-selected': actionType === 'AUTO' }"
-              @click="actionType = 'AUTO'"
+              :class="{ 'is-selected': actionType === tile.type, 'is-danger-tile': tile.danger }"
+              @click="actionType = tile.type"
             >
-              <div class="tile-icon-wrap is-blue">
-                <el-icon><RefreshLeft /></el-icon>
+              <div class="tile-icon-wrap" :class="`is-${tile.tone}`">
+                <el-icon><component :is="tile.icon" /></el-icon>
               </div>
               <div class="tile-info">
-                <div class="tile-title">自动回退</div>
-                <div class="tile-desc">回溯至上一审批人</div>
-              </div>
-              <div class="tile-check">
-                <el-icon><Select /></el-icon>
-              </div>
-            </div>
-
-            <!-- 卡片 2: 指定环节 -->
-            <div
-              v-if="canReturn && hasMultipleTargets"
-              class="action-tile"
-              :class="{ 'is-selected': actionType === 'CUSTOM' }"
-              @click="actionType = 'CUSTOM'"
-            >
-              <div class="tile-icon-wrap is-indigo">
-                <el-icon><Operation /></el-icon>
-              </div>
-              <div class="tile-info">
-                <div class="tile-title">指定环节</div>
-                <div class="tile-desc">精准自选回退节点</div>
-              </div>
-              <div class="tile-check">
-                <el-icon><Select /></el-icon>
-              </div>
-            </div>
-
-            <!-- 卡片 3: 直接否决 -->
-            <div
-              v-if="canTerminate"
-              class="action-tile is-danger-tile"
-              :class="{ 'is-selected': actionType === 'TERMINATE' }"
-              @click="actionType = 'TERMINATE'"
-            >
-              <div class="tile-icon-wrap is-red">
-                <el-icon><CircleClose /></el-icon>
-              </div>
-              <div class="tile-info">
-                <div class="tile-title">直接否决</div>
-                <div class="tile-desc">一票否决终止流程</div>
+                <div class="tile-title">{{ tile.title }}</div>
+                <div class="tile-desc">{{ tile.desc }}</div>
               </div>
               <div class="tile-check">
                 <el-icon><Select /></el-icon>
@@ -79,7 +41,7 @@
 
         <!-- 模式对应的辅助区域 -->
         <!-- 1. 自动回退说明 -->
-        <div v-if="actionType === 'AUTO'" class="auto-hint-banner">
+        <div v-if="actionType === 'AUTO' && !noReturnTarget" class="mode-banner is-info">
           <el-icon class="banner-icon"><InfoFilled /></el-icon>
           <span v-if="filteredTargets.length === 1">
             工单将退回至唯一上游环节：<strong>{{ filteredTargets[0].node_name }}</strong>
@@ -115,20 +77,10 @@
         </el-form-item>
 
         <!-- 3. 直接否决终止警示 -->
-        <div v-if="actionType === 'TERMINATE'" class="terminate-banner">
+        <div v-if="actionType === 'TERMINATE'" class="mode-banner is-danger">
           <el-icon class="banner-icon"><WarningFilled /></el-icon>
           <span>否决后流程将直接终止并作废归档，工单无法再次修改或提审。</span>
         </div>
-
-        <!-- 4. 无合法退回目标提示 -->
-        <el-alert
-          v-if="actionType !== 'TERMINATE' && filteredTargets.length === 0 && !loadingTargets"
-          title="当前策略下无可退回的目标环节，无法执行退回修改。"
-          type="warning"
-          :closable="false"
-          show-icon
-          class="no-target-alert"
-        />
 
         <!-- 驳回说明 / 修改意见 -->
         <el-form-item label="驳回原因" required>
@@ -149,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue"
+import { computed, ref, watch, type Component } from "vue"
 import { WarningFilled, InfoFilled, RefreshLeft, Operation, CircleClose, Select } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { FormDialog } from "@@/components/Dialogs"
@@ -213,6 +165,8 @@ const filteredTargets = computed(() => {
 
 const hasMultipleTargets = computed(() => filteredTargets.value.length > 1)
 
+const noReturnTarget = computed(() => !loadingTargets.value && filteredTargets.value.length === 0)
+
 // 可用的处理方式选项列表（并列展示）
 const availableActions = computed<RejectActionType[]>(() => {
   const actions: RejectActionType[] = []
@@ -227,6 +181,14 @@ const availableActions = computed<RejectActionType[]>(() => {
   }
   return actions
 })
+
+const TILE_META: Record<RejectActionType, { title: string; desc: string; icon: Component; tone: string; danger?: boolean }> = {
+  AUTO: { title: "自动回退", desc: "回溯至上一审批人", icon: RefreshLeft, tone: "blue" },
+  CUSTOM: { title: "指定环节", desc: "精准自选回退节点", icon: Operation, tone: "indigo" },
+  TERMINATE: { title: "直接否决", desc: "一票否决终止流程", icon: CircleClose, tone: "red", danger: true }
+}
+
+const actionTiles = computed(() => availableActions.value.map((type) => ({ type, ...TILE_META[type] })))
 
 const isConfirmDisabled = computed(() => {
   if (!comment.value.trim() || submitting.value) return true
@@ -354,7 +316,7 @@ const submit = async () => {
 
 const reset = () => {
   comment.value = ""
-  actionType.value = canReturn.value ? "AUTO" : "TERMINATE"
+  syncDefaultAction()
   targetNodeId.value = ""
   submitting.value = false
 }
@@ -551,7 +513,7 @@ const reset = () => {
   width: 100%;
 }
 
-.auto-hint-banner {
+.mode-banner {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -560,41 +522,31 @@ const reset = () => {
   margin-bottom: 16px;
   font-size: 12px;
   line-height: 1.5;
-  color: #0369a1;
-  background: #f0f9ff;
-  border: 1px solid #e0f2fe;
   border-radius: 6px;
 
   .banner-icon {
     font-size: 14px;
-    color: #0284c7;
     flex-shrink: 0;
   }
-}
 
-.terminate-banner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  margin-top: -4px;
-  margin-bottom: 16px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fee2e2;
-  border-radius: 6px;
+  &.is-info {
+    color: #0369a1;
+    background: #f0f9ff;
+    border: 1px solid #e0f2fe;
 
-  .banner-icon {
-    font-size: 14px;
-    color: #ef4444;
-    flex-shrink: 0;
+    .banner-icon {
+      color: #0284c7;
+    }
   }
-}
 
-.no-target-alert {
-  margin-bottom: 16px;
-  border-radius: 6px;
+  &.is-danger {
+    color: #991b1b;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+
+    .banner-icon {
+      color: #ef4444;
+    }
+  }
 }
 </style>

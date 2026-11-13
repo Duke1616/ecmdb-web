@@ -102,6 +102,7 @@ import dayjs from "dayjs"
 import { WarningFilled, ChatDotRound, ArrowRight } from "@element-plus/icons-vue"
 import type { LatestReject, PriorComment } from "@/api/ticket/manager/types/manager"
 import { TicketStatus } from "@/api/ticket/manager/types/manager"
+import { TaskRecordStatus } from "../utils/recordHelpers"
 
 interface FeedbackBannerProps {
   ticketStatus?: TicketStatus
@@ -150,7 +151,7 @@ const visiblePriorComments = computed(() => {
     // 剔除与顶部 latestReject 重复的那条驳回记录
     if (
       banner &&
-      item.status === 2 &&
+      item.status === TaskRecordStatus.Rejected &&
       item.node_id === banner.node_id &&
       item.approved_by === banner.rejected_by &&
       item.occurred_at === banner.rejected_at
@@ -176,7 +177,7 @@ const isRejectState = computed(() => {
     return false
   }
   if (effectiveLatestReject.value) return true
-  if (visiblePriorComments.value.length > 0 && visiblePriorComments.value[0].status === 2) {
+  if (visiblePriorComments.value.length > 0 && visiblePriorComments.value[0].status === TaskRecordStatus.Rejected) {
     return true
   }
   return false
@@ -200,7 +201,7 @@ const feedbackSummaryText = computed(() => {
     const user = latest.approved_by_name || latest.approved_by
 
     // 若最新记录为驳回（例如驳回撤单归档场景）
-    if (latest.status === 2) {
+    if (latest.status === TaskRecordStatus.Rejected) {
       const reason = latest.comment ? ` · 驳回原因：${latest.comment}` : ""
       return `由 ${user} 在 [${latest.node_name}] 环节驳回${reason}`
     }
@@ -222,7 +223,7 @@ const historyCountText = computed(() => {
 })
 
 const priorCommentVerdict = (status: number): { label: string; type: "success" | "danger" } =>
-  status === 2 ? { label: "驳回", type: "danger" } : { label: "通过", type: "success" }
+  status === TaskRecordStatus.Rejected ? { label: "驳回", type: "danger" } : { label: "通过", type: "success" }
 </script>
 
 <style scoped lang="scss">

@@ -1,7 +1,7 @@
 <template>
   <Drawer
     v-model="dialogVisible"
-    :title="computedActionName"
+    :title="detailTitle"
     :subtitle="ticketInfo?.id ? `工单号: ${ticketInfo.id}` : ''"
     :header-icon="Document"
     size="40%"
@@ -14,7 +14,6 @@
         <template #default="{ activeTab }">
           <Form
             v-if="activeTab === 'form'"
-            ref="formRef"
             :ticket-id="props.ticketInfo?.id"
             :template-id="props.ticketInfo?.template_id"
             :process-inst-id="props.ticketInfo?.process_instance_id"
@@ -25,7 +24,6 @@
           />
           <Flow
             v-if="activeTab === 'flow'"
-            ref="flowRef"
             :workflow-id="props.ticketInfo?.workflow_id"
             :process-inst-id="props.ticketInfo?.process_instance_id"
             :status="props.ticketInfo?.status"
@@ -61,6 +59,7 @@ import { Document } from "@element-plus/icons-vue"
 import TaskAttemptDialog from "@/pages/ticket/task-history/components/TaskAttemptDialog.vue"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
+import { getDetailTitle } from "../utils"
 
 const activeName = ref<string>("form")
 const attemptTaskId = ref<TaskID>("")
@@ -86,9 +85,7 @@ const taskRef = ref<InstanceType<typeof Task>>()
 // 处理标签页切换
 const handleTabChange = (tabName: string) => {
   activeName.value = tabName
-  if (tabName === "flow") {
-    // 流程图相关逻辑
-  } else if (tabName === "process") {
+  if (tabName === "process") {
     recordRef.value?.listTicketTaskTimelineData()
   } else if (tabName === "task") {
     taskRef.value?.listTasksData()
@@ -106,16 +103,7 @@ const props = defineProps<Props>()
 const emits = defineEmits(["close", "refresh-data"])
 
 // 计算属性：根据 action 显示不同的标题
-const computedActionName = computed(() => {
-  const actionMap: Record<string, string> = {
-    todo: "待办审批",
-    my: "我的工单",
-    "my-Start": "我的工单",
-    history: "历史工单",
-    view: "查看详情"
-  }
-  return actionMap[props.action] || "审批服务"
-})
+const detailTitle = computed(() => getDetailTitle(props.action))
 
 const dialogVisible = computed({
   get: () => props.dialogVisible || false,

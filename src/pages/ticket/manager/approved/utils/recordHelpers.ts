@@ -1,4 +1,5 @@
 import type { taskRecord, taskTimelineEvent } from "@/api/ticket/manager/types/manager"
+import { isSystemActor } from "../../utils"
 
 /**
  * 任务流转记录状态枚举（消除魔数）
@@ -24,27 +25,6 @@ export enum TaskRecordStatus {
 export enum TaskFinishStatus {
   Unfinished = 0,
   Finished = 1
-}
-
-/**
- * 格式化处理人名称，对系统标识统一转换为易读的“系统”
- */
-export const formatOperator = (name?: string): string => {
-  if (!name) return "-"
-  const lower = name.trim().toLowerCase()
-  if (lower === "system" || lower === "automation" || lower === "sys_skipped") {
-    return "系统"
-  }
-  return name
-}
-
-/**
- * 判断处理人是否为系统角色
- */
-export const isSystemActor = (name?: string): boolean => {
-  if (!name) return false
-  const lower = name.trim().toLowerCase()
-  return lower === "system" || lower === "automation" || lower === "sys_skipped"
 }
 
 /**

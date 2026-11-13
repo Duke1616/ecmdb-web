@@ -2,17 +2,11 @@ import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { useTemplateToolsStore } from "@/pinia/stores/template-tools"
 import type { Ticket } from "@/api/ticket/manager/types/manager"
-import type { TicketFetcher } from "./types"
+import type { TicketFetcher, TicketSpanRow } from "./types"
 
 interface UseTicketListOptions {
   fetcher: TicketFetcher
   mergeFields?: string[]
-}
-
-interface SpanRow {
-  mergeCell?: string[]
-  [key: `rowspan_${string}`]: number | string[] | undefined
-  [key: string]: unknown
 }
 
 export const useTicketList = ({ fetcher, mergeFields = [] }: UseTicketListOptions) => {
@@ -22,9 +16,9 @@ export const useTicketList = ({ fetcher, mergeFields = [] }: UseTicketListOption
   const ticketsData = ref<Ticket[]>([])
   const loading = ref(false)
 
-  const setTableRowSpan = (tableData: SpanRow[], colFields: string[]) => {
+  const setTableRowSpan = (tableData: TicketSpanRow[], colFields: string[]) => {
     colFields.forEach((field, index) => {
-      let lastItem: SpanRow | undefined
+      let lastItem: TicketSpanRow | undefined
 
       tableData.forEach((item) => {
         item.mergeCell = colFields
@@ -54,7 +48,7 @@ export const useTicketList = ({ fetcher, mergeFields = [] }: UseTicketListOption
       ticketsData.value = data.tasks || []
 
       if (mergeFields.length > 0) {
-        setTableRowSpan(ticketsData.value as SpanRow[], mergeFields)
+        setTableRowSpan(ticketsData.value as TicketSpanRow[], mergeFields)
       }
 
       const templateIds = ticketsData.value.map((item) => item.template_id).filter(Boolean)
