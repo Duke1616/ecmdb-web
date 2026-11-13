@@ -2,7 +2,7 @@
   <div class="form-container">
     <div class="form-scroll-area">
       <!-- 审批驳回说明：置于顶部高亮警示，确保用户第一时间掌握驳回背景与修改要求 -->
-      <div v-if="latestReject" class="ticket-reject-reason ticket-reject-reason--top">
+      <div v-if="latestReject" ref="rejectBannerRef" class="ticket-reject-reason ticket-reject-reason--top">
         <div class="ticket-reject-reason__head">
           <span class="reject-title">
             <el-icon class="warning-icon"><WarningFilled /></el-icon>
@@ -20,6 +20,50 @@
       <div v-if="revokeReason" class="ticket-revoke-reason ticket-revoke-reason--top">
         <div class="ticket-revoke-reason__head">撤单原因</div>
         <p>{{ revokeReason }}</p>
+      </div>
+
+      <!-- 前序审批意见：只读上下文置于顶部、驳回横幅之下，阅读顺序即决策顺序。
+           默认折叠成一行摘要，避免把表单推下首屏；被驳回工单自动展开（此时历史是决策关键）。
+           门禁与「操作信息」段一致：发起人视图与历史视图不展示 -->
+      <div v-if="showPriorComments" class="prior-comments">
+        <button
+          type="button"
+          class="prior-comments__head"
+          :aria-expanded="priorCommentsExpanded"
+          @click="priorCommentsExpanded = !priorCommentsExpanded"
+        >
+          <span class="prior-comments__title">
+            <el-icon class="prior-comments__caret" :class="{ 'is-expanded': priorCommentsExpanded }">
+              <ArrowRight />
+            </el-icon>
+            前序审批意见
+            <!-- 计数必须等于展开后实际渲染的行数：后端 total 含被顶部横幅剔除的那条驳回，
+                 直接用 total 会出现「3 条」却只列 2 行的错位；横幅那条已在横幅展示，不重复计 -->
+            <small>（{{ visiblePriorComments.length }} 条）</small>
+          </span>
+          <small v-if="hiddenPriorCommentCount > 0">
+            另有 {{ hiddenPriorCommentCount }} 条更早意见，完整链路见「审批记录」
+          </small>
+        </button>
+        <el-collapse-transition>
+          <ul v-show="priorCommentsExpanded" class="prior-comments__list">
+            <li
+              v-for="(item, index) in visiblePriorComments"
+              :key="`${item.node_id}-${item.approved_by}-${item.occurred_at}-${index}`"
+              class="prior-comments__item"
+            >
+              <div class="prior-comments__meta">
+                <span class="prior-comments__node">{{ item.node_name }}</span>
+                <el-tag :type="priorCommentVerdict(item.status).type" size="small" effect="light">
+                  {{ priorCommentVerdict(item.status).label }}
+                </el-tag>
+                <span>{{ item.approved_by_name }}</span>
+                <small class="prior-comments__time">{{ item.occurred_at }}</small>
+              </div>
+              <p class="prior-comments__text">{{ item.comment }}</p>
+            </li>
+          </ul>
+        </el-collapse-transition>
       </div>
 
       <div class="form-section">
@@ -79,6 +123,14 @@
         <el-form ref="formRef" :model="formData" label-position="top" class="operation-form">
           <div v-if="taskFormSchema && taskFormSchema.length > 0" class="dynamic-form-section">
             <DynamicForm ref="dynamicFormRef" :schema="taskFormSchema" v-model="taskFormData" :compact="false" />
+          </div>
+
+          <!-- 驳回回声：顶部横幅与评论框之间隔整张表单，落笔处再给一行修改意见，避免来回滚动；
+               单行截断保持紧凑，完整上下文点链接跳回顶部横幅 -->
+          <div v-if="latestReject" class="reject-echo">
+            <span class="reject-echo__label">驳回修改意见</span>
+            <span class="reject-echo__text" :title="latestReject.reason">{{ latestReject.reason }}</span>
+            <button type="button" class="reject-echo__link" @click="scrollToRejectBanner">查看完整说明</button>
           </div>
 
           <el-form-item prop="comment" label="评论" class="form-item required">
@@ -169,7 +221,7 @@ import {
 import type { PassTicketReq, TicketRating } from "@/api/ticket/manager/types/manager.js"
 import { cloneDeep } from "lodash-es"
 import { FormInstance, ElMessageBox, ElMessage } from "element-plus"
-import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch, WarningFilled } from "@element-plus/icons-vue"
+import { Document, Setting, EditPen, RefreshLeft, Check, Close, Switch, WarningFilled, ArrowRight } from "@element-plus/icons-vue"
 import DynamicForm from "./components/DynamicForm.vue"
 import { getTaskFormConfigApi } from "@/api/ticket/manager/index"
 import { removeFetchFromRules } from "@/common/utils/form-create"
@@ -179,7 +231,13 @@ import RevokeTicketDialog from "../components/RevokeTicketDialog.vue"
 import RejectTicketDialog from "../components/RejectTicketDialog.vue"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import { usePermission } from "@/common/composables/usePermission"
-import type { TaskID, ProcessInstanceID, LatestReject, FlowPolicy } from "@/api/ticket/manager/types/manager"
+import type {
+  TaskID,
+  ProcessInstanceID,
+  LatestReject,
+  PriorComment,
+  FlowPolicy
+} from "@/api/ticket/manager/types/manager"
 import type {
   DynamicFormExpose,
   DynamicFormField,
@@ -218,9 +276,37 @@ const data = ref<TicketFormData>({})
 const ticketRating = ref<TicketRating>()
 const revokeReason = ref("")
 const latestReject = ref<LatestReject>()
+const priorComments = ref<PriorComment[]>([])
+const priorCommentTotal = ref(0)
+// 默认折叠成一行摘要；加载到被驳回工单时自动展开，见 handleGetTicketData
+const priorCommentsExpanded = ref(false)
 const currentFlowPolicy = ref<FlowPolicy>()
 const allowTransfer = computed(() => currentFlowPolicy.value?.allow_transfer ?? false)
 const allowReject = computed(() => currentFlowPolicy.value?.allow_reject ?? true)
+
+// 顶部驳回横幅已完整展示最近一次驳回，面板剔除同一条，避免审批人读到重复意见；
+// 会签可能同节点同秒多人驳回，故账号也参与比对，只精确命中横幅那一条
+const visiblePriorComments = computed(() => {
+  const banner = latestReject.value
+  if (!banner) return priorComments.value
+  return priorComments.value.filter(
+    (item) =>
+      !(
+        item.status === 2 &&
+        item.node_id === banner.node_id &&
+        item.approved_by === banner.rejected_by &&
+        item.occurred_at === banner.rejected_at
+      )
+  )
+})
+// 折叠数按后端返回页大小算，而非去重后的展示数：被剔除的那条已在顶部横幅展示，不算遗漏
+const hiddenPriorCommentCount = computed(() => Math.max(priorCommentTotal.value - priorComments.value.length, 0))
+// 与「操作信息」段同一门禁：发起人视图与历史视图不展示前序意见
+const showPriorComments = computed(
+  () => visiblePriorComments.value.length > 0 && !/^my-/.test(props.action) && props.action !== "history"
+)
+const priorCommentVerdict = (status: number): { label: string; type: "success" | "danger" } =>
+  status === 2 ? { label: "驳回", type: "danger" } : { label: "通过", type: "success" }
 const rule = ref<FormRule[]>()
 const options = ref<FormCreateOptions>()
 
@@ -240,6 +326,11 @@ const transferLoading = ref(false)
 const revokeVisible = ref(false)
 const rejectVisible = ref(false)
 const usernameToDisplayName = ref<Record<string, string>>({})
+
+const rejectBannerRef = ref<HTMLElement | null>(null)
+const scrollToRejectBanner = () => {
+  rejectBannerRef.value?.scrollIntoView({ behavior: "smooth", block: "start" })
+}
 
 const formatRejectTime = (timeStr?: string) => {
   if (!timeStr) return ""
@@ -343,6 +434,9 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
   ticketRating.value = undefined
   revokeReason.value = ""
   latestReject.value = undefined
+  priorComments.value = []
+  priorCommentTotal.value = 0
+  priorCommentsExpanded.value = false
   currentFlowPolicy.value = undefined
   taskFormData.value = {}
   try {
@@ -354,6 +448,10 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     ticketRating.value = ticketInfo.rating
     revokeReason.value = ticketInfo.revoke_reason || ""
     latestReject.value = ticketInfo.latest_reject
+    // 被驳回工单的历史意见是决策关键，默认展开；其余工单保持折叠以免把表单推下首屏
+    priorCommentsExpanded.value = !!ticketInfo.latest_reject
+    priorComments.value = ticketInfo.prior_comments?.items ?? []
+    priorCommentTotal.value = ticketInfo.prior_comments?.total ?? 0
     currentFlowPolicy.value = ticketInfo.flow_policy
 
     const taskId = props.taskId || ticketInfo.task_id
@@ -371,6 +469,9 @@ const handleGetTicketData = async (processInstId: ProcessInstanceID) => {
     ticketRating.value = undefined
     revokeReason.value = ""
     latestReject.value = undefined
+    priorComments.value = []
+    priorCommentTotal.value = 0
+    priorCommentsExpanded.value = false
     currentFlowPolicy.value = undefined
     taskFormSchema.value = []
     ElMessage.error("获取工单详情失败")
@@ -590,6 +691,135 @@ defineExpose({})
 
 .dynamic-form-section {
   margin-bottom: 4px;
+}
+
+.reject-echo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  background: #fff7ed;
+  font-size: 12px;
+  color: #9a3412;
+}
+
+.reject-echo__label {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #ea580c;
+}
+
+.reject-echo__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reject-echo__link {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  color: #b45309;
+  text-decoration: underline;
+}
+
+.prior-comments {
+  max-width: 960px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.prior-comments__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+
+  small {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 400;
+  }
+}
+
+.prior-comments__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prior-comments__caret {
+  transition: transform 0.2s;
+
+  &.is-expanded {
+    transform: rotate(90deg);
+  }
+}
+
+.prior-comments__list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prior-comments__item {
+  padding: 8px 0;
+  border-top: 1px dashed #e2e8f0;
+
+  &:first-child {
+    padding-top: 0;
+    border-top: none;
+  }
+}
+
+.prior-comments__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+.prior-comments__node {
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.prior-comments__time {
+  margin-left: auto;
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.prior-comments__text {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
 }
 
 .ticket-rating-summary {

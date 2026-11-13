@@ -67,6 +67,7 @@ export interface Ticket {
   process_start_error?: string
   process_start_attempts?: number
   latest_reject?: LatestReject
+  prior_comments?: PriorComments
   flow_policy?: FlowPolicy
 }
 
@@ -83,6 +84,24 @@ export interface LatestReject {
   node_name: string
   reason: string
   rejected_at: string
+}
+
+// 后端按 omitempty 下发：无可见意见时整个字段缺省，而非空对象
+export interface PriorComments {
+  items: PriorComment[]
+  total: number
+}
+
+export interface PriorComment {
+  node_id: string
+  node_name: string
+  approved_by: string
+  approved_by_name: string
+  // 审批裁决状态（1: 通过, 2: 驳回）
+  status: number
+  comment: string
+  // 后端已格式化为 YYYY-MM-DD HH:mm:ss，前端直接展示不再二次解析
+  occurred_at: string
 }
 
 export interface RestartProcessReq {
