@@ -1,7 +1,7 @@
 <template>
   <div class="record-container">
     <div class="record-body" v-loading="loading">
-      <el-timeline class="record-timeline" v-if="timelineEvents.length > 0">
+      <el-timeline v-if="timelineEvents.length > 0" class="record-timeline">
         <el-timeline-item
           v-for="activity in timelineEvents"
           :key="activity.id"
@@ -15,7 +15,9 @@
             <div class="record-heading">
               <div class="heading-main">
                 <span class="node-name">{{ activity.node_name }}</span>
-                <span class="operator">{{ activity.actors.length > 0 ? activity.actors.map(formatOperator).join("、") : "系统" }}</span>
+                <span class="operator">
+                  {{ activity.actors.length > 0 ? activity.actors.map(formatOperator).join("、") : "系统" }}
+                </span>
               </div>
               <el-tag :type="getTimelineTagType(activity)" effect="light" size="small" round>
                 {{ getTimelineTagLabel(activity) }}
@@ -24,6 +26,7 @@
 
             <div class="record-summary">{{ getTimelineSummary(activity) }}</div>
 
+            <!-- 多人/明细处理折叠区 -->
             <el-collapse v-if="activity.members.length > 0" class="member-collapse">
               <el-collapse-item :name="activity.id">
                 <template #title>查看 {{ activity.members.length }} 人处理明细</template>
@@ -36,15 +39,18 @@
                       {{ getTaskTagLabel(member) }}
                     </el-tag>
                   </div>
-                  <div class="record-comment" v-if="member.comment">{{ member.comment }}</div>
-                  <div class="extra-data-section" v-if="member.form_values && member.form_values.length > 0">
+
+                  <div v-if="member.comment" class="record-comment">{{ member.comment }}</div>
+
+                  <!-- 表单动态数据呈现 -->
+                  <div v-if="member.form_values && member.form_values.length > 0" class="extra-data-section">
                     <div class="data-title">表单数据</div>
                     <div class="data-content">
                       <div v-for="(item, itemIndex) in member.form_values" :key="itemIndex" class="data-item">
                         <span class="data-key">{{ item.name }}</span>
-                        <span class="data-value">{{
-                          Array.isArray(item.value) ? item.value.join(", ") : item.value
-                        }}</span>
+                        <span class="data-value">
+                          {{ Array.isArray(item.value) ? item.value.join(", ") : item.value }}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -58,7 +64,8 @@
       <el-empty v-else description="暂无审批记录" />
     </div>
 
-    <div class="pager-wrapper" v-if="timelineEvents.length > 0">
+    <!-- 分页器 -->
+    <div v-if="timelineEvents.length > 0" class="pager-wrapper">
       <span class="pager-summary">共 {{ paginationData.total }} 个节点事件</span>
       <el-pagination
         background
@@ -78,169 +85,38 @@
 import { ref, watch } from "vue"
 import { usePagination } from "@/common/composables/usePagination"
 import { listTicketTaskTimelineApi } from "@/api/ticket/manager"
-import type { taskRecord, taskTimelineEvent, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
+import type { taskTimelineEvent, ProcessInstanceID } from "@/api/ticket/manager/types/manager"
+import {
+  formatOperator,
+  getTaskTagType,
+  getTaskTagLabel,
+  resolveTimelineSummary,
+  getTimelineTagType,
+  getTimelineTagLabel,
+  getTimelineSummary,
+  getTimelineItemType,
+  getTimelineItemColor
+} from "./utils/recordHelpers"
 
-const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 interface Props {
   processInstId: ProcessInstanceID | undefined
 }
+
 const props = defineProps<Props>()
+const { paginationData, handleCurrentChange, handleSizeChange } = usePagination()
 
 const timelineEvents = ref<taskTimelineEvent[]>([])
 const loading = ref<boolean>(false)
 
-const formatOperator = (name?: string) => {
-  if (!name) return "-"
-  const lower = name.trim().toLowerCase()
-  if (lower === "system" || lower === "automation" || lower === "sys_skipped") {
-    return "系统"
-  }
-  return name
-}
-
-const getTaskTagType = (row: taskRecord) => {
-  if (row.status === 1 && row.is_finished === 1) return "success"
-  if (row.status === 2) return "danger"
-  if (row.status === 3 && row.is_finished === 1) return "success"
-  if (row.status === 4 && row.is_finished === 1) return "danger"
-  if (row.status === 5 && row.is_finished === 1) return "info"
-  if (row.status === 0 && row.is_finished === 1) return "danger"
-  return "warning"
-}
-
-const getTaskTagLabel = (row: taskRecord) => {
-  const isAutomation = row.node_name?.startsWith("自动化-") ?? false
-  if (row.status === 1 && !isAutomation && row.is_finished === 1) return "确认通过"
-  if (row.status === 1 && isAutomation && row.is_finished === 1) return "自动通过"
-  if (row.status === 3 && row.is_finished === 1) return "系统通过"
-  if (row.status === 4 && row.is_finished === 1) return "系统驳回"
-  if (row.status === 2 && row.is_finished === 1) return "手动驳回"
-  if (row.status === 5 && row.is_finished === 1) return "系统跳过"
-  if (row.status === 0 && row.is_finished === 1) return "节点或签联动处理"
-  return "等待处理"
-}
-
-// Timeline helpers
 /**
- * 根据批次成员实际记录（members）校准批次统计 summary
- * 解决后端批次聚合时可能把系统驳回（status: 4）混算入 rejected 的问题，确保卡片外层与内层处理标签完全一致
+ * 查询按节点批次聚合的审批时间线数据
  */
-const resolveTimelineSummary = (event: taskTimelineEvent) => {
-  const isSystemNode =
-    event.actors.length === 0 ||
-    event.actors.every((a) => {
-      const lower = a.trim().toLowerCase()
-      return lower === "system" || lower === "automation" || lower === "sys_skipped"
-    })
-
-  if (!event.members || event.members.length === 0) {
-    if (isSystemNode && event.summary?.rejected > 0) {
-      return {
-        ...event.summary,
-        system_rejected: (event.summary.system_rejected || 0) + event.summary.rejected,
-        rejected: 0
-      }
-    }
-    return event.summary
-  }
-
-  let passed = 0
-  let rejected = 0
-  let system_passed = 0
-  let system_rejected = 0
-  let skipped = 0
-  let linked = 0
-  let pending = 0
-
-  for (const m of event.members) {
-    if (m.is_finished !== 1) {
-      pending++
-      continue
-    }
-
-    const isAutomation = m.node_name?.startsWith("自动化-") ?? false
-    if (m.status === 1) {
-      if (isAutomation) {
-        system_passed++
-      } else {
-        passed++
-      }
-    } else if (m.status === 2) {
-      rejected++
-    } else if (m.status === 3) {
-      system_passed++
-    } else if (m.status === 4) {
-      system_rejected++
-    } else if (m.status === 5) {
-      skipped++
-    } else if (m.status === 0) {
-      linked++
-    }
-  }
-
-  if (isSystemNode && rejected > 0) {
-    system_rejected += rejected
-    rejected = 0
-  }
-
-  return {
-    total: event.members.length,
-    passed,
-    rejected,
-    system_passed,
-    system_rejected,
-    skipped,
-    linked,
-    pending
-  }
-}
-
-const getTimelineTagType = (event: taskTimelineEvent) => {
-  const summary = event.summary
-  if (summary.pending > 0) return "warning"
-  if (summary.rejected > 0 || summary.system_rejected > 0) return "danger"
-  if (summary.passed > 0 || summary.system_passed > 0) return "success"
-  if (summary.skipped > 0) return "info"
-  return "warning"
-}
-
-const getTimelineTagLabel = (event: taskTimelineEvent) => {
-  const summary = event.summary
-  if (summary.pending > 0) return "等待处理"
-  if (summary.rejected > 0) return "手动驳回"
-  if (summary.system_rejected > 0) return "系统驳回"
-  if (summary.passed > 0) return "确认通过"
-  if (summary.system_passed > 0) return "系统通过"
-  if (summary.skipped > 0) return "系统跳过"
-  return "已处理"
-}
-
-const getTimelineSummary = (event: taskTimelineEvent) => {
-  const summary = event.summary
-  const parts: string[] = []
-  if (summary.passed > 0) parts.push(`${summary.passed} 人通过`)
-  if (summary.rejected > 0) parts.push(`${summary.rejected} 人驳回`)
-  if (summary.system_passed > 0) parts.push(`${summary.system_passed} 人系统通过`)
-  if (summary.system_rejected > 0) parts.push(`${summary.system_rejected} 人系统驳回`)
-  if (summary.linked > 0) parts.push(`${summary.linked} 人节点或签联动处理`)
-  if (summary.skipped > 0) parts.push(`${summary.skipped} 人系统跳过`)
-  if (summary.pending > 0) parts.push(`${summary.pending} 人待处理`)
-  return parts.join("，") || (summary.total > 0 ? `${summary.total} 人已处理` : "暂无处理结果")
-}
-
-const getTimelineItemType = (event: taskTimelineEvent) => {
-  const type = getTimelineTagType(event)
-  return type === "danger" ? "danger" : type === "success" ? "success" : "primary"
-}
-
-const getTimelineItemColor = (event: taskTimelineEvent) => {
-  if (event.summary.pending > 0) return "#909399"
-  return "" // Default uses type color
-}
-
-/** 查询按节点批次聚合的审批时间线 */
 const listTicketTaskTimelineData = async () => {
-  if (!props.processInstId) return
+  if (!props.processInstId) {
+    timelineEvents.value = []
+    paginationData.total = 0
+    return
+  }
 
   loading.value = true
   try {
@@ -262,7 +138,16 @@ const listTicketTaskTimelineData = async () => {
   }
 }
 
-/** 监听分页参数的变化 */
+// 监听工单实例 ID 切换时重置分页并刷新
+watch(
+  () => props.processInstId,
+  () => {
+    paginationData.currentPage = 1
+    listTicketTaskTimelineData()
+  }
+)
+
+// 监听分页参数变化刷新
 watch([() => paginationData.currentPage, () => paginationData.pageSize], listTicketTaskTimelineData, {
   immediate: true
 })
