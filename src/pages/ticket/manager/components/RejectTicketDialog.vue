@@ -33,11 +33,27 @@
             </el-radio-group>
           </el-form-item>
 
-          <!-- 自动回退提示说明 -->
-          <div v-if="targetMode === 'AUTO'" class="auto-return-hint">
+          <!-- 自动回退提示（多候选时由引擎在许可类别内决策） -->
+          <div v-if="targetMode === 'AUTO' && filteredTargets.length > 1" class="auto-return-hint">
             <el-icon class="hint-icon"><InfoFilled /></el-icon>
             <span>由流程引擎按实际执行路径自动回溯至紧邻上游审批环节或发起人</span>
           </div>
+
+          <!-- 单一许可目标：显式退回，无需选择 -->
+          <div v-if="filteredTargets.length === 1" class="auto-return-hint">
+            <el-icon class="hint-icon"><InfoFilled /></el-icon>
+            <span>将退回至唯一许可环节：{{ filteredTargets[0].node_name }}</span>
+          </div>
+
+          <!-- 无合法退回目标 -->
+          <el-alert
+            v-if="filteredTargets.length === 0 && !loadingTargets"
+            title="当前策略下无可退回的目标环节，无法执行退回修改。"
+            type="warning"
+            :closable="false"
+            show-icon
+            class="terminate-alert"
+          />
 
           <!-- 自主指定环节选择器 -->
           <el-form-item v-if="targetMode === 'CUSTOM'" label="退回环节" required>
@@ -165,8 +181,10 @@ const hasMultipleTargets = computed(() => filteredTargets.value.length > 1)
 
 const isConfirmDisabled = computed(() => {
   if (!comment.value.trim() || submitting.value) return true
-  if (rejectType.value === "RETURN" && targetMode.value === "CUSTOM" && !targetNodeId.value) {
-    return true
+  if (rejectType.value === "RETURN") {
+    if (targetMode.value === "CUSTOM" && !targetNodeId.value) return true
+    // 无合法退回目标时禁用，避免提交后才被引擎拒绝
+    if (!loadingTargets.value && filteredTargets.value.length === 0) return true
   }
   return false
 })
@@ -248,7 +266,15 @@ const submit = async () => {
 
   submitting.value = true
   try {
-    const targetId = rejectType.value === "RETURN" && targetMode.value === "CUSTOM" ? targetNodeId.value : undefined
+    let targetId: string | undefined
+    if (rejectType.value === "RETURN") {
+      if (targetMode.value === "CUSTOM") {
+        targetId = targetNodeId.value
+      } else if (filteredTargets.value.length === 1) {
+        // 单一许可目标显式下推，避免 AUTO 在收窄策略下落到非许可类别
+        targetId = filteredTargets.value[0].node_id
+      }
+    }
 
     await rejectTicketApi({
       ticket_id: props.ticketId,
