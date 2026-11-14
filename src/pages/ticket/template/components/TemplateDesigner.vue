@@ -2,28 +2,22 @@
   <div class="designer-container">
     <div class="designer-content">
       <div class="form-card">
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>表单设计器</h3>
-              <p>通过拖拽方式设计表单结构和字段配置</p>
-            </div>
-          </div>
+        <FormSection variant="designer" title="表单设计器" description="通过拖拽方式设计表单结构和字段配置">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+          </template>
 
           <div class="designer-wrapper">
             <fc-designer ref="designerRef" :config="config" class="form-designer" @drag="handleDesignerDrag" />
           </div>
-        </div>
+        </FormSection>
       </div>
     </div>
 
@@ -43,6 +37,7 @@
 import { ref, nextTick, onMounted, onBeforeUnmount, watch } from "vue"
 import FcDesigner from "@form-create/designer"
 import FormActions from "@/common/components/FormActions/index.vue"
+import FormSection from "@@/components/FormSection/index.vue"
 import { createDefaultTemplateFormData } from "../types"
 import type { TemplateFormData } from "../types"
 import {
@@ -171,18 +166,6 @@ onMounted(() => {
   designerRef.value?.addComponent(scheduleDateTimeDragRule)
   setDesignerForm(props.formData)
 })
-
-defineExpose({
-  setForm: (row: TemplateFormData) => {
-    setDesignerForm(row)
-    localFormData.value = { ...localFormData.value, ...row }
-  },
-  resetForm: () => {
-    nextScheduleGroupIndex = 1
-    designerRef.value?.clearDragRule()
-    designerRef.value?.setOptions({})
-  }
-})
 </script>
 
 <style lang="scss" scoped>
@@ -213,103 +196,55 @@ defineExpose({
   }
 }
 
-// 表单区块
-.form-section {
-  padding: 16px;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+// 设计器主体
+.designer-wrapper {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fafafa;
+  min-height: 0;
 
-  .section-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 16px;
-    flex-shrink: 0;
+  // 禁用通知推送配置项 - 现代卡片式排版
+  :deep(.notify-display-card-item) {
+    margin-top: 14px !important;
+    margin-bottom: 8px !important;
+    padding: 10px 12px !important;
+    background-color: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: all 0.2s ease !important;
 
-    .section-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-
-      svg {
-        width: 16px;
-        height: 16px;
-        color: white;
-      }
+    &:hover {
+      background-color: #f1f5f9 !important;
+      border-color: #cbd5e1 !important;
     }
 
-    .section-title {
-      h3 {
-        margin: 0 0 3px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e293b;
-      }
-
-      p {
-        margin: 0;
-        font-size: 13px;
-        color: #64748b;
-        line-height: 1.4;
-      }
-    }
-  }
-
-  .designer-wrapper {
-    flex: 1;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fafafa;
-    min-height: 0;
-
-    // 禁用通知推送配置项 - 现代卡片式排版
-    :deep(.notify-display-card-item) {
-      margin-top: 14px !important;
-      margin-bottom: 8px !important;
-      padding: 10px 12px !important;
-      background-color: #f8fafc !important;
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 8px !important;
+    .el-form-item__label {
+      flex: 1 !important;
+      margin-bottom: 0 !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      color: #1e293b !important;
+      line-height: 1.4 !important;
+      padding-right: 8px !important;
       display: flex !important;
       align-items: center !important;
-      justify-content: space-between !important;
-      transition: all 0.2s ease !important;
+    }
 
-      &:hover {
-        background-color: #f1f5f9 !important;
-        border-color: #cbd5e1 !important;
-      }
+    .el-form-item__content {
+      display: flex !important;
+      justify-content: flex-end !important;
+      line-height: normal !important;
+      margin-left: 0 !important;
+      flex-shrink: 0 !important;
+    }
 
-      .el-form-item__label {
-        flex: 1 !important;
-        margin-bottom: 0 !important;
-        font-size: 13px !important;
-        font-weight: 500 !important;
-        color: #1e293b !important;
-        line-height: 1.4 !important;
-        padding-right: 8px !important;
-        display: flex !important;
-        align-items: center !important;
-      }
-
-      .el-form-item__content {
-        display: flex !important;
-        justify-content: flex-end !important;
-        line-height: normal !important;
-        margin-left: 0 !important;
-        flex-shrink: 0 !important;
-      }
-
-      .el-switch {
-        --el-switch-on-color: #3b82f6 !important;
-      }
+    .el-switch {
+      --el-switch-on-color: #3b82f6 !important;
     }
   }
 }

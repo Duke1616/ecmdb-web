@@ -9,23 +9,17 @@
         class="form-card"
         @submit.prevent="handleFormNext"
       >
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>模板标识</h3>
-              <p>为您的模板设置名称和基本信息</p>
-            </div>
-          </div>
+        <FormSection title="模板标识" description="为您的模板设置名称和基本信息">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
+            </svg>
+          </template>
 
           <div class="form-grid">
             <div class="form-field">
@@ -64,25 +58,19 @@
               </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>关联配置</h3>
-              <p>设置模板关联的流程和图标</p>
-            </div>
-          </div>
+        <FormSection title="关联配置" description="设置模板关联的流程和图标">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+              />
+            </svg>
+          </template>
 
           <div class="form-grid">
             <div class="form-field">
@@ -114,25 +102,19 @@
               </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>模板描述</h3>
-              <p>详细描述模板的目的和功能</p>
-            </div>
-          </div>
+        <FormSection title="模板描述" description="详细描述模板的目的和功能">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </template>
 
           <div class="form-field full-width">
             <div class="field-label">
@@ -153,7 +135,7 @@
               <div class="input-hint">清晰的描述有助于团队成员理解和执行模板</div>
             </div>
           </div>
-        </div>
+        </FormSection>
       </el-form>
     </div>
 
@@ -168,6 +150,7 @@ import { ElMessage } from "element-plus"
 import type { FormInstance, FormRules } from "element-plus"
 import AppIconPicker from "@/common/components/AppIconPicker/index.vue"
 import FormActions from "@/common/components/FormActions/index.vue"
+import FormSection from "@@/components/FormSection/index.vue"
 import WorkflowPicker from "./WorkflowPicker.vue"
 import { createDefaultTemplateFormData } from "../types"
 import { useTemplateOptions } from "../composables/useTemplateOptions"
@@ -262,56 +245,6 @@ watch(
   }
 }
 
-// 表单区块
-.form-section {
-  padding: 24px;
-  border-bottom: 1px solid #f1f5f9;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
-
-    .section-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-
-      svg {
-        width: 16px;
-        height: 16px;
-        color: white;
-      }
-    }
-
-    .section-title {
-      h3 {
-        margin: 0 0 3px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e293b;
-      }
-
-      p {
-        margin: 0;
-        font-size: 13px;
-        color: #64748b;
-        line-height: 1.4;
-      }
-    }
-  }
-}
-
 // 表单网格
 .form-grid {
   display: grid;
@@ -372,10 +305,6 @@ watch(
     border-radius: 12px;
   }
 
-  .form-section {
-    padding: 24px;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -385,10 +314,6 @@ watch(
 @media (max-width: 480px) {
   .info-content {
     padding: 12px;
-  }
-
-  .form-section {
-    padding: 20px;
   }
 }
 </style>

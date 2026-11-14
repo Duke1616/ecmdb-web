@@ -529,10 +529,6 @@ watch(
   },
   { deep: true }
 )
-
-defineExpose({
-  getGraphData: () => lf.value?.getGraphData()
-})
 </script>
 
 <style lang="scss" scoped>

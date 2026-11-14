@@ -41,7 +41,7 @@ export const useWorkflowList = () => {
       paginationData.total = data.total
       workflowsData.value = data.workflows || []
       await loadOwnerNames(workflowsData.value)
-    } catch (error) {
+    } catch {
       workflowsData.value = []
       paginationData.total = 0
     } finally {

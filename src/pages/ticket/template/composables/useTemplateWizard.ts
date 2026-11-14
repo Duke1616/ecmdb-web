@@ -38,19 +38,11 @@ export function useTemplateWizard(options: { refresh: () => void }) {
   }
 
   const handleCreateTemplate = () => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.Add)) {
-      ElMessage.warning("暂无新增模板权限")
-      return
-    }
     templateFormData.value = createDefaultTemplateFormData()
     openTemplateWizard()
   }
 
   const handleUpdateTemplate = async (row: template) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.Edit)) {
-      ElMessage.warning("暂无修改模板权限")
-      return
-    }
     try {
       const detail = await getTemplateDetail(row)
       templateFormData.value = { ...createDefaultTemplateFormData(), ...cloneDeep(detail) }
@@ -61,10 +53,6 @@ export function useTemplateWizard(options: { refresh: () => void }) {
   }
 
   const handleCloneTemplate = async (row: template) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.Add)) {
-      ElMessage.warning("暂无克隆模板权限")
-      return
-    }
     try {
       const detail = await getTemplateDetail(row)
       templateFormData.value = cloneTemplatePayload(detail)

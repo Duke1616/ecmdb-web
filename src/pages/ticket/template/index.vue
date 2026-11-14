@@ -33,7 +33,6 @@
           :loading="loading"
           :format-workflow="formatWorkflow"
           :get-operate-items="getOperateBtnItems"
-          @selection-change="handleSelectionChange"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
           @operate="operateEvent"
@@ -103,7 +102,6 @@ const {
   paginationData,
   refreshTemplateManageData,
   formatWorkflow,
-  handleSelectionChange,
   handleCurrentChange,
   handleSizeChange
 } = useTemplateList()

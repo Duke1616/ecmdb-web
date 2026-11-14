@@ -77,7 +77,7 @@
 
       <template #actions="{ row }">
         <OperateBtn
-          :items="getOperateBtnItems()"
+          :items="dispatchOperateItems"
           :operate-item="row"
           :max-length="2"
           @route-event="(data: AutomationDispatchRow, action: DispatchAction) => operateEvent(action, data)"
@@ -138,18 +138,12 @@
 </template>
 
 <script setup lang="ts">
-// ==================== 导入模块 ====================
 import { computed, h, nextTick, onMounted, ref, watch } from "vue"
 import { CirclePlus, Connection, Delete, RefreshRight, Setting } from "@element-plus/icons-vue"
-import type { template } from "@/api/ticket/template/types/template.js"
 import { ElMessage, ElMessageBox } from "element-plus"
-import type { runner } from "@/api/task/runner/types/runner.js"
-import { listRunnerByCodebookIdApi, listRunnerByIdsApi } from "@/api/task/runner/index.js"
-import { deleteDispatchApi, listDispatchByTemplateIdApi } from "@/api/ticket/dispatch"
-import type { dispatch } from "@/api/ticket/dispatch/types/dispatch"
+import { useRoute, useRouter } from "vue-router"
+import { deleteDispatchApi } from "@/api/ticket/dispatch"
 import { detailTemplateApi } from "@/api/ticket/template/index.js"
-import { getAutomationNodesApi } from "@/api/ticket/workflow/workflow"
-import type { AutomationNode } from "@/api/ticket/workflow/types/workflow"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
 import AuthButton from "@/common/components/Auth/AuthButton.vue"
 import { usePermission } from "@/common/composables/usePermission"
@@ -158,73 +152,36 @@ import DataTable from "@@/components/DataTable/index.vue"
 import OperateBtn from "@@/components/OperateBtn/index.vue"
 import PageContainer from "@@/components/PageContainer/index.vue"
 import ManagerHeader from "@@/components/ManagerHeader/index.vue"
+import type { Column } from "@@/components/DataTable/types"
 import TemplateDispatchForm from "./components/TemplateDispatchForm.vue"
 import TemplateDispatchSync from "./components/TemplateDispatchSync.vue"
-import { useRoute, useRouter } from "vue-router"
+import { useDispatchData } from "./composables/useDispatchData"
+import { DispatchAction } from "./types"
+import type { AutomationDispatchRow, DispatchOperateItem } from "./types"
 
-// ==================== 路由和组合式函数 ====================
 const route = useRoute()
 const router = useRouter()
 const { hasPermission } = usePermission()
 const canViewDispatch = computed(() => hasPermission(TICKET_CAPABILITIES.Dispatch.View))
 
-// ==================== 响应式数据 ====================
-// 组件引用
 const apiRef = ref<InstanceType<typeof TemplateDispatchForm>>()
 const syncRef = ref<InstanceType<typeof TemplateDispatchSync>>()
+const dialogVisible = ref(false)
+const syncVisible = ref(false)
 
-// 页面状态
-const templateData = ref<template>()
-const dialogVisible = ref<boolean>(false)
-const syncVisible = ref<boolean>(false)
-const loading = ref<boolean>(false)
+const {
+  templateData,
+  automationNodes,
+  workflowRunners,
+  fieldMap,
+  loading,
+  automationRows,
+  dispatchSummary,
+  getTableSpan,
+  setForm,
+  loadAutomationDispatchData
+} = useDispatchData(canViewDispatch)
 
-// 数据映射
-const automationNodes = ref<AutomationNode[]>([])
-const workflowRunners = ref<runner[]>([])
-const dispatches = ref<dispatch[]>([])
-const fieldMap = new Map<string, string>()
-
-import type { Column } from "@@/components/DataTable/types"
-import type { ButtonType } from "element-plus"
-import type { Component } from "vue"
-
-interface TemplateRuleNode {
-  type?: string
-  field?: string
-  title?: string
-  children?: TemplateRuleNode[]
-}
-
-interface AutomationDispatchRow {
-  id: string
-  automationNodeId: string
-  dispatchId: number
-  dispatch: dispatch
-  nodeName: string
-  runner?: runner
-  runners: runner[]
-}
-
-enum DispatchAction {
-  Configure = "configure",
-  Delete = "delete"
-}
-
-interface DispatchOperateItem {
-  code: DispatchAction
-  name: string
-  type?: ButtonType
-  icon?: Component
-  disabled?: boolean
-  capability?: string | string[]
-}
-
-const isTemplateRuleNode = (value: unknown): value is TemplateRuleNode => {
-  return typeof value === "object" && value !== null
-}
-
-// ==================== 表格配置 ====================
 const tableColumns: Column[] = [
   { prop: "nodeName", label: "自动化节点", slot: "node", align: "center", minWidth: 220 },
   { prop: "rule", label: "匹配条件", slot: "rule", align: "center", minWidth: 280 },
@@ -232,7 +189,7 @@ const tableColumns: Column[] = [
   { prop: "priority", label: "优先级", slot: "priority", align: "center", width: 100 }
 ]
 
-const getOperateBtnItems = (): DispatchOperateItem[] => [
+const dispatchOperateItems: DispatchOperateItem[] = [
   {
     code: DispatchAction.Configure,
     name: "编辑",
@@ -249,192 +206,18 @@ const getOperateBtnItems = (): DispatchOperateItem[] => [
   }
 ]
 
-const getCompatibleRunners = (node: AutomationNode) =>
-  workflowRunners.value.filter((item) => item.codebook_id === node.codebook_id)
-
-const automationRows = computed<AutomationDispatchRow[]>(() =>
-  automationNodes.value.flatMap((node) => {
-    const runners = getCompatibleRunners(node)
-    const nodeDispatches = dispatches.value
-      .filter((item) => item.automation_node_id === node.id)
-      .sort((left, right) => right.priority - left.priority || left.id - right.id)
-    return nodeDispatches.map((dispatch) => ({
-      id: `${node.id}:${dispatch.id}`,
-      automationNodeId: node.id,
-      dispatchId: dispatch.id,
-      dispatch,
-      nodeName: node.name,
-      runner: workflowRunners.value.find((item) => item.id === dispatch.runner_id),
-      runners
-    }))
-  })
-)
-
-const unconfiguredNodeCount = computed(() => {
-  const configuredNodeIds = new Set(dispatches.value.map((item) => item.automation_node_id))
-  return automationNodes.value.filter((node) => !configuredNodeIds.has(node.id)).length
-})
-
-const dispatchSummary = computed(() => {
-  const summary = `${automationNodes.value.length} 个自动化节点 · ${dispatches.value.length} 条条件规则`
-  return unconfiguredNodeCount.value > 0 ? `${summary} · ${unconfiguredNodeCount.value} 个节点未配置` : summary
-})
-
-const getTableSpan = ({ rowIndex, columnIndex }: { rowIndex: number; columnIndex: number }) => {
-  if (columnIndex !== 0) return [1, 1]
-
-  const rows = automationRows.value
-  const currentNodeId = rows[rowIndex]?.automationNodeId
-  if (!currentNodeId) return [1, 1]
-  if (rowIndex > 0 && rows[rowIndex - 1]?.automationNodeId === currentNodeId) return [0, 0]
-
-  let rowspan = 1
-  while (rows[rowIndex + rowspan]?.automationNodeId === currentNodeId) rowspan += 1
-  return [rowspan, 1]
-}
-
-// ==================== 模版数据处理 ====================
-const parseTemplateRules = (rules: unknown): TemplateRuleNode[] => {
-  if (typeof rules === "string") {
-    const parsed: unknown = JSON.parse(rules)
-    return Array.isArray(parsed) ? parsed.filter(isTemplateRuleNode) : []
-  }
-
-  return Array.isArray(rules) ? rules.filter(isTemplateRuleNode) : []
-}
-
-const processRules = (rules: unknown, fieldMap: Map<string, string>) => {
-  let rulesArray: TemplateRuleNode[] = []
-
-  try {
-    rulesArray = parseTemplateRules(rules)
-  } catch (error) {
-    console.warn("解析 rules JSON 失败:", error)
-    return
-  }
-
-  rulesArray.forEach((item) => {
-    if (item.type !== "fcRow" && item.type !== "col" && item.field) {
-      fieldMap.set(item.field, item.title || item.field)
-    }
-
-    if (Array.isArray(item.children)) {
-      processRules(item.children, fieldMap)
-    }
-  })
-}
-
-const setForm = (row: template) => {
-  templateData.value = row
-  processRules(row.rules, fieldMap)
-  loadAutomationDispatchData()
-}
-
-// ==================== 自动化节点与执行单元 ====================
-const fetchAutomationNodes = async (): Promise<boolean> => {
-  if (!templateData.value?.workflow_id) {
-    return false
-  }
-
-  try {
-    const { data } = await getAutomationNodesApi(templateData.value.workflow_id)
-    automationNodes.value = (data.automation_nodes || []).filter((node) => node.id && node.codebook_id > 0)
-    return automationNodes.value.length > 0
-  } catch (error) {
-    automationNodes.value = []
-    return false
-  }
-}
-
-const listRunnersByAutomationNodes = async (): Promise<boolean> => {
-  const runnerIds = Array.from(new Set(automationNodes.value.map((node) => node.runner_id).filter((id) => id > 0)))
-
-  try {
-    const defaultRunners = runnerIds.length > 0 ? (await listRunnerByIdsApi(runnerIds)).data.runners || [] : []
-    const codebookIds = Array.from(
-      new Set(automationNodes.value.map((node) => node.codebook_id).filter((id) => id > 0))
-    )
-    const responses = await Promise.all(codebookIds.map((codebookId) => listRunnerByCodebookIdApi(codebookId)))
-    const candidates = responses.flatMap(({ data }) => data.runners || [])
-    const uniqueRunners = new Map<number, runner>()
-    for (const item of [...defaultRunners, ...candidates]) {
-      uniqueRunners.set(item.id, item)
-    }
-
-    workflowRunners.value = Array.from(uniqueRunners.values())
-    return workflowRunners.value.length > 0
-  } catch (error) {
-    workflowRunners.value = []
-    return false
-  }
-}
-
-const listDispatchesByTemplate = async (): Promise<boolean> => {
-  if (!templateData.value?.id) {
-    dispatches.value = []
-    return false
-  }
-
-  try {
-    const { data } = await listDispatchByTemplateIdApi({
-      template_id: templateData.value.id,
-      offset: 0,
-      limit: 1000
-    })
-    dispatches.value = data.dispatches || []
-    return dispatches.value.length > 0
-  } catch (error) {
-    dispatches.value = []
-    return false
-  }
-}
-
-// ==================== 数据查询 ====================
-const loadAutomationDispatchData = async () => {
-  if (!templateData.value || !canViewDispatch.value) return
-
-  loading.value = true
-  try {
-    const hasAutomationNodes = await fetchAutomationNodes()
-    if (hasAutomationNodes) {
-      await listRunnersByAutomationNodes()
-      await listDispatchesByTemplate()
-    } else {
-      workflowRunners.value = []
-      dispatches.value = []
-    }
-  } catch (error) {
-    automationNodes.value = []
-    workflowRunners.value = []
-    dispatches.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
-// ==================== 事件处理 ====================
 const handleBack = () => {
   router.go(-1)
 }
 
-const handlerCreate = async () => {
-  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Add)) {
-    ElMessage.warning("暂无新增执行单元路由权限")
-    return
-  }
-
+const handlerCreate = () => {
   dialogVisible.value = true
   nextTick(() => {
     apiRef.value?.resetForm()
   })
 }
 
-const handlerConfigure = async (row: AutomationDispatchRow) => {
-  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Edit)) {
-    ElMessage.warning("暂无修改执行单元路由权限")
-    return
-  }
-
+const handlerConfigure = (row: AutomationDispatchRow) => {
   if (row.runners.length === 0) {
     ElMessage.warning("当前自动化节点暂无兼容 Runner")
     return
@@ -449,11 +232,6 @@ const handlerConfigure = async (row: AutomationDispatchRow) => {
 }
 
 const handlerDelete = (row: AutomationDispatchRow) => {
-  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Delete)) {
-    ElMessage.warning("暂无删除执行单元路由权限")
-    return
-  }
-
   ElMessageBox({
     title: "删除确认",
     message: h("p", null, [
@@ -472,11 +250,6 @@ const handlerDelete = (row: AutomationDispatchRow) => {
 }
 
 const handlerSync = () => {
-  if (!hasPermission(TICKET_CAPABILITIES.Dispatch.Sync)) {
-    ElMessage.warning("暂无复制执行单元路由权限")
-    return
-  }
-
   syncVisible.value = true
 }
 
@@ -496,7 +269,6 @@ const operateEvent = (action: DispatchAction, row: AutomationDispatchRow) => {
   }
 }
 
-// ==================== 对话框事件 ====================
 const onClosed = () => {
   dialogVisible.value = false
 }
@@ -506,7 +278,6 @@ const onSyncClosed = () => {
   syncRef.value?.resetForm()
 }
 
-// ==================== 页面初始化 ====================
 const templateId = route.query.id as string
 
 const fetchTemplateDetail = async (id: string) => {
@@ -537,14 +308,6 @@ watch(canViewDispatch, (allowed) => {
   if (allowed && templateId) fetchTemplateDetail(templateId)
 })
 </script>
-
-<style lang="scss">
-.add-drawer {
-  .el-drawer__header {
-    margin: 0;
-  }
-}
-</style>
 
 <style lang="scss" scoped>
 .dispatch-empty {

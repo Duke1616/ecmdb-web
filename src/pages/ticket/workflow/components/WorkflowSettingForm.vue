@@ -3,23 +3,17 @@
     <div class="setting-content">
       <div class="form-card">
         <!-- 区块 1: 通知设置 -->
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>通知设置</h3>
-              <p>配置工作流执行时的通知方式和渠道</p>
-            </div>
-          </div>
+        <FormSection title="通知设置" description="配置工作流执行时的通知方式和渠道">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
+            </svg>
+          </template>
 
           <div class="form-grid">
             <!-- 启用通知 -->
@@ -69,26 +63,20 @@
             </span>
             <span v-else>当前已禁用：在该模式下，工作流执行时将不会发送任何外部通知消息</span>
           </div>
-        </div>
+        </FormSection>
 
         <!-- 区块 2: 流转与审批策略配置 -->
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>流转与审批策略</h3>
-              <p>配置工单运行时的操作权限与驳回规则</p>
-            </div>
-          </div>
+        <FormSection title="流转与审批策略" description="配置工单运行时的操作权限与驳回规则">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+              />
+            </svg>
+          </template>
 
           <div class="form-grid">
             <!-- 允许转签 -->
@@ -138,85 +126,37 @@
             </div>
 
             <div class="reject-modes-grid">
-              <!-- 模式 1: 退回上一环节 (顺序驳回) -->
               <el-tooltip
-                :disabled="!isEasyFlow"
-                content="当前引擎不支持退回上一环节"
+                v-for="opt in rejectModeOptions"
+                :key="opt.mode"
+                :disabled="!opt.disabledTip || !isEasyFlow"
+                :content="opt.disabledTip || ''"
                 placement="top"
               >
                 <div
                   class="reject-mode-card"
                   :class="{
-                    'is-selected': isModeSelected('history'),
-                    'is-disabled': isEasyFlow
+                    'reject-mode-card--danger': opt.danger,
+                    'is-selected': isModeSelected(opt.mode),
+                    'is-disabled': !!opt.disabledTip && isEasyFlow
                   }"
-                  @click="toggleRejectMode('history')"
+                  @click="toggleRejectMode(opt.mode)"
                 >
                   <div class="mode-header">
                     <el-checkbox
-                      :model-value="isModeSelected('history')"
-                      :disabled="isEasyFlow"
+                      :model-value="isModeSelected(opt.mode)"
+                      :disabled="!!opt.disabledTip && isEasyFlow"
                       @click.stop
-                      @change="toggleRejectMode('history')"
+                      @change="toggleRejectMode(opt.mode)"
                     />
-                    <span class="mode-title">退回上一环节（顺序驳回）</span>
+                    <span class="mode-title">{{ opt.title }}</span>
                   </div>
-                  <div class="mode-desc">
-                    按流转路径回退至紧邻的上一审批环节，默认推荐
-                  </div>
+                  <div class="mode-desc">{{ opt.desc }}</div>
                 </div>
               </el-tooltip>
-
-              <!-- 模式 2: 退回发起人 -->
-              <el-tooltip
-                :disabled="!isEasyFlow"
-                content="当前引擎不支持退回发起人"
-                placement="top"
-              >
-                <div
-                  class="reject-mode-card"
-                  :class="{
-                    'is-selected': isModeSelected('starter'),
-                    'is-disabled': isEasyFlow
-                  }"
-                  @click="toggleRejectMode('starter')"
-                >
-                  <div class="mode-header">
-                    <el-checkbox
-                      :model-value="isModeSelected('starter')"
-                      :disabled="isEasyFlow"
-                      @click.stop
-                      @change="toggleRejectMode('starter')"
-                    />
-                    <span class="mode-title">退回发起人</span>
-                  </div>
-                  <div class="mode-desc">
-                    退回给发起人修改并重新提审，表单数据自动回填
-                  </div>
-                </div>
-              </el-tooltip>
-
-              <!-- 模式 3: 直接否决终止 -->
-              <div
-                class="reject-mode-card reject-mode-card--danger"
-                :class="{ 'is-selected': isModeSelected('terminate') }"
-                @click="toggleRejectMode('terminate')"
-              >
-                <div class="mode-header">
-                  <el-checkbox
-                    :model-value="isModeSelected('terminate')"
-                    @click.stop
-                    @change="toggleRejectMode('terminate')"
-                  />
-                  <span class="mode-title">直接否决</span>
-                </div>
-                <div class="mode-desc">
-                  一票否决并办结归档，工单不再继续流转
-                </div>
-              </div>
             </div>
           </div>
-        </div>
+        </FormSection>
       </div>
     </div>
 
@@ -231,13 +171,41 @@ import { InfoFilled, Connection } from "@element-plus/icons-vue"
 import { ElMessage } from "element-plus"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import FormActions from "@/common/components/FormActions/index.vue"
+import FormSection from "@@/components/FormSection/index.vue"
 import type { RejectMode } from "@/api/ticket/workflow/types/workflow"
+import { getDefaultFlowPolicy } from "../types"
 
 const notifyMapping = [
   {
     value: 1,
-    label: "飞书",
-    recommended: true
+    label: "飞书"
+  }
+]
+
+const rejectModeOptions: {
+  mode: RejectMode
+  title: string
+  desc: string
+  danger?: boolean
+  disabledTip?: string
+}[] = [
+  {
+    mode: "history",
+    title: "退回上一环节（顺序驳回）",
+    desc: "按流转路径回退至紧邻的上一审批环节，默认推荐",
+    disabledTip: "当前引擎不支持退回上一环节"
+  },
+  {
+    mode: "starter",
+    title: "退回发起人",
+    desc: "退回给发起人修改并重新提审，表单数据自动回填",
+    disabledTip: "当前引擎不支持退回发起人"
+  },
+  {
+    mode: "terminate",
+    title: "直接否决",
+    desc: "一票否决并办结归档，工单不再继续流转",
+    danger: true
   }
 ]
 
@@ -262,16 +230,10 @@ const isEasyFlow = computed(() => {
 
 const initPolicy = () => {
   if (!localFormData.value.flow_policy) {
-    localFormData.value.flow_policy = {
-      allow_transfer: false,
-      allow_reject: true,
-      reject_modes: isEasyFlow.value ? ["terminate"] : ["history"]
-    }
-  } else {
-    if (isEasyFlow.value) {
-      localFormData.value.flow_policy.allow_transfer = false
-      localFormData.value.flow_policy.reject_modes = ["terminate"]
-    }
+    localFormData.value.flow_policy = getDefaultFlowPolicy(localFormData.value.engine_type)
+  } else if (isEasyFlow.value) {
+    localFormData.value.flow_policy.allow_transfer = false
+    localFormData.value.flow_policy.reject_modes = getDefaultFlowPolicy(localFormData.value.engine_type).reject_modes
   }
 }
 
@@ -302,9 +264,7 @@ const handleRejectSwitchChange = (val: string | number | boolean) => {
   if (Boolean(val)) {
     const modes = localFormData.value.flow_policy.reject_modes
     if (!modes || modes.length === 0) {
-      localFormData.value.flow_policy.reject_modes = isEasyFlow.value
-        ? ["terminate"]
-        : ["history"]
+      localFormData.value.flow_policy.reject_modes = getDefaultFlowPolicy(localFormData.value.engine_type).reject_modes
     }
   }
   updateFormData()
@@ -349,55 +309,6 @@ watch(
     overflow: hidden;
     max-width: 800px;
     margin: 0 auto;
-  }
-}
-
-.form-section {
-  padding: 24px;
-  border-bottom: 1px solid #f1f5f9;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
-
-    .section-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: white;
-
-      svg {
-        width: 16px;
-        height: 16px;
-      }
-    }
-
-    .section-title {
-      h3 {
-        margin: 0 0 3px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e293b;
-      }
-
-      p {
-        margin: 0;
-        font-size: 13px;
-        color: #64748b;
-        line-height: 1.4;
-      }
-    }
   }
 }
 

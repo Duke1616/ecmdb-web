@@ -9,23 +9,17 @@
         class="form-card"
         @submit.prevent="handleFormNext"
       >
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>流程标识</h3>
-              <p>为您的流程设置名称和负责人</p>
-            </div>
-          </div>
+        <FormSection title="流程标识" description="为您的流程设置名称和负责人">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+              />
+            </svg>
+          </template>
 
           <div class="form-grid">
             <div class="form-field">
@@ -42,7 +36,6 @@
                     size="large"
                   />
                 </el-form-item>
-                <!-- <div class="input-hint">建议使用简洁明了的名称，便于团队理解</div> -->
               </div>
             </div>
 
@@ -59,23 +52,16 @@
                     @update:modelValue="updateFormData"
                   />
                 </el-form-item>
-                <!-- <div class="input-hint">选择负责此流程的主要人员</div> -->
               </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
         <!-- 流程引擎选择 -->
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <el-icon><Cpu /></el-icon>
-            </div>
-            <div class="section-title">
-              <h3>流程引擎</h3>
-              <p>选择驱动该工作流编排执行的底层引擎内核</p>
-            </div>
-          </div>
+        <FormSection title="流程引擎" description="选择驱动该工作流编排执行的底层引擎内核">
+          <template #icon>
+            <el-icon><Cpu /></el-icon>
+          </template>
 
           <!-- 轻量引擎单选卡片 -->
           <div class="compact-engine-grid">
@@ -98,25 +84,19 @@
               </div>
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div class="form-section">
-          <div class="section-header">
-            <div class="section-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-            <div class="section-title">
-              <h3>流程描述</h3>
-              <p>详细描述流程的目的和功能</p>
-            </div>
-          </div>
+        <FormSection title="流程描述" description="详细描述流程的目的和功能">
+          <template #icon>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </template>
 
           <div class="form-field full-width">
             <div class="field-label">
@@ -136,7 +116,7 @@
               <div class="input-hint">清晰的描述有助于团队成员理解和执行流程</div>
             </div>
           </div>
-        </div>
+        </FormSection>
       </el-form>
     </div>
 
@@ -152,8 +132,10 @@ import { Cpu } from "@element-plus/icons-vue"
 import { useFormHandler } from "@/common/composables/useFormHandler"
 import UserPicker from "@@/components/Pickers/UserPicker/index.vue"
 import FormActions from "@/common/components/FormActions/index.vue"
+import FormSection from "@@/components/FormSection/index.vue"
 import type { FormInstance, FormRules } from "element-plus"
 import type { EngineType } from "@/api/ticket/workflow/types/workflow"
+import { getDefaultFlowPolicy } from "../types"
 
 const engineMapping: {
   value: EngineType
@@ -205,21 +187,7 @@ const isCurrentEngine = (val: EngineType) => {
 const handleSelectEngine = (val: EngineType) => {
   if (localFormData.value.engine_type === val) return
   localFormData.value.engine_type = val
-
-  // 针对 EasyFlow 引擎自动适配其支持的流转与驳回策略（不支持转签，仅支持办结终止驳回）
-  if (val === "easy-workflow") {
-    localFormData.value.flow_policy = {
-      allow_transfer: false,
-      allow_reject: true,
-      reject_modes: ["terminate"]
-    }
-  } else {
-    localFormData.value.flow_policy = {
-      allow_transfer: false,
-      allow_reject: true,
-      reject_modes: ["history"]
-    }
-  }
+  localFormData.value.flow_policy = getDefaultFlowPolicy(val)
   updateFormData()
 }
 
@@ -246,12 +214,10 @@ const formRules: FormRules = {
 const handleFormNext = () => {
   if (!formRef.value) return
 
-  formRef.value.validate((valid, fields) => {
+  formRef.value.validate((valid) => {
     if (valid) {
       next()
     } else {
-      console.log("表单校验失败:", fields)
-      // 可以增加提示
       ElMessage.warning("请完善必填项")
     }
   })
@@ -290,58 +256,6 @@ watch(
     overflow: hidden;
     max-width: 800px;
     margin: 0 auto;
-  }
-}
-
-// 表单区块
-.form-section {
-  padding: 24px;
-  border-bottom: 1px solid #f1f5f9;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .section-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    margin-bottom: 20px;
-
-    .section-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-
-      svg,
-      .el-icon {
-        width: 16px;
-        height: 16px;
-        font-size: 16px;
-        color: white;
-      }
-    }
-
-    .section-title {
-      h3 {
-        margin: 0 0 3px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #1e293b;
-      }
-
-      p {
-        margin: 0;
-        font-size: 13px;
-        color: #64748b;
-        line-height: 1.4;
-      }
-    }
   }
 }
 
@@ -525,10 +439,6 @@ watch(
     border-radius: 12px;
   }
 
-  .form-section {
-    padding: 24px;
-  }
-
   .form-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -538,10 +448,6 @@ watch(
 @media (max-width: 480px) {
   .info-content {
     padding: 12px;
-  }
-
-  .form-section {
-    padding: 20px;
   }
 }
 </style>

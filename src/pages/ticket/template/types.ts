@@ -1,6 +1,7 @@
-import type { Component } from "vue"
-import type { ButtonType } from "element-plus"
 import type { createOrUpdateTemplateReq } from "@/api/ticket/template/types/template"
+import type { dispatch } from "@/api/ticket/dispatch/types/dispatch"
+import type { runner } from "@/api/task/runner/types/runner"
+import type { OperateItem } from "@@/components/OperateBtn/types"
 
 export type TemplateFormData = createOrUpdateTemplateReq
 
@@ -32,14 +33,7 @@ export enum TemplateEditorStep {
 
 export type TemplateManageGroupKey = number | "all"
 
-export interface TicketTemplateOperateItem {
-  name: string
-  code: TicketTemplateAction
-  type?: ButtonType
-  icon?: string | Component
-  disabled?: boolean
-  capability?: string | string[]
-}
+export type TicketTemplateOperateItem = OperateItem<TicketTemplateAction>
 
 export interface TemplateGroupFormExpose {
   handleCreate: () => void
@@ -51,4 +45,21 @@ export interface TemplateThirdPartyFormExpose {
   handleCreate: () => void
   resetForm: () => void
   setForm: (data: TemplateFormData) => void
+}
+
+export enum DispatchAction {
+  Configure = "configure",
+  Delete = "delete"
+}
+
+export type DispatchOperateItem = OperateItem<DispatchAction>
+
+export interface AutomationDispatchRow {
+  id: string
+  automationNodeId: string
+  dispatchId: number
+  dispatch: dispatch
+  nodeName: string
+  runner?: runner
+  runners: runner[]
 }

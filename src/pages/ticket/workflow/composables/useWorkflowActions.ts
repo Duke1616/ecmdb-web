@@ -4,7 +4,6 @@ import { ElMessage, ElMessageBox } from "element-plus"
 import { deleteWorkflowApi, deployWorkflowApi, getWorkflowDetailApi } from "@/api/ticket/workflow/workflow"
 import type { Workflow, WorkflowGraphData } from "@/api/ticket/workflow/types/workflow"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
-import { usePermission } from "@/common/composables/usePermission"
 import { refreshGraphId } from "@/common/utils/logicflow"
 import { WorkflowAction } from "../types"
 import type { WorkflowFormData, WorkflowOperateItem } from "../types"
@@ -61,31 +60,19 @@ export const useWorkflowActions = (options: {
   refresh: () => void
   showWizard: (data?: Partial<WorkflowFormData>) => void
 }) => {
-  const { hasPermission } = usePermission()
   const previewVisible = ref(false)
   const previewData = ref<WorkflowGraphData>()
 
-  const guardPermission = (capability: string, message: string) => {
-    if (hasPermission(capability)) return true
-
-    ElMessage.warning(message)
-    return false
-  }
-
   const handleEdit = async (row: Workflow) => {
-    if (!guardPermission(TICKET_CAPABILITIES.Workflow.Edit, "暂无修改流程权限")) return
-
     try {
       const { data } = await getWorkflowDetailApi(row.id)
       options.showWizard(data)
-    } catch (error) {
+    } catch {
       ElMessage.error("获取流程详情失败")
     }
   }
 
   const handleClone = async (row: Workflow) => {
-    if (!guardPermission(TICKET_CAPABILITIES.Workflow.Add, "暂无新增流程权限")) return
-
     try {
       const { data } = await getWorkflowDetailApi(row.id)
       options.showWizard({
@@ -94,26 +81,22 @@ export const useWorkflowActions = (options: {
         name: `${row.name}_copy`,
         flow_data: data.flow_data ? refreshGraphId(data.flow_data) : data.flow_data
       })
-    } catch (error) {
+    } catch {
       ElMessage.error("获取流程详情失败")
     }
   }
 
   const handlePreview = async (row: Workflow) => {
-    if (!guardPermission(TICKET_CAPABILITIES.Workflow.Detail, "暂无流程详情权限")) return
-
     try {
       const { data } = await getWorkflowDetailApi(row.id)
       previewData.value = data.flow_data
       previewVisible.value = true
-    } catch (error) {
+    } catch {
       ElMessage.error("获取流程预览失败")
     }
   }
 
   const handleDelete = async (row: Workflow) => {
-    if (!guardPermission(TICKET_CAPABILITIES.Workflow.Delete, "暂无删除流程权限")) return
-
     try {
       await confirmAction("删除确认", "删除", row.name)
       await deleteWorkflowApi(row.id)
@@ -125,8 +108,6 @@ export const useWorkflowActions = (options: {
   }
 
   const handleDeploy = async (row: Workflow) => {
-    if (!guardPermission(TICKET_CAPABILITIES.Workflow.Deploy, "暂无发布流程权限")) return
-
     try {
       await confirmAction("部署确认", "部署", row.name)
       await deployWorkflowApi(row.id)

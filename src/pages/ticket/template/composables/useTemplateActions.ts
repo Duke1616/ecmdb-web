@@ -4,7 +4,6 @@ import { Connection, CopyDocument, Delete, EditPen, Search } from "@element-plus
 import { ElMessage, ElMessageBox } from "element-plus"
 import { deleteTemplateApi, deleteTemplateGroupApi } from "@/api/ticket/template"
 import { TICKET_CAPABILITIES } from "@/common/auth/capability"
-import { usePermission } from "@/common/composables/usePermission"
 import type { createOrUpdateTemplateReq, template, templateGroupSummary } from "@/api/ticket/template/types/template"
 import { TicketTemplateAction } from "../types"
 import type { TemplateGroupFormExpose, TemplateThirdPartyFormExpose, TicketTemplateOperateItem } from "../types"
@@ -32,7 +31,6 @@ export function useTemplateActions(options: {
   handleCloneTemplate: (row: template) => void | Promise<void>
 }) {
   const router = useRouter()
-  const { hasPermission } = usePermission()
 
   const groupDialogVisible = ref(false)
   const groupDialogTitle = ref("新增模板分组")
@@ -88,20 +86,11 @@ export function useTemplateActions(options: {
   }
 
   const openGroupDialog = () => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.AddGroup)) {
-      ElMessage.warning("暂无新增模板分组权限")
-      return
-    }
     groupDialogTitle.value = "新增模板分组"
     groupDialogVisible.value = true
   }
 
   const openEditGroupDialog = (group: templateGroupSummary) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.EditGroup)) {
-      ElMessage.warning("暂无修改模板分组权限")
-      return
-    }
-
     groupDialogTitle.value = "编辑模板分组"
     groupDialogVisible.value = true
     nextTick(() => {
@@ -124,11 +113,6 @@ export function useTemplateActions(options: {
   }
 
   const handleDeleteTemplateGroup = async (group: templateGroupSummary) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.DeleteGroup)) {
-      ElMessage.warning("暂无删除模板分组权限")
-      return
-    }
-
     try {
       await confirmDelete("模板分组", group.name)
       await deleteTemplateGroupApi(group.id)
@@ -155,11 +139,6 @@ export function useTemplateActions(options: {
   }
 
   const handleDispatch = (row: template) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Dispatch.View)) {
-      ElMessage.warning("暂无查看执行单元路由权限")
-      return
-    }
-
     router.push({
       name: "TicketTemplateDispatch",
       query: {
@@ -169,11 +148,6 @@ export function useTemplateActions(options: {
   }
 
   const handleSync = (row: template) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.Edit)) {
-      ElMessage.warning("暂无绑定第三方流程权限")
-      return
-    }
-
     thirdpartyDialogVisible.value = true
     nextTick(() => {
       thirdPartyFormRef.value?.setForm(row as createOrUpdateTemplateReq)
@@ -181,11 +155,6 @@ export function useTemplateActions(options: {
   }
 
   const handleDelete = async (row: template) => {
-    if (!hasPermission(TICKET_CAPABILITIES.Template.Delete)) {
-      ElMessage.warning("暂无删除模板权限")
-      return
-    }
-
     try {
       await confirmDelete("模板", row.name)
       await deleteTemplateApi(row.id)

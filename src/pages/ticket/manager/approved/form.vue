@@ -76,12 +76,7 @@
 
     <div v-if="showActionFooter" class="form-footer">
       <template v-if="props.action === 'my-Start'">
-        <AuthButton
-          type="primary"
-          :icon="EditPen"
-          :capability="TICKET_CAPABILITIES.Manager.Pass"
-          @click="handlePass"
-        >
+        <AuthButton type="primary" :icon="EditPen" :capability="TICKET_CAPABILITIES.Manager.Pass" @click="handlePass">
           修改
         </AuthButton>
         <AuthButton

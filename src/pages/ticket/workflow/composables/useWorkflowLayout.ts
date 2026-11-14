@@ -499,7 +499,6 @@ export const useWorkflowLayout = (
   return {
     smartCenterAndZoom,
     runAutoLayout,
-    runElkLayout: runAutoLayout, // 向后兼容别名
     autoLayoutAndCenter
   }
 }

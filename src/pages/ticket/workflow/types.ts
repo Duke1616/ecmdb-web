@@ -1,7 +1,5 @@
-import type { Component } from "vue"
-import type { ButtonType } from "element-plus"
-import type { CreateOrUpdateWorkflowReq, WorkflowGraphData } from "@/api/ticket/workflow/types/workflow"
-import { getEngineDefaultTemplateGraph } from "./templates"
+import type { OperateItem } from "@@/components/OperateBtn/types"
+import type { CreateOrUpdateWorkflowReq, FlowPolicy, WorkflowGraphData } from "@/api/ticket/workflow/types/workflow"
 
 export * from "./templates"
 
@@ -13,14 +11,7 @@ export enum WorkflowAction {
   Delete = "delete"
 }
 
-export interface WorkflowOperateItem {
-  name: string
-  code: WorkflowAction
-  type?: ButtonType
-  icon?: string | Component
-  disabled?: boolean
-  capability?: string | string[]
-}
+export type WorkflowOperateItem = OperateItem<WorkflowAction>
 
 export interface WorkflowWizardExpose {
   currentStep: { value: number }
@@ -28,6 +19,13 @@ export interface WorkflowWizardExpose {
 }
 
 export type WorkflowFormData = CreateOrUpdateWorkflowReq
+
+// EasyFlow 不支持转签、仅支持办结终止驳回；FlowX 默认退回上一环节
+export const getDefaultFlowPolicy = (engineType?: string): FlowPolicy => ({
+  allow_transfer: false,
+  allow_reject: true,
+  reject_modes: engineType === "easy-workflow" ? ["terminate"] : ["history"]
+})
 
 export const createDefaultWorkflowGraph = (createId: () => string): WorkflowGraphData => ({
   nodes: [
@@ -58,22 +56,6 @@ export const createDefaultWorkflowFormData = (createId: () => string): WorkflowF
   desc: "",
   icon: "",
   owner: "",
-  flow_policy: {
-    allow_transfer: false,
-    allow_reject: true,
-    reject_modes: ["history"]
-  },
+  flow_policy: getDefaultFlowPolicy("flowx"),
   flow_data: createDefaultWorkflowGraph(createId)
 })
-
-/**
- * 构造标准示范工作流拓扑（Demo 一键注入，按引擎自适应）
- * @param createId UUID 生成函数
- * @param engineType 流程引擎类型（flowx 或 easyflow）
- */
-export const createDemoWorkflowGraph = (
-  createId: () => string,
-  engineType: string = "flowx"
-): WorkflowGraphData => {
-  return getEngineDefaultTemplateGraph(createId, engineType)
-}

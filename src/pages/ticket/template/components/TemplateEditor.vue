@@ -22,31 +22,7 @@
     </div>
 
     <div class="editor-body">
-      <TemplateInfoForm
-        v-if="currentStep === TemplateEditorStep.Info"
-        :form-data="formData"
-        @update:form-data="emit('update:formData', $event)"
-        @next="goNext"
-        @close="confirmClose"
-      />
-      <TemplateDesigner
-        v-else-if="currentStep === TemplateEditorStep.Designer"
-        :form-data="formData"
-        :has-binding-step="hasBindingStep"
-        @update:form-data="emit('update:formData', $event)"
-        @previous="goPrevious"
-        @next="goNext"
-        @save="emit('save')"
-        @close="confirmClose"
-      />
-      <TemplateScheduleOverrides
-        v-else
-        :form-data="formData"
-        @update:form-data="emit('update:formData', $event)"
-        @previous="goPrevious"
-        @save="emit('save')"
-        @close="confirmClose"
-      />
+      <component :is="stepComponent" v-bind="stepProps" v-on="stepListeners" />
     </div>
   </div>
 </template>
@@ -159,20 +135,41 @@ const confirmClose = async () => {
           <div class="confirm-icon">${isBasicStep ? "📝" : "🎨"}</div>
           <div class="confirm-text">${content}</div>
         </div>
-      `,
-      beforeClose: (_action, _instance, done) => {
-        setTimeout(() => {
-          const messageBox = document.querySelector(".custom-confirm-dialog")
-          messageBox?.classList.add("custom-confirm-dialog")
-        }, 0)
-        done()
-      }
+      `
     })
     emitClose()
   } catch {
     // 用户选择继续填写/设计
   }
 }
+
+const stepComponentMap = {
+  [TemplateEditorStep.Info]: TemplateInfoForm,
+  [TemplateEditorStep.Designer]: TemplateDesigner,
+  [TemplateEditorStep.Bindings]: TemplateScheduleOverrides
+}
+
+const stepComponent = computed(() => stepComponentMap[currentStep.value])
+
+const stepProps = computed(() =>
+  currentStep.value === TemplateEditorStep.Designer
+    ? { formData: props.formData, hasBindingStep: hasBindingStep.value }
+    : { formData: props.formData }
+)
+
+const stepListeners = computed(() => {
+  const base = {
+    "update:formData": (data: createOrUpdateTemplateReq) => emit("update:formData", data),
+    close: confirmClose
+  }
+  if (currentStep.value === TemplateEditorStep.Info) {
+    return { ...base, next: goNext }
+  }
+  if (currentStep.value === TemplateEditorStep.Designer) {
+    return { ...base, next: goNext, previous: goPrevious, save: () => emit("save") }
+  }
+  return { ...base, previous: goPrevious, save: () => emit("save") }
+})
 
 watch(
   () => props.modelValue,

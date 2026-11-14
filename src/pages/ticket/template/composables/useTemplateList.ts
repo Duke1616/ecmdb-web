@@ -19,7 +19,6 @@ export function useTemplateList() {
   const loading = ref(false)
   const groupLoading = ref(false)
   const workflowMaps = ref(new Map<number, string>())
-  const selectedTemplates = ref<template[]>([])
   let templateRequestId = 0
 
   const canViewTemplate = computed(() => hasPermission(TICKET_CAPABILITIES.Template.View))
@@ -92,15 +91,17 @@ export function useTemplateList() {
     }
   }
 
+  const reloadFromFirstPage = () => {
+    if (paginationData.currentPage === 1) {
+      return listTemplatesData()
+    }
+    paginationData.currentPage = 1
+  }
+
   const refreshTemplateManageData = async () => {
     const groupChanged = await listTemplateGroupsData()
     if (groupChanged) return
-
-    if (paginationData.currentPage === 1) {
-      await listTemplatesData()
-      return
-    }
-    paginationData.currentPage = 1
+    await reloadFromFirstPage()
   }
 
   const formatWorkflow = (row: template) => {
@@ -125,10 +126,6 @@ export function useTemplateList() {
     workflowMaps.value = nextMap
   }
 
-  const handleSelectionChange = (selection: template[]) => {
-    selectedTemplates.value = selection
-  }
-
   watch(
     [() => paginationData.currentPage, () => paginationData.pageSize],
     () => {
@@ -137,26 +134,12 @@ export function useTemplateList() {
     { immediate: true }
   )
 
-  watch(selectedGroup, () => {
-    selectedTemplates.value = []
-    if (paginationData.currentPage === 1) {
-      listTemplatesData()
-      return
-    }
-    paginationData.currentPage = 1
-  })
+  watch(selectedGroup, reloadFromFirstPage)
 
   let keywordTimer: number | undefined
   watch(keyword, () => {
-    selectedTemplates.value = []
     window.clearTimeout(keywordTimer)
-    keywordTimer = window.setTimeout(() => {
-      if (paginationData.currentPage === 1) {
-        listTemplatesData()
-        return
-      }
-      paginationData.currentPage = 1
-    }, SEARCH_DEBOUNCE_MS)
+    keywordTimer = window.setTimeout(reloadFromFirstPage, SEARCH_DEBOUNCE_MS)
   })
 
   watch(
@@ -181,7 +164,6 @@ export function useTemplateList() {
     templateGroups,
     selectedGroup,
     keyword,
-    selectedTemplates,
     totalTemplateCount,
     loading,
     groupLoading,
@@ -190,7 +172,6 @@ export function useTemplateList() {
     listTemplateGroupsData,
     refreshTemplateManageData,
     formatWorkflow,
-    handleSelectionChange,
     handleCurrentChange,
     handleSizeChange
   }

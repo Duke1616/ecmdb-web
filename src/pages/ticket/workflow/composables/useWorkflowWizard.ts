@@ -40,11 +40,6 @@ export const useWorkflowWizard = (options: { refresh: () => void }) => {
   }
 
   const openCreate = () => {
-    if (!hasPermission(TICKET_CAPABILITIES.Workflow.Add)) {
-      ElMessage.warning("暂无新增流程权限")
-      return
-    }
-
     showWizard()
   }
 

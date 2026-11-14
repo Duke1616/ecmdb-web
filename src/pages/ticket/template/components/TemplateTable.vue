@@ -2,7 +2,6 @@
   <DataTable
     :data="data"
     :columns="columns"
-    :show-selection="true"
     :show-pagination="true"
     :total="paginationData.total"
     :page-size="paginationData.pageSize"
@@ -11,7 +10,6 @@
     :pagination-layout="paginationData.layout"
     :table-props="{}"
     :loading="loading"
-    @selection-change="emit('selection-change', $event)"
     @size-change="emit('size-change', $event)"
     @current-change="emit('current-change', $event)"
   >
@@ -65,7 +63,6 @@ withDefaults(
 )
 
 const emit = defineEmits<{
-  (event: "selection-change", value: template[]): void
   (event: "size-change", value: number): void
   (event: "current-change", value: number): void
   (event: "operate", row: template, action: string): void

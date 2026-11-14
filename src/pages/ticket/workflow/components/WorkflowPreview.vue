@@ -39,7 +39,7 @@ const initLf = (data: any) => {
   })
   lf.value = lfInstance
   // 设置主题
-  setThemem()
+  setTheme()
   // 注册节点
   registerNode()
 
@@ -51,7 +51,7 @@ const initLf = (data: any) => {
   lf.value.fitView(300, 300)
 }
 
-const setThemem = () => {
+const setTheme = () => {
   lf.value.setTheme({
     circle: {
       stroke: "#000000",
@@ -94,18 +94,6 @@ defineExpose({
 </script>
 
 <style scoped>
-/* .logic-flow-preview {
-  height: 70vh;
-  position: relative;
-}
-
-#LF-preview {
-  width: calc(100% - 100px);
-  height: 100%;
-  outline: none;
-  margin-left: 50px;
-} */
-
 .logic-flow-preview {
   display: flex;
   flex-direction: column;
